@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.editor.event.VisibleAreaListener;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -25,6 +26,7 @@ import java.awt.*;
  * @see Editor#getScrollingModel()
  */
 public interface ScrollingModel {
+  @NotNull
   Rectangle getVisibleArea();
   Rectangle getVisibleAreaOnScrollingFinished();
 

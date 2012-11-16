@@ -108,7 +108,7 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
   public AnAction createFilterResolvedItemsAction(final InspectionResultsView view){
     return new ToggleAction(InspectionsBundle.message("inspection.filter.resolved.action.text"),
                             InspectionsBundle.message("inspection.filter.resolved.action.text"),
-                            AllIcons.Ant.Filter) {
+                            AllIcons.General.Filter) {
 
 
       @Override

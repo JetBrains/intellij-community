@@ -27,6 +27,7 @@ public class CompositePsiClasChildrenSource implements PsiClassChildrenSource {
     mySources = sources;
   }
 
+  @Override
   public void addChildren(PsiClass psiClass, List<PsiElement> children) {
     for (PsiClassChildrenSource source : mySources) {
       source.addChildren(psiClass, children);

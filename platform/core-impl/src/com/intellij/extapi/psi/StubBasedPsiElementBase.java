@@ -30,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -137,10 +138,14 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
         stub = stub.getParentStub();
       }
       PsiFile psi = (PsiFile)stub.getPsi();
-      if (psi == null) {
-        throw new PsiInvalidElementAccessException(this, "no psi for file stub " + stub, null);
+      if (psi != null) {
+        return psi;
       }
-      return psi;
+      synchronized (PsiLock.LOCK) {
+        if (myStub != null) {
+          throw new PsiInvalidElementAccessException(this, "no psi for file stub " + stub, null);
+        }
+      }
     }
 
     PsiFile file = super.getContainingFile();

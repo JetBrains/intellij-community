@@ -21,7 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.StaticChecker;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
@@ -32,7 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class DynamicMemberUtils {
 
   public static final Key<Map<String, String>> COMMENT_KEY = Key.create("DynamicMemberUtils:COMMENT_KEY");
-  
+
   private static final Key<ConcurrentHashMap<String, ClassMemberHolder>> KEY = Key.create("DynamicMemberUtils");
 
   private DynamicMemberUtils() {
@@ -58,12 +58,12 @@ public class DynamicMemberUtils {
     }
 
     assert source == res.myClassSource : "Store class sources in static constant, do not generate it in each call.";
-    
+
     return res;
   }
 
   public static boolean process(PsiScopeProcessor processor, PsiClass psiClass, GrReferenceExpression ref, String classSource) {
-    return process(processor, PsiUtil.isInStaticContext(ref, psiClass), ref, classSource);
+    return process(processor, StaticChecker.isInStaticContext(ref, psiClass), ref, classSource);
   }
 
   public static boolean process(PsiScopeProcessor processor, boolean isInStaticContext, GroovyPsiElement place, String classSource) {
@@ -89,20 +89,20 @@ public class DynamicMemberUtils {
     return true;
   }
 
-  public static boolean checkVersion(PsiMethod method, String grailsVersion) {
-    String since = getCommentValue(method, "@since");
+  public static boolean checkVersion(PsiMethod method, String version) {
+    String since = getCommentValue(method, "since");
     if (since == null) return true;
 
-    return grailsVersion.compareTo(since) >= 0;
+    return version.compareTo(since) >= 0;
   }
-  
+
   @Nullable
   public static String getCommentValue(PsiMethod method, String commentTagName) {
     Map<String, String> commentMap = method.getUserData(COMMENT_KEY);
     if (commentMap == null) return null;
     return commentMap.get(commentTagName);
   }
-  
+
   public static class ClassMemberHolder {
     private final String myClassSource;
 
@@ -170,7 +170,7 @@ public class DynamicMemberUtils {
       MultiMap<String, PsiMethod> staticMultiMap = new MultiMap<String, PsiMethod>();
       MultiMap<String, PsiMethod> nonStaticMultiMap = new MultiMap<String, PsiMethod>();
 
-      for (GrMethod method : myClass.getGroovyMethods()) {
+      for (GrMethod method : myClass.getCodeMethods()) {
         GrDynamicMethodWithCache dynamicMethod = new GrDynamicMethodWithCache(method, classSource);
 
         Map<String, String> commentMap = parseComment(method.getDocComment());
@@ -314,6 +314,7 @@ public class DynamicMemberUtils {
 
   public interface DynamicElement {
     String getSource();
+
     PsiClass getSourceClass();
   }
 
@@ -352,7 +353,7 @@ public class DynamicMemberUtils {
 
     @NotNull
     @Override
-    public Map<String,NamedArgumentDescriptor> getNamedParameters() {
+    public Map<String, NamedArgumentDescriptor> getNamedParameters() {
       return namedParameters;
     }
 

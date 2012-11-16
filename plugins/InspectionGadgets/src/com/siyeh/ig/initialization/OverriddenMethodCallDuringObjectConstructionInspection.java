@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,25 +22,22 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.CloneUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class OverriddenMethodCallDuringObjectConstructionInspection
-  extends BaseInspection {
+public class OverriddenMethodCallDuringObjectConstructionInspection extends BaseInspection {
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "overridden.method.call.in.constructor.display.name");
+    return InspectionGadgetsBundle.message("overridden.method.call.in.constructor.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "overridden.method.call.in.constructor.problem.descriptor");
+    return InspectionGadgetsBundle.message("overridden.method.call.in.constructor.problem.descriptor");
   }
 
   @Override
@@ -48,78 +45,37 @@ public class OverriddenMethodCallDuringObjectConstructionInspection
     return new OverriddenMethodCallInConstructorVisitor();
   }
 
-  private static class OverriddenMethodCallInConstructorVisitor
-    extends BaseInspectionVisitor {
+  private static class OverriddenMethodCallInConstructorVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression call) {
-      super.visitMethodCallExpression(call);
-      final PsiMember member =
-        PsiTreeUtil.getParentOfType(call, PsiMethod.class,
-                                    PsiClassInitializer.class);
-      if (member instanceof PsiClassInitializer) {
-        final PsiClassInitializer classInitializer =
-          (PsiClassInitializer)member;
-        if (classInitializer.hasModifierProperty(PsiModifier.STATIC)) {
-          return;
-        }
-      }
-      else if (member instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)member;
-        if (!isObjectConstructionMethod(method)) {
-          return;
-        }
-      }
-      else {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      if (!MethodCallUtils.isCallDuringObjectConstruction(expression)) {
         return;
       }
-      final PsiReferenceExpression methodExpression =
-        call.getMethodExpression();
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (qualifier != null) {
-        if (!(qualifier instanceof PsiThisExpression ||
-              qualifier instanceof PsiSuperExpression)) {
+        if (!(qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression)) {
           return;
         }
       }
-      final PsiClass containingClass = member.getContainingClass();
-      if (containingClass == null ||
-          containingClass.hasModifierProperty(PsiModifier.FINAL)) {
+      final PsiClass containingClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+      if (containingClass == null || containingClass.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
-      final PsiMethod calledMethod =
-        (PsiMethod)methodExpression.resolve();
+      final PsiMethod calledMethod = expression.resolveMethod();
       if (calledMethod == null || !PsiUtil.canBeOverriden(calledMethod)) {
         return;
       }
-      final PsiClass calledMethodClass =
-        calledMethod.getContainingClass();
-      if (!InheritanceUtil.isInheritorOrSelf(containingClass,
-                                             calledMethodClass, true)) {
+      final PsiClass calledMethodClass = calledMethod.getContainingClass();
+      if (!InheritanceUtil.isInheritorOrSelf(containingClass, calledMethodClass, true)) {
         return;
       }
-      if (!MethodUtils.isOverriddenInHierarchy(calledMethod,
-                                               containingClass)) {
+      if (!MethodUtils.isOverriddenInHierarchy(calledMethod, containingClass)) {
         return;
       }
-      registerMethodCallError(call);
-    }
-
-    public static boolean isObjectConstructionMethod(PsiMethod method) {
-      if (method.isConstructor()) {
-        return true;
-      }
-      if (CloneUtils.isClone(method)) {
-        return true;
-      }
-      if (MethodUtils.simpleMethodMatches(method, null, "void",
-                                          "readObject", "java.io.ObjectInputStream")) {
-        return true;
-      }
-      return MethodUtils.simpleMethodMatches(method, null, "void",
-                                             "readObjectNoData");
+      registerMethodCallError(expression);
     }
   }
 }

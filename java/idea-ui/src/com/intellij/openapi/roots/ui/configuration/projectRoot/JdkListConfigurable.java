@@ -40,8 +40,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class JdkListConfigurable extends BaseStructureConfigurable {
   private final ProjectSdksModel myJdksTreeModel;
@@ -123,7 +123,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
 
   @Override
   protected void loadTree() {
-    final HashMap<Sdk,Sdk> sdks = myJdksTreeModel.getProjectSdks();
+    final Map<Sdk,Sdk> sdks = myJdksTreeModel.getProjectSdks();
     for (Sdk sdk : sdks.keySet()) {
       final JdkConfigurable configurable = new JdkConfigurable((ProjectJdkImpl)sdks.get(sdk), myJdksTreeModel, TREE_UPDATER, myHistory,
                                                                myProject);

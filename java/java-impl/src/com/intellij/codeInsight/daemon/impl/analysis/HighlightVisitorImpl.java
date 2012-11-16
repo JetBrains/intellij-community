@@ -244,7 +244,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (LambdaUtil.isValidLambdaContext(expression.getParent())) {
         final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
         if (functionalInterfaceType != null) {
-          final String notFunctionalMessage = LambdaUtil.checkInterfaceFunctional(functionalInterfaceType);
+          final String notFunctionalMessage = LambdaHighlightingUtil.checkInterfaceFunctional(functionalInterfaceType);
           if (notFunctionalMessage != null) {
             myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, notFunctionalMessage));
           } else {
@@ -253,7 +253,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                                                              "Cyclic inference")); //todo[ann] append not inferred type params info
             }
             else {
-              final String incompatibleReturnTypesMessage = LambdaUtil.checkReturnTypeCompatible(expression, LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType));
+              final String incompatibleReturnTypesMessage = LambdaHighlightingUtil
+                .checkReturnTypeCompatible(expression, LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType));
               if (incompatibleReturnTypesMessage != null) {
                 myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, incompatibleReturnTypesMessage));
               } else {
@@ -704,14 +705,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) visitExpression(expression);
   }
 
-  @Override public void visitModifierList(PsiModifierList list) {
+  @Override
+  public void visitModifierList(PsiModifierList list) {
     super.visitModifierList(list);
     PsiElement parent = list.getParent();
-    if (!myHolder.hasErrorResults() && parent instanceof PsiMethod) {
-      myHolder.add(HighlightMethodUtil.checkMethodCanHaveBody((PsiMethod)parent));
-    }
     if (parent instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)parent;
+      if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodCanHaveBody(method));
       MethodSignatureBackedByPsiMethod methodSignature = MethodSignatureBackedByPsiMethod.create(method, PsiSubstitutor.EMPTY);
       if (!method.isConstructor()) {
         try {
@@ -988,7 +988,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       } else {
         final PsiElement referenceNameElement = expression.getReferenceNameElement();
         if (referenceNameElement instanceof PsiKeyword) {
-          if (!LambdaUtil.isValidQualifier(expression)) {
+          if (!PsiMethodReferenceUtil.isValidQualifier(expression)) {
             final PsiElement qualifier = expression.getQualifier();
             myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, qualifier, "Cannot find class " + qualifier.getText()));
           }
@@ -1014,6 +1014,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitReferenceParameterList(PsiReferenceParameterList list) {
     myHolder.add(GenericsHighlightUtil.checkParametersAllowed(list));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkParametersOnRaw(list));
+    if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkRawOnParameterizedType(list));
   }
 
   @Override public void visitReturnStatement(PsiReturnStatement statement) {

@@ -46,8 +46,15 @@ public abstract class FrameworkSupportInModuleConfigurable implements Disposable
     return FrameworkLibraryVersionFilter.ALL;
   }
 
+  public void onFrameworkSelectionChanged(boolean selected) {
+  }
+
   public boolean isOnlyLibraryAdded() {
     return false;
+  }
+
+  public boolean isVisible() {
+    return true;
   }
 
   @Override

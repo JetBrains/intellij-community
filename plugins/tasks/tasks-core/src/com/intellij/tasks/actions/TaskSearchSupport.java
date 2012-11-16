@@ -16,6 +16,7 @@
 
 package com.intellij.tasks.actions;
 
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.tasks.Task;
@@ -24,6 +25,7 @@ import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,10 +38,10 @@ public class TaskSearchSupport {
   private TaskSearchSupport() {
   }
 
-  public static List<Task> getLocalAndCachedTasks(final TaskManager myManager, String pattern) {
+  public static List<Task> getLocalAndCachedTasks(final TaskManager myManager, String pattern, final boolean withClosed) {
     List<Task> tasks = new ArrayList<Task>();
-    ContainerUtil.addAll(tasks, myManager.getLocalTasks());
-    ContainerUtil.addAll(tasks, ContainerUtil.filter(myManager.getCachedIssues(), new Condition<Task>() {
+    ContainerUtil.addAll(tasks, myManager.getLocalTasks(withClosed));
+    ContainerUtil.addAll(tasks, ContainerUtil.filter(myManager.getCachedIssues(withClosed), new Condition<Task>() {
       @Override
       public boolean value(final Task task) {
         return myManager.findTask(task.getId()) == null;
@@ -59,8 +61,14 @@ public class TaskSearchSupport {
     });
   }
 
-  public static List<Task> getRepositoriesTasks(final TaskManager myManager, String pattern, int max, long since, boolean forceRequest) {
-    List<Task> tasks = myManager.getIssues(pattern, max, since, forceRequest);
+  public static List<Task> getRepositoriesTasks(final TaskManager myManager,
+                                                String pattern,
+                                                int max,
+                                                long since,
+                                                boolean forceRequest,
+                                                final boolean withClosed,
+                                                @NotNull final ProgressIndicator cancelled) {
+    List<Task> tasks = myManager.getIssues(pattern, max, since, forceRequest, withClosed, cancelled);
     ContainerUtil.sort(tasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
     return tasks;
   }

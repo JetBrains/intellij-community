@@ -175,8 +175,8 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "      PARAMETER_LIST:PsiParameterListStub\n" +
            "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n" +
-           "    METHOD:PsiMethodStub[m2:void default {}]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=1]\n" +
+           "    METHOD:PsiMethodStub[m2:void]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=513]\n" +
            "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "      PARAMETER_LIST:PsiParameterListStub\n" +
            "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n");

@@ -1015,7 +1015,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private int yPositionToVisibleLine(int y) {
-    LOG.assertTrue(y >= 0, y);
+    assert y >= 0: y;
     return y / getLineHeight();
   }
 
@@ -2829,7 +2829,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       y = visibleLineToY(logicalToVisualLine(line));
     }
     else if (line + 1 >= myDocument.getLineCount()) {
-      y = visibleLineToY(offsetToVisualLine(myDocument.getTextLength()));
+      y = visibleLineToY(offsetToVisualLine(myDocument.getTextLength()) + 1);
     }
     else {
       y = logicalLineToY(line + 1);
@@ -3269,6 +3269,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           lineHeight = 12;
         }
       }
+      assert lineHeight > 0 : lineHeight;
       myLineHeight = lineHeight;
     }
     return lineHeight;
@@ -3739,7 +3740,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         newY = visibleLineToY(getVisibleLogicalLinesCount());
       }
       if (newY >= y) {
-        LogMessageEx.error(LOG, "cycled moveCaretToScreenPos() detected", String.format("x=%d, y=%d%nstate=%s", x, y, dumpState()));
+        LogMessageEx.error(LOG, "cycled moveCaretToScreenPos() detected", String.format("x=%d, y=%d\nstate=%s", x, y, dumpState()));
+        throw new IllegalStateException("cycled moveCaretToScreenPos() detected");
       } 
       moveCaretToScreenPos(x, newY);
       return;

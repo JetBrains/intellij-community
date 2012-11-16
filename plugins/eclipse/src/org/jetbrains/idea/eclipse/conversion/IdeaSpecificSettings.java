@@ -27,6 +27,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
 import com.intellij.openapi.roots.libraries.Library;
@@ -41,11 +43,14 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.eclipse.IdeaXml;
+import org.jetbrains.idea.eclipse.config.CachedXmlDocumentSet;
 import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -56,7 +61,7 @@ import static org.jetbrains.idea.eclipse.conversion.EPathUtil.areUrlsPointTheSam
 /**
  * Read/write .eml
  */
-public class IdeaSpecificSettings {
+public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<ModifiableRootModel, ContentEntry> {
   @NonNls private static final String RELATIVE_MODULE_SRC = "relative-module-src";
   @NonNls private static final String RELATIVE_MODULE_CLS = "relative-module-cls";
   @NonNls private static final String RELATIVE_MODULE_JAVADOC = "relative-module-javadoc";
@@ -71,40 +76,22 @@ public class IdeaSpecificSettings {
   private IdeaSpecificSettings() {
   }
 
-  public static void readIDEASpecific(final Element root, ModifiableRootModel model) throws InvalidDataException {
-    PathMacroManager.getInstance(model.getModule()).expandPaths(root);
+  public static void readIDEASpecific(ModifiableRootModel model, CachedXmlDocumentSet documentSet, String eml) throws InvalidDataException, IOException, JDOMException {
+    new IdeaSpecificSettings().readIDEASpecific(documentSet.read(eml).getRootElement(), model);
+  }
 
-    model.getModuleExtension(LanguageLevelModuleExtension.class).readExternal(root);
+  @Override
+  protected ContentEntry[] getEntries(ModifiableRootModel model) {
+    return model.getContentEntries();
+  }
 
-    final CompilerModuleExtension compilerModuleExtension = model.getModuleExtension(CompilerModuleExtension.class);
-    final Element testOutputElement = root.getChild(IdeaXml.OUTPUT_TEST_TAG);
-    if (testOutputElement != null) {
-      compilerModuleExtension.setCompilerOutputPathForTests(testOutputElement.getAttributeValue(IdeaXml.URL_ATTR));
-    }
+  @Override
+  protected ContentEntry createContentEntry(ModifiableRootModel model, final String url) {
+    return model.addContentEntry(url);
+  }
 
-    final String inheritedOutput = root.getAttributeValue(IdeaXml.INHERIT_COMPILER_OUTPUT_ATTR);
-    if (inheritedOutput != null && Boolean.valueOf(inheritedOutput).booleanValue()) {
-      compilerModuleExtension.inheritCompilerOutputPath(true);
-    }
-
-    compilerModuleExtension.setExcludeOutput(root.getChild(IdeaXml.EXCLUDE_OUTPUT_TAG) != null);
-
-    final List entriesElements = root.getChildren(IdeaXml.CONTENT_ENTRY_TAG);
-    if (!entriesElements.isEmpty()) {
-      for (Object o : entriesElements) {
-        readContentEntry((Element)o, model.addContentEntry(((Element)o).getAttributeValue(IdeaXml.URL_ATTR)));
-      }
-    } else {
-      final ContentEntry[] entries = model.getContentEntries();//todo
-      if (entries.length > 0) {
-        readContentEntry(root, entries[0]);
-      }
-    }
-
-    final String inheritJdk = root.getAttributeValue(INHERIT_JDK);
-    if (inheritJdk != null && Boolean.parseBoolean(inheritJdk)) {
-      model.inheritSdk();
-    }
+  @Override
+  protected void setupLibraryRoots(Element root, ModifiableRootModel model) {
     for (Object o : root.getChildren("lib")) {
       Element libElement = (Element)o;
       final String libName = libElement.getAttributeValue("name");
@@ -128,10 +115,52 @@ public class IdeaSpecificSettings {
         }
       }
     }
-    overrideModulesScopes(root, model);
   }
 
-  private static void overrideModulesScopes(Element root, ModifiableRootModel model) {
+  @Override
+  protected void setupJdk(Element root, ModifiableRootModel model) {
+    final String inheritJdk = root.getAttributeValue(INHERIT_JDK);
+    if (inheritJdk != null && Boolean.parseBoolean(inheritJdk)) {
+      model.inheritSdk();
+    } else {
+      final String jdkName = root.getAttributeValue("jdk");
+      if (jdkName != null) {
+        final Sdk jdkByName = ProjectJdkTable.getInstance().findJdk(jdkName);
+        if (jdkByName != null) {
+          model.setSdk(jdkByName);
+        }
+      }
+    }
+  }
+
+  @Override
+  protected void setupCompilerOutputs(Element root, ModifiableRootModel model) {
+    final CompilerModuleExtension compilerModuleExtension = model.getModuleExtension(CompilerModuleExtension.class);
+    final Element testOutputElement = root.getChild(IdeaXml.OUTPUT_TEST_TAG);
+    if (testOutputElement != null) {
+      compilerModuleExtension.setCompilerOutputPathForTests(testOutputElement.getAttributeValue(IdeaXml.URL_ATTR));
+    }
+
+    final String inheritedOutput = root.getAttributeValue(IdeaXml.INHERIT_COMPILER_OUTPUT_ATTR);
+    if (inheritedOutput != null && Boolean.valueOf(inheritedOutput).booleanValue()) {
+      compilerModuleExtension.inheritCompilerOutputPath(true);
+    }
+
+    compilerModuleExtension.setExcludeOutput(root.getChild(IdeaXml.EXCLUDE_OUTPUT_TAG) != null);
+  }
+
+  @Override
+  protected void readLanguageLevel(Element root, ModifiableRootModel model) throws InvalidDataException {
+    model.getModuleExtension(LanguageLevelModuleExtension.class).readExternal(root);
+  }
+
+  @Override
+  protected void expandElement(Element root, ModifiableRootModel model) {
+    PathMacroManager.getInstance(model.getModule()).expandPaths(root);
+  }
+
+  @Override
+  protected void overrideModulesScopes(Element root, ModifiableRootModel model) {
     for (Object o : root.getChildren("module")) {
       final String moduleName = ((Element)o).getAttributeValue("name");
       final String scope = ((Element)o).getAttributeValue("scope");
@@ -180,7 +209,8 @@ public class IdeaSpecificSettings {
   }
 
 
-  public static void readContentEntry(Element root, ContentEntry entry) {
+  @Override
+  public void readContentEntry(Element root, ContentEntry entry, ModifiableRootModel model) {
     for (Object o : root.getChildren(IdeaXml.TEST_FOLDER_TAG)) {
       final String url = ((Element)o).getAttributeValue(IdeaXml.URL_ATTR);
       SourceFolder folderToBeTest = null;
@@ -278,8 +308,12 @@ public class IdeaSpecificSettings {
           isModified = true;
         }
       }
-      if (entry instanceof InheritedJdkOrderEntry && EclipseModuleManagerImpl.getInstance(entry.getOwnerModule()).getInvalidJdk() != null) {
-        root.setAttribute(INHERIT_JDK, "true");
+      if (entry instanceof JdkOrderEntry && EclipseModuleManagerImpl.getInstance(entry.getOwnerModule()).getInvalidJdk() != null) {
+        if (entry instanceof InheritedJdkOrderEntry) {
+          root.setAttribute(INHERIT_JDK, "true");
+        } else {
+          root.setAttribute("jdk", ((JdkOrderEntry)entry).getJdkName());
+        }
         isModified = true;
       }
       if (!(entry instanceof LibraryOrderEntry)) continue;

@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
@@ -77,13 +78,15 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
     return color;
   }
 
+  @Override
   public boolean isProblem(@NotNull final VirtualFile file) {
     return myProblemSolver.isProblemFile(file);
   }
 
+  @Override
   public String getFileTooltipText(final VirtualFile file) {
     final StringBuilder tooltipText = new StringBuilder();
-    final Module module = ModuleUtil.findModuleForFile(file, getProject());
+    final Module module = ModuleUtilCore.findModuleForFile(file, getProject());
     if (module != null) {
       tooltipText.append("[");
       tooltipText.append(module.getName());
@@ -109,6 +112,7 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
    * Updates attribute of open files when roots change
    */
   private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {
+    @Override
     public void propertyChanged(@NotNull final PsiTreeChangeEvent e) {
       if (PsiTreeChangeEvent.PROP_ROOTS.equals(e.getPropertyName())) {
         ApplicationManager.getApplication().assertIsDispatchThread();
@@ -121,22 +125,27 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
       }
     }
 
+    @Override
     public void childAdded(@NotNull PsiTreeChangeEvent event) {
       doChange(event);
     }
 
+    @Override
     public void childRemoved(@NotNull PsiTreeChangeEvent event) {
       doChange(event);
     }
 
+    @Override
     public void childReplaced(@NotNull PsiTreeChangeEvent event) {
       doChange(event);
     }
 
+    @Override
     public void childMoved(@NotNull PsiTreeChangeEvent event) {
       doChange(event);
     }
 
+    @Override
     public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
       doChange(event);
     }
@@ -151,14 +160,17 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
   }
 
   private class MyProblemListener extends WolfTheProblemSolver.ProblemListener {
+    @Override
     public void problemsAppeared(@NotNull final VirtualFile file) {
       updateFile(file);
     }
 
+    @Override
     public void problemsDisappeared(@NotNull VirtualFile file) {
       updateFile(file);
     }
 
+    @Override
     public void problemsChanged(@NotNull VirtualFile file) {
       updateFile(file);
     }

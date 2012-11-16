@@ -47,4 +47,9 @@ public class JpsModuleDependencyImpl extends JpsDependencyElementBase<JpsModuleD
   public JpsModuleDependencyImpl createCopy() {
     return new JpsModuleDependencyImpl(this);
   }
+
+  @Override
+  public String toString() {
+    return "module dep [" + getModuleReference() + "]";
+  }
 }

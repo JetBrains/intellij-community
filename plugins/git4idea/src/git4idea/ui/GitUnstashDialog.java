@@ -407,7 +407,7 @@ public class GitUnstashDialog extends DialogWrapper {
       }
     });
     int rc = GitHandlerUtil.doSynchronously(h, GitBundle.getString("unstash.unstashing"), h.printableCommandLine(), false);
-    root.refresh(true, true);
+    ServiceManager.getService(myProject, GitPlatformFacade.class).hardRefresh(root);
 
     if (conflict.get()) {
       boolean conflictsResolved = new UnstashConflictResolver(myProject, root, getSelectedStash()).merge();

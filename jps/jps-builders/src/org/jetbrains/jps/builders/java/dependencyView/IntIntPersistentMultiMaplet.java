@@ -29,11 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
+ * @author: db
  * Date: 08.03.11
- * Time: 15:38
- * To change this template use File | Settings | File Templates.
  */
 class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   private static final TIntHashSet NULL_COLLECTION = new TIntHashSet();

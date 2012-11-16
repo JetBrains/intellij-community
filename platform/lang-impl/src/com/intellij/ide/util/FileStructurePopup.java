@@ -16,7 +16,6 @@
 package com.intellij.ide.util;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.IdeBundle;
@@ -136,20 +135,24 @@ public class FileStructurePopup implements Disposable {
     }
 
     myTreeStructure = new SmartTreeStructure(project, myTreeModel){
+      @Override
       public void rebuildTree() {
         if (ApplicationManager.getApplication().isUnitTestMode() || !myPopup.isDisposed()) {
           super.rebuildTree();
         }
       }
 
+      @Override
       public boolean isToBuildChildrenInBackground(final Object element) {
         return getRootElement() == element;
       }
 
+      @Override
       protected TreeElementWrapper createTree() {
         return new StructureViewComponent.StructureViewTreeElementWrapper(myProject, myModel.getRoot(), myModel);
       }
 
+      @NonNls
       @Override
       public String toString() {
         return "structure view tree structure(model=" + myTreeModel + ")";
@@ -293,6 +296,7 @@ public class FileStructurePopup implements Disposable {
       @Override
       public void run() {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
           public void run() {
             myFilteringStructure.rebuild();
           }
@@ -314,70 +318,62 @@ public class FileStructurePopup implements Disposable {
                 });
               }
             });
+            installUpdater();
           }
         });
-        installUpdater();
       }
     });
   }
 
   private void installUpdater() {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, myPopup);
-      alarm.addRequest(new Runnable() {
-        String filter = "";
-
-        @Override
-        public void run() {
-          alarm.cancelAllRequests();
-          String prefix = mySpeedSearch.getEnteredPrefix();
-          myTree.getEmptyText().setText(StringUtil.isEmpty(prefix) ? "Nothing to show" : "Can't find '" + prefix + "'");
-          if (prefix == null) prefix = "";
-
-          if (!filter.equals(prefix)) {
-            final boolean isBackspace = prefix.length() < filter.length();
-            filter = prefix;
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                ApplicationManager.getApplication().runReadAction(new Runnable() {
-                  @Override
-                  public void run() {
-                    myAbstractTreeBuilder.refilter(null, false, false).doWhenProcessed(new Runnable() {
-                      @Override
-                      public void run() {
-                        SwingUtilities.invokeLater(new Runnable() {
-                          @Override
-                          public void run() {
-                            myTree.repaint();
-                            if (isBackspace && handleBackspace(filter)) {
-                              return;
-                            }
-                            if (myFilteringStructure.getRootElement().getChildren().length == 0) {
-                              for (JCheckBox box : myCheckBoxes.values()) {
-                                if (!box.isSelected()) {
-                                  myAutoClicked.add(box);
-                                  myTriggeredCheckboxes.add(0, Pair.create(filter, box));
-                                  box.doClick();
-                                  filter = "";
-                                  break;
-                                }
-                              }
-                            }
-                          }
-                        });
-                      }
-                    });
-                  }
-                });
-              }
-            });
-          }
-          if (!alarm.isDisposed()) {
-            alarm.addRequest(this, 300);
-          }
-        }
-      }, 300);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
     }
+    final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, myPopup);
+    alarm.addRequest(new Runnable() {
+      String filter = "";
+
+      @Override
+      public void run() {
+        alarm.cancelAllRequests();
+        String prefix = mySpeedSearch.getEnteredPrefix();
+        myTree.getEmptyText().setText(StringUtil.isEmpty(prefix) ? "Nothing to show" : "Can't find '" + prefix + "'");
+        if (prefix == null) prefix = "";
+
+        if (!filter.equals(prefix)) {
+          final boolean isBackspace = prefix.length() < filter.length();
+          filter = prefix;
+          myAbstractTreeBuilder.refilter(null, false, false).doWhenProcessed(new Runnable() {
+            @Override
+            public void run() {
+              SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  myTree.repaint();
+                  if (isBackspace && handleBackspace(filter)) {
+                    return;
+                  }
+                  if (myFilteringStructure.getRootElement().getChildren().length == 0) {
+                    for (JCheckBox box : myCheckBoxes.values()) {
+                      if (!box.isSelected()) {
+                        myAutoClicked.add(box);
+                        myTriggeredCheckboxes.add(0, Pair.create(filter, box));
+                        box.doClick();
+                        filter = "";
+                        break;
+                      }
+                    }
+                  }
+                }
+              });
+            }
+          });
+        }
+        if (!alarm.isDisposed()) {
+          alarm.addRequest(this, 300);
+        }
+      }
+    }, 300);
   }
 
   private boolean handleBackspace(String filter) {
@@ -455,9 +451,11 @@ public class FileStructurePopup implements Disposable {
     return PsiDocumentManager.getInstance(project).getPsiFile(myEditor.getDocument());
   }
 
+  @Override
   public void dispose() {
   }
 
+  @NonNls
   protected static String getDimensionServiceKey() {
     return "StructurePopup";
   }
@@ -503,6 +501,7 @@ public class FileStructurePopup implements Disposable {
     final Shortcut[] ENTER = CustomShortcutSet.fromString("ENTER").getShortcuts();
     final CustomShortcutSet shortcutSet = new CustomShortcutSet(ArrayUtil.mergeArrays(F4, ENTER));
     new AnAction() {
+      @Override
       public void actionPerformed(AnActionEvent e) {
         final boolean succeeded = navigateSelectedElement();
         if (succeeded) {
@@ -512,6 +511,7 @@ public class FileStructurePopup implements Disposable {
     }.registerCustomShortcutSet(shortcutSet, panel);
 
     new AnAction() {
+      @Override
       public void actionPerformed(AnActionEvent e) {
         if (mySpeedSearch != null && mySpeedSearch.isPopupActive()) {
           mySpeedSearch.hidePopup();
@@ -597,6 +597,7 @@ public class FileStructurePopup implements Disposable {
     final Ref<Boolean> succeeded = new Ref<Boolean>();
     final CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(myProject, new Runnable() {
+      @Override
       public void run() {
         final AbstractTreeNode selectedNode = getSelectedNode();
         if (selectedNode != null) {
@@ -623,6 +624,7 @@ public class FileStructurePopup implements Disposable {
     final JCheckBox checkBox = new JCheckBox(IdeBundle.message("checkbox.narrow.down.on.typing"));
     checkBox.setSelected(PropertiesComponent.getInstance().getBoolean(narrowDownPropertyKey, true));
     checkBox.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         myShouldNarrowDown = checkBox.isSelected();
         PropertiesComponent.getInstance().setValue(narrowDownPropertyKey, Boolean.toString(myShouldNarrowDown));
@@ -658,6 +660,7 @@ public class FileStructurePopup implements Disposable {
     chkFilter.setSelected(selected);
     myTreeActionsOwner.setActionIncluded(action, action instanceof FileStructureFilter ? !selected : selected);
     chkFilter.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         final boolean state = chkFilter.isSelected();
         if (!myAutoClicked.contains(chkFilter)) {
@@ -675,6 +678,7 @@ public class FileStructurePopup implements Disposable {
 
         final Object sel = selection;
         final Runnable runnable = new Runnable() {
+          @Override
           public void run() {
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               @Override
@@ -703,6 +707,7 @@ public class FileStructurePopup implements Disposable {
     if (shortcuts.length > 0) {
       text += " (" + KeymapUtil.getShortcutText(shortcuts[0]) + ")";
       new AnAction() {
+        @Override
         public void actionPerformed(final AnActionEvent e) {
           chkFilter.doClick();
         }
@@ -729,6 +734,7 @@ public class FileStructurePopup implements Disposable {
     }
   }
 
+  @NonNls
   public static String getPropertyName(String propertyName) {
     return propertyName + ".file.structure.state";
   }
@@ -849,13 +855,14 @@ public class FileStructurePopup implements Disposable {
 
   public class MyTreeSpeedSearch extends TreeSpeedSearch {
     public MyTreeSpeedSearch() {
-      super(FileStructurePopup.this.myTree, new Convertor<TreePath, String>() {
+      super(myTree, new Convertor<TreePath, String>() {
+        @Override
         @Nullable
         public String convert(TreePath path) {
           final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
           final Object userObject = node.getUserObject();
           if (userObject instanceof FilteringTreeStructure.FilteringNode) {
-            return FileStructurePopup.getText(((FilteringTreeStructure.FilteringNode)userObject).getDelegate());
+            return getText(((FilteringTreeStructure.FilteringNode)userObject).getDelegate());
           }
           return "";
         }

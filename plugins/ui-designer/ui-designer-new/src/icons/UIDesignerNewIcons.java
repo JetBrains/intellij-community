@@ -13,7 +13,5 @@ public class UIDesignerNewIcons {
     return IconLoader.getIcon(path, UIDesignerNewIcons.class);
   }
 
-  public static final Icon ExpandAll = load("/com/intellij/designer/icons/ExpandAll.png"); // 11x16
-  public static final Icon Filter = load("/com/intellij/designer/icons/filter.png"); // 16x16
   public static final Icon ToolWindow = load("/com/intellij/designer/icons/toolWindow.png"); // 13x13
 }

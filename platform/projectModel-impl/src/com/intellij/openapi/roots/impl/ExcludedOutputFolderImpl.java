@@ -30,10 +30,12 @@ public class ExcludedOutputFolderImpl extends ContentFolderBaseImpl implements E
     super(outputPath, contentEntry);
   }
 
+  @Override
   public boolean isSynthetic() {
     return true;
   }
 
+  @Override
   public ContentFolder cloneFolder(final ContentEntry contentEntry) {
     return new ExcludedOutputFolderImpl((ContentEntryImpl)contentEntry, VirtualFilePointerManager.getInstance().create(getUrl(), getRootModel().getModule(), null));
   }

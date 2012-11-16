@@ -35,6 +35,7 @@ public class ClassSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiEleme
     this(project, (PsiClass)value, viewSettings);
   }
 
+  @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildrenImpl() {
     PsiClass parent = getPsiClass();
@@ -66,10 +67,12 @@ public class ClassSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiEleme
     return treeNodes;
   }
 
+  @Override
   public boolean isAlwaysLeaf() {
     return !getSettings().isShowMembers();
   }
   
+  @Override
   public void updateImpl(PresentationData data) {
     final PsiClass aClass = getPsiClass();
     if (aClass != null) {
@@ -82,6 +85,7 @@ public class ClassSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiEleme
   }
 
 
+  @Override
   public boolean expandOnDoubleClick() {
     return false;
   }
@@ -90,6 +94,7 @@ public class ClassSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiEleme
     return (PsiClass)getPsiElement();
   }
 
+  @Override
   public boolean isAlwaysExpand() {
     return getParentValue() instanceof PsiFile;
   }

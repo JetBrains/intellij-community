@@ -16,6 +16,7 @@
 package com.intellij.tasks;
 
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import org.jetbrains.annotations.NotNull;
@@ -43,26 +44,32 @@ public abstract class TaskManager {
 
   public abstract List<Task> getIssues(@Nullable String query, boolean forceRequest);
 
-  public abstract List<Task> getIssues(@Nullable String query, int max, long since, boolean forceRequest);
+  public abstract List<Task> getIssues(@Nullable String query,
+                                       int max,
+                                       long since,
+                                       boolean forceRequest,
+                                       final boolean withClosed,
+                                       @NotNull final ProgressIndicator cancelled);
   /**
    * Returns already cached issues.
    * @return cached issues.
    */
   public abstract List<Task> getCachedIssues();
 
+  public abstract List<Task> getCachedIssues(final boolean withClosed);
+
   @Nullable
   public abstract Task updateIssue(@NotNull String id);
 
-  public abstract LocalTask[] getLocalTasks();
+  public abstract List<LocalTask> getLocalTasks();
+
+  public abstract List<LocalTask> getLocalTasks(final boolean withClosed);
 
   public abstract LocalTask addTask(Task issue);
 
   public abstract LocalTask createLocalTask(String summary);
 
   public abstract void activateTask(@NotNull Task task, boolean clearContext, boolean createChangelist);
-
-  @NotNull
-  public abstract List<ChangeListInfo> getOpenChangelists(Task task);
 
   @NotNull
   public abstract LocalTask getActiveTask();
@@ -78,10 +85,14 @@ public abstract class TaskManager {
 
   public abstract boolean isVcsEnabled();
 
+  public abstract boolean isLocallyClosed(LocalTask localTask);
+
   @Nullable
   public abstract LocalTask getAssociatedTask(LocalChangeList list);
 
-  public abstract void associateWithTask(LocalChangeList changeList);
+  public abstract void trackContext(LocalChangeList changeList);
+
+  public abstract void disassociateFromTask(LocalChangeList changeList);
 
   public abstract void removeTask(LocalTask task);
 

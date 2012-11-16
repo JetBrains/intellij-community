@@ -22,7 +22,10 @@ import com.intellij.openapi.diff.DiffViewer;
 import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
+import com.intellij.openapi.diff.impl.fragments.Fragment;
+import com.intellij.openapi.diff.impl.fragments.LineFragment;
 import com.intellij.openapi.diff.impl.util.FocusDiffSide;
+import com.intellij.openapi.diff.impl.util.TextDiffType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -111,4 +114,16 @@ public class DiffUtil {
     return backgroundColor.darker();
   }
 
+  @NotNull
+  public static TextDiffType makeTextDiffType(@NotNull LineFragment fragment) {
+    TextDiffType type = TextDiffType.create(fragment.getType());
+    if (isInlineWrapper(fragment)) {
+      return TextDiffType.deriveInstanceForInlineWrapperFragment(type);
+    }
+    return type;
+  }
+
+  public static boolean isInlineWrapper(@NotNull Fragment fragment) {
+    return fragment instanceof LineFragment && ((LineFragment)fragment).getChildrenIterator() != null;
+  }
 }

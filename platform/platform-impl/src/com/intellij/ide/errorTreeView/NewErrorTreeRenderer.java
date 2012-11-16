@@ -174,13 +174,13 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
     else if (element instanceof SimpleMessageElement || element instanceof NavigatableMessageElement) {
       ErrorTreeElementKind kind = element.getKind();
       if (ErrorTreeElementKind.ERROR.equals(kind)) {
-        icon = AllIcons.Compiler.Error;
+        icon = AllIcons.General.Error;
       }
       else if (ErrorTreeElementKind.WARNING.equals(kind) || ErrorTreeElementKind.NOTE.equals(kind)) {
-        icon = AllIcons.Compiler.Warning;
+        icon = AllIcons.General.Warning;
       }
       else if (ErrorTreeElementKind.INFO.equals(kind)) {
-        icon = AllIcons.Compiler.Information;
+        icon = AllIcons.General.Information;
       }
     }
 

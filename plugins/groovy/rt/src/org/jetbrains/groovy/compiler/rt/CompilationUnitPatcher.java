@@ -19,11 +19,13 @@ package org.jetbrains.groovy.compiler.rt;
 import groovy.lang.GroovyResourceLoader;
 import org.codehaus.groovy.control.CompilationUnit;
 
+import java.io.File;
+
 /**
  * @author peter
  */
-public interface CompilationUnitPatcher {
+public abstract class CompilationUnitPatcher {
 
-  void patchCompilationUnit(CompilationUnit compilationUnit, GroovyResourceLoader resourceLoader);
+  public abstract void patchCompilationUnit(CompilationUnit compilationUnit, GroovyResourceLoader resourceLoader, File[] srcFiles);
 
 }

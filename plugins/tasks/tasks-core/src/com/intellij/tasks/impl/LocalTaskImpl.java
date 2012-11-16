@@ -39,26 +39,27 @@ import java.util.List;
 @SuppressWarnings({"UnusedDeclaration"})
 public class LocalTaskImpl extends LocalTask {
 
-  @NonNls static final String DEFAULT_TASK_ID = "Default";
+  @NonNls public static final String DEFAULT_TASK_ID = "Default";
 
   private String myId = "";
   private String mySummary = "";
-  private boolean myActive;
-  private boolean myClosed;
-  private Date myCreated;
-  protected Date myUpdated;
-  private List<ChangeListInfo> myChangeLists = new ArrayList<ChangeListInfo>();
-
-  private boolean myIssue;
-  private TaskRepository myRepository;
-  private String myIssueUrl;
-
-  private TaskType myType = TaskType.OTHER;
-  private String myDescription;
+  private String myDescription = null;
   private Comment[] myComments = new Comment[0];
-  private String myAssociatedChangelistId;
+  private boolean myClosed = false;
+  private Date myCreated;
+  private Date myUpdated;
+  private TaskType myType = TaskType.OTHER;
   private String myPresentableName;
-  private String myCustomIcon;
+  private String myCustomIcon = null;
+
+  private boolean myIssue = false;
+  private TaskRepository myRepository = null;
+  private String myIssueUrl = null;
+
+  private boolean myActive;
+  private List<ChangeListInfo> myChangeLists = new ArrayList<ChangeListInfo>();
+  private long myTimeSpent = 0;
+
 
   /** for serialization */
   public LocalTaskImpl() {    
@@ -80,7 +81,7 @@ public class LocalTaskImpl extends LocalTask {
     if (origin instanceof LocalTaskImpl) {
       myChangeLists = ((LocalTaskImpl)origin).getChangeLists();
       myActive = ((LocalTaskImpl)origin).isActive();
-      myAssociatedChangelistId = ((LocalTaskImpl)origin).getAssociatedChangelistId();
+      myTimeSpent = ((LocalTaskImpl)origin).getTimeSpent();
     }
   }
 
@@ -126,29 +127,25 @@ public class LocalTaskImpl extends LocalTask {
   }
 
   @Override
-  public String getAssociatedChangelistId() {
-    return myAssociatedChangelistId;
-  }
-
-  @Override
   public void updateFromIssue(Task issue) {
     copy(issue);
     myIssue = true;
   }
 
   private void copy(Task issue) {
+    mySummary = issue.getSummary();
+    myDescription = issue.getDescription();
+    myComments = issue.getComments();
+    myClosed = issue.isClosed();
     myCreated = issue.getCreated();
     if (Comparing.compare(myUpdated, issue.getUpdated()) < 0) {
       myUpdated = issue.getUpdated();
     }
-    myPresentableName = issue.getPresentableName();    
-    mySummary = issue.getSummary();
-    myClosed = issue.isClosed();
-    myIssueUrl = issue.getIssueUrl();
     myType = issue.getType();
-    myDescription = issue.getDescription();
-    myComments = issue.getComments();
+    myPresentableName = issue.getPresentableName();
     myCustomIcon = issue.getCustomIcon();
+    myIssueUrl = issue.getIssueUrl();
+    myRepository = issue.getRepository();
   }
 
   public void setId(String id) {
@@ -190,19 +187,27 @@ public class LocalTaskImpl extends LocalTask {
     myUpdated = updated;
   }
 
+  @NotNull
   @Property(surroundWithTag = false)
   @AbstractCollection(surroundWithTag = false, elementTag="changelist")
   public List<ChangeListInfo> getChangeLists() {
     return myChangeLists;
   }
 
-  public void setChangeLists(List<ChangeListInfo> changeLists) {
-    myChangeLists = changeLists;
+  @Override
+  public void addChangelist(final ChangeListInfo info) {
+    if (!myChangeLists.contains(info)) {
+      myChangeLists.add(info);
+    }
   }
 
   @Override
-  public void setAssociatedChangelistId(String associatedChangelistId) {
-    myAssociatedChangelistId = associatedChangelistId;
+  public void removeChangelist(final ChangeListInfo info) {
+    myChangeLists.remove(info);
+  }
+
+  public void setChangeLists(List<ChangeListInfo> changeLists) {
+    myChangeLists = changeLists;
   }
 
   public boolean isClosed() {
@@ -213,6 +218,7 @@ public class LocalTaskImpl extends LocalTask {
     myClosed = closed;
   }
 
+  @NotNull
   @Override
   public Icon getIcon() {
     final String customIcon = getCustomIcon();
@@ -247,10 +253,6 @@ public class LocalTaskImpl extends LocalTask {
     return myId.equals(DEFAULT_TASK_ID);
   }
 
-  public boolean equalsTo(LocalTask task) {
-    return task != null && task.getId().equals(myId);
-  }
-
   @Override
   public String getPresentableName() {
     return myPresentableName != null ? myPresentableName : toString();
@@ -258,5 +260,14 @@ public class LocalTaskImpl extends LocalTask {
 
   public String getCustomIcon() {
     return myCustomIcon;
+  }
+
+  @Tag("timeSpent")
+  public long getTimeSpent() {
+    return myTimeSpent;
+  }
+
+  public void setTimeSpent(final long timeSpent) {
+    myTimeSpent = timeSpent;
   }
 }

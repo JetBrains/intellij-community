@@ -53,18 +53,18 @@ public class StringUtilRt {
     if (a < 'a') {
       return a;
     }
-    if (a >= 'a' && a <= 'z') {
+    if (a <= 'z') {
       return (char)(a + ('A' - 'a'));
     }
     return Character.toUpperCase(a);
   }
 
-  public static char toLowerCase(final char a) {
+  public static char toLowerCase(char a) {
     if (a < 'A' || a >= 'a' && a <= 'z') {
       return a;
     }
 
-    if (a >= 'A' && a <= 'Z') {
+    if (a <= 'Z') {
       return (char)(a + ('a' - 'A'));
     }
 

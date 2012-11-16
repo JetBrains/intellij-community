@@ -17,6 +17,7 @@
 package org.jetbrains.idea.maven.dom.annotator;
 
 import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
@@ -105,7 +106,7 @@ public class MavenDomGutterAnnotator implements Annotator {
     final Set<MavenDomDependency> children = getDependencyUsages(dependency);
     if (children.size() > 0) {
       final NavigationGutterIconBuilder<MavenDomDependency> iconBuilder =
-        NavigationGutterIconBuilder.create(icons.MavenIcons.OverridenDependency, CONVERTER);
+        NavigationGutterIconBuilder.create(AllIcons.General.OverridenMethod, CONVERTER);
       iconBuilder.
         setTargets(children).
         setPopupTitle(MavenDomBundle.message("navigate.parent.dependency.title")).
@@ -123,7 +124,7 @@ public class MavenDomGutterAnnotator implements Annotator {
     if (children.size() > 0) {
 
       final NavigationGutterIconBuilder<MavenDomDependency> iconBuilder =
-        NavigationGutterIconBuilder.create(icons.MavenIcons.OverridingDependency, CONVERTER);
+        NavigationGutterIconBuilder.create(AllIcons.General.OverridingMethod, CONVERTER);
       iconBuilder.
         setTargets(children).
         setTooltipText(MavenDomBundle.message("overriden.dependency.title")).

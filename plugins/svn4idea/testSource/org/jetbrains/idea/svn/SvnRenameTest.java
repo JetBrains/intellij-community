@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
@@ -42,6 +43,10 @@ import java.util.List;
 public class SvnRenameTest extends Svn17TestCase {
   @NonNls private static final String LOG_SEPARATOR = "------------------------------------------------------------------------\n";
   @NonNls private static final String LOG_SEPARATOR_START = "-------------";
+
+  public SvnRenameTest() {
+    myInitChangeListManager = false;
+  }
 
   @Test
   public void testSimpleRename() throws Exception {
@@ -100,14 +105,19 @@ public class SvnRenameTest extends Svn17TestCase {
 
     refreshVfs();   // wait for end of refresh operations initiated from SvnFileSystemListener
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    changeListManager.ensureUpToDate(false);
-    List<Change> changes = new ArrayList<Change>(changeListManager.getDefaultChangeList().getChanges());
-    Assert.assertEquals(4, changes.size());
-    sortChanges(changes);
-    verifyChange(changes.get(0), "child", "childnew");
-    verifyChange(changes.get(1), "child" + File.separatorChar + "a.txt", "childnew" + File.separatorChar + "a.txt");
-    verifyChange(changes.get(2), "child" + File.separatorChar + "grandChild", "childnew" + File.separatorChar + "grandChild");
-    verifyChange(changes.get(3), "child" + File.separatorChar + "grandChild" + File.separatorChar + "b.txt", "childnew" + File.separatorChar + "grandChild" + File.separatorChar + "b.txt");
+    insideInitializedChangeListManager(changeListManager, new Runnable() {
+      @Override
+      public void run() {
+        changeListManager.ensureUpToDate(false);
+        List<Change> changes = new ArrayList<Change>(changeListManager.getDefaultChangeList().getChanges());
+        Assert.assertEquals(4, changes.size());
+        sortChanges(changes);
+        verifyChange(changes.get(0), "child", "childnew");
+        verifyChange(changes.get(1), "child" + File.separatorChar + "a.txt", "childnew" + File.separatorChar + "a.txt");
+        verifyChange(changes.get(2), "child" + File.separatorChar + "grandChild", "childnew" + File.separatorChar + "grandChild");
+        verifyChange(changes.get(3), "child" + File.separatorChar + "grandChild" + File.separatorChar + "b.txt", "childnew" + File.separatorChar + "grandChild" + File.separatorChar + "b.txt");
+      }
+    });
 
     // there is no such directory any more
     /*VirtualFile oldChild = myWorkingCopyDir.findChild("child");
@@ -116,6 +126,16 @@ public class SvnRenameTest extends Svn17TestCase {
       oldChild = myWorkingCopyDir.findChild("child");
     }
     Assert.assertEquals(FileStatus.DELETED, changeListManager.getStatus(oldChild));*/
+  }
+
+  private void insideInitializedChangeListManager(final ChangeListManager changeListManager, final Runnable runnable) {
+    ((ChangeListManagerImpl) changeListManager).projectOpened();
+    try {
+      runnable.run();
+    } finally {
+      ((ChangeListManagerImpl) changeListManager).projectClosed();
+      ((ChangeListManagerImpl) changeListManager).stopEveryThingIfInTestMode();
+    }
   }
 
   private VirtualFile prepareDirectoriesForRename() throws IOException {
@@ -150,6 +170,7 @@ public class SvnRenameTest extends Svn17TestCase {
     Assert.assertTrue(lines.get(1).startsWith("r1 |"));
   }
 
+  // todo - undo; undo after commit
   // IDEADEV-9755
   @Test
   public void testRollbackRenameDir() throws Exception {
@@ -157,18 +178,24 @@ public class SvnRenameTest extends Svn17TestCase {
     renameFileInCommand(child, "newchild");
 
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    changeListManager.ensureUpToDate(false);
-    final Change change = changeListManager.getChange(myWorkingCopyDir.findChild("newchild"));
-    Assert.assertNotNull(change);
+    insideInitializedChangeListManager(changeListManager, new Runnable() {
+      @Override
+      public void run() {
+        changeListManager.ensureUpToDate(false);
+        final Change change = changeListManager.getChange(myWorkingCopyDir.findChild("newchild"));
+        Assert.assertNotNull(change);
 
-    final List<VcsException> exceptions = new ArrayList<VcsException>();
-    SvnVcs.getInstance(myProject).getRollbackEnvironment().rollbackChanges(Collections.singletonList(change), exceptions,
-                                                                           RollbackProgressListener.EMPTY);
-    Assert.assertTrue(exceptions.isEmpty());
-    Assert.assertFalse(new File(myWorkingCopyDir.getPath(), "newchild").exists());
-    Assert.assertTrue(new File(myWorkingCopyDir.getPath(), "child").exists());
+        final List<VcsException> exceptions = new ArrayList<VcsException>();
+        SvnVcs.getInstance(myProject).getRollbackEnvironment().rollbackChanges(Collections.singletonList(change), exceptions,
+                                                                               RollbackProgressListener.EMPTY);
+        Assert.assertTrue(exceptions.isEmpty());
+        Assert.assertFalse(new File(myWorkingCopyDir.getPath(), "newchild").exists());
+        Assert.assertTrue(new File(myWorkingCopyDir.getPath(), "child").exists());
+      }
+    });
   }
 
+  // todo undo; undo after commit
   // IDEADEV-7697
   @Test
   public void testMovePackageToParent() throws Exception {
@@ -178,15 +205,20 @@ public class SvnRenameTest extends Svn17TestCase {
     createFileInCommand(grandChild, "a.txt", "a");
     checkin();
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-
-    moveFileInCommand(grandChild, myWorkingCopyDir);
-    refreshVfs();   // wait for end of refresh operations initiated from SvnFileSystemListener
-    changeListManager.ensureUpToDate(false);
-    final List<Change> changes = new ArrayList<Change>(changeListManager.getDefaultChangeList().getChanges());
-    Assert.assertEquals(listToString(changes), 2, changes.size());
-    sortChanges(changes);
-    verifyChange(changes.get(0), "child" + File.separatorChar + "grandChild", "grandChild");
-    verifyChange(changes.get(1), "child" + File.separatorChar + "grandChild" + File.separatorChar + "a.txt", "grandChild" + File.separatorChar + "a.txt");
+    insideInitializedChangeListManager(changeListManager, new Runnable() {
+      @Override
+      public void run() {
+        moveFileInCommand(grandChild, myWorkingCopyDir);
+        refreshVfs();   // wait for end of refresh operations initiated from SvnFileSystemListener
+        changeListManager.ensureUpToDate(false);
+        final List<Change> changes = new ArrayList<Change>(changeListManager.getDefaultChangeList().getChanges());
+        Assert.assertEquals(listToString(changes), 2, changes.size());
+        sortChanges(changes);
+        verifyChange(changes.get(0), "child" + File.separatorChar + "grandChild", "grandChild");
+        verifyChange(changes.get(1), "child" + File.separatorChar + "grandChild" + File.separatorChar + "a.txt",
+                     "grandChild" + File.separatorChar + "a.txt");
+      }
+    });
   }
 
   private String listToString(final List<Change> changes) {
@@ -206,38 +238,43 @@ public class SvnRenameTest extends Svn17TestCase {
     createFileInCommand(unversionedDir, "c.txt", "c");
     
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    changeListManager.ensureUpToDate(false);
-    Assert.assertEquals(FileStatus.UNKNOWN, changeListManager.getStatus(unversioned));
+    insideInitializedChangeListManager(changeListManager, new Runnable() {
+      @Override
+      public void run() {
+        changeListManager.ensureUpToDate(false);
+        Assert.assertEquals(FileStatus.UNKNOWN, changeListManager.getStatus(unversioned));
 
-    renameFileInCommand(child, "newchild");
-    File childPath = new File(myWorkingCopyDir.getPath(), "child");
-    File newChildPath = new File(myWorkingCopyDir.getPath(), "newchild");
-    Assert.assertTrue(new File(newChildPath, "a.txt").exists());
-    Assert.assertTrue(new File(newChildPath, "u.txt").exists());
-    Assert.assertFalse(new File(childPath, "u.txt").exists());
+        renameFileInCommand(child, "newchild");
+        File childPath = new File(myWorkingCopyDir.getPath(), "child");
+        File newChildPath = new File(myWorkingCopyDir.getPath(), "newchild");
+        Assert.assertTrue(new File(newChildPath, "a.txt").exists());
+        Assert.assertTrue(new File(newChildPath, "u.txt").exists());
+        Assert.assertFalse(new File(childPath, "u.txt").exists());
 
-    refreshVfs();
-    changeListManager.ensureUpToDate(false);
-    final List<Change> changes = new ArrayList<Change>();
-    changes.add(ChangeListManager.getInstance(myProject).getChange(myWorkingCopyDir.findChild("newchild").findChild("a.txt")));
-    changes.add(ChangeListManager.getInstance(myProject).getChange(myWorkingCopyDir.findChild("newchild")));
+        refreshVfs();
+        changeListManager.ensureUpToDate(false);
+        final List<Change> changes = new ArrayList<Change>();
+        changes.add(ChangeListManager.getInstance(myProject).getChange(myWorkingCopyDir.findChild("newchild").findChild("a.txt")));
+        changes.add(ChangeListManager.getInstance(myProject).getChange(myWorkingCopyDir.findChild("newchild")));
 
-    final List<VcsException> exceptions = new ArrayList<VcsException>();
-    SvnVcs.getInstance(myProject).getRollbackEnvironment().rollbackChanges(changes, exceptions, RollbackProgressListener.EMPTY);
-    try {
-      Thread.sleep(300);
-    }
-    catch (InterruptedException e) {
-      //
-    }
-    Assert.assertTrue(exceptions.isEmpty());
-    final File fileA = new File(childPath, "a.txt");
-    Assert.assertTrue(fileA.getAbsolutePath(), fileA.exists());
-    final File fileU = new File(childPath, "u.txt");
-    Assert.assertTrue(fileU.getAbsolutePath(), fileU.exists());
-    final File unversionedDirFile = new File(childPath, "uc");
-    Assert.assertTrue(unversionedDirFile.exists());
-    Assert.assertTrue(new File(unversionedDirFile, "c.txt").exists());
+        final List<VcsException> exceptions = new ArrayList<VcsException>();
+        SvnVcs.getInstance(myProject).getRollbackEnvironment().rollbackChanges(changes, exceptions, RollbackProgressListener.EMPTY);
+        try {
+          Thread.sleep(300);
+        }
+        catch (InterruptedException e) {
+          //
+        }
+        Assert.assertTrue(exceptions.isEmpty());
+        final File fileA = new File(childPath, "a.txt");
+        Assert.assertTrue(fileA.getAbsolutePath(), fileA.exists());
+        final File fileU = new File(childPath, "u.txt");
+        Assert.assertTrue(fileU.getAbsolutePath(), fileU.exists());
+        final File unversionedDirFile = new File(childPath, "uc");
+        Assert.assertTrue(unversionedDirFile.exists());
+        Assert.assertTrue(new File(unversionedDirFile, "c.txt").exists());
+      }
+    });
   }
 
   // IDEA-13824
@@ -252,11 +289,16 @@ public class SvnRenameTest extends Svn17TestCase {
                  "D child", "D child" + File.separatorChar + "a.txt", "D child" + File.separatorChar + "grandChild", "D child" + File.separatorChar + "grandChild" + File.separatorChar + "b.txt", "D + newchild" + File.separatorChar + "a.txt");
 
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    refreshVfs();   // wait for end of refresh operations initiated from SvnFileSystemListener
-    changeListManager.ensureUpToDate(false);
-    final List<Change> changes = new ArrayList<Change>(changeListManager.getDefaultChangeList().getChanges());
-    final List<VcsException> list = SvnVcs.getInstance(myProject).getCheckinEnvironment().commit(changes, "test");
-    Assert.assertEquals(0, list.size());
+    insideInitializedChangeListManager(changeListManager, new Runnable() {
+      @Override
+      public void run() {
+        refreshVfs();   // wait for end of refresh operations initiated from SvnFileSystemListener
+        changeListManager.ensureUpToDate(false);
+        final List<Change> changes = new ArrayList<Change>(changeListManager.getDefaultChangeList().getChanges());
+        final List<VcsException> list = SvnVcs.getInstance(myProject).getCheckinEnvironment().commit(changes, "test");
+        Assert.assertEquals(0, list.size());
+      }
+    });
   }
 
   // IDEADEV-19364
@@ -289,8 +331,19 @@ public class SvnRenameTest extends Svn17TestCase {
     Assert.assertFalse(new File(myWorkingCopyDir.getPath(), "b.txt").exists());
   }
 
+  @Test
+  public void testUndoCommittedRenameFile() throws Exception {
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
+    checkin();
+
+    renameFileInCommand(file, "b.txt");
+    checkin();
+    undo();
+    verifySorted(runSvn("status"), "A + a.txt", "D b.txt");
+  }
+
   // IDEADEV-19336
-  /*@Bombed(user = "Ira", month = 6, day = 15)
   @Test
   public void testUndoMoveCommittedPackage() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
@@ -305,9 +358,83 @@ public class SvnRenameTest extends Svn17TestCase {
     checkin();
 
     undo();
-    verifySorted(runSvn("status"), "A + parent1" + File.separatorChar + "child", "D parent2" + File.separatorChar + "child", "D parent2" + File.separatorChar + "child" + File.separatorChar + "a.txt");
-  }*/
+    verifySorted(runSvn("status"), "A + parent1" + File.separatorChar + "child",
+                 "D parent2" + File.separatorChar + "child",
+                 "D parent2" + File.separatorChar + "child" + File.separatorChar + "a.txt");
+  }
 
+  @Test
+  public void testMoveToUnversioned() throws Exception {
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
+    final VirtualFile child = moveToNewPackage(file, "child");
+    verifySorted(runSvn("status"), "A child", "A child" + File.separatorChar + "a.txt");
+    checkin();
+    disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    final VirtualFile unversioned = createDirInCommand(myWorkingCopyDir, "unversioned");
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    verifySorted(runSvn("status"), "? unversioned");
+
+    moveFileInCommand(child, unversioned);
+    verifySorted(runSvn("status"), "? unversioned", "D child", "D child" + File.separator + "a.txt");
+  }
+
+  @Test
+  public void testUndoMoveToUnversioned() throws Exception {
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
+    final VirtualFile child = moveToNewPackage(file, "child");
+    verifySorted(runSvn("status"), "A child", "A child" + File.separatorChar + "a.txt");
+    checkin();
+    disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    final VirtualFile unversioned = createDirInCommand(myWorkingCopyDir, "unversioned");
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    verifySorted(runSvn("status"), "? unversioned");
+
+    moveFileInCommand(child, unversioned);
+    verifySorted(runSvn("status"), "? unversioned", "D child", "D child" + File.separator + "a.txt");
+
+    undo();
+    verifySorted(runSvn("status"), "? unversioned");
+  }
+
+  @Test
+  public void testUndoMoveToUnversionedCommitted() throws Exception {
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
+    final VirtualFile child = moveToNewPackage(file, "child");
+    verifySorted(runSvn("status"), "A child", "A child" + File.separatorChar + "a.txt");
+    checkin();
+    disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    final VirtualFile unversioned = createDirInCommand(myWorkingCopyDir, "unversioned");
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    verifySorted(runSvn("status"), "? unversioned");
+
+    moveFileInCommand(child, unversioned);
+    verifySorted(runSvn("status"), "? unversioned", "D child", "D child" + File.separator + "a.txt");
+    checkin();
+
+    undo();
+    verifySorted(runSvn("status"), "? child", "? unversioned");
+  }
+
+  // IDEA-92941
+  @Test
+  public void testUndoNewMove() throws Exception {
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    final VirtualFile sink = createDirInCommand(myWorkingCopyDir, "sink");
+    final VirtualFile child = createDirInCommand(myWorkingCopyDir, "child");
+    verifySorted(runSvn("status"), "A child", "A sink");
+    checkin();
+    final VirtualFile file = createFileInCommand(child, "a.txt", "A");
+    verifySorted(runSvn("status"), "A child" + File.separatorChar + "a.txt");
+    moveFileInCommand(file, sink);
+    verifySorted(runSvn("status"), "A sink" + File.separatorChar + "a.txt");
+    undo();
+    verifySorted(runSvn("status"), "A child" + File.separatorChar + "a.txt");
+  }
+
+  // todo undo, undo committed?
   @Test
   public void testMoveToNewPackage() throws Throwable {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
@@ -325,13 +452,14 @@ public class SvnRenameTest extends Svn17TestCase {
     verifySorted(runSvn("status"), "A child", "A + child" + File.separatorChar + "a.txt", "D a.txt");
   }
 
-  private void moveToNewPackage(final VirtualFile file, final String packageName) throws Throwable {
+  private VirtualFile moveToNewPackage(final VirtualFile file, final String packageName) throws Exception {
+    final VirtualFile[] dir = new VirtualFile[1];
     new WriteCommandAction.Simple(myProject) {
       @Override
       public void run() {
         try {
-          final VirtualFile dir = myWorkingCopyDir.createChildDirectory(this, packageName);
-          file.move(this, dir);
+          dir[0] = myWorkingCopyDir.createChildDirectory(this, packageName);
+          file.move(this, dir[0]);
         }
         catch (IOException e) {
           throw new RuntimeException(e);
@@ -339,5 +467,6 @@ public class SvnRenameTest extends Svn17TestCase {
 
       }
     }.execute().throwException();
+    return dir[0];
   }
 }

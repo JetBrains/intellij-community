@@ -110,6 +110,7 @@ public class RemoveInvalidElementsDialog extends DialogWrapper {
     return items;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myMainPanel;
   }

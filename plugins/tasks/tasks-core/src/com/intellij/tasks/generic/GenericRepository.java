@@ -99,7 +99,11 @@ public class GenericRepository extends BaseRepositoryImpl {
       tasks.add(new GenericTask(id, summary, this));
     }
 
-    tasks = TaskSearchSupport.filterTasks(query != null ? query : "", tasks);
+    final boolean searchSupported = getTasksListURL().contains(QUERY_PLACEHOLDER);
+    if (!searchSupported) {
+      tasks = TaskSearchSupport.filterTasks(query != null ? query : "", tasks);
+    }
+
     tasks = tasks.subList(0, Math.min(max, tasks.size()));
 
     return tasks.toArray(new Task[tasks.size()]);

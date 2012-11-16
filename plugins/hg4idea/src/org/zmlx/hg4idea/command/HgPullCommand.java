@@ -84,7 +84,7 @@ public class HgPullCommand {
       new HgCommandResultNotifier(project).process(result, null, null);
       return false;
     } else {
-      project.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(project);
+      project.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(project, null);
       return true;
     }
   }

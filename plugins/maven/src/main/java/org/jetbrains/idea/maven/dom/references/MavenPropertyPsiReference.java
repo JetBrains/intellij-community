@@ -60,6 +60,7 @@ import java.util.Set;
 public class MavenPropertyPsiReference extends MavenPsiReference {
   public static final String TIMESTAMP_PROP = "maven.build.timestamp";
 
+  @Nullable
   protected final MavenDomProjectModel myProjectDom;
   protected final MavenProject myMavenProject;
   private final boolean mySoft;
@@ -179,24 +180,27 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
       if (result != null) return result;
     }
 
-    PsiElement result = MavenDomProjectProcessorUtils.searchProperty(myText, myProjectDom, myProject);
-    if (result != null) return result;
+    if (myProjectDom != null) {
+      PsiElement result = MavenDomProjectProcessorUtils.searchProperty(myText, myProjectDom, myProject);
+      if (result != null) return result;
+    }
 
-    IProperty property = MavenDomUtil.findProperty(myProject, MavenPropertiesVirtualFileSystem.SYSTEM_PROPERTIES_FILE, myText);
+    MavenPropertiesVirtualFileSystem mavenPropertiesVirtualFileSystem = MavenPropertiesVirtualFileSystem.getInstance();
+
+    IProperty property = mavenPropertiesVirtualFileSystem.findSystemProperty(myProject, myText);
     if (property != null) return property.getPsiElement();
 
     if (myText.startsWith("env.")) {
-      property = MavenDomUtil.findProperty(myProject, MavenPropertiesVirtualFileSystem.ENV_PROPERTIES_FILE,
-                                           myText.substring("env.".length()));
+      property = mavenPropertiesVirtualFileSystem.findEnvProperty(myProject, myText.substring("env.".length()));
       if (property != null) return property.getPsiElement();
     }
 
     String textWithEnv = "env." + myText;
 
-    property = MavenDomUtil.findProperty(myProject, MavenPropertiesVirtualFileSystem.SYSTEM_PROPERTIES_FILE, textWithEnv);
+    property = mavenPropertiesVirtualFileSystem.findSystemProperty(myProject, textWithEnv);
     if (property != null) return property.getPsiElement();
 
-    property = MavenDomUtil.findProperty(myProject, MavenPropertiesVirtualFileSystem.ENV_PROPERTIES_FILE, textWithEnv);
+    property = mavenPropertiesVirtualFileSystem.findEnvProperty(myProject, textWithEnv);
     if (property != null) return property.getPsiElement();
 
     if (!hasPrefix) {
@@ -379,13 +383,16 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
   }
 
   private void collectPropertiesVariants(final List<Object> result) {
-    for (XmlTag xmlTag : MavenDomProjectProcessorUtils.collectProperties(myProjectDom, myProject)) {
-      result.add(createLookupElement(xmlTag, xmlTag.getName(), PlatformIcons.PROPERTY_ICON));
+    if (myProjectDom != null) {
+      for (XmlTag xmlTag : MavenDomProjectProcessorUtils.collectProperties(myProjectDom, myProject)) {
+        result.add(createLookupElement(xmlTag, xmlTag.getName(), PlatformIcons.PROPERTY_ICON));
+      }
     }
   }
 
   private void collectSystemEnvProperties(String propertiesFileName, @Nullable String prefix, List<Object> result) {
-    PropertiesFile file = MavenDomUtil.getPropertiesFile(myProject, propertiesFileName);
+    VirtualFile virtualFile = MavenPropertiesVirtualFileSystem.getInstance().findFileByPath(propertiesFileName);
+    PropertiesFile file = MavenDomUtil.getPropertiesFile(myProject, virtualFile);
     collectPropertiesFileVariants(file, prefix, result);
   }
 

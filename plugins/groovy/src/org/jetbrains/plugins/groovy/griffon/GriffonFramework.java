@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.griffon;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -36,9 +37,11 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.IgnoredBeanFactory;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.ArrayUtil;
 import gnu.trove.TIntArrayList;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
@@ -91,6 +94,18 @@ public class GriffonFramework extends MvcFramework {
 
   @Override
   public void upgradeFramework(@NotNull Module module) {
+  }
+
+  @Nullable
+  @Override
+  protected GeneralCommandLine getCreationCommandLine(Module module) {
+    GriffonCreateProjectDialog dialog = new GriffonCreateProjectDialog(module);
+    dialog.show();
+    if (!dialog.isOK()) {
+      return null;
+    }
+
+    return createCommandAndShowErrors(null, module, true, dialog.getCommand(), dialog.getArguments());
   }
 
   @Override
@@ -269,7 +284,7 @@ public class GriffonFramework extends MvcFramework {
         throw new ExecutionException("Failed to initialize griffon module: module " + module.getName() + " contains more than one root");
       }
 
-      args = new String[]{roots[0].getName()};
+      args = ArrayUtil.mergeArrays(new String[]{roots[0].getName()}, args);
       rootFile = roots[0].getParent();
     }
     else {
@@ -279,7 +294,7 @@ public class GriffonFramework extends MvcFramework {
       }
     }
 
-    String workDir = VfsUtil.virtualToIoFile(rootFile).getAbsolutePath();
+    String workDir = VfsUtilCore.virtualToIoFile(rootFile).getAbsolutePath();
 
     if (jvmParams != null) {
       params.getVMParametersList().addParametersString(jvmParams);
@@ -423,11 +438,20 @@ public class GriffonFramework extends MvcFramework {
 
       for (VirtualFile file : ModuleRootManager.getInstance(myModule).getContentRoots()) {
         handleSrc(file.findChild("src"), sourceFolders);
-        handleGriffonApp(file.findChild("griffon-app"), sourceFolders);
+        VirtualFile griffonApp = file.findChild("griffon-app");
+        handleGriffonApp(griffonApp, sourceFolders);
         List<GriffonSourceInspector.GriffonSource> sources =
           GriffonSourceInspector.processModuleMetadata(myModule);
         for (GriffonSourceInspector.GriffonSource source : sources) {
           sourceFolders.add(source.getPath());
+        }
+        if (griffonApp != null) {
+          for (VirtualFile child : file.getChildren()) {
+            if (child.getNameWithoutExtension().endsWith("GriffonAddon")) {
+              sourceFolders.add("");
+              break;
+            }
+          }
         }
       }
       return sourceFolders.toArray(new String[sourceFolders.size()]);

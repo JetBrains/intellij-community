@@ -77,7 +77,7 @@ public class DiffToolbarImpl implements DiffToolbar {
     updateToolbar();
   }
 
-  public void reset(DiffRequest.ToolbarAddons toolBar) {
+  public void reset(@NotNull DiffRequest.ToolbarAddons toolBar) {
     myActionGroup.removeAll();
     toolBar.customize(this);
   }

@@ -1,22 +1,26 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.hash.HashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
+import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase;
+import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
+import org.jetbrains.jps.incremental.messages.DoneSomethingNotification;
+import org.jetbrains.jps.incremental.messages.FileDeletedEvent;
 import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
-import org.jetbrains.jps.incremental.messages.UptoDateFilesSavedEvent;
+import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetConfiguration;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -54,14 +58,7 @@ public class BuildOperations {
       configuration.save();
     }
     else if (pd.fsState.markInitialScanPerformed(target)) {
-      if (target instanceof ModuleBasedTarget) {
-        initTargetFSState(context, target, false);
-      }
-      else {
-        // todo: check why other non-associated with module targets have to initialize deleted outputs by themselves
-        // instead of getting this functionality out-of the box
-        FSOperations.markDirtyFiles(context, target, timestamps, false, null);
-      }
+      initTargetFSState(context, target, false);
     }
   }
 
@@ -89,7 +86,7 @@ public class BuildOperations {
   void buildTarget(final T target, final CompileContext context, TargetBuilder<?, ?> builder) throws ProjectBuildException, IOException {
 
     if (builder.getTargetTypes().contains(target.getTargetType())) {
-      DirtyFilesHolder<R, T> holder = new DirtyFilesHolder<R, T>() {
+      DirtyFilesHolder<R, T> holder = new DirtyFilesHolderBase<R, T>(context) {
         @Override
         public void processDirtyFiles(@NotNull FileProcessor<R, T> processor) throws IOException {
           context.getProjectDescriptor().fsState.processFilesToRecompile(context, target, processor);
@@ -107,7 +104,7 @@ public class BuildOperations {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     final BuildFSState fsState = pd.fsState;
     if (!Utils.errorsDetected(context) && !context.getCancelStatus().isCanceled()) {
-      boolean marked = false;
+      boolean marked = dropRemovedPaths(context, chunk);
       for (BuildTarget<?> target : chunk.getTargets()) {
         if (context.isMake() && target instanceof ModuleBuildTarget) {
           // ensure non-incremental flag cleared
@@ -123,8 +120,90 @@ public class BuildOperations {
       }
 
       if (marked) {
-        context.processMessage(UptoDateFilesSavedEvent.INSTANCE);
+        context.processMessage(DoneSomethingNotification.INSTANCE);
       }
+    }
+  }
+
+  private static boolean dropRemovedPaths(CompileContext context, BuildTargetChunk chunk) throws IOException {
+    final Map<BuildTarget<?>, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
+    boolean dropped = false;
+    if (map != null) {
+      for (BuildTarget<?> target : chunk.getTargets()) {
+        final Collection<String> paths = map.remove(target);
+        if (paths != null) {
+          final SourceToOutputMapping storage = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
+          for (String path : paths) {
+            storage.remove(path);
+            dropped = true;
+          }
+        }
+      }
+    }
+    return dropped;
+  }
+
+  public static <R extends BuildRootDescriptor, T extends BuildTarget<R>>
+  Map<T, Set<File>> cleanOutputsCorrespondingToChangedFiles(final CompileContext context, DirtyFilesHolder<R, T> dirtyFilesHolder) throws ProjectBuildException {
+    final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
+    try {
+      final Map<T, Set<File>> cleanedSources = new java.util.HashMap<T, Set<File>>();
+
+      ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
+      final Collection<String> outputsToLog = logger.isEnabled() ? new LinkedList<String>() : null;
+      final THashSet<File> dirsToDelete = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+
+      dirtyFilesHolder.processDirtyFiles(new FileProcessor<R, T>() {
+        private final Map<T, SourceToOutputMapping> mappingsCache = new java.util.HashMap<T, SourceToOutputMapping>(); // cache the mapping locally
+
+        @Override
+        public boolean apply(T target, File file, R sourceRoot) throws IOException {
+          SourceToOutputMapping srcToOut = mappingsCache.get(target);
+          if (srcToOut == null) {
+            srcToOut = dataManager.getSourceToOutputMap(target);
+            mappingsCache.put(target, srcToOut);
+          }
+          final String srcPath = file.getPath();
+          final Collection<String> outputs = srcToOut.getOutputs(srcPath);
+          if (outputs != null) {
+            final boolean shouldPruneOutputDirs = target instanceof ModuleBasedTarget;
+            for (String output : outputs) {
+              if (outputsToLog != null) {
+                outputsToLog.add(output);
+              }
+              final File outFile = new File(output);
+              final boolean deleted = outFile.delete();
+              if (deleted && shouldPruneOutputDirs) {
+                final File parent = outFile.getParentFile();
+                if (parent != null) {
+                  dirsToDelete.add(parent);
+                }
+              }
+            }
+            if (!outputs.isEmpty()) {
+              context.processMessage(new FileDeletedEvent(outputs));
+            }
+            Set<File> cleaned = cleanedSources.get(target);
+            if (cleaned == null) {
+              cleaned = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+              cleanedSources.put(target, cleaned);
+            }
+            cleaned.add(file);
+          }
+          return true;
+        }
+      });
+
+      if (outputsToLog != null && context.isMake()) {
+        logger.logDeletedFiles(outputsToLog);
+      }
+      // attempting to delete potentially empty directories
+      FSOperations.pruneEmptyDirs(context, dirsToDelete);
+
+      return cleanedSources;
+    }
+    catch (Exception e) {
+      throw new ProjectBuildException(e);
     }
   }
 
@@ -147,9 +226,10 @@ public class BuildOperations {
       final File outputFile = new File(outputFilePath);
       for (File outputRoot : myOutputs) {
         if (FileUtil.isAncestor(outputRoot, outputFile, false)) {
-          final String relativePath = FileUtil.getRelativePath(outputRoot, outputFile);
+          String outputRootPath = FileUtil.toSystemIndependentName(outputRoot.getPath());
+          final String relativePath = FileUtil.getRelativePath(outputRootPath, FileUtil.toSystemIndependentName(outputFilePath), '/');
           if (relativePath != null) {
-            myFileGeneratedEvent.add(FileUtil.toSystemIndependentName(outputRoot.getPath()), FileUtil.toSystemIndependentName(relativePath));
+            myFileGeneratedEvent.add(outputRootPath, relativePath);
           }
           break;
         }
@@ -168,6 +248,31 @@ public class BuildOperations {
     public void fireFileGeneratedEvent() {
       if (!myFileGeneratedEvent.getPaths().isEmpty()) {
         myContext.processMessage(myFileGeneratedEvent);
+      }
+    }
+  }
+
+  public static class ChunkBuildOutputConsumerImpl implements ChunkBuildOutputConsumer {
+    private final CompileContext myContext;
+    private Map<BuildTarget<?>, BuildOutputConsumerImpl> myTarget2Consumer = new HashMap<BuildTarget<?>, BuildOutputConsumerImpl>();
+
+    public ChunkBuildOutputConsumerImpl(CompileContext context) {
+      myContext = context;
+    }
+
+    @Override
+    public void registerOutputFile(BuildTarget<?> target, String outputFilePath, Collection<String> sourceFiles) throws IOException {
+      BuildOutputConsumerImpl consumer = myTarget2Consumer.get(target);
+      if (consumer == null) {
+        consumer = new BuildOutputConsumerImpl(target, myContext);
+        myTarget2Consumer.put(target, consumer);
+      }
+      consumer.registerOutputFile(outputFilePath, sourceFiles);
+    }
+
+    public void fireFileGeneratedEvents() {
+      for (BuildOutputConsumerImpl consumer : myTarget2Consumer.values()) {
+        consumer.fireFileGeneratedEvent();
       }
     }
   }

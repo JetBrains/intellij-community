@@ -37,11 +37,11 @@ import java.awt.*;
 import java.awt.event.MouseListener;
 
 public class HintUtil {
-  public static final Color INFORMATION_COLOR = new Color(253, 254, 226);
-  public static final Color QUESTION_COLOR = new Color(181, 208, 251);
-  public static final Color ERROR_COLOR = new Color(255, 220, 220);
+  public static final Color INFORMATION_COLOR = UIUtil.isUnderDarcula() ?  new Color(0x575C5D) : new Color(253, 254, 226);
+  public static final Color QUESTION_COLOR = UIUtil.isUnderDarcula() ? new Color(55, 108, 137) : new Color(181, 208, 251);
+  public static final Color ERROR_COLOR = UIUtil.isUnderDarcula() ? new Color(0x781732) : new Color(255, 220, 220);
 
-  public static final Color QUESTION_UNDERSCORE_COLOR = Color.black;
+  public static final Color QUESTION_UNDERSCORE_COLOR = UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : Color.black;
 
   private HintUtil() {
   }
@@ -63,7 +63,7 @@ public class HintUtil {
 
     if (!hintHint.isAwtTooltip()) {
       label.setBorder(createHintBorder());
-      label.setForeground(Color.black);
+      label.setForeground(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : Color.black);
       label.setFont(getBoldFont());
       label.setBackground(INFORMATION_COLOR);
       label.setOpaque(true);
@@ -94,7 +94,10 @@ public class HintUtil {
 
   @NotNull
   public static HintHint getInformationHint() {
-    return new HintHint().setTextBg(INFORMATION_COLOR).setTextFg(Color.black).setFont(getBoldFont()).setAwtTooltip(true);
+    return new HintHint().setTextBg(INFORMATION_COLOR)
+      .setTextFg(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : Color.black)
+      .setFont(getBoldFont())
+      .setAwtTooltip(true);
   }
 
   public static CompoundBorder createHintBorder() {
@@ -109,7 +112,10 @@ public class HintUtil {
   }
 
   public static JComponent createQuestionLabel(String text) {
-    HintHint hintHint = new HintHint().setTextBg(QUESTION_COLOR).setTextFg(Color.black).setFont(getBoldFont()).setAwtTooltip(true);
+    HintHint hintHint = new HintHint().setTextBg(QUESTION_COLOR)
+      .setTextFg(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : Color.black)
+      .setFont(getBoldFont())
+      .setAwtTooltip(true);
 
     HintLabel label = new HintLabel();
     label.setText(text, hintHint);
@@ -117,7 +123,7 @@ public class HintUtil {
 
     if (!hintHint.isAwtTooltip()) {
       label.setBorder(createHintBorder());
-      label.setForeground(Color.black);
+      label.setForeground(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : Color.black);
       label.setFont(getBoldFont());
       label.setBackground(QUESTION_COLOR);
       label.setOpaque(true);
@@ -130,7 +136,7 @@ public class HintUtil {
 
     highlighted.setIcon(icon);
     highlighted.setBackground(INFORMATION_COLOR);
-    highlighted.setForeground(Color.black);
+    highlighted.setForeground(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : Color.black);
     highlighted.setFont(getBoldFont());
     text.appendToComponent(highlighted);
 
@@ -141,7 +147,10 @@ public class HintUtil {
   }
 
   public static JComponent createErrorLabel(String text) {
-    HintHint hintHint = new HintHint().setTextBg(ERROR_COLOR).setTextFg(Color.black).setFont(getBoldFont()).setAwtTooltip(true);
+    HintHint hintHint = new HintHint().setTextBg(ERROR_COLOR)
+      .setTextFg(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : Color.black)
+      .setFont(getBoldFont())
+      .setAwtTooltip(true);
     HintLabel label = new HintLabel();
     label.setText(text, hintHint);
     label.setIcon(null);
@@ -149,7 +158,7 @@ public class HintUtil {
     if (!hintHint.isAwtTooltip()) {
       label.setBorder(createHintBorder()
       );
-      label.setForeground(Color.black);
+      label.setForeground(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : Color.black);
       label.setFont(getBoldFont());
       label.setBackground(ERROR_COLOR);
       label.setOpaque(true);

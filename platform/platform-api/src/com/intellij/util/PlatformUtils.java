@@ -71,7 +71,7 @@ public class PlatformUtils {
     return FLEX_PREFIX.equals(getPlatformPrefix());
   }
 
-  public static boolean isJavaIDE() {
+  public static boolean isIntelliJ() {
     return isIdea() || isCommunity();
   }
 }

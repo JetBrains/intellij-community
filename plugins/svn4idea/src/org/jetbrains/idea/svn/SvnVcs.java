@@ -25,6 +25,7 @@ import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -48,6 +49,7 @@ import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Processor;
@@ -60,6 +62,7 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.actions.CleanupWorker;
 import org.jetbrains.idea.svn.actions.ShowPropertiesDiffWithLocalAction;
 import org.jetbrains.idea.svn.actions.SvnMergeProvider;
 import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
@@ -94,7 +97,6 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLogAdapter;
 import org.tmatesoft.svn.util.SVNLogType;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
@@ -141,6 +143,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private final WorkingCopiesContent myWorkingCopiesContent;
 
   @NonNls public static final String LOG_PARAMETER_NAME = "javasvn.log";
+  @NonNls public static final String TRACE_NATIVE_CALLS = "javasvn.log.native";
   public static final String pathToEntries = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.ENTRIES_FILE_NAME;
   public static final String pathToDirProps = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.DIR_PROPS_FILE_NAME;
   private final SvnChangelistListener myChangeListListener;
@@ -185,8 +188,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   static {
-    //noinspection UseOfArchaicSystemPropertyAccessors
-    final JavaSVNDebugLogger logger = new JavaSVNDebugLogger(Boolean.getBoolean(LOG_PARAMETER_NAME), LOG);
+    System.setProperty("svnkit.log.native.calls", "true");
+    final JavaSVNDebugLogger logger = new JavaSVNDebugLogger(Boolean.getBoolean(LOG_PARAMETER_NAME), Boolean.getBoolean(TRACE_NATIVE_CALLS), LOG);
     SVNDebugLog.setDefaultLog(logger);
 
     SVNJNAUtil.setJNAEnabled(true);
@@ -279,14 +282,13 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     if (myProject.isDefault()) return;
     myCopiesRefreshManager = new SvnCopiesRefreshManager(myProject, (SvnFileUrlMappingImpl) getSvnFileUrlMapping());
     if (! myConfiguration.isCleanupRun()) {
-      SwingUtilities.invokeLater(new Runnable() {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          if (cleanup17copies()) {
-            myConfiguration.setCleanupRun(true);
-          }
+          cleanup17copies();
+          myConfiguration.setCleanupRun(true);
         }
-      });
+      }, ModalityState.NON_MODAL, myProject.getDisposed());
     } else {
       invokeRefreshSvnRoots(true);
     }
@@ -294,33 +296,27 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     myWorkingCopiesContent.activate();
   }
 
-  private boolean cleanup17copies() {
-    final boolean[] result = new boolean[1];
-    result[0] = true;
-    final Runnable runnable = new Runnable() {
-      public void run() {
+  private void cleanup17copies() {
+    new CleanupWorker(new VirtualFile[]{}, myProject, "action.Subversion.cleanup.progress.title") {
+      @Override
+      protected void chanceToFillRoots() {
         myCopiesRefreshManager.getCopiesRefresh().synchRequest();
         final List<WCInfo> infos = getAllWcInfos();
+        final LocalFileSystem lfs = LocalFileSystem.getInstance();
+        final List<VirtualFile> roots = new ArrayList<VirtualFile>(infos.size());
         for (WCInfo info : infos) {
           if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(info.getFormat())) {
-            try {
-              createWCClient().doCleanup(new File(info.getPath()));
+            final VirtualFile file = lfs.refreshAndFindFileByIoFile(new File(info.getPath()));
+            if (file == null) {
+              LOG.info("Wasn't able to find virtual file for wc root: " + info.getPath());
+            } else {
+              roots.add(file);
             }
-            catch (SVNException e) {
-              LOG.info(e);
-              result[0] = false;          }
           }
         }
+        myRoots = roots.toArray(new VirtualFile[roots.size()]);
       }
-    };
-
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable,
-        "Cleanup working copies", true, myProject);
-    } else {
-      runnable.run();
-    }
-    return result[0];
+    }.execute();
   }
 
   public void invokeRefreshSvnRoots(final boolean asynchronous) {
@@ -938,89 +934,48 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     }
   }
 
-  public static class SVNStatusHolder {
-
-    private final SVNStatus myValue;
-    private final long myEntriesTimestamp;
-    private final long myFileTimestamp;
-    private final boolean myIsLocked;
-
-    public SVNStatusHolder(long entriesStamp, long fileStamp, SVNStatus value) {
-      myValue = value;
-      myEntriesTimestamp = entriesStamp;
-      myFileTimestamp = fileStamp;
-      myIsLocked = value != null && value.isLocked();
-    }
-
-    public long getEntriesTimestamp() {
-      return myEntriesTimestamp;
-    }
-
-    public long getFileTimestamp() {
-      return myFileTimestamp;
-    }
-
-    public boolean isLocked() {
-      return myIsLocked;
-    }
-
-    public SVNStatus getStatus() {
-      return myValue;
-    }
-  }
-
-  public static class SVNInfoHolder {
-
-    private final SVNInfo myValue;
-    private final long myEntriesTimestamp;
-    private final long myFileTimestamp;
-
-    public SVNInfoHolder(long entriesStamp, long fileStamp, SVNInfo value) {
-      myValue = value;
-      myEntriesTimestamp = entriesStamp;
-      myFileTimestamp = fileStamp;
-    }
-
-    public long getEntriesTimestamp() {
-      return myEntriesTimestamp;
-    }
-
-    public long getFileTimestamp() {
-      return myFileTimestamp;
-    }
-
-    public SVNInfo getInfo() {
-      return myValue;
-    }
-  }
-
   private static class JavaSVNDebugLogger extends SVNDebugLogAdapter {
     private final boolean myLoggingEnabled;
+    private final boolean myLogNative;
     private final Logger myLog;
-    @NonNls public static final String TRACE_LOG_PARAMETER_NAME = "javasvn.log.trace";
 
-    public JavaSVNDebugLogger(boolean loggingEnabled, Logger log) {
+    public JavaSVNDebugLogger(boolean loggingEnabled, boolean logNative, Logger log) {
       myLoggingEnabled = loggingEnabled;
+      myLogNative = logNative;
       myLog = log;
+    }
+
+    private boolean shouldLog(final SVNLogType logType) {
+      return myLoggingEnabled || myLogNative && SVNLogType.NATIVE_CALL.equals(logType);
     }
 
     @Override
     public void log(final SVNLogType logType, final Throwable th, final Level logLevel) {
-      if (myLoggingEnabled) {
+      if (shouldLog(logType)) {
         myLog.info(th);
       }
     }
 
     @Override
     public void log(final SVNLogType logType, final String message, final Level logLevel) {
-      if (myLoggingEnabled) {
+      if (SVNLogType.NATIVE_CALL.equals(logType)) {
+        logNative(message);
+      }
+      if (shouldLog(logType)) {
         myLog.info(message);
       }
     }
 
+    private static void logNative(String message) {
+      if (message == null) return;
+      final NativeLogReader.CallInfo callInfo = SvnNativeLogParser.parse(message);
+      if (callInfo == null) return;
+      NativeLogReader.putInfo(callInfo);
+    }
+
     @Override
     public void log(final SVNLogType logType, final String message, final byte[] data) {
-      if (myLoggingEnabled) {
+      if (shouldLog(logType)) {
         if (data != null) {
           try {
             myLog.info(message + "\n" + new String(data, "UTF-8"));

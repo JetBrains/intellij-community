@@ -27,6 +27,8 @@ public interface ExpressionContext {
   @NonNls Key<String> SELECTION = Key.create("SELECTION");
 
   Project getProject();
+
+  @Nullable
   Editor getEditor();
   int getStartOffset();
   int getTemplateStartOffset();

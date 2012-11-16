@@ -36,11 +36,9 @@ public class FormattingTest {
   char   ccc3         = 'a'
   double ddd31, ddd32 = 1
 
-  private
-  final     String s4 = ""
-  private
-  transient int    i4 = 1
-  def              o4
+  private final     String s4 = ""
+  private transient int    i4 = 1
+  def                      o4
 
   private final                      String s5    = "xxx"
   private transient                  int    iiii5 = 1

@@ -350,20 +350,19 @@ public class GitRebaseDialog extends DialogWrapper {
       GitBranch trackedBranch = null;
       if (currentBranch != null) {
         String remote = GitConfigUtil.getValue(myProject, root, "branch." + currentBranch + ".remote");
-        String merge = GitConfigUtil.getValue(myProject, root, "branch." + currentBranch + ".merge");
-        String name =
-          (merge != null && merge.startsWith(GitBranch.REFS_HEADS_PREFIX)) ? merge.substring(GitBranch.REFS_HEADS_PREFIX.length()) : null;
-        if (remote == null || merge == null || name == null) {
+        String mergeBranch = GitConfigUtil.getValue(myProject, root, "branch." + currentBranch + ".merge");
+        if (remote == null || mergeBranch == null) {
           trackedBranch = null;
         }
         else {
+          mergeBranch = GitBranchUtil.stripRefsPrefix(mergeBranch);
           if (remote.equals(".")) {
-            trackedBranch = new GitSvnRemoteBranch(name, GitBranch.DUMMY_HASH);
+            trackedBranch = new GitSvnRemoteBranch(mergeBranch, GitBranch.DUMMY_HASH);
           }
           else {
             GitRemote r = GitBranchUtil.findRemoteByNameOrLogError(myProject, root, remote);
             if (r != null) {
-              trackedBranch = new GitStandardRemoteBranch(r, name, GitBranch.DUMMY_HASH);
+              trackedBranch = new GitStandardRemoteBranch(r, mergeBranch, GitBranch.DUMMY_HASH);
             }
           }
         }

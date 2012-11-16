@@ -24,6 +24,7 @@ import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -50,6 +51,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
   private static final ExtensionPointName<ModuleBuilderFactory> EP_NAME = ExtensionPointName.create("com.intellij.moduleBuilder");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.ModuleBuilder");
+  protected Sdk myJdk;
   private String myName;
   @NonNls private String myModuleFilePath;
   private String myContentEntryPath;
@@ -294,6 +296,14 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     myName = from.getName();
     myContentEntryPath = from.getContentEntryPath();
     myModuleFilePath = from.getModuleFilePath();
+  }
+
+  public void setModuleJdk(Sdk jdk) {
+    myJdk = jdk;
+  }
+
+  public Sdk getModuleJdk() {
+    return myJdk;
   }
 
   public static abstract class ModuleConfigurationUpdater {

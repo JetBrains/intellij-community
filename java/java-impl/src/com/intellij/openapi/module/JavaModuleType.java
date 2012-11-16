@@ -17,13 +17,11 @@ package com.intellij.openapi.module;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.projectWizard.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.CommonClassNames;
@@ -83,17 +81,6 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
                                               final ModulesProvider modulesProvider) {
     final ProjectWizardStepFactory wizardFactory = ProjectWizardStepFactory.getInstance();
     ArrayList<ModuleWizardStep> steps = new ArrayList<ModuleWizardStep>();
-    if (!wizardContext.isTemplateMode()) {
-      steps.add(wizardFactory.createSourcePathsStep(wizardContext, moduleBuilder, getWizardIcon(), "reference.dialogs.new.project.fromScratch.source"));
-      steps.add(wizardFactory.createProjectJdkStep(wizardContext, JavaSdk.getInstance(), moduleBuilder, new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          //final Sdk projectJdk = wizardFactory.getNewProjectSdk(wizardContext);
-          //return projectJdk == null || projectJdk.getSdkType() != JavaSdk.getInstance() ? Boolean.TRUE : Boolean.FALSE;
-          return Boolean.TRUE;
-        }
-      }, getWizardIcon(), "reference.dialogs.new.project.fromScratch.sdk"));
-    }
     final ModuleWizardStep supportForFrameworksStep = wizardFactory.createSupportForFrameworksStep(wizardContext, moduleBuilder, modulesProvider);
     if (supportForFrameworksStep != null) {
       steps.add(supportForFrameworksStep);
@@ -105,15 +92,6 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   @Nullable
   @Override
   public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep, final ModuleBuilder moduleBuilder) {
-    Project project = settingsStep.getContext().getProject();
-    if (project != null) {
-      Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
-      if (sdk != null && moduleBuilder.isSuitableSdkType(sdk.getSdkType())) {
-        // use default project SDK
-//        context.setProjectJdk(sdk);
-        return null;
-      }
-    }
     return ProjectWizardStepFactory.getInstance().createJavaSettingsStep(settingsStep, moduleBuilder, new Condition<SdkTypeId>() {
       @Override
       public boolean value(SdkTypeId sdkType) {

@@ -125,8 +125,10 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
   @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(GroovyInspectionBundle.message("highlight.if.groovy.object.methods.overridden"), "myHighlightIfGroovyObjectOverridden");
-    optionsPanel.addCheckbox(GroovyInspectionBundle.message("highlight.if.missing.methods.declared"), "myHighlightIfMissingMethodsDeclared");
+    optionsPanel
+      .addCheckbox(GroovyInspectionBundle.message("highlight.if.groovy.object.methods.overridden"), "myHighlightIfGroovyObjectOverridden");
+    optionsPanel
+      .addCheckbox(GroovyInspectionBundle.message("highlight.if.missing.methods.declared"), "myHighlightIfMissingMethodsDeclared");
     return optionsPanel;
   }
 
@@ -194,23 +196,25 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     PsiElement refNameElement = ref.getReferenceNameElement();
     if (refNameElement == null) return null;
 
-    if (!isInspectionEnabled(ref.getContainingFile(), ref.getProject())) return null;
-    GrUnresolvedAccessInspection inspection = getInstance(ref.getContainingFile(), ref.getProject());
-
     boolean cannotBeDynamic = PsiUtil.isCompileStatic(ref) || isPropertyAccessInStaticMethod(ref);
     GroovyResolveResult resolveResult = getBestResolveResult(ref);
 
     if (resolveResult.getElement() != null) {
-      if (isStaticOk(resolveResult))  return null;
+      if (!isInspectionEnabled(ref.getContainingFile(), ref.getProject())) return null;
+
+      if (isStaticOk(resolveResult)) return null;
       String message = GroovyBundle.message("cannot.reference.nonstatic", ref.getReferenceName());
       return createAnnotationForRef(ref, cannotBeDynamic, message);
     }
 
-    if (ResolveUtil.isKeyOfMap(ref)) {
+    if (ResolveUtil.isKeyOfMap(ref) || isClassReference(ref)) {
       return null;
     }
 
     if (!cannotBeDynamic) {
+      if (!isInspectionEnabled(ref.getContainingFile(), ref.getProject())) return null;
+      GrUnresolvedAccessInspection inspection = getInstance(ref.getContainingFile(), ref.getProject());
+
       if (!inspection.myHighlightIfGroovyObjectOverridden && areGroovyObjectMethodsOverridden(ref)) return null;
       if (!inspection.myHighlightIfMissingMethodsDeclared && areMissingMethodsDeclared(ref)) return null;
 
@@ -237,6 +241,14 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     }
 
     return null;
+  }
+
+  public static boolean isClassReference(GrReferenceExpression ref) {
+    GrExpression qualifier = ref.getQualifier();
+    return "class".equals(ref.getReferenceName()) &&
+           qualifier instanceof GrReferenceExpression &&
+           ((GrReferenceExpression)qualifier).resolve() instanceof PsiClass &&
+           !PsiUtil.isThisReference(qualifier);
   }
 
   private static boolean areMissingMethodsDeclared(GrReferenceExpression ref) {
@@ -377,7 +389,9 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     return HighlightInfo.createHighlightInfo(highlightInfoType, refNameElement, message);
   }
 
-  private static void registerStaticImportFix(@NotNull GrReferenceExpression referenceExpression, @Nullable HighlightInfo info, @Nullable final HighlightDisplayKey key) {
+  private static void registerStaticImportFix(@NotNull GrReferenceExpression referenceExpression,
+                                              @Nullable HighlightInfo info,
+                                              @Nullable final HighlightDisplayKey key) {
     final String referenceName = referenceExpression.getReferenceName();
     if (StringUtil.isEmpty(referenceName)) return;
     if (referenceExpression.getQualifier() != null) return;
@@ -447,7 +461,9 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     QuickFixAction.registerQuickFixAction(info, new GroovyAddImportAction(refElement), key);
   }
 
-  private static void registerCreateClassByTypeFix(GrReferenceElement refElement, @Nullable HighlightInfo info, final HighlightDisplayKey key) {
+  private static void registerCreateClassByTypeFix(GrReferenceElement refElement,
+                                                   @Nullable HighlightInfo info,
+                                                   final HighlightDisplayKey key) {
     GrPackageDefinition packageDefinition = PsiTreeUtil.getParentOfType(refElement, GrPackageDefinition.class);
     if (packageDefinition != null) return;
 
@@ -469,7 +485,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
       }
       else {
         QuickFixAction.registerQuickFixAction(info, CreateClassFix.createClassFixAction(refElement, CreateClassKind.CLASS), key);
-        QuickFixAction.registerQuickFixAction(info, CreateClassFix.createClassFixAction(refElement, CreateClassKind.INTERFACE),key);
+        QuickFixAction.registerQuickFixAction(info, CreateClassFix.createClassFixAction(refElement, CreateClassKind.INTERFACE), key);
         QuickFixAction.registerQuickFixAction(info, CreateClassFix.createClassFixAction(refElement, CreateClassKind.ENUM), key);
         QuickFixAction.registerQuickFixAction(info, CreateClassFix.createClassFixAction(refElement, CreateClassKind.ANNOTATION), key);
       }

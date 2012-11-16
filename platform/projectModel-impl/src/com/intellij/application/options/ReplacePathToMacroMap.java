@@ -69,6 +69,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     }
   }
 
+  @Override
   public String substitute(String text, boolean caseSensitive) {
     if (text == null) {
       //noinspection ConstantConditions
@@ -82,7 +83,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
   }
 
   private String replacePathMacro(String text, final String path, boolean caseSensitive) {
-    if (text.length() < path.length() || path.length() == 0) {
+    if (text.length() < path.length() || path.isEmpty()) {
       return text;
     }
 
@@ -125,7 +126,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
       return text;
     }
 
-    if (path.length() == 0) return text;
+    if (path.isEmpty()) return text;
 
     final StringBuilder newText = StringBuilderSpinAllocator.alloc();
     try {
@@ -202,6 +203,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
       }
 
       ContainerUtil.sort(entries, new Comparator<Map.Entry<String, String>>() {
+        @Override
         public int compare(final Map.Entry<String, String> o1, final Map.Entry<String, String> o2) {
           return weights.get(o2) - weights.get(o1);
         }

@@ -134,6 +134,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     for (int i = 0; i < candidates.length; i++) {
       CandidateInfo candidate = (CandidateInfo)candidates[i];
       PsiMethod method = (PsiMethod)candidate.getElement();
+      if (!method.isValid()) continue;
       PsiSubstitutor substitutor = getCandidateInfoSubstitutor(candidate);
       assert substitutor != null;
 
@@ -331,10 +332,10 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     }
   }
 
-  public static void updateMethodPresentation(PsiMethod method, PsiSubstitutor substitutor, ParameterInfoUIContext context) {
+  public static void updateMethodPresentation(PsiMethod method, @Nullable PsiSubstitutor substitutor, ParameterInfoUIContext context) {
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
 
-    if (!method.isValid()) {
+    if (!method.isValid() || substitutor != null && !substitutor.isValid()) {
       context.setUIComponentEnabled(false);
       return;
     }
@@ -345,7 +346,6 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       if (!method.isConstructor()) {
         PsiType returnType = method.getReturnType();
         if (substitutor != null) {
-          assert substitutor.isValid();
           returnType = substitutor.substitute(returnType);
         }
 

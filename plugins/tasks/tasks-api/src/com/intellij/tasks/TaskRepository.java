@@ -15,16 +15,23 @@
  */
 package com.intellij.tasks;
 
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.Callable;
 
 /**
+ * This class describes bug-tracking server.
+ * Do not forget to mark your implementation with {@link Tag} annotation to make it persistent.
+ *
+ * @see TaskRepositoryType
+ * @see com.intellij.tasks.impl.BaseRepository
  * @author Dmitry Avdeev
  */
 @Tag("server")
@@ -75,8 +82,6 @@ public abstract class TaskRepository  {
   /**
    * Get issues from the repository. If query is null, return issues should assigned to current user only.
    *
-   *
-   *
    * @param query repository specific.
    * @param max maximum issues number to return
    * @param since last updated timestamp. If 0, all issues should be returned.
@@ -84,6 +89,10 @@ public abstract class TaskRepository  {
    * @throws Exception
    */
   public abstract Task[] getIssues(@Nullable String query, int max, long since) throws Exception;
+
+  public Task[] getIssues(@Nullable String query, int max, long since, @NotNull ProgressIndicator cancelled) throws Exception {
+    return getIssues(query, max, since);
+  }
 
   @Nullable
   public abstract Task findTask(String id) throws Exception;

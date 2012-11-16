@@ -8,4 +8,10 @@
     <description>&lt;code&gt;Math.random()&lt;/code&gt; cast to 'int' is always rounded down to '0' #loc</description>
   </problem>
 
+  <problem>
+    <file>MathRandomCastToInt.java</file>
+    <line>7</line>
+    <description>&lt;code&gt;Math.random()&lt;/code&gt; cast to 'int' is always rounded down to '0' #loc</description>
+  </problem>
+
 </problems>

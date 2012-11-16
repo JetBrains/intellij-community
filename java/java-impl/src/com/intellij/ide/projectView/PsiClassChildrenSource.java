@@ -25,22 +25,26 @@ public interface PsiClassChildrenSource {
   void addChildren(PsiClass psiClass, List<PsiElement> children);
 
   PsiClassChildrenSource NONE = new PsiClassChildrenSource() {
+    @Override
     public void addChildren(PsiClass psiClass, List<PsiElement> children) { }
   };
 
   PsiClassChildrenSource METHODS = new PsiClassChildrenSource() {
+    @Override
     public void addChildren(PsiClass psiClass, List<PsiElement> children) {
       ContainerUtil.addAll(children, psiClass.getMethods());
     }
   };
 
   PsiClassChildrenSource FIELDS = new PsiClassChildrenSource() {
+    @Override
     public void addChildren(PsiClass psiClass, List<PsiElement> children) {
       ContainerUtil.addAll(children, psiClass.getFields());
     }
   };
 
   PsiClassChildrenSource CLASSES = new PsiClassChildrenSource() {
+    @Override
     public void addChildren(PsiClass psiClass, List<PsiElement> children) {
       ContainerUtil.addAll(children, psiClass.getInnerClasses());
     }

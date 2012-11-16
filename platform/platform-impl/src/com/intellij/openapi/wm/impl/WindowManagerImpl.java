@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.Patches;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.GeneralSettings;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
@@ -40,9 +39,8 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManagerListener;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.ui.ScreenUtil;
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.UIUtil;
@@ -67,9 +65,9 @@ import java.util.Set;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-
 public final class WindowManagerImpl extends WindowManagerEx implements ApplicationComponent, NamedJDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.WindowManagerImpl");
+
   private static boolean ourAlphaModeLibraryLoaded;
   @NonNls private static final String FOCUSED_WINDOW_PROPERTY_NAME = "focusedWindow";
   @NonNls private static final String X_ATTR = "x";
@@ -222,28 +220,18 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     }
   }
 
-  public void showFrame(final String[] args) {
-    IdeEventQueue.getInstance().setWindowManager(this);
-    final IdeFrameImpl frame = new IdeFrameImpl(myApplicationInfoEx, myActionManager, myUiSettings, myDataManager,
-                                                ApplicationManager.getApplication(), args);
-    myProject2Frame.put(null, frame);
-
-    if (myFrameBounds == null
-        || !ScreenUtil.isVisible(myFrameBounds)) { //avoid situations when IdeFrame is out of all screens
-      Rectangle rect = ScreenUtil.getScreenRectangle(0, 0);
-      int yParts = rect.height / 6;
-      int xParts = rect.width / 5;
-      myFrameBounds = new Rectangle(xParts, yParts, xParts * 3, yParts * 4);
-    }
-
-    frame.setBounds(myFrameBounds);
-    frame.setVisible(true);
-    frame.setExtendedState(myFrameExtendedState);
-  }
-
-  public IdeFrameImpl[] getAllFrames() {
+  @NotNull
+  public IdeFrameImpl[] getAllProjectFrames() {
     final Collection<IdeFrameImpl> ideFrames = myProject2Frame.values();
     return ideFrames.toArray(new IdeFrameImpl[ideFrames.size()]);
+  }
+
+  @Override
+  public JFrame findVisibleFrame() {
+    IdeFrameImpl[] frames = getAllProjectFrames();
+
+    if (frames.length > 0) return frames[0];
+    return WelcomeFrame.getInstance();
   }
 
   @Override
@@ -558,7 +546,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     }
     else {
       frame = new IdeFrameImpl((ApplicationInfoEx)ApplicationInfo.getInstance(), ActionManagerEx.getInstanceEx(), UISettings.getInstance(),
-                               DataManager.getInstance(), ApplicationManager.getApplication(), ArrayUtil.EMPTY_STRING_ARRAY);
+                               DataManager.getInstance(), ApplicationManager.getApplication());
       final Rectangle bounds = ProjectFrameBounds.getInstance(project).getBounds();
       if (bounds != null) {
         frame.setBounds(bounds);
@@ -612,13 +600,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     frame.setFileTitle(null, null);
 
     myProject2Frame.remove(project);
-    if (myProject2Frame.isEmpty()) {
-      myProject2Frame.put(null, frame);
-    }
-    else {
-      Disposer.dispose(frame.getStatusBar());
-      frame.dispose();
-    }
+    Disposer.dispose(frame.getStatusBar());
+    frame.dispose();
   }
 
   public final void disposeRootFrame() {

@@ -1,11 +1,8 @@
 package org.jetbrains.ether;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
+ * @author: db
  * Date: 09.08.11
- * Time: 13:30
- * To change this template use File | Settings | File Templates.
  */
 public class ClassPropertyTest extends IncrementalTestCase {
   public ClassPropertyTest() throws Exception {
@@ -25,6 +22,14 @@ public class ClassPropertyTest extends IncrementalTestCase {
   }
 
   public void testRemoveExtends() throws Exception {
+    doTest();
+  }
+
+  public void testRemoveExtendsAffectsFieldAccess() throws Exception {
+    doTest();
+  }
+
+  public void testRemoveExtendsAffectsMethodAccess() throws Exception {
     doTest();
   }
 

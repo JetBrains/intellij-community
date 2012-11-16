@@ -57,49 +57,59 @@ public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implem
     }
   }
 
+  @Override
   public OrderEntry cloneEntry(RootModelImpl rootModel,
                                ProjectRootManagerImpl projectRootManager,
                                VirtualFilePointerManager filePointerManager) {
     return new InheritedJdkOrderEntryImpl(rootModel, projectRootManager);
   }
 
+  @Override
   public boolean isSynthetic() {
     return false;
   }
 
+  @Override
   public boolean isValid() {
     return !isDisposed() && getJdk() != null;
   }
 
+  @Override
   public <R> R accept(RootPolicy<R> policy, R initialValue) {
     return policy.visitInheritedJdkOrderEntry(this, initialValue);
   }
 
+  @Override
   public void writeExternal(Element rootElement) throws WriteExternalException {
     final Element orderEntryElement = OrderEntryFactory.createOrderEntryElement(ENTRY_TYPE);
     rootElement.addContent(orderEntryElement);
   }
 
+  @Override
   public Sdk getJdk() {
     final Project project = getRootModel().getModule().getProject();
     return getRootModel().getConfigurationAccessor().getProjectSdk(project);
   }
 
+  @Override
   public String getJdkName() {
     final Project project = getRootModel().getModule().getProject();
     return getRootModel().getConfigurationAccessor().getProjectSdkName(project);
   }
 
+  @Override
   protected RootProvider getRootProvider() {
     final Sdk projectJdk = myProjectRootManagerImpl.getProjectSdk();
     return projectJdk == null ? null : projectJdk.getRootProvider();
   }
 
+  @Override
   @NotNull
   public String getPresentableName() {
     return "< " + getJdkName() + " >";
   }
 
+  @Override
   public void dispose() {
     super.dispose();
     myProjectRootManagerImpl.removeJdkTableListener(myJdkTableListener);
@@ -108,18 +118,21 @@ public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implem
 
 
   private class MyJdkTableListener implements ProjectJdkTable.Listener {
+    @Override
     public void jdkRemoved(Sdk jdk) {
       if (jdk.equals(getJdk())) {
         updateFromRootProviderAndSubscribe();
       }
     }
 
+    @Override
     public void jdkAdded(Sdk jdk) {
       if (isAffectedByJdk(jdk)) {
         updateFromRootProviderAndSubscribe();
       }
     }
 
+    @Override
     public void jdkNameChanged(Sdk jdk, String previousName) {
       if (isAffectedByJdk(jdk)) {
         // if current name matches my name
@@ -133,6 +146,7 @@ public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implem
   }
 
   private class MyProjectJdkListener implements ProjectRootManagerEx.ProjectJdkListener {
+    @Override
     public void projectJdkChanged() {
       updateFromRootProviderAndSubscribe();
     }

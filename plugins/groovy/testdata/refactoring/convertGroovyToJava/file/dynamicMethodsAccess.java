@@ -1,4 +1,4 @@
-public class Abc extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
+public class Abc {
 public java.lang.Object foo() {
 invokeMethod("bar", new java.lang.Object[]{2});
 java.util.LinkedHashMap<java.lang.String, java.lang.Integer> map = new java.util.LinkedHashMap<java.lang.String, java.lang.Integer>(1);

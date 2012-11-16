@@ -25,7 +25,10 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.CommittedChangesProvider;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
@@ -50,6 +53,10 @@ import org.zmlx.hg4idea.provider.commit.HgCheckinEnvironment;
 import org.zmlx.hg4idea.provider.commit.HgCommitAndPushExecutor;
 import org.zmlx.hg4idea.provider.update.HgIntegrateEnvironment;
 import org.zmlx.hg4idea.provider.update.HgUpdateEnvironment;
+import org.zmlx.hg4idea.status.HgRemoteStatusUpdater;
+import org.zmlx.hg4idea.status.ui.HgCurrentBranchStatusUpdater;
+import org.zmlx.hg4idea.status.ui.HgHideableWidget;
+import org.zmlx.hg4idea.status.ui.HgIncomingOutgoingWidget;
 import org.zmlx.hg4idea.status.ui.HgStatusWidget;
 import org.zmlx.hg4idea.util.HgUtil;
 
@@ -62,6 +69,8 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   public static final Topic<HgUpdater> BRANCH_TOPIC = new Topic<HgUpdater>("hg4idea.branch", HgUpdater.class);
   public static final Topic<HgUpdater> REMOTE_TOPIC = new Topic<HgUpdater>("hg4idea.remote", HgUpdater.class);
   public static final Topic<HgUpdater> STATUS_TOPIC = new Topic<HgUpdater>("hg4idea.status", HgUpdater.class);
+  public static final Topic<HgHideableWidget> INCOMING_OUTGOING_CHECK_TOPIC =
+    new Topic<HgHideableWidget>("hg4idea.incomingcheck", HgHideableWidget.class);
   private static final Logger LOG = Logger.getInstance(HgVcs.class);
 
   public static final String VCS_NAME = "hg4idea";
@@ -82,8 +91,8 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private final HgIntegrateEnvironment integrateEnvironment;
   private final HgCachingCommitedChangesProvider commitedChangesProvider;
   private MessageBusConnection messageBusConnection;
-  private final HgGlobalSettings globalSettings;
-  private final HgProjectSettings projectSettings;
+  @NotNull private final HgGlobalSettings globalSettings;
+  @NotNull private final HgProjectSettings projectSettings;
   private final ProjectLevelVcsManager myVcsManager;
 
   private HgVFSListener myVFSListener;
@@ -93,9 +102,16 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private File myPromptHooksExtensionFile;
   private CommitExecutor myCommitAndPushExecutor;
 
+  private HgRemoteStatusUpdater myHgRemoteStatusUpdater;
+  private HgCurrentBranchStatusUpdater myHgCurrentBranchStatusUpdater;
   private HgStatusWidget myStatusWidget;
+  private HgIncomingOutgoingWidget myIncomingWidget;
+  private HgIncomingOutgoingWidget myOutgoingWidget;
 
-  public HgVcs(Project project, HgGlobalSettings globalSettings, HgProjectSettings projectSettings, ProjectLevelVcsManager vcsManager) {
+  public HgVcs(Project project,
+               @NotNull HgGlobalSettings globalSettings,
+               @NotNull HgProjectSettings projectSettings,
+               ProjectLevelVcsManager vcsManager) {
     super(project, VCS_NAME);
     this.globalSettings = globalSettings;
     this.projectSettings = projectSettings;
@@ -118,9 +134,10 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   public Configurable getConfigurable() {
-    return new HgProjectConfigurable(projectSettings);
+    return new HgProjectConfigurable(getProject(), projectSettings);
   }
 
+  @NotNull
   public HgProjectSettings getProjectSettings() {
     return projectSettings;
   }
@@ -254,13 +271,27 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     myStatusWidget = new HgStatusWidget(this, getProject(), projectSettings);
     myStatusWidget.activate();
 
+    myIncomingWidget = new HgIncomingOutgoingWidget(this, getProject(), projectSettings, true);
+    myIncomingWidget.activate();
+
+    myOutgoingWidget = new HgIncomingOutgoingWidget(this, getProject(), projectSettings, false);
+    myOutgoingWidget.activate();
+
     // updaters and listeners
+    myHgRemoteStatusUpdater =
+      new HgRemoteStatusUpdater(this, myIncomingWidget.getChangesetStatus(), myOutgoingWidget.getChangesetStatus(),
+                                projectSettings);
+    myHgRemoteStatusUpdater.activate();
+
+    myHgCurrentBranchStatusUpdater = new HgCurrentBranchStatusUpdater(this, myStatusWidget.getCurrentBranchStatus());
+    myHgCurrentBranchStatusUpdater.activate();
+
     messageBusConnection = myProject.getMessageBus().connect();
     messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
       public void selectionChanged(FileEditorManagerEvent event) {
         Project project = event.getManager().getProject();
-        project.getMessageBus().syncPublisher(BRANCH_TOPIC).update(project);
+        project.getMessageBus().syncPublisher(BRANCH_TOPIC).update(project, null);
       }
     });
 
@@ -278,16 +309,31 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     }
 
     // Force a branch topic update
-    myProject.getMessageBus().syncPublisher(BRANCH_TOPIC).update(myProject);
+    myProject.getMessageBus().syncPublisher(BRANCH_TOPIC).update(myProject, null);
   }
 
   @Override
   public void deactivate() {
+    if (null != myHgRemoteStatusUpdater) {
+      myHgRemoteStatusUpdater.deactivate();
+      myHgRemoteStatusUpdater = null;
+    }
+    if (null != myHgCurrentBranchStatusUpdater) {
+      myHgCurrentBranchStatusUpdater.deactivate();
+      myHgCurrentBranchStatusUpdater = null;
+    }
     if (null != myStatusWidget) {
       myStatusWidget.deactivate();
       myStatusWidget = null;
     }
-
+    if (null != myIncomingWidget) {
+      myIncomingWidget.deactivate();
+      myIncomingWidget = null;
+    }
+    if (null != myOutgoingWidget) {
+      myOutgoingWidget.deactivate();
+      myOutgoingWidget = null;
+    }
     if (messageBusConnection != null) {
       messageBusConnection.disconnect();
     }
@@ -333,6 +379,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     return globalSettings.getHgExecutable();
   }
 
+  @NotNull
   public HgGlobalSettings getGlobalSettings() {
     return globalSettings;
   }
@@ -366,5 +413,4 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   public static VcsKey getKey() {
     return ourKey;
   }
-
 }

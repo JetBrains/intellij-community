@@ -66,7 +66,8 @@ public class DfaUtil {
           }
           else {
             final ValuableInstructionVisitor visitor = new ValuableInstructionVisitor(context);
-            if (new ValuableDataFlowRunner().analyzeMethod(codeBlock, visitor) == RunnerResult.OK) {
+            RunnerResult runnerResult = new ValuableDataFlowRunner().analyzeMethod(codeBlock, visitor);
+            if (runnerResult == RunnerResult.OK) {
               result = visitor.myValues;
             }
             else {

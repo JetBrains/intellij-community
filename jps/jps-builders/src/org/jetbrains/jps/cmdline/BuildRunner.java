@@ -126,6 +126,9 @@ public class BuildRunner {
             //todo[nik]
     //        new ProjectBuilder(new GantBinding(), project).clean();
             break;
+          case UP_TO_DATE_CHECK:
+            builder.checkUpToDate(compileScope);
+            break;
         }
         break; // break attempts loop
       }
@@ -193,7 +196,7 @@ public class BuildRunner {
       files = Collections.emptyMap();
     }
 
-    return new CompileScopeImpl(buildType != BuildType.MAKE, targetTypes, targets, files);
+    return new CompileScopeImpl(!(buildType == BuildType.MAKE || buildType == BuildType.UP_TO_DATE_CHECK), targetTypes, targets, files);
   }
 
   public List<TargetTypeBuildScope> getScopes() {

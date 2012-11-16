@@ -45,11 +45,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.mac.MacMainFrameDecorator;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,27 +78,35 @@ public class NewProjectUtil {
       return;
     }
 
-    doCreate(dialog, projectToClose);
+    createFromWizard(dialog, projectToClose);
   }
 
-  public static Project doCreate(final AddModuleWizard dialog, @Nullable Project projectToClose) {
+  public static Project createFromWizard(AddModuleWizard dialog, Project projectToClose) {
+    try {
+      return doCreate(dialog, projectToClose);
+    }
+    catch (final IOException e) {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          Messages.showErrorDialog(e.getMessage(), "Project Initialization Failed");
+        }
+      });
+      return null;
+    }
+  }
+
+  private static Project doCreate(final AddModuleWizard dialog, @Nullable Project projectToClose) throws IOException {
     final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     final String projectFilePath = dialog.getNewProjectFilePath();
     final ProjectBuilder projectBuilder = dialog.getProjectBuilder();
 
     try {
+      File projectDir = new File(projectFilePath).getParentFile();
+      FileUtil.ensureExists(projectDir);
       if (StorageScheme.DIRECTORY_BASED == dialog.getStorageScheme()) {
         final File ideaDir = new File(projectFilePath, Project.DIRECTORY_STORE_FOLDER);
-        if (!ideaDir.exists() && !ideaDir.mkdirs()) {
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              Messages.showErrorDialog("Unable to create '.idea' directory at: " + projectFilePath, "Project Initialization Failed");
-            }
-          });
-
-          return projectToClose;
-        }
+        FileUtil.ensureExists(ideaDir);
       }
 
       final Project newProject;
@@ -139,14 +148,15 @@ public class NewProjectUtil {
                 //file doesn't exist
               }
               canonicalPath = FileUtil.toSystemIndependentName(canonicalPath);
-              CompilerProjectExtension.getInstance(newProject).setCompilerOutputUrl(VfsUtil.pathToUrl(canonicalPath));
+              CompilerProjectExtension.getInstance(newProject).setCompilerOutputUrl(VfsUtilCore.pathToUrl(canonicalPath));
             }
           });
         }
       }, null, null);
 
-      newProject.save();
-
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        newProject.save();
+      }
 
       if (projectBuilder != null && !projectBuilder.validate(projectToClose, newProject)) {
         return projectToClose;
@@ -166,7 +176,7 @@ public class NewProjectUtil {
           // ensure the dialog is shown after all startup activities are done
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-              if (newProject.isDisposed()) return;
+              if (newProject.isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) return;
               if (need2OpenProjectStructure) {
                 ModulesConfigurator.showDialog(newProject, null, null);
               }
@@ -200,7 +210,9 @@ public class NewProjectUtil {
 
         projectManager.openProject(newProject);
       }
-      newProject.save();
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        newProject.save();
+      }
       return newProject;
     }
     finally {

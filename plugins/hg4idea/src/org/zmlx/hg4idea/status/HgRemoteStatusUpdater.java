@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.HgIncomingCommand;
 import org.zmlx.hg4idea.command.HgOutgoingCommand;
@@ -62,6 +63,10 @@ public class HgRemoteStatusUpdater implements HgUpdater {
   }
 
   public void update(final Project project) {
+    update(project, null);
+  }
+
+  public void update(final Project project, @Nullable final VirtualFile root) {
     if (!isCheckingEnabled() || myUpdateStarted.get()) {
       return;
     }
@@ -71,15 +76,14 @@ public class HgRemoteStatusUpdater implements HgUpdater {
         new Task.Backgroundable(project, getProgressTitle(), true) {
           public void run(@NotNull ProgressIndicator indicator) {
             if (project.isDisposed()) return;
-            VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(myVcs);
-            if (myProjectSettings.isCheckIncoming()) {
+            final VirtualFile[] roots =
+              root != null ? new VirtualFile[]{root} : ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(myVcs);
+            if (myProjectSettings.isCheckIncomingOutgoing()) {
               updateChangesetStatus(project, roots, myIncomingStatus, true);
-            }
-            if (myProjectSettings.isCheckOutgoing()) {
               updateChangesetStatus(project, roots, myOutgoingStatus, false);
             }
 
-            project.getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(project);
+            project.getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(project, null);
 
             indicator.stop();
             myUpdateStarted.set(false);
@@ -124,23 +128,11 @@ public class HgRemoteStatusUpdater implements HgUpdater {
   }
 
   private String getProgressTitle() {
-    String type;
-    if (myProjectSettings.isCheckIncoming()) {
-      if (myProjectSettings.isCheckOutgoing()) {
-        type = "incoming and outgoing";
-      }
-      else {
-        type = "incoming";
-      }
-    }
-    else {
-      type = "outgoing";
-    }
-    return "Checking " + type + " changes";
+    return "Checking incoming and outgoing changes";
   }
 
   protected boolean isCheckingEnabled() {
-    return myProjectSettings.isCheckIncoming() || myProjectSettings.isCheckOutgoing();
+    return myProjectSettings.isCheckIncomingOutgoing();
   }
 
   private final class ChangesetFormatter implements HgChangesetStatus.ChangesetWriter {

@@ -72,6 +72,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
+ * @author aalmiray
  * @author peter
  */
 public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase {
@@ -95,6 +96,9 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
         if (useJps()) {
           CompilerTestUtil.enableExternalCompiler(getProject());
           ModuleRootModificationUtil.setModuleSdk(myModule, JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk());
+        }
+        else {
+          CompilerTestUtil.disableExternalCompiler(getProject());
         }
       }
     }.execute();

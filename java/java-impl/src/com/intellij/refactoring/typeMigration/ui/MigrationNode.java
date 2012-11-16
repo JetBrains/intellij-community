@@ -83,7 +83,12 @@ public class MigrationNode extends AbstractTreeNode<TypeMigrationUsageInfo> impl
       if (element != null) {
         myLabeler.setCurrentRoot(myInfo);
 
-        myLabeler.migrateRoot(element, myMigrationType, myLabeler.markRootUsages(element, myMigrationType));
+        try {
+          myLabeler.migrateRoot(element, myMigrationType, myLabeler.markRootUsages(element, myMigrationType));
+        }
+        catch (TypeMigrationLabeler.MigrateException e) {
+          //skip warning
+        }
 
         final HashSet<Pair<TypeMigrationUsageInfo, PsiType>> roots = myLabeler.getRootsTree().get(myInfo);
         if (roots != null) {

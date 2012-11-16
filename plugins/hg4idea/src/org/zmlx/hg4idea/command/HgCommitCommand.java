@@ -69,8 +69,8 @@ public class HgCommitCommand {
 
     ensureSuccess(new HgCommandExecutor(myProject).executeInCurrentThread(myRoot, "commit", parameters));
     final MessageBus messageBus = myProject.getMessageBus();
-    messageBus.syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject);
-    messageBus.syncPublisher(HgVcs.BRANCH_TOPIC).update(myProject);
+    messageBus.syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject, null);
+    messageBus.syncPublisher(HgVcs.BRANCH_TOPIC).update(myProject, null);
   }
 
   private File saveCommitMessage() throws VcsException {

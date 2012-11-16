@@ -83,6 +83,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class ChooseByNameBase {
   protected final Project myProject;
@@ -1461,6 +1462,7 @@ public abstract class ChooseByNameBase {
     private void addElementsByPattern(@NotNull String pattern,
                                       @NotNull final Set<Object> elements,
                                       @NotNull final ProgressIndicator cancelled) {
+      long start = System.currentTimeMillis();
       myProvider.filterElements(
         ChooseByNameBase.this, pattern, myCheckboxState,
         cancelled,
@@ -1478,6 +1480,10 @@ public abstract class ChooseByNameBase {
           }
         }
       );
+      long end = System.currentTimeMillis();
+      if (ContributorsBasedGotoByModel.LOG.isDebugEnabled()) {
+        ContributorsBasedGotoByModel.LOG.debug("addElementsByPattern("+pattern+"): "+(end-start)+"ms; "+elements.size()+" elements");
+      }
     }
 
     private void showCard(final String card, final int delay) {
@@ -1537,6 +1543,10 @@ public abstract class ChooseByNameBase {
     return myMaximumListSizeLimit;
   }
 
+  public void setMaximumListSizeLimit(final int maximumListSizeLimit) {
+    myMaximumListSizeLimit = maximumListSizeLimit;
+  }
+
   private static final String ACTION_NAME = "Show All in View";
 
   private abstract class ShowFindUsagesAction extends AnAction {
@@ -1581,12 +1591,13 @@ public abstract class ChooseByNameBase {
               public void run() {
                 final boolean[] overFlow = {false};
                 myCalcElementsThread = new CalcElementsThread(text, checkboxState, null, ModalityState.NON_MODAL, true) {
+                  private final AtomicBoolean userAskedToAbort = new AtomicBoolean();
                   @Override
                   protected boolean isOverflow(@NotNull Set<Object> elementsArray) {
-                    if (elementsArray.size() > UsageLimitUtil.USAGES_LIMIT - myMaximumListSizeLimit) {
-                      final int ret = UsageLimitUtil.showTooManyUsagesWarning(myProject, UsageViewBundle
+                    if (elementsArray.size() > UsageLimitUtil.USAGES_LIMIT - myMaximumListSizeLimit && !userAskedToAbort.getAndSet(true)) {
+                      final UsageLimitUtil.Result ret = UsageLimitUtil.showTooManyUsagesWarning(myProject, UsageViewBundle
                         .message("find.excessive.usage.count.prompt", elementsArray.size() + myMaximumListSizeLimit));
-                      if (ret != 0) {
+                      if (ret == UsageLimitUtil.Result.ABORT) {
                         overFlow[0] = true;
                         return true;
                       }

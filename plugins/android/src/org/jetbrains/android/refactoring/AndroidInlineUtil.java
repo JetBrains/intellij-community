@@ -13,22 +13,19 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.GenericAttributeValue;
+import org.jetbrains.android.dom.AndroidDomUtil;
 import org.jetbrains.android.dom.converters.AndroidResourceReferenceBase;
 import org.jetbrains.android.dom.layout.Include;
 import org.jetbrains.android.dom.layout.LayoutViewElement;
 import org.jetbrains.android.dom.resources.ResourceValue;
 import org.jetbrains.android.dom.resources.Style;
-import org.jetbrains.android.dom.resources.StyleItem;
 import org.jetbrains.android.dom.wrappers.LazyValueResourceElementWrapper;
 import org.jetbrains.android.util.AndroidBundle;
-import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.util.ErrorReporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,14 +67,14 @@ class AndroidInlineUtil {
 
     if (domElement instanceof LayoutViewElement) {
       final GenericAttributeValue<ResourceValue> styleAttribute = ((LayoutViewElement)domElement).getStyle();
-      final AndroidResourceReferenceBase reference = getAndroidResourceReference(styleAttribute);
+      final AndroidResourceReferenceBase reference = AndroidDomUtil.getAndroidResourceReference(styleAttribute, true);
 
       if (reference != null) {
         return new ViewStyleUsageData(tag, styleAttribute, reference);
       }
     }
     else if (domElement instanceof Style) {
-      final AndroidResourceReferenceBase reference = getAndroidResourceReference(((Style)domElement).getParentStyle());
+      final AndroidResourceReferenceBase reference = AndroidDomUtil.getAndroidResourceReference(((Style)domElement).getParentStyle(), true);
 
       if (reference != null) {
         return new ParentStyleUsageData((Style)domElement, reference);
@@ -93,7 +90,7 @@ class AndroidInlineUtil {
 
     if (domElement instanceof Include) {
       final GenericAttributeValue<ResourceValue> layoutAttribute = ((Include)domElement).getLayout();
-      final AndroidResourceReferenceBase reference = getAndroidResourceReference(layoutAttribute);
+      final AndroidResourceReferenceBase reference = AndroidDomUtil.getAndroidResourceReference(layoutAttribute, true);
 
       if (reference != null) {
         return new LayoutUsageData(project, tag, reference);
@@ -102,74 +99,19 @@ class AndroidInlineUtil {
     return null;
   }
 
-  @Nullable
-  private static AndroidResourceReferenceBase getAndroidResourceReference(@Nullable GenericAttributeValue<ResourceValue> attribute) {
-    if (attribute == null) {
-      return null;
-    }
-
-    final ResourceValue resValue = attribute.getValue();
-    if (resValue == null || resValue.getPackage() != null) {
-      return null;
-    }
-
-    final XmlAttributeValue value = attribute.getXmlAttributeValue();
-    if (value == null) {
-      return null;
-    }
-
-    for (PsiReference reference : value.getReferences()) {
-      if (reference instanceof AndroidResourceReferenceBase) {
-        return (AndroidResourceReferenceBase)reference;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  static Map<AndroidAttributeInfo, String> computeAttributeMap(@NotNull Style style, @NotNull ErrorReporter errorReporter) {
-    final Map<AndroidAttributeInfo, String> attributeValues = new HashMap<AndroidAttributeInfo, String>();
-
-    for (StyleItem item : style.getItems()) {
-      final String attributeName = item.getName().getStringValue();
-      String attributeValue = item.getStringValue();
-
-      if (attributeName == null || attributeName.length() <= 0 || attributeValue == null) {
-        continue;
-      }
-      final int idx = attributeName.indexOf(':');
-      final String localName = idx >= 0 ? attributeName.substring(idx + 1) : attributeName;
-      final String nsPrefix = idx >= 0 ? attributeName.substring(0, idx) : null;
-
-      if (nsPrefix != null) {
-        if (!AndroidUtils.SYSTEM_RESOURCE_PACKAGE.equals(nsPrefix)) {
-          errorReporter.report(RefactoringBundle.getCannotRefactorMessage("Unknown XML attribute prefix '" + nsPrefix + ":'"),
-                               AndroidBundle.message("android.inline.style.title"));
-          return null;
-        }
-      }
-      else {
-        errorReporter.report(
-          RefactoringBundle.getCannotRefactorMessage("The style contains attribute without 'android' prefix."),
-          AndroidBundle.message("android.inline.style.title"));
-        return null;
-      }
-      attributeValues.put(new AndroidAttributeInfo(localName, nsPrefix), attributeValue);
-    }
-    return attributeValues;
-  }
-
   static void doInlineStyleDeclaration(@NotNull Project project,
                                        @NotNull MyStyleData data,
                                        @Nullable final StyleUsageData usageData,
                                        @NotNull ErrorReporter errorReporter,
                                        @Nullable AndroidInlineTestConfig testConfig) {
     final Style style = data.myStyleElement;
-    final Map<AndroidAttributeInfo, String> attributeValues = computeAttributeMap(style, errorReporter);
+    final Map<AndroidAttributeInfo, String> attributeValues = AndroidRefactoringUtil.computeAttributeMap(style, errorReporter,
+                                                                                                         AndroidBundle.message(
+                                                                                                           "android.inline.style.title"));
     if (attributeValues == null) {
       return;
     }
-    final StyleRefData parentStyleRef = getParentStyle(style);
+    final StyleRefData parentStyleRef = AndroidRefactoringUtil.getParentStyle(style);
     boolean inlineThisOnly;
 
     if (testConfig != null) {
@@ -214,31 +156,6 @@ class AndroidInlineUtil {
       processor.setPreviewUsages(false);
       processor.run();
     }
-  }
-
-  @Nullable
-  static StyleRefData getParentStyle(@NotNull Style style) {
-    final ResourceValue parentStyleRefValue = style.getParentStyle().getValue();
-
-    if (parentStyleRefValue != null) {
-      final String parentStyleName = parentStyleRefValue.getResourceName();
-
-      if (parentStyleName != null) {
-        return new StyleRefData(parentStyleName, parentStyleRefValue.getPackage());
-      }
-    }
-    else {
-      final String styleName = style.getName().getStringValue();
-
-      if (styleName != null) {
-        final int idx = styleName.lastIndexOf('.');
-
-        if (idx > 0) {
-          return new StyleRefData(styleName.substring(0, idx), null);
-        }
-      }
-    }
-    return null;
   }
 
   @Nullable

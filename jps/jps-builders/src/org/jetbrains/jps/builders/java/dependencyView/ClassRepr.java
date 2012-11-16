@@ -10,16 +10,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
+ * @author: db
  * Date: 01.02.11
- * Time: 4:54
- * To change this template use File | Settings | File Templates.
  */
 public class ClassRepr extends Proto {
   private final DependencyContext myContext;
   private final int myFileName;
-  private final TypeRepr.AbstractType mySuperClass;
+  private final TypeRepr.ClassType mySuperClass;
   private final Set<TypeRepr.AbstractType> myInterfaces;
   private final Set<ElemType> myAnnotationTargets;
   private final RetentionPolicy myRetentionPolicy;
@@ -30,6 +27,7 @@ public class ClassRepr extends Proto {
 
   private final int myOuterClassName;
   private final boolean myIsLocal;
+  private final boolean myIsAnonymous;
 
   public Set<MethodRepr> getMethods() {
     return myMethods;
@@ -47,7 +45,11 @@ public class ClassRepr extends Proto {
     return myIsLocal;
   }
 
-  public TypeRepr.AbstractType getSuperClass() {
+  public boolean isAnonymous() {
+    return myIsAnonymous;
+  }
+
+  public TypeRepr.ClassType getSuperClass() {
     return mySuperClass;
   }
 
@@ -103,8 +105,11 @@ public class ClassRepr extends Proto {
     return new Diff() {
       @Override
       public boolean extendsAdded() {
-        final String pastSuperName = myContext.getValue(((TypeRepr.ClassType)((ClassRepr)past).mySuperClass).myClassName);
-        return (d & Difference.SUPERCLASS) > 0 && pastSuperName.equals("java/lang/Object");
+        if ((d & Difference.SUPERCLASS) <= 0) {
+          return false;
+        }
+        final String pastSuperName = myContext.getValue(((ClassRepr)past).mySuperClass.className);
+        return "java/lang/Object".equals(pastSuperName);
       }
 
       @Override
@@ -170,11 +175,11 @@ public class ClassRepr extends Proto {
   public int[] getSupers() {
     final int[] result = new int[myInterfaces.size() + 1];
 
-    result[0] = ((TypeRepr.ClassType)mySuperClass).myClassName;
+    result[0] = mySuperClass.className;
 
     int i = 1;
     for (TypeRepr.AbstractType t : myInterfaces) {
-      result[i++] = ((TypeRepr.ClassType)t).myClassName;
+      result[i++] = ((TypeRepr.ClassType)t).className;
     }
 
     return result;
@@ -199,13 +204,13 @@ public class ClassRepr extends Proto {
   public ClassRepr(final DependencyContext context, final int a, final int fn, final int n, final int sig,
                    final int sup,
                    final String[] i,
-                   final Collection<String> ns,
                    final Set<FieldRepr> f,
                    final Set<MethodRepr> m,
                    final Set<ElemType> targets,
                    final RetentionPolicy policy,
                    final int outerClassName,
                    final boolean localClassFlag,
+                   final boolean anonymousClassFlag,
                    final Set<UsageRepr.Usage> usages) {
     super(a, sig, n);
     this.myContext = context;
@@ -218,6 +223,7 @@ public class ClassRepr extends Proto {
     this.myRetentionPolicy = policy;
     this.myOuterClassName = outerClassName;
     this.myIsLocal = localClassFlag;
+    this.myIsAnonymous = anonymousClassFlag;
     this.myUsages = usages;
   }
 
@@ -226,7 +232,7 @@ public class ClassRepr extends Proto {
     try {
       this.myContext = context;
       myFileName = in.readInt();
-      mySuperClass = TypeRepr.externalizer(context).read(in);
+      mySuperClass = (TypeRepr.ClassType)TypeRepr.externalizer(context).read(in);
       myInterfaces = (Set<TypeRepr.AbstractType>)RW.read(TypeRepr.externalizer(context), new HashSet<TypeRepr.AbstractType>(), in);
       myFields = (Set<FieldRepr>)RW.read(FieldRepr.externalizer(context), new HashSet<FieldRepr>(), in);
       myMethods = (Set<MethodRepr>)RW.read(MethodRepr.externalizer(context), new HashSet<MethodRepr>(), in);
@@ -238,6 +244,7 @@ public class ClassRepr extends Proto {
 
       myOuterClassName = in.readInt();
       myIsLocal = in.readBoolean();
+      myIsAnonymous = in.readBoolean();
       myUsages =(Set<UsageRepr.Usage>)RW.read(UsageRepr.externalizer(context), new HashSet<UsageRepr.Usage>(), in);
     }
     catch (IOException e) {
@@ -258,6 +265,7 @@ public class ClassRepr extends Proto {
       out.writeUTF(myRetentionPolicy == null ? "" : myRetentionPolicy.toString());
       out.writeInt(myOuterClassName);
       out.writeBoolean(myIsLocal);
+      out.writeBoolean(myIsAnonymous);
       RW.save(myUsages, UsageRepr.externalizer(myContext), out);
     }
     catch (IOException e) {
@@ -389,6 +397,8 @@ public class ClassRepr extends Proto {
 
     stream.print("      Local class: ");
     stream.println(myIsLocal);
+    stream.print("      Anonymous class: ");
+    stream.println(myIsAnonymous);
 
     stream.println("      Fields:");
     final FieldRepr[] fs = myFields.toArray(new FieldRepr[myFields.size()]);

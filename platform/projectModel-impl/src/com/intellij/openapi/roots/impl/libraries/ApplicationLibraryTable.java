@@ -26,14 +26,17 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
  */
 public class ApplicationLibraryTable extends LibraryTableBase {
   private static final LibraryTablePresentation GLOBAL_LIBRARY_TABLE_PRESENTATION = new LibraryTablePresentation() {
+    @Override
     public String getDisplayName(boolean plural) {
       return ProjectBundle.message("global.library.display.name", plural ? 2 : 1);
     }
 
+    @Override
     public String getDescription() {
       return ProjectBundle.message("libraries.node.text.ide");
     }
 
+    @Override
     public String getLibraryTableEditorTitle() {
       return ProjectBundle.message("library.configure.global.title");
     }
@@ -43,14 +46,17 @@ public class ApplicationLibraryTable extends LibraryTableBase {
     return ServiceManager.getService(ApplicationLibraryTable.class);
   }
 
+  @Override
   public String getTableLevel() {
     return LibraryTablesRegistrar.APPLICATION_LEVEL;
   }
 
+  @Override
   public LibraryTablePresentation getPresentation() {
     return GLOBAL_LIBRARY_TABLE_PRESENTATION;
   }
 
+  @Override
   public boolean isEditable() {
     return true;
   }

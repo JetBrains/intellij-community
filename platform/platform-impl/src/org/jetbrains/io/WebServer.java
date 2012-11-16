@@ -6,13 +6,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
+import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.bootstrap.ServerBootstrap;
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
+import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.handler.codec.http.*;
+import org.jboss.netty.util.CharsetUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,13 +26,16 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jboss.netty.channel.Channels.pipeline;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
+import static org.jboss.netty.handler.codec.http.HttpResponseStatus.OK;
 import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 public class WebServer {
-  private final NioServerSocketChannelFactory channelFactory;
+  private static final String START_TIME_PATH = "/startTime";
+
   private final List<ChannelFutureListener> closingListeners = ContainerUtil.createEmptyCOWList();
   private final ChannelGroup openChannels = new DefaultChannelGroup("web-server");
 
@@ -36,16 +44,15 @@ public class WebServer {
   @NonNls
   private static final String PROPERTY_ONLY_ANY_HOST = "rpc.onlyAnyHost";
 
-  public WebServer() {
-    final Application application = ApplicationManager.getApplication();
-    final Executor pooledThreadExecutor = new Executor() {
-      @Override
-      public void execute(@NotNull Runnable command) {
-        application.executeOnPooledThread(command);
-      }
-    };
-    channelFactory = new NioServerSocketChannelFactory(pooledThreadExecutor, pooledThreadExecutor, 2);
-  }
+  private final Executor pooledThreadExecutor = new Executor() {
+    private final Application application = ApplicationManager.getApplication();
+
+    @Override
+    public void execute(@NotNull Runnable command) {
+      application.executeOnPooledThread(command);
+    }
+  };
+  private final NioServerSocketChannelFactory channelFactory = new NioServerSocketChannelFactory(pooledThreadExecutor, pooledThreadExecutor, 2);
 
   public boolean isRunning() {
     return !openChannels.isEmpty();
@@ -74,36 +81,136 @@ public class WebServer {
     return bind(firstPort, portsCount, tryAnyPort, bootstrap);
   }
 
+  private boolean checkPort(final InetSocketAddress remoteAddress) {
+    ClientBootstrap bootstrap = new ClientBootstrap(new NioClientSocketChannelFactory(pooledThreadExecutor, pooledThreadExecutor, 1));
+    bootstrap.setOption("child.tcpNoDelay", true);
+
+    final AtomicBoolean result = new AtomicBoolean();
+    final Semaphore semaphore = new Semaphore();
+    bootstrap.setPipeline(
+      pipeline(new HttpResponseDecoder(), new HttpChunkAggregator(1048576), new HttpRequestEncoder(), new SimpleChannelUpstreamHandler() {
+        @Override
+        public void messageReceived(ChannelHandlerContext context, MessageEvent e) throws Exception {
+          try {
+            if (e.getMessage() instanceof HttpResponse) {
+              HttpResponse response = (HttpResponse)e.getMessage();
+              if (response.getStatus().equals(OK) &&
+                  response.getContent().toString(CharsetUtil.US_ASCII).equals(getApplicationStartTime())) {
+                LOG.info("port check: current OS must be marked as normal");
+                result.set(true);
+              }
+            }
+          }
+          finally {
+            semaphore.up();
+          }
+        }
+
+        @Override
+        public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
+          try {
+            LOG.error(e.getCause());
+          }
+          finally {
+            semaphore.up();
+          }
+        }
+      }));
+
+    ChannelFuture connectFuture = bootstrap.connect(remoteAddress);
+    if (!waitComplete(connectFuture, "connect")) {
+      return false;
+    }
+
+    try {
+      semaphore.down();
+      ChannelFuture writeFuture = connectFuture.getChannel().write(new DefaultHttpRequest(HTTP_1_1, HttpMethod.GET, START_TIME_PATH));
+      if (!waitComplete(writeFuture, "write")) {
+        return false;
+      }
+
+      try {
+        // yes, 30 seconds. I always get timeout in Linux in Parallels if I set to 2 seconds.
+        // In any case all work is done in pooled thread (IDE init time isn't affected)
+        if (!semaphore.waitForUnsafe(30000)) {
+          LOG.info("port check: semaphore down timeout");
+        }
+      }
+      catch (InterruptedException e) {
+        LOG.info("port check: semaphore interrupted", e);
+      }
+    }
+    finally {
+      connectFuture.getChannel().close();
+      bootstrap.releaseExternalResources();
+    }
+    return result.get();
+  }
+
+  private static boolean waitComplete(ChannelFuture writeFuture, String failedMessage) {
+    if (!writeFuture.awaitUninterruptibly(500) || !writeFuture.isSuccess()) {
+      LOG.info("port check: " + failedMessage + ", " + writeFuture.isSuccess());
+      return false;
+    }
+    return true;
+  }
+
+  private static String getApplicationStartTime() {
+    return Long.toString(ApplicationManager.getApplication().getStartTime());
+  }
+
   // IDEA-91436 idea <121 binds to 127.0.0.1, but >=121 must be available not only from localhost
   // but if we bind only to any local port (0.0.0.0), instance of idea <121 can bind to our ports and any request to us will be intercepted
   // so, we bind to 127.0.0.1 and 0.0.0.0
   private int bind(int firstPort, int portsCount, boolean tryAnyPort, ServerBootstrap bootstrap) {
     String property = System.getProperty(PROPERTY_ONLY_ANY_HOST);
-    boolean onlyAnyHost = property == null ? SystemInfo.isLinux || SystemInfo.isWindowsXP : (property.isEmpty() || Boolean.valueOf(property));
+    boolean onlyAnyHost = property == null ? (SystemInfo.isLinux || SystemInfo.isWindowsXP) : (property.isEmpty() || Boolean.valueOf(property));
+    boolean portChecked = false;
     for (int i = 0; i < portsCount; i++) {
       int port = firstPort + i;
+      ChannelException channelException = null;
       try {
         openChannels.add(bootstrap.bind(new InetSocketAddress(port)));
         if (!onlyAnyHost) {
-          openChannels.add(bootstrap.bind(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), port)));
+          InetSocketAddress localAddress = null;
+          try {
+            localAddress = new InetSocketAddress(InetAddress.getByName("127.0.0.1"), port);
+            openChannels.add(bootstrap.bind(localAddress));
+          }
+          catch (UnknownHostException e) {
+            return port;
+          }
+          catch (ChannelException e) {
+            channelException = e;
+            if (!portChecked) {
+              portChecked = true;
+              assert localAddress != null;
+              if (checkPortSafe(localAddress)) {
+                return port;
+              }
+            }
+          }
         }
-        return port;
       }
       catch (ChannelException e) {
+        channelException = e;
+      }
+
+      if (channelException == null) {
+        return port;
+      }
+      else {
         if (!openChannels.isEmpty()) {
           openChannels.close();
           openChannels.clear();
         }
 
         if (portsCount == 1) {
-          throw e;
+          throw channelException;
         }
         else if (!tryAnyPort && i == (portsCount - 1)) {
-          LOG.error(e);
+          LOG.error(channelException);
         }
-      }
-      catch (UnknownHostException e) {
-        LOG.error(e);
       }
     }
 
@@ -119,6 +226,19 @@ public class WebServer {
     }
 
     return -1;
+  }
+
+  private boolean checkPortSafe(@NotNull InetSocketAddress localAddress) {
+    LOG.info("We have tried to bind to 127.0.0.1 host but have got exception (" +
+             SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION + "), " +
+             "so, try to check - are we really need to bind to 127.0.0.1");
+    try {
+      return checkPort(localAddress);
+    }
+    catch (Throwable innerE) {
+      LOG.error(innerE);
+      return false;
+    }
   }
 
   public void stop() {
@@ -210,7 +330,15 @@ public class WebServer {
     @Override
     public void messageReceived(ChannelHandlerContext context, MessageEvent e) throws Exception {
       if (e.getMessage() instanceof HttpRequest) {
-        HttpResponse response = new DefaultHttpResponse(HTTP_1_1, NOT_FOUND);
+        HttpRequest message = (HttpRequest)e.getMessage();
+        HttpResponse response;
+        if (new QueryStringDecoder(message.getUri()).getPath().equals(START_TIME_PATH)) {
+          response = new DefaultHttpResponse(HTTP_1_1, OK);
+          response.setContent(ChannelBuffers.copiedBuffer(getApplicationStartTime(), CharsetUtil.US_ASCII));
+        }
+        else {
+          response = new DefaultHttpResponse(HTTP_1_1, NOT_FOUND);
+        }
         context.getChannel().write(response).addListener(ChannelFutureListener.CLOSE);
       }
     }

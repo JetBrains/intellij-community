@@ -73,7 +73,7 @@ import java.util.Map;
  */
 public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunConfigurationModule>
   implements CommonJavaRunConfigurationParameters, RefactoringListenerProvider {
-  
+
   private static final Logger LOG = Logger.getInstance(GroovyScriptRunConfiguration.class);
   private String vmParams;
   private String workDir;
@@ -218,7 +218,6 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
 
     state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject()));
     return state;
-
   }
 
   public void setScriptParameters(String scriptParameters) {
@@ -315,6 +314,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
+    super.checkConfiguration();
     final PsiClass toRun = getScriptClass();
     if (toRun == null) {
       throw new RuntimeConfigurationWarning(GroovyBundle.message("class.does.not.exist"));

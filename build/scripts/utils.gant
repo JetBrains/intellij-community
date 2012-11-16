@@ -309,7 +309,21 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   String minor = p("component.version.minor")
   String version = isEap() && !minor.contains("RC") && !minor.contains("Beta") ? "EAP $args.buildNumber" : "${p("component.version.major")}.${minor}"
 
-  String properties = readIdeaProperties(args)
+  Map properties = readIdeaProperties(args)
+
+  def coreKeys = ["idea.platform.prefix", "idea.paths.selector"]
+
+  String coreProperties = submapToXml(properties, coreKeys);
+
+  StringBuilder effectiveProperties = new StringBuilder()
+  properties.each { k, v ->
+    if (!coreKeys.contains(k)) {
+      effectiveProperties.append("$k=$v\n");
+    }
+  }
+
+  new File("$path/bin/idea.properties").text = effectiveProperties.toString()
+  new File("$path/bin/idea.vmoptions").text = "$mem64 -XX:+UseCompressedOops".split(" ").join("\n")
 
   String classPath = classPathLibs.collect {"\$APP_PACKAGE/lib/${it}" }.join(":")
 
@@ -323,9 +337,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
     replacefilter(token: "@@year@@", value: "$todayYear")
     replacefilter(token: "@@version@@", value: version)
     replacefilter(token: "@@vmoptions@@", value: vmOptions)
-    replacefilter(token: "@@vmoptions32@@", value: "$mem32")
-    replacefilter(token: "@@vmoptions64@@", value: "$mem64 -XX:+UseCompressedOops")
-    replacefilter(token: "@@idea_properties@@", value: properties)
+    replacefilter(token: "@@idea_properties@@", value: coreProperties)
     replacefilter(token: "@@class_path@@", value: classPath)
     replacefilter(token: "@@help_id@@", value: helpId)
   }
@@ -539,10 +551,10 @@ binding.setVariable("zipSources", { String home, String targetDir ->
  * @param args
  * @return text xml properties description in xml
  */
-private String readIdeaProperties(Map args) {
+private Map readIdeaProperties(Map args) {
   String ideaPropertiesPath =  args == null ? null : args.get("idea.properties.path")
   if (ideaPropertiesPath == null) {
-    return ""
+    return [:]
   }
 
   // read idea.properties file
@@ -579,12 +591,18 @@ private String readIdeaProperties(Map args) {
     }
   }
 
-  // generate properties description for Info.plist
+  return ideaProperties;
+}
+
+private String submapToXml(Map properties, List keys) {
+// generate properties description for Info.plist
   StringBuilder buff = new StringBuilder()
-  ideaProperties.each { key, value ->
+
+  keys.each { key ->
+    String value = properties[key]
     if (value != null) {
       String string =
-"""
+        """
         <key>$key</key>
         <string>$value</string>
 """
@@ -608,24 +626,25 @@ binding.setVariable("buildWinZip", { String zipPath, List paths ->
   notifyArtifactBuilt(zipPath)
 })
 
-binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths, List extraBins = [] ->
+binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths, String macPath, List extraBins = [] ->
   projectBuilder.stage(".mac.zip")
 
+  allPaths = paths + [macPath]
   ant.zip(zipfile: zipPath) {
-    paths.each {
+    allPaths.each {
       zipfileset(dir: it, prefix: zipRoot) {
         exclude(name: "bin/*.sh")
         exclude(name: "bin/fsnotifier")
         exclude(name: "bin/relaunch")
-        exclude(name: "bin/idea.properties")
         exclude(name: "Contents/MacOS/*")
         extraBins.each {
           exclude(name: it)
         }
+        exclude(name: "bin/idea.properties")
       }
     }
 
-    paths.each {
+    allPaths.each {
       zipfileset(dir: it, filemode: "755", prefix: zipRoot) {
         include(name: "bin/*.sh")
         include(name: "bin/fsnotifier")
@@ -636,6 +655,8 @@ binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths,
         }
       }
     }
+
+    zipfileset(file: "$macPath/bin/idea.properties", prefix: "$zipRoot/bin")
   }
 
   notifyArtifactBuilt(zipPath)

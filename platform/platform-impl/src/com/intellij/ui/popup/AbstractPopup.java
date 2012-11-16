@@ -66,6 +66,10 @@ public class AbstractPopup implements JBPopup {
 
   private static final Object SUPPRESS_MAC_CORNER = new Object();
   @NonNls public static final  String SHOW_HINTS          = "ShowHints";
+  /**
+   * X server sometimes focuses focusable popups upon appearance, ignoring the fact that we didn't ask to focus them
+   */
+  private static final boolean ourXWindowIDEA94683FocusBug = SystemInfo.isXWindow;
 
   private PopupComponent myPopup;
   private MyContentPanel myContent;
@@ -302,7 +306,7 @@ public class AbstractPopup implements JBPopup {
     if (settingsButtons != null) {
       myCaption.addSettingsComponent(settingsButtons);
     }
-    
+
     myKeyEventHandler = keyEventHandler;
     return this;
   }
@@ -457,7 +461,8 @@ public class AbstractPopup implements JBPopup {
       showInCenterOf(focused);
     }
     else {
-      final JFrame frame = WindowManager.getInstance().getFrame(myProject);
+      final WindowManager manager = WindowManager.getInstance();
+      final JFrame frame = myProject != null ? manager.getFrame(myProject) : manager.findVisibleFrame();
       showInCenterOf(frame.getRootPane());
     }
   }
@@ -522,7 +527,7 @@ public class AbstractPopup implements JBPopup {
     int adjustedY = preferredBounds.y - editor.getLineHeight() * 3 / 2 - preferredSize.height;
     return adjustedY >= 0 ? RelativePoint.fromScreen(new Point(preferredBounds.x, adjustedY)) : preferredLocation;
   }
-  
+
   public void addPopupListener(JBPopupListener listener) {
     myListeners.add(listener);
   }
@@ -669,7 +674,7 @@ public class AbstractPopup implements JBPopup {
     installProjectDisposer();
     addActivity();
 
-    final Component c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    final Component prevOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
 
     final boolean shouldShow = beforeShow();
     if (!shouldShow) {
@@ -912,12 +917,17 @@ public class AbstractPopup implements JBPopup {
         }
       });
     } else {
+      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
           if (isDisposed()) {
             removeActivity();
             return;
+          }
+
+          if (false && ourXWindowIDEA94683FocusBug && isFocused() && !myRequestFocus && prevOwner != null) {
+            IdeFocusManager.getInstance(myProject).requestFocus(prevOwner, false);
           }
 
           afterShow.run();
@@ -1126,7 +1136,7 @@ public class AbstractPopup implements JBPopup {
 
   private PopupComponent.Factory getFactory(boolean forceHeavyweight, boolean forceDialog) {
     boolean noFocus = !myFocusable || !myRequestFocus;
-    boolean cannotBeDialog = noFocus && SystemInfo.isLinux;
+    boolean cannotBeDialog = noFocus && SystemInfo.isXWindow;
 
     if (!cannotBeDialog && (isPersistent() || forceDialog)) {
       return new PopupComponent.Factory.Dialog();
@@ -1440,7 +1450,7 @@ public class AbstractPopup implements JBPopup {
   @Override
   public void moveToFitScreen() {
     if (myPopup == null) return;
-    
+
     final Window popupWindow = SwingUtilities.windowForComponent(myContent);
     Rectangle bounds = popupWindow.getBounds();
 
@@ -1611,7 +1621,7 @@ public class AbstractPopup implements JBPopup {
 
     if (doRevalidate) myContent.revalidate();
   }
-  
+
   public void setWarning(@NotNull String text) {
     JBLabel label = new JBLabel(text, UIUtil.getBalloonWarningIcon(), SwingConstants.CENTER);
     label.setOpaque(true);

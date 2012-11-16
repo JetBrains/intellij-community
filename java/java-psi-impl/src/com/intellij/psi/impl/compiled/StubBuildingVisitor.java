@@ -132,21 +132,36 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       }
     }
 
-    String[] interfacesArray = ArrayUtil.toStringArray(convertedInterfaces);
     if (isInterface) {
-      new PsiClassReferenceListStubImpl(JavaStubElementTypes.EXTENDS_LIST, myResult, interfacesArray, PsiReferenceList.Role.EXTENDS_LIST);
-      new PsiClassReferenceListStubImpl(JavaStubElementTypes.IMPLEMENTS_LIST, myResult, ArrayUtil.EMPTY_STRING_ARRAY,
-                                        PsiReferenceList.Role.IMPLEMENTS_LIST);
-    } else {
-      if (convertedSuper != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(convertedSuper)) {
-        new PsiClassReferenceListStubImpl(JavaStubElementTypes.EXTENDS_LIST, myResult, new String[]{convertedSuper},
-                                          PsiReferenceList.Role.EXTENDS_LIST);
-      } else {
-        new PsiClassReferenceListStubImpl(JavaStubElementTypes.EXTENDS_LIST, myResult, ArrayUtil.EMPTY_STRING_ARRAY, PsiReferenceList.Role.EXTENDS_LIST);
+      if (isAnnotationType) {
+        convertedInterfaces.remove(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION);
       }
-      new PsiClassReferenceListStubImpl(JavaStubElementTypes.IMPLEMENTS_LIST, myResult, interfacesArray,
-                                        PsiReferenceList.Role.IMPLEMENTS_LIST);
+      newReferenceList(JavaStubElementTypes.EXTENDS_LIST, myResult, ArrayUtil.toStringArray(convertedInterfaces));
+      newReferenceList(JavaStubElementTypes.IMPLEMENTS_LIST, myResult);
     }
+    else {
+      if (convertedSuper == null ||
+          CommonClassNames.JAVA_LANG_OBJECT.equals(convertedSuper) ||
+          isEnum && (CommonClassNames.JAVA_LANG_ENUM.equals(convertedSuper) ||
+                     (CommonClassNames.JAVA_LANG_ENUM + "<" + fqn + ">").equals(convertedSuper))) {
+        newReferenceList(JavaStubElementTypes.EXTENDS_LIST, myResult);
+      }
+      else {
+        newReferenceList(JavaStubElementTypes.EXTENDS_LIST, myResult, convertedSuper);
+      }
+      newReferenceList(JavaStubElementTypes.IMPLEMENTS_LIST, myResult, ArrayUtil.toStringArray(convertedInterfaces));
+    }
+  }
+
+  public static void newReferenceList(JavaClassReferenceListElementType type, StubElement parent, String... types) {
+    PsiReferenceList.Role role;
+    if (type == JavaStubElementTypes.EXTENDS_LIST) role = PsiReferenceList.Role.EXTENDS_LIST;
+    else if (type == JavaStubElementTypes.IMPLEMENTS_LIST) role = PsiReferenceList.Role.IMPLEMENTS_LIST;
+    else if (type == JavaStubElementTypes.THROWS_LIST) role = PsiReferenceList.Role.THROWS_LIST;
+    else if (type == JavaStubElementTypes.EXTENDS_BOUND_LIST) role = PsiReferenceList.Role.EXTENDS_BOUNDS_LIST;
+    else throw new IllegalArgumentException("Unknown type: " + type);
+
+    new PsiClassReferenceListStubImpl(type, parent, types, role);
   }
 
   @Nullable
@@ -161,9 +176,9 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   @Nullable
   private static String parseClassSignature(final CharacterIterator signatureIterator, final List<String> convertedInterfaces)
     throws ClsFormatException {
-    final String convertedSuper = SignatureParsing.parseToplevelClassRefSignature(signatureIterator);
+    final String convertedSuper = SignatureParsing.parseTopLevelClassRefSignature(signatureIterator);
     while (signatureIterator.current() != CharacterIterator.DONE) {
-      final String ifs = SignatureParsing.parseToplevelClassRefSignature(signatureIterator);
+      final String ifs = SignatureParsing.parseTopLevelClassRefSignature(signatureIterator);
       if (ifs == null) throw new ClsFormatException();
 
       convertedInterfaces.add(ifs);
@@ -244,7 +259,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     return flags;
   }
 
-  private static int packMethodFlags(final int access) {
+  private static int packMethodFlags(final int access, boolean isInterface) {
     int flags = packCommonFlags(access);
 
     if ((access & Opcodes.ACC_SYNCHRONIZED) != 0) {
@@ -255,6 +270,9 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     }
     if ((access & Opcodes.ACC_ABSTRACT) != 0) {
       flags |= ModifierFlags.ABSTRACT_MASK;
+    }
+    else if (isInterface) {
+      flags |= ModifierFlags.DEFENDER_MASK;
     }
     if ((access & Opcodes.ACC_STRICT) != 0) {
       flags |= ModifierFlags.STRICTFP_MASK;
@@ -374,19 +392,19 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     boolean isConstructor = SYNTHETIC_INIT_METHOD.equals(name);
     boolean isVarargs = (access & Opcodes.ACC_VARARGS) != 0;
     boolean isAnnotationMethod = myResult.isAnnotationType();
-    boolean isExtensionMethod = myResult.isInterface() && (access & Opcodes.ACC_ABSTRACT) == 0;
 
     if (!isConstructor && !isCorrectName(name)) return null;
 
-    final byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnnotationMethod, isVarargs, isDeprecated, false, isExtensionMethod);
+    final byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnnotationMethod, isVarargs, isDeprecated, false);
 
-    String canonicalMethodName = isConstructor ? myResult.getName() : name;
+    final String canonicalMethodName = isConstructor ? myResult.getName() : name;
     final List<String> args = new ArrayList<String>();
     final List<String> throwables = exceptions != null ? new ArrayList<String>() : null;
 
-    PsiMethodStubImpl stub = new PsiMethodStubImpl(myResult, StringRef.fromString(canonicalMethodName), flags, null);
+    final PsiMethodStubImpl stub = new PsiMethodStubImpl(myResult, StringRef.fromString(canonicalMethodName), flags, null);
 
-    final PsiModifierListStub modList = new PsiModifierListStubImpl(stub, packMethodFlags(access));
+    final PsiModifierListStub modList = new PsiModifierListStubImpl(stub, packMethodFlags(access, myResult.isInterface()));
+
     boolean parsedViaGenericSignature = false;
     String returnType;
     if (signature == null) {
@@ -424,15 +442,10 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     }
 
     String[] thrownTypes = buildThrowsList(exceptions, throwables, parsedViaGenericSignature);
-    new PsiClassReferenceListStubImpl(JavaStubElementTypes.THROWS_LIST, stub, thrownTypes, PsiReferenceList.Role.THROWS_LIST);
+    newReferenceList(JavaStubElementTypes.THROWS_LIST, stub, thrownTypes);
 
-    final boolean isEnumConstructor = isConstructor && myResult.isEnum();
-
-    int localVarIgnoreCount = (access & Opcodes.ACC_STATIC) != 0 ? 0 : 1;
-    if (isEnumConstructor) {
-      localVarIgnoreCount += 2;
-    }
-    final int paramIgnoreCount = isEnumConstructor? 2 : isNonStaticInnerClassConstructor ? 1 : 0;
+    final int localVarIgnoreCount = (access & Opcodes.ACC_STATIC) != 0 ? 0 : isConstructor && myResult.isEnum() ? 3 : 1;
+    final int paramIgnoreCount = isConstructor && myResult.isEnum() ? 2 : isNonStaticInnerClassConstructor ? 1 : 0;
     return new AnnotationParamCollectingVisitor(stub, modList, localVarIgnoreCount, paramIgnoreCount, paramCount, paramStubs);
   }
 
@@ -610,10 +623,10 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     private AnnotationParamCollectingVisitor(final PsiMethodStub owner,
                                              final PsiModifierListStub modList,
-                                             int ignoreCount,
-                                             int paramIgnoreCount,
-                                             int paramCount,
-                                             PsiParameterStubImpl[] paramStubs) {
+                                             final int ignoreCount,
+                                             final int paramIgnoreCount,
+                                             final int paramCount,
+                                             final PsiParameterStubImpl[] paramStubs) {
       super(Opcodes.ASM4);
       myOwner = owner;
       myModList = modList;
@@ -649,10 +662,14 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
         // long and double variables increase the index by 2, not by 1
         int paramIndex = (index - myIgnoreCount == myUsedParamSize) ? myUsedParamCount : index - myIgnoreCount;
         if (paramIndex >= myParamCount) return;
-        PsiParameterStubImpl parameterStub = myParamStubs[paramIndex];
-        if (parameterStub != null) {
-          parameterStub.setName(name);
+
+        if (ClsParsingUtil.isJavaIdentifier(name, LanguageLevel.HIGHEST)) {
+          PsiParameterStubImpl parameterStub = myParamStubs[paramIndex];
+          if (parameterStub != null) {
+            parameterStub.setName(name);
+          }
         }
+
         myUsedParamCount = paramIndex+1;
         if ("D".equals(desc) || "J".equals(desc)) {
           myUsedParamSize += 2;

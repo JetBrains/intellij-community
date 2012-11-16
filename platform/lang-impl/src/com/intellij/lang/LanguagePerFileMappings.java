@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.testFramework.LightVirtualFile;
@@ -72,6 +73,13 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
 
   @Nullable
   public T getMapping(@Nullable VirtualFile file) {
+    FilePropertyPusher<T> pusher = getFilePropertyPusher();
+    T t = getMappingInner(file, myMappings, pusher == null? null : pusher.getFileDataKey());
+    return t == null? getDefaultMapping(file) : t;
+  }
+
+  @Nullable
+  protected static <T> T getMappingInner(@Nullable VirtualFile file, @Nullable Map<VirtualFile, T> mappings, @Nullable Key<T> pusherKey) {
     if (file instanceof VirtualFileWindow) {
       final VirtualFileWindow window = (VirtualFileWindow)file;
       file = window.getDelegate();
@@ -80,28 +88,27 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
     if (Comparing.equal(originalFile, file)) originalFile = null;
 
     if (file != null) {
-      final FilePropertyPusher<T> pusher = getFilePropertyPusher();
-      final T pushedValue = pusher == null? null : file.getUserData(pusher.getFileDataKey());
+      final T pushedValue = pusherKey == null? null : file.getUserData(pusherKey);
       if (pushedValue != null) return pushedValue;
     }
     if (originalFile != null) {
-      final FilePropertyPusher<T> pusher = getFilePropertyPusher();
-      final T pushedValue = pusher == null? null : originalFile.getUserData(pusher.getFileDataKey());
+      final T pushedValue = pusherKey == null? null : originalFile.getUserData(pusherKey);
       if (pushedValue != null) return pushedValue;
     }
-    synchronized (myMappings) {
+    if (mappings == null) return null;
+    synchronized (mappings) {
       for (VirtualFile cur = file; ; cur = cur.getParent()) {
-        T dialect = myMappings.get(cur);
-        if (dialect != null) return dialect;
+        T t = mappings.get(cur);
+        if (t != null) return t;
         if (originalFile != null) {
-          dialect = myMappings.get(originalFile);
-          if (dialect != null) return dialect;
+          t = mappings.get(originalFile);
+          if (t != null) return t;
           originalFile = originalFile.getParent();
         }
         if (cur == null) break;
       }
     }
-    return getDefaultMapping(file);
+    return null;
   }
 
   @Override

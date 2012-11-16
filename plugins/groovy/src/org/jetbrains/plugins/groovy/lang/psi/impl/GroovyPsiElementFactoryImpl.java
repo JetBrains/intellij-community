@@ -474,7 +474,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     if (!( definition != null && definition instanceof GrClassDefinition)) {
       throw new IncorrectOperationException("constructorName: " + constructorName + ", text: " + constructorText);
     }
-    GrMethod[] methods = ((GrClassDefinition)definition).getGroovyMethods();
+    GrMethod[] methods = ((GrClassDefinition)definition).getCodeMethods();
     if (methods.length != 1) {
       throw new IncorrectOperationException("constructorName: " + constructorName + ", text: " + constructorText);
     }
@@ -980,6 +980,12 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @NotNull
   @Override
+  public GrParameter createParameter(@NotNull @NonNls String name, @Nullable PsiType type, PsiElement context) throws IncorrectOperationException {
+    return createParameter(name, type == null ? null : type.getCanonicalText(), null, context instanceof GroovyPsiElement ? (GroovyPsiElement)context : null);
+  }
+
+  @NotNull
+  @Override
   public PsiParameterList createParameterList(@NotNull @NonNls String[] names, @NotNull PsiType[] types) throws IncorrectOperationException {
     StringBuilder builder = StringBuilderSpinAllocator.alloc();
     builder.append("def foo(");
@@ -1011,6 +1017,11 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @Override
   public PsiMethod createConstructor(@NotNull @NonNls String name) {
     return createConstructorFromText(name, name + "(){}", null);
+  }
+
+  @Override
+  public PsiMethod createConstructor(@NotNull @NonNls String name, PsiElement context) {
+    return createConstructorFromText(name, name + "(){}", context);
   }
 
   @NotNull

@@ -22,6 +22,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 
+import javax.swing.*;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -29,12 +31,22 @@ public class ShowColorPickerAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getProject();
-    final IdeFrame frame = project == null ? WindowManager.getInstance().getAllFrames()[0] : WindowManager.getInstance().getIdeFrame(project);
-    if (frame != null) {
+    JComponent root = rootComponent(project);
+    if (root != null) {
       final ColorPicker.ColorPickerDialog picker =
-        new ColorPicker.ColorPickerDialog(frame.getComponent(), "Color Picker", null, true, e.getData(LangDataKeys.PSI_ELEMENT));
+        new ColorPicker.ColorPickerDialog(root, "Color Picker", null, true, e.getData(LangDataKeys.PSI_ELEMENT));
       picker.setModal(false);
       picker.show();
     }
+  }
+
+  private static JComponent rootComponent(Project project) {
+    if (project != null) {
+      IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
+      if (frame != null) return frame.getComponent();
+    }
+
+    JFrame frame = WindowManager.getInstance().findVisibleFrame();
+    return frame != null ? frame.getRootPane() : null;
   }
 }

@@ -37,17 +37,18 @@ public class ChooseByNameLanguageFilter extends ChooseByNameFilter<Language> {
   }
 
   @Override
-  protected String textForFilterValue(Language value) {
+  protected String textForFilterValue(@NotNull Language value) {
     return value.getDisplayName();
   }
 
   @Nullable
   @Override
-  protected Icon iconForFilterValue(Language value) {
+  protected Icon iconForFilterValue(@NotNull Language value) {
     final LanguageFileType fileType = value.getAssociatedFileType();
     return fileType != null ? fileType.getIcon() : null;
   }
 
+  @NotNull
   @Override
   protected Collection<Language> getAllFilterValues() {
     final Collection<Language> registeredLanguages = Language.getRegisteredLanguages();
@@ -57,12 +58,14 @@ public class ChooseByNameLanguageFilter extends ChooseByNameFilter<Language> {
         accepted.add(language);
       }
     }
-    Collections.sort(accepted, new Comparator<Language>() {
-      @Override
-      public int compare(Language o1, Language o2) {
-        return o1.getDisplayName().compareTo(o2.getDisplayName());
-      }
-    });
+    Collections.sort(accepted, BY_DISPLAY_NAME);
     return accepted;
   }
+
+  private static final Comparator<Language> BY_DISPLAY_NAME = new Comparator<Language>() {
+    @Override
+    public int compare(Language o1, Language o2) {
+      return o1.getDisplayName().compareTo(o2.getDisplayName());
+    }
+  };
 }

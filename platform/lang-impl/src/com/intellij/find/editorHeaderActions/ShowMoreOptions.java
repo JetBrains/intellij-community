@@ -19,7 +19,7 @@ import java.awt.event.KeyEvent;
 */
 public class ShowMoreOptions extends AnAction implements DumbAware {
   private JComponent myToolbarComponent;
-  public static final Shortcut SHORT_CUT = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.ALT_DOWN_MASK), null);
+  public static final Shortcut SHORT_CUT = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.ALT_DOWN_MASK), null);
 
   public ShowMoreOptions(JComponent toolbarComponent, JTextComponent searchField) {
     this.myToolbarComponent = toolbarComponent;

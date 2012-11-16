@@ -363,6 +363,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
       final MyNode node = (MyNode)last;
       final NamedConfigurable configurable = node.getConfigurable();
+      if (configurable == null) return false;
       final Object editableObject = configurable.getEditableObject();
 
       return removeObject(editableObject);

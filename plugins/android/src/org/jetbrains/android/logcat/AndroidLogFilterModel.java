@@ -21,6 +21,7 @@ import com.intellij.diagnostic.logging.LogFilter;
 import com.intellij.diagnostic.logging.LogFilterListener;
 import com.intellij.diagnostic.logging.LogFilterModel;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +37,7 @@ import java.util.regex.Pattern;
  */
 public abstract class AndroidLogFilterModel extends LogFilterModel {
   static final Pattern ANDROID_LOG_MESSAGE_PATTERN =
-    Pattern.compile("\\d\\d-\\d\\d\\s\\d\\d:\\d\\d:\\d\\d\\.\\d+:\\s+[A-Z]+/([\\S ]+)\\((\\d+)\\):(.*)");
+    Pattern.compile("\\d\\d-\\d\\d\\s\\d\\d:\\d\\d:\\d\\d\\.\\d+:\\s+([A-Z]+)/([\\S ]+)\\((\\d+)\\):(.*)");
 
   private final List<LogFilterListener> myListeners = new ArrayList<LogFilterListener>();
 
@@ -47,18 +48,14 @@ public abstract class AndroidLogFilterModel extends LogFilterModel {
   private boolean myFullMessageApplicableByCustomFilter = false;
   private StringBuilder myMessageBuilder = new StringBuilder();
   
-  private LogFilter mySelectedLogFilter;
-  private List<AndroidLogFilter> myLogFilters = new ArrayList<AndroidLogFilter>();
+  protected List<AndroidLogFilter> myLogFilters = new ArrayList<AndroidLogFilter>();
 
-  public AndroidLogFilterModel(String initialLogLevelName) {
+  public AndroidLogFilterModel() {
     for (Log.LogLevel logLevel : Log.LogLevel.values()) {
-      AndroidLogFilter filter = new AndroidLogFilter(logLevel);
-      if (logLevel.name().equals(initialLogLevelName)) {
-        mySelectedLogFilter = filter;
-      }
-      myLogFilters.add(filter);
+      myLogFilters.add(new AndroidLogFilter(logLevel));
     }
   }
+
 
   public void updateCustomFilter(String filter) {
     super.updateCustomFilter(filter);
@@ -81,7 +78,7 @@ public abstract class AndroidLogFilterModel extends LogFilterModel {
     return null;
   }
 
-  protected abstract void saveLogLevel(Log.LogLevel logLevel);
+  protected abstract void saveLogLevel(String logLevelName);
 
   public void addFilterListener(LogFilterListener listener) {
     myListeners.add(listener);
@@ -124,11 +121,8 @@ public abstract class AndroidLogFilterModel extends LogFilterModel {
   @Override
   public boolean isApplicable(String text) {
     if (!super.isApplicable(text)) return false;
-
-    if (!(mySelectedLogFilter == null || mySelectedLogFilter.isAcceptable(text))) {
-      return false;
-    }
-    return true;
+    final LogFilter selectedLogLevelFilter = getSelectedLogLevelFilter();
+    return selectedLogLevelFilter == null || selectedLogLevelFilter.isAcceptable(text);
   }
 
   public boolean isApplicableByCustomFilter(String text) {
@@ -138,6 +132,7 @@ public abstract class AndroidLogFilterModel extends LogFilterModel {
     }
 
 
+    Log.LogLevel logLevel = null;
     String tag = null;
     String pid = null;
     String message = text;
@@ -146,15 +141,20 @@ public abstract class AndroidLogFilterModel extends LogFilterModel {
     if (matcher.matches()) {
       String s = matcher.group(1).trim();
       if (s.length() > 0) {
+        logLevel = getLogLevel(s);
+      }
+
+      s = matcher.group(2).trim();
+      if (s.length() > 0) {
         tag = s;
       }
       
-      s = matcher.group(2).trim();
+      s = matcher.group(3).trim();
       if (s.length() > 0) {
         pid = s;
       }
       
-      s = matcher.group(3).trim();
+      s = matcher.group(4).trim();
       if (s.length() > 0) {
         message = s;
       }
@@ -167,8 +167,10 @@ public abstract class AndroidLogFilterModel extends LogFilterModel {
     if (pid == null) {
       pid = myPrevPid;
     }
-
-    return configuredFilterName.isApplicable(message, tag, pid, getLogLevel(text));
+    if (logLevel == null) {
+      logLevel = myPrevMessageLogLevel;
+    }
+    return configuredFilterName.isApplicable(message, tag, pid, logLevel);
   }
 
   public List<? extends LogFilter> getLogFilters() {
@@ -185,28 +187,55 @@ public abstract class AndroidLogFilterModel extends LogFilterModel {
 
     @Override
     public boolean isAcceptable(String line) {
-      Log.LogLevel logLevel = getLogLevel(line);
+      final Matcher matcher = ANDROID_LOG_MESSAGE_PATTERN.matcher(line);
+      Log.LogLevel logLevel = null;
+
+      if (matcher.matches()) {
+        logLevel = getLogLevel(matcher.group(1));
+      }
+      if (logLevel == null) {
+        logLevel = myPrevMessageLogLevel;
+      }
       return logLevel != null && logLevel.getPriority() >= myLogLevel.getPriority();
     }
   }
 
   @Nullable
-  Log.LogLevel getLogLevel(String line) {
-    Log.LogLevel logLevel = AndroidLogcatUtil.getLogLevel(line);
-    if (logLevel == null) {
-      logLevel = myPrevMessageLogLevel;
+  protected static Log.LogLevel getLogLevel(@NotNull String name) {
+    for (Log.LogLevel level : Log.LogLevel.values()) {
+      if (name.equals(level.name())) {
+        return level;
+      }
     }
-    return logLevel;
+    return null;
+  }
+
+  public abstract String getSelectedLogLevelName();
+
+  @Nullable
+  private LogFilter getSelectedLogLevelFilter() {
+    final String filterName = getSelectedLogLevelName();
+    if (filterName != null) {
+      for (AndroidLogFilter logFilter : myLogFilters) {
+        if (filterName.equals(logFilter.myLogLevel.name())) {
+          return logFilter;
+        }
+      }
+    }
+    return null;
   }
 
   public boolean isFilterSelected(LogFilter filter) {
-    return mySelectedLogFilter == filter;
+    return filter == getSelectedLogLevelFilter();
   }
 
   public void selectFilter(LogFilter filter) {
-    if (filter != mySelectedLogFilter && filter instanceof AndroidLogFilter) {
-      mySelectedLogFilter = filter;
-      saveLogLevel(((AndroidLogFilter)filter).myLogLevel);
+    if (!(filter instanceof AndroidLogFilter)) {
+      return;
+    }
+    String newFilterName = ((AndroidLogFilter)filter).myLogLevel.name();
+    if (!Comparing.equal(newFilterName, getSelectedLogLevelName())) {
+      saveLogLevel(newFilterName);
       fireFilterChange(filter);
     }
   }
@@ -226,24 +255,24 @@ public abstract class AndroidLogFilterModel extends LogFilterModel {
     final boolean messageHeader = matcher.matches();
 
     if (messageHeader) {
-      String s = matcher.group(1).trim();
+      String s = matcher.group(1);
+      if (s.length() > 0) {
+        final Log.LogLevel logLevel = getLogLevel(s);
+        if (logLevel != null) {
+          myPrevMessageLogLevel = logLevel;
+        }
+      }
+
+      s = matcher.group(2).trim();
       if (s.length() > 0) {
         myPrevTag = s;
       }
       
-      s = matcher.group(2).trim();
+      s = matcher.group(3).trim();
       if (s.length() > 0) {
         myPrevPid = s;
       }
     }
-    
-    Log.LogLevel logLevel = AndroidLogcatUtil.getLogLevel(line);
-    if (logLevel != null) {
-      myPrevMessageLogLevel = logLevel;
-    }
-    final Key key = myPrevMessageLogLevel != null ? getProcessOutputType(myPrevMessageLogLevel) : ProcessOutputTypes.STDOUT;
-    
-    
     final boolean applicable = isApplicable(line); 
     final boolean applicableByCustomFilter = isApplicableByCustomFilter(line);
 
@@ -266,6 +295,7 @@ public abstract class AndroidLogFilterModel extends LogFilterModel {
       myFullMessageApplicable = myFullMessageApplicable || applicable;
       myFullMessageApplicableByCustomFilter = myFullMessageApplicableByCustomFilter || applicableByCustomFilter;
     }
+    final Key key = myPrevMessageLogLevel != null ? getProcessOutputType(myPrevMessageLogLevel) : ProcessOutputTypes.STDOUT;
     
     return new MyProcessingResult(key,
                                   myFullMessageApplicable && myFullMessageApplicableByCustomFilter,

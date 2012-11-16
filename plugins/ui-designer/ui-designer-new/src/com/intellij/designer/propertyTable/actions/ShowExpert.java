@@ -17,11 +17,11 @@ package com.intellij.designer.propertyTable.actions;
 
 import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.propertyTable.RadPropertyTable;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import icons.UIDesignerNewIcons;
 
 /**
  * @author Alexander Lobas
@@ -37,7 +37,7 @@ public class ShowExpert extends ToggleAction {
     String text = DesignerBundle.message("designer.properties.show.expert");
     presentation.setText(text);
     presentation.setDescription(text);
-    presentation.setIcon(UIDesignerNewIcons.Filter);
+    presentation.setIcon(AllIcons.General.Filter);
   }
 
   @Override
@@ -49,7 +49,7 @@ public class ShowExpert extends ToggleAction {
       presentation.setIcon(null);
     }
     else {
-      presentation.setIcon(UIDesignerNewIcons.Filter);
+      presentation.setIcon(AllIcons.General.Filter);
     }
   }
 

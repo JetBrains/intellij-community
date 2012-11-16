@@ -37,7 +37,7 @@ class ViewStyleUsageData implements StyleUsageData {
     for (Map.Entry<AndroidAttributeInfo, String> entry : attributeValues.entrySet()) {
       final AndroidAttributeInfo info = entry.getKey();
       final String localName = info.getName();
-      final String namespace = info.isSystem() ? SdkConstants.NS_RESOURCES : null;
+      final String namespace = info.getNamespace();
 
       if (myTag.getAttribute(localName, namespace) == null) {
         myTag.setAttribute(localName, namespace, entry.getValue());

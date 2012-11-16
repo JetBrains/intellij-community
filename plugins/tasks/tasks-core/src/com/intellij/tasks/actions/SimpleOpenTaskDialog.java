@@ -22,7 +22,6 @@ import com.intellij.openapi.options.binding.ControlBinder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.tasks.*;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskUtil;
@@ -30,7 +29,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Iterator;
 
 /**
  * @author Dmitry Avdeev
@@ -67,23 +65,11 @@ public class SimpleOpenTaskDialog extends DialogWrapper {
       myMarkAsInProgressBox.setVisible(false);
     }
 
-    // refresh change lists
-    ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    for (Iterator<ChangeListInfo> it = taskManager.getOpenChangelists(task).iterator(); it.hasNext(); ) {
-      ChangeListInfo changeListInfo = it.next();
-      if (changeListManager.getChangeList(changeListInfo.id) == null) {
-        it.remove();
-      }
-    }
+    myClearContext.setSelected(taskManager.getState().clearContext);
 
-    boolean vcsEnabled = manager.isVcsEnabled();
-    if (!vcsEnabled) {
+    if (!manager.isVcsEnabled()) {
       myCreateChangelist.setEnabled(false);
       myCreateChangelist.setSelected(false);
-    }
-    else if (!taskManager.getOpenChangelists(task).isEmpty()) {
-      myCreateChangelist.setSelected(true);
-      myCreateChangelist.setEnabled(false);
     }
     else {
       myCreateChangelist.setSelected(taskManager.getState().createChangelist);
@@ -96,7 +82,12 @@ public class SimpleOpenTaskDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     TaskManagerImpl taskManager = (TaskManagerImpl)TaskManager.getManager(myProject);
+
     taskManager.getState().markAsInProgress = isMarkAsInProgress();
+    if (taskManager.isVcsEnabled()) {
+      taskManager.getState().createChangelist = myCreateChangelist.isSelected();
+    }
+
     TaskRepository repository = myTask.getRepository();
     if (isMarkAsInProgress() && repository != null) {
       try {

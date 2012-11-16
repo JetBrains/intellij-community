@@ -30,6 +30,7 @@ import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
@@ -83,6 +84,7 @@ public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText
     add(pane, BorderLayout.CENTER);
     myTable.registerKeyboardAction(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           final int[] selectedRows = myTable.getSelectedRows();
           boolean currentlyMarked = true;
@@ -100,6 +102,7 @@ public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText
     );
 
     final SpeedSearchBase<JBTable> speedSearch = new SpeedSearchBase<JBTable>(myTable) {
+      @Override
       public int getSelectedIndex() {
         return myTable.getSelectedRow();
       }
@@ -109,6 +112,7 @@ public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText
         return myTable.convertRowIndexToModel(viewIndex);
       }
 
+      @Override
       public Object[] getAllElements() {
         final int count = myTableModel.getRowCount();
         Object[] elements = new Object[count];
@@ -118,10 +122,12 @@ public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText
         return elements;
       }
 
+      @Override
       public String getElementText(Object element) {
         return getItemText((T)element);
       }
 
+      @Override
       public void selectElement(Object element, String selectedText) {
         final int count = myTableModel.getRowCount();
         for (int row = 0; row < count; row++) {
@@ -143,8 +149,8 @@ public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText
     InputMap inputMap = table.getInputMap(WHEN_FOCUSED);
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, 0), "selectLastRow");
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0), "selectFirstRow");
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, KeyEvent.SHIFT_DOWN_MASK), "selectFirstRowExtendSelection");
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, KeyEvent.SHIFT_DOWN_MASK), "selectLastRowExtendSelection");
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, InputEvent.SHIFT_DOWN_MASK), "selectFirstRowExtendSelection");
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, InputEvent.SHIFT_DOWN_MASK), "selectLastRowExtendSelection");
   }
 
   @NotNull
@@ -283,7 +289,7 @@ public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText
     }
   }
 
-  public static interface ElementProperties {
+  public interface ElementProperties {
     @Nullable
     Icon getIcon();
     @Nullable
@@ -329,7 +335,7 @@ public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText
   }
 
   public void selectElements(Collection<? extends T> elements) {
-    if (elements.size() == 0) {
+    if (elements.isEmpty()) {
       myTable.clearSelection();
       return;
     }
@@ -369,6 +375,7 @@ public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText
     myTableModel.sort(comparator);
   }
   
+  @Override
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
     myTable.setRowSelectionAllowed(enabled);
@@ -453,15 +460,15 @@ public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText
       return isMarked.booleanValue();
     }
 
-    protected void addElement(T element, boolean isMarked) {
+    private void addElement(T element, boolean isMarked) {
       myElements.add(element);
       myMarkedMap.put(element, isMarked? Boolean.TRUE : Boolean.FALSE);
       int row = myElements.size() - 1;
       fireTableRowsInserted(row, row);
     }
 
-    protected void addElements(@Nullable List<T> elements, boolean isMarked) {
-      if (elements == null || elements.size() == 0) {
+    private void addElements(@Nullable List<T> elements, boolean isMarked) {
+      if (elements == null || elements.isEmpty()) {
         return;
       }
       for (final T element : elements) {
@@ -507,14 +514,17 @@ public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText
       fireTableDataChanged();
     }
 
+    @Override
     public int getRowCount() {
       return myElements.size();
     }
 
+    @Override
     public int getColumnCount() {
       return myElementsCanBeMarked? 2 : 1;
     }
 
+    @Override
     @Nullable
     public Object getValueAt(int rowIndex, int columnIndex) {
       T element = myElements.get(rowIndex);
@@ -527,6 +537,7 @@ public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText
       return null;
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       if (columnIndex == CHECK_MARK_COLUM_INDEX) {
         setMarked(rowIndex, ((Boolean)aValue).booleanValue());
@@ -562,6 +573,7 @@ public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText
       fireTableRowsUpdated(firstRow, lastRow);
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
       if (columnIndex == CHECK_MARK_COLUM_INDEX) {
         return Boolean.class;
@@ -569,8 +581,9 @@ public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText
       return super.getColumnClass(columnIndex);
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-      if (!ElementsChooser.this.isEnabled() || columnIndex != CHECK_MARK_COLUM_INDEX) {
+      if (!isEnabled() || columnIndex != CHECK_MARK_COLUM_INDEX) {
         return false;
       }
       final T o = (T)getValueAt(rowIndex, ELEMENT_COLUMN_INDEX);
@@ -589,11 +602,12 @@ public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText
   }
 
   @Nullable
-  protected Icon getItemIcon(T value) {
+  protected Icon getItemIcon(@NotNull T value) {
     return null;
   }
 
   private class MyElementColumnCellRenderer extends DefaultTableCellRenderer {
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       final Color color = UIUtil.getTableFocusCellBackground();
       Component component;
@@ -610,7 +624,7 @@ public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText
         UIManager.put(UIUtil.TABLE_FOCUS_CELL_BACKGROUND_PROPERTY, color);
       }
       final MyTableModel model = (MyTableModel)table.getModel();
-      component.setEnabled(ElementsChooser.this.isEnabled() && (myColorUnmarkedElements? model.isElementMarked(row) : true));
+      component.setEnabled(ElementsChooser.this.isEnabled() && (!myColorUnmarkedElements || model.isElementMarked(row)));
       final ElementProperties properties = myElementToPropertiesMap.get(t);
       if (component instanceof JLabel) {
         final Icon icon = properties != null ? properties.getIcon() : t != null ? getItemIcon(t) : null;
@@ -620,7 +634,7 @@ public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText
       }
       component.setForeground(properties != null && properties.getColor() != null ?
                               properties.getColor() :
-                              (isSelected ? table.getSelectionForeground() : table.getForeground()));
+                              isSelected ? table.getSelectionForeground() : table.getForeground());
       return component;
     }
   }
@@ -632,9 +646,10 @@ public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText
       myDelegate = delegate;
     }
 
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       Component component = myDelegate.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      component.setEnabled(ElementsChooser.this.isEnabled());
+      component.setEnabled(isEnabled());
       if (component instanceof JComponent) {
         ((JComponent)component).setBorder(null);
       }

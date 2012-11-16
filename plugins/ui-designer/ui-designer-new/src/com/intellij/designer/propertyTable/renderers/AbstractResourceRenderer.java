@@ -33,7 +33,14 @@ import java.awt.*;
  */
 public abstract class AbstractResourceRenderer implements PropertyRenderer {
   protected final ColorIcon myColorIcon = new ColorIcon(10, 9);
-  protected final SimpleColoredComponent myColoredComponent = new SimpleColoredComponent();
+  protected final SimpleColoredComponent myColoredComponent = new SimpleColoredComponent() {
+    @Override
+    protected void doPaintIcon(Graphics2D g, Icon icon, int offset) {
+      g.setColor(getBackground());
+      g.fillRect(offset, 0, icon.getIconWidth() + getIpad().left + myIconTextGap, getHeight());
+      paintIcon(g, icon, offset + getIpad().left);
+    }
+  };
 
   @NotNull
   @Override

@@ -32,14 +32,19 @@ public abstract class JpsLoaderBase {
                                                        final E element) {
     String fileName = serializer.getConfigFileName();
     File configFile = new File(dir, fileName != null ? fileName : defaultFileName);
+    Element componentTag;
     if (configFile.exists()) {
-      Element componentTag = JDomSerializationUtil.findComponent(loadRootElement(configFile), serializer.getComponentName());
-      if (componentTag != null) {
-        serializer.loadExtension(element, componentTag);
-      }
+      componentTag = JDomSerializationUtil.findComponent(loadRootElement(configFile), serializer.getComponentName());
     }
     else {
-      LOG.debug("Cannot load component " + serializer.getComponentName() + ": " + configFile + " doesn't exist");
+      componentTag = null;
+    }
+
+    if (componentTag != null) {
+      serializer.loadExtension(element, componentTag);
+    }
+    else {
+      serializer.loadExtensionWithDefaultSettings(element);
     }
   }
 

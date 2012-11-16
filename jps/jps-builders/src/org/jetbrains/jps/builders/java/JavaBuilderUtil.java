@@ -5,16 +5,21 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
+import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
-import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
-import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.FSOperations;
-import org.jetbrains.jps.incremental.ModuleBuildTarget;
-import org.jetbrains.jps.incremental.Utils;
+import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.jps.model.JpsDummyElement;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
+import org.jetbrains.jps.model.library.JpsTypedLibrary;
+import org.jetbrains.jps.model.library.sdk.JpsSdk;
+import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
@@ -31,24 +36,29 @@ public class JavaBuilderUtil {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.Builder");
 
   /**
+   *
    * @param context
    * @param delta
+   * @param dirtyFilesHolder
    * @param chunk
    * @param filesToCompile       files compiled in this round
    * @param successfullyCompiled
    * @return true if additional compilation pass is required, false otherwise
    * @throws Exception
    */
-  public static boolean updateMappings(CompileContext context, final Mappings delta, ModuleChunk chunk,
-                                             Collection<File> filesToCompile,
-                                             Collection<File> successfullyCompiled) throws IOException {
+  public static boolean updateMappings(CompileContext context,
+                                       final Mappings delta,
+                                       DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
+                                       ModuleChunk chunk,
+                                       Collection<File> filesToCompile,
+                                       Collection<File> successfullyCompiled) throws IOException {
     if (Utils.errorsDetected(context)) {
       return false;
     }
     try {
       boolean additionalPassRequired = false;
 
-      final Set<String> removedPaths = getRemovedPaths(context, chunk);
+      final Set<String> removedPaths = getRemovedPaths(chunk, dirtyFilesHolder);
 
       final Mappings globalMappings = context.getProjectDescriptor().dataManager.getMappings();
 
@@ -140,9 +150,6 @@ public class JavaBuilderUtil {
 
       globalMappings.integrate(delta);
 
-      // safe to remove everything that has been integrated
-      dropRemovedPaths(context, chunk);
-
       return additionalPassRequired;
     }
     catch (RuntimeException e) {
@@ -207,39 +214,38 @@ public class JavaBuilderUtil {
     return allCompiledFiles;
   }
 
-  private static Set<String> getRemovedPaths(CompileContext context, ModuleChunk chunk) {
-    final Map<ModuleBuildTarget, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
-    if (map == null) {
+  private static Set<String> getRemovedPaths(ModuleChunk chunk, DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) {
+    if (!dirtyFilesHolder.hasRemovedFiles()) {
       return Collections.emptySet();
     }
     final Set<String> removed = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
     for (ModuleBuildTarget target : chunk.getTargets()) {
-      final Collection<String> modulePaths = map.get(target);
-      if (modulePaths != null) {
-        removed.addAll(modulePaths);
-      }
+      removed.addAll(dirtyFilesHolder.getRemovedFiles(target));
     }
     return removed;
-  }
-
-  private static void dropRemovedPaths(CompileContext context, ModuleChunk chunk) throws IOException {
-    final Map<ModuleBuildTarget, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
-    if (map != null) {
-      for (ModuleBuildTarget target : chunk.getTargets()) {
-        final Collection<String> paths = map.remove(target);
-        if (paths != null) {
-          final SourceToOutputMapping storage = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
-          for (String path : paths) {
-            storage.remove(path);
-          }
-        }
-      }
-    }
   }
 
   public static void cleanupChunkResources(CompileContext context) {
     ALL_AFFECTED_FILES_KEY.set(context, null);
     ALL_COMPILED_FILES_KEY.set(context, null);
+  }
+
+  @NotNull
+  public static JpsSdk<JpsDummyElement> ensureModuleHasJdk(JpsModule module, CompileContext context, final String compilerName) throws
+                                                                                                                                ProjectBuildException {
+    JpsSdkReference<JpsDummyElement> reference = module.getSdkReference(JpsJavaSdkType.INSTANCE);
+    if (reference == null) {
+      context.processMessage(new CompilerMessage(compilerName, BuildMessage.Kind.ERROR, "JDK isn't specified for module '" + module.getName() + "'"));
+      throw new ProjectBuildException();
+    }
+
+    JpsTypedLibrary<JpsSdk<JpsDummyElement>> sdkLibrary = reference.resolve();
+    if (sdkLibrary == null) {
+      context.processMessage(new CompilerMessage(compilerName, BuildMessage.Kind.ERROR,
+                                                 "Cannot find JDK '" + reference.getSdkName() + "' for module '" + module.getName() + "'"));
+      throw new ProjectBuildException();
+    }
+    return sdkLibrary.getProperties();
   }
 
   private static class ModulesBasedFileFilter implements Mappings.DependentFilesFilter {

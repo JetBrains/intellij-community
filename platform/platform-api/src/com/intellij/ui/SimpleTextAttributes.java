@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.MagicConstant;
@@ -53,7 +54,7 @@ public final class SimpleTextAttributes {
   public static final SimpleTextAttributes GRAYED_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, UIUtil.getInactiveTextColor());
   public static final SimpleTextAttributes GRAYED_BOLD_ATTRIBUTES = new SimpleTextAttributes(STYLE_BOLD, UIUtil.getInactiveTextColor());
 
-  public static final SimpleTextAttributes SYNTHETIC_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, Color.BLUE);
+  public static final SimpleTextAttributes SYNTHETIC_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, PlatformColors.BLUE);
   public static final SimpleTextAttributes GRAY_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, Color.GRAY);
   public static final SimpleTextAttributes GRAY_ITALIC_ATTRIBUTES = new SimpleTextAttributes(STYLE_ITALIC, Color.GRAY);
   public static final SimpleTextAttributes DARK_TEXT = new SimpleTextAttributes(STYLE_PLAIN, new Color(112, 112, 164));
@@ -81,11 +82,11 @@ public final class SimpleTextAttributes {
     this(style, fgColor, null);
   }
 
-  public SimpleTextAttributes(@StyleAttributeConstant int style, Color fgColor, Color waveColor) {
+  public SimpleTextAttributes(@StyleAttributeConstant int style, Color fgColor, @Nullable Color waveColor) {
     this(null, fgColor, waveColor, style);
   }
 
-  public SimpleTextAttributes(final Color bgColor, final Color fgColor, final Color waveColor, @StyleAttributeConstant int style) {
+  public SimpleTextAttributes(@Nullable final Color bgColor, final Color fgColor, @Nullable final Color waveColor, @StyleAttributeConstant int style) {
     if ((~(STYLE_PLAIN |
            STYLE_BOLD |
            STYLE_ITALIC |
@@ -115,6 +116,7 @@ public final class SimpleTextAttributes {
   /**
    * @return background color
    */
+  @Nullable
   public Color getBgColor() {
     return myBgColor;
   }
@@ -123,6 +125,7 @@ public final class SimpleTextAttributes {
    * @return wave color. The method can return <code>null</code>. <code>null</code>
    *         means that color of wave is the same as foreground color.
    */
+  @Nullable
   public Color getWaveColor() {
     return myWaveColor;
   }

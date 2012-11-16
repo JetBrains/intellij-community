@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.execution;
 
 import com.google.common.base.Predicates;
 import com.google.common.collect.Maps;
+import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
@@ -141,6 +142,7 @@ public class MavenRunnerParameters implements Cloneable {
   }
 
   @OptionTag("profilesMap")
+  @MapAnnotation(sortBeforeSave = false)
   public Map<String, Boolean> getProfilesMap() {
     return myProfilesMap;
   }

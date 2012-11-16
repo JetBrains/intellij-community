@@ -30,7 +30,7 @@ public class PresentationFactory {
 
   public final Presentation getPresentation(@NotNull AnAction action){
     Presentation presentation = myAction2Presentation.get(action);
-    if (presentation == null){
+    if (presentation == null || !action.isDefaultIcon()){
       presentation = action.getTemplatePresentation().clone();
       myAction2Presentation.put(action, processPresentation(presentation));
     }

@@ -20,6 +20,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.EditChangelistSupport;
+import com.intellij.tasks.ChangeListInfo;
+import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.actions.OpenTaskDialog;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TextFieldWithAutoCompletionContributor;
@@ -48,7 +50,7 @@ public class TaskChangelistSupport implements EditChangelistSupport {
     TextFieldWithAutoCompletionContributor.installCompletion(document, myProject, completionProvider, false);
   }
 
-  public Consumer<LocalChangeList> addControls(JPanel bottomPanel, LocalChangeList initial) {
+  public Consumer<LocalChangeList> addControls(JPanel bottomPanel, final LocalChangeList initial) {
     final JCheckBox checkBox = new JCheckBox("Track context");
     checkBox.setMnemonic('t');
     checkBox.setToolTipText("Reload context (e.g. open editors) when changelist is set active");
@@ -58,9 +60,27 @@ public class TaskChangelistSupport implements EditChangelistSupport {
     bottomPanel.add(checkBox);
     return new Consumer<LocalChangeList>() {
       public void consume(LocalChangeList changeList) {
-        myTaskManager.getState().trackContextForNewChangelist = checkBox.isSelected();
-        if (checkBox.isSelected()) {
-          myTaskManager.associateWithTask(changeList);
+        if (initial == null) {
+          myTaskManager.getState().trackContextForNewChangelist = checkBox.isSelected();
+          if (checkBox.isSelected()) {
+            myTaskManager.trackContext(changeList);
+          }
+          else {
+            myTaskManager.getActiveTask().addChangelist(new ChangeListInfo(changeList));
+          }
+        }
+        else {
+          final LocalTask associatedTask = myTaskManager.getAssociatedTask(changeList);
+          if (checkBox.isSelected()) {
+            if (associatedTask == null) {
+              myTaskManager.trackContext(changeList);
+            }
+          }
+          else {
+            if (associatedTask != null) {
+              myTaskManager.removeTask(associatedTask);
+            }
+          }
         }
       }
     };

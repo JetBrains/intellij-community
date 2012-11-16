@@ -45,7 +45,10 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
@@ -66,6 +69,7 @@ import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
 import com.intellij.refactoring.util.occurrences.NotInSuperCallOccurrenceFilter;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -385,7 +389,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       if (hasErrors[0]) return null;
 
       final PsiReferenceExpression refExpr = PsiTreeUtil.getParentOfType(toBeExpression.findElementAt(refIdx[0]), PsiReferenceExpression.class);
-      assert refExpr != null;
+      if (refExpr == null) return null;
       if (toBeExpression == refExpr && refIdx[0] > 0) {
         return null;
       }
@@ -539,6 +543,23 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
     final PsiFile file = anchorStatement.getContainingFile();
     LOG.assertTrue(file != null, "expr.getContainingFile() == null");
+    final PsiElement nameSuggestionContext = editor != null ? file.findElementAt(editor.getCaretModel().getOffset()) : null;
+    final RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(expr.getLanguage());
+    final boolean isInplaceAvailableOnDataContext =
+      supportProvider != null &&
+      editor.getSettings().isVariableInplaceRenameEnabled() &&
+      supportProvider.isInplaceIntroduceAvailable(expr, nameSuggestionContext) &&
+      !ApplicationManager.getApplication().isUnitTestMode() &&
+      !isInJspHolderMethod(expr);
+
+    if (isInplaceAvailableOnDataContext) {
+      final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+      checkInLoopCondition(expr, conflicts);
+      if (!conflicts.isEmpty()) {
+        showErrorMessage(project, editor, StringUtil.join(conflicts.values(), "<br>"));
+        return false;
+      }
+    }
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return false;
 
@@ -550,14 +571,6 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
     final boolean hasWriteAccess = fillChoices(expr, occurrences, occurrencesMap);
 
-    final PsiElement nameSuggestionContext = editor != null ? file.findElementAt(editor.getCaretModel().getOffset()) : null;
-    final RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(expr.getLanguage());
-    final boolean isInplaceAvailableOnDataContext =
-      supportProvider != null &&
-      editor.getSettings().isVariableInplaceRenameEnabled() &&
-      supportProvider.isInplaceIntroduceAvailable(expr, nameSuggestionContext) &&
-      !ApplicationManager.getApplication().isUnitTestMode() &&
-      !isInJspHolderMethod(expr);
     final boolean inFinalContext = occurrenceManager.isInFinalContext();
     final InputValidator validator = new InputValidator(this, project, anchorStatementIfAll, anchorStatement, occurrenceManager);
     final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(project, originalType, expr, occurrences);
@@ -775,7 +788,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
           PsiDeclarationStatement declaration = JavaPsiFacade.getInstance(project).getElementFactory()
             .createVariableDeclarationStatement(settings.getEnteredName(), selectedType.getType(), initializer);
           if (!isInsideLoop) {
-            declaration = (PsiDeclarationStatement) container.addBefore(declaration, anchor);
+            declaration = addDeclaration(declaration, initializer);
             LOG.assertTrue(expr1.isValid());
             if (deleteSelf) { // never true
               final PsiElement lastChild = statement.getLastChild();
@@ -832,6 +845,32 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
         } catch (IncorrectOperationException e) {
           LOG.error(e);
         }
+      }
+
+      private PsiDeclarationStatement addDeclaration(PsiDeclarationStatement declaration, PsiExpression initializer) {
+        if (anchor instanceof PsiDeclarationStatement) {
+          final PsiElement[] declaredElements = ((PsiDeclarationStatement)anchor).getDeclaredElements();
+          if (declaredElements.length > 1) {
+            final int [] usedFirstVar = new int[] {-1};
+            initializer.accept(new JavaRecursiveElementWalkingVisitor() {
+              @Override
+              public void visitReferenceExpression(PsiReferenceExpression expression) {
+                final int i = ArrayUtilRt.find(declaredElements, expression.resolve());
+                if (i > -1) {
+                  usedFirstVar[0] = Math.max(i, usedFirstVar[0]);
+                }
+                super.visitReferenceExpression(expression);
+              }
+            });
+            if (usedFirstVar[0] > -1) {
+              final PsiVariable psiVariable = (PsiVariable)declaredElements[usedFirstVar[0]];
+              psiVariable.normalizeDeclaration();
+              final PsiDeclarationStatement parDeclarationStatement = PsiTreeUtil.getParentOfType(psiVariable, PsiDeclarationStatement.class);
+              return (PsiDeclarationStatement)container.addAfter(declaration, parDeclarationStatement);
+            }
+          }
+        }
+        return  (PsiDeclarationStatement) container.addBefore(declaration, anchor);
       }
     };
   }

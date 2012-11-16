@@ -79,11 +79,13 @@ public abstract class ChooseByNameFilter<T> {
                             @NotNull Project project) {
     myParentPopup = popup;
     DefaultActionGroup actionGroup = new DefaultActionGroup("go.to.file.filter", false);
-    ToggleAction action = new ToggleAction("Filter", "Filter files by type", AllIcons.Icons.Inspector.UseFilter) {
+    ToggleAction action = new ToggleAction("Filter", "Filter files by type", AllIcons.General.Filter) {
+      @Override
       public boolean isSelected(final AnActionEvent e) {
         return myPopup != null;
       }
 
+      @Override
       public void setSelected(final AnActionEvent e, final boolean state) {
         if (state) {
           createPopup();
@@ -115,6 +117,7 @@ public abstract class ChooseByNameFilter<T> {
     JPanel buttons = new JPanel();
     JButton all = new JButton("All");
     all.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         myChooser.setAllElementsMarked(true);
       }
@@ -122,6 +125,7 @@ public abstract class ChooseByNameFilter<T> {
     buttons.add(all);
     JButton none = new JButton("None");
     none.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         myChooser.setAllElementsMarked(false);
       }
@@ -129,6 +133,7 @@ public abstract class ChooseByNameFilter<T> {
     buttons.add(none);
     JButton invert = new JButton("Invert");
     invert.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         final int count = myChooser.getElementCount();
         for (int i = 0; i < count; i++) {
@@ -150,7 +155,9 @@ public abstract class ChooseByNameFilter<T> {
    * @param filterConfiguration
    * @return a created file chooser
    */
-  protected ElementsChooser<T> createChooser(final FilteringGotoByModel<T> model, final ChooseByNameFilterConfiguration<T> filterConfiguration) {
+  @NotNull
+  protected ElementsChooser<T> createChooser(@NotNull final FilteringGotoByModel<T> model,
+                                             @NotNull final ChooseByNameFilterConfiguration<T> filterConfiguration) {
     List<T> elements = new ArrayList<T>(getAllFilterValues());
     final ElementsChooser<T> chooser = new ElementsChooser<T>(elements, true) {
       @Override
@@ -159,7 +166,7 @@ public abstract class ChooseByNameFilter<T> {
       }
 
       @Override
-      protected Icon getItemIcon(final T value) {
+      protected Icon getItemIcon(@NotNull final T value) {
         return iconForFilterValue(value);
       }
     };
@@ -173,20 +180,21 @@ public abstract class ChooseByNameFilter<T> {
     }
     updateModel(model, chooser, true);
     chooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<T>() {
+      @Override
       public void elementMarkChanged(final T element, final boolean isMarked) {
         filterConfiguration.setVisible(element, isMarked);
         updateModel(model, chooser, false);
       }
     });
     return chooser;
-
   }
 
-  protected abstract String textForFilterValue(T value);
+  protected abstract String textForFilterValue(@NotNull T value);
 
   @Nullable
-  protected abstract Icon iconForFilterValue(T value);
+  protected abstract Icon iconForFilterValue(@NotNull T value);
 
+  @NotNull
   protected abstract Collection<T> getAllFilterValues();
 
   /**
@@ -195,7 +203,7 @@ public abstract class ChooseByNameFilter<T> {
    * @param gotoFileModel a model
    * @param chooser       a file type chooser
    */
-  protected void updateModel(final FilteringGotoByModel<T> gotoFileModel, ElementsChooser<T> chooser, boolean initial) {
+  protected void updateModel(@NotNull FilteringGotoByModel<T> gotoFileModel, @NotNull ElementsChooser<T> chooser, boolean initial) {
     final List<T> markedElements = chooser.getMarkedElements();
     gotoFileModel.setFilterItems(markedElements);
     myParentPopup.rebuildList(initial);
@@ -212,6 +220,7 @@ public abstract class ChooseByNameFilter<T> {
         .setResizable(true).setCancelOnClickOutside(false).setMinSize(new Dimension(200, 200))
         .setDimensionServiceKey(myProject, "GotoFile_FileTypePopup", false).createPopup();
     myPopup.addListener(new JBPopupListener.Adapter() {
+      @Override
       public void onClosed(LightweightWindowEvent event) {
         myPopup = null;
       }

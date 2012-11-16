@@ -128,22 +128,37 @@ public class OldFrameworkSupportProviderWrapper extends FrameworkSupportInModule
     public FrameworkSupportConfigurableWrapper(FrameworkSupportConfigurable configurable) {
       Disposer.register(this, configurable);
       myConfigurable = configurable;
+      myVersionFilter = getVersionFilter(configurable);
+    }
+
+    private FrameworkLibraryVersionFilter getVersionFilter(FrameworkSupportConfigurable configurable) {
       if (configurable instanceof FrameworkSupportWithLibrary) {
-        myVersionFilter = FrameworkLibraryVersionFilter.ALL;
+        final FrameworkLibraryVersionFilter filter = configurable.getVersionFilter();
+        if (filter != null) {
+          return filter;
+        }
       }
-      else {
-        myVersionFilter = new FrameworkLibraryVersionFilter() {
-          @Override
-          public boolean isAccepted(@NotNull FrameworkLibraryVersion version) {
-            final FrameworkVersion selectedVersion = myConfigurable.getSelectedVersion();
-            return selectedVersion == null || version.getVersionString().equals(selectedVersion.getVersionName());
-          }
-        };
-      }
+      return new FrameworkLibraryVersionFilter() {
+        @Override
+        public boolean isAccepted(@NotNull FrameworkLibraryVersion version) {
+          final FrameworkVersion selectedVersion = myConfigurable.getSelectedVersion();
+          return selectedVersion == null || version.getVersionString().equals(selectedVersion.getVersionName());
+        }
+      };
     }
 
     public FrameworkSupportConfigurable getConfigurable() {
       return myConfigurable;
+    }
+
+    @Override
+    public void onFrameworkSelectionChanged(boolean selected) {
+      myConfigurable.onFrameworkSelectionChanged(selected);
+    }
+
+    @Override
+    public boolean isVisible() {
+      return myConfigurable.isVisible();
     }
 
     @Override

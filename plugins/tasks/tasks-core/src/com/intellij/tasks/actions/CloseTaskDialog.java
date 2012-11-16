@@ -34,12 +34,9 @@ public class CloseTaskDialog extends DialogWrapper {
   private JLabel myTaskLabel;
 
   public CloseTaskDialog(Project project, LocalTask task) {
-
     super(project, false);
 
-    boolean hasChanges = !TaskManager.getManager(project).getOpenChangelists(task).isEmpty();
-
-    myCommitChanges.setEnabled(hasChanges);
+    myCommitChanges.setEnabled(TaskManager.getManager(project).isVcsEnabled() && !task.getChangeLists().isEmpty());
     myCloseIssue.setEnabled(task.isIssue());
 
     myTaskLabel.setIcon(task.getIcon());

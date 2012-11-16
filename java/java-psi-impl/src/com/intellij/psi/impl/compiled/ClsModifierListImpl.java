@@ -17,9 +17,9 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiModifierListStub;
-import com.intellij.psi.impl.source.PsiModifierListImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -41,13 +41,7 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
 
   @Override
   public boolean hasModifierProperty(@NotNull String name) {
-    return hasMaskModifierProperty(name, getStub().getModifiersMask());
-  }
-
-  public static boolean hasMaskModifierProperty(String name, int mask) {
-    int flag = PsiModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP.get(name);
-    assert flag != 0;
-    return (mask & flag) != 0;
+    return ModifierFlags.hasModifierProperty(name, getStub().getModifiersMask());
   }
 
   @Override
@@ -149,6 +143,10 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
     }
     if (hasModifierProperty(PsiModifier.STRICTFP)) {
       buffer.append(PsiModifier.STRICTFP);
+      buffer.append(' ');
+    }
+    if (hasModifierProperty(PsiModifier.DEFAULT)) {
+      buffer.append(PsiModifier.DEFAULT);
       buffer.append(' ');
     }
   }

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.BundleBase;
 import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -58,7 +59,6 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.text.MessageFormat;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -653,7 +653,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
     String description;
     try {
-      description = MessageFormat.format(message, reference.getCanonicalText());
+      description = BundleBase.format(message, reference.getCanonicalText()); // avoid double formatting
     }
     catch (IllegalArgumentException ex) {
       // unresolvedMessage provided by third-party reference contains wrong format string (e.g. {}), tolerate it

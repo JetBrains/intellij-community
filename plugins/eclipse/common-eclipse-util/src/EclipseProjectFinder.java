@@ -23,6 +23,7 @@ package org.jetbrains.idea.eclipse;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Processor;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 public class EclipseProjectFinder implements EclipseXml {
   public static void findModuleRoots(final List<String> paths, final String rootPath, @Nullable Processor<String> progressUpdater) {
@@ -109,6 +111,25 @@ public class EclipseProjectFinder implements EclipseXml {
       }
     }
     return null;
+  }
+
+  public static void collectUnknownNatures(String path, Set<String> naturesNames) {
+    final File projectfile = new File(path, DOT_PROJECT_EXT);
+    try {
+      final Element natures = JDOMUtil.loadDocument(projectfile).getRootElement().getChild("natures");
+      if (natures != null) {
+        final List naturesList = natures.getChildren("nature");
+        for (Object nature : naturesList) {
+          final String natureName = ((Element)nature).getText();
+          if (!StringUtil.isEmptyOrSpaces(natureName)) {
+            naturesNames.add(natureName);
+          }
+        }
+      }
+    }
+    catch (Exception ignore) {
+    }
+    naturesNames.remove("org.eclipse.jdt.core.javanature");
   }
 
   public static class LinkedResource {

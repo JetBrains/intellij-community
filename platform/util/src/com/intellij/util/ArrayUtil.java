@@ -92,6 +92,21 @@ public class ArrayUtil extends ArrayUtilRt {
     System.arraycopy(array, 0, result, 0, Math.min(oldSize, newSize));
     return result;
   }
+  @NotNull
+  public static <T> T[] realloc(@NotNull T[] array, final int newSize, @NotNull ArrayFactory<T> factory) {
+    final int oldSize = array.length;
+    if (oldSize == newSize) {
+      return array;
+    }
+
+    T[] result = factory.create(newSize);
+    if (newSize == 0) {
+      return result;
+    }
+
+    System.arraycopy(array, 0, result, 0, Math.min(oldSize, newSize));
+    return result;
+  }
 
   @NotNull
   public static int[] append(@NotNull int[] array, int value) {
@@ -695,7 +710,7 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @NotNull
-  public static String[] toStringArray(@NotNull Collection<String> collection) {
+  public static String[] toStringArray(@Nullable Collection<String> collection) {
     return ArrayUtilRt.toStringArray(collection);
   }
 

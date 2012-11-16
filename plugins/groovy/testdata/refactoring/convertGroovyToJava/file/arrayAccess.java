@@ -1,4 +1,4 @@
-public class Foo extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
+public class Foo {
 public void putAt(java.lang.String s, java.lang.Integer x, java.lang.Object value) {
 }
 

@@ -1310,5 +1310,11 @@ public class ListUtils {
     assert myFixture.lookupElementStrings.containsAll(['foo', 'bar'])
   }
 
+  public void testDontAutoInsertMiddleMatch() {
+    configure()
+    checkResult()
+    assert lookup.items.size() == 1
+  }
+
 
 }

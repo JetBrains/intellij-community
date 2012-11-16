@@ -75,9 +75,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     return new JavaElementVisitor() {
       @Override
       public void visitField(PsiField field) {
-        if (isNullLiteralExpression(field.getInitializer()) && NullableNotNullManager.isNotNull(field)) {
-          holder.registerProblem(field.getInitializer(), InspectionsBundle.message("dataflow.message.initializing.field.with.null"));
-        }
+        analyzeCodeBlock(field, holder);
       }
 
       @Override
@@ -92,19 +90,19 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     };
   }
 
-  private void analyzeCodeBlock(final PsiCodeBlock body, ProblemsHolder holder) {
-    if (body == null) return;
+  private void analyzeCodeBlock(@Nullable final PsiElement scope, ProblemsHolder holder) {
+    if (scope == null) return;
     final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(SUGGEST_NULLABLE_ANNOTATIONS);
-    final StandardInstructionVisitor visitor = new DataFlowInstructionVisitor();
-    final RunnerResult rc = dfaRunner.analyzeMethod(body, visitor);
+    final StandardInstructionVisitor visitor = new DataFlowInstructionVisitor(dfaRunner);
+    final RunnerResult rc = dfaRunner.analyzeMethod(scope, visitor);
     if (rc == RunnerResult.OK) {
       if (dfaRunner.problemsDetected(visitor)) {
         createDescription(dfaRunner, holder, visitor);
       }
     }
     else if (rc == RunnerResult.TOO_COMPLEX) {
-      if (body.getParent() instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod)body.getParent();
+      if (scope.getParent() instanceof PsiMethod) {
+        PsiMethod method = (PsiMethod)scope.getParent();
         final PsiIdentifier name = method.getNameIdentifier();
         if (name != null) { // Might be null for synthetic methods like JSP page.
           holder.registerProblem(name, InspectionsBundle.message("dataflow.too.complex"), ProblemHighlightType.WEAK_WARNING);
@@ -283,7 +281,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
           createSimplifyToAssignmentFix()
         );
       }
-      else if (shouldReportConditionAlwaysTrueOrFalse(psiAnchor, evaluatesToTrue) && !visitor.silenceConstantCondition(psiAnchor)) {
+      else if (!skipReportingConstantCondition(visitor, psiAnchor, evaluatesToTrue)) {
         final LocalQuickFix fix = createSimplifyBooleanExpressionFix(psiAnchor, evaluatesToTrue);
         String message = InspectionsBundle.message(underBinary ?
                                                    "dataflow.message.constant.condition.when.reached" :
@@ -292,6 +290,11 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       }
       reportedAnchors.add(psiAnchor);
     }
+  }
+
+  private boolean skipReportingConstantCondition(StandardInstructionVisitor visitor, PsiElement psiAnchor, boolean evaluatesToTrue) {
+    return DONT_REPORT_TRUE_ASSERT_STATEMENTS && isAssertionEffectively(psiAnchor, evaluatesToTrue) ||
+           visitor.silenceConstantCondition(psiAnchor);
   }
 
   private static void reportNullableArguments(StandardDataFlowRunner runner, ProblemsHolder holder) {
@@ -339,11 +342,24 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     }
   }
 
-  private boolean shouldReportConditionAlwaysTrueOrFalse(PsiElement psiAnchor, boolean evaluatesToTrue) {
-    if (psiAnchor.getParent() instanceof PsiAssertStatement && DONT_REPORT_TRUE_ASSERT_STATEMENTS && evaluatesToTrue) {
-      return false;
+  private static boolean isAssertionEffectively(PsiElement psiAnchor, boolean evaluatesToTrue) {
+    PsiElement parent = psiAnchor.getParent();
+    if (parent instanceof PsiAssertStatement) {
+      return evaluatesToTrue;
     }
-    return true;
+    if (parent instanceof PsiIfStatement && psiAnchor == ((PsiIfStatement)parent).getCondition()) {
+      PsiStatement thenBranch = ((PsiIfStatement)parent).getThenBranch();
+      if (thenBranch instanceof PsiThrowStatement) {
+        return !evaluatesToTrue;
+      }
+      if (thenBranch instanceof PsiBlockStatement) {
+        PsiStatement[] statements = ((PsiBlockStatement)thenBranch).getCodeBlock().getStatements();
+        if (statements.length == 1 && statements[0] instanceof PsiThrowStatement) {
+          return !evaluatesToTrue;
+        }
+      }
+    }
+    return false;
   }
 
   private static boolean isAtRHSOfBooleanAnd(PsiElement expr) {
@@ -580,38 +596,41 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
   }
 
   private static class DataFlowInstructionVisitor extends StandardInstructionVisitor {
+    private final StandardDataFlowRunner myRunner;
 
-    protected void onAssigningToNotNullableVariable(AssignInstruction instruction, DataFlowRunner runner) {
-      ((StandardDataFlowRunner)runner).onAssigningToNotNullableVariable(instruction.getRExpression());
+    private DataFlowInstructionVisitor(StandardDataFlowRunner runner) {
+      myRunner = runner;
     }
 
-    protected void onNullableReturn(CheckReturnValueInstruction instruction, DataFlowRunner runner) {
-      ((StandardDataFlowRunner)runner).onNullableReturn(instruction.getReturn());
+    protected void onAssigningToNotNullableVariable(AssignInstruction instruction) {
+      myRunner.onAssigningToNotNullableVariable(instruction.getRExpression());
     }
 
-    protected void onInstructionProducesNPE(FieldReferenceInstruction instruction, DataFlowRunner runner) {
-      ((StandardDataFlowRunner)runner).onInstructionProducesNPE(instruction);
+    protected void onNullableReturn(CheckReturnValueInstruction instruction) {
+      myRunner.onNullableReturn(instruction.getReturn());
     }
 
-    protected void onInstructionProducesCCE(TypeCastInstruction instruction, DataFlowRunner runner) {
-      ((StandardDataFlowRunner)runner).onInstructionProducesCCE(instruction);
+    protected void onInstructionProducesCCE(TypeCastInstruction instruction) {
+      myRunner.onInstructionProducesCCE(instruction);
     }
 
-    protected void onInstructionProducesNPE(MethodCallInstruction instruction, DataFlowRunner runner) {
-      ((StandardDataFlowRunner)runner).onInstructionProducesNPE(instruction);
+    protected void onInstructionProducesNPE(Instruction instruction) {
+      if (instruction instanceof MethodCallInstruction &&
+          ((MethodCallInstruction)instruction).getMethodType() == MethodCallInstruction.MethodType.UNBOXING) {
+        myRunner.onUnboxingNullable(((MethodCallInstruction)instruction).getContext());
+      }
+      else {
+        myRunner.onInstructionProducesNPE(instruction);
+      }
     }
 
-    protected void onUnboxingNullable(MethodCallInstruction instruction, DataFlowRunner runner) {
-      ((StandardDataFlowRunner)runner).onUnboxingNullable(instruction.getContext());
-    }
-
-    protected void onPassingNullParameter(DataFlowRunner runner, PsiExpression arg) {
-      ((StandardDataFlowRunner)runner).onPassingNullParameter(arg); // Parameters on stack are reverted.
+    protected void onPassingNullParameter(PsiExpression arg) {
+      myRunner.onPassingNullParameter(arg);
     }
 
     @Override
     protected void onPassingNullParameterToNonAnnotated(DataFlowRunner runner, PsiExpression arg) {
-      ((StandardDataFlowRunner)runner).onPassingNullParameterToNonAnnotated(arg);
+      myRunner.onPassingNullParameterToNonAnnotated(arg);
     }
   }
 }

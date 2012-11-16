@@ -217,16 +217,8 @@ public class StringUtil extends StringUtilRt {
       fromIndex = 0;
     }
 
-    int max = sourceCount - 1;
-
-    for (int i = fromIndex; i <= max; i++) {
-      /* Look for first character. */
-      if (!charsEqualIgnoreCase(where.charAt(i), what)) {
-        while (++i <= max && !charsEqualIgnoreCase(where.charAt(i), what)) ;
-      }
-
-      /* Found first character, now look at the rest of v2 */
-      if (i <= max) {
+    for (int i = fromIndex; i < sourceCount; i++) {
+      if (charsEqualIgnoreCase(where.charAt(i), what)) {
         return i;
       }
     }

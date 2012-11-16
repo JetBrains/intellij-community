@@ -15,7 +15,9 @@
  */
 package com.intellij.designer.designSurface;
 
+import com.intellij.designer.componentTree.TreeDropListener;
 import com.intellij.designer.designSurface.tools.ToolProvider;
+import com.intellij.designer.palette.PaletteItem;
 import com.intellij.openapi.actionSystem.DataProvider;
 import org.jetbrains.annotations.NonNls;
 
@@ -37,6 +39,7 @@ public final class GlassLayer extends JComponent implements DataProvider {
     myToolProvider = provider;
     myArea = area;
     enableEvents(EVENT_FLAGS);
+    new TreeDropListener(this, area, provider, PaletteItem.class);
   }
 
   @Override

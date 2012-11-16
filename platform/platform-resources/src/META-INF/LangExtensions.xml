@@ -93,7 +93,7 @@
                       serviceImplementation="com.intellij.openapi.paths.PathReferenceManagerImpl"/>
 
   <applicationService serviceInterface="com.intellij.codeInsight.folding.CodeFoldingSettings"
-                      serviceImplementation="com.intellij.codeInsight.folding.CodeFoldingSettings"/>
+                      serviceImplementation="com.intellij.codeInsight.folding.CodeFoldingSettingsImpl"/>
   <exportable serviceInterface="com.intellij.codeInsight.folding.CodeFoldingSettings"/>
 
   <applicationService serviceInterface="com.intellij.psi.statistics.StatisticsManager"

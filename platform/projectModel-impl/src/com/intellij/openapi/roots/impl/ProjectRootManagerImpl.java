@@ -137,6 +137,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     myRootsCache = new OrderRootsCache(project);
   }
 
+  @Override
   @NotNull
   public ProjectFileIndex getFileIndex() {
     return ProjectFileIndex.SERVICE.getInstance(myProject);
@@ -188,6 +189,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return new ModulesOrderEnumerator(myProject, modules);
   }
 
+  @Override
   public VirtualFile[] getContentRootsFromAllModules() {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     final Module[] modules = getModuleManager().getSortedModules();
@@ -199,14 +201,17 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
+  @Override
   public Sdk getProjectSdk() {
     return myProjectSdkName == null ? null : ProjectJdkTable.getInstance().findJdk(myProjectSdkName, myProjectSdkType);
   }
 
+  @Override
   public String getProjectSdkName() {
     return myProjectSdkName;
   }
 
+  @Override
   public void setProjectSdk(Sdk sdk) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (sdk == null) {
@@ -218,49 +223,60 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       myProjectSdkType = sdk.getSdkType().getName();
     }
     mergeRootsChangesDuring(new Runnable() {
+      @Override
       public void run() {
         myProjectJdkEventDispatcher.getMulticaster().projectJdkChanged();
       }
     });
   }
 
+  @Override
   public void setProjectSdkName(String name) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     myProjectSdkName = name;
 
     mergeRootsChangesDuring(new Runnable() {
+      @Override
       public void run() {
         myProjectJdkEventDispatcher.getMulticaster().projectJdkChanged();
       }
     });
   }
 
+  @Override
   public void addProjectJdkListener(ProjectJdkListener listener) {
     myProjectJdkEventDispatcher.addListener(listener);
   }
 
+  @Override
   public void removeProjectJdkListener(ProjectJdkListener listener) {
     myProjectJdkEventDispatcher.removeListener(listener);
   }
 
+  @Override
   public void projectOpened() {
   }
 
+  @Override
   public void projectClosed() {
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "ProjectRootManager";
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
     myJdkTableMultiListener = null;
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     for (ProjectExtension extension : Extensions.getExtensions(ProjectExtension.EP_NAME, myProject)) {
       extension.readExternal(element);
@@ -269,6 +285,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     myProjectSdkType = element.getAttributeValue(PROJECT_JDK_TYPE_ATTR);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     element.setAttribute(ATTRIBUTE_VERSION, "2");
     for (ProjectExtension extension : Extensions.getExtensions(ProjectExtension.EP_NAME, myProject)) {
@@ -286,6 +303,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private boolean myMergedCallHasRootChange = false;
   private int myRootsChangesDepth = 0;
 
+  @Override
   public void mergeRootsChangesDuring(@NotNull Runnable runnable) {
     if (getBatchSession(false).myBatchLevel == 0 && !myMergedCallStarted) {
       LOG.assertTrue(myRootsChangesDepth == 0,
@@ -313,6 +331,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     clearScopesCachesForModules();
   }
 
+  @Override
   public void clearScopesCachesForModules() {
     myRootsCache.clearCache();
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
@@ -321,6 +340,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     }
   }
 
+  @Override
   public void makeRootsChange(@NotNull Runnable runnable, boolean filetypes, boolean fireEvents) {
     if (myProject.isDisposed()) return;
     BatchSession session = getBatchSession(filetypes);
@@ -484,9 +504,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       }
     }
 
+    @Override
     public void afterLibraryAdded(final Library newLibrary) {
       myModificationCount++;
       mergeRootsChangesDuring(new Runnable() {
+        @Override
         public void run() {
           for (LibraryTable.Listener listener : myListeners) {
             listener.afterLibraryAdded(newLibrary);
@@ -495,9 +517,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       });
     }
 
+    @Override
     public void afterLibraryRenamed(final Library library) {
       myModificationCount++;
       mergeRootsChangesDuring(new Runnable() {
+        @Override
         public void run() {
           for (LibraryTable.Listener listener : myListeners) {
             listener.afterLibraryRenamed(library);
@@ -506,9 +530,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       });
     }
 
+    @Override
     public void beforeLibraryRemoved(final Library library) {
       myModificationCount++;
       mergeRootsChangesDuring(new Runnable() {
+        @Override
         public void run() {
           for (LibraryTable.Listener listener : myListeners) {
             listener.beforeLibraryRemoved(library);
@@ -517,9 +543,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       });
     }
 
+    @Override
     public void afterLibraryRemoved(final Library library) {
       myModificationCount++;
       mergeRootsChangesDuring(new Runnable() {
+        @Override
         public void run() {
           for (LibraryTable.Listener listener : myListeners) {
             listener.afterLibraryRemoved(library);
@@ -552,24 +580,30 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       uninstallListener(true);
     }
 
+    @Override
     public void jdkAdded(final Sdk jdk) {
       mergeRootsChangesDuring(new Runnable() {
+        @Override
         public void run() {
           myDispatcher.getMulticaster().jdkAdded(jdk);
         }
       });
     }
 
+    @Override
     public void jdkRemoved(final Sdk jdk) {
       mergeRootsChangesDuring(new Runnable() {
+        @Override
         public void run() {
           myDispatcher.getMulticaster().jdkRemoved(jdk);
         }
       });
     }
 
+    @Override
     public void jdkNameChanged(final Sdk jdk, final String previousName) {
       mergeRootsChangesDuring(new Runnable() {
+        @Override
         public void run() {
           myDispatcher.getMulticaster().jdkNameChanged(jdk, previousName);
         }
@@ -613,6 +647,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private class RootProviderChangeListener implements RootProvider.RootSetChangedListener {
     private boolean myInsideRootsChange;
 
+    @Override
     public void rootSetChanged(final RootProvider wrapper) {
       if (myInsideRootsChange) return;
       myInsideRootsChange = true;
@@ -625,6 +660,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     }
   }
 
+  @Override
   public long getModificationCount() {
     return myModificationCount;
   }

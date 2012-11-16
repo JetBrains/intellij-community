@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -318,7 +318,7 @@ public class GenerationUtil {
         ModifierListGenerator.writeModifiers(text, parameter.getModifierList(), ModifierListGenerator.JAVA_MODIFIERS, true);
       }
       if (context != null) {
-        if (context.analyzedVars.toMakeFinal(parameter)) {
+        if (context.analyzedVars.toMakeFinal(parameter) && !parameter.hasModifierProperty(PsiModifier.FINAL)) {
           text.append(PsiModifier.FINAL).append(' ');
         }
         writeType(text, context.typeProvider.getParameterType(parameter), parameter, classNameProvider);

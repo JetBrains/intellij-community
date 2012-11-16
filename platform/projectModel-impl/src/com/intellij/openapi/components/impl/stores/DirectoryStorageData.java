@@ -109,6 +109,7 @@ public class DirectoryStorageData {
   public Map<IFile, Long> getAllStorageFiles() {
     final Map<IFile, Long> allStorageFiles = new THashMap<IFile, Long>();
     process(new StorageDataProcessor() {
+      @Override
       public void process(final String componentName, final IFile file, final Element element) {
         allStorageFiles.put(file, file.getTimeStamp());
       }
@@ -129,6 +130,7 @@ public class DirectoryStorageData {
   public void process(@NotNull final StorageDataProcessor processor) {
     for (final String componentName : myStates.keySet()) {
       processComponent(componentName, new PairConsumer<IFile, Element>() {
+        @Override
         public void consume(final IFile iFile, final Element element) {
           processor.process(componentName, iFile, element);
         }
@@ -136,6 +138,7 @@ public class DirectoryStorageData {
     }
   }
 
+  @Override
   protected DirectoryStorageData clone() {
     final DirectoryStorageData result = new DirectoryStorageData();
     result.myStates = new HashMap<String, Map<IFile, Element>>(myStates);
@@ -161,6 +164,7 @@ public class DirectoryStorageData {
   public <T> T getMergedState(String componentName, Class<T> stateClass, StateSplitter splitter, @Nullable T mergeInto) {
     final List<Element> subElements = new ArrayList<Element>();
     processComponent(componentName, new PairConsumer<IFile, Element>() {
+      @Override
       public void consume(final IFile iFile, final Element element) {
         final List children = element.getChildren();
         assert children.size() == 1 : JDOMUtil.writeElement(element, File.separator);

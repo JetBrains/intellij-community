@@ -1,5 +1,7 @@
 package com.intellij.tasks.mantis;
 
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.tasks.Comment;
 import com.intellij.tasks.Task;
@@ -65,14 +67,23 @@ public class MantisRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public Task[] getIssues(@Nullable String request, int max, long since) throws Exception {
+  public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
+    return getIssues(query, max, since, new EmptyProgressIndicator());
+  }
+
+  @Override
+  public Task[] getIssues(@Nullable final String query,
+                          final int max,
+                          final long since,
+                          @NotNull final ProgressIndicator cancelled) throws Exception {
     MantisConnectPortType soap = createSoap();
     List<Task> tasks = new ArrayList<Task>(max);
     int page = 1;
-    int issuesOnPage = StringUtils.isEmpty(request) ? max : max * request.length() * 5;
+    int issuesOnPage = StringUtils.isEmpty(query) ? max : max * query.length() * 5;
     while (true) {
+      cancelled.checkCanceled();
       final List<Task> issuesFromPage = getIssues(page, issuesOnPage, soap);
-      final List<Task> filteredTasks = TaskSearchSupport.filterTasks(request != null ? request : "", issuesFromPage);
+      final List<Task> filteredTasks = TaskSearchSupport.filterTasks(query != null ? query : "", issuesFromPage);
       tasks.addAll(filteredTasks);
       if (issuesFromPage.size() < issuesOnPage || tasks.size() >= max) {
         break;
@@ -130,7 +141,7 @@ public class MantisRepository extends BaseRepositoryImpl {
     if (id == null) return null;
     String summary = data.getSummary();
     if (summary == null) return null;
-    MantisTask task = new MantisTask(id, summary, myProject, this) {
+    return new MantisTask(id, summary, myProject, this, data.getLast_updated().getTime()) {
       @Override
       public String getDescription() {
         return data.getDescription();
@@ -164,11 +175,13 @@ public class MantisRepository extends BaseRepositoryImpl {
         });
         return comments.toArray(new Comment[comments.size()]);
       }
-    };
 
-    task.setUpdated(data.getLast_updated().getTime());
-    task.setCreated(data.getDate_submitted().getTime());
-    return task;
+      @Nullable
+      @Override
+      public Date getCreated() {
+        return data.getDate_submitted().getTime();
+      }
+    };
   }
 
   @Nullable
@@ -177,11 +190,7 @@ public class MantisRepository extends BaseRepositoryImpl {
     if (id == null) return null;
     String summary = data.getSummary();
     if (summary == null) return null;
-    MantisTask task = new MantisTask(id, summary, myProject, this);
-
-    task.setIssue(true);
-    task.setUpdated(data.getLast_updated().getTime());
-    return task;
+    return new MantisTask(id, summary, myProject, this, data.getLast_updated().getTime());
   }
 
   public List<MantisProject> getProjects() throws Exception {

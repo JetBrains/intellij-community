@@ -42,6 +42,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+import java.util.Map;
 import java.util.Properties;
 
 public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
@@ -72,7 +74,15 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
                               @NotNull String name,
                               @NotNull String templateName,
                               boolean askForUndefinedVariables) throws IncorrectOperationException {
-    return createClassFromTemplate(dir, name, templateName, askForUndefinedVariables);
+    return createClass(dir, name, templateName, askForUndefinedVariables, Collections.<String, String>emptyMap());
+  }
+
+  @Override
+  public PsiClass createClass(@NotNull PsiDirectory dir,
+                              @NotNull String name,
+                              @NotNull String templateName,
+                              boolean askForUndefinedVariables, @NotNull final Map<String, String> additionalProperties) throws IncorrectOperationException {
+    return createClassFromTemplate(dir, name, templateName, askForUndefinedVariables, additionalProperties);
   }
 
   @Override
@@ -109,13 +119,13 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
   }
 
   private static PsiClass createClassFromTemplate(@NotNull PsiDirectory dir, String name, String templateName) throws IncorrectOperationException {
-    return createClassFromTemplate(dir, name, templateName, false);
+    return createClassFromTemplate(dir, name, templateName, false, Collections.<String, String>emptyMap());
   }
 
   private static PsiClass createClassFromTemplate(@NotNull PsiDirectory dir,
                                                   String name,
                                                   String templateName,
-                                                  boolean askToDefineVariables) throws IncorrectOperationException {
+                                                  boolean askToDefineVariables, @NotNull Map<String, String> additionalProperties) throws IncorrectOperationException {
     //checkCreateClassOrInterface(dir, name);
 
     FileTemplate template = FileTemplateManager.getInstance().getInternalTemplate(templateName);
@@ -123,6 +133,9 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
     Properties defaultProperties = FileTemplateManager.getInstance().getDefaultProperties(dir.getProject());
     Properties properties = new Properties(defaultProperties);
     properties.setProperty(FileTemplate.ATTRIBUTE_NAME, name);
+    for (Map.Entry<String, String> entry : additionalProperties.entrySet()) {
+      properties.setProperty(entry.getKey(), entry.getValue());
+    }
 
     String ext = StdFileTypes.JAVA.getDefaultExtension();
     String fileName = name + "." + ext;

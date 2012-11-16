@@ -44,22 +44,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DfaMemoryStateImpl");
   private final DfaValueFactory myFactory;
 
-  private ArrayList<SortedIntSet> myEqClasses;
-  private int myStateSize;
-  private Stack<DfaValue> myStack;
-  private TIntStack myOffsetStack;
-  private TLongHashSet myDistinctClasses;
-  private THashMap<DfaVariableValue,DfaVariableState> myVariableStates;
-  private boolean myHasDirtyFields = true;
+  private final ArrayList<SortedIntSet> myEqClasses = new ArrayList<SortedIntSet>();
+  private int myStateSize = 0;
+  private final Stack<DfaValue> myStack = new Stack<DfaValue>();
+  private TIntStack myOffsetStack = new TIntStack(1);
+  private final TLongHashSet myDistinctClasses = new TLongHashSet();
+  private final THashMap<DfaVariableValue,DfaVariableState> myVariableStates = new THashMap<DfaVariableValue, DfaVariableState>();
 
   public DfaMemoryStateImpl(final DfaValueFactory factory) {
     myFactory = factory;
-    myEqClasses = new ArrayList<SortedIntSet>();
-    myStateSize = 0;
-    myStack = new Stack<DfaValue>();
-    myDistinctClasses = new TLongHashSet();
-    myVariableStates = new THashMap<DfaVariableValue, DfaVariableState>();
-    myOffsetStack = new TIntStack(1);
   }
 
   public DfaValueFactory getFactory() {
@@ -74,13 +67,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     DfaMemoryStateImpl newState = createNew();
 
     //noinspection unchecked
-    newState.myStack = (Stack<DfaValue>)myStack.clone();
-    newState.myDistinctClasses = new TLongHashSet(myDistinctClasses.toArray());
-    newState.myEqClasses = new ArrayList<SortedIntSet>();
+    newState.myStack.addAll(myStack);
+    newState.myDistinctClasses.addAll(myDistinctClasses.toArray());
     newState.myStateSize = myStateSize;
-    newState.myVariableStates = new THashMap<DfaVariableValue, DfaVariableState>();
     newState.myOffsetStack = new TIntStack(myOffsetStack);
-    newState.myHasDirtyFields = myHasDirtyFields;
 
     for (int i = 0; i < myEqClasses.size(); i++) {
       SortedIntSet aClass = myEqClasses.get(i);
@@ -111,7 +101,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (!myStack.equals(that.myStack)) return false;
     if (!myOffsetStack.equals(that.myOffsetStack)) return false;
     if (!myVariableStates.equals(that.myVariableStates)) return false;
-    if (myHasDirtyFields != that.myHasDirtyFields) return false;
 
     int[] permutation = getPermutationToSortedState();
     int[] thatPermutation = that.getPermutationToSortedState();
@@ -338,9 +327,22 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return result;
   }
 
-  public  boolean canBeNaN(@NotNull DfaValue dfaValue) {
-    List<DfaValue> eqClasses = getEqClassesFor(dfaValue);
-    for (DfaValue eqClass : eqClasses) {
+  private boolean canBeNaN(@NotNull DfaValue dfaValue) {
+    for (DfaValue eq : getEqClassesFor(dfaValue)) {
+      if (eq instanceof DfaBoxedValue) {
+        eq = ((DfaBoxedValue)eq).getWrappedValue();
+      }
+      if (eq instanceof DfaConstValue && !isNaN(eq)) {
+        return false;
+      }
+    }
+
+    return dfaValue instanceof DfaVariableValue && TypeConversionUtil.isFloatOrDoubleType(((DfaVariableValue)dfaValue).getVariableType());
+  }
+
+
+  private boolean isEffectivelyNaN(@NotNull DfaValue dfaValue) {
+    for (DfaValue eqClass : getEqClassesFor(dfaValue)) {
       if (isNaN(eqClass)) return true;
     }
     return false;
@@ -494,11 +496,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myDistinctClasses.add(createPair(c1Index, c2Index));
   }
 
-  @Override
-  public void fieldReferenced() {
-    myHasDirtyFields = true;
-  }
-
   public boolean isNull(DfaValue dfaValue) {
     if (dfaValue instanceof DfaNotNullValue) return false;
 
@@ -561,20 +558,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       DfaVariableValue dfaVar = ((DfaUnboxedValue)dfaCond).getVariable();
       boolean isNegated = dfaVar.isNegated();
       DfaVariableValue dfaNormalVar = isNegated ? dfaVar.createNegated() : dfaVar;
-      DfaConstValue dfaTrue = myFactory.getConstFactory().getTrue();
-      final DfaValue boxedTrue = myFactory.getBoxedFactory().createBoxed(dfaTrue);
-      DfaRelationValue dfaEqualsTrue = myFactory.getRelationFactory().createRelation(dfaNormalVar, boxedTrue, JavaTokenType.EQEQ, isNegated);
-
-      return applyCondition(dfaEqualsTrue);
+      final DfaValue boxedTrue = myFactory.getBoxedFactory().createBoxed(myFactory.getConstFactory().getTrue());
+      return applyRelationCondition(myFactory.getRelationFactory().createRelation(dfaNormalVar, boxedTrue, JavaTokenType.EQEQ, isNegated));
     }
     if (dfaCond instanceof DfaVariableValue) {
       DfaVariableValue dfaVar = (DfaVariableValue)dfaCond;
       boolean isNegated = dfaVar.isNegated();
       DfaVariableValue dfaNormalVar = isNegated ? dfaVar.createNegated() : dfaVar;
       DfaConstValue dfaTrue = myFactory.getConstFactory().getTrue();
-      DfaRelationValue dfaEqualsTrue = myFactory.getRelationFactory().createRelation(dfaNormalVar, dfaTrue, JavaTokenType.EQEQ, isNegated);
-
-      return applyCondition(dfaEqualsTrue);
+      return applyRelationCondition(myFactory.getRelationFactory().createRelation(dfaNormalVar, dfaTrue, JavaTokenType.EQEQ, isNegated));
     }
 
     if (dfaCond instanceof DfaConstValue) {
@@ -617,6 +609,16 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
 
     if (dfaLeft instanceof DfaUnknownValue || dfaRight instanceof DfaUnknownValue) return true;
+
+
+    if (isEffectivelyNaN(dfaLeft) || isEffectivelyNaN(dfaRight)) {
+      applyEquivalenceRelation(dfaRelation, dfaLeft, dfaRight);
+      return isNegated;
+    }
+    if (canBeNaN(dfaLeft) || canBeNaN(dfaRight)) {
+      applyEquivalenceRelation(dfaRelation, dfaLeft, dfaRight);
+      return true;
+    }
 
     return applyEquivalenceRelation(dfaRelation, dfaLeft, dfaRight);
   }
@@ -696,7 +698,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return true;
   }
 
-  private static boolean isNaN(final DfaValue dfa) {
+  static boolean isNaN(final DfaValue dfa) {
     if (dfa instanceof DfaConstValue) {
       Object value = ((DfaConstValue)dfa).getValue();
       if (value instanceof Double && ((Double)value).isNaN()) return true;
@@ -778,12 +780,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   public void flushFields(DataFlowRunner runner) {
-    if (!myHasDirtyFields) return;
-
-    myHasDirtyFields = false;
     for (DfaVariableValue field : runner.getFields()) {
-      flushVariable(field);
-      getVariableState(field).setNullable(false);
+      if (myVariableStates.containsKey(field) || getEqClassIndex(field) >= 0) {
+        flushVariable(field);
+        getVariableState(field).setNullable(false);
+      }
     }
   }
 

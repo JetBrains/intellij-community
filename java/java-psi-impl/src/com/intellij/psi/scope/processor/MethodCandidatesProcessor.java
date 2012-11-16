@@ -22,6 +22,9 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.conflictResolvers.DuplicateConflictResolver;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author ik
@@ -30,11 +33,11 @@ import com.intellij.util.SmartList;
 public class MethodCandidatesProcessor extends MethodsProcessor{
   protected boolean myHasAccessibleStaticCorrectCandidate = false;
 
-  public MethodCandidatesProcessor(PsiElement place, PsiConflictResolver[] resolvers, SmartList<CandidateInfo> container) {
+  public MethodCandidatesProcessor(@NotNull PsiElement place, @NotNull PsiConflictResolver[] resolvers, @NotNull List<CandidateInfo> container) {
     super(resolvers, container, place);
   }
 
-  public MethodCandidatesProcessor(PsiElement place) {
+  public MethodCandidatesProcessor(@NotNull PsiElement place) {
     super(new PsiConflictResolver[]{DuplicateConflictResolver.INSTANCE}, new SmartList<CandidateInfo>(), place);
   }
 

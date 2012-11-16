@@ -42,7 +42,7 @@ public class RemoveUnnecessaryEscapeCharactersIntention extends Intention {
     final Document document = editor.getDocument();
     final TextRange range = element.getTextRange();
 
-    document.replaceString(range.getStartOffset(), range.getEndOffset(), removeUnnecessaryEscapeSymbols(((GrLiteral)element)));
+    document.replaceString(range.getStartOffset(), range.getEndOffset(), removeUnnecessaryEscapeSymbols((GrLiteral)element));
   }
 
   @NotNull
@@ -51,9 +51,10 @@ public class RemoveUnnecessaryEscapeCharactersIntention extends Intention {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(PsiElement element) {
-        final String text = element.getText();
+        String text;
+
         return element instanceof GrLiteral &&
-               getStartQuote(text) != null &&
+               getStartQuote(text = element.getText()) != null &&
                !removeUnnecessaryEscapeSymbols((GrLiteral)element).equals(text);
       }
     };

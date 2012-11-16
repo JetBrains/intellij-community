@@ -49,6 +49,7 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
     }
   }
 
+  @Override
   public void writeExternal(Element rootElement) throws WriteExternalException {
     Element element = OrderEntryFactory.createOrderEntryElement(ENTRY_TYPE);
     element.setAttribute(OrderEntryFactory.ORDER_ENTRY_TYPE_ATTR, ENTRY_TYPE);
@@ -56,25 +57,30 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
     rootElement.addContent(element);
   }
 
+  @Override
   public boolean isValid() {
     return !isDisposed();
   }
 
+  @Override
   @NotNull
   public Module getOwnerModule() {
     return getRootModel().getModule();
   }
 
+  @Override
   public <R> R accept(RootPolicy<R> policy, R initialValue) {
     return policy.visitModuleSourceOrderEntry(this, initialValue);
   }
 
+  @Override
   @NotNull
   public String getPresentableName() {
     return ProjectBundle.message("project.root.module.source");
   }
 
 
+  @Override
   @NotNull
   public VirtualFile[] getFiles(OrderRootType type) {
     if (OrderRootType.SOURCES.equals(type)) {
@@ -83,6 +89,7 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
     return VirtualFile.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public String[] getUrls(OrderRootType type) {
     final ArrayList<String> result = new ArrayList<String>();
@@ -100,12 +107,14 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
+  @Override
   public OrderEntry cloneEntry(RootModelImpl rootModel,
                                ProjectRootManagerImpl projectRootManager,
                                VirtualFilePointerManager filePointerManager) {
     return new ModuleSourceOrderEntryImpl(rootModel);
   }
 
+  @Override
   public boolean isSynthetic() {
     return true;
   }

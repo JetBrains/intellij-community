@@ -235,13 +235,13 @@ public class GenerateMembersUtil {
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
 
     try {
-      final PsiMethod resultMethod = createMethod(factory, sourceMethod);
+      final PsiMethod resultMethod = createMethod(factory, sourceMethod, target);
       copyDocComment(sourceMethod, resultMethod);
       copyModifiers(sourceMethod.getModifierList(), resultMethod.getModifierList());
       final PsiSubstitutor collisionResolvedSubstitutor =
         substituteTypeParameters(factory, target, sourceMethod.getTypeParameterList(), resultMethod.getTypeParameterList(), substitutor);
       substituteReturnType(PsiManager.getInstance(project), resultMethod, sourceMethod.getReturnType(), collisionResolvedSubstitutor);
-      substituteParameters(factory, codeStyleManager, sourceMethod.getParameterList(), resultMethod.getParameterList(), collisionResolvedSubstitutor);
+      substituteParameters(factory, codeStyleManager, sourceMethod.getParameterList(), resultMethod.getParameterList(), collisionResolvedSubstitutor, target);
       substituteThrows(factory, sourceMethod.getThrowsList(), resultMethod.getThrowsList(), collisionResolvedSubstitutor);
       return resultMethod;
     }
@@ -344,7 +344,7 @@ public class GenerateMembersUtil {
                                            @NotNull JavaCodeStyleManager codeStyleManager,
                                            @NotNull PsiParameterList sourceParameterList,
                                            @NotNull PsiParameterList targetParameterList,
-                                           @NotNull PsiSubstitutor substitutor) {
+                                           @NotNull PsiSubstitutor substitutor, PsiElement target) {
     PsiParameter[] parameters = sourceParameterList.getParameters();
     UniqueNameGenerator generator = new UniqueNameGenerator();
     for (int i = 0; i < parameters.length; i++) {
@@ -367,7 +367,7 @@ public class GenerateMembersUtil {
 
       if (paramName == null) paramName = "p" + i;
       generator.addExistingName(paramName);
-      final PsiParameter newParameter = factory.createParameter(paramName, substituted);
+      final PsiParameter newParameter = factory.createParameter(paramName, substituted, target);
       copyOrReplaceModifierList(parameter, newParameter);
       targetParameterList.add(newParameter);
     }
@@ -392,9 +392,9 @@ public class GenerateMembersUtil {
 
   @NotNull
   private static PsiMethod createMethod(@NotNull JVMElementFactory factory,
-                                        @NotNull PsiMethod method) {
+                                        @NotNull PsiMethod method, PsiElement target) {
     if (method.isConstructor()) {
-      return factory.createConstructor(method.getName());
+      return factory.createConstructor(method.getName(), target);
     }
     return factory.createMethod(method.getName(), PsiType.VOID);
   }
@@ -429,17 +429,6 @@ public class GenerateMembersUtil {
     final PsiType psiType = substitutor.substitute(type);
     if (psiType != null) return psiType;
     return TypeConversionUtil.erasure(type);
-  }
-
-  public static PsiSubstitutor correctSubstitutor(PsiMethod method, PsiSubstitutor substitutor) {
-    PsiClass hisClass = method.getContainingClass();
-    PsiTypeParameter[] typeParameters = method.getTypeParameters();
-    if (typeParameters.length > 0) {
-      if (PsiUtil.isRawSubstitutor(hisClass, substitutor)) {
-        substitutor = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createRawSubstitutor(substitutor, typeParameters);
-      }
-    }
-    return substitutor;
   }
 
   public static boolean isChildInRange(PsiElement child, PsiElement first, PsiElement last) {

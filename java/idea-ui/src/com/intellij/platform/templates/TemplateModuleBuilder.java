@@ -17,6 +17,8 @@ package com.intellij.platform.templates;
 
 import com.intellij.ide.util.newProjectWizard.modes.ImportImlMode;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
@@ -25,9 +27,11 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NullableComputable;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -46,7 +50,8 @@ import java.util.zip.ZipInputStream;
 * @author Dmitry Avdeev
 *         Date: 10/19/12
 */
-class TemplateModuleBuilder extends ModuleBuilder {
+public class TemplateModuleBuilder extends ModuleBuilder {
+
   private static final NullableFunction<String,String> PATH_CONVERTOR = new NullableFunction<String, String>() {
     @Nullable
     @Override
@@ -54,6 +59,7 @@ class TemplateModuleBuilder extends ModuleBuilder {
       return s.contains(".idea") ? null : s;
     }
   };
+
   private final ModuleType myType;
   private ArchivedProjectTemplate myTemplate;
   private boolean myProjectMode;
@@ -69,7 +75,12 @@ class TemplateModuleBuilder extends ModuleBuilder {
   }
 
   @Override
-  public Module commitModule(@NotNull Project project, ModifiableModuleModel model) {
+  public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
+    return myType.createModuleBuilder().createWizardSteps(wizardContext, modulesProvider);
+  }
+
+  @Override
+  public Module commitModule(@NotNull final Project project, ModifiableModuleModel model) {
     if (myProjectMode) {
       final Module[] modules = ModuleManager.getInstance(project).getModules();
       if (modules.length > 0) {
@@ -77,10 +88,17 @@ class TemplateModuleBuilder extends ModuleBuilder {
           @Override
           public void run() {
             try {
-              setupModule(modules[0]);
+              Module module = modules[0];
+              setupModule(module);
+              ModifiableModuleModel modifiableModuleModel = ModuleManager.getInstance(project).getModifiableModel();
+              modifiableModuleModel.renameModule(module, module.getProject().getName());
+              modifiableModuleModel.commit();
             }
             catch (ConfigurationException e) {
               LOG.error(e);
+            }
+            catch (ModuleWithNameAlreadyExists exists) {
+              // do nothing
             }
           }
         });
@@ -103,13 +121,18 @@ class TemplateModuleBuilder extends ModuleBuilder {
     throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
     final String path = getContentEntryPath();
     unzip(path, true);
-    return ImportImlMode.setUpLoader(getModuleFilePath()).createModule(moduleModel);
+    Module module = ImportImlMode.setUpLoader(getModuleFilePath()).createModule(moduleModel);
+    if (myProjectMode) {
+      moduleModel.renameModule(module, module.getProject().getName());
+    }
+    return module;
   }
 
   private void unzip(String path, boolean moduleMode) {
+    File dir = new File(path);
+    ZipInputStream zipInputStream = null;
     try {
-      File dir = new File(path);
-      ZipInputStream zipInputStream = myTemplate.getStream();
+      zipInputStream = myTemplate.getStream();
       ZipUtil.unzip(ProgressManager.getInstance().getProgressIndicator(), dir, zipInputStream, moduleMode ? PATH_CONVERTOR : null);
       String iml = ContainerUtil.find(dir.list(), new Condition<String>() {
         @Override
@@ -132,6 +155,9 @@ class TemplateModuleBuilder extends ModuleBuilder {
     }
     catch (IOException e) {
       throw new RuntimeException(e);
+    }
+    finally {
+      StreamUtil.closeStream(zipInputStream);
     }
   }
 

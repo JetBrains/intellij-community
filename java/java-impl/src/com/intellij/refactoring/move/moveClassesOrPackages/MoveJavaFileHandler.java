@@ -21,7 +21,7 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
+import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -42,7 +42,7 @@ public class MoveJavaFileHandler extends MoveFileHandler {
   public boolean canProcessElement(PsiFile element) {
     return element instanceof PsiJavaFile &&
            !JspPsiUtil.isInJspFile(element) &&
-           !CollectHighlightsUtil.isOutsideSourceRoot(element) &&
+           !ProjectRootsUtil.isOutsideSourceRoot(element) &&
            !(element instanceof PsiCompiledElement);
   }
 

@@ -29,6 +29,7 @@ public class ShowRegistryAction extends AnAction implements DumbAware {
     e.getPresentation().setEnabled(myUi == null);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     myUi = new RegistryUi() {
       @Override

@@ -36,10 +36,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
-import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.fs.FileSystem;
@@ -90,6 +87,7 @@ public class ClasspathStorage implements StateStorage {
         for (VirtualFile file : files) {
           final Listener listener = messageBus.syncPublisher(STORAGE_TOPIC);
           virtualFileTracker.addTracker(file.getUrl(), new VirtualFileAdapter() {
+            @Override
             public void contentsChanged(final VirtualFileEvent event) {
               listener.storageFileChanged(event, ClasspathStorage.this);
             }
@@ -106,6 +104,7 @@ public class ClasspathStorage implements StateStorage {
     return myConverter.getFileSet();
   }
 
+  @Override
   @Nullable
   public <T> T getState(final Object component, final String componentName, Class<T> stateClass, @Nullable T mergeInto)
     throws StateStorageException {
@@ -146,6 +145,7 @@ public class ClasspathStorage implements StateStorage {
     }
   }
 
+  @Override
   public boolean hasState(final Object component, final String componentName, final Class<?> aClass, final boolean reloadData)
     throws StateStorageException {
     return true;
@@ -167,9 +167,11 @@ public class ClasspathStorage implements StateStorage {
     }
   }
 
+  @Override
   @NotNull
   public ExternalizationSession startExternalization() {
     final ExternalizationSession session = new ExternalizationSession() {
+      @Override
       public void setState(final Object component, final String componentName, final Object state, final Storage storageSpec)
         throws StateStorageException {
         assert mySession == this;
@@ -181,6 +183,7 @@ public class ClasspathStorage implements StateStorage {
     return session;
   }
 
+  @Override
   @NotNull
   public SaveSession startSave(final ExternalizationSession externalizationSession) {
     assert mySession == externalizationSession;
@@ -191,16 +194,19 @@ public class ClasspathStorage implements StateStorage {
         return ClasspathStorage.this.needsSave();
       }
 
+      @Override
       public void save() throws StateStorageException {
         assert mySession == this;
         ClasspathStorage.this.save();
       }
 
+      @Override
       @Nullable
       public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
         return null;
       }
 
+      @Override
       public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
         if (needsSave()) {
           final List<IFile> list = new ArrayList<IFile>();
@@ -214,6 +220,7 @@ public class ClasspathStorage implements StateStorage {
         }
       }
 
+      @Override
       public List<IFile> getAllStorageFiles() {
         final List<IFile> list = new ArrayList<IFile>();
         final ArrayList<VirtualFile> virtualFiles = new ArrayList<VirtualFile>();
@@ -229,11 +236,12 @@ public class ClasspathStorage implements StateStorage {
 
   private static void convert2Io(List<IFile> list, ArrayList<VirtualFile> virtualFiles) {
     for (VirtualFile virtualFile : virtualFiles) {
-      final File ioFile = VfsUtil.virtualToIoFile(virtualFile);
+      final File ioFile = VfsUtilCore.virtualToIoFile(virtualFile);
       list.add(FileSystem.FILE_SYSTEM.createFile(ioFile.getAbsolutePath()));
     }
   }
 
+  @Override
   public void finishSave(final SaveSession saveSession) {
     try {
       LOG.assertTrue(mySession == saveSession);
@@ -243,6 +251,7 @@ public class ClasspathStorage implements StateStorage {
     }
   }
 
+  @Override
   public void reload(final Set<String> changedComponents) throws StateStorageException {
   }
 
@@ -253,6 +262,7 @@ public class ClasspathStorage implements StateStorage {
   public void save() throws StateStorageException {
     final Ref<IOException> ref = new Ref<IOException>();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         try {
           getFileSet().commit();
@@ -336,30 +346,37 @@ public class ClasspathStorage implements StateStorage {
   }
 
   private static class DefaultStorageProvider implements ClasspathStorageProvider {
+    @Override
     @NonNls
     public String getID() {
       return DEFAULT_STORAGE;
     }
 
+    @Override
     @Nls
     public String getDescription() {
       return DEFAULT_STORAGE_DESCR;
     }
 
+    @Override
     public void assertCompatible(final ModuleRootModel model) throws ConfigurationException {
     }
 
+    @Override
     public void detach(Module module) {
     }
 
+    @Override
     public void moduleRenamed(Module module, String newName) {
       //do nothing
     }
 
+    @Override
     public ClasspathConverter createConverter(Module module) {
       throw new UnsupportedOperationException(getDescription());
     }
 
+    @Override
     public String getContentRoot(ModuleRootModel model) {
       return null;
     }
@@ -376,44 +393,54 @@ public class ClasspathStorage implements StateStorage {
       myType = type;
     }
 
+    @Override
     @NonNls
     public String getID() {
       return myType;
     }
 
+    @Override
     @Nls
     public String getDescription() {
       return "Unsupported classpath format " + myType;
     }
 
+    @Override
     public void assertCompatible(final ModuleRootModel model) throws ConfigurationException {
       throw new UnsupportedOperationException(getDescription());
     }
 
+    @Override
     public void detach(final Module module) {
       throw new UnsupportedOperationException(getDescription());
     }
 
+    @Override
     public void moduleRenamed(Module module, String newName) {
       throw new UnsupportedOperationException(getDescription());
     }
 
+    @Override
     public ClasspathConverter createConverter(final Module module) {
       return new ClasspathConverter() {
+        @Override
         public FileSet getFileSet() {
           throw new StateStorageException(getDescription());
         }
 
+        @Override
         public Set<String> getClasspath(final ModifiableRootModel model, final Element element) throws IOException, InvalidDataException {
           throw new InvalidDataException(getDescription());
         }
 
+        @Override
         public void setClasspath(ModuleRootModel model) throws IOException, WriteExternalException {
           throw new WriteExternalException(getDescription());
         }
       };
     }
 
+    @Override
     public String getContentRoot(ModuleRootModel model) {
       return null;
     }

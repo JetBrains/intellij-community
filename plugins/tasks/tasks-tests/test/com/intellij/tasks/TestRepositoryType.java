@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.util.Consumer;
+import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -34,9 +35,10 @@ public class TestRepositoryType extends TaskRepositoryType<TestRepository> {
     return "Test";
   }
 
+  @NotNull
   @Override
   public Icon getIcon() {
-    return null;
+    return TasksIcons.Unknown;
   }
 
   @NotNull

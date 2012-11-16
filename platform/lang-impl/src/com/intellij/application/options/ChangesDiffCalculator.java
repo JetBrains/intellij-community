@@ -26,15 +26,17 @@ import com.intellij.openapi.diff.impl.fragments.LineFragment;
 import com.intellij.openapi.diff.impl.highlighting.DiffMarkup;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.processing.TextCompareProcessor;
+import com.intellij.openapi.diff.impl.util.TextDiffType;
 import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -109,13 +111,14 @@ public class ChangesDiffCalculator implements Disposable {
       return null;
     }
 
+    @Nullable
     @Override
     public Document getDocument() {
       return document;
     }
 
     @Override
-    public void addLineMarker(int line, TextAttributesKey type) {
+    public void addLineMarker(int line, TextDiffType type, SeparatorPlacement separatorPlacement) {
     }
 
     @Override
@@ -123,7 +126,7 @@ public class ChangesDiffCalculator implements Disposable {
     }
 
     @Override
-    public void highlightText(Fragment fragment, boolean drawBorder, GutterIconRenderer gutterIconRenderer) {
+    public void highlightText(@NotNull Fragment fragment, GutterIconRenderer gutterIconRenderer) {
     }
 
 
@@ -143,7 +146,7 @@ public class ChangesDiffCalculator implements Disposable {
     }
 
     @Override
-    public void highlightText(Fragment fragment, boolean drawBorder, GutterIconRenderer gutterIconRenderer) {
+    public void highlightText(@NotNull Fragment fragment, GutterIconRenderer gutterIconRenderer) {
       TextRange currentRange = fragment.getRange(FragmentSide.SIDE2);
       if (INTERESTED_DIFF_TYPES.contains(fragment.getType())) {
         ranges.add(currentRange);

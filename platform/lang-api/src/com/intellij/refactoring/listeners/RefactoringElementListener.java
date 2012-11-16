@@ -24,6 +24,14 @@ import org.jetbrains.annotations.NotNull;
  * @author dsl
  */
 public interface RefactoringElementListener {
+  RefactoringElementListener DEAF = new RefactoringElementListener() {
+    @Override
+    public void elementMoved(@NotNull PsiElement newElement) {}
+
+    @Override
+    public void elementRenamed(@NotNull PsiElement newElement) {}
+  };
+  
   /**
    * Invoked in write action and command.
    */

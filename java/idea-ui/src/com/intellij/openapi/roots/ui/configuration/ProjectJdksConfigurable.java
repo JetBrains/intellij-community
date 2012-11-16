@@ -47,10 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class ProjectJdksConfigurable extends MasterDetailsComponent {
 
@@ -99,7 +96,7 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
     myProjectJdksModel.reset(myProject);
 
     myRoot.removeAllChildren();
-    final HashMap<Sdk, Sdk> sdks = myProjectJdksModel.getProjectSdks();
+    final Map<Sdk, Sdk> sdks = myProjectJdksModel.getProjectSdks();
     for (Sdk sdk : sdks.keySet()) {
       final JdkConfigurable configurable = new JdkConfigurable((ProjectJdkImpl)sdks.get(sdk), myProjectJdksModel, TREE_UPDATER, myHistory, myProject);
       addNode(new MyNode(configurable), myRoot);

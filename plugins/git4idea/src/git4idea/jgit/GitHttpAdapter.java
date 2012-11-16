@@ -22,6 +22,7 @@ import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.AuthData;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
@@ -34,13 +35,16 @@ import git4idea.update.GitFetchResult;
 import git4idea.update.GitFetcher;
 import git4idea.util.NetrcData;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.errors.NoRemoteRepositoryException;
 import org.eclipse.jgit.errors.NotSupportedException;
 import org.eclipse.jgit.errors.TransportException;
+import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.RefSpec;
 import org.jetbrains.annotations.NotNull;
@@ -67,6 +71,7 @@ public final class GitHttpAdapter {
   private static final Logger LOG = Logger.getInstance(GitHttpAdapter.class);
 
   private static final Pattern HTTP_URL_WITH_USERNAME_AND_PASSWORD = Pattern.compile("http(s?)://([^\\s^@:]+):([^\\s^@:]+)@.*");
+  private static final String IGNORECASE_SETTING = "ignorecase";
 
   public static boolean shouldUseJGit(@NotNull String url) {
     if (!url.startsWith("http")) {
@@ -234,8 +239,13 @@ public final class GitHttpAdapter {
     GitFetchResult.Type resultType;
     try {
       final GitHttpCredentialsProvider provider = new GitHttpCredentialsProvider(project, url);
-      GeneralResult result = callWithAuthRetry(new GitHttpRemoteCommand.Clone(directory,  provider, url), project);
+      GitHttpRemoteCommand.Clone command = new GitHttpRemoteCommand.Clone(directory, provider, url);
+      GeneralResult result = callWithAuthRetry(command, project);
       resultType = convertToFetchResultType(result);
+      if (resultType.equals(GitFetchResult.Type.SUCCESS)) {
+        updateCoreIgnoreCaseSetting(command.getGit());
+      }
+      return new GitFetchResult(resultType);
     }
     catch (InvalidRemoteException e) {
       LOG.info("Exception while cloning " + url + " to " + directory, e);
@@ -249,7 +259,24 @@ public final class GitHttpAdapter {
       LOG.info("Exception while cloning " + url + " to " + directory, e);
       return GitFetchResult.error(e);
     }
-    return new GitFetchResult(resultType);
+  }
+
+  private static void updateCoreIgnoreCaseSetting(@Nullable Git git) {
+    if (SystemInfo.isFileSystemCaseSensitive) {
+      return;
+    }
+    if (git == null) {
+      LOG.info("jgit.Git is null, the command should have failed. Not updating the settings.");
+      return;
+    }
+    StoredConfig config = git.getRepository().getConfig();
+    config.setString(ConfigConstants.CONFIG_CORE_SECTION, null, IGNORECASE_SETTING, Boolean.TRUE.toString());
+    try {
+      config.save();
+    }
+    catch (IOException e) {
+      LOG.info("Couldn't save config for " + git.getRepository().getDirectory().getPath(), e);
+    }
   }
 
   @NotNull
@@ -305,7 +332,7 @@ public final class GitHttpAdapter {
           rememberPassword(provider);
           return GeneralResult.SUCCESS;
         }
-        catch (InvalidRemoteException e) {
+        catch (GitAPIException e) {
           if (!noRemoteWithoutGitErrorFixTried && isNoRemoteWithoutDotGitError(e, url)) {
             url = addDotGitToUrl(url);
             command.setUrl(url);

@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.projectImport.SelectImportedProjectsStep;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
@@ -77,5 +78,16 @@ public class MavenProjectImportProvider extends ProjectImportProvider {
           return "reference.dialogs.new.project.import.maven.page3";
         }
       }, stepFactory.createProjectJdkStep(wizardContext), stepFactory.createNameAndLocationStep(wizardContext)};
+  }
+
+  @Override
+  protected boolean canImportFromFile(VirtualFile file) {
+    return "pom.xml".equals(file.getName());
+  }
+
+  @Nullable
+  @Override
+  public String getFileSample() {
+    return "pom.xml";
   }
 }

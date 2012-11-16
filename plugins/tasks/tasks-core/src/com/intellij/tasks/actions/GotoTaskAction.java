@@ -15,6 +15,7 @@ import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.doc.TaskPsiElement;
+import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -60,8 +61,8 @@ public class GotoTaskAction extends GotoActionBase {
                                     boolean everywhere,
                                     @NotNull ProgressIndicator cancelled,
                                     @NotNull Processor<Object> consumer) {
-        List<Task> cachedTasks = TaskSearchSupport.getLocalAndCachedTasks(TaskManager.getManager(project), pattern);
-        List<TaskPsiElement> taskPsiElements = ContainerUtil.map(cachedTasks, new Function<Task, TaskPsiElement>() {
+        List<Task> cachedAndLocalTasks = TaskSearchSupport.getLocalAndCachedTasks(TaskManager.getManager(project), pattern, everywhere);
+        List<TaskPsiElement> taskPsiElements = ContainerUtil.map(cachedAndLocalTasks, new Function<Task, TaskPsiElement>() {
           @Override
           public TaskPsiElement fun(Task task) {
             return new TaskPsiElement(PsiManager.getInstance(project), task);
@@ -83,9 +84,9 @@ public class GotoTaskAction extends GotoActionBase {
           if (!consumer.process(element)) return false;
         }
 
-        List<Task> tasks =
-          TaskSearchSupport.getRepositoriesTasks(TaskManager.getManager(project), pattern, base.getMaximumListSizeLimit(), 0, true);
-        tasks.removeAll(cachedTasks);
+        List<Task> tasks = TaskSearchSupport
+          .getRepositoriesTasks(TaskManager.getManager(project), pattern, base.getMaximumListSizeLimit(), 0, true, everywhere, cancelled);
+        tasks.removeAll(cachedAndLocalTasks);
         taskPsiElements = ContainerUtil.map(tasks, new Function<Task, TaskPsiElement>() {
           @Override
           public TaskPsiElement fun(Task task) {
@@ -104,7 +105,7 @@ public class GotoTaskAction extends GotoActionBase {
         }
         return true;
       }
-    }, "", false, 0);
+    }, null, false, 0);
     popup.setShowListForEmptyPattern(true);
     popup.setSearchInAnyPlace(true);
     popup.setAdText("<html>Press SHIFT to merge with current context<br/>" +
@@ -131,6 +132,7 @@ public class GotoTaskAction extends GotoActionBase {
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
     actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     popup.setToolArea(actionToolbar.getComponent());
+    popup.setMaximumListSizeLimit(10);
 
     showNavigationPopup(new GotoActionCallback<Object>() {
       @Override
@@ -140,22 +142,27 @@ public class GotoTaskAction extends GotoActionBase {
           Task task = ((TaskPsiElement)element).getTask();
           LocalTask localTask = taskManager.findTask(task.getId());
           if (localTask != null) {
-            final boolean createChangelist =
-              taskManager.isVcsEnabled() && !taskManager.getOpenChangelists(localTask).isEmpty();
-            taskManager.activateTask(localTask, !shiftPressed.get(), createChangelist);
+            taskManager.activateTask(localTask, !shiftPressed.get(), false);
           }
           else {
-            popup.close(false);
-            (new SimpleOpenTaskDialog(project, task)).show();
+            showOpenTaskDialog(project, task);
           }
         }
         else if (element == CREATE_NEW_TASK_ACTION) {
-          popup.close(false);
-          Task task = taskManager.createLocalTask(CREATE_NEW_TASK_ACTION.getTaskName());
-          new SimpleOpenTaskDialog(project, task).show();
+          LocalTask localTask = taskManager.createLocalTask(CREATE_NEW_TASK_ACTION.getTaskName());
+          showOpenTaskDialog(project, localTask);
         }
       }
     }, null, popup);
+  }
+
+  public static void showOpenTaskDialog(final Project project, final Task task) {
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        new SimpleOpenTaskDialog(project, task).show();
+      }
+    });
   }
 
   private static class GotoTaskPopupModel extends SimpleChooseByNameModel {
@@ -191,6 +198,21 @@ public class GotoTaskAction extends GotoActionBase {
         return CREATE_NEW_TASK_ACTION.getActionText();
       }
       return null;
+    }
+
+    @Override
+    public String getCheckBoxName() {
+      return "Include closed tasks";
+    }
+
+    @Override
+    public void saveInitialCheckBoxState(final boolean state) {
+      ((TaskManagerImpl)TaskManager.getManager(getProject())).getState().searchClosedTasks = state;
+    }
+
+    @Override
+    public boolean loadInitialCheckBoxState() {
+      return ((TaskManagerImpl)TaskManager.getManager(getProject())).getState().searchClosedTasks;
     }
   }
 

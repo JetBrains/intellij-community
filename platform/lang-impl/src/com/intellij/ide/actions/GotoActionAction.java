@@ -33,6 +33,8 @@ import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -87,6 +89,14 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
                         ChooseByNamePopup.createPopup(project, model, new DefaultChooseByNameItemProvider(null) {
                               @Override
                               protected void sortNamesList(@NotNull String namePattern, List<String> namesList) {
+                                Collections.sort(namesList, new Comparator<String>() {
+                                  @Override
+                                  public int compare(String o1, String o2) {
+                                    if (o1.equals(GotoActionModel.SETTINGS_KEY)) return 1;
+                                    if (o2.equals(GotoActionModel.SETTINGS_KEY)) return -1;
+                                    return o1.compareToIgnoreCase(o2);
+                                  }
+                                });
                               }
                         }, start.first, false, start.second));
   }

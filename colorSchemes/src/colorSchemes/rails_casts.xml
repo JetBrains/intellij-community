@@ -111,6 +111,8 @@
     <option name="COFFEESCRIPT.ESCAPE_SEQUENCE">
       <value>
         <option name="FOREGROUND" value="519F50" />
+        <option name="EFFECT_TYPE" value="1" />
+        <option name="EFFECT_COLOR" value="519F50" />
       </value>
     </option>
     <option name="COFFEESCRIPT.EXISTENTIAL">
@@ -845,6 +847,8 @@
     <option name="JAVA_VALID_STRING_ESCAPE">
       <value>
         <option name="FOREGROUND" value="519F50" />
+        <option name="EFFECT_TYPE" value="1" />
+        <option name="EFFECT_COLOR" value="519F50" />
       </value>
     </option>
     <option name="JS.ATTRIBUTE">
@@ -1152,6 +1156,87 @@
     <option name="PHP_VAR">
       <value>
         <option name="FOREGROUND" value="CC7833" />
+      </value>
+    </option>
+    <option name="PUPPET_BAD_CHARACTER">
+      <value>
+        <option name="FOREGROUND" value="FFFFFF" />
+        <option name="BACKGROUND" value="990000" />
+      </value>
+    </option>
+    <option name="PUPPET_BLOCK_COMMENT">
+      <value>
+        <option name="FOREGROUND" value="BC9458" />
+        <option name="FONT_TYPE" value="2" />
+      </value>
+    </option>
+    <option name="PUPPET_BRACES">
+      <value />
+    </option>
+    <option name="PUPPET_BRACKETS">
+      <value />
+    </option>
+    <option name="PUPPET_CLASS">
+      <value>
+        <option name="FOREGROUND" value="FFFFFF" />
+      </value>
+    </option>
+    <option name="PUPPET_COMMA">
+      <value />
+    </option>
+    <option name="PUPPET_DOT">
+      <value />
+    </option>
+    <option name="PUPPET_ESCAPE_SEQUENCE">
+      <value>
+        <option name="FOREGROUND" value="519F50" />
+      </value>
+    </option>
+    <option name="PUPPET_KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="CC7833" />
+      </value>
+    </option>
+    <option name="PUPPET_NUMBER">
+      <value>
+        <option name="FOREGROUND" value="A5C261" />
+      </value>
+    </option>
+    <option name="PUPPET_OPERATION_SIGN">
+      <value>
+        <option name="FOREGROUND" value="CC7833" />
+      </value>
+    </option>
+    <option name="PUPPET_PARENTH">
+      <value />
+    </option>
+    <option name="PUPPET_REGEX">
+      <value>
+        <option name="FOREGROUND" value="A5C261" />
+      </value>
+    </option>
+    <option name="PUPPET_RESOURCE_REFERENCE">
+      <value />
+    </option>
+    <option name="PUPPET_SEMICOLON">
+      <value />
+    </option>
+    <option name="PUPPET_SQ_STRING">
+      <value>
+        <option name="FOREGROUND" value="A5C261" />
+      </value>
+    </option>
+    <option name="PUPPET_STRING">
+      <value>
+        <option name="FOREGROUND" value="A5C261" />
+      </value>
+    </option>
+    <option name="PUPPET_VARIABLE">
+      <value />
+    </option>
+    <option name="PUPPET_VARIABLE_INTERPOLATION">
+      <value>
+        <option name="FOREGROUND" value="A5C261" />
       </value>
     </option>
     <option name="PY.BRACES">

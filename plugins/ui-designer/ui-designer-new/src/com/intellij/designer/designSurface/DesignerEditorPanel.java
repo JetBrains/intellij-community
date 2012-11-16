@@ -19,6 +19,7 @@ import com.intellij.designer.DesignerEditor;
 import com.intellij.designer.DesignerEditorState;
 import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.ModuleProvider;
+import com.intellij.designer.actions.AbstractComboBoxAction;
 import com.intellij.designer.actions.DesignerActionPanel;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
 import com.intellij.designer.designSurface.tools.*;
@@ -29,9 +30,8 @@ import com.intellij.designer.palette.PaletteToolWindowManager;
 import com.intellij.designer.propertyTable.InplaceContext;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.diagnostic.errordialog.Attachment;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -42,6 +42,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.IdeBorderFactory;
@@ -119,6 +120,8 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   private int[][] mySelectionState;
   private final Map<String, int[][]> mySourceSelectionState = new FixedHashMap<String, int[][]>(16);
 
+  private FixableMessageAction myWarnAction;
+
   private JPanel myErrorPanel;
   private JPanel myErrorMessages;
   private JPanel myErrorStackPanel;
@@ -152,6 +155,17 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
         super.fireSelectionChanged();
         myLayeredPane.revalidate();
         myLayeredPane.repaint();
+      }
+
+      @Override
+      public void scrollToSelection() {
+        List<RadComponent> selection = getSelection();
+        if (selection.size() == 1) {
+          Rectangle bounds = selection.get(0).getBounds(myLayeredPane);
+          if (bounds != null) {
+            myLayeredPane.scrollRectToVisible(bounds);
+          }
+        }
       }
 
       @Override
@@ -313,6 +327,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myQuickFixManager = new QuickFixManager(this, myGlassLayer, myScrollPane.getViewport());
 
     myActionPanel = new DesignerActionPanel(this, myGlassLayer);
+    myWarnAction = new FixableMessageAction();
 
     add(myActionPanel.getToolbarComponent());
     add(myPanel);
@@ -407,8 +422,6 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myErrorMessages.removeAll();
 
     if (info.myShowStack) {
-      info.myMessages.add(0, new FixableMessageInfo(true, info.myDisplayMessage, "", "", null, null));
-
       ByteArrayOutputStream stream = new ByteArrayOutputStream();
       info.myThrowable.printStackTrace(new PrintStream(stream));
       myErrorStack.setText(stream.toString());
@@ -419,6 +432,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       myErrorStackLayout.show(myErrorStackPanel, ERROR_NO_STACK_CARD);
     }
 
+    addErrorMessage(new FixableMessageInfo(true, info.myDisplayMessage, "", "", null, null), Messages.getErrorIcon());
     for (FixableMessageInfo message : info.myMessages) {
       addErrorMessage(message, message.myErrorIcon ? Messages.getErrorIcon() : Messages.getWarningIcon());
     }
@@ -478,6 +492,15 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
         fixesPanel.add(fixLabel);
       }
       myErrorMessages.add(fixesPanel);
+    }
+  }
+
+  protected final void showWarnMessages(@Nullable List<FixableMessageInfo> messages) {
+    if (messages == null) {
+      myWarnAction.hide();
+    }
+    else {
+      myWarnAction.show(messages);
     }
   }
 
@@ -894,6 +917,141 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     }
 
     public boolean getScrollableTracksViewportHeight() {
+      return false;
+    }
+  }
+
+  private class FixableMessageAction extends AbstractComboBoxAction<FixableMessageInfo> {
+    private final DefaultActionGroup myActionGroup = new DefaultActionGroup();
+    private String myTitle;
+    private boolean myIsAdded;
+
+    public FixableMessageAction() {
+      myActionPanel.getActionGroup().add(myActionGroup);
+
+      Presentation presentation = getTemplatePresentation();
+      presentation.setDescription("Warnings");
+      presentation.setIcon(AllIcons.Ide.Warning_notifications);
+    }
+
+    public void show(List<FixableMessageInfo> messages) {
+      if (!myIsAdded) {
+        myTitle = Integer.toString(messages.size());
+        setItems(messages, null);
+        myActionGroup.add(this);
+        myActionPanel.update();
+        myIsAdded = true;
+      }
+    }
+
+    public void hide() {
+      if (myIsAdded) {
+        myActionGroup.remove(this);
+        myActionPanel.update();
+        myIsAdded = false;
+      }
+    }
+
+    @NotNull
+    @Override
+    protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+      DefaultActionGroup actionGroup = new DefaultActionGroup();
+      for (final FixableMessageInfo message : myItems) {
+        AnAction action;
+        if ((message.myQuickFix != null && (message.myLinkText.length() > 0 || message.myAfterLinkText.length() > 0)) ||
+            (message.myAdditionalFixes != null && message.myAdditionalFixes.size() > 0)) {
+          final AnAction[] defaultAction = new AnAction[1];
+          DefaultActionGroup popupGroup = new DefaultActionGroup() {
+            @Override
+            public boolean canBePerformed(DataContext context) {
+              return true;
+            }
+
+            @Override
+            public void actionPerformed(AnActionEvent e) {
+              defaultAction[0].actionPerformed(e);
+            }
+          };
+          popupGroup.setPopup(true);
+          action = popupGroup;
+
+          if (message.myQuickFix != null && (message.myLinkText.length() > 0 || message.myAfterLinkText.length() > 0)) {
+            AnAction popupAction = new AnAction() {
+              @Override
+              public void actionPerformed(AnActionEvent e) {
+                message.myQuickFix.run();
+              }
+            };
+            popupAction.getTemplatePresentation().setText(cleanText(message.myLinkText + message.myAfterLinkText));
+            popupGroup.add(popupAction);
+            defaultAction[0] = popupAction;
+          }
+          if (message.myAdditionalFixes != null && message.myAdditionalFixes.size() > 0) {
+            for (final Pair<String, Runnable> pair : message.myAdditionalFixes) {
+              AnAction popupAction = new AnAction() {
+                @Override
+                public void actionPerformed(AnActionEvent e) {
+                  pair.second.run();
+                }
+              };
+              popupAction.getTemplatePresentation().setText(cleanText(pair.first));
+              popupGroup.add(popupAction);
+              if (defaultAction[0] == null) {
+                defaultAction[0] = popupAction;
+              }
+            }
+          }
+        }
+        else {
+          action = new EmptyAction(true);
+        }
+        actionGroup.add(action);
+        update(message, action.getTemplatePresentation(), true);
+      }
+      return actionGroup;
+    }
+
+    @Override
+    protected void update(FixableMessageInfo item, Presentation presentation, boolean popup) {
+      if (popup) {
+        presentation.setText(cleanText(item.myBeforeLinkText));
+      }
+      else {
+        presentation.setText(myTitle);
+      }
+    }
+
+    private String cleanText(String text) {
+      if (text != null) {
+        text = text.trim();
+        text = StringUtil.replace(text, "&nbsp;", " ");
+        text = StringUtil.replace(text, "\n", " ");
+
+        StringBuilder builder = new StringBuilder();
+        int length = text.length();
+        boolean whitespace = false;
+
+        for (int i = 0; i < length; i++) {
+          char ch = text.charAt(i);
+          if (ch == ' ') {
+            if (!whitespace) {
+              whitespace = true;
+              builder.append(ch);
+            }
+          }
+          else {
+            whitespace = false;
+            builder.append(ch);
+          }
+        }
+
+        text = builder.toString();
+      }
+      return text;
+    }
+
+    @Override
+    protected boolean selectionChanged(FixableMessageInfo item) {
       return false;
     }
   }

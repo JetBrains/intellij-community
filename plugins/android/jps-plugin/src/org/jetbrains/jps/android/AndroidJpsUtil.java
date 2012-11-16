@@ -36,6 +36,7 @@ import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.impl.JpsJavaDependenciesEnumerationHandler;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryRoot;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
@@ -74,8 +75,9 @@ public class AndroidJpsUtil {
   }
 
   private static boolean shouldProcessDependenciesRecursively(JpsModule module) {
-    // todo: return false for mavenized modules
-    return true;
+    return JpsJavaDependenciesEnumerationHandler.shouldProcessDependenciesRecursively(
+      JpsJavaDependenciesEnumerationHandler.createHandlers(
+        Collections.singletonList(module)));
   }
 
   @Nullable

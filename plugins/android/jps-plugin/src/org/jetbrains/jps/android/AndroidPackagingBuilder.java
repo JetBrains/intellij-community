@@ -45,7 +45,7 @@ import java.util.*;
  * @author Eugene.Kudelevsky
  */
 public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, AndroidBuildTarget> {
-  @NonNls private static final String BUILDER_NAME = "android-packager";
+  @NonNls private static final String BUILDER_NAME = "Android Packager";
   @NonNls private static final String RELEASE_SUFFIX = ".release";
   @NonNls private static final String UNSIGNED_SUFFIX = ".unsigned";
 
@@ -53,14 +53,10 @@ public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, 
     super(Collections.singletonList(AndroidBuildTarget.TargetType.PACKAGING));
   }
 
+  @NotNull
   @Override
-  public String getName() {
+  public String getPresentableName() {
     return BUILDER_NAME;
-  }
-
-  @Override
-  public String getDescription() {
-    return "Android Packaging Builder";
   }
 
   @Override

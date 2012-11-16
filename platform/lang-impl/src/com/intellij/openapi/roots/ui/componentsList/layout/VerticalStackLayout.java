@@ -28,6 +28,7 @@ public class VerticalStackLayout implements LayoutManager2 {
    * @param parent the component to be laid out
    * @see #preferredLayoutSize
    */
+  @Override
   public Dimension minimumLayoutSize(Container parent) {
     ComponentOperation.SizeCalculator calculator = new ComponentOperation.SizeCalculator(SizeProperty.MINIMUM_SIZE);
     withAllVisibleDo(parent, calculator);
@@ -48,6 +49,7 @@ public class VerticalStackLayout implements LayoutManager2 {
    * Lays out the specified container.
    * @param parent the container to be laid out
    */
+  @Override
   public void layoutContainer(final Container parent) {
     withAllVisibleDo(parent,
                      new ComponentOperation.InlineLayout(parent, myDefaultHeight, SizeProperty.PREFERED_SIZE,
@@ -61,6 +63,7 @@ public class VerticalStackLayout implements LayoutManager2 {
    *
    * @see #minimumLayoutSize
    */
+  @Override
   public Dimension preferredLayoutSize(Container parent) {
     ComponentOperation.SizeCalculator calculator =
         new ComponentOperation.SizeCalculator(myDefaultHeight, SizeProperty.PREFERED_SIZE, Orientation.VERTICAL);
@@ -70,11 +73,18 @@ public class VerticalStackLayout implements LayoutManager2 {
     return result.getSum();
   }
 
+  @Override
   public void removeLayoutComponent(Component comp) {}
+  @Override
   public Dimension maximumLayoutSize(Container target) { return null; }
+  @Override
   public float getLayoutAlignmentY(Container target) { return 0; }
+  @Override
   public void addLayoutComponent(Component comp, Object constraints) {}
+  @Override
   public void invalidateLayout(Container target) {}
+  @Override
   public void addLayoutComponent(String name, Component comp) {}
+  @Override
   public float getLayoutAlignmentX(Container target) { return 0; }
 }

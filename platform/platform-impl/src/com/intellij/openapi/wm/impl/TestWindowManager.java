@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -215,8 +215,14 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     }
   }
 
-  public IdeFrameImpl[] getAllFrames() {
+  @NotNull
+  public IdeFrameImpl[] getAllProjectFrames() {
     return new IdeFrameImpl[0];
+  }
+
+  @Override
+  public JFrame findVisibleFrame() {
+    return null;
   }
 
   public final IdeFrameImpl getFrame(final Project project) {

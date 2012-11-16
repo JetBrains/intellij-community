@@ -283,7 +283,7 @@ public class CompositeElement extends TreeElement {
     final int len = getTextLength();
 
     if (startStamp != myModificationsCount) {
-      throw new AssertionError("Tree changed while calculating text. startStamp:"+startStamp+"; current:"+myModificationsCount+"; myHC:"+myHC+"; assertThreading:"+ASSERT_THREADING+"; Thread.holdsLock(START_OFFSET_LOCK):"+Thread.holdsLock(START_OFFSET_LOCK)+"; Thread.holdsLock(PSI_LOCK):"+Thread.holdsLock(PsiLock.LOCK));
+      throw new AssertionError("Tree changed while calculating text. startStamp:"+startStamp+"; current:"+myModificationsCount+"; myHC:"+myHC+"; assertThreading:"+ASSERT_THREADING+"; Thread.holdsLock(START_OFFSET_LOCK):"+Thread.holdsLock(START_OFFSET_LOCK)+"; Thread.holdsLock(PSI_LOCK):"+Thread.holdsLock(PsiLock.LOCK)+"; this: " + this);
     }
 
     char[] buffer = new char[len];

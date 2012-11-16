@@ -335,6 +335,11 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
     }
   }
 
+  @Override
+  public boolean isStepVisible() {
+    return true;
+  }
+
   public JComponent getPreferredFocusedComponent() {
     return myWizardContext.isCreatingNewProject() ? super.getPreferredFocusedComponent() : myModuleName;
   }
@@ -391,48 +396,59 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
   }
 
   public boolean validate() throws ConfigurationException {
-    final String moduleName = getModuleName();
     if (myCreateModuleCb.isSelected() || !myWizardContext.isCreatingNewProject()) {
-      final String moduleFileDirectory = myModuleFileLocation.getText();
-      if (moduleFileDirectory.length() == 0) {
-        throw new ConfigurationException("Enter module file location");
-      }
-      if (moduleName.length() == 0) {
-        throw new ConfigurationException("Enter a module name");
-      }
-
-      if (!ProjectWizardUtil.createDirectoryIfNotExists(IdeBundle.message("directory.module.file"), moduleFileDirectory,
-                                                        myImlLocationChangedByUser)) {
-        return false;
-      }
-      if (!ProjectWizardUtil.createDirectoryIfNotExists(IdeBundle.message("directory.module.content.root"), myModuleContentRoot.getText(),
-                                                        myContentRootChangedByUser)) {
-        return false;
-      }
-
-      File moduleFile = new File(moduleFileDirectory, moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-      if (moduleFile.exists()) {
-        int answer = Messages.showYesNoDialog(IdeBundle.message("prompt.overwrite.project.file", moduleFile.getAbsolutePath(), IdeBundle.message("project.new.wizard.module.identification")),
-                                              IdeBundle.message("title.file.already.exists"), Messages.getQuestionIcon());
-        if (answer != 0) {
-          return false;
-        }
-      }
+      if (validateModulePaths()) return false;
     }
     if (!myWizardContext.isCreatingNewProject()) {
-      final Module module;
-      final ProjectStructureConfigurable fromConfigurable = ProjectStructureConfigurable.getInstance(myWizardContext.getProject());
-      if (fromConfigurable != null) {
-        module = fromConfigurable.getModulesConfig().getModule(moduleName);
-      }
-      else {
-        module = ModuleManager.getInstance(myWizardContext.getProject()).findModuleByName(moduleName);
-      }
-      if (module != null) {
-        throw new ConfigurationException("Module \'" + moduleName + "\' already exist in project. Please, specify another name.");
-      }
+      validateExistingModuleName();
     }
     return !myWizardContext.isCreatingNewProject() || super.validate();
+  }
+
+  private void validateExistingModuleName() throws ConfigurationException {
+    final String moduleName = getModuleName();
+    final Module module;
+    final ProjectStructureConfigurable fromConfigurable = ProjectStructureConfigurable.getInstance(myWizardContext.getProject());
+    if (fromConfigurable != null) {
+      module = fromConfigurable.getModulesConfig().getModule(moduleName);
+    }
+    else {
+      module = ModuleManager.getInstance(myWizardContext.getProject()).findModuleByName(moduleName);
+    }
+    if (module != null) {
+      throw new ConfigurationException("Module \'" + moduleName + "\' already exist in project. Please, specify another name.");
+    }
+  }
+
+  private boolean validateModulePaths() throws ConfigurationException {
+    final String moduleName = getModuleName();
+    final String moduleFileDirectory = myModuleFileLocation.getText();
+    if (moduleFileDirectory.length() == 0) {
+      throw new ConfigurationException("Enter module file location");
+    }
+    if (moduleName.length() == 0) {
+      throw new ConfigurationException("Enter a module name");
+    }
+
+    if (!ProjectWizardUtil.createDirectoryIfNotExists(IdeBundle.message("directory.module.file"), moduleFileDirectory,
+                                                      myImlLocationChangedByUser)) {
+      return true;
+    }
+    if (!ProjectWizardUtil.createDirectoryIfNotExists(IdeBundle.message("directory.module.content.root"), myModuleContentRoot.getText(),
+                                                      myContentRootChangedByUser)) {
+      return true;
+    }
+
+    File moduleFile = new File(moduleFileDirectory, moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
+    if (moduleFile.exists()) {
+      int answer = Messages.showYesNoDialog(IdeBundle.message("prompt.overwrite.project.file", moduleFile.getAbsolutePath(),
+                                                              IdeBundle.message("project.new.wizard.module.identification")),
+                                            IdeBundle.message("title.file.already.exists"), Messages.getQuestionIcon());
+      if (answer != 0) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static class PermanentSingleSelectionModel extends DefaultListSelectionModel {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.codeInspection.CustomSuppressableInspectionTool;
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.SuppressIntentionAction;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -72,6 +73,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     return myTool;
   }
 
+  @Override
   public boolean isInitialized() {
     return myTool != null;
   }
@@ -86,11 +88,13 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   }
 
   @NotNull
+  @Override
   public String getShortName() {
-    return myEP == null ? getTool().getShortName() : myEP.getShortName();
+    return myEP != null ? myEP.getShortName() : getTool().getShortName();
   }
 
   @NotNull
+  @Override
   public String getDisplayName() {
     if (myEP == null) {
       return getTool().getDisplayName();
@@ -102,6 +106,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   }
 
   @NotNull
+  @Override
   public String getGroupDisplayName() {
     if (myEP == null) {
       return getTool().getGroupDisplayName();
@@ -112,11 +117,13 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     }
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return myEP == null ? getTool().isEnabledByDefault() : myEP.enabledByDefault;
   }
 
   @NotNull
+  @Override
   public HighlightDisplayLevel getDefaultLevel() {
     return myEP == null ? getTool().getDefaultLevel() : myEP.getDefaultLevel();
   }
@@ -133,45 +140,52 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     }
   }
 
+  @Override
   public void readSettings(Element element) throws InvalidDataException {
     getTool().readSettings(element);
   }
 
+  @Override
   public void writeSettings(Element element) throws WriteExternalException {
     getTool().writeSettings(element);
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     return getTool().createOptionsPanel();
   }
 
+  @Override
   public void projectOpened(Project project) {
     if (myEP == null) {
       getTool().projectOpened(project);
     }
   }
 
+  @Override
   public void projectClosed(Project project) {
     if (myEP == null) {
       getTool().projectClosed(project);
     }
   }
 
-  @Nullable
+  @Override
   public String getStaticDescription() {
     return myEP == null || myEP.hasStaticDescription ? getTool().getStaticDescription() : null;
   }
 
   @Override
   protected URL getDescriptionUrl() {
-    if (myEP == null || ApplicationManager.getApplication().isUnitTestMode() ||
-        ApplicationManager.getApplication().isHeadlessEnvironment()) return super.getDescriptionUrl();
+    Application app = ApplicationManager.getApplication();
+    if (myEP == null || app.isUnitTestMode() || app.isHeadlessEnvironment()) {
+      return super.getDescriptionUrl();
+    }
     String fileName = getDescriptionFileName();
     if (fileName == null) return null;
     return myEP.getLoaderForClass().getResource("/inspectionDescriptions/" + fileName);
   }
 
-  @Nullable
+  @Override
   public SuppressIntentionAction[] getSuppressActions() {
     if (getTool() instanceof CustomSuppressableInspectionTool) {
       return ((CustomSuppressableInspectionTool)getTool()).getSuppressActions(null);
@@ -179,13 +193,9 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     return super.getSuppressActions();
   }
 
+  @Override
   public Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
     return getTool().getClass();
-  }
-
-  @Override
-  public String toString() {
-    return getShortName();
   }
 
   @Override
@@ -195,5 +205,10 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
 
   public E getExtension() {
     return myEP;
+  }
+
+  @Override
+  public String toString() {
+    return getShortName();
   }
 }

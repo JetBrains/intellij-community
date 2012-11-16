@@ -41,8 +41,6 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
 import java.util.*;
 
 public class DataFlowRunner {
@@ -125,11 +123,10 @@ public class DataFlowRunner {
 
       long timeLimit = ourTimeLimit;
       final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-      ThreadMXBean tm = ManagementFactory.getThreadMXBean();
-      final long before = tm.getCurrentThreadUserTime();
+      WorkingTimeMeasurer measurer = new WorkingTimeMeasurer(timeLimit);
       int count = 0;
       while (!queue.isEmpty()) {
-        if (count % 50 == 0 && !unitTestMode && tm.getCurrentThreadUserTime() - before > timeLimit) {
+        if (count % 50 == 0 && !unitTestMode && measurer.isTimeOver()) {
           psiBlock.putUserData(TOO_EXPENSIVE_SIZE, psiBlock.getText().hashCode());
           return RunnerResult.TOO_COMPLEX;
         }
@@ -148,6 +145,8 @@ public class DataFlowRunner {
             return RunnerResult.TOO_COMPLEX; // Too complex :(
           }
         }
+
+        //System.out.println(instructionState);
 
         DfaInstructionState[] after = instruction.accept(this, instructionState.getMemoryState(), visitor);
         if (after != null) {

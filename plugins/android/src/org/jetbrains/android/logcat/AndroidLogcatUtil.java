@@ -45,36 +45,21 @@ import java.util.Map;
  */
 public class AndroidLogcatUtil {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.run.AndroidDebugRunner");
-  private static Map<String, Log.LogLevel> LOG_LEVELS;
-  private static int minLogLevelNameLength;
-  private static int maxLogLevelNameLength;
+  private static Map<String, Log.LogLevel> ourLogLevels;
 
   private AndroidLogcatUtil() {
   }
 
   @Nullable
-  public synchronized static Log.LogLevel getLogLevel(String message) {
-    if (LOG_LEVELS == null) {
-      LOG_LEVELS = new HashMap<String, Log.LogLevel>();
+  public synchronized static Log.LogLevel getLogLevel(String s) {
+    if (ourLogLevels == null) {
+      ourLogLevels = new HashMap<String, Log.LogLevel>();
+
       for (Log.LogLevel level : Log.LogLevel.values()) {
-        String name = level.name();
-        if (minLogLevelNameLength == 0 || name.length() < minLogLevelNameLength) {
-          minLogLevelNameLength = name.length();
-        }
-        if (name.length() > maxLogLevelNameLength) {
-          maxLogLevelNameLength = name.length();
-        }
-        LOG_LEVELS.put(name, level);
+        ourLogLevels.put(level.name(), level);
       }
     }
-    for (int i = 0, n = message.length(); i < n; i++) {
-      for (int j = i + minLogLevelNameLength; j <= i + maxLogLevelNameLength && j < n; j++) {
-        String s = message.substring(i, j);
-        Log.LogLevel logLevel = LOG_LEVELS.get(s);
-        if (logLevel != null) return logLevel;
-      }
-    }
-    return null;
+    return ourLogLevels.get(s);
   }
 
   private static void startLogging(IDevice device, AndroidOutputReceiver receiver)

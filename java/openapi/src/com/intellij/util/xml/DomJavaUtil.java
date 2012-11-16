@@ -71,8 +71,10 @@ public class DomJavaUtil {
 
   @Nullable
   public static PsiClass findClass(@Nullable String name, @NotNull DomElement element) {
+    assert element.isValid();
     XmlElement xmlElement = element.getXmlElement();
     if (xmlElement != null) {
+      assert xmlElement.isValid();
       return findClass(name, xmlElement.getContainingFile(), element.getModule(), element.getResolveScope());
     }
     return null;

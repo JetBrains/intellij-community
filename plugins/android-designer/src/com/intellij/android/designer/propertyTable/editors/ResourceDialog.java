@@ -33,6 +33,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -156,6 +157,7 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
       }
     }
     if (doSelection && value.startsWith("@")) {
+      value = StringUtil.replace(value, "+", "");
       int index = value.indexOf('/');
       if (index != -1) {
         ResourcePanel panel;
@@ -342,7 +344,7 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
   private class ResourcePanel {
     public final Tree myTree;
     public final AbstractTreeBuilder myTreeBuilder;
-    public final JPanel myComponent;
+    public final JBSplitter myComponent;
 
     private final JPanel myPreviewPanel;
     private final JTextArea myTextArea;
@@ -409,11 +411,13 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
       });
       new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true);
 
-      myComponent = new JPanel(new BorderLayout(0, 5));
-      myComponent.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
+      myComponent = new JBSplitter(true, 0.8f);
+      myComponent.setSplitterProportionKey("android.resource_dialog_splitter");
+
+      myComponent.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree));
 
       myPreviewPanel = new JPanel(new CardLayout());
-      myComponent.add(myPreviewPanel, BorderLayout.SOUTH);
+      myComponent.setSecondComponent(myPreviewPanel);
 
       myTextArea = new JTextArea(5, 20);
       myPreviewPanel.add(ScrollPaneFactory.createScrollPane(myTextArea), TEXT);
@@ -434,7 +438,7 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
     public void showPreview(@Nullable ResourceItem element) {
       CardLayout layout = (CardLayout)myPreviewPanel.getLayout();
 
-      if (element == null) {
+      if (element == null || element.getGroup().getType() == ResourceType.ID) {
         layout.show(myPreviewPanel, NONE);
         return;
       }
@@ -455,7 +459,7 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
 
               int size = resources.size();
               if (size == 1) {
-                value = resources.get(0).getRawText();
+                value = getResourceElementValue(resources.get(0));
                 element.setPreviewString(value);
               }
               else if (size > 1) {
@@ -463,9 +467,10 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
                 String[] tabNames = new String[size];
                 for (int i = 0; i < size; i++) {
                   ResourceElement resource = resources.get(i);
-                  values[i] = resource.getRawText();
+                  values[i] = getResourceElementValue(resource);
 
-                  String tabName = resource.getXmlTag().getContainingFile().getParent().getName();
+                  PsiDirectory directory = resource.getXmlTag().getContainingFile().getParent();
+                  String tabName = directory == null ? "unknown-" + i : directory.getName();
                   tabNames[i] = tabName.substring(tabName.indexOf('-') + 1);
                 }
                 element.setPreviewStrings(values, tabNames);
@@ -555,6 +560,14 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
         }
       }
     }
+  }
+
+  private static String getResourceElementValue(ResourceElement element) {
+    String text = element.getRawText();
+    if (StringUtil.isEmpty(text)) {
+      return element.getXmlTag().getText();
+    }
+    return text;
   }
 
   private static class ResourceGroup {

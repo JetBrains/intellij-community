@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -358,20 +357,17 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
       }
       else if (member instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)member;
-        final PsiMethod methodBySignature =
-          MethodSignatureUtil.findMethodBySuperSignature(targetClass, method.getSignature(substitutor), false);
+        PsiMethod methodBySignature = MethodSignatureUtil.findMethodBySuperSignature(targetClass, method.getSignature(substitutor), false);
         if (methodBySignature == null) {
-          final boolean wasInterface = myClass.isInterface();
           newMember = (PsiMethod)targetClass.add(method);
-          if (wasInterface) {
+          if (myClass.isInterface()) {
             if (!targetClass.isInterface()) {
               PsiUtil.setModifierProperty(newMember, PsiModifier.PUBLIC, true);
-              final PsiJavaToken extMethodMarker = PsiImplUtil.findExtensionMethodMarker((PsiMethod)newMember);
-              if (extMethodMarker == null) {
-                PsiUtil.setModifierProperty(newMember, PsiModifier.ABSTRACT, true);
+              if (newMember.hasModifierProperty(PsiModifier.DEFAULT)) {
+                PsiUtil.setModifierProperty(newMember, PsiModifier.DEFAULT, false);
               }
               else {
-                extMethodMarker.delete();
+                PsiUtil.setModifierProperty(newMember, PsiModifier.ABSTRACT, true);
               }
             }
           }
@@ -384,7 +380,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
         }
         else { //abstract method: remove @Override
           final PsiAnnotation annotation = AnnotationUtil.findAnnotation(methodBySignature, "java.lang.Override");
-          if (annotation != null) {
+          if (annotation != null && !leaveOverrideAnnotation(substitutor, method)) {
             annotation.delete();
           }
           final PsiDocComment oldDocComment = method.getDocComment();
@@ -441,5 +437,22 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
         ((JavaRefactoringListenerManagerImpl)listenerManager).fireMemberMoved(myClass, newMember);
       }
     }
+  }
+
+  private boolean leaveOverrideAnnotation(PsiSubstitutor substitutor, PsiMethod method) {
+    final PsiMethod methodBySignature = MethodSignatureUtil.findMethodBySignature(myClass, method.getSignature(substitutor), false);
+    if (methodBySignature == null) return false;
+    final PsiMethod[] superMethods = methodBySignature.findDeepestSuperMethods();
+    if (superMethods.length == 0) return false;
+    final boolean is15 = !PsiUtil.isLanguageLevel6OrHigher(methodBySignature);
+    if (is15) {
+      for (PsiMethod psiMethod : superMethods) {
+        final PsiClass aClass = psiMethod.getContainingClass();
+        if (aClass != null && aClass.isInterface()) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 }

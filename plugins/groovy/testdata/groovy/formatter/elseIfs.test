@@ -13,16 +13,13 @@ h
 -----
 if (a) {
   b
-}
-else
+} else
   if (c) {
     d
-  }
-  else
+  } else
     if (e) {
       f
-    }
-    else
+    } else
       if (g) {
         h
       }

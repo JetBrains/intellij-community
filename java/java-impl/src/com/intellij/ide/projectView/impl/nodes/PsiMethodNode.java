@@ -23,6 +23,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 
 import java.util.Collection;
 
@@ -31,15 +32,20 @@ public class PsiMethodNode extends BasePsiMemberNode<PsiMethod>{
     super(project, value, viewSettings);
   }
 
+  @Override
   public Collection<AbstractTreeNode> getChildrenImpl() {
     return null;
   }
 
+  @Override
   public void updateImpl(PresentationData data) {
     String name = PsiFormatUtil.formatMethod(
       getValue(),
-        PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER | PsiFormatUtil.SHOW_PARAMETERS,
-      PsiFormatUtil.SHOW_TYPE
+        PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME |
+                              PsiFormatUtilBase.SHOW_TYPE |
+                              PsiFormatUtilBase.TYPE_AFTER |
+                              PsiFormatUtilBase.SHOW_PARAMETERS,
+        PsiFormatUtilBase.SHOW_TYPE
     );
     int c = name.indexOf('\n');
     if (c > -1) {
@@ -48,6 +54,7 @@ public class PsiMethodNode extends BasePsiMemberNode<PsiMethod>{
     data.setPresentableText(name);
   }
 
+  @Override
   public boolean isAlwaysLeaf() {
     return true;
   }
@@ -57,6 +64,7 @@ public class PsiMethodNode extends BasePsiMemberNode<PsiMethod>{
     return psiMethod != null && psiMethod.isConstructor();
   }
 
+  @Override
   public int getWeight() {
     return isConstructor() ? 40 : 50;
   }

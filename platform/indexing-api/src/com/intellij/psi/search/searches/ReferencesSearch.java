@@ -57,6 +57,11 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
       return myElementToSearch;
     }
 
+    /**
+     * Use {@link #getEffectiveSearchScope} instead
+     * @return
+     */
+    @Deprecated()
     public SearchScope getScope() {
       return myScope;
     }

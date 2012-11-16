@@ -59,11 +59,7 @@ public class ChooseClassDialog extends DialogWrapper implements ListSelectionLis
     }.installOn(myList);
 
     DefaultListModel model = new DefaultListModel();
-    for (String className : classes) {
-      for (PsiClass psiClass : findInheritors(module, className, includeAll)) {
-        model.addElement(psiClass);
-      }
-    }
+    findClasses(module, includeAll, model, classes);
     myList.setModel(model);
     myList.setCellRenderer(new DefaultPsiElementCellRenderer());
 
@@ -85,7 +81,15 @@ public class ChooseClassDialog extends DialogWrapper implements ListSelectionLis
     init();
   }
 
-  private static Collection<PsiClass> findInheritors(Module module, String name, boolean includeAll) {
+  protected void findClasses(Module module, boolean includeAll, DefaultListModel model, String[] classes) {
+    for (String className : classes) {
+      for (PsiClass psiClass : findInheritors(module, className, includeAll)) {
+        model.addElement(psiClass);
+      }
+    }
+  }
+
+  public static Collection<PsiClass> findInheritors(Module module, String name, boolean includeAll) {
     PsiClass base = findClass(module, name);
     if (base != null) {
       GlobalSearchScope scope = includeAll ?

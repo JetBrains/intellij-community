@@ -10,7 +10,7 @@ import org.jetbrains.jps.model.JpsElement;
  */
 public abstract class JpsElementExtensionSerializerBase<E extends JpsElement> {
   protected final String myConfigFileName;
-  protected String myComponentName;
+  protected final String myComponentName;
 
   protected JpsElementExtensionSerializerBase(@Nullable String configFileName, @NotNull String componentName) {
     myComponentName = componentName;
@@ -28,6 +28,10 @@ public abstract class JpsElementExtensionSerializerBase<E extends JpsElement> {
   }
 
   public abstract void loadExtension(@NotNull E e, @NotNull Element componentTag);
+
+  // called when no corresponding component tag was found in xml configs
+  public void loadExtensionWithDefaultSettings(@NotNull E e) {
+  }
 
   public abstract void saveExtension(@NotNull E e, @NotNull Element componentTag);
 }

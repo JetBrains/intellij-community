@@ -18,6 +18,7 @@ package com.intellij.compiler.server;
 import com.intellij.ProjectTopics;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.compiler.server.impl.CompileServerClasspathManager;
 import com.intellij.execution.ExecutionAdapter;
 import com.intellij.execution.ExecutionException;
@@ -396,7 +397,7 @@ public class BuildManager implements ApplicationComponent{
 
         final List<String> emptyList = Collections.emptyList();
         final RequestFuture future = scheduleBuild(
-          project, false, true, CmdlineProtoUtil.createAllModulesScopes(), emptyList, Collections.<String, String>emptyMap(), new AutoMakeMessageHandler(project)
+          project, false, true, false, CmdlineProtoUtil.createAllModulesScopes(), emptyList, Collections.<String, String>emptyMap(), new AutoMakeMessageHandler(project)
         );
         if (future != null) {
           futures.add(future);
@@ -434,9 +435,8 @@ public class BuildManager implements ApplicationComponent{
 
   @Nullable
   public RequestFuture scheduleBuild(
-    final Project project, final boolean isRebuild,
-    final boolean isMake,
-    final List<TargetTypeBuildScope> scopes,
+    final Project project, final boolean isRebuild, final boolean isMake,
+    final boolean onlyCheckUpToDate, final List<TargetTypeBuildScope> scopes,
     final Collection<String> paths,
     final Map<String, String> userData, final DefaultMessageHandler handler) {
 
@@ -508,6 +508,9 @@ public class BuildManager implements ApplicationComponent{
           final CmdlineRemoteProto.Message.ControllerMessage params;
           if (isRebuild) {
             params = CmdlineProtoUtil.createRebuildRequest(projectPath, scopes, userData, globals);
+          }
+          else if (onlyCheckUpToDate) {
+            params = CmdlineProtoUtil.createUpToDateCheckRequest(projectPath, scopes, paths, userData, globals, currentFSChanges);
           }
           else {
             params = isMake ?
@@ -709,7 +712,7 @@ public class BuildManager implements ApplicationComponent{
     }
 
     // validate tools.jar presence
-    final File compilerPath;
+    final String compilerPath;
     if (projectJdk.equals(internalJdk)) {
       final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
       if (systemCompiler == null) {
@@ -718,11 +721,10 @@ public class BuildManager implements ApplicationComponent{
       compilerPath = ClasspathBootstrap.getResourcePath(systemCompiler.getClass());
     }
     else {
-      final String path = ((JavaSdk)projectJdk.getSdkType()).getToolsPath(projectJdk);
-      if (path == null) {
+      compilerPath = ((JavaSdk)projectJdk.getSdkType()).getToolsPath(projectJdk);
+      if (compilerPath == null) {
         throw new ExecutionException("Cannot determine path to 'tools.jar' library for " + projectJdk.getName() + " (" + projectJdk.getHomePath() + ")");
       }
-      compilerPath = new File(path);
     }
 
     final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(project);
@@ -731,7 +733,14 @@ public class BuildManager implements ApplicationComponent{
     cmdLine.setExePath(vmExecutablePath);
     //cmdLine.addParameter("-XX:MaxPermSize=150m");
     //cmdLine.addParameter("-XX:ReservedCodeCacheSize=64m");
-    final int heapSize = config.COMPILER_PROCESS_HEAP_SIZE;
+    int heapSize = config.COMPILER_PROCESS_HEAP_SIZE;
+
+    // todo: remove when old make implementation is removed
+    if (heapSize == CompilerWorkspaceConfiguration.DEFAULT_COMPILE_PROCESS_HEAP_SIZE) {
+      // check if javac is set to use larger heap, and if so, use it.
+      heapSize = Math.max(heapSize, JavacConfiguration.getOptions(project, JavacConfiguration.class).MAXIMUM_HEAP_SIZE);
+    }
+
     final int xms = heapSize / 2;
     if (xms > 32) {
       cmdLine.addParameter("-Xms" + xms + "m");
@@ -788,12 +797,11 @@ public class BuildManager implements ApplicationComponent{
       }
     }
 
-    cmdLine.addParameter("-classpath");
-
-    final List<File> cp = ClasspathBootstrap.getBuildProcessApplicationClasspath();
+    final List<String> cp = ClasspathBootstrap.getBuildProcessApplicationClasspath();
     cp.add(compilerPath);
-    cp.addAll(myClasspathManager.getCompileServerPluginsClasspath());
+    cp.addAll(myClasspathManager.getCompileServerPluginsClasspath(project));
 
+    cmdLine.addParameter("-classpath");
     cmdLine.addParameter(classpathToString(cp));
 
     cmdLine.addParameter(BuildMain.class.getName());
@@ -919,13 +927,13 @@ public class BuildManager implements ApplicationComponent{
     myProjectDataMap.remove(getProjectPath(project));
   }
 
-  private static String classpathToString(List<File> cp) {
+  private static String classpathToString(List<String> cp) {
     StringBuilder builder = new StringBuilder();
-    for (File file : cp) {
+    for (String file : cp) {
       if (builder.length() > 0) {
         builder.append(File.pathSeparator);
       }
-      builder.append(FileUtil.toCanonicalPath(file.getPath()));
+      builder.append(FileUtil.toCanonicalPath(file));
     }
     return builder.toString();
   }

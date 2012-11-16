@@ -20,11 +20,8 @@ import gnu.trove.TIntIntProcedure;
 import java.io.PrintStream;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
+ * @author: db
  * Date: 04.11.11
- * Time: 23:48
- * To change this template use File | Settings | File Templates.
  */
 abstract class IntIntMaplet implements Streamable {
   abstract boolean containsKey(final int key);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@
 package com.intellij.ide.fileTemplates;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -26,7 +28,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 
-import java.util.Properties;
+import java.util.Map;
 
 /**
  * @author yole
@@ -38,7 +40,7 @@ public class DefaultCreateFromTemplateHandler implements CreateFromTemplateHandl
 
   public PsiElement createFromTemplate(final Project project, final PsiDirectory directory, String fileName, final FileTemplate template,
                                        final String templateText,
-                                       final Properties props) throws IncorrectOperationException {
+                                       final Map<String, Object> props) throws IncorrectOperationException {
     fileName = checkAppendExtension(fileName, template);
 
     if (FileTypeManager.getInstance().isFileIgnored(fileName)) {
@@ -46,7 +48,8 @@ public class DefaultCreateFromTemplateHandler implements CreateFromTemplateHandl
     }
 
     directory.checkCreateFile(fileName);
-    PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(fileName, templateText);
+    FileType type = FileTypeRegistry.getInstance().getFileTypeByFileName(fileName);
+    PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(fileName, type, templateText);
 
     if (template.isReformatCode()) {
       CodeStyleManager.getInstance(project).reformat(file);
@@ -80,7 +83,7 @@ public class DefaultCreateFromTemplateHandler implements CreateFromTemplateHandl
   }
 
   @Override
-  public Properties prepareProperties(Properties props) {
-    return props;
+  public void prepareProperties(Map<String, Object> props) {
+    // ignore
   }
 }

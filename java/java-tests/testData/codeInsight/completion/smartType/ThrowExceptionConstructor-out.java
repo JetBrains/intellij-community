@@ -4,6 +4,6 @@ class MyException extends RuntimeException {
 
 class XXX {
   {
-    throw new MyException(new String[<caret>]);
+    throw new MyException(new String[]{<caret>});
   }
 }

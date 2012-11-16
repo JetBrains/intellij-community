@@ -203,7 +203,7 @@ public class StorageData {
   }
 
   public boolean isEmpty() {
-    return myComponentStates.size() == 0;
+    return myComponentStates.isEmpty();
   }
 
   public boolean hasState(final String componentName) {

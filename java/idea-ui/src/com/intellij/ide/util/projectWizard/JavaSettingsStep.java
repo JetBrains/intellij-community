@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBCheckBox;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -46,8 +47,8 @@ public class JavaSettingsStep extends SdkSettingsStep {
   private TextFieldWithBrowseButton mySourcePath;
   private JPanel myPanel;
 
-  public JavaSettingsStep(SettingsStep settingsStep, ModuleBuilder moduleBuilder, Condition<SdkTypeId> sdkFilter) {
-    super(settingsStep, sdkFilter);
+  public JavaSettingsStep(SettingsStep settingsStep, ModuleBuilder moduleBuilder, @NotNull Condition<SdkTypeId> sdkFilter) {
+    super(settingsStep, moduleBuilder, sdkFilter);
     myModuleBuilder = moduleBuilder;
 
     if (moduleBuilder instanceof JavaModuleBuilder) {

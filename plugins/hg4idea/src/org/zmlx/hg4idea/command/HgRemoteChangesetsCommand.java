@@ -82,8 +82,7 @@ public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
           }
         }), project);
       final HgProjectSettings projectSettings = vcs.getProjectSettings();
-      projectSettings.setCheckIncoming(false);
-      projectSettings.setCheckOutgoing(false);
+      projectSettings.setCheckIncomingOutgoing(false);
     }
     return result;
   }

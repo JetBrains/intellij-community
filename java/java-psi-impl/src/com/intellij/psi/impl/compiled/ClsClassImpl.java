@@ -317,9 +317,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
     buffer.append(isEnum() ? "enum " : isAnnotationType() ? "@interface " : isInterface() ? "interface " : "class ");
     appendText(getNameIdentifier(), indentLevel, buffer, " ");
     appendText(getTypeParameterList(), indentLevel, buffer, " ");
-    if (!isEnum() && !isAnnotationType()) {
-      appendText(getExtendsList(), indentLevel, buffer, " ");
-    }
+    appendText(getExtendsList(), indentLevel, buffer, " ");
     appendText(getImplementsList(), indentLevel, buffer, " ");
 
     buffer.append('{');
@@ -405,9 +403,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
     setMirror(getModifierList(), mirror.getModifierList());
     setMirror(getNameIdentifier(), mirror.getNameIdentifier());
     setMirror(getTypeParameterList(), mirror.getTypeParameterList());
-    if (!isEnum() && !isAnnotationType()) {
-      setMirror(getExtendsList(), mirror.getExtendsList());
-    }
+    setMirror(getExtendsList(), mirror.getExtendsList());
     setMirror(getImplementsList(), mirror.getImplementsList());
 
     setMirrors(getOwnFields(), mirror.getFields());
@@ -499,7 +495,22 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
     }
 
     PsiClass aClass = getSourceMirrorClass();
-    return aClass != null ? aClass.getNavigationElement() : this;
+
+    if (aClass != null) {
+      return aClass.getNavigationElement();
+    }
+
+    if ("package-info".equals(getName())) {
+      PsiElement parent = getParent();
+      if (parent instanceof ClsFileImpl) {
+        PsiElement sourceFile = parent.getNavigationElement();
+        if (sourceFile instanceof PsiJavaFile) {
+          return sourceFile;
+        }
+      }
+    }
+
+    return this;
   }
 
   @Override

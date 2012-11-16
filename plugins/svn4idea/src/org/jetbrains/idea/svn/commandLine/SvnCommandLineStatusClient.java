@@ -26,17 +26,18 @@ import org.jetbrains.idea.svn.portable.SvnExceptionWrapper;
 import org.jetbrains.idea.svn.portable.SvnStatusClientI;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
-import org.tmatesoft.svn.core.wc.SVNInfo;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatus;
+import org.tmatesoft.svn.core.wc.*;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -99,61 +100,10 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
 
     // todo can not understand why revision can be used here
     final SvnSimpleCommand command = new SvnSimpleCommand(myProject, base, SvnCommandName.st);
+    putParameters(depth, remote, reportAll, includeIgnored, changeLists, command);
 
-    if (depth != null) {
-      command.addParameters("--depth", depth.getName());
-    }
-    if (remote) {
-      command.addParameters("-u");
-    }
-    if (reportAll) {
-      command.addParameters("-v");
-    }
-    if (includeIgnored) {
-      command.addParameters("--no-ignore");
-    }
-    if (! collectParentExternals) {
-      command.addParameters("--ignore-externals");
-    }
-
-    //--changelist (--cl) ARG
-    changelistsToCommand(changeLists, command);
-    command.addParameters("--xml");
-
-    final String[] changelistName = new String[1];
     final SvnStatusHandler[] svnHandl = new SvnStatusHandler[1];
-    svnHandl[0] = new SvnStatusHandler(new SvnStatusHandler.ExternalDataCallback() {
-      @Override
-      public void switchPath() {
-        final PortableStatus pending = svnHandl[0].getPending();
-        pending.setChangelistName(changelistName[0]);
-        try {
-          if (infoBase != null) {
-            final String append = SVNPathUtil.append(infoBase.getURL().toString(), FileUtil.toSystemIndependentName(pending.getPath()));
-            pending.setURL(SVNURL.parseURIEncoded(append));
-          }
-          handler.handleStatus(pending);
-        }
-        catch (SVNException e) {
-          throw new SvnExceptionWrapper(e);
-        }
-      }
-
-      @Override
-      public void switchChangeList(String newList) {
-        changelistName[0] = newList;
-      }
-    }, base, new Convertor<File, SVNInfo>() {
-      @Override
-      public SVNInfo convert(File o) {
-        try {
-          return myInfoClient.doInfo(o, revision);
-        }
-        catch (SVNException e) {
-          throw new SvnExceptionWrapper(e);
-        }
-      }
-    });
+    svnHandl[0] = createStatusHandler(revision, handler, base, infoBase, svnHandl);
 
     try {
       final String result = command.run();
@@ -180,6 +130,109 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
     }
     return 0;
+  }
+
+  private void putParameters(SVNDepth depth,
+                             boolean remote,
+                             boolean reportAll,
+                             boolean includeIgnored,
+                             Collection changeLists,
+                             SvnSimpleCommand command) {
+    if (depth != null) {
+      command.addParameters("--depth", depth.getName());
+    }
+    if (remote) {
+      command.addParameters("-u");
+    }
+    if (reportAll) {
+      command.addParameters("-v");
+    }
+    if (includeIgnored) {
+      command.addParameters("--no-ignore");
+    }
+    // no way in interface to ignore externals
+    /*if (! collectParentExternals) {
+      command.addParameters("--ignore-externals");
+    }*/
+
+    //--changelist (--cl) ARG
+    changelistsToCommand(changeLists, command);
+    command.addParameters("--xml");
+  }
+
+  public SvnStatusHandler createStatusHandler(final SVNRevision revision,
+                                               final ISVNStatusHandler handler,
+                                               final File base,
+                                               final SVNInfo infoBase, final SvnStatusHandler[] svnHandl) {
+    final SvnStatusHandler.ExternalDataCallback callback = createStatusCallback(handler, base, infoBase, svnHandl);
+
+    return new SvnStatusHandler(callback, base, new Convertor<File, SVNInfo>() {
+      @Override
+      public SVNInfo convert(File o) {
+        try {
+          return myInfoClient.doInfo(o, revision);
+        }
+        catch (SVNException e) {
+          throw new SvnExceptionWrapper(e);
+        }
+      }
+    });
+  }
+
+  public static SvnStatusHandler.ExternalDataCallback createStatusCallback(final ISVNStatusHandler handler,
+                                                                            final File base,
+                                                                            final SVNInfo infoBase,
+                                                                            final SvnStatusHandler[] svnHandl) {
+    final Map<File, SVNInfo> externalsMap = new HashMap<File, SVNInfo>();
+    final String[] changelistName = new String[1];
+
+    return new SvnStatusHandler.ExternalDataCallback() {
+      @Override
+      public void switchPath() {
+        final PortableStatus pending = svnHandl[0].getPending();
+        pending.setChangelistName(changelistName[0]);
+        try {
+          //if (infoBase != null) {
+          SVNInfo baseInfo = infoBase;
+          File baseFile = base;
+          final File pendingFile = new File(pending.getPath());
+          if (! externalsMap.isEmpty()) {
+            for (File file : externalsMap.keySet()) {
+              if (FileUtil.isAncestor(file, pendingFile, false)) {
+                baseInfo = externalsMap.get(file);
+                baseFile = file;
+                break;
+              }
+            }
+          }
+          if (baseInfo != null) {
+            final String append;
+            final String systemIndependentPath = FileUtil.toSystemIndependentName(pending.getPath());
+            if (pendingFile.isAbsolute()) {
+              final String relativePath =
+                FileUtil.getRelativePath(FileUtil.toSystemIndependentName(baseFile.getPath()), systemIndependentPath, '/');
+              append = SVNPathUtil.append(baseInfo.getURL().toString(), FileUtil.toSystemIndependentName(relativePath));
+            }
+            else {
+              append = SVNPathUtil.append(baseInfo.getURL().toString(), systemIndependentPath);
+            }
+            pending.setURL(SVNURL.parseURIEncoded(append));
+          }
+          if (SVNStatusType.STATUS_EXTERNAL.equals(pending.getNodeStatus())) {
+            externalsMap.put(pending.getFile(), pending.getInfo());
+          }
+          handler.handleStatus(pending);
+        }
+        catch (SVNException e) {
+          throw new SvnExceptionWrapper(e);
+        }
+      }
+
+      @Override
+      public void switchChangeList(String newList) {
+        changelistName[0] = newList;
+      }
+    };
   }
 
   public static void changelistsToCommand(Collection changeLists, SvnSimpleCommand command) {

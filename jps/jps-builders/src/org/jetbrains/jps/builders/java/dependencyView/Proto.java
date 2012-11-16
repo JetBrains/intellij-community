@@ -8,11 +8,8 @@ import java.io.IOException;
 import java.io.PrintStream;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
+ * @author: db
  * Date: 01.03.11
- * Time: 17:57
- * To change this template use File | Settings | File Templates.
  */
 class Proto implements RW.Savable, Streamable {
   public final int access;

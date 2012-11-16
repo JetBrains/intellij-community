@@ -8,11 +8,8 @@ import java.io.IOException;
 import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
+ * @author: db
  * Date: 01.02.11
- * Time: 4:56
- * To change this template use File | Settings | File Templates.
  */
 class FieldRepr extends ProtoMember {
   public void updateClassUsages(final DependencyContext context, final int owner, final Set<UsageRepr.Usage> s) {

@@ -25,6 +25,7 @@ import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -46,7 +47,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,10 +65,8 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> extends DialogWrapper implements TreeChooser<T> {
   private Tree myTree;
@@ -476,17 +475,21 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
       myTreeClassChooserDialog = treeClassChooserDialog;
     }
 
-    @Override
     @NotNull
-    public Object[] getElementsByName(final String name, final boolean checkBoxState, final String pattern) {
+    @Override
+    public Object[] getElementsByName(String name,
+                                      boolean checkBoxState,
+                                      String pattern,
+                                      @NotNull ProgressIndicator canceled) {
       List<T> classes = myTreeClassChooserDialog.getClassesByName(name, checkBoxState, pattern, myTreeClassChooserDialog.getScope());
       if (classes.size() == 0) return ArrayUtil.EMPTY_OBJECT_ARRAY;
       if (classes.size() == 1) {
         return isAccepted(classes.get(0)) ? ArrayUtil.toObjectArray(classes) : ArrayUtil.EMPTY_OBJECT_ARRAY;
       }
+      Set<String> qNames = ContainerUtil.newHashSet();
       List<T> list = new ArrayList<T>(classes.size());
       for (T aClass : classes) {
-        if (isAccepted(aClass)) {
+        if (qNames.add(getFullName(aClass)) && isAccepted(aClass)) {
           list.add(aClass);
         }
       }

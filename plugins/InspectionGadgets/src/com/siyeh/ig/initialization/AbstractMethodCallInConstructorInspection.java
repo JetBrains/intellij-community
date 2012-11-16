@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,72 +20,53 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class AbstractMethodCallInConstructorInspection extends BaseInspection {
 
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "abstract.method.call.in.constructor.display.name");
+    return InspectionGadgetsBundle.message("abstract.method.call.in.constructor.display.name");
   }
 
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "abstract.method.call.in.constructor.problem.descriptor");
+    return InspectionGadgetsBundle.message("abstract.method.call.in.constructor.problem.descriptor");
   }
 
   public BaseInspectionVisitor buildVisitor() {
     return new AbstractMethodCallInConstructorVisitor();
   }
 
-  private static class AbstractMethodCallInConstructorVisitor
-    extends BaseInspectionVisitor {
+  private static class AbstractMethodCallInConstructorVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression call) {
-      super.visitMethodCallExpression(call);
-      final PsiMethod method =
-        PsiTreeUtil.getParentOfType(call, PsiMethod.class);
-      if (method == null) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      if (!MethodCallUtils.isCallDuringObjectConstruction(expression)) {
         return;
       }
-      if (!method.isConstructor()) {
-        return;
-      }
-      final PsiReferenceExpression methodExpression =
-        call.getMethodExpression();
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (qualifier != null) {
-        if (!(qualifier instanceof PsiThisExpression) &&
-            !(qualifier instanceof PsiSuperExpression)) {
+        if (!(qualifier instanceof PsiThisExpression) && !(qualifier instanceof PsiSuperExpression)) {
           return;
         }
       }
-      final PsiMethod calledMethod =
-        (PsiMethod)methodExpression.resolve();
-      if (calledMethod == null) {
+      final PsiMethod calledMethod = (PsiMethod)methodExpression.resolve();
+      if (calledMethod == null || calledMethod.isConstructor() || !calledMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
         return;
       }
-      if (calledMethod.isConstructor()) {
-        return;
-      }
-      if (!calledMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        return;
-      }
-      final PsiClass calledMethodClass =
-        calledMethod.getContainingClass();
+      final PsiClass calledMethodClass = calledMethod.getContainingClass();
       if (calledMethodClass == null) {
         return;
       }
-      final PsiClass methodClass = method.getContainingClass();
-      if (!calledMethodClass.equals(methodClass)) {
+      final PsiClass containingClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+      if (!calledMethodClass.equals(containingClass)) {
         return;
       }
-      registerMethodCallError(call);
+      registerMethodCallError(expression);
     }
   }
 }

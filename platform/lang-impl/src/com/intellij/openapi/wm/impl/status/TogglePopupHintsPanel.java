@@ -72,17 +72,21 @@ public class TogglePopupHintsPanel extends EditorBasedWidget implements StatusBa
     return new TogglePopupHintsPanel(getProject());
   }
 
+  @Override
   @NotNull
   public Icon getIcon() {
     return myCurrentIcon;
   }
 
+  @Override
   public String getTooltipText() {
     return myToolTipText;
   }
 
+  @Override
   public Consumer<MouseEvent> getClickConsumer() {
     return new Consumer<MouseEvent>() {
+      @Override
       public void consume(final MouseEvent e) {
         Point point = new Point(0, 0);
         final PsiFile file = getCurrentFile();
@@ -97,11 +101,13 @@ public class TogglePopupHintsPanel extends EditorBasedWidget implements StatusBa
     };
   }
 
+  @Override
   @NotNull
   public String ID() {
     return "InspectionProfile";
   }
 
+  @Override
   public WidgetPresentation getPresentation(@NotNull PlatformType type) {
     return this;
   }

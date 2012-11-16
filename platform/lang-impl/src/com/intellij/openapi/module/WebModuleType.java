@@ -1,10 +1,6 @@
 package com.intellij.openapi.module;
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.WebModuleGenerationStep;
-import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -17,16 +13,6 @@ public class WebModuleType extends WebModuleTypeBase<ModuleBuilder> {
   }
 
   @Override
-  public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModuleBuilder moduleBuilder, ModulesProvider modulesProvider) {
-    if (wizardContext.isTemplateMode()) return ModuleWizardStep.EMPTY_ARRAY;
-    WebModuleGenerationStep generationStep = new WebModuleGenerationStep(
-      moduleBuilder,
-      wizardContext.getStepIcon(),
-      "reference.dialogs.new.project.fromScratch.webModuleGeneration"
-    );
-    return new ModuleWizardStep[]{generationStep};
-  }
-
   public ModuleBuilder createModuleBuilder() {
     return new WebModuleBuilder();
   }

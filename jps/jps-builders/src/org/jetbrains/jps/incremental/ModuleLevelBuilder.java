@@ -1,6 +1,7 @@
 package org.jetbrains.jps.incremental;
 
 import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.builders.ChunkBuildOutputConsumer;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 
@@ -26,7 +27,8 @@ public abstract class ModuleLevelBuilder extends Builder {
 
   public abstract ExitCode build(CompileContext context,
                                  ModuleChunk chunk,
-                                 DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder)
+                                 DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
+                                 ChunkBuildOutputConsumer outputConsumer)
     throws ProjectBuildException, IOException;
 
   public boolean shouldHonorFileEncodingForCompilation(File file) {

@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -266,6 +267,13 @@ public class TargetElementUtil extends TargetElementUtilBase {
           if (expression != null) {
             psiClass = PsiUtil.resolveClassInType(expression.getType());
           } else {
+            if (element instanceof PsiClass) {
+              final PsiElement resolve = reference.resolve();
+              if (resolve instanceof PsiClass) {
+                return InheritanceUtil.isInheritorOrSelf((PsiClass)resolve, (PsiClass)element, true) ||
+                       InheritanceUtil.isInheritorOrSelf((PsiClass)element, (PsiClass)resolve, true);
+              }
+            }
             psiClass = PsiTreeUtil.getParentOfType((PsiReferenceExpression)reference, PsiClass.class);
           }
           final PsiClass containingClass = ((PsiMember)element).getContainingClass();

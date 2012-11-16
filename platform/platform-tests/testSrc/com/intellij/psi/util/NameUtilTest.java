@@ -123,7 +123,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertDoesntMatch("ARS.j", "activity_report_summary.xml");
     assertDoesntMatch("ARS.j", "activity_report_summary_justsometingwrong.xml");
 
-    assertMatches("foo.goo", "foo.bar.goo");
+    assertDoesntMatch("foo.goo", "foo.bar.goo");
   }
 
   public void testSpaceForAnyWordsInBetween() {
@@ -178,9 +178,9 @@ public class NameUtilTest extends UsefulTestCase {
 
   public void testSkipDot() {
     assertMatches("ja", "jquery.autocomplete.js");
-    assertMatches("ja.js", "jquery.autocomplete.js");
+    assertDoesntMatch("ja.js", "jquery.autocomplete.js");
     assertMatches("jajs", "jquery.autocomplete.js");
-    assertMatches("j.ajs", "jquery.autocomplete.js");
+    assertDoesntMatch("j.ajs", "jquery.autocomplete.js");
   }
 
   public void testNoExtension() {
@@ -531,4 +531,13 @@ public class NameUtilTest extends UsefulTestCase {
    assertTrue(c.matchingFragments("an", "Changes") != null);
    assertTrue(c.matchingFragments("a", "Changes") != null);
  }
+
+  public void testFilePatterns() {
+    assertMatches("groovy*.jar", "groovy-1.7.jar");
+    assertDoesntMatch("*.ico", "a.i.c.o");
+  }
+
+  public void testUsingCapsMeansTheyShouldMatchCaps() {
+    assertDoesntMatch("URLCl", "UrlClassLoader");
+  }
 }

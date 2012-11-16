@@ -104,6 +104,7 @@ public class ParameterCanBeLocalInspection extends BaseJavaLocalInspectionTool {
     if (controlFlow == null) return Collections.emptyList();
 
     final Set<PsiParameter> result = filterParameters(controlFlow, parameters);
+    result.retainAll(ControlFlowUtil.getWrittenVariables(controlFlow, 0, controlFlow.getSize(), false));
     for (final PsiReferenceExpression readBeforeWrite : ControlFlowUtil.getReadBeforeWrite(controlFlow)) {
       final PsiElement resolved = readBeforeWrite.resolve();
       if (resolved instanceof PsiParameter) {

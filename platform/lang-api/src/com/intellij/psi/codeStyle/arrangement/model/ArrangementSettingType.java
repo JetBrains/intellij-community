@@ -20,5 +20,5 @@ package com.intellij.psi.codeStyle.arrangement.model;
  * @since 8/6/12 5:02 PM
  */
 public enum ArrangementSettingType {
-  TYPE, MODIFIER
+  TYPE, MODIFIER, NAME, ORDER
 }

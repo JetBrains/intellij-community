@@ -18,7 +18,6 @@ package com.intellij.psi.codeStyle.arrangement.match;
 import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 
-import com.intellij.psi.codeStyle.arrangement.ArrangementOperator;
 import com.intellij.psi.codeStyle.arrangement.ModifierAwareArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.TypeAwareArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
@@ -80,7 +79,7 @@ public class StandardArrangementEntryMatcherTest {
 
   @Test
   public void compositeAndCondition() {
-    ArrangementCompositeMatchCondition condition = new ArrangementCompositeMatchCondition(ArrangementOperator.AND);
+    ArrangementCompositeMatchCondition condition = new ArrangementCompositeMatchCondition();
     condition.addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.FIELD));
     condition.addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.PUBLIC));
 

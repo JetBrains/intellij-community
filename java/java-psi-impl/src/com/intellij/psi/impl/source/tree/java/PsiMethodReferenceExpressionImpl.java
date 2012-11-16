@@ -135,7 +135,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       return JavaResolveResult.EMPTY_ARRAY;
     }
     final MethodReferenceResolver resolver = new MethodReferenceResolver();
-    final Map<PsiMethodReferenceExpression, PsiType> map = LambdaUtil.ourRefs.get();
+    final Map<PsiMethodReferenceExpression, PsiType> map = PsiMethodReferenceUtil.ourRefs.get();
     if (map != null && map.containsKey(this)) {
       return (JavaResolveResult[])resolver.resolve(this, incompleteCode);
     }
@@ -301,7 +301,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
         final boolean isConstructor = element instanceof PsiKeyword && PsiKeyword.NEW.equals(element.getText());
         if (element instanceof PsiIdentifier || isConstructor) {
           PsiType functionalInterfaceType = null;
-          final Map<PsiMethodReferenceExpression,PsiType> map = LambdaUtil.ourRefs.get();
+          final Map<PsiMethodReferenceExpression,PsiType> map = PsiMethodReferenceUtil.ourRefs.get();
           if (map != null) {
             functionalInterfaceType = map.get(PsiMethodReferenceExpressionImpl.this);
           }
@@ -328,7 +328,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
               boolean hasReceiver = false;
               final PsiType[] parameterTypes = signature.getParameterTypes();
               
-              if (parameterTypes.length == 1 && LambdaUtil.isReceiverType(parameterTypes[0], containingClass, substitutor)) {
+              if (parameterTypes.length == 1 && PsiMethodReferenceUtil.isReceiverType(parameterTypes[0], containingClass, substitutor)) {
                 hasReceiver = true;
               }
               final boolean innerClassOuterClassReference = containingClass.getContainingClass() != null && !containingClass.hasModifierProperty(PsiModifier.STATIC);
@@ -441,7 +441,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
 
         boolean hasReceiver = false;
         final PsiType[] parameterTypes = mySignature.getParameterTypes();
-        if (parameterTypes.length > 0 && LambdaUtil.isReceiverType(parameterTypes[0], myContainingClass, mySubstitutor)) {
+        if (parameterTypes.length > 0 && PsiMethodReferenceUtil.isReceiverType(parameterTypes[0], myContainingClass, mySubstitutor)) {
           hasReceiver = true;
         }
 

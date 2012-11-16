@@ -1,4 +1,4 @@
-public class A extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
+public class A {
 public void foo() {
 setProperty("bar", 2);
 org.codehaus.groovy.runtime.DefaultGroovyMethods.print(this, setProperty0(this, "bar", 3));

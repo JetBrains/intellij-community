@@ -32,10 +32,12 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
     registerModuleType(getDefaultModuleType(), true);
   }
 
+  @Override
   public void registerModuleType(ModuleType type) {
     registerModuleType(type, false);
   }
 
+  @Override
   public void registerModuleType(ModuleType type, boolean classpathProvider) {
     for (ModuleType oldType : myModuleTypes.keySet()) {
       if (oldType.getId().equals(type.getId())) {
@@ -47,6 +49,7 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
     myModuleTypes.put(type, classpathProvider);
   }
 
+  @Override
   public ModuleType[] getRegisteredTypes() {
     List<ModuleType> result = new ArrayList<ModuleType>();
     result.addAll(myModuleTypes.keySet());
@@ -57,6 +60,7 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
     return result.toArray(new ModuleType[result.size()]);
   }
 
+  @Override
   public ModuleType findByID(String moduleTypeID) {
     if (moduleTypeID == null) return getDefaultModuleType();
     for (ModuleType type : myModuleTypes.keySet()) {
@@ -73,6 +77,7 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
     return new UnknownModuleType(moduleTypeID, getDefaultModuleType());
   }
 
+  @Override
   public boolean isClasspathProvider(final ModuleType moduleType) {
     for (ModuleTypeEP ep : Extensions.getExtensions(ModuleTypeEP.EP_NAME)) {
       if (ep.id.equals(moduleType.getId())) {
@@ -84,6 +89,7 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
     return provider != null && provider.booleanValue();
   }
 
+  @Override
   public ModuleType getDefaultModuleType() {
     return EmptyModuleType.getInstance();
   }

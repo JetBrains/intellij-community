@@ -91,17 +91,20 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
     }, project);
 
     startupManager.registerStartupActivity(new Runnable() {
+      @Override
       public void run() {
         myStartupActivityPerformed = true;
       }
     });
 
     myHandler = new BatchUpdateListener() {
+      @Override
       public void onBatchUpdateStarted() {
         myRootsChanged.levelUp();
         myFileTypesChanged.levelUp();
       }
 
+      @Override
       public void onBatchUpdateFinished() {
         myRootsChanged.levelDown();
         myFileTypesChanged.levelDown();
@@ -149,6 +152,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
     LocalFileSystem.getInstance().removeWatchedRoots(myRootsToWatch);
   }
 
+  @Override
   protected void addRootsToWatch() {
     final Pair<Set<String>, Set<String>> roots = getAllRoots(false);
     if (roots == null) return;
@@ -183,6 +187,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
     return false;
   }
 
+  @Override
   protected void fireBeforeRootsChangeEvent(boolean fileTypes) {
     isFiringEvent = true;
     try {
@@ -195,6 +200,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
     }
   }
 
+  @Override
   protected void fireRootsChangedEvent(boolean fileTypes) {
     isFiringEvent = true;
     try {
@@ -306,10 +312,12 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
   }
 
   private class AppListener extends ApplicationAdapter {
+    @Override
     public void beforeWriteActionStart(Object action) {
       myInsideRefresh++;
     }
 
+    @Override
     public void writeActionFinished(Object action) {
       if (--myInsideRefresh == 0) {
         if (myPointerChangesDetected) {
@@ -325,6 +333,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
   }
 
   private class MyVirtualFilePointerListener implements VirtualFilePointerListener {
+    @Override
     public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
       if (!myProject.isDisposed()) {
         if (myInsideRefresh == 0) {
@@ -342,6 +351,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
       }
     }
 
+    @Override
     public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
       if (!myProject.isDisposed()) {
         if (myInsideRefresh > 0) {

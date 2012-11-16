@@ -191,7 +191,7 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
   }
 
   public void testThisKeywordCompletionAfterClassName2() {
-    doBasicTest();
+    doVariantableTest(null, "", CompletionType.BASIC, CompletionResult.notContain, "this");
   }
 
   public void testWhileInstanceof() { doBasicTest() }
@@ -216,7 +216,7 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
   }
 
   public void testTypeCompletionInVariableDeclaration2() {
-    doBasicTest();
+    doVariantableTest(null, "", CompletionType.BASIC, CompletionResult.notContain, "ArrayList");
   }
 
   public void testTypeCompletionInParameter() {
@@ -977,7 +977,7 @@ println "abcd"
   }
 
   public void testNoModifiersAfterDef() {
-    checkSingleItemCompletion 'def priv<caret>', 'def priv<caret>'
+    doVariantableTest('def priv<caret>', '', CompletionType.BASIC, CompletionResult.notContain, 'private')
   }
 
   public void testIfSpace() { checkCompletion 'int iff; if<caret>', ' ', "int iff; if <caret>" }
@@ -1425,7 +1425,7 @@ Base<String> b = new Inh<>()<caret>
   }
 
   void testDiamondCompletion2() {
-    doSmartTest('''\
+    doCompletionTest('''\
 interface Base<T>{}
 
 class Inh<T> implements Base<T>{}
@@ -1441,7 +1441,7 @@ class Inh<T> implements Base<T>{}
 def foo(Base<String> b){}
 
 foo(new Inh<String>()<caret>)
-''')
+''', CompletionType.SMART)
   }
 
   void testPropertiesOfBaseClass() {
@@ -1468,7 +1468,7 @@ class Inheritor extends Base {
   }
 
   void testDiamondCompletionInAssignmentCompletion() {
-    doSmartTest('''\
+    doCompletionTest('''\
 class Foo<T> {}
 
 Foo<String> var
@@ -1478,7 +1478,7 @@ class Foo<T> {}
 
 Foo<String> var
 var = new Foo<>()<caret>
-''')
+''', CompletionType.SMART)
   }
 
   void testDiamondCompletionInAssignmentCompletion2() {
@@ -1571,5 +1571,12 @@ setBarrr(<caret>)
 
   void testNewExprDoesntCompleteDef() {
     doNoVariantsTest('def a = \new <caret>', 'def', 'final')
+  }
+
+  void testThisInScriptCompletion() {
+    doVariantableTest('''\
+def foo() {}
+this.<caret>
+''', "", CompletionType.BASIC, CompletionResult.contain, 'foo')
   }
 }

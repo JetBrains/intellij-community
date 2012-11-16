@@ -421,6 +421,7 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
       final PsiMethod method = (PsiMethod)resolveResult.getElement();
       if (method == null) return null;
       final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+      if (!PsiUtil.isRawSubstitutor(method, substitutor)) return null;
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       for (final PsiParameter parameter : parameters) {
         final PsiType parameterType = parameter.getType();
@@ -448,7 +449,7 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
           public Boolean visitWildcardType(PsiWildcardType wildcardType) {
             PsiType bound = wildcardType.getBound();
             if (bound != null) return bound.accept(this);
-            return Boolean.FALSE;
+            return Boolean.TRUE;
           }
 
           public Boolean visitEllipsisType(PsiEllipsisType ellipsisType) {

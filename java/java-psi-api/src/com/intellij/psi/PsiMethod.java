@@ -100,13 +100,6 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
   boolean isVarArgs();
 
   /**
-   * Checks if the method is a Java 8 extension method.
-   *
-   * @return true if the method is an extension method, false otherwise.
-   */
-  boolean isExtensionMethod();
-
-  /**
    * Returns the signature of this method, using the specified substitutor to specify
    * values of generic type parameters.
    *

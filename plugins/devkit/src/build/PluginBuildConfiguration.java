@@ -20,7 +20,6 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -48,7 +47,6 @@ import java.io.File;
 public class PluginBuildConfiguration implements ModuleComponent, JDOMExternalizable {
   private final Module myModule;
   private final ConfigFileContainer myPluginXmlContainer;
-  private VirtualFilePointer myPluginXmlPointer;
   private VirtualFilePointer myManifestFilePointer;
   private boolean myUseUserManifest = false;
   @NonNls private static final String URL_ATTR = "url";
@@ -56,7 +54,6 @@ public class PluginBuildConfiguration implements ModuleComponent, JDOMExternaliz
   @NonNls private static final String META_INF = "META-INF";
   @NonNls private static final String PLUGIN_XML = "plugin.xml";
   private final PluginBuildParticipant myBuildParticipant;
-  private String myPluginXmlUrl;
 
   public PluginBuildConfiguration(Module module) {
     myModule = module;
@@ -82,16 +79,6 @@ public class PluginBuildConfiguration implements ModuleComponent, JDOMExternaliz
   }
 
   public void initComponent() {
-    StartupManager.getInstance(myModule.getProject()).runWhenProjectIsInitialized(new Runnable() {
-      public void run() {
-        if (myPluginXmlUrl != null) {
-          setPluginXmlUrl(myPluginXmlUrl);
-        } else {
-          setPluginXmlUrl(VfsUtil.pathToUrl(getDefaultLocation()));
-        }
-        myPluginXmlUrl = null;
-      }
-    });
   }
 
   public void disposeComponent() {
@@ -100,7 +87,7 @@ public class PluginBuildConfiguration implements ModuleComponent, JDOMExternaliz
   public void readExternal(Element element) throws InvalidDataException {
     String url = element.getAttributeValue(URL_ATTR);
     if (url != null) {
-      myPluginXmlUrl = url;
+      myPluginXmlContainer.getConfiguration().replaceConfigFile(PluginDescriptorConstants.META_DATA, url);
     }
     url = element.getAttributeValue(MANIFEST_ATTR);
     if (url != null) {
@@ -109,7 +96,7 @@ public class PluginBuildConfiguration implements ModuleComponent, JDOMExternaliz
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    element.setAttribute(URL_ATTR, getPluginXmlPointer().getUrl());
+    element.setAttribute(URL_ATTR, getPluginXmlUrl());
     if (myManifestFilePointer != null){
       element.setAttribute(MANIFEST_ATTR, myManifestFilePointer.getUrl());
     }
@@ -120,13 +107,6 @@ public class PluginBuildConfiguration implements ModuleComponent, JDOMExternaliz
     return myPluginXmlContainer.getConfigFile(PluginDescriptorConstants.META_DATA);
   }
 
-  public void createPluginXmlIfNotExist() {
-    final ConfigFile descriptor = myPluginXmlContainer.getConfigFile(PluginDescriptorConstants.META_DATA);
-    if (descriptor == null) {
-      createDescriptor(getPluginXmlUrl());
-    }
-  }
-
   private void createDescriptor(final String url) {
     final ConfigFileInfo descriptor = new ConfigFileInfo(PluginDescriptorConstants.META_DATA, url);
     myPluginXmlContainer.getConfiguration().addConfigFile(descriptor);
@@ -135,48 +115,34 @@ public class PluginBuildConfiguration implements ModuleComponent, JDOMExternaliz
   }
 
   @Nullable
-  public VirtualFilePointer getStoredPluginXmlPointer() {
-    return myPluginXmlPointer;
+  public ConfigFile getPluginXmlConfigFile() {
+    return myPluginXmlContainer.getConfigFile(PluginDescriptorConstants.META_DATA);
   }
 
-  public VirtualFilePointer getPluginXmlPointer() {
-    if (myPluginXmlPointer == null) {
-      setPluginXmlPath(getDefaultLocation());
-    }
-    return myPluginXmlPointer;
-  }
-
-  public String getPluginXmlUrl() {
-    if (myPluginXmlPointer == null) {
-      return VfsUtil.pathToUrl(getDefaultLocation());
-    }
-    return myPluginXmlPointer.getUrl();
+  @Nullable
+  private String getPluginXmlUrl() {
+    ConfigFile configFile = getPluginXmlConfigFile();
+    return configFile != null ? configFile.getUrl() : null;
   }
 
   private String getDefaultLocation() {
     return new File(myModule.getModuleFilePath()).getParent() + File.separator + META_INF + File.separator + PLUGIN_XML;
   }
 
+  @NotNull
   public String getPluginXmlPath() {
-    VirtualFile file = getPluginXmlPointer().getFile();
-    if (file == null){ //e.g. file deleted
-      myPluginXmlPointer = null;
-      file = getPluginXmlPointer().getFile(); //to suggest default location
+    String url = getPluginXmlUrl();
+    if (url == null) {
+      return getDefaultLocation();
     }
-    assert file != null;
-    return FileUtil.toSystemDependentName(file.getPath());
+    return FileUtil.toSystemDependentName(VfsUtil.urlToPath(url));
   }
 
-  public void setPluginXmlPath(final String pluginXmlPath) {
-    setPluginXmlUrl(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(pluginXmlPath)));
-  }
-
-  private void setPluginXmlUrl(final String url) {
+  public void setPluginXmlPathAndCreateDescriptorIfDoesntExist(final String pluginXmlPath) {
     myPluginXmlContainer.getConfiguration().removeConfigFiles(PluginDescriptorConstants.META_DATA);
     new WriteAction() {
       protected void run(final Result result) throws Throwable {
-        createDescriptor(url);
-        myPluginXmlPointer = VirtualFilePointerManager.getInstance().create(url, myModule, null);
+        createDescriptor(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(pluginXmlPath)));
       }
     }.execute();
   }

@@ -44,6 +44,7 @@ public class ChangesModuleGroupingPolicy implements ChangesGroupingPolicy {
     myModel = model;
   }
 
+  @Override
   @Nullable
   public ChangesBrowserNode getParentNodeFor(final StaticFilePath node, final ChangesBrowserNode rootNode) {
     if (myProject.isDefault()) return null;
@@ -61,6 +62,7 @@ public class ChangesModuleGroupingPolicy implements ChangesGroupingPolicy {
     return null;
   }
 
+  @Override
   public void clear() {
     myModuleCache.clear();
   }

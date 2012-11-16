@@ -15,8 +15,6 @@
  */
 package com.intellij.psi.codeStyle.arrangement.match;
 
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
-import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 8/28/12 2:59 PM
  */
-public class StdArrangementMatchRule extends ArrangementMatchRule {
+public class StdArrangementMatchRule extends ArrangementMatchRule implements Cloneable {
 
   public StdArrangementMatchRule(@NotNull StdArrangementEntryMatcher matcher) {
     super(matcher);
@@ -42,5 +40,10 @@ public class StdArrangementMatchRule extends ArrangementMatchRule {
   @Override
   public StdArrangementEntryMatcher getMatcher() {
     return (StdArrangementEntryMatcher)super.getMatcher();
+  }
+
+  @Override
+  public StdArrangementMatchRule clone() {
+    return new StdArrangementMatchRule(new StdArrangementEntryMatcher(getMatcher().getCondition().clone()), getOrderType());
   }
 }

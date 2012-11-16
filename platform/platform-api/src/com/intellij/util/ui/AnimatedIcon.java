@@ -59,6 +59,7 @@ public class AnimatedIcon extends JComponent implements Disposable {
     myPrefSize.height = Math.max(passiveIcon.getIconHeight(), myPrefSize.height);
 
     myAnimator = new Animator(myName, icons.length, cycleLength, true) {
+      @Override
       public void paintNow(final int frame, final int totalFrames, final int cycle) {
         final int len = myIcons.length;
         myCurrentIconIndex = frame < 0 ? 0 : frame >= len ? len - 1 : frame;
@@ -91,6 +92,7 @@ public class AnimatedIcon extends JComponent implements Disposable {
     return changes;
   }
 
+  @Override
   public void addNotify() {
     super.addNotify();
     if (myRunning) {
@@ -98,6 +100,7 @@ public class AnimatedIcon extends JComponent implements Disposable {
     }
   }
 
+  @Override
   public void removeNotify() {
     super.removeNotify();
     ensureAnimation(false);
@@ -115,23 +118,28 @@ public class AnimatedIcon extends JComponent implements Disposable {
     }
   }
 
+  @Override
   public void dispose() {
     Disposer.dispose(myAnimator);
   }
 
+  @Override
   public Dimension getPreferredSize() {
     final Insets insets = getInsets();
     return new Dimension(myPrefSize.width + insets.left + insets.right, myPrefSize.height + insets.top + insets.bottom);
   }
 
+  @Override
   public Dimension getMinimumSize() {
     return getPreferredSize();
   }
 
+  @Override
   public Dimension getMaximumSize() {
     return getPreferredSize();
   }
 
+  @Override
   protected void paintComponent(Graphics g) {
     //if (myPaintingBgNow) return;
 

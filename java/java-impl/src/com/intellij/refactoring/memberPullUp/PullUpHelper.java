@@ -222,7 +222,7 @@ public class PullUpHelper extends BaseRefactoringProcessor{
         if (method.findDeepestSuperMethods().length == 0) {
           deleteOverrideAnnotationIfFound(methodCopy);
         }
-        final boolean isOriginalMethodAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT) || method.isExtensionMethod();
+        final boolean isOriginalMethodAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT) || method.hasModifierProperty(PsiModifier.DEFAULT);
         if (myIsTargetInterface || info.isToAbstract()) {
           ChangeContextUtil.clearContextInfo(method);
           RefactoringUtil.makeMethodAbstract(myTargetSuperClass, methodCopy);

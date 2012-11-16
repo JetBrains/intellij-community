@@ -18,6 +18,7 @@ package com.intellij.debugger.ui.breakpoints;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -48,7 +49,8 @@ class JavaBreakpointItem extends BreakpointItem {
     if (plainView) {
       renderer.setIcon(myBreakpoint.getIcon());
     }
-    renderer.append(myBreakpoint.getShortName(), isEnabled() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
+    renderer.append(plainView ? StringUtil.shortenTextWithEllipsis(myBreakpoint.getShortName(), 60, 0) : myBreakpoint.getDisplayName(),
+                    isEnabled() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
   }
 
   @Override

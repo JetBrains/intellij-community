@@ -695,7 +695,7 @@ public class ScopeEditorPanel {
 
     public FilterLegalsAction(final Runnable update) {
       super(IdeBundle.message("action.show.included.only"),
-            IdeBundle.message("action.description.show.included.only"), AllIcons.Ant.Filter);
+            IdeBundle.message("action.description.show.included.only"), AllIcons.General.Filter);
       myUpdate = update;
     }
 

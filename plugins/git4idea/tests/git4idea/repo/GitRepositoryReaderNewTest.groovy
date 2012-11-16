@@ -15,6 +15,7 @@
  */
 package git4idea.repo
 
+import com.intellij.openapi.application.PluginPathManager
 import git4idea.GitLocalBranch
 import git4idea.test.GitExecutor
 import git4idea.test.GitLightTest
@@ -67,6 +68,19 @@ class GitRepositoryReaderNewTest extends GitLightTest {
     def state = reader.readState();
     assertNull "Current branch can't be identified for this case", branch
     assertEquals "State value is incorrect", GitRepository.State.REBASING, state
+  }
+
+  @Test
+  void "test large packed-refs"() {
+    File pluginRoot = new File(PluginPathManager.getPluginHomePath("git4idea"));
+    File dataDir = new File(new File(pluginRoot, "testData"), "repo");
+
+    File gitDir = new File(myRepository.getRoot().getPath(), ".git")
+    cd(dataDir.path)
+    cp("packed-refs", gitDir)
+
+    def reader = new GitRepositoryReader(gitDir)
+    reader.readBranches(Collections.emptyList())
   }
 
 

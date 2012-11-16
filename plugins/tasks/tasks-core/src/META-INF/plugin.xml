@@ -75,12 +75,14 @@
       <add-to-group group-id="NavBarToolBar" anchor="last"/>
     </group>
 
+    <!--
     <action id="tasks.trackContext" class="com.intellij.tasks.actions.AssociateWithTaskAction"
             text="Associate with _Task"
             description="Reload context (e.g. open editors) when changelist is set active">
 
       <add-to-group group-id="ChangesViewPopupMenu" relative-to-action="ChangesView.SetDefault" anchor="after"/>
     </action>
+    -->
 
   </actions>
 
@@ -122,6 +124,10 @@
     <tasks.repositoryType implementation="com.intellij.tasks.generic.assembla.AssemblaRepositoryType"/>
 
     <checkinHandlerFactory implementation="com.intellij.tasks.impl.TaskCheckinHandlerFactory"/>
+
+    <toolWindow id="Time Tracking" anchor="right" secondary="false" icon="TasksIcons.Clock"
+                factoryClass="com.intellij.tasks.timetracking.TasksToolWindowFactory"
+                conditionClass="com.intellij.tasks.timetracking.TasksToolWindowFactory"/>
   </extensions>
 
 </idea-plugin>

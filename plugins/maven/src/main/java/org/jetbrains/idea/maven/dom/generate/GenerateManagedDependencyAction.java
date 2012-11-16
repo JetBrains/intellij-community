@@ -53,30 +53,32 @@ public class GenerateManagedDependencyAction extends GenerateDomElementAction {
     protected MavenDomDependency doGenerate(@NotNull final MavenDomProjectModel mavenModel, final Editor editor) {
       Set<MavenDomDependency> managingDependencies = collectManagingDependencies(mavenModel);
 
-      List<MavenDomDependency> dependenciesToOverride =
+      final List<MavenDomDependency> dependenciesToOverride =
         GenerateDependencyUtil.chooseDependencies(managingDependencies, mavenModel.getManager().getProject());
 
-      for (final MavenDomDependency parentDependency : dependenciesToOverride) {
-        final String groupId = parentDependency.getGroupId().getStringValue();
-        final String artifactId = parentDependency.getArtifactId().getStringValue();
+      if (!dependenciesToOverride.isEmpty()) {
+        return new WriteCommandAction<MavenDomDependency>(editor.getProject(), mavenModel.getXmlTag().getContainingFile()) {
+          @Override
+          protected void run(Result result) throws Throwable {
+            for (MavenDomDependency parentDependency : dependenciesToOverride) {
+              String groupId = parentDependency.getGroupId().getStringValue();
+              String artifactId = parentDependency.getArtifactId().getStringValue();
 
-        if (!StringUtil.isEmptyOrSpaces(groupId) && !StringUtil.isEmptyOrSpaces(artifactId)) {
-          return new WriteCommandAction<MavenDomDependency>(editor.getProject(), mavenModel.getXmlTag().getContainingFile()) {
-            @Override
-            protected void run(Result result) throws Throwable {
-              MavenDomDependency dependency = MavenDomUtil.createDomDependency(mavenModel, editor);
+              if (!StringUtil.isEmptyOrSpaces(groupId) && !StringUtil.isEmptyOrSpaces(artifactId)) {
+                MavenDomDependency dependency = MavenDomUtil.createDomDependency(mavenModel, editor);
 
-              dependency.getGroupId().setStringValue(groupId);
-              dependency.getArtifactId().setStringValue(artifactId);
-              String typeValue = parentDependency.getType().getStringValue();
+                dependency.getGroupId().setStringValue(groupId);
+                dependency.getArtifactId().setStringValue(artifactId);
+                String typeValue = parentDependency.getType().getStringValue();
 
-              if (!StringUtil.isEmptyOrSpaces(typeValue)) {
-                dependency.getType().setStringValue(typeValue);
+                if (!StringUtil.isEmptyOrSpaces(typeValue)) {
+                  dependency.getType().setStringValue(typeValue);
+                }
+                dependency.getVersion().undefine();
               }
-              dependency.getVersion().undefine();
             }
-          }.execute().getResultObject();
-        }
+          }
+        }.execute().getResultObject();
       }
 
       return null;

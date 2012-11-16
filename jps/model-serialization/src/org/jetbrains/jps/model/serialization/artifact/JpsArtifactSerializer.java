@@ -14,6 +14,8 @@ import org.jetbrains.jps.model.module.JpsModuleReference;
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 
+import java.util.List;
+
 /**
  * @author nik
  */
@@ -50,10 +52,17 @@ public class JpsArtifactSerializer {
   private static <P extends JpsElement> void loadArtifact(JpsProject project, JpsArtifactService service, ArtifactState state, JpsArtifactPropertiesSerializer<P> serializer) {
     JpsPackagingElement rootElement = loadPackagingElement(state.getRootElement());
     if (rootElement != null) {
+      List<ArtifactPropertiesState> propertiesList = state.getPropertiesList();
       JpsArtifact artifact = service.addArtifact(project, state.getName(), (JpsCompositePackagingElement)rootElement,
-                                                 serializer.getType(), serializer.loadProperties(state.getPropertiesList()));
+                                                 serializer.getType(), serializer.loadProperties(propertiesList));
       artifact.setBuildOnMake(state.isBuildOnMake());
       artifact.setOutputPath(state.getOutputPath());
+      for (ArtifactPropertiesState propertiesState : propertiesList) {
+        JpsArtifactExtensionSerializer<?> extensionSerializer = getExtensionSerializer(propertiesState.getId());
+        if (extensionSerializer != null) {
+          loadExtension(extensionSerializer, artifact, propertiesState.getOptions());
+        }
+      }
     }
   }
 
@@ -70,9 +79,36 @@ public class JpsArtifactSerializer {
                                                             JpsArtifactPropertiesSerializer<P> serializer) {
     state.setArtifactType(serializer.getTypeId());
     state.setRootElement(savePackagingElement(artifact.getRootElement()));
+    List<ArtifactPropertiesState> propertiesList = state.getPropertiesList();
     //noinspection unchecked
-    serializer.saveProperties((P)artifact.getProperties(), state.getPropertiesList());
+    serializer.saveProperties((P)artifact.getProperties(), propertiesList);
+    for (JpsModelSerializerExtension serializerExtension : JpsModelSerializerExtension.getExtensions()) {
+      for (JpsArtifactExtensionSerializer<?> extensionSerializer : serializerExtension.getArtifactExtensionSerializers()) {
+        JpsElement extension = artifact.getContainer().getChild(extensionSerializer.getRole());
+        if (extension != null) {
+          ArtifactPropertiesState propertiesState = new ArtifactPropertiesState();
+          propertiesState.setId(extensionSerializer.getId());
+          propertiesState.setOptions(saveExtension(extensionSerializer, extension));
+          propertiesList.add(propertiesState);
+        }
+      }
+    }
     componentElement.addContent(XmlSerializer.serialize(state, SERIALIZATION_FILTERS));
+  }
+
+  private static <E extends JpsElement> void loadExtension(JpsArtifactExtensionSerializer<E> serializer,
+                                                           JpsArtifact artifact,
+                                                           Element options) {
+    E e = serializer.loadExtension(options);
+    artifact.getContainer().setChild(serializer.getRole(), e);
+  }
+
+  private static <E extends JpsElement> Element saveExtension(JpsArtifactExtensionSerializer<?> serializer,
+                                                              E extension) {
+    Element optionsTag = new Element("options");
+    //noinspection unchecked
+    ((JpsArtifactExtensionSerializer<E>)serializer).saveExtension(extension, optionsTag);
+    return optionsTag;
   }
 
   private static <P extends JpsPackagingElement> Element savePackagingElement(P element) {
@@ -146,6 +182,18 @@ public class JpsArtifactSerializer {
       }
     }
     throw new IllegalArgumentException("Serializer not found for " + elementClass);
+  }
+
+  @Nullable
+  private static JpsArtifactExtensionSerializer<?> getExtensionSerializer(String id) {
+    for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
+      for (JpsArtifactExtensionSerializer<?> serializer : extension.getArtifactExtensionSerializers()) {
+        if (serializer.getId().equals(id)) {
+          return serializer;
+        }
+      }
+    }
+    return null;
   }
 
   private static JpsArtifactPropertiesSerializer<?> getTypePropertiesSerializer(String typeId) {

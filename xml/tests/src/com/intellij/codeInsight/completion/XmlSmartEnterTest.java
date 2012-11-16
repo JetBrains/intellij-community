@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupEvent;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
@@ -115,7 +116,7 @@ public class XmlSmartEnterTest extends LightCodeInsightTestCase {
   }
 
   private void select(final char c) {
-    if (c != '\n' && c != '\t' && c != Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
+    if (!LookupEvent.isSpecialCompletionChar(c)) {
       type(c);
       return;
     }

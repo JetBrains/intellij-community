@@ -29,10 +29,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDocumentation;
-import com.intellij.lang.documentation.CompositeDocumentationProvider;
-import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.lang.documentation.ExternalDocumentationHandler;
-import com.intellij.lang.documentation.ExternalDocumentationProvider;
+import com.intellij.lang.documentation.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -180,13 +177,15 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
   }
 
-  public boolean hasActiveDockedDocWindow() {
-    return myToolWindow != null && myToolWindow.isVisible();
-  }
-  
   public void setAllowContentUpdateFromContext(boolean allow) {
     if (hasActiveDockedDocWindow()) {
       restartAutoUpdate(allow);
+    }
+  }
+
+  public void updateToolwindowContext() {
+    if (hasActiveDockedDocWindow()) {
+      updateComponent();
     }
   }
 
@@ -242,17 +241,15 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       myParameterInfoController = ParameterInfoController.findControllerAtOffset(editor, list.getTextRange().getStartOffset());
     }
 
-    final PsiElement originalElement = file != null ? file.findElementAt(editor.getCaretModel().getOffset()) : null;
-    PsiElement element = findTargetElement(editor, file, originalElement);
-    assertSameProject(element);
+    final PsiElement originalElement = getContextElement(editor, file);
+    PsiElement element = assertSameProject(findTargetElement(editor, file));
 
     if (element == null && myParameterInfoController != null) {
       final Object[] objects = myParameterInfoController.getSelectedElements();
 
       if (objects != null && objects.length > 0) {
         if (objects[0] instanceof PsiElement) {
-          element = (PsiElement)objects[0];
-          assertSameProject(element);
+          element = assertSameProject((PsiElement)objects[0]);
         }
       }
     }
@@ -260,8 +257,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     if (element == null && file == null) return; //file == null for text field editor
 
     if (element == null) { // look if we are within a javadoc comment
-      element = originalElement;
-      assertSameProject(element);
+      element = assertSameProject(originalElement);
       if (element == null) return;
 
       PsiComment comment = PsiTreeUtil.getParentOfType(element, PsiComment.class);
@@ -310,6 +306,14 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     };
 
     doShowJavaDocInfo(element, requestFocus, updateProcessor, originalElement, autoupdate);
+  }
+
+  public PsiElement findTargetElement(Editor editor, PsiFile file) {
+    return findTargetElement(editor, file, getContextElement(editor, file));
+  }
+
+  private static PsiElement getContextElement(Editor editor, PsiFile file) {
+    return file != null ? file.findElementAt(editor.getCaretModel().getOffset()) : null;
   }
 
   private void doShowJavaDocInfo(final PsiElement element, boolean requestFocus, PopupUpdateProcessor updateProcessor,
@@ -480,40 +484,35 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   @Nullable
-  public PsiElement findTargetElement(final Editor editor, @Nullable final PsiFile file, PsiElement contextElement) {
-    return findTargetElement(editor, editor.getCaretModel().getOffset(), file, contextElement);
-  }
-  
-  @Nullable
-  public PsiElement findTargetElement(final Editor editor, int offset, @Nullable final PsiFile file, PsiElement contextElement) {
+  public PsiElement findTargetElement(@NotNull final Editor editor, @Nullable final PsiFile file, PsiElement contextElement) {
+    int offset = editor.getCaretModel().getOffset();
     TargetElementUtilBase util = TargetElementUtilBase.getInstance();
-    PsiElement element = editor != null ? util.findTargetElement(editor, ourFlagsForTargetElements, offset)
-                                        : null;
-    assertSameProject(element);
-
-    // Allow context doc over xml tag content
-    if (element != null || contextElement != null) {
-      final PsiElement adjusted = util.adjustElement(editor, ourFlagsForTargetElements, element, contextElement);
-      if (adjusted != null) {
-        element = adjusted;
-        assertSameProject(element);
+    PsiElement element = assertSameProject(getElementFromLookup(editor, file));
+    if (element == null && file != null) {
+      final DocumentationProvider documentationProvider = getProviderFromElement(file);
+      if (documentationProvider instanceof DocumentationProviderEx) {
+        element = assertSameProject(((DocumentationProviderEx)documentationProvider).getCustomDocumentationElement(editor, file, contextElement));
       }
     }
     
-    if (element == null && editor != null) {
-      element = getElementFromLookup(editor, file);
-      assertSameProject(element);
-
-      if (element == null) {
-        final PsiReference ref = TargetElementUtilBase.findReference(editor, offset);
-
-        if (ref != null) {
-          element = util.adjustReference(ref);
-          assertSameProject(element);
-          if (element == null && ref instanceof PsiPolyVariantReference) {
-            element = ref.getElement();
-            assertSameProject(element);
-          }
+    if (element == null) {
+      element = assertSameProject(util.findTargetElement(editor, ourFlagsForTargetElements, offset));
+      
+      // Allow context doc over xml tag content
+      if (element != null || contextElement != null) {
+        final PsiElement adjusted = assertSameProject(util.adjustElement(editor, ourFlagsForTargetElements, element, contextElement));
+        if (adjusted != null) {
+          element = adjusted;
+        }
+      }
+    }
+    
+    if (element == null) {
+      final PsiReference ref = TargetElementUtilBase.findReference(editor, offset);
+      if (ref != null) {
+        element = assertSameProject(util.adjustReference(ref));
+        if (element == null && ref instanceof PsiPolyVariantReference) {
+          element = assertSameProject(ref.getElement());
         }
       }
     }
@@ -955,16 +954,17 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return myProject;
   }
 
-  private void assertSameProject(@Nullable PsiElement element) {
+  private PsiElement assertSameProject(@Nullable PsiElement element) {
     if (element != null && element.isValid() && myProject != element.getProject()) {
       throw new AssertionError(myProject + "!=" + element.getProject() + "; element=" + element);
     }
+    return element;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static void createHyperlink(StringBuilder buffer, String refText,String label,boolean plainLink) {
     buffer.append("<a href=\"");
-    buffer.append("psi_element://"); // :-)
+    buffer.append(PSI_ELEMENT_PROTOCOL); // :-)
     buffer.append(refText);
     buffer.append("\">");
     if (!plainLink) {

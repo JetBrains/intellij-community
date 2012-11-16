@@ -18,8 +18,10 @@ package com.intellij.util;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,17 +31,21 @@ import java.util.List;
  * @author traff
  */
 public class PathMappingSettings implements Cloneable {
+  @NotNull
   private List<PathMapping> myPathMappings;
 
-  public PathMappingSettings(List<PathMapping> pathMappings) {
+  public PathMappingSettings(@Nullable final List<PathMapping> pathMappings) {
     myPathMappings = create(pathMappings);
   }
 
-  private List<PathMapping> create(List<PathMapping> mappings) {
+  @NotNull
+  private static List<PathMapping> create(@Nullable final List<PathMapping> mappings) {
     List<PathMapping> result = ContainerUtil.newArrayList();
-    for (PathMapping m : mappings) {
-      if (m != null && !isEmpty(m.myLocalRoot, m.myRemoteRoot)) {
-        result.add(m);
+    if (mappings != null) {
+      for (PathMapping m : mappings) {
+        if (m != null && !isEmpty(m.myLocalRoot, m.myRemoteRoot)) {
+          result.add(m);
+        }
       }
     }
     return result;
@@ -105,20 +111,16 @@ public class PathMappingSettings implements Cloneable {
     return FileUtil.toSystemIndependentName(s);
   }
 
-  private static String normReplace(String s) {
-    return FileUtil.toSystemIndependentName(s);
-  }
-
-
   public boolean isUseMapping() {
     return myPathMappings.size() > 0;
   }
 
+  @NotNull
   public List<PathMapping> getPathMappings() {
     return myPathMappings;
   }
 
-  public void setPathMappings(List<PathMapping> pathMappings) {
+  public void setPathMappings(@Nullable final List<PathMapping> pathMappings) {
     myPathMappings = create(pathMappings);
   }
 
@@ -134,6 +136,31 @@ public class PathMappingSettings implements Cloneable {
 
   public static boolean isEmpty(String localRoot, String remoteRoot) {
     return StringUtil.isEmpty(localRoot) || StringUtil.isEmpty(remoteRoot);
+  }
+
+  @Nullable
+  public static PathMappingSettings readExternal(@Nullable final Element element) {
+    if (element == null) {
+      return null;
+    }
+
+    final Element settingsElement = element.getChild(PathMappingSettings.class.getSimpleName());
+    if (settingsElement == null) {
+      return null;
+    }
+
+    return XmlSerializer.deserialize(settingsElement, PathMappingSettings.class);
+  }
+
+  public static void writeExternal(@Nullable final Element element, @Nullable final PathMappingSettings mappings) {
+    if (element == null || mappings == null || !mappings.isUseMapping()) {
+      return;
+    }
+    element.addContent(XmlSerializer.serialize(mappings));
+  }
+
+  public void addAll(PathMappingSettings settings) {
+    myPathMappings.addAll(settings.getPathMappings());
   }
 
   @Tag("mapping")

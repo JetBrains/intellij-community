@@ -126,7 +126,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         }
       }
       else if (parameterType instanceof PsiMethodReferenceType) {
-        LambdaUtil.processMethodReferenceReturnType(conflicts, i);
+        PsiMethodReferenceUtil.processMethodReferenceReturnType(conflicts, i);
       }
     }
   }
@@ -282,9 +282,15 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
           }
 
           if (currentClass != null && InheritanceUtil.isInheritorOrSelf(currentClass, class1, true) && InheritanceUtil.isInheritorOrSelf(currentClass, existingClass, true)) {
-            if (MethodSignatureUtil.areSignaturesEqual(existingMethod.getSignature(TypeConversionUtil.getSuperClassSubstitutor(existingClass, currentClass, PsiSubstitutor.EMPTY)), 
-                                                       method.getSignature(TypeConversionUtil.getSuperClassSubstitutor(class1, currentClass, PsiSubstitutor.EMPTY)))) {
-              conflicts.remove(i);
+            final PsiSubstitutor eSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(existingClass, currentClass, PsiSubstitutor.EMPTY);
+            final PsiSubstitutor cSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(class1, currentClass, PsiSubstitutor.EMPTY);
+            if (MethodSignatureUtil.areSignaturesEqual(existingMethod.getSignature(eSubstitutor), method.getSignature(cSubstitutor))) {
+              final PsiType returnType = eSubstitutor.substitute(existingMethod.getReturnType());
+              if (!PsiUtil.captureToplevelWildcards(returnType, existingMethod).equals(returnType)) {
+                conflicts.remove(existing);
+              } else {
+                conflicts.remove(i);
+              }
               i--;
               break;
             }
@@ -643,9 +649,10 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return substitutor;
   }
 
-  public static void checkPrimitiveVarargs(final List<CandidateInfo> conflicts,
-                                           final int argumentsCount) {
-    PsiMethod objectVararg = null;
+  public void checkPrimitiveVarargs(final List<CandidateInfo> conflicts,
+                                    final int argumentsCount) {
+    if (JavaVersionService.getInstance().isAtLeast(myArgumentsList, JavaSdkVersion.JDK_1_7)) return;
+    CandidateInfo objectVararg = null;
     for (CandidateInfo conflict : conflicts) {
       final PsiMethod method = (PsiMethod)conflict.getElement();
       final int parametersCount = method.getParameterList().getParametersCount();
@@ -654,21 +661,21 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         final PsiType componentType = ((PsiArrayType)type).getComponentType();
         final PsiClassType classType = PsiType.getJavaLangObject(method.getManager(), GlobalSearchScope.allScope(method.getProject()));
         if (Comparing.equal(componentType, classType)) {
-          objectVararg = method;
+          objectVararg = conflict;
         }
       }
     }
 
     if (objectVararg != null) {
-      for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext(); ) {
-        CandidateInfo conflict = iterator.next();
+      for (CandidateInfo conflict : conflicts) {
         PsiMethod method = (PsiMethod)conflict.getElement();
         if (method != objectVararg && method != null && method.isVarArgs()) {
           final int paramsCount = method.getParameterList().getParametersCount();
           final PsiType type = method.getParameterList().getParameters()[paramsCount - 1].getType();
           final PsiType componentType = ((PsiArrayType)type).getComponentType();
           if (argumentsCount == paramsCount - 1 && componentType instanceof PsiPrimitiveType) {
-            iterator.remove();
+            conflicts.remove(objectVararg);
+            break;
           }
         }
       }

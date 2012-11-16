@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,9 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiTypeParameterListStub;
 import com.intellij.psi.impl.java.stubs.PsiTypeParameterStub;
-import com.intellij.psi.impl.java.stubs.impl.PsiClassReferenceListStubImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiTypeParameterListStubImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiTypeParameterStubImpl;
 import com.intellij.psi.stubs.StubElement;
@@ -37,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.text.CharacterIterator;
 import java.util.ArrayList;
-import java.util.Collections;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class SignatureParsing {
@@ -58,14 +55,14 @@ public class SignatureParsing {
     return list;
   }
 
-  private static PsiTypeParameterStub parseTypeParameter(CharacterIterator singatureIterator, PsiTypeParameterListStub parent)
+  private static PsiTypeParameterStub parseTypeParameter(CharacterIterator signatureIterator, PsiTypeParameterListStub parent)
       throws ClsFormatException {
-    StringBuffer name = new StringBuffer();
-    while (singatureIterator.current() != ':' && singatureIterator.current() != CharacterIterator.DONE) {
-      name.append(singatureIterator.current());
-      singatureIterator.next();
+    StringBuilder name = new StringBuilder();
+    while (signatureIterator.current() != ':' && signatureIterator.current() != CharacterIterator.DONE) {
+      name.append(signatureIterator.current());
+      signatureIterator.next();
     }
-    if (singatureIterator.current() == CharacterIterator.DONE) {
+    if (signatureIterator.current() == CharacterIterator.DONE) {
       throw new ClsFormatException();
     }
 
@@ -73,23 +70,22 @@ public class SignatureParsing {
     PsiTypeParameterStub parameterStub = new PsiTypeParameterStubImpl(parent, StringRef.fromString(name.toString()));
 
     ArrayList<String> bounds = null;
-    while (singatureIterator.current() == ':') {
-      singatureIterator.next();
-      String bound = parseToplevelClassRefSignature(singatureIterator);
+    while (signatureIterator.current() == ':') {
+      signatureIterator.next();
+      String bound = parseTopLevelClassRefSignature(signatureIterator);
       if (bound != null && !bound.equals(CommonClassNames.JAVA_LANG_OBJECT)) {
         if (bounds == null) bounds = new ArrayList<String>();
         bounds.add(bound);
       }
     }
 
-    String[] sbounds = ArrayUtil.toStringArray(bounds == null ? Collections.<String>emptyList() : bounds);
-    new PsiClassReferenceListStubImpl(JavaStubElementTypes.EXTENDS_BOUND_LIST, parameterStub, sbounds, PsiReferenceList.Role.EXTENDS_BOUNDS_LIST);
+    StubBuildingVisitor.newReferenceList(JavaStubElementTypes.EXTENDS_BOUND_LIST, parameterStub, ArrayUtil.toStringArray(bounds));
 
     return parameterStub;
   }
 
   @Nullable
-  public static String parseToplevelClassRefSignature(CharacterIterator signature) throws ClsFormatException {
+  public static String parseTopLevelClassRefSignature(CharacterIterator signature) throws ClsFormatException {
     if (signature.current() == 'L') {
       return parseParameterizedClassRefSignature(signature);
     }
@@ -101,7 +97,7 @@ public class SignatureParsing {
 
   private static String parseTypeVariableRefSignature(CharacterIterator signature) {
     signature.next();
-    StringBuffer id = new StringBuffer();
+    StringBuilder id = new StringBuilder();
     while (signature.current() != ';' && signature.current() != '>') {
       id.append(signature.current());
       signature.next();
@@ -129,6 +125,14 @@ public class SignatureParsing {
             if(standAlone$) {
               canonicalText.append('$');
               break;
+            } else if (signature.getIndex() + 1 < signature.getEndIndex()) {
+              char next = signature.next();
+              signature.previous();
+              standAlone$ = !StringUtil.isJavaIdentifierPart(next); // $;
+              if(standAlone$) {
+                canonicalText.append('$');
+                break;
+              }
             }
           }
         case '/':
@@ -239,7 +243,7 @@ public class SignatureParsing {
       case '.':
       case '=':
         signature.next();
-        // fall thru
+        // fall through
       default:
         variance = '\0';
     }

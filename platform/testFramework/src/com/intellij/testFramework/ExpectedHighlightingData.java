@@ -40,6 +40,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
@@ -410,6 +411,10 @@ public class ExpectedHighlightingData {
   }
 
   public void checkResult(Collection<HighlightInfo> infos, String text, @Nullable String filePath) {
+    if (filePath == null) {
+      VirtualFile virtualFile = myFile == null? null : myFile.getVirtualFile();
+      filePath = virtualFile == null? null : virtualFile.getUserData(VfsTestUtil.TEST_DATA_FILE_PATH);
+    }
     String fileName = myFile == null ? "" : myFile.getName() + ": ";
     String failMessage = "";
 
@@ -463,13 +468,16 @@ public class ExpectedHighlightingData {
     }
 
     if (!failMessage.isEmpty()) {
-      compareTexts(infos, text, failMessage, filePath);
+      compareTexts(infos, text, failMessage + "\n", filePath);
     }
   }
 
   private void compareTexts(Collection<HighlightInfo> infos, String text, String failMessage, @Nullable String filePath) {
     String actual = composeText(highlightingTypes,  infos, text);
     if (filePath != null && !myText.equals(actual)) {
+      // uncomment to overwrite, don't forget to revert on commit!
+      //VfsTestUtil.overwriteTestData(filePath, actual);
+      //return;
       throw new FileComparisonFailure(failMessage, myText, actual, filePath);
     }
     Assert.assertEquals(failMessage + "\n", myText, actual);

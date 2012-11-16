@@ -15,59 +15,37 @@ package org.zmlx.hg4idea.ui;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.SystemInfo;
-import org.zmlx.hg4idea.HgGlobalSettings;
+import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgVersionCommand;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class HgConfigurationProjectPanel {
 
-  private final HgProjectSettings myProjectSettings;
+  @NotNull private final HgProjectSettings myProjectSettings;
 
   private JPanel myMainPanel;
-  private JCheckBox myCheckIncomingCbx;
-  private JCheckBox myCheckOutgoingCbx;
-  private JRadioButton myAutoRadioButton;
-  private JRadioButton mySelectRadioButton;
+  private JCheckBox myCheckIncomingOutgoingCbx;
   private TextFieldWithBrowseButton myPathSelector;
   private JCheckBox myRunHgAsBashCheckBox;
 
-  public HgConfigurationProjectPanel(HgProjectSettings projectSettings) {
+  public HgConfigurationProjectPanel(@NotNull HgProjectSettings projectSettings) {
     myProjectSettings = projectSettings;
     loadSettings();
-
-    final ActionListener listener = new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        myPathSelector.setEnabled(mySelectRadioButton.isSelected());
-      }
-    };
-    mySelectRadioButton.addActionListener(listener);
-    myAutoRadioButton.addActionListener(listener);
   }
 
   public boolean isModified() {
-    boolean executableModified = mySelectRadioButton.isSelected()
-                                 ? !getCurrentPath().equals(myProjectSettings.getHgExecutable())
-                                 : myAutoRadioButton.isSelected() != myProjectSettings.isAutodetectHg();
-    return executableModified || myCheckIncomingCbx.isSelected() != myProjectSettings.isCheckIncoming()
-           || myCheckOutgoingCbx.isSelected() != myProjectSettings.isCheckOutgoing()
+    boolean executableModified = !getCurrentPath().equals(myProjectSettings.getHgExecutable());
+    return executableModified || myCheckIncomingOutgoingCbx.isSelected() != myProjectSettings.isCheckIncomingOutgoing()
            || myRunHgAsBashCheckBox.isSelected() != myProjectSettings.isRunViaBash();
   }
 
   public void saveSettings() {
-    myProjectSettings.setCheckIncoming(myCheckIncomingCbx.isSelected());
-    myProjectSettings.setCheckOutgoing(myCheckOutgoingCbx.isSelected());
+    myProjectSettings.setCheckIncomingOutgoing(myCheckIncomingOutgoingCbx.isSelected());
     myProjectSettings.setRunViaBash(myRunHgAsBashCheckBox.isSelected());
-
-    if (myAutoRadioButton.isSelected()) {
-      myProjectSettings.enableAutodetectHg();
-    } else {
-      myProjectSettings.setHgExecutable(getCurrentPath());
-    }
+    myProjectSettings.setHgExecutable(getCurrentPath());
   }
 
   private String getCurrentPath() {
@@ -75,19 +53,9 @@ public class HgConfigurationProjectPanel {
   }
 
   public void loadSettings() {
-    myCheckIncomingCbx.setSelected(myProjectSettings.isCheckIncoming());
-    myCheckOutgoingCbx.setSelected(myProjectSettings.isCheckOutgoing());
+    myCheckIncomingOutgoingCbx.setSelected(myProjectSettings.isCheckIncomingOutgoing() );
     myRunHgAsBashCheckBox.setSelected(myProjectSettings.isRunViaBash());
-
-    boolean isAutodetectHg = myProjectSettings.isAutodetectHg();
-    myAutoRadioButton.setSelected(isAutodetectHg);
-    mySelectRadioButton.setSelected(!isAutodetectHg);
-    myPathSelector.setEnabled(!isAutodetectHg);
-    if (isAutodetectHg) {
-      myPathSelector.setText("");
-    } else {
-      myPathSelector.setText(myProjectSettings.getHgExecutable());
-    }
+    myPathSelector.setText(myProjectSettings.getGlobalSettings().getHgExecutable());
   }
 
   public JPanel getPanel() {
@@ -96,11 +64,7 @@ public class HgConfigurationProjectPanel {
 
   public void validate() throws ConfigurationException {
     String hgExecutable;
-    if (myAutoRadioButton.isSelected()) {
-      hgExecutable = HgGlobalSettings.getDefaultExecutable();
-    } else {
-      hgExecutable = getCurrentPath();
-    }
+    hgExecutable = getCurrentPath();
     HgVersionCommand command = new HgVersionCommand();
     if (!command.isValid(hgExecutable, myRunHgAsBashCheckBox.isSelected())) {
       throw new ConfigurationException(
@@ -115,4 +79,8 @@ public class HgConfigurationProjectPanel {
     myRunHgAsBashCheckBox.setVisible(!SystemInfo.isWindows);
   }
 
+  @NotNull
+  public HgProjectSettings getProjectSettings() {
+    return myProjectSettings;
+  }
 }

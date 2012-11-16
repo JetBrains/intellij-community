@@ -1,4 +1,4 @@
-public class IntCat extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
+public class IntCat {
 public static void call(java.lang.Integer i) {
 org.codehaus.groovy.runtime.DefaultGroovyMethods.print(this, i);
 }

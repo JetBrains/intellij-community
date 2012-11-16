@@ -36,6 +36,7 @@ public class JavacConfiguration implements PersistentStateComponent<JpsJavaCompi
     myProject = project;
   }
 
+  @Override
   @NotNull
   public JpsJavaCompilerOptions getState() {
     JpsJavaCompilerOptions state = new JpsJavaCompilerOptions();
@@ -44,11 +45,13 @@ public class JavacConfiguration implements PersistentStateComponent<JpsJavaCompi
     return state;
   }
 
+  @Override
   public void loadState(JpsJavaCompilerOptions state) {
     XmlSerializerUtil.copyBean(state, mySettings);
   }
 
   public static JpsJavaCompilerOptions getOptions(Project project, Class<? extends JavacConfiguration> aClass) {
-    return ServiceManager.getService(project, aClass).mySettings;
+    JavacConfiguration configuration = ServiceManager.getService(project, aClass);
+    return configuration.mySettings;
   }
 }

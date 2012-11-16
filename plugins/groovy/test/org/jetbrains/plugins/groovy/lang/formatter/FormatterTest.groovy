@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -248,6 +248,9 @@ public class FormatterTest extends GroovyFormatterTestCase {
   void testNonIndentAfterClosureQualifier2() { doTest() }
 
   void testAssertDescriptionIndent() { doTest() }
+
+  void testPackageDef1() { doTest() }
+  void testPackageDef2() { doTest() }
 
   private void doGeeseTest() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class);

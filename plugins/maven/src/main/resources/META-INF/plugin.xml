@@ -188,33 +188,33 @@
 
     <action id="Maven.DownloadAllSources" class="org.jetbrains.idea.maven.project.actions.DownloadAllSourcesAction"
             text="Download Sources" description="Download sources for all dependencies"
-            icon="MavenIcons.Download">
+            icon="AllIcons.Actions.Download">
     </action>
 
     <action id="Maven.DownloadAllDocs" class="org.jetbrains.idea.maven.project.actions.DownloadAllDocsAction"
             text="Download Documentation" description="Download documentation for all dependencies"
-            icon="MavenIcons.Download">
+            icon="AllIcons.Actions.Download">
     </action>
 
     <action id="Maven.DownloadAllSourcesAndDocs" class="org.jetbrains.idea.maven.project.actions.DownloadAllSourcesAndDocsAction"
             text="Download Sources and Documentation" description="Download sources and documentation for all dependencies"
-            icon="MavenIcons.Download">
+            icon="AllIcons.Actions.Download">
     </action>
 
     <action id="Maven.DownloadSelectedSourcesAndDocs" class="org.jetbrains.idea.maven.project.actions.DownloadSelectedSourcesAndDocsAction"
             text="Download Sources and Documentation"
             description="Download sources and documentation for all dependencies for selected projects"
-            icon="MavenIcons.Download">
+            icon="AllIcons.Actions.Download">
     </action>
 
     <action id="Maven.DownloadSelectedSources" class="org.jetbrains.idea.maven.project.actions.DownloadSelectedSourcesAction"
             text="Download Sources" description="Download sources for all dependencies for selected projects"
-            icon="MavenIcons.Download">
+            icon="AllIcons.Actions.Download">
     </action>
 
     <action id="Maven.DownloadSelectedDocs" class="org.jetbrains.idea.maven.project.actions.DownloadSelectedDocsAction"
             text="Download Documentation" description="Download documentation for all dependencies for selected projects"
-            icon="MavenIcons.Download">
+            icon="AllIcons.Actions.Download">
     </action>
 
     <action id="Maven.AddManagedFiles"
@@ -317,7 +317,7 @@
     </group>
 
     <group id="Maven.DownloadAllGroup" popup="true" class="org.jetbrains.idea.maven.project.actions.DownloadActionGroup"
-           icon="MavenIcons.Download">
+           icon="AllIcons.Actions.Download">
       <reference id="Maven.DownloadAllSources"/>
       <reference id="Maven.DownloadAllDocs"/>
       <reference id="Maven.DownloadAllSourcesAndDocs"/>
@@ -354,7 +354,7 @@
               text="Show Basic Phases Only"
               description="Show basic phases only"
               secondary="true"
-              icon="MavenIcons.FilterPhases"/>
+              icon="AllIcons.General.Filter"/>
     </group>
 
     <group id="Maven.DependencyMenu">

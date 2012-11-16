@@ -23,6 +23,7 @@ package com.intellij.codeEditor.printing;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +35,7 @@ public class FileSeparatorProvider {
   }
 
   @Nullable
-  public List<LineMarkerInfo> getFileSeparators(PsiFile file, final Document document) {
+  public List<LineMarkerInfo> getFileSeparators(PsiFile file, final Document document, @Nullable final Editor editor) {
     return null;
   }
 }

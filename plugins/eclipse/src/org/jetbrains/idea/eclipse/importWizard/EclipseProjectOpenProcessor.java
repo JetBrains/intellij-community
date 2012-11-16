@@ -41,7 +41,6 @@ public class EclipseProjectOpenProcessor extends ProjectOpenProcessorBase<Eclips
   }
 
   public boolean doQuickImport(VirtualFile file, final WizardContext wizardContext) {
-    //noinspection ConstantConditions
     getBuilder().setRootDirectory(file.getParent().getPath());
 
     final List<String> projects = getBuilder().getList();

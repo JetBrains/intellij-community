@@ -20,9 +20,12 @@
  */
 package com.intellij.projectImport;
 
+import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +35,7 @@ import javax.swing.*;
 public abstract class ProjectImportProvider {
   public static final ExtensionPointName<ProjectImportProvider> PROJECT_IMPORT_PROVIDER = ExtensionPointName.create("com.intellij.projectImportProvider");
 
-  private final ProjectImportBuilder myBuilder;
+  protected ProjectImportBuilder myBuilder;
 
   protected ProjectImportProvider(final ProjectImportBuilder builder) {
     myBuilder = builder;
@@ -57,5 +60,44 @@ public abstract class ProjectImportProvider {
     return getBuilder().getIcon();
   }
 
-  public abstract ModuleWizardStep[] createSteps(WizardContext context);
+  public boolean canImport(VirtualFile fileOrDirectory, @Nullable Project project) {
+    if (fileOrDirectory.isDirectory()) {
+      return true;
+    }
+    else {
+      return canImportFromFile(fileOrDirectory);
+    }
+  }
+
+  protected boolean canImportFromFile(VirtualFile file) {
+    return false;
+  }
+
+  public String getPathToBeImported(VirtualFile file) {
+    return getDefaultPath(file);
+  }
+
+  public static String getDefaultPath(VirtualFile file) {
+    return file.isDirectory() ? file.getPath() : file.getParent().getPath();
+  }
+
+  public boolean canCreateNewProject() {
+    return true;
+  }
+
+  public void addSteps(StepSequence sequence, WizardContext context, String id) {
+    ModuleWizardStep[] steps = createSteps(context);
+    for (ModuleWizardStep step : steps) {
+      sequence.addSpecificStep(id, step);
+    }
+  }
+
+  public ModuleWizardStep[] createSteps(WizardContext context) {
+    return ModuleWizardStep.EMPTY_ARRAY;
+  }
+
+  @Nullable
+  public String getFileSample() {
+    return null;
+  }
 }

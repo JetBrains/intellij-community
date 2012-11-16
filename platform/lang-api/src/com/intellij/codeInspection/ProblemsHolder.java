@@ -16,6 +16,7 @@
 
 package com.intellij.codeInspection;
 
+import com.intellij.BundleBase;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -33,7 +34,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.List;
@@ -143,7 +143,14 @@ public class ProblemsHolder {
     String message;
     if (reference instanceof EmptyResolveMessageProvider) {
       String pattern = ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern();
-      message = pattern.contains("{0}") ? MessageFormat.format(pattern, reference.getCanonicalText()) : pattern;
+      try {
+        message = BundleBase.format(pattern, reference.getCanonicalText()); // avoid double formatting
+      }
+      catch (IllegalArgumentException ex) {
+        // unresolvedMessage provided by third-party reference contains wrong format string (e.g. {}), tolerate it
+        message = pattern;
+        LOG.info(pattern);
+      }
     }
     else {
       message = CodeInsightBundle.message("error.cannot.resolve.default.message", reference.getCanonicalText());

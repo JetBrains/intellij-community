@@ -1,9 +1,11 @@
 package org.jetbrains.jps.builders;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.io.TestFileSystemBuilder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.BuildType;
@@ -19,7 +21,6 @@ import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.IncProjectBuilder;
 import org.jetbrains.jps.incremental.RebuildRequestedException;
 import org.jetbrains.jps.incremental.Utils;
-import org.jetbrains.jps.incremental.artifacts.ArtifactBuilderLoggerImpl;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
@@ -37,6 +38,7 @@ import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
@@ -110,7 +112,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
 
   protected JpsSdk<JpsDummyElement> addJdk(final String name) {
     try {
-      return addJdk(name, FileUtil.toSystemIndependentName(ClasspathBootstrap.getResourcePath(Object.class).getCanonicalPath()));
+      return addJdk(name, FileUtil.toSystemIndependentName(ClasspathBootstrap.getResourceFile(Object.class).getCanonicalPath()));
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -156,16 +158,18 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     try {
       String testDataRootPath = getTestDataRootPath();
       String fullProjectPath = FileUtil.toSystemDependentName(testDataRootPath != null ? testDataRootPath + "/" + projectPath : projectPath);
-      pathVariables = addPathVariables(pathVariables);
-      JpsProjectLoader.loadProject(myProject, pathVariables, fullProjectPath);
+      Map<String, String> allPathVariables = new HashMap<String, String>(pathVariables.size() + 1);
+      allPathVariables.putAll(pathVariables);
+      allPathVariables.put(PathMacroUtil.APPLICATION_HOME_DIR, PathManager.getHomePath());
+      addPathVariables(allPathVariables);
+      JpsProjectLoader.loadProject(myProject, allPathVariables, fullProjectPath);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  protected Map<String, String> addPathVariables(Map<String, String> pathVariables) {
-    return pathVariables;
+  protected void addPathVariables(Map<String, String> pathVariables) {
   }
 
   @Nullable
@@ -205,7 +209,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   }
 
   protected BuildResult doBuild(CompileScopeTestBuilder scope) {
-    ProjectDescriptor descriptor = createProjectDescriptor(new BuildLoggingManager(new ArtifactBuilderLoggerImpl(), myLogger));
+    ProjectDescriptor descriptor = createProjectDescriptor(new BuildLoggingManager(myLogger));
     try {
       myLogger.clear();
       return doBuild(descriptor, scope);
@@ -216,7 +220,11 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   }
 
   protected void assertCompiled(String builderName, String... paths) {
-    myLogger.assertCompiled(builderName, getOrCreateProjectDir(), paths);
+    myLogger.assertCompiled(builderName, new File[]{myProjectDir, myDataStorageRoot}, paths);
+  }
+
+  protected void assertDeleted(String... paths) {
+    myLogger.assertDeleted(new File[]{myProjectDir, myDataStorageRoot}, paths);
   }
 
   protected BuildResult doBuild(final ProjectDescriptor descriptor, CompileScopeTestBuilder scopeBuilder) {
@@ -272,20 +280,5 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       myJdk = addJdk("1.6");
     }
     return addModule(moduleName, srcPaths, getAbsolutePath("out/production/" + moduleName), myJdk);
-  }
-
-  protected String getProjectRelativePath(String path) {
-    assertNotNull(myProjectDir);
-    final String projectDir = FileUtil.toSystemIndependentName(myProjectDir.getAbsolutePath());
-    String dataStorageRoot = FileUtil.toSystemIndependentName(myDataStorageRoot.getAbsolutePath());
-    if (FileUtil.isAncestor(projectDir, path, true)) {
-      return FileUtil.getRelativePath(projectDir, path, '/');
-    }
-    else if (FileUtil.isAncestor(dataStorageRoot, path, true)) {
-      return FileUtil.getRelativePath(dataStorageRoot, path, '/');
-    }
-    else {
-      return path;
-    }
   }
 }

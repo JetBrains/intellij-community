@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,24 +17,22 @@ package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ConcurrentHashMap;
-import org.apache.maven.wagon.events.TransferEvent;
-import org.apache.maven.wagon.events.TransferListener;
+import org.sonatype.aether.transfer.TransferCancelledException;
+import org.sonatype.aether.transfer.TransferEvent;
+import org.sonatype.aether.transfer.TransferListener;
+import org.sonatype.aether.transfer.TransferResource;
 
 import java.rmi.RemoteException;
-import java.text.MessageFormat;
-import java.util.Map;
 
+/**
+ * @author Sergey Evdokimov
+ */
 public class TransferListenerAdapter implements TransferListener {
+
   protected final MavenServerProgressIndicator myIndicator;
-  private final Map<String, DownloadData> myDownloads = new ConcurrentHashMap<String, DownloadData>();
 
   public TransferListenerAdapter(MavenServerProgressIndicator indicator) {
     myIndicator = indicator;
-  }
-
-  public void transferInitiated(TransferEvent event) {
-    checkCanceled();
   }
 
   private void checkCanceled() {
@@ -46,95 +44,98 @@ public class TransferListenerAdapter implements TransferListener {
     }
   }
 
-  public void transferStarted(TransferEvent event) {
-    checkCanceled();
-
-    String resourceName = event.getResource().getName();
-    DownloadData data = new DownloadData(event.getWagon().getRepository().getName(),
-                                         event.getResource().getContentLength());
-    myDownloads.put(resourceName, data);
-    updateProgress(resourceName, data);
+  private static String formatResourceName(TransferEvent event) {
+    return event.getResource().getFile().getName() + " [" + event.getResource().getRepositoryUrl() + "]";
   }
 
-  public void transferProgress(TransferEvent event, byte[] bytes, int i) {
+  @Override
+  public void transferInitiated(TransferEvent event) {
     checkCanceled();
 
-    String resourceName = event.getResource().getName();
-    DownloadData data = myDownloads.get(resourceName);
-    data.downloaded += i;
-    updateProgress(resourceName, data);
-  }
-
-  public void transferCompleted(TransferEvent event) {
     try {
-      Maven3ServerGlobals.getDownloadListener().artifactDownloaded(event.getLocalFile(), event.getResource().getName());
+      myIndicator.setIndeterminate(true);
+      myIndicator.setText2(formatResourceName(event));
     }
     catch (RemoteException e) {
       throw new RuntimeRemoteException(e);
     }
-
-    checkCanceled();
-
-    String resourceName = event.getResource().getName();
-    DownloadData data = myDownloads.remove(resourceName);
-    data.finished = true;
-    updateProgress(resourceName, data);
   }
 
-  public void transferError(TransferEvent event) {
-    checkCanceled();
-
-    String resourceName = event.getResource().getName();
-    DownloadData data = myDownloads.remove(resourceName);
-    if (data != null) {
-      data.failed = true;
-      updateProgress(resourceName, data);
-    }
+  @Override
+  public void transferStarted(TransferEvent event) throws TransferCancelledException {
+    transferProgressed(event);
   }
 
-  public void debug(String s) {
+  @Override
+  public void transferProgressed(TransferEvent event) throws TransferCancelledException {
     checkCanceled();
-  }
 
-  private void updateProgress(String resourceName, DownloadData data) {
-    String prefix = "";
-    if (data.finished) {
-      prefix = "Finished ";
-    }
-    if (data.failed) {
-      prefix = "Failed ";
-    }
+    TransferResource r = event.getResource();
+
+    long totalLength = r.getContentLength();
 
     String sizeInfo;
-    if (data.finished || data.failed || data.total <= 0) {
-      sizeInfo = StringUtil.formatFileSize(data.downloaded);
+    if (totalLength <= 0) {
+      sizeInfo = StringUtil.formatFileSize(event.getTransferredBytes()) + " / ?";
     } else {
-      sizeInfo = ((int)100f * data.downloaded / data.total) + "% of " + StringUtil.formatFileSize(data.total);
+      sizeInfo = StringUtil.formatFileSize(event.getTransferredBytes()) + " / " + StringUtil.formatFileSize(totalLength);
     }
 
     try {
-      myIndicator.setText2(MessageFormat.format(prefix + sizeInfo + " [{0}] {1}", data.repository, resourceName));
+      myIndicator.setText2(formatResourceName(event) + "  (" + sizeInfo + ')');
+      if (totalLength <= 0) {
+        myIndicator.setIndeterminate(true);
+      }
+      else {
+        myIndicator.setIndeterminate(false);
+        myIndicator.setFraction((double)event.getTransferredBytes() / totalLength);
+      }
+    }
+    catch (RemoteException e) {
+      throw new RuntimeRemoteException(e);
+    }
+  }
+
+  @Override
+  public void transferCorrupted(TransferEvent event) throws TransferCancelledException {
+    try {
+      myIndicator.setText2("Checksum failed: " + formatResourceName(event));
+      myIndicator.setIndeterminate(true);
+    }
+    catch (RemoteException e) {
+      throw new RuntimeRemoteException(e);
+    }
+  }
+
+  @Override
+  public void transferSucceeded(TransferEvent event) {
+    try {
+      myIndicator.setText2("Finished (" + StringUtil.formatFileSize(event.getTransferredBytes()) + ") " + formatResourceName(event));
+      myIndicator.setIndeterminate(true);
+    }
+    catch (RemoteException e) {
+      throw new RuntimeRemoteException(e);
+    }
+  }
+
+  @Override
+  public void transferFailed(TransferEvent event) {
+    try {
+      if (myIndicator.isCanceled()) {
+        myIndicator.setText2("Canceling...");
+        return; // Don't throw exception here.
+      }
     }
     catch (RemoteException e) {
       throw new RuntimeRemoteException(e);
     }
 
-    downloadProgress(data.downloaded, data.total);
-  }
-
-  protected void downloadProgress(long downloaded, long total) {
-  }
-
-  private static class DownloadData {
-    public final String repository;
-    public final long total;
-    public long downloaded;
-    public boolean finished;
-    public boolean failed;
-
-    private DownloadData(String repository, long total) {
-      this.repository = repository;
-      this.total = total;
+    try {
+      myIndicator.setText2("Failed to download " + formatResourceName(event));
+      myIndicator.setIndeterminate(true);
+    }
+    catch (RemoteException e) {
+      throw new RuntimeRemoteException(e);
     }
   }
 }

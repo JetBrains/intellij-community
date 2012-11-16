@@ -50,10 +50,12 @@ public class ChooseModulesDialog extends ChooseElementsDialog<Module> {
     myChooser.setSingleSelectionMode();
   }
 
+  @Override
   protected Icon getItemIcon(final Module item) {
     return ModuleType.get(item).getIcon();
   }
 
+  @Override
   protected String getItemText(final Module item) {
     return item.getName();
   }

@@ -17,12 +17,14 @@ package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.PairFunction;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -40,7 +42,7 @@ import java.util.EventObject;
 /**
  * @author Konstantin Bulenkov
  */
-public class ShowUIDefaultsAction extends AnAction {
+public class ShowUIDefaultsAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final UIDefaults defaults = UIManager.getDefaults();
@@ -57,7 +59,7 @@ public class ShowUIDefaultsAction extends AnAction {
     Arrays.sort(data, new Comparator<Object[]>() {
       @Override
       public int compare(Object[] o1, Object[] o2) {
-        return StringUtil.naturalCompare(o1[0].toString(), o2[0].toString());
+        return StringUtil.naturalCompare(o1[0 ].toString(), o2[0].toString());
       }
     });
 
@@ -124,7 +126,7 @@ public class ShowUIDefaultsAction extends AnAction {
               return panel;
             } else if (value instanceof Icon) {
               try {
-                final Icon icon = (Icon)value;
+                final Icon icon = new IconWrap((Icon)value);
                 if (icon.getIconHeight() <= 20) {
                   label.setIcon(icon);
                 }
@@ -159,5 +161,33 @@ public class ShowUIDefaultsAction extends AnAction {
         return panel;
       }
     }.show();
+  }
+
+  private class IconWrap implements Icon {
+    private final Icon myIcon;
+
+    public IconWrap(Icon icon) {
+      myIcon = icon;
+    }
+
+
+    @Override
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+      try {
+        myIcon.paintIcon(c, g, x, y);
+      } catch (Exception e) {
+        EmptyIcon.ICON_0.paintIcon(c, g, x, y);
+      }
+    }
+
+    @Override
+    public int getIconWidth() {
+      return myIcon.getIconWidth();
+    }
+
+    @Override
+    public int getIconHeight() {
+      return myIcon.getIconHeight();
+    }
   }
 }

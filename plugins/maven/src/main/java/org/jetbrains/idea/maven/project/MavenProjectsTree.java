@@ -64,7 +64,7 @@ public class MavenProjectsTree {
   private volatile List<String> myIgnoredFilesPatterns = new ArrayList<String>();
   private volatile Pattern myIgnoredFilesPatternsCache;
 
-  private volatile Set<String> myExplicitProfiles = new THashSet<String>();
+  private Set<String> myExplicitProfiles = new THashSet<String>();
   private final Set<String> myTemporarilyRemovedExplicitProfiles = new THashSet<String>();
 
   private final List<MavenProject> myRootProjects = new ArrayList<MavenProject>();
@@ -882,8 +882,16 @@ public class MavenProjectsTree {
     readLock();
     try {
       CRC32 crc = new CRC32();
-      crc.update(myRootProjects.size() & 0xFF);
-      for (MavenProject mavenProject : myRootProjects) {
+
+      Set<String> profiles = myExplicitProfiles;
+      if (profiles != null) {
+        updateCrc(crc, profiles.hashCode());
+      }
+
+      Collection<MavenProject> allProjects = myVirtualFileToProjectMapping.values();
+
+      crc.update(allProjects.size() & 0xFF);
+      for (MavenProject mavenProject : allProjects) {
         VirtualFile pomFile = mavenProject.getFile();
         Module module = fileIndex.getModuleForFile(pomFile);
         if (module == null) continue;

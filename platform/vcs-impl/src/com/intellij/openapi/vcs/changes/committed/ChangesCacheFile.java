@@ -221,10 +221,14 @@ public class ChangesCacheFile {
   private void closeStreams() throws IOException {
     myStreamsOpen = false;
     try {
-      myStream.close();
+      if (myStream != null) {
+        myStream.close();
+      }
     }
     finally {
-      myIndexStream.close();
+      if (myIndexStream != null) {
+        myIndexStream.close();
+      }
     }
   }
 

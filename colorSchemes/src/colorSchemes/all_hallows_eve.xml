@@ -1156,6 +1156,86 @@
         <option name="FOREGROUND" value="CC7833" />
       </value>
     </option>
+    <option name="PUPPET_BAD_CHARACTER">
+      <value>
+        <option name="BACKGROUND" value="6e3b3b" />
+      </value>
+    </option>
+    <option name="PUPPET_BLOCK_COMMENT">
+      <value>
+        <option name="FOREGROUND" value="9933CC" />
+      </value>
+    </option>
+    <option name="PUPPET_BRACES">
+      <value />
+    </option>
+    <option name="PUPPET_BRACKETS">
+      <value />
+    </option>
+    <option name="PUPPET_CLASS">
+      <value>
+        <option name="EFFECT_TYPE" value="1" />
+        <option name="EFFECT_COLOR" value="FFFFFF" />
+      </value>
+    </option>
+    <option name="PUPPET_COMMA">
+      <value />
+    </option>
+    <option name="PUPPET_DOT">
+      <value />
+    </option>
+    <option name="PUPPET_ESCAPE_SEQUENCE">
+      <value>
+        <option name="FOREGROUND" value="3387CC" />
+      </value>
+    </option>
+    <option name="PUPPET_KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="CC7833" />
+      </value>
+    </option>
+    <option name="PUPPET_NUMBER">
+      <value>
+        <option name="FOREGROUND" value="3387CC" />
+      </value>
+    </option>
+    <option name="PUPPET_OPERATION_SIGN">
+      <value>
+        <option name="FOREGROUND" value="CC7833" />
+      </value>
+    </option>
+    <option name="PUPPET_PARENTH">
+      <value />
+    </option>
+    <option name="PUPPET_REGEX">
+      <value>
+        <option name="FOREGROUND" value="CCCC33" />
+      </value>
+    </option>
+    <option name="PUPPET_RESOURCE_REFERENCE">
+      <value />
+    </option>
+    <option name="PUPPET_SEMICOLON">
+      <value />
+    </option>
+    <option name="PUPPET_SQ_STRING">
+      <value>
+        <option name="FOREGROUND" value="66CC33" />
+      </value>
+    </option>
+    <option name="PUPPET_STRING">
+      <value>
+        <option name="FOREGROUND" value="66CC33" />
+      </value>
+    </option>
+    <option name="PUPPET_VARIABLE">
+      <value />
+    </option>
+    <option name="PUPPET_VARIABLE_INTERPOLATION">
+      <value>
+        <option name="FOREGROUND" value="66CC33" />
+      </value>
+    </option>
     <option name="PY.BRACES">
       <value />
     </option>

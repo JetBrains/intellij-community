@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import java.awt.*;
 public abstract class WindowManager {
   /**
    * @return <code>true</code> is and only if current OS supports alpha mode for windows and
-   * all native libraries were successfully loaded.
+   *         all native libraries were successfully loaded.
    */
   public abstract boolean isAlphaModeSupported();
 
@@ -34,15 +34,14 @@ public abstract class WindowManager {
    * Sets alpha (transparency) ratio for the specified <code>window</code>.
    * If alpha mode isn't supported by underlying windowing system then the method does nothing.
    * The method also does nothing if alpha mode isn't enabled for the specified <code>window</code>.
+   *
    * @param window <code>window</code> which transparency should be changed.
-   * @param ratio ratio of transparency. <code>0</code> means absolutely non transparent window.
-   * <code>1</code> means absolutely transparent window.
-   * @exception IllegalArgumentException if <code>window</code> is not
-   * desplayable or not showing.
-   * @exception IllegalArgumentException if <code>ration</code> isn't
-   * in <code>[0..1]</code> range.
+   * @param ratio  ratio of transparency. <code>0</code> means absolutely non transparent window.
+   *               <code>1</code> means absolutely transparent window.
+   * @throws IllegalArgumentException if <code>window</code> is not displayable or not showing,
+   *                                  or if <code>ration</code> isn't in <code>[0..1]</code> range.
    */
-  public abstract void setAlphaModeRatio(Window window,float ratio);
+  public abstract void setAlphaModeRatio(Window window, float ratio);
 
   /**
    * @return <code>true</code> if specified <code>window</code> is currently is alpha mode.
@@ -52,12 +51,13 @@ public abstract class WindowManager {
   /**
    * Sets whether the alpha (transparent) mode is enabled for specified <code>window</code>.
    * If alpha mode isn't supported by underlying windowing system then the method does nothing.
+   *
    * @param window window which mode to be set.
-   * @param state determines the new alpha mode.
+   * @param state  determines the new alpha mode.
    */
-  public abstract void setAlphaModeEnabled(Window window,boolean state);
+  public abstract void setAlphaModeEnabled(Window window, boolean state);
 
-  public static WindowManager getInstance(){
+  public static WindowManager getInstance() {
     return ApplicationManager.getApplication().getComponent(WindowManager.class);
   }
 
@@ -68,25 +68,24 @@ public abstract class WindowManager {
   /**
    * Gets first window (starting from the active one) that can be parent for other windows.
    * Note, that this method returns only subclasses of dialog or frame.
+   *
    * @return <code>null</code> if there is no currently active window or there are any window
-   * that can be parent.
+   *         that can be parent.
    */
   @Nullable
   public abstract Window suggestParentWindow(@Nullable Project project);
 
   /**
    * Get the status bar for the project's main frame
-   * @param project
-   * @return
    */
   @Nullable
   public abstract StatusBar getStatusBar(Project project);
 
   /**
    * Get the status bar for the component, it may be either the main status bar or the status bar for an undocked window
+   *
    * @param c a component
    * @return status bar
-   * 
    * @deprecated use getStatusBar(Component, Project)
    */
   public abstract StatusBar getStatusBar(@NotNull Component c);
@@ -103,19 +102,26 @@ public abstract class WindowManager {
    * Tests whether the specified rectangle is inside of screen bounds. Method uses its own heuristic test.
    * Test passes if intersection of screen bounds and specified rectangle isn't empty and its height and
    * width are not less then some value. Note, that all parameters are in screen coordinate system.
-   * The method properly works in mutlimonitor configuration.
+   * The method properly works in multi-monitor configuration.
    */
   public abstract boolean isInsideScreenBounds(int x, int y, int width);
 
   /**
    * Tests whether the specified point is inside of screen bounds. Note, that
    * all parameters are in screen coordinate system.
-   * The method properly works in mutlimonitor configuration.
+   * The method properly works in multi-monitor configuration.
    */
-  public abstract boolean isInsideScreenBounds(int x,int y);
+  public abstract boolean isInsideScreenBounds(int x, int y);
 
-  public abstract IdeFrame[] getAllFrames();
+  @NotNull
+  public abstract IdeFrame[] getAllProjectFrames();
+
+  /** @deprecated Use {@linkplain #getAllProjectFrames()} instead (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration") public IdeFrame[] getAllFrames() { return getAllProjectFrames(); }
+
+  public abstract JFrame findVisibleFrame();
 
   public abstract void addListener(WindowManagerListener listener);
+
   public abstract void removeListener(WindowManagerListener listener);
 }

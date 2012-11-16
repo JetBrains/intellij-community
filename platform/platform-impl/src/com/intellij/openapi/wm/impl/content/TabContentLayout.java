@@ -22,6 +22,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.ui.BaseButtonBehavior;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -322,23 +323,25 @@ class TabContentLayout extends ContentLayout {
     BufferedImage image = new BufferedImage(r.width, r.height, BufferedImage.TYPE_INT_ARGB);
     Graphics2D g2d = image.createGraphics();
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    
+
     if (selected) {
+      if (!UIUtil.isUnderDarcula()) {
       g2d.setColor(active ? new Color(0, 0, 0, 70) : new Color(0, 0, 0, 90));
       g2d.fillRect(0, 0, r.width, r.height);
 
       g2d.setColor(new Color(0, 0, 0, 140));
       g2d.drawLine(0, 0, r.width - 1, 0);
       g2d.drawLine(0, 1, 0, r.height - 1);
-      
+
       g2d.setColor(new Color(0, 0, 0, 20));
       g2d.drawLine(1, 1, r.width - 1, 1);
       g2d.drawLine(1, 2, 1, r.height - 2);
       g2d.drawLine(1, r.height - 1, r.width - 1, r.height - 1);
-      
+
       g2d.setColor(new Color(0, 0, 0, 60));
       g2d.drawLine(r.width - 1, 1, r.width - 1, r.height - 2);
-      
+      }
+
       if (active) {
         g2d.setColor(new Color(100, 150, 230, 50));
         g2d.fill(new Rectangle(0, 0, r.width, r.height));
@@ -347,13 +350,14 @@ class TabContentLayout extends ContentLayout {
     else {
       g2d.setPaint(new GradientPaint(0, 0, new Color(0, 0, 0, 10), 0, r.height, new Color(0, 0, 0, 30)));
       g2d.fillRect(0, 0, r.width, r.height);
-      
+
+      final Color c = new Color(255, 255, 255, UIUtil.isUnderDarcula() ? 10 : 80);
       if (last) {
         if (prevSelected) {
-          g2d.setColor(new Color(255, 255, 255, 80));
+          g2d.setColor(c);
           g2d.drawRect(0, 0, r.width - 2, r.height - 1);
         } else {
-          g2d.setColor(new Color(255, 255, 255, 80));
+          g2d.setColor(c);
           g2d.drawRect(1, 0, r.width - 3, r.height - 1);
 
           g2d.setColor(new Color(0, 0, 0, 60));
@@ -364,11 +368,11 @@ class TabContentLayout extends ContentLayout {
         g2d.drawLine(r.width - 1, 0, r.width - 1, r.height);
       } else {
         if (prevSelected) {
-          g2d.setColor(new Color(255, 255, 255, 80));
+          g2d.setColor(c);
           g2d.drawRect(0, 0, r.width - 1, r.height - 1);
         }
         else {
-          g2d.setColor(new Color(255, 255, 255, 80));
+          g2d.setColor(c);
           g2d.drawRect(1, 0, r.width - 2, r.height - 1);
 
           g2d.setColor(new Color(0, 0, 0, 60));
@@ -376,7 +380,7 @@ class TabContentLayout extends ContentLayout {
         }
       }
     }
-    
+
     g2d.dispose();
     return image;
   }

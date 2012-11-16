@@ -193,7 +193,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
     updateUI();
 
-    if (SystemInfo.isLinux) {
+    if (SystemInfo.isXWindow) {
       myThemeChangeListener = new PropertyChangeListener() {
         @Override
         public void propertyChange(final PropertyChangeEvent evt) {
@@ -422,7 +422,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   private boolean checkLookAndFeel(final UIManager.LookAndFeelInfo lafInfo, final boolean confirm) {
     String message = null;
 
-    if (lafInfo.getName().contains("GTK") && SystemInfo.isLinux && !SystemInfo.isJavaVersionAtLeast("1.6.0_12")) {
+    if (lafInfo.getName().contains("GTK") && SystemInfo.isXWindow && !SystemInfo.isJavaVersionAtLeast("1.6.0_12")) {
       message = IdeBundle.message("warning.problem.laf.1");
     }
 
@@ -452,50 +452,53 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
    * as it's configured in <code>UISettings</code>.
    */
   public void updateUI() {
+    final UIDefaults uiDefaults = UIManager.getLookAndFeelDefaults();
+
     fixPopupWeight();
 
     fixGtkPopupStyle();
-    final UIDefaults uiDefaults = UIManager.getLookAndFeelDefaults();
+
     fixTreeWideSelection(uiDefaults);
+
+    fixMenuIssues(uiDefaults);
+
+    if (UIUtil.isUnderAquaLookAndFeel()) {
+      uiDefaults.put("Panel.opaque", Boolean.TRUE);
+    }
+    else if (UIUtil.isWinLafOnVista()) {
+      uiDefaults.put("ComboBox.border", null);
+    }
+
+    initInputMapDefaults(uiDefaults);
+
+    uiDefaults.put("Button.defaultButtonFollowsFocus", Boolean.FALSE);
+
+    patchFileChooserStrings(uiDefaults);
+
+    patchLafFonts(uiDefaults);
+
+    patchOptionPaneIcons(uiDefaults);
+
+    fixSeparatorColor(uiDefaults);
+
+    for (Frame frame : Frame.getFrames()) {
+      updateUI(frame);
+    }
+    fireLookAndFeelChanged();
+  }
+
+  private static void fixMenuIssues(UIDefaults uiDefaults) {
     if (UIUtil.isUnderAquaLookAndFeel()) {
       // update ui for popup menu to get round corners
       uiDefaults.put("PopupMenuUI", MacPopupMenuUI.class.getCanonicalName());
       uiDefaults.put("Menu.invertedArrowIcon", getAquaMenuInvertedIcon());
       uiDefaults.put("Menu.disabledArrowIcon", getAquaMenuDisabledIcon());
     }
-
-    if (UIUtil.isWinLafOnVista()) {
-      uiDefaults.put("ComboBox.border", null);
+    else if (UIUtil.isUnderJGoodiesLookAndFeel()) {
+      uiDefaults.put("Menu.opaque", true);
+      uiDefaults.put("MenuItem.opaque", true);
     }
-
-    initInputMapDefaults(uiDefaults);
-
-    if (UIUtil.isUnderJGoodiesLookAndFeel()) {
-      UIManager.put("Menu.opaque", true);
-      UIManager.put("MenuItem.opaque", true);
-    }
-
-    UIManager.put("Button.defaultButtonFollowsFocus", Boolean.FALSE);
-    UIManager.put("MenuItem.background", UIManager.getColor("Menu.background"));
-
-    patchFileChooserStrings(uiDefaults);
-    if (shouldPatchLAFFonts()) {
-      storeOriginalFontDefaults(uiDefaults);
-      initFontDefaults(uiDefaults, myUiSettings.FONT_FACE, myUiSettings.FONT_SIZE);
-    }
-    else {
-      restoreOriginalFontDefaults(uiDefaults);
-    }
-
-    patchOptionPaneIcons(uiDefaults);
-
-    Frame[] frames = Frame.getFrames();
-    for (Frame frame : frames) {
-      updateUI(frame);
-    }
-    fireLookAndFeelChanged();
-    
-    fixSeparatorColor(uiDefaults);
+    uiDefaults.put("MenuItem.background", UIManager.getColor("Menu.background"));
   }
 
   private static void fixTreeWideSelection(UIDefaults uiDefaults) {
@@ -615,6 +618,16 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
   }
 
+  private void patchLafFonts(UIDefaults uiDefaults) {
+    if (UISettings.getInstance().OVERRIDE_NONIDEA_LAF_FONTS) {
+      storeOriginalFontDefaults(uiDefaults);
+      initFontDefaults(uiDefaults, myUiSettings.FONT_FACE, myUiSettings.FONT_SIZE);
+    }
+    else {
+      restoreOriginalFontDefaults(uiDefaults);
+    }
+  }
+
   private void restoreOriginalFontDefaults(UIDefaults defaults) {
     UIManager.LookAndFeelInfo lf = getCurrentLookAndFeel();
     HashMap<String, Object> lfDefaults = myStoredDefaults.get(lf);
@@ -635,10 +648,6 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       }
       myStoredDefaults.put(lf, lfDefaults);
     }
-  }
-
-  private static boolean shouldPatchLAFFonts() {
-    return UISettings.getInstance().OVERRIDE_NONIDEA_LAF_FONTS;
   }
 
   private static void updateUI(Window window){

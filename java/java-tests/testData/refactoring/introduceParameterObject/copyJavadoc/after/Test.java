@@ -1,7 +1,7 @@
 class Test {
   /**
    * foo comment
-   * @param param long description
+   * @param param
    */
   void foo(Param param) {
     bar(param.getS());

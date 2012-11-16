@@ -51,7 +51,7 @@ public class NamedElementDuplicateHandler extends EditorWriteActionHandler {
         TextRange toDuplicate = new TextRange(editor.logicalPositionToOffset(lines.first), editor.logicalPositionToOffset(lines.second));
 
         PsiElement name = findNameIdentifier(editor, file, toDuplicate);
-        if (name != null) {
+        if (name != null && !name.getTextRange().containsOffset(editor.getCaretModel().getOffset())) {
           editor.getCaretModel().moveToOffset(name.getTextOffset());
         }
       }

@@ -56,10 +56,7 @@
                   <splitpane position="right"/>
                 </constraints>
                 <properties/>
-                <clientProperties>
-                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndentWithoutInsets"/>
-                </clientProperties>
-                <border type="none" title-resource-bundle="messages/IdeBundle" title-key="editbox.plugin.description">
+                <border type="none">
                   <size top="0" left="0" bottom="0" right="0"/>
                 </border>
                 <children>
@@ -79,6 +76,9 @@
                           <editable value="false"/>
                           <maximumSize width="-1" height="-1"/>
                         </properties>
+                        <clientProperties>
+                          <JEditorPane.honorDisplayProperties class="java.lang.Boolean" value="true"/>
+                        </clientProperties>
                       </component>
                     </children>
                   </scrollpane>

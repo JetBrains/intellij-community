@@ -220,7 +220,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       if (stub != null) {
         final Iterator<StubElement<?>> stubs = stub.getPlainList().iterator();
         stubs.next(); // Skip file stub;
-        switchFromStubToAST(treeElement, stubs);
+        synchronized (PsiLock.LOCK) {
+          switchFromStubToAST(treeElement, stubs);
+        }
 
         clearStub();
       }
@@ -425,11 +427,17 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       throw new AssertionError("Unable to clone the view provider: " + viewProvider + "; " + language);
     }
     PsiFileImpl clone = (PsiFileImpl)providerCopy.getPsi(language);
-    assert clone != null : "Cannot find psi file with: " + language + "." +
-                           " Original viewprovider: " + viewProvider +"; languages: " + viewProvider.getLanguages()+
-                           "; copied viewprovider: "+ providerCopy + "; languages: " + providerCopy.getLanguages() +
-                           "; Original virtual file: " + getVirtualFile() + "; copied virtual file: "+providerCopy.getVirtualFile()
-                           + "; its .getOriginal(): "+(providerCopy.getVirtualFile() instanceof LightVirtualFile ? ((LightVirtualFile)providerCopy.getVirtualFile()).getOriginalFile() : null);
+    if (clone == null) {
+      throw new AssertionError("Cannot find psi file with: " + language + "." +
+                               " Original viewprovider: " + viewProvider +
+                               "; languages: " + viewProvider.getLanguages() +
+                               "; copied viewprovider: " + providerCopy +
+                               "; languages: " + providerCopy.getLanguages() +
+                               "; Original virtual file: " + getVirtualFile() +
+                               "; copied virtual file: " + providerCopy.getVirtualFile() +
+                               "; its.getOriginal(): " +
+                               (providerCopy.getVirtualFile() instanceof LightVirtualFile ? ((LightVirtualFile)providerCopy.getVirtualFile()).getOriginalFile() : null));
+    }
 
     copyCopyableDataTo(clone);
 

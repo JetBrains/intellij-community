@@ -25,7 +25,7 @@ public abstract class ComponentOperation {
   public static class SizeCalculator extends ComponentOperation {
     private final int myDefaultExtent;
     private final SizeProperty mySizeProperty;
-    private OrientedDimensionSum myDimensionSum;
+    private final OrientedDimensionSum myDimensionSum;
 
     public SizeCalculator(int defaultExtent, SizeProperty sizeProperty, Orientation orientation) {
       myDefaultExtent = defaultExtent;
@@ -37,6 +37,7 @@ public abstract class ComponentOperation {
       this(0, sizeProperty, Orientation.VERTICAL);
     }
 
+    @Override
     public void applyTo(Component component) {
       Dimension size = mySizeProperty.getSize(component);
       if (size != null) {
@@ -67,6 +68,7 @@ public abstract class ComponentOperation {
       myPosition = new Point(insets.left, insets.top);
     }
 
+    @Override
     public void applyTo(Component component) {
       component.setSize(myParentExtent, myDefaultExtent);
       Dimension preferredSize = mySizeProperty.getSize(component);

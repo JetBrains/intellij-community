@@ -2,7 +2,12 @@ package org.jetbrains.jps.model.serialization;
 
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.JpsElementChildRole;
+import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsGlobal;
+import org.jetbrains.jps.model.JpsSimpleElement;
+import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 
@@ -15,6 +20,7 @@ import java.util.Map;
  */
 public class JpsGlobalLoader extends JpsLoaderBase {
   public static final String SDK_TABLE_COMPONENT_NAME = "ProjectJdkTable";
+  private static final JpsElementChildRole<JpsSimpleElement<Map<String, String>>> PATH_VARIABLES_ROLE = JpsElementChildRoleBase.create("path variables");
   private static final JpsGlobalExtensionSerializer[] SERIALIZERS = {
     new GlobalLibrariesSerializer(), new SdkTableSerializer(), new FileTypesSerializer()
   };
@@ -23,11 +29,18 @@ public class JpsGlobalLoader extends JpsLoaderBase {
   public JpsGlobalLoader(JpsGlobal global, Map<String, String> pathVariables) {
     super(new JpsMacroExpander(pathVariables));
     myGlobal = global;
+    global.getContainer().setChild(PATH_VARIABLES_ROLE, JpsElementFactory.getInstance().createSimpleElement(pathVariables));
   }
 
   public static void loadGlobalSettings(JpsGlobal global, Map<String, String> pathVariables, String optionsPath) throws IOException {
     File optionsDir = new File(optionsPath).getCanonicalFile();
     new JpsGlobalLoader(global, pathVariables).load(optionsDir);
+  }
+
+  @Nullable
+  public static String getPathVariable(JpsGlobal global, String name) {
+    JpsSimpleElement<Map<String, String>> child = global.getContainer().getChild(PATH_VARIABLES_ROLE);
+    return child != null ? child.getData().get(name) : null;
   }
 
   private void load(File optionsDir) {

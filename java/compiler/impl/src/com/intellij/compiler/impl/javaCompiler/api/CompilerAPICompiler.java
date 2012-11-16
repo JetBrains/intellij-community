@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
 import java.io.File;
 import java.io.IOException;
@@ -61,9 +62,8 @@ public class CompilerAPICompiler implements BackendCompiler {
 
   @NotNull
   @NonNls
-  // used for externalization
-  public String getId() {
-    return "compAPI";
+  public String getId() { // used for externalization
+    return JavaCompilers.JAVAC_API_ID;
   }
 
   @NotNull

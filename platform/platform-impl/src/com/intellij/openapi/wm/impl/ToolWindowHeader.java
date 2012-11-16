@@ -336,7 +336,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
     super.paintChildren(graphics);
 
     Rectangle r = getBounds();
-    if (!isActive()) {
+    if (!isActive() && !UIUtil.isUnderDarcula()) {
       graphics.setColor(new Color(255, 255, 255, 30));
       graphics.fill(r);
     }

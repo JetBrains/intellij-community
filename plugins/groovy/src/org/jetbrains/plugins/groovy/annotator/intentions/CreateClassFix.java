@@ -32,7 +32,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.actions.NewGroovyClassAction;
+import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -82,7 +82,7 @@ public abstract class CreateClassFix {
         PsiDirectory targetDirectory = getTargetDirectory(project, qualifier, name, module, getText());
         if (targetDirectory == null) return;
 
-        GrTypeDefinition targetClass = createClassByType(targetDirectory, name, manager, myRefElement, NewGroovyClassAction.GROOVY_CLASS);
+        GrTypeDefinition targetClass = createClassByType(targetDirectory, name, manager, myRefElement, GroovyTemplates.GROOVY_CLASS);
         if (targetClass == null) return;
 
         PsiType[] argTypes = getArgTypes(myRefElement);
@@ -242,13 +242,13 @@ public abstract class CreateClassFix {
   private static String getTemplateName(CreateClassKind createClassKind) {
     switch (createClassKind) {
       case ENUM:
-        return NewGroovyClassAction.GROOVY_ENUM;
+        return GroovyTemplates.GROOVY_ENUM;
       case CLASS:
-        return NewGroovyClassAction.GROOVY_CLASS;
+        return GroovyTemplates.GROOVY_CLASS;
       case INTERFACE:
-        return NewGroovyClassAction.GROOVY_INTERFACE;
+        return GroovyTemplates.GROOVY_INTERFACE;
       case ANNOTATION:
-        return NewGroovyClassAction.GROOVY_ANNOTATION;
+        return GroovyTemplates.GROOVY_ANNOTATION;
       default:
         return null;
     }

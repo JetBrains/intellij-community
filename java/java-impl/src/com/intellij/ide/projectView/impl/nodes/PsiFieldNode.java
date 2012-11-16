@@ -23,6 +23,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 
 import java.util.Collection;
 
@@ -31,13 +32,15 @@ public class PsiFieldNode extends BasePsiMemberNode<PsiField>{
     super(project, value, viewSettings);
   }
 
+  @Override
   public Collection<AbstractTreeNode> getChildrenImpl() {
     return null;
   }
 
+  @Override
   public void updateImpl(PresentationData data) {
     String name = PsiFormatUtil.formatVariable(getValue(),
-      PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER | PsiFormatUtil.SHOW_INITIALIZER,
+      PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.TYPE_AFTER | PsiFormatUtilBase.SHOW_INITIALIZER,
         PsiSubstitutor.EMPTY);
     int c = name.indexOf('\n');
     if (c > -1) {
@@ -46,10 +49,12 @@ public class PsiFieldNode extends BasePsiMemberNode<PsiField>{
     data.setPresentableText(name);
   }
 
+  @Override
   public int getWeight() {
     return 70;
   }
 
+  @Override
   public boolean isAlwaysLeaf() {
     return true;
   }

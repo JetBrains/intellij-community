@@ -108,13 +108,13 @@
               <text value="Auto-update if &amp;push of the current branch was rejected"/>
             </properties>
           </component>
-          <component id="2e80d" class="com.intellij.ui.components.JBCheckBox" binding="mySyncBranchControl">
+          <component id="2e80d" class="com.intellij.ui.components.JBCheckBox" binding="mySyncRepoControl">
             <constraints>
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Control &amp;branches from different roots synchronously"/>
-              <toolTipText value="If selected, you would be able to checkout, compare, delete and create new branches in all Git roots with a single action"/>
+              <text value="Control registered Git &amp;repositories synchronously"/>
+              <toolTipText value="If selected, you will be able to perform various Git operations (push, checkout, compare, delete and merge branches) in all Git roots simultaneously with a single action"/>
             </properties>
           </component>
           <component id="5a98" class="javax.swing.JCheckBox" binding="myAutoCommitOnCherryPick">

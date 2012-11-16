@@ -115,12 +115,16 @@ public final class ActionMenu extends JMenu {
 
   @Override
   public void updateUI() {
+    boolean isAmbiance = UIUtil.isUnderGTKLookAndFeel() && "Ambiance".equalsIgnoreCase(UIUtil.getGtkThemeName());
+    if (myTopLevel && !isAmbiance && UIUtil.GTK_AMBIANCE_TEXT_COLOR.equals(getForeground())) {
+      setForeground(null);
+    }
+
     if (UIUtil.isStandardMenuLAF()) {
       super.updateUI();
 
-      if (myTopLevel && UIUtil.isUnderGTKLookAndFeel() && "Ambiance".equalsIgnoreCase(UIUtil.getGtkThemeName())) {
+      if (myTopLevel && isAmbiance) {
         setForeground(UIUtil.GTK_AMBIANCE_TEXT_COLOR);
-        setBackground(UIUtil.GTK_AMBIANCE_BACKGROUND_COLOR);
       }
     }
     else {
@@ -265,7 +269,7 @@ public final class ActionMenu extends JMenu {
       String name = e.getPropertyName();
       if (Presentation.PROP_VISIBLE.equals(name)) {
         setVisible(myPresentation.isVisible());
-        if (SystemInfo.isMacSystemMenu && myPlace == ActionPlaces.MAIN_MENU) {
+        if (SystemInfo.isMacSystemMenu && myPlace.equals(ActionPlaces.MAIN_MENU)) {
           validateTree();
         }
       }

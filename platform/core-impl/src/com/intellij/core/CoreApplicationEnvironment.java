@@ -36,6 +36,7 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.StaticGetter;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
@@ -56,6 +57,7 @@ import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.messages.impl.MessageBusImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 
 import java.lang.reflect.Modifier;
@@ -98,20 +100,27 @@ public class CoreApplicationEnvironment {
       }
     }, null));
 
-    registerComponentInstance(appContainer, VirtualFileManager.class,
-                              new VirtualFileManagerImpl(new VirtualFileSystem[] {myLocalFileSystem, myJarFileSystem},
-                                                         new MessageBusImpl(myApplication, null),
-                                                         new FileSystemPersistence() {
-                                                           @Override
-                                                           public void refresh(boolean asynchronous, Runnable postAction, @NotNull ModalityState modalityState) {
-                                                           }
+    FileSystemPersistence fileSystemPersistence = new FileSystemPersistence() {
+      @Override
+      public void refresh(boolean asynchronous, Runnable postAction, @NotNull ModalityState modalityState) {
+      }
 
-                                                           @Override
-                                                           public int getCheapFileSystemModificationCount() {
-                                                             return 0;
-                                                           }
-                                                         }
-                              )
+      @Override
+      public int getCheapFileSystemModificationCount() {
+        return 0;
+      }
+
+      @Nullable
+      @Override
+      public VirtualFile findFileById(int id) {
+        return null;
+      }
+    };
+    VirtualFileManagerImpl virtualFileManager = new VirtualFileManagerImpl(new VirtualFileSystem[]{myLocalFileSystem, myJarFileSystem},
+                                                                       new MessageBusImpl(myApplication, null),
+                                                                       fileSystemPersistence
+    );
+    registerComponentInstance(appContainer, VirtualFileManager.class, virtualFileManager
     );
     myApplication.registerService(VirtualFilePointerManager.class, new CoreVirtualFilePointerManager());
 

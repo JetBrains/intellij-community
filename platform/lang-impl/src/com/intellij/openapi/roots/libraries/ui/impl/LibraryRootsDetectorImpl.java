@@ -31,7 +31,7 @@ import java.util.List;
  * @author nik
  */
 public class LibraryRootsDetectorImpl extends LibraryRootsDetector {
-  private List<? extends RootDetector> myDetectors;
+  private final List<? extends RootDetector> myDetectors;
 
   public LibraryRootsDetectorImpl(List<? extends RootDetector> detectors) {
     myDetectors = detectors;

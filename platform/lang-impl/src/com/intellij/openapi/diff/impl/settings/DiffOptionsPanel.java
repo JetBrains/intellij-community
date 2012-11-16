@@ -55,6 +55,7 @@ public class DiffOptionsPanel implements OptionsPanel {
     ListSelectionModel selectionModel = myOptionsList.getSelectionModel();
     selectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     selectionModel.addListSelectionListener(new ListSelectionListener() {
+          @Override
           public void valueChanged(ListSelectionEvent e) {
             TextDiffType selection = getSelectedOption();
             ColorPanel background = getBackgroundColorPanel();
@@ -77,6 +78,7 @@ public class DiffOptionsPanel implements OptionsPanel {
         });
 
     getBackgroundColorPanel().addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         MyColorAndFontDescription selectedDescription = getSelectedDescription();
         ColorPanel colorPanel = getBackgroundColorPanel();
@@ -89,6 +91,7 @@ public class DiffOptionsPanel implements OptionsPanel {
       }
     });
     getStripeMarkColorPanel().addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         MyColorAndFontDescription selectedDescription = getSelectedDescription();
         ColorPanel colorPanel = getStripeMarkColorPanel();
@@ -105,15 +108,18 @@ public class DiffOptionsPanel implements OptionsPanel {
 
 
 
+  @Override
   public void addListener(final ColorAndFontSettingsListener listener) {
     myDispatcher.addListener(listener);
 
   }
 
+  @Override
   public JPanel getPanel() {
     return myWholePanel;
   }
 
+  @Override
   public void updateOptionsList() {
     myOptionsModel.clear();
     myDescriptions.clear();
@@ -131,6 +137,7 @@ public class DiffOptionsPanel implements OptionsPanel {
     ListScrollingUtil.ensureSelectionExists(myOptionsList);
   }
 
+  @Override
   public Runnable showOption(final String option) {
 
 
@@ -143,6 +150,7 @@ public class DiffOptionsPanel implements OptionsPanel {
         if (type.toLowerCase().contains(option.toLowerCase())) {
           final int i1 = i;
           return new Runnable() {
+            @Override
             public void run() {
               ListScrollingUtil.selectItem(myOptionsList, i1);
             }
@@ -157,6 +165,7 @@ public class DiffOptionsPanel implements OptionsPanel {
 
   }
 
+  @Override
   public Set<String> processListOptions() {
     Set<String> result = ContainerUtil.newHashSet();
     Map<TextAttributesKey, TextDiffType> typesByKey = ContainerUtil.newMapFromValues(TextDiffType.MERGE_TYPES.iterator(),
@@ -174,6 +183,7 @@ public class DiffOptionsPanel implements OptionsPanel {
   }
 
 
+  @Override
   public void applyChangesToScheme() {
     MyColorAndFontDescription description = getSelectedDescription();
     if (description != null) {
@@ -181,6 +191,7 @@ public class DiffOptionsPanel implements OptionsPanel {
     }
   }
 
+  @Override
   public void selectOption(final String typeToSelect) {
 
     for (int i = 0; i < myOptionsModel.getItems().size(); i++) {
@@ -198,6 +209,7 @@ public class DiffOptionsPanel implements OptionsPanel {
 
 
   private static final Comparator<TextDiffType> TEXT_DIFF_TYPE_COMPARATOR = new Comparator<TextDiffType>() {
+      @Override
       public int compare(TextDiffType textDiffType, TextDiffType textDiffType1) {
         return textDiffType.getDisplayName().compareToIgnoreCase(textDiffType1.getDisplayName());
       }
@@ -237,6 +249,7 @@ public class DiffOptionsPanel implements OptionsPanel {
   }
 
   private static class OptionsReneder extends ColoredListCellRenderer {
+    @Override
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       TextDiffType diffType = (TextDiffType)value;
       append(diffType.getDisplayName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -262,6 +275,7 @@ public class DiffOptionsPanel implements OptionsPanel {
       myOriginalStripebar = myStripebarColor;
     }
 
+    @Override
     public void apply(EditorColorsScheme scheme) {
       TextAttributesKey key = myDiffType.getAttributesKey();
       TextAttributes attrs = new TextAttributes(null, myBackgroundColor, null, EffectType.BOXED, Font.PLAIN);
@@ -269,18 +283,22 @@ public class DiffOptionsPanel implements OptionsPanel {
       scheme.setAttributes(key, attrs);
     }
 
+    @Override
     public String getGroup() {
       return ColorAndFontOptions.DIFF_GROUP;
     }
 
+    @Override
     public EditorColorsScheme getScheme() {
       return myScheme;
     }
 
+    @Override
     public String getType() {
       return myDiffType.getAttributesKey().getExternalName();
     }
 
+    @Override
     public boolean isModified() {
       TextAttributes attrs = myDiffType.getTextAttributes(myScheme);
       return !Comparing.equal(myOriginalBackground, attrs.getBackgroundColor()) ||

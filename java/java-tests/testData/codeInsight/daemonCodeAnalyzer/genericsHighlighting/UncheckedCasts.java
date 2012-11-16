@@ -70,3 +70,39 @@ class UncheckedCastFalsePositive {
     }
 
 }
+
+class IDEA21547 {
+  class O {}
+  class A<<warning descr="Type parameter 'T' is never used">T</warning>> {}
+  class B<K extends O> extends A<K>{}
+
+  public void bar(A<? extends O> a, B<O> b) {
+    b = <warning descr="Unchecked cast: 'IDEA21547.A<capture<? extends IDEA21547.O>>' to 'IDEA21547.B<IDEA21547.O>'">(B<O>)a</warning>;
+    System.out.println(b);
+  }
+
+  public void bar1(A<?> a, B<O> b) {
+    b = <warning descr="Unchecked cast: 'IDEA21547.A<capture<?>>' to 'IDEA21547.B<IDEA21547.O>'">(B<O>)a</warning>;
+    System.out.println(b);
+  }
+
+  public void bar2(A<?> a, B<?> b) {
+    b = <warning descr="Unchecked cast: 'IDEA21547.A<capture<?>>' to 'IDEA21547.B<IDEA21547.O>'">(B<O>)a</warning>;
+    System.out.println(b);
+  }
+
+  public void bar4(A<? extends O> a, B<?> b) {
+    b = <warning descr="Unchecked cast: 'IDEA21547.A<capture<? extends IDEA21547.O>>' to 'IDEA21547.B<IDEA21547.O>'">(B<O>)a</warning>;
+    System.out.println(b);
+  }
+
+  public void bar5(A<? super O> a, B<?> b) {
+    b = <warning descr="Unchecked cast: 'IDEA21547.A<capture<? super IDEA21547.O>>' to 'IDEA21547.B<IDEA21547.O>'">(B<O>)a</warning>;
+    System.out.println(b);
+  }
+
+  public void bar6(A a, B<?> b) {
+    b = <warning descr="Unchecked cast: 'IDEA21547.A' to 'IDEA21547.B<IDEA21547.O>'">(B<O>)a</warning>;
+    System.out.println(b);
+  }
+}

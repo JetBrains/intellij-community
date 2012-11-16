@@ -54,18 +54,19 @@ public class GroovyGenerateConstructorHandler extends GenerateConstructorHandler
     for (ClassMember classMember : classMembers) {
       if (classMember instanceof PsiMethodMember) {
         final PsiMethod method = ((PsiMethodMember)classMember).getElement();
-        final PsiMethod copy = (PsiMethod)method.copy();
-        LOG.assertTrue(copy != null, method.getClass().getName());
 
-        if (copy instanceof GrMethod) {
-          for (GrParameter parameter : ((GrMethod)copy).getParameterList().getParameters()) {
-            if (parameter.getTypeElementGroovy() == null) {
-              parameter.setName(DEF_PSEUDO_ANNO + parameter.getName());
+        PsiMethod copy = factory.createMethodFromText(GroovyToJavaGenerator.generateMethodStub(method), method);
+        if (method instanceof GrMethod) {
+          GrParameter[] parameters = ((GrMethod)method).getParameterList().getParameters();
+          PsiParameter[] copyParameters = copy.getParameterList().getParameters();
+          for (int i = 0; i < parameters.length; i++) {
+            if (parameters[i].getTypeElementGroovy() == null) {
+              copyParameters[i].setName(DEF_PSEUDO_ANNO + parameters[i].getName());
             }
           }
         }
 
-        res.add(new PsiMethodMember(factory.createMethodFromText(GroovyToJavaGenerator.generateMethodStub(copy), method)));
+        res.add(new PsiMethodMember(copy));
       }
       else if (classMember instanceof PsiFieldMember) {
         final PsiField field = ((PsiFieldMember)classMember).getElement();
@@ -85,7 +86,8 @@ public class GroovyGenerateConstructorHandler extends GenerateConstructorHandler
   }
 
   @NotNull
-  protected List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
+  protected List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members)
+    throws IncorrectOperationException {
     final List<? extends GenerationInfo> list = super.generateMemberPrototypes(aClass, members);
 
     List<PsiGenerationInfo<GrMethod>> grConstructors = new ArrayList<PsiGenerationInfo<GrMethod>>();
@@ -93,7 +95,7 @@ public class GroovyGenerateConstructorHandler extends GenerateConstructorHandler
     for (GenerationInfo generationInfo : list) {
       final PsiMember constructorMember = generationInfo.getPsiMember();
       assert constructorMember instanceof PsiMethod;
-      final PsiMethod constructor = (PsiMethod) constructorMember;
+      final PsiMethod constructor = (PsiMethod)constructorMember;
 
       final PsiCodeBlock block = constructor.getBody();
       assert block != null;
@@ -127,6 +129,4 @@ public class GroovyGenerateConstructorHandler extends GenerateConstructorHandler
   public boolean startInWriteAction() {
     return true;
   }
-
-
 }

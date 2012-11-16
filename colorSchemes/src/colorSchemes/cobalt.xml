@@ -1220,6 +1220,101 @@
         <option name="FOREGROUND" value="FF9D00" />
       </value>
     </option>
+    <option name="PUPPET_BAD_CHARACTER">
+      <value>
+        <option name="FOREGROUND" value="F8F8F8" />
+        <option name="BACKGROUND" value="800F00" />
+      </value>
+    </option>
+    <option name="PUPPET_BLOCK_COMMENT">
+      <value>
+        <option name="FOREGROUND" value="0088FF" />
+        <option name="FONT_TYPE" value="2" />
+      </value>
+    </option>
+    <option name="PUPPET_BRACES">
+      <value>
+        <option name="FOREGROUND" value="E1EFFF" />
+      </value>
+    </option>
+    <option name="PUPPET_BRACKETS">
+      <value>
+        <option name="FOREGROUND" value="E1EFFF" />
+      </value>
+    </option>
+    <option name="PUPPET_CLASS">
+      <value>
+        <option name="FOREGROUND" value="FFDD00" />
+      </value>
+    </option>
+    <option name="PUPPET_COMMA">
+      <value>
+        <option name="FOREGROUND" value="E1EFFF" />
+      </value>
+    </option>
+    <option name="PUPPET_DOT">
+      <value>
+        <option name="FOREGROUND" value="E1EFFF" />
+      </value>
+    </option>
+    <option name="PUPPET_ESCAPE_SEQUENCE">
+      <value>
+        <option name="FOREGROUND" value="FF628C" />
+      </value>
+    </option>
+    <option name="PUPPET_KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="FF9D00" />
+      </value>
+    </option>
+    <option name="PUPPET_NUMBER">
+      <value>
+        <option name="FOREGROUND" value="FF628C" />
+      </value>
+    </option>
+    <option name="PUPPET_OPERATION_SIGN">
+      <value>
+        <option name="FOREGROUND" value="FF9D00" />
+      </value>
+    </option>
+    <option name="PUPPET_PARENTH">
+      <value>
+        <option name="FOREGROUND" value="E1EFFF" />
+      </value>
+    </option>
+    <option name="PUPPET_REGEX">
+      <value>
+        <option name="FOREGROUND" value="80FFC2" />
+      </value>
+    </option>
+    <option name="PUPPET_RESOURCE_REFERENCE">
+      <value />
+    </option>
+    <option name="PUPPET_SEMICOLON">
+      <value>
+        <option name="FOREGROUND" value="E1EFFF" />
+      </value>
+    </option>
+    <option name="PUPPET_SQ_STRING">
+      <value>
+        <option name="FOREGROUND" value="3AD900" />
+      </value>
+    </option>
+    <option name="PUPPET_STRING">
+      <value>
+        <option name="FOREGROUND" value="3AD900" />
+      </value>
+    </option>
+    <option name="PUPPET_VARIABLE">
+      <value>
+        <option name="FOREGROUND" value="E1EFFF" />
+      </value>
+    </option>
+    <option name="PUPPET_VARIABLE_INTERPOLATION">
+      <value>
+        <option name="FOREGROUND" value="3AD900" />
+      </value>
+    </option>
     <option name="PY.BRACES">
       <value>
         <option name="FOREGROUND" value="E1EFFF" />

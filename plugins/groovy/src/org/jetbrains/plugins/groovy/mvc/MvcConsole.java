@@ -38,7 +38,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -84,12 +83,6 @@ public class MvcConsole implements Disposable {
   public MvcConsole(Project project, TextConsoleBuilderFactory consoleBuilderFactory) {
     myProject = project;
     myConsole = (ConsoleViewImpl)consoleBuilderFactory.createBuilder(myProject).getConsole();
-    myConsole.setModalityStateForUpdate(new Computable<ModalityState>() {
-      @Nullable
-      public ModalityState compute() {
-        return null;
-      }
-    });
     Disposer.register(this, myConsole);
 
     myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(TOOL_WINDOW_ID, false, ToolWindowAnchor.BOTTOM, this, true);

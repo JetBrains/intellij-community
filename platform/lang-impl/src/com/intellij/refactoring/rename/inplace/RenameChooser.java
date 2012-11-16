@@ -67,7 +67,7 @@ abstract class RenameChooser {
         dropHighlighters();
         final MarkupModel markupModel = myEditor.getMarkupModel();
 
-        if (selectedValue == ALL_OCCURRENCES) {
+        if (selectedValue.equals(ALL_OCCURRENCES)) {
           for (Pair<PsiElement, TextRange> pair : stringUsages) {
             final TextRange textRange = pair.second.shiftRight(pair.first.getTextOffset());
             final RangeHighlighter rangeHighlighter = markupModel.addRangeHighlighter(
@@ -96,7 +96,7 @@ abstract class RenameChooser {
       .setRequestFocus(true)
       .setItemChoosenCallback(new Runnable() {
         public void run() {
-          runRenameTemplate(list.getSelectedValue() == ALL_OCCURRENCES ? stringUsages : new ArrayList<Pair<PsiElement, TextRange>>());
+          runRenameTemplate(list.getSelectedValue().equals(ALL_OCCURRENCES) ? stringUsages : new ArrayList<Pair<PsiElement, TextRange>>());
         }
       })
       .addListener(new JBPopupAdapter() {

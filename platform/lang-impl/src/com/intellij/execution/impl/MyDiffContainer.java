@@ -16,6 +16,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -32,10 +33,10 @@ import java.awt.*;
 * Time: 3:13 PM
 */
 public class MyDiffContainer extends JLayeredPane implements Disposable {
-  private AnimatedIcon myIcon = new AsyncProcessIcon(this.getClass().getName());
+  private final AnimatedIcon myIcon = new AsyncProcessIcon(getClass().getName());
 
-  private JComponent myContent;
-  private JComponent myLoadingPanel;
+  private final JComponent myContent;
+  private final JComponent myLoadingPanel;
   private final JLabel myJLabel;
 
   public MyDiffContainer(JComponent content, final String text) {
@@ -44,6 +45,7 @@ public class MyDiffContainer extends JLayeredPane implements Disposable {
     myLoadingPanel = new JPanel(new MyPanelLayout());
     myLoadingPanel.setOpaque(false);
     myLoadingPanel.add(myIcon);
+    Disposer.register(this, myIcon);
     myJLabel = new JLabel(text);
     myJLabel.setForeground(UIUtil.getInactiveTextColor());
     myLoadingPanel.add(myJLabel);
@@ -54,8 +56,8 @@ public class MyDiffContainer extends JLayeredPane implements Disposable {
     finishUpdating();
   }
 
+  @Override
   public void dispose() {
-    myIcon.dispose();
   }
 
   public void startUpdating() {
@@ -69,17 +71,20 @@ public class MyDiffContainer extends JLayeredPane implements Disposable {
   }
 
   private class MyOverlayLayout extends AbstractLayoutManager {
+    @Override
     public void layoutContainer(Container parent) {
       myContent.setBounds(0, 0, getWidth(), getHeight());
       myLoadingPanel.setBounds(0, 0, getWidth(), getHeight());
     }
 
+    @Override
     public Dimension preferredLayoutSize(Container parent) {
       return myContent.getPreferredSize();
     }
   }
 
   private class MyPanelLayout extends AbstractLayoutManager {
+    @Override
     public void layoutContainer(Container parent) {
       Dimension size = myIcon.getPreferredSize();
       Dimension preferredSize = myJLabel.getPreferredSize();
@@ -89,6 +94,7 @@ public class MyDiffContainer extends JLayeredPane implements Disposable {
       myJLabel.setBounds(offset + size.width + 3, 0, preferredSize.width, size.height);
     }
 
+    @Override
     public Dimension preferredLayoutSize(Container parent) {
       return myContent.getPreferredSize();
     }

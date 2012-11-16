@@ -45,6 +45,7 @@ public class MakeClassStaticTest extends LightRefactoringTestCase {
 
   public void testNonDefaultConstructorAnonymousClass() throws Exception {perform();}
   public void testDefaultConstructorAnonymousClass() throws Exception {perform();}
+  public void testFieldInitializerSplit() throws Exception {perform();}
 
   public void testRegReference() throws Exception {
     perform();

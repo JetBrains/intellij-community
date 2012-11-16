@@ -3,6 +3,7 @@ package org.jetbrains.jps.incremental.artifacts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.util.JpsPathUtil;
@@ -148,6 +149,15 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
     assertOutput(artifact, fs().file("A.class"));
   }
 
+  public void testCopyResourcesFromModuleOutput() {
+    String file = createFile("src/a.xml", "");
+    JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(myProject).addResourcePattern("*.xml");
+    JpsModule module = addModule("a", PathUtil.getParentPath(file));
+    JpsArtifact artifact = addArtifact(root().module(module));
+    buildArtifacts(artifact);
+    assertOutput(artifact, fs().file("a.xml"));
+  }
+
   public void testIgnoredFile() {
     final String file = createFile("a/.svn/a.txt");
     createFile("a/svn/b.txt");
@@ -291,6 +301,28 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
 
     rebuildAll();
     assertOutput(a, fs().archive("a.jar").file("a.txt").end().file("b.txt"));
+  }
+
+  public void testDoNotCreateEmptyArchive() {
+    String file = createFile("dir/a.txt");
+    JpsArtifact a = addArtifact(archive("a.jar").parentDirCopy(file));
+    delete(file);
+    buildAll();
+    assertEmptyOutput(a);
+  }
+
+  public void testDoNotCreateEmptyArchiveInsideArchive() {
+    String file = createFile("dir/a.txt");
+    JpsArtifact a = addArtifact(archive("a.jar").archive("inner.jar").parentDirCopy(file));
+    delete(file);
+    buildAll();
+    assertEmptyOutput(a);
+  }
+
+  public void testDoNotCreateEmptyArchiveFromExtractedDirectory() {
+    final JpsArtifact a = addArtifact("a", archive("a.jar").dir("dir").extractedDir(getJUnitJarPath(), "/xxx/"));
+    buildAll();
+    assertEmptyOutput(a);
   }
 
   private static void createFileInArtifactOutput(JpsArtifact a, final String fileName) throws IOException {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public class CodeBlockGenerationTest extends LightGroovyTestCase {
     GrTopStatement[] statements = file.topStatements
     final StringBuilder builder = new StringBuilder()
     def generator = new CodeBlockGenerator(builder, new ExpressionContext(project));
-    for (def statement: statements) {
+    for (def statement : statements) {
       statement.accept(generator);
       builder.append('\n')
     }
@@ -52,14 +52,19 @@ public class CodeBlockGenerationTest extends LightGroovyTestCase {
     myFixture.addFileToProject("Bar.groovy", text)
   }
 
-  void testSwitch1() {doTest()}
-  void testSwitch2() {doTest()}
-  void testSwitch3() {doTest()}
-  void testSwitch4() {doTest()}
+  void testSwitch1() { doTest() }
 
-  void _testWhile1() {doTest()}
-  void _testWhile2() {doTest()}
-  void _testWhile3() {doTest()}
+  void testSwitch2() { doTest() }
+
+  void testSwitch3() { doTest() }
+
+  void testSwitch4() { doTest() }
+
+  void _testWhile1() { doTest() }
+
+  void _testWhile2() { doTest() }
+
+  void _testWhile3() { doTest() }
 
   void testRefExpr() {
     myFixture.addFileToProject 'Bar.groovy', '''
@@ -78,7 +83,7 @@ class MyCat {
     doTest()
   }
 
-  void testMemberPointer() {doTest()}
+  void testMemberPointer() { doTest() }
 
   void testCompareMethods() {
     addFile '''
@@ -139,29 +144,47 @@ public final class Matcher {
     doTest()
   }
 
-  void testAsBoolean() {doTest()}
-  void testCharInitializer() {doTest()}
+  void testAsBoolean() { doTest() }
 
-  void testAnonymousFromMap() {doTest()}
-  void testClosure() {doTest()}
-  void testListAsArray() {doTest()}
+  void testCharInitializer() { doTest() }
 
-  void testUnresolvedArrayAccess() {doTest()}
-  void testArrayAccess() {doTest()}
-  void testCastWithEquality() {doTest()}
-  void testAsserts() {doTest()}
-  void testConditional() {doTest()}
-  void testBinary() {doTest()}
-  void testSafeCast() {doTest()}
-  void testNewExpr() {doTest()}
+  void testAnonymousFromMap() { doTest() }
 
-  void testMapNameAlreadyused() {doTest()}
+  void testClosure() { doTest() }
 
-  void testEmptyMap() {doTest()}
-  void testEmptyList() {doTest()}
+  void testListAsArray() { doTest() }
+
+  void testUnresolvedArrayAccess() { doTest() }
+
+  void testArrayAccess() { doTest() }
+
+  void testCastWithEquality() { doTest() }
+
+  void testAsserts() { doTest() }
+
+  void testConditional() { doTest() }
+
+  void testBinary() { doTest() }
+
+  void testSafeCast() { doTest() }
+
+  void testNewExpr() { doTest() }
+
+  void testMapNameAlreadyused() { doTest() }
+
+  void testEmptyMap() { doTest() }
+
+  void testEmptyList() { doTest() }
 
   void testErasedArrayInitializer() { doTest() }
 
-  void testTupleVariableDeclaration() {doTest()}
+  void testTupleVariableDeclaration() { doTest() }
+
   void testEmptyVarargs() { doTest() }
+
+  void testClassReference() { doTest() }
+
+  void testEquals() { doTest() }
+
+  void testSelfNavigatingOperator() { doTest() }
 }

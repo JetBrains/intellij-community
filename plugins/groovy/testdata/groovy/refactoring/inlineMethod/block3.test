@@ -20,8 +20,7 @@ def tail(int jjj) {
             int result
             if (jjj > 0) {
                 result = jjj * fact(jjj - 1)
-            }
-            else result = 1
+            } else result = 1
             1 + result
         }
 }

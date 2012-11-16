@@ -15,8 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.mvc;
 
-import com.intellij.ide.util.projectWizard.*;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.plugins.groovy.config.GroovyAwareModuleBuilder;
 
 import javax.swing.*;
@@ -34,8 +32,7 @@ public class MvcModuleBuilder extends GroovyAwareModuleBuilder {
   }
 
   @Override
-  public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
-    final ModuleWizardStep sdkStep = new GroovySdkForNewModuleWizardStep(this, wizardContext, myFramework);
-    return new ModuleWizardStep[]{ProjectWizardStepFactory.getInstance().createProjectJdkStep(wizardContext), sdkStep};
+  protected MvcFramework getFramework() {
+    return myFramework;
   }
 }

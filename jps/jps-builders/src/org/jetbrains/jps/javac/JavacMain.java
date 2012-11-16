@@ -41,8 +41,7 @@ public class JavacMain {
         break;
       }
       if (compiler == null) {
-        final String message = "Eclipse Batch Compiler was not found in classpath";
-        outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, message));
+        outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Eclipse Batch Compiler was not found in classpath"));
         return false;
       }
     }
@@ -50,6 +49,10 @@ public class JavacMain {
     final boolean nowUsingJavac;
     if (compiler == null) {
       compiler = ToolProvider.getSystemJavaCompiler();
+      if (compiler == null) {
+        outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "System Java Compiler was not found in classpath"));
+        return false;
+      }
       nowUsingJavac = true;
     }
     else {
@@ -75,6 +78,10 @@ public class JavacMain {
     if (!classpath.isEmpty()) {
       try {
         fileManager.setLocation(StandardLocation.CLASS_PATH, classpath);
+        if (!nowUsingJavac && !isOptionSet(options, "-processorpath")) {
+          // for non-javac file manager ensure annotation processor path defaults to classpath
+          fileManager.setLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH, classpath);
+        }
       }
       catch (IOException e) {
         fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
@@ -146,6 +153,15 @@ public class JavacMain {
       }
     }
     return true;
+  }
+
+  private static boolean isOptionSet(final Collection<String> options, String option) {
+    for (String opt : options) {
+      if (option.equals(opt)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static Collection<String> prepareOptions(final Collection<String> options, boolean usingJavac) {

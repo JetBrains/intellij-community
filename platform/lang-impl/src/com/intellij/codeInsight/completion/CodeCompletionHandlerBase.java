@@ -395,6 +395,7 @@ public class CodeCompletionHandlerBase {
       final AutoCompletionPolicy policy = getAutocompletionPolicy(item);
       if (policy == AutoCompletionPolicy.NEVER_AUTOCOMPLETE) return AutoCompletionDecision.SHOW_LOOKUP;
       if (policy == AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE) return AutoCompletionDecision.insertItem(item);
+      if (!indicator.getLookup().itemMatcher(item).isStartMatch(item)) return AutoCompletionDecision.SHOW_LOOKUP;
     }
     if (!isAutocompleteOnInvocation(parameters.getCompletionType())) {
       return AutoCompletionDecision.SHOW_LOOKUP;

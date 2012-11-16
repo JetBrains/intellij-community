@@ -18,7 +18,6 @@ package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -40,7 +39,6 @@ import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.editor.UIFormEditor;
-import com.intellij.uiDesigner.make.SourceInstrumentationTask;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import icons.UIDesignerIcons;
@@ -82,7 +80,6 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
         myToolWindowReady = true;
-        CompilerManager.getInstance(myProject).addBeforeTask(new SourceInstrumentationTask());
       }
     });
   }

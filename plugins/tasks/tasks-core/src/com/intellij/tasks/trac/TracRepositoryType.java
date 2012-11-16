@@ -36,6 +36,7 @@ public class TracRepositoryType extends BaseRepositoryType<TracRepository> {
     return "Trac";
   }
 
+  @NotNull
   @Override
   public Icon getIcon() {
     return TasksIcons.Trac;

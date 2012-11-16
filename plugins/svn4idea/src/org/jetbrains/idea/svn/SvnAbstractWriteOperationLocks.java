@@ -42,12 +42,14 @@ public abstract class SvnAbstractWriteOperationLocks {
   private final static Object myLock = new Object();
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnAbstractWriteOperationLocks");
   private ISqlJetBusyHandler ourBusyHandler;
+  private volatile boolean myDisposed;
 
   protected SvnAbstractWriteOperationLocks(long timeout) {
     myTimeout = timeout;
     ourBusyHandler = new ISqlJetBusyHandler() {
             @Override
             public boolean call(int i) {
+              if (myDisposed) return false;
               try {
                 Thread.sleep(myTimeout);
               }
@@ -57,6 +59,10 @@ public abstract class SvnAbstractWriteOperationLocks {
               return true;
             }
           };
+  }
+
+  public void dispose() {
+    myDisposed = true;
   }
 
   // null if not 1.7+ copy

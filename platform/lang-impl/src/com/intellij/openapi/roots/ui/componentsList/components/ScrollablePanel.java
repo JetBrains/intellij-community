@@ -27,10 +27,12 @@ public class ScrollablePanel extends JPanel implements Scrollable {
     super(layout);
   }
 
+  @Override
   public Dimension getPreferredScrollableViewportSize() {
     return getPreferredSize();
   }
 
+  @Override
   public void addNotify() {
     super.addNotify();
     final FontMetrics fontMetrics = getFontMetrics(getFont());
@@ -39,6 +41,7 @@ public class ScrollablePanel extends JPanel implements Scrollable {
     }
   }
 
+  @Override
   public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
     if (orientation == SwingConstants.HORIZONTAL) {
       return myUnitWidth;
@@ -48,10 +51,12 @@ public class ScrollablePanel extends JPanel implements Scrollable {
     }
   }
 
+  @Override
   public boolean getScrollableTracksViewportWidth() {
     return true;
   }
 
+  @Override
   public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
     if (orientation == SwingConstants.HORIZONTAL) {
       return visibleRect.width;
@@ -59,6 +64,7 @@ public class ScrollablePanel extends JPanel implements Scrollable {
     return visibleRect.height;
   }
 
+  @Override
   public boolean getScrollableTracksViewportHeight() {
     return false;
   }

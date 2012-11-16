@@ -43,6 +43,7 @@ public abstract class ContentEntryEditingAction extends ToggleAction implements 
     getTemplatePresentation().setEnabled(true);
   }
 
+  @Override
   public void update(AnActionEvent e) {
     super.update(e);
     final Presentation presentation = e.getPresentation();
@@ -82,6 +83,7 @@ public abstract class ContentEntryEditingAction extends ToggleAction implements 
     return selected.toArray(new VirtualFile[selected.size()]);
   }
 
+  @Override
   public JComponent createCustomComponent(Presentation presentation) {
     return new ActionButtonWithText(this, presentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
   }

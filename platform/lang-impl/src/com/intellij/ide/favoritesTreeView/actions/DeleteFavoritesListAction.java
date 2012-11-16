@@ -41,8 +41,9 @@ public class DeleteFavoritesListAction extends AnAction implements DumbAware {
     if (project == null) {
       return;
     }
-    FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
     String listName = FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(dataContext);
+    if (! RenameFavoritesListAction.isFavoritesListReadWrite(project, listName)) return;
+    FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
     if (listName != null) {
       favoritesManager.removeFavoritesList(listName);
     }
@@ -56,8 +57,9 @@ public class DeleteFavoritesListAction extends AnAction implements DumbAware {
       return;
     }
     String listName = FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(dataContext);
-    e.getPresentation().setEnabled(listName != null && !listName.equals(project.getName()));
-    if (listName != null) {
+    final boolean enabled = RenameFavoritesListAction.isFavoritesListReadWrite(project, listName);
+    e.getPresentation().setEnabled(enabled);
+    if (enabled) {
       e.getPresentation().setText(IdeBundle.message("action.delete.favorites.list", listName));
       e.getPresentation().setDescription(IdeBundle.message("action.delete.favorites.list", listName));
     }

@@ -29,6 +29,7 @@ class Paths {
   final artifacts
   final artifacts_core
   final artifacts_core_upsource
+  final artifacts_jps
 
   def Paths(String out) {
     sandbox = out
@@ -39,6 +40,7 @@ class Paths {
     artifacts = "$sandbox/artifacts"
     artifacts_core = "$artifacts/core"
     artifacts_core_upsource = "$artifacts/core-upsource"
+    artifacts_jps = "$artifacts/jps"
   }
 }
 
@@ -52,13 +54,14 @@ target(compile: "Compile project") {
   projectBuilder.stage("Cleaning up sandbox folder")
   forceDelete(paths.sandbox)
 
-  [paths.sandbox, paths.distWin, paths.distAll, paths.distUnix, paths.distMac, paths.artifacts, paths.artifacts_core].each {
+  [paths.sandbox, paths.distWin, paths.distAll, paths.distUnix, paths.distMac, paths.artifacts, paths.artifacts_core, paths.artifacts_jps].each {
     ant.mkdir(dir: it)
   }
 
   projectBuilder.targetFolder = "$out/classes"
   projectBuilder.cleanOutput()
   projectBuilder.buildProduction()
+  projectBuilder.makeModuleTests(findModule("jps-builders"))
 }
 
 private String appInfoFile() {
@@ -76,7 +79,7 @@ target('default': 'The default target') {
   layoutAll([buildNumber: "IC-$snapshot",
              system_selector: "IdeaIC${p("component.version.major")}",
              tools_jar: true],
-            home, null, paths)
+            home, null, paths, true)
 }
 
 target('build-dist-jars' : 'Target to build jars from locally compiled classes') {
@@ -87,10 +90,10 @@ target('build-dist-jars' : 'Target to build jars from locally compiled classes')
   layoutAll([buildNumber: "IC-$snapshot",
              system_selector: "IdeaIC${p("component.version.major")}",
              tools_jar: true],
-            home, null, paths)
+             home, null, paths)
 }
 
-def layoutAll(Map args, String home, String out, Paths _paths = null) {
+def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps = false) {
   Paths paths = _paths != null ? _paths : new Paths(out)
 
   wireBuildDate(args.buildNumber, appInfoFile())
@@ -102,6 +105,10 @@ def layoutAll(Map args, String home, String out, Paths _paths = null) {
   notifyArtifactBuilt(paths.artifacts_core)
   layouts.layout_core_upsource(home, paths.artifacts_core_upsource)
   notifyArtifactBuilt(paths.artifacts_core_upsource)
+  if (buildJps) {
+    layouts.layout_jps(home, paths.artifacts_jps)
+    notifyArtifactBuilt(paths.artifacts_jps)
+  }
 
   layout(paths.distAll) {
     dir("bin") {
@@ -123,7 +130,7 @@ def layoutAll(Map args, String home, String out, Paths _paths = null) {
   buildWinZip("$paths.artifacts/idea${args.buildNumber}.win.zip", [paths.distAll, paths.distWin])
 
   def macAppRoot = isEap() ? "${p("component.version.codename")}-${args.buildNumber}.app" : "IntelliJ IDEA ${p("component.version.major")} CE.app"
-  buildMacZip(macAppRoot, "$paths.artifacts/idea${args.buildNumber}.mac.zip", [paths.distAll, paths.distMac])
+  buildMacZip(macAppRoot, "$paths.artifacts/idea${args.buildNumber}.mac.zip", [paths.distAll], paths.distMac)
 
   buildTarGz("idea-${args.buildNumber}", "$paths.artifacts/idea${args.buildNumber}.tar", [paths.distAll, paths.distUnix])
 }

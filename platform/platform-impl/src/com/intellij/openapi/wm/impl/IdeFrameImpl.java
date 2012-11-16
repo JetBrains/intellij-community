@@ -50,6 +50,7 @@ import com.intellij.openapi.wm.impl.status.EncodingPanel;
 import com.intellij.openapi.wm.impl.status.InsertOverwritePanel;
 import com.intellij.openapi.wm.impl.status.PositionPanel;
 import com.intellij.openapi.wm.impl.status.ToggleReadOnlyAttributePanel;
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.FocusTrackback;
@@ -89,9 +90,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   private boolean myRestoreFullscreen;
 
   public IdeFrameImpl(ApplicationInfoEx applicationInfoEx, ActionManagerEx actionManager, UISettings uiSettings, DataManager dataManager,
-                      final Application application, final String[] commandLineArgs) {
+                      final Application application) {
     super(applicationInfoEx.getFullApplicationName());
-    myRootPane = new IdeRootPane(actionManager, uiSettings, dataManager, application, commandLineArgs, this);
+    myRootPane = new IdeRootPane(actionManager, uiSettings, dataManager, application, this);
     setRootPane(myRootPane);
 
     AppUIUtil.updateFrameIcon(this);
@@ -184,6 +185,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
                   ProjectUtil.closeAndDispose(myProject);
                 }
                 app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).projectFrameClosed();
+                WelcomeFrame.showIfNoProjectOpened();
               }
               else {
                 ApplicationManagerEx.getApplicationEx().exit();
@@ -465,10 +467,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
 
   public boolean isInFullScreen() {
     return myFrameDecorator != null && myFrameDecorator.isInFullScreen();
-  }
-
-  public void showWelcomeScreen() {
-    myRootPane.showWelcomeScreen();
   }
 
   @Override

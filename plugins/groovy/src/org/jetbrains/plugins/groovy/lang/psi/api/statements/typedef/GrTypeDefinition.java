@@ -82,7 +82,7 @@ public interface GrTypeDefinition
   String[] getSuperClassNames();
 
   @NotNull
-  GrMethod[] getGroovyMethods();
+  GrMethod[] getCodeMethods();
 
   @NotNull
   PsiMethod[] findCodeMethodsByName(@NonNls String name, boolean checkBases);

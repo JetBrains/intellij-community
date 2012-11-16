@@ -90,7 +90,7 @@ public class LibraryOptionsPanel implements Disposable {
   private SortedComboBoxModel<LibraryEditor> myLibraryComboBoxModel;
   private boolean myDisposed;
 
-  private static enum Choice {
+  private enum Choice {
     USE_LIBRARY,
     DOWNLOAD,
     SETUP_LIBRARY_LATER
@@ -333,7 +333,9 @@ public class LibraryOptionsPanel implements Disposable {
   private void updateState() {
     myMessageLabel.setIcon(null);
     myConfigureButton.setVisible(true);
-    myDownloadRadioButton.setEnabled(mySettings.getDownloadSettings() != null);
+    final LibraryDownloadSettings settings = mySettings.getDownloadSettings();
+    myDownloadRadioButton.setEnabled(settings != null);
+    myDownloadRadioButton.setVisible(settings != null);
     if (!myDownloadRadioButton.isEnabled() && myDownloadRadioButton.isSelected() && myUseLibraryRadioButton.isVisible()) {
       myUseLibraryRadioButton.setSelected(true);
     }

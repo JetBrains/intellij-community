@@ -21,6 +21,8 @@ import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -140,9 +142,14 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
+  public boolean isToBuildChildrenInBackground(Object element) {
+    return myBaseStructure.isToBuildChildrenInBackground(element);
+  }
+
+  @Override
   @NotNull
   public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
-    return (FilteringNode)element;
+    return element instanceof FilteringNode ? (FilteringNode)element : new FilteringNode((SimpleNode)parentDescriptor, element);
   }
 
   @Override
@@ -159,6 +166,10 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
   @Override
   public ActionCallback asyncCommit() {
     return myBaseStructure.asyncCommit();
+  }
+
+  public FilteringNode createFilteringNode(Object delegate) {
+    return new FilteringNode(null, delegate);
   }
 
   public class FilteringNode extends SimpleNode {
@@ -228,7 +239,12 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
     public SimpleNode[] getChildren() {
       List<FilteringNode> nodes = myNodesCache.get(this);
       if (nodes == null) {
-        return SimpleNode.NO_CHILDREN;
+        return myDelegate instanceof SimpleNode ? ContainerUtil.map(((SimpleNode)myDelegate).getChildren(), new Function<SimpleNode, SimpleNode>() {
+          @Override
+          public SimpleNode fun(SimpleNode node) {
+            return new FilteringNode(FilteringNode.this, node);
+          }
+        }, NO_CHILDREN) : NO_CHILDREN;
       }
 
       ArrayList<FilteringNode> result = new ArrayList<FilteringNode>();

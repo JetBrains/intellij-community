@@ -1,0 +1,40 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android">
+  <Button android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:textColor="@android:color/black"
+          android:background="@android:color/white"
+          android:text="Hello"/>
+
+  <TextView android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/black"
+            android:background="@android:color/white"/>
+
+  <TextView android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/black"/>
+
+  <Button android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:textColor="@android:color/white"
+          android:background="@android:color/black"/>
+
+  <Button android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:textColor="@android:color/black"
+          android:background="@android:color/white"
+          style="@style/unknown"
+          android:text="Hello"/>
+
+  <Button android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          style="@style/style2.style1"
+          android:text="Hello"/>
+
+  <Button android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:textColor="@android:color/black"
+          android:background="@android:color/white"
+          style="@style/style1"
+          android:text="Hello"/>
+</LinearLayout>

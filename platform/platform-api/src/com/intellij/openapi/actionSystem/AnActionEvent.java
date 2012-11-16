@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.PlaceProvider;
@@ -62,6 +63,19 @@ public class AnActionEvent implements PlaceProvider<String> {
     myPlace = place;
     myPresentation = presentation;
     myModifiers = modifiers;
+  }
+
+  public static AnActionEvent createFromInputEvent(AnAction action, InputEvent event, String place) {
+    DataContext context = event != null ? DataManager.getInstance().getDataContext(event.getComponent()) : DataManager.getInstance().getDataContext();
+    int modifiers = event != null ? event.getModifiers() : 0;
+    return new AnActionEvent(
+      event,
+      context,
+      place,
+      action.getTemplatePresentation(),
+      ActionManager.getInstance(),
+      modifiers
+    );
   }
 
   /**

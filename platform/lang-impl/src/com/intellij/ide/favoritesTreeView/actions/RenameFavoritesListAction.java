@@ -28,6 +28,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 
 /**
@@ -48,6 +49,7 @@ public class RenameFavoritesListAction extends AnAction implements DumbAware {
     }
     final FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
     String listName = FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(dataContext);
+    if (! isFavoritesListReadWrite(project, listName)) return;
     final String newName = Messages
       .showInputDialog(project, IdeBundle.message("prompt.input.favorites.list.new.name"), IdeBundle.message("title.rename.favorites.list"),
                        Messages.getInformationIcon(), listName, new InputValidator() {
@@ -80,6 +82,16 @@ public class RenameFavoritesListAction extends AnAction implements DumbAware {
       return;
     }
     String listName = FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(dataContext);
-    e.getPresentation().setEnabled(listName != null && !listName.equals(project.getName()));
+    boolean enabled = isFavoritesListReadWrite(project, listName);
+    e.getPresentation().setEnabled(enabled);
+  }
+
+  public static boolean isFavoritesListReadWrite(Project project, String listName) {
+    boolean enabled = listName != null && !listName.equals(project.getName());
+    if (! StringUtil.isEmptyOrSpaces(listName)) {
+      final FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
+      enabled = ! favoritesManager.isReadOnly(listName);
+    }
+    return enabled;
   }
 }

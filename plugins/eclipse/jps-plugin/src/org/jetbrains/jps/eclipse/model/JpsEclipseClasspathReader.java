@@ -16,6 +16,7 @@
 package org.jetbrains.jps.eclipse.model;
 
 import com.intellij.openapi.components.ExpandMacroToPathMap;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashSet;
@@ -44,6 +45,7 @@ import java.util.Set;
  * Date: 10/29/12
  */
 class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule> {
+  private static final Logger LOG = Logger.getInstance(JpsEclipseClasspathReader.class);
 
   public JpsEclipseClasspathReader(String rootPath, @Nullable List<String> currentRoots, @Nullable Set<String> moduleNames) {
     super(rootPath, currentRoots, moduleNames);
@@ -66,8 +68,12 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
                                  boolean exported,
                                  String name,
                                  boolean applicationLevel) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("loading " + rootModel.getName() + ": adding " + (applicationLevel ? "application" : "project") + " library '" + name + "'");
+    }
     JpsElementFactory factory = JpsElementFactory.getInstance();
-    JpsLibraryReference libraryReference = factory.createLibraryReference(name, applicationLevel ? factory.createGlobalReference() : factory.createProjectReference());
+    JpsLibraryReference libraryReference =
+      factory.createLibraryReference(name, applicationLevel ? factory.createGlobalReference() : factory.createProjectReference());
     final JpsLibraryDependency dependency = rootModel.getDependenciesList().addLibraryDependency(libraryReference);
     setLibraryEntryExported(dependency, exported);
   }
@@ -86,11 +92,12 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
                                 Collection<String> unknownJdks,
                                 EclipseModuleManager eclipseModuleManager,
                                 String jdkName) {
-    if (jdkName == null) {
-      final JpsDependenciesList dependenciesList = rootModel.getDependenciesList();
-      dependenciesList.addSdkDependency(JpsJavaSdkType.INSTANCE);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("loading " + rootModel.getName() + ": set module jdk " + jdkName);
     }
-    else {
+    final JpsDependenciesList dependenciesList = rootModel.getDependenciesList();
+    dependenciesList.addSdkDependency(JpsJavaSdkType.INSTANCE);
+    if (jdkName != null) {
       JpsSdkTableSerializer.setSdkReference(rootModel.getSdkReferencesTable(), jdkName, JpsJavaSdkType.INSTANCE);
     }
   }
@@ -156,6 +163,7 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
     else {
       url = expandEclipsePath2Url(rootModel, url);
     }
+    LOG.debug("loading " + rootModel.getName() + ": adding module library " + libName + ": " + url);
     jpsLibrary.addRoot(url, JpsOrderRootType.COMPILED);
 
     setLibraryEntryExported(dependency, exported);
@@ -196,6 +204,7 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
   public void readClasspath(JpsModule model,
                             final String testPattern,
                             Element classpathElement, JpsMacroExpander expander) throws IOException {
+    LOG.debug("start loading classpath for " + model.getName());
     for (Object o : classpathElement.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
       try {
         readClasspathEntry(model, new ArrayList<String>(), new ArrayList<String>(), new HashSet<String>(), new HashSet<String>(),
@@ -206,14 +215,22 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
       }
     }
     boolean foundSdkDependency = false;
-    for (JpsDependencyElement element : model.getDependenciesList().getDependencies()) {
+    JpsDependenciesList dependenciesList = model.getDependenciesList();
+    for (JpsDependencyElement element : dependenciesList.getDependencies()) {
       if (element instanceof JpsSdkDependency) {
         foundSdkDependency = true;
         break;
       }
     }
     if (!foundSdkDependency) {
-      model.getDependenciesList().addSdkDependency(JpsJavaSdkType.INSTANCE);
+      dependenciesList.addSdkDependency(JpsJavaSdkType.INSTANCE);
+    }
+    if (LOG.isDebugEnabled()) {
+      String name = model.getName();
+      LOG.debug("finished loading classpath for " + name + " (" + dependenciesList.getDependencies().size() + " items):");
+      for (JpsDependencyElement element : dependenciesList.getDependencies()) {
+        LOG.debug(" [" + name + "]:" + element.toString());
+      }
     }
   }
 
@@ -235,6 +252,8 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
     final JpsJavaModuleExtension extension = getService().getOrCreateModuleExtension(rootModel);
     extension.setOutputUrl(pathToUrl(path));
     extension.setInheritOutput(false);
+
+    rootModel.getDependenciesList().addModuleSourceDependency();
   }
 
   private static void setLibraryEntryExported(final JpsDependencyElement dependency, boolean exported) {

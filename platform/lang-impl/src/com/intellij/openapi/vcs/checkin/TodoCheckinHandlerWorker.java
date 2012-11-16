@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ public class TodoCheckinHandlerWorker {
   private final List<Pair<FilePath, String>> mySkipped;
   private PsiFile myPsiFile;
   private List<TodoItem> myNewTodoItems;
-  private MyEditedFileProcessor myEditedFileProcessor;
+  private final MyEditedFileProcessor myEditedFileProcessor;
 
 
   public TodoCheckinHandlerWorker(final Project project, final Collection<Change> changes, final TodoFilter todoFilter,
@@ -234,7 +234,7 @@ public class TodoCheckinHandlerWorker {
 
     private void checkEditedFragment(TodoItem newTodoItem) {
       if (myBeforeFile == null) {
-        myBeforeFile = myPsiFileFactory.createFileFromText("old" + myAfterFile.getName(), myBeforeContent);
+        myBeforeFile = myPsiFileFactory.createFileFromText("old" + myAfterFile.getName(), myAfterFile.getFileType(), myBeforeContent);
       }
       if (myOldItems == null)  {
         final Collection<IndexPatternOccurrence> all =

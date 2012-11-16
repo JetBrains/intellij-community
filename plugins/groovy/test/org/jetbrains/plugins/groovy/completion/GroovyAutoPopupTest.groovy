@@ -14,20 +14,18 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.completion
-
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionAutoPopupTestCase
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.groovy.LightGroovyTestCase
-
+import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 /**
  * @author peter
  */
 class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
   @NotNull
   @Override protected LightProjectDescriptor getProjectDescriptor() {
-    return LightGroovyTestCase.GROOVY_DESCRIPTOR
+    return GroovyLightProjectDescriptor.INSTANCE
   }
 
   public void testGenerallyFocusLookup() {

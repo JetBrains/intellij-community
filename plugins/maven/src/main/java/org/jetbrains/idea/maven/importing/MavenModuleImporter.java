@@ -17,6 +17,8 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.module.Module;
@@ -36,6 +38,9 @@ import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.*;
@@ -217,9 +222,27 @@ public class MavenModuleImporter {
   private void configSurefirePlugin() {
     List<String> urls = new ArrayList<String>();
 
-    Element config = myMavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-surefire-plugin");
-    for (String each : MavenJDOMUtil.findChildrenValuesByPath(config, "additionalClasspathElements", "additionalClasspathElement")) {
-      urls.add(VfsUtil.pathToUrl(each));
+    AccessToken accessToken = ReadAction.start();
+    try {
+      MavenDomProjectModel domModel = null;
+
+      Element config = myMavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-surefire-plugin");
+      for (String each : MavenJDOMUtil.findChildrenValuesByPath(config, "additionalClasspathElements", "additionalClasspathElement")) {
+        String url = VfsUtil.pathToUrl(each);
+
+        if (domModel == null) {
+          domModel = MavenDomUtil.getMavenDomProjectModel(myModule.getProject(), myMavenProject.getFile());
+        }
+
+        if (domModel != null) {
+          url = MavenPropertyResolver.resolve(url, domModel);
+        }
+
+        urls.add(url);
+      }
+    }
+    finally {
+      accessToken.finish();
     }
 
     LibraryTable moduleLibraryTable = myRootModelAdapter.getRootModel().getModuleLibraryTable();
@@ -334,17 +357,22 @@ public class MavenModuleImporter {
       return;
     }
 
+    String oldAnnotationProcessorDirectory = currentProfile.getGeneratedSourcesDirectoryName(false);
+    String oldTestAnnotationProcessorDirectory = currentProfile.getGeneratedSourcesDirectoryName(true);
+    String annotationProcessorDirectory = null;
+    String testAnnotationProcessorDirectory = null;
+
     ProcessorConfigProfile moduleProfile = compilerConfiguration.findModuleProcessorProfile(moduleProfileName);
 
     ProcessorConfigProfile defaultMavenProfile = compilerConfiguration.findModuleProcessorProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE);
 
     if (shouldEnableAnnotationProcessors()) {
-      String annotationProcessorDirectory = getRelativeAnnotationProcessorDirectory(false);
+      annotationProcessorDirectory = getRelativeAnnotationProcessorDirectory(false);
       if (annotationProcessorDirectory == null) {
         annotationProcessorDirectory = DEFAULT_ANNOTATION_PATH_OUTPUT;
       }
 
-      String testAnnotationProcessorDirectory = getRelativeAnnotationProcessorDirectory(true);
+      testAnnotationProcessorDirectory = getRelativeAnnotationProcessorDirectory(true);
       if (testAnnotationProcessorDirectory == null) {
         testAnnotationProcessorDirectory = DEFAULT_TEST_ANNOTATION_OUTPUT;
       }
@@ -421,18 +449,67 @@ public class MavenModuleImporter {
         compilerConfiguration.removeModuleProcessorProfile(moduleProfile);
       }
     }
+
+    if (!Boolean.parseBoolean(System.getProperty("idea.maven.dont.exclude.annotation.processors.output"))) {
+      if (!oldAnnotationProcessorDirectory.equals(annotationProcessorDirectory) && !oldAnnotationProcessorDirectory.equals(testAnnotationProcessorDirectory)) {
+        removeFromCompilerExclude(oldAnnotationProcessorDirectory);
+      }
+
+      if (!oldTestAnnotationProcessorDirectory.equals(annotationProcessorDirectory) && !oldTestAnnotationProcessorDirectory.equals(testAnnotationProcessorDirectory)) {
+        removeFromCompilerExclude(oldTestAnnotationProcessorDirectory);
+      }
+
+      if (annotationProcessorDirectory != null) {
+        addToCompilerExclude(annotationProcessorDirectory);
+      }
+      if (testAnnotationProcessorDirectory != null) {
+        addToCompilerExclude(testAnnotationProcessorDirectory);
+      }
+    }
+  }
+
+  private void addToCompilerExclude(@NotNull String path) {
+    String url = VfsUtil.pathToUrl(myMavenProject.getDirectory() + '/' + path);
+
+    CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myModule.getProject());
+    ExcludedEntriesConfiguration excludedCfg = configuration.getExcludedEntriesConfiguration();
+
+    for (ExcludeEntryDescription description : excludedCfg.getExcludeEntryDescriptions()) {
+      if (url.equals(description.getUrl())) return;
+    }
+
+    excludedCfg.addExcludeEntryDescription(new ExcludeEntryDescription(url, true, false, excludedCfg));
+  }
+
+  private void removeFromCompilerExclude(@NotNull String path) {
+    String url = VfsUtil.pathToUrl(myMavenProject.getDirectory() + '/' + path);
+
+    CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myModule.getProject());
+    ExcludedEntriesConfiguration excludedCfg = configuration.getExcludedEntriesConfiguration();
+
+    for (ExcludeEntryDescription description : excludedCfg.getExcludeEntryDescriptions()) {
+      if (url.equals(description.getUrl())) {
+        excludedCfg.removeExcludeEntryDescription(description);
+      }
+    }
   }
 
   @Nullable
   private String getRelativeAnnotationProcessorDirectory(boolean isTest) {
-    String absoluteAnnotationProcessorDirectory = myMavenProject.getAnnotationProcessorDirectory(isTest);
-    String absoluteProjectDirectory = myMavenProject.getDirectory();
+    String annotationProcessorDirectory = myMavenProject.getAnnotationProcessorDirectory(isTest);
+    File annotationProcessorDirectoryFile = new File(annotationProcessorDirectory);
+    if (!annotationProcessorDirectoryFile.isAbsolute()) {
+      return annotationProcessorDirectory;
+    }
 
-    return FileUtil.getRelativePath(new File(absoluteProjectDirectory), new File(absoluteAnnotationProcessorDirectory));
+    String absoluteProjectDirectory = myMavenProject.getDirectory();
+    return FileUtil.getRelativePath(new File(absoluteProjectDirectory), annotationProcessorDirectoryFile);
   }
 
   private boolean shouldEnableAnnotationProcessors() {
-    return myMavenProject.getProcMode() != MavenProject.ProcMode.NONE && !"pom".equals(myMavenProject.getPackaging());
+    if ("pom".equals(myMavenProject.getPackaging())) return false;
+
+    return myMavenProject.getProcMode() != MavenProject.ProcMode.NONE || myMavenProject.getPluginConfiguration("org.bsc.maven", "maven-processor-plugin") != null;
   }
 
   @NotNull

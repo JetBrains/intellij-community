@@ -37,7 +37,7 @@ public class FixedHotfixGroupElement extends GroupingElement {
                                         boolean leaf,
                                         int row,
                                         boolean hasFocus) {
-        renderer.setIcon(AllIcons.Compiler.Information);
+        renderer.setIcon(AllIcons.General.Information);
         renderer.append("Fixed: ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         final String[] text = getText();
         final String checkedText = ((text != null) && (text.length > 0)) ? text[0] : "";

@@ -1,7 +1,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.Key;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.containers.ConcurrentFactoryMap;
@@ -65,8 +65,19 @@ public class InvocationCache {
     addCoreInvocations(DomElement.class);
     addCoreInvocations(Navigatable.class);
     addCoreInvocations(AnnotatedElement.class);
-    addCoreInvocations(UserDataHolder.class);
     addCoreInvocations(Object.class);
+    ourCoreInvocations.put(new JavaMethodSignature("getUserData", Key.class), new Invocation() {
+      public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) throws Throwable {
+        return handler.getUserData((Key<?>)args[0]);
+      }
+    });
+    ourCoreInvocations.put(new JavaMethodSignature("putUserData", Key.class, Object.class), new Invocation() {
+      public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) throws Throwable {
+        //noinspection unchecked
+        handler.putUserData((Key)args[0], args[1]);
+        return null;
+      }
+    });
     ourCoreInvocations.put(new JavaMethodSignature("getXmlElement"), new Invocation() {
       public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) throws Throwable {
         return handler.getXmlElement();
@@ -82,9 +93,15 @@ public class InvocationCache {
         return handler.getParent();
       }
     });
-    ourCoreInvocations.put(new JavaMethodSignature("accept"), new Invocation() {
+    ourCoreInvocations.put(new JavaMethodSignature("accept", DomElementVisitor.class), new Invocation() {
       public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) throws Throwable {
         handler.accept((DomElementVisitor)args[0]);
+        return null;
+      }
+    });
+    ourCoreInvocations.put(new JavaMethodSignature("acceptChildren", DomElementVisitor.class), new Invocation() {
+      public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) throws Throwable {
+        handler.acceptChildren((DomElementVisitor)args[0]);
         return null;
       }
     });

@@ -34,19 +34,23 @@ public class ModuleConfigurationStateImpl extends UserDataHolderBase implements 
     myProject = project;
   }
 
+  @Override
   public ModulesProvider getModulesProvider() {
     return myProvider;
   }
 
+  @Override
   public FacetsProvider getFacetsProvider() {
     return DefaultFacetsProvider.INSTANCE;
   }
 
+  @Override
   @Nullable
   public ModifiableRootModel getRootModel() {
     return null;
   }
 
+  @Override
   public Project getProject() {
     return myProject;
   }

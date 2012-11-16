@@ -15,12 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.formatter;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -29,7 +27,9 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessorHelper;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -82,9 +82,12 @@ public class GroovyBraceEnforcer extends GroovyRecursiveElementVisitor {
     buf.append("\n}");
     final int oldTextLength = statement.getTextLength();
     try {
-      CodeEditUtil.replaceChild(SourceTreeToPsiMap.psiElementToTree(statement),
-                                SourceTreeToPsiMap.psiElementToTree(blockCandidate),
-                                SourceTreeToPsiMap.psiElementToTree(factory.createBlockStatementFromText(buf.toString(), null)));
+      ASTNode newChild = SourceTreeToPsiMap.psiElementToTree(factory.createBlockStatementFromText(buf.toString(), null));
+      ASTNode parent = SourceTreeToPsiMap.psiElementToTree(statement);
+      ASTNode childToReplace = SourceTreeToPsiMap.psiElementToTree(blockCandidate);
+      CodeEditUtil.replaceChild(parent, childToReplace, newChild);
+
+      removeTailSemicolon(newChild, parent);
       CodeStyleManager.getInstance(statement.getProject()).reformat(statement, true);
     }
     catch (IncorrectOperationException e) {
@@ -92,6 +95,17 @@ public class GroovyBraceEnforcer extends GroovyRecursiveElementVisitor {
     }
     finally {
       updateResultRange(oldTextLength, statement.getTextLength());
+    }
+  }
+
+  private static void removeTailSemicolon(ASTNode newChild, ASTNode parent) {
+    ASTNode semi = newChild.getTreeNext();
+    while (semi != null && semi.getElementType() == TokenType.WHITE_SPACE && !semi.getText().contains("\n")) {
+      semi = semi.getTreeNext();
+    }
+
+    if (semi != null && semi.getElementType() == GroovyTokenTypes.mSEMI) {
+      parent.removeRange(newChild.getTreeNext(), semi.getTreeNext());
     }
   }
 
@@ -108,7 +122,7 @@ public class GroovyBraceEnforcer extends GroovyRecursiveElementVisitor {
     return myPostProcessor.isElementFullyInRange(element);
   }
 
-  private void processStatement(GrStatement statement, GrStatement blockCandidate, int options) {
+  private void processStatement(GrStatement statement, @Nullable GrStatement blockCandidate, int options) {
     if (blockCandidate instanceof GrCodeBlock || blockCandidate instanceof GrBlockStatement || blockCandidate == null) return;
     if (options == CommonCodeStyleSettings.FORCE_BRACES_ALWAYS ||
         options == CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE && PostFormatProcessorHelper.isMultiline(statement)) {

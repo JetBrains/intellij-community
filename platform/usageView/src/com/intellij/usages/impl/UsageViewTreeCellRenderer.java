@@ -107,7 +107,8 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         if (node.isValid()) {
           TextChunk[] text = node.getUsage().getPresentation().getText();
           for (TextChunk textChunk : text) {
-            append(textChunk.getText(), patchAttrs(node, SimpleTextAttributes.fromTextAttributes(textChunk.getAttributes())));
+            SimpleTextAttributes simples = textChunk.getSimpleAttributesIgnoreBackground();
+            append(textChunk.getText(), patchAttrs(node, simples));
           }
         }
       }

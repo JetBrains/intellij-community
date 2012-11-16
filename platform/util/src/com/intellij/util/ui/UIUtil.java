@@ -74,7 +74,7 @@ public class UIUtil {
     @NotNull
     @Override
     protected Boolean compute() {
-      if (!SystemInfo.isLinux) {
+      if (!SystemInfo.isXWindow) {
         return false;
       }
       try {
@@ -124,6 +124,12 @@ public class UIUtil {
   public static void drawFramingLines(@NotNull Graphics2D g, int startX, int endX, int topY, int bottomY, @NotNull Color color) {
     drawLine(g, startX, topY, endX, topY, null, color);
     drawLine(g, startX, bottomY, endX, bottomY, null, color);
+  }
+
+  private static final GrayFilter DEFAULT_GRAY_FILTER = new GrayFilter(true, 65);
+  private static final GrayFilter DARCULA_GRAY_FILTER = new GrayFilter(true, 30);
+  public static GrayFilter getGrayFilter() {
+    return isUnderDarcula() ? DARCULA_GRAY_FILTER : DEFAULT_GRAY_FILTER;
   }
 
   public enum FontSize {NORMAL, SMALL, MINI}
@@ -196,9 +202,9 @@ public class UIUtil {
 
   @NonNls private static final String ROOT_PANE = "JRootPane.future";
 
-  private UIUtil() { }
-
   private static final Ref<Boolean> ourRetina = Ref.create(SystemInfo.isMac ? null : false);
+
+  private UIUtil() { }
 
   @SuppressWarnings("UseOfArchaicSystemPropertyAccessors")
   public static boolean isRetina() {
@@ -449,7 +455,9 @@ public class UIUtil {
   }
 
   public static Color getLabelDisabledForeground() {
-    return UIManager.getColor("Label.disabledForeground");
+    final Color color = UIManager.getColor("Label.disabledForeground");
+    if (color != null) return color;
+    return UIManager.getColor("Label.disabledText");
   }
 
   public static Icon getOptionPanelWarningIcon() {
@@ -646,12 +654,23 @@ public class UIUtil {
     return isUnderGTKLookAndFeel() ? getTreeTextBackground() : UIManager.getColor("Table.background");
   }
 
+  public static Color getTableBackground(final boolean isSelected) {
+    return isSelected ? getTableSelectionBackground() : getTableBackground();
+  }
+
   public static Color getTableSelectionForeground() {
+    if (isUnderNimbusLookAndFeel()) {
+      return UIManager.getColor("Table[Enabled+Selected].textForeground");
+    }
     return UIManager.getColor("Table.selectionForeground");
   }
 
   public static Color getTableForeground() {
     return UIManager.getColor("Table.foreground");
+  }
+
+  public static Color getTableForeground(final boolean isSelected) {
+    return isSelected ? getTableSelectionForeground() : getTableForeground();
   }
 
   public static Color getTableGridColor() {
@@ -692,11 +711,10 @@ public class UIUtil {
   }
 
   public static Color getListSelectionBackground() {
-    final Color color = UIManager.getColor("List.selectionBackground");
-    if (color == null) {
+    if (isUnderNimbusLookAndFeel()) {
       return UIManager.getColor("List[Selected].textBackground");  // Nimbus
     }
-    return color;
+    return UIManager.getColor("List.selectionBackground");
   }
 
   public static Color getListUnfocusedSelectionBackground() {
@@ -877,12 +895,12 @@ public class UIUtil {
   }
 
   public static Icon getTreeSelectedCollapsedIcon() {
-    return isUnderAquaBasedLookAndFeel() || isUnderNimbusLookAndFeel() || isUnderGTKLookAndFeel()
+    return isUnderAquaBasedLookAndFeel() || isUnderNimbusLookAndFeel() || isUnderGTKLookAndFeel() || isUnderDarcula()
            ? AllIcons.Mac.Tree_white_right_arrow : getTreeCollapsedIcon();
   }
 
   public static Icon getTreeSelectedExpandedIcon() {
-    return isUnderAquaBasedLookAndFeel() || isUnderNimbusLookAndFeel() || isUnderGTKLookAndFeel()
+    return isUnderAquaBasedLookAndFeel() || isUnderNimbusLookAndFeel() || isUnderGTKLookAndFeel() || isUnderDarcula()
            ? AllIcons.Mac.Tree_white_down_arrow : getTreeExpandedIcon();
   }
 
@@ -1270,7 +1288,7 @@ public class UIUtil {
     if (drawTopLine) g.drawLine(x, 0, width, 0);
     g.drawLine(x, height - 1, width, height - 1);
 
-    g.setColor(new Color(255, 255, 255, 100));
+    g.setColor(isUnderDarcula() ? Gray._255.withAlpha(30) : new Color(255, 255, 255, 100));
     g.drawLine(x, drawTopLine ? 1 : 0, width, drawTopLine ? 1 : 0);
 
     if (active) {
@@ -1758,10 +1776,6 @@ public class UIUtil {
     return defFont.deriveFont(Math.max(defFont.getSize() - 2f, 11f));
   }
 
-  public static Color getTitledBorderTitleColor() {
-    return Color.BLACK;
-  }
-
   /**
    * @deprecated use getBorderColor instead
    */
@@ -2178,8 +2192,8 @@ public class UIUtil {
     private float myLineSpacing;
 
     public TextPainter() {
-      myDrawShadow = isUnderAquaLookAndFeel();
-      myShadowColor = isUnderDarcula() ? Gray._0.withAlpha(180) : Gray._220;
+      myDrawShadow = /*isUnderAquaLookAndFeel() ||*/ isUnderDarcula();
+      myShadowColor = isUnderDarcula() ? Gray._0.withAlpha(100) : Gray._220;
       myLineSpacing = 1.0f;
     }
 
@@ -2461,7 +2475,6 @@ public class UIUtil {
   }
 
   public static Dimension addInsets(@NotNull Dimension dimension, @NotNull Insets insets) {
-
     Dimension ans = new Dimension(dimension);
     ans.width += insets.left;
     ans.width += insets.right;
@@ -2478,6 +2491,7 @@ public class UIUtil {
     final Dimension newSize = new Dimension(Math.max(size.width, minSize.width), Math.max(size.height, minSize.height));
 
     if (!newSize.equals(size)) {
+      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           if (window.isShowing()) {
@@ -2523,4 +2537,3 @@ public class UIUtil {
     return isUnderDarcula() ? DECORATED_ROW_BG_COLOR_DARK : DECORATED_ROW_BG_COLOR;
   }
 }
-

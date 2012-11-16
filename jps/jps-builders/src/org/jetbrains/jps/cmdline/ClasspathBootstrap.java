@@ -22,7 +22,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.jgoodies.forms.layout.CellConstraints;
 import net.n3.nanoxml.IXMLBuilder;
 import org.jboss.netty.util.Version;
@@ -49,9 +51,10 @@ public class ClasspathBootstrap {
     static final String CLASS_NAME = "org.jetbrains.jps.javac.OptimizedFileManager";
     static final Class<StandardJavaFileManager> managerClass;
     static {
-      Class<StandardJavaFileManager> aClass = null;
+      Class<StandardJavaFileManager> aClass;
       try {
-        aClass = (Class<StandardJavaFileManager>)Class.forName(CLASS_NAME);
+        @SuppressWarnings("unchecked") Class<StandardJavaFileManager> c = (Class<StandardJavaFileManager>)Class.forName(CLASS_NAME);
+        aClass = c;
       }
       catch (Throwable e) {
         aClass = null;
@@ -67,9 +70,10 @@ public class ClasspathBootstrap {
     static final String CLASS_NAME = "org.jetbrains.jps.javac.OptimizedFileManager17";
     static final Class<StandardJavaFileManager> managerClass;
     static {
-      Class<StandardJavaFileManager> aClass = null;
+      Class<StandardJavaFileManager> aClass;
       try {
-        aClass = (Class<StandardJavaFileManager>)Class.forName(CLASS_NAME);
+        @SuppressWarnings("unchecked") Class<StandardJavaFileManager> c = (Class<StandardJavaFileManager>)Class.forName(CLASS_NAME);
+        aClass = c;
       }
       catch (Throwable e) {
         aClass = null;
@@ -84,12 +88,12 @@ public class ClasspathBootstrap {
   private ClasspathBootstrap() {
   }
 
-  public static List<File> getBuildProcessApplicationClasspath() {
-    final Set<File> cp = new LinkedHashSet<File>();
+  public static List<String> getBuildProcessApplicationClasspath() {
+    final Set<String> cp = ContainerUtil.newHashSet();
+
     cp.add(getResourcePath(BuildMain.class));
-    for (String path : PathManager.getUtilClassPath()) { // util
-      cp.add(new File(path));
-    }
+
+    cp.addAll(PathManager.getUtilClassPath()); // util
     cp.add(getResourcePath(Message.class)); // protobuf
     cp.add(getResourcePath(Version.class)); // netty
     cp.add(getResourcePath(ClassWriter.class));  // asm
@@ -99,7 +103,7 @@ public class ClasspathBootstrap {
     cp.add(getResourcePath(JpsProjectLoader.class));  // jps-model-serialization
     cp.add(getResourcePath(AlienFormFileException.class));  // forms-compiler
     cp.add(getResourcePath(GridConstraints.class));  // forms-rt
-    cp.add(getResourcePath(CellConstraints.class));  // jgoodies-forms
+    cp.add(getResourcePath(CellConstraints.class));  // jGoodies-forms
     cp.add(getResourcePath(NotNullVerifyingInstrumenter.class));  // not-null
     cp.add(getResourcePath(IXMLBuilder.class));  // nano-xml
 
@@ -116,34 +120,36 @@ public class ClasspathBootstrap {
     }
 
     for (JavaCompiler javaCompiler : ServiceLoader.load(JavaCompiler.class)) { // Eclipse compiler
-      final File compilerResource = getResourcePath(javaCompiler.getClass());
-      final String name = compilerResource.getName();
+      final String compilerResource = getResourcePath(javaCompiler.getClass());
+      final String name = PathUtilRt.getFileName(compilerResource);
       if (name.startsWith("ecj-") && name.endsWith(".jar")) {
         cp.add(compilerResource);
       }
     }
 
-    return new ArrayList<File>(cp);
+    return ContainerUtil.newArrayList(cp);
   }
 
   public static List<File> getJavacServerClasspath(String sdkHome) {
     final Set<File> cp = new LinkedHashSet<File>();
-    cp.add(getResourcePath(JavacServer.class)); // self
+    cp.add(getResourceFile(JavacServer.class)); // self
     // util
     for (String path : PathManager.getUtilClassPath()) {
       cp.add(new File(path));
     }
-    cp.add(getResourcePath(Message.class)); // protobuf
-    cp.add(getResourcePath(Version.class)); // netty
+    cp.add(getResourceFile(JpsModel.class));  // jps-model-api
+    cp.add(getResourceFile(JpsModelImpl.class));  // jps-model-impl
+    cp.add(getResourceFile(Message.class)); // protobuf
+    cp.add(getResourceFile(Version.class)); // netty
 
     final Class<StandardJavaFileManager> optimizedFileManagerClass = getOptimizedFileManagerClass();
     if (optimizedFileManagerClass != null) {
-      cp.add(getResourcePath(optimizedFileManagerClass));  // optimizedFileManager, if applicable
+      cp.add(getResourceFile(optimizedFileManagerClass));  // optimizedFileManager, if applicable
     }
 
     try {
       final Class<?> cmdLineWrapper = Class.forName("com.intellij.rt.execution.CommandLineWrapper");
-      cp.add(getResourcePath(cmdLineWrapper));  // idea_rt.jar
+      cp.add(getResourceFile(cmdLineWrapper));  // idea_rt.jar
     }
     catch (Throwable th) {
       LOG.info(th);
@@ -152,7 +158,7 @@ public class ClasspathBootstrap {
     final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
     if (systemCompiler != null) {
       try {
-        final String localJarPath = FileUtil.toSystemIndependentName(getResourcePath(systemCompiler.getClass()).getPath());
+        final String localJarPath = FileUtil.toSystemIndependentName(getResourceFile(systemCompiler.getClass()).getPath());
         final String localJavaHome = FileUtil.toSystemIndependentName(SystemProperties.getJavaHome());
         if (FileUtil.pathsEqual(localJavaHome, FileUtil.toSystemIndependentName(sdkHome))) {
           cp.add(new File(localJarPath));
@@ -195,7 +201,11 @@ public class ClasspathBootstrap {
     return OptimizedFileManager17ClassHolder.managerClass;
   }
 
-  public static File getResourcePath(Class aClass) {
-    return new File(PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class"));
+  public static String getResourcePath(Class aClass) {
+    return PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
+  }
+
+  public static File getResourceFile(Class aClass) {
+    return new File(getResourcePath(aClass));
   }
 }

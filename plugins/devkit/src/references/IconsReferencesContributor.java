@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
@@ -292,7 +293,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
       final Module module = ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
         @Override
         public Module compute() {
-          return ModuleUtil.findModuleForPsiElement(file);
+          return ModuleUtilCore.findModuleForPsiElement(file);
         }
       });
 
@@ -306,9 +307,9 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
         model.setCaseSensitive(true);
         model.setFindAll(true);
         model.setWholeWordsOnly(true);
-        final List<UsageInfo> usages = FindInProjectUtil.findUsages(model, FindInProjectUtil.getPsiDirectory(model, project), project, false);
-        if (!usages.isEmpty()) {
-          for (final UsageInfo usage : usages) {
+        FindInProjectUtil.findUsages(model, FindInProjectUtil.getPsiDirectory(model, project), project, false, new Processor<UsageInfo>() {
+          @Override
+          public boolean process(final UsageInfo usage) {
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               public void run() {
                 final PsiElement element = usage.getElement();
@@ -332,8 +333,9 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
                 }
               }
             });
+            return true;
           }
-        }
+        });
       }
     }
     return true;

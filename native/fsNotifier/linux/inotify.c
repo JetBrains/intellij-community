@@ -122,11 +122,19 @@ inline bool watch_limit_reached() {
 static int add_watch(const char* path, watch_node* parent) {
   int wd = inotify_add_watch(inotify_fd, path, EVENT_MASK);
   if (wd < 0) {
-    if (errno == ENOSPC) {
-      limit_reached = true;
+    if (errno == EACCES || errno == ENOENT) {
+      userlog(LOG_DEBUG, "inotify_add_watch(%s): %s", path, strerror(errno));
+      return ERR_IGNORE;
     }
-    userlog(LOG_ERR, "inotify_add_watch(%s): %s", path, strerror(errno));
-    return ERR_CONTINUE;
+    else if (errno == ENOSPC) {
+      userlog(LOG_WARNING, "inotify_add_watch(%s): %s", path, strerror(errno));
+      limit_reached = true;
+      return ERR_CONTINUE;
+    }
+    else {
+      userlog(LOG_ERR, "inotify_add_watch(%s): %s", path, strerror(errno));
+      return ERR_ABORT;
+    }
   }
   else {
     userlog(LOG_DEBUG, "watching %s: %d", path, wd);
@@ -216,11 +224,19 @@ static void rm_watch(int wd, bool update_parent) {
 }
 
 
-static int walk_tree(const char* path, watch_node* parent, bool recursive) {
+static int walk_tree(const char* path, watch_node* parent, bool recursive, array* mounts) {
+  for (int j=0; j<array_size(mounts); j++) {
+    char* mount = array_get(mounts, j);
+    if (strncmp(path, mount, strlen(mount)) == 0) {
+      userlog(LOG_DEBUG, "watch path '%s' crossed mount point '%s' - skipping", path, mount);
+      return ERR_IGNORE;
+    }
+  }
+
   DIR* dir = NULL;
   if (recursive) {
     if ((dir = opendir(path)) == NULL) {
-      if (errno == EACCES || errno == ENOENT) {
+      if (errno == EACCES || errno == ENOENT || errno == ENOTDIR) {
         userlog(LOG_DEBUG, "opendir(%s): %d", path, errno);
         return ERR_IGNORE;
       }
@@ -257,7 +273,7 @@ static int walk_tree(const char* path, watch_node* parent, bool recursive) {
 
     strcpy(p, entry->d_name);
 
-    int subdir_id = walk_tree(subdir, table_get(watches, id), recursive);
+    int subdir_id = walk_tree(subdir, table_get(watches, id), recursive, mounts);
     if (subdir_id < 0 && subdir_id != ERR_IGNORE) {
       rm_watch(id, true);
       id = subdir_id;
@@ -270,7 +286,7 @@ static int walk_tree(const char* path, watch_node* parent, bool recursive) {
 }
 
 
-int watch(const char* root) {
+int watch(const char* root, array* mounts) {
   bool recursive = true;
   if (root[0] == '|') {
     root++;
@@ -297,7 +313,7 @@ int watch(const char* root) {
     return ERR_IGNORE;
   }
 
-  return walk_tree(root, NULL, recursive);
+  return walk_tree(root, NULL, recursive, mounts);
 }
 
 
@@ -313,8 +329,7 @@ static bool process_inotify_event(struct inotify_event* event) {
   }
 
   bool is_dir = (event->mask & IN_ISDIR) == IN_ISDIR;
-  userlog(LOG_DEBUG, "inotify: wd=%d mask=%d dir=%d name=%s",
-      event->wd, event->mask & (~IN_ISDIR), is_dir, node->name);
+  userlog(LOG_DEBUG, "inotify: wd=%d mask=%d dir=%d name=%s", event->wd, event->mask & (~IN_ISDIR), is_dir, node->name);
 
   char path[PATH_MAX];
   strcpy(path, node->name);
@@ -326,8 +341,8 @@ static bool process_inotify_event(struct inotify_event* event) {
   }
 
   if (is_dir && ((event->mask & IN_CREATE) == IN_CREATE || (event->mask & IN_MOVED_TO) == IN_MOVED_TO)) {
-    int result = walk_tree(path, node, true);
-    if (result < 0 && result != ERR_IGNORE) {
+    int result = walk_tree(path, node, true, NULL);
+    if (result < 0 && result != ERR_IGNORE && result != ERR_CONTINUE) {
       return false;
     }
   }

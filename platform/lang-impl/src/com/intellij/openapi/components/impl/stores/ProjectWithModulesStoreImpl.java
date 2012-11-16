@@ -41,6 +41,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
     super(project);
   }
 
+  @Override
   public void reinitComponents(final Set<String> componentNames, final boolean reloadData) {
     super.reinitComponents(componentNames, reloadData);
 
@@ -49,6 +50,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
     }
   }
 
+  @Override
   public TrackingPathMacroSubstitutor[] getSubstitutors() {
     final List<TrackingPathMacroSubstitutor> result = new ArrayList<TrackingPathMacroSubstitutor>();
     result.add(getStateStorageManager().getMacroSubstitutor());
@@ -60,6 +62,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
     return result.toArray(new TrackingPathMacroSubstitutor[result.size()]);
   }
 
+  @Override
   public boolean isReloadPossible(final Set<String> componentNames) {
     if (!super.isReloadPossible(componentNames)) return false;
 
@@ -77,6 +80,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
     return moduleManager.getModules();
   }
 
+  @Override
   protected SaveSessionImpl createSaveSession() throws StateStorageException {
     return new ProjectWithModulesSaveSession();
   }
@@ -95,6 +99,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
       }
     }
 
+    @Override
     public List<IFile> getAllStorageFiles(final boolean includingSubStructures) {
       final List<IFile> result = super.getAllStorageFiles(includingSubStructures);
 
@@ -107,6 +112,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
       return result;
     }
 
+    @Override
     @Nullable
     public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile,StateStorage>> changedFiles) {
       final Set<String> result = super.analyzeExternalChanges(changedFiles);
@@ -121,6 +127,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
       return result;
     }
 
+    @Override
     public void finishSave() {
       try {
         Throwable first = null;
@@ -142,6 +149,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
       }
     }
 
+    @Override
     public void reset() {
       try {
         for (SaveSession moduleSaveSession : myModuleSaveSessions) {
@@ -153,6 +161,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
       }
     }
 
+    @Override
     protected void beforeSave() throws IOException {
       super.beforeSave();
       for (SaveSession moduleSaveSession : myModuleSaveSessions) {
@@ -160,6 +169,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
       }
     }
 
+    @Override
     protected void collectSubfilesToSave(final List<IFile> result) throws IOException {
       for (SaveSession moduleSaveSession : myModuleSaveSessions) {
         final List<IFile> moduleFiles = moduleSaveSession.getAllStorageFilesToSave(true);

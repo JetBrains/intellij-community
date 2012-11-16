@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.highlighting.actions;
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -28,7 +28,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 
 public class HighlightUsagesAction extends AnAction implements DumbAware {
-
   public HighlightUsagesAction() {
     setInjectedContext(true);
   }
@@ -37,7 +36,6 @@ public class HighlightUsagesAction extends AnAction implements DumbAware {
   public void update(final AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
     final DataContext dataContext = event.getDataContext();
-
     presentation.setEnabled(PlatformDataKeys.PROJECT.getData(dataContext) != null &&
                             PlatformDataKeys.EDITOR.getData(dataContext) != null);
   }
@@ -59,8 +57,8 @@ public class HighlightUsagesAction extends AnAction implements DumbAware {
           try {
             HighlightUsagesHandler.invoke(project, editor, psiFile);
           }
-          catch (IndexNotReadyException e1) {
-            DumbService.getInstance(project).showDumbModeNotification("This usage search requires indices and cannot be performed until they are built");
+          catch (IndexNotReadyException ex) {
+            DumbService.getInstance(project).showDumbModeNotification(ActionsBundle.message("action.HighlightUsagesInFile.not.ready"));
           }
         }
       },

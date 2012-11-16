@@ -41,7 +41,7 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
                                                  BuildDataPaths dataPaths);
 
   @Nullable
-  public abstract BuildRootDescriptor findRootDescriptor(String rootId, BuildRootIndex rootIndex);
+  public abstract R findRootDescriptor(String rootId, BuildRootIndex rootIndex);
 
   @NotNull
   public abstract String getPresentableName();

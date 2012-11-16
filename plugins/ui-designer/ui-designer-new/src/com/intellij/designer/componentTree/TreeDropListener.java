@@ -15,14 +15,21 @@
  */
 package com.intellij.designer.componentTree;
 
-import com.intellij.designer.DesignerBundle;
-import com.intellij.designer.designSurface.*;
+import com.intellij.designer.clipboard.SimpleTransferable;
+import com.intellij.designer.designSurface.ComponentTargetFilter;
+import com.intellij.designer.designSurface.EditOperation;
+import com.intellij.designer.designSurface.EditableArea;
+import com.intellij.designer.designSurface.OperationContext;
+import com.intellij.designer.designSurface.tools.CreationTool;
 import com.intellij.designer.designSurface.tools.ToolProvider;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadComponentVisitor;
 import com.intellij.designer.model.RadLayout;
+import com.intellij.designer.palette.PaletteItem;
 import com.intellij.designer.utils.Cursors;
+import com.intellij.util.ArrayUtil;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.dnd.*;
 import java.util.ArrayList;
@@ -35,6 +42,7 @@ import java.util.List;
 public class TreeDropListener extends DropTargetAdapter {
   private final EditableArea myArea;
   private final ToolProvider myToolProvider;
+  private final Class[] myDragTargets;
   private final OperationContext myContext = new OperationContext();
   private DropTargetDragEvent myEvent;
   private EditOperation myTargetOperation;
@@ -43,18 +51,23 @@ public class TreeDropListener extends DropTargetAdapter {
   private boolean myShowFeedback;
 
   public TreeDropListener(ComponentTree tree, EditableArea area, ToolProvider provider) {
+    this(tree, area, provider, TreeDropListener.class, PaletteItem.class);
+    tree.setDragEnabled(true);
+    tree.setTransferHandler(new TreeTransfer(TreeDropListener.class));
+  }
+
+  public TreeDropListener(JComponent component, EditableArea area, ToolProvider provider, Class... dragTargets) {
     myArea = area;
     myContext.setArea(area);
     myToolProvider = provider;
-    tree.setDragEnabled(true);
-    tree.setTransferHandler(new TreeTransfer());
-    tree.setDropTarget(new DropTarget(tree, this));
+    myDragTargets = dragTargets;
+    component.setDropTarget(new DropTarget(component, this));
   }
 
   @Override
   public void dragExit(DropTargetEvent event) {
     eraseFeedback();
-    clearState();
+    clearState(false);
   }
 
   @Override
@@ -70,7 +83,7 @@ public class TreeDropListener extends DropTargetAdapter {
   public void drop(DropTargetDropEvent event) {
     eraseFeedback();
     executeCommand();
-    clearState();
+    clearState(true);
   }
 
   private void showFeedback() {
@@ -93,6 +106,24 @@ public class TreeDropListener extends DropTargetAdapter {
     myContext.setLocation(getLocation());
 
     if (myContext.getComponents() == null) {
+      if (!ArrayUtil.contains(SimpleTransferable.getData(myEvent.getTransferable(), Class.class), myDragTargets)) {
+        myContext.setComponents(Collections.<RadComponent>emptyList());
+        return;
+      }
+
+      if (myToolProvider.getActiveTool() instanceof CreationTool) {
+        myContext.setType(OperationContext.CREATE);
+        CreationTool tool = (CreationTool)myToolProvider.getActiveTool();
+        try {
+          myContext.setComponents(Collections.singletonList(tool.getFactory().create()));
+        }
+        catch (Throwable e) {
+          myContext.setComponents(Collections.<RadComponent>emptyList());
+          myToolProvider.loadDefaultTool();
+        }
+        return;
+      }
+
       List<RadComponent> components = RadComponent.getPureSelection(myArea.getSelection());
 
       RadComponent parent = null;
@@ -121,29 +152,33 @@ public class TreeDropListener extends DropTargetAdapter {
     }
 
     final List<RadComponent> excludeComponents = new ArrayList<RadComponent>(myContext.getComponents());
-    for (RadComponent component : myContext.getComponents()) {
-      component.accept(new RadComponentVisitor() {
-        @Override
-        public void endVisit(RadComponent component) {
-          excludeComponents.add(component);
-        }
-      }, true);
+    if (!myContext.isCreate()) {
+      for (RadComponent component : myContext.getComponents()) {
+        component.accept(new RadComponentVisitor() {
+          @Override
+          public void endVisit(RadComponent component) {
+            excludeComponents.add(component);
+          }
+        }, true);
+      }
     }
 
     final EditOperation[] operation = new EditOperation[1];
     ComponentTargetFilter filter = new ComponentTargetFilter() {
       @Override
       public boolean preFilter(RadComponent component) {
-        return !excludeComponents.contains(component);
+        return myContext.isCreate() || !excludeComponents.contains(component);
       }
 
       @Override
       public boolean resultFilter(RadComponent target) {
-        if (myContext.getComponents().get(0).getParent() == target) {
-          myContext.setType(OperationContext.MOVE);
-        }
-        else {
-          myContext.setType(OperationContext.ADD);
+        if (!myContext.isCreate()) {
+          if (myContext.getComponents().get(0).getParent() == target) {
+            myContext.setType(OperationContext.MOVE);
+          }
+          else {
+            myContext.setType(OperationContext.ADD);
+          }
         }
 
         if (myTarget == target) {
@@ -171,7 +206,9 @@ public class TreeDropListener extends DropTargetAdapter {
     }
 
     if (target == null) {
-      myContext.setType(null);
+      if (!myContext.isCreate()) {
+        myContext.setType(null);
+      }
     }
     else {
       myTargetOperation.setComponents(myContext.getComponents());
@@ -190,6 +227,9 @@ public class TreeDropListener extends DropTargetAdapter {
       else if (myContext.isAdd()) {
         setExecuteEnabled(myContext.isAddEnabled() && myTargetOperation.canExecute());
       }
+      else if (myContext.isCreate()) {
+        setExecuteEnabled(myTargetOperation.canExecute());
+      }
       else {
         setExecuteEnabled(false);
       }
@@ -205,7 +245,7 @@ public class TreeDropListener extends DropTargetAdapter {
     myExecuteEnabled = enabled;
     if (enabled) {
       myEvent.acceptDrag(myEvent.getDropAction());
-      myArea.setCursor(myDragCursor);
+      myArea.setCursor(myContext.isCreate() ? Cursors.getCopyCursor() : myDragCursor);
     }
     else {
       myEvent.rejectDrag();
@@ -215,18 +255,23 @@ public class TreeDropListener extends DropTargetAdapter {
 
   private void executeCommand() {
     if (myExecuteEnabled) {
-      myToolProvider.execute(Collections.singletonList(myTargetOperation),
-                             DesignerBundle.message("command.tool_operation", myContext.getType()));
+      myToolProvider.execute(Collections.singletonList(myTargetOperation), myContext.getMessage());
+      if (myContext.isCreate()) {
+        myArea.setSelection(myContext.getComponents());
+      }
     }
   }
 
-  private void clearState() {
-    myContext.setType(null);
+  private void clearState(boolean full) {
     myContext.setComponents(null);
     myEvent = null;
     myTargetOperation = null;
     myTarget = null;
     myExecuteEnabled = false;
-    myToolProvider.loadDefaultTool();
+    if (full || !myContext.isCreate()) {
+      myContext.setType(null);
+      myToolProvider.loadDefaultTool();
+    }
+    myArea.setCursor(null);
   }
 }

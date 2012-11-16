@@ -63,14 +63,14 @@ final class MessageTreeRenderer extends MultilineTreeCellRenderer {
       }
       else if (type == AntBuildMessageView.MessageType.MESSAGE) {
         if (node.getPriority() == AntBuildMessageView.PRIORITY_WARN) {
-          icon = AllIcons.Compiler.Warning;
+          icon = AllIcons.General.Warning;
         }
         else {
           icon = AllIcons.Ant.Message;
         }
       }
       else if (type == AntBuildMessageView.MessageType.ERROR) {
-        icon = AllIcons.Compiler.Error;
+        icon = AllIcons.General.Error;
       }
     }
     setIcon(icon);

@@ -43,7 +43,7 @@ public class GroovySmartCompletionTest extends GroovyCompletionTestBase {
 
   public void testSmartAfterNewInCall() throws Throwable { doSmartTest(); }
 
-  public void testInnerClassInStaticMethodCompletion() throws Throwable { doSmartTest(); }
+  public void testInnerClassInStaticMethodCompletion() throws Throwable { doVariantableTest(null, "", CompletionType.SMART, CompletionResult.notContain, 'Inner'); }
 
   public void testSmartCompletionInAssignmentExpression() throws Throwable { doSmartTest(); }
 
@@ -82,9 +82,7 @@ public class GroovySmartCompletionTest extends GroovyCompletionTestBase {
   public void testEnumMembersInAssignmentInsideEnum() {doSmartCompletion "IN_STOCK", "NOWHERE", "ORDERED", "next", "previous" }
 
   public void testPreferVarargElement() {
-    doSmartCompletion "Foo", "Foo"
-    myFixture.type('\n')
-    checkResult()
+    doCompletionTest(null, null, '\n', CompletionType.SMART)
   }
 
   public void testGlobalStaticMembers() {

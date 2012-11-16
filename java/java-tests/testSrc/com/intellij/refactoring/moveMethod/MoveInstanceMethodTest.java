@@ -56,6 +56,7 @@ public class MoveInstanceMethodTest extends LightRefactoringTestCase {
   public void testThisInAnonymous() throws Exception { doTest(true, 0); }
 
   public void testOverloadingMethods() throws Exception { doTest(true, 0); }
+  public void testOverloadingMethods1() throws Exception { doTest(true, 0); }
 
   public void testPolyadicExpr() throws Exception { doTest(true, 0); }
 

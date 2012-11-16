@@ -74,7 +74,11 @@ class MapBinding implements Binding {
 
     final Set keySet = map.keySet();
     final Object[] keys = ArrayUtil.toObjectArray(keySet);
-    Arrays.sort(keys, KEY_COMPARATOR);
+
+    if (myMapAnnotation == null || myMapAnnotation.sortBeforeSave()) {
+      Arrays.sort(keys, KEY_COMPARATOR);
+    }
+
     for (Object k : keys) {
       Object v = map.get(k);
 

@@ -36,7 +36,6 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
@@ -47,7 +46,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
@@ -199,7 +197,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   private static FindUsagesOptions getDefaultOptions(@NotNull FindUsagesHandler handler) {
     FindUsagesOptions options = handler.getFindUsagesOptions(DataManager.getInstance().getDataContext());
     // by default, scope in FindUsagesOptions is copied from the FindSettings, but we need a default one
-    options.searchScope = getMaximalScope(handler);
+    options.searchScope = FindUsagesManager.getMaximalScope(handler);
     return options;
   }
 
@@ -338,6 +336,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
             Container parent = processIcon.getParent();
             parent.remove(processIcon);
             parent.repaint();
+            pingEDT.ping(); // repaint title
             synchronized (usages) {
               if (visibleNodes.isEmpty()) {
                 if (usages.isEmpty()) {
@@ -424,7 +423,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
     @Override
     public void removeRangeFromModel(int start, int end) {
-      for (int i=end-1; i>=start; i--) {
+      for (int i=end; i>=start; i--) {
         removeRow(i);
       }
     }
@@ -506,7 +505,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     if (shortcut != null) {
       shortcutText = "(" + KeymapUtil.getShortcutText(shortcut) + ")";
     }
-    return new InplaceButton("Options..." + shortcutText, AllIcons.General.Settings, new ActionListener() {
+    return new InplaceButton("Settings..." + shortcutText, AllIcons.General.Settings, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         SwingUtilities.invokeLater(new Runnable() {
@@ -694,17 +693,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   }
 
   @NotNull
-  private static GlobalSearchScope getMaximalScope(@NotNull FindUsagesHandler handler) {
-    PsiElement element = handler.getPsiElement();
-    Project project = element.getProject();
-    PsiFile file = element.getContainingFile();
-    if (file != null && ProjectFileIndex.SERVICE.getInstance(project).isInContent(file.getViewProvider().getVirtualFile())) {
-      return GlobalSearchScope.projectScope(project);
-    }
-    return GlobalSearchScope.allScope(project);
-  }
-
-  @NotNull
   private static String suggestSecondInvocation(@NotNull FindUsagesOptions options, @NotNull FindUsagesHandler handler, @NotNull String text) {
     final String title = getSecondInvocationTitle(options, handler);
 
@@ -717,7 +705,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   @Nullable
   private static String getSecondInvocationTitle(@NotNull FindUsagesOptions options, @NotNull FindUsagesHandler handler) {
     if (getShowUsagesShortcut() != null) {
-       GlobalSearchScope maximalScope = getMaximalScope(handler);
+       GlobalSearchScope maximalScope = FindUsagesManager.getMaximalScope(handler);
        if (!notNullizeScope(options, handler.getProject()).equals(maximalScope)) {
          return "Press " + KeymapUtil.getShortcutText(getShowUsagesShortcut()) + " again to search in " + maximalScope.getDisplayName();
        }
@@ -731,7 +719,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                                 @NotNull RelativePoint popupPosition,
                                 int maxUsages) {
     FindUsagesOptions cloned = options.clone();
-    cloned.searchScope = getMaximalScope(handler);
+    cloned.searchScope = FindUsagesManager.getMaximalScope(handler);
     showElementUsages(handler, editor, popupPosition, maxUsages, cloned);
   }
 

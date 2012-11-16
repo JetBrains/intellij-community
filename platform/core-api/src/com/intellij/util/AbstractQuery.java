@@ -31,6 +31,7 @@ import java.util.Iterator;
 public abstract class AbstractQuery<Result> implements Query<Result> {
   private boolean myIsProcessing = false;
 
+  @Override
   @NotNull
   public Collection<Result> findAll() {
     assertNotProcessing();
@@ -39,11 +40,13 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
     return processor.getResults();
   }
 
+  @Override
   public Iterator<Result> iterator() {
     assertNotProcessing();
     return new UnmodifiableIterator<Result>(findAll().iterator());
   }
 
+  @Override
   @Nullable
   public Result findFirst() {
     assertNotProcessing();
@@ -56,6 +59,7 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
     assert !myIsProcessing : "Operation is not allowed while query is being processed";
   }
 
+  @Override
   public Result[] toArray(Result[] a) {
     assertNotProcessing();
 
@@ -63,6 +67,7 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
     return all.toArray(a);
   }
 
+  @Override
   public boolean forEach(@NotNull Processor<Result> consumer) {
     assertNotProcessing();
 

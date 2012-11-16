@@ -26,11 +26,9 @@ import com.intellij.psi.PsiFileSystemItem;
 public class DirectoryTemplateCompletionProcessor implements TemplateCompletionProcessor {
   @Override
   public boolean nextTabOnItemSelected(final ExpressionContext context, final LookupElement item) {
-    if (item.getObject() instanceof PsiFileSystemItem) {
-      final PsiFileSystemItem fileSystemItem = (PsiFileSystemItem)item.getObject();
-      if (fileSystemItem.isDirectory()) {
-        return false;
-      }
+    Object object = item.getObject();
+    if (object instanceof PsiFileSystemItem && ((PsiFileSystemItem)object).isDirectory()) {
+      return false;
     }
     return true;
   }

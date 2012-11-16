@@ -26,7 +26,6 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.GraphicsConfig;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.impl.ShadowBorderPainter;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -40,7 +39,6 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.Range;
@@ -541,11 +539,20 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
     return size;
   }
 
+  private void disposeCloseButton(CloseButton closeButton) {
+    if (closeButton != null && closeButton.getParent() != null) {
+      Container parent = closeButton.getParent();
+      parent.remove(closeButton);
+      ((JComponent)parent).revalidate();
+      parent.repaint();
+    }
+  }
+
   private void createComponent() {
     myComp = new MyComponent(myContent, this, myShowPointer
                                ? myPosition.createBorder(this)
                                : getPointlessBorder());
-
+    myCloseRec = new CloseButton();
 
     myComp.clear();
     myComp.myAlpha = 0f;
@@ -1228,7 +1235,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
 
       add(myContent);
 
-      myCloseRec = new CloseButton();
+
     }
 
     public Rectangle getContentBounds() {
@@ -1323,16 +1330,11 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
     public void removeNotify() {
       super.removeNotify();
 
-
+      final CloseButton closeButton = myCloseRec;
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
-          if (myCloseRec != null && myCloseRec.getParent() != null) {
-            Container parent = myCloseRec.getParent();
-            parent.remove(myCloseRec);
-            ((JComponent)parent).revalidate();
-            parent.repaint();
-          }
+          disposeCloseButton(closeButton);
         }
       });
     }
@@ -1473,67 +1475,6 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
     public Shape getShape() {
       return myPath;
     }
-  }
-
-  public static void main(String[] args) {
-    IconLoader.activate();
-
-    final JFrame frame = new JFrame();
-    frame.getContentPane().setLayout(new BorderLayout());
-    final JPanel content = new JPanel(new BorderLayout());
-    frame.getContentPane().add(content, BorderLayout.CENTER);
-    frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-
-    final JTree tree = new Tree();
-    content.add(tree);
-
-
-    final Ref<BalloonImpl> balloon = new Ref<BalloonImpl>();
-
-    tree.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mousePressed(final MouseEvent e) {
-        if (balloon.get() != null && balloon.get().isVisible()) {
-          balloon.get().dispose();
-        }
-        else {
-          //JLabel pane1 = new JLabel("Hello, world!");
-          //JLabel pane2 = new JLabel("Hello, again");
-          //JPanel pane = new JPanel(new BorderLayout());
-          //pane.add(pane1, BorderLayout.CENTER);
-          //pane.add(pane2, BorderLayout.SOUTH);
-
-          //pane.setBorder(new LineBorder(Color.blue));
-
-          balloon.set(new BalloonImpl(new JLabel("FUCK"), Color.black, MessageType.ERROR.getPopupBackground(), true, true, true, true, true, 0, true, null, false, 500, 25, 0, 0, false, "This is the title",
-                                      new Insets(2, 2, 2, 2), true, false, false, Layer.normal));
-          balloon.get().setShowPointer(true);
-
-          if (e.isShiftDown()) {
-            balloon.get().show(new RelativePoint(e), ABOVE);
-          }
-          else if (e.isAltDown()) {
-            balloon.get().show(new RelativePoint(e), BELOW);
-          }
-          else if (e.isMetaDown()) {
-            balloon.get().show(new RelativePoint(e), AT_LEFT);
-          }
-          else {
-            balloon.get().show(new RelativePoint(e), AT_RIGHT);
-          }
-        }
-      }
-    });
-
-    tree.addMouseMotionListener(new MouseMotionAdapter() {
-      @Override
-      public void mouseMoved(MouseEvent e) {
-        System.out.println(e.getPoint());
-      }
-    });
-
-    frame.setBounds(300, 300, 300, 300);
-    frame.show();
   }
 
   @Override

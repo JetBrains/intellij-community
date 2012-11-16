@@ -31,25 +31,34 @@ public class CreateChangelistAction extends BaseTaskAction {
 
   @Override
   public void update(AnActionEvent event) {
-    TaskManager manager = getTaskManager(event);
-    Presentation presentation = event.getPresentation();
-
-    if (manager == null || !manager.isVcsEnabled() || !manager.getOpenChangelists(manager.getActiveTask()).isEmpty()) {
-      presentation.setText(getTemplatePresentation().getText());
-      presentation.setEnabled(false);
-    } else {
-      presentation.setText("Create changelist for '" + TaskUtil.getTrimmedSummary(manager.getActiveTask()) + "'");
-      presentation.setEnabled(true);
-    }
     super.update(event);
+    if (event.getPresentation().isEnabled()) {
+      TaskManager manager = getTaskManager(event);
+      Presentation presentation = event.getPresentation();
+
+      if (manager == null || !manager.isVcsEnabled()) {
+        presentation.setText(getTemplatePresentation().getText());
+        presentation.setEnabled(false);
+      }
+      else {
+        presentation.setEnabled(true);
+        if (manager.getActiveTask().getChangeLists().size() == 0) {
+          presentation.setText("Create changelist for '" + TaskUtil.getTrimmedSummary(manager.getActiveTask()) + "'");
+        }
+        else {
+          presentation.setText("Add changelist for '" + TaskUtil.getTrimmedSummary(manager.getActiveTask()) + "'");
+        }
+      }
+    }
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    LocalTask activeTask = getActiveTask(e);
     TaskManagerImpl manager = (TaskManagerImpl)getTaskManager(e);
     assert manager != null;
-    String name = Messages.showInputDialog(getProject(e), "Changelist name:", "Create Changelist", null, manager.getChangelistName(activeTask), null);
+    LocalTask activeTask = manager.getActiveTask();
+    String name =
+      Messages.showInputDialog(getProject(e), "Changelist name:", "Create Changelist", null, manager.getChangelistName(activeTask), null);
     if (name != null) {
       manager.createChangeList(activeTask, name);
     }

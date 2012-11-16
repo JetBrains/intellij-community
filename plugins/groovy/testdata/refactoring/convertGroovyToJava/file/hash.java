@@ -1,4 +1,4 @@
-public class BigInteger extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
+public class BigInteger {
 public BigInteger(int i, java.lang.Byte[] arr) {
 }
 public java.lang.String toString(int radix) {
@@ -6,9 +6,9 @@ return "";
 }
 
 }
-public class NoSuchAlgorithmException extends java.lang.Exception implements groovy.lang.GroovyObject {
+public class NoSuchAlgorithmException extends java.lang.Exception {
 }
-public class MessageDigest extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
+public class MessageDigest {
 public static MessageDigest getInstance(java.lang.String algorithm) throws NoSuchAlgorithmException {
 return new MessageDigest();
 }
@@ -30,7 +30,7 @@ public java.lang.Object run() {
 int KB = 1024;
 int MB = 1024 * KB;
 java.io.File f = new java.io.File(this.getBinding().getProperty("args")[0]);
-if (!org.codehaus.groovy.runtime.DefaultGroovyMethods.asBoolean(f.exists()) || !org.codehaus.groovy.runtime.DefaultGroovyMethods.asBoolean(f.isFile())){
+if (!f.exists() || !f.isFile()){
 println("Invalid file " + java.lang.String.valueOf(f) + " provided");
 println("Usage: groovy sha1.groovy <file_to_hash>");
 }

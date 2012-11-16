@@ -15,8 +15,6 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.lexer.JavaLexer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
@@ -53,9 +51,7 @@ class ClsIdentifierImpl extends ClsElementImpl implements PsiIdentifier, PsiJava
   }
 
   private boolean isCorrectName(String name) {
-    return name != null &&
-           StringUtil.isJavaIdentifier(name) &&
-           !JavaLexer.isKeyword(name, ((PsiJavaFile)getContainingFile()).getLanguageLevel());
+    return name != null && ClsParsingUtil.isJavaIdentifier(name, ((PsiJavaFile)getContainingFile()).getLanguageLevel());
   }
 
   @Override

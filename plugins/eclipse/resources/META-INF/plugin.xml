@@ -6,8 +6,7 @@
   <vendor url="http://www.jetbrains.com" logo="/general/ijLogo.png">JetBrains s.r.o.</vendor>
   <extensions defaultExtensionNs="com.intellij">
     <classpathStorageProvider implementation="org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider"/>
-    <compileServer.plugin classpath="eclipse-jps-plugin.jar"/>
-    <compileServer.plugin classpath="common-eclipse-util.jar"/>
+    <compileServer.plugin classpath="eclipse-jps-plugin.jar;common-eclipse-util.jar"/>
     <projectImportProvider implementation="org.jetbrains.idea.eclipse.importWizard.EclipseProjectImportProvider"/>
     <projectOpenProcessor id="EclipseProjectOpenProcessor" implementation="org.jetbrains.idea.eclipse.importWizard.EclipseProjectOpenProcessor"/>
     <projectImportBuilder implementation="org.jetbrains.idea.eclipse.importWizard.EclipseImportBuilder"/>
@@ -22,7 +21,7 @@
   </module-components>
   <actions>
     <action id="ExportToEclipse" class="org.jetbrains.idea.eclipse.export.ExportEclipseProjectsAction" text="Export to Eclipse...">
-      <add-to-group group-id="ExportImportGroup" anchor="after" relative-to-action="ImportSettings"/>
+      <add-to-group group-id="ExportImportGroup" anchor="last"/>
     </action>
   </actions>
 </idea-plugin>

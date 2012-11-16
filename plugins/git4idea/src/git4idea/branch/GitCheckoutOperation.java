@@ -229,26 +229,12 @@ class GitCheckoutOperation extends GitBranchOperation {
     return false;
   }
 
-  private static void refresh(GitRepository... repositories) {
+  private void refresh(GitRepository... repositories) {
     for (GitRepository repository : repositories) {
-      // If repository is small, everything can happen so fast, that FileWatcher wouldn't report the change before refresh() handles it.
-      // Performing a fair total refresh would be an overhead, so just waiting a bit to let file watcher report the change.
-      // This is a hack, but other solutions would be either performance or programming overhead.
-      // See http://youtrack.jetbrains.com/issue/IDEA-80573
-      sleepABit();
       refreshRoot(repository);
       // repository state will be auto-updated with this VFS refresh => in general there is no need to call GitRepository#update()
       // but to avoid problems of the asynchronous refresh, let's force update the repository info.
       repository.update();
-    }
-  }
-
-  private static void sleepABit() {
-    try {
-      Thread.sleep(50);
-    }
-    catch (InterruptedException e) {
-      throw new RuntimeException(e);
     }
   }
 }

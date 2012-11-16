@@ -469,7 +469,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
     @NonNls public static final String SHOW_PACKAGES_FROM_CYCLES_ONLY = "Hide packages without cyclic dependencies";
 
     HideOutOfCyclePackagesAction() {
-      super(SHOW_PACKAGES_FROM_CYCLES_ONLY, SHOW_PACKAGES_FROM_CYCLES_ONLY, AllIcons.Ant.Filter);
+      super(SHOW_PACKAGES_FROM_CYCLES_ONLY, SHOW_PACKAGES_FROM_CYCLES_ONLY, AllIcons.General.Filter);
     }
 
     @Override

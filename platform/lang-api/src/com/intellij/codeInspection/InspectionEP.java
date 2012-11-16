@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,10 +33,10 @@ import java.util.ResourceBundle;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 9/27/11
+ * @since 27.09.2011
  * @see LocalInspectionEP
  */
-public class InspectionEP extends LanguageExtensionPoint {
+public class InspectionEP extends LanguageExtensionPoint implements InspectionProfileEntry.DefaultNameProvider {
 
   /** @see GlobalInspectionTool */
   public final static ExtensionPointName<InspectionEP> GLOBAL_INSPECTION = ExtensionPointName.create("com.intellij.globalInspection");
@@ -138,10 +138,27 @@ public class InspectionEP extends LanguageExtensionPoint {
 
   public InspectionProfileEntry instantiateTool() {
     try {
-      return instantiate(implementationClass, ApplicationManager.getApplication().getPicoContainer());
+      final InspectionProfileEntry entry = instantiate(implementationClass, ApplicationManager.getApplication().getPicoContainer());
+      entry.myNameProvider = this;
+      return entry;
     }
     catch (ClassNotFoundException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @Override
+  public String getDefaultShortName() {
+    return getShortName();
+  }
+
+  @Override
+  public String getDefaultDisplayName() {
+    return getDisplayName();
+  }
+
+  @Override
+  public String getDefaultGroupDisplayName() {
+    return getGroupDisplayName();
   }
 }

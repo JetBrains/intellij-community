@@ -15,7 +15,11 @@
  */
 package org.jetbrains.idea.eclipse.importWizard;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -85,6 +89,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
   private Parameters parameters;
 
 
+  @NotNull
   public String getName() {
     return EclipseBundle.message("eclipse.name");
   }
@@ -131,6 +136,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
       }
     });
 
+    setFileToImport(path);
     return getParameters().workspace != null;
   }
 
@@ -165,6 +171,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
   public boolean validate(final Project currentProject, final Project dstProject) {
     final Ref<Exception> refEx = new Ref<Exception>();
     final HashSet<String> variables = new HashSet<String>();
+    final Set<String> naturesNames = new HashSet<String>();
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         try {
@@ -174,6 +181,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
               final Element classpathElement = JDOMUtil.loadDocument(classpathfile).getRootElement();
               EclipseClasspathReader.collectVariables(variables, classpathElement, path);
             }
+            EclipseProjectFinder.collectUnknownNatures(path, naturesNames);
           }
         }
         catch (IOException e) {
@@ -193,6 +201,17 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
     if (!ProjectMacrosUtil.checkNonIgnoredMacros(dstProject, variables)) {
       return false;
     }
+
+    final Runnable runnable = new Runnable() {
+      public void run() {
+        if (!naturesNames.isEmpty()) {
+          final String title = "Unknown Natures Detected";
+          Notifications.Bus.notify(new Notification(title, title, "Imported projects contain unknown natures:<br>" + StringUtil.join(naturesNames, "<br>")+ "<br>" +
+                                                                  "Some settings may be lost after import.", NotificationType.WARNING));
+        }
+      }
+    };
+    ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL);
 
     return true;
   }

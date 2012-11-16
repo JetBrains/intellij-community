@@ -77,7 +77,7 @@ public class DfaConstValue extends DfaValue {
     private static Boolean computeJavaLangBooleanFieldReference(final PsiVariable variable) {
       if (!(variable instanceof PsiField)) return null;
       PsiClass psiClass = ((PsiField)variable).getContainingClass();
-      if (psiClass == null || !"java.lang.Boolean".equals(psiClass.getQualifiedName())) return null;
+      if (psiClass == null || !CommonClassNames.JAVA_LANG_BOOLEAN.equals(psiClass.getQualifiedName())) return null;
       @NonNls String name = variable.getName();
       return "TRUE".equals(name) ? Boolean.TRUE : "FALSE".equals(name) ? Boolean.FALSE : null;
     }
@@ -87,15 +87,8 @@ public class DfaConstValue extends DfaValue {
       if (value == Boolean.TRUE) return dfaTrue;
       if (value == Boolean.FALSE) return dfaFalse;
 
-      if (TypeConversionUtil.isNumericType(type)) {
-        if (PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type)) {
-          //double dbVal = type == PsiType.DOUBLE ? ((Double)value).doubleValue() : ((Float)value).doubleValue();
-          //// 5.0f == 5
-          //if (Math.floor(dbVal) == dbVal) value = TypeConversionUtil.computeCastTo(value, PsiType.LONG);
-        }
-        else {
-          value = TypeConversionUtil.computeCastTo(value, PsiType.LONG);
-        }
+      if (TypeConversionUtil.isNumericType(type) && !TypeConversionUtil.isFloatOrDoubleType(type)) {
+        value = TypeConversionUtil.computeCastTo(value, PsiType.LONG);
       }
       DfaConstValue instance = myValues.get(value);
       if (instance == null) {

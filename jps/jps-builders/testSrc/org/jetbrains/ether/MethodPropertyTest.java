@@ -1,11 +1,8 @@
 package org.jetbrains.ether;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
+ * @author: db
  * Date: 05.10.11
- * Time: 20:43
- * To change this template use File | Settings | File Templates.
  */
 public class MethodPropertyTest extends IncrementalTestCase {
   public MethodPropertyTest() throws Exception {

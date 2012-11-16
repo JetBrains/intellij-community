@@ -16,6 +16,7 @@
 
 package com.intellij.find.impl;
 
+import com.intellij.BundleBase;
 import com.intellij.find.*;
 import com.intellij.find.ngrams.TrigramIndex;
 import com.intellij.navigation.ItemPresentation;
@@ -163,19 +164,6 @@ public class FindInProjectUtil {
     }
   }
 
-  @NotNull
-  public static List<UsageInfo> findUsages(@NotNull final FindModel findModel, final PsiDirectory psiDirectory, @NotNull final Project project) {
-    return findUsages(findModel, psiDirectory, project, true);
-  }
-
-  @NotNull
-  public static List<UsageInfo> findUsages(@NotNull final FindModel findModel, final PsiDirectory psiDirectory, @NotNull final Project project, boolean showWarnings) {
-    final CommonProcessors.CollectProcessor<UsageInfo> collector = new CommonProcessors.CollectProcessor<UsageInfo>();
-    findUsages(findModel, psiDirectory, project, collector, showWarnings);
-
-    return new ArrayList<UsageInfo>(collector.getResults());
-  }
-
   @Nullable
   private static Pattern createFileMaskRegExp(@NotNull FindModel findModel) {
     final String filter = findModel.getFileFilter();
@@ -207,16 +195,8 @@ public class FindInProjectUtil {
   public static void findUsages(@NotNull final FindModel findModel,
                                 final PsiDirectory psiDirectory,
                                 @NotNull final Project project,
+                                boolean showWarnings,
                                 @NotNull final Processor<UsageInfo> consumer) {
-    findUsages(findModel, psiDirectory, project, consumer, true);
-  }
-
-
-  public static void findUsages(@NotNull final FindModel findModel,
-                                final PsiDirectory psiDirectory,
-                                @NotNull final Project project,
-                                @NotNull final Processor<UsageInfo> consumer,
-                                boolean showWarnings) {
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
 
     final Collection<PsiFile> psiFiles = getFilesToSearchIn(findModel, project, psiDirectory);
@@ -317,6 +297,17 @@ public class FindInProjectUtil {
   private static int processUsagesInFile(@NotNull final PsiFile psiFile,
                                          @NotNull final FindModel findModel,
                                          @NotNull final Processor<UsageInfo> consumer) {
+    if (findModel.getStringToFind().isEmpty()) {
+      if (!ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+              @Override
+              public Boolean compute() {
+                return consumer.process(new UsageInfo(psiFile,0,0,true));
+              }
+            })) {
+        throw new ProcessCanceledException();
+      }
+      return 1;
+    }
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return 0;
     if (virtualFile.getFileType().isBinary()) return 0; // do not decompile .class files
@@ -393,7 +384,7 @@ public class FindInProjectUtil {
     if (psiDirectory == null || findModel.isWithSubdirectories() && fileIndex.isInContent(psiDirectory.getVirtualFile())) {
       final Pattern fileMaskRegExp = createFileMaskRegExp(findModel);
       // optimization
-      Pair<Boolean, Collection<PsiFile>> fastWords = getFilesForFastWordSearch(findModel, project, psiDirectory, fileMaskRegExp, module);
+      Pair<Boolean, Collection<PsiFile>> fastWords = getFilesForFastWordSearch(findModel, project, psiDirectory, fileMaskRegExp, module, fileIndex);
       final Collection<PsiFile> filesForFastWordSearch = fastWords.getSecond();
 
       if (fastWords.getFirst() && canOptimizeForFastWordSearch(findModel)) return filesForFastWordSearch;
@@ -477,9 +468,11 @@ public class FindInProjectUtil {
   }
 
   @NotNull
-  private static Pair<Boolean, Collection<PsiFile>> getFilesForFastWordSearch(@NotNull final FindModel findModel, @NotNull final Project project,
-                                                                              @Nullable final PsiDirectory psiDirectory, final Pattern fileMaskRegExp,
-                                                                              @Nullable final Module module) {
+  private static Pair<Boolean, Collection<PsiFile>> getFilesForFastWordSearch(@NotNull final FindModel findModel,
+                                                                              @NotNull final Project project,
+                                                                              @Nullable final PsiDirectory psiDirectory,
+                                                                              final Pattern fileMaskRegExp,
+                                                                              @Nullable final Module module, FileIndex fileIndex) {
     if (DumbService.getInstance(project).isDumb()) {
       return new Pair<Boolean, Collection<PsiFile>>(false, Collections.<PsiFile>emptyList());
     }
@@ -499,11 +492,12 @@ public class FindInProjectUtil {
     }
 
     Set<Integer> keys = new THashSet<Integer>(30);
-    Set<PsiFile> resultFiles = new THashSet<PsiFile>();
+    final Set<PsiFile> resultFiles = new THashSet<PsiFile>();
     boolean fast = false;
 
+    String stringToFind = findModel.getStringToFind();
     if (TrigramIndex.ENABLED) {
-      TIntHashSet trigrams = TrigramBuilder.buildTrigram(findModel.getStringToFind());
+      TIntHashSet trigrams = TrigramBuilder.buildTrigram(stringToFind);
       TIntIterator it = trigrams.iterator();
       while (it.hasNext()) {
         keys.add(it.next());
@@ -527,9 +521,9 @@ public class FindInProjectUtil {
     // $ is used to separate words when indexing plain-text files but not when indexing
     // Java identifiers, so we can't consistently break a string containing $ characters into words
 
-    fast |= findModel.isWholeWordsOnly() && findModel.getStringToFind().indexOf('$') < 0;
+    fast |= findModel.isWholeWordsOnly() && stringToFind.indexOf('$') < 0;
 
-    List<String> words = StringUtil.getWordsInStringLongestFirst(findModel.getStringToFind());
+    List<String> words = StringUtil.getWordsInStringLongestFirst(stringToFind);
 
     for (int i = 0; i < words.size(); i++) {
       String word = words.get(i);
@@ -553,12 +547,28 @@ public class FindInProjectUtil {
       if (resultFiles.isEmpty()) break;
     }
 
-    // in case our word splitting is incorrect
-    PsiFile[] allWordsFiles =
-      cacheManager.getFilesWithWord(findModel.getStringToFind(), UsageSearchContext.ANY, scope, findModel.isCaseSensitive());
-    ContainerUtil.addAll(resultFiles, allWordsFiles);
+    if (stringToFind.isEmpty()) {
+      fileIndex.iterateContent(new ContentIterator() {
+        @Override
+        public boolean processFile(VirtualFile file) {
+          if (!file.isDirectory() && fileMaskRegExp.matcher(file.getName()).matches()) {
+            PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+            if (psiFile != null) {
+              resultFiles.add(psiFile);
+            }
+          }
+          return true;
+        }
+      });
+    }
+    else {
+      // in case our word splitting is incorrect
+      PsiFile[] allWordsFiles =
+        cacheManager.getFilesWithWord(stringToFind, UsageSearchContext.ANY, scope, findModel.isCaseSensitive());
+      ContainerUtil.addAll(resultFiles, allWordsFiles);
 
-    filterMaskedFiles(resultFiles, fileMaskRegExp);
+      filterMaskedFiles(resultFiles, fileMaskRegExp);
+    }
 
     return new Pair<Boolean, Collection<PsiFile>>(fast, resultFiles);
   }
@@ -649,9 +659,16 @@ public class FindInProjectUtil {
     final String scope = getTitleForScope(findModelCopy);
     final String stringToFind = findModelCopy.getStringToFind();
     presentation.setScopeText(scope);
-    presentation.setTabText(FindBundle.message("find.usage.view.tab.text", stringToFind));
-    presentation.setToolwindowTitle(FindBundle.message("find.usage.view.toolwindow.title", stringToFind, scope));
-    presentation.setUsagesString(FindBundle.message("find.usage.view.usages.text", stringToFind));
+    if (stringToFind.isEmpty()) {
+      presentation.setTabText("Files");
+      presentation.setToolwindowTitle(BundleBase.format("Files in ''{0}''", scope));
+      presentation.setUsagesString("files");
+    }
+    else {
+      presentation.setTabText(FindBundle.message("find.usage.view.tab.text", stringToFind));
+      presentation.setToolwindowTitle(FindBundle.message("find.usage.view.toolwindow.title", stringToFind, scope));
+      presentation.setUsagesString(FindBundle.message("find.usage.view.usages.text", stringToFind));
+    }
     presentation.setOpenInNewTab(toOpenInNewTab);
     presentation.setCodeUsages(false);
 
@@ -697,7 +714,7 @@ public class FindInProjectUtil {
       }
     };
 
-    public StringUsageTarget(String _stringToFind) {
+    public StringUsageTarget(@NotNull String _stringToFind) {
       myStringToFind = _stringToFind;
     }
 

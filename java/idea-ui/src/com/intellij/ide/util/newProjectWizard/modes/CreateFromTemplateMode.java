@@ -21,9 +21,20 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.util.Condition;
+import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.ProjectTemplate;
+import com.intellij.platform.ProjectTemplatesFactory;
+import com.intellij.platform.templates.LocalArchivedTemplate;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
@@ -31,7 +42,43 @@ import org.jetbrains.annotations.Nullable;
  */
 public class CreateFromTemplateMode extends WizardMode {
 
+  private static final Condition<ProjectTemplate> TEMPLATE_CONDITION = new Condition<ProjectTemplate>() {
+    @Override
+    public boolean value(ProjectTemplate template) {
+      return !(template instanceof DirectoryProjectGenerator);
+    }
+  };
   private SelectTemplateStep mySelectTemplateStep;
+
+  public static MultiMap<String, ProjectTemplate> getTemplatesMap(WizardContext context) {
+    ProjectTemplatesFactory[] factories = ProjectTemplatesFactory.EP_NAME.getExtensions();
+    final MultiMap<String, ProjectTemplate> groups = new MultiMap<String, ProjectTemplate>();
+    for (ProjectTemplatesFactory factory : factories) {
+      for (String group : factory.getGroups()) {
+        ProjectTemplate[] templates = factory.createTemplates(group, context);
+        List<ProjectTemplate> values = context.isCreatingNewProject() ? Arrays.asList(templates) : ContainerUtil.filter(templates,
+                                                                                                                        TEMPLATE_CONDITION);
+        if (!values.isEmpty()) {
+          groups.putValues(group, values);
+        }
+      }
+    }
+    final MultiMap<String, ProjectTemplate> sorted = new MultiMap<String, ProjectTemplate>();
+    // put single leafs under "Other"
+    for (Map.Entry<String, Collection<ProjectTemplate>> entry : groups.entrySet()) {
+      Collection<ProjectTemplate> templates = entry.getValue();
+      if (templates.size() == 1 &&
+          !ProjectTemplatesFactory.CUSTOM_GROUP.equals(entry.getKey())) {
+
+        if (!(templates.iterator().next() instanceof LocalArchivedTemplate)) {
+          sorted.putValues(ProjectTemplatesFactory.OTHER_GROUP, templates);
+          continue;
+        }
+      }
+      sorted.putValues(entry.getKey(), templates);
+    }
+    return sorted;
+  }
 
   @NotNull
   @Override
@@ -53,10 +100,14 @@ public class CreateFromTemplateMode extends WizardMode {
   @Nullable
   @Override
   protected StepSequence createSteps(WizardContext context, @NotNull ModulesProvider modulesProvider) {
+    MultiMap<String, ProjectTemplate> map = getTemplatesMap(context);
     StepSequence sequence = new StepSequence();
-    mySelectTemplateStep = new SelectTemplateStep(context, sequence);
+    for (ProjectTemplate template : map.values()) {
+      sequence.addStepsForBuilder(template.createModuleBuilder(), context, modulesProvider);
+    }
+    mySelectTemplateStep = new SelectTemplateStep(context, sequence, map);
     sequence.addCommonStep(mySelectTemplateStep);
-    return CreateFromScratchMode.addSteps(context, modulesProvider, this, sequence, context.getAllBuilders());
+    return sequence;
   }
 
   @Nullable

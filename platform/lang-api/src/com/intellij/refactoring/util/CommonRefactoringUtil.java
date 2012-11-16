@@ -22,7 +22,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.*;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDirectoryContainer;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.containers.ContainerUtil;
@@ -201,10 +204,11 @@ public class CommonRefactoringUtil {
     VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
-        if (!vFile.isWritable() && !fileTypeManager.isFileIgnored(file)) {
-          list.add(vFile);
+        final boolean ignored = fileTypeManager.isFileIgnored(file);
+        if (! file.isWritable() && ! ignored) {
+          list.add(file);
         }
-        return true;
+        return ! ignored;
       }
     });
   }

@@ -451,7 +451,7 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
       return RunConfigurationExtension.wrapRefactoringElementListener(element, this, listener);
     }
     else if (data.TEST_OBJECT.equals(TestType.CLASS.getType())) {
-      if (!(element instanceof PsiClass)) return null;
+      if (!(element instanceof PsiClass) && !(element instanceof PsiPackage)) return null;
       final RefactoringElementListener listener = RefactoringListeners.getClassOrPackageListener(element, myClass);
       return RunConfigurationExtension.wrapRefactoringElementListener(element, this, listener);
     }

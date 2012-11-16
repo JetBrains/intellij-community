@@ -131,6 +131,8 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
 
     assert compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.MAVEN_DEFAULT_ANNOTATION_PROFILE) == null
     assert compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.PROFILE_PREFIX + "project").getGeneratedSourcesDirectoryName(false).replace('\\', '/').endsWith("out/generated")
+
+    assert compilerConfiguration.excludedEntriesConfiguration.excludeEntryDescriptions.find {it.url.endsWith("out/generated")} != null
   }
 
   public void testImportAnnotationProcessorOptions() {
@@ -158,7 +160,117 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
     def compilerConfiguration = ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject))
 
     assert compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.MAVEN_DEFAULT_ANNOTATION_PROFILE) == null
-    assert compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.PROFILE_PREFIX + "project").getProcessorOptions() == ['opt1': '111', 'opt2': '222', 'opt3': '333']
+    def processorOptions = compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.PROFILE_PREFIX + "project").getProcessorOptions()
+    assert new HashMap(processorOptions) == ['opt1': '111', 'opt2': '222', 'opt3': '333']
   }
+
+  public void testMavenProcessorPlugin() {
+    importProject """
+<groupId>test</groupId>
+<artifactId>project</artifactId>
+<version>1</version>
+
+<build>
+  <plugins>
+            <plugin>
+                <groupId>org.bsc.maven</groupId>
+                <artifactId>maven-processor-plugin</artifactId>
+
+                <executions>
+                    <execution>
+                        <id>process</id>
+                        <goals>
+                            <goal>process</goal>
+                        </goals>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <outputDirectory>target/metamodel</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>process-test</id>
+                        <goals>
+                            <goal>process-test</goal>
+                        </goals>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <outputDirectory>target/metamodelTest</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+  </plugins>
+</build>
+""";
+
+    def compilerConfiguration = ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject))
+
+    assert compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.MAVEN_DEFAULT_ANNOTATION_PROFILE) == null
+    def profile = compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.PROFILE_PREFIX + "project")
+    assert profile.getGeneratedSourcesDirectoryName(false).replace('\\', '/').endsWith("target/metamodel")
+    assert profile.getGeneratedSourcesDirectoryName(true).replace('\\', '/').endsWith("target/metamodelTest")
+
+    assert compilerConfiguration.excludedEntriesConfiguration.excludeEntryDescriptions.find {it.url.endsWith("target/metamodel")} != null
+    assert compilerConfiguration.excludedEntriesConfiguration.excludeEntryDescriptions.find {it.url.endsWith("target/metamodelTest")} != null
+  }
+
+  public void testMavenProcessorPluginDefault() {
+    importProject """
+<groupId>test</groupId>
+<artifactId>project</artifactId>
+<version>1</version>
+
+<build>
+  <plugins>
+    <plugin>
+      <artifactId>maven-compiler-plugin</artifactId>
+      <configuration>
+        <compilerArgument>-Aopt1=111 -Xmx512Mb -Aopt2=222</compilerArgument>
+        <compilerArguments>
+          <proc>none</proc>
+          <compilerArgument>-proc:none</compilerArgument>
+        </compilerArguments>
+      </configuration>
+    </plugin>
+
+            <plugin>
+                <groupId>org.bsc.maven</groupId>
+                <artifactId>maven-processor-plugin</artifactId>
+
+                <executions>
+                    <execution>
+                        <id>process</id>
+                        <goals>
+                            <goal>process</goal>
+                        </goals>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <outputDirectory>target/metamodel</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>process-test</id>
+                        <goals>
+                            <goal>process-test</goal>
+                        </goals>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <outputDirectory>target/metamodelTest</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+  </plugins>
+</build>
+""";
+
+    def compilerConfiguration = ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject))
+
+    assert compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.MAVEN_DEFAULT_ANNOTATION_PROFILE) == null
+    def profile = compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.PROFILE_PREFIX + "project")
+    assert profile.getGeneratedSourcesDirectoryName(false).replace('\\', '/').endsWith("target/metamodel")
+    assert profile.getGeneratedSourcesDirectoryName(true).replace('\\', '/').endsWith("target/metamodelTest")
+  }
+
 
 }

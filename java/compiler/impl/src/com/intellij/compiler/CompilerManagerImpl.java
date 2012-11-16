@@ -162,10 +162,17 @@ public class CompilerManagerImpl extends CompilerManager {
   public final void addCompiler(@NotNull Compiler compiler) {
     if (compiler instanceof TranslatingCompiler) {
       myTranslators.add((TranslatingCompiler)compiler);
-
     }
     else {
       myCompilers.add(compiler);
+      // supporting file instrumenting compilers and validators for external build
+      // Since these compilers are IDE-specific and use PSI, it is ok to run them before and after the build in the IDE
+      if (compiler instanceof SourceInstrumentingCompiler) {
+        addBeforeTask(new FileProcessingCompilerAdapterTask((FileProcessingCompiler)compiler));
+      }
+      else if (compiler instanceof Validator) {
+        addAfterTask(new FileProcessingCompilerAdapterTask((FileProcessingCompiler)compiler));
+      }
     }
   }
 
@@ -174,7 +181,16 @@ public class CompilerManagerImpl extends CompilerManager {
       myTranslators.remove(compiler);
     }
     else {
-      myCompilers.remove(compiler);
+      if (myCompilers.remove(compiler)) {
+        for (List<CompileTask> tasks : Arrays.asList(myBeforeTasks, myAfterTasks)) {
+          for (Iterator<CompileTask> iterator = tasks.iterator(); iterator.hasNext(); ) {
+            CompileTask task = iterator.next();
+            if (task instanceof FileProcessingCompilerAdapterTask && ((FileProcessingCompilerAdapterTask)task).getCompiler() == compiler) {
+              iterator.remove();
+            }
+          }
+        }
+      }
     }
     myCompilerToInputTypes.remove(compiler);
     myCompilerToOutputTypes.remove(compiler);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
@@ -71,15 +72,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -818,11 +816,16 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
       if (method instanceof GrGdkMethod && place instanceof GrReferenceExpression) {
         final PsiMethod staticMethod = ((GrGdkMethod)method).getStaticMethod();
-        final PsiType qualifier = inferQualifierTypeByPlace((GrReferenceExpression)place);
-        if (qualifier != null && !MixinMemberContributor.isCategoryMethod(staticMethod, qualifier, methodResolveResult.getSubstitutor())) {
-          registerError(((GrReferenceExpression)place).getReferenceNameElement(),
-                        GroovyInspectionBundle.message("category.method.0.cannot.be.applied.to.1", method.getName(),
-                                                       qualifier.getCanonicalText()));
+        final PsiType qualifierType = inferQualifierTypeByPlace((GrReferenceExpression)place);
+
+        final GrExpression qualifier = PsiImplUtil.getRuntimeQualifier((GrReferenceExpression)place);
+
+        //check methods processed by @Category(ClassWhichProcessMethod) annotation
+        if (qualifierType != null &&
+            !GdkMethodUtil.isCategoryMethod(staticMethod, qualifierType, qualifier, methodResolveResult.getSubstitutor()) &&
+            !checkCategoryQualifier((GrReferenceExpression)place, qualifier, staticMethod, methodResolveResult.getSubstitutor())) {
+          registerError(((GrReferenceExpression)place).getReferenceNameElement(), GroovyInspectionBundle
+            .message("category.method.0.cannot.be.applied.to.1", method.getName(), qualifierType.getCanonicalText()));
           return false;
         }
       }
@@ -861,6 +864,38 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         default:
           return true;
       }
+    }
+
+    private static boolean checkCategoryQualifier(GrReferenceExpression place,
+                                                  GrExpression qualifier,
+                                                  PsiMethod gdkMethod,
+                                                  PsiSubstitutor substitutor) {
+      PsiClass categoryAnnotationOwner = inferCategoryAnnotationOwner(place, qualifier);
+
+      if (categoryAnnotationOwner != null) {
+        PsiClassType categoryType = GdkMethodUtil.getCategoryType(categoryAnnotationOwner);
+        if (categoryType != null) {
+          return GdkMethodUtil.isCategoryMethod(gdkMethod, categoryType, qualifier, substitutor);
+        }
+      }
+
+      return false;
+    }
+
+    private static PsiClass inferCategoryAnnotationOwner(GrReferenceExpression place, GrExpression qualifier) {
+      if (qualifier == null) {
+        GrMethod container = PsiTreeUtil.getParentOfType(place, GrMethod.class, true, GrMember.class);
+        if (container != null && !container.hasModifierProperty(PsiModifier.STATIC)) { //only instance methods can be qualified by category class
+          return container.getContainingClass();
+        }
+      }
+      else if (PsiUtil.isThisReference(qualifier)) {
+        PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
+        if (resolved instanceof PsiClass) {
+          return (PsiClass)resolved;
+        }
+      }
+      return null;
     }
 
     private void highlightUnknownArgs(GroovyPsiElement place) {

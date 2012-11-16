@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -35,8 +36,9 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WelcomeScreen;
-import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBPanel;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
@@ -50,6 +52,7 @@ import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
 
@@ -75,7 +78,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
   private static final int MAX_TOOLTIP_WIDTH = 400;
   private static final int ACTION_BUTTON_PADDING = 5;
 
-  private static final Dimension ACTION_BUTTON_SIZE = new Dimension(66, 66);
+  private static final Dimension ACTION_BUTTON_SIZE = new Dimension(64, 48);
 
   @NonNls private static final String CAPTION_FONT_NAME = "Tahoma";
   private static final Font TEXT_FONT = new Font(CAPTION_FONT_NAME, Font.PLAIN, 11);
@@ -101,7 +104,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
   @NonNls private static final String ___HTML_SUFFIX = "...</html>";
   @NonNls private static final String ESC_NEW_LINE = "\\n";
 
-  private final JPanel myWelcomePanel;
+  private final JBPanel myWelcomePanel;
   private final JPanel myMainPanel;
   private final JPanel myPluginsPanel;
 
@@ -121,17 +124,27 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
     return myWelcomePanel;
   }
 
-  public DefaultWelcomeScreen(IdeRootPane rootPane) {
+  public DefaultWelcomeScreen(JComponent rootPane) {
     initApplicationSpecificImages();
 
-    myWelcomePanel = new JPanel(new GridBagLayout());
+    myWelcomePanel = new JBPanel(new GridBagLayout()) {
+      @Override
+      public Dimension getPreferredSize() {
+        return new Dimension(1024, 768);
+      }
+    };
+
+    myWelcomePanel.setBackgroundImage(IconLoader.getIcon("/frame_background.png"));
+    if (PlatformUtils.isIntelliJ()) {
+      myWelcomePanel.setCenterImage(IconLoader.getIcon("idea_logo_background.png"));
+    }
 
     // Create caption pane
     JPanel topPanel = createCaptionPane();
 
     // Create Main Panel for Quick Start and Documentation
     myMainPanel = new WelcomeScrollablePanel(new GridLayout(1, 2));
-    myMainPanel.setBackground(MAIN_PANEL_BACKGROUND);
+    //myMainPanel.setBackground(MAIN_PANEL_BACKGROUND);
     setUpMainPanel(rootPane);
     JScrollPane mainScrollPane = scrollPane(myMainPanel, null);
 
@@ -148,8 +161,10 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
     myWelcomePanel.add(topPanel, gBC);
     gBC = new GridBagConstraints(0, 1, 1, 1, 0.7, 1, NORTHWEST, BOTH, new Insets(0, 7, 7, 7), 0, 0);
     myWelcomePanel.add(mainScrollPane, gBC);
+    /*
     gBC = new GridBagConstraints(1, 1, 1, 1, 0.3, 1, NORTHWEST, BOTH, new Insets(0, 0, 7, 7), 0, 0);
     myWelcomePanel.add(pluginsScrollPane, gBC);
+    */
   }
 
   @Override
@@ -188,7 +203,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
     return topPanel;
   }
 
-  private void setUpMainPanel(IdeRootPane rootPane) {
+  private void setUpMainPanel(JComponent rootPane) {
     final ActionManager actionManager = ActionManager.getInstance();
 
     // Create QuickStarts group of actions
@@ -196,18 +211,21 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
     // Append plug-in actions to the end of the QuickStart list
     quickStarts.appendActionsFromGroup((DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART));
     final JPanel quickStartPanel = quickStarts.getPanel();
+    quickStartPanel.setOpaque(false);
 
     AnAction[] recentProjectsActions = RecentProjectsManagerBase.getInstance().getRecentProjectsActions(false);
     if (recentProjectsActions.length > 0) {
       myRecentProjectsPanel = new JPanel(new GridBagLayout());
+      myRecentProjectsPanel.setOpaque(false);
       setUpRecentProjectsPanel(rootPane, recentProjectsActions);
       quickStartPanel.add(myRecentProjectsPanel, new GridBagConstraints(0, quickStarts.getIdx() + 2, 2, 1, 1, 1, NORTHWEST, HORIZONTAL,
-                                                                      new Insets(14, 30, 5, 0), 0, 0));
+                                                                      new Insets(14, 24, 5, 0), 0, 0));
     }
 
     // Add empty panel at the end of the QuickStarts panel
     JPanel emptyPanel_2 = new JPanel();
-    emptyPanel_2.setBackground(MAIN_PANEL_BACKGROUND);
+    emptyPanel_2.setOpaque(false);
+    //emptyPanel_2.setBackground(MAIN_PANEL_BACKGROUND);
     quickStartPanel.add(emptyPanel_2, new GridBagConstraints(0, quickStarts.getIdx() + 3, 2, 1, 1, 1, NORTHWEST, BOTH, NO_INSETS, 0, 0));
 
     // Create Documentation group of actions
@@ -215,9 +233,11 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
     // Append plug-in actions to the end of the QuickStart list
     docsGroup.appendActionsFromGroup((DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_DOC));
     final JPanel docsPanel = docsGroup.getPanel();
+    docsPanel.setOpaque(false);
     // Add empty panel at the end of the Documentation list
     JPanel emptyPanel_3 = new JPanel();
-    emptyPanel_3.setBackground(MAIN_PANEL_BACKGROUND);
+    emptyPanel_3.setOpaque(false);
+    //emptyPanel_3.setBackground(MAIN_PANEL_BACKGROUND);
     docsPanel.add(emptyPanel_3, new GridBagConstraints(0, docsGroup.getIdx() + 2, 2, 1, 1, 1, NORTHWEST, BOTH, NO_INSETS, 0, 0));
 
     // Add QuickStarts and Docs to main panel
@@ -228,7 +248,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
     myWelcomePanel.setTransferHandler(new OpenProjectTransferHandler(myWelcomePanel));
   }
 
-  private void setUpRecentProjectsPanel(final IdeRootPane rootPane, final AnAction[] recentProjectsActions) {
+  private void setUpRecentProjectsPanel(final JComponent rootPane, final AnAction[] recentProjectsActions) {
     myRecentProjectsPanel.setBackground(MAIN_PANEL_BACKGROUND);
 
     JLabel caption = new JLabel("Recent Projects");
@@ -759,7 +779,9 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
         }
       };
 
-      addButton(button, text, presentation.getDescription());
+      String description = presentation.getDescription();
+      description = MessageFormat.format(description, ApplicationNamesInfo.getInstance().getFullProductName());
+      addButton(button, text, description);
     }
 
     public JPanel getPanel() {
@@ -776,11 +798,11 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
     private int myRowIdx;
     private int myColumnIdx;
     private final String myDisplayName;
-    private final Icon myIcon;
+    private final LabeledIcon myIcon;
 
     private MyActionButton(Icon icon, String displayName) {
       myDisplayName = displayName;
-      myIcon = new LabeledIcon(icon != null ? icon : AllIcons.General.ConfigurableDefault, getDisplayName(), null);
+      myIcon = new LabeledIcon(icon != null ? icon : EmptyIcon.create(48), getDisplayName(), null);
     }
 
     private void setupWithinPanel(JPanel panel, int groupIdx, int rowIdx, int columnIdx) {
@@ -812,7 +834,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
       super.paintComponent(g);
       ActionButtonLook look = ActionButtonLook.IDEA_LOOK;
       paintBackground(g);
-      look.paintIcon(g, this, myIcon);
+      look.paintIconAt(g, this, myIcon, 0, 5);
       paintBorder(g);
     }
 

@@ -49,7 +49,7 @@ public class DiffPreviewPanel implements PreviewPanel {
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
-  public DiffPreviewPanel(Disposable parent) {
+  public DiffPreviewPanel(@NotNull Disposable parent) {
     myMergePanelComponent = new MergePanel2.AsComponent(parent);
     myPanel.add(myMergePanelComponent, BorderLayout.CENTER);
     myMergePanelComponent.setToolbarEnabled(false);
@@ -59,6 +59,7 @@ public class DiffPreviewPanel implements PreviewPanel {
       final EditorMouseListener motionListener = new EditorMouseListener(i);
       final EditorClickListener clickListener = new EditorClickListener(i);
       mergePanel.getEditorPlace(i).addListener(new EditorPlace.EditorListener() {
+        @Override
         public void onEditorCreated(EditorPlace place) {
           Editor editor = place.getEditor();
           editor.addEditorMouseMotionListener(motionListener);
@@ -66,6 +67,7 @@ public class DiffPreviewPanel implements PreviewPanel {
           editor.getCaretModel().addCaretListener(clickListener);
         }
 
+        @Override
         public void onEditorReleased(Editor releasedEditor) {
           releasedEditor.removeEditorMouseMotionListener(motionListener);
           releasedEditor.removeEditorMouseListener(clickListener);
@@ -79,10 +81,12 @@ public class DiffPreviewPanel implements PreviewPanel {
     }
   }
 
+  @Override
   public Component getPanel() {
     return myPanel;
   }
 
+  @Override
   public void updateView() {
     MergeList mergeList = getMergePanel().getMergeList();
     if (mergeList != null) mergeList.updateMarkup();
@@ -110,6 +114,7 @@ public class DiffPreviewPanel implements PreviewPanel {
       myIndex = index;
     }
 
+    @Override
     public void mouseMoved(EditorMouseEvent e) {
       MergePanel2 mergePanel = getMergePanel();
       Editor editor = mergePanel.getEditor(myIndex);
@@ -122,15 +127,19 @@ public class DiffPreviewPanel implements PreviewPanel {
       super(project);
     }
 
+    @Override
     @NotNull
     public DiffContent[] getContents() {
       return DiffPreviewProvider.getContents();
     }
 
+    @Override
     public String[] getContentTitles() { return new String[]{"", "", ""}; }
+    @Override
     public String getWindowTitle() { return DiffBundle.message("merge.color.options.dialog.title"); }
   }
 
+  @Override
   public void addListener(@NotNull final ColorAndFontSettingsListener listener) {
     myDispatcher.addListener(listener);
   }
@@ -142,6 +151,7 @@ public class DiffPreviewPanel implements PreviewPanel {
       myIndex = i;
     }
 
+    @Override
     public void mouseClicked(EditorMouseEvent e) {
       select(MergeSearchHelper.findChangeAt(e, getMergePanel(), myIndex));
     }
@@ -151,15 +161,18 @@ public class DiffPreviewPanel implements PreviewPanel {
       myDispatcher.getMulticaster().selectionInPreviewChanged(change.getType().getTextDiffType().getDisplayName());
      }
 
+    @Override
     public void caretPositionChanged(CaretEvent e) {
       select(MergeSearchHelper.findChangeAt(e, getMergePanel(), myIndex));
     }
   }
 
+  @Override
   public void blinkSelectedHighlightType(final Object selected) {
     
   }
 
+  @Override
   public void disposeUIResources() {
   }
 }

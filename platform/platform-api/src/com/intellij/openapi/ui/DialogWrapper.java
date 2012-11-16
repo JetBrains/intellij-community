@@ -495,7 +495,8 @@ public abstract class DialogWrapper {
     return panel;
   }
 
-  private Action[] filter(Action[] actions) {
+  @NotNull
+  private Action[] filter(@NotNull Action[] actions) {
     ArrayList<Action> answer = new ArrayList<Action>();
     for (Action action : actions) {
       if (action != null && (ApplicationInfo.contextHelpAvailable() || action != getHelpAction())) {
@@ -877,6 +878,7 @@ public abstract class DialogWrapper {
    * @see #createSouthPanel
    * @see #createJButtonForAction
    */
+  @NotNull
   protected Action[] createActions() {
     if (getHelpId() == null) {
       if (SystemInfo.isMac) {
@@ -1875,7 +1877,7 @@ public abstract class DialogWrapper {
             break;
           case SIGN:
             p = SwingUtilities.convertPoint(comp, w,  0, component);
-            AllIcons.Ide.ErrorSign.paintIcon(component, g, p.x - 8, p.y - 8);
+            AllIcons.General.Error.paintIcon(component, g, p.x - 8, p.y - 8);
             break;
           case LINE:
             p = SwingUtilities.convertPoint(comp, 0,  h, component);

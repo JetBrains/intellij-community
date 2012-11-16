@@ -17,10 +17,12 @@ package org.jetbrains.jps.maven.compiler;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetRegistry;
+import org.jetbrains.jps.builders.ChunkBuildOutputConsumer;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
@@ -62,18 +64,17 @@ public class MavenResourceBuilderRunner extends ModuleLevelBuilder{
 
   }
 
+  @NotNull
   @Override
-  public String getName() {
+  public String getPresentableName() {
     return "MavenResourceBuilder Runner";
   }
 
   @Override
-  public String getDescription() {
-    return getName();
-  }
-
-  @Override
-  public ExitCode build(CompileContext context, ModuleChunk chunk, DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws ProjectBuildException {
+  public ExitCode build(CompileContext context,
+                        ModuleChunk chunk,
+                        DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
+                        ChunkBuildOutputConsumer outputConsumer) throws ProjectBuildException {
     ExitCode rc = ExitCode.NOTHING_DONE;
     final MavenResourcesBuilder mavenBuilder = BUILDER_KEY.get(context);
     if (mavenBuilder == null) {

@@ -322,6 +322,9 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     descriptor.setAttachedContent(content);
     content.getManager().setSelectedContent(content);
 
+    if (!descriptor.isActivateToolWindowWhenAdded()) {
+      return;
+    }
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (myProject.isDisposed()) return;

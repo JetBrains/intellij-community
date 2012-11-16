@@ -15,9 +15,13 @@
  */
 package org.jetbrains.idea.maven.dom;
 
+import com.intellij.lang.properties.IProperty;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
 import org.jetbrains.idea.maven.dom.model.MavenDomProfiles;
 import org.jetbrains.idea.maven.dom.model.MavenDomProfilesModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel;
@@ -689,9 +693,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
 
                      "<name>${<caret>user.home}</name>");
 
-    assertResolved(myProjectPom, MavenDomUtil.findProperty(myProject,
-                                                           MavenPropertiesVirtualFileSystem.SYSTEM_PROPERTIES_FILE,
-                                                           "user.home").getPsiElement());
+    assertResolved(myProjectPom, MavenPropertiesVirtualFileSystem.getInstance().findSystemProperty(myProject, "user.home").getPsiElement());
   }
 
   public void testEnvProperties() throws Exception {
@@ -701,9 +703,47 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
 
                      "<name>${<caret>env." + getEnvVar() + "}</name>");
 
-    assertResolved(myProjectPom, MavenDomUtil.findProperty(myProject,
-                                                           MavenPropertiesVirtualFileSystem.ENV_PROPERTIES_FILE,
-                                                           getEnvVar()).getPsiElement());
+    assertResolved(myProjectPom, MavenPropertiesVirtualFileSystem.getInstance().findEnvProperty(myProject, getEnvVar()).getPsiElement());
+  }
+
+  public void testUpperCaseEnvPropertiesOnWindows() throws Exception {
+    if (!SystemInfo.isWindows) return;
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<name>${<caret>env.PATH}</name>");
+
+    PsiReference ref = getReferenceAtCaret(myProjectPom);
+    assertNotNull(ref);
+
+    PsiElement resolved = ref.resolve();
+    assertEquals(System.getenv("Path").replaceAll("[^A-Za-z]", ""), ((IProperty)resolved).getValue().replaceAll("[^A-Za-z]", ""));
+  }
+
+  public void testCaseInsencitiveOnWindows() throws Exception {
+    if (!SystemInfo.isWindows) return;
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<name>${<caret>env.PaTH}</name>");
+
+    assertUnresolved(myProjectPom);
+  }
+
+  public void testNotUpperCaseEnvPropertiesOnWindows() throws Exception {
+    if (!SystemInfo.isWindows) return;
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<name>${<caret>env.Path}</name>");
+
+    assertUnresolved(myProjectPom);
   }
 
   public void testHighlightUnresolvedProperties() throws Exception {

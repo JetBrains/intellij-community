@@ -16,6 +16,8 @@
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -532,6 +534,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     if (!(param instanceof PsiClassType)) return null;
     PsiManager manager = typeParam.getManager();
     if (arg instanceof PsiPrimitiveType) {
+      if (!JavaVersionService.getInstance().isAtLeast(typeParam, JavaSdkVersion.JDK_1_7) && !isContraVariantPosition) return null;
       arg = ((PsiPrimitiveType)arg).getBoxedType(typeParam);
       if (arg == null) return null;
     }
@@ -621,10 +624,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       }
 
       final PsiType[] args = new PsiType[methodParameters.length];
-      Map<PsiMethodReferenceExpression,PsiType> map = LambdaUtil.ourRefs.get();
+      Map<PsiMethodReferenceExpression,PsiType> map = PsiMethodReferenceUtil.ourRefs.get();
       if (map == null) {
         map = new HashMap<PsiMethodReferenceExpression, PsiType>();
-        LambdaUtil.ourRefs.set(map);
+        PsiMethodReferenceUtil.ourRefs.set(map);
       }
       final PsiType added = map.put(methodReferenceExpression, functionalInterfaceType);
       final JavaResolveResult methReferenceResolveResult;
@@ -642,7 +645,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
         final PsiParameter[] parameters = method.getParameterList().getParameters();
         boolean hasReceiver = false;
         if (methodParamTypes.length == parameters.length + 1) {
-          if (!LambdaUtil.isReceiverType(methodParamTypes[0], method.getContainingClass(), methReferenceResolveResult.getSubstitutor())) return null;
+          if (!PsiMethodReferenceUtil
+            .isReceiverType(methodParamTypes[0], method.getContainingClass(), methReferenceResolveResult.getSubstitutor())) return null;
           hasReceiver = true;
         } else if (parameters.length != methodParameters.length) {
           return null;
@@ -1043,14 +1047,14 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
   }
 
   @Nullable
-  private static PsiExpression skipParenthesizedExprDown(PsiExpression initializer) {
+  public static PsiExpression skipParenthesizedExprDown(PsiExpression initializer) {
     while (initializer instanceof PsiParenthesizedExpression) {
       initializer = ((PsiParenthesizedExpression)initializer).getExpression();
     }
     return initializer;
   }
 
-  private static PsiElement skipParenthesizedExprUp(PsiElement parent) {
+  public static PsiElement skipParenthesizedExprUp(PsiElement parent) {
     while (parent instanceof PsiParenthesizedExpression) {
       parent = parent.getParent();
     }

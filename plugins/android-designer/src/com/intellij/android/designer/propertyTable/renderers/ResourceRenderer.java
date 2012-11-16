@@ -90,12 +90,21 @@ public class ResourceRenderer extends AbstractResourceRenderer {
         myColoredComponent.append(value.substring(0, prefix), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         myColoredComponent.append(value.substring(prefix), textStyle(component, value, system, colorValue));
       }
-      else if (myFormats.contains(AttributeFormat.Dimension) && value.length() > 2) {
-        int index = value.length() - 2;
-        String dimension = value.substring(index);
-        if (ArrayUtil.indexOf(DIMENSIONS, dimension) != -1) {
-          myColoredComponent.append(value.substring(0, index));
-          myColoredComponent.append(dimension, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      else if (myFormats.contains(AttributeFormat.Dimension)) {
+        if (value.length() > 3 && value.endsWith("dip")) {
+          myColoredComponent.append(value.substring(0, value.length() - 3));
+          myColoredComponent.append("dip", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        }
+        else if (value.length() > 2) {
+          int index = value.length() - 2;
+          String dimension = value.substring(index);
+          if (ArrayUtil.indexOf(DIMENSIONS, dimension) != -1) {
+            myColoredComponent.append(value.substring(0, index));
+            myColoredComponent.append(dimension, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+          }
+          else {
+            myColoredComponent.append(value);
+          }
         }
         else {
           myColoredComponent.append(value);

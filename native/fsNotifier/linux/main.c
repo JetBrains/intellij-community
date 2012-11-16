@@ -320,23 +320,31 @@ static bool register_roots(array* new_roots, array* unwatchable, array* mounts) 
       continue;
     }
 
-    char* skip = NULL;
+    array* inner_mounts = array_create(5);
+    CHECK_NULL(inner_mounts, false);
+
+    bool skip = false;
     for (int j=0; j<array_size(mounts); j++) {
       char* mount = array_get(mounts, j);
-      if (strncmp(mount, unflattened, strlen(mount)) == 0) {
-        userlog(LOG_DEBUG, "path %s is under unwatchable %s - ignoring", unflattened, mount);
-        skip = strdup(unflattened);
-        CHECK_NULL(skip, false);
+      if (is_parent_path(mount, unflattened)) {
+        userlog(LOG_DEBUG, "watch root '%s' is under mount point '%s' - skipping", unflattened, mount);
+        CHECK_NULL(array_push(unwatchable, strdup(unflattened)), false);
+        skip = true;
         break;
       }
+      else if (is_parent_path(unflattened, mount)) {
+        userlog(LOG_DEBUG, "watch root '%s' contains mount point '%s' - partial watch", unflattened, mount);
+        char* copy = strdup(mount);
+        CHECK_NULL(array_push(unwatchable, copy), false);
+        CHECK_NULL(array_push(inner_mounts, copy), false);
+      }
     }
-    if (skip != NULL) {
-      CHECK_NULL(array_push(unwatchable, skip), false);
+    if (skip) {
       continue;
     }
 
-    // todo: consider a mount point under a watch root?
-    int id = watch(new_root);
+    int id = watch(new_root, inner_mounts);
+    array_delete(inner_mounts);
 
     if (id >= 0) {
       watch_root* root = malloc(sizeof(watch_root));
@@ -364,10 +372,10 @@ static bool register_roots(array* new_roots, array* unwatchable, array* mounts) 
 }
 
 
-static bool is_watchable(const char* mnt, const char* fs) {
+static bool is_watchable(const char* fs) {
   // don't watch special and network filesystems
-  return !(strncmp(mnt, "/dev", 4) == 0 || strncmp(mnt, "/proc", 5) == 0 || strncmp(mnt, "/sys", 4) == 0 ||
-           strncmp(fs, "fuse.", 5) == 0 || strcmp(fs, "cifs") == 0 || strcmp(fs, MNTTYPE_NFS) == 0 || strcmp(fs, MNTTYPE_SWAP) == 0);
+  return !(strncmp(fs, "dev", 3) == 0 || strcmp(fs, "proc") == 0 || strcmp(fs, "sysfs") == 0 || strcmp(fs, MNTTYPE_SWAP) == 0 ||
+           strncmp(fs, "fuse", 4) == 0 || strcmp(fs, "cifs") == 0 || strcmp(fs, MNTTYPE_NFS) == 0);
 }
 
 static array* unwatchable_mounts() {
@@ -383,7 +391,7 @@ static array* unwatchable_mounts() {
   struct mntent* ent;
   while ((ent = getmntent(mtab)) != NULL) {
     userlog(LOG_DEBUG, "mtab: %s : %s", ent->mnt_dir, ent->mnt_type);
-    if (strcmp(ent->mnt_type, MNTTYPE_IGNORE) != 0 && !is_watchable(ent->mnt_dir, ent->mnt_type)) {
+    if (strcmp(ent->mnt_type, MNTTYPE_IGNORE) != 0 && !is_watchable(ent->mnt_type)) {
       CHECK_NULL(array_push(mounts, strdup(ent->mnt_dir)), NULL);
     }
   }

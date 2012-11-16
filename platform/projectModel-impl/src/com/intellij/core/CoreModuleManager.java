@@ -67,6 +67,7 @@ public class CoreModuleManager extends ModuleManagerImpl {
     return module;
   }
 
+  @Override
   protected void deliverPendingEvents() {
   }
 

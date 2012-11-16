@@ -38,7 +38,7 @@ public class DarculaInstaller {
   }
 
   private static void restart() {
-    if (Messages.showOkCancelDialog("You must restart the IDE to changes take effect. Restart now?", "Restart", Messages.getQuestionIcon()) == Messages.OK) {
+    if (Messages.showOkCancelDialog("You must restart the IDE to changes take effect. Restart now?", "Restart Is Required", "Restart", "Postpone", Messages.getQuestionIcon()) == Messages.OK) {
       ApplicationManagerEx.getApplicationEx().restart();
     }
   }

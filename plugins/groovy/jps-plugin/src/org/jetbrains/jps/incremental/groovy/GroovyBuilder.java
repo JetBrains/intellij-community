@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.jps.incremental.groovy;
 
 
@@ -7,10 +22,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.ChunkBuildOutputConsumer;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
@@ -47,7 +64,6 @@ import java.util.concurrent.Future;
  */
 public class GroovyBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.groovy.GroovyBuilder");
-  public static final String BUILDER_NAME = "groovy";
   private static final Key<Boolean> CHUNK_REBUILD_ORDERED = Key.create("CHUNK_REBUILD_ORDERED");
   private static final Key<Map<String, String>> STUB_TO_SRC = Key.create("STUB_TO_SRC");
   private final boolean myForStubs;
@@ -56,20 +72,17 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   public GroovyBuilder(boolean forStubs) {
     super(forStubs ? BuilderCategory.SOURCE_GENERATOR : BuilderCategory.OVERWRITING_TRANSLATOR);
     myForStubs = forStubs;
-    myBuilderName = BUILDER_NAME + (forStubs ? "-stubs" : "-classes");
+    myBuilderName = "Groovy " + (forStubs ? "stub generator" : "compiler");
   }
 
   static {
     JavaBuilder.registerClassPostProcessor(new RecompileStubSources());
   }
 
-  public String getName() {
-    return myBuilderName;
-  }
-
   public ModuleLevelBuilder.ExitCode build(final CompileContext context,
                                            ModuleChunk chunk,
-                                           DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws ProjectBuildException {
+                                           DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
+                                           ChunkBuildOutputConsumer outputConsumer) throws ProjectBuildException {
     try {
       final List<File> toCompile = collectChangedFiles(context, dirtyFilesHolder);
       if (toCompile.isEmpty()) {
@@ -119,7 +132,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         context.processMessage(message);
       }
 
-      if (!myForStubs && updateDependencies(context, chunk, toCompile, generationOutputs, compiled)) {
+      if (!myForStubs && updateDependencies(context, chunk, dirtyFilesHolder, toCompile, generationOutputs, compiled)) {
         return ExitCode.ADDITIONAL_PASS_REQUIRED;
       }
       return ExitCode.OK;
@@ -149,8 +162,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       Arrays.asList("-Xmx384m",
                     "-Dfile.encoding=" + System.getProperty("file.encoding")/*,
                     "-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239"*/),
-      Arrays.<String>asList(myForStubs ? "stubs" : "groovyc",
-                            tempFile.getPath())
+      Arrays.<String>asList(myForStubs ? "stubs" : "groovyc", tempFile.getPath())
     );
 
     final Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(cmd));
@@ -200,7 +212,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     final BuildRootIndex rootsIndex = context.getProjectDescriptor().getBuildRootIndex();
     for (ModuleBuildTarget target : generationOutputs.keySet()) {
       File root = new File(generationOutputs.get(target));
-      rootsIndex.associateTempRoot(context, target, new JavaSourceRootDescriptor(root, target, true, true, ""));
+      rootsIndex.associateTempRoot(context, target, new JavaSourceRootDescriptor(root, target, true, true, "", Collections.<File>emptySet()));
     }
   }
 
@@ -241,7 +253,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     Map<ModuleBuildTarget, String> generationOutputs = new HashMap<ModuleBuildTarget, String>();
     File commonRoot = new File(context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot(), "groovyStubs");
     for (ModuleBuildTarget target : chunk.getTargets()) {
-      File targetRoot = new File(commonRoot, target.getModuleName() + File.separator + target.getTargetType().getTypeId());
+      File targetRoot = new File(commonRoot, target.getModule().getName() + File.separator + target.getTargetType().getTypeId());
       if (!FileUtil.delete(targetRoot)) {
         throw new IOException("External make cannot clean " + targetRoot.getPath());
       }
@@ -254,12 +266,12 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   }
 
   @Nullable
-  private static Map<ModuleBuildTarget, String> getCanonicalModuleOutputs(CompileContext context, ModuleChunk chunk) {
+  private Map<ModuleBuildTarget, String> getCanonicalModuleOutputs(CompileContext context, ModuleChunk chunk) {
     Map<ModuleBuildTarget, String> finalOutputs = new HashMap<ModuleBuildTarget, String>();
     for (ModuleBuildTarget target : chunk.getTargets()) {
       File moduleOutputDir = target.getOutputDir();
       if (moduleOutputDir == null) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Output directory not specified for module " + target.getModuleName()));
+        context.processMessage(new CompilerMessage(myBuilderName, BuildMessage.Kind.ERROR, "Output directory not specified for module " + target.getModule().getName()));
         return null;
       }
       String moduleOutputPath = FileUtil.toCanonicalPath(moduleOutputDir.getPath());
@@ -319,6 +331,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
   private static boolean updateDependencies(CompileContext context,
                                             ModuleChunk chunk,
+                                            DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                                             List<File> toCompile,
                                             Map<ModuleBuildTarget, String> generationOutputs,
                                             List<GroovycOSProcessHandler.OutputItem> successfullyCompiled) throws IOException {
@@ -332,11 +345,10 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       for (GroovycOSProcessHandler.OutputItem item : successfullyCompiled) {
         final String sourcePath = FileUtil.toSystemIndependentName(item.sourcePath);
         final String outputPath = FileUtil.toSystemIndependentName(item.outputPath);
-        final JavaSourceRootDescriptor moduleAndRoot = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context,
-                                                                                                                                 new File(
-                                                                                                                                   sourcePath));
-        if (moduleAndRoot != null) {
-          String moduleOutputPath = generationOutputs.get(moduleAndRoot.target);
+        final BuildRootIndex rootIndex = context.getProjectDescriptor().getBuildRootIndex();
+        final JavaSourceRootDescriptor rd = rootIndex.findJavaRootDescriptor(context, new File(sourcePath));
+        if (rd != null) {
+          final String moduleOutputPath = FileUtil.toSystemIndependentName(generationOutputs.get(rd.target));
           generatedEvent.add(moduleOutputPath, FileUtil.getRelativePath(moduleOutputPath, outputPath, '/'));
         }
         callback.associate(outputPath, sourcePath, new ClassReader(FileUtil.loadFileBytes(new File(outputPath))));
@@ -347,7 +359,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     }
 
 
-    return JavaBuilderUtil.updateMappings(context, delta, chunk, toCompile, successfullyCompiledFiles);
+    return JavaBuilderUtil.updateMappings(context, delta, dirtyFilesHolder, chunk, toCompile, successfullyCompiledFiles);
   }
 
   private static Collection<String> generateClasspath(CompileContext context, ModuleChunk chunk) {
@@ -368,7 +380,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   }
 
   private static File getGroovyRtRoot() {
-    File root = ClasspathBootstrap.getResourcePath(GroovyBuilder.class);
+    File root = ClasspathBootstrap.getResourceFile(GroovyBuilder.class);
     if (root.isFile()) {
       return new File(root.getParentFile(), "groovy_rt.jar");
     }
@@ -406,13 +418,12 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
   @Override
   public String toString() {
-    return "GroovyBuilder{" +
-           "myForStubs=" + myForStubs +
-           '}';
+    return myBuilderName;
   }
 
-  public String getDescription() {
-    return "Groovy builder";
+  @NotNull
+  public String getPresentableName() {
+    return myBuilderName;
   }
 
   private static class RecompileStubSources implements ClassPostProcessor {

@@ -24,35 +24,35 @@ public class TaskManagerTest extends TaskManagerTestCase {
 
   public void testAddRemoveListener() throws Exception {
 
-    TaskListener listener = new TaskListener() {
+    TaskListener listener = new TaskListenerAdapter() {
       @Override
       public void taskActivated(LocalTask task) {
 
       }
     };
-    myManager.addTaskListener(listener);
-    myManager.removeTaskListener(listener);
+    myTaskManager.addTaskListener(listener);
+    myTaskManager.removeTaskListener(listener);
   }
 
   public void testTaskSwitch() throws Exception {
 
     final Ref<Integer> count = Ref.create(0);
-    TaskListener listener = new TaskListener() {
+    TaskListener listener = new TaskListenerAdapter() {
       @Override
       public void taskActivated(LocalTask task) {
         count.set(count.get() + 1);
       }
     };
-    myManager.addTaskListener(listener);
-    LocalTask localTask = myManager.createLocalTask("foo");
-    myManager.activateTask(localTask, false, false);
+    myTaskManager.addTaskListener(listener);
+    LocalTask localTask = myTaskManager.createLocalTask("foo");
+    myTaskManager.activateTask(localTask, false, false);
     assertEquals(1, count.get().intValue());
 
-    LocalTask other = myManager.createLocalTask("bar");
-    myManager.activateTask(other, false, false);
+    LocalTask other = myTaskManager.createLocalTask("bar");
+    myTaskManager.activateTask(other, false, false);
     assertEquals(2, count.get().intValue());
 
-    myManager.removeTaskListener(listener);
+    myTaskManager.removeTaskListener(listener);
   }
 
   public void testNotifications() throws Exception {
@@ -83,13 +83,13 @@ public class TaskManagerTest extends TaskManagerTestCase {
         throw new Exception();
       }
     };
-    myManager.setRepositories(Collections.singletonList(repository));
+    myTaskManager.setRepositories(Collections.singletonList(repository));
 
-    myManager.updateIssues(null);
+    myTaskManager.updateIssues(null);
 
     assertNull(notificationRef.get());
 
-    myManager.getIssues("");
+    myTaskManager.getIssues("");
 
     assertNotNull(notificationRef.get());
   }
@@ -97,7 +97,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
   public void testSharedServers() throws Exception {
     TaskRepository repository = new YouTrackRepository(new YouTrackRepositoryType());
     repository.setShared(true);
-    myManager.setRepositories(Collections.singletonList(repository));
+    myTaskManager.setRepositories(Collections.singletonList(repository));
 
     TaskProjectConfiguration configuration = ServiceManager.getService(getProject(), TaskProjectConfiguration.class);
     TaskProjectConfiguration state = configuration.getState();
@@ -106,14 +106,14 @@ public class TaskManagerTest extends TaskManagerTestCase {
     Element element = XmlSerializer.serialize(state);
 
     configuration.servers.clear();
-    myManager.setRepositories(Collections.<TaskRepository>emptyList());
+    myTaskManager.setRepositories(Collections.<TaskRepository>emptyList());
 
     configuration.loadState(XmlSerializer.deserialize(element, TaskProjectConfiguration.class));
     assertEquals(1, state.servers.size());
 
-    myManager.projectOpened();
+    myTaskManager.projectOpened();
 
-    TaskRepository[] repositories = myManager.getAllRepositories();
+    TaskRepository[] repositories = myTaskManager.getAllRepositories();
     assertEquals(1, repositories.length);
   }
 
@@ -126,13 +126,13 @@ public class TaskManagerTest extends TaskManagerTestCase {
         return super.getIssues(query, max, since);
       }
     };
-    myManager.setRepositories(Collections.singletonList(repository));
+    myTaskManager.setRepositories(Collections.singletonList(repository));
 
-    List<Task> issues = myManager.getIssues("");
+    List<Task> issues = myTaskManager.getIssues("");
     assertEquals(1, issues.size());
 
     stopper.set(Boolean.TRUE);
-    issues = myManager.getIssues("");
+    issues = myTaskManager.getIssues("");
     assertEquals(1, issues.size());
   }
 }

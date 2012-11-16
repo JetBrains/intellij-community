@@ -195,7 +195,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   
   @Override
   public float getLineSpacing() {
-    return myLineSpacing <= 0 ? 1.0f : myLineSpacing;
+    float spacing = myLineSpacing;
+    return spacing <= 0 ? 1.0f : spacing;
   }
 
   protected void initFonts() {
@@ -532,10 +533,11 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
   @Override
   public float getConsoleLineSpacing() {
-    if (myConsoleLineSpacing == -1) {
+    float consoleLineSpacing = myConsoleLineSpacing;
+    if (consoleLineSpacing == -1) {
       return getLineSpacing();
     }
-    return myConsoleLineSpacing;
+    return consoleLineSpacing;
   }
 
   @Override
@@ -545,7 +547,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
   private static String getDefaultFontName() {
     if (SystemInfo.isMacOSSnowLeopard) return "Menlo";
-    if (SystemInfo.isLinux) {
+    if (SystemInfo.isXWindow) {
       for (Font font : GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts()) {
         if ("DejaVu Sans Mono".equals(font.getName())) {
           return font.getFontName();

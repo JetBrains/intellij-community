@@ -388,6 +388,9 @@ public class TypeConversionUtil {
     return PsiType.NULL.equals(type);
   }
 
+  public static boolean isFloatOrDoubleType(PsiType type) {
+    return isFloatType(type) || isDoubleType(type);
+  }
   public static boolean isDoubleType(PsiType type) {
     return PsiType.DOUBLE.equals(type) || PsiType.DOUBLE.equals(PsiPrimitiveType.getUnboxedType(type));
   }
@@ -665,7 +668,7 @@ public class TypeConversionUtil {
     if (right instanceof PsiMethodReferenceType) {
       final PsiMethodReferenceExpression methodReferenceExpression = ((PsiMethodReferenceType)right).getExpression();
       if (left instanceof PsiClassType) {
-        return LambdaUtil.isAcceptable(methodReferenceExpression, (PsiClassType)left);
+        return PsiMethodReferenceUtil.isAcceptable(methodReferenceExpression, (PsiClassType)left);
       } else if (left instanceof PsiLambdaExpressionType) {
         final PsiType rType = methodReferenceExpression.getFunctionalInterfaceType();
         final PsiType lType = ((PsiLambdaExpressionType)left).getExpression().getFunctionalInterfaceType();
@@ -927,7 +930,9 @@ public class TypeConversionUtil {
         // compatibility feature: allow to assign raw types to generic ones
         return allowUncheckedConversion;
       }
-      if (!typesAgree(typeLeft, typeRight, allowUncheckedConversion)) return false;
+      if (!typesAgree(typeLeft, typeRight, allowUncheckedConversion)) {
+        return false;
+      }
     }
     return true;
   }
@@ -965,11 +970,19 @@ public class TypeConversionUtil {
         }
       }
       else {
+        boolean effectiveAllowUncheckedConversion = allowUncheckedConversion;
+        if (typeRight instanceof PsiCapturedWildcardType) {
+          effectiveAllowUncheckedConversion = false;
+          final PsiClass psiClass = PsiUtil.resolveClassInType(((PsiCapturedWildcardType)typeRight).getWildcard().getBound());
+          if (psiClass != null && !psiClass.hasTypeParameters()) {
+            effectiveAllowUncheckedConversion = allowUncheckedConversion;
+          }
+        }
         if (leftWildcard.isExtends()) {
-          return isAssignable(leftBound, typeRight, allowUncheckedConversion && !containsWildcards(leftBound));
+          return isAssignable(leftBound, typeRight, effectiveAllowUncheckedConversion && !containsWildcards(leftBound));
         }
         else { // isSuper
-          return isAssignable(typeRight, leftBound, allowUncheckedConversion && !containsWildcards(leftBound));
+          return isAssignable(typeRight, leftBound, effectiveAllowUncheckedConversion && !containsWildcards(leftBound));
         }
       }
     }
@@ -1116,6 +1129,7 @@ public class TypeConversionUtil {
                                                    PsiClass base,
                                                    Set<PsiClass> set,
                                                    PsiManager manager) {
+    assert candidateSubstitutor.isValid();
     for (final PsiClassType type : types) {
       final PsiType substitutedType = candidateSubstitutor.substitute(type);
       //if (!(substitutedType instanceof PsiClassType)) return null;

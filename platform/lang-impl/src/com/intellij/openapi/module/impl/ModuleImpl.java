@@ -68,7 +68,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   private IModuleStore myComponentStore;
   private final ModuleScopeProvider myModuleScopeProvider;
 
-  public ModuleImpl(String filePath, Project project) {
+  public ModuleImpl(@NotNull String filePath, @NotNull Project project) {
     super(project);
 
     getPicoContainer().registerComponentInstance(Module.class, this);
@@ -80,6 +80,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
 
   }
 
+  @Override
   protected void bootstrapPicoContainer() {
     Extensions.instantiateArea(ExtensionAreas.IDEA_MODULE, this, (AreaInstance)getParentComponentManager());
     super.bootstrapPicoContainer();
@@ -108,6 +109,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener, this);
   }
 
+  @Override
   public void loadModuleComponents() {
     final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
     for (IdeaPluginDescriptor plugin : plugins) {
@@ -116,6 +118,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     }
   }
 
+  @Override
   protected boolean isComponentSuitable(Map<String, String> options) {
     if (!super.isComponentSuitable(options)) return false;
     if (options == null) return true;
@@ -134,11 +137,13 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     return Arrays.asList(optionValue.split(";"));
   }
 
+  @Override
   @Nullable
   public VirtualFile getModuleFile() {
     return getStateStore().getModuleFile();
   }
 
+  @Override
   public void rename(String newName) {
     myName = newName;
     final VirtualFile file = getStateStore().getModuleFile();
@@ -162,11 +167,13 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     }
   }
 
+  @Override
   @NotNull
   public String getModuleFilePath() {
     return getStateStore().getModuleFilePath();
   }
 
+  @Override
   public synchronized void dispose() {
     isModuleAdded = false;
     disposeComponents();
@@ -176,6 +183,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   }
 
 
+  @Override
   public void projectOpened() {
     for (ModuleComponent component : getComponents(ModuleComponent.class)) {
       try {
@@ -187,6 +195,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     }
   }
 
+  @Override
   public void projectClosed() {
     List<ModuleComponent> components = new ArrayList<ModuleComponent>(Arrays.asList(getComponents(ModuleComponent.class)));
     Collections.reverse(components);
@@ -201,20 +210,24 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     }
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     return myProject;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myName;
   }
 
+  @Override
   public boolean isLoaded() {
     return isModuleAdded;
   }
 
+  @Override
   public void moduleAdded() {
     isModuleAdded = true;
     for (ModuleComponent component : getComponents(ModuleComponent.class)) {
@@ -222,18 +235,22 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     }
   }
 
+  @Override
   public void setOption(@NotNull String optionName, @NotNull String optionValue) {
     getStateStore().setOption(optionName, optionValue);
   }
 
+  @Override
   public void clearOption(@NotNull String optionName) {
     getStateStore().clearOption(optionName);
   }
 
+  @Override
   public String getOptionValue(@NotNull String optionName) {
     return getStateStore().getOptionValue(optionName);
   }
 
+  @Override
   public GlobalSearchScope getModuleScope() {
     return myModuleScopeProvider.getModuleScope();
   }
@@ -243,10 +260,12 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     return myModuleScopeProvider.getModuleScope(includeTests);
   }
 
+  @Override
   public GlobalSearchScope getModuleWithLibrariesScope() {
     return myModuleScopeProvider.getModuleWithLibrariesScope();
   }
 
+  @Override
   public GlobalSearchScope getModuleWithDependenciesScope() {
     return myModuleScopeProvider.getModuleWithDependenciesScope();
   }
@@ -261,18 +280,22 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     return myModuleScopeProvider.getModuleContentWithDependenciesScope();
   }
 
+  @Override
   public GlobalSearchScope getModuleWithDependenciesAndLibrariesScope(boolean includeTests) {
     return myModuleScopeProvider.getModuleWithDependenciesAndLibrariesScope(includeTests);
   }
 
+  @Override
   public GlobalSearchScope getModuleWithDependentsScope() {
     return myModuleScopeProvider.getModuleWithDependentsScope();
   }
 
+  @Override
   public GlobalSearchScope getModuleTestsWithDependentsScope() {
     return myModuleScopeProvider.getModuleTestsWithDependentsScope();
   }
 
+  @Override
   public GlobalSearchScope getModuleRuntimeScope(boolean includeTests) {
     return myModuleScopeProvider.getModuleRuntimeScope(includeTests);
   }
@@ -292,6 +315,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     return StringUtil.trimEnd(fileName, ModuleFileType.DOT_DEFAULT_EXTENSION);
   }
 
+  @Override
   public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
     return Extensions.getArea(this).getExtensionPoint(extensionPointName).getExtensions();
   }
@@ -302,6 +326,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   }
 
   private class MyVirtualFileListener extends VirtualFileAdapter {
+    @Override
     public void propertyChanged(VirtualFilePropertyEvent event) {
       if (!isModuleAdded) return;
       final Object requestor = event.getRequestor();
@@ -353,6 +378,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     }
   }
 
+  @Override
   protected MutablePicoContainer createPicoContainer() {
     return Extensions.getArea(this).getPicoContainer();
   }

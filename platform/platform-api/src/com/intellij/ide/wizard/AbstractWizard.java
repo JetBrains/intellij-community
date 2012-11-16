@@ -27,9 +27,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.panels.OpaquePanel;
-import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +57,6 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   protected JPanel myContentPanel;
   protected TallImageComponent myIcon;
   private Component myCurrentStepComponent;
-  private final Alarm myFocusAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final Map<Component, String> myComponentToIdMap = new HashMap<Component, String>();
   private final StepListener myStepListener = new StepListener() {
     public void stateChanged() {
@@ -292,6 +291,10 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     return myCurrentStep;
   }
 
+  public int getStepCount() {
+    return mySteps.size();
+  }
+
   public T getCurrentStepObject() {
     return mySteps.get(myCurrentStep);
   }
@@ -413,7 +416,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   }
 
   protected void updateStep() {
-    if (mySteps.size() == 0) {
+    if (mySteps.isEmpty()) {
       return;
     }
 
@@ -432,17 +435,14 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     requestFocusTo(component != null ? component : myNextButton);
   }
 
-  private void requestFocusTo(final JComponent component) {
-    myFocusAlarm.cancelAllRequests();
-    myFocusAlarm.addRequest(new Runnable() {
+  private static void requestFocusTo(final JComponent component) {
+    UiNotifyConnector.doWhenFirstShown(component, new Runnable() {
       @Override
       public void run() {
-        if (component.isVisible()) {
-          final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(component);
-          focusManager.requestFocus(component, false);
-        }
+        final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(component);
+        focusManager.requestFocus(component, false);
       }
-    }, 50);
+    });
   }
 
   protected boolean canGoNext() {
@@ -487,6 +487,10 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
   protected JButton getPreviousButton() {
     return myPreviousButton;
+  }
+
+  protected JButton getHelpButton() {
+    return myHelpButton;
   }
 
   public JButton getCancelButton() {

@@ -35,7 +35,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     myProjectRoot.getChildren(); // make sure fs is cached
 
     new File(myProjectRoot.getPath(), "target/foo").mkdirs();
-    new File(myProjectRoot.getPath(), "target/generated-sources/xxx").mkdirs();
+    new File(myProjectRoot.getPath(), "target/generated-sources/xxx/z").mkdirs();
     updateProjectFolders();
 
     assertExcludes("project", "target/foo");
@@ -70,10 +70,10 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     assertExcludes("m1", "target");
     assertExcludes("m2", "target");
 
-    new File(myProjectRoot.getPath(), "m1/target/foo").mkdirs();
-    new File(myProjectRoot.getPath(), "m1/target/generated-sources/xxx").mkdirs();
+    new File(myProjectRoot.getPath(), "m1/target/foo/z").mkdirs();
+    new File(myProjectRoot.getPath(), "m1/target/generated-sources/xxx/z").mkdirs();
     new File(myProjectRoot.getPath(), "m2/target/bar").mkdirs();
-    new File(myProjectRoot.getPath(), "m2/target/generated-sources/yyy").mkdirs();
+    new File(myProjectRoot.getPath(), "m2/target/generated-sources/yyy/z").mkdirs();
 
     updateProjectFolders();
 
@@ -208,9 +208,9 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
       }
     });
 
-    new File(myProjectRoot.getPath(), "target/generated-sources/foo").mkdirs();
-    new File(m1.getPath(), "target/generated-sources/bar").mkdirs();
-    new File(m2.getPath(), "target/generated-sources/baz").mkdirs();
+    new File(myProjectRoot.getPath(), "target/generated-sources/foo/z").mkdirs();
+    new File(m1.getPath(), "target/generated-sources/bar/z").mkdirs();
+    new File(m2.getPath(), "target/generated-sources/baz/z").mkdirs();
 
     updateProjectFolders();
 

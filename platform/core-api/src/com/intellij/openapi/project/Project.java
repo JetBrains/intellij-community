@@ -112,6 +112,9 @@ public interface Project extends ComponentManager, AreaInstance {
   @NonNls
   String getLocation();
 
+  /**
+   * Should be invoked under WriteAction.
+   */
   void save();
 
   boolean isOpen();

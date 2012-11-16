@@ -262,7 +262,7 @@ public class GenericsHighlightUtil {
     final PsiClassType[] bounds = classParameter.getSuperTypes();
     for (PsiClassType type1 : bounds) {
       PsiType bound = substitutor.substitute(type1);
-      if (checkNotInBounds(type, bound)) {
+      if (!bound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) && checkNotInBounds(type, bound)) {
         PsiClass boundClass = bound instanceof PsiClassType ? ((PsiClassType)bound).resolve() : null;
 
         @NonNls final String messageKey = boundClass == null || referenceClass == null || referenceClass.isInterface() == boundClass.isInterface()
@@ -297,7 +297,7 @@ public class GenericsHighlightUtil {
           return checkExtendsWildcardCaptureFailure((PsiWildcardType)type, bound);
         }
         else if (((PsiWildcardType)type).isSuper()) {
-          return checkNotAssignable(bound, ((PsiWildcardType)type).getSuperBound());
+          return checkNotAssignable(bound, ((PsiWildcardType)type).getSuperBound(), false);
         }
       }
       else if (type instanceof PsiArrayType) {
@@ -628,7 +628,7 @@ public class GenericsHighlightUtil {
     return null;
   }
 
-  public static HighlightInfo checkReferenceTypeUsedAsTypeArgument(PsiTypeElement typeElement) {
+  public static HighlightInfo checkReferenceTypeUsedAsTypeArgument(final PsiTypeElement typeElement) {
     final PsiType type = typeElement.getType();
     if (type != PsiType.NULL && type instanceof PsiPrimitiveType ||
         type instanceof PsiWildcardType && ((PsiWildcardType)type).getBound() instanceof PsiPrimitiveType) {
@@ -639,7 +639,19 @@ public class GenericsHighlightUtil {
       if (element == null) return null;
 
       String description = JavaErrorMessages.message("generics.type.argument.cannot.be.of.primitive.type");
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, typeElement, description);
+      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, typeElement, description);
+      PsiType toConvert = type;
+      if (type instanceof PsiWildcardType) {
+        toConvert = ((PsiWildcardType)type).getBound();
+      }
+      if (toConvert instanceof PsiPrimitiveType) {
+        final PsiClassType boxedType = ((PsiPrimitiveType)toConvert).getBoxedType(typeElement);
+        if (boxedType != null) {
+          QuickFixAction.registerQuickFixAction(highlightInfo, 
+                                                new ReplacePrimitiveWithBoxedTypeAction(typeElement, toConvert.getPresentableText(), ((PsiPrimitiveType)toConvert).getBoxedTypeName()));
+        }
+      }
+      return highlightInfo;
     }
 
     return null;
@@ -748,6 +760,10 @@ public class GenericsHighlightUtil {
             PsiClassType otherType =
               JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(castClass, modifiedSubstitutor);
             if (TypeConversionUtil.isAssignable(operandType, otherType, false)) return true;
+          }
+          for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(operandClass)) {
+            final PsiType operand = operandResult.getSubstitutor().substitute(typeParameter);
+            if (operand instanceof PsiCapturedWildcardType) return true;
           }
           return false;
         }
@@ -1376,6 +1392,29 @@ public class GenericsHighlightUtil {
     if (superClass instanceof PsiTypeParameter) {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, toHighlight,
                                                JavaErrorMessages.message("class.cannot.inherit.from.its.type.parameter"));
+    }
+    return null;
+  }
+
+  /**
+   * http://docs.oracle.com/javase/specs/jls/se7/html/jls-4.html#jls-4.8
+   */
+  @Nullable
+  public static HighlightInfo checkRawOnParameterizedType(PsiReferenceParameterList list) {
+    if (list.getTypeArguments().length > 0) return null;
+    final PsiElement parent = list.getParent();
+    if (parent instanceof PsiJavaCodeReferenceElement) {
+      final PsiElement qualifier = ((PsiJavaCodeReferenceElement)parent).getQualifier();
+      if (qualifier instanceof PsiJavaCodeReferenceElement) {
+        if (((PsiJavaCodeReferenceElement)qualifier).getTypeParameters().length > 0) {
+          final PsiElement resolve = ((PsiJavaCodeReferenceElement)parent).resolve();
+          if (resolve instanceof PsiTypeParameterListOwner 
+              && ((PsiTypeParameterListOwner)resolve).hasTypeParameters() 
+              && !((PsiTypeParameterListOwner)resolve).hasModifierProperty(PsiModifier.STATIC)) {
+            return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, parent, "Improper formed type; some type parameters are missing");
+          }
+        }
+      }
     }
     return null;
   }

@@ -34,6 +34,7 @@ import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -60,11 +61,11 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
 
   // predefined macros
   @NonNls
-  public static final String APPLICATION_HOME_MACRO_NAME = "APPLICATION_HOME_DIR";
+  public static final String APPLICATION_HOME_MACRO_NAME = PathMacroUtil.APPLICATION_HOME_DIR;
   @NonNls
-  public static final String PROJECT_DIR_MACRO_NAME = "PROJECT_DIR";
+  public static final String PROJECT_DIR_MACRO_NAME = PathMacroUtil.PROJECT_DIR_MACRO_NAME;
   @NonNls
-  public static final String MODULE_DIR_MACRO_NAME = "MODULE_DIR";
+  public static final String MODULE_DIR_MACRO_NAME = PathMacroUtil.MODULE_DIR_MACRO_NAME;
   @NonNls
   public static final String USER_HOME_MACRO_NAME = "USER_HOME";
 

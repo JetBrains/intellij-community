@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.PlatformColors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -190,7 +191,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       }
       Stroke oldStroke = g2d.getStroke();
       g2d.setStroke(new BasicStroke(2.0f));
-      g.setColor(Color.BLUE);
+      g.setColor(PlatformColors.BLUE);
       if (myIsRow) {
         g.drawLine(bounds.x+1, coord, bounds.x+bounds.width-1, coord);
       }

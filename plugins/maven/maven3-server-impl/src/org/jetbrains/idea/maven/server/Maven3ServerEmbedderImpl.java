@@ -23,6 +23,7 @@ import org.apache.maven.Maven;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
+import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.ArtifactRepositoryFactory;
 import org.apache.maven.artifact.repository.metadata.RepositoryMetadataManager;
@@ -72,6 +73,7 @@ import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.embedder.*;
 import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
 import org.sonatype.aether.RepositorySystemSession;
+import org.sonatype.aether.util.DefaultRepositorySystemSession;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
@@ -88,6 +90,8 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
 
   private final ArtifactRepository myLocalRepository;
   private final Maven3ServerConsoleLogger myConsoleWrapper;
+
+  private final Properties mySystemProperties;
 
   private volatile MavenServerProgressIndicator myCurrentIndicator;
 
@@ -156,9 +160,11 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
     myContainer = FieldAccessor.get(MavenCli.class, cli, "container");
     myContainer.getLoggerManager().setThreshold(settings.getLoggingLevel());
 
+    mySystemProperties = FieldAccessor.<Properties>get(cliRequestClass, cliRequest, "systemProperties");
+
     myMavenSettings = buildSettings(FieldAccessor.<SettingsBuilder>get(MavenCli.class, cli, "settingsBuilder"),
                                     settings,
-                                    FieldAccessor.<Properties>get(cliRequestClass, cliRequest, "systemProperties"),
+                                    mySystemProperties,
                                     FieldAccessor.<Properties>get(cliRequestClass, cliRequest, "userProperties"));
 
     myLocalRepository = createLocalRepository(settings.getSnapshotUpdatePolicy());
@@ -249,7 +255,7 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
       ((CustomMaven3RepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).customize(workspaceMap);
       //((CustomMaven3WagonManager)getComponent(WagonManager.class)).customize(failOnUnresolvedDependency);
 
-      setConsoleAndIndicator(console, indicator);
+      setConsoleAndIndicator(console, new MavenServerProgressIndicatorWrapper(indicator));
     }
     catch (Exception e) {
       throw rethrowException(e);
@@ -334,11 +340,16 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
           resolutionRequest.setResolveRoot(false);
           resolutionRequest.setResolveTransitively(true);
 
+          RepositorySystemSession repositorySession = getComponent(LegacySupport.class).getRepositorySession();
+          if (repositorySession instanceof DefaultRepositorySystemSession) {
+            ((DefaultRepositorySystemSession)repositorySession).setTransferListener(new TransferListenerAdapter(myCurrentIndicator));
+          }
+
           ArtifactResolutionResult result = resolver.resolve(resolutionRequest);
 
           project.setArtifacts(result.getArtifacts());
           // end copied from DefaultMavenProjectBuilder.buildWithDependencies
-          ref.set(new MavenExecutionResult(project, result.getExceptions()));
+          ref.set(new MavenExecutionResult(project, new ArrayList<Exception>()));
         }
         catch (Exception e) {
           ref.set(handleException(e));
@@ -366,6 +377,8 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
       result.setPom(file);
 
       getComponent(MavenExecutionRequestPopulator.class).populateDefaults(result);
+
+      result.setSystemProperties(mySystemProperties);
 
       return result;
     }
@@ -482,7 +495,33 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
   public List<MavenArtifact> resolveTransitively(@NotNull List<MavenArtifactInfo> artifacts,
                                                  @NotNull List<MavenRemoteRepository> remoteRepositories)
     throws RemoteException, MavenServerProcessCanceledException {
-    throw new UnsupportedOperationException();
+
+    try {
+      Set<Artifact> toResolve = new LinkedHashSet<Artifact>();
+      for (MavenArtifactInfo each : artifacts) {
+        toResolve.add(createArtifact(each));
+      }
+
+      Artifact project = getComponent(ArtifactFactory.class).createBuildArtifact("temp", "temp", "666", "pom");
+
+      Set<Artifact> res = getComponent(ArtifactResolver.class)
+        .resolveTransitively(toResolve, project, Collections.EMPTY_MAP, myLocalRepository, convertRepositories(remoteRepositories),
+                             getComponent(ArtifactMetadataSource.class))
+        .getArtifacts();
+
+      return MavenModelConverter.convertArtifacts(res, new THashMap<Artifact, MavenArtifact>(), getLocalRepositoryFile());
+    }
+    catch (ArtifactResolutionException e) {
+      Maven3ServerGlobals.getLogger().info(e);
+    }
+    catch (ArtifactNotFoundException e) {
+      Maven3ServerGlobals.getLogger().info(e);
+    }
+    catch (Exception e) {
+      throw rethrowException(e);
+    }
+
+    return Collections.emptyList();
   }
 
   @Override
@@ -602,7 +641,49 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
                                             @NotNull List<String> selectedProjects,
                                             boolean alsoMake,
                                             boolean alsoMakeDependents) throws RemoteException, MavenServerProcessCanceledException {
-    throw new UnsupportedOperationException();
+    MavenExecutionResult result = doExecute(file, new ArrayList<String>(activeProfiles), new ArrayList<String>(inactiveProfiles), goals,
+                                             selectedProjects, alsoMake, alsoMakeDependents);
+
+    return createExecutionResult(file, result, null);
+  }
+
+  private MavenExecutionResult doExecute(@NotNull final File file,
+                                         @NotNull final List<String> activeProfiles,
+                                         @NotNull final List<String> inactiveProfiles,
+                                         @NotNull final List<String> goals,
+                                         @NotNull final List<String> selectedProjects,
+                                         boolean alsoMake,
+                                         boolean alsoMakeDependents) throws RemoteException {
+    MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, goals);
+
+    if (!selectedProjects.isEmpty()) {
+      request.setRecursive(true);
+      request.setSelectedProjects(selectedProjects);
+      if (alsoMake && alsoMakeDependents) {
+        request.setMakeBehavior(ReactorManager.MAKE_BOTH_MODE);
+      }
+      else if (alsoMake) {
+        request.setMakeBehavior(ReactorManager.MAKE_MODE);
+      }
+      else if (alsoMakeDependents) {
+        request.setMakeBehavior(ReactorManager.MAKE_DEPENDENTS_MODE);
+      }
+    }
+
+    Maven maven = getComponent(Maven.class);
+    org.apache.maven.execution.MavenExecutionResult executionResult = maven.execute(request);
+
+    return new MavenExecutionResult(executionResult.getProject(), filterExceptions(executionResult.getExceptions()));
+  }
+
+  private static List<Exception> filterExceptions(List<Throwable> list) {
+    for (Throwable throwable : list) {
+      if (!(throwable instanceof Exception)) {
+        throw new RuntimeException(throwable);
+      }
+    }
+
+    return (List<Exception>)((List)list);
   }
 
   @Override

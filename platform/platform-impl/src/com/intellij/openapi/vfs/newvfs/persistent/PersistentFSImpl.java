@@ -36,6 +36,7 @@ import com.intellij.util.containers.StripedLockIntObjectConcurrentHashMap;
 import com.intellij.util.io.ReplicatorInputStream;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
+import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -509,7 +510,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       // perforce offline mode as well
       if ((!delegate.isReadOnly() ||
            // do not cache archive content unless asked
-           (cacheContent && !application.isInternal() && !application.isUnitTestMode())) &&
+           cacheContent && !application.isInternal() && !application.isUnitTestMode()) &&
           content.length <= PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) {
         synchronized (myInputLock) {
           writeContent(file, new ByteSequence(content), delegate.isReadOnly());
@@ -853,25 +854,42 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     myIdToDirCache.clear();
   }
 
+  private static final int DEPTH_LIMIT = 75;
+
   @Override
   @Nullable
   public NewVirtualFile findFileById(final int id) {
-    return _findFileById(id, false);
+    return _findFileById(id, false, ApplicationManager.getApplication().isInternal() ? new TIntArrayList(DEPTH_LIMIT) : null);
   }
 
   @Override
   public NewVirtualFile findFileByIdIfCached(final int id) {
-    return _findFileById(id, true);
+    return _findFileById(id, true, ApplicationManager.getApplication().isInternal() ? new TIntArrayList(DEPTH_LIMIT) : null);
   }
 
   @Nullable
-  private NewVirtualFile _findFileById(int id, final boolean cachedOnly) {
-    final NewVirtualFile cached = myIdToDirCache.get(id);
+  private NewVirtualFile _findFileById(int id, boolean cachedOnly, @Nullable TIntArrayList visited) {
+    NewVirtualFile cached = myIdToDirCache.get(id);
     if (cached != null) {
       return cached;
     }
 
-    NewVirtualFile result = doFindFile(id, cachedOnly);
+    if (visited != null) {
+      if (visited.size() < DEPTH_LIMIT) {
+        visited.add(id);
+      }
+      else {
+        StringBuilder sb = new StringBuilder("Dead loop detected in persistent FS:");
+        for (int i = 0; i < visited.size(); i++) {
+          int _id = visited.get(i);
+          sb.append("\n  ").append(_id).append(" '").append(getName(_id)).append("' ").append(String.format("%02x", getFileAttributes(_id)));
+        }
+        LOG.error(sb.toString());
+        return null;
+      }
+    }
+
+    NewVirtualFile result = doFindFile(id, cachedOnly, visited);
 
     if (result != null && result.isDirectory()) {
       NewVirtualFile old = myIdToDirCache.put(id, result);
@@ -881,7 +899,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   @Nullable
-  private NewVirtualFile doFindFile(final int id, boolean cachedOnly) {
+  private NewVirtualFile doFindFile(final int id, boolean cachedOnly, @Nullable TIntArrayList visited) {
     final int parentId = getParent(id);
     if (parentId == 0) {
       myRootsLock.readLock().lock();
@@ -893,7 +911,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       }
     }
     else {
-      NewVirtualFile parentFile = _findFileById(parentId, cachedOnly);
+      NewVirtualFile parentFile = _findFileById(parentId, cachedOnly, visited);
       if (parentFile == null) {
         return null;
       }
@@ -1122,6 +1140,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     FSRecords.setParent(fileId, newParentId);
   }
 
+  @Override
   public String getName(final int id) {
     assert id > 0;
     return FSRecords.getName(id);

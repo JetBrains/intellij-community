@@ -4,9 +4,11 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
+import org.jetbrains.jps.builders.ChunkBuildOutputConsumer;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.incremental.*;
@@ -21,14 +23,17 @@ import java.util.Set;
  * @author Eugene.Kudelevsky
  */
 public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
-  @NonNls private static final String BUILDER_NAME = "android-library-packager";
+  @NonNls private static final String BUILDER_NAME = "Android Library Packaging";
 
   protected AndroidLibraryPackagingBuilder() {
     super(BuilderCategory.CLASS_POST_PROCESSOR);
   }
 
   @Override
-  public ExitCode build(CompileContext context, ModuleChunk chunk, DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws ProjectBuildException {
+  public ExitCode build(CompileContext context,
+                        ModuleChunk chunk,
+                        DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
+                        ChunkBuildOutputConsumer outputConsumer) throws ProjectBuildException {
     if (chunk.containsTests() || !AndroidJpsUtil.containsAndroidFacet(chunk) || AndroidJpsUtil.isLightBuild(context)) {
       return ExitCode.NOTHING_DONE;
     }
@@ -65,7 +70,7 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
       }
 
       if (context.isMake()) {
-        final Set<String> dirtyOutputDirs = context.getUserData(AndroidDexBuilder.DIRTY_OUTPUT_DIRS);
+        final Set<String> dirtyOutputDirs = AndroidDexBuilder.DIRTY_OUTPUT_DIRS.get(context);
         assert dirtyOutputDirs != null;
         if (!dirtyOutputDirs.contains(classesDir.getPath())) {
           continue;
@@ -90,13 +95,9 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
     return success ? (doneSomething ? ExitCode.OK : ExitCode.NOTHING_DONE) : ExitCode.ABORT;
   }
 
+  @NotNull
   @Override
-  public String getName() {
+  public String getPresentableName() {
     return BUILDER_NAME;
-  }
-
-  @Override
-  public String getDescription() {
-    return "Android Library Packaging Builder";
   }
 }

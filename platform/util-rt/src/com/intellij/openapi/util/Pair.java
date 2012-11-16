@@ -17,19 +17,18 @@ package com.intellij.openapi.util;
 
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class Pair<A, B> {
   public final A first;
   public final B second;
 
   @NotNull
-  public static <A, B> Pair<A, B> create(@Nullable A first, @Nullable B second) {
+  public static <A, B> Pair<A, B> create(A first, B second) {
     return new Pair<A, B>(first, second);
   }
 
   @NotNull
-  public static <A, B> Function<A, Pair<A, B>> createFunction(@Nullable final B value) {
+  public static <A, B> Function<A, Pair<A, B>> createFunction(final B value) {
     return new Function<A, Pair<A, B>>() {
       public Pair<A, B> fun(A a) {
         return create(a, value);
@@ -37,15 +36,15 @@ public class Pair<A, B> {
     };
   }
 
-  public static <T> T getFirst(@Nullable Pair<T, ?> pair) {
+  public static <T> T getFirst(Pair<T, ?> pair) {
     return pair != null ? pair.first : null;
   }
 
-  public static <T> T getSecond(@Nullable Pair<?, T> pair) {
+  public static <T> T getSecond(Pair<?, T> pair) {
     return pair != null ? pair.second : null;
   }
 
-  @SuppressWarnings({"unchecked", "NullableProblems"})
+  @SuppressWarnings("unchecked")
   private static final Pair EMPTY = create(null, null);
 
   @SuppressWarnings("unchecked")
@@ -53,17 +52,15 @@ public class Pair<A, B> {
     return EMPTY;
   }
 
-  public Pair(@Nullable A first, @Nullable B second) {
+  public Pair(A first, B second) {
     this.first = first;
     this.second = second;
   }
 
-  @SuppressWarnings("ConstantConditions")
   public final A getFirst() {
     return first;
   }
 
-  @SuppressWarnings("ConstantConditions")
   public final B getSecond() {
     return second;
   }

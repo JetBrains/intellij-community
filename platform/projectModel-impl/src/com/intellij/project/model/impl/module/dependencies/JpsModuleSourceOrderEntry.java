@@ -45,6 +45,7 @@ public class JpsModuleSourceOrderEntry extends JpsOrderEntry<JpsModuleSourceDepe
     return ProjectBundle.message("project.root.module.source");
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getFiles(OrderRootType type) {
     if (OrderRootType.SOURCES.equals(type)) {
@@ -53,6 +54,7 @@ public class JpsModuleSourceOrderEntry extends JpsOrderEntry<JpsModuleSourceDepe
     return VirtualFile.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public String[] getUrls(OrderRootType type) {
     final ArrayList<String> result = new ArrayList<String>();

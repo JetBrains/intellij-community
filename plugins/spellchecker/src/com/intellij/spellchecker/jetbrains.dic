@@ -103,6 +103,7 @@ dumpfile
 dylib
 elseif
 elsif
+endregion
 enqueue
 enum
 enums
@@ -172,6 +173,7 @@ javascript
 javax
 jetbrains
 jndi
+jnilib
 jquery
 jsessionid
 json
@@ -375,6 +377,7 @@ scriptlets
 securefile
 serializable
 serializer
+serializers
 servererror
 servlet
 shader

@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
+import org.jetbrains.jps.builders.ChunkBuildOutputConsumer;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
@@ -52,7 +53,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   @NonNls private static final String ANDROID_RENDERSCRIPT_COMPILER = "android-renderscript-compiler";
   @NonNls private static final String ANDROID_BUILD_CONFIG_GENERATOR = "android-buildconfig-generator";
   @NonNls private static final String ANDROID_APT_COMPILER = "android-apt-compiler";
-  @NonNls private static final String BUILDER_NAME = "android-source-generator";
+  @NonNls private static final String BUILDER_NAME = "Android Source Generator";
 
   @NonNls private static final String AIDL_EXTENSION = "aidl";
   @NonNls private static final String RENDERSCRIPT_EXTENSION = "rs";
@@ -69,14 +70,10 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   }
 
   @Override
-  public String getName() {
-    return BUILDER_NAME;
-  }
-
-  @Override
   public ModuleLevelBuilder.ExitCode build(CompileContext context,
                                            ModuleChunk chunk,
-                                           DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws ProjectBuildException {
+                                           DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
+                                           ChunkBuildOutputConsumer outputConsumer) throws ProjectBuildException {
     if (chunk.containsTests() || !AndroidJpsUtil.containsAndroidFacet(chunk)) {
       return ExitCode.NOTHING_DONE;
     }
@@ -422,7 +419,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         if (messages.get(AndroidCompilerMessageKind.ERROR).size() > 0) {
           success = false;
         }
-        else {
+        else if (outputFile.exists()) {
           final SourceToOutputMapping sourceToOutputMap = context.getProjectDescriptor().dataManager.getSourceToOutputMap(buildTarget);
           sourceToOutputMap.setOutput(filePath, outputFilePath);
           FSOperations.markDirty(context, outputFile);
@@ -985,9 +982,10 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     return FileUtil.toSystemIndependentName(relPath).replace('/', '.');
   }
 
+  @NotNull
   @Override
-  public String getDescription() {
-    return "Android Source Generating Builder";
+  public String getPresentableName() {
+    return BUILDER_NAME;
   }
 
   // support for lib<->lib and app<->lib circular dependencies

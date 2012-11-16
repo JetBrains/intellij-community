@@ -197,7 +197,11 @@ public class ExportToFileUtil {
       panel.add(button, gbConstraints);
 
       String defaultFilePath = myExporter.getDefaultFilePath();
-      defaultFilePath = PathMacroManager.getInstance(myProject).collapsePath(defaultFilePath).replace('/', File.separatorChar);
+      if (! new File(defaultFilePath).isAbsolute()) {
+        defaultFilePath = PathMacroManager.getInstance(myProject).collapsePath(defaultFilePath).replace('/', File.separatorChar);
+      } else {
+        defaultFilePath = defaultFilePath.replace('/', File.separatorChar);
+      }
       textField.setText(defaultFilePath);
 
       button.addActionListener(

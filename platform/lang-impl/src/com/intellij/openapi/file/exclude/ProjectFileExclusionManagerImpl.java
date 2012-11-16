@@ -65,6 +65,7 @@ public class ProjectFileExclusionManagerImpl extends PersistentFileSetManager im
     });
   }
 
+  @Override
   public boolean isExcluded(VirtualFile file) {
     return containsFile(file);
   }

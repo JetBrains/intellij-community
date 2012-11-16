@@ -48,17 +48,21 @@
     <group id="OpenProjectGroup">
       <action id="NewProject" class="com.intellij.ide.actions.NewProjectAction"/>
       <action id="NewModule" class="com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction"/>
+      <action id="ImportProject" class="com.intellij.ide.actions.ImportProjectAction" text="Import Project..."/>
+      <action id="ImportModule" class="com.intellij.ide.actions.ImportModuleAction" text="Import Module..."/>
       <action id="OpenProject" class="com.intellij.ide.actions.OpenProjectAction"/>
 
       <add-to-group group-id="FileOpenGroup" anchor="first"/>
     </group>
     <action id="NewElement" class="com.intellij.ide.actions.NewElementAction">
-      <add-to-group group-id="OpenProjectGroup" anchor="after" relative-to-action="NewModule"/>
+      <add-to-group group-id="OpenProjectGroup" anchor="before" relative-to-action="OpenFile"/>
     </action>
 
-
-    <action id="SaveAsNewFormat" class="com.intellij.ide.actions.SaveAsDirectoryBasedFormatAction" text="Save as Directory-Based Format...">
+    <group>
       <add-to-group group-id="ExportImportGroup" anchor="first"/>
+    </group>
+    <action id="SaveAsNewFormat" class="com.intellij.ide.actions.SaveAsDirectoryBasedFormatAction" text="Save as Directory-Based Format...">
+      <add-to-group group-id="ExportImportGroup" anchor="last"/>
     </action>
 
     <!-- Edit -->
@@ -118,17 +122,16 @@
       <action id="Merge3Files" internal="true" class="com.intellij.openapi.diff.actions.MergeFilesAction"/>
       <separator/>
       <action internal="true" id="DecodeBytesAction" class="com.intellij.internal.encodings.DecodeBytesAction"/>
-      <separator/>
-      <action id="DumpExtensions" internal="true" text="Dump Extensions" class="com.intellij.internal.DumpExtensionsAction"/>
-      <action id="DumpInspectionDescriptions" internal="true" class="com.intellij.internal.DumpInspectionDescriptionsAction"/>
-      <action id="DumpIntentionsDescriptions" internal="true" class="com.intellij.internal.DumpIntentionsAction"/>
-      <action id="DumpConfigurationTypes" internal="true" class="com.intellij.internal.DumpConfigurationTypesAction"/>
-      <action id="DumpDirectoryIndex" internal="true" class="com.intellij.internal.DumpDirectoryInfoAction"/>
-      <separator/>
-      <action id="AddTestProcessAction" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessAction" text="Add Test Process"/>
-      <action id="AddTestProcessActionIndefinte" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessActionIndefinite" text="Add Test Process Indefinite"/>
-      <separator/>
-      <action id="TestGestureAction" class="com.intellij.openapi.keymap.impl.ui.TestGestureAction" text="Test Gesture Action"/>
+      <group id="Internal.Dump" text="Dump" internal="true" popup="true">
+        <action id="DumpExtensions" internal="true" text="Dump Extensions" class="com.intellij.internal.DumpExtensionsAction"/>
+        <action id="DumpInspectionDescriptions" internal="true" class="com.intellij.internal.DumpInspectionDescriptionsAction"/>
+        <action id="DumpIntentionsDescriptions" internal="true" class="com.intellij.internal.DumpIntentionsAction"/>
+        <action id="DumpConfigurationTypes" internal="true" class="com.intellij.internal.DumpConfigurationTypesAction"/>
+        <action id="DumpDirectoryIndex" internal="true" class="com.intellij.internal.DumpDirectoryInfoAction"/>
+        <action id="ScanSourceCommentsAction" internal="true" class="com.intellij.tools.ScanSourceCommentsAction"
+                text="Dump all comments in the project"/>
+      </group>
+
       <separator/>
       <group id="Internal.VFS" text="VFS" popup="true">
         <action id="VirtualFileInfo" internal="true" class="com.intellij.openapi.vfs.impl.local.VirtualFileInfoAction"/>
@@ -138,12 +141,13 @@
         <action id="LoadAllContent" internal="true" class="com.intellij.internal.LoadAllContentsAction" text="Load all files content"/>
         <action id="LoadAllVFSContent" internal="true" class="com.intellij.internal.LoadAllVfsStoredContentsAction" text="Load all VFS stored files content"/>
         <!--<action id="ComputeVFStatistics" internal="true" class="com.intellij.internal.ComputeVirtualFileNameStatAction"/>-->
+        <separator/>
+        <action internal="true" id="PruneEmptyDirectories" class="com.intellij.ide.actions.PruneEmptyDirectoriesAction" text="Prune Empty Directories"/>
+        <action internal="true" id="FixLineSeparators" class="com.intellij.ide.actions.FixLineSeparatorsAction" text="Fix Line Separators"/>
       </group>
 
       <separator/>
 
-      <action id="ScanSourceCommentsAction" internal="true" class="com.intellij.tools.ScanSourceCommentsAction"
-              text="Dump all comments in the project"/>
       <action internal="true" id="CompilerTest" class="com.intellij.compiler.impl.javaCompiler.api.CompilerPerfTestAction"
               text="Test Rebuild Performance"/>
       <action internal="true" id="GenerateDomModel" class="com.intellij.util.dom.generator.GenerateDomModelAction"
@@ -377,7 +381,8 @@
     <group id="WelcomeScreen.QuickStart.IDEA">
       <action id="WelcomeScreen.CreateNewProject" class="com.intellij.ide.actions.NewProjectAction"
               icon="AllIcons.General.CreateNewProject"/>
-      <action id="WelcomeScreen.OpenProject" class="com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenOpenProjectAction"
+      <action id="WelcomeScreen.ImportProject" class="com.intellij.ide.actions.ImportProjectAction" icon="AllIcons.General.ReopenRecentProject"/>
+      <action id="WelcomeScreen.OpenProject" class="com.intellij.ide.actions.OpenProjectAction"
               icon="AllIcons.General.OpenProject"/>
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
     </group>
@@ -413,11 +418,14 @@
     <group>
       <action id="CreateLibraryFromFile" class="com.intellij.ide.projectView.actions.MarkLibraryRootAction"/>
       <action id="ImportModuleFromImlFile" class="com.intellij.ide.projectView.actions.ImportModuleFromImlFileAction"/>
-
       <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" relative-to-action="MarkRootGroup" anchor="after"/>
     </group>
-    <action class="com.intellij.platform.templates.SaveProjectAsTemplateAction" text="Save Project as Template...">
+
+    <group>
+      <action class="com.intellij.platform.templates.SaveProjectAsTemplateAction" text="Save Project as Template..."/>
+      <action class="com.intellij.platform.templates.ManageProjectTemplatesAction" text="Manage Project Templates..."/>
       <add-to-group group-id="ToolsBasicGroup" anchor="after" relative-to-action="SaveFileAsTemplate"/>
-    </action>
+    </group>
+
   </actions>
 </component>

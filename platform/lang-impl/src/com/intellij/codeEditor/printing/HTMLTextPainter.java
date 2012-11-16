@@ -35,6 +35,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
@@ -84,7 +85,8 @@ class HTMLTextPainter {
 
     ArrayList<LineMarkerInfo> methodSeparators = new ArrayList<LineMarkerInfo>();
     if (document != null) {
-      final List<LineMarkerInfo> separators = FileSeparatorProvider.getInstance().getFileSeparators(psiFile, document);
+      final List<LineMarkerInfo> separators = FileSeparatorProvider.getInstance().getFileSeparators(psiFile, document,
+                                                                                                    PsiUtilBase.findEditor(psiFile));
       if (separators != null) {
         methodSeparators.addAll(separators);
       }

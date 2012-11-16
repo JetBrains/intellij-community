@@ -26,7 +26,7 @@ import java.awt.*;
 /**
  * @author beg
  */
-public class ScrollPaneFactory {
+public class ScrollPaneFactory implements ScrollPaneConstants {
   private ScrollPaneFactory() {
   }
 
@@ -42,7 +42,15 @@ public class ScrollPaneFactory {
     return new JBScrollPane(vsbPolicy, hsbPolicy);
   }
 
-  public static JScrollPane createScrollPane(Component view, int vsbPolicy, int hsbPolicy) {
+  public static JScrollPane createScrollPane(Component view,
+                                             @MagicConstant(intValues = {
+                                               VERTICAL_SCROLLBAR_ALWAYS,
+                                               VERTICAL_SCROLLBAR_AS_NEEDED,
+                                               VERTICAL_SCROLLBAR_NEVER}) int vsbPolicy,
+                                             @MagicConstant(intValues = {
+                                               HORIZONTAL_SCROLLBAR_ALWAYS,
+                                               HORIZONTAL_SCROLLBAR_AS_NEEDED,
+                                               HORIZONTAL_SCROLLBAR_NEVER}) int hsbPolicy) {
     return new JBScrollPane(view, vsbPolicy, hsbPolicy);
   }
 

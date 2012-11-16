@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses;
 import com.intellij.lang.ASTNode;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
@@ -50,62 +49,46 @@ public class GrTraditionalForClauseImpl extends GroovyPsiElementImpl implements 
   }
 
   public GrCondition getInitialization() {
-    final ASTNode first = getFirstSemicolon();
-    for (ASTNode child = getNode().getFirstChildNode(); child != null && child != first; child = child.getTreeNext()) {
-      if (child.getPsi() instanceof GrCondition) {
-        return (GrCondition)child.getPsi();
-      }
-    }
-    return null;
+    return getConditionInner(0);
   }
 
   public GrExpression getCondition() {
-    final ASTNode first = getFirstSemicolon();
-    if (first == null) return null;
-    for (ASTNode child = first.getTreeNext(); child != null; child = child.getTreeNext()) {
-      if (child.getPsi() instanceof GrExpression) {
-        return (GrExpression) child.getPsi();
-      }
-    }
-
-    return null;
+    final GrCondition condition = getConditionInner(1);
+    return condition instanceof GrExpression ? (GrExpression)condition : null;
   }
 
   public GrExpression getUpdate() {
-    final ASTNode second = getSecondSemicolon();
-    if (second == null) return null;
-
-    for (ASTNode child = second; child != null; child = child.getTreeNext()) {
-      if (child.getPsi() instanceof GrExpression) {
-        return (GrExpression)child.getPsi();
-      }
-    }
-    return null;
+    final GrCondition condition = getConditionInner(2);
+    return condition instanceof GrExpression ? (GrExpression)condition : null;
   }
 
-  @Nullable
-  private ASTNode getFirstSemicolon() {
+  private GrCondition getConditionInner(final int i) {
+    int passed = 0;
+    boolean waitForSemicolon = false;
+
     for (ASTNode child = getNode().getFirstChildNode(); child != null; child = child.getTreeNext()) {
       if (child.getElementType() == GroovyTokenTypes.mSEMI) {
-        return child;
-      }
-    }
+        if (waitForSemicolon) {
+          waitForSemicolon = false;
+        }
+        else {
+          if (passed == i) {
+            return null;
+          }
 
-    return null;
-  }
-
-  @Nullable
-  private ASTNode getSecondSemicolon() {
-    boolean firstPassed = false;
-    for (ASTNode child = getNode().getFirstChildNode(); child != null; child = child.getTreeNext()) {
-      if (child.getElementType() == GroovyTokenTypes.mSEMI) {
-        if (firstPassed) {
-          return child;
-        } else {
-          firstPassed = true;
+          passed++;
         }
       }
+      else if (child.getPsi() instanceof GrCondition) {
+        if (passed == i) {
+          return (GrCondition)child.getPsi();
+        }
+
+        passed++;
+        waitForSemicolon = true;
+      }
     }
+
     return null;
   }
 

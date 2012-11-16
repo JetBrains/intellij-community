@@ -8,11 +8,8 @@ import java.io.*;
 import java.util.Collection;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
+ * @author: db
  * Date: 29.01.11
- * Time: 21:10
- * To change this template use File | Settings | File Templates.
  */
 public class RW {
   private RW() {

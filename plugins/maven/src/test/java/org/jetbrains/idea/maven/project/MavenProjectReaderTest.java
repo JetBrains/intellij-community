@@ -1294,7 +1294,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testActivatingProfilesByEnvProperty() throws Exception {
-    String value = MavenUtil.getEnvProperties().getProperty(getEnvVar());
+    String value = System.getenv(getEnvVar());
 
     createProjectPom("<profiles>" +
                      "  <profile>" +

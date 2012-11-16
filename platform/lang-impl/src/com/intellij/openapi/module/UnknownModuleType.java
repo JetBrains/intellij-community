@@ -32,26 +32,32 @@ public class UnknownModuleType extends ModuleType {
     myModuleType = moduleType;
   }
 
+  @Override
   public ModuleBuilder createModuleBuilder() {
     return myModuleType.createModuleBuilder();
   }
 
+  @Override
   public String getName() {
     return ProjectBundle.message("module.type.unknown.name", myModuleType.getName());
   }
 
+  @Override
   public String getDescription() {
     return myModuleType.getDescription();
   }
 
+  @Override
   public Icon getBigIcon() {
     return myModuleType.getBigIcon();
   }
 
+  @Override
   public Icon getNodeIcon(boolean isOpened) {
     return myModuleType.getIcon();
   }
 
+  @Override
   public ModuleWizardStep[] createWizardSteps(final WizardContext wizardContext, final ModuleBuilder moduleBuilder, final ModulesProvider modulesProvider) {
     return myModuleType.createWizardSteps(wizardContext, moduleBuilder, modulesProvider);
   }

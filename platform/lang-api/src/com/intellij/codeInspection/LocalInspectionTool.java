@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,10 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/*
- * @author max
  */
 package com.intellij.codeInspection;
 
@@ -31,9 +27,18 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @author max
+ */
 public abstract class LocalInspectionTool extends InspectionProfileEntry {
   public static final LocalInspectionTool[] EMPTY_ARRAY = new LocalInspectionTool[0];
+
   private static final Logger LOG = Logger.getInstance("#" + LocalInspectionTool.class.getName());
+
+  interface LocalDefaultNameProvider extends DefaultNameProvider {
+    @Nullable String getDefaultID();
+    @Nullable String getDefaultAlternativeID();
+  }
 
   /**
    * Pattern used for inspection ID validation.
@@ -56,12 +61,21 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   @NonNls
   @NotNull
   public String getID() {
+    if (myNameProvider instanceof LocalDefaultNameProvider) {
+      final String id = ((LocalDefaultNameProvider)myNameProvider).getDefaultID();
+      if (id != null) {
+        return id;
+      }
+    }
     return getShortName();
   }
 
   @NonNls
   @Nullable
   public String getAlternativeID() {
+    if (myNameProvider instanceof LocalDefaultNameProvider) {
+      return ((LocalDefaultNameProvider)myNameProvider).getDefaultAlternativeID();
+    }
     return null;
   }
 

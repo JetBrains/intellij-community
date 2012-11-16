@@ -45,7 +45,7 @@ xmlrpc-2.0.jar
 xpp3-1.1.4-min.jar
 xstream-1.4.3.jar
 swingx-core-1.6.2.jar
-netty-3.5.8.Final.jar
+netty-3.5.10.Final.jar
 protobuf-2.4.1.jar
 rhino-js-1_7R4.jar
 proxy-vole_20120920.jar

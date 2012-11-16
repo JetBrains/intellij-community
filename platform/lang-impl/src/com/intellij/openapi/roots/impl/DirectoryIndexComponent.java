@@ -22,10 +22,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModuleRootAdapter;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
@@ -33,6 +30,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -111,18 +109,24 @@ public class DirectoryIndexComponent extends DirectoryIndexImpl {
       myState = updateStateWithNewFile(file, parent);
     }
 
-    private IndexState updateStateWithNewFile(VirtualFile file, VirtualFile parent) {
+    @NotNull
+    private IndexState updateStateWithNewFile(@NotNull VirtualFile file, @NotNull VirtualFile parent) {
       final IndexState originalState = myState;
       IndexState state = originalState;
-      DirectoryInfo parentInfo = originalState.myDirToInfoMap.get(parent);
+      int parentId = getId(parent);
+      DirectoryInfo parentInfo = originalState.myDirToInfoMap.get(parentId);
 
       // fill info for all nested roots
       for (Module eachModule : ModuleManager.getInstance(myProject).getModules()) {
         for (ContentEntry eachRoot : getContentEntries(eachModule)) {
-          if (parentInfo != null && eachRoot == parentInfo.contentRoot) continue;
+          if (parentInfo != null) {
+            VirtualFile contFile = eachRoot.getFile();
+            if (contFile != null && contFile.equals(parentInfo.getContentRoot())) continue;
+          }
 
-          if (FileUtil.startsWith(eachRoot.getUrl(), file.getUrl())) {
-            String rel = FileUtil.getRelativePath(file.getUrl(), eachRoot.getUrl(), '/');
+          String url = eachRoot.getUrl();
+          if (FileUtil.startsWith(url, file.getUrl())) {
+            String rel = FileUtil.getRelativePath(file.getUrl(), url, '/');
             if (rel != null) {
               VirtualFile f = file.findFileByRelativePath(rel);
               if (f != null) {
@@ -136,36 +140,37 @@ public class DirectoryIndexComponent extends DirectoryIndexImpl {
 
       if (parentInfo == null) return state;
 
-      Module module = parentInfo.module;
+      Module module = parentInfo.getModule();
 
       for (DirectoryIndexExcludePolicy policy : myExcludePolicies) {
         if (policy.isExcludeRoot(file)) return state;
       }
 
       if (state == originalState) state = state.copy();
-      state.fillMapWithModuleContent(file, module, parentInfo.contentRoot, null);
+      state.fillMapWithModuleContent(file, module, parentInfo.getContentRoot(), null);
 
-      String parentPackage = state.myDirToPackageName.get(parent);
+      String parentPackage = state.myDirToPackageName.get(parentId);
 
       if (module != null) {
-        if (parentInfo.isInModuleSource) {
+        if (parentInfo.isInModuleSource()) {
           String newDirPackageName = getPackageNameForSubdir(parentPackage, file.getName());
-          state.fillMapWithModuleSource(file, module, newDirPackageName, parentInfo.sourceRoot, parentInfo.isTestSource, null);
+          state.fillMapWithModuleSource(file, module, newDirPackageName, parentInfo.getSourceRoot(), parentInfo.isTestSource(), null);
         }
       }
 
-      if (parentInfo.libraryClassRoot != null) {
+      if (parentInfo.hasLibraryClassRoot()) {
         String newDirPackageName = getPackageNameForSubdir(parentPackage, file.getName());
-        state.fillMapWithLibraryClasses(file, newDirPackageName, parentInfo.libraryClassRoot, null);
+        state.fillMapWithLibraryClasses(file, newDirPackageName, parentInfo.getLibraryClassRoot(), null);
       }
 
-      if (parentInfo.isInLibrarySource) {
+      if (parentInfo.isInLibrarySource()) {
         String newDirPackageName = getPackageNameForSubdir(parentPackage, file.getName());
-        state.fillMapWithLibrarySources(file, newDirPackageName, parentInfo.sourceRoot, null);
+        state.fillMapWithLibrarySources(file, newDirPackageName, parentInfo.getSourceRoot(), null);
       }
 
-      if (!parentInfo.getOrderEntries().isEmpty()) {
-        state.fillMapWithOrderEntries(file, parentInfo.getOrderEntries(), null, null, null, parentInfo, null);
+      OrderEntry[] entries = parentInfo.getOrderEntries();
+      if (entries.length != 0) {
+        state.fillMapWithOrderEntries(file, entries, null, null, null, parentInfo, null);
       }
       return state;
     }
@@ -174,7 +179,7 @@ public class DirectoryIndexComponent extends DirectoryIndexImpl {
     public void beforeFileDeletion(VirtualFileEvent event) {
       VirtualFile file = event.getFile();
       if (!file.isDirectory()) return;
-      if (!myState.myDirToInfoMap.containsKey(file)) return;
+      if (!myState.myDirToInfoMap.containsKey(getId(file))) return;
 
       final IndexState state = myState.copy();
 
@@ -185,7 +190,7 @@ public class DirectoryIndexComponent extends DirectoryIndexImpl {
     }
 
     private void addDirsRecursively(IndexState state, ArrayList<VirtualFile> list, VirtualFile dir) {
-      if (!state.myDirToInfoMap.containsKey(dir) || !(dir instanceof NewVirtualFile)) return;
+      if (!(dir instanceof NewVirtualFile) || !state.myDirToInfoMap.containsKey(getId(dir))) return;
 
       list.add(dir);
 
@@ -204,11 +209,12 @@ public class DirectoryIndexComponent extends DirectoryIndexImpl {
 
       IndexState copy = null;
       for (VirtualFile dir : list) {
-        if (myState.myDirToInfoMap.containsKey(dir)) {
+        int id = getId(dir);
+        if (myState.myDirToInfoMap.containsKey(id)) {
           if (copy == null) copy = myState.copy();
 
-          copy.myDirToInfoMap.remove(dir);
-          copy.setPackageName(dir, null);
+          copy.myDirToInfoMap.remove(id);
+          copy.setPackageName(id, null);
         }
       }
 
@@ -235,5 +241,4 @@ public class DirectoryIndexComponent extends DirectoryIndexImpl {
       }
     }
   }
-
 }

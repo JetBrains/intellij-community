@@ -154,7 +154,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
       return;
     }
 
-    ArrangementCompositeMatchCondition composite = new ArrangementCompositeMatchCondition(ArrangementOperator.AND);
+    ArrangementCompositeMatchCondition composite = new ArrangementCompositeMatchCondition();
     for (Object condition : conditions) {
       composite.addOperand(new ArrangementAtomMatchCondition(ArrangementUtil.parseType(condition), condition));
     }
@@ -201,7 +201,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     root.accept(new JavaArrangementVisitor(parseInfo, document, ranges, getGroupingRules(settings)));
     if (settings != null) {
       for (ArrangementGroupingRule rule : settings.getGroupings()) {
-        switch (rule.getRule()) {
+        switch (rule.getGroupingType()) {
           case GETTERS_AND_SETTERS:
             setupGettersAndSetters(parseInfo);
             break;
@@ -285,7 +285,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     Set<ArrangementGroupingType> groupingRules = EnumSet.noneOf(ArrangementGroupingType.class);
     if (settings != null) {
       for (ArrangementGroupingRule rule : settings.getGroupings()) {
-        groupingRules.add(rule.getRule());
+        groupingRules.add(rule.getGroupingType());
       }
     }
     return groupingRules;
@@ -374,6 +374,11 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
   @Override
   public StdArrangementSettings getDefaultSettings() {
     return DEFAULT_SETTINGS;
+  }
+
+  @Override
+  public boolean isNameFilterSupported() {
+    return true;
   }
 
   @Override

@@ -25,6 +25,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+
 public abstract class JavaDirectoryService {
   public static JavaDirectoryService getInstance() {
     return ServiceManager.getService(JavaDirectoryService.class);
@@ -74,6 +76,15 @@ public abstract class JavaDirectoryService {
    *  false leave them blank
    */
   public abstract PsiClass createClass(@NotNull PsiDirectory dir, @NotNull String name, @NotNull String templateName, boolean askForUndefinedVariables) throws IncorrectOperationException;
+
+  /**
+   * @param additionalProperties additional properties to be substituted in the template
+   */
+  public abstract PsiClass createClass(@NotNull PsiDirectory dir,
+                                       @NotNull String name,
+                                       @NotNull String templateName,
+                                       boolean askForUndefinedVariables,
+                                       @NotNull final Map<String, String> additionalProperties) throws IncorrectOperationException;
 
   /**
    * Checks if it's possible to create a class with the specified name in the directory,

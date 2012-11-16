@@ -9,6 +9,8 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
+import com.intellij.codeInsight.template.macro.ClassNameCompleteMacro
+import com.intellij.codeInsight.template.macro.CompleteMacro
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.CommandProcessor
@@ -134,6 +136,43 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     checkResult();
   }
 
+  public void "test honor custom completion caret placement"() {
+    myFixture.configureByText 'a.java', '''
+class Foo {
+  void foo(int a) {}
+  { <caret> }
+}
+'''
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("frm", "user", '$VAR$');
+    template.addVariable('VAR', new MacroCallNode(new CompleteMacro()), new EmptyNode(), true)
+    manager.startTemplate(getEditor(), template);
+    myFixture.type('fo\n')
+    myFixture.checkResult '''
+class Foo {
+  void foo(int a) {}
+  { foo(<caret>); }
+}
+'''
+    assert !state.finished
+  }
+
+  public void "_test non-imported classes in className macro"() {
+    myFixture.addClass('package bar; public class Bar {}')
+    myFixture.configureByText 'a.java', '''
+class Foo {
+  void foo(int a) {}
+  { <caret> }
+}
+'''
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("frm", "user", '$VAR$');
+    template.addVariable('VAR', new MacroCallNode(new ClassNameCompleteMacro()), new EmptyNode(), true)
+    manager.startTemplate(getEditor(), template);
+    assert !state.finished
+    assert 'Bar' in myFixture.lookupElementStrings
+  }
+
   private Editor getEditor() {
     return myFixture.getEditor();
   }
@@ -234,6 +273,13 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     configure();
     startTemplate("iter", "iterations")
     stripTrailingSpaces();
+    checkResult();
+  }
+
+  public void testAsListToar() {
+    configure();
+    startTemplate("toar", "other")
+    myFixture.type('\n\t')
     checkResult();
   }
 

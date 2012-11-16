@@ -15,27 +15,35 @@
  */
 package git4idea.push;
 
+import com.intellij.openapi.diagnostic.Logger;
 import git4idea.GitLocalBranch;
+import git4idea.GitLogger;
 import git4idea.GitRemoteBranch;
-import git4idea.repo.GitRemote;
+import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Kirill Likhodedov
  */
 public class GitPushSpec {
 
-  @NotNull private final GitLocalBranch mySource;
-  @NotNull private final GitRemoteBranch myDest;
+  private static final Logger LOG = GitLogger.PUSH_LOG;
 
-  GitPushSpec(@NotNull GitLocalBranch source, @NotNull GitRemoteBranch dest) {
-    myDest = dest;
-    mySource = source;
-  }
+  @NotNull private final GitLocalBranch mySource;
+  @Nullable private final GitRemoteBranch myDest;
 
   @NotNull
-  public GitRemote getRemote() {
-    return myDest.getRemote();
+  public static GitPushSpec collect(GitRepository repository) {
+    repository.update();
+    GitLocalBranch currentBranch = repository.getCurrentBranch();
+    LOG.assertTrue(currentBranch != null, "Push shouldn't be available in the detached HEAD state");
+    return new GitPushSpec(currentBranch, currentBranch.findTrackedBranch(repository));
+  }
+
+  GitPushSpec(@NotNull GitLocalBranch source, @Nullable GitRemoteBranch dest) {
+    myDest = dest;
+    mySource = source;
   }
 
   @NotNull
@@ -43,7 +51,12 @@ public class GitPushSpec {
     return mySource;
   }
 
-  @NotNull
+  /**
+   * Returns the destination branch: branch on the remote which the source branch will be pushed to.
+   * @return destination branch or null if no destination branch has been defined (i. e. if there is no current branch, and no branch has
+   * been defined via the Push dialog).
+   */
+  @Nullable
   public GitRemoteBranch getDest() {
     return myDest;
   }
@@ -52,4 +65,25 @@ public class GitPushSpec {
   public String toString() {
     return mySource + "->" + myDest;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    GitPushSpec spec = (GitPushSpec)o;
+
+    if (myDest != null ? !myDest.equals(spec.myDest) : spec.myDest != null) return false;
+    if (!mySource.equals(spec.mySource)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = mySource.hashCode();
+    result = 31 * result + (myDest != null ? myDest.hashCode() : 0);
+    return result;
+  }
+
 }

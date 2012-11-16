@@ -15,12 +15,20 @@
  */
 package com.intellij.designer.palette;
 
+import com.intellij.designer.componentTree.TreeTransfer;
+import com.intellij.designer.designSurface.DesignerEditorPanel;
+import com.intellij.ide.dnd.DnDAction;
+import com.intellij.ide.dnd.DnDDragStartBean;
+import com.intellij.ide.dnd.DnDManager;
+import com.intellij.ide.dnd.DnDSource;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicListUI;
@@ -35,12 +43,14 @@ import java.awt.event.MouseListener;
  */
 public class PaletteItemsComponent extends JBList {
   private final PaletteGroup myGroup;
+  private final DesignerEditorPanel myDesigner;
   private int myBeforeClickSelectedRow = -1;
   private boolean myNeedClearSelection;
   private Integer myTempWidth;
 
-  public PaletteItemsComponent(PaletteGroup group) {
+  public PaletteItemsComponent(PaletteGroup group, @Nullable DesignerEditorPanel designer) {
     myGroup = group;
+    myDesigner = designer;
 
     setModel(new AbstractListModel() {
       @Override
@@ -93,7 +103,7 @@ public class PaletteItemsComponent extends JBList {
         setToolTipText(tooltip);
       }
     };
-    renderer.getIpad().left = UIUtil.getTreeLeftChildIndent();
+    renderer.getIpad().left = 2 * UIUtil.getTreeLeftChildIndent();
     renderer.getIpad().right = UIUtil.getTreeRightChildIndent();
     setCellRenderer(renderer);
 
@@ -120,6 +130,39 @@ public class PaletteItemsComponent extends JBList {
         }
       }
     });
+
+    setDragEnabled(true);
+    setTransferHandler(new TreeTransfer(PaletteItem.class));
+    DnDManager.getInstance().registerSource(new DnDSource() {
+      @Override
+      public boolean canStartDragging(DnDAction action, Point dragOrigin) {
+        int index = locationToIndex(dragOrigin);
+        if (index != -1 && myDesigner != null) {
+          PaletteItem paletteItem = myGroup.getItems().get(index);
+          myDesigner.activatePaletteItem(paletteItem);
+        }
+        return false;
+      }
+
+      @Override
+      public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
+        return null;
+      }
+
+      @Nullable
+      @Override
+      public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
+        return null;
+      }
+
+      @Override
+      public void dragDropEnd() {
+      }
+
+      @Override
+      public void dropActionChanged(int gestureModifiers) {
+      }
+    }, this);
 
     initActions();
   }

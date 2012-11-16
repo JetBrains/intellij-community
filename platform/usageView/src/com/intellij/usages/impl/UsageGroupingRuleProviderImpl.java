@@ -120,7 +120,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
   private static class GroupByUsageTypeAction extends RuleAction {
     private GroupByUsageTypeAction(UsageViewImpl view) {
-      super(view, UsageViewBundle.message("action.group.by.usage.type"), AllIcons.Ant.Filter); //TODO: special icon
+      super(view, UsageViewBundle.message("action.group.by.usage.type"), AllIcons.General.Filter); //TODO: special icon
     }
     @Override
     protected boolean getOptionValue() {

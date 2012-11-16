@@ -61,34 +61,41 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
     myTitleLabel.setText(myTitleLabel.getText().replace("$productName", ApplicationNamesInfo.getInstance().getFullProductName()));
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return IdeBundle.message("file.encodings.configurable");
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getHelpTopic() {
     return "reference.settingsdialog.project.file.encodings";
   }
 
+  @Override
   @NotNull
   public String getId() {
     return "File.Encoding";
   }
 
+  @Override
   public Runnable enableSearch(final String option) {
     return null;
   }
 
+  @Override
   public JComponent createComponent() {
     myAction = new ChooseFileEncodingAction(null) {
+      @Override
       public void update(final AnActionEvent e) {
         getTemplatePresentation().setEnabled(true);
         getTemplatePresentation().setText(mySelectedCharsetForPropertiesFiles == null ? SYSTEM_DEFAULT :
                                           mySelectedCharsetForPropertiesFiles.displayName());
       }
 
+      @Override
       protected void chosen(final VirtualFile virtualFile, final Charset charset) {
         mySelectedCharsetForPropertiesFiles = charset == NO_ENCODING ? null : charset;
         update((AnActionEvent)null);
@@ -103,6 +110,7 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
     return myPanel;
   }
 
+  @Override
   public boolean isModified() {
     if (isEncodingModified()) return true;
     EncodingProjectManager encodingManager = EncodingProjectManager.getInstance(myProject);
@@ -126,6 +134,7 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
     return !Comparing.equal(item, EncodingManager.getInstance().getDefaultCharset());
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     Map<VirtualFile,Charset> result = myTreeView.getValues();
     EncodingProjectManager encodingManager = EncodingProjectManager.getInstance(myProject);
@@ -143,6 +152,7 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
     }
   }
 
+  @Override
   public void reset() {
     EncodingProjectManager encodingManager = EncodingProjectManager.getInstance(myProject);
     myTreeView.reset(encodingManager.getAllMappings());
@@ -164,6 +174,7 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
     }
  }
 
+  @Override
   public void disposeUIResources() {
     myAction = null;
   }
@@ -176,6 +187,7 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
     myTreePanel = ScrollPaneFactory.createScrollPane(new JBTable());
   }
 
+  @Override
   public boolean needDisplay() {
     // TODO[yole] cleaner API
     return !PlatformUtils.isRubyMine();

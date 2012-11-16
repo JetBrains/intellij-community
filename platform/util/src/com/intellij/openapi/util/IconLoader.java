@@ -59,10 +59,20 @@ public final class IconLoader {
     ourDeprecatedIconsReplacements.put("/actions/showSettings.png", "AllIcons.General.ProjectSettings");
     ourDeprecatedIconsReplacements.put("/general/ideOptions.png", "AllIcons.General.Settings");
     ourDeprecatedIconsReplacements.put("/general/applicationSettings.png", "AllIcons.General.Settings");
+    ourDeprecatedIconsReplacements.put("/toolbarDecorator/add.png", "AllIcons.General.Add");
     ourDeprecatedIconsReplacements.put("/vcs/customizeView.png", "AllIcons.General.Settings");
 
     ourDeprecatedIconsReplacements.put("/vcs/refresh.png", "AllIcons.Actions.Refresh");
     ourDeprecatedIconsReplacements.put("/actions/sync.png", "AllIcons.Actions.Refresh");
+
+    ourDeprecatedIconsReplacements.put("/compiler/error.png", "AllIcons.General.Error");
+    ourDeprecatedIconsReplacements.put("/compiler/hideWarnings.png", "AllIcons.General.HideWarnings");
+    ourDeprecatedIconsReplacements.put("/compiler/information.png", "AllIcons.General.Information");
+    ourDeprecatedIconsReplacements.put("/compiler/warning.png", "AllIcons.General.Warning");
+    ourDeprecatedIconsReplacements.put("/ide/errorSign.png", "AllIcons.General.Error");
+
+    ourDeprecatedIconsReplacements.put("/ant/filter.png", "AllIcons.General.Filter");
+    ourDeprecatedIconsReplacements.put("/inspector/useFilter.png", "AllIcons.General.Filter");
   }
 
   private static final ImageIcon EMPTY_ICON = new ImageIcon(new BufferedImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)) {
@@ -254,7 +264,7 @@ public final class IconLoader {
   }
 
   private static Image createDisabled(BufferedImage image) {
-    final GrayFilter filter = new GrayFilter(true, UIUtil.isUnderDarcula() ? 30 : 65);
+    final GrayFilter filter = UIUtil.getGrayFilter();
     final ImageProducer prod = new FilteredImageSource(image.getSource(), filter);
     return Toolkit.getDefaultToolkit().createImage(prod);
   }

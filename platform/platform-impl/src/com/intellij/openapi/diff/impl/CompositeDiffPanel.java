@@ -23,6 +23,7 @@ import com.intellij.openapi.diff.impl.external.DiscloseMultiRequest;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -45,7 +46,7 @@ public class CompositeDiffPanel implements DiffViewer {
   private final Disposable myParentDisposable;
   private final Map<String, DiffViewer> myMap;
 
-  public CompositeDiffPanel(Project project, final DiscloseMultiRequest request, final Window window, final Disposable parentDisposable) {
+  public CompositeDiffPanel(Project project, final DiscloseMultiRequest request, final Window window, @NotNull Disposable parentDisposable) {
     myRequest = request;
     myWindow = window;
     myParentDisposable = parentDisposable;

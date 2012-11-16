@@ -28,11 +28,8 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
+ * @author: db
  * Date: 08.03.11
- * Time: 15:38
- * To change this template use File | Settings | File Templates.
  */
 class IntObjectPersistentMultiMaplet<V extends Streamable> extends IntObjectMultiMaplet<V> {
   private static final Collection NULL_COLLECTION = Collections.emptySet();

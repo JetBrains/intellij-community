@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,9 +58,9 @@ public class HyperlinkLabel extends HighlightableComponent {
 
   public HyperlinkLabel(String text) {
     this(text,
-         UIUtil.isUnderDarcula() ? DarculaColors.BLUE : Color.BLUE,
+         PlatformColors.BLUE,
          UIUtil.getLabelBackground(),
-         UIUtil.isUnderDarcula() ? DarculaColors.BLUE : Color.BLUE);
+         PlatformColors.BLUE);
   }
 
   public HyperlinkLabel(String text, final Color textForegroundColor, final Color textBackgroundColor, final Color textEffectColor) {

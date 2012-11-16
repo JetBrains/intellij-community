@@ -39,7 +39,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ArrayUtil;
@@ -75,7 +74,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
    */
   private int[] errorCount;
 
-  public TrafficLightRenderer(Project project, Document document, PsiFile file) {
+  public TrafficLightRenderer(@Nullable Project project, Document document, PsiFile file) {
     myProject = project;
     myDaemonCodeAnalyzer = project == null ? null : (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
     myDocument = document;
@@ -116,21 +115,25 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     errorCount = newErrors;
   }
 
-  public static void setOrRefreshErrorStripeRenderer(@NotNull EditorMarkupModel editorMarkupModel, @NotNull Project project, Document document, PsiFile file) {
+  public static void setOrRefreshErrorStripeRenderer(@NotNull EditorMarkupModel editorMarkupModel,
+                                                     @NotNull Project project,
+                                                     @NotNull Document document,
+                                                     PsiFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (editorMarkupModel.isErrorStripeVisible()) {
-      ErrorStripeRenderer renderer = editorMarkupModel.getErrorStripeRenderer();
-      if (renderer instanceof TrafficLightRenderer) {
-        TrafficLightRenderer tlr = (TrafficLightRenderer)renderer;
-        tlr.refresh();
-        ((EditorMarkupModelImpl)editorMarkupModel).repaintVerticalScrollBar();
-        if (tlr.myFile == null || tlr.myFile.isValid()) return;
-        Disposer.dispose(tlr);
-      }
-      renderer = new TrafficLightRenderer(project, document, file);
-      Disposer.register(((EditorImpl)editorMarkupModel.getEditor()).getDisposable(), (Disposable)renderer);
-      editorMarkupModel.setErrorStripeRenderer(renderer);
+    if (!editorMarkupModel.isErrorStripeVisible() || !DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(file)) {
+      return;
     }
+    ErrorStripeRenderer renderer = editorMarkupModel.getErrorStripeRenderer();
+    if (renderer instanceof TrafficLightRenderer) {
+      TrafficLightRenderer tlr = (TrafficLightRenderer)renderer;
+      tlr.refresh();
+      ((EditorMarkupModelImpl)editorMarkupModel).repaintVerticalScrollBar();
+      if (tlr.myFile == null || tlr.myFile.isValid()) return;
+      Disposer.dispose(tlr);
+    }
+    renderer = new TrafficLightRenderer(project, document, file);
+    Disposer.register(((EditorImpl)editorMarkupModel.getEditor()).getDisposable(), (Disposable)renderer);
+    editorMarkupModel.setErrorStripeRenderer(renderer);
   }
 
   @Override

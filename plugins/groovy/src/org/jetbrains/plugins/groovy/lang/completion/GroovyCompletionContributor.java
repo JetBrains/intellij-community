@@ -358,8 +358,9 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
   private static boolean couldContainReference(PsiElement position) {
     return IN_CATCH_TYPE.accepts(position) ||
-               AFTER_AT.accepts(position) ||
-               GroovyCompletionUtil.isFirstElementAfterPossibleModifiersInVariableDeclaration(position, true);
+           AFTER_AT.accepts(position) ||
+           GroovyCompletionUtil.isFirstElementAfterPossibleModifiersInVariableDeclaration(position, true) ||
+           GroovyCompletionUtil.isTupleVarNameWithoutTypeDeclared(position);
   }
 
   public static boolean isClassNamePossible(PsiElement position) {
@@ -731,6 +732,10 @@ public class GroovyCompletionContributor extends CompletionContributor {
     if (iterator.atEnd()) return false;
 
     if (iterator.getTokenType() == mIDENT) {
+      iterator.advance();
+    }
+
+    while (!iterator.atEnd() && WHITE_SPACES_OR_COMMENTS.contains(iterator.getTokenType())) {
       iterator.advance();
     }
 

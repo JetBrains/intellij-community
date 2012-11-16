@@ -18,6 +18,7 @@ package com.intellij.util;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileProvider;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -50,10 +51,10 @@ public class PathUtil {
     if (!file.isValid()) {
       return file;
     }
-    if (file.getFileSystem().getProtocol().equals(StandardFileSystems.JAR_PROTOCOL)) {
-      final VirtualFile jarFile = StandardFileSystems.getVirtualFileForJar(file);
-      if (jarFile != null) {
-        return jarFile;
+    if (file.getFileSystem() instanceof LocalFileProvider) {
+      final VirtualFile localFile = ((LocalFileProvider)file.getFileSystem()).getLocalVirtualFileFor(file);
+      if (localFile != null) {
+        return localFile;
       }
     }
     return file;

@@ -17,15 +17,12 @@ package com.intellij.openapi.diff.impl.incrementalMerge;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.impl.DiffUtil;
+import com.intellij.openapi.diff.impl.DiffLineMarkerRenderer;
 import com.intellij.openapi.diff.impl.util.GutterActionRenderer;
 import com.intellij.openapi.diff.impl.util.TextDiffType;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.*;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,7 +78,7 @@ class ChangeHighlighterHolder {
     RangeHighlighter highlighter = getMarkupModel().addLineHighlighter(line, layer, null);
     highlighter.setLineSeparatorColor(diffType.getTextBackground(myEditor));
     highlighterCreated(highlighter, diffType.getTextAttributes(myEditor), applied);
-    highlighter.setLineMarkerRenderer(new ChangesColoringLineMarkerRenderer(diffType));
+    highlighter.setLineMarkerRenderer(DiffLineMarkerRenderer.createInstance(diffType));
     return highlighter;
   }
 
@@ -92,7 +89,7 @@ class ChangeHighlighterHolder {
     TextAttributes attributes = type.getTextAttributes(myEditor);
     RangeHighlighter highlighter = getMarkupModel().addRangeHighlighter(start, end, layer, attributes, targetArea);
     highlighterCreated(highlighter, attributes, applied);
-    highlighter.setLineMarkerRenderer(new ChangesColoringLineMarkerRenderer(type));
+    highlighter.setLineMarkerRenderer(DiffLineMarkerRenderer.createInstance(type));
     return highlighter;
   }
 
@@ -152,46 +149,5 @@ class ChangeHighlighterHolder {
     LOG.assertTrue(myEditor != null);
     removeHighlighters();
     setHighlighter(changeSide, type);
-  }
-
-  /**
-   * Expands the change highlighters to the editor's gutter.
-   */
-  private class ChangesColoringLineMarkerRenderer implements LineMarkerRenderer {
-    private final TextDiffType myDiffType;
-
-    public ChangesColoringLineMarkerRenderer(@NotNull TextDiffType diffType) {
-      myDiffType = diffType;
-    }
-
-    @Override
-    public void paint(Editor editor, Graphics g, Rectangle range) {
-      Color color = myDiffType.getPolygonColor(myEditor);
-      if (color == null) {
-        return;
-      }
-
-      EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
-      Graphics2D g2 = (Graphics2D)g;
-      int x = 0;
-      int y = range.y;
-      int width = gutter.getWidth();
-      int height = range.height;
-
-      if (!myDiffType.isApplied()) {
-        if (height > 2) {
-          g.setColor(color);
-          g.fillRect(x, y, width, height);
-          UIUtil.drawFramingLines(g2, x, x + width, y - 1, y + height - 1, color.darker());
-        }
-        else {
-          // insertion or deletion, when a range is null. matching the text highlighter which is a 2 pixel line
-          DiffUtil.drawDoubleShadowedLine(g2, x, x + width, y - 1, color);
-        }
-      }
-      else {
-        DiffUtil.drawBoldDottedFramingLines(g2, x, x + width, y - 1, y + height - 1, color);
-      }
-    }
   }
 }

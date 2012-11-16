@@ -25,7 +25,6 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.Pair;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.WebProjectGenerator;
 import org.jetbrains.annotations.NotNull;
@@ -76,10 +75,8 @@ public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> imple
       @Nullable
       @Override
       public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep) {
-        Pair<String, JComponent> pair = myPeer.getValue().getSettingsField();
-        if (pair != null) {
-          settingsStep.addSettingsField(pair.first, pair.second);
-        }
+        GeneratorPeer<T> peer = myPeer.getValue();
+        peer.buildUI(settingsStep);
         return new ModuleWizardStep() {
           @Override
           public JComponent getComponent() {

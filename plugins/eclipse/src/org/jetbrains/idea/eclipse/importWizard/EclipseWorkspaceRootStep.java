@@ -45,8 +45,6 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
   private ProjectFormatPanel myProjectFormatPanel;
   private JPanel myFormatPanel;
 
-
-  private EclipseProjectWizardContext myContext;
   private EclipseImportBuilder.Parameters myParameters;
 
 
@@ -112,12 +110,13 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
   }
 
   public void updateStep() {
-    String path = getContext().getRootDirectory();
+    String path = getBuilder().getFileToImport();
     if (path == null) {
       if (getWizardContext().isProjectFileDirectorySet() || !PropertiesComponent.getInstance().isValueSet(_ECLIPSE_PROJECT_DIR)) {
         path = getWizardContext().getProjectFileDirectory();
-      } else {
-        path =  PropertiesComponent.getInstance().getValue(_ECLIPSE_PROJECT_DIR);
+      }
+      else {
+        path = PropertiesComponent.getInstance().getValue(_ECLIPSE_PROJECT_DIR);
       }
     }
     myWorkspaceRootComponent.setText(path.replace('/', File.separatorChar));
@@ -163,10 +162,7 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
   }
 
   public EclipseProjectWizardContext getContext() {
-    if (myContext == null) {
-      myContext = (EclipseProjectWizardContext)getBuilder();
-    }
-    return myContext;
+    return (EclipseProjectWizardContext)getBuilder();
   }
 
   public EclipseImportBuilder.Parameters getParameters() {

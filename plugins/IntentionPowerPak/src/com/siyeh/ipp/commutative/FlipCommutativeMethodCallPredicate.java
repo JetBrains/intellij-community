@@ -16,6 +16,7 @@
 package com.siyeh.ipp.commutative;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
@@ -56,7 +57,8 @@ class FlipCommutativeMethodCallPredicate implements PsiElementPredicate {
     if (callerType == null || !(callerType instanceof PsiClassType)) {
       return false;
     }
-    final PsiClass argumentClass = ((PsiClassType)argumentType).resolve();
+    final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)argumentType).resolveGenerics();
+    final PsiClass argumentClass = resolveResult.getElement();
     if (argumentClass == null) {
       return false;
     }
@@ -70,9 +72,16 @@ class FlipCommutativeMethodCallPredicate implements PsiElementPredicate {
         final PsiParameter[] parameters = parameterList.getParameters();
         if (parameters.length == 1) {
           final PsiParameter parameter = parameters[0];
-          final PsiType type = parameter.getType();
-          if (type.isAssignableFrom(callerType)) {
-            return true;
+          final PsiClass containingClass = testMethod.getContainingClass();
+          if (containingClass != null) {
+            final PsiSubstitutor substitutor =
+              TypeConversionUtil.getClassSubstitutor(containingClass, argumentClass, resolveResult.getSubstitutor());
+            if (substitutor != null) {
+              final PsiType type = substitutor.substitute(parameter.getType());
+              if (type != null && type.isAssignableFrom(callerType)) {
+                return true;
+              }
+            }
           }
         }
       }

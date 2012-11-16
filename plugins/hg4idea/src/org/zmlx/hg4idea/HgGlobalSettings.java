@@ -16,11 +16,14 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.Map;
 
 @State(
@@ -29,13 +32,23 @@ import java.util.Map;
 )
 public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettings.State> {
 
-  private static final String HG = HgVcs.HG_EXECUTABLE_FILE_NAME;
+  @NonNls private static final String[] DEFAULT_WINDOWS_PATHS = {"C:\\Program Files\\Mercurial",
+    "C:\\Program Files (x86)\\Mercurial",
+    "C:\\cygwin\\bin"};
+  @NonNls private static final String[] DEFAULT_UNIX_PATHS = {"/usr/local/bin",
+    "/usr/bin",
+    "/opt/local/bin",
+    "/opt/bin",
+    "/usr/local/mercurial"};
+  @NonNls private static final String DEFAULT_WINDOWS_HG = "hg.exe";
+  @NonNls private static final String DEFAULT_UNIX_HG = "hg";
+
   private static final int FIVE_MINUTES = 300;
 
   private State myState = new State();
 
   public static class State {
-    public String myHgExecutable = HG;
+    public String myHgExecutable = null;
     public boolean myRunViaBash = false;
     // visited URL -> login for this URL. Passwords are remembered in the PasswordSafe.
     public Map<String, String> myRememberedUserNames = new HashMap<String, String>();
@@ -50,7 +63,39 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
   }
 
   /**
+   * @return the default executable name depending on the platform
+   */
+  @NotNull
+  public String defaultHgExecutable() {
+    if (myState.myHgExecutable == null) {
+      String[] paths;
+      String programName;
+      if (SystemInfo.isWindows) {
+        programName = DEFAULT_WINDOWS_HG;
+        paths = DEFAULT_WINDOWS_PATHS;
+      }
+      else {
+        programName = DEFAULT_UNIX_HG;
+        paths = DEFAULT_UNIX_PATHS;
+      }
+
+      for (String p : paths) {
+        File f = new File(p, programName);
+        if (f.exists()) {
+          myState.myHgExecutable = f.getAbsolutePath();
+          break;
+        }
+      }
+      if (myState.myHgExecutable == null) { // otherwise, take the first variant and hope it's in $PATH
+        myState.myHgExecutable = programName;
+      }
+    }
+    return myState.myHgExecutable;
+  }
+
+  /**
    * Returns the remembered username for the specified URL which were accessed while working in the plugin.
+   *
    * @param stringUrl the url for which to retrieve the last used username;
    * @return the (probably empty) login remembered for this URL.
    */
@@ -61,6 +106,7 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
 
   /**
    * Adds the information about visited URL.
+   *
    * @param stringUrl String representation of the URL. If null or blank String is passed, nothing is saved.
    * @param username  Login used to access the URL. If null is passed, a blank String is used.
    */
@@ -74,25 +120,14 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
     myState.myRememberedUserNames.put(stringUrl, username);
   }
 
-  public static String getDefaultExecutable() {
-    return HG;
-  }
-
   public String getHgExecutable() {
-    return myState.myHgExecutable;
+    return myState.myHgExecutable == null ? defaultHgExecutable() : myState.myHgExecutable;
   }
 
   public void setHgExecutable(String hgExecutable) {
     myState.myHgExecutable = hgExecutable;
   }
 
-  public boolean isAutodetectHg() {
-    return HG.equals(myState.myHgExecutable);
-  }
-
-  public void enableAutodetectHg() {
-    myState.myHgExecutable = HG;
-  }
 
   public static int getIncomingCheckIntervalSeconds() {
     return FIVE_MINUTES;
@@ -105,5 +140,4 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
   public void setRunViaBash(boolean runViaBash) {
     myState.myRunViaBash = runViaBash;
   }
-
 }

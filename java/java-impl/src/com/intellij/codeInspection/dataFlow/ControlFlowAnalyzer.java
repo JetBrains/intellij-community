@@ -226,6 +226,14 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(statement);
   }
 
+  @Override
+  public void visitField(PsiField field) {
+    PsiExpression initializer = field.getInitializer();
+    if (initializer != null) {
+      initializeVariable(field, initializer);
+    }
+  }
+
   private void initializeVariable(PsiVariable variable, PsiExpression initializer) {
     DfaVariableValue dfaVariable = myFactory.getVarFactory().createVariableValue(variable, false);
     addInstruction(new PushInstruction(dfaVariable, initializer));
@@ -995,7 +1003,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
                                          TypeConversionUtil.isNumericType(lType) &&
                                          TypeConversionUtil.isNumericType(rType);
 
-    PsiType castType = comparingPrimitiveNumerics ? PsiType.LONG : type;
+    PsiType castType = comparingPrimitiveNumerics ? TypeConversionUtil.isFloatOrDoubleType(lType) ? PsiType.DOUBLE : PsiType.LONG : type;
 
     if (!comparingRef) {
       generateBoxingUnboxingInstructionFor(lExpr,castType);
@@ -1086,15 +1094,13 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiExpression operand = operands[i];
       operand.accept(this);
       generateBoxingUnboxingInstructionFor(operand, exprType);
-      PsiExpression nextOperand = i == operands.length - 1 ? null : operands[i + 1];
 
-      if (nextOperand != null) {
-        ConditionalGotoInstruction onFail = new ConditionalGotoInstruction(-1, true, operand);
-        branchToFail.add(onFail);
-        addInstruction(onFail);
-      }
+      ConditionalGotoInstruction onFail = new ConditionalGotoInstruction(-1, true, operand);
+      branchToFail.add(onFail);
+      addInstruction(onFail);
     }
 
+    addInstruction(new PushInstruction(myFactory.getConstFactory().getTrue(), null));
     GotoInstruction toSuccess = new GotoInstruction(-1);
     addInstruction(toSuccess);
     PushInstruction pushFalse = new PushInstruction(myFactory.getConstFactory().getFalse(), null);

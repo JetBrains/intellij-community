@@ -55,7 +55,7 @@ public class PropertiesDocumentationProvider extends AbstractDocumentationProvid
     return StringUtil.escapeXml(raw);
   }
 
-  public String generateDoc(final PsiElement element, final PsiElement originalElement) {
+  public String generateDoc(final PsiElement element, @Nullable final PsiElement originalElement) {
     if (element instanceof IProperty) {
       IProperty property = (IProperty)element;
       String text = property.getDocCommentText();

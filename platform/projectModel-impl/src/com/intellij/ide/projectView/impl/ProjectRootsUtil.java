@@ -20,7 +20,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author anna
@@ -91,5 +94,14 @@ public class ProjectRootsUtil {
 
   public static boolean isProjectHome(final PsiDirectory psiDirectory) {
     return psiDirectory.getVirtualFile().equals(psiDirectory.getProject().getBaseDir());
+  }
+
+  public static boolean isOutsideSourceRoot(@Nullable PsiFile psiFile) {
+    if (psiFile == null) return false;
+    if (psiFile instanceof PsiCodeFragment) return false;
+    final VirtualFile file = psiFile.getVirtualFile();
+    if (file == null) return false;
+    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(psiFile.getProject()).getFileIndex();
+    return !projectFileIndex.isInSource(file) && !projectFileIndex.isInLibraryClasses(file);
   }
 }

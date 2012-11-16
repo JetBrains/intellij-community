@@ -51,7 +51,7 @@ public class AndroidBuildTarget extends ModuleBasedTarget<BuildRootDescriptor> {
 
   @Override
   public Collection<BuildTarget<?>> computeDependencies(final BuildTargetRegistry registry) {
-    final List<BuildTarget<?>> result = new ArrayList<BuildTarget<?>>();
+    final List<BuildTarget<?>> result = new ArrayList<BuildTarget<?>>(3);
 
     if (myTargetType == TargetType.PACKAGING) {
       result.add(new AndroidBuildTarget(TargetType.DEX, myModule));
@@ -124,7 +124,7 @@ public class AndroidBuildTarget extends ModuleBasedTarget<BuildRootDescriptor> {
       for (JpsModule module : model.getProject().getModules()) {
         final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
 
-        if (extension != null && !extension.isLibrary()) {
+        if (extension != null) {
           targets.add(new AndroidBuildTarget(this, module));
         }
       }

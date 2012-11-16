@@ -359,17 +359,22 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
                                  boolean showSuccessNotification) {
     final Continuation continuation = Continuation.createForCurrentProgress(myProject, true, "Unshelve changes");
     final GatheringContinuationContext initContext = new GatheringContinuationContext();
-    scheduleUnshelveChangeList(changeList, changes, binaryFiles, targetChangeList, showSuccessNotification, initContext, false);
+    scheduleUnshelveChangeList(changeList, changes, binaryFiles, targetChangeList, showSuccessNotification, initContext, false,
+                               false, null, null);
     continuation.run(initContext.getList());
   }
 
   @AsynchronousExecution
   public void scheduleUnshelveChangeList(final ShelvedChangeList changeList,
-                                 @Nullable final List<ShelvedChange> changes,
-                                 @Nullable final List<ShelvedBinaryFile> binaryFiles,
-                                 @Nullable final LocalChangeList targetChangeList,
-                                 final boolean showSuccessNotification, final ContinuationContext context,
-                                 final boolean systemOperation) {
+                                         @Nullable final List<ShelvedChange> changes,
+                                         @Nullable final List<ShelvedBinaryFile> binaryFiles,
+                                         @Nullable final LocalChangeList targetChangeList,
+                                         final boolean showSuccessNotification,
+                                         final ContinuationContext context,
+                                         final boolean systemOperation,
+                                         final boolean reverse,
+                                         final String leftConflictTitle,
+                                         final String rightConflictTitle) {
     context.next(new TaskDescriptor("", Where.AWT) {
       @Override
       public void run(ContinuationContext contextInner) {
@@ -402,7 +407,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
 
         final BinaryPatchApplier binaryPatchApplier = new BinaryPatchApplier(binaryFilesToUnshelve.size());
         final PatchApplier<ShelvedBinaryFilePatch> patchApplier = new PatchApplier<ShelvedBinaryFilePatch>(myProject, myProject.getBaseDir(),
-            patches, targetChangeList, binaryPatchApplier, commitContext);
+            patches, targetChangeList, binaryPatchApplier, commitContext, reverse, leftConflictTitle, rightConflictTitle);
         patchApplier.setIsSystemOperation(systemOperation);
 
         // after patch applier part

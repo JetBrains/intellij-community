@@ -97,6 +97,10 @@
     </action>
     <action id="AndroidInlineIncludeAction" class="org.jetbrains.android.refactoring.AndroidInlineIncludeAction"
             text="Inline _Layout..." description="Inlines included Android layout"/>
+    <action id="AndroidFindStyleApplicationsAction" class="org.jetbrains.android.refactoring.AndroidFindStyleApplicationsAction"
+            text="Use style _where possible..." description="Replaces attributes by Android style reference where possible">
+      <add-to-group group-id="RefactoringMenu"/>
+    </action>
   </actions>
 
   <depends>JUnit</depends>
@@ -141,11 +145,12 @@
 
     <configurationType implementation="org.jetbrains.android.run.AndroidRunConfigurationType"/>
     <configurationType implementation="org.jetbrains.android.run.testing.AndroidTestRunConfigurationType"/>
-    <programRunner implementation="org.jetbrains.android.run.AndroidDebugRunner"/>
+    <programRunner implementation="org.jetbrains.android.run.AndroidDebugRunner" order="first"/>
     <facetType implementation="org.jetbrains.android.facet.AndroidFacetType"/>
     <framework.detector implementation="org.jetbrains.android.facet.AndroidFrameworkDetector"/>
     <fileTemplateGroup implementation="org.jetbrains.android.AndroidFileTemplateProvider"/>
-    <moduleBuilder builderClass="org.jetbrains.android.newProject.AndroidModuleBuilder"/>
+
+    <projectTemplatesFactory implementation="org.jetbrains.android.newProject.AndroidProjectTemplatesFactory"/>
 
     <compiler implementation="org.jetbrains.android.compiler.AndroidIncludingCompiler"/>
     <compiler implementation="org.jetbrains.android.compiler.AndroidRenderscriptCompiler"/>

@@ -10,10 +10,11 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.dom.AndroidDomUtil;
@@ -106,6 +107,7 @@ public class AndroidExtractStyleAction extends AndroidBaseLayoutRefactoringActio
     final String styleName;
     final List<XmlAttribute> styledAttributes;
     final Module chosenModule;
+    final boolean searchStyleApplications;
 
     if (testConfig == null) {
       final ExtractStyleDialog dialog =
@@ -116,6 +118,7 @@ public class AndroidExtractStyleAction extends AndroidBaseLayoutRefactoringActio
       if (!dialog.isOK()) {
         return null;
       }
+      searchStyleApplications = dialog.isToSearchStyleApplications();
       chosenModule = dialog.getChosenModule();
       assert chosenModule != null;
 
@@ -135,8 +138,10 @@ public class AndroidExtractStyleAction extends AndroidBaseLayoutRefactoringActio
           styledAttributes.add(attribute);
         }
       }
+      searchStyleApplications = false;
     }
     final boolean[] success = {false};
+    final Ref<Style> createdStyleRef = Ref.create();
     final boolean finalSupportImplicitParent = supportImplicitParent;
 
     new WriteCommandAction(project, "Extract Android Style '" + styleName + "'", file) {
@@ -150,6 +155,7 @@ public class AndroidExtractStyleAction extends AndroidBaseLayoutRefactoringActio
             public boolean process(ResourceElement element) {
               assert element instanceof Style;
               final Style style = (Style)element;
+              createdStyleRef.set(style);
 
               for (XmlAttribute attribute : styledAttributes) {
                 if (SdkConstants.NS_RESOURCES.equals(attribute.getNamespace())) {
@@ -162,7 +168,7 @@ public class AndroidExtractStyleAction extends AndroidBaseLayoutRefactoringActio
 
               if (parentStyleValue != null && (!finalSupportImplicitParent || !styleName.startsWith(parentStyle + "."))) {
                 final String aPackage = parentStyleValue.getPackage();
-                 style.getParentStyle().setStringValue((aPackage != null ? aPackage + ":" : "") + parentStyle);
+                style.getParentStyle().setStringValue((aPackage != null ? aPackage + ":" : "") + parentStyle);
               }
               return true;
             }
@@ -192,7 +198,28 @@ public class AndroidExtractStyleAction extends AndroidBaseLayoutRefactoringActio
       }
     }.execute();
 
-    return success[0] ? styleName : null;
+    if (!success[0]) {
+      return null;
+    }
+
+    final Style createdStyle = createdStyleRef.get();
+    final XmlTag createdStyleTag = createdStyle != null ? createdStyle.getXmlTag() : null;
+
+    if (createdStyleTag != null) {
+      final AndroidFindStyleApplicationsAction.MyStyleData createdStyleData =
+        AndroidFindStyleApplicationsAction.getStyleData(createdStyleTag);
+
+      if (createdStyleData != null && searchStyleApplications) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            AndroidFindStyleApplicationsAction.doRefactoringForTag(
+              project, createdStyleTag, createdStyleData, file, null);
+          }
+        });
+      }
+    }
+    return styleName;
   }
 
   @NotNull
@@ -212,7 +239,7 @@ public class AndroidExtractStyleAction extends AndroidBaseLayoutRefactoringActio
       return false;
     }
     final String name = attribute.getLocalName();
-    if (ArrayUtil.find(NON_EXTRACTABLE_ATTRIBUTES, name) >= 0) {
+    if (ArrayUtilRt.find(NON_EXTRACTABLE_ATTRIBUTES, name) >= 0) {
       return false;
     }
     if (name.startsWith(AndroidDomUtil.ATTR_STYLE)) {

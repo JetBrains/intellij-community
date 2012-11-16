@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,6 +34,7 @@ public class ActionButtonWithText extends ActionButton {
                               final Dimension minimumSize) {
     super(action, presentation, place, minimumSize);
     setFont(UIUtil.getLabelFont());
+    setForeground(UIUtil.getLabelForeground());
   }
 
   public Dimension getPreferredSize() {
@@ -45,30 +47,36 @@ public class ActionButtonWithText extends ActionButton {
   }
 
   public void paintComponent(Graphics g) {
-    final String text = getText();
-    final Icon icon = getIcon();
-    final FontMetrics fontMetrics = getFontMetrics(getFont());
-    int x = (int)Math.ceil((getWidth() - icon.getIconWidth() - fontMetrics.stringWidth(text)) / 2);
-    int y = (int)Math.ceil((getHeight() - icon.getIconHeight()) / 2);
+    Icon icon = getIcon();
+    FontMetrics fm = SwingUtilities2.getFontMetrics(this, g, getFont());
+    Rectangle viewRect = new Rectangle(getSize());
+    Insets i = getInsets();
+    viewRect.x += i.left;
+    viewRect.y += i.top;
+    viewRect.width -= (i.right + viewRect.x);
+    viewRect.height -= (i.bottom + viewRect.y);
+
+    Rectangle iconRect = new Rectangle();
+    Rectangle textRect = new Rectangle();
+    String text = SwingUtilities.layoutCompoundLabel(this, fm, getText(), icon,
+                                                     SwingConstants.CENTER, horizontalTextAlignment(),
+                                                     SwingConstants.CENTER, SwingConstants.TRAILING,
+                                                     viewRect, iconRect, textRect, iconTextSpace());
     ActionButtonLook look = ActionButtonLook.IDEA_LOOK;
     look.paintBackground(g, this);
-    look.paintIconAt(g, this, icon, x, y);
+    look.paintIconAt(g, this, icon, iconRect.x, iconRect.y);
     look.paintBorder(g, this);
-    final int textHeight = fontMetrics.getMaxAscent() + fontMetrics.getMaxDescent();
 
     UIUtil.applyRenderingHints(g);
-    g.setColor(isButtonEnabled() ? UIUtil.getLabelForeground() : UIUtil.getInactiveTextColor());
-    final int iconTextDifference = (int)Math.ceil((icon.getIconHeight() - textHeight) / 2);
-    final int textStartX = x + icon.getIconWidth() + iconTextSpace();
-    g.drawString(text, textStartX, y + iconTextDifference + fontMetrics.getMaxAscent());
-    final int mnemonicIndex = getMnemonicCharIndex(text);
-    if (mnemonicIndex >= 0) {
-      final char[] chars = text.toCharArray();
-      final int startX = textStartX + fontMetrics.charsWidth(chars, 0, mnemonicIndex);
-      final int startY = y + iconTextDifference + fontMetrics.getMaxAscent() + fontMetrics.getMaxDescent();
-      final int endX = startX + fontMetrics.charWidth(text.charAt(mnemonicIndex));
-      UIUtil.drawLine(g, startX, startY, endX, startY);
-    }
+    g.setColor(isButtonEnabled() ? getForeground() : UIUtil.getInactiveTextColor());
+    SwingUtilities2.drawStringUnderlineCharAt(this, g, text,
+                                              getMnemonicCharIndex(text),
+                                              textRect.x,
+                                              textRect.y + fm.getAscent());
+  }
+
+  protected int horizontalTextAlignment() {
+    return SwingConstants.CENTER;
   }
 
   private int iconTextSpace() {

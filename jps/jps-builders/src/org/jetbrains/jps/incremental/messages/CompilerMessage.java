@@ -44,7 +44,7 @@ public class CompilerMessage extends BuildMessage {
     myProblemBeginOffset = problemBeginOffset;
     myProblemEndOffset = problemEndOffset;
     myProblemLocationOffset = problemLocationOffset;
-    mySourcePath = sourcePath != null? sourcePath.replace(File.separatorChar, '/') : null;
+    mySourcePath = sourcePath != null && !sourcePath.isEmpty()? sourcePath.replace(File.separatorChar, '/') : null;
     myLine = locationLine;
     myColumn = locationColumn;
   }

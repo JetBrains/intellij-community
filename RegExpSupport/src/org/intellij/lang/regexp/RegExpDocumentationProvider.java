@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 public class RegExpDocumentationProvider extends AbstractDocumentationProvider {
   @Override
   @Nullable
-  public String generateDoc(PsiElement element, PsiElement originalElement) {
+  public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     if (element instanceof RegExpProperty) {
       final RegExpProperty prop = (RegExpProperty)element;
       final ASTNode node = prop.getCategoryNode();

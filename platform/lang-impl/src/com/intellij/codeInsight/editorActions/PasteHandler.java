@@ -28,7 +28,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.EditorTextInsertHandler;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -37,8 +36,10 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -239,7 +240,8 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       boolean pastedTextContainsWhiteSpacesOnly = 
         CharArrayUtil.shiftForward(document.getCharsSequence(), bounds.getStartOffset(), " \n\t") >= bounds.getEndOffset();
 
-      if (!pastedTextContainsWhiteSpacesOnly) {
+      VirtualFile virtualFile = file.getVirtualFile();
+      if (!pastedTextContainsWhiteSpacesOnly && (virtualFile == null || !SingleRootFileViewProvider.isTooLargeForIntelligence(virtualFile))) {
         final int indentOptions1 = indentOptions;
         ApplicationManager.getApplication().runWriteAction(
           new Runnable() {
@@ -384,6 +386,9 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
 
     if (endOffset - startOffset > 1000) {
       DocumentUtil.executeInBulk(editor.getDocument(), true, task);
+    }
+    else {
+      task.run();
     }
   }
 

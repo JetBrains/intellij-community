@@ -1,4 +1,4 @@
-public abstract class Anon extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
+public abstract class Anon {
 public Anon(java.lang.Object foo) {
 this.foo = foo;
 }

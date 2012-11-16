@@ -51,16 +51,8 @@ public class FilePathImpl implements FilePath {
                        final boolean isDirectory,
                        VirtualFile child,
                        final boolean forDeleted) {
-    myLocal = true;
+    this(virtualParent == null ? new File(name) : new File(new File(virtualParent.getPath()), name), isDirectory, true);
     myVirtualParent = virtualParent;
-    myName = name;
-    myIsDirectory = isDirectory;
-    if (myVirtualParent == null) {
-      myFile = new File(myName);
-    }
-    else {
-      myFile = new File(new File(myVirtualParent.getPath()), myName);
-    }
 
     if (!forDeleted) {
       if (child == null) {
@@ -239,7 +231,7 @@ public class FilePathImpl implements FilePath {
 
   @Override
   public String getPresentableUrl() {
-    if (myVirtualFile == null) {
+    if (myVirtualFile == null || !myVirtualFile.isValid()) {
       return myFile.getAbsolutePath();
     }
     else {
@@ -385,7 +377,7 @@ public class FilePathImpl implements FilePath {
   @Override
   @NonNls
   public String toString() {
-    return "FilePath[" + myFile + "]";
+    return "FilePath[" + myFile.getName() + "] (" + myFile.getParent() + ")";
   }
 
   @Override

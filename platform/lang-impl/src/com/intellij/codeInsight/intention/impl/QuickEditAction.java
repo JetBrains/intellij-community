@@ -18,6 +18,7 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -47,6 +48,7 @@ import java.util.List;
  */
 public class QuickEditAction implements IntentionAction, LowPriorityAction {
   public static final Key<QuickEditHandler> QUICK_EDIT_HANDLER = Key.create("QUICK_EDIT_HANDLER");
+  public static final Key<Boolean> EDIT_ACTION_AVAILABLE = Key.create("EDIT_ACTION_AVAILABLE");
   private String myLastLanguageName;
 
   @Override
@@ -70,7 +72,11 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
       }
     });
     if (rangePair != null) {
-      myLastLanguageName = rangePair.first.getContainingFile().getLanguage().getDisplayName();
+      final Language language = rangePair.first.getContainingFile().getLanguage();
+      final Object action = language.getUserData(EDIT_ACTION_AVAILABLE);
+      if (action != null && action.equals(false)) return null;
+
+      myLastLanguageName = language.getDisplayName();
     }
     return rangePair;
   }

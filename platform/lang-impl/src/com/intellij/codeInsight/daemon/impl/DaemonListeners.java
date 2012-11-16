@@ -203,6 +203,9 @@ public class DaemonListeners implements Disposable {
           // editor appear in modal context, re-enable the daemon
           myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
         }
+        for (Editor editor : activeEditors) {
+          myDaemonCodeAnalyzer.repaintErrorStripeRenderer(editor);
+        }
       }
     };
     editorTracker.addEditorTrackerListener(editorTrackerListener, this);

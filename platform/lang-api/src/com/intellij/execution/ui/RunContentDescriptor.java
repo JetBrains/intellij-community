@@ -40,6 +40,8 @@ public class RunContentDescriptor implements Disposable {
   private final Icon myIcon;
   private final String myHelpId;
 
+  private boolean myActivateToolWindowWhenAdded = true;
+
   /**
    * Used to hack {@link com.intellij.execution.runners.RestartAction}
    */
@@ -137,5 +139,13 @@ public class RunContentDescriptor implements Disposable {
 
   public Runnable getRestarter() {
     return myRestarter;
+  }
+
+  public boolean isActivateToolWindowWhenAdded() {
+    return myActivateToolWindowWhenAdded;
+  }
+
+  public void setActivateToolWindowWhenAdded(boolean activateToolWindowWhenAdded) {
+    myActivateToolWindowWhenAdded = activateToolWindowWhenAdded;
   }
 }

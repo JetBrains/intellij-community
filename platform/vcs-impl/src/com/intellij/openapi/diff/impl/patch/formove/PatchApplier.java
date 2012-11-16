@@ -68,15 +68,23 @@ public class PatchApplier<BinaryType extends FilePatch> {
   private final PathsVerifier<BinaryType> myVerifier;
   private boolean mySystemOperation;
 
+  private final boolean myReverseConflict;
+  @Nullable private final String myLeftConflictPanelTitle;
+  @Nullable private final String myRightConflictPanelTitle;
+
   public PatchApplier(final Project project, final VirtualFile baseDirectory, final List<FilePatch> patches,
-                      @Nullable final Consumer<Collection<FilePath>> toTargetListsMover, final CustomBinaryPatchApplier<BinaryType> customForBinaries,
-                      final CommitContext commitContext) {
+                      @Nullable final Consumer<Collection<FilePath>> toTargetListsMover,
+                      final CustomBinaryPatchApplier<BinaryType> customForBinaries, final CommitContext commitContext,
+                      boolean reverseConflict, @Nullable String leftConflictPanelTitle, @Nullable String rightConflictPanelTitle) {
     myProject = project;
     myBaseDirectory = baseDirectory;
     myPatches = patches;
     myToTargetListsMover = toTargetListsMover;
     myCustomForBinaries = customForBinaries;
     myCommitContext = commitContext;
+    myReverseConflict = reverseConflict;
+    myLeftConflictPanelTitle = leftConflictPanelTitle;
+    myRightConflictPanelTitle = rightConflictPanelTitle;
     myRemainingPatches = new ArrayList<FilePatch>();
     myVerifier = new PathsVerifier<BinaryType>(myProject, myBaseDirectory, myPatches, new PathsVerifier.BaseMapper() {
       @Nullable
@@ -91,6 +99,14 @@ public class PatchApplier<BinaryType extends FilePatch> {
     });
   }
 
+  public PatchApplier(final Project project, final VirtualFile baseDirectory, final List<FilePatch> patches,
+                      final LocalChangeList targetChangeList, final CustomBinaryPatchApplier<BinaryType> customForBinaries,
+                      final CommitContext commitContext,
+                      boolean reverseConflict, @Nullable String leftConflictPanelTitle, @Nullable String rightConflictPanelTitle) {
+    this(project, baseDirectory, patches, createMover(project, targetChangeList), customForBinaries, commitContext,
+         reverseConflict, leftConflictPanelTitle, rightConflictPanelTitle);
+  }
+
   public void setIgnoreContentRootsCheck() {
     myVerifier.setIgnoreContentRootsCheck(true);
   }
@@ -98,7 +114,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
   public PatchApplier(final Project project, final VirtualFile baseDirectory, final List<FilePatch> patches,
                         final LocalChangeList targetChangeList, final CustomBinaryPatchApplier<BinaryType> customForBinaries,
                         final CommitContext commitContext) {
-    this(project, baseDirectory, patches, createMover(project, targetChangeList), customForBinaries, commitContext);
+    this(project, baseDirectory, patches, targetChangeList, customForBinaries, commitContext, false, null, null);
   }
 
   public void setIsSystemOperation(boolean systemOperation) {
@@ -460,7 +476,8 @@ public class PatchApplier<BinaryType extends FilePatch> {
                                                                                             ApplyPatchStatus status,
                                                                                             CommitContext commiContext) throws IOException {
     for (Pair<VirtualFile, T> patch : patches) {
-      ApplyPatchStatus patchStatus = ApplyPatchAction.applyOnly(myProject, patch.getSecond(), context, patch.getFirst(), commiContext);
+      ApplyPatchStatus patchStatus = ApplyPatchAction.applyOnly(myProject, patch.getSecond(), context, patch.getFirst(), commiContext,
+                                                                myReverseConflict, myLeftConflictPanelTitle, myRightConflictPanelTitle);
       myVerifier.doMoveIfNeeded(patch.getFirst());
 
       status = ApplyPatchStatus.and(status, patchStatus);

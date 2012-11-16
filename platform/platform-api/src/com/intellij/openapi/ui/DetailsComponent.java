@@ -240,34 +240,6 @@ public class DetailsComponent {
     setContent(null);
   }
 
-  public static void main(String[] args) {
-    final JFrame frame = new JFrame();
-    frame.getContentPane().setLayout(new BorderLayout());
-    final JPanel content = new JPanel(new BorderLayout());
-
-    final DetailsComponent d = new DetailsComponent();
-    content.add(d.getComponent(), BorderLayout.CENTER);
-
-    d.setText("This is a Tree");
-    final JTree c = new Tree();
-    c.setBorder(new LineBorder(Color.red));
-    d.setContent(c);
-
-    frame.getContentPane().add(content, BorderLayout.CENTER);
-    final JCheckBox details = new JCheckBox("Details");
-    details.setSelected(true);
-    frame.getContentPane().add(details, BorderLayout.SOUTH);
-    details.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        d.setDetailsModeEnabled(details.isSelected());
-      }
-    });
-
-
-    frame.setBounds(300, 300, 300, 300);
-    frame.show();
-  }
-
   public void updateBannerActions() {
     myBannerLabel.updateActions();
   }

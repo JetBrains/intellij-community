@@ -38,11 +38,20 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
   private volatile boolean myOptional;
   private volatile GrModifierList myModifierList;
   private final PsiElement myScope;
+  private final GrTypeElement myTypeElement;
+  private final PsiType myTypeGroovy;
 
-  public GrLightParameter(@NotNull String name, @NotNull PsiType type, @NotNull PsiElement scope) {
-    super(scope.getManager(), name, type, GroovyFileType.GROOVY_LANGUAGE);
+  public GrLightParameter(@NotNull String name, @Nullable PsiType type, @NotNull PsiElement scope) {
+    super(scope.getManager(), name, getTypeNotNull(type, scope), GroovyFileType.GROOVY_LANGUAGE);
     myScope = scope;
     myModifierList = new GrLightModifierList(this);
+    myTypeGroovy = type;
+    myTypeElement = type == null ? null : new GrLightTypeElement(type, scope.getManager());
+  }
+
+  @NotNull
+  private static PsiType getTypeNotNull(PsiType type, PsiElement scope) {
+    return type != null ? type : PsiType.getJavaLangObject(scope.getManager(), scope.getResolveScope());
   }
 
   @NotNull
@@ -58,7 +67,7 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
 
   @Override
   public GrTypeElement getTypeElementGroovy() {
-    return null;
+    return myTypeElement;
   }
 
   @Override
@@ -99,12 +108,12 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
 
   @Override
   public PsiType getTypeGroovy() {
-    return getType();
+    return myTypeGroovy;
   }
 
   @Override
   public PsiType getDeclaredType() {
-    return getType();
+    return myTypeGroovy;
   }
 
   @Override

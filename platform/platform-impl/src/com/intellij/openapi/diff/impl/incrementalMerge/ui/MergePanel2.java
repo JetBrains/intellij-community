@@ -34,6 +34,10 @@ import com.intellij.openapi.diff.impl.incrementalMerge.ChangeCounter;
 import com.intellij.openapi.diff.impl.incrementalMerge.ChangeList;
 import com.intellij.openapi.diff.impl.incrementalMerge.MergeList;
 import com.intellij.openapi.diff.impl.mergeTool.MergeRequestImpl;
+import com.intellij.openapi.diff.impl.settings.DiffMergeEditorSetting;
+import com.intellij.openapi.diff.impl.settings.DiffMergeSettings;
+import com.intellij.openapi.diff.impl.settings.DiffMergeSettingsAction;
+import com.intellij.openapi.diff.impl.settings.MergeToolSettings;
 import com.intellij.openapi.diff.impl.splitter.DiffDividerPaint;
 import com.intellij.openapi.diff.impl.splitter.LineBlocks;
 import com.intellij.openapi.diff.impl.util.*;
@@ -80,7 +84,7 @@ public class MergePanel2 implements DiffViewer {
   private final DialogBuilder myBuilder;
   private final MyDataProvider myProvider;
 
-  public MergePanel2(DialogBuilder builder, Disposable parent) {
+  public MergePanel2(DialogBuilder builder, @NotNull Disposable parent) {
     ArrayList<EditorPlace> editorPlaces = new ArrayList<EditorPlace>();
     EditorPlace.EditorListener placeListener = new EditorPlace.EditorListener() {
       public void onEditorCreated(EditorPlace place) {
@@ -146,8 +150,11 @@ public class MergePanel2 implements DiffViewer {
         toolbar.addAction(new OpenPartialDiffAction(0, 2, AllIcons.Diff.BranchDiff));
         toolbar.addSeparator();
         toolbar.addAction(new ApplyNonConflicts(myPanel));
-        toolbar.addSeparator();
-        toolbar.addAction(new MergeToolSettingsAction(getEditors()));
+        Project project = myData.getProject();
+        if (project != null) {
+          toolbar.addSeparator();
+          toolbar.addAction(new DiffMergeSettingsAction(getEditors(), ServiceManager.getService(project, MergeToolSettings.class)));
+        }
       }
     };
   }
@@ -274,8 +281,8 @@ public class MergePanel2 implements DiffViewer {
 
   private static void initEditorSettings(@NotNull Editor editor) {
     Project project = editor.getProject();
-    MergeToolSettings settings = project == null ? null : ServiceManager.getService(project, MergeToolSettings.class);
-    for (MergeToolEditorSetting property : MergeToolEditorSetting.values()) {
+    DiffMergeSettings settings = project == null ? null : ServiceManager.getService(project, MergeToolSettings.class);
+    for (DiffMergeEditorSetting property : DiffMergeEditorSetting.values()) {
       property.apply(editor, settings == null ? property.getDefault() : settings.getPreference(property));
     }
     editor.getSettings().setLineMarkerAreaShown(true);
@@ -620,7 +627,7 @@ public class MergePanel2 implements DiffViewer {
   public static class AsComponent extends JPanel{
     private final MergePanel2 myMergePanel;
 
-    public AsComponent(Disposable parent) {
+    public AsComponent(@NotNull Disposable parent) {
       super(new BorderLayout());
       myMergePanel = new MergePanel2(null, parent);
       add(myMergePanel.getComponent(), BorderLayout.CENTER);

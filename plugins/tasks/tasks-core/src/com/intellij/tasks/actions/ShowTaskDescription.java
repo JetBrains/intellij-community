@@ -17,40 +17,40 @@ package com.intellij.tasks.actions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiManager;
 import com.intellij.tasks.LocalTask;
-import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.doc.TaskPsiElement;
 
 /**
  * @author Dennis.Ushakov
  */
-public class ShowTaskDescription extends AnAction {
+public class ShowTaskDescription extends BaseTaskAction {
   @Override
   public void update(AnActionEvent event) {
-    final Presentation presentation = event.getPresentation();
-    final DataContext dataContext = event.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    final LocalTask task = project != null ? TaskManager.getManager(project).getActiveTask() : null;
-    presentation.setEnabled(task != null && task.getIssueUrl() != null);
-    if (project == null || !TaskManager.getManager(project).getActiveTask().isIssue()) {
-      presentation.setText(getTemplatePresentation().getText());
-    } else {
-      presentation.setText("Show '" + TaskManager.getManager(project).getActiveTask().getPresentableName() + "' _Description");
+    super.update(event);
+    if (event.getPresentation().isEnabled()) {
+      final Presentation presentation = event.getPresentation();
+      final LocalTask activeTask = getActiveTask(event);
+      presentation.setEnabled(activeTask != null && activeTask.isIssue() && activeTask.getDescription() != null);
+      if (activeTask == null || !activeTask.isIssue()) {
+        presentation.setText(getTemplatePresentation().getText());
+      } else {
+        presentation.setText("Show '" + activeTask.getPresentableName() + "' _Description");
+      }
     }
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    final LocalTask task = TaskManager.getManager(project).getActiveTask();
-
+    final Project project = getProject(e);
+    assert project != null;
+    final LocalTask task = getActiveTask(e);
     try {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickjavadoc.ctrln");
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {

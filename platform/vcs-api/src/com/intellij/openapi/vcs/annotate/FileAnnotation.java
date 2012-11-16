@@ -58,13 +58,15 @@ public interface FileAnnotation {
   LineAnnotationAspect[] getAspects();
 
   /**
-   * The tooltip that is shown over annotation. Typically this
-   * is a comment associated with commit that has added or modified
-   * the line.
+   * <p>The tooltip that is shown over annotation.
+   * Typically this is a comment associated with commit that has added or modified the line.</p>
+   *
+   * <p>If the method returns null, the tooltip is not shown for this line.</p>
    *
    * @param lineNumber the line number
    * @return the tooltip text
    */
+  @Nullable
   String getToolTip(int lineNumber);
 
   /**

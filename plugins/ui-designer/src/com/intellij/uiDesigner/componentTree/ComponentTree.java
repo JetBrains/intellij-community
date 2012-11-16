@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.uiDesigner.componentTree;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -47,6 +48,7 @@ import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.quickFixes.QuickFixManager;
 import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import icons.UIDesignerIcons;
@@ -367,7 +369,7 @@ public final class ComponentTree extends Tree implements DataProvider {
       return icon;
     }
     else {
-      return UIDesignerIcons.Error_small;
+      return AllIcons.General.Error;
     }
   }
 
@@ -472,7 +474,7 @@ public final class ComponentTree extends Tree implements DataProvider {
         setIcon(getComponentIcon(component));
 
         if (component == myDropTargetComponent) {
-          setBorder(BorderFactory.createLineBorder(Color.BLUE, 1));
+          setBorder(BorderFactory.createLineBorder(PlatformColors.BLUE, 1));
         } else {
           setBorder(BorderFactory.createEmptyBorder(1,1,1,1));
         }

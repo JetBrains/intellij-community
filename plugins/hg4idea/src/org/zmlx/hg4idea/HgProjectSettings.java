@@ -16,64 +16,48 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import org.jetbrains.annotations.NotNull;
 
 @State(
   name = "hg4idea.settings",
   storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE)
 )
 public class HgProjectSettings implements PersistentStateComponent<HgProjectSettings.State> {
+ @NotNull private final HgGlobalSettings myAppSettings;
 
-  private final HgGlobalSettings myAppSettings;
-  private boolean myCheckIncoming = true;
-  private boolean myCheckOutgoing = true;
+  private State myState = new State();
 
-  public HgProjectSettings(HgGlobalSettings appSettings) {
+  public HgProjectSettings(@NotNull HgGlobalSettings appSettings) {
     myAppSettings = appSettings;
   }
 
   public static class State {
     public boolean myCheckIncoming = true;
     public boolean myCheckOutgoing = true;
+    public Boolean CHECK_INCOMING_OUTGOING = null;
   }
 
   public State getState() {
-    final State s = new State();
-    s.myCheckIncoming = myCheckIncoming;
-    s.myCheckOutgoing = myCheckOutgoing;
-    return s;
+    return myState;
   }
 
   public void loadState(State state) {
-    myCheckIncoming = state.myCheckIncoming;
-    myCheckOutgoing = state.myCheckOutgoing;
+    myState = state;
+    if (state.CHECK_INCOMING_OUTGOING == null) {
+      state.CHECK_INCOMING_OUTGOING = state.myCheckIncoming || state.myCheckOutgoing;
+    }
   }
 
-  public boolean isCheckIncoming() {
-    return myCheckIncoming;
+  public boolean isCheckIncomingOutgoing() {
+    return myState.CHECK_INCOMING_OUTGOING != null && myState.CHECK_INCOMING_OUTGOING.booleanValue();
   }
 
-  public void setCheckIncoming(boolean checkIncoming) {
-    this.myCheckIncoming = checkIncoming;
-  }
-
-  public boolean isCheckOutgoing() {
-    return myCheckOutgoing;
-  }
-
-  public void setCheckOutgoing(boolean checkOutgoing) {
-    this.myCheckOutgoing = checkOutgoing;
+  public void setCheckIncomingOutgoing(boolean checkIncomingOutgoing) {
+    myState.CHECK_INCOMING_OUTGOING = checkIncomingOutgoing;
   }
 
   public String getHgExecutable() {
     return myAppSettings.getHgExecutable();
-  }
-
-  public boolean isAutodetectHg() {
-    return myAppSettings.isAutodetectHg();
-  }
-
-  public void enableAutodetectHg() {
-    myAppSettings.enableAutodetectHg();
   }
 
   public void setHgExecutable(String text) {
@@ -88,4 +72,8 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
     myAppSettings.setRunViaBash(runViaBash);
   }
 
+  @NotNull
+  public HgGlobalSettings getGlobalSettings() {
+    return myAppSettings;
+  }
 }

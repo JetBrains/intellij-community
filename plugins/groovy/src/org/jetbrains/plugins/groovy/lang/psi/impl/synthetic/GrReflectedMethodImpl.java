@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,10 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightReferenceListBuilder;
 import com.intellij.psi.impl.light.LightTypeParameterListBuilder;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,14 +31,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierL
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import javax.swing.*;
@@ -67,7 +61,7 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
           new GrLightModifierList(baseMethod), new LightReferenceListBuilder(baseMethod.getManager(), baseMethod.getLanguage(), null),
           new LightTypeParameterListBuilder(baseMethod.getManager(), baseMethod.getLanguage())
     );
-    
+
     initParameterList(baseMethod, optionalParams, categoryType);
     initTypeParameterList(baseMethod);
     initModifiers(baseMethod, categoryType != null);
@@ -99,7 +93,7 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
         myModifierList.addModifier(modifier);
       }
     }
-    
+
     for (PsiElement modifier : baseMethod.getModifierList().getModifiers()) {
       if (modifier instanceof GrAnnotation) {
         final String qualifiedName = ((GrAnnotation)modifier).getQualifiedName();
@@ -135,7 +129,7 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
         }
         optionalParams--;
       }
-      parameterList.addParameter(new GrLightParameter(parameter.getName(), parameter.getType(), this));
+      parameterList.addParameter(new GrLightParameter(parameter.getName(), parameter.getDeclaredType(), this));
     }
 
     LOG.assertTrue(optionalParams == 0, optionalParams + "methodText: " + baseMethod.getText());
@@ -284,42 +278,7 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
   private static PsiClassType getCategoryType(GrMethod method) {
     final PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return null;
-    return CachedValuesManager.getManager(method.getProject()).getCachedValue(containingClass, new CachedValueProvider<PsiClassType>() {
-      @Override
-      public Result<PsiClassType> compute() {
-        return Result.create(inferCategoryType(containingClass), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-      }
-
-      @Nullable
-      private PsiClassType inferCategoryType(final PsiClass aClass) {
-        return RecursionManager.doPreventingRecursion(aClass, true, new Computable<PsiClassType>() {
-          @Nullable
-          @Override
-          public PsiClassType compute() {
-            final PsiModifierList modifierList = aClass.getModifierList();
-            if (modifierList == null) return null;
-
-            final PsiAnnotation annotation = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_LANG_CATEGORY);
-            if (annotation == null) return null;
-
-            PsiAnnotationMemberValue value = annotation.findAttributeValue("value");
-            if (!(value instanceof GrReferenceExpression)) return null;
-
-            if ("class".equals(((GrReferenceExpression)value).getReferenceName())) value = ((GrReferenceExpression)value).getQualifier();
-            if (!(value instanceof GrReferenceExpression)) return null;
-
-            final PsiElement resolved = ((GrReferenceExpression)value).resolve();
-            if (!(resolved instanceof PsiClass)) return null;
-
-            String className = ((PsiClass)resolved).getQualifiedName();
-            if (className == null) className = ((PsiClass)resolved).getName();
-            if (className == null) return null;
-
-            return JavaPsiFacade.getElementFactory(aClass.getProject()).createTypeByFQClassName(className, resolved.getResolveScope());
-          }
-        });
-      }
-    });
+    return GdkMethodUtil.getCategoryType(containingClass);
   }
 
   @NotNull

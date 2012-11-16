@@ -23,9 +23,11 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.concurrency.SwingWorker;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -124,28 +126,47 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
     }
     showCard(PROGRESS_PANEL);
     myProgressIndicator = progress;
-    new SwingWorker() {
-      public Object construct() {
-        final Ref<Result> result = Ref.create(null);
-        ProgressManager.getInstance().runProcess(new Runnable() {
-          public void run() {
-            result.set(calculate());
-          }
-        }, progress);
-        return result.get();
-      }
 
-      public void finished() {
-        myProgressIndicator = null;
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            final Result result = (Result)get();
-            onFinished(result, progress.isCanceled());
-            showCard(RESULTS_PANEL);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+
+      Result result = ProgressManager.getInstance().runProcess(new Computable<Result>() {
+        @Override
+        public Result compute() {
+          return calculate();
+        }
+      }, progress);
+      onFinished(result, false);
+      return;
+    }
+
+    UiNotifyConnector.doWhenFirstShown(myPanel, new Runnable() {
+      @Override
+      public void run() {
+
+        new SwingWorker() {
+          public Object construct() {
+            final Ref<Result> result = Ref.create(null);
+            ProgressManager.getInstance().runProcess(new Runnable() {
+              public void run() {
+                result.set(calculate());
+              }
+            }, progress);
+            return result.get();
           }
-        });
+
+          public void finished() {
+            myProgressIndicator = null;
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              public void run() {
+                final Result result = (Result)get();
+                onFinished(result, progress.isCanceled());
+                showCard(RESULTS_PANEL);
+              }
+            });
+          }
+        }.start();
       }
-    }.start();
+    });
   }
 
   private void showCard(final String id) {

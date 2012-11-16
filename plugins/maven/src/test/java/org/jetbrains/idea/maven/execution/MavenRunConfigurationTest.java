@@ -28,7 +28,7 @@ public class MavenRunConfigurationTest extends IdeaTestCase {
     MavenRunConfiguration.MavenSettings s = new MavenRunConfiguration.MavenSettings(myProject);
     s.myRunnerParameters.setWorkingDirPath("some path");
     s.myRunnerParameters.setGoals(Arrays.asList("clean", "validate"));
-    s.myRunnerParameters.setProfilesMap(ImmutableMap.of("prof1", true, "prof2", true, "prof3", false));
+    s.myRunnerParameters.setProfilesMap(ImmutableMap.of("prof1", true, "prof2", true, "prof3", false, "aaa", true));
 
     s.myGeneralSettings = new MavenGeneralSettings();
     s.myGeneralSettings.setChecksumPolicy(MavenExecutionOptions.ChecksumPolicy.WARN);
@@ -45,6 +45,7 @@ public class MavenRunConfigurationTest extends IdeaTestCase {
     assertEquals(s.myRunnerParameters.getWorkingDirPath(), loaded.myRunnerParameters.getWorkingDirPath());
     assertEquals(s.myRunnerParameters.getGoals(), loaded.myRunnerParameters.getGoals());
     assertEquals(s.myRunnerParameters.getProfilesMap(), loaded.myRunnerParameters.getProfilesMap());
+    assertOrderedEquals(s.myRunnerParameters.getProfilesMap().keySet(), loaded.myRunnerParameters.getProfilesMap().keySet()); // Compare ordering of profiles.
 
     assertEquals(s.myGeneralSettings, loaded.myGeneralSettings);
     assertEquals(s.myRunnerSettings, loaded.myRunnerSettings);

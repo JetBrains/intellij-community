@@ -11,15 +11,13 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.uiDesigner.compiler.AlienFormFileException;
-import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
-import com.intellij.uiDesigner.compiler.FormErrorInfo;
-import com.intellij.uiDesigner.compiler.NestedFormLoader;
+import com.intellij.uiDesigner.compiler.*;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,18 +30,20 @@ import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.ChunkBuildOutputConsumer;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
-import org.jetbrains.jps.builders.java.ResourcesOnlyRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
+import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.OneToManyPathsMapping;
@@ -56,8 +56,6 @@ import org.jetbrains.jps.model.java.LanguageLevel;
 import org.jetbrains.jps.model.java.compiler.*;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
-import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerConfiguration;
-import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerExtensionService;
 
 import javax.tools.*;
 import java.io.*;
@@ -117,6 +115,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static final Key<Callbacks.Backend> DELTA_MAPPINGS_CALLBACK_KEY = Key.create("_dependency_data_");
   private final Executor myTaskRunner;
   private static final List<ClassPostProcessor> ourClassProcessors = new ArrayList<ClassPostProcessor>();
+  private static boolean OPTION_ENABLE_FORMS_INSTRUMENTATION = false;
+  private static boolean OPTION_COPY_FORMS_RUNTIME_CLASSES = false;
+
+  private static final Key<Boolean> USE_ECLIPSE_COMPILER = Key.create("java.builder.use.eclipse.compiler");
 
   static {
     registerClassPostProcessor(new ClassPostProcessor() {
@@ -166,38 +168,57 @@ public class JavaBuilder extends ModuleLevelBuilder {
     ourClassProcessors.add(processor);
   }
 
+  public static boolean isFormsInstrumentationEnabled() {
+    return OPTION_ENABLE_FORMS_INSTRUMENTATION;
+  }
+
+  public static void setFormsInstrumentationEnabled(boolean enabled) {
+    OPTION_ENABLE_FORMS_INSTRUMENTATION = enabled;
+  }
+
+  public static boolean isCopyFormsRuntime() {
+    return OPTION_COPY_FORMS_RUNTIME_CLASSES;
+  }
+
+  public static void setCopyFormsRuntime(boolean copy) {
+    OPTION_COPY_FORMS_RUNTIME_CLASSES = copy;
+  }
+
   public JavaBuilder(Executor tasksExecutor) {
     super(BuilderCategory.TRANSLATOR);
     myTaskRunner = new SequentialTaskExecutor(tasksExecutor);
     //add here class processors in the sequence they should be executed
   }
 
-  private static boolean hasRemovedSources(CompileContext context) {
-    final Map<ModuleBuildTarget, Collection<String>> removed = Utils.REMOVED_SOURCES_KEY.get(context);
-    return removed != null && !removed.isEmpty();
-  }
-
-  @Override
-  public String getName() {
+  @NotNull
+  public String getPresentableName() {
     return BUILDER_NAME;
-  }
-
-  public String getDescription() {
-    return "Java Builder";
   }
 
   public ExitCode build(final CompileContext context,
                         final ModuleChunk chunk,
-                        DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws ProjectBuildException {
+                        DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
+                        ChunkBuildOutputConsumer outputConsumer) throws ProjectBuildException {
+    final JpsProject project = context.getProjectDescriptor().getProject();
+    final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
+
+    final String compilerId = configuration.getJavaCompilerId();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Java compiler ID: " + compilerId);
+    }
+    if (JavaCompilers.ECLIPSE_ID.equals(compilerId) || JavaCompilers.ECLIPSE_EMBEDDED_ID.equals(compilerId)) {
+      context.putUserData(USE_ECLIPSE_COMPILER, true);
+    }
+    else if (!(JavaCompilers.JAVAC_ID.equals(compilerId) || JavaCompilers.JAVAC_API_ID.equals(compilerId))) {
+      return ExitCode.NOTHING_DONE;
+    }
+
     try {
       final Set<File> filesToCompile = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
       final Set<File> formsToCompile = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
 
       dirtyFilesHolder.processDirtyFiles(new FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>() {
         public boolean apply(ModuleBuildTarget target, File file, JavaSourceRootDescriptor descriptor) throws IOException {
-          if (descriptor instanceof ResourcesOnlyRootDescriptor) {
-            return true;
-          }
           if (JAVA_SOURCES_FILTER.accept(file)) {
             filesToCompile.add(file);
           }
@@ -209,8 +230,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       });
 
       // force compilation of bound source file if the form is dirty
-      final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
-        context.getProjectDescriptor().getProject()).getCompilerExcludes();
+      final JpsCompilerExcludes excludes = configuration.getCompilerExcludes();
       if (!context.isProjectRebuild()) {
         for (Iterator<File> formsIterator = formsToCompile.iterator(); formsIterator.hasNext(); ) {
           final File form = formsIterator.next();
@@ -263,7 +283,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
       }
 
-      return compile(context, chunk, filesToCompile, formsToCompile);
+      return compile(context, chunk, dirtyFilesHolder, filesToCompile, formsToCompile);
     }
     catch (ProjectBuildException e) {
       throw e;
@@ -272,7 +292,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
       String message = e.getMessage();
       if (message == null) {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        e.printStackTrace(new PrintStream(out));
+        final PrintStream stream = new PrintStream(out);
+        try {
+          e.printStackTrace(stream);
+        }
+        finally {
+          stream.close();
+        }
         message = "Internal error: \n" + out.toString();
       }
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message));
@@ -305,25 +331,27 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
-  private ExitCode compile(final CompileContext context, ModuleChunk chunk, Collection<File> files, Collection<File> forms)
+  private ExitCode compile(final CompileContext context,
+                           ModuleChunk chunk,
+                           DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
+                           Collection<File> files,
+                           Collection<File> forms)
     throws Exception {
     ExitCode exitCode = ExitCode.NOTHING_DONE;
 
     final boolean hasSourcesToCompile = !files.isEmpty() || !forms.isEmpty();
 
-    if (!hasSourcesToCompile && !hasRemovedSources(context)) {
+    if (!hasSourcesToCompile && !dirtyFilesHolder.hasRemovedFiles()) {
       return exitCode;
     }
 
     final ProjectPaths paths = context.getProjectPaths();
     final ProjectDescriptor pd = context.getProjectDescriptor();
-    final boolean addNotNullAssertions = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
-      pd.getProject()).isAddNotNullAssertions();
+    final boolean addNotNullAssertions = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(pd.getProject()).isAddNotNullAssertions();
 
-    final Collection<File> classpath =
-      paths.getCompilationClasspath(chunk, false/*context.isProjectRebuild()*/);
-    final Collection<File> platformCp =
-      paths.getPlatformCompilationClasspath(chunk, false/*context.isProjectRebuild()*/);
+    JavaBuilderUtil.ensureModuleHasJdk(chunk.representativeTarget().getModule(), context, BUILDER_NAME);
+    final Collection<File> classpath = paths.getCompilationClasspath(chunk, false/*context.isProjectRebuild()*/);
+    final Collection<File> platformCp = paths.getPlatformCompilationClasspath(chunk, false/*context.isProjectRebuild()*/);
 
     // begin compilation round
     final DiagnosticSink diagnosticSink = new DiagnosticSink(context);
@@ -333,6 +361,30 @@ public class JavaBuilder extends ModuleLevelBuilder {
     try {
       if (hasSourcesToCompile) {
         exitCode = ExitCode.OK;
+
+        if (OPTION_COPY_FORMS_RUNTIME_CLASSES && !forms.isEmpty()) {
+          for (ModuleBuildTarget target : chunk.getTargets()) {
+            if (!target.isTests()) {
+              final File outputDir = target.getOutputDir();
+              if (outputDir != null) {
+                final String outputRoot = FileUtil.toSystemIndependentName(outputDir.getPath());
+                final List<File> generatedFiles = CopyResourcesUtil.copyFormsRuntime(outputRoot, false);
+                if (!generatedFiles.isEmpty()) {
+                  // now inform others about files just copied
+                  final FileGeneratedEvent event = new FileGeneratedEvent();
+                  for (File file : generatedFiles) {
+                    final String relativePath = FileUtil.getRelativePath(outputRoot, FileUtil.toSystemIndependentName(file.getPath()), '/');
+                    if (relativePath != null) {
+                      event.add(outputRoot, relativePath);
+                    }
+                  }
+                  context.processMessage(event);
+                }
+              }
+            }
+          }
+        }
+
         final Set<File> srcPath = new HashSet<File>();
         final BuildRootIndex index = pd.getBuildRootIndex();
         for (ModuleBuildTarget target : chunk.getTargets()) {
@@ -371,21 +423,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
           final InstrumentationClassFinder finder = createInstrumentationClassFinder(platformCp, classpath, chunkSourcePath, outputSink);
 
           try {
-            if (!forms.isEmpty()) {
+            if (OPTION_ENABLE_FORMS_INSTRUMENTATION && !forms.isEmpty()) {
               try {
                 context.processMessage(new ProgressMessage("Instrumenting forms [" + chunkName + "]"));
                 instrumentForms(context, chunk, chunkSourcePath, finder, forms, outputSink);
-                JpsUiDesignerConfiguration configuration = JpsUiDesignerExtensionService.getInstance().getUiDesignerConfiguration(pd.getProject());
-                if (configuration != null && configuration.isCopyFormsRuntimeToOutput()) {
-                  for (ModuleBuildTarget target : chunk.getTargets()) {
-                    if (!target.isTests()) {
-                      final File outputDir = target.getOutputDir();
-                      if (outputDir != null) {
-                        CopyResourcesUtil.copyFormsRuntime(outputDir.getAbsolutePath(), false);
-                      }
-                    }
-                  }
-                }
               }
               finally {
                 context.processMessage(new ProgressMessage("Finished instrumenting forms [" + chunkName + "]"));
@@ -430,7 +471,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       final Set<File> successfullyCompiled = outputSink.getSuccessfullyCompiled();
       DELTA_MAPPINGS_CALLBACK_KEY.set(context, null);
 
-      if (JavaBuilderUtil.updateMappings(context, delta, chunk, files, successfullyCompiled)) {
+      if (JavaBuilderUtil.updateMappings(context, delta, dirtyFilesHolder, chunk, files, successfullyCompiled)) {
         exitCode = ExitCode.ADDITIONAL_PASS_REQUIRED;
       }
     }
@@ -492,7 +533,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     try {
       final boolean rc;
       if (USE_EMBEDDED_JAVAC) {
-        final boolean useEclipse = useEclipseCompiler(context);
+        final boolean useEclipse = USE_ECLIPSE_COMPILER.isIn(context);
         rc = JavacMain.compile(
           options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer, context.getCancelStatus(), useEclipse
         );
@@ -514,11 +555,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
     finally {
       counter.await();
     }
-  }
-
-  private static boolean useEclipseCompiler(CompileContext context) {
-    JpsProject project = context.getProjectDescriptor().getProject();
-    return USE_EMBEDDED_JAVAC && "Eclipse".equalsIgnoreCase(JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project).getJavaCompilerId());
   }
 
   private void submitAsyncTask(CompileContext context, final Runnable taskRunnable) {
@@ -837,7 +873,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     final JpsProject project = context.getProjectDescriptor().getProject();
     final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
-    final boolean useEclipseCompiler = useEclipseCompiler(context);
     final JpsJavaCompilerOptions compilerOptions = compilerConfig.getCurrentCompilerOptions();
     if (compilerOptions.DEBUGGING_INFO) {
       options.add("-g");
@@ -877,7 +912,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
     }
 
-    if (useEclipseCompiler) {
+    if (USE_ECLIPSE_COMPILER.isIn(context)) {
       for (String option : options) {
         if (option.startsWith("-proceedOnError")) {
           Utils.PROCEED_ON_ERROR_KEY.set(context, Boolean.TRUE);
@@ -896,13 +931,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private static Map<File, Set<File>> buildOutputDirectoriesMap(CompileContext context, ModuleChunk chunk) {
-    final Map<File, Set<File>> map = new LinkedHashMap<File, Set<File>>();
+    final Map<File, Set<File>> map = new THashMap<File, Set<File>>(FileUtil.FILE_HASHING_STRATEGY);
     for (ModuleBuildTarget target : chunk.getTargets()) {
       final File outputDir = target.getOutputDir();
       if (outputDir == null) {
         continue;
       }
-      final Set<File> roots = new LinkedHashSet<File>();
+      final Set<File> roots = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
       for (JavaSourceRootDescriptor descriptor : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context)) {
         roots.add(descriptor.root);
       }
@@ -974,11 +1009,22 @@ public class JavaBuilder extends ModuleLevelBuilder {
     for (File formFile : formsToInstrument) {
       final LwRootContainer rootContainer;
       try {
-        rootContainer = com.intellij.uiDesigner.compiler.Utils
-          .getRootContainer(formFile.toURI().toURL(), new CompiledClassPropertiesProvider(finder.getLoader()));
+        rootContainer = com.intellij.uiDesigner.compiler.Utils.getRootContainer(
+          formFile.toURI().toURL(), new CompiledClassPropertiesProvider( finder.getLoader())
+        );
       }
       catch (AlienFormFileException e) {
         // ignore non-IDEA forms
+        continue;
+      }
+      catch (UnexpectedFormElementException e) {
+        context.processMessage(new CompilerMessage(FORMS_BUILDER_NAME, BuildMessage.Kind.ERROR, e.getMessage(), formFile.getPath()));
+        LOG.info(e);
+        continue;
+      }
+      catch (UIDesignerException e) {
+        context.processMessage(new CompilerMessage(FORMS_BUILDER_NAME, BuildMessage.Kind.ERROR, e.getMessage(), formFile.getPath()));
+        LOG.info(e);
         continue;
       }
       catch (Exception e) {
@@ -992,8 +1038,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
       final OutputFileObject outputClassFile = findClassFile(compiledClassNames, classToBind);
       if (outputClassFile == null) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.WARNING, "Class to bind does not exist: " + classToBind,
-                                                   formFile.getAbsolutePath()));
+        context.processMessage(new CompilerMessage(
+          BUILDER_NAME, BuildMessage.Kind.WARNING, "Class to bind does not exist: " + classToBind, formFile.getAbsolutePath())
+        );
         continue;
       }
 
@@ -1027,7 +1074,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
         final FormErrorInfo[] warnings = codeGenerator.getWarnings();
         for (final FormErrorInfo warning : warnings) {
           context.processMessage(
-            new CompilerMessage(FORMS_BUILDER_NAME, BuildMessage.Kind.WARNING, warning.getErrorMessage(), formFile.getAbsolutePath()));
+            new CompilerMessage(FORMS_BUILDER_NAME, BuildMessage.Kind.WARNING, warning.getErrorMessage(), formFile.getAbsolutePath())
+          );
         }
 
         final FormErrorInfo[] errors = codeGenerator.getErrors();
@@ -1118,12 +1166,27 @@ public class JavaBuilder extends ModuleLevelBuilder {
       if (!StringUtil.isEmpty(line)) {
         if (line.contains("java.lang.OutOfMemoryError")) {
           myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "OutOfMemoryError: insufficient memory"));
+          myErrorCount++;
         }
         else {
-          final BuildMessage.Kind kind = line.toLowerCase(Locale.US).contains("error")? BuildMessage.Kind.ERROR : BuildMessage.Kind.INFO;
+          final BuildMessage.Kind kind = getKindByMessageText(line);
+          if (kind == BuildMessage.Kind.ERROR) {
+            myErrorCount++;
+          }
+          else if (kind == BuildMessage.Kind.WARNING) {
+            myWarningCount++;
+          }
           myContext.processMessage(new CompilerMessage(BUILDER_NAME, kind, line));
         }
       }
+    }
+
+    private BuildMessage.Kind getKindByMessageText(String line) {
+      final String lowercasedLine = line.toLowerCase(Locale.US);
+      if (lowercasedLine.contains("error") || lowercasedLine.contains("requires target release")) {
+        return BuildMessage.Kind.ERROR;
+      }
+      return BuildMessage.Kind.INFO;
     }
 
     public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
@@ -1143,7 +1206,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
           kind = BuildMessage.Kind.INFO;
       }
       final JavaFileObject source = diagnostic.getSource();
-      final File sourceFile = source != null ? Utils.convertToFile(source.toUri()) : null;
+      File sourceFile = null;
+      try {
+        sourceFile = source != null ? Utils.convertToFile(source.toUri()) : null;
+      }
+      catch (Exception e) {
+        LOG.info(e);
+      }
       final String srcPath = sourceFile != null ? FileUtil.toSystemIndependentName(sourceFile.getPath()) : null;
       String message = diagnostic.getMessage(Locale.US);
       if (Utils.IS_TEST_MODE) {

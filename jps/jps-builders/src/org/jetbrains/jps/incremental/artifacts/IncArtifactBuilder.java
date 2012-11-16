@@ -11,12 +11,11 @@ import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
+import org.jetbrains.jps.builders.artifacts.ArtifactBuildTaskProvider;
+import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
-import org.jetbrains.jps.incremental.BuildListener;
-import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.ProjectBuildException;
-import org.jetbrains.jps.incremental.TargetBuilder;
+import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.artifacts.impl.ArtifactSorter;
 import org.jetbrains.jps.incremental.artifacts.impl.JarsBuilder;
 import org.jetbrains.jps.incremental.artifacts.instructions.*;
@@ -25,6 +24,7 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,7 +34,7 @@ import java.util.*;
  * @author nik
  */
 public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, ArtifactBuildTarget> {
-  public static final String BUILDER_NAME = "artifacts";
+  public static final String BUILDER_NAME = "Artifacts builder";
 
   public IncArtifactBuilder() {
     super(Collections.singletonList(ArtifactBuildTargetType.INSTANCE));
@@ -71,6 +71,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
       }
 
       context.processMessage(new ProgressMessage("Building artifact '" + artifact.getName() + "'..."));
+      runArtifactTasks(context, target.getArtifact(), ArtifactBuildTaskProvider.ArtifactBuildPhase.PRE_PROCESSING);
       final SourceToOutputMapping srcOutMapping = pd.dataManager.getSourceToOutputMap(target);
       final ArtifactOutputToSourceMapping outSrcMapping = state.getOrCreateOutSrcMapping();
 
@@ -92,29 +93,32 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
       }
 
       Set<String> changedOutputPaths = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
-      for (Map.Entry<BuildRootDescriptor, Set<File>> entry : filesToRecompile.entrySet()) {
-        int rootIndex = ((ArtifactRootDescriptor)entry.getKey()).getRootIndex();
-        for (File file : entry.getValue()) {
-          String sourcePath = FileUtil.toSystemIndependentName(file.getPath());
-          addFileToProcess(filesToProcess, rootIndex, sourcePath, deletedFiles);
-          final Collection<String> outputPaths = srcOutMapping.getOutputs(sourcePath);
-          if (outputPaths != null) {
-            changedOutputPaths.addAll(outputPaths);
-            for (String outputPath : outputPaths) {
-              filesToDelete.putValue(outputPath, sourcePath);
-              final List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex> sources = outSrcMapping.getState(outputPath);
-              if (sources != null) {
-                for (ArtifactOutputToSourceMapping.SourcePathAndRootIndex source : sources) {
-                  addFileToProcess(filesToProcess, source.getRootIndex(), source.getPath(), deletedFiles);
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
+      synchronized (filesToRecompile) {
+        for (Map.Entry<BuildRootDescriptor, Set<File>> entry : filesToRecompile.entrySet()) {
+          int rootIndex = ((ArtifactRootDescriptor)entry.getKey()).getRootIndex();
+          for (File file : entry.getValue()) {
+            String sourcePath = FileUtil.toSystemIndependentName(file.getPath());
+            addFileToProcess(filesToProcess, rootIndex, sourcePath, deletedFiles);
+            final Collection<String> outputPaths = srcOutMapping.getOutputs(sourcePath);
+            if (outputPaths != null) {
+              changedOutputPaths.addAll(outputPaths);
+              for (String outputPath : outputPaths) {
+                filesToDelete.putValue(outputPath, sourcePath);
+                final List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex> sources = outSrcMapping.getState(outputPath);
+                if (sources != null) {
+                  for (ArtifactOutputToSourceMapping.SourcePathAndRootIndex source : sources) {
+                    addFileToProcess(filesToProcess, source.getRootIndex(), source.getPath(), deletedFiles);
+                  }
                 }
               }
             }
           }
         }
-      }
-      for (Set<File> files : filesToRecompile.values()) {
-        for (File file : files) {
-          srcOutMapping.remove(file.getPath());
+        for (Set<File> files : filesToRecompile.values()) {
+          for (File file : files) {
+            srcOutMapping.remove(file.getPath());
+          }
         }
       }
       for (String outputPath : changedOutputPaths) {
@@ -150,9 +154,20 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
 
       JarsBuilder builder = new JarsBuilder(changedJars, context, outputConsumer, outSrcMapping);
       builder.buildJars();
+      runArtifactTasks(context, artifact, ArtifactBuildTaskProvider.ArtifactBuildPhase.POST_PROCESSING);
     }
     catch (IOException e) {
       throw new ProjectBuildException(e);
+    }
+  }
+
+  private static void runArtifactTasks(CompileContext context, JpsArtifact artifact, ArtifactBuildTaskProvider.ArtifactBuildPhase phase)
+    throws ProjectBuildException {
+    for (ArtifactBuildTaskProvider provider : JpsServiceManager.getInstance().getExtensions(ArtifactBuildTaskProvider.class)) {
+      List<? extends BuildTask> tasks = provider.createArtifactBuildTasks(artifact, phase);
+      for (BuildTask task : tasks) {
+        task.build(context);
+      }
     }
   }
 
@@ -192,7 +207,6 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
       }
 
       if (deleted) {
-        context.getLoggingManager().getArtifactBuilderLogger().fileDeleted(filePath);
         outSrcMapping.remove(filePath);
         deletedPaths.add(filePath);
         for (String sourcePath : filesToDelete.get(filePath)) {
@@ -208,19 +222,25 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
         context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.WARNING, "Cannot delete file '" + filePath + "'"));
       }
     }
+    ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
+    if (logger.isEnabled()) {
+      logger.logDeletedFiles(deletedPaths);
+    }
   }
 
   @Override
   public void buildStarted(final CompileContext context) {
+    //todo[nik] move to common place
     context.addBuildListener(new BuildListener() {
       @Override
       public void filesGenerated(Collection<Pair<String, String>> paths) {
         BuildFSState fsState = context.getProjectDescriptor().fsState;
         BuildRootIndex rootsIndex = context.getProjectDescriptor().getBuildRootIndex();
         for (Pair<String, String> pair : paths) {
-          File file = new File(pair.getFirst(), pair.getSecond());
-          Collection<ArtifactRootDescriptor> descriptors = rootsIndex.findAllParentDescriptors(file, Collections.singletonList(ArtifactBuildTargetType.INSTANCE), context);
-          for (ArtifactRootDescriptor descriptor : descriptors) {
+          String relativePath = pair.getSecond();
+          File file = relativePath.equals(".") ? new File(pair.getFirst()) : new File(pair.getFirst(), relativePath);
+          Collection<BuildRootDescriptor> descriptors = rootsIndex.findAllParentDescriptors(file, null, context);
+          for (BuildRootDescriptor descriptor : descriptors) {
             try {
               fsState.markDirty(context, file, descriptor, context.getProjectDescriptor().timestamps.getStorage(), false);
             }
@@ -236,8 +256,8 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
         BuildRootIndex rootsIndex = context.getProjectDescriptor().getBuildRootIndex();
         for (String path : paths) {
           File file = new File(FileUtil.toSystemDependentName(path));
-          Collection<ArtifactRootDescriptor> descriptors = rootsIndex.findAllParentDescriptors(file, Collections.singletonList(ArtifactBuildTargetType.INSTANCE), context);
-          for (ArtifactRootDescriptor descriptor : descriptors) {
+          Collection<BuildRootDescriptor> descriptors = rootsIndex.findAllParentDescriptors(file, null, context);
+          for (BuildRootDescriptor descriptor : descriptors) {
             state.registerDeleted(descriptor.getTarget(), file);
           }
         }
@@ -245,13 +265,9 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
     });
   }
 
+  @NotNull
   @Override
-  public String getName() {
+  public String getPresentableName() {
     return BUILDER_NAME;
-  }
-
-  @Override
-  public String getDescription() {
-    return "Artifacts builder";
   }
 }

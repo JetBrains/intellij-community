@@ -17,8 +17,10 @@ package com.intellij.ui.components;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.LoadingDecorator;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +46,7 @@ public class JBLoadingPanel extends JPanel {
         final NonOpaquePanel panel = super.customizeLoadingLayer(parent, text, icon);
         final Font font = text.getFont();
         text.setFont(font.deriveFont(font.getStyle(), font.getSize() + 6));
-        text.setForeground(new Color(0, 0, 0, 150));
+        text.setForeground(ColorUtil.toAlpha(UIUtil.getLabelForeground(), 150));
         return panel;
       }
     };

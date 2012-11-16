@@ -24,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
+import static com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -72,14 +74,14 @@ public class RowsDnDSupport {
           Rectangle cellBounds = getCellBounds(component, newIndex);
           if (model instanceof RefinedDropSupport) {
             RefinedDropSupport.Position position = ((RefinedDropSupport)model).isDropInto(component, oldIndex, newIndex)
-                                                   ? RefinedDropSupport.Position.INTO
+                                                   ? INTO
                                                    : (event.getPoint().y < cellBounds.y + cellBounds.height / 2)
-                                                     ? RefinedDropSupport.Position.ABOVE
-                                                     : RefinedDropSupport.Position.BELOW;
+                                                     ? ABOVE
+                                                     : BELOW;
             boolean canDrop = ((RefinedDropSupport)model).canDrop(oldIndex, newIndex, position);
             event.setDropPossible(canDrop);
             if (canDrop && oldIndex != newIndex) {
-              if (position == RefinedDropSupport.Position.BELOW) {
+              if (position == BELOW) {
                 cellBounds.y += cellBounds.height - 2;
               }
               RelativeRectangle rectangle = new RelativeRectangle(component, cellBounds);
@@ -140,10 +142,10 @@ public class RowsDnDSupport {
               if (model instanceof RefinedDropSupport) {
                 Rectangle cellBounds = getCellBounds(component, newIndex);
                 RefinedDropSupport.Position position = ((RefinedDropSupport)model).isDropInto(component, oldIndex, newIndex)
-                                                       ? RefinedDropSupport.Position.INTO
+                                                       ? INTO
                                                        : (event.getPoint().y < cellBounds.y + cellBounds.height / 2)
-                                                         ? RefinedDropSupport.Position.ABOVE
-                                                         : RefinedDropSupport.Position.BELOW;
+                                                         ? ABOVE
+                                                         : BELOW;
                 if (((RefinedDropSupport)model).canDrop(oldIndex, newIndex, position)) {
                   ((RefinedDropSupport)model).drop(oldIndex, newIndex, position);
                 }

@@ -375,7 +375,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
     replaceTransferable();
 
-    myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, myProject);
+    myUpdateAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, myProject);
 
     final HistoryAsTreeProvider treeHistoryProvider = myHistorySession.getHistoryAsTreeProvider();
 

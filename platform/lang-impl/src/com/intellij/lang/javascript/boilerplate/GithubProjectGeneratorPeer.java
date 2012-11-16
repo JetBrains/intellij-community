@@ -3,20 +3,26 @@ package com.intellij.lang.javascript.boilerplate;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.projectWizard.SettingsStep;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.WebProjectGenerator;
 import com.intellij.platform.templates.github.GithubTagInfo;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.*;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -27,16 +33,25 @@ import java.util.Set;
  */
 public class GithubProjectGeneratorPeer implements WebProjectGenerator.GeneratorPeer<GithubTagInfo> {
 
+  private static final String CONTROL_PLACE = "Github.Project.Generator.Reload";
+
+  private enum UpdateStatus {
+    UPDATING, IDLE
+  }
+
   private final List<WebProjectGenerator.SettingsStateListener> myListeners = ContainerUtil.newArrayList();
   private final GithubTagInfo myMasterTag;
+  private final GithubTagListProvider myTagListProvider;
+  private final AsyncProcessIcon myLoadingVersionIcon = new AsyncProcessIcon("Getting github tags");
+  private final JLabel myErrorMessage = new JLabel();
   private JComboBox myComboBox;
-  private final GithubTagListProvider myProvider;
   private JComponent myComponent;
-  private JLabel myErrorMessage;
-  private JButton myReloadButton;
   private JPanel myVersionPanel;
+  private JPanel myActionPanel;
+  private UpdateStatus myUpdateStatus;
 
   public GithubProjectGeneratorPeer(@NotNull AbstractGithubTagDownloadedProjectGenerator generator) {
+    myErrorMessage.setForeground(Color.RED);
     String ghUserName = generator.getGithubUserName();
     String ghRepoName = generator.getGithubRepositoryName();
     myMasterTag = new GithubTagInfo(
@@ -47,38 +62,28 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
     myComboBox.setRenderer(new ListCellRendererWrapper<GithubTagInfo>() {
       @Override
       public void customize(JList list, GithubTagInfo tag, int index, boolean selected, boolean hasFocus) {
-        if (tag != null) {
-          setText(tag.getName());
-        }
+        String text = tag == null ? "Unavailable" : tag.getName();
+        setText(text);
       }
     });
 
-    myProvider = new GithubTagListProvider(ghUserName, ghRepoName);
-    ImmutableSet<GithubTagInfo> cachedTags = myProvider.getCachedTags();
+    myTagListProvider = new GithubTagListProvider(ghUserName, ghRepoName);
+    fillActionPanel();
+    ImmutableSet<GithubTagInfo> cachedTags = myTagListProvider.getCachedTags();
     if (cachedTags != null) {
-      updateTagList(cachedTags);
+      onTagsUpdated(cachedTags);
     }
-
-    myErrorMessage.setText(null);
-    myReloadButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        asyncUpdateTags();
-      }
-    });
-    asyncUpdateTags();
+    reloadTagsInBackground();
   }
 
-  private void asyncUpdateTags() {
-    myProvider.updateTagListAsynchronously(this);
-  }
-
-  void updateTagList(@NotNull ImmutableSet<GithubTagInfo> tags) {
+  void onTagsUpdated(@NotNull ImmutableSet<GithubTagInfo> tags) {
+    changeUpdateStatus(UpdateStatus.IDLE);
     if (!shouldUpdate(tags)) {
       return;
     }
     List<GithubTagInfo> sortedTags = createSortedTagList(tags);
-    GithubTagInfo selectedItem = ObjectUtils.tryCast(myComboBox.getSelectedItem(), GithubTagInfo.class);
+    GithubTagInfo previouslySelectedTag = getSelectedTag();
+    GithubTagInfo selectedItem = previouslySelectedTag;
     if (selectedItem == null && sortedTags.size() > 0) {
       selectedItem = sortedTags.get(0);
     }
@@ -90,8 +95,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
     if (selectedItem != null) {
       // restore previously selected item
       for (int i = 0; i < myComboBox.getItemCount(); i++) {
-        GithubTagInfo
-          item = ObjectUtils.tryCast(myComboBox.getItemAt(i), GithubTagInfo.class);
+        GithubTagInfo item = GithubTagInfo.tryCast(myComboBox.getItemAt(i));
         if (item != null && item.getName().equals(selectedItem.getName())) {
           myComboBox.setSelectedIndex(i);
           break;
@@ -99,13 +103,19 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
       }
     }
     myComboBox.updateUI();
+    if (previouslySelectedTag == null && selectedItem != null) {
+      fireStateChanged();
+    }
   }
 
-  void setErrorMessage(@Nullable final String message) {
+  void onTagsUpdateError(@NotNull final String errorMessage) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        myErrorMessage.setText(message);
+        if (getSelectedTag() == null) {
+          myErrorMessage.setText(errorMessage);
+        }
+        changeUpdateStatus(UpdateStatus.IDLE);
       }
     });
   }
@@ -147,33 +157,118 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
   }
 
   @Override
-  public Pair<String, JComponent> getSettingsField() {
-    return new Pair<String, JComponent>("\u001BVersion:", myVersionPanel);
+  public void buildUI(@NotNull SettingsStep settingsStep) {
+    settingsStep.addSettingsField("\u001BVersion:", myVersionPanel);
+    settingsStep.addSettingsComponent(myErrorMessage);
   }
 
   @NotNull
   @Override
   public GithubTagInfo getSettings() {
-    Object obj = myComboBox.getSelectedItem();
-    if (obj instanceof GithubTagInfo) {
-      return (GithubTagInfo) obj;
+    GithubTagInfo tag = getSelectedTag();
+    if (tag == null) {
+      throw new RuntimeException("[internal error] No versions available.");
     }
-    throw new RuntimeException("Can't handle selected version: " + obj);
+    return tag;
   }
 
   @Override
   @Nullable
   public ValidationInfo validate() {
-    Object obj = myComboBox.getSelectedItem();
-    if (obj instanceof GithubTagInfo) {
+    GithubTagInfo tag = getSelectedTag();
+    if (tag != null) {
       return null;
     }
-    return new ValidationInfo("Can't handle selected version: " + obj);
+    String errorMessage = StringUtil.notNullize(myErrorMessage.getText());
+    if (errorMessage.isEmpty()) {
+      errorMessage = "Versions have not been loaded yet.";
+    }
+    return new ValidationInfo(errorMessage);
+  }
+
+  @Override
+  public boolean isBackgroundJobRunning() {
+    return myUpdateStatus == UpdateStatus.UPDATING;
   }
 
   @Override
   public void addSettingsStateListener(@NotNull WebProjectGenerator.SettingsStateListener listener) {
     myListeners.add(listener);
+  }
+
+  @Nullable
+  private GithubTagInfo getSelectedTag() {
+    return GithubTagInfo.tryCast(myComboBox.getSelectedItem());
+  }
+
+  private void fireStateChanged() {
+    GithubTagInfo tag = getSelectedTag();
+    for (WebProjectGenerator.SettingsStateListener listener : myListeners) {
+      listener.stateChanged(tag != null);
+    }
+  }
+
+  private void reloadTagsInBackground() {
+    changeUpdateStatus(UpdateStatus.UPDATING);
+    myErrorMessage.setText(null);
+    myTagListProvider.updateTagListAsynchronously(this);
+  }
+
+  private void changeUpdateStatus(@NotNull UpdateStatus status) {
+    CardLayout cardLayout = (CardLayout) myActionPanel.getLayout();
+    cardLayout.show(myActionPanel, status.name());
+    if (status == UpdateStatus.UPDATING) {
+      myLoadingVersionIcon.resume();
+    }
+    else {
+      myLoadingVersionIcon.suspend();
+    }
+    myUpdateStatus = status;
+  }
+
+  private void fillActionPanel() {
+    myActionPanel.add(createReloadButtonPanel(), UpdateStatus.IDLE.name());
+    myActionPanel.add(createReloadInProgressPanel(), UpdateStatus.UPDATING.name());
+    changeUpdateStatus(UpdateStatus.IDLE);
+  }
+
+  @NotNull
+  private JPanel createReloadButtonPanel() {
+    ReloadAction reloadAction = new ReloadAction();
+    ActionButton reloadButton = new ActionButton(
+      reloadAction,
+      reloadAction.getTemplatePresentation().clone(),
+      CONTROL_PLACE,
+      ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE
+    );
+    JPanel panel = new JPanel(new BorderLayout(0, 0));
+    panel.add(reloadButton, BorderLayout.WEST);
+    return panel;
+  }
+
+  @NotNull
+  private JPanel createReloadInProgressPanel() {
+    JPanel panel = new JPanel(new BorderLayout(3, 0));
+    panel.add(myLoadingVersionIcon, BorderLayout.CENTER);
+    panel.add(new JLabel("Loading..."), BorderLayout.EAST);
+    return panel;
+  }
+
+  private class ReloadAction extends AnAction {
+
+    private ReloadAction() {
+      super("Reload versions", null, AllIcons.Actions.Refresh);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      GithubProjectGeneratorPeer.this.reloadTagsInBackground();
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(true);
+    }
   }
 
 }

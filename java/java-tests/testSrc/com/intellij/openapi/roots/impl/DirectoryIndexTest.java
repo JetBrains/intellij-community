@@ -32,12 +32,12 @@ import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
@@ -337,20 +337,20 @@ public class DirectoryIndexTest extends IdeaTestCase {
     VirtualFile output1 = myModule1Dir.createChildDirectory(this, "output1");
     VirtualFile output2 = myModule1Dir.createChildDirectory(this, "output2");
 
-    assertNotNull(myIndex.getInfoForDirectory(output1));
-    assertNotNull(myIndex.getInfoForDirectory(output2));
+    checkInfoNotNull(output1);
+    checkInfoNotNull(output2);
 
     getCompilerProjectExtension().setCompilerOutputUrl(output1.getUrl());
     fireRootsChanged();
 
-    assertNull(myIndex.getInfoForDirectory(output1));
-    assertNotNull(myIndex.getInfoForDirectory(output2));
+    checkInfoNull(output1);
+    checkInfoNotNull(output2);
 
     getCompilerProjectExtension().setCompilerOutputUrl(output2.getUrl());
     fireRootsChanged();
 
-    assertNotNull(myIndex.getInfoForDirectory(output1));
-    assertNull(myIndex.getInfoForDirectory(output2));
+    checkInfoNotNull(output1);
+    checkInfoNull(output2);
   }
 
   private void fireRootsChanged() {
@@ -363,10 +363,10 @@ public class DirectoryIndexTest extends IdeaTestCase {
     VirtualFile module2Output = myModule1Dir.createChildDirectory(this, "module2Output");
     VirtualFile module2TestOutput = myModule2Dir.createChildDirectory(this, "module2TestOutput");
 
-    assertNotNull(myIndex.getInfoForDirectory(excluded));
-    assertNotNull(myIndex.getInfoForDirectory(projectOutput));
-    assertNotNull(myIndex.getInfoForDirectory(module2Output));
-    assertNotNull(myIndex.getInfoForDirectory(module2TestOutput));
+    checkInfoNotNull(excluded);
+    checkInfoNotNull(projectOutput);
+    checkInfoNotNull(module2Output);
+    checkInfoNotNull(module2TestOutput);
 
     getCompilerProjectExtension().setCompilerOutputUrl(projectOutput.getUrl());
 
@@ -375,44 +375,37 @@ public class DirectoryIndexTest extends IdeaTestCase {
     PsiTestUtil.setCompilerOutputPath(myModule2, module2TestOutput.getUrl(), true);
     PsiTestUtil.setExcludeCompileOutput(myModule2, true);
 
-    assertNull(myIndex.getInfoForDirectory(excluded));
-    assertNull(myIndex.getInfoForDirectory(projectOutput));
-    assertNull(myIndex.getInfoForDirectory(module2Output));
-    assertNull(myIndex.getInfoForDirectory(module2TestOutput));
+    checkInfoNull(excluded);
+    checkInfoNull(projectOutput);
+    checkInfoNull(module2Output);
+    checkInfoNull(module2TestOutput);
 
     excluded.delete(this);
     projectOutput.delete(this);
     module2Output.delete(this);
     module2TestOutput.delete(this);
 
-    final List<Boolean> isExcluded = new ArrayList<Boolean>();
+    final List<VirtualFile> created = new ArrayList<VirtualFile>();
     VirtualFileListener l = new VirtualFileAdapter() {
       @Override
       public void fileCreated(VirtualFileEvent e) {
-        isExcluded.add(myIndex.getInfoForDirectory(e.getFile()) == null);
+        VirtualFile file = e.getFile();
+        checkInfoNull(file);
+        created.add(file);
       }
     };
-    VirtualFileManager.getInstance().addVirtualFileListener(l);
-    try {
-      excluded = myModule1Dir.createChildDirectory(this, excluded.getName());
-      projectOutput = myModule1Dir.createChildDirectory(this, projectOutput.getName());
-      module2Output = myModule1Dir.createChildDirectory(this, module2Output.getName());
-      module2TestOutput = myModule2Dir.createChildDirectory(this, module2TestOutput.getName());
-    }
-    finally {
-      VirtualFileManager.getInstance().removeVirtualFileListener(l);
-    }
+    VirtualFileManager.getInstance().addVirtualFileListener(l, getTestRootDisposable());
+    excluded = myModule1Dir.createChildDirectory(this, excluded.getName());
+    projectOutput = myModule1Dir.createChildDirectory(this, projectOutput.getName());
+    module2Output = myModule1Dir.createChildDirectory(this, module2Output.getName());
+    module2TestOutput = myModule2Dir.createChildDirectory(this, module2TestOutput.getName());
 
-    assertNull(myIndex.getInfoForDirectory(excluded));
-    assertNull(myIndex.getInfoForDirectory(projectOutput));
-    assertNull(myIndex.getInfoForDirectory(module2Output));
-    assertNull(myIndex.getInfoForDirectory(module2TestOutput));
+    checkInfoNull(excluded);
+    checkInfoNull(projectOutput);
+    checkInfoNull(module2Output);
+    checkInfoNull(module2TestOutput);
 
-    assertEquals(4, isExcluded.size());
-    assertTrue(isExcluded.get(0));
-    assertTrue(isExcluded.get(1));
-    assertTrue(isExcluded.get(2));
-    assertTrue(isExcluded.get(3));
+    assertEquals(created.toString(), 4, created.size());
   }
 
   public void testExcludesShouldBeRecognizedRightOnRefresh() throws Exception {
@@ -430,27 +423,20 @@ public class DirectoryIndexTest extends IdeaTestCase {
     boolean created = new File(myModule1Dir.getPath(), "dir/excluded/foo").mkdirs();
     assertTrue(created);
 
-    final List<Boolean> toAssert = new ArrayList<Boolean>();
     VirtualFileListener l = new VirtualFileAdapter() {
       @Override
       public void fileCreated(VirtualFileEvent e) {
         assertEquals("dir", e.getFileName());
 
-        toAssert.add(myIndex.getInfoForDirectory(e.getFile()) != null);
-        toAssert.add(myIndex.getInfoForDirectory(e.getFile().findFileByRelativePath("excluded")) == null);
-        toAssert.add(myIndex.getInfoForDirectory(e.getFile().findFileByRelativePath("excluded/foo")) == null);
+        VirtualFile file = e.getFile();
+        checkInfoNotNull(file);
+        checkInfoNull(file.findFileByRelativePath("excluded"));
+        checkInfoNull(file.findFileByRelativePath("excluded/foo"));
       }
     };
 
-    VirtualFileManager.getInstance().addVirtualFileListener(l);
-    try {
-      VirtualFileManager.getInstance().refresh(false);
-    }
-    finally {
-      VirtualFileManager.getInstance().removeVirtualFileListener(l);
-    }
-
-    assertEquals(Arrays.asList(true, true, true), toAssert);
+    VirtualFileManager.getInstance().addVirtualFileListener(l, getTestRootDisposable());
+    VirtualFileManager.getInstance().refresh(false);
   }
 
   public void testProcessingNestedContentRootsOfExcludedDirsOnCreation() {
@@ -474,8 +460,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
     });
 
 
-    assertNull(myIndex.getInfoForDirectory(LocalFileSystem.getInstance().findFileByIoFile(f.getParentFile().getParentFile())));
-    assertNotNull(myIndex.getInfoForDirectory(LocalFileSystem.getInstance().findFileByIoFile(f)));
+    checkInfoNull(LocalFileSystem.getInstance().findFileByIoFile(f.getParentFile().getParentFile()));
+    checkInfoNotNull(LocalFileSystem.getInstance().findFileByIoFile(f));
   }
 
   public void testLibraryDirInContent() throws Exception {
@@ -503,35 +489,33 @@ public class DirectoryIndexTest extends IdeaTestCase {
                          boolean isInLibrarySource,
                          @Nullable String packageName,
                          Module... modulesOfOrderEntries) {
-    DirectoryInfo info = myIndex.getInfoForDirectory(dir);
-    assertNotNull(info);
-    assertEquals(module, info.module);
-    assertEquals(isInModuleSource, info.isInModuleSource);
-    assertEquals(isTestSource, info.isTestSource);
-    assertEquals(isInLibrary, info.libraryClassRoot != null);
-    assertEquals(isInLibrarySource, info.isInLibrarySource);
+    DirectoryInfo info = checkInfoNotNull(dir);
+    assertEquals(module, info.getModule());
+    assertEquals(isInModuleSource, info.isInModuleSource());
+    assertEquals(isTestSource, info.isTestSource());
+    assertEquals(isInLibrary, info.hasLibraryClassRoot());
+    assertEquals(isInLibrarySource, info.isInLibrarySource());
 
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     if (dir.isDirectory()) {
       assertEquals(packageName, fileIndex.getPackageNameByDirectory(dir));
     }
 
-    assertEquals(modulesOfOrderEntries.length, info.getOrderEntries().size());
+    assertEquals(modulesOfOrderEntries.length, info.getOrderEntries().length);
     for (Module aModule : modulesOfOrderEntries) {
-      boolean found = false;
-      for (OrderEntry orderEntry : info.getOrderEntries()) {
-        if (orderEntry.getOwnerModule() == aModule) {
-          found = true;
-          break;
-        }
-      }
-      assertTrue(found);
+      OrderEntry found = info.findOrderEntryWithOwnerModule(aModule);
+      assertNotNull(found);
     }
   }
 
-  private void checkInfoNull(VirtualFile dir) {
-    DirectoryInfo info = myIndex.getInfoForDirectory(dir);
-    assertNull(info);
+  private void checkInfoNull(@NotNull VirtualFile dir) {
+    assertNull(myIndex.getInfoForDirectory(dir));
+  }
+  private DirectoryInfo checkInfoNotNull(@NotNull VirtualFile output2) {
+    DirectoryInfo info = myIndex.getInfoForDirectory(output2);
+    assertNotNull(output2.toString(), info);
+    info.assertConsistency();
+    return info;
   }
 
   private void checkPackage(String packageName, VirtualFile... expectedDirs) {

@@ -28,6 +28,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
@@ -44,6 +45,7 @@ import java.util.*;
  * @author Alexander Lobas
  */
 public class ProfileManager {
+  private static final LayoutDevice NO_DEVICES = new LayoutDevice("[None]", LayoutDevice.Type.CUSTOM);
   private static final LayoutDevice CUSTOM_DEVICE = new LayoutDevice("Edit Devices", LayoutDevice.Type.CUSTOM);
 
   private final ModuleProvider myModuleProvider;
@@ -84,39 +86,11 @@ public class ProfileManager {
 
       @Override
       protected boolean selectionChanged(LayoutDevice item) {
+        if (item == NO_DEVICES) {
+          return false;
+        }
         if (item == CUSTOM_DEVICE) {
-          LayoutDeviceConfiguration configuration = myDeviceConfigurationAction.getSelection();
-          configuration = configuration != null && configuration.getDevice().getType() == LayoutDevice.Type.CUSTOM ? configuration : null;
-          LayoutDeviceConfigurationsDialog dialog =
-            new LayoutDeviceConfigurationsDialog(myModuleProvider.getProject(), configuration, myLayoutDeviceManager);
-          dialog.show();
-
-          if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-            myLayoutDeviceManager.saveUserDevices();
-          }
-
-          updatePlatform(getPlatform(null));
-
-          String deviceName = dialog.getSelectedDeviceName();
-          if (deviceName != null) {
-            LayoutDevice newDevice = null;
-            for (LayoutDevice device : myDevices) {
-              if (device.getName().equals(deviceName)) {
-                newDevice = device;
-                break;
-              }
-            }
-
-            if (newDevice != null) {
-              String configurationName = dialog.getSelectedDeviceConfigName();
-              if (configurationName == null) {
-                updateDevice(newDevice);
-              }
-              else {
-                updateDevice(newDevice, configurationName);
-              }
-            }
-          }
+          configureCustomDevices(false);
         }
         else {
           updateDevice(item);
@@ -232,6 +206,52 @@ public class ProfileManager {
   //
   //
   //////////////////////////////////////////////////////////////////////////////////////////
+
+  public void showCustomDevicesDialog() {
+    if (configureCustomDevices(true)) {
+      myRefreshAction.run();
+    }
+  }
+
+  private boolean configureCustomDevices(boolean exitOnCancel) {
+    LayoutDeviceConfiguration configuration = myDeviceConfigurationAction.getSelection();
+    configuration = configuration != null && configuration.getDevice().getType() == LayoutDevice.Type.CUSTOM ? configuration : null;
+    LayoutDeviceConfigurationsDialog dialog =
+      new LayoutDeviceConfigurationsDialog(myModuleProvider.getProject(), configuration, myLayoutDeviceManager);
+    dialog.show();
+
+    if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+      myLayoutDeviceManager.saveUserDevices();
+    }
+    else if (exitOnCancel) {
+      return false;
+    }
+
+    updatePlatform(getPlatform(null));
+
+    String deviceName = dialog.getSelectedDeviceName();
+    if (deviceName != null) {
+      LayoutDevice newDevice = null;
+      for (LayoutDevice device : myDevices) {
+        if (device.getName().equals(deviceName)) {
+          newDevice = device;
+          break;
+        }
+      }
+
+      if (newDevice != null) {
+        String configurationName = dialog.getSelectedDeviceConfigName();
+        if (configurationName == null) {
+          updateDevice(newDevice);
+        }
+        else {
+          updateDevice(newDevice, configurationName);
+        }
+      }
+    }
+
+    return true;
+  }
 
   public void setProfile(Profile profile) {
     myProfile = profile;
@@ -405,24 +425,15 @@ public class ProfileManager {
     locales.add(new LocaleData(null, null, language2Regions.isEmpty() ? "Any locale" : "Other locale"));
 
     LocaleData newLocale = null;
-    if (myProfile.getLocaleLanguage() != null && myProfile.getLocaleRegion() != null) {
-      LocaleData oldLocale = new LocaleData(myProfile.getLocaleLanguage(), myProfile.getLocaleRegion(), "");
-      for (LocaleData locale : locales) {
-        if (locale.equals(oldLocale)) {
-          newLocale = locale;
-          break;
-        }
-      }
+    if (myProfile.getLocaleLanguage() != null || myProfile.getLocaleRegion() != null) {
+      newLocale = findLocale(locales, myProfile.getLocaleLanguage(), myProfile.getLocaleRegion());
+    }
+    if (newLocale == null) {
+      newLocale = findLocale(locales, "en", null);
     }
     if (newLocale == null) {
       Locale defaultLocale = Locale.getDefault();
-      LocaleData defaultData = new LocaleData(defaultLocale.getLanguage(), defaultLocale.getCountry(), "");
-      for (LocaleData locale : locales) {
-        if (locale.equals(defaultData)) {
-          newLocale = locale;
-          break;
-        }
-      }
+      newLocale = findLocale(locales, defaultLocale.getLanguage(), defaultLocale.getCountry());
     }
     if (newLocale == null && locales.size() > 0) {
       newLocale = locales.get(0);
@@ -430,6 +441,22 @@ public class ProfileManager {
 
     myLocaleAction.setItems(locales, newLocale);
     updateLocale(newLocale);
+  }
+
+  @Nullable
+  private static LocaleData findLocale(List<LocaleData> locales, String localeLanguage, @Nullable String localeRegion) {
+    LocaleData localeWithoutRegion = null;
+    for (LocaleData locale : locales) {
+      if (StringUtil.equalsIgnoreCase(locale.getLanguage(), localeLanguage)) {
+        if (StringUtil.equalsIgnoreCase(locale.getRegion(), localeRegion)) {
+          return locale;
+        }
+        if (localeWithoutRegion == null) {
+          localeWithoutRegion = locale;
+        }
+      }
+    }
+    return localeWithoutRegion;
   }
 
   private void updatePlatform(@Nullable AndroidPlatform platform) {
@@ -440,6 +467,9 @@ public class ProfileManager {
     if (sdkData != null) {
       myLayoutDeviceManager.loadDevices(sdkData);
       myDevices = new ArrayList<LayoutDevice>(myLayoutDeviceManager.getCombinedList());
+      if (myDevices.isEmpty()) {
+        myDevices.add(NO_DEVICES);
+      }
       myDevices.add(CUSTOM_DEVICE);
 
       targets = new ArrayList<IAndroidTarget>();
@@ -450,7 +480,7 @@ public class ProfileManager {
       }
     }
     else {
-      myDevices = Collections.emptyList();
+      myDevices = Arrays.asList(NO_DEVICES);
     }
 
     LayoutDevice newDevice = null;
@@ -521,8 +551,17 @@ public class ProfileManager {
   private void updateDevice(@Nullable LayoutDevice device, @Nullable String configurationName) {
     myProfile.setDevice(device == null ? null : device.getName());
 
-    List<LayoutDeviceConfiguration> configurations =
-      device == null ? Collections.<LayoutDeviceConfiguration>emptyList() : device.getConfigurations();
+    List<LayoutDeviceConfiguration> configurations;
+    if (device == null) {
+      configurations = Collections.emptyList();
+    }
+    else {
+      configurations = device.getConfigurations();
+      if (configurations == null) {
+        configurations = Collections.emptyList();
+      }
+    }
+
     LayoutDeviceConfiguration newConfiguration = null;
 
     if (configurationName != null) {

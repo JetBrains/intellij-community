@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrModifierListStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+
+import java.util.ArrayList;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -119,22 +121,14 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
 
   @NotNull
   public PsiElement[] getModifiers() {
-    PsiElement[] modifiersKeywords = findChildrenByType(TokenSets.MODIFIERS, PsiElement.class);
-    GrAnnotation[] modifiersAnnotations = findChildrenByClass(GrAnnotation.class);
-
-    if (modifiersAnnotations.length == 0) return modifiersKeywords;
-
-    PsiElement[] res = new PsiElement[modifiersAnnotations.length + modifiersKeywords.length];
-
-    int i = 0;
-    for (PsiElement modifiersKeyword : modifiersKeywords) {
-      res[i++] = modifiersKeyword;
-    }
-    for (GrAnnotation modifiersAnnotation : modifiersAnnotations) {
-      res[i++] = modifiersAnnotation;
+    final ArrayList<PsiElement> result = new ArrayList<PsiElement>();
+    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrAnnotation || TokenSets.MODIFIERS.contains(cur.getNode().getElementType())) {
+        result.add(cur);
+      }
     }
 
-    return res;
+    return result.toArray(new PsiElement[result.size()]);
   }
 
   public boolean hasExplicitVisibilityModifiers() {
@@ -276,12 +270,14 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
   @Nullable
   private PsiElement findAnchor(String name) {
     final int myPriority = PRIORITY.get(name);
-    final PsiElement[] modifiers = getModifiers();
     PsiElement anchor = null;
-    for (int i = modifiers.length - 1; i >= 0; i--) {
-      PsiElement modifier = modifiers[i];
-      if (PRIORITY.get(modifier.getText()) <= myPriority) {
+
+    for (PsiElement modifier : getModifiers()) {
+      final int otherPriority = PRIORITY.get(modifier.getText());
+      if (otherPriority <= myPriority) {
         anchor = modifier;
+      }
+      else if (otherPriority > myPriority && anchor != null) {
         break;
       }
     }

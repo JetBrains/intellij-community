@@ -63,7 +63,7 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.facet.AvdsNotSupportedException;
 import org.jetbrains.android.logcat.AndroidLogcatToolWindowFactory;
-import org.jetbrains.android.logcat.AndroidLogcatToolWindowView;
+import org.jetbrains.android.logcat.AndroidLogcatView;
 import org.jetbrains.android.logcat.AndroidLogcatUtil;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
@@ -84,7 +84,7 @@ import static com.intellij.execution.process.ProcessOutputTypes.STDOUT;
 /**
  * @author coyote
  */
-public abstract class AndroidRunningState implements RunProfileState, AndroidDebugBridge.IClientChangeListener {
+public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.IClientChangeListener, AndroidExecutionState {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.run.AndroidRunningState");
 
   @NonNls private static final String ANDROID_TARGET_DEVICES_PROPERTY = "AndroidTargetDevices";
@@ -105,6 +105,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   private final String myCommandLine;
   private final AndroidApplicationLauncher myApplicationLauncher;
   private final Map<AndroidFacet, String> myAdditionalFacet2PackageName;
+  private final AndroidRunConfigurationBase myConfiguration;
 
   private final Object myDebugLock = new Object();
 
@@ -131,6 +132,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   private TargetChooser myTargetChooser;
   private final boolean mySupportMultipleDevices;
   private final boolean myClearLogcatBeforeStart;
+  private final List<AndroidRunningStateListener> myListeners = new ArrayList<AndroidRunningStateListener>();
 
   public void setDebugMode(boolean debugMode) {
     myDebugMode = debugMode;
@@ -163,6 +165,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
 
   public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
     myProcessHandler = new DefaultDebugProcessHandler();
+    AndroidProcessText.attach(myProcessHandler);
     ConsoleView console;
     if (isDebugMode()) {
       Project project = myFacet.getModule().getProject();
@@ -173,7 +176,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       }
     }
     else {
-      console = attachConsole();
+      console = myConfiguration.attachConsole(this, executor);
     }
     myConsole = console;
 
@@ -204,14 +207,16 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
 
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
-        start();
+        chooseTargetDeviceAndStart();
       }
     });
     return new DefaultExecutionResult(console, myProcessHandler);
   }
 
   @NotNull
-  protected abstract ConsoleView attachConsole() throws ExecutionException;
+  public AndroidRunConfigurationBase getConfiguration() {
+    return myConfiguration;
+  }
 
   @Nullable
   public RunnerSettings getRunnerSettings() {
@@ -241,6 +246,17 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   @NotNull
   public AndroidFacet getFacet() {
     return myFacet;
+  }
+
+  @Override
+  public IDevice[] getDevices() {
+    return myTargetDevices;
+  }
+
+  @Nullable
+  @Override
+  public ConsoleView getConsoleView() {
+    return myConsole;
   }
 
   public class MyReceiver extends AndroidOutputReceiver {
@@ -287,10 +303,12 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
                              AndroidApplicationLauncher applicationLauncher,
                              Map<AndroidFacet, String> additionalFacet2PackageName,
                              boolean supportMultipleDevices,
-                             boolean clearLogcatBeforeStart) throws ExecutionException {
+                             boolean clearLogcatBeforeStart,
+                             @NotNull AndroidRunConfigurationBase configuration) throws ExecutionException {
     myFacet = facet;
     myCommandLine = commandLine;
-    
+    myConfiguration = configuration;
+
     myTargetChooser = targetChooser;
     mySupportMultipleDevices = supportMultipleDevices;
 
@@ -318,27 +336,15 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
 
   @Nullable
   private IDevice[] chooseDevicesAutomaticaly() {
-    final AndroidDebugBridge bridge = AndroidDebugBridge.getBridge();
-    if (bridge == null) {
+    final List<IDevice> compatibleDevices = getAllCompatibleDevices();
+
+    if (compatibleDevices.size() == 0) {
       return EMPTY_DEVICE_ARRAY;
     }
-    IDevice[] devices = bridge.getDevices();
-
-    boolean showChooserDialog = false;
-    IDevice targetDevice = null;
-    for (IDevice device : devices) {
-      if (isCompatibleDevice(device) != Boolean.FALSE) {
-        if (targetDevice == null) {
-          targetDevice = device;
-        }
-        else {
-          showChooserDialog = true;
-          break;
-        }
-      }
+    else if (compatibleDevices.size() == 1) {
+      return new IDevice[] {compatibleDevices.get(0)};
     }
-
-    if (showChooserDialog) {
+    else {
       final IDevice[][] devicesWrapper = {null};
       ApplicationManager.getApplication().invokeAndWait(new Runnable() {
         @Override
@@ -353,8 +359,23 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       }, ModalityState.defaultModalityState());
       return devicesWrapper[0].length > 0 ? devicesWrapper[0] : null;
     }
+  }
 
-    return targetDevice != null ? new IDevice[] {targetDevice} : EMPTY_DEVICE_ARRAY;
+  @NotNull
+  List<IDevice> getAllCompatibleDevices() {
+    final List<IDevice> compatibleDevices = new ArrayList<IDevice>();
+    final AndroidDebugBridge bridge = AndroidDebugBridge.getBridge();
+
+    if (bridge != null) {
+      IDevice[] devices = bridge.getDevices();
+
+      for (IDevice device : devices) {
+        if (isCompatibleDevice(device) != Boolean.FALSE) {
+          compatibleDevices.add(device);
+        }
+      }
+    }
+    return compatibleDevices;
   }
 
   private void chooseAvd() {
@@ -399,13 +420,19 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     }
   }
 
-  private void start() {
+  private void chooseTargetDeviceAndStart() {
     message("Waiting for device.", STDOUT);
     if (myTargetDevices.length == 0) {
       if (!chooseOrLaunchDevice()) {
+        getProcessHandler().destroyProcess();
+        fireExecutionFailed();
         return;
       }
     }
+    start();
+  }
+
+  void start() {
     if (myDebugMode) {
       AndroidDebugBridge.addClientChangeListener(this);
     }
@@ -433,7 +460,6 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     IDevice[] targetDevices = chooseDevicesAutomaticaly();
     if (targetDevices == null) {
       message("Canceled", STDERR);
-      getProcessHandler().destroyProcess();
       return false;
     }
 
@@ -449,13 +475,11 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       }
       else if (getProcessHandler().isStartNotified()) {
         message("Canceled", STDERR);
-        getProcessHandler().destroyProcess();
         return false;
       }
     }
     else {
       message("USB device not found", STDERR);
-      getProcessHandler().destroyProcess();
       return false;
     }
     return true;
@@ -534,7 +558,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   }
 
   @Nullable
-  private Boolean isCompatibleDevice(@NotNull IDevice device) {
+  Boolean isCompatibleDevice(@NotNull IDevice device) {
     if (myTargetChooser instanceof EmulatorTargetChooser) {
       if (device.isEmulator()) {
         String avdName = device.isEmulator() ? device.getAvdName() : null;
@@ -556,6 +580,14 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     }
     Boolean compatible = isCompatibleDevice(device);
     return compatible == null || compatible.booleanValue();
+  }
+
+  public void setTargetDevices(@NotNull IDevice[] targetDevices) {
+    myTargetDevices = targetDevices;
+  }
+
+  public void setConsole(@NotNull ConsoleView console) {
+    myConsole = console;
   }
 
   @Nullable
@@ -590,6 +622,20 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   }
 
   private boolean prepareAndStartApp(IDevice device) {
+    if (!doPrepareAndStart(device)) {
+      fireExecutionFailed();
+      return false;
+    }
+    return true;
+  }
+
+  private void fireExecutionFailed() {
+    for (AndroidRunningStateListener listener : myListeners) {
+      listener.executionFailed();
+    }
+  }
+
+  private boolean doPrepareAndStart(IDevice device) {
     if (myClearLogcatBeforeStart) {
       clearLogcatAndConsole(getModule().getProject(), device);
     }
@@ -637,7 +683,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       return false;
     }
   }
-  
+
   private boolean checkPackageNames() {
     final Map<String, List<String>> packageName2ModuleNames = new HashMap<String, List<String>>();
     packageName2ModuleNames.put(myPackageName, new ArrayList<String>(Arrays.asList(myFacet.getModule().getName())));
@@ -690,7 +736,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
         }
 
         for (Content content : toolWindow.getContentManager().getContents()) {
-          final AndroidLogcatToolWindowView view = content.getUserData(AndroidLogcatToolWindowView.ANDROID_LOGCAT_VIEW_KEY);
+          final AndroidLogcatView view = content.getUserData(AndroidLogcatView.ANDROID_LOGCAT_VIEW_KEY);
 
           if (view != null && device == view.getSelectedDevice()) {
             view.getLogConsole().clear();
@@ -869,6 +915,10 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     boolean success = isSuccess(receiver);
     message(receiver.output.toString(), success ? STDOUT : STDERR);
     return success;
+  }
+
+  public void addListener(@NotNull AndroidRunningStateListener listener) {
+    myListeners.add(listener);
   }
 
   private class MyDeviceChangeListener implements AndroidDebugBridge.IDeviceChangeListener, Disposable {

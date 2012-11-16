@@ -209,7 +209,11 @@ public def layoutCommunityPlugins(String home) {
       layoutPlugin it
     }
 
-    layoutPlugin("ant", "ant", "antIntegration")
+    layoutPlugin("ant", "ant", "antIntegration") {
+      jar("ant-jps-plugin.jar") {
+        module("ant-jps-plugin")
+      }
+    }
     layoutPlugin("InspectionGadgets", "InspectionGadgetsPlugin")
     layoutPlugin("IntentionPowerPack", "IntentionPowerPackPlugin")
     layoutPlugin("ToString", "generate-tostring", "toString")
@@ -533,7 +537,7 @@ def reorder(String home, String targetDirectory) {
   }
 }
 
-def layout_jps(String target) {
+def layout_jps(String home, String target) {
   layout(target) {
     jar("util.jar") {
       module("annotations")
@@ -551,9 +555,35 @@ def layout_jps(String target) {
       module("instrumentation-util")
       module("jps-builders")
       module("jps-standalone-builder")
+      module("java-runtime")
     }
-    jar("jps-groovy-plugin.jar") {
+    jar("groovy-jps-plugin.jar") {
+      module("groovy-jps-plugin")
+      module("groovy-rt-constants")
+    }
+    jar("groovy_rt.jar") {
       module("groovy_rt")
+    }
+    jar("ui-designer-jps-plugin.jar") {
+      module("ui-designer-jps-plugin")
+    }
+    fileset(dir: "$home/lib") {
+      include(name: "jdom.jar")
+      include(name: "jna.jar")
+      include(name: "trove4j.jar")
+      include(name: "asm4-all.jar")
+      include(name: "nanoxml-*.jar")
+      include(name: "protobuf-*.jar")
+      include(name: "optimizedFileManager.jar")
+      include(name: "log4j.jar")
+      include(name: "jgoodies-forms.jar")
+    }
+    dir("test") {
+      jar("jps-build-test.jar") {
+        moduleTests("jps-builders")
+        moduleTests("jps-model-impl")
+        moduleTests("jps-model-serialization")
+      }
     }
   }
 }

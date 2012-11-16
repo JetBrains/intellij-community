@@ -66,7 +66,7 @@ public class AssociateWithTaskAction extends ToggleAction implements DumbAware {
     TaskManager manager = TaskManager.getManager(project);
     for (ChangeList list : lists) {
       if (list instanceof LocalChangeList) {
-        manager.associateWithTask((LocalChangeList)list);
+        manager.trackContext((LocalChangeList)list);
       }
     }
   }

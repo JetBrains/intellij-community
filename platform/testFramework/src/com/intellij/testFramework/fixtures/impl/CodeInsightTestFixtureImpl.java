@@ -182,37 +182,42 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       fromFile = new File(sourceFilePath);
     }
 
+    VirtualFile result;
     if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
       VirtualFile fromVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fromFile);
       if (fromVFile == null) {
         fromVFile = myTempDirFixture.getFile(sourceFilePath);
       }
       assert fromVFile != null : "can't find test data file " + sourceFilePath + " (" + testDataPath + ")";
-      return myTempDirFixture.copyFile(fromVFile, targetPath);
+      result = myTempDirFixture.copyFile(fromVFile, targetPath);
     }
+    else {
 
-    final File targetFile = new File(getTempDirPath() + "/" + targetPath);
-    if (!targetFile.exists()) {
-      if (fromFile.isDirectory()) {
-        assert targetFile.mkdirs() : targetFile;
+      final File targetFile = new File(getTempDirPath() + "/" + targetPath);
+      if (!targetFile.exists()) {
+        if (fromFile.isDirectory()) {
+          assert targetFile.mkdirs() : targetFile;
+        }
+        else {
+          if (!fromFile.exists()) {
+            fail("Cannot find source file: '" + sourceFilePath + "'. getTestDataPath()='" + testDataPath + "'. " +
+                 "getHomePath()='" + getHomePath() + "'.");
+          }
+          try {
+            FileUtil.copy(fromFile, targetFile);
+          }
+          catch (IOException e) {
+            throw new RuntimeException("Cannot copy " + fromFile + " to " + targetFile, e);
+          }
+        }
       }
-      else {
-        if (!fromFile.exists()) {
-          fail("Cannot find source file: '" + sourceFilePath + "'. getTestDataPath()='" + testDataPath + "'. " +
-               "getHomePath()='" + getHomePath() + "'.");
-        }
-        try {
-          FileUtil.copy(fromFile, targetFile);
-        }
-        catch (IOException e) {
-          throw new RuntimeException("Cannot copy " + fromFile + " to " + targetFile, e);
-        }
-      }
+
+      final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(targetFile);
+      assert file != null : targetFile;
+      result = file;
     }
-
-    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(targetFile);
-    assert file != null : targetFile;
-    return file;
+    result.putUserData(VfsTestUtil.TEST_DATA_FILE_PATH, fromFile.getPath());
+    return result;
   }
 
   @Override
@@ -1163,6 +1168,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
 
       @Override
+      public InspectionProfileEntry getToolById(String id, @NotNull PsiElement element) {
+        if (myAvailableTools.containsKey(id)) {
+          return myAvailableTools.get(id);
+        }
+
+        return super.getToolById(id, element);
+      }
+
+      @Override
       public List<ToolsImpl> getAllEnabledInspectionTools(Project project) {
         List<ToolsImpl> result = new ArrayList<ToolsImpl>();
         for (InspectionProfileEntry entry : getInspectionTools(null)) {
@@ -1564,9 +1578,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final RangeMarker selEndMarker;
     final boolean blockSelection;
 
-    static SelectionAndCaretMarkupLoader fromFile(String path, Project project) throws IOException {
-      return new SelectionAndCaretMarkupLoader(StringUtil.convertLineSeparators(FileUtil.loadFile(new File(path))),
-                                               project);
+    static SelectionAndCaretMarkupLoader fromFile(String path, Project project, String charset) throws IOException {
+      return new SelectionAndCaretMarkupLoader(
+        StringUtil.convertLineSeparators(FileUtil.loadFile(new File(path), charset)), project);
     }
 
     static SelectionAndCaretMarkupLoader fromFile(VirtualFile file, Project project) {
@@ -1640,8 +1654,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final String newText = myFile == originalFile ? fileText.substring(0, caret) + "<caret>" + fileText.substring(caret) : fileText;
     VfsUtil.saveText(result, newText);*/
 
-    checkResult(expectedFile, stripTrailingSpaces,
-                SelectionAndCaretMarkupLoader.fromFile(path, getProject()), fileText);
+    VirtualFile virtualFile = originalFile.getVirtualFile();
+    String charset = virtualFile == null? null : virtualFile.getCharset().name();
+    checkResult(expectedFile, stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromFile(path, getProject(), charset), fileText);
 
   }
 

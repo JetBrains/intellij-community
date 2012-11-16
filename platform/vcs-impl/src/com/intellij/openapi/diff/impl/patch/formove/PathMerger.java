@@ -19,6 +19,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -145,7 +146,10 @@ public class PathMerger {
     }
 
     public boolean down(final String name) {
-      final VirtualFile nextChild = myCurrent.findChild(name);
+      VirtualFile nextChild = myCurrent.findChild(name);
+      if (nextChild == null) {
+        nextChild = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myCurrent.getPath(), name));
+      }
       if (nextChild != null) {
         myCurrent = nextChild;
         return true;

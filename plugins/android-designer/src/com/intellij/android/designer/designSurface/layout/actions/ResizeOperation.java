@@ -215,21 +215,23 @@ public class ResizeOperation implements EditOperation {
         myTextFeedback.dimension("dp");
       }
     }
-    else {
-      if (staticText.length() > 2) {
-        int index = staticText.length() - 2;
-        String dimension = staticText.substring(index);
-        if (ArrayUtil.indexOf(ResourceRenderer.DIMENSIONS, dimension) != -1) {
-          myTextFeedback.append(staticText.substring(0, index));
-          myTextFeedback.dimension(dimension);
-        }
-        else {
-          myTextFeedback.append(staticText);
-        }
+    else if (staticText.length() > 3 && staticText.endsWith("dip")) {
+      myTextFeedback.append(staticText.substring(0, staticText.length() - 3));
+      myTextFeedback.dimension("dip");
+    }
+    else if (staticText.length() > 2) {
+      int index = staticText.length() - 2;
+      String dimension = staticText.substring(index);
+      if (ArrayUtil.indexOf(ResourceRenderer.DIMENSIONS, dimension) != -1) {
+        myTextFeedback.append(staticText.substring(0, index));
+        myTextFeedback.dimension(dimension);
       }
       else {
         myTextFeedback.append(staticText);
       }
+    }
+    else {
+      myTextFeedback.append(staticText);
     }
   }
 

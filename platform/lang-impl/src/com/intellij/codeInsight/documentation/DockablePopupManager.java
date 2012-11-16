@@ -153,41 +153,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
         myAutoUpdateRequest = new Runnable() {
           @Override
           public void run() {
-            if (myProject.isDisposed()) return;
-
-            AsyncResult<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocus();
-            DataContext dataContext = asyncResult.getResult();
-            if (dataContext == null) {
-              return;
-            }
-
-            if (PlatformDataKeys.PROJECT.getData(dataContext) != myProject) {
-              return;
-            }
-
-            final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-            if (editor == null) {
-              PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
-              if (element != null) {
-                doUpdateComponent(element);
-              }
-              return;
-            }
-
-            final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, myProject);
-
-            final Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file);
-            if (injectedEditor != null) {
-              final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(injectedEditor, myProject);
-              if (psiFile != null) {
-                doUpdateComponent(injectedEditor, psiFile);
-                return;
-              }
-            }
-
-            if (file != null) {
-              doUpdateComponent(editor, file);
-            }
+            updateComponent();
           }
         };
 
@@ -199,6 +165,44 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
         IdeEventQueue.getInstance().removeIdleListener(myAutoUpdateRequest);
         myAutoUpdateRequest = null;
       }
+    }
+  }
+
+  public void updateComponent() {
+    if (myProject.isDisposed()) return;
+
+    AsyncResult<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocus();
+    DataContext dataContext = asyncResult.getResult();
+    if (dataContext == null) {
+      return;
+    }
+
+    if (PlatformDataKeys.PROJECT.getData(dataContext) != myProject) {
+      return;
+    }
+
+    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    if (editor == null) {
+      PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+      if (element != null) {
+        doUpdateComponent(element);
+      }
+      return;
+    }
+
+    final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, myProject);
+
+    final Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file);
+    if (injectedEditor != null) {
+      final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(injectedEditor, myProject);
+      if (psiFile != null) {
+        doUpdateComponent(injectedEditor, psiFile);
+        return;
+      }
+    }
+
+    if (file != null) {
+      doUpdateComponent(editor, file);
     }
   }
 
@@ -216,5 +220,9 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
       myToolWindow = null;
       restartAutoUpdate(false);
     }
+  }
+
+  public boolean hasActiveDockedDocWindow() {
+    return myToolWindow != null && myToolWindow.isVisible();
   }
 }

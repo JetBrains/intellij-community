@@ -150,6 +150,10 @@ public class PortableStatus extends SVNStatus {
     return myInfo;
   }
 
+  public SVNInfo getInfo() {
+    return initInfo();
+  }
+
   @Override
   public SVNNodeKind getKind() {
     if (myFileExists) return super.getKind();

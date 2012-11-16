@@ -55,27 +55,25 @@ public class DeleteFromFavoritesAction extends AnActionButton implements DumbAwa
     final DnDAwareTree tree = FavoritesTreeViewPanel.FAVORITES_TREE_KEY.getData(dataContext);
 
     assert roots != null && tree != null;
-    Map<String, List<Object>> toRemove = new HashMap<String, List<Object>>();
+    Map<String, List<AbstractTreeNode>> toRemove = new HashMap<String, List<AbstractTreeNode>>();
     for (FavoritesTreeNodeDescriptor root : roots) {
       final AbstractTreeNode node = root.getElement();
       if (node instanceof FavoritesListNode) {
         favoritesManager.removeFavoritesList((String)node.getValue());
       }
       else {
-        final Object value = node.getValue();
-        LOG.assertTrue(value != null, node);
         final FavoritesListNode listNode = FavoritesTreeUtil.extractParentList(root);
         LOG.assertTrue(listNode != null);
         final String name = listNode.getName();
         if (! toRemove.containsKey(name)) {
-          toRemove.put(name, new ArrayList<Object>());
+          toRemove.put(name, new ArrayList<AbstractTreeNode>());
         }
-        toRemove.get(name).add(value);
+        toRemove.get(name).add(node);
       }
     }
 
     for (String key : toRemove.keySet()) {
-      favoritesManager.removeRootByElements(key, toRemove.get(key));
+      favoritesManager.removeRoot(key, toRemove.get(key));
     }
   }
 
@@ -87,12 +85,20 @@ public class DeleteFromFavoritesAction extends AnActionButton implements DumbAwa
       return;
     }
     FavoritesTreeNodeDescriptor[] roots = FavoritesTreeViewPanel.CONTEXT_FAVORITES_ROOTS_DATA_KEY.getData(dataContext);
-    if (roots == null) {
+    if (roots == null || roots.length == 0) {
       e.getPresentation().setEnabled(false);
       return;
     }
 
     final FavoritesManager fm = FavoritesManager.getInstance(project);
+    for (FavoritesTreeNodeDescriptor root : roots) {
+      if (! FavoritesTreeUtil.extractParentList(root).isAllowsTree()) {
+        if (!(root.getElement() instanceof FavoritesListNode) && root.getParentDescriptor() != null && (! (root.getParentDescriptor().getElement() instanceof FavoritesListNode))) {
+          e.getPresentation().setEnabled(false);
+          return;
+        }
+      }
+    }
     if (roots.length == 1
         && roots[0].getElement() instanceof FavoritesListNode
         && fm.isReadOnly(((FavoritesListNode) roots[0].getElement()).getName())) {

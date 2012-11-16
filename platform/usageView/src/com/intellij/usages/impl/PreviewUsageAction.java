@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 */
 class PreviewUsageAction extends RuleAction {
   PreviewUsageAction(@NotNull UsageView usageView) {
-    super(usageView, UsageViewBundle.message("preview.usages.action.text"), AllIcons.Actions.Preview);
+    super(usageView, UsageViewBundle.message("preview.usages.action.text"), AllIcons.Actions.PreviewDetails);
   }
 
   @Override

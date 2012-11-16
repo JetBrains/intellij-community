@@ -19,7 +19,8 @@ package com.intellij.ide.util.projectWizard;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -45,7 +46,6 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
   private List<Pair<String,String>> mySourcePaths;
   // Pair<Library path, Source path>
   private final List<Pair<String, String>> myModuleLibraries = new ArrayList<Pair<String, String>>();
-  private Sdk myJdk;
 
   public final void setCompilerOutputPath(String compilerOutputPath) {
     myCompilerOutputPath = acceptParameter(compilerOutputPath);
@@ -75,6 +75,11 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
 
   public ModuleType getModuleType() {
     return StdModuleTypes.JAVA;
+  }
+
+  @Override
+  public boolean isSuitableSdkType(SdkTypeId sdkType) {
+    return sdkType instanceof JavaSdkType;
   }
 
   @Nullable
@@ -145,14 +150,6 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
 
   public void addModuleLibrary(String moduleLibraryPath, String sourcePath) {
     myModuleLibraries.add(Pair.create(moduleLibraryPath,sourcePath));
-  }
-
-  public void setModuleJdk(Sdk jdk) {
-    myJdk = jdk;
-  }
-
-  public Sdk getModuleJdk() {
-    return myJdk;
   }
 
   @Nullable

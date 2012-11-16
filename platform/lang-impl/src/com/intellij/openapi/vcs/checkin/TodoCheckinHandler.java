@@ -63,7 +63,7 @@ import java.util.Collection;
 public class TodoCheckinHandler extends CheckinHandler {
   private final Project myProject;
   private final CheckinProjectPanel myCheckinProjectPanel;
-  private VcsConfiguration myConfiguration;
+  private final VcsConfiguration myConfiguration;
   private TodoFilter myTodoFilter;
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.checkin.TodoCheckinHandler");
 
@@ -77,6 +77,7 @@ public class TodoCheckinHandler extends CheckinHandler {
   public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
     final JCheckBox checkBox = new JCheckBox(VcsBundle.message("before.checkin.new.todo.check", ""));
     return new RefreshableOnComponent() {
+      @Override
       public JComponent getComponent() {
         JPanel panel = new JPanel(new BorderLayout(4, 0));
         panel.add(checkBox, BorderLayout.WEST);
@@ -117,13 +118,16 @@ public class TodoCheckinHandler extends CheckinHandler {
         }
       }
 
+      @Override
       public void refresh() {
       }
 
+      @Override
       public void saveState() {
         myConfiguration.CHECK_NEW_TODO = checkBox.isSelected();
       }
 
+      @Override
       public void restoreState() {
         checkBox.setSelected(myConfiguration.CHECK_NEW_TODO);
       }
@@ -159,6 +163,7 @@ public class TodoCheckinHandler extends CheckinHandler {
     final TodoCheckinHandlerWorker worker = new TodoCheckinHandlerWorker(myProject, changes, myTodoFilter, true);
 
     final Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         worker.execute();
         }

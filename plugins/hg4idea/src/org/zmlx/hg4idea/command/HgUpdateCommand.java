@@ -68,7 +68,7 @@ public class HgUpdateCommand {
     final HgCommandExecutor executor = new HgCommandExecutor(project);
     executor.setShowOutput(true);
     final HgCommandResult result = executor.executeInCurrentThread(repo, "update", arguments,new HgDeleteModifyPromptHandler());
-    project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project);
+    project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
     return result;
   }
 

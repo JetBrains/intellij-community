@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,6 +87,7 @@ public class GroovyCompletionData {
     }
 
     if (parent instanceof GrExpression && parent.getParent() instanceof GrAnnotationNameValuePair) {
+      addKeywords(result, false, PsiKeyword.TRUE, PsiKeyword.FALSE, PsiKeyword.NULL);
       return;
     }
 
@@ -106,7 +107,7 @@ public class GroovyCompletionData {
       for (String keyword : addExtendsImplements(position)) {
         result.addElement(keyword(keyword, TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
-      
+
       addExtendsForTypeParams(position, result);
 
       registerControlCompletion(position, result);
@@ -216,7 +217,7 @@ public class GroovyCompletionData {
     if (ext && impl) {
       return new String[]{PsiKeyword.EXTENDS, PsiKeyword.IMPLEMENTS};
     }
-    
+
     return new String[]{ext ? PsiKeyword.EXTENDS : PsiKeyword.IMPLEMENTS};
   }
 
@@ -540,6 +541,8 @@ public class GroovyCompletionData {
       }
 
     }
+
+    if (isTupleVarNameWithoutTypeDeclared(context)) return true;
 
     if (previous != null && GroovyTokenTypes.mAT.equals(previous.getNode().getElementType())) {
       return false;

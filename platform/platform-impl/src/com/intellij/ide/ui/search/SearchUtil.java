@@ -181,21 +181,25 @@ public class SearchUtil {
                                       final GlassPanel glassPanel) {
     return new Runnable() {
       public void run() {
-        if (!SearchUtil.traverseComponentsTree(configurable, glassPanel, component, option, true)) {
-          SearchUtil.traverseComponentsTree(configurable, glassPanel, component, option, false);
+        if (!traverseComponentsTree(configurable, glassPanel, component, option, true)) {
+          traverseComponentsTree(configurable, glassPanel, component, option, false);
         }
       }
     };
   }
 
-  public static int getSelection(String tabIdx, final JTabbedPane tabbedPane) {
+  private static int getSelection(String tabIdx, final JTabbedPane tabbedPane) {
     SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
     for (int i = 0; i < tabbedPane.getTabCount(); i++) {
       final Set<String> pathWords = searchableOptionsRegistrar.getProcessedWords(tabIdx);
       final String title = tabbedPane.getTitleAt(i);
-      final Set<String> titleWords = searchableOptionsRegistrar.getProcessedWords(title);
-      pathWords.removeAll(titleWords);
-      if (pathWords.isEmpty()) return i;
+      if (!pathWords.isEmpty()) {
+        final Set<String> titleWords = searchableOptionsRegistrar.getProcessedWords(title);
+        pathWords.removeAll(titleWords);
+        if (pathWords.isEmpty()) return i;
+      } else if (tabIdx.equalsIgnoreCase(title)) { //e.g. only stop words
+        return i;
+      }
     }
     return -1;
   }
@@ -252,7 +256,7 @@ public class SearchUtil {
     }
     else if (rootComponent instanceof JTabbedPane) {
       final JTabbedPane tabbedPane = (JTabbedPane)rootComponent;
-      final String path = SearchableOptionsRegistrarImpl.getInstance().getInnerPath(configurable, option);
+      final String path = SearchableOptionsRegistrar.getInstance().getInnerPath(configurable, option);
       if (path != null) {
         final int index = getSelection(path, tabbedPane);
         if (index > -1 && index < tabbedPane.getTabCount()) {
@@ -318,7 +322,7 @@ public class SearchUtil {
                                       final boolean forceSelect) {
     return new Runnable() {
       public void run() {
-        SearchUtil.traverseComponentsTree(configurable, glassPanel, component, option, forceSelect);
+        traverseComponentsTree(configurable, glassPanel, component, option, forceSelect);
       }
     };
   }
@@ -365,7 +369,7 @@ public class SearchUtil {
     String cur = "";
     final String s = textToMarkup.toLowerCase();
     for (String part : filter.split(" ")) {
-      if (s.indexOf(part) != -1) {
+      if (s.contains(part)) {
         cur += "\"" + part + "\" ";
       }
       else {

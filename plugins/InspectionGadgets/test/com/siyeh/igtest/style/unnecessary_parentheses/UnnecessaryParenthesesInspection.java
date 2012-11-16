@@ -102,4 +102,9 @@ public class UnnecessaryParenthesesInspection
     String s = "asdf" + (1 + 2 + "asdf");
     boolean d = c == (1 < 3);
   }
+
+  private static boolean placeEqualsLastArg(Object place, Object[] args) {
+    final Object[] objects = {(args.length - 1), 1};
+    return args.length > 0 && place.equals(args[(args.length - 1)]);// here are unnecessary parentheses inside args[...]
+  }
 }

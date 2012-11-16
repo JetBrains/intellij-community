@@ -23,9 +23,9 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
  * @author max
  */
 public class LayerDescriptor {
-  private SyntaxHighlighter myLayerHighlighter;
-  private String myTokenSeparator;
-  private TextAttributesKey myBackground;
+  private final SyntaxHighlighter myLayerHighlighter;
+  private final String myTokenSeparator;
+  private final TextAttributesKey myBackground;
 
   public LayerDescriptor(final SyntaxHighlighter layerHighlighter, final String tokenSeparator, final TextAttributesKey background) {
     myBackground = background;

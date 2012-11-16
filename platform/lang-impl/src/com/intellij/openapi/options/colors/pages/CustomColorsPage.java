@@ -66,30 +66,36 @@ public class CustomColorsPage implements ColorSettingsPage, DisplayPrioritySorta
     SYNTAX_TABLE.addKeyword4("anotherKeyword4");
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return OptionsBundle.message("options.custom.display.name");
   }
 
+  @Override
   public Icon getIcon() {
     return PlatformIcons.CUSTOM_FILE_ICON;
   }
 
+  @Override
   @NotNull
   public AttributesDescriptor[] getAttributeDescriptors() {
     return ATTRS;
   }
 
+  @Override
   @NotNull
   public ColorDescriptor[] getColorDescriptors() {
     return ColorDescriptor.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public SyntaxHighlighter getHighlighter() {
     return new CustomFileHighlighter(SYNTAX_TABLE);
   }
 
+  @Override
   @NotNull
   public String getDemoText() {
     return "# Line comment\n"
@@ -107,6 +113,7 @@ public class CustomColorsPage implements ColorSettingsPage, DisplayPrioritySorta
            + "\n";
   }
 
+  @Override
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     return null;
   }

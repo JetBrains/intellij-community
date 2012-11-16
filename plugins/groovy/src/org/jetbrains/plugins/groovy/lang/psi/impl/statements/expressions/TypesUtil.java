@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinary
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureImpl;
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.util.LightCacheKey;
@@ -163,6 +164,8 @@ public class TypesUtil {
     ourOperationsToOperatorNames.put(mSTAR_STAR, "power");
     ourOperationsToOperatorNames.put(COMPOSITE_LSHIFT_SIGN, "leftShift");
     ourOperationsToOperatorNames.put(COMPOSITE_RSHIFT_SIGN, "rightShift");
+    ourOperationsToOperatorNames.put(mEQUAL, "equals");
+    ourOperationsToOperatorNames.put(mNOT_EQUAL, "equals");
 
     ourUnaryOperationsToOperatorNames.put(mLNOT, "asBoolean");
     ourUnaryOperationsToOperatorNames.put(mPLUS, "positive");
@@ -274,6 +277,14 @@ public class TypesUtil {
       else if (isClassType(lType, JAVA_LANG_STRING)) {
         return true;
       }
+      else if (lType instanceof PsiArrayType) {
+        PsiType lComponentType = ((PsiArrayType)lType).getComponentType();
+        PsiType rComponentType = ClosureParameterEnhancer.findTypeForIteration(rType, manager, scope);
+        if (rComponentType != null && isAssignable(lComponentType, rComponentType, manager, scope)) {
+          return true;
+        }
+      }
+
     }
 
     rType = boxPrimitiveType(rType, manager, scope);
@@ -384,7 +395,7 @@ public class TypesUtil {
     return Boolean.TRUE;
   }
 
-  public static boolean isNumericType(PsiType type) {
+  public static boolean isNumericType(@Nullable PsiType type) {
     if (type instanceof PsiClassType) {
       return TYPE_TO_RANK.contains(type.getCanonicalText());
     }
@@ -792,5 +803,13 @@ public class TypesUtil {
       }
     }, new PsiType[initializers.length]);
     return new GrTupleType(types, JavaPsiFacade.getInstance(value.getProject()), value.getResolveScope());
+  }
+
+  public static boolean resolvesTo(PsiType type, String fqn) {
+    if (type instanceof PsiClassType) {
+      final PsiClass resolved = ((PsiClassType)type).resolve();
+      return resolved != null && fqn.equals(resolved.getQualifiedName());
+    }
+    return false;
   }
 }

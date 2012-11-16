@@ -199,9 +199,11 @@ public class OutdatedVersionNotifier implements ProjectComponent {
       if (pos >= 0) {
         comment = comment.substring(0, pos).trim() + "...";
       }
-      final String key = c.getType() == Change.Type.DELETED ? "outdated.version.text.deleted" : "outdated.version.text";
-      myLabel.setText(VcsBundle.message(key, myChangeList.getCommitterName(),
-                                        DateFormatUtil.formatPrettyDateTime(myChangeList.getCommitDate()), comment));
+      final String formattedDate = DateFormatUtil.formatPrettyDateTime(myChangeList.getCommitDate());
+      final boolean dateIsPretty = ! formattedDate.contains("/");
+      final String key = c.getType() == Change.Type.DELETED ? "outdated.version.text.deleted" :
+                         (dateIsPretty ? "outdated.version.pretty.date.text" : "outdated.version.text");
+      myLabel.setText(VcsBundle.message(key, myChangeList.getCommitterName(), formattedDate, comment));
     }
 
     public void setChangeList(final CommittedChangeList changeList, final Change c) {

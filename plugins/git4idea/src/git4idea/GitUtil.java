@@ -16,6 +16,8 @@
 package git4idea;
 
 import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
+import com.google.common.collect.Collections2;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -32,6 +34,7 @@ import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
@@ -242,7 +245,8 @@ public class GitUtil {
    * @return the map from root to the files under the root
    * @throws VcsException if non git files are passed when {@code ignoreNonGit} is false
    */
-  public static Map<VirtualFile, List<FilePath>> sortFilePathsByGitRoot(Collection<FilePath> files, boolean ignoreNonGit)
+  @NotNull
+  public static Map<VirtualFile, List<FilePath>> sortFilePathsByGitRoot(@NotNull Collection<FilePath> files, boolean ignoreNonGit)
     throws VcsException {
     Map<VirtualFile, List<FilePath>> rc = new HashMap<VirtualFile, List<FilePath>>();
     for (FilePath p : files) {
@@ -894,6 +898,31 @@ public class GitUtil {
       return null;
     }
     return GitBranchUtil.getTrackInfoForBranch(repository, currentBranch);
+  }
+
+  @NotNull
+  public static Collection<GitRepository> getRepositoriesForFiles(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
+    final GitRepositoryManager manager = getRepositoryManager(project);
+    com.google.common.base.Function<VirtualFile,GitRepository> ROOT_TO_REPO =
+      new com.google.common.base.Function<VirtualFile, GitRepository>() {
+        @Override
+        public GitRepository apply(@Nullable VirtualFile root) {
+          return root != null ? manager.getRepositoryForRoot(root) : null;
+        }
+      };
+    return Collections2.filter(Collections2.transform(sortFilesByGitRootsIgnoringOthers(files).keySet(), ROOT_TO_REPO),
+                               Predicates.notNull());
+  }
+
+  @NotNull
+  public static Map<VirtualFile, List<VirtualFile>> sortFilesByGitRootsIgnoringOthers(@NotNull Collection<VirtualFile> files) {
+    try {
+      return sortFilesByGitRoot(files, true);
+    }
+    catch (VcsException e) {
+      LOG.error("Should never happen, since we passed 'ignore non-git' parameter", e);
+      return Collections.emptyMap();
+    }
   }
 
 }

@@ -62,6 +62,7 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
     myConnection = bus.connect(project);
     myProgressManager = progressManager;
     myConnection.setDefaultHandler(new MessageHandler() {
+      @Override
       public void handle(Method event, Object... params) {
         cleanCachedStuff();
       }
@@ -69,6 +70,7 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
 
     myConnection.subscribe(ProjectTopics.PROJECT_ROOTS);
     myConnection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener.Adapter() {
+      @Override
       public void projectComponentsInitialized(final Project project) {
         long start = System.currentTimeMillis();
         loadModules(myModuleModel);
@@ -78,6 +80,7 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
 
   }
 
+  @Override
   protected void showUnknownModuleTypeNotification(List<Module> modulesWithUnknownTypes) {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !modulesWithUnknownTypes.isEmpty()) {
       String message;
@@ -105,26 +108,32 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
     }
   }
 
+  @Override
   protected ModuleEx createModule(String filePath) {
     return new ModuleImpl(filePath, myProject);
   }
 
+  @Override
   protected ModuleEx createAndLoadModule(String filePath) throws IOException {
     ModuleImpl module = new ModuleImpl(filePath, myProject);
     module.getStateStore().load();
     return module;
   }
 
+  @Override
   protected boolean isUnknownModuleType(Module module) {
     return ModuleType.get(module) instanceof UnknownModuleType;
   }
 
+  @Override
   protected void fireModulesAdded() {
     Runnable runnableWithProgress = new Runnable() {
+      @Override
       public void run() {
         for (final Module module : myModuleModel.myPathToModule.values()) {
           final Application app = ApplicationManager.getApplication();
           final Runnable swingRunnable = new Runnable() {
+            @Override
             public void run() {
               fireModuleAddedInWriteAction(module);
             }
@@ -149,6 +158,7 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
     }
   }
 
+  @Override
   protected void deliverPendingEvents() {
     myConnection.deliverImmediately();
   }

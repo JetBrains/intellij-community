@@ -46,6 +46,9 @@ public class DarculaTest {
   private JButton myCancelButton;
   private JButton myDisabledButton;
   private JButton myDefaultButton;
+  private JTextField myTextField2;
+  private JTextField myTextField3;
+  private JTextField myTextField4;
 
   public static void main(String[] args) {
     try {
@@ -53,7 +56,7 @@ public class DarculaTest {
     }
     catch (UnsupportedLookAndFeelException ignored) {}
     final JFrame frame = new JFrame("Darcula Demo");
-    frame.setSize(600, 500);
+    frame.setSize(900, 500);
     final DarculaTest form = new DarculaTest();
     final JPanel root = form.myRoot;
     frame.setContentPane(root);

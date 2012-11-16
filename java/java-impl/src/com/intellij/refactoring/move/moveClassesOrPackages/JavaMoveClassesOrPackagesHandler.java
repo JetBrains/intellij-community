@@ -16,7 +16,7 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
+import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -92,7 +92,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
       if (((PsiClass)element).getContainingClass() != null) return true;
       parentFile = element.getContainingFile();
     }
-    return parentFile instanceof PsiJavaFile && CollectHighlightsUtil.isOutsideSourceRoot(parentFile);
+    return parentFile instanceof PsiJavaFile && ProjectRootsUtil.isOutsideSourceRoot(parentFile);
   }
 
   @Override

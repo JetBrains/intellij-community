@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,10 @@ import java.util.Map;
 public class ScreenUtil {
   @Nullable private static final Map<GraphicsConfiguration, Pair<Insets, Long>> ourInsetsCache;
   static {
-    final boolean useCache = (SystemInfo.isLinux || SystemInfo.isSolaris)
-                             && !GraphicsEnvironment.isHeadless();
+    final boolean useCache = SystemInfo.isXWindow && !GraphicsEnvironment.isHeadless();
     ourInsetsCache = useCache ? new WeakHashMap<GraphicsConfiguration, Pair<Insets, Long>>() : null;
   }
+  private static final int ourInsetsTimeout = 5000;  // shouldn't be too long
 
   private ScreenUtil() { }
 
@@ -106,7 +106,7 @@ public class ScreenUtil {
     synchronized (ourInsetsCache) {
       Pair<Insets, Long> data = ourInsetsCache.get(gc);
       final long now = System.currentTimeMillis();
-      if (data == null || now > data.second + /*17 * */1000) {  // keep for 17s
+      if (data == null || now > data.second + ourInsetsTimeout) {
         data = Pair.create(calcInsets(gc), now);
         ourInsetsCache.put(gc, data);
       }
@@ -116,7 +116,7 @@ public class ScreenUtil {
 
   private static Insets calcInsets(GraphicsConfiguration gc) {
     Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(gc);
-    if (SystemInfo.isLinux && GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices().length > 1) {
+    if (SystemInfo.isXWindow && GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices().length > 1) {
       return fixGlobalInsets(gc.getBounds(), insets);
     }
     return insets;
