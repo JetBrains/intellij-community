@@ -58,7 +58,6 @@ import java.util.concurrent.TimeUnit;
 public class IncProjectBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.IncProjectBuilder");
 
-  public static final String BUILD_NAME = "EXTERNAL BUILD";
   private static final String CLASSPATH_INDEX_FINE_NAME = "classpath.index";
   private static final boolean GENERATE_CLASSPATH_INDEX = Boolean.parseBoolean(System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION, "false"));
   private static final int MAX_BUILDER_THREADS;
@@ -166,7 +165,7 @@ public class IncProjectBuilder {
           cause instanceof MappingFailedException ||
           cause instanceof IOException) {
         myMessageDispatcher.processMessage(new CompilerMessage(
-          BUILD_NAME, BuildMessage.Kind.INFO,
+          "", BuildMessage.Kind.INFO,
           "Internal caches are corrupted or have outdated format, forcing project rebuild: " +
           e.getMessage())
         );
@@ -183,7 +182,7 @@ public class IncProjectBuilder {
         }
         else {
           // the reason for the build stop is unexpected internal error, report it
-          myMessageDispatcher.processMessage(new CompilerMessage(BUILD_NAME, cause));
+          myMessageDispatcher.processMessage(new CompilerMessage("", cause));
         }
       }
     }
@@ -566,7 +565,7 @@ public class IncProjectBuilder {
         }
         else {
           context.processMessage(new CompilerMessage(
-            BUILD_NAME, BuildMessage.Kind.ERROR, "Cannot build " + target.getPresentableName() + " because it is included into a circular dependency")
+            "", BuildMessage.Kind.ERROR, "Cannot build " + target.getPresentableName() + " because it is included into a circular dependency")
           );
           return false;
         }
