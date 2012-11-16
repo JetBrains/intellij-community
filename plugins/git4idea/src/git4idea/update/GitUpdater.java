@@ -134,7 +134,7 @@ public abstract class GitUpdater {
    */
   public boolean isUpdateNeeded() throws VcsException {
     GitBranchPair gitBranchPair = myTrackedBranches.get(myRoot);
-    String currentBranch = gitBranchPair.getSource().getName();
+    String currentBranch = gitBranchPair.getBranch().getName();
     GitBranch dest = gitBranchPair.getDest();
     assert dest != null;
     String remoteBranch = dest.getName();

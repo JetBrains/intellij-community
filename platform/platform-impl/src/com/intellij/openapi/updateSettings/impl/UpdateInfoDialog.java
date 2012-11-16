@@ -185,20 +185,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     public UpdateInfoPanel() {
       ApplicationInfo appInfo = ApplicationInfo.getInstance();
       myBuildNumber.setText(appInfo.getBuild().asStringWithoutProductCode() + ")");
-      final String majorVersion = appInfo.getMajorVersion();
-      final String version;
-      if (majorVersion != null && majorVersion.trim().length() > 0) {
-        final String minorVersion = appInfo.getMinorVersion();
-        if (minorVersion != null && minorVersion.trim().length() > 0) {
-          version = majorVersion + "." + minorVersion;
-        }
-        else {
-          version = majorVersion + ".0";
-        }
-      }
-      else {
-        version = appInfo.getVersionName();
-      }
+      final String version = appInfo.getFullVersion();
 
       myVersionNumber.setText(version);
       myNewBuildNumber.setText(myLatestBuild.getNumber().asStringWithoutProductCode() + ")");

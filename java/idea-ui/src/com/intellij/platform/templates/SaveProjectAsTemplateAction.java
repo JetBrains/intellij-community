@@ -98,7 +98,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
   }
 
   public static VirtualFile getDescriptionFile(Project project) {
-    return VfsUtil.findRelativeFile(ArchivedProjectTemplate.DESCRIPTION_PATH, project.getBaseDir());
+    return VfsUtil.findRelativeFile(LocalArchivedTemplate.DESCRIPTION_PATH, project.getBaseDir());
   }
 
   public static void saveProject(final Project project,
@@ -127,7 +127,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
       final VirtualFile dir = getDirectoryToSave(project, moduleToSave);
       final VirtualFile descriptionFile = getDescriptionFile(project);
       if (descriptionFile == null) {
-        stream.putNextEntry(new ZipEntry(dir.getName() + "/" + ArchivedProjectTemplate.DESCRIPTION_PATH));
+        stream.putNextEntry(new ZipEntry(dir.getName() + "/" + LocalArchivedTemplate.DESCRIPTION_PATH));
         stream.write(description.getBytes());
         stream.closeEntry();
       }

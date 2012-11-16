@@ -15,17 +15,19 @@
  */
 package git4idea.push;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import git4idea.repo.GitRemote;
+import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.util.Collection;
 
@@ -36,6 +38,8 @@ class GitManualPushToBranch extends JPanel {
 
   private final JTextField myDestBranchTextField;
   private final JBLabel myComment;
+  private final GitPushLogRefreshAction myRefreshAction;
+  private final JComponent myRefreshButton;
   private final RemoteSelector myRemoteSelector;
   private final JComponent myRemoteSelectorComponent;
   private boolean myMultiRepositoryProject;
@@ -44,25 +48,20 @@ class GitManualPushToBranch extends JPanel {
     super();
     myMultiRepositoryProject = multiRepositoryProject;
 
-    myDestBranchTextField = new JBTextField(20);
-    myDestBranchTextField.getDocument().addDocumentListener(new DocumentListener() {
-      @Override
-      public void insertUpdate(DocumentEvent e) {
-        performOnRefresh.run();
-      }
-
-      @Override
-      public void removeUpdate(DocumentEvent e) {
-        performOnRefresh.run();
-      }
-
-      @Override
-      public void changedUpdate(DocumentEvent e) {
-        performOnRefresh.run();
-      }
-    });
+    myDestBranchTextField = new JTextField(20);
     
     myComment = new JBLabel("This will apply to all selected repositories", UIUtil.ComponentStyle.SMALL);
+    
+    myRefreshAction = new GitPushLogRefreshAction() {
+      @Override public void actionPerformed(AnActionEvent e) {
+        performOnRefresh.run();
+      }
+    };
+    myRefreshButton = new ActionButton(myRefreshAction,  myRefreshAction.getTemplatePresentation(), myRefreshAction.getTemplatePresentation().getText(), ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+    myRefreshButton.setFocusable(true);
+    final ShortcutSet shortcutSet = ActionManager.getInstance().getAction(IdeActions.ACTION_REFRESH).getShortcutSet();
+    myRefreshAction.registerCustomShortcutSet(shortcutSet, myRefreshButton);
+
     myRemoteSelector = new RemoteSelector();
     myRemoteSelectorComponent = myRemoteSelector.createComponent();
 
@@ -80,12 +79,11 @@ class GitManualPushToBranch extends JPanel {
       .setDefaultInsets(new Insets(0, 0, UIUtil.DEFAULT_VGAP, 5))
     ;
     JLabel targetBranchLabel = new JBLabel("Target branch: ");
-    targetBranchLabel.setDisplayedMnemonic('b');
-    targetBranchLabel.setLabelFor(myDestBranchTextField);
 
     panel.add(targetBranchLabel, g.nextLine().next());
     panel.add(myRemoteSelectorComponent, g.next());
     panel.add(myDestBranchTextField, g.next());
+    panel.add(myRefreshButton, g.next());
     if (myMultiRepositoryProject) {
       panel.add(myComment, g.nextLine().insets(0, 0, 0, 0).coverLine());
     }
@@ -160,4 +158,11 @@ class GitManualPushToBranch extends JPanel {
 
   }
 
+  private abstract static class GitPushLogRefreshAction extends DumbAwareAction {
+    
+    GitPushLogRefreshAction() {
+      super("Refresh commit list", "Refresh commit list", AllIcons.Actions.Refresh);
+    }
+  }
+  
 }

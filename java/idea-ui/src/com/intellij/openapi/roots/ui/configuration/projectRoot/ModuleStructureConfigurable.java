@@ -555,8 +555,8 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return myContext.myModulesConfigurator.getFacetsConfigurator();
   }
 
-  private void addModule() {
-    final List<Module> modules = myContext.myModulesConfigurator.addModule(myTree);
+  private void addModule(boolean anImport) {
+    final List<Module> modules = myContext.myModulesConfigurator.addModule(myTree, anImport);
     if (modules != null) {
       for (Module module : modules) {
         addModuleNode(module);
@@ -782,10 +782,17 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       @Override
       @NotNull
       public AnAction[] getChildren(@Nullable final AnActionEvent e) {
-        AnAction module = new AddModuleAction();
 
         ArrayList<AnAction> result = new ArrayList<AnAction>();
-        result.add(module);
+
+        AnAction addModuleAction = new AddModuleAction(false);
+        addModuleAction.getTemplatePresentation().setText("New Module");
+        result.add(addModuleAction);
+
+        AnAction importModuleAction = new AddModuleAction(true);
+        importModuleAction.getTemplatePresentation().setText("Import Module");
+        importModuleAction.getTemplatePresentation().setIcon(AllIcons.ToolbarDecorator.Import);
+        result.add(importModuleAction);
 
         final Collection<AnAction> actions = AddFacetToModuleAction.createAddFrameworkActions(myFacetEditorFacade, myProject);
         if (!actions.isEmpty()) {
@@ -970,13 +977,17 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   private class AddModuleAction extends AnAction implements DumbAware {
-    public AddModuleAction() {
+
+    private final boolean myImport;
+
+    public AddModuleAction(boolean anImport) {
       super(ProjectBundle.message("add.new.module.text.full"), null, AllIcons.Actions.Module);
+      myImport = anImport;
     }
 
     @Override
     public void actionPerformed(final AnActionEvent e) {
-      addModule();
+      addModule(myImport);
     }
   }
 

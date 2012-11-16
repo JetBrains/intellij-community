@@ -164,6 +164,8 @@ public class TypesUtil {
     ourOperationsToOperatorNames.put(mSTAR_STAR, "power");
     ourOperationsToOperatorNames.put(COMPOSITE_LSHIFT_SIGN, "leftShift");
     ourOperationsToOperatorNames.put(COMPOSITE_RSHIFT_SIGN, "rightShift");
+    ourOperationsToOperatorNames.put(mEQUAL, "equals");
+    ourOperationsToOperatorNames.put(mNOT_EQUAL, "equals");
 
     ourUnaryOperationsToOperatorNames.put(mLNOT, "asBoolean");
     ourUnaryOperationsToOperatorNames.put(mPLUS, "positive");

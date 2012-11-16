@@ -36,14 +36,13 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.ProjectTemplate;
+import com.intellij.platform.ProjectTemplatesFactory;
+import com.intellij.platform.templates.RemoteTemplatesFactory;
 import com.intellij.platform.templates.TemplateModuleBuilder;
 import com.intellij.projectImport.ProjectFormatPanel;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -54,6 +53,7 @@ import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -120,7 +120,9 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
   private final ElementFilter.Active.Impl<SimpleNode> myFilter;
   private final FilteringTreeBuilder myTreeBuilder;
+  private boolean myIsTreeUpdating;
   private MinusculeMatcher[] myMatchers;
+
   @Nullable
   private ModuleBuilder myModuleBuilder;
 
@@ -145,17 +147,28 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     myExpertPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, IdeBorderFactory.TITLED_BORDER_INDENT, 5, 0));
     myExpertDecorator.setContentComponent(myExpertPanel);
 
+    final RemoteTemplatesFactory factory = new RemoteTemplatesFactory();
+    final DynamicGroupNode dynamicGroupNode = new DynamicGroupNode(factory.getGroups()[0], factory);
     SimpleTreeStructure.Impl structure = new SimpleTreeStructure.Impl(new SimpleNode() {
       @Override
       public SimpleNode[] getChildren() {
-        return ContainerUtil.map2Array(map.entrySet(), NO_CHILDREN, new Function<Map.Entry<String, Collection<ProjectTemplate>>, SimpleNode>() {
-          @Override
-          public SimpleNode fun(Map.Entry<String, Collection<ProjectTemplate>> entry) {
-            return new GroupNode(entry.getKey(), entry.getValue());
-          }
-        });
+        SimpleNode[] nodes =
+          ContainerUtil.map2Array(map.entrySet(), NO_CHILDREN, new Function<Map.Entry<String, Collection<ProjectTemplate>>, SimpleNode>() {
+            @Override
+            public SimpleNode fun(Map.Entry<String, Collection<ProjectTemplate>> entry) {
+              return new GroupNode(entry.getKey(), entry.getValue());
+            }
+          });
+
+        return ArrayUtil.append(nodes, dynamicGroupNode);
       }
-    });
+    })
+    {
+      @Override
+      public boolean isToBuildChildrenInBackground(Object element) {
+        return getDelegate(element) instanceof DynamicGroupNode;
+      }
+    };
 
     buildMatcher();
     myFilter = new ElementFilter.Active.Impl<SimpleNode>() {
@@ -164,7 +177,9 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
         return template instanceof TemplateNode && matches((TemplateNode)template);
       }
     };
-    myTreeBuilder = new FilteringTreeBuilder(myTemplatesTree, myFilter, structure, new Comparator<NodeDescriptor>() {
+    final FilteringTreeStructure filteringTreeStructure = new FilteringTreeStructure(myFilter, structure);
+
+    myTreeBuilder = new FilteringTreeBuilder(myTemplatesTree, myFilter, filteringTreeStructure, new Comparator<NodeDescriptor>() {
       @Override
       public int compare(NodeDescriptor o1, NodeDescriptor o2) {
         if (o1 instanceof FilteringTreeStructure.FilteringNode) {
@@ -179,6 +194,11 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
       @Override
       public boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
         return myMatchers != null && myMatchers.length > 0;
+      }
+
+      @Override
+      protected void runBackgroundLoading(@NotNull Runnable runnable) {
+        runnable.run();
       }
 
       @Override
@@ -234,8 +254,9 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
       addField("Project \u001bformat:", myFormatPanel.getStorageFormatComboBox(), myModulePanel);
     }
 
-    mySplitter = new JBSplitter(false, 0.3f);
+    mySplitter = new JBSplitter(false, 0.3f, 0.3f, 0.6f);
     mySplitter.setSplitterProportionKey("select.template.proportion");
+    myLeftPanel.setMinimumSize(new Dimension(200, 200));
     mySplitter.setFirstComponent(myLeftPanel);
     mySplitter.setSecondComponent(myRightPanel);
 //    mySettingsPanel.setVisible(false);
@@ -259,24 +280,33 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyEvent.VK_UP, KeyEvent.VK_DOWN), mySearchField);
 
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
+    Runnable runnable = new Runnable() {
       @Override
       public void run() {
+        myIsTreeUpdating = true;
+        FilteringTreeStructure.FilteringNode node = filteringTreeStructure.createFilteringNode(dynamicGroupNode);
+        myTreeBuilder.queueUpdateFrom(node, false);
+
         TreeState state = SelectTemplateSettings.getInstance().getTreeState();
-       if (state != null && !ApplicationManager.getApplication().isUnitTestMode()) {
-         state.applyTo(myTemplatesTree, (DefaultMutableTreeNode)myTemplatesTree.getModel().getRoot());
-       }
-       else {
-         myTreeBuilder.expandAll(new Runnable() {
-           @Override
-           public void run() {
-             myTemplatesTree.setSelectionRow(1);
-           }
-         });
-       }
+        if (state != null && !ApplicationManager.getApplication().isUnitTestMode()) {
+          state.applyTo(myTemplatesTree, (DefaultMutableTreeNode)myTemplatesTree.getModel().getRoot());
+        }
+        else {
+          myTreeBuilder.expandAll(new Runnable() {
+            @Override
+            public void run() {
+              myTemplatesTree.setSelectionRow(1);
+            }
+          });
+        }
       }
-    });
+    };
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      SwingUtilities.invokeLater(runnable);
+    }
+    else {
+      myTreeBuilder.getIntialized().doWhenDone(runnable);
+    }
   }
 
   private static NamePathComponent initNamePathComponent(WizardContext context) {
@@ -337,7 +367,6 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
   @Override
   public void updateStep() {
-    myTreeBuilder.queueUpdate();
     myExpertDecorator.setOn(SelectTemplateSettings.getInstance().EXPERT_MODE);
   }
 
@@ -536,6 +565,31 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     addField(label, field, panel);
   }
 
+  private class DynamicGroupNode extends GroupNode {
+
+    private final ProjectTemplatesFactory myFactory;
+
+    private DynamicGroupNode(String group, ProjectTemplatesFactory factory) {
+      super(group, Collections.<ProjectTemplate>emptyList());
+      myFactory = factory;
+    }
+
+    @Override
+    public SimpleNode[] getChildren() {
+      if (!myIsTreeUpdating) return NO_CHILDREN;
+      ProjectTemplate[] templates = myFactory.createTemplates(myName, myWizardContext);
+      if (templates.length == 0) {
+        return new SimpleNode[]{new NullNode() {
+          @Override
+          public String getName() {
+            return "<no samples found>";
+          }
+        }};
+      }
+      return getNodes(Arrays.asList(templates));
+    }
+  }
+
   private static class GroupNode extends SimpleNode {
     private final String myGroup;
     private final Collection<ProjectTemplate> myTemplates;
@@ -547,8 +601,12 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
     @Override
     public SimpleNode[] getChildren() {
+      return getNodes(myTemplates);
+    }
+
+    protected SimpleNode[] getNodes(Collection<ProjectTemplate> templates) {
       List<SimpleNode> children = new ArrayList<SimpleNode>();
-      for (ProjectTemplate template : myTemplates) {
+      for (ProjectTemplate template : templates) {
         children.add(new TemplateNode(this, template));
       }
       return children.toArray(new SimpleNode[children.size()]);
@@ -568,6 +626,11 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     public TemplateNode(GroupNode groupNode, ProjectTemplate template) {
       myGroupNode = groupNode;
       myTemplate = template;
+    }
+
+    @Override
+    public boolean isAlwaysLeaf() {
+      return true;
     }
 
     @Override
@@ -784,6 +847,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     return myModuleName.getText().trim();
   }
 
+  @TestOnly
   public boolean setSelectedTemplate(String group, String name) {
     final ComparableObject.Impl test = new ComparableObject.Impl(group, name);
     return myTemplatesTree.select(myTreeBuilder, new SimpleNodeVisitor() {
@@ -800,5 +864,10 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   @Nullable
   public ModuleWizardStep getSettingsStep() {
     return mySettingsStep;
+  }
+
+  @Override
+  public Icon getIcon() {
+    return myWizardContext.getStepIcon();
   }
 }

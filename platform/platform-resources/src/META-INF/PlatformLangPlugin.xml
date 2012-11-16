@@ -86,6 +86,7 @@
 
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SameDirectoryWeigher" id="sameDirectory"
              order="after openedInEditor"/>
+
   </extensions>
 
   <xi:include href="xdebugger.xml" xpointer="xpointer(/root/*)"/>

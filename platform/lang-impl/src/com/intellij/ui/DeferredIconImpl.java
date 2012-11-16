@@ -108,7 +108,6 @@ public class DeferredIconImpl<T> implements DeferredIcon {
               IconDeferrerImpl.evaluateDeferred(evalRunnable);
             }
           })) {
-            System.out.println("Redeferring");
             myIsScheduled = false;
             return;
           }

@@ -355,7 +355,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
     List<Usage> usages = FindUtil.findAll(getProject(), myEditor, findModel);
     for (Usage usage : usages) {
-      ReplaceInProjectManager.getInstance(getProject()).doReplace(usage, findModel, Collections.<Usage>emptySet());
+      ReplaceInProjectManager.getInstance(getProject()).doReplace(usage, findModel, Collections.<Usage>emptySet(), false);
     }
     String newText = StringUtil.repeat(toReplace + "\n",6);
     assertEquals(newText, getEditor().getDocument().getText());

@@ -27,6 +27,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.Callable;
 
 /**
+ * This class describes bug-tracking server.
+ * Do not forget to mark your implementation with {@link Tag} annotation to make it persistent.
+ *
+ * @see TaskRepositoryType
+ * @see com.intellij.tasks.impl.BaseRepository
  * @author Dmitry Avdeev
  */
 @Tag("server")

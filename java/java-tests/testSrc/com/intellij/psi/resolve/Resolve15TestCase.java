@@ -3,6 +3,9 @@
  */
 package com.intellij.psi.resolve;
 
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
+import com.intellij.openapi.projectRoots.JavaVersionServiceImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.ResolveTestCase;
@@ -18,6 +21,7 @@ public abstract class Resolve15TestCase extends ResolveTestCase {
     super.setUp();
     myOldLanguageLevel = LanguageLevelProjectExtension.getInstance(myJavaFacade.getProject()).getLanguageLevel();
     LanguageLevelProjectExtension.getInstance(myJavaFacade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+    ((JavaVersionServiceImpl)JavaVersionService.getInstance()).setTestVersion(JavaSdkVersion.JDK_1_5, getTestRootDisposable());
   }
 
   @Override

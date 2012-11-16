@@ -99,36 +99,6 @@ public class OnClickConverter extends Converter<String> implements CustomReferen
       return result.toArray(new ResolveResult[result.size()]);
     }
 
-    private static boolean checkSignature(PsiMethod method) {
-      if (method.getReturnType() != PsiType.VOID) {
-        return false;
-      }
-
-      if (method.hasModifierProperty(PsiModifier.STATIC) ||
-          method.hasModifierProperty(PsiModifier.ABSTRACT) ||
-          !method.hasModifierProperty(PsiModifier.PUBLIC)) {
-        return false;
-      }
-
-      final PsiClass aClass = method.getContainingClass();
-      if (aClass == null || aClass.isInterface()) {
-        return false;
-      }
-
-      final PsiParameter[] parameters = method.getParameterList().getParameters();
-      if (parameters.length != 1) {
-        return false;
-      }
-
-      final PsiType paramType = parameters[0].getType();
-      if (!(paramType instanceof PsiClassType)) {
-        return false;
-      }
-
-      final PsiClass paramClass = ((PsiClassType)paramType).resolve();
-      return paramClass != null && AndroidUtils.VIEW_CLASS_NAME.equals(paramClass.getQualifiedName());
-    }
-
     @NotNull
     @Override
     public Object[] getVariants() {
@@ -159,6 +129,36 @@ public class OnClickConverter extends Converter<String> implements CustomReferen
       });
       return ArrayUtil.toObjectArray(result);
     }
+  }
+
+  public static boolean checkSignature(PsiMethod method) {
+    if (method.getReturnType() != PsiType.VOID) {
+      return false;
+    }
+
+    if (method.hasModifierProperty(PsiModifier.STATIC) ||
+        method.hasModifierProperty(PsiModifier.ABSTRACT) ||
+        !method.hasModifierProperty(PsiModifier.PUBLIC)) {
+      return false;
+    }
+
+    final PsiClass aClass = method.getContainingClass();
+    if (aClass == null || aClass.isInterface()) {
+      return false;
+    }
+
+    final PsiParameter[] parameters = method.getParameterList().getParameters();
+    if (parameters.length != 1) {
+      return false;
+    }
+
+    final PsiType paramType = parameters[0].getType();
+    if (!(paramType instanceof PsiClassType)) {
+      return false;
+    }
+
+    final PsiClass paramClass = ((PsiClassType)paramType).resolve();
+    return paramClass != null && AndroidUtils.VIEW_CLASS_NAME.equals(paramClass.getQualifiedName());
   }
 
   private static LookupElement createLookupElement(PsiMethod method) {

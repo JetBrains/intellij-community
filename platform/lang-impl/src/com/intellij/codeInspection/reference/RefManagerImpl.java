@@ -323,6 +323,7 @@ public class RefManagerImpl extends RefManager {
 
   @NotNull
   public List<RefElement> getSortedElements() {
+    LOG.assertTrue(myRefTable != null);
     List<RefElement> answer = new ArrayList<RefElement>(myRefTable.values());
     ContainerUtil.quickSort(answer, new Comparator<RefElement>() {
       @Override

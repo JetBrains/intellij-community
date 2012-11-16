@@ -15,18 +15,7 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.ide.impl.NewProjectUtil;
-import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -34,15 +23,10 @@ import java.util.List;
  */
 public class ImportProjectAction extends ImportModuleAction {
 
-  @Override
-  public List<Module> doImport(Project project, @NotNull VirtualFile file) {
-    return super.doImport(null, file);
-  }
 
   @Override
-  public List<Module> createFromWizard(Project project, AddModuleWizard wizard) {
-    Project newProject = NewProjectUtil.createFromWizard(wizard, project);
-    return  newProject == null ? Collections.<Module>emptyList() : Arrays.asList(ModuleManager.getInstance(newProject).getModules());
+  public void actionPerformed(AnActionEvent e) {
+    doImport(null);
   }
 
   @Override

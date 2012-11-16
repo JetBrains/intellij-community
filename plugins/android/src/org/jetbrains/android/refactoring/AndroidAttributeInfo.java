@@ -1,5 +1,6 @@
 package org.jetbrains.android.refactoring;
 
+import com.android.sdklib.SdkConstants;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,8 +17,9 @@ class AndroidAttributeInfo {
     myPackage = aPackage;
   }
 
-  public boolean isSystem() {
-    return AndroidUtils.SYSTEM_RESOURCE_PACKAGE.equals(myPackage);
+  public String getNamespace() {
+    final boolean system = AndroidUtils.SYSTEM_RESOURCE_PACKAGE.equals(myPackage);
+    return system ? SdkConstants.NS_RESOURCES : null;
   }
 
   @NotNull

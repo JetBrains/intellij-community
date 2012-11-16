@@ -18,8 +18,10 @@ package com.intellij.android.designer.propertyTable;
 import com.android.resources.ResourceType;
 import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.android.designer.propertyTable.editors.EventHandlerEditor;
 import com.intellij.android.designer.propertyTable.editors.ResourceEditor;
 import com.intellij.android.designer.propertyTable.editors.StringsComboEditor;
+import com.intellij.android.designer.propertyTable.renderers.EventHandlerRenderer;
 import com.intellij.android.designer.propertyTable.renderers.ResourceRenderer;
 import com.intellij.designer.model.Property;
 import com.intellij.designer.propertyTable.PropertyEditor;
@@ -57,24 +59,25 @@ public class AttributeProperty extends Property<RadViewComponent> implements IXm
 
     Set<AttributeFormat> formats = definition.getFormats();
 
+    if ("onClick".equals(getName())) {
+      myRenderer = new EventHandlerRenderer(formats);
+      myEditor = new EventHandlerEditor();
+      return;
+    }
     if (formats.size() == 1) {
       if (formats.contains(AttributeFormat.Float)) {
         myRenderer = new LabelPropertyRenderer(null);
         myEditor = new TextEditor();
+        return;
       }
-      else if (formats.contains(AttributeFormat.Enum)) {
+      if (formats.contains(AttributeFormat.Enum)) {
         myRenderer = new LabelPropertyRenderer(null);
         myEditor = new StringsComboEditor(definition.getValues());
-      }
-      else {
-        myRenderer = createResourceRenderer(definition, formats);
-        myEditor = createResourceEditor(definition, formats);
+        return;
       }
     }
-    else {
-      myRenderer = createResourceRenderer(definition, formats);
-      myEditor = createResourceEditor(definition, formats);
-    }
+    myRenderer = createResourceRenderer(definition, formats);
+    myEditor = createResourceEditor(definition, formats);
   }
 
   protected PropertyRenderer createResourceRenderer(AttributeDefinition definition, Set<AttributeFormat> formats) {

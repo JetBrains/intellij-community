@@ -61,6 +61,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
       level = LanguageLevel.JDK_1_5;
     }
     LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(level);
+    ((JavaVersionServiceImpl)JavaVersionService.getInstance()).setTestVersion(JavaSdkVersion.JDK_1_6, myTestRootDisposable);
   }
 
   @Override
@@ -79,7 +80,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testExplicitMethodParameters1() throws Exception { doTest(false); }
   public void testInferenceWithBounds() throws Exception { doTest(false); }
   public void testInferenceWithSuperBounds() throws Exception { doTest(false); }
-  public void testInferenceWithUpperBoundPromotion() throws Exception { doTest(false); }
+  public void testInferenceWithUpperBoundPromotion() throws Exception { doTest17Incompatibility(); }
   public void testVariance() throws Exception { doTest(false); }
   public void testForeachTypes() throws Exception { doTest(false); }
   public void testRawOverridingMethods() throws Exception { doTest(false); }
@@ -96,7 +97,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testUncheckedOverriding() throws Exception { doTest(true); }
   public void testWildcardTypes() throws Exception { doTest(true); }
   public void testConvertibleTypes() throws Exception { doTest(true); }
-  public void testIntersectionTypes() throws Exception { doTest(true); }
+  public void testIntersectionTypes() throws Exception { doTest17Incompatibility(true); }
   public void testVarargs() throws Exception { doTest(true); }
   public void testTypeArgsOnRaw() throws Exception { doTest(false); }
   public void testConditionalExpression() throws Exception { doTest(false); }
@@ -152,8 +153,8 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA67681() throws Exception { doTest(false); }
   public void testIDEA67599() throws Exception { doTest(false); }
   public void testIDEA57668() throws Exception { doTest(false); }
-  public void testIDEA57667() throws Exception { doTest(false); }
-  public void testIDEA57650() throws Exception { doTest(false); }
+  public void testIDEA57667() throws Exception { doTest17Incompatibility(false); }
+  public void testIDEA57650() throws Exception { doTest17Incompatibility(false); }
   public void testIDEA57378() throws Exception { doTest(false); }
   public void testIDEA57557() throws Exception { doTest(false); }
   public void testIDEA57563() throws Exception { doTest(false); }
@@ -195,6 +196,11 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA91626() throws Exception { doTest(true); }
   public void testIDEA92022() throws Exception { doTest(false); }
   public void testRawOnParameterized() throws Exception { doTest(false); }
+  public void testFailedInferenceWithBoxing() throws Exception { doTest(false); }
+  public void testFixedFailedInferenceWithBoxing() throws Exception { doTest17Incompatibility(false); }
+  public void testInferenceWithBoxingCovariant() throws Exception { doTest17Incompatibility(false); }
+  public void testSuperWildcardIsNotWithinItsBound() throws Exception { doTest17Incompatibility(false); }
+  public void testSpecificReturnType() throws Exception { doTest17Incompatibility(false); }
 
   public void testJavaUtilCollections_NoVerify() throws Exception {
     PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));
@@ -207,7 +213,11 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   private void doTest17Incompatibility() throws Exception {
+    doTest17Incompatibility(false);
+  }
+
+  private void doTest17Incompatibility(final boolean warnings) throws Exception {
     ((JavaVersionServiceImpl)JavaVersionService.getInstance()).setTestVersion(JavaSdkVersion.JDK_1_7, getTestRootDisposable());
-    doTest(false);
+    doTest(warnings);
   }
 }

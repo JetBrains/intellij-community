@@ -303,6 +303,28 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
     assertOutput(a, fs().archive("a.jar").file("a.txt").end().file("b.txt"));
   }
 
+  public void testDoNotCreateEmptyArchive() {
+    String file = createFile("dir/a.txt");
+    JpsArtifact a = addArtifact(archive("a.jar").parentDirCopy(file));
+    delete(file);
+    buildAll();
+    assertEmptyOutput(a);
+  }
+
+  public void testDoNotCreateEmptyArchiveInsideArchive() {
+    String file = createFile("dir/a.txt");
+    JpsArtifact a = addArtifact(archive("a.jar").archive("inner.jar").parentDirCopy(file));
+    delete(file);
+    buildAll();
+    assertEmptyOutput(a);
+  }
+
+  public void testDoNotCreateEmptyArchiveFromExtractedDirectory() {
+    final JpsArtifact a = addArtifact("a", archive("a.jar").dir("dir").extractedDir(getJUnitJarPath(), "/xxx/"));
+    buildAll();
+    assertEmptyOutput(a);
+  }
+
   private static void createFileInArtifactOutput(JpsArtifact a, final String fileName) throws IOException {
     assertTrue(new File(a.getOutputPath(), fileName).createNewFile());
   }

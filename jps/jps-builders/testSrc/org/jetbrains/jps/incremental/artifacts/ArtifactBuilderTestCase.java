@@ -97,8 +97,8 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
     return FileUtil.toSystemIndependentName(file.getAbsolutePath());
   }
 
-  protected static void assertEmptyOutput(JpsArtifact a1) {
-    assertOutput(a1, fs());
+  protected static void assertEmptyOutput(JpsArtifact a) {
+    assertOutput(a, fs());
   }
 
   protected void assertBuildFailed(JpsArtifact a) {

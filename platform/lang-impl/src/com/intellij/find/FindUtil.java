@@ -638,7 +638,7 @@ public class FindUtil {
       }
     }
 
-    ReplaceInProjectManager.reportNumberReplacedOccurences(project, occurrences);
+    ReplaceInProjectManager.reportNumberReplacedOccurrences(project, occurrences);
     return replaced;
   }
 

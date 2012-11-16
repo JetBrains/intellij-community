@@ -357,12 +357,29 @@ public class MavenProject {
 
   @NotNull
   public String getAnnotationProcessorDirectory(boolean testSources) {
+    Element cfg = getPluginGoalConfiguration("org.bsc.maven", "maven-processor-plugin", testSources ? "process-test" : "process");
+    if (cfg != null) {
+      String out = MavenJDOMUtil.findChildValueByPath(cfg, "outputDirectory");
+      if (out == null) {
+        out = MavenJDOMUtil.findChildValueByPath(cfg, "defaultOutputDirectory");
+        if (out == null) {
+          return getBuildDirectory() + "/generated-sources/apt";
+        }
+      }
+
+      if (!new File(out).isAbsolute()) {
+        out = getDirectory() + '/' + out;
+      }
+
+      return out;
+    }
+
     String def = getGeneratedSourcesDirectory(testSources) + (testSources ? "/test-annotations" : "/annotations");
     return MavenJDOMUtil.findChildValueByPath(getCompilerConfig(),
                                               testSources ? "generatedTestSourcesDirectory" : "generatedSourcesDirectory",
                                               def);
   }
-  
+
   @NotNull
   public ProcMode getProcMode() {
     Element compilerConfiguration = getCompilerConfig();

@@ -240,8 +240,8 @@ public class UsageViewManagerImpl extends UsageViewManager {
       public void run() {
         if (usageView != null && usageView.searchHasBeenCancelled() || indicator != null && indicator.isCanceled()) return;
         String message = UsageViewBundle.message("find.excessive.usage.count.prompt", usageCount);
-        int ret = UsageLimitUtil.showTooManyUsagesWarning(myProject, message);
-        if (ret != 0 && usageView != null) {
+        UsageLimitUtil.Result ret = UsageLimitUtil.showTooManyUsagesWarning(myProject, message);
+        if (ret == UsageLimitUtil.Result.ABORT && usageView != null) {
           usageView.setCurrentSearchCancelled(true);
           if (indicator != null) indicator.cancel();
         }

@@ -247,7 +247,8 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     GrExpression qualifier = ref.getQualifier();
     return "class".equals(ref.getReferenceName()) &&
            qualifier instanceof GrReferenceExpression &&
-           ((GrReferenceExpression)qualifier).resolve() instanceof PsiClass;
+           ((GrReferenceExpression)qualifier).resolve() instanceof PsiClass &&
+           !PsiUtil.isThisReference(qualifier);
   }
 
   private static boolean areMissingMethodsDeclared(GrReferenceExpression ref) {

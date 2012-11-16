@@ -61,6 +61,7 @@ public class GradleSelectProjectStep extends AbstractImportFromGradleWizardStep 
       null,
       GradleUtil.getFileChooserDescriptor()
     );
+    myProjectPathComponent.setText(context.getProjectFileDirectory());
     myComponent.add(myProjectPathComponent, myControlConstraints);
   }
 

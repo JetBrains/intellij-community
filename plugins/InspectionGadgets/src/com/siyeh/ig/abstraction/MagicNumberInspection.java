@@ -24,10 +24,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.IntroduceConstantFix;
-import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.MethodUtils;
-import com.siyeh.ig.psiutils.TestUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -42,6 +39,9 @@ public class MagicNumberInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreInAnnotations = true;
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreInitialCapacity = false;
 
   @Override
   @NotNull
@@ -61,6 +61,7 @@ public class MagicNumberInspection extends BaseInspection {
     panel.addCheckbox(InspectionGadgetsBundle.message("magic.number.ignore.option"), "ignoreInHashCode");
     panel.addCheckbox(InspectionGadgetsBundle.message("ignore.in.test.code"), "ignoreInTestCode");
     panel.addCheckbox(InspectionGadgetsBundle.message("ignore.in.annotations"),"ignoreInAnnotations");
+    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.as.initial.capacity"), "ignoreInitialCapacity");
     return panel;
   }
 
@@ -85,16 +86,10 @@ public class MagicNumberInspection extends BaseInspection {
     public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
       super.visitLiteralExpression(expression);
       final PsiType type = expression.getType();
-      if (!ClassUtils.isPrimitiveNumericType(type)) {
+      if (!ClassUtils.isPrimitiveNumericType(type) || PsiType.CHAR.equals(type)) {
         return;
       }
-      if (PsiType.CHAR.equals(type)) {
-        return;
-      }
-      if (isSpecialCaseLiteral(expression)) {
-        return;
-      }
-      if (ExpressionUtils.isDeclaredConstant(expression)) {
+      if (isSpecialCaseLiteral(expression) || ExpressionUtils.isDeclaredConstant(expression)) {
         return;
       }
       if (ignoreInHashCode) {
@@ -106,9 +101,24 @@ public class MagicNumberInspection extends BaseInspection {
       if (ignoreInTestCode && TestUtils.isInTestCode(expression)) {
         return;
       }
-      final boolean insideAnnotation = AnnotationUtil.isInsideAnnotation(expression);
-      if (ignoreInAnnotations && insideAnnotation) {
-        return;
+      if (ignoreInAnnotations) {
+        final boolean insideAnnotation = AnnotationUtil.isInsideAnnotation(expression);
+        if (insideAnnotation) {
+          return;
+        }
+      }
+      if (ignoreInitialCapacity) {
+        final PsiExpressionList expressionList = PsiTreeUtil.getParentOfType(expression, PsiExpressionList.class, true, PsiMember.class);
+        if (expressionList != null) {
+          final PsiElement parent = expressionList.getParent();
+          if (parent instanceof PsiNewExpression) {
+            final PsiNewExpression newExpression = (PsiNewExpression)parent;
+            if (TypeUtils.expressionHasTypeOrSubtype(newExpression, CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER,
+                                                 CommonClassNames.JAVA_UTIL_MAP, CommonClassNames.JAVA_UTIL_COLLECTION) != null) {
+              return;
+            }
+          }
+        }
       }
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiPrefixExpression) {

@@ -32,6 +32,9 @@ import org.jetbrains.annotations.Nullable;
 public class AndroidProjectTemplatesFactory implements ProjectTemplatesFactory {
 
   public static final String ANDROID = "Android";
+  public static final String EMPTY_MODULE = "Empty Module";
+  public static final String LIBRARY_MODULE = "Library Module";
+  public static final String TEST_MODULE = "Test Module";
 
   @NotNull
   @Override
@@ -44,7 +47,7 @@ public class AndroidProjectTemplatesFactory implements ProjectTemplatesFactory {
   public ProjectTemplate[] createTemplates(String group, WizardContext context) {
     ProjectTemplate[] templates = {
       new BuilderBasedTemplate(new AndroidModuleBuilder()),
-      new AndroidProjectTemplate("Empty Android Module",
+      new AndroidProjectTemplate(EMPTY_MODULE,
                                  "Simple Android module with configured Android SDK and without any pre-defined structure",
                                  new AndroidModuleBuilder(null) {
 
@@ -60,7 +63,7 @@ public class AndroidProjectTemplatesFactory implements ProjectTemplatesFactory {
                                    }
                                  }),
 
-      new AndroidProjectTemplate("Android Library Module",
+      new AndroidProjectTemplate(LIBRARY_MODULE,
                                  "Android library modules hold shared Android source code and resources " +
                                  "that can be referenced by other Android modules",
                                  new AndroidModuleBuilder.Library())
@@ -69,7 +72,7 @@ public class AndroidProjectTemplatesFactory implements ProjectTemplatesFactory {
       return templates;
     }
     else {
-      AndroidProjectTemplate test = new AndroidProjectTemplate("Android Test Module",
+      AndroidProjectTemplate test = new AndroidProjectTemplate(TEST_MODULE,
                                                                "Android test modules contain Android applications that you write using " +
                                                                "the <a href='http://developer.android.com/tools/testing/index.html'>" +
                                                                "Testing and Instrumentation framework</a>",

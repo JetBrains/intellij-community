@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,7 +163,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
           }
         }
         else if (value instanceof OptionDescription) {
-          if (!isSelected) {
+          if (!isSelected && !UIUtil.isUnderDarcula()) {
             panel.setBackground(LightColors.SLIGHTLY_GRAY);
           }
           String hit = ((OptionDescription)value).getHit();
@@ -309,6 +309,9 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
               optionDescriptions.retainAll(descriptions);
             }
           }
+        } else {
+          optionDescriptions = null;
+          break;
         }
       }
       if (optionDescriptions != null && !optionDescriptions.isEmpty()) {
@@ -420,7 +423,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
   @NotNull
   private Pattern getPattern(@NotNull String pattern) {
-    String converted = convertPattern(pattern);
+    String converted = convertPattern(pattern.trim());
     Pattern compiledPattern = myCompiledPattern;
     if (compiledPattern != null && !Comparing.strEqual(converted, compiledPattern.getPattern())) {
       compiledPattern = null;

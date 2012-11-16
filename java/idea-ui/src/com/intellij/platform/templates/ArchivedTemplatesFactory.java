@@ -127,7 +127,7 @@ public class ArchivedTemplatesFactory implements ProjectTemplatesFactory {
           if (child.endsWith(ZIP)) {
             URL templateUrl = new URL(url.toExternalForm() + "/" + child);
             String name = child.substring(0, child.length() - ZIP.length()).replace('_', ' ');
-            templates.add(new ArchivedProjectTemplate(name, templateUrl));
+            templates.add(new LocalArchivedTemplate(name, templateUrl));
           }
         }
       }

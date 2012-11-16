@@ -36,6 +36,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.rename.AutomaticRenamingDialog;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
 import com.intellij.refactoring.rename.RenameProcessor;
@@ -240,7 +241,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
                   final String newElementName = renamer.getNewName(element);
                   if (newElementName != null) {
                     final Collection<UsageInfo> infos = classified.get(element);
-                    RenameUtil.doRenameGenericNamedElement(element, newElementName, infos.toArray(new UsageInfo[infos.size()]), null);
+                    RenameUtil.doRename(element, newElementName, infos.toArray(new UsageInfo[infos.size()]), myProject, RefactoringElementListener.DEAF);
                   }
                 }
               }

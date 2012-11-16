@@ -20,14 +20,13 @@ import com.android.resources.ResourceType;
 import com.android.sdklib.SdkConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.xml.Converter;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.ResolvingConverter;
-import com.intellij.util.xml.XmlName;
+import com.intellij.util.xml.*;
 import org.jetbrains.android.dom.attrs.AttributeDefinition;
 import org.jetbrains.android.dom.attrs.AttributeDefinitions;
 import org.jetbrains.android.dom.attrs.AttributeFormat;
@@ -357,5 +356,30 @@ public class AndroidDomUtil {
       }
     }
     return class2Name.values();
+  }
+
+  @Nullable
+  public static AndroidResourceReferenceBase getAndroidResourceReference(@Nullable GenericAttributeValue<ResourceValue> attribute,
+                                                                         boolean localOnly) {
+    if (attribute == null) {
+      return null;
+    }
+
+    final ResourceValue resValue = attribute.getValue();
+    if (resValue == null || (localOnly && resValue.getPackage() != null)) {
+      return null;
+    }
+
+    final XmlAttributeValue value = attribute.getXmlAttributeValue();
+    if (value == null) {
+      return null;
+    }
+
+    for (PsiReference reference : value.getReferences()) {
+      if (reference instanceof AndroidResourceReferenceBase) {
+        return (AndroidResourceReferenceBase)reference;
+      }
+    }
+    return null;
   }
 }

@@ -144,18 +144,16 @@
           <action id="CloseProject" class="com.intellij.ide.actions.CloseProjectAction"/>
         </group>
         <separator/>
-        <group id="ExportImportGroup">
-          <group id="File.ImportGroup" popup="true" text="Import">
-            <action id="ImportSettings" class="com.intellij.ide.actions.ImportSettingsAction" text="Settings..."/>
-          </group>
-          <action id="ExportSettings" class="com.intellij.ide.actions.ExportSettingsAction"/>
-        </group>
-        <separator/>
         <group id="FileMainSettingsGroup">
           <action id="ShowSettings" class="com.intellij.ide.actions.ShowSettingsAction" icon="AllIcons.General.Settings"/>
           <group id="FileOtherSettingsGroup" class="com.intellij.ide.actions.SmartPopupActionGroup">
              <action id="TemplateProjectProperties" class="com.intellij.ide.actions.TemplateProjectPropertiesAction"/>
              <group id="FileSettingsGroup"/>
+          </group>
+          <separator/>
+          <group id="ExportImportGroup">
+            <action id="ImportSettings" class="com.intellij.ide.actions.ImportSettingsAction"/>
+            <action id="ExportSettings" class="com.intellij.ide.actions.ExportSettingsAction"/>
           </group>
         </group>
         <separator/>

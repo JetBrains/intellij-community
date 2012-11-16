@@ -21,12 +21,12 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
-import git4idea.branch.GitBranchPair
 import git4idea.commands.Git
 import git4idea.commands.GitCommandResult
 import git4idea.commands.GitImpl
 import git4idea.commands.GitLineHandlerListener
 import git4idea.history.browser.GitCommit
+import git4idea.push.GitPushSpec
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
@@ -180,7 +180,7 @@ public class GitTestImpl implements Git {
   @NotNull
   @Override
   public GitCommandResult push(@NotNull GitRepository repository,
-                               @NotNull GitBranchPair pushSpec,
+                               @NotNull GitPushSpec pushSpec,
                                @NotNull GitLineHandlerListener... listeners) {
     throw new UnsupportedOperationException();
   }

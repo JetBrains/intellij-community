@@ -161,7 +161,7 @@ public class GitMergeUpdater extends GitUpdater {
 
     // git log --name-status master..origin/master
     GitBranchPair gitBranchPair = myTrackedBranches.get(myRoot);
-    String currentBranch = gitBranchPair.getSource().getName();
+    String currentBranch = gitBranchPair.getBranch().getName();
     String remoteBranch = gitBranchPair.getDest().getName();
     try {
       GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(myRoot);

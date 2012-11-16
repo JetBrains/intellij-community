@@ -40,6 +40,22 @@ public abstract class ApplicationInfo {
   public abstract String getCompanyURL();
   public abstract boolean hasContextHelp();
 
+  public String getFullVersion() {
+    final String majorVersion = getMajorVersion();
+    if (majorVersion != null && majorVersion.trim().length() > 0) {
+      final String minorVersion = getMinorVersion();
+      if (minorVersion != null && minorVersion.trim().length() > 0) {
+        return majorVersion + "." + minorVersion;
+      }
+      else {
+        return majorVersion + ".0";
+      }
+    }
+    else {
+      return getVersionName();
+    }
+  }
+
   public static ApplicationInfo getInstance() {
     return ApplicationManager.getApplication().getComponent(ApplicationInfo.class);
   }

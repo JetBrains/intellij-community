@@ -262,7 +262,7 @@ public class GenericsHighlightUtil {
     final PsiClassType[] bounds = classParameter.getSuperTypes();
     for (PsiClassType type1 : bounds) {
       PsiType bound = substitutor.substitute(type1);
-      if (checkNotInBounds(type, bound)) {
+      if (!bound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) && checkNotInBounds(type, bound)) {
         PsiClass boundClass = bound instanceof PsiClassType ? ((PsiClassType)bound).resolve() : null;
 
         @NonNls final String messageKey = boundClass == null || referenceClass == null || referenceClass.isInterface() == boundClass.isInterface()
@@ -297,7 +297,7 @@ public class GenericsHighlightUtil {
           return checkExtendsWildcardCaptureFailure((PsiWildcardType)type, bound);
         }
         else if (((PsiWildcardType)type).isSuper()) {
-          return checkNotAssignable(bound, ((PsiWildcardType)type).getSuperBound());
+          return checkNotAssignable(bound, ((PsiWildcardType)type).getSuperBound(), false);
         }
       }
       else if (type instanceof PsiArrayType) {

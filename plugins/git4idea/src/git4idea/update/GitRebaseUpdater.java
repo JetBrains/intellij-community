@@ -107,7 +107,7 @@ public class GitRebaseUpdater extends GitUpdater {
     GitBranchPair gitBranchPair = myTrackedBranches.get(myRoot);
     GitBranch dest = gitBranchPair.getDest();
     LOG.assertTrue(dest != null, String.format("Destination branch is null for source branch %s in %s",
-                                               gitBranchPair.getSource().getName(), myRoot));
+                                               gitBranchPair.getBranch().getName(), myRoot));
     return dest.getName();
   }
 

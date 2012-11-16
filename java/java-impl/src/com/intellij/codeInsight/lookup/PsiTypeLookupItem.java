@@ -27,8 +27,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,7 +93,7 @@ public class PsiTypeLookupItem extends LookupItem {
 
     PsiElement position = context.getFile().findElementAt(context.getStartOffset());
     assert position != null;
-    boolean afterNew = JavaCompletionContributor.isInJavaContext(position) && JavaSmartCompletionContributor.AFTER_NEW.accepts(position);
+    boolean addBraces = shouldAddBraces(position);
     int genericsStart = context.getTailOffset();
     context.getDocument().insertString(genericsStart, JavaCompletionUtil.escapeXmlIfNeeded(context, calcGenerics(position, context)));
     JavaCompletionUtil.shortenReference(context.getFile(), genericsStart - 1);
@@ -102,7 +102,7 @@ public class PsiTypeLookupItem extends LookupItem {
     String braces = StringUtil.repeat("[]", getBracketsCount());
     Editor editor = context.getEditor();
     if (!braces.isEmpty()) {
-      if (LookupEvent.isSpecialCompletionChar(context.getCompletionChar()) && afterNew) {
+      if (LookupEvent.isSpecialCompletionChar(context.getCompletionChar()) && addBraces) {
         context.getDocument().insertString(tail, braces + "{}");
         editor.getCaretModel().moveToOffset(tail + braces.length() + 1);
       } else {
@@ -123,6 +123,14 @@ public class PsiTypeLookupItem extends LookupItem {
       //noinspection unchecked
       handler.handleInsert(context, this);
     }
+  }
+
+  private static boolean shouldAddBraces(PsiElement position) {
+    if (!JavaCompletionContributor.isInJavaContext(position) || !JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) {
+      return false;
+    }
+    PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(position, PsiNewExpression.class);
+    return newExpression != null && newExpression.getParent() instanceof PsiExpressionList;
   }
 
   public String calcGenerics(@NotNull PsiElement context, InsertionContext insertionContext) {

@@ -19,11 +19,11 @@ import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.hash.HashMap
-import git4idea.branch.GitBranchPair
 import git4idea.commands.Git
 import git4idea.commands.GitCommandResult
 import git4idea.commands.GitLineHandlerListener
 import git4idea.history.browser.GitCommit
+import git4idea.push.GitPushSpec
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
@@ -169,7 +169,7 @@ class MockGit implements Git {
 
   @NotNull
   @Override
-  GitCommandResult push(@NotNull GitRepository repository, @NotNull GitBranchPair pushSpec, @NotNull GitLineHandlerListener... listeners) {
+  GitCommandResult push(@NotNull GitRepository repository, @NotNull GitPushSpec pushSpec, @NotNull GitLineHandlerListener... listeners) {
     throw new UnsupportedOperationException()
   }
 

@@ -507,7 +507,9 @@ public class MavenModuleImporter {
   }
 
   private boolean shouldEnableAnnotationProcessors() {
-    return myMavenProject.getProcMode() != MavenProject.ProcMode.NONE && !"pom".equals(myMavenProject.getPackaging());
+    if ("pom".equals(myMavenProject.getPackaging())) return false;
+
+    return myMavenProject.getProcMode() != MavenProject.ProcMode.NONE || myMavenProject.getPluginConfiguration("org.bsc.maven", "maven-processor-plugin") != null;
   }
 
   @NotNull

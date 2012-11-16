@@ -23,11 +23,9 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.Consumer;
 import git4idea.*;
-import git4idea.branch.GitBranchPair;
-import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
-import git4idea.settings.GitSyncRepoSetting;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,9 +42,6 @@ public class GitPushDialog extends DialogWrapper {
   private static final Logger LOG = GitLogger.PUSH_LOG;
   private static final String DEFAULT_REMOTE = "origin";
 
-  @NotNull private final Collection<GitRepository> myAllRepositories;
-  @NotNull private final Project myProject;
-  @NotNull private final GitPlatformFacade myFacade;
   @NotNull private final GitPushSpecs myInitialPushSpecs;
   @NotNull private final GitOutgoingCommitsCollector myOutgoingCommitsCollector;
 
@@ -54,32 +49,29 @@ public class GitPushDialog extends DialogWrapper {
   @NotNull private final JBLoadingPanel myLoadingPanel;
   @NotNull private final GitManualPushToBranch myRefspecPanel;
 
-  public GitPushDialog(@NotNull Project project, @NotNull GitPlatformFacade facade, @NotNull GitPushSpecs pushSpecs) {
+  public GitPushDialog(@NotNull Project project, @NotNull GitPushSpecs pushSpecs) {
     super(project);
-    myProject = project;
-    myFacade = facade;
     myInitialPushSpecs = pushSpecs;
-    myAllRepositories = GitUtil.getRepositoryManager(project).getRepositories();
+    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
+
+    Collection<GitRepository> repositories = myInitialPushSpecs.getRepositories();
 
     myOutgoingCommitsCollector = GitOutgoingCommitsCollector.getInstance(project);
 
     myLoadingPanel = new JBLoadingPanel(new BorderLayout(), this.getDisposable());
 
-    myListPanel = new GitPushLog(project, myAllRepositories, new RepositoryCheckboxListener());
-    myRefspecPanel = new GitManualPushToBranch(myAllRepositories.size() > 1, new RefreshButtonListener());
+    myListPanel = new GitPushLog(project, manager.getRepositories(), new RepositoryCheckboxListener());
+    myRefspecPanel = new GitManualPushToBranch(repositories.size() > 1, new RefreshButtonListener());
 
     init();
     setOKButtonText("Push");
     setOKButtonMnemonic('P');
     setTitle("Git Push");
-    updateTargetBranchField();
+    update();
   }
 
-  private void updateTargetBranchField() {
+  private void update() {
     Collection<GitRepository> repositories = myListPanel.getSelectedRepositories();
-    if (repositories == null) {
-      repositories = myInitialPushSpecs.getSelectedRepositories();
-    }
     Collection<GitRemote> commonRemotes = getRemotesWithCommonNames(repositories);
     myRefspecPanel.setRemotes(commonRemotes, getDefaultRemote(repositories));
 
@@ -166,6 +158,7 @@ public class GitPushDialog extends DialogWrapper {
 
   private JComponent createCommitListPanel() {
     myLoadingPanel.add(myListPanel, BorderLayout.CENTER);
+    loadCommitsInBackground(myInitialPushSpecs);
 
     JPanel commitListPanel = new JPanel(new BorderLayout());
     commitListPanel.add(myLoadingPanel, BorderLayout.CENTER);
@@ -175,20 +168,20 @@ public class GitPushDialog extends DialogWrapper {
   private void loadCommitsInBackground(final GitPushSpecs pushSpecs) {
     final ModalityState modalityState = ModalityState.stateForComponent(getRootPane());
     myLoadingPanel.startLoading();
-    myOutgoingCommitsCollector.collect(pushSpecs, new GitOutgoingCommitsCollector.ResultHandler() {
+    myOutgoingCommitsCollector.collect(new GitOutgoingCommitsCollector.ResultHandler() {
       @Override
-      public void onSuccess(@NotNull final GitCommitsByRepoAndBranch commits) {
+      public void onSuccess(final GitCommitsByRepoAndBranch commits) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            myListPanel.setCommits(defaultRepository(), pushSpecs.getSelectedRepositories(), commits);
+            myListPanel.setCommits(pushSpecs.getRepositories(), commits);
             myLoadingPanel.stopLoading();
           }
         }, modalityState);
       }
 
       @Override
-      public void onError(@NotNull final String error) {
+      public void onError(final String error) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
@@ -199,34 +192,15 @@ public class GitPushDialog extends DialogWrapper {
     });
   }
 
-  @Nullable
-  private GitRepository defaultRepository() {
-    GitSyncRepoSetting syncSetting = myFacade.getSettings(myProject).getSyncSetting();
-    if (syncSetting.equals(GitSyncRepoSetting.SYNC)) {
-      return null;
-    }
-    GitRepository currentRepository = GitBranchUtil.getCurrentRepository(myProject);
-    if (currentRepository == null) {
-      LOG.info("Couldn't identify current repository");
-    }
-    return currentRepository;
-  }
-
   @NotNull
   public GitPushSpecs getPushSpecs() {
-    GitPushSpecs specs = new GitPushSpecs();
-    for (GitRepository repository : myAllRepositories) {
-      GitBranchPair spec = new GitBranchPair(repository.getCurrentBranch(), getTargetBranch());      // TODO what to do with detached head
-      specs.put(repository, spec, isSelected(repository));
-    }
-    return specs;
-  }
-
-  private boolean isSelected(@NotNull GitRepository repository) {
     Collection<GitRepository> selectedRepositories = myListPanel.getSelectedRepositories();
-    return selectedRepositories != null
-           ? selectedRepositories.contains(repository)
-           : myInitialPushSpecs.getSelectedRepositories().contains(repository);
+    Map<GitRepository, GitPushSpec> specs = new HashMap<GitRepository, GitPushSpec>();
+    for (GitRepository repository : selectedRepositories) {
+      GitPushSpec spec = new GitPushSpec(repository.getCurrentBranch(), getTargetBranch());      // TODO what to do with detached head
+      specs.put(repository, spec);
+    }
+    return new GitPushSpecs(specs);
   }
 
   @NotNull
@@ -275,7 +249,7 @@ public class GitPushDialog extends DialogWrapper {
 
   private class RepositoryCheckboxListener implements Consumer<Boolean> {
     @Override public void consume(Boolean checked) {
-      updateTargetBranchField();
+      update();
     }
   }
 

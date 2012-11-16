@@ -300,6 +300,9 @@
     <projectImportProvider implementation="com.intellij.ide.util.projectWizard.ImportFromSourcesProvider"/>
 
     <projectTemplatesFactory implementation="com.intellij.platform.templates.ArchivedTemplatesFactory"/>
+    <!--
+    <projectTemplatesFactory implementation="com.intellij.platform.templates.RemoteTemplatesFactory"/>
+    -->
     <projectTemplatesFactory implementation="com.intellij.platform.templates.PlainModuleTemplatesFactory"/>
 
     <applicationService serviceImplementation="com.intellij.ide.util.newProjectWizard.SelectTemplateSettings"/>

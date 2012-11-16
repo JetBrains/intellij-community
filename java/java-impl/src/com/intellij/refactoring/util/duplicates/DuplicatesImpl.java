@@ -112,7 +112,7 @@ public class DuplicatesImpl {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       if ((!skipPromptWhenOne || size > 1) && (showAll.get() == null || !showAll.get())) {
         final String prompt = provider.getConfirmDuplicatePrompt(match);
-        final ReplacePromptDialog promptDialog = new ReplacePromptDialog(false, provider.getReplaceDuplicatesTitle(idx, size), project){
+        final ReplacePromptDialog promptDialog = new ReplacePromptDialog(false, provider.getReplaceDuplicatesTitle(idx, size), project) {
           @Override
           protected String getMessage() {
             final String message = super.getMessage();

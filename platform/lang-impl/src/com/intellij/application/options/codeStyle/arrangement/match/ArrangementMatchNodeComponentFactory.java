@@ -88,18 +88,21 @@ public class ArrangementMatchNodeComponentFactory {
                                                        ArrangementAnimationManager.Callback
   {
 
-    @NotNull private final StdArrangementMatchRule   myRule;
+    @NotNull private final StdArrangementMatchRule myRule;
+
+    @NotNull private Object myModelValue;
     private int myRow;
 
     RemoveAtomConditionCallback(@NotNull StdArrangementMatchRule rule) {
       myRule = rule;
+      myModelValue = myRule;
     }
 
     @Override
     public void consume(@NotNull ArrangementAtomMatchConditionComponent component) {
       ArrangementAtomMatchCondition condition = component.getMatchCondition();
       ArrangementMatchingRulesModel model = myList.getModel();
-      int i = getRuleIndex();
+      int i = getModelIndex();
       if (i < 0) {
         return;
       }
@@ -108,7 +111,7 @@ public class ArrangementMatchNodeComponentFactory {
       ArrangementMatchCondition existingCondition = myRule.getMatcher().getCondition();
       if (existingCondition.equals(condition)) {
         // We can't just remove an element at this time because that breaks last row rendering. 
-        model.set(i, new DummyElement());
+        model.set(i, myModelValue = new DummyElement());
       }
       else {
         assert existingCondition instanceof ArrangementCompositeMatchCondition;
@@ -116,13 +119,15 @@ public class ArrangementMatchNodeComponentFactory {
         operands.remove(condition);
         if (operands.isEmpty()) {
           // We can't just remove an element at this time because that breaks last row rendering.
-          model.set(i, new DummyElement());
+          model.set(i, myModelValue = new DummyElement());
         }
         else if (operands.size() == 1) {
-          model.set(i, new StdArrangementMatchRule(new StdArrangementEntryMatcher(operands.iterator().next()), myRule.getOrderType()));
+          myModelValue = new StdArrangementMatchRule(new StdArrangementEntryMatcher(operands.iterator().next()), myRule.getOrderType());
+          model.set(i, myModelValue);
         }
         else if (ArrangementConstants.LOG_RULE_MODIFICATION) {
           LOG.info(String.format("Removed '%s' condition. Current rule state: %s", condition, myRule));
+          myModelValue = myRule;
         }
       }
 
@@ -132,37 +137,46 @@ public class ArrangementMatchNodeComponentFactory {
 
     @Override
     public void onAnimationIteration(boolean finished) {
+      refreshRow();
+      if (myRow < 0) {
+        return;
+      }
       myList.repaintRows(myRow, myRow, finished);
       if (!finished) {
         return;
       }
       ArrangementMatchingRulesModel model = myList.getModel();
-      boolean repaintToBottom = getRuleIndex() < 0;
-      if (repaintToBottom) {
-        Object removeCandidate = model.getElementAt(myRow);
-        if (removeCandidate instanceof DummyElement) {
-          model.removeRow(myRow);
-        }
-      }
-
-      if (repaintToBottom && myRow < model.getSize()) {
-        myList.repaintRows(myRow, model.getSize() - 1, true);
+      if (myModelValue instanceof DummyElement) {
+        model.removeRow(myRow);
       }
     }
 
-    private int getRuleIndex() {
+    private void refreshRow() {
+      ArrangementMatchingRulesModel model = myList.getModel();
+      if (myRow < 0 || myRow >= model.getSize()) {
+        myRow = getModelIndex();
+      }
+      else {
+        Object o = model.getElementAt(myRow);
+        if (o != myModelValue) {
+          myRow = getModelIndex();
+        }
+      }
+    }
+
+    private int getModelIndex() {
       // We can't just use model.indexOf(myRule) because there is a possible case that the model contain equal
       // rules (rule1.equals(rule2) == true). That's why we have a helper method for search by reference identity. 
       ArrangementMatchingRulesModel model = myList.getModel();
       for (int i = 0, max = model.getSize(); i < max; i++) {
-        if (model.getElementAt(i) == myRule) {
+        if (model.getElementAt(i) == myModelValue) {
           return i;
         }
       }
       return -1;
     }
   }
-  
+
   private static class DummyElement {
     @Override
     public String toString() {

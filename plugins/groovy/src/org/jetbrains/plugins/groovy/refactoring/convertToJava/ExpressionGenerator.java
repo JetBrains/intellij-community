@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrArrayTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
@@ -641,6 +640,10 @@ public class ExpressionGenerator extends Generator {
       if (right == null) {
         right = factory.createExpressionFromText("null");
       }
+
+      if (op == mNOT_EQUAL && "equals".equals(((PsiMethod)resolved).getName())) {
+        builder.append('!');
+      }
       invokeMethodOn(
         ((PsiMethod)resolved),
         left,
@@ -963,7 +966,7 @@ public class ExpressionGenerator extends Generator {
       LOG.assertTrue(qualifier != null);
 
       String qualifierName = createVarByInitializer(qualifier);
-      builder.append(qualifierName).append(" == null ? null : ");
+      builder.append('(').append(qualifierName).append(" == null ? null : ");
 
       qualifierToUse = factory.createReferenceExpressionFromText(qualifierName, referenceExpression);
     }
@@ -1040,6 +1043,11 @@ public class ExpressionGenerator extends Generator {
         }
       }
     }
+
+    if (type == mOPTIONAL_DOT) {
+      builder.append(')');
+    }
+
   }
 
   private String createVarByInitializer(@NotNull GrExpression initializer) {
@@ -1101,20 +1109,28 @@ public class ExpressionGenerator extends Generator {
       return;
     }
 
-    if (operand instanceof GrListOrMap && !((GrListOrMap)operand).isMap() && typeElement instanceof GrArrayTypeElement) {
+    final PsiType type = typeElement.getType();
+    if (operand instanceof GrListOrMap && !((GrListOrMap)operand).isMap() && type instanceof PsiArrayType) {
       builder.append("new ");
-      writeTypeForNew(builder, typeElement.getType(), typeCastExpression);
-      builder.append('{');
       final GrExpression[] initializers = ((GrListOrMap)operand).getInitializers();
-      for (GrExpression initializer : initializers) {
-        initializer.accept(this);
-        builder.append(", ");
+      if (initializers.length == 0) {
+        writeTypeForNew(builder, ((PsiArrayType)type).getComponentType(), typeCastExpression);
+        builder.append("[0]");
       }
-      if (initializers.length > 0) {
-        builder.delete(builder.length() - 2, builder.length());
-        //builder.removeFromTheEnd(2);
+      else {
+        writeTypeForNew(builder, type, typeCastExpression);
+
+        builder.append('{');
+        for (GrExpression initializer : initializers) {
+          initializer.accept(this);
+          builder.append(", ");
+        }
+        if (initializers.length > 0) {
+          builder.delete(builder.length() - 2, builder.length());
+          //builder.removeFromTheEnd(2);
+        }
+        builder.append('}');
       }
-      builder.append('}');
       return;
     }
 
