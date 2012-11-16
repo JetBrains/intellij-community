@@ -18,7 +18,7 @@ package com.intellij.codeInsight.javadoc;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
-import com.intellij.codeInsight.documentation.DocumentationManager;
+import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -1474,7 +1474,7 @@ public class JavaDocInfoGenerator {
   private void generateLink(StringBuilder buffer, PsiElement element, String label) {
     String refText = JavaDocUtil.getReferenceText(myProject, element);
     if (refText != null) {
-      DocumentationManager.createHyperlink(buffer, refText,label,false);
+      DocumentationManagerUtil.createHyperlink(buffer, refText,label,false);
       //return generateLink(buffer, refText, label, context, false);
     }
   }
@@ -1501,7 +1501,7 @@ public class JavaDocInfoGenerator {
     }
 
 
-    DocumentationManager.createHyperlink(buffer, JavaDocUtil.getReferenceText(context.getProject(), target), label, plainLink);
+    DocumentationManagerUtil.createHyperlink(buffer, JavaDocUtil.getReferenceText(context.getProject(), target), label, plainLink);
     return label.length();
   }
 
