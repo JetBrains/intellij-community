@@ -15,8 +15,10 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.action;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
@@ -27,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine;
 
 import java.util.ArrayList;
@@ -39,6 +42,16 @@ import java.util.List;
  * @since 8/30/12 10:01 AM
  */
 public class RearrangeCodeAction extends AnAction {
+
+  @Override
+  public void update(AnActionEvent e) {
+    Language language = LangDataKeys.LANGUAGE.getData(e.getDataContext());
+    boolean enabled = false;
+    if (language != null) {
+      enabled = Rearranger.EXTENSION.forLanguage(language) != null;
+    }
+    e.getPresentation().setEnabled(enabled);
+  }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
