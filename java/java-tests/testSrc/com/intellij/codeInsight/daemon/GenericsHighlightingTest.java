@@ -200,6 +200,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testFixedFailedInferenceWithBoxing() throws Exception { doTest17Incompatibility(false); }
   public void testInferenceWithBoxingCovariant() throws Exception { doTest17Incompatibility(false); }
   public void testSuperWildcardIsNotWithinItsBound() throws Exception { doTest17Incompatibility(false); }
+  public void testSpecificReturnType() throws Exception { doTest17Incompatibility(false); }
 
   public void testJavaUtilCollections_NoVerify() throws Exception {
     PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));
