@@ -33,14 +33,13 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.tasks.*;
 import com.intellij.tasks.config.TaskRepositoriesConfigurable;
 import com.intellij.tasks.context.WorkingContextManager;
 import com.intellij.tasks.timetracking.TasksToolWindowFactory;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
@@ -58,7 +57,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.event.ActionEvent;
@@ -139,6 +137,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   private final EventDispatcher<TaskListener> myDispatcher = EventDispatcher.create(TaskListener.class);
   private Set<TaskRepository> myBadRepositories = new ConcurrentHashSet<TaskRepository>();
   private Timer myTimeTrackingTimer;
+  private Alarm myIdleAlarm;
 
   public TaskManagerImpl(Project project,
                          WorkingContextManager contextManager,
@@ -591,9 +590,22 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       });
       StartupManager.getInstance(myProject).registerStartupActivity(new Runnable() {
         public void run() {
-          myTimeTrackingTimer.start();
+          startTimeTrackingTimer();
         }
       });
+
+      myIdleAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, myProject);
+
+      IdeEventQueue.getInstance().addActivityListener(new Runnable() {
+        @Override
+        public void run() {
+          final IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
+          if (frame == null) return;
+          final Project project = frame.getProject();
+          if (project == null || !myProject.equals(project)) return;
+          startTimeTrackingTimer();
+        }
+      }, myProject);
     }
 
     LocalTask defaultTask = myTasks.get(LocalTaskImpl.DEFAULT_TASK_ID);
@@ -662,29 +674,22 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         activateTimeTrackingToolWindow();
       }
     });
+  }
 
-    SwingUtilities.invokeLater(new Runnable() {
+  private void startTimeTrackingTimer() {
+    if (!myTimeTrackingTimer.isRunning()) {
+      myTimeTrackingTimer.start();
+    }
+
+    myIdleAlarm.cancelAllRequests();
+    myIdleAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
-        IdeEventQueue.getInstance().addIdleListener(new Runnable() {
-          @Override
-          public void run() {
-            if (myTimeTrackingTimer.isRunning()) {
-              myTimeTrackingTimer.stop();
-            }
-          }
-        }, getState().timeTrackingSuspendDelayInSeconds * 1000);
-
-        IdeEventQueue.getInstance().addActivityListener(new Runnable() {
-          @Override
-          public void run() {
-            if (!myTimeTrackingTimer.isRunning()) {
-              myTimeTrackingTimer.start();
-            }
-          }
-        }, myProject);
+        if (myTimeTrackingTimer.isRunning()) {
+          myTimeTrackingTimer.stop();
+        }
       }
-    });
+    }, getState().timeTrackingSuspendDelayInSeconds * 1000);
   }
 
   private void activateTimeTrackingToolWindow() {
@@ -944,7 +949,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
     @Tag("servers")
     public Element servers = new Element("servers");
-    public int timeTrackingSuspendDelayInSeconds = 60;
+    public int timeTrackingSuspendDelayInSeconds = 600;
   }
 
   private abstract class TestConnectionTask extends com.intellij.openapi.progress.Task.Modal {
