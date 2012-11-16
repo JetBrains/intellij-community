@@ -15,17 +15,14 @@
  */
 package com.intellij.openapi.diff.impl.dir;
 
-import com.intellij.ide.diff.DiffElement;
-import com.intellij.ide.diff.DiffType;
-import com.intellij.ide.diff.DirDiffElement;
-import com.intellij.ide.diff.DirDiffSettings;
+import com.intellij.ide.diff.*;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-import static com.intellij.openapi.diff.impl.dir.DirDiffOperation.*;
+import static com.intellij.ide.diff.DirDiffOperation.*;
 
 /**
  * @author Konstantin Bulenkov

@@ -16,7 +16,7 @@
 package com.intellij.openapi.diff.impl.dir.actions.popup;
 
 import com.intellij.ide.diff.DirDiffElement;
-import com.intellij.openapi.diff.impl.dir.DirDiffOperation;
+import com.intellij.ide.diff.DirDiffOperation;
 import org.jetbrains.annotations.NotNull;
 
 /**

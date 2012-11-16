@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.diff.impl.dir;
+package com.intellij.ide.diff;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.vcs.FileStatus;

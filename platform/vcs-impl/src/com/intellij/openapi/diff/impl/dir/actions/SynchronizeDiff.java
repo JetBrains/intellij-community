@@ -26,7 +26,7 @@ import com.intellij.openapi.util.SystemInfo;
 
 import java.util.List;
 
-import static com.intellij.openapi.diff.impl.dir.DirDiffOperation.*;
+import static com.intellij.ide.diff.DirDiffOperation.*;
 
 /**
  * @author Konstantin Bulenkov
