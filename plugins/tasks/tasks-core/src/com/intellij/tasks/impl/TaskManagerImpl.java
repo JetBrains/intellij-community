@@ -57,6 +57,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.event.ActionEvent;
@@ -68,6 +69,8 @@ import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import static com.intellij.tasks.timetracking.TasksToolWindowFactory.TOOL_WINDOW_ID;
 
 
 /**
@@ -590,7 +593,12 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       });
       StartupManager.getInstance(myProject).registerStartupActivity(new Runnable() {
         public void run() {
-          startTimeTrackingTimer();
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              startTimeTrackingTimer();
+            }
+          });
         }
       });
 
@@ -656,22 +664,22 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     addTaskListener(new TaskListener() {
       @Override
       public void taskDeactivated(final LocalTask task) {
-        activateTimeTrackingToolWindow();
+        updateTimeTrackingToolWindow();
       }
 
       @Override
       public void taskActivated(final LocalTask task) {
-        activateTimeTrackingToolWindow();
+        updateTimeTrackingToolWindow();
       }
 
       @Override
       public void taskAdded(final LocalTask task) {
-        activateTimeTrackingToolWindow();
+        updateTimeTrackingToolWindow();
       }
 
       @Override
       public void taskRemoved(final LocalTask task) {
-        activateTimeTrackingToolWindow();
+        updateTimeTrackingToolWindow();
       }
     });
   }
@@ -692,23 +700,29 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     }, getState().timeTrackingSuspendDelayInSeconds * 1000);
   }
 
-  private void activateTimeTrackingToolWindow() {
-    final String TOOL_WINDOW_ID = "Time Tracking";
+  public void updateTimeTrackingToolWindow() {
     ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TOOL_WINDOW_ID);
-    if (toolWindow != null) return;
-    final TasksToolWindowFactory tasksToolWindowFactory = new TasksToolWindowFactory();
-    if (!isTimeTrackingToolWindowAvailable()) return;
-    toolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(TOOL_WINDOW_ID, true, ToolWindowAnchor.RIGHT, myProject, true);
-    tasksToolWindowFactory.createToolWindowContent(myProject, toolWindow);
-    toolWindow.setAvailable(true, null);
-    toolWindow.show(null);
-    toolWindow.activate(null);
+    if (isTimeTrackingToolWindowAvailable()) {
+      if (toolWindow == null) {
+        toolWindow =
+          ToolWindowManager.getInstance(myProject).registerToolWindow(TOOL_WINDOW_ID, true, ToolWindowAnchor.RIGHT, myProject, true);
+        new TasksToolWindowFactory().createToolWindowContent(myProject, toolWindow);
+      }
+      toolWindow.setAvailable(true, null);
+      toolWindow.show(null);
+      toolWindow.activate(null);
+    }
+    else {
+      if (toolWindow != null) {
+        toolWindow.setAvailable(false, null);
+      }
+    }
   }
 
   public boolean isTimeTrackingToolWindowAvailable() {
     final LocalTask activeTask = getActiveTask();
     final boolean isNotUsed = activeTask.isDefault() && Comparing.equal(activeTask.getCreated(), activeTask.getUpdated());
-    return !isNotUsed && ApplicationManager.getApplication().isInternal();
+    return !isNotUsed && ApplicationManager.getApplication().isInternal() && getState().enableTimeTracking;
   }
 
   private static LocalTaskImpl createDefaultTask() {
@@ -949,6 +963,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
     @Tag("servers")
     public Element servers = new Element("servers");
+
+    public boolean enableTimeTracking = true;
     public int timeTrackingSuspendDelayInSeconds = 600;
   }
 

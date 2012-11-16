@@ -1,120 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.tasks.config.TaskConfigurable">
-  <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="8" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="7" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="555" height="400"/>
+      <xy x="20" y="20" width="565" height="420"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <component id="e53da" class="javax.swing.JCheckBox" binding="myUpdateCheckBox" default-binding="true">
-        <constraints>
-          <grid row="5" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <text value="Enable issue &amp;cache"/>
-        </properties>
-      </component>
       <component id="9f69d" class="javax.swing.JFormattedTextField" binding="myHistoryLength">
         <constraints>
-          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false">
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false">
             <preferred-size width="50" height="-1"/>
           </grid>
         </constraints>
         <properties>
-          <horizontalAlignment value="4"/>
           <text value="11"/>
         </properties>
       </component>
       <component id="b5a6c" class="javax.swing.JLabel">
         <constraints>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <horizontalAlignment value="4"/>
           <labelFor value="9f69d"/>
           <text value="Task history &amp;length:"/>
         </properties>
       </component>
       <vspacer id="3f700">
         <constraints>
-          <grid row="7" column="1" row-span="1" col-span="3" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false">
-            <preferred-size width="136" height="14"/>
-          </grid>
+          <grid row="6" column="1" row-span="1" col-span="2" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
       </vspacer>
-      <grid id="e4d1f" binding="myCacheSettings" layout-manager="GridLayoutManager" row-count="1" column-count="6" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-        <margin top="0" left="0" bottom="0" right="0"/>
-        <constraints>
-          <grid row="6" column="0" row-span="1" col-span="4" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties/>
-        <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
-        </clientProperties>
-        <border type="etched" title="Cache settings"/>
-        <children>
-          <component id="f757b" class="javax.swing.JLabel">
-            <constraints>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <horizontalAlignment value="4"/>
-              <labelFor value="4b4f6"/>
-              <text value="&amp;Update"/>
-            </properties>
-          </component>
-          <hspacer id="87f9">
-            <constraints>
-              <grid row="0" column="5" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-          </hspacer>
-          <component id="4b4f6" class="javax.swing.JFormattedTextField" binding="myUpdateCount">
-            <constraints>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false">
-                <preferred-size width="50" height="-1"/>
-              </grid>
-            </constraints>
-            <properties>
-              <horizontalAlignment value="4"/>
-              <text value="11"/>
-            </properties>
-          </component>
-          <component id="1c14" class="javax.swing.JLabel">
-            <constraints>
-              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <horizontalAlignment value="4"/>
-              <labelFor value="fc85e"/>
-              <text value="issues e&amp;very"/>
-            </properties>
-          </component>
-          <component id="fc85e" class="javax.swing.JFormattedTextField" binding="myUpdateInterval">
-            <constraints>
-              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false">
-                <preferred-size width="50" height="-1"/>
-              </grid>
-            </constraints>
-            <properties>
-              <horizontalAlignment value="4"/>
-              <text value="11"/>
-            </properties>
-          </component>
-          <component id="312f0" class="javax.swing.JLabel">
-            <constraints>
-              <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value="minutes"/>
-            </properties>
-          </component>
-        </children>
-      </grid>
       <component id="6f93" class="javax.swing.JCheckBox" binding="mySaveContextOnCommit">
         <constraints>
-          <grid row="4" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="4" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text value="&amp;Save context on commit"/>
@@ -122,10 +42,10 @@
       </component>
       <component id="89ca" class="com.intellij.ui.components.JBLabel">
         <constraints>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <horizontalAlignment value="4"/>
+          <anchor value=""/>
           <labelFor value="ef62"/>
           <text value="Changelist name &amp;format:"/>
         </properties>
@@ -140,7 +60,7 @@
       </component>
       <component id="6010f" class="com.intellij.ui.components.JBCheckBox" binding="myAlwaysDisplayTaskCombo">
         <constraints>
-          <grid row="3" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="3" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text value="Always &amp;display task combo in toolbar"/>
@@ -148,21 +68,19 @@
       </component>
       <component id="f47eb" class="com.intellij.ui.components.JBLabel">
         <constraints>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <horizontalAlignment value="11"/>
           <text value="Connection &amp;timeout:"/>
         </properties>
       </component>
       <component id="f5566" class="javax.swing.JFormattedTextField" binding="myConnectionTimeout">
         <constraints>
-          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false">
+          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false">
             <preferred-size width="50" height="-1"/>
           </grid>
         </constraints>
         <properties>
-          <horizontalAlignment value="4"/>
           <text value="3000"/>
         </properties>
       </component>
@@ -174,9 +92,148 @@
           <text value="milliseconds"/>
         </properties>
       </component>
-      <hspacer id="c38af">
+      <grid id="fa297" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="10" left="0" bottom="0" right="0"/>
         <constraints>
-          <grid row="2" column="3" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+          <grid row="5" column="0" row-span="1" col-span="3" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="e53da" class="javax.swing.JCheckBox" binding="myUpdateCheckBox" default-binding="true">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Enable issue &amp;cache"/>
+            </properties>
+          </component>
+          <grid id="e4d1f" binding="myCacheSettings" layout-manager="GridLayoutManager" row-count="1" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+            <clientProperties>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
+            </clientProperties>
+            <border type="etched" title="Cache settings"/>
+            <children>
+              <component id="f757b" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <horizontalAlignment value="4"/>
+                  <labelFor value="4b4f6"/>
+                  <text value="&amp;Update"/>
+                </properties>
+              </component>
+              <component id="4b4f6" class="javax.swing.JFormattedTextField" binding="myUpdateCount">
+                <constraints>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false">
+                    <preferred-size width="50" height="-1"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <text value="11"/>
+                </properties>
+              </component>
+              <component id="1c14" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <horizontalAlignment value="4"/>
+                  <labelFor value="fc85e"/>
+                  <text value="issues e&amp;very"/>
+                </properties>
+              </component>
+              <component id="fc85e" class="javax.swing.JFormattedTextField" binding="myUpdateInterval">
+                <constraints>
+                  <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false">
+                    <preferred-size width="50" height="-1"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <text value="11"/>
+                </properties>
+              </component>
+              <component id="312f0" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="minutes"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+          <grid id="2da41" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="10" left="0" bottom="0" right="0"/>
+            <constraints>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="57d74" class="com.intellij.ui.components.JBCheckBox" binding="myEnableTimeTrackingCheckBox">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Enable Time Tracking"/>
+                </properties>
+              </component>
+              <grid id="4a3c" binding="myTimeTrackingSettings" layout-manager="GridLayoutManager" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                <margin top="0" left="0" bottom="0" right="0"/>
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+                <clientProperties>
+                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
+                </clientProperties>
+                <border type="none" title="Time Tracking settings"/>
+                <children>
+                  <component id="b4e9f" class="com.intellij.ui.components.JBLabel">
+                    <constraints>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="Suspend delay:"/>
+                    </properties>
+                  </component>
+                  <hspacer id="f3dab">
+                    <constraints>
+                      <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                  </hspacer>
+                  <component id="4d525" class="javax.swing.JTextField" binding="myTimeTrackingSuspendDelay">
+                    <constraints>
+                      <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="1" indent="0" use-parent-layout="false">
+                        <preferred-size width="50" height="-1"/>
+                      </grid>
+                    </constraints>
+                    <properties/>
+                  </component>
+                  <component id="cb93c" class="com.intellij.ui.components.JBLabel">
+                    <constraints>
+                      <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="seconds"/>
+                    </properties>
+                  </component>
+                </children>
+              </grid>
+            </children>
+          </grid>
+        </children>
+      </grid>
+      <hspacer id="87f9">
+        <constraints>
+          <grid row="5" column="3" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
       </hspacer>
     </children>

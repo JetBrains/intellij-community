@@ -15,6 +15,7 @@ import com.intellij.ui.content.ContentManager;
  * Date: 11/8/12
  */
 public class TasksToolWindowFactory implements ToolWindowFactory, Condition<Project>, DumbAware {
+  public static final String TOOL_WINDOW_ID = "Time Tracking";
 
   @Override
   public boolean value(final Project project) {

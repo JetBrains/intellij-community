@@ -107,5 +107,7 @@ public abstract class TaskManager {
 
   public final static TaskRepositoryType[] ourRepositoryTypes = Extensions.getExtensions(TaskRepositoryType.EP_NAME);
 
+  public abstract void updateTimeTrackingToolWindow();
+
   public abstract boolean isTimeTrackingToolWindowAvailable();
 }
