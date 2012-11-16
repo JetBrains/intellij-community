@@ -43,14 +43,14 @@ public class SvnDiffProvider implements DiffProvider, DiffMixin {
   }
 
   public VcsRevisionNumber getCurrentRevision(VirtualFile file) {
-    final SVNStatusClient client = myVcs.createStatusClient();
+    final SVNWCClient client = myVcs.createWCClient();
     try {
-      final SVNStatus svnStatus = client.doStatus(new File(file.getPresentableUrl()), false, false);
-      if (svnStatus == null) return null;
-      if (SVNRevision.UNDEFINED.equals(svnStatus.getCommittedRevision()) && svnStatus.isCopied()) {
-        return new SvnRevisionNumber(svnStatus.getCopyFromRevision());
+      final SVNInfo svnInfo = client.doInfo(new File(file.getPresentableUrl()), SVNRevision.UNDEFINED);
+      if (svnInfo == null) return null;
+      if (SVNRevision.UNDEFINED.equals(svnInfo.getCommittedRevision()) && svnInfo.getCopyFromRevision() != null) {
+        return new SvnRevisionNumber(svnInfo.getCopyFromRevision());
       }
-      return new SvnRevisionNumber(svnStatus.getRevision());
+      return new SvnRevisionNumber(svnInfo.getRevision());
     }
     catch (SVNException e) {
       LOG.debug(e);    // most likely the file is unversioned
