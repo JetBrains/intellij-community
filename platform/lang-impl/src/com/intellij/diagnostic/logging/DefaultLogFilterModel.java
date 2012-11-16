@@ -153,7 +153,7 @@ public class DefaultLogFilterModel extends LogFilterModel {
     final String type = LogConsolePreferences.getType(line);
     Key contentType = type != null
                       ? LogConsolePreferences.getProcessOutputTypes(type)
-                      : (myPrevType.equals(LogConsolePreferences.ERROR) ? ProcessOutputTypes.STDERR : ProcessOutputTypes.STDOUT);
+                      : (LogConsolePreferences.ERROR.equals(myPrevType) ? ProcessOutputTypes.STDERR : ProcessOutputTypes.STDOUT);
     if (type != null) {
       myPrevType = type;
     }
