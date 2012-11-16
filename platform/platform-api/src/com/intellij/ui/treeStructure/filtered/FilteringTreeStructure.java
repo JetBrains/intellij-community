@@ -21,6 +21,8 @@ import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -237,7 +239,12 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
     public SimpleNode[] getChildren() {
       List<FilteringNode> nodes = myNodesCache.get(this);
       if (nodes == null) {
-        return myDelegate instanceof SimpleNode ? ((SimpleNode)myDelegate).getChildren() : NO_CHILDREN;
+        return myDelegate instanceof SimpleNode ? ContainerUtil.map(((SimpleNode)myDelegate).getChildren(), new Function<SimpleNode, SimpleNode>() {
+          @Override
+          public SimpleNode fun(SimpleNode node) {
+            return new FilteringNode(FilteringNode.this, node);
+          }
+        }, NO_CHILDREN) : NO_CHILDREN;
       }
 
       ArrayList<FilteringNode> result = new ArrayList<FilteringNode>();

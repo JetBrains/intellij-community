@@ -846,6 +846,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     return myModuleName.getText().trim();
   }
 
+  @TestOnly
   public boolean setSelectedTemplate(String group, String name) {
     final ComparableObject.Impl test = new ComparableObject.Impl(group, name);
     return myTemplatesTree.select(myTreeBuilder, new SimpleNodeVisitor() {
