@@ -24,9 +24,11 @@ import com.intellij.ide.ReopenProjectAction;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.Gray;
+import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
@@ -71,6 +73,28 @@ public class RecentProjectPanel extends JPanel {
         }
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+
+    ActionListener deleteAction = new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        ReopenProjectAction selection = (ReopenProjectAction)myList.getSelectedValue();
+
+        final int rc = Messages.showOkCancelDialog(RecentProjectPanel.this,
+                                                   "Remove '" + selection.getTemplatePresentation().getText() +
+                                                   "' from recent projects list?",
+                                                   "Remove Recent Project",
+                                                   Messages.getQuestionIcon());
+        if (rc == 0) {
+          final RecentProjectsManagerBase manager = RecentProjectsManagerBase.getInstance();
+
+          manager.removePath(selection.getProjectPath());
+          ListUtil.removeSelectedItems(myList);
+        }
+      }
+    };
+
+    myList.registerKeyboardAction(deleteAction, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    myList.registerKeyboardAction(deleteAction, KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
     myList.addMouseMotionListener(new MouseMotionAdapter() {
       boolean myIsEngaged = false;
