@@ -735,7 +735,7 @@ public class HighlightClassUtil {
           // must be inner class
           if (!PsiUtil.isInnerClass(base)) return;
 
-          if (resolve == resolved && baseClass != null &&
+          if (resolve == resolved && baseClass != null && !PsiTreeUtil.isAncestor(baseClass, extendRef, true) &&
               !hasEnclosingInstanceInScope(baseClass, extendRef, true) && !qualifiedNewCalledInConstructors(aClass, baseClass)) {
             String description = JavaErrorMessages.message("no.enclosing.instance.in.scope", HighlightUtil.formatClass(baseClass));
             infos[0] = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, extendRef, description);
@@ -811,11 +811,9 @@ public class HighlightClassUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkCreateInnerClassFromStaticContext(PsiElement element, @Nullable PsiExpression qualifier, PsiClass aClass) {
-    if (!PsiUtil.isInnerClass(aClass)) return null;
-    PsiClass outerClass = aClass.getContainingClass();
-    if (outerClass == null) return null;
-
+  public static HighlightInfo checkCreateInnerClassFromStaticContext(PsiElement element,
+                                                                     @Nullable PsiExpression qualifier,
+                                                                     PsiClass aClass) {
     PsiElement placeToSearchEnclosingFrom;
     if (qualifier != null) {
       PsiType qType = qualifier.getType();
@@ -824,6 +822,16 @@ public class HighlightClassUtil {
     else {
       placeToSearchEnclosingFrom = element;
     }
+    return checkCreateInnerClassFromStaticContext(element, placeToSearchEnclosingFrom, aClass);
+  }
+
+  @Nullable
+  public static HighlightInfo checkCreateInnerClassFromStaticContext(PsiElement element,
+                                                                     PsiElement placeToSearchEnclosingFrom,
+                                                                     PsiClass aClass) {
+    if (aClass == null || !PsiUtil.isInnerClass(aClass)) return null;
+    PsiClass outerClass = aClass.getContainingClass();
+    if (outerClass == null) return null;
 
     if (outerClass instanceof JspClass || hasEnclosingInstanceInScope(outerClass, placeToSearchEnclosingFrom, true)) return null;
     return reportIllegalEnclosingUsage(placeToSearchEnclosingFrom, aClass, outerClass, element);
