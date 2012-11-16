@@ -421,17 +421,19 @@ public class ArrangementMatchingRulesControl extends JBTable {
     
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+      if (isEditing() && getEditingRow() == row) {
+        return EMPTY_RENDERER;
+      }
       if (value instanceof ArrangementRepresentationAware) {
         return ((ArrangementRepresentationAware)value).getComponent();
       }
 
-      if (!(value instanceof StdArrangementMatchRule)) {
-        return EMPTY_RENDERER;
-      }
-
-      StdArrangementMatchRule rule = (StdArrangementMatchRule)value;
       ArrangementListRowDecorator component = myComponents.get(row);
       if (component == null) {
+        if (!(value instanceof StdArrangementMatchRule)) {
+          return EMPTY_RENDERER;
+        }
+        StdArrangementMatchRule rule = (StdArrangementMatchRule)value;
         ArrangementMatchConditionComponent ruleComponent = myFactory.getComponent(rule.getMatcher().getCondition(), rule, true);
         component = new ArrangementListRowDecorator(ruleComponent, ArrangementMatchingRulesControl.this);
         myComponents.set(row, component);
@@ -441,7 +443,9 @@ public class ArrangementMatchingRulesControl extends JBTable {
       component.setRowIndex((myEditorRow >= 0 && row > myEditorRow) ? row : row + 1);
       component.setSelected(getSelectionModel().isSelectedIndex(row) || (myEditorRow >= 0 && row == myEditorRow - 1));
       component.setBeingEdited(myEditorRow >= 0 && myEditorRow == row + 1);
-      component.setShowSortIcon(rule.getOrderType() == ArrangementEntryOrderType.BY_NAME);
+      boolean showSortIcon = value instanceof StdArrangementMatchRule
+                             && ((StdArrangementMatchRule)value).getOrderType() == ArrangementEntryOrderType.BY_NAME;
+      component.setShowSortIcon(showSortIcon);
       return component.getUiComponent();
     }
   }
