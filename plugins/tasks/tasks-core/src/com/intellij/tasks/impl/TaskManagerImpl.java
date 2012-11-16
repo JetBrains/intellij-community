@@ -32,9 +32,13 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.tasks.*;
 import com.intellij.tasks.config.TaskRepositoriesConfigurable;
 import com.intellij.tasks.context.WorkingContextManager;
+import com.intellij.tasks.timetracking.TasksToolWindowFactory;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
@@ -634,6 +638,47 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     myDispatcher.getMulticaster().taskActivated(myActiveTask);
 
     myChangeListManager.addChangeListListener(myChangeListListener);
+
+    addTaskListener(new TaskListener() {
+      @Override
+      public void taskDeactivated(final LocalTask task) {
+        activateTimeTrackingToolWindow();
+      }
+
+      @Override
+      public void taskActivated(final LocalTask task) {
+        activateTimeTrackingToolWindow();
+      }
+
+      @Override
+      public void taskAdded(final LocalTask task) {
+        activateTimeTrackingToolWindow();
+      }
+
+      @Override
+      public void taskRemoved(final LocalTask task) {
+        activateTimeTrackingToolWindow();
+      }
+    });
+  }
+
+  private void activateTimeTrackingToolWindow() {
+    final String TOOL_WINDOW_ID = "Time Tracking";
+    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TOOL_WINDOW_ID);
+    if (toolWindow != null) return;
+    final TasksToolWindowFactory tasksToolWindowFactory = new TasksToolWindowFactory();
+    if (!isTimeTrackingToolWindowAvailable()) return;
+    toolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(TOOL_WINDOW_ID, true, ToolWindowAnchor.RIGHT, myProject, true);
+    tasksToolWindowFactory.createToolWindowContent(myProject, toolWindow);
+    toolWindow.setAvailable(true, null);
+    toolWindow.show(null);
+    toolWindow.activate(null);
+  }
+
+  public boolean isTimeTrackingToolWindowAvailable() {
+    final LocalTask activeTask = getActiveTask();
+    final boolean isNotUsed = activeTask.isDefault() && Comparing.equal(activeTask.getCreated(), activeTask.getUpdated());
+    return !isNotUsed && ApplicationManager.getApplication().isInternal();
   }
 
   private static LocalTaskImpl createDefaultTask() {

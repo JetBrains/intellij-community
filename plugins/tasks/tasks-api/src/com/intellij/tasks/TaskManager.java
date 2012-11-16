@@ -106,4 +106,6 @@ public abstract class TaskManager {
   public abstract boolean testConnection(TaskRepository repository);
 
   public final static TaskRepositoryType[] ourRepositoryTypes = Extensions.getExtensions(TaskRepositoryType.EP_NAME);
+
+  public abstract boolean isTimeTrackingToolWindowAvailable();
 }
