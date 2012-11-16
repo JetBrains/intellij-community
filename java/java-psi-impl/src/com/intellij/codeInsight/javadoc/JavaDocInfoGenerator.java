@@ -24,6 +24,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,14 +38,16 @@ import com.intellij.psi.javadoc.PsiInlineDocTag;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -518,21 +521,21 @@ public class JavaDocInfoGenerator {
   }
 
   private void generatePackageHtmlJavaDoc(final StringBuilder buffer, final PsiFile packageHtmlFile) {
-    String htmlText;
-    XmlFile packageXmlFile = (XmlFile) packageHtmlFile;
-    final XmlTag rootTag = packageXmlFile.getDocument().getRootTag();
-    if (rootTag != null) {
-      final XmlTag subTag = rootTag.findFirstSubTag("body");
-      if (subTag != null) {
-        htmlText = subTag.getValue().getText();
-      }
-      else {
-        htmlText = packageHtmlFile.getText();
+    String htmlText = packageHtmlFile.getText();
+
+    try {
+      final Document document = JDOMUtil.loadDocument(new ByteArrayInputStream(htmlText.getBytes()));
+      final Element rootTag = document.getRootElement();
+      if (rootTag != null) {
+        final Element subTag = rootTag.getChild("body");
+        if (subTag != null) {
+          htmlText = subTag.getValue();
+        }
       }
     }
-    else {
-      htmlText = packageHtmlFile.getText();
-    }
+    catch (JDOMException ignore) {}
+    catch (IOException ignore) {}
+
     htmlText = StringUtil.replace(htmlText, "*/", "&#42;&#47;");
 
     final String fileText = "/** " + htmlText + " */";

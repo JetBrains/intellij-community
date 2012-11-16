@@ -305,7 +305,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     if (docElement != null) {
       ContainerUtil.addIfNotNull(result, docElement.getUserData(NonCodeMembersHolder.DOCUMENTATION_URL));
     }
-    List<String> list = JavaDocumentationProvider.getExternalJavaDocUrl(element);
+    List<String> list = new JavaDocumentationProvider().getExternalJavaDocUrl(element);
     if (list != null) {
       result.addAll(list);
     }
@@ -335,7 +335,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     
     if (element == null) return null;
 
-    String standard = JavaDocumentationProvider.generateExternalJavadoc(element);
+    String standard = new JavaDocumentationProvider().generateExternalJavadoc(element);
 
     if (element instanceof GrVariable &&
         ((GrVariable)element).getTypeElementGroovy() == null &&
