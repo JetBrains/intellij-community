@@ -32,6 +32,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
@@ -89,7 +90,7 @@ public class ResourceEditor extends PropertyEditor {
       });
     }
     else if (formats.contains(AttributeFormat.Enum)) {
-      ComboboxWithBrowseButton editor = new ComboboxWithBrowseButton(new ComboBox()) {
+      ComboboxWithBrowseButton editor = new ComboboxWithBrowseButton(SystemInfo.isWindows ? new ComboBox() : new JComboBox()) {
         @Override
         public Dimension getPreferredSize() {
           return getComponentPreferredSize();
