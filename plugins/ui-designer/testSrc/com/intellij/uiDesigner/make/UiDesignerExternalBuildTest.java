@@ -15,47 +15,45 @@
  */
 package com.intellij.uiDesigner.make;
 
-//import com.intellij.compiler.artifacts.ArtifactCompilerTestCase;
-//import com.intellij.openapi.application.ex.PathManagerEx;
-//import com.intellij.openapi.module.Module;
-//import com.intellij.openapi.util.io.FileUtil;
-//import com.intellij.openapi.vfs.VfsUtilCore;
-//import com.intellij.openapi.vfs.VirtualFile;
-//import com.intellij.packaging.artifacts.Artifact;
-//import com.intellij.uiDesigner.core.AbstractLayout;
-//
-//import java.io.File;
-//import java.io.IOException;
+import com.intellij.compiler.artifacts.ArtifactCompilerTestCase;
+import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.uiDesigner.core.AbstractLayout;
 
+import java.io.File;
 import java.io.IOException;
 
 /**
  * @author nik
  */
-public class UiDesignerExternalBuildTest /*extends ArtifactCompilerTestCase*/ {
-  //@Override
-  //protected boolean useExternalCompiler() {
-  //  return true;
-  //}
-  //
-  ////IDEA-94779
-  public void _testCopyFormsRuntimeToArtifact() throws IOException {
-  //  VirtualFile file = createFile("src/A.java", "class A{}");
-  //  VirtualFile srcRoot = file.getParent();
-  //  Module module = addModule("a", srcRoot);
-  //  Artifact a = addArtifact(root().module(module));
-  //  make(a);
-  //  assertOutput(a, fs().file("A.class"));
-  //
-  //  File dir = PathManagerEx.findFileUnderCommunityHome("plugins/ui-designer/testData/build/copyFormsRuntimeToArtifact");
-  //  FileUtil.copyDir(dir, VfsUtilCore.virtualToIoFile(srcRoot));
-  //  srcRoot.refresh(false, false);
-  //  make(a);
-  //  File outputDir = VfsUtilCore.virtualToIoFile(getOutputDir(a));
-  //  assertTrue(new File(outputDir, "A.class").exists());
-  //  assertTrue(new File(outputDir, "B.class").exists());
-  //
-  //  assertTrue(new File(outputDir, AbstractLayout.class.getName().replace('.', '/') + ".class").exists());
+public class UiDesignerExternalBuildTest extends ArtifactCompilerTestCase {
+  @Override
+  protected boolean useExternalCompiler() {
+    return true;
+  }
+
+  //IDEA-94779
+  public void testCopyFormsRuntimeToArtifact() throws IOException {
+    VirtualFile file = createFile("src/A.java", "class A{}");
+    VirtualFile srcRoot = file.getParent();
+    Module module = addModule("a", srcRoot);
+    Artifact a = addArtifact(root().module(module));
+    make(a);
+    assertOutput(a, fs().file("A.class"));
+
+    File dir = PathManagerEx.findFileUnderCommunityHome("plugins/ui-designer/testData/build/copyFormsRuntimeToArtifact");
+    FileUtil.copyDir(dir, VfsUtilCore.virtualToIoFile(srcRoot));
+    srcRoot.refresh(false, false);
+    make(a);
+    File outputDir = VfsUtilCore.virtualToIoFile(getOutputDir(a));
+    assertTrue(new File(outputDir, "A.class").exists());
+    assertTrue(new File(outputDir, "B.class").exists());
+
+    assertTrue(new File(outputDir, AbstractLayout.class.getName().replace('.', '/') + ".class").exists());
   }
 
 }
