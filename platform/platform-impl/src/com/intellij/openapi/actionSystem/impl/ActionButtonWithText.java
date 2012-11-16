@@ -59,7 +59,7 @@ public class ActionButtonWithText extends ActionButton {
     Rectangle iconRect = new Rectangle();
     Rectangle textRect = new Rectangle();
     String text = SwingUtilities.layoutCompoundLabel(this, fm, getText(), icon,
-                                                     SwingConstants.CENTER, SwingConstants.CENTER,
+                                                     SwingConstants.CENTER, horizontalTextAlignment(),
                                                      SwingConstants.CENTER, SwingConstants.TRAILING,
                                                      viewRect, iconRect, textRect, iconTextSpace());
     ActionButtonLook look = ActionButtonLook.IDEA_LOOK;
@@ -73,6 +73,10 @@ public class ActionButtonWithText extends ActionButton {
                                               getMnemonicCharIndex(text),
                                               textRect.x,
                                               textRect.y + fm.getAscent());
+  }
+
+  protected int horizontalTextAlignment() {
+    return SwingConstants.CENTER;
   }
 
   private int iconTextSpace() {

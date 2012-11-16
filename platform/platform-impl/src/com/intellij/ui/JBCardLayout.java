@@ -34,7 +34,7 @@ public class JBCardLayout extends CardLayout {
   public enum SwipeDirection {FORWARD, BACKWARD, AUTO}
 
   private Map<String, Component> myMap = new LinkedHashMap<String, Component>();
-  private int mySwipeTime = 400;//default value, provide setter if need
+  private int mySwipeTime = 200;//default value, provide setter if need
   private int mySwipeSteps = 20;//default value, provide setter if need
   private final Timer myTimer = new Timer(Math.max(1, mySwipeTime / mySwipeSteps), null);
   private Component mySwipeFrom = null;
