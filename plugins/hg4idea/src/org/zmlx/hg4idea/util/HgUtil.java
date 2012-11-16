@@ -21,10 +21,7 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.FileHistoryPanelImpl;
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
@@ -39,6 +36,7 @@ import org.zmlx.hg4idea.command.HgRemoveCommand;
 import org.zmlx.hg4idea.command.HgStatusCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 import org.zmlx.hg4idea.provider.HgChangeProvider;
+import org.zmlx.hg4idea.provider.HgRepositoryLocation;
 
 import java.awt.*;
 import java.io.*;
@@ -133,9 +131,9 @@ public abstract class HgUtil {
 
   /**
    * Returns a temporary python file that will be deleted on exit.
-   * 
+   *
    * Also all compiled version of the python file will be deleted.
-   * 
+   *
    * @param base The basename of the file to copy
    * @return The temporary copy the specified python file, with all the necessary hooks installed
    * to make sure it is completely removed at shutdown
@@ -225,7 +223,7 @@ public abstract class HgUtil {
    * Gets the Mercurial root for the given file path or null if non exists:
    * the root should not only be in directory mappings, but also the .hg repository folder should exist.
    * @see #getHgRootOrThrow(com.intellij.openapi.project.Project, com.intellij.openapi.vcs.FilePath)
-   * @see #getHgRootOrNull(com.intellij.openapi.project.Project, com.intellij.openapi.vcs.FilePath) 
+   * @see #getHgRootOrNull(com.intellij.openapi.project.Project, com.intellij.openapi.vcs.FilePath)
    */
   @Nullable
   public static VirtualFile getHgRootOrNull(Project project, VirtualFile file) {
@@ -254,7 +252,7 @@ public abstract class HgUtil {
   /**
    * Checks is a merge operation is in progress on the given repository.
    * Actually gets the number of parents of the current revision. If there are 2 parents, then a merge is going on. Otherwise there is
-   * only one parent. 
+   * only one parent.
    * @param project    project to work on.
    * @param repository repository which is checked on merge.
    * @return True if merge operation is in progress, false if there is no merge operation.
@@ -265,7 +263,7 @@ public abstract class HgUtil {
   /**
    * Groups the given files by their Mercurial repositories and returns the map of relative paths to files for each repository.
    * @param hgFiles files to be grouped.
-   * @return key is repository, values is the non-empty list of relative paths to files, which belong to this repository. 
+   * @return key is repository, values is the non-empty list of relative paths to files, which belong to this repository.
    */
   @NotNull
   public static Map<VirtualFile, List<String>> getRelativePathsByRepository(Collection<HgFile> hgFiles) {
@@ -405,5 +403,74 @@ public abstract class HgUtil {
       resultFile = lfs.refreshAndFindFileByPath(file.getPath());
     }
     return resultFile;
+  }
+
+  @NotNull
+  public static List<Change> getDiff(@NotNull final Project project,
+                                     @NotNull final HgRepositoryLocation repository,
+                                     @NotNull final FilePath path,
+                                     @Nullable final HgFileRevision rev1,
+                                     @Nullable final HgFileRevision rev2) {
+    HgStatusCommand statusCommand = new HgStatusCommand(project);
+    statusCommand.setIncludeCopySource(false);
+    HgRevisionNumber revNumber1 = null;
+    if (rev1 != null) {
+      revNumber1 = rev1.getRevisionNumber();
+      statusCommand.setBaseRevision(revNumber1);
+      statusCommand.setTargetRevision(rev2 != null ? rev2.getRevisionNumber() : null);   //rev2==null means "compare with local version"
+    }
+    else {
+      assert (rev2 != null); //rev1 and rev2 can't be null both//
+      statusCommand.setBaseRevision(rev2.getRevisionNumber());     //get initial changes//
+    }
+
+    Collection<HgChange> hgChanges = statusCommand.execute(repository.getRoot(), Collections.singleton(path));
+    List<Change> changes = new ArrayList<Change>();
+    //convert output changes to standart Change class
+    for (HgChange hgChange : hgChanges) {
+      FileStatus status = convertHgDiffStatus(hgChange.getStatus());
+      if (status != null) {
+        changes.add(createChange(project, repository.getRoot(), hgChange.beforeFile().getRelativePath(), revNumber1,
+                                 hgChange.afterFile().getRelativePath(),
+                                 rev2 != null ? rev2.getRevisionNumber() : null, status));
+      }
+    }
+    return changes;
+  }
+
+  @NotNull
+  public static Change createChange(@NotNull final Project project, VirtualFile root,
+                                    @NotNull String fileBefore,
+                                    @Nullable HgRevisionNumber revisionBefore,
+                                    @NotNull String fileAfter,
+                                    @Nullable HgRevisionNumber revisionAfter,
+                                    @NotNull FileStatus aStatus) {
+    HgContentRevision beforeRevision = revisionBefore == null
+                                       ? null
+                                       : new HgContentRevision(project, new HgFile(root, new File(root.getPath(), fileBefore)),
+                                                               revisionBefore);
+    if (revisionAfter == null) {
+      ContentRevision currentRevision =
+        CurrentContentRevision.create(new HgFile(root, new File(root.getPath(), fileBefore)).toFilePath());
+      return new Change(beforeRevision, currentRevision, aStatus);
+    }
+    HgContentRevision afterRevision = new HgContentRevision(project,
+                                                            new HgFile(root, new File(root.getPath(), fileAfter)),
+                                                            revisionAfter);
+    return new Change(beforeRevision, afterRevision, aStatus);
+  }
+
+  @Nullable
+  public static FileStatus convertHgDiffStatus(@NotNull HgFileStatusEnum hgstatus) {
+    if (hgstatus.equals(HgFileStatusEnum.ADDED)) {
+      return FileStatus.ADDED;
+    }
+    else if (hgstatus.equals(HgFileStatusEnum.DELETED)) {
+      return FileStatus.DELETED;
+    }
+    else if (hgstatus.equals(HgFileStatusEnum.MODIFIED)) {
+      return FileStatus.MODIFIED;
+    }
+    return null;
   }
 }

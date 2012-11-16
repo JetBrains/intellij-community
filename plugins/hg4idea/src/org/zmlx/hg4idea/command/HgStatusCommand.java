@@ -48,8 +48,8 @@ public class HgStatusCommand {
   private boolean includeUnknown = true;
   private boolean includeIgnored = true;
   private boolean includeCopySource = true;
-  private HgRevisionNumber baseRevision;
-  private HgRevisionNumber targetRevision;
+  @Nullable private HgRevisionNumber baseRevision;
+  @Nullable private HgRevisionNumber targetRevision;
 
   public HgStatusCommand(Project project) {
     this.project = project;
@@ -83,7 +83,7 @@ public class HgStatusCommand {
     this.includeCopySource = includeCopySource;
   }
 
-  public void setBaseRevision(HgRevisionNumber base) {
+  public void setBaseRevision(@Nullable HgRevisionNumber base) {
     baseRevision = base;
   }
 

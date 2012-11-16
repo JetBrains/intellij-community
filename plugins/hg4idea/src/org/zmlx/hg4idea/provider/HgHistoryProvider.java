@@ -118,7 +118,7 @@ public class HgHistoryProvider implements VcsHistoryProvider {
 
   @Override
   public DiffFromHistoryHandler getHistoryDiffHandler() {
-    return null;
+    return new HgDiffFromHistoryHandler(myProject);
   }
 
   @Override
