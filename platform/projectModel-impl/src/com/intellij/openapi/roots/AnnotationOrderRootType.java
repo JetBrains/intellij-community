@@ -35,7 +35,7 @@ public class AnnotationOrderRootType extends PersistentOrderRootType {
     return getOrderRootType(AnnotationOrderRootType.class);
   }
 
-  private AnnotationOrderRootType() {
+  public AnnotationOrderRootType() {
     super("ANNOTATIONS", "annotationsPath", "annotation-paths", null);
   }
 

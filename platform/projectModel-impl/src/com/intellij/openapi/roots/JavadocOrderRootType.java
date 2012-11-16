@@ -25,7 +25,7 @@ import java.util.List;
  * @author yole
  */
 public class JavadocOrderRootType extends PersistentOrderRootType {
-  private JavadocOrderRootType() {
+  public JavadocOrderRootType() {
     super("JAVADOC", "javadocPath", "javadoc-paths", "javadocPathEntry");
   }
 
