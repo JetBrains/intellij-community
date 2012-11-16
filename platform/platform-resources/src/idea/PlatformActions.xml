@@ -462,6 +462,16 @@
       <reference ref="Help.KeymapReference"/>
     </group>
 
+    <group id="WelcomeScreen.Configure">
+      <!-- TODO: Bigger icon for settings -->
+      <action id="WelcomeScreen.Settings" class="com.intellij.ide.actions.ShowSettingsAction" icon="AllIcons.General.Settings"/>
+      <action id="WelcomeScreen.Plugins" class="com.intellij.ide.actions.ShowPluginManagerAction" icon="AllIcons.General.PluginManager"/>
+
+     <!-- TODO: Actions -->
+      <action id="WelcomeScreen.Configure.Import" class="com.intellij.ide.actions.ImportSettingsAction"/>
+      <action id="WelcomeScreen.Configure.Export" class="com.intellij.ide.actions.ExportSettingsAction"/>
+    </group>
+
     <group id="FileChooser">
       <action id="FileChooser.TogglePathShowing" class="com.intellij.openapi.fileChooser.actions.TooglePathShowingAction"/>
     </group>

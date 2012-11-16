@@ -139,6 +139,7 @@ public class RecentProjectPanel extends JPanel {
         return new Dimension(super.getPreferredSize().width, 28);
       }
     };
+    title.setBorder(new BottomLineBorder());
 
     JLabel titleLabel = new JLabel("Recent Projects");
     title.add(titleLabel);

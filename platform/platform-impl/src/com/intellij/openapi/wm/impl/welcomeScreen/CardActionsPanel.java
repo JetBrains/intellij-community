@@ -17,11 +17,13 @@
 /*
  * @author max
  */
-package com.intellij.ui;
+package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBCardLayout;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -121,6 +123,7 @@ public class CardActionsPanel extends JPanel {
       JLabel title = new JLabel(text);
       title.setHorizontalAlignment(SwingConstants.CENTER);
       add(title, BorderLayout.CENTER);
+      setBorder(new BottomLineBorder());
     }
 
     @Override
