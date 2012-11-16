@@ -36,7 +36,6 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -257,8 +256,13 @@ public class CreateFromUsageUtils {
 
       if (argType == null || PsiType.NULL.equals(argType) || 
           argType instanceof PsiLambdaExpressionType || 
+          argType instanceof PsiLambdaParameterType || 
           argType instanceof PsiMethodReferenceType) {
         argType = PsiType.getJavaLangObject(psiManager, resolveScope);
+      } else if (argType instanceof PsiDisjunctionType) {
+        argType = ((PsiDisjunctionType)argType).getLeastUpperBound();
+      } else if (argType instanceof PsiWildcardType) {
+        argType = ((PsiWildcardType)argType).isBounded() ? ((PsiWildcardType)argType).getBound() : PsiType.getJavaLangObject(psiManager, resolveScope);
       }
       PsiParameter parameter;
       if (parameterList.getParametersCount() <= i) {
