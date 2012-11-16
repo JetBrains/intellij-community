@@ -90,11 +90,15 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     setTitle(info.getTitle());
     final Project nonDefaultProject = project == null || project.isDisposed() ? null : project.isDefault() ? null : project;
     final IdeFrame frame = ((WindowManagerEx)WindowManager.getInstance()).findFrameFor(nonDefaultProject);
-    myStatusBar = (StatusBarEx)frame.getStatusBar();
-    myBackgrounded = option.shouldStartInBackground();
-    if (option.shouldStartInBackground()) {
+    myStatusBar = frame != null ? (StatusBarEx)frame.getStatusBar() : null;
+    myBackgrounded = shouldStartInBackground();
+    if (myBackgrounded) {
       doBackground();
     }
+  }
+
+  private boolean shouldStartInBackground() {
+    return myOption.shouldStartInBackground() && myStatusBar != null;
   }
 
   public BackgroundableProcessIndicator(Project project,
@@ -133,7 +137,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   protected void showDialog() {
     if (myDisposed) return;
 
-    if (myOption.shouldStartInBackground()) {
+    if (shouldStartInBackground()) {
       return;
     }
 
