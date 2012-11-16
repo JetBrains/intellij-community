@@ -31,11 +31,12 @@ import java.util.List;
 
 public class CardActionsPanel extends JPanel {
   private final JBCardLayout myLayout = new JBCardLayout();
+  private final JPanel myContent = new JPanel(myLayout);
   private int nCards = 0;
 
   public CardActionsPanel(ActionGroup rootGroup) {
-    setLayout(myLayout);
-
+    setLayout(new GridLayout(1, 1));
+    add(myContent);
     createCardForGroup(rootGroup, "root", null);
   }
 
@@ -44,7 +45,7 @@ public class CardActionsPanel extends JPanel {
 
     JPanel withBottomFiller = new JPanel(new BorderLayout());
     withBottomFiller.add(card, BorderLayout.NORTH);
-    add(withBottomFiller, cardId);
+    myContent.add(withBottomFiller, cardId);
 
     List<Button> buttons = buildButtons(group, cardId);
 
@@ -78,7 +79,7 @@ public class CardActionsPanel extends JPanel {
           AnAction activateCard = new AnAction() {
             @Override
             public void actionPerformed(AnActionEvent e) {
-              myLayout.swipe(CardActionsPanel.this, id, JBCardLayout.SwipeDirection.FORWARD);
+              myLayout.swipe(myContent, id, JBCardLayout.SwipeDirection.FORWARD);
             }
           };
 
@@ -105,7 +106,7 @@ public class CardActionsPanel extends JPanel {
         AnAction back = new AnAction("Back", null, AllIcons.Actions.Back) {
           @Override
           public void actionPerformed(AnActionEvent e) {
-            myLayout.swipe(CardActionsPanel.this, parentId, JBCardLayout.SwipeDirection.BACKWARD);
+            myLayout.swipe(myContent, parentId, JBCardLayout.SwipeDirection.BACKWARD);
           }
         };
 
