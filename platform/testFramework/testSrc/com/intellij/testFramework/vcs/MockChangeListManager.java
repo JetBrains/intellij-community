@@ -72,6 +72,11 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
+  public int getChangeListsNumber() {
+    return getChangeListsCopy().size();
+  }
+
+  @Override
   public List<LocalChangeList> getChangeListsCopy() {
     return new ArrayList<LocalChangeList>(myChangeLists.values());
   }

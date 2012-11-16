@@ -549,6 +549,10 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return changes;
   }
 
+  public int getChangeListsNumber() {
+    return myMap.size();
+  }
+
   private abstract class ExternalVsInternalChangesIntersection {
     protected final Collection<Change> myInChanges;
     protected final Map<Pair<String, String>, LocalChangeList> myInternalMap;
