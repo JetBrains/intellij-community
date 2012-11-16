@@ -69,7 +69,7 @@
                   <gridbag weightx="0.0" weighty="1.0"/>
                 </constraints>
                 <properties>
-                  <labelFor value="e6ad1"/>
+                  <labelFor value="edb8a"/>
                   <text resource-bundle="messages/ProjectBundle" key="project.new.wizard.module.name.title"/>
                 </properties>
               </component>
@@ -88,7 +88,7 @@
                   <gridbag weightx="0.0" weighty="1.0"/>
                 </constraints>
                 <properties>
-                  <labelFor value="4af6e"/>
+                  <labelFor value="d2d6b"/>
                   <text resource-bundle="messages/ProjectBundle" key="project.new.wizard.module.root.title"/>
                 </properties>
               </component>
@@ -105,7 +105,7 @@
                   <gridbag weightx="0.0" weighty="1.0"/>
                 </constraints>
                 <properties>
-                  <labelFor value="83a50"/>
+                  <labelFor value="9e1b8"/>
                   <text resource-bundle="messages/ProjectBundle" key="project.new.wizard.module.file.title"/>
                 </properties>
               </component>
