@@ -143,9 +143,10 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
     targetPath.append('/').append(relativePath);
 
     final String outputPath = targetPath.toString();
-    FileUtil.copyContent(file, new File(outputPath));
+    final File targetFile = new File(outputPath);
+    FileUtil.copyContent(file, targetFile);
     try {
-      outputConsumer.registerOutputFile(outputPath, Collections.singletonList(file.getPath()));
+      outputConsumer.registerOutputFile(targetFile, Collections.singletonList(file.getPath()));
     }
     catch (Exception e) {
       context.processMessage(new CompilerMessage(BUILDER_NAME, e));

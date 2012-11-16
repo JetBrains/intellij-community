@@ -1,5 +1,6 @@
 package org.jetbrains.jps.builders;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 
@@ -7,5 +8,5 @@ import java.util.Collection;
  * @author nik
  */
 public interface BuildOutputConsumer {
-  void registerOutputFile(String outputFilePath, Collection<String> sourceFiles) throws IOException;
+  void registerOutputFile(File outputFile, Collection<String> sourcePaths) throws IOException;
 }

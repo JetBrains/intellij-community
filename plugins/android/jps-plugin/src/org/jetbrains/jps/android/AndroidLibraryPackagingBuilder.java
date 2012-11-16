@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
-import org.jetbrains.jps.builders.ChunkBuildOutputConsumer;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.incremental.*;
@@ -33,7 +32,7 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
   public ExitCode build(CompileContext context,
                         ModuleChunk chunk,
                         DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
-                        ChunkBuildOutputConsumer outputConsumer) throws ProjectBuildException {
+                        OutputConsumer outputConsumer) throws ProjectBuildException {
     if (chunk.containsTests() || !AndroidJpsUtil.containsAndroidFacet(chunk) || AndroidJpsUtil.isLightBuild(context)) {
       return ExitCode.NOTHING_DONE;
     }

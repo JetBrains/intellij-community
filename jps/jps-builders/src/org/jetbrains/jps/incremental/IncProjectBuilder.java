@@ -778,7 +778,7 @@ public class IncProjectBuilder {
     final int modulesInChunk = chunk.getModules().size();
     int buildersPassed = 0;
     boolean nextPassRequired;
-    BuildOperations.ChunkBuildOutputConsumerImpl outputConsumer = new BuildOperations.ChunkBuildOutputConsumerImpl(context);
+    ChunkBuildOutputConsumerImpl outputConsumer = new ChunkBuildOutputConsumerImpl(context);
     try {
       do {
         nextPassRequired = false;

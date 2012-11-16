@@ -1,10 +1,10 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.containers.hash.HashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.*;
+import org.jetbrains.jps.builders.impl.BuildOutputConsumerImpl;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
@@ -13,7 +13,6 @@ import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.DoneSomethingNotification;
 import org.jetbrains.jps.incremental.messages.FileDeletedEvent;
-import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetConfiguration;
 import org.jetbrains.jps.incremental.storage.Timestamps;
@@ -204,76 +203,6 @@ public class BuildOperations {
     }
     catch (Exception e) {
       throw new ProjectBuildException(e);
-    }
-  }
-
-  private static class BuildOutputConsumerImpl implements BuildOutputConsumer {
-    private final BuildTarget<?> myTarget;
-    private final CompileContext myContext;
-    private FileGeneratedEvent myFileGeneratedEvent;
-    private Collection<File> myOutputs;
-    private THashSet<String> myRegisteredSources = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
-
-    public BuildOutputConsumerImpl(BuildTarget<?> target, CompileContext context) {
-      myTarget = target;
-      myContext = context;
-      myFileGeneratedEvent = new FileGeneratedEvent();
-      myOutputs = myTarget.getOutputRoots(context);
-    }
-
-    @Override
-    public void registerOutputFile(String outputFilePath, Collection<String> sourceFiles) throws IOException {
-      final File outputFile = new File(outputFilePath);
-      for (File outputRoot : myOutputs) {
-        if (FileUtil.isAncestor(outputRoot, outputFile, false)) {
-          String outputRootPath = FileUtil.toSystemIndependentName(outputRoot.getPath());
-          final String relativePath = FileUtil.getRelativePath(outputRootPath, FileUtil.toSystemIndependentName(outputFilePath), '/');
-          if (relativePath != null) {
-            myFileGeneratedEvent.add(outputRootPath, relativePath);
-          }
-          break;
-        }
-      }
-      final SourceToOutputMapping mapping = myContext.getProjectDescriptor().dataManager.getSourceToOutputMap(myTarget);
-      for (String sourceFile : sourceFiles) {
-        if (myRegisteredSources.add(FileUtil.toSystemIndependentName(sourceFile))) {
-          mapping.setOutput(sourceFile, outputFilePath);
-        }
-        else {
-          mapping.appendOutput(sourceFile, outputFilePath);
-        }
-      }
-    }
-
-    public void fireFileGeneratedEvent() {
-      if (!myFileGeneratedEvent.getPaths().isEmpty()) {
-        myContext.processMessage(myFileGeneratedEvent);
-      }
-    }
-  }
-
-  public static class ChunkBuildOutputConsumerImpl implements ChunkBuildOutputConsumer {
-    private final CompileContext myContext;
-    private Map<BuildTarget<?>, BuildOutputConsumerImpl> myTarget2Consumer = new HashMap<BuildTarget<?>, BuildOutputConsumerImpl>();
-
-    public ChunkBuildOutputConsumerImpl(CompileContext context) {
-      myContext = context;
-    }
-
-    @Override
-    public void registerOutputFile(BuildTarget<?> target, String outputFilePath, Collection<String> sourceFiles) throws IOException {
-      BuildOutputConsumerImpl consumer = myTarget2Consumer.get(target);
-      if (consumer == null) {
-        consumer = new BuildOutputConsumerImpl(target, myContext);
-        myTarget2Consumer.put(target, consumer);
-      }
-      consumer.registerOutputFile(outputFilePath, sourceFiles);
-    }
-
-    public void fireFileGeneratedEvents() {
-      for (BuildOutputConsumerImpl consumer : myTarget2Consumer.values()) {
-        consumer.fireFileGeneratedEvent();
-      }
     }
   }
 }
