@@ -40,7 +40,7 @@ import java.util.Arrays;
 public class AndroidProjectWizardTest extends ProjectWizardTestCase {
 
   public void testCreateProject() throws Exception {
-    createProjectFromTemplate(AndroidProjectTemplatesFactory.ANDROID, "Android Application Module", new Consumer<ModuleWizardStep>() {
+    createProjectFromTemplate(AndroidProjectTemplatesFactory.ANDROID, "Application Module", new Consumer<ModuleWizardStep>() {
       @Override
       public void consume(ModuleWizardStep step) {
         if (step instanceof AndroidModuleWizardStep) {
@@ -54,7 +54,7 @@ public class AndroidProjectWizardTest extends ProjectWizardTestCase {
   }
 
   public void testCreateLibrary() throws Exception {
-    createProjectFromTemplate(AndroidProjectTemplatesFactory.ANDROID, "Android Library Module", new Consumer<ModuleWizardStep>() {
+    createProjectFromTemplate(AndroidProjectTemplatesFactory.ANDROID, AndroidProjectTemplatesFactory.LIBRARY_MODULE, new Consumer<ModuleWizardStep>() {
       @Override
       public void consume(ModuleWizardStep step) {
         if (step instanceof AndroidModuleWizardStep) {
@@ -68,7 +68,7 @@ public class AndroidProjectWizardTest extends ProjectWizardTestCase {
   }
 
   public void testCreateEmptyProject() throws Exception {
-    createProjectFromTemplate(AndroidProjectTemplatesFactory.ANDROID, "Empty Android Module", null);
+    createProjectFromTemplate(AndroidProjectTemplatesFactory.ANDROID, AndroidProjectTemplatesFactory.EMPTY_MODULE, null);
   }
 
   @Override

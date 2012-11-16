@@ -1,6 +1,8 @@
 package org.jetbrains.jps.model.library.impl;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.*;
@@ -11,9 +13,7 @@ import org.jetbrains.jps.model.library.*;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author nik
@@ -147,6 +147,8 @@ public class JpsLibraryImpl<P extends JpsElement> extends JpsNamedCompositeEleme
     return urls;
   }
 
+  private static final Set<String> AR_EXTENSIONS  = ContainerUtil.newTroveSet(FileUtil.PATH_HASHING_STRATEGY, "jar", "zip", "swc", "ane");
+
   private static void collectArchives(File file, boolean recursively, List<String> result) {
     final File[] children = file.listFiles();
     if (children != null) {
@@ -158,7 +160,7 @@ public class JpsLibraryImpl<P extends JpsElement> extends JpsNamedCompositeEleme
           }
         }
         // todo [nik] get list of extensions mapped to Archive file type from IDE settings
-        else if (extension.equals("jar") || extension.equals("zip") || extension.equals("swc") || extension.equals("ane")) {
+        else if (AR_EXTENSIONS.contains(extension)) {
           result.add(JpsPathUtil.getLibraryRootUrl(child));
         }
       }

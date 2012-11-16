@@ -194,8 +194,18 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
+  public static <T> THashSet<T> newTroveSet(TObjectHashingStrategy<T> strategy) {
+    return new THashSet<T>(strategy);
+  }
+
+  @NotNull
   public static <T> THashSet<T> newTroveSet(T... elements) {
     return newTroveSet(Arrays.asList(elements));
+  }
+
+  @NotNull
+  public static <T> THashSet<T> newTroveSet(TObjectHashingStrategy<T> strategy, T... elements) {
+    return new THashSet<T>(Arrays.asList(elements), strategy);
   }
 
   @NotNull

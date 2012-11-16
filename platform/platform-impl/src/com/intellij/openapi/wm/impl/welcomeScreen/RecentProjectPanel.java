@@ -26,11 +26,15 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.Gray;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.speedSearch.ListWithFilter;
+import com.intellij.util.Function;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,6 +78,7 @@ public class RecentProjectPanel extends JPanel {
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
+
     ActionListener deleteAction = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -114,7 +119,19 @@ public class RecentProjectPanel extends JPanel {
 
     JBScrollPane scroll = new JBScrollPane(myList);
     scroll.setBorder(null);
-    add(scroll, BorderLayout.CENTER);
+
+    add(ListWithFilter.wrap(myList, scroll, new Function<Object, String>() {
+      @Override
+      public String fun(Object o) {
+        ReopenProjectAction item = (ReopenProjectAction)o;
+        String home = SystemProperties.getUserHome();
+        String path = item.getProjectPath();
+        if (FileUtil.startsWith(path, home)) {
+          path = path.substring(home.length());
+        }
+        return item.getProjectName() + " " + path;
+      }
+    }), BorderLayout.CENTER);
 
     JPanel title = new JPanel() {
       @Override

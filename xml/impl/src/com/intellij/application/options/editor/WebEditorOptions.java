@@ -41,6 +41,7 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
   private boolean myBreadcrumbsEnabled = true;
   private boolean myBreadcrumbsEnabledInXml = false;
   private boolean myShowCssColorPreviewInGutter = true;
+  private boolean myShowCssInlineColorPreview = false;
   private boolean myAutomaticallyInsertClosingTag = true;
   private boolean myAutomaticallyInsertRequiredAttributes = true;
   private boolean myAutomaticallyInsertRequiredSubTags = true;
@@ -74,6 +75,14 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
 
   public boolean isBreadcrumbsEnabledInXml() {
     return myBreadcrumbsEnabledInXml;
+  }
+
+  public boolean isShowCssInlineColorPreview() {
+    return myShowCssInlineColorPreview;
+  }
+
+  public void setShowCssInlineColorPreview(final boolean showCssInlineColorPreview) {
+    myShowCssInlineColorPreview = showCssInlineColorPreview;
   }
 
   public boolean isShowCssColorPreviewInGutter() {
