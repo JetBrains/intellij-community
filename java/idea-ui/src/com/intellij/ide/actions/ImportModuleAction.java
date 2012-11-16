@@ -161,6 +161,6 @@ public class ImportModuleAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    presentation.setVisible(getEventProject(e) != null);
+    presentation.setEnabled(getEventProject(e) != null);
   }
 }
