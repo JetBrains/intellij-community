@@ -111,8 +111,9 @@ public class TasksToolWindowPanel extends JPanel implements Disposable {
             panel.setBackground(UIUtil.getTableBackground(isSelected));
             final SimpleColoredComponent component = new SimpleColoredComponent();
             final boolean isClosed = task.isClosed() || myTaskManager.isLocallyClosed(task);
-            component.append((String)value, getAttributes(isClosed, task.isActive(), isSelected));
-            component.setIcon(isClosed ? IconLoader.getTransparentIcon(task.getIcon()) : task.getIcon());
+            final boolean isActive = task.isActive();
+            component.append((String)value, getAttributes(isClosed, isActive, isSelected));
+            component.setIcon(isClosed && !isActive ? IconLoader.getTransparentIcon(task.getIcon()) : task.getIcon());
             component.setOpaque(false);
             panel.add(component, BorderLayout.CENTER);
             panel.setOpaque(true);
@@ -187,7 +188,7 @@ public class TasksToolWindowPanel extends JPanel implements Disposable {
     return new SimpleTextAttributes(isActive ? SimpleTextAttributes.STYLE_BOLD : SimpleTextAttributes.STYLE_PLAIN,
                                     isSelected
                                     ? UIUtil.getTableSelectionForeground()
-                                    : isClosed ? UIUtil.getLabelDisabledForeground() : UIUtil.getTableForeground());
+                                    : isClosed && !isActive ? UIUtil.getLabelDisabledForeground() : UIUtil.getTableForeground());
   }
 
   private static String formatDuration(final long milliseconds) {
