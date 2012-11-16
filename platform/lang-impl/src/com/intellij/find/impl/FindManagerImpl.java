@@ -155,7 +155,11 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
 
   @Override
   public int showPromptDialog(final FindModel model, String title) {
-    ReplacePromptDialog replacePromptDialog = new ReplacePromptDialog(model.isMultipleFiles(), title, myProject) {
+    return showPromptDialogImpl(model, title, null);
+  }
+
+  public int showPromptDialogImpl(final FindModel model, String title, @Nullable final MalformedReplacementStringException exception) {
+    ReplacePromptDialog replacePromptDialog = new ReplacePromptDialog(model.isMultipleFiles(), title, myProject, exception) {
       @Override
       @Nullable
       public Point getInitialLocation() {
@@ -311,6 +315,11 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
 
       offset = model.isForward() ? result.getStartOffset() + 1 : result.getEndOffset() - 1;
     }
+  }
+
+  @Override
+  public int showMalformedReplacementPrompt(FindModel model, String title, MalformedReplacementStringException exception) {
+    return showPromptDialogImpl(model, title, exception);
   }
 
   @Override
@@ -626,8 +635,12 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       return replaced.substring(matcher.start());
     }
     catch (Exception e) {
-      throw new MalformedReplacementStringException(FindBundle.message("find.replace.invalid.replacement.string", model.getStringToReplace()), e);
+      throw createMalformedReplacementException(model, e);
     }
+  }
+
+  private static MalformedReplacementStringException createMalformedReplacementException(FindModel model, Exception e) {
+    return new MalformedReplacementStringException(FindBundle.message("find.replace.invalid.replacement.string", model.getStringToReplace()), e);
   }
 
   private static String getStringToReplaceByRegexp0(String foundString, final FindModel model) throws MalformedReplacementStringException{
@@ -651,7 +664,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
         return matcher.replaceAll(StringUtil.unescapeStringCharacters(toReplace));
       }
       catch (Exception e) {
-        throw new MalformedReplacementStringException(FindBundle.message("find.replace.invalid.replacement.string", model.getStringToReplace()), e);
+        throw createMalformedReplacementException(model, e);
       }
     }
     else {

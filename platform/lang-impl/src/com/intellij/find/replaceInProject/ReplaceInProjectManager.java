@@ -19,6 +19,7 @@ package com.intellij.find.replaceInProject;
 import com.intellij.find.*;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.find.impl.FindInProjectUtil;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,14 +28,17 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -47,12 +51,11 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class ReplaceInProjectManager {
+  static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("FindInPath", ToolWindowId.FIND, false);
+
   private final Project myProject;
   private boolean myIsFindInProgress = false;
 
@@ -214,7 +217,16 @@ public class ReplaceInProjectManager {
       CommandProcessor.getInstance()
         .executeCommand(myProject, selectOnEditorRunnable, FindBundle.message("find.replace.select.on.editor.command"), null);
       String title = FindBundle.message("find.replace.found.usage.title", i + 1, usages.length);
-      int result = FindManager.getInstance(myProject).showPromptDialog(replaceContext.getFindModel(), title);
+
+      int result;
+      try {
+        doReplace(usage, replaceContext.getFindModel(), replaceContext.getExcludedSet(), true);
+        result = FindManager.getInstance(myProject).showPromptDialog(replaceContext.getFindModel(), title);
+      }
+      catch (FindManager.MalformedReplacementStringException e) {
+        markAsMalformedReplacement(replaceContext, usage);
+        result = FindManager.getInstance(myProject).showMalformedReplacementPrompt(replaceContext.getFindModel(), title, e);
+      }
 
       if (result == FindManager.PromptResult.CANCEL) {
         return;
@@ -225,16 +237,15 @@ public class ReplaceInProjectManager {
 
       final int currentNumber = i;
       if (result == FindManager.PromptResult.OK) {
+        final Ref<Boolean> success = Ref.create();
         Runnable runnable = new Runnable() {
           @Override
           public void run() {
-            doReplace(usage, replaceContext.getFindModel(), replaceContext.getExcludedSet());
-            replaceContext.getUsageView().removeUsage(usage);
+            success.set(doReplace(usage, replaceContext));
           }
         };
         CommandProcessor.getInstance().executeCommand(myProject, runnable, FindBundle.message("find.replace.command"), null);
-        if (i + 1 == usages.length) {
-          replaceContext.getUsageView().close();
+        if (closeUsageViewIfEmpty(replaceContext.getUsageView(), success.get())) {
           return;
         }
       }
@@ -246,7 +257,7 @@ public class ReplaceInProjectManager {
           @Override
           public void run() {
             int j = currentNumber;
-
+            boolean  success = true;
             for (; j < usages.length; j++) {
               final Usage usage = usages[j];
               final UsageInfo usageInfo = ((UsageInfo2UsageAdapter)usage).getUsageInfo();
@@ -257,12 +268,11 @@ public class ReplaceInProjectManager {
               if (!otherPsiFile.equals(psiFile)) {
                 break;
               }
-              doReplace(usage, replaceContext.getFindModel(), replaceContext.getExcludedSet());
-              replaceContext.getUsageView().removeUsage(usage);
+              if (!doReplace(usage, replaceContext)) {
+                success = false;
+              }
             }
-            if (j == usages.length) {
-              replaceContext.getUsageView().close();
-            }
+            closeUsageViewIfEmpty(replaceContext.getUsageView(), success);
             nextNumber[0] = j;
           }
         };
@@ -277,8 +287,8 @@ public class ReplaceInProjectManager {
         CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
           @Override
           public void run() {
-            doReplace(replaceContext, _usages);
-            replaceContext.getUsageView().close();
+            final boolean success = doReplace(replaceContext, _usages);
+            closeUsageViewIfEmpty(replaceContext.getUsageView(), success);
           }
         }, FindBundle.message("find.replace.command"), null);
         break;
@@ -286,15 +296,28 @@ public class ReplaceInProjectManager {
     }
   }
 
+  private boolean doReplace(Usage usage, ReplaceContext replaceContext) {
+    try {
+      doReplace(usage, replaceContext.getFindModel(), replaceContext.getExcludedSet(), false);
+      replaceContext.getUsageView().removeUsage(usage);
+    }
+    catch (FindManager.MalformedReplacementStringException e) {
+      markAsMalformedReplacement(replaceContext, usage);
+      return false;
+    }
+    return true;
+  }
+
   private void addReplaceActions(final ReplaceContext replaceContext) {
     final Runnable replaceRunnable = new Runnable() {
       @Override
       public void run() {
-        doReplace(replaceContext, replaceContext.getUsageView().getUsages());
+        final UsageView usageView = replaceContext.getUsageView();
+        final boolean success = doReplace(replaceContext, usageView.getUsages());
+        closeUsageViewIfEmpty(usageView, success);
       }
     };
-    replaceContext.getUsageView().addPerformOperationAction(replaceRunnable, FindBundle.message("find.replace.all.action"), null,
-                                                            FindBundle.message("find.replace.all.action.description"));
+    replaceContext.getUsageView().addButtonToLowerPane(replaceRunnable, FindBundle.message("find.replace.all.action"));
 
     final Runnable replaceSelectedRunnable = new Runnable() {
       @Override
@@ -306,14 +329,29 @@ public class ReplaceInProjectManager {
     replaceContext.getUsageView().addButtonToLowerPane(replaceSelectedRunnable, FindBundle.message("find.replace.selected.action"));
   }
 
-  private void doReplace(final ReplaceContext replaceContext, Collection<Usage> usages) {
+  private boolean doReplace(final ReplaceContext replaceContext, Collection<Usage> usages) {
+    boolean success = true;
+    int replacedCount = 0;
     for (final Usage usage : usages) {
-      doReplace(usage, replaceContext.getFindModel(), replaceContext.getExcludedSet());
+      try {
+        doReplace(usage, replaceContext.getFindModel(), replaceContext.getExcludedSet(), false);
+        replaceContext.getUsageView().removeUsage(usage);
+        replacedCount++;
+      }
+      catch (FindManager.MalformedReplacementStringException e) {
+        markAsMalformedReplacement(replaceContext, usage);
+        success = false;
+      }
     }
-    reportNumberReplacedOccurences(myProject, usages.size());
+    reportNumberReplacedOccurrences(myProject, replacedCount);
+    return success;
   }
 
-  public static void reportNumberReplacedOccurences(Project project, int occurrences) {
+  private static void markAsMalformedReplacement(ReplaceContext replaceContext, Usage usage) {
+    replaceContext.getUsageView().excludeUsages(new Usage[]{usage});
+  }
+
+  public static void reportNumberReplacedOccurrences(Project project, int occurrences) {
     if (occurrences != 0) {
       final StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
       if (statusBar != null) {
@@ -322,7 +360,12 @@ public class ReplaceInProjectManager {
     }
   }
 
-  public void doReplace(@NotNull final Usage usage, @NotNull final FindModel findModel, @NotNull final Set<Usage> excludedSet) {
+  public void doReplace(@NotNull final Usage usage,
+                        @NotNull final FindModel findModel,
+                        @NotNull final Set<Usage> excludedSet,
+                        final boolean justCheck)
+    throws FindManager.MalformedReplacementStringException {
+    final Ref<FindManager.MalformedReplacementStringException> exceptionResult = Ref.create();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -331,41 +374,55 @@ public class ReplaceInProjectManager {
         }
 
         final Document document = ((UsageInfo2UsageAdapter)usage).getDocument();
+        if (!document.isWritable()) return;
         ((UsageInfo2UsageAdapter)usage).processRangeMarkers(new Processor<Segment>() {
           @Override
           public boolean process(Segment segment) {
-            if (!document.isWritable()) return false;
-
             final int textOffset = segment.getStartOffset();
-            if (textOffset < 0 || textOffset >= document.getTextLength()) {
-              return true;
-            }
             final int textEndOffset = segment.getEndOffset();
-            if (textEndOffset < 0 || textOffset > document.getTextLength()) {
-              return true;
-            }
-            FindManager findManager = FindManager.getInstance(myProject);
-            final CharSequence foundString = document.getCharsSequence().subSequence(textOffset, textEndOffset);
-            FindResult findResult = findManager.findString(document.getCharsSequence(), textOffset, findModel);
-            if (!findResult.isStringFound()) {
-              return true;
-            }
-            String stringToReplace = null;
+            final Ref<String> stringToReplace = Ref.create();
             try {
-              stringToReplace =
-                findManager.getStringToReplace(foundString.toString(), findModel, textOffset, document.getText());
+              if (!getStringToReplace(textOffset, textEndOffset, document, findModel, stringToReplace)) return true;
+              if (!stringToReplace.isNull() && !justCheck) {
+                document.replaceString(textOffset, textEndOffset, stringToReplace.get());
+              }
             }
             catch (FindManager.MalformedReplacementStringException e) {
-              Messages.showErrorDialog(myProject, e.getMessage(), FindBundle.message("find.replace.invalid.replacement.string.title"));
-            }
-            if (stringToReplace != null) {
-              document.replaceString(textOffset, textEndOffset, stringToReplace);
+              exceptionResult.set(e);
+              return false;
             }
             return true;
           }
         });
       }
     });
+    if (!exceptionResult.isNull()) {
+      throw exceptionResult.get();
+    }
+  }
+
+
+  private boolean getStringToReplace(int textOffset,
+                                     int textEndOffset,
+                                     Document document, FindModel findModel, Ref<String> stringToReplace)
+    throws FindManager.MalformedReplacementStringException {
+    if (textOffset < 0 || textOffset >= document.getTextLength()) {
+      return false;
+    }
+    if (textEndOffset < 0 || textOffset > document.getTextLength()) {
+      return false;
+    }
+    FindManager findManager = FindManager.getInstance(myProject);
+    final CharSequence foundString = document.getCharsSequence().subSequence(textOffset, textEndOffset);
+    FindResult findResult = findManager.findString(document.getCharsSequence(), textOffset, findModel);
+    if (!findResult.isStringFound()) {
+      return false;
+    }
+
+    stringToReplace.set(
+      FindManager.getInstance(myProject).getStringToReplace(foundString.toString(), findModel, textOffset, document.getText()));
+
+    return true;
   }
 
   private void doReplaceSelected(final ReplaceContext replaceContext) {
@@ -401,18 +458,23 @@ public class ReplaceInProjectManager {
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       @Override
       public void run() {
-        doReplace(replaceContext, selectedUsages);
-        for (final Usage selectedUsage : selectedUsages) {
-          replaceContext.getUsageView().removeUsage(selectedUsage);
-        }
+        final boolean success = doReplace(replaceContext, selectedUsages);
+        final UsageView usageView = replaceContext.getUsageView();
 
-        if (replaceContext.getUsageView().getUsages().isEmpty()) {
-          replaceContext.getUsageView().close();
-          return;
-        }
-        replaceContext.getUsageView().getComponent().requestFocus();
+        if (closeUsageViewIfEmpty(usageView, success)) return;
+        usageView.getComponent().requestFocus();
       }
     }, FindBundle.message("find.replace.command"), null);
+  }
+
+  private boolean closeUsageViewIfEmpty(UsageView usageView, boolean success) {
+    if (usageView.getUsages().isEmpty()) {
+      usageView.close();
+      return true;
+    } else if (!success) {
+      NOTIFICATION_GROUP.createNotification("One or more malformed replacement strings", MessageType.ERROR).notify(myProject);
+    }
+    return false;
   }
 
   public boolean isWorkInProgress() {
