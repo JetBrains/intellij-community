@@ -10,7 +10,6 @@ import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.appengine.model.JpsAppEngineExtensionService;
 import org.jetbrains.jps.appengine.model.JpsAppEngineModuleExtension;
 import org.jetbrains.jps.appengine.model.PersistenceApi;
-import org.jetbrains.jps.builders.ChunkBuildOutputConsumer;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
@@ -46,7 +45,7 @@ public class AppEngineEnhancerBuilder extends ModuleLevelBuilder {
   public ExitCode build(final CompileContext context,
                         ModuleChunk chunk,
                         DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
-                        ChunkBuildOutputConsumer outputConsumer)
+                        OutputConsumer outputConsumer)
     throws ProjectBuildException, IOException {
     
     boolean doneSomething = false;
