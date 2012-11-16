@@ -83,6 +83,7 @@ public class SvnNestedTypeRechecker {
     if (! myRoots.isEmpty()) {
       initTravellingMap();
 
+      // todo be very careful with this code since wrong statuses may be reported if file is not put into the map
       final ISVNStatusFileProvider fileProvider = new ISVNStatusFileProvider() {
         public Map getChildrenFiles(File parent) {
           final Map<String, File> children = myTreeTravellingMap.get(FileUtil.nameToCompare(parent.getAbsolutePath()));

@@ -52,12 +52,11 @@ public class SvnScopeZipper implements Runnable {
             me.add(new FilePathImpl(child));
           }
         }
-      } else {
-        final FilePath parent = file.getParentPath();
-        if (parent != null) {
-          final MyDirNonRecursive item = createOrGet(parent);
-          item.add(file);
-        }
+      }
+      final FilePath parent = file.getParentPath();
+      if (parent != null) {
+        final MyDirNonRecursive item = createOrGet(parent);
+        item.add(file);
       }
     }
 
