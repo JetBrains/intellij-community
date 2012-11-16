@@ -135,9 +135,9 @@ public class JarsBuilder {
   }
 
   private void buildJar(final JarInfo jar) throws IOException {
+    final String emptyArchiveMessage = "Archive '" + jar.getPresentableDestination() + "' doesn't contain files so it won't be created";
     if (jar.getContent().isEmpty()) {
-      final String message = "Archive '" + jar.getPresentableDestination() + "' has no files so it won't be created";
-      myContext.processMessage(new CompilerMessage(IncArtifactBuilder.BUILDER_NAME, BuildMessage.Kind.WARNING, message));
+      myContext.processMessage(new CompilerMessage(IncArtifactBuilder.BUILDER_NAME, BuildMessage.Kind.WARNING, emptyArchiveMessage));
       return;
     }
 
@@ -151,8 +151,8 @@ public class JarsBuilder {
     Manifest manifest = loadManifest(jar, packedFilePaths);
     final JarOutputStream jarOutputStream = createJarOutputStream(jarFile, manifest);
 
+    final THashSet<String> writtenPaths = new THashSet<String>();
     try {
-      final THashSet<String> writtenPaths = new THashSet<String>();
       if (manifest != null) {
         writtenPaths.add(JarFile.MANIFEST_NAME);
       }
@@ -187,16 +187,31 @@ public class JarsBuilder {
         }
       }
 
+      if (writtenPaths.isEmpty()) {
+        myContext.processMessage(new CompilerMessage(IncArtifactBuilder.BUILDER_NAME, BuildMessage.Kind.WARNING, emptyArchiveMessage));
+        return;
+      }
+
       final ProjectBuilderLogger logger = myContext.getLoggingManager().getProjectBuilderLogger();
       if (logger.isEnabled()) {
-
         logger.logCompiledPaths(packedFilePaths, IncArtifactBuilder.BUILDER_NAME, "Packing files:");
       }
       myOutputConsumer.registerOutputFile(targetJarPath, packedFilePaths);
 
     }
     finally {
-      jarOutputStream.close();
+      if (writtenPaths.isEmpty()) {
+        try {
+          jarOutputStream.close();
+        }
+        catch (IOException ignored) {
+        }
+        FileUtil.delete(jarFile);
+        myBuiltJars.remove(jar);
+      }
+      else {
+        jarOutputStream.close();
+      }
     }
   }
 
