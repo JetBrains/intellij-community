@@ -63,14 +63,17 @@ public abstract class ComponentEditor extends ComboEditor {
                                  @Nullable PropertyContext context, Object value,
                                  @Nullable InplaceContext inplaceContext) {
     DefaultComboBoxModel model = new DefaultComboBoxModel();
-    myCombo.setModel(model);
     model.addElement(StringsComboEditor.UNSET);
+
+    myCombo.setModel(model);
+
     if (container instanceof RadComponent) {
       for (RadComponent childComponent : getComponents((RadComponent)container)) {
         model.addElement(childComponent);
       }
       myCombo.setSelectedItem(myRenderer.getComponentById((RadComponent)container, (String)value));
     }
+
     myCombo.setBorder(inplaceContext == null ? null : myComboBorder);
     return myCombo;
   }

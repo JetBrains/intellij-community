@@ -534,7 +534,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     if (!(param instanceof PsiClassType)) return null;
     PsiManager manager = typeParam.getManager();
     if (arg instanceof PsiPrimitiveType) {
-      if (!JavaVersionService.getInstance().isAtLeast(typeParam, JavaSdkVersion.JDK_1_7)) return null;
+      if (!JavaVersionService.getInstance().isAtLeast(typeParam, JavaSdkVersion.JDK_1_7) && !isContraVariantPosition) return null;
       arg = ((PsiPrimitiveType)arg).getBoxedType(typeParam);
       if (arg == null) return null;
     }

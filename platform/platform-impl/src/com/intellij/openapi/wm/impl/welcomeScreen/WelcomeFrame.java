@@ -71,6 +71,8 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
     myScreen = screen;
     setupCloseAction();
     new MnemonicHelper().register(this);
+
+    setResizable(false);
   }
 
   public static WelcomeFrame getInstance() {
@@ -130,7 +132,8 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
       if (screen != null) break;
     }
     if (screen == null) {
-      screen = new DefaultWelcomeScreen(rootPane);
+      //screen = new DefaultWelcomeScreen(rootPane);
+      screen = new NewWelcomeScreen(rootPane);
     }
     return screen;
   }

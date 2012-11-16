@@ -29,6 +29,7 @@ import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.editors.ComboEditor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
@@ -52,9 +53,9 @@ import java.util.Set;
  */
 public class ResourceEditor extends PropertyEditor {
   private final ResourceType[] myTypes;
-  private ComponentWithBrowseButton myEditor;
+  protected ComponentWithBrowseButton myEditor;
   protected RadComponent myRootComponent;
-  private RadComponent myComponent;
+  protected RadComponent myComponent;
   private JCheckBox myCheckBox;
   private final Border myCheckBoxBorder = new JTextField().getBorder();
   private boolean myIgnoreCheckBoxValue;
@@ -88,7 +89,7 @@ public class ResourceEditor extends PropertyEditor {
       });
     }
     else if (formats.contains(AttributeFormat.Enum)) {
-      ComboboxWithBrowseButton editor = new ComboboxWithBrowseButton() {
+      ComboboxWithBrowseButton editor = new ComboboxWithBrowseButton(new ComboBox()) {
         @Override
         public Dimension getPreferredSize() {
           return getComponentPreferredSize();
@@ -96,14 +97,8 @@ public class ResourceEditor extends PropertyEditor {
       };
 
       final JComboBox comboBox = editor.getComboBox();
-      DefaultComboBoxModel model;
-      if (formats.contains(AttributeFormat.Boolean)) {
-        model = new DefaultComboBoxModel(new String[]{StringsComboEditor.UNSET, "true", "false"});
-      }
-      else {
-        model = new DefaultComboBoxModel(values);
-        model.insertElementAt(StringsComboEditor.UNSET, 0);
-      }
+      DefaultComboBoxModel model = new DefaultComboBoxModel(values);
+      model.insertElementAt(StringsComboEditor.UNSET, 0);
       comboBox.setModel(model);
       comboBox.setEditable(true);
       ComboEditor.addEditorSupport(this, comboBox);
@@ -212,7 +207,7 @@ public class ResourceEditor extends PropertyEditor {
                                  @Nullable PropertyContext context,
                                  Object object,
                                  @Nullable InplaceContext inplaceContext) {
-    myComponent = container instanceof RadComponent ? (RadComponent)container : null;
+    myComponent = (RadComponent)container;
     myRootComponent = context instanceof RadPropertyContext ? ((RadPropertyContext)context).getRootComponent() : null;
 
     String value = (String)object;

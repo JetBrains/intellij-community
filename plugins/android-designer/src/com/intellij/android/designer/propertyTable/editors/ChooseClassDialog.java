@@ -89,7 +89,7 @@ public class ChooseClassDialog extends DialogWrapper implements ListSelectionLis
     }
   }
 
-  protected static Collection<PsiClass> findInheritors(Module module, String name, boolean includeAll) {
+  public static Collection<PsiClass> findInheritors(Module module, String name, boolean includeAll) {
     PsiClass base = findClass(module, name);
     if (base != null) {
       GlobalSearchScope scope = includeAll ?
