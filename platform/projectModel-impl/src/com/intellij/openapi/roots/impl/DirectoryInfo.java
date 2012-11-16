@@ -210,7 +210,7 @@ public final class DirectoryInfo {
 
   // orderEntries must be sorted BY_OWNER_MODULE
   @NotNull
-  DirectoryInfo withOrderEntries(@NotNull OrderEntry[] orderEntries,
+  public DirectoryInfo withOrderEntries(@NotNull OrderEntry[] orderEntries,
                                  @Nullable final DirectoryInfo parentInfo,
                                  @Nullable final OrderEntry[] oldParentEntries) {
     OrderEntry[] newOrderEntries;
@@ -272,6 +272,7 @@ public final class DirectoryInfo {
   public VirtualFile getSourceRoot() {
     return sourceRoot;
   }
+
   public boolean hasSourceRoot() {
     return getSourceRoot() != null;
   }
@@ -279,6 +280,7 @@ public final class DirectoryInfo {
   public VirtualFile getLibraryClassRoot() {
     return libraryClassRoot;
   }
+
   public boolean hasLibraryClassRoot() {
     return getLibraryClassRoot() != null;
   }
@@ -292,7 +294,7 @@ public final class DirectoryInfo {
   }
 
   @NotNull
-  DirectoryInfo withInModuleSource(boolean inModuleSource) {
+  public DirectoryInfo withInModuleSource(boolean inModuleSource) {
     byte sourceFlag = (byte)BitUtil.set(this.sourceFlag, MODULE_SOURCE_FLAG, inModuleSource);
     return new DirectoryInfo(module, contentRoot, sourceRoot, libraryClassRoot, sourceFlag, orderEntries);
   }
@@ -302,7 +304,7 @@ public final class DirectoryInfo {
   }
 
   @NotNull
-  DirectoryInfo withTestSource(boolean testSource) {
+  public DirectoryInfo withTestSource(boolean testSource) {
     byte sourceFlag = (byte)BitUtil.set(this.sourceFlag, TEST_SOURCE_FLAG, testSource);
     return new DirectoryInfo(module, contentRoot, sourceRoot, libraryClassRoot, sourceFlag, orderEntries);
   }
@@ -312,7 +314,7 @@ public final class DirectoryInfo {
   }
 
   @NotNull
-  DirectoryInfo withInLibrarySource(boolean inLibrarySource) {
+  public DirectoryInfo withInLibrarySource(boolean inLibrarySource) {
     byte sourceFlag = (byte)BitUtil.set(this.sourceFlag, LIBRARY_SOURCE_FLAG, inLibrarySource);
     return new DirectoryInfo(module, contentRoot, sourceRoot, libraryClassRoot, sourceFlag, orderEntries);
   }
@@ -322,27 +324,27 @@ public final class DirectoryInfo {
   }
 
   @NotNull
-  DirectoryInfo withModule(Module module) {
+  public DirectoryInfo withModule(Module module) {
     return new DirectoryInfo(module, contentRoot, sourceRoot, libraryClassRoot, sourceFlag, orderEntries);
   }
 
   @NotNull
-  DirectoryInfo withLibraryClassRoot(@NotNull VirtualFile libraryClassRoot) {
+  public DirectoryInfo withLibraryClassRoot(@NotNull VirtualFile libraryClassRoot) {
     return new DirectoryInfo(module, contentRoot, sourceRoot, libraryClassRoot, sourceFlag, orderEntries);
   }
 
   @NotNull
-  DirectoryInfo withContentRoot(VirtualFile contentRoot) {
+  public DirectoryInfo withContentRoot(VirtualFile contentRoot) {
     return new DirectoryInfo(module, contentRoot, sourceRoot, libraryClassRoot, sourceFlag, orderEntries);
   }
 
   @NotNull
-  DirectoryInfo withSourceRoot(@NotNull VirtualFile sourceRoot) {
+  public DirectoryInfo withSourceRoot(@NotNull VirtualFile sourceRoot) {
     return new DirectoryInfo(module, contentRoot, sourceRoot, libraryClassRoot, sourceFlag, orderEntries);
   }
 
   @NotNull
-  DirectoryInfo withInternedEntries(@NotNull OrderEntry[] orderEntries) {
+  public DirectoryInfo withInternedEntries(@NotNull OrderEntry[] orderEntries) {
     return new DirectoryInfo(module, contentRoot, sourceRoot, libraryClassRoot, sourceFlag, orderEntries);
   }
 
