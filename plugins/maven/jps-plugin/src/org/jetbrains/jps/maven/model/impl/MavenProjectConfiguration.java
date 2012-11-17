@@ -21,6 +21,7 @@ import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +48,7 @@ public class MavenProjectConfiguration {
 
   @Tag("resource-processing")
   @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false, entryTagName = "maven-module", keyAttributeName = "name")
-  public Map<String, MavenModuleResourceConfiguration> moduleConfigurations = new HashMap<String, MavenModuleResourceConfiguration>();
+  public Map<String, MavenModuleResourceConfiguration> moduleConfigurations = new THashMap<String, MavenModuleResourceConfiguration>();
 
   @Nullable
   public MavenModuleResourceConfiguration findProject(MavenIdBean id) {
@@ -61,7 +62,7 @@ public class MavenProjectConfiguration {
   private Map<MavenIdBean, MavenModuleResourceConfiguration> getModuleConfigurationMap() {
     Map<MavenIdBean, MavenModuleResourceConfiguration> map = myIdToModuleMap;
     if (map == null) {
-      map = new HashMap<MavenIdBean, MavenModuleResourceConfiguration>();
+      map = new THashMap<MavenIdBean, MavenModuleResourceConfiguration>();
       for (MavenModuleResourceConfiguration configuration : moduleConfigurations.values()) {
         if (configuration != null) {
           map.put(configuration.id, configuration);
