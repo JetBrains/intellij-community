@@ -17,7 +17,7 @@
       </vspacer>
       <component id="700b2" class="javax.swing.JLabel" binding="name">
         <constraints>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="5" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <font name="Tahoma" size="18" style="1"/>

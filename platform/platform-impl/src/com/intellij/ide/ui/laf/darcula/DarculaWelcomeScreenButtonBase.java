@@ -36,24 +36,26 @@ import java.text.MessageFormat;
 public class DarculaWelcomeScreenButtonBase {
   protected void setup(final AnAction action, JPanel root, final JLabel name, final JLabel description, JLabel icon) {
     name.setText(action.getTemplatePresentation().getText());
-    name.setUI(DarculaWelcomeScreenForm.TITLE_UI);
-    icon.setIcon(action.getTemplatePresentation().getIcon());
+    name.setUI(DarculaWelcomeScreenLabelUI.createUI(name));
+    name.setForeground(UIUtil.getPanelBackground());
+    description.setUI(DarculaWelcomeScreenLabelUI.createUI(description));
+    //icon.setIcon(action.getTemplatePresentation().getIcon());
     final String text = action.getTemplatePresentation().getDescription();
     final String html = "<html>" + MessageFormat.format(text, ApplicationNamesInfo.getInstance().getFullProductName()) + "</html>";
     root.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     description.setText(html);
-    description.setForeground(Gray._90);
+    description.setForeground(Gray._200);
+    description.setEnabled(false);
     root.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseEntered(MouseEvent e) {
-
-        description.setForeground(Gray._200);
+        description.setEnabled(true);
         name.setForeground(new Color(0xE09600));
       }
 
       @Override
       public void mouseExited(MouseEvent e) {
-        description.setForeground(Gray._90);
+        description.setEnabled(false);
         name.setForeground(UIUtil.getPanelBackground());
       }
 
