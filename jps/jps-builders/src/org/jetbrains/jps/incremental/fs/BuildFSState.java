@@ -59,6 +59,15 @@ public class BuildFSState extends FSState {
     return super.getSourcesToRecompile(context, target);
   }
 
+  //public boolean isMarkedForRecompilation(BuildRootDescriptor rd, File file) {
+  //  final Map<BuildRootDescriptor, Set<File>> recompile = getDelta(rd.getTarget()).getSourcesToRecompile();
+  //  //noinspection SynchronizationOnLocalVariableOrMethodParameter
+  //  synchronized (recompile) {
+  //    final Set<File> files = recompile.get(rd);
+  //    return files != null && files.contains(file);
+  //  }
+  //}
+
   @Override
   public boolean markDirty(@Nullable CompileContext context, File file, final BuildRootDescriptor rd, @Nullable Timestamps tsStorage, boolean saveEventStamp) throws IOException {
     final FilesDelta roundDelta = getRoundDelta(CURRENT_ROUND_DELTA_KEY, context);
