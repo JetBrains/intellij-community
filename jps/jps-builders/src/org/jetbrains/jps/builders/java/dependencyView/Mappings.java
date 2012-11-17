@@ -155,9 +155,10 @@ public class Mappings {
   }
 
   @Nullable
-  private ClassRepr getReprByName(final int name) {
-    final File source = myClassToSourceFile.get(name);
-
+  private ClassRepr getReprByName(@Nullable File source, final int name) {
+    if (source == null) {
+      source = myClassToSourceFile.get(name);
+    }
     if (source != null) {
       final Collection<ClassRepr> reprs = mySourceFileToClasses.get(source);
 
@@ -426,14 +427,14 @@ public class Mappings {
     @Nullable
     ClassRepr reprByName(final int name) {
       if (myMappings != null) {
-        final ClassRepr r = myMappings.getReprByName(name);
+        final ClassRepr r = myMappings.getReprByName(null, name);
 
         if (r != null) {
           return r;
         }
       }
 
-      return getReprByName(name);
+      return getReprByName(null, name);
     }
 
     @Nullable
@@ -1003,7 +1004,7 @@ public class Mappings {
 
         if ((m.access & Opcodes.ACC_PRIVATE) == 0 && m.name != myInitName) {
           if (oldItRef == null) {
-            oldItRef = new Ref<ClassRepr>(getReprByName(it.name)); // lazy init
+            oldItRef = new Ref<ClassRepr>(getReprByName(null, it.name)); // lazy init
           }
           final ClassRepr oldIt = oldItRef.get();
 
@@ -1560,7 +1561,7 @@ public class Mappings {
           if (superClassChanged) {
             myDelta.registerRemovedSuperClass(changedClass.name, changedClass.getSuperClass().className);
 
-            final ClassRepr newClass = myDelta.getReprByName(changedClass.name);
+            final ClassRepr newClass = myDelta.getReprByName(null, changedClass.name);
 
             assert (newClass != null);
 
@@ -1790,53 +1791,50 @@ public class Mappings {
         public boolean execute(final int depClass) {
           final File depFile = myClassToSourceFile.get(depClass);
 
-          if (depFile != null) {
+          if (depFile == null || myAffectedFiles.contains(depFile) || myCompiledFiles.contains(depFile)) {
+            return true;
+          }
 
-            if (myAffectedFiles.contains(depFile) || myCompiledFiles.contains(depFile)) {
-              return true;
-            }
+          debug("Dependent class: ", depClass);
 
-            debug("Dependent class: ", depClass);
+          final ClassRepr classRepr = getReprByName(depFile, depClass);
 
-            final ClassRepr classRepr = getReprByName(depClass);
+          if (classRepr == null) {
+            return true;
+          }
 
-            if (classRepr == null) {
-              return true;
-            }
+          final Set<UsageRepr.Usage> depUsages = classRepr.getUsages();
 
-            final Set<UsageRepr.Usage> depUsages = classRepr.getUsages();
+          if (depUsages == null || depUsages.isEmpty()) {
+            return true;
+          }
 
-            if (depUsages == null) {
-              return true;
-            }
-
-            for (UsageRepr.Usage usage : depUsages) {
-              if (usage instanceof UsageRepr.AnnotationUsage) {
-                for (final UsageRepr.AnnotationUsage query : state.myAnnotationQuery) {
-                  if (query.satisfies(usage)) {
-                    debug("Added file due to annotation query");
-                    myAffectedFiles.add(depFile);
-
-                    return true;
-                  }
-                }
-              }
-              else if (state.myAffectedUsages.contains(usage)) {
-                final Util.UsageConstraint constraint = state.myUsageConstraints.get(usage);
-
-                if (constraint == null) {
-                  debug("Added file with no constraints");
+          for (UsageRepr.Usage usage : depUsages) {
+            if (usage instanceof UsageRepr.AnnotationUsage) {
+              for (final UsageRepr.AnnotationUsage query : state.myAnnotationQuery) {
+                if (query.satisfies(usage)) {
+                  debug("Added file due to annotation query");
                   myAffectedFiles.add(depFile);
 
                   return true;
                 }
-                else {
-                  if (constraint.checkResidence(depClass)) {
-                    debug("Added file with satisfied constraint");
-                    myAffectedFiles.add(depFile);
+              }
+            }
+            else if (state.myAffectedUsages.contains(usage)) {
+              final Util.UsageConstraint constraint = state.myUsageConstraints.get(usage);
 
-                    return true;
-                  }
+              if (constraint == null) {
+                debug("Added file with no constraints");
+                myAffectedFiles.add(depFile);
+
+                return true;
+              }
+              else {
+                if (constraint.checkResidence(depClass)) {
+                  debug("Added file with satisfied constraint");
+                  myAffectedFiles.add(depFile);
+
+                  return true;
                 }
               }
             }
@@ -1932,7 +1930,7 @@ public class Mappings {
                                      @Nullable Set<UsageRepr.Usage> usages,
                                      final IntIntMultiMaplet buffer) {
     if (usages == null) {
-      final ClassRepr repr = getReprByName(className);
+      final ClassRepr repr = getReprByName(null, className);
 
       if (repr != null) {
         usages = repr.getUsages();
@@ -2160,7 +2158,7 @@ public class Mappings {
             public void run() {
               final int rootClassName = myContext.get(className.replace(".", "/"));
               final File fileName = myClassToSourceFile.get(rootClassName);
-              final ClassRepr repr = fileName != null? getReprByName(rootClassName) : null;
+              final ClassRepr repr = fileName != null? getReprByName(fileName, rootClassName) : null;
 
               for (final String i : allImports) {
                 final int iname = myContext.get(i.replace(".", "/"));
