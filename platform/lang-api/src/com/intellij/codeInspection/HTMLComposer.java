@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 public abstract class HTMLComposer {
@@ -38,10 +39,10 @@ public abstract class HTMLComposer {
   public abstract void appendListItem(StringBuffer buf, RefElement refElement);
 
   public static void appendHeading(@NonNls StringBuffer buf, String name){
-    buf.append(
-      "&nbsp;&nbsp;<font style=\"font-weight:bold; color:#005555;\">");
-    buf.append(name);
-    buf.append("</font>");
+    buf.append("&nbsp;&nbsp;<font style=\"font-weight:bold; color:")
+      .append(UIUtil.isUnderDarcula() ? "#A5C25C" : "#005555").append(";\">")
+      .append(name)
+      .append("</font>");
   }
 
   public abstract void appendElementReference(StringBuffer buf, RefElement refElement, boolean isPackageIncluded);
