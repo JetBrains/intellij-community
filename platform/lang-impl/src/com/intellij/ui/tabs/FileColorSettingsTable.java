@@ -280,7 +280,7 @@ public abstract class FileColorSettingsTable extends JBTable {
       preinit(table, isSelected, hasFocus);
 
       final FileColorConfiguration configuration = (FileColorConfiguration)value;
-      setText(configuration.getScopeName());
+      setText(FileColorManagerImpl.getAlias(configuration.getScopeName()));
       return this;
     }
 
@@ -318,7 +318,7 @@ public abstract class FileColorSettingsTable extends JBTable {
 
       final FileColorConfiguration configuration = (FileColorConfiguration)value;
       setIconColor(myManager.getColor(configuration.getColorName()));
-      setText(configuration.getColorPresentableName());
+      setText(FileColorManagerImpl.getAlias(configuration.getColorPresentableName()));
 
       return this;
     }

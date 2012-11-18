@@ -243,7 +243,7 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
     protected Color myColor;
 
     protected ColorButton(final String text, final Color color) {
-      super(text);
+      super(FileColorManagerImpl.getAlias(text));
       setUI(new ColorButtonUI());
       myColor = color;
       addActionListener(new ActionListener() {

@@ -68,7 +68,7 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
     ourDefaultDarkColors.put("Green", new Color(0x253B10));
     ourDefaultDarkColors.put("Orange", new Color(0xB85E3A));
     ourDefaultDarkColors.put("Rose", new Color(0x4B193E));
-    ourDefaultDarkColors.put("Violet", new Color(0x341657));
+    ourDefaultDarkColors.put("Violet", new Color(0x4f4056));
     ourDefaultDarkColors.put("Yellow", new Color(0x494539));
   }
 
@@ -279,4 +279,12 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
     }
     return null;
   }
+
+  static String getAlias(String text) {
+    if (UIUtil.isUnderDarcula()) {
+      if (text.equals("Yellow")) return "Brawn";
+    }
+    return text;
+  }
+
 }
