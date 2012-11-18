@@ -120,18 +120,21 @@ public class RecentProjectPanel extends JPanel {
     JBScrollPane scroll = new JBScrollPane(myList);
     scroll.setBorder(null);
 
-    add(ListWithFilter.wrap(myList, scroll, new Function<Object, String>() {
-      @Override
-      public String fun(Object o) {
-        ReopenProjectAction item = (ReopenProjectAction)o;
-        String home = SystemProperties.getUserHome();
-        String path = item.getProjectPath();
-        if (FileUtil.startsWith(path, home)) {
-          path = path.substring(home.length());
-        }
-        return item.getProjectName() + " " + path;
-      }
-    }), BorderLayout.CENTER);
+    JComponent list = recentProjectActions.length == 0
+                      ? myList
+                      : ListWithFilter.wrap(myList, scroll, new Function<Object, String>() {
+                        @Override
+                        public String fun(Object o) {
+                          ReopenProjectAction item = (ReopenProjectAction)o;
+                          String home = SystemProperties.getUserHome();
+                          String path = item.getProjectPath();
+                          if (FileUtil.startsWith(path, home)) {
+                            path = path.substring(home.length());
+                          }
+                          return item.getProjectName() + " " + path;
+                        }
+                      });
+    add(list, BorderLayout.CENTER);
 
     JPanel title = new JPanel() {
       @Override
