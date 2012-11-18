@@ -66,8 +66,8 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
     ourDefaultDarkColors = new LinkedHashMap<String, Color>();
     ourDefaultDarkColors.put("Blue", new Color(0x2B3557));
     ourDefaultDarkColors.put("Green", new Color(0x2A3B2C));
-    ourDefaultDarkColors.put("Orange", new Color(0xB85E3A));
-    ourDefaultDarkColors.put("Rose", new Color(0x4B193E));
+    ourDefaultDarkColors.put("Orange", new Color(0x823B1C));
+    ourDefaultDarkColors.put("Rose", new Color(0x542F3A));
     ourDefaultDarkColors.put("Violet", new Color(0x4f4056));
     ourDefaultDarkColors.put("Yellow", new Color(0x494539));
   }
