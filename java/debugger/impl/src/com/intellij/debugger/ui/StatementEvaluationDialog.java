@@ -71,8 +71,8 @@ public class StatementEvaluationDialog extends EvaluationDialog{
 
     final MyEvaluationPanel evaluationPanel = getEvaluationPanel();
     final JPanel ep = new JPanel(new BorderLayout());
-    final JLabel resultLabel = new JLabel(DebuggerBundle.message("label.evaluate.dialog.result"));
-    ep.add(resultLabel, BorderLayout.NORTH);
+    //final JLabel resultLabel = new JLabel(DebuggerBundle.message("label.evaluate.dialog.result"));
+    //ep.add(resultLabel, BorderLayout.NORTH);
     ep.add(evaluationPanel, BorderLayout.CENTER);
     splitter.setSecondComponent(ep);
     final Dimension statementSize = DimensionService.getInstance().getSize(STATEMENT_EDITOR_DIMENSION_KEY, project);

@@ -31,11 +31,15 @@ import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * update(Value, boolean) method must be called whenever the state of the target VM changes
  */
 public class WatchItemDescriptor extends EvaluationDescriptor {
+
+  @Nullable
+  private String myCustomName = null;
 
   public WatchItemDescriptor(Project project, TextWithImports text) {
     super(text, project);
@@ -48,7 +52,12 @@ public class WatchItemDescriptor extends EvaluationDescriptor {
   }
 
   public String getName() {
-    return getEvaluationText().getText();
+    final String customName = myCustomName;
+    return customName == null? getEvaluationText().getText() : customName;
+  }
+
+  public void setCustomName(@Nullable String customName) {
+    myCustomName = customName;
   }
 
   public void setNew() {
