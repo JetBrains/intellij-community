@@ -27,7 +27,7 @@ import com.intellij.ui.Colored;
 /**
  * @author Konstantin Bulenkov
  */
-@Colored(color = "e7fadb", darkVariant = "777777")
+@Colored(color = "e7fadb", darkVariant = "2A3B2C")
 public class TestsScope extends NamedScope {
   public static final String NAME = IdeBundle.message("predefined.scope.tests.name");
   public TestsScope() {
