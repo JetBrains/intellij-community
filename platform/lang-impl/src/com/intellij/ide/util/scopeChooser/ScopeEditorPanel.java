@@ -81,6 +81,8 @@ public class ScopeEditorPanel {
   private boolean myTextChanged = false;
   private JPanel myMatchingCountPanel;
   private JPanel myPositionPanel;
+  private JLabel myRecursivelyIncluded;
+  private JLabel myPartiallyIncluded;
   private PanelProgressIndicator myCurrentProgress;
   private NamedScopesHolder myHolder;
 
@@ -146,6 +148,8 @@ public class ScopeEditorPanel {
         cancelCurrentProgress();
       }
     });
+    myPartiallyIncluded.setBackground(MyTreeCellRenderer.PARTIAL_INCLUDED);
+    myRecursivelyIncluded.setBackground(MyTreeCellRenderer.WHOLE_INCLUDED);
   }
 
   private void updateCaretPositionText() {
@@ -216,7 +220,7 @@ public class ScopeEditorPanel {
 
   private void showErrorMessage() {
     myMatchingCountLabel.setText(StringUtil.capitalize(myErrorMessage));
-    myMatchingCountLabel.setForeground(Color.red);
+    myMatchingCountLabel.setForeground(JBColor.red);
     myMatchingCountLabel.setToolTipText(myErrorMessage);
   }
 
@@ -634,8 +638,8 @@ public class ScopeEditorPanel {
   }
 
   private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
-    private static final Color WHOLE_INCLUDED = new Color(10, 119, 0);
-    private static final Color PARTIAL_INCLUDED = new Color(0, 50, 160);
+    private static final Color WHOLE_INCLUDED = new JBColor(new Color(10, 119, 0), new Color(0xA5C25C));
+    private static final Color PARTIAL_INCLUDED = new JBColor(new Color(0, 50, 160), DarculaColors.BLUE);
 
     public void customizeCellRenderer(JTree tree,
                                       Object value,
