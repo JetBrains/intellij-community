@@ -7,11 +7,11 @@ import java.util.*;
  */
 public class ReadOnlyList<E> implements List<E> {
 
-    public static <E> ReadOnlyList<E> newReadOnlyList(List<E> list) {
+    public static <E> ReadOnlyList<E> newReadOnlyList(List<? extends E> list) {
         return new ReadOnlyList<E>(Collections.unmodifiableList(list));
     }
 
-    public static <E> ReadOnlyList<E> newReadOnlyList(final SimpleAbstractList<E> abstractList) {
+    public static <E> ReadOnlyList<E> newReadOnlyList(final SimpleAbstractList<? extends E> abstractList) {
         List<E> list = new AbstractList<E>() {
             @Override
             public E get(int index) {
