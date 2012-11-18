@@ -23,6 +23,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -65,7 +66,7 @@ public class TipPanel extends JPanel {
     browser = new JEditorPane();
     browser.setEditable(false);
     browser.setEditorKit(new HTMLEditorKit());
-    browser.setBackground(Color.white);
+    browser.setBackground(UIUtil.getTextFieldBackground());
     browser.addHyperlinkListener(
       new HyperlinkListener() {
         public void hyperlinkUpdate(HyperlinkEvent e) {
