@@ -41,6 +41,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class CreateVirtualEnvDialog extends IdeaDialog {
@@ -95,10 +96,15 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
     setupDialog(null, isNewProject, allSdks, suggestedBaseSdk);
   }
 
-  private void setupDialog(Project project, boolean isNewProject, List<Sdk> allSdks, Sdk suggestedBaseSdk) {
+  private void setupDialog(Project project, boolean isNewProject, List<Sdk> allSdks, @Nullable Sdk suggestedBaseSdk) {
     myProject = project;
     init();
     setTitle("Create Virtual Environment");
+    if (suggestedBaseSdk == null && allSdks.size() > 0) {
+      List<Sdk> sortedSdks = new ArrayList<Sdk>(allSdks);
+      Collections.sort(sortedSdks, new PreferredSdkComparator());
+      suggestedBaseSdk = sortedSdks.get(0);
+    }
     updateSdkList(allSdks, suggestedBaseSdk);
 
     myMakeAvailableToAllProjectsCheckbox.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
