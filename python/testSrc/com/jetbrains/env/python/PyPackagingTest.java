@@ -12,9 +12,9 @@ import com.intellij.util.Processor;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.packaging.*;
-import com.jetbrains.python.sdk.PythonSdkFlavor;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.VirtualEnvSdkFlavor;
+import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
