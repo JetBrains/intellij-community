@@ -25,13 +25,16 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenLog;
 
 import javax.swing.*;
+import java.io.IOException;
 import java.util.Collections;
 
 public class MavenFrameworkSupportProvider extends FrameworkSupportProvider {
@@ -65,11 +68,47 @@ public class MavenFrameworkSupportProvider extends FrameworkSupportProvider {
           MavenProjectsManager.getInstance(module.getProject()).addManagedFiles(Collections.singletonList(existingPom));
         }
         else {
+          prepareProjectStructure(model, root);
+
           new MavenModuleBuilderHelper(new MavenId("groupId", module.getName(), "1.0-SNAPSHOT"), null, null, false, false, null,
                                        null, "Add Maven Support").configure(model.getProject(), root, true);
         }
       }
     };
+  }
+
+  private static void prepareProjectStructure(@NotNull ModifiableRootModel model, @NotNull VirtualFile root) {
+    VirtualFile src = root.findChild("src");
+    if (src == null || !src.isDirectory()) return;
+
+    if (ArrayUtil.contains(src, model.getSourceRoots())) {
+      try {
+        VirtualFile main = src.findChild("main");
+        if (main == null) {
+          main = src.createChildDirectory(null, "main");
+        }
+        else if (!main.isDirectory()) {
+          return;
+        }
+
+        VirtualFile java = main.findChild("java");
+        if (java == null) {
+          java = main.createChildDirectory(null, "java");
+        }
+        else if (java.isDirectory()) {
+          return;
+        }
+
+        for (VirtualFile child : src.getChildren()) {
+          if (!main.equals(child)) {
+            child.move(null, java);
+          }
+        }
+      }
+      catch (IOException e) {
+        MavenLog.LOG.info(e);
+      }
+    }
   }
 
   @Override
