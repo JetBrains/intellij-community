@@ -42,9 +42,7 @@ import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
-import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
-import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.OneToManyPathsMapping;
 import org.jetbrains.jps.javac.*;
 import org.jetbrains.jps.model.JpsDummyElement;
@@ -111,57 +109,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
     ;
 
-  private static final Key<Callbacks.Backend> DELTA_MAPPINGS_CALLBACK_KEY = Key.create("_dependency_data_");
   private final Executor myTaskRunner;
   private static final List<ClassPostProcessor> ourClassProcessors = new ArrayList<ClassPostProcessor>();
   private static boolean OPTION_ENABLE_FORMS_INSTRUMENTATION = false;
   private static boolean OPTION_COPY_FORMS_RUNTIME_CLASSES = false;
 
   private static final Key<Boolean> USE_ECLIPSE_COMPILER = Key.create("java.builder.use.eclipse.compiler");
-
-  static {
-    registerClassPostProcessor(new ClassPostProcessor() {
-      public void process(CompileContext context, OutputFileObject out) {
-        final OutputFileObject.Content content = out.getContent();
-        final File srcFile = out.getSourceFile();
-        boolean isTemp = false;
-        final JavaFileObject.Kind outKind = out.getKind();
-        if (srcFile != null && content != null) {
-          final String outputPath = FileUtil.toSystemIndependentName(out.getFile().getPath());
-          final String sourcePath = FileUtil.toSystemIndependentName(srcFile.getPath());
-          final JavaSourceRootDescriptor rootDescriptor = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, srcFile);
-          final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
-          if (rootDescriptor != null) {
-            isTemp = rootDescriptor.isTemp;
-            if (!isTemp) {
-              try {
-                dataManager.getSourceToOutputMap(rootDescriptor.target).appendOutput(sourcePath, outputPath);
-              }
-              catch (Exception e) {
-                context.processMessage(new CompilerMessage(BUILDER_NAME, e));
-              }
-            }
-          }
-          out.setTemp(isTemp);
-          if (!isTemp && outKind == JavaFileObject.Kind.CLASS && !Utils.errorsDetected(context)) {
-            final Callbacks.Backend callback = DELTA_MAPPINGS_CALLBACK_KEY.get(context);
-            if (callback != null) {
-              final ClassReader reader = new ClassReader(content.getBuffer(), content.getOffset(), content.getLength());
-              callback.associate(outputPath, sourcePath, reader);
-            }
-          }
-        }
-        if (!isTemp && outKind != JavaFileObject.Kind.CLASS && outKind != JavaFileObject.Kind.SOURCE) { // this should be a generated resource
-          try {
-            FSOperations.markDirty(context, out.getFile());
-          }
-          catch (IOException e) {
-            LOG.info(e);
-          }
-        }
-      }
-    });
-  }
 
   public static void registerClassPostProcessor(ClassPostProcessor processor) {
     ourClassProcessors.add(processor);
@@ -282,7 +235,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
       }
 
-      return compile(context, chunk, dirtyFilesHolder, filesToCompile, formsToCompile);
+      return compile(context, chunk, dirtyFilesHolder, filesToCompile, formsToCompile, outputConsumer);
     }
     catch (ProjectBuildException e) {
       throw e;
@@ -334,7 +287,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
                            ModuleChunk chunk,
                            DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                            Collection<File> files,
-                           Collection<File> forms)
+                           Collection<File> forms, OutputConsumer outputConsumer)
     throws Exception {
     ExitCode exitCode = ExitCode.NOTHING_DONE;
 
@@ -354,9 +307,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     // begin compilation round
     final DiagnosticSink diagnosticSink = new DiagnosticSink(context);
-    final OutputFilesSink outputSink = new OutputFilesSink(context);
     final Mappings delta = pd.dataManager.getMappings().createDelta();
-    DELTA_MAPPINGS_CALLBACK_KEY.set(context, delta.getCallback());
+    final Callbacks.Backend mappingsCallback = delta.getCallback();
+    final OutputFilesSink outputSink = new OutputFilesSink(context, outputConsumer, mappingsCallback);
     try {
       if (hasSourcesToCompile) {
         exitCode = ExitCode.OK;
@@ -370,14 +323,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
                 final List<File> generatedFiles = CopyResourcesUtil.copyFormsRuntime(outputRoot, false);
                 if (!generatedFiles.isEmpty()) {
                   // now inform others about files just copied
-                  final FileGeneratedEvent event = new FileGeneratedEvent();
                   for (File file : generatedFiles) {
-                    final String relativePath = FileUtil.getRelativePath(outputRoot, FileUtil.toSystemIndependentName(file.getPath()), '/');
-                    if (relativePath != null) {
-                      event.add(outputRoot, relativePath);
-                    }
+                    outputConsumer.registerOutputFile(target, file, Collections.<String>emptyList());
                   }
-                  context.processMessage(event);
                 }
               }
             }
@@ -419,13 +367,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
         if (diagnosticSink.getErrorCount() == 0 && (!forms.isEmpty() || addNotNullAssertions)) {
           final Map<File, String> chunkSourcePath = ProjectPaths.getSourceRootsWithDependents(chunk);
-          final InstrumentationClassFinder finder = createInstrumentationClassFinder(platformCp, classpath, chunkSourcePath, outputSink);
+          final InstrumentationClassFinder finder = createInstrumentationClassFinder(platformCp, classpath, chunkSourcePath, outputConsumer);
 
           try {
             if (OPTION_ENABLE_FORMS_INSTRUMENTATION && !forms.isEmpty()) {
               try {
                 context.processMessage(new ProgressMessage("Instrumenting forms [" + chunkName + "]"));
-                instrumentForms(context, chunk, chunkSourcePath, finder, forms, outputSink);
+                final Set<File> problems = instrumentForms(context, chunk, chunkSourcePath, finder, forms, outputConsumer);
+                outputSink.markError(problems);
               }
               finally {
                 context.processMessage(new ProgressMessage("Finished instrumenting forms [" + chunkName + "]"));
@@ -437,7 +386,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
             if (addNotNullAssertions) {
               try {
                 context.processMessage(new ProgressMessage("Adding NotNull assertions [" + chunkName + "]"));
-                instrumentNotNull(context, outputSink, finder);
+                final Set<File> problems = instrumentNotNull(context, outputConsumer, finder);
+                outputSink.markError(problems);
               }
               finally {
                 context.processMessage(new ProgressMessage("Finished adding NotNull assertions [" + chunkName + "]"));
@@ -465,12 +415,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
     }
     finally {
-      outputSink.writePendingData();
-
-      final Set<File> successfullyCompiled = outputSink.getSuccessfullyCompiled();
-      DELTA_MAPPINGS_CALLBACK_KEY.set(context, null);
-
-      if (JavaBuilderUtil.updateMappings(context, delta, dirtyFilesHolder, chunk, files, successfullyCompiled)) {
+      if (JavaBuilderUtil.updateMappings(context, delta, dirtyFilesHolder, chunk, files, outputSink.getSuccessfullyCompiled())) {
         exitCode = ExitCode.ADDITIONAL_PASS_REQUIRED;
       }
     }
@@ -680,7 +625,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   private static InstrumentationClassFinder createInstrumentationClassFinder(Collection<File> platformCp,
                                                                              Collection<File> classpath,
-                                                                             Map<File, String> chunkSourcePath, final OutputFilesSink outputSink) throws MalformedURLException {
+                                                                             Map<File, String> chunkSourcePath, final OutputConsumer outputConsumer) throws MalformedURLException {
     final URL[] platformUrls = new URL[platformCp.size()];
     int index = 0;
     for (File file : platformCp) {
@@ -699,7 +644,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     return new InstrumentationClassFinder(platformUrls, urls.toArray(new URL[urls.size()])) {
       protected InputStream lookupClassBeforeClasspath(String internalClassName) {
-        final OutputFileObject.Content content = outputSink.lookupClassBytes(internalClassName.replace("/", "."));
+        final BinaryContent content = outputConsumer.lookupClassBytes(internalClassName.replace("/", "."));
         if (content != null) {
           return new ByteArrayInputStream(content.getBuffer(), content.getOffset(), content.getLength());
         }
@@ -946,12 +891,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   // todo: probably instrument other NotNull-like annotations defined in project settings?
-  private static void instrumentNotNull(CompileContext context, OutputFilesSink sink, final InstrumentationClassFinder finder) {
-    for (final OutputFileObject fileObject : sink.getFileObjects()) {
-      final OutputFileObject.Content originalContent = fileObject.getContent();
-      if (originalContent == null || fileObject.getKind() != JavaFileObject.Kind.CLASS) {
-        continue;
-      }
+  private static Set<File> instrumentNotNull(CompileContext context, OutputConsumer outputConsumer, final InstrumentationClassFinder finder) {
+    final Set<File> problematic = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+    for (final CompiledClass compiledClass : outputConsumer.getCompiledClasses().values()) {
+      final BinaryContent originalContent = compiledClass.getContent();
       final ClassReader reader = new ClassReader(originalContent.getBuffer(), originalContent.getOffset(), originalContent.getLength());
       final int version = getClassFileVersion(reader);
       if (version >= Opcodes.V1_5) {
@@ -961,14 +904,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
           final NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer);
           reader.accept(instrumenter, 0);
           if (instrumenter.isModification()) {
-            fileObject.updateContent(writer.toByteArray());
+            compiledClass.setContent(new BinaryContent(writer.toByteArray()));
           }
           success = true;
         }
         catch (Throwable e) {
           final StringBuilder msg = new StringBuilder();
           msg.append("@NotNull instrumentation failed ");
-          final File sourceFile = fileObject.getSourceFile();
+          final File sourceFile = compiledClass.getSourceFile();
           if (sourceFile != null) {
             msg.append(" for ").append(sourceFile.getName());
           }
@@ -978,29 +921,24 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
         finally {
           if (!success) {
-            sink.markError(fileObject);
+            problematic.add(compiledClass.getSourceFile());
           }
         }
       }
     }
+    return problematic;
   }
 
-  private static void instrumentForms(CompileContext context,
+  private static Set<File> instrumentForms(CompileContext context,
                                       ModuleChunk chunk,
                                       final Map<File, String> chunkSourcePath,
                                       final InstrumentationClassFinder finder, Collection<File> formsToInstrument,
-                                      OutputFilesSink outputSink) throws ProjectBuildException {
+                                      OutputConsumer outConsumer) throws ProjectBuildException {
 
     final Map<String, File> class2form = new HashMap<String, File>();
     final OneToManyPathsMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap();
     final Set<File> touchedFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-
-    final Map<String, OutputFileObject> compiledClassNames = new HashMap<String, OutputFileObject>();
-    for (OutputFileObject fileObject : outputSink.getFileObjects()) {
-      if (fileObject.getKind() == JavaFileObject.Kind.CLASS) {
-        compiledClassNames.put(fileObject.getClassName(), fileObject);
-      }
-    }
+    final Set<File> problematic = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
 
     final MyNestedFormLoader nestedFormsLoader =
       new MyNestedFormLoader(chunkSourcePath, ProjectPaths.getOutputPathsWithDependents(chunk));
@@ -1035,8 +973,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
         continue;
       }
 
-      final OutputFileObject outputClassFile = findClassFile(compiledClassNames, classToBind);
-      if (outputClassFile == null) {
+      final CompiledClass compiled = findClassFile(outConsumer, classToBind);
+      if (compiled == null) {
         context.processMessage(new CompilerMessage(
           BUILDER_NAME, BuildMessage.Kind.WARNING, "Class to bind does not exist: " + classToBind, formFile.getAbsolutePath())
         );
@@ -1058,7 +996,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
       boolean success = true;
       try {
-        final OutputFileObject.Content originalContent = outputClassFile.getContent();
+        final BinaryContent originalContent = compiled.getContent();
         final ClassReader classReader =
           new ClassReader(originalContent.getBuffer(), originalContent.getOffset(), originalContent.getLength());
 
@@ -1067,7 +1005,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, finder, nestedFormsLoader, false, classWriter);
         final byte[] patchedBytes = codeGenerator.patchClass(classReader);
         if (patchedBytes != null) {
-          outputClassFile.updateContent(patchedBytes);
+          compiled.setContent(new BinaryContent(patchedBytes));
         }
 
         final FormErrorInfo[] warnings = codeGenerator.getWarnings();
@@ -1090,7 +1028,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
           context.processMessage(new CompilerMessage(FORMS_BUILDER_NAME, BuildMessage.Kind.ERROR, message.toString()));
         }
         else {
-          final File sourceFile = outputClassFile.getSourceFile();
+          final File sourceFile = compiled.getSourceFile();
           if (sourceFile != null) {
             if (touchedFiles.add(sourceFile)) { // clear data once before updating
               sourceToFormMap.update(sourceFile.getPath(), formFile.getPath());
@@ -1107,15 +1045,17 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
       finally {
         if (!success) {
-          outputSink.markError(outputClassFile);
+          problematic.add(compiled.getSourceFile());
         }
       }
     }
+    return problematic;
   }
 
-  private static OutputFileObject findClassFile(Map<String, OutputFileObject> outputs, String classToBind) {
+  private static CompiledClass findClassFile(OutputConsumer outputConsumer, String classToBind) {
+    final Map<String, CompiledClass> compiled = outputConsumer.getCompiledClasses();
     while (true) {
-      final OutputFileObject fo = outputs.get(classToBind);
+      final CompiledClass fo = compiled.get(classToBind);
       if (fo != null) {
         return fo;
       }
@@ -1151,14 +1091,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     public void registerImports(final String className, final Collection<String> imports, final Collection<String> staticImports) {
-      submitAsyncTask(myContext, new Runnable() {
-        public void run() {
-          final Callbacks.Backend callback = DELTA_MAPPINGS_CALLBACK_KEY.get(myContext);
-          if (callback != null) {
-            callback.registerImports(className, imports, staticImports);
-          }
-        }
-      });
+      //submitAsyncTask(myContext, new Runnable() {
+      //  public void run() {
+      //    final Callbacks.Backend callback = DELTA_MAPPINGS_CALLBACK_KEY.get(myContext);
+      //    if (callback != null) {
+      //      callback.registerImports(className, imports, staticImports);
+      //    }
+      //  }
+      //});
     }
 
     public void outputLineAvailable(String line) {

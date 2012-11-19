@@ -57,11 +57,11 @@ public class JavacServerResponseHandler implements ProtobufResponseHandler{
         final String outputRoot = outputObject.hasOutputRoot()? outputObject.getOutputRoot() : null;
         final File outputRootFile = outputRoot != null? new File(outputRoot) : null;
 
-        final OutputFileObject.Content fileObjectContent;
+        final BinaryContent fileObjectContent;
         final ByteString content = outputObject.hasContent()? outputObject.getContent() : null;
         if (content != null) {
           final byte[] bytes = content.toByteArray();
-          fileObjectContent = new OutputFileObject.Content(bytes, 0, bytes.length);
+          fileObjectContent = new BinaryContent(bytes, 0, bytes.length);
         }
         else {
           fileObjectContent = null;

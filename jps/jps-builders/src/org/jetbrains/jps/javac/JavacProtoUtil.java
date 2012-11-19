@@ -58,7 +58,7 @@ public class JavacProtoUtil {
 
     msgBuilder.setKind(convertKind(fileObject.getKind()));
     msgBuilder.setFilePath(FileUtil.toSystemIndependentName(fileObject.getFile().getPath()));
-    final OutputFileObject.Content content = fileObject.getContent();
+    final BinaryContent content = fileObject.getContent();
     if (content != null) {
       msgBuilder.setContent(ByteString.copyFrom(content.getBuffer(), content.getOffset(), content.getLength()));
     }

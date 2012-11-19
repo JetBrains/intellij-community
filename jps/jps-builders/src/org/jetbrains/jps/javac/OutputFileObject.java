@@ -4,11 +4,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.Utils;
 
-import javax.tools.JavaFileObject;
-import javax.tools.SimpleJavaFileObject;
+import javax.tools.*;
 import java.io.*;
 import java.net.URI;
-import java.util.Arrays;
 
 /**
  * @author Eugene Zhuravlev
@@ -24,15 +22,14 @@ public final class OutputFileObject extends SimpleJavaFileObject {
   @Nullable
   private final String myClassName;
   @Nullable private final URI mySourceUri;
-  private volatile Content myContent;
+  private volatile BinaryContent myContent;
   private final File mySourceFile;
-  public boolean myIsTemp = false;
 
   public OutputFileObject(@NotNull JavacFileManager.Context context, @Nullable File outputRoot, String relativePath, @NotNull File file, @NotNull Kind kind, @Nullable String className, @Nullable final URI sourceUri) {
     this(context, outputRoot, relativePath, file, kind, className, sourceUri, null);
   }
 
-  public OutputFileObject(@Nullable JavacFileManager.Context context, @Nullable File outputRoot, String relativePath, @NotNull File file, @NotNull Kind kind, @Nullable String className, @Nullable final URI srcUri, @Nullable Content content) {
+  public OutputFileObject(@Nullable JavacFileManager.Context context, @Nullable File outputRoot, String relativePath, @NotNull File file, @NotNull Kind kind, @Nullable String className, @Nullable final URI srcUri, @Nullable BinaryContent content) {
     super(Utils.toURI(file.getPath()), kind);
     myContext = context;
     mySourceUri = srcUri;
@@ -42,14 +39,6 @@ public final class OutputFileObject extends SimpleJavaFileObject {
     myFile = file;
     myClassName = className != null? className.replace('/', '.') : null;
     mySourceFile = srcUri != null? Utils.convertToFile(srcUri) : null;
-  }
-
-  public boolean isTemp() {
-    return myIsTemp;
-  }
-
-  public void setTemp(boolean isTemp) {
-    myIsTemp = isTemp;
   }
 
   @Nullable
@@ -90,7 +79,7 @@ public final class OutputFileObject extends SimpleJavaFileObject {
           super.close();
         }
         finally {
-          myContent = new Content(buf, 0, size());
+          myContent = new BinaryContent(buf, 0, size());
           if (myContext != null) {
             myContext.consumeOutputFile(OutputFileObject.this);
           }
@@ -101,7 +90,7 @@ public final class OutputFileObject extends SimpleJavaFileObject {
 
   @Override
   public InputStream openInputStream() throws IOException {
-    final Content bytes = myContent;
+    final BinaryContent bytes = myContent;
     if (bytes == null) {
       throw new FileNotFoundException(toUri().getPath());
     }
@@ -110,7 +99,7 @@ public final class OutputFileObject extends SimpleJavaFileObject {
 
   @Override
   public CharSequence getCharContent(boolean ignoreEncodingErrors) throws IOException {
-    final Content content = myContent;
+    final BinaryContent content = myContent;
     if (content == null) {
       throw new FileNotFoundException(toUri().getPath());
     }
@@ -118,12 +107,12 @@ public final class OutputFileObject extends SimpleJavaFileObject {
   }
 
   @Nullable
-  public Content getContent() {
+  public BinaryContent getContent() {
     return myContent;
   }
 
   public void updateContent(@NotNull byte[] updatedContent) {
-    myContent = new Content(updatedContent, 0, updatedContent.length);
+    myContent = new BinaryContent(updatedContent, 0, updatedContent.length);
   }
 
   @Override
@@ -134,33 +123,5 @@ public final class OutputFileObject extends SimpleJavaFileObject {
   @Override
   public boolean equals(Object obj) {
     return obj instanceof JavaFileObject && toUri().equals(((JavaFileObject)obj).toUri());
-  }
-
-  public static final class Content {
-    private final byte[] myBuffer;
-    private final int myOffset;
-    private final int myLength;
-
-    Content(byte[] buf, int off, int len) {
-      myBuffer = buf;
-      myOffset = off;
-      myLength = len;
-    }
-
-    public byte[] getBuffer() {
-      return myBuffer;
-    }
-
-    public int getOffset() {
-      return myOffset;
-    }
-
-    public int getLength() {
-      return myLength;
-    }
-
-    public byte[] toByteArray() {
-      return Arrays.copyOfRange(myBuffer, myOffset, myOffset + myLength);
-    }
   }
 }
