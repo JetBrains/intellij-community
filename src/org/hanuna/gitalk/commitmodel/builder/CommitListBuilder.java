@@ -4,7 +4,6 @@ import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitData;
 import org.hanuna.gitalk.commitmodel.Hash;
 import org.hanuna.gitalk.common.readonly.ReadOnlyList;
-import org.hanuna.gitalk.common.readonly.SimpleReadOnlyList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -43,7 +42,7 @@ public class CommitListBuilder {
             parents.add(parent);
         }
         removeCommit(logData.getHash());
-        CommitData commitData = new CommitData(commits.size(), new SimpleReadOnlyList<Commit>(parents),
+        CommitData commitData = new CommitData(commits.size(), ReadOnlyList.newReadOnlyList(parents),
                 logData.getCommitMessage(), logData.getAuthor(), logData.getTimeStamp());
         commit.setCommitData(commitData);
         commits.add(commit);
@@ -61,7 +60,7 @@ public class CommitListBuilder {
         if (allLogReadied) {
             checkEmptyCache();
         }
-        return new SimpleReadOnlyList<Commit>(commits);
+        return ReadOnlyList.newReadOnlyList(commits);
     }
 
 }

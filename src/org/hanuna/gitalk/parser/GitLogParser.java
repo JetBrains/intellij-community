@@ -5,7 +5,6 @@ import org.hanuna.gitalk.commitmodel.Hash;
 import org.hanuna.gitalk.commitmodel.builder.CommitListBuilder;
 import org.hanuna.gitalk.commitmodel.builder.CommitLogData;
 import org.hanuna.gitalk.common.readonly.ReadOnlyList;
-import org.hanuna.gitalk.common.readonly.SimpleReadOnlyList;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -39,12 +38,12 @@ public class GitLogParser {
 
             String[] parentsStr = parents.split("\\s");
             List<Hash> hashs = new ArrayList<Hash>(parentsStr.length);
-            for (int i = 0; i < parentsStr.length; i++) {
-                if (parentsStr[i].length() > 0) {
-                    hashs.add(Hash.buildHash(parentsStr[i]));
+            for (String aParentsStr : parentsStr) {
+                if (aParentsStr.length() > 0) {
+                    hashs.add(Hash.buildHash(aParentsStr));
                 }
             }
-            return new CommitLogData(hash, new SimpleReadOnlyList<Hash>(hashs), message, author, timeStamp);
+            return new CommitLogData(hash, ReadOnlyList.newReadOnlyList(hashs), message, author, timeStamp);
         } else {
             throw new IllegalArgumentException("unexpected format of string:" + inputStr);
         }
