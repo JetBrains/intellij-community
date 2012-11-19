@@ -22,6 +22,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -199,5 +200,28 @@ public abstract class SdkType implements SdkTypeId {
 
   public boolean isRootTypeApplicable(final OrderRootType type) {
     return true;
+  }
+
+  /**
+   * If this method returns true, instead of showing the standard file path chooser when a new SDK of the type is created,
+   * the {@link #showCustomCreateUI} method is called.
+   *
+   * @return true if the custom create UI is supported, false otherwise.
+   * @since 12.0
+   */
+  public boolean supportsCustomCreateUI() {
+    return false;
+  }
+
+  /**
+   * Shows the custom SDK create UI. The returned SDK needs to have the correct name and home path; the framework will call
+   * setupSdkPaths() on the returned SDK.
+   *
+   * @param sdkModel the list of SDKs currently displayed in the configuration dialog.
+   * @param parentComponent the parent component for showing the dialog.
+   * @param sdkCreatedCallback the callback to which the created SDK is passed.
+   * @since 12.0
+   */
+  public void showCustomCreateUI(SdkModel sdkModel, JComponent parentComponent, Consumer<Sdk> sdkCreatedCallback) {
   }
 }
