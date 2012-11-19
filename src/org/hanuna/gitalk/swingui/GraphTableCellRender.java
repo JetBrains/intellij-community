@@ -1,9 +1,6 @@
 package org.hanuna.gitalk.swingui;
 
-import org.hanuna.gitalk.commitgraph.CommitRow;
-import org.hanuna.gitalk.commitgraph.Edge;
-import org.hanuna.gitalk.commitgraph.node.SpecialNode;
-import org.hanuna.gitalk.common.readonly.ReadOnlyList;
+import org.hanuna.gitalk.printgraph.PrintGraphRow;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -22,10 +19,10 @@ public class GraphTableCellRender extends DefaultTableCellRenderer {
     public Component getTableCellRendererComponent(JTable table, Object value,
                                                    boolean isSelected, boolean hasFocus, int row, int column) {
         data = (GraphCell) value;
-        String text = data.getCommit().getMessage();
+        String text = data.getCommit().getData().getMessage();
         super.getTableCellRendererComponent(table, text, isSelected, hasFocus, row, column);
 
-        int countNodes = data.getCommitRow().count();
+        int countNodes = data.getCommitRow().size();
         int padding = countNodes * WIDTH_NODE;
         Border paddingBorder = BorderFactory.createEmptyBorder(0, padding, 0, 0);
         this.setBorder(BorderFactory.createCompoundBorder(this.getBorder(), paddingBorder));
@@ -85,11 +82,11 @@ public class GraphTableCellRender extends DefaultTableCellRenderer {
         g2.setStroke(new BasicStroke(THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL));
 
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        CommitRow commitRow = data.getCommitRow();
-
-        ReadOnlyList<Edge> edges = commitRow.getDownEdges();
-        for (Edge edge : edges) {
-            paintDownLine(g2, edge.from(), edge.to(), ColorGenerator.getColor(edge.getColorIndex()));
+        PrintGraphRow commitRow = data.getCommitRow();
+        /*
+        ReadOnlyList<ShortEdge> edges = commitRow.getDownEdges(0);
+        for (ShortEdge edge : edges) {
+            paintDownLine(g2, edge.getFrom(), edge.getTo(), ColorGenerator.getColor(edge.getColorIndex()));
         }
 
         edges = commitRow.getUpEdges();
@@ -115,6 +112,7 @@ public class GraphTableCellRender extends DefaultTableCellRenderer {
                     throw new IllegalStateException();
             }
         }
+        */
     }
 
 }

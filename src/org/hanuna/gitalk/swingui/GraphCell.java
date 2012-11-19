@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.swingui;
 
-import org.hanuna.gitalk.commitgraph.CommitRow;
 import org.hanuna.gitalk.commitmodel.Commit;
+import org.hanuna.gitalk.printgraph.PrintGraphRow;
 
 /**
  * @author erokhins
@@ -13,9 +13,9 @@ public class GraphCell {
     public static final int THICK_LINE = 3;
 
     private final Commit commit;
-    private final CommitRow commitRow;
+    private final PrintGraphRow commitRow;
 
-    public GraphCell(Commit commit, CommitRow commitRow) {
+    public GraphCell(Commit commit, PrintGraphRow commitRow) {
         this.commit = commit;
         this.commitRow = commitRow;
     }
@@ -24,7 +24,7 @@ public class GraphCell {
         return commit;
     }
 
-    public CommitRow getCommitRow() {
+    public PrintGraphRow getCommitRow() {
         return commitRow;
     }
 }

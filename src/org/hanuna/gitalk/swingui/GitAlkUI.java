@@ -1,8 +1,8 @@
 package org.hanuna.gitalk.swingui;
 
-import org.hanuna.gitalk.commitgraph.CommitRow;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.readonly.ReadOnlyList;
+import org.hanuna.gitalk.printgraph.PrintGraphRow;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,7 +13,7 @@ import java.awt.*;
 public class GitAlkUI extends JFrame {
     private JTable table;
 
-    public GitAlkUI(ReadOnlyList<CommitRow> commitRows, ReadOnlyList<Commit> commits) {
+    public GitAlkUI(ReadOnlyList<PrintGraphRow> commitRows, ReadOnlyList<Commit> commits) {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setTitle("GitAlk");
         table = new JTable(new CommitTableModel(commitRows, commits));
@@ -33,7 +33,7 @@ public class GitAlkUI extends JFrame {
         setVisible(true);
     }
 
-    public void update(ReadOnlyList<CommitRow> commitRows, ReadOnlyList<Commit> commits) {
+    public void update(ReadOnlyList<PrintGraphRow> commitRows, ReadOnlyList<Commit> commits) {
         table.setModel(new CommitTableModel(commitRows, commits));
     }
 }

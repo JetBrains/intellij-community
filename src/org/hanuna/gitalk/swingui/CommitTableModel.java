@@ -1,8 +1,8 @@
 package org.hanuna.gitalk.swingui;
 
-import org.hanuna.gitalk.commitgraph.CommitRow;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.readonly.ReadOnlyList;
+import org.hanuna.gitalk.printgraph.PrintGraphRow;
 
 import javax.swing.table.AbstractTableModel;
 
@@ -10,11 +10,11 @@ import javax.swing.table.AbstractTableModel;
  * @author erokhins
  */
 public class CommitTableModel extends AbstractTableModel {
-    private final ReadOnlyList<CommitRow> commitRows;
+    private final ReadOnlyList<PrintGraphRow> commitRows;
     private final ReadOnlyList<Commit> commits;
     private final String[] columnNames = {"Subject", "Author", "Date"};
 
-    public CommitTableModel(ReadOnlyList<CommitRow> commitRows, ReadOnlyList<Commit> commits) {
+    public CommitTableModel(ReadOnlyList<PrintGraphRow> commitRows, ReadOnlyList<Commit> commits) {
         this.commitRows = commitRows;
         this.commits = commits;
     }
@@ -55,9 +55,9 @@ public class CommitTableModel extends AbstractTableModel {
             case 0:
                 return new GraphCell(commit, commitRows.get(rowIndex));
             case 1:
-                return commit.getAuthor();
+                return commit.getData().getAuthor();
             case 2:
-                long timeStamp = commit.getTimeStamp();
+                long timeStamp = commit.getData().getTimeStamp();
                 return DateConverter.getStringOfDate(timeStamp);
             default:
                 throw new IllegalArgumentException("columnIndex > 2");
