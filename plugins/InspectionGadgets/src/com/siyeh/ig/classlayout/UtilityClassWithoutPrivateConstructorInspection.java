@@ -45,8 +45,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UtilityClassWithoutPrivateConstructorInspection
-  extends BaseInspection {
+public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
   public boolean ignoreClassesWithOnlyMain = false;
@@ -194,6 +193,9 @@ public class UtilityClassWithoutPrivateConstructorInspection
         return;
       }
       if (AnnotationUtil.isAnnotated(aClass, ignorableAnnotations)) {
+        return;
+      }
+      if (aClass.hasModifierProperty(PsiModifier.PRIVATE) && aClass.getConstructors().length == 0) {
         return;
       }
       final SearchScope scope = GlobalSearchScope.projectScope(aClass.getProject());

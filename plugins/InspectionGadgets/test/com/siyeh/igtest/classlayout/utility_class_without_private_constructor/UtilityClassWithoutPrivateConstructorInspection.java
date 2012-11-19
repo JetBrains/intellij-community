@@ -20,4 +20,9 @@ class Temp
     {
         return false;
     }
+
+    private static class Util {
+
+        public static void foo() {}
+    }
 }
