@@ -31,6 +31,7 @@ public class TooltipGroup implements Comparable<TooltipGroup> {
     myPriority = priority;
   }
 
+  @Override
   public int compareTo(TooltipGroup tooltipGroup) {
     return myPriority - tooltipGroup.myPriority;
   }

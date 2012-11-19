@@ -123,10 +123,12 @@ public class EditorFragmentComponent extends JPanel {
     }
 
     JComponent component = new JComponent() {
+      @Override
       public Dimension getPreferredSize() {
         return new Dimension(textImageWidth + markersImageWidth, textImageHeight);
       }
 
+      @Override
       protected void paintComponent(Graphics graphics) {
         if (markersImage != null) {
           graphics.drawImage(markersImage, 0, 0, null);
@@ -253,11 +255,13 @@ public class EditorFragmentComponent extends JPanel {
       setForceLightweightPopup(true);
     }
 
+    @Override
     public void hide() {
       // needed for Alt-Q multiple times
       // Q: not good?
       SwingUtilities.invokeLater(
         new Runnable() {
+          @Override
           public void run() {
             MyComponentHint.super.hide();
           }
