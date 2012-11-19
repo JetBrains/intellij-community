@@ -471,14 +471,14 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
   }
 
   public IdeFrame findFrameFor(@Nullable final Project project) {
-    IdeFrameImpl frame = null;
+    IdeFrame frame = null;
     if (project != null) {
       frame =  getFrame(project);
     } else {
       Container eachParent = getMostRecentFocusedWindow();
       while(eachParent != null) {
-        if (eachParent instanceof IdeFrameImpl) {
-          frame = (IdeFrameImpl)eachParent;
+        if (eachParent instanceof IdeFrame) {
+          frame = (IdeFrame)eachParent;
           break;
         }
         eachParent = eachParent.getParent();
@@ -494,13 +494,13 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     return frame;
   }
 
-  private static IdeFrameImpl tryToFindTheOnlyFrame() {
-    IdeFrameImpl candidate = null;
+  private static IdeFrame tryToFindTheOnlyFrame() {
+    IdeFrame candidate = null;
     final Frame[] all = Frame.getFrames();
     for (Frame each : all) {
-      if (each instanceof IdeFrameImpl) {
+      if (each instanceof IdeFrame) {
         if (candidate == null) {
-          candidate = (IdeFrameImpl)each;
+          candidate = (IdeFrame)each;
         } else {
           candidate = null;
           break;
