@@ -18,6 +18,9 @@ package com.intellij.execution.filters;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * @author Yura Cangea
  * @version 1.0
@@ -26,17 +29,42 @@ public interface Filter {
 
   Filter[] EMPTY_ARRAY = new Filter[0];
 
-  class Result{
-    public final int highlightStartOffset;
-    public final int highlightEndOffset;
-    public final TextAttributes highlightAttributes;
-    public final HyperlinkInfo hyperlinkInfo;
+  class Result extends ResultItem{
+    protected List<ResultItem> myResultItems;
 
     public Result(final int highlightStartOffset, final int highlightEndOffset, final HyperlinkInfo hyperlinkInfo) {
       this(highlightStartOffset, highlightEndOffset, hyperlinkInfo, null);
     }
 
     public Result(final int highlightStartOffset, final int highlightEndOffset, final HyperlinkInfo hyperlinkInfo, final TextAttributes highlightAttributes) {
+      super(highlightStartOffset, highlightEndOffset, hyperlinkInfo, highlightAttributes);
+    }
+    
+    public Result(List<ResultItem> resultItems) {
+      super(-1, -1, null, null);
+      myResultItems = resultItems;
+    }
+    
+    public List<ResultItem> getResultItems() {
+      List<ResultItem> resultItems = myResultItems;
+      if (resultItems == null) {
+        resultItems = Collections.singletonList((ResultItem)this);
+      }
+      return resultItems;
+    }
+    
+  }
+  class ResultItem{
+    public final int highlightStartOffset;
+    public final int highlightEndOffset;
+    public final TextAttributes highlightAttributes;
+    public final HyperlinkInfo hyperlinkInfo;
+
+    public ResultItem(final int highlightStartOffset, final int highlightEndOffset, final HyperlinkInfo hyperlinkInfo) {
+      this(highlightStartOffset, highlightEndOffset, hyperlinkInfo, null);
+    }
+
+    public ResultItem(final int highlightStartOffset, final int highlightEndOffset, final HyperlinkInfo hyperlinkInfo, final TextAttributes highlightAttributes) {
       this.highlightStartOffset = highlightStartOffset;
       this.highlightEndOffset = highlightEndOffset;
       this.hyperlinkInfo = hyperlinkInfo;
