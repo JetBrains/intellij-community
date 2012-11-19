@@ -20,6 +20,7 @@ import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDis
 import com.intellij.application.options.codeStyle.arrangement.component.ArrangementEditorAware;
 import com.intellij.application.options.codeStyle.arrangement.component.ArrangementRepresentationAware;
 import com.intellij.application.options.codeStyle.arrangement.util.ArrangementRuleIndexControl;
+import com.intellij.application.options.codeStyle.arrangement.util.InsetsPanel;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType;
 import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
 import com.intellij.ui.IdeBorderFactory;
@@ -107,6 +108,13 @@ public class ArrangementGroupingComponent extends JPanel implements ArrangementR
     add(myCheckedBox, new GridBag().anchor(GridBagConstraints.WEST).insets(0, 0, 0, 2));
     add(myGroupingTypeLabel, new GridBag().anchor(GridBagConstraints.WEST).insets(0, 0, 0, ArrangementConstants.HORIZONTAL_GAP));
     if (myOrderTypeBox != null) {
+      int minWidth = 0;
+      ListCellRenderer renderer = myOrderTypeBox.getRenderer();
+      for (int i = 0, max = myOrderTypeBox.getItemCount(); i < max; i++) {
+        Component rendererComponent = renderer.getListCellRendererComponent(null, myOrderTypeBox.getItemAt(i), i, false, true);
+        minWidth = Math.max(minWidth, rendererComponent.getPreferredSize().width);
+      }
+      myOrderTypeBox.setPreferredSize(new Dimension(minWidth * 5 / 3, myOrderTypeBox.getPreferredSize().height));
       add(myOrderTypeBox, new GridBag().anchor(GridBagConstraints.WEST));
     }
     add(new JLabel(" "), new GridBag().weightx(1).fillCellHorizontally());
