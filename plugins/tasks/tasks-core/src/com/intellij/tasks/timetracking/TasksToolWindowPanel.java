@@ -90,11 +90,11 @@ public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Dispo
     myTimer.start();
   }
 
-  private static SimpleTextAttributes getAttributes(final boolean isClosed, final boolean isRunning, final boolean isSelected) {
-    return new SimpleTextAttributes(isRunning ? SimpleTextAttributes.STYLE_BOLD : SimpleTextAttributes.STYLE_PLAIN,
+  private static SimpleTextAttributes getAttributes(final boolean isClosed, final boolean isActive, final boolean isSelected) {
+    return new SimpleTextAttributes(isActive ? SimpleTextAttributes.STYLE_BOLD : SimpleTextAttributes.STYLE_PLAIN,
                                     isSelected
                                     ? UIUtil.getTableSelectionForeground()
-                                    : isClosed && !isRunning ? UIUtil.getLabelDisabledForeground() : UIUtil.getTableForeground());
+                                    : isClosed && !isActive ? UIUtil.getLabelDisabledForeground() : UIUtil.getTableForeground());
   }
 
   private static String formatDuration(final long milliseconds) {
@@ -212,11 +212,12 @@ public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Dispo
             panel.setBackground(UIUtil.getTableBackground(isSelected));
             final SimpleColoredComponent component = new SimpleColoredComponent();
             final boolean isClosed = task.isClosed() || myTaskManager.isLocallyClosed(task);
-            final boolean isRunning = myTaskManager.isTimeTrackingAutoMode() ? task.isActive() : task.isRunning();
-            component.append((String)value, getAttributes(isClosed, isRunning, isSelected));
+            final boolean isActive = task.isActive();
+            final boolean isRunning = myTaskManager.isTimeTrackingAutoMode() ? isActive : isActive && task.isRunning();
+            component.append((String)value, getAttributes(isClosed, isActive, isSelected));
             component.setIcon(isRunning
                               ? LayeredIcon.create(task.getIcon(), AllIcons.General.Run)
-                              : isClosed ? IconLoader.getTransparentIcon(task.getIcon()) : task.getIcon());
+                              : isClosed && !isActive ? IconLoader.getTransparentIcon(task.getIcon()) : task.getIcon());
             component.setOpaque(false);
             panel.add(component, BorderLayout.CENTER);
             panel.setOpaque(true);
@@ -263,8 +264,8 @@ public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Dispo
             panel.setBackground(UIUtil.getTableBackground(isSelected));
             final SimpleColoredComponent component = new SimpleColoredComponent();
             final boolean isClosed = task.isClosed() || myTaskManager.isLocallyClosed(task);
-            final boolean isRunning = myTaskManager.isTimeTrackingAutoMode() ? task.isActive() : task.isRunning();
-            component.append((String)value, getAttributes(isClosed, isRunning, isSelected));
+            final boolean isActive = task.isActive();
+            component.append((String)value, getAttributes(isClosed, isActive, isSelected));
             component.setOpaque(false);
             panel.add(component, BorderLayout.CENTER);
             panel.setOpaque(true);

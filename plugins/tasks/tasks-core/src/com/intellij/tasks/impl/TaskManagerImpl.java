@@ -584,19 +584,16 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       myTimeTrackingTimer = UIUtil.createNamedTimer("TaskManager time tracking", TIME_TRACKING_TIME_UNIT, new ActionListener() {
         @Override
         public void actionPerformed(final ActionEvent e) {
+          final LocalTask activeTask = getActiveTask();
           if (isTimeTrackingAutoMode()) {
-            getActiveTask().setTimeSpent(getActiveTask().getTimeSpent() + TIME_TRACKING_TIME_UNIT);
+            activeTask.setTimeSpent(activeTask.getTimeSpent() + TIME_TRACKING_TIME_UNIT);
             getState().myTotallyTimeSpent += TIME_TRACKING_TIME_UNIT;
           }
           else {
-            boolean runningTaskExist = false;
-            for (LocalTask localTask : getLocalTasks()) {
-              if (localTask.isRunning()) {
-                localTask.setTimeSpent(localTask.getTimeSpent() + TIME_TRACKING_TIME_UNIT);
-                runningTaskExist = true;
-              }
+            if (activeTask.isRunning()) {
+              activeTask.setTimeSpent(activeTask.getTimeSpent() + TIME_TRACKING_TIME_UNIT);
+              getState().myTotallyTimeSpent += TIME_TRACKING_TIME_UNIT;
             }
-            if (runningTaskExist) getState().myTotallyTimeSpent += TIME_TRACKING_TIME_UNIT;
           }
         }
       });
