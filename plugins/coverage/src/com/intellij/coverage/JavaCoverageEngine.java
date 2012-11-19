@@ -494,17 +494,34 @@ public class JavaCoverageEngine extends CoverageEngine {
   public List<PsiElement> findTestsByNames(@NotNull String[] testNames, @NotNull Project project) {
     final List<PsiElement> elements = new ArrayList<PsiElement>();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
     for (String testName : testNames) {
-      final PsiClass psiClass =
-          facade.findClass(StringUtil.getPackageName(testName, '_').replaceAll("\\_", "\\."), GlobalSearchScope.projectScope(project));
+      PsiClass psiClass =
+          facade.findClass(StringUtil.getPackageName(testName, '_').replaceAll("\\_", "\\."), projectScope);
+      int lastIdx = testName.lastIndexOf("_");
       if (psiClass != null) {
-        final PsiMethod[] testsByName = psiClass.findMethodsByName(testName.substring(testName.lastIndexOf("_") + 1), true);
-        if (testsByName.length == 1) {
-          elements.add(testsByName[0]);
+        collectTestsByName(elements, testName, psiClass, lastIdx);
+      } else {
+        String className = testName;
+        while (lastIdx > 0) {
+          className = className.substring(0, lastIdx - 1);
+          psiClass = facade.findClass(StringUtil.getPackageName(className, '_').replaceAll("\\_", "\\."), projectScope);
+          lastIdx = className.lastIndexOf("_");
+          if (psiClass != null) {
+            collectTestsByName(elements, testName, psiClass, lastIdx);
+            break;
+          }
         }
       }
     }
     return elements;
+  }
+
+  private static void collectTestsByName(List<PsiElement> elements, String testName, PsiClass psiClass, int lastIdx) {
+    final PsiMethod[] testsByName = psiClass.findMethodsByName(testName.substring(lastIdx + 1), true);
+    if (testsByName.length == 1) {
+      elements.add(testsByName[0]);
+    }
   }
 
 
