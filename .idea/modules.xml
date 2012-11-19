@@ -5,6 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/GitAlk.iml" filepath="$PROJECT_DIR$/GitAlk.iml" />
       <module fileurl="file://$PROJECT_DIR$/commits/commits.iml" filepath="$PROJECT_DIR$/commits/commits.iml" />
       <module fileurl="file://$PROJECT_DIR$/common/common.iml" filepath="$PROJECT_DIR$/common/common.iml" />
+      <module fileurl="file://$PROJECT_DIR$/graph/graph.iml" filepath="$PROJECT_DIR$/graph/graph.iml" />
     </modules>
   </component>
 </project>
