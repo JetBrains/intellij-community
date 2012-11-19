@@ -82,7 +82,7 @@ public class CoreApplicationEnvironment {
     myFileTypeRegistry = new CoreFileTypeRegistry();
     myEncodingRegistry = new CoreEncodingRegistry();
 
-    myApplication = createApplication();
+    myApplication = createApplication(myParentDisposable);
     ApplicationManager.setApplication(myApplication,
                                       new StaticGetter<FileTypeRegistry>(myFileTypeRegistry),
                                       new StaticGetter<EncodingRegistry>(myEncodingRegistry),
@@ -139,12 +139,12 @@ public class CoreApplicationEnvironment {
 
   }
 
-  protected CoreVirtualFilePointerManager createVirtualFilePointerManager() {
+  protected VirtualFilePointerManager createVirtualFilePointerManager() {
     return new CoreVirtualFilePointerManager();
   }
 
-  protected MockApplication createApplication() {
-    return new MockApplication(myParentDisposable);
+  protected MockApplication createApplication(Disposable parentDisposable) {
+    return new MockApplication(parentDisposable);
   }
 
   protected JobLauncher createJobLauncher() {
