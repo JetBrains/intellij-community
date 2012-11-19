@@ -698,7 +698,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       final PsiType returnType = subst.substitute(method.getReturnType());
       if (returnType != null && returnType != PsiType.VOID) {
         Pair<PsiType, ConstraintType> constraint = null;
-        final List<PsiExpression> expressions = lambdaExpression.getReturnExpressions();
+        final List<PsiExpression> expressions = LambdaUtil.getReturnExpressions(lambdaExpression);
         for (final PsiExpression expression : expressions) {
           final boolean independent = LambdaUtil.isFreeFromTypeInferenceArgs(methodParameters, lambdaExpression, expression, subst, functionalInterfaceType, typeParam);
           if (!independent) {

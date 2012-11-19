@@ -15,7 +15,6 @@
  */
 package com.intellij.psi;
 
-import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -30,8 +29,10 @@ public interface PsiMethodReferenceExpression extends PsiReferenceExpression {
   @Nullable
   PsiTypeElement getQualifierType();
   
+  /**
+   * @return SAM type the method reference expression corresponds to
+   *         null when no SAM type could be found
+  */
   @Nullable
   PsiType getFunctionalInterfaceType();
-
-  boolean process(Ref<PsiClass> psiClassRef, Ref<PsiSubstitutor> substRef);
 }
