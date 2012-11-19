@@ -95,7 +95,7 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
 
     JPanel footerPanel = new JPanel(new BorderLayout());
     footerPanel.setBackground(WelcomeScreenColors.FOOTER_BACKGROUND);
-    footerPanel.setBorder(new EmptyBorder(5, 5, 5, 5) {
+    footerPanel.setBorder(new EmptyBorder(2, 5, 2, 5) {
       @Override
       public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
         g.setColor(WelcomeScreenColors.BORDER_COLOR);
