@@ -35,22 +35,18 @@ import com.intellij.ui.EditorNotifications;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
  */
 public class ChangelistConflictTracker {
 
-  private final Map<String, Conflict> myConflicts = new LinkedHashMap<String, Conflict>();
+  private final Map<String, Conflict> myConflicts = Collections.synchronizedMap(new LinkedHashMap<String, Conflict>());
 
   private final Options myOptions = new Options();
   private final Project myProject;
