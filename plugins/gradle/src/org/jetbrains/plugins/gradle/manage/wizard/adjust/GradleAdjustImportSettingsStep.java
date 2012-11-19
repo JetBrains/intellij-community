@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.importing.wizard.adjust;
+package org.jetbrains.plugins.gradle.manage.wizard.adjust;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.options.ConfigurationException;
@@ -7,8 +7,8 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.importing.GradleProjectImportBuilder;
-import org.jetbrains.plugins.gradle.importing.wizard.AbstractImportFromGradleWizardStep;
+import org.jetbrains.plugins.gradle.manage.GradleProjectImportBuilder;
+import org.jetbrains.plugins.gradle.manage.wizard.AbstractImportFromGradleWizardStep;
 import org.jetbrains.plugins.gradle.model.gradle.*;
 import org.jetbrains.plugins.gradle.model.id.GradleEntityId;
 import org.jetbrains.plugins.gradle.model.id.GradleSyntheticId;

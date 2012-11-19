@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.importing;
+package org.jetbrains.plugins.gradle.manage;
 
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -116,10 +116,10 @@ public class GradleModulesImporter {
         AccessToken writeLock = application.acquireWriteActionLock(getClass());
         try {
           final List<ModifiableRootModel> rootModels = new ArrayList<ModifiableRootModel>();
-          final GradleProjectEntityImportListener publisher =
-            intellijProject.getMessageBus().syncPublisher(GradleProjectEntityImportListener.TOPIC);
+          final GradleProjectEntityChangeListener publisher =
+            intellijProject.getMessageBus().syncPublisher(GradleProjectEntityChangeListener.TOPIC);
           for (GradleModule module : modules) {
-            publisher.onImportStart(module);
+            publisher.onChangeStart(module);
           }
           try {
             Map<GradleModule, Module> moduleMappings = doImportModules(modules, model, rootModels);
@@ -134,7 +134,7 @@ public class GradleModulesImporter {
             ModifiableRootModel[] modelsAsArray = rootModels.toArray(new ModifiableRootModel[rootModels.size()]);
             ModifiableModelCommitter.multiCommit(modelsAsArray, model);
             for (GradleModule module : modules) {
-              publisher.onImportEnd(module);
+              publisher.onChangeEnd(module);
             }
           }
         }
@@ -387,14 +387,14 @@ public class GradleModulesImporter {
     model = projectLibraryTable.getModifiableModel();
     List<ModifiableRootModel> modelsToCommit = new ArrayList<ModifiableRootModel>();
     Map<GradleLibrary, Library> libraryMappings = registerProjectLibraries(gradleProject, model);
-    final GradleProjectEntityImportListener publisher
-      = intellijProject.getMessageBus().syncPublisher(GradleProjectEntityImportListener.TOPIC);
+    final GradleProjectEntityChangeListener publisher
+      = intellijProject.getMessageBus().syncPublisher(GradleProjectEntityChangeListener.TOPIC);
     try {
       if (libraryMappings == null) {
         return;
       }
       for (GradleLibrary library : libraryMappings.keySet()) {
-        publisher.onImportStart(library);
+        publisher.onChangeStart(library);
       }
       modelsToCommit.addAll(configureModulesLibraryDependencies(moduleMappings, libraryMappings, gradleProject));
     }
@@ -407,7 +407,7 @@ public class GradleModulesImporter {
       }
       if (libraryMappings != null) {
         for (GradleLibrary library : libraryMappings.keySet()) {
-          publisher.onImportEnd(library);
+          publisher.onChangeEnd(library);
         }
       }
     }

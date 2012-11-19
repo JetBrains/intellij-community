@@ -40,6 +40,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleSettings;
+import org.jetbrains.plugins.gradle.manage.GradleProjectEntityChangeListener;
 import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
 import org.jetbrains.plugins.gradle.model.id.GradleEntityId;
 import org.jetbrains.plugins.gradle.model.id.GradleSyntheticId;
@@ -59,6 +60,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -437,6 +439,25 @@ public class GradleUtil {
   
   public static boolean isGradleAvailable(@Nullable Project project) {
     return LIBRARY_MANAGER.getValue().getGradleHome(project) != null;
+  }
+
+  public static void executeProjectChangeAction(@NotNull Project project, @NotNull Object entityToChange, @NotNull Runnable task) {
+    executeProjectChangeAction(project, Collections.singleton(entityToChange), task);
+  }
+  
+  public static void executeProjectChangeAction(@NotNull Project project, @NotNull Iterable<?> entitiesToChange, @NotNull Runnable task) {
+    final GradleProjectEntityChangeListener publisher = project.getMessageBus().syncPublisher(GradleProjectEntityChangeListener.TOPIC);
+    for (Object e : entitiesToChange) {
+      publisher.onChangeStart(e);
+    }
+    try {
+      task.run();
+    }
+    finally {
+      for (Object e : entitiesToChange) {
+        publisher.onChangeEnd(e);
+      }
+    }
   }
   
   private interface TaskUnderProgress {

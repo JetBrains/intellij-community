@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.importing;
+package org.jetbrains.plugins.gradle.manage;
 
 
 import org.jetbrains.plugins.gradle.model.id.GradleEntityIdMapper
@@ -14,17 +14,17 @@ import static org.junit.Assert.fail
  * @author Denis Zhdanov
  * @since 02/10/2012
  */
-public class GradleLocalNodeImportHelperTest extends AbstractGradleTest {
+public class GradleLocalNodeManageHelperTest extends AbstractGradleTest {
 
-  private GradleLocalNodeImportHelper myHelper
+  private GradleLocalNodeManageHelper myHelper
   
   @Override
   protected void configureContainer(MutablePicoContainer container) {
-    container.registerComponentImplementation(GradleLocalNodeImportHelper)
+    container.registerComponentImplementation(GradleLocalNodeManageHelper)
     container.registerComponentImplementation(GradleModuleImporter)
-    container.registerComponentImplementation(GradleLibraryImporter)
+    container.registerComponentImplementation(GradleLibraryManager)
     container.registerComponentImplementation(GradleDependencyImporter)
-    container.registerComponentImplementation(GradleContentRootImporter)
+    container.registerComponentImplementation(GradleContentRootManager)
   }
 
   @Test
@@ -51,7 +51,7 @@ public class GradleLocalNodeImportHelperTest extends AbstractGradleTest {
   }
   
   private def doTest(Closure c) {
-    myHelper = container.getComponentInstance(GradleLocalNodeImportHelper)
+    myHelper = container.getComponentInstance(GradleLocalNodeManageHelper)
     def compositeBuilder = new CompositeProjectBuilder(gradleBuilder: gradle, intellijBuilder: intellij)
     c.delegate = compositeBuilder
     c.call()

@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.importing;
+package org.jetbrains.plugins.gradle.manage;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -46,47 +46,47 @@ import java.util.*;
  * @author Denis Zhdanov
  * @since 2/10/12 11:51 AM
  */
-public class GradleLocalNodeImportHelper {
+public class GradleLocalNodeManageHelper {
 
-  @NotNull private final GradleProjectStructureHelper   myProjectStructureHelper;
-  @NotNull private final GradleEntityIdMapper           myIdMapper;
-  @NotNull private final GradleModuleImporter           myModuleImporter;
-  @NotNull private final GradleLibraryImporter          myLibraryImporter;
-  @NotNull private final GradleDependencyImporter myModuleDependencyImporter;
-  @NotNull private final GradleContentRootImporter      myContentRootImporter;
+  @NotNull private final GradleProjectStructureHelper myProjectStructureHelper;
+  @NotNull private final GradleEntityIdMapper         myIdMapper;
+  @NotNull private final GradleModuleImporter         myModuleImporter;
+  @NotNull private final GradleLibraryManager         myLibraryImporter;
+  @NotNull private final GradleDependencyImporter     myModuleDependencyImporter;
+  @NotNull private final GradleContentRootManager     myContentRootManager;
 
-  public GradleLocalNodeImportHelper(@NotNull GradleProjectStructureHelper projectStructureHelper,
+  public GradleLocalNodeManageHelper(@NotNull GradleProjectStructureHelper projectStructureHelper,
                                      @NotNull GradleEntityIdMapper idMapper,
                                      @NotNull GradleModuleImporter moduleImporter,
-                                     @NotNull GradleLibraryImporter libraryImporter,
+                                     @NotNull GradleLibraryManager libraryImporter,
                                      @NotNull GradleDependencyImporter moduleDependencyImporter,
-                                     @NotNull GradleContentRootImporter contentRootImporter)
+                                     @NotNull GradleContentRootManager contentRootManager)
   {
     myProjectStructureHelper = projectStructureHelper;
     myIdMapper = idMapper;
     myModuleImporter = moduleImporter;
     myModuleDependencyImporter = moduleDependencyImporter;
     myLibraryImporter = libraryImporter;
-    myContentRootImporter = contentRootImporter;
+    myContentRootManager = contentRootManager;
   }
 
   /**
    * {@link #deriveEntitiesToImport(Iterable) Derives} target entities from the given nodes
    * and {@link #importEntities(Collection) imports them}.
-   * 
+   *
    * @param nodes  'anchor nodes' to import
    */
   public void importNodes(Iterable<GradleProjectStructureNode<?>> nodes) {
     final List<GradleEntity> entities = deriveEntitiesToImport(nodes);
     importEntities(entities);
   }
-  
+
   /**
    * Collects all nodes that should be imported based on the given nodes and returns corresponding gradle entities
    * sorted in topological order.
-   * 
+   *
    * @param nodes  'anchor nodes' to import
-   * @return       collection of gradle entities that should be imported based on the given nodes
+   * @return collection of gradle entities that should be imported based on the given nodes
    */
   @NotNull
   public List<GradleEntity> deriveEntitiesToImport(@NotNull Iterable<GradleProjectStructureNode<?>> nodes) {
@@ -221,7 +221,7 @@ public class GradleLocalNodeImportHelper {
             ));
             return;
           }
-          myContentRootImporter.importContentRoots(contentRoot, intellijModule);
+          myContentRootManager.importContentRoots(contentRoot, intellijModule);
         }
 
         @Override
@@ -246,6 +246,22 @@ public class GradleLocalNodeImportHelper {
     }
     GradleUtil.refreshProject(myProjectStructureHelper.getProject());
   }
+
+  public void removeNodes(@NotNull Collection<GradleProjectStructureNode<?>> nodes) {
+    Context context = new Context();
+    for (GradleProjectStructureNode<?> node : nodes) {
+      GradleProjectStructureNodeDescriptor<? extends GradleEntityId> descriptor = node.getDescriptor();
+      if (descriptor.getAttributes() != GradleTextAttributes.INTELLIJ_LOCAL_CHANGE) {
+        continue;
+      }
+      Object entity = myIdMapper.mapIdToEntity(descriptor.getElement());
+      if (entity == null) {
+        continue;
+      }
+      // TODO den implement
+      //GradleUtil.dispatch(entity);
+    }
+  }
   
   private class Context {
 
@@ -254,7 +270,6 @@ public class GradleLocalNodeImportHelper {
     public final Set<GradleLibrary>     libraries    = new HashSet<GradleLibrary>();
     public final Set<GradleDependency>  dependencies = new HashSet<GradleDependency>();
     public final CollectingVisitor      visitor      = new CollectingVisitor(this);
-    
     public boolean recursive;
 
     @NotNull

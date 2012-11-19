@@ -4,14 +4,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.GradleTextAttributes;
-import org.jetbrains.plugins.gradle.importing.GradleLocalNodeImportHelper;
+import org.jetbrains.plugins.gradle.manage.GradleLocalNodeManageHelper;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * Imports target {@link GradleTextAttributes#GRADLE_LOCAL_CHANGE 'gradle local'} entity to the current intellij project.
@@ -40,13 +38,7 @@ public class GradleImportEntityAction extends AbstractGradleSyncTreeNodeAction {
 
   @Override
   protected void doActionPerformed(@NotNull Collection<GradleProjectStructureNode<?>> nodes, @NotNull Project project, @NotNull Tree tree) {
-    final GradleLocalNodeImportHelper importHelper = project.getComponent(GradleLocalNodeImportHelper.class);
-    final List<GradleProjectStructureNode<?>> interestedNodes = new ArrayList<GradleProjectStructureNode<?>>();
-    for (GradleProjectStructureNode<?> node : nodes) {
-      if (node.getDescriptor().getAttributes() == GradleTextAttributes.GRADLE_LOCAL_CHANGE) {
-        interestedNodes.add(node);
-      }
-    }
-    importHelper.importNodes(interestedNodes); 
+    final GradleLocalNodeManageHelper helper = project.getComponent(GradleLocalNodeManageHelper.class);
+    helper.importNodes(nodes); 
   }
 }

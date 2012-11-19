@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.importing.wizard.adjust;
+package org.jetbrains.plugins.gradle.manage.wizard.adjust;
 
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.projectRoots.JavaSdk;

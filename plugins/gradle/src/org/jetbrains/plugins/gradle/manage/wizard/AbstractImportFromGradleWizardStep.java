@@ -1,10 +1,10 @@
-package org.jetbrains.plugins.gradle.importing.wizard;
+package org.jetbrains.plugins.gradle.manage.wizard;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.projectImport.ProjectImportWizardStep;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.importing.GradleProjectImportBuilder;
+import org.jetbrains.plugins.gradle.manage.GradleProjectImportBuilder;
 
 /**
  * Just a holder for the common useful functionality.
