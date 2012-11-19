@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.printgraph;
 
-import org.hanuna.gitalk.graphmodel.Node;
+import org.hanuna.gitalk.graph.Node;
 
 /**
  * @author erokhins

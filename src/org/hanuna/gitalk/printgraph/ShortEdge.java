@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.printgraph;
 
-import org.hanuna.gitalk.graphmodel.Edge;
+import org.hanuna.gitalk.graph.Edge;
 
 /**
  * @author erokhins

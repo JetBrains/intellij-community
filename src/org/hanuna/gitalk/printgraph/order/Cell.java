@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.printgraph.order;
 
-import org.hanuna.gitalk.graphmodel.Branch;
+import org.hanuna.gitalk.graph.Branch;
 
 /**
  * @author erokhins
