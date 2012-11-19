@@ -1,10 +1,7 @@
 package org.hanuna.gitalk.commitmodel;
 
+import org.junit.Assert;
 import org.junit.Test;
-
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertTrue;
 
 /**
  * @author erokhins
@@ -12,7 +9,7 @@ import static junit.framework.Assert.assertTrue;
 public class HashTest {
     public void runStringTest(String strHash) {
         Hash hash = Hash.buildHash(strHash);
-        assertEquals(strHash, hash.toStrHash());
+        Assert.assertEquals(strHash, hash.toStrHash());
     }
 
     @Test
@@ -25,10 +22,10 @@ public class HashTest {
     @Test
     public void testEquals() throws Exception {
         Hash hash1 = Hash.buildHash("adf");
-        assertTrue(hash1.equals(hash1));
-        assertFalse(hash1.equals(null));
+        Assert.assertTrue(hash1.equals(hash1));
+        Assert.assertFalse(hash1.equals(null));
         Hash hash2 = Hash.buildHash("adf");
-        assertTrue(hash1.equals(hash2));
-        assertTrue(hash1 == hash2);
+        Assert.assertTrue(hash1.equals(hash2));
+        Assert.assertTrue(hash1 == hash2);
     }
 }

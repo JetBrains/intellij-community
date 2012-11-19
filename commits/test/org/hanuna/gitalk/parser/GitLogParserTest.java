@@ -23,31 +23,31 @@ public class GitLogParserTest {
 
     @Test
     public void testParseCommitData() throws Exception {
-        runTestParseCommitData("a12f|-|-author s|-132352112|- message", "a12f|-author s|-132352112|- message");
-        runTestParseCommitData("a|-b c|-|-13|-message", "a|-b|-c|-|-13|-message");
+        runTestParseCommitData("a12f|-|-author s|-132352112|- message", "a12f|-|-author s|-132352112|- message");
+        runTestParseCommitData("a|-b c|-|-13|-message", "a|-b c|-|-13|-message");
         runTestParseCommitData("adf23|-adf2|-a|-1|-mes|-age", "adf23|-adf2|-a|-1|-mes|-age");
-        runTestParseCommitData("adf23|-a1 a2 a3|-a|-|-mes|-age", "adf23|-a1|-a2|-a3|-a|-0|-mes|-age");
+        runTestParseCommitData("adf23|-a1 a2 a3|-a|-|-mes|-age", "adf23|-a1 a2 a3|-a|-0|-mes|-age");
     }
 
 
     private void runLogParserTest(String in, String out) throws IOException {
         String input = in.replace("\n", "|-aut|-132352112|-mes\n") + "|-aut|-132352112|-mes";
-        String output = out.replace(" ", "|-") + "\n";
+        //String output = out.replace(" ", "|-") + "\n";
         GitLogParser parser = new GitLogParser(new StringReader(input));
         ReadOnlyList<Commit> commits = parser.getFullModel();
-        assertEquals(output, toShortStr(commits));
+        assertEquals(out, toShortStr(commits));
     }
 
     @Test
     public void testLogParser() throws IOException {
-        runLogParserTest("12|-", "0|-12");
+        runLogParserTest("12|-", "0|-|-12");
 
         runLogParserTest(
                 "12|-af\n" +
                 "af|-",
 
                 "0|-1|-12\n" +
-                "1|-af"
+                "1|-|-af"
         );
 
         runLogParserTest(
@@ -68,8 +68,8 @@ public class GitLogParserTest {
                 "4|-7|-a4\n" +
                 "5|-7|-a5\n" +
                 "6|-7|-a6\n" +
-                "7|-a7\n" +
-                "8|-a8"
+                "7|-|-a7\n" +
+                "8|-|-a8"
         );
     }
 
