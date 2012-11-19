@@ -32,7 +32,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 )
 public class CompilerWorkspaceConfiguration implements PersistentStateComponent<CompilerWorkspaceConfiguration> {
   public static final int DEFAULT_COMPILE_PROCESS_HEAP_SIZE = 700;
-  public static final String DEFAULT_COMPILE_PROCESS_VM_OPTIONS = "-ea -XX:MaxPermSize=150m";
+  public static final String DEFAULT_COMPILE_PROCESS_VM_OPTIONS = "-ea";
 
   public boolean AUTO_SHOW_ERRORS_IN_EDITOR = true;
   @Deprecated public boolean CLOSE_MESSAGE_VIEW_IF_SUCCESS = true;
