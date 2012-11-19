@@ -259,21 +259,27 @@ public class ArrangementMatchingRuleEditor extends JPanel {
     myRuleInfo.copyConditionsFrom(infoWithConditions);
     myNameField.setText(myRuleInfo.getNamePattern());
     
-    disableInapplicableConditions(condition);
+    refreshConditions();
   }
 
   /**
    * Disable conditions not applicable at the current context (e.g. disable 'synchronized' if no 'method' is selected).
    */
-  private void disableInapplicableConditions(@NotNull ArrangementMatchCondition condition) {
-    Map<ArrangementSettingType, Set<?>> available = ArrangementConfigUtil.buildAvailableConditions(myFilter, condition);
-    for (Collection<?> ids : available.values()) {
-      for (Object id : ids) {
-        ArrangementAtomMatchConditionComponent component = myConditionComponents.get(id);
-        if (component != null) {
-          component.setEnabled(true);
-          component.setSelected(myRuleInfo.hasCondition(id));
+  private void refreshConditions() {
+    Map<ArrangementSettingType, Set<?>> available = ArrangementConfigUtil.buildAvailableConditions(myFilter, myRuleInfo.buildCondition());
+    for (ArrangementAtomMatchConditionComponent component : myConditionComponents.values()) {
+      ArrangementAtomMatchCondition c = component.getMatchCondition();
+      Set<?> s = available.get(c.getType());
+      if (s == null || !s.contains(c.getValue())) {
+        if (myRuleInfo.hasCondition(c.getValue())) {
+          removeCondition(component);
         }
+        else {
+          component.setEnabled(false);
+        }
+      }
+      else if (s.contains(c.getValue()) && !component.isEnabled()) {
+        component.setEnabled(true);
       }
     }
   }
@@ -346,6 +352,8 @@ public class ArrangementMatchingRuleEditor extends JPanel {
 
   private void addCondition(@NotNull ArrangementAtomMatchConditionComponent component) {
     ArrangementAtomMatchCondition chosenCondition = component.getMatchCondition();
+    myRuleInfo.addAtomCondition(chosenCondition);
+    component.setSelected(true);
     Collection<Set<?>> mutexes = myFilter.getMutexes();
     
     // Update 'mutex conditions', i.e. conditions which can't be active at the same time (e.g. type 'field' and type 'method').
@@ -354,52 +362,19 @@ public class ArrangementMatchingRuleEditor extends JPanel {
         continue;
       }
       for (Object key : mutex) {
-        if (myRuleInfo.hasCondition(key)) {
-          ArrangementAtomMatchConditionComponent componentToDeselect = myConditionComponents.get(key);
-          myRuleInfo.removeCondition(componentToDeselect.getMatchCondition().getValue());
+        if (!chosenCondition.getValue().equals(key) && myRuleInfo.hasCondition(key)) {
+          removeCondition(myConditionComponents.get(key));
           myRuleInfo.addAtomCondition(chosenCondition);
-          ArrangementMatchCondition newCondition = myRuleInfo.buildCondition();
-          for (ArrangementAtomMatchConditionComponent componentToCheck : myConditionComponents.values()) {
-            Object value = componentToCheck.getMatchCondition().getValue();
-            if (myRuleInfo.hasCondition(value) && !ArrangementConfigUtil.isEnabled(value, myFilter, newCondition)) {
-              myRuleInfo.removeCondition(componentToCheck.getMatchCondition().getValue());
-              newCondition = myRuleInfo.buildCondition();
-            }
-          }
-
-          // There is a possible case that some conditions become unavailable, e.g. changing type from 'field' to 'method'
-          // makes 'volatile' condition inappropriate.
-          assert newCondition != null;
-          disableInapplicableConditions(newCondition);
-          return;
         }
       }
     }
-    myRuleInfo.addAtomCondition(chosenCondition); 
+    refreshConditions();
   }
 
   private void removeCondition(@NotNull ArrangementAtomMatchConditionComponent component) {
     myRuleInfo.removeCondition(component.getMatchCondition().getValue());
     component.setSelected(false);
-    ArrangementMatchCondition condition = myRuleInfo.buildCondition();
-    Map<ArrangementSettingType, Set<?>> map = ArrangementConfigUtil.buildAvailableConditions(myFilter, condition);
-    for (ArrangementAtomMatchConditionComponent c : myConditionComponents.values()) {
-      Object v = c.getMatchCondition().getValue();
-      if (!myRuleInfo.hasCondition(v)) {
-        continue;
-      }
-      boolean remain = false;
-      for (Set<?> s : map.values()) {
-        if (s.contains(v)) {
-          remain = true;
-          break;
-        }
-      }
-      if (!remain) {
-        removeCondition(c);
-        return;
-      }
-    }
+    refreshConditions();
   }
 
   @Override
