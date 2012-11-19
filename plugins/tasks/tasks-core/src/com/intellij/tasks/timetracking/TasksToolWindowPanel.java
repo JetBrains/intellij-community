@@ -11,12 +11,15 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskListenerAdapter;
 import com.intellij.tasks.TaskManager;
+import com.intellij.tasks.actions.GotoTaskAction;
+import com.intellij.tasks.actions.SwitchTaskAction;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
@@ -40,17 +43,20 @@ public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Dispo
 
   private final ListTableModel<LocalTask> myTableModel;
   private final TaskManager myTaskManager;
+  private final Project myProject;
   private Timer myTimer;
+  private final TableView<LocalTask> myTable;
 
   public TasksToolWindowPanel(final Project project, final boolean vertical) {
     super(vertical);
+    myProject = project;
     myTaskManager = TaskManager.getManager(project);
 
-    final TableView<LocalTask> table = new TableView<LocalTask>(createListModel());
-    myTableModel = table.getListTableModel();
+    myTable = new TableView<LocalTask>(createListModel());
+    myTableModel = myTable.getListTableModel();
     updateTable();
 
-    setContent(ScrollPaneFactory.createScrollPane(table, true));
+    setContent(ScrollPaneFactory.createScrollPane(myTable, true));
     setToolbar(createToolbar());
 
     myTaskManager.addTaskListener(new TaskListenerAdapter() {
@@ -78,7 +84,7 @@ public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Dispo
     myTimer = new Timer(TaskManagerImpl.TIME_TRACKING_TIME_UNIT, new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
-        table.repaint();
+        myTable.repaint();
       }
     });
     myTimer.start();
@@ -105,6 +111,26 @@ public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Dispo
 
   private JComponent createToolbar() {
     DefaultActionGroup group = new DefaultActionGroup();
+    group.add(new GotoTaskAction());
+    group.add(new AnAction("Remove Task", "Remove Task", IconUtil.getRemoveIcon()) {
+      @Override
+      public void actionPerformed(final AnActionEvent e) {
+        for (LocalTask localTask : myTable.getSelectedObjects()) {
+          SwitchTaskAction.removeTask(myProject, localTask, myTaskManager);
+        }
+      }
+    });
+    group.add(new ToggleAction("Hide closed tasks", "Hide closed tasks", AllIcons.Actions.Checked) {
+      @Override
+      public boolean isSelected(final AnActionEvent e) {
+        return myTaskManager.isHideClosedTasks();
+      }
+
+      @Override
+      public void setSelected(final AnActionEvent e, final boolean state) {
+        myTaskManager.setHideClosedTasks(state);
+      }
+    });
     group.add(new ToggleAction("Auto mode", "Automatic starting and stopping of timer", TasksIcons.AutoMode) {
       @Override
       public boolean isSelected(final AnActionEvent e) {
@@ -114,6 +140,7 @@ public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Dispo
       @Override
       public void setSelected(final AnActionEvent e, final boolean state) {
         myTaskManager.setTimeTrackingAutoMode(state);
+        updateTable();
       }
     });
     group.add(new AnAction() {
@@ -153,7 +180,7 @@ public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Dispo
   }
 
   private void updateTable() {
-    myTableModel.setItems(ContainerUtil.filter(myTaskManager.getLocalTasks(), new Condition<LocalTask>() {
+    myTableModel.setItems(ContainerUtil.filter(myTaskManager.getLocalTasks(myTaskManager.isHideClosedTasks()), new Condition<LocalTask>() {
       @Override
       public boolean value(final LocalTask task) {
         return task.isActive() || task.getTimeSpent() != 0;
