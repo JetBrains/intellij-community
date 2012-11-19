@@ -49,6 +49,10 @@ public class CaptionPanel extends JPanel {
     super.paintComponent(g);
     final Graphics2D g2d = (Graphics2D) g;
 
+    if (UIUtil.isUnderDarcula() && (getComponents().length != 1 || !(getComponents()[0] instanceof EngravedLabel))) {
+      paintUnderDarcula(g2d);
+      return;
+    }
     if (myActive) {
       g.setColor(Color.white);
       g.drawLine(0, 0, getWidth(), 0);
@@ -65,6 +69,25 @@ public class CaptionPanel extends JPanel {
     }
 
     g2d.fillRect(0, 1, getWidth(), getHeight() - 2);
+  }
+
+  private void paintUnderDarcula(Graphics2D g) {
+    if (myActive) {
+      g.setColor(Gray._100);
+      g.drawLine(0, 0, getWidth(), 0);
+      g.setColor(Gray._50);
+      g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
+      g.setPaint(new GradientPaint(0, 0, Gray._100, 0, getHeight(), Gray._85));
+    }
+    else {
+      g.setColor(Gray._100);
+      g.drawLine(0, 0, getWidth(), 0);
+      g.setColor(Gray._50);
+      g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
+      g.setPaint(new GradientPaint(0, 0, Gray._120, 0, getHeight(), Gray._105));
+    }
+
+    g.fillRect(0, 1, getWidth(), getHeight() - 2);
   }
 
   public void setActive(final boolean active) {
