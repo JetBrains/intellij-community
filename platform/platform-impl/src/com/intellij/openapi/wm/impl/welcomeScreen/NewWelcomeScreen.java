@@ -24,7 +24,6 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.WelcomeScreen;
-import com.intellij.ui.Gray;
 import com.intellij.ui.LightColors;
 
 import javax.swing.*;
@@ -32,6 +31,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
+
   public NewWelcomeScreen(JRootPane rootPane) {
     super(new BorderLayout());
     add(createHeaderPanel(), BorderLayout.NORTH);
@@ -91,13 +91,14 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
                              " Build " +
                              ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode());
     versionLabel.setFont(versionLabel.getFont().deriveFont((float) 10));
+    versionLabel.setForeground(WelcomeScreenColors.FOOTER_FOREGROUND);
 
     JPanel footerPanel = new JPanel(new BorderLayout());
-    footerPanel.setBackground(Gray._210);
+    footerPanel.setBackground(WelcomeScreenColors.FOOTER_BACKGROUND);
     footerPanel.setBorder(new EmptyBorder(5, 5, 5, 5) {
       @Override
       public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-        g.setColor(Gray._190);
+        g.setColor(WelcomeScreenColors.BORDER_COLOR);
         g.drawLine(x, y, x + width, y);
       }
     });
@@ -111,9 +112,9 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
     welcome.setBorder(new EmptyBorder(15, 15, 15, 15));
     welcome.setFont(welcome.getFont().deriveFont((float) 32));
     welcome.setIconTextGap(30);
-    welcome.setForeground(Gray._80);
+    welcome.setForeground(WelcomeScreenColors.WELCOME_HEADER_FOREGROUND);
     header.add(welcome);
-    header.setBackground(Gray._220);
+    header.setBackground(WelcomeScreenColors.WELCOME_HEADER_BACKGROUND);
 
     header.setBorder(new BottomLineBorder());
     return header;

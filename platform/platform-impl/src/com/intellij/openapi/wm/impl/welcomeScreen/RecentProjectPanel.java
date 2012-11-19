@@ -28,7 +28,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.ClickListener;
-import com.intellij.ui.Gray;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
@@ -147,11 +146,12 @@ public class RecentProjectPanel extends JPanel {
     JLabel titleLabel = new JLabel("Recent Projects");
     title.add(titleLabel);
     titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
-    title.setBackground(Gray._210);
+    titleLabel.setForeground(WelcomeScreenColors.CAPTION_FOREGROUND);
+    title.setBackground(WelcomeScreenColors.CAPTION_BACKGROUND);
 
     add(title, BorderLayout.NORTH);
 
-    setBorder(new LineBorder(Gray._190));
+    setBorder(new LineBorder(WelcomeScreenColors.BORDER_COLOR));
   }
 
   private static String getTitle2Text(String fullText, JComponent pathLabel) {

@@ -22,7 +22,6 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
-import com.intellij.ui.Gray;
 import com.intellij.ui.JBCardLayout;
 
 import javax.swing.*;
@@ -102,7 +101,7 @@ public class CardActionsPanel extends JPanel {
     private HeaderPanel(String text, final String parentId) {
       super(new BorderLayout(5, 5));
 
-      setBackground(Gray._210);
+      setBackground(WelcomeScreenColors.CAPTION_BACKGROUND);
 
       if (parentId != null) {
         AnAction back = new AnAction("Back", null, AllIcons.Actions.Back) {
@@ -122,6 +121,7 @@ public class CardActionsPanel extends JPanel {
 
       JLabel title = new JLabel(text);
       title.setHorizontalAlignment(SwingConstants.CENTER);
+      title.setForeground(WelcomeScreenColors.CAPTION_FOREGROUND);
       add(title, BorderLayout.CENTER);
       setBorder(new BottomLineBorder());
     }

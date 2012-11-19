@@ -20,7 +20,6 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.ui.Gray;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -37,7 +36,7 @@ public class WelcomePane extends JPanel {
       }
     };
 
-    actionsPanel.setBorder(new LineBorder(Gray._190));
+    actionsPanel.setBorder(new LineBorder(WelcomeScreenColors.BORDER_COLOR));
 
     JPanel recentsPanel = new JPanel(new BorderLayout(30, 30));
     recentsPanel.add(new RecentProjectPanel());

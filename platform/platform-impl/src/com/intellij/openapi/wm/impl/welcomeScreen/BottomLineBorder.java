@@ -3,8 +3,6 @@
  */
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
-import com.intellij.ui.Gray;
-
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
@@ -15,7 +13,7 @@ public class BottomLineBorder extends EmptyBorder {
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-    g.setColor(Gray._190);
+    g.setColor(WelcomeScreenColors.BORDER_COLOR);
     g.drawLine(x, y + height - 1, x + width, y + height - 1);
   }
 }
