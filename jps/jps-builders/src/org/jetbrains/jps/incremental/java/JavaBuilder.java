@@ -393,6 +393,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
                 context.processMessage(new ProgressMessage("Finished adding NotNull assertions [" + chunkName + "]"));
               }
             }
+
+            for (CompiledClass compiledClass : outputConsumer.getCompiledClasses().values()) {
+              if (compiledClass.isDirty()) {
+                compiledClass.save();
+              }
+            }
           }
           finally {
             finder.releaseResources();

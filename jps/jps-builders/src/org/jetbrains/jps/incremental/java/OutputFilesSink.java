@@ -17,9 +17,7 @@ import org.jetbrains.jps.javac.OutputFileObject;
 
 import javax.tools.*;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Collections;
 import java.util.Set;
 
@@ -104,22 +102,8 @@ class OutputFilesSink implements OutputFileConsumer {
       throw new IOException("Missing content for file " + file);
     }
 
-    try {
-      _writeToFile(file, content);
-    }
-    catch (IOException e) {
-      // assuming the reason is non-existing parent
-      final File parentFile = file.getParentFile();
-      if (parentFile == null) {
-        throw e;
-      }
-      if (!parentFile.mkdirs()) {
-        throw e;
-      }
-      // second attempt
-      _writeToFile(file, content);
-    }
-    
+    content.saveToFile(file);
+
     final File source = fileObject.getSourceFile();
     if (!isTemp && source != null) {
       mySuccessfullyCompiled.add(source);
@@ -127,16 +111,6 @@ class OutputFilesSink implements OutputFileConsumer {
       if (className != null) {
         myContext.processMessage(new ProgressMessage("Compiled " + className));
       }
-    }
-  }
-
-  private static void _writeToFile(final File file, BinaryContent content) throws IOException {
-    final OutputStream stream = new FileOutputStream(file);
-    try {
-      stream.write(content.getBuffer(), content.getOffset(), content.getLength());
-    }
-    finally {
-      stream.close();
     }
   }
 

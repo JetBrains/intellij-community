@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.javac.BinaryContent;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * @author Eugene Zhuravlev
@@ -21,11 +22,18 @@ public class CompiledClass {
   @NotNull
   private BinaryContent myContent;
 
+  private boolean myIsDirty = false;
+
   public CompiledClass(@NotNull File outputFile, @NotNull File sourceFile, @Nullable String className, @NotNull BinaryContent content) {
     myOutputFile = outputFile;
     mySourceFile = sourceFile;
     myClassName = className;
     myContent = content;
+  }
+
+  public  void save() throws IOException {
+    myContent.saveToFile(myOutputFile);
+    myIsDirty = false;
   }
 
   @NotNull
@@ -50,6 +58,11 @@ public class CompiledClass {
 
   public void setContent(@NotNull BinaryContent content) {
     myContent = content;
+    myIsDirty = true;
+  }
+
+  public boolean isDirty() {
+    return myIsDirty;
   }
 
   @Override
