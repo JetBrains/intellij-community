@@ -741,10 +741,6 @@ public class BuildManager implements ApplicationComponent{
       heapSize = Math.max(heapSize, JavacConfiguration.getOptions(project, JavacConfiguration.class).MAXIMUM_HEAP_SIZE);
     }
 
-    final int xms = heapSize / 2;
-    if (xms > 32) {
-      cmdLine.addParameter("-Xms" + xms + "m");
-    }
     cmdLine.addParameter("-Xmx" + heapSize + "m");
 
     if (SystemInfo.isMac && sdkVersion != null && JavaSdkVersion.JDK_1_6.equals(sdkVersion) && Registry.is("compiler.process.32bit.vm.on.mac")) {

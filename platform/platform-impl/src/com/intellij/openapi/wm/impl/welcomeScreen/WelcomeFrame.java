@@ -86,6 +86,8 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
 
   @Override
   public void dispose() {
+    DimensionService.getInstance().setLocation(DIMENSION_KEY, getLocation());
+
     super.dispose();
 
     Disposer.dispose(myScreen);
@@ -148,17 +150,12 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
     if (ourInstance == null) {
       WelcomeFrame frame = new WelcomeFrame();
       frame.pack();
-      DimensionService dimensionService = DimensionService.getInstance();
-      Point location = dimensionService.getLocation(DIMENSION_KEY);
-      if (location == null) {
-        Rectangle screenBounds = ScreenUtil.getScreenRectangle(new Point(0, 0));
-        location = new Point(
-          screenBounds.x + (screenBounds.width - frame.getWidth()) / 2,
-          screenBounds.y + (screenBounds.height - frame.getHeight()) / 3
-        );
-      }
-      frame.setLocation(location);
-      dimensionService.setLocation(DIMENSION_KEY, location);
+      Point location = DimensionService.getInstance().getLocation(DIMENSION_KEY);
+      Rectangle screenBounds = ScreenUtil.getScreenRectangle(location != null ? location : new Point(0, 0));
+      frame.setLocation(new Point(
+        screenBounds.x + (screenBounds.width - frame.getWidth()) / 2,
+        screenBounds.y + (screenBounds.height - frame.getHeight()) / 3
+      ));
       frame.setVisible(true);
 
       ourInstance = frame;
