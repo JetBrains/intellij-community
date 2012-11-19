@@ -180,10 +180,10 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
       throw new ConfigurationException("\'" + className + "\' is invalid extracted class name");
     }
 
-    final String packageName = getPackageName();
+    /*final String packageName = getPackageName();
     if (packageName.length() == 0 || !nameHelper.isQualifiedName(packageName)) {
       throw new ConfigurationException("\'" + packageName + "\' is invalid extracted class package name");
-    }
+    }*/
     for (PsiClass innerClass : innerClasses) {
       if (className.equals(innerClass.getName())) {
         throw new ConfigurationException(
