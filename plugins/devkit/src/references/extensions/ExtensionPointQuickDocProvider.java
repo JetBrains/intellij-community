@@ -69,7 +69,7 @@ public class ExtensionPointQuickDocProvider implements DocumentationProvider {
         final Project project = element.getProject();
         final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(fqn, GlobalSearchScope.allScope(project));
         if (psiClass != null) {
-          return JavaDocumentationProvider.generateExternalJavadoc(psiClass);
+          return new JavaDocumentationProvider().generateExternalJavadoc(psiClass);
         }
       }
 

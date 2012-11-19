@@ -74,7 +74,7 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
 
-public class DocumentationManager extends DockablePopupManager<DocumentationComponent> {
+public class DocumentationManager extends DockablePopupManager<DocumentationComponent> implements DocumentationManagerProtocol {
 
   @NonNls public static final String JAVADOC_LOCATION_AND_SIZE = "javadoc.popup";
   public static final DataKey<String> SELECTED_QUICK_DOC_TEXT = DataKey.create("QUICK_DOC.SELECTED_TEXT");
@@ -89,8 +89,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   private WeakReference<JBPopup> myDocInfoHintRef;
   private Component myPreviouslyFocused = null;
   public static final Key<SmartPsiElementPointer> ORIGINAL_ELEMENT_KEY = Key.create("Original element");
-  @NonNls public static final String PSI_ELEMENT_PROTOCOL = "psi_element://";
-  @NonNls public static final String DOC_ELEMENT_PROTOCOL = "doc_element://";
 
   private final ActionManagerEx myActionManagerEx;
 
@@ -961,20 +959,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return element;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void createHyperlink(StringBuilder buffer, String refText,String label,boolean plainLink) {
-    buffer.append("<a href=\"");
-    buffer.append(PSI_ELEMENT_PROTOCOL); // :-)
-    buffer.append(refText);
-    buffer.append("\">");
-    if (!plainLink) {
-      buffer.append("<code>");
-    }
-    buffer.append(label);
-    if (!plainLink) {
-      buffer.append("</code>");
-    }
-    buffer.append("</a>");
+    DocumentationManagerUtil.createHyperlink(buffer, refText, label, plainLink);
   }
 
   @Override
