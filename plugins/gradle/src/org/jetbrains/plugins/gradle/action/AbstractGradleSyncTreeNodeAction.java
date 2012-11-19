@@ -60,6 +60,9 @@ public abstract class AbstractGradleSyncTreeNodeAction extends AnAction {
       return;
     }
     final Collection<GradleProjectStructureNode<?>> nodes = helper.getTargetNodes(e);
+    if (nodes != null) {
+      filterNodes(nodes);
+    }
     if (nodes == null || nodes.isEmpty()) {
       return;
     }

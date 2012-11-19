@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.importing;
+package org.jetbrains.plugins.gradle.manage;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -125,11 +125,11 @@ public class GradleDependencyImporter {
             // Register library dependencies.
             ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
             final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
-            final GradleProjectEntityImportListener publisher
-              = module.getProject().getMessageBus().syncPublisher(GradleProjectEntityImportListener.TOPIC);
+            final GradleProjectEntityChangeListener publisher
+              = module.getProject().getMessageBus().syncPublisher(GradleProjectEntityChangeListener.TOPIC);
             try {
               for (LibraryDependencyInfo info : infos) {
-                publisher.onImportStart(info.library);
+                publisher.onChangeStart(info.library);
                 LibraryOrderEntry orderEntry = moduleRootModel.addLibraryEntry(info.library);
                 orderEntry.setExported(info.exported);
                 orderEntry.setScope(info.scope);
@@ -138,7 +138,7 @@ public class GradleDependencyImporter {
             finally {
               moduleRootModel.commit();
               for (LibraryDependencyInfo info : infos) {
-                publisher.onImportEnd(info.library);
+                publisher.onChangeEnd(info.library);
               }
             }
           }

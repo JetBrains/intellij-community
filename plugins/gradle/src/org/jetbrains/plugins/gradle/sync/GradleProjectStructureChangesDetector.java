@@ -12,7 +12,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.importing.GradleProjectEntityImportListener;
+import org.jetbrains.plugins.gradle.manage.GradleProjectEntityChangeListener;
 import org.jetbrains.plugins.gradle.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.task.GradleTaskType;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
@@ -43,14 +43,14 @@ public class GradleProjectStructureChangesDetector extends AbstractProjectCompon
   
   private void subscribeToGradleImport(@NotNull Project project) {
     MessageBusConnection connection = project.getMessageBus().connect(project);
-    connection.subscribe(GradleProjectEntityImportListener.TOPIC, new GradleProjectEntityImportListener() {
+    connection.subscribe(GradleProjectEntityChangeListener.TOPIC, new GradleProjectEntityChangeListener() {
       @Override
-      public void onImportStart(@NotNull Object entity) {
+      public void onChangeStart(@NotNull Object entity) {
         myImportCounter.incrementAndGet();
       }
 
       @Override
-      public void onImportEnd(@NotNull Object entity) {
+      public void onChangeEnd(@NotNull Object entity) {
         if (myImportCounter.decrementAndGet() <= 0) {
           // There is a possible case that we need to add/remove IJ-specific new nodes because of the IJ project structure changes
           // triggered by gradle.

@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.importing.wizard.adjust;
+package org.jetbrains.plugins.gradle.manage.wizard.adjust;
 
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;

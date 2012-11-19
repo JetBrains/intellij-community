@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.importing.wizard.adjust;
+package org.jetbrains.plugins.gradle.manage.wizard.adjust;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;

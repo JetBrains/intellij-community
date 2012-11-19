@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.importing.wizard.select;
+package org.jetbrains.plugins.gradle.manage.wizard.select;
 
 import com.intellij.ide.util.projectWizard.NamePathComponent;
 import com.intellij.ide.util.projectWizard.WizardContext;
@@ -10,8 +10,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.GradleConfigurable;
 import org.jetbrains.plugins.gradle.config.GradleHomeSettingType;
-import org.jetbrains.plugins.gradle.importing.GradleProjectImportBuilder;
-import org.jetbrains.plugins.gradle.importing.wizard.AbstractImportFromGradleWizardStep;
+import org.jetbrains.plugins.gradle.manage.GradleProjectImportBuilder;
+import org.jetbrains.plugins.gradle.manage.wizard.AbstractImportFromGradleWizardStep;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;

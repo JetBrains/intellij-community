@@ -10,8 +10,6 @@ import org.jetbrains.plugins.gradle.diff.GradleDiffUtil;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
 import org.jetbrains.plugins.gradle.diff.GradleStructureChangesCalculator;
 import org.jetbrains.plugins.gradle.diff.module.GradleModuleStructureChangesCalculator;
-import org.jetbrains.plugins.gradle.diff.project.GradleLanguageLevelChange;
-import org.jetbrains.plugins.gradle.diff.project.GradleProjectRenameChange;
 import org.jetbrains.plugins.gradle.model.gradle.GradleModule;
 import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
 

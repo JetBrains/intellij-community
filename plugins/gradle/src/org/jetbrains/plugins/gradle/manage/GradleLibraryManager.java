@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.importing;
+package org.jetbrains.plugins.gradle.manage;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -26,11 +26,11 @@ import java.util.*;
  * @author Denis Zhdanov
  * @since 2/15/12 11:32 AM
  */
-public class GradleLibraryImporter {
+public class GradleLibraryManager {
 
-  @NotNull private final PlatformFacade               myPlatformFacade;
+  @NotNull private final PlatformFacade myPlatformFacade;
 
-  public GradleLibraryImporter(@NotNull PlatformFacade platformFacade) {
+  public GradleLibraryManager(@NotNull PlatformFacade platformFacade) {
     myPlatformFacade = platformFacade;
   }
 
@@ -52,7 +52,7 @@ public class GradleLibraryImporter {
     }
     return importLibrary(library.getName(), libraryFiles, project);
   }
-  
+
   @NotNull
   public Library importLibrary(@NotNull final String libraryName,
                                @NotNull final Map<OrderRootType, ? extends Collection<File>> libraryFiles,
@@ -62,13 +62,13 @@ public class GradleLibraryImporter {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        final GradleProjectEntityImportListener publisher = project.getMessageBus().syncPublisher(GradleProjectEntityImportListener.TOPIC);
-        publisher.onImportStart(libraryName);
+        final GradleProjectEntityChangeListener publisher = project.getMessageBus().syncPublisher(GradleProjectEntityChangeListener.TOPIC);
+        publisher.onChangeStart(libraryName);
         try {
           result.set(doImportLibrary(libraryName, libraryFiles, project));
         }
         finally {
-          publisher.onImportEnd(libraryName);
+          publisher.onChangeEnd(libraryName);
         }
       }
     });
@@ -77,8 +77,8 @@ public class GradleLibraryImporter {
 
   @NotNull
   private Library doImportLibrary(@NotNull final String libraryName,
-                               @NotNull final Map<OrderRootType, ? extends Collection<File>> libraryFiles,
-                               @NotNull Project project)
+                                  @NotNull final Map<OrderRootType, ? extends Collection<File>> libraryFiles,
+                                  @NotNull Project project)
   {
     // Is assumed to be called from the EDT.
     final LibraryTable libraryTable = myPlatformFacade.getProjectLibraryTable(project);
@@ -137,10 +137,16 @@ public class GradleLibraryImporter {
     }
   }
 
+  public void removeLibrary(@NotNull Library library) {
+    // TODO den check
+    LibraryTable table = library.getTable();
+    table.removeLibrary(library);
+  }
+  
+  
   private static class Lazy {
-    private static final Map<LibraryPathType, OrderRootType> LIBRARY_ROOT_MAPPINGS
+    static final Map<LibraryPathType, OrderRootType> LIBRARY_ROOT_MAPPINGS
       = new EnumMap<LibraryPathType, OrderRootType>(LibraryPathType.class);
-
     static {
       LIBRARY_ROOT_MAPPINGS.put(LibraryPathType.BINARY, OrderRootType.CLASSES);
       LIBRARY_ROOT_MAPPINGS.put(LibraryPathType.SOURCE, OrderRootType.SOURCES);
