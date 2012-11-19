@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.ui.Gray;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -105,9 +107,10 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
     final ButtonModel model=button.getModel();
 
     final Color background = button.getBackground();
-    
 
-    Color toBorder = model.isRollover() ? new Color(0, 0, 0, 50) : null;
+    final boolean dark = UIUtil.isUnderDarcula();
+
+    Color toBorder = model.isRollover() ? dark ? Gray._90 : new Color(0, 0, 0, 50) : null;
     final boolean vertical = anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT;
 
     if (anchor == ToolWindowAnchor.RIGHT) {
@@ -115,17 +118,17 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
     }
 
     if (model.isArmed() && model.isPressed() || model.isSelected()) {
-      g2.setColor(new Color(0, 0, 0, 30));
+      g2.setColor(dark ? Gray._85.withAlpha(85) : new Color(0, 0, 0, 30));
       g2.fillRect(3, 3, button.getWidth() - (vertical ? 6 : 5), button.getHeight() - 6);
       
-      g2.setColor(new Color(0, 0, 0, 120));
+      g2.setColor(dark ? Gray._40 : new Color(0, 0, 0, 120));
       g2.drawLine(2, 2, 3 + button.getWidth() - (vertical ? 7 : 6), 2);
       g2.drawLine(2, 3, 2, 3 + button.getHeight() - 7);
       
-      g2.setColor(new Color(0, 0, 0, 40));
+      g2.setColor(dark ? Gray._65 : new Color(0, 0, 0, 40));
       g2.drawRect(3, 3, button.getWidth() - (vertical ? 7 : 6), button.getHeight() - 7);
       
-      g2.setColor(new Color(255, 255, 255, 110));
+      g2.setColor(dark ? Gray._75 : new Color(255, 255, 255, 110));
       g2.drawLine(3, button.getHeight() - 3, 3 + button.getWidth() - (vertical ? 6 : 5), button.getHeight() - 3);
       g2.drawLine(3 + button.getWidth() - (vertical ? 6 : 5), 2, 3 + button.getWidth() - (vertical ? 6 : 5), 
                   3 + button.getHeight() - 7);
