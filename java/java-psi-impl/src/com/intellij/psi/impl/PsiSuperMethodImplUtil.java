@@ -232,8 +232,8 @@ public class PsiSuperMethodImplUtil {
   }
 
   private static boolean isReturnTypeIsMoreSpecificThan(@NotNull HierarchicalMethodSignature thisSig, @NotNull HierarchicalMethodSignature thatSig) {
-    PsiType thisRet = thisSig.getMethod().getReturnType();
-    PsiType thatRet = thatSig.getMethod().getReturnType();
+    PsiType thisRet = thisSig.getSubstitutor().substitute(thisSig.getMethod().getReturnType());
+    PsiType thatRet = thatSig.getSubstitutor().substitute(thatSig.getMethod().getReturnType());
     return thatRet != null && thisRet != null && !thatRet.equals(thisRet) && TypeConversionUtil.isAssignable(thatRet, thisRet);
   }
 

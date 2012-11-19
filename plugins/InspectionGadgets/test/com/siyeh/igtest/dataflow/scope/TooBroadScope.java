@@ -91,4 +91,22 @@ public class TooBroadScope
         };
         runnable.run();
     }
+
+    void switchLabel() {
+        final int other = 4;
+        switch (2)
+        {
+            case other:
+                System.out.println("other");
+            default:
+                System.out.println("default");
+      }
+    }
+
+    void forLoop() {
+        int i  = 0;
+        for ( ; i < 10; i++) {
+            System.out.println(i);
+        }
+    }
 }

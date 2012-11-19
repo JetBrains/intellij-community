@@ -24,13 +24,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 final class AntExplorerTreeStructure extends AbstractTreeStructure {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.config.explorer.AntExplorerTreeStructure");
@@ -177,7 +176,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
     public TextInfoNodeDescriptor(Project project, NodeDescriptor parentDescriptor, String text) {
       super(project, parentDescriptor);
       myName = text;
-      myColor = Color.blue;
+      myColor = JBColor.blue;
     }
 
     @Override

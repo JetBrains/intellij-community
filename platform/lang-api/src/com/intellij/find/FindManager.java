@@ -66,7 +66,7 @@ public abstract class FindManager {
    *
    * @param model the model containing the settings of the replace operation.
    * @param title the title of the dialog to show.
-   * @return the exit code of the dialog, as defined by the {@link PromptResult}
+   * @return the exit code of the dialog, as defined by the {@link com.intellij.find.FindManager.PromptResult}
    * interface.
    */
   public abstract int showPromptDialog(FindModel model, String title);
@@ -117,6 +117,18 @@ public abstract class FindManager {
   @NotNull
   public abstract FindResult findString(@NotNull CharSequence text, int offset, @NotNull FindModel model,
                                         @Nullable VirtualFile findContextFile);
+
+  /**
+   * Shows a replace prompt dialog for the bad replace operation.
+   *
+   * @param model the model containing the settings of the replace operation.
+   * @param title the title of the dialog to show.
+   * @param exception exception from {@link FindManager#getStringToReplace}
+   * @return the exit code of the dialog, as defined by the {@link PromptResult}
+   * interface. May be only {@link PromptResult.CANCEL} or {@link PromptResult.SKIP} for bad replace operation
+   */
+
+  public abstract int showMalformedReplacementPrompt(FindModel model, String title, MalformedReplacementStringException exception);
 
   public static class MalformedReplacementStringException extends Exception {
     public MalformedReplacementStringException(String s) {

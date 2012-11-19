@@ -421,7 +421,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
   public void clearProgressData() {
     if (myProgressPanel != null) {
-      myProgressText = "";
+      myProgressText = " ";
       myFraction = 0.0f;
       updateProgress();
     }

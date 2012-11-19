@@ -196,7 +196,7 @@ public class JarsBuilder {
       if (logger.isEnabled()) {
         logger.logCompiledPaths(packedFilePaths, IncArtifactBuilder.BUILDER_NAME, "Packing files:");
       }
-      myOutputConsumer.registerOutputFile(targetJarPath, packedFilePaths);
+      myOutputConsumer.registerOutputFile(new File(targetJarPath), packedFilePaths);
 
     }
     finally {

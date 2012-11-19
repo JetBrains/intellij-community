@@ -24,11 +24,17 @@ import com.intellij.ide.ReopenProjectAction;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.Gray;
+import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.speedSearch.ListWithFilter;
+import com.intellij.util.Function;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -72,6 +78,29 @@ public class RecentProjectPanel extends JPanel {
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
+
+    ActionListener deleteAction = new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        ReopenProjectAction selection = (ReopenProjectAction)myList.getSelectedValue();
+
+        final int rc = Messages.showOkCancelDialog(RecentProjectPanel.this,
+                                                   "Remove '" + selection.getTemplatePresentation().getText() +
+                                                   "' from recent projects list?",
+                                                   "Remove Recent Project",
+                                                   Messages.getQuestionIcon());
+        if (rc == 0) {
+          final RecentProjectsManagerBase manager = RecentProjectsManagerBase.getInstance();
+
+          manager.removePath(selection.getProjectPath());
+          ListUtil.removeSelectedItems(myList);
+        }
+      }
+    };
+
+    myList.registerKeyboardAction(deleteAction, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    myList.registerKeyboardAction(deleteAction, KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+
     myList.addMouseMotionListener(new MouseMotionAdapter() {
       boolean myIsEngaged = false;
       public void mouseMoved(MouseEvent e) {
@@ -90,7 +119,22 @@ public class RecentProjectPanel extends JPanel {
 
     JBScrollPane scroll = new JBScrollPane(myList);
     scroll.setBorder(null);
-    add(scroll, BorderLayout.CENTER);
+
+    JComponent list = recentProjectActions.length == 0
+                      ? myList
+                      : ListWithFilter.wrap(myList, scroll, new Function<Object, String>() {
+                        @Override
+                        public String fun(Object o) {
+                          ReopenProjectAction item = (ReopenProjectAction)o;
+                          String home = SystemProperties.getUserHome();
+                          String path = item.getProjectPath();
+                          if (FileUtil.startsWith(path, home)) {
+                            path = path.substring(home.length());
+                          }
+                          return item.getProjectName() + " " + path;
+                        }
+                      });
+    add(list, BorderLayout.CENTER);
 
     JPanel title = new JPanel() {
       @Override
@@ -98,6 +142,7 @@ public class RecentProjectPanel extends JPanel {
         return new Dimension(super.getPreferredSize().width, 28);
       }
     };
+    title.setBorder(new BottomLineBorder());
 
     JLabel titleLabel = new JLabel("Recent Projects");
     title.add(titleLabel);

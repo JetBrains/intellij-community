@@ -20,7 +20,6 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.ui.CardActionsPanel;
 import com.intellij.ui.Gray;
 
 import javax.swing.*;
@@ -49,6 +48,7 @@ public class WelcomePane extends JPanel {
     c.insets = new Insets(15, 15, 15, 15);
     c.weightx = 0.33;
     c.weighty = 1;
+    c.fill = GridBagConstraints.BOTH;
     add(recentsPanel, c);
 
     c.gridx = 1;

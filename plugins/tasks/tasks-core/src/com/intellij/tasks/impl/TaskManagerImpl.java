@@ -15,6 +15,7 @@
  */
 package com.intellij.tasks.impl;
 
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
@@ -32,10 +33,13 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.wm.*;
 import com.intellij.tasks.*;
 import com.intellij.tasks.config.TaskRepositoriesConfigurable;
 import com.intellij.tasks.context.WorkingContextManager;
+import com.intellij.tasks.timetracking.TasksToolWindowFactory;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
@@ -53,6 +57,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.event.ActionEvent;
@@ -133,6 +138,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   private final EventDispatcher<TaskListener> myDispatcher = EventDispatcher.create(TaskListener.class);
   private Set<TaskRepository> myBadRepositories = new ConcurrentHashSet<TaskRepository>();
   private Timer myTimeTrackingTimer;
+  private Alarm myIdleAlarm;
 
   public TaskManagerImpl(Project project,
                          WorkingContextManager contextManager,
@@ -579,15 +585,45 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       myTimeTrackingTimer = UIUtil.createNamedTimer("TaskManager time tracking", TIME_TRACKING_TIME_UNIT, new ActionListener() {
         @Override
         public void actionPerformed(final ActionEvent e) {
-          getActiveTask().setTimeSpent(getActiveTask().getTimeSpent() + TIME_TRACKING_TIME_UNIT);
-          getState().myTotallyTimeSpent += TIME_TRACKING_TIME_UNIT;
+          if (isTimeTrackingAutoMode()) {
+            getActiveTask().setTimeSpent(getActiveTask().getTimeSpent() + TIME_TRACKING_TIME_UNIT);
+            getState().myTotallyTimeSpent += TIME_TRACKING_TIME_UNIT;
+          }
+          else {
+            boolean runningTaskExist = false;
+            for (LocalTask localTask : getLocalTasks()) {
+              if (localTask.isRunning()) {
+                localTask.setTimeSpent(localTask.getTimeSpent() + TIME_TRACKING_TIME_UNIT);
+                runningTaskExist = true;
+              }
+            }
+            if (runningTaskExist) getState().myTotallyTimeSpent += TIME_TRACKING_TIME_UNIT;
+          }
         }
       });
       StartupManager.getInstance(myProject).registerStartupActivity(new Runnable() {
         public void run() {
-          myTimeTrackingTimer.start();
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              startTimeTrackingTimer();
+            }
+          });
         }
       });
+
+      myIdleAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, myProject);
+
+      IdeEventQueue.getInstance().addActivityListener(new Runnable() {
+        @Override
+        public void run() {
+          final IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
+          if (frame == null) return;
+          final Project project = frame.getProject();
+          if (project == null || !myProject.equals(project)) return;
+          startTimeTrackingTimer();
+        }
+      }, myProject);
     }
 
     LocalTask defaultTask = myTasks.get(LocalTaskImpl.DEFAULT_TASK_ID);
@@ -634,6 +670,79 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     myDispatcher.getMulticaster().taskActivated(myActiveTask);
 
     myChangeListManager.addChangeListListener(myChangeListListener);
+
+    addTaskListener(new TaskListener() {
+      @Override
+      public void taskDeactivated(final LocalTask task) {
+        updateTimeTrackingToolWindow();
+      }
+
+      @Override
+      public void taskActivated(final LocalTask task) {
+        updateTimeTrackingToolWindow();
+      }
+
+      @Override
+      public void taskAdded(final LocalTask task) {
+        updateTimeTrackingToolWindow();
+      }
+
+      @Override
+      public void taskRemoved(final LocalTask task) {
+        updateTimeTrackingToolWindow();
+      }
+    });
+  }
+
+  private void startTimeTrackingTimer() {
+    if (!myTimeTrackingTimer.isRunning()) {
+      myTimeTrackingTimer.start();
+    }
+
+    myIdleAlarm.cancelAllRequests();
+    myIdleAlarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        if (myTimeTrackingTimer.isRunning()) {
+          myTimeTrackingTimer.stop();
+        }
+      }
+    }, getState().timeTrackingSuspendDelayInSeconds * 1000);
+  }
+
+  public void updateTimeTrackingToolWindow() {
+    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.TASKS);
+    if (isTimeTrackingToolWindowAvailable()) {
+      if (toolWindow == null) {
+        toolWindow =
+          ToolWindowManager.getInstance(myProject).registerToolWindow(ToolWindowId.TASKS, true, ToolWindowAnchor.RIGHT, myProject, true);
+        new TasksToolWindowFactory().createToolWindowContent(myProject, toolWindow);
+      }
+      toolWindow.setAvailable(true, null);
+      toolWindow.show(null);
+      toolWindow.activate(null);
+    }
+    else {
+      if (toolWindow != null) {
+        toolWindow.setAvailable(false, null);
+      }
+    }
+  }
+
+  public boolean isTimeTrackingToolWindowAvailable() {
+    final LocalTask activeTask = getActiveTask();
+    final boolean isNotUsed = activeTask.isDefault() && Comparing.equal(activeTask.getCreated(), activeTask.getUpdated());
+    return !isNotUsed && ApplicationManager.getApplication().isInternal() && getState().enableTimeTracking;
+  }
+
+  @Override
+  public boolean isTimeTrackingAutoMode() {
+    return getState().isTimeTrackingAutoMode;
+  }
+
+  @Override
+  public void setTimeTrackingAutoMode(final boolean state) {
+    getState().isTimeTrackingAutoMode = state;
   }
 
   private static LocalTaskImpl createDefaultTask() {
@@ -874,6 +983,10 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
     @Tag("servers")
     public Element servers = new Element("servers");
+
+    public boolean enableTimeTracking = true;
+    public int timeTrackingSuspendDelayInSeconds = 600;
+    public boolean isTimeTrackingAutoMode = true;
   }
 
   private abstract class TestConnectionTask extends com.intellij.openapi.progress.Task.Modal {

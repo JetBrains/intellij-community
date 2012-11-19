@@ -82,7 +82,7 @@ public class CoreApplicationEnvironment {
     myFileTypeRegistry = new CoreFileTypeRegistry();
     myEncodingRegistry = new CoreEncodingRegistry();
 
-    myApplication = new MockApplication(myParentDisposable);
+    myApplication = createApplication(myParentDisposable);
     ApplicationManager.setApplication(myApplication,
                                       new StaticGetter<FileTypeRegistry>(myFileTypeRegistry),
                                       new StaticGetter<EncodingRegistry>(myEncodingRegistry),
@@ -122,7 +122,7 @@ public class CoreApplicationEnvironment {
     );
     registerComponentInstance(appContainer, VirtualFileManager.class, virtualFileManager
     );
-    myApplication.registerService(VirtualFilePointerManager.class, new CoreVirtualFilePointerManager());
+    myApplication.registerService(VirtualFilePointerManager.class, createVirtualFilePointerManager());
 
     myApplication.registerService(DefaultASTFactory.class, new CoreASTFactory());
     myApplication.registerService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
@@ -137,6 +137,14 @@ public class CoreApplicationEnvironment {
 
     myApplication.registerService(JobLauncher.class, createJobLauncher());
 
+  }
+
+  protected VirtualFilePointerManager createVirtualFilePointerManager() {
+    return new CoreVirtualFilePointerManager();
+  }
+
+  protected MockApplication createApplication(Disposable parentDisposable) {
+    return new MockApplication(parentDisposable);
   }
 
   protected JobLauncher createJobLauncher() {

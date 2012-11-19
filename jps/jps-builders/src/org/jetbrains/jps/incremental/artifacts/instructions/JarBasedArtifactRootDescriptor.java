@@ -94,7 +94,7 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
               from.close();
               to.close();
             }
-            outputConsumer.registerOutputFile(fullOutputPath, Collections.singletonList(filePath));
+            outputConsumer.registerOutputFile(outputFile, Collections.singletonList(filePath));
           }
           outSrcMapping.appendData(fullOutputPath, Collections.singletonList(new ArtifactOutputToSourceMapping.SourcePathAndRootIndex(fullSourcePath, rootIndex)));
         }

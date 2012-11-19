@@ -1410,6 +1410,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     return worker.isDone();
   }
 
+  @Override
+  public int getChangeListsNumber() {
+    synchronized (myDataLock) {
+      return myWorker.getChangeListsNumber();
+    }
+  }
+
   // only a light attempt to show that some dirty scope request is asynchronously coming
   // for users to see changes are not valid
   // (commit -> asynch synch VFS -> asynch vcs dirty scope)

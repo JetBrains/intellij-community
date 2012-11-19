@@ -1,12 +1,13 @@
 package org.jetbrains.jps.incremental;
 
 import org.jetbrains.jps.ModuleChunk;
-import org.jetbrains.jps.builders.ChunkBuildOutputConsumer;
+import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 
 /**
  * Use {@link BuilderService} to register implementations of this class
@@ -25,10 +26,18 @@ public abstract class ModuleLevelBuilder extends Builder {
     NOTHING_DONE, OK, ABORT, ADDITIONAL_PASS_REQUIRED, CHUNK_REBUILD_REQUIRED
   }
 
+  public interface OutputConsumer {
+
+    void registerOutputFile(BuildTarget<?> target, File outputFile, Collection<String> sourcePaths) throws IOException;
+
+    void registerCompiledClass(BuildTarget<?> target, File outputFile, File sourceFile, byte[] bytecode) throws IOException;
+
+  }
+
   public abstract ExitCode build(CompileContext context,
                                  ModuleChunk chunk,
                                  DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
-                                 ChunkBuildOutputConsumer outputConsumer)
+                                 OutputConsumer outputConsumer)
     throws ProjectBuildException, IOException;
 
   public boolean shouldHonorFileEncodingForCompilation(File file) {

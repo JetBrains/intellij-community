@@ -59,6 +59,7 @@ public class LocalTaskImpl extends LocalTask {
   private boolean myActive;
   private List<ChangeListInfo> myChangeLists = new ArrayList<ChangeListInfo>();
   private long myTimeSpent = 0;
+  private boolean myRunning = false;
 
 
   /** for serialization */
@@ -82,6 +83,7 @@ public class LocalTaskImpl extends LocalTask {
       myChangeLists = ((LocalTaskImpl)origin).getChangeLists();
       myActive = ((LocalTaskImpl)origin).isActive();
       myTimeSpent = ((LocalTaskImpl)origin).getTimeSpent();
+      myRunning = ((LocalTaskImpl)origin).isRunning();
     }
   }
 
@@ -269,5 +271,15 @@ public class LocalTaskImpl extends LocalTask {
 
   public void setTimeSpent(final long timeSpent) {
     myTimeSpent = timeSpent;
+  }
+
+  @Tag("running")
+  @Override
+  public boolean isRunning() {
+    return myRunning;
+  }
+
+  public void setRunning(final boolean running) {
+    myRunning = running;
   }
 }

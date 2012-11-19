@@ -16,10 +16,12 @@
 
 package com.intellij.ui;
 
+import com.intellij.find.FindManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.find.FindManager;
 import com.intellij.openapi.ui.Messages;
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -27,10 +29,16 @@ import java.awt.event.ActionEvent;
 public class ReplacePromptDialog extends DialogWrapper {
 
   private final boolean myIsMultiple;
+  @Nullable private FindManager.MalformedReplacementStringException myException;
 
   public ReplacePromptDialog(boolean isMultipleFiles, String title, Project project) {
+    this(isMultipleFiles, title, project, null);
+  }
+
+  public ReplacePromptDialog(boolean isMultipleFiles, String title, Project project, @Nullable FindManager.MalformedReplacementStringException exception) {
     super(project, true);
     myIsMultiple = isMultipleFiles;
+    myException = exception;
     setButtonsAlignment(SwingUtilities.CENTER);
     setTitle(title);
     init();
@@ -39,22 +47,33 @@ public class ReplacePromptDialog extends DialogWrapper {
   protected Action[] createActions(){
     DoAction replaceAction = new DoAction(UIBundle.message("replace.prompt.replace.button"), FindManager.PromptResult.OK);
     replaceAction.putValue(DEFAULT_ACTION,Boolean.TRUE);
-    if (myIsMultiple){
-      return new Action[]{
-        replaceAction,
-        new DoAction(UIBundle.message("replace.prompt.skip.button"), FindManager.PromptResult.SKIP),
-        new DoAction(UIBundle.message("replace.prompt.all.in.this.file.button"), FindManager.PromptResult.ALL_IN_THIS_FILE),
-        new DoAction(UIBundle.message("replace.prompt.all.files.action"), FindManager.PromptResult.ALL_FILES),
-        getCancelAction()
-      };
-    }else{
-      return new Action[]{
-        replaceAction,
-        new DoAction(UIBundle.message("replace.prompt.skip.button"), FindManager.PromptResult.SKIP),
-        new DoAction(UIBundle.message("replace.prompt.all.button"), FindManager.PromptResult.ALL),
+    if (myException == null) {
+      if (myIsMultiple){
+        return new Action[]{
+          replaceAction,
+          createSkipAction(),
+          new DoAction(UIBundle.message("replace.prompt.all.in.this.file.button"), FindManager.PromptResult.ALL_IN_THIS_FILE),
+          new DoAction(UIBundle.message("replace.prompt.all.files.action"), FindManager.PromptResult.ALL_FILES),
+          getCancelAction()
+        };
+      } else {
+        return new Action[]{
+          replaceAction,
+          createSkipAction(),
+          new DoAction(UIBundle.message("replace.prompt.all.button"), FindManager.PromptResult.ALL),
+          getCancelAction()
+        };
+      }
+    } else {
+      return new Action[] {
+        createSkipAction(),
         getCancelAction()
       };
     }
+  }
+
+  private DoAction createSkipAction() {
+    return new DoAction(UIBundle.message("replace.prompt.skip.button"), FindManager.PromptResult.SKIP);
   }
 
   public JComponent createNorthPanel() {
@@ -73,7 +92,7 @@ public class ReplacePromptDialog extends DialogWrapper {
   }
 
   protected String getMessage() {
-    return UIBundle.message("replace.propmt.replace.occurrence.label");
+    return myException == null ? UIBundle.message("replace.propmt.replace.occurrence.label") : myException.getMessage();
   }
 
   public JComponent createCenterPanel() {

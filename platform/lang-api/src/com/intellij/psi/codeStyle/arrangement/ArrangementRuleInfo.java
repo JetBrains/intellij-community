@@ -91,6 +91,7 @@ public class ArrangementRuleInfo {
     clearConditions();
     myConditions.addAll(info.myConditions);
     myAtomConditions.addAll(info.myAtomConditions);
+    myNamePattern = info.myNamePattern;
   }
 
   public void clear() {

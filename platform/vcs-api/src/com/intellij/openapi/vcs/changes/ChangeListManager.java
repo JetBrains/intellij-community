@@ -51,6 +51,7 @@ public abstract class ChangeListManager implements ChangeListModification {
   @TestOnly
   public abstract boolean ensureUpToDate(boolean canBeCanceled);
 
+  public abstract int getChangeListsNumber();
   public abstract List<LocalChangeList> getChangeListsCopy();
   @NotNull
   public abstract List<LocalChangeList> getChangeLists();

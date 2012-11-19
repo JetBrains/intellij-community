@@ -53,4 +53,8 @@ public abstract class LocalTask extends Task {
   public abstract long getTimeSpent();
 
   public abstract void setTimeSpent(long time);
+
+  public abstract boolean isRunning();
+
+  public abstract void setRunning(final boolean running);
 }

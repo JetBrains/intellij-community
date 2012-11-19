@@ -254,8 +254,9 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
       addField("Project \u001bformat:", myFormatPanel.getStorageFormatComboBox(), myModulePanel);
     }
 
-    mySplitter = new JBSplitter(false, 0.3f);
+    mySplitter = new JBSplitter(false, 0.3f, 0.3f, 0.6f);
     mySplitter.setSplitterProportionKey("select.template.proportion");
+    myLeftPanel.setMinimumSize(new Dimension(200, 200));
     mySplitter.setFirstComponent(myLeftPanel);
     mySplitter.setSecondComponent(myRightPanel);
 //    mySettingsPanel.setVisible(false);

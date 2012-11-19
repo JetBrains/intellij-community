@@ -23,15 +23,14 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.ClickListener;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
-import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.plaf.LabelUI;
-import javax.swing.plaf.basic.BasicLabelUI;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -48,15 +47,6 @@ import static java.awt.GridBagConstraints.NORTHWEST;
  */
 public class DarculaWelcomeScreenForm {
   private final DarculaIntelliJWelcomeScreen myWelcomeScreen;
-  public static final LabelUI TITLE_UI = new BasicLabelUI() {
-    @Override
-    protected void paintEnabledText(JLabel l, Graphics g, String s, int x, int y) {
-      g.setColor(l.getForeground().equals(UIUtil.getPanelBackground()) ? Gray._255.withAlpha(60) : Gray._0.withAlpha(150));
-      SwingUtilities2.drawStringUnderlineCharAt(l, g, s, -1, x, y+1);
-      g.setColor(l.getForeground());
-      SwingUtilities2.drawStringUnderlineCharAt(l, g, s, -1, x, y);
-    }
-  };
   private JPanel myRoot;
   private JPanel myRecentProjects;
   private JPanel myQuickStartPanel;
@@ -68,24 +58,31 @@ public class DarculaWelcomeScreenForm {
     myWelcomeScreen = welcomeScreen;
     createRecentProjectPanel(myRoot);
     myQuickStartPanel.add(fillButtons(myRoot, true), BorderLayout.NORTH);
+    JPanel p = new JPanel(); p.setOpaque(false);
+    myQuickStartPanel.add(p, BorderLayout.CENTER);
     myHelpPanel.add(fillButtons(myRoot, false), BorderLayout.NORTH);
+    p = new JPanel(); p.setOpaque(false);
+    myHelpPanel.add(p, BorderLayout.CENTER);
   }
   private void createRecentProjectPanel(final JPanel root) {
     myRecentProjects.removeAll();
+    myRecentProjects.setBorder(new EmptyBorder(0, 20, 0, 20));
     final AnAction[] recentProjectsActions = RecentProjectsManagerBase.getInstance().getRecentProjectsActions(false);
     JLabel caption = new JLabel("Recent Projects");
-    caption.setUI(TITLE_UI);
-    caption.setBorder(new EmptyBorder(0, 30, 0, 0));
+    caption.setUI(DarculaWelcomeScreenLabelUI.createUI(caption));
+    caption.setBorder(new EmptyBorder(10, 0, 0, 0));
+    caption.setHorizontalAlignment(SwingConstants.CENTER);
     caption.setFont(new Font("Tahoma", Font.BOLD, 18));
     final Color fg = UIUtil.getPanelBackground();
     caption.setForeground(UIUtil.getPanelBackground());
-    myRecentProjects.add(caption, new GridBagConstraints(0, 0, 2, 1, 1, 0, NORTHWEST, HORIZONTAL, new Insets(0, 0, 20, 0), 0, 0));
+    myRecentProjects.add(caption, new GridBagConstraints(0, 0, 2, 1, 1, 0, NORTHWEST, HORIZONTAL, new Insets(0, 0, 10, 0), 0, 0));
 
     int row = 1;
     for (final AnAction action : recentProjectsActions) {
       if (!(action instanceof ReopenProjectAction)) continue;
 
-      final SimpleColoredComponent actionLabel = new SimpleColoredComponent() {
+      final SimpleColoredComponent pathLabel = new SimpleColoredComponent();
+      final SimpleColoredComponent nameLabel = new SimpleColoredComponent() {
         @Override
         public Dimension getPreferredSize() {
           boolean hasIcon = getIcon() != null;
@@ -99,11 +96,11 @@ public class DarculaWelcomeScreenForm {
           return getPreferredSize();
         }
       };
-      actionLabel.append(String.valueOf(row) + ". ", new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, null));
+      nameLabel.append(String.valueOf(row) + ". ", new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, null));
 
-      actionLabel.append(((ReopenProjectAction)action).getProjectName(),
-                         new SimpleTextAttributes(/*SimpleTextAttributes.STYLE_UNDERLINE | */SimpleTextAttributes.STYLE_BOLD, null));
-      actionLabel.setIconOnTheRight(true);
+      nameLabel.append(((ReopenProjectAction)action).getProjectName(),
+                  new SimpleTextAttributes(/*SimpleTextAttributes.STYLE_UNDERLINE | */SimpleTextAttributes.STYLE_BOLD, null));
+      nameLabel.setIconOnTheRight(true);
 
       String path = ((ReopenProjectAction)action).getProjectPath();
       File pathFile = new File(path);
@@ -111,18 +108,22 @@ public class DarculaWelcomeScreenForm {
         path = pathFile.getParent();
       }
       path = FileUtil.getLocationRelativeToUserHome(path);
-      actionLabel.append("   " + path, new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, null));
+      pathLabel.append("   " + path, new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, null));
 
-      actionLabel.setFont(new Font("Tahoma", Font.PLAIN, 12));
-      actionLabel.setForeground(fg);
-      actionLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      nameLabel.setFont(new Font("Tahoma", Font.PLAIN, 14));
+      pathLabel.setFont(new Font("Tahoma", Font.PLAIN, 8));
+
+      for (final SimpleColoredComponent label : new SimpleColoredComponent[]{nameLabel, pathLabel}) {
+      label.setForeground(fg);
+      label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
 
       new ClickListener() {
         @Override
         public boolean onClick(MouseEvent e, int clickCount) {
           if (e.getButton() == MouseEvent.BUTTON1) {
             DataContext dataContext = DataManager.getInstance().getDataContext(root);
-            int fragment = actionLabel.findFragmentAt(e.getX());
+            int fragment = label.findFragmentAt(e.getX());
             if (fragment == SimpleColoredComponent.FRAGMENT_ICON) {
               final int rc = Messages.showOkCancelDialog(PlatformDataKeys.PROJECT.getData(dataContext),
                                                          "Remove '" + action.getTemplatePresentation().getText() +
@@ -156,28 +157,34 @@ public class DarculaWelcomeScreenForm {
           }
           return true;
         }
-      }.installOn(actionLabel);
+      }.installOn(label);
 
-      actionLabel.addMouseListener(new MouseAdapter() {
+      label.addMouseListener(new MouseAdapter() {
         @Override
         public void mouseEntered(MouseEvent e) {
-          actionLabel.setIcon(AllIcons.Actions.CloseNew);
-          actionLabel.setForeground(new Color(0xE09600));
+          nameLabel.setIcon(AllIcons.Actions.CloseNew);
+          nameLabel.setForeground(new Color(0xE09600));
+          pathLabel.setForeground(new Color(0xE09600));
         }
 
         @Override
         public void mouseExited(MouseEvent e) {
-          actionLabel.setIcon(EmptyIcon.create(AllIcons.Actions.CloseNew));
-          actionLabel.setForeground(UIUtil.getPanelBackground());
+          nameLabel.setIcon(EmptyIcon.create(AllIcons.Actions.CloseNew));
+          nameLabel.setForeground(UIUtil.getPanelBackground());
+          pathLabel.setForeground(UIUtil.getPanelBackground());
         }
       });
-      actionLabel.setIcon(EmptyIcon.create(AllIcons.Actions.CloseNew));
-      actionLabel.setOpaque(false);
-      actionLabel.setIconOpaque(false);
+      }
+      nameLabel.setIcon(EmptyIcon.create(AllIcons.Actions.CloseNew));
+      nameLabel.setOpaque(false);
+      pathLabel.setOpaque(false);
+      nameLabel.setIconOpaque(false);
       action.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_0 + row, InputEvent.ALT_DOWN_MASK)), root,
                                        myWelcomeScreen);
-      myRecentProjects.add(actionLabel,
-                new GridBagConstraints(1, row++, 1, 1, 1, 0, NORTHWEST, HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0));
+      myRecentProjects.add(nameLabel,
+                           new GridBagConstraints(1, 2 * row - 1, 1, 1, 1, 0, NORTHWEST, HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+      myRecentProjects.add(pathLabel, new GridBagConstraints(1, 2*row, 1, 1, 1, 0, NORTHWEST, HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+      row++;
       if (row == 10) break;
     }
   }
@@ -202,7 +209,7 @@ public class DarculaWelcomeScreenForm {
         return new Dimension(getPreferredSize().width, super.getMaximumSize().height);
       }
     };
-    panel.setBorder(new EmptyBorder(30, 30, 30, 30));
+    panel.setBorder(new EmptyBorder(10, 10, 10, 10));
     panel.setOpaque(false);
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
     if (quickStartActions) {

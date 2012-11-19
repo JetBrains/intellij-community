@@ -53,7 +53,7 @@ public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
       }
       final File targetFile = new File(FileUtil.toSystemDependentName(targetPath));
       FileUtil.copyContent(file, targetFile);
-      outputConsumer.registerOutputFile(targetPath, Collections.singletonList(filePath));
+      outputConsumer.registerOutputFile(targetFile, Collections.singletonList(filePath));
     }
     outSrcMapping.appendData(targetPath, Collections.singletonList(new ArtifactOutputToSourceMapping.SourcePathAndRootIndex(filePath, rootIndex)));
   }

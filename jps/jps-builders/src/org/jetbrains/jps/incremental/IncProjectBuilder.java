@@ -3,6 +3,7 @@ package org.jetbrains.jps.incremental;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
@@ -57,7 +58,6 @@ import java.util.concurrent.TimeUnit;
 public class IncProjectBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.IncProjectBuilder");
 
-  public static final String BUILD_NAME = "EXTERNAL BUILD";
   private static final String CLASSPATH_INDEX_FINE_NAME = "classpath.index";
   private static final boolean GENERATE_CLASSPATH_INDEX = Boolean.parseBoolean(System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION, "false"));
   private static final int MAX_BUILDER_THREADS;
@@ -165,19 +165,25 @@ public class IncProjectBuilder {
           cause instanceof MappingFailedException ||
           cause instanceof IOException) {
         myMessageDispatcher.processMessage(new CompilerMessage(
-          BUILD_NAME, BuildMessage.Kind.INFO,
+          "", BuildMessage.Kind.INFO,
           "Internal caches are corrupted or have outdated format, forcing project rebuild: " +
           e.getMessage())
         );
         throw new RebuildRequestedException(cause);
       }
-      else if (cause != null) {
-        myMessageDispatcher.processMessage(new CompilerMessage(BUILD_NAME, cause));
-      }
       else {
-        String message = e.getMessage();
-        if (message == null) message = "Internal error";
-        myMessageDispatcher.processMessage(new CompilerMessage(BUILD_NAME, BuildMessage.Kind.ERROR, message));
+        if (cause == null) {
+          // some builder desided to stop the build
+          // report optional progress message if exists
+          final String msg = e.getMessage();
+          if (!StringUtil.isEmpty(msg)) {
+            myMessageDispatcher.processMessage(new ProgressMessage(msg));
+          }
+        }
+        else {
+          // the reason for the build stop is unexpected internal error, report it
+          myMessageDispatcher.processMessage(new CompilerMessage("", cause));
+        }
       }
     }
     finally {
@@ -559,7 +565,7 @@ public class IncProjectBuilder {
         }
         else {
           context.processMessage(new CompilerMessage(
-            BUILD_NAME, BuildMessage.Kind.ERROR, "Cannot build " + target.getPresentableName() + " because it is included into a circular dependency")
+            "", BuildMessage.Kind.ERROR, "Cannot build " + target.getPresentableName() + " because it is included into a circular dependency")
           );
           return false;
         }
@@ -772,7 +778,7 @@ public class IncProjectBuilder {
     final int modulesInChunk = chunk.getModules().size();
     int buildersPassed = 0;
     boolean nextPassRequired;
-    BuildOperations.ChunkBuildOutputConsumerImpl outputConsumer = new BuildOperations.ChunkBuildOutputConsumerImpl(context);
+    ChunkBuildOutputConsumerImpl outputConsumer = new ChunkBuildOutputConsumerImpl(context);
     try {
       do {
         nextPassRequired = false;

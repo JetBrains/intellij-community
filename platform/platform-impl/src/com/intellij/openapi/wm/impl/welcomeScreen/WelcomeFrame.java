@@ -31,12 +31,14 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -67,7 +69,10 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
         dispose();
       }
     });
-
+    if (UIUtil.isUnderDarcula()) {
+      setUndecorated(!SystemInfo.isMac);
+      setTitle("Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName());
+    }
     myScreen = screen;
     setupCloseAction();
     new MnemonicHelper().register(this);

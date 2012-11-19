@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -82,7 +83,7 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
 
         final Color fg = orig.getForeground();
         final Color bg = orig.getBackground();
-        final Color grayedFg = isSelected ? fg : Color.DARK_GRAY;
+        final Color grayedFg = isSelected ? fg : UIUtil.isUnderDarcula() ? Gray._128 : Color.DARK_GRAY;
         myNameLabel.setForeground(fg);
         myStatusLabel.setForeground(grayedFg);
         

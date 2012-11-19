@@ -31,6 +31,7 @@ import com.intellij.debugger.ui.impl.WatchPanel;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.EvaluationDescriptor;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
+import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
@@ -110,7 +111,11 @@ public abstract class EvaluationDialog extends DialogWrapper {
       setOKActionEnabled(false);
       NodeDescriptorImpl descriptor = myEvaluationPanel.getWatchTree().addWatch(codeToEvaluate).getDescriptor();
       if (descriptor instanceof EvaluationDescriptor) {
-        ((EvaluationDescriptor)descriptor).setCodeFragmentFactory(myEditor.getCurrentFactory());
+        final EvaluationDescriptor evalDescriptor = (EvaluationDescriptor)descriptor;
+        evalDescriptor.setCodeFragmentFactory(myEditor.getCurrentFactory());
+      }
+      if (descriptor instanceof WatchItemDescriptor) {
+        ((WatchItemDescriptor)descriptor).setCustomName("Result");
       }
       myEvaluationPanel.getWatchTree().rebuild(getDebuggerContext());
       descriptor.myIsExpanded = true;

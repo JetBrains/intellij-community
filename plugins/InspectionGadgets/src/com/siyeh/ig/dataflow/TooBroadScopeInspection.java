@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,23 +68,16 @@ public class TooBroadScopeInspection extends BaseInspection {
   @Override
   @Nullable
   public JComponent createOptionsPanel() {
-    // html allows text to wrap
-    final MultipleCheckboxOptionsPanel checkboxOptionsPanel =
-      new MultipleCheckboxOptionsPanel(this);
-    checkboxOptionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "too.broad.scope.only.blocks.option"),
-                                     "m_onlyLookAtBlocks");
-    checkboxOptionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "too.broad.scope.allow.option"),
-                                     "m_allowConstructorAsInitializer");
+    final MultipleCheckboxOptionsPanel checkboxOptionsPanel = new MultipleCheckboxOptionsPanel(this);
+    checkboxOptionsPanel.addCheckbox(InspectionGadgetsBundle.message("too.broad.scope.only.blocks.option"), "m_onlyLookAtBlocks");
+    checkboxOptionsPanel.addCheckbox(InspectionGadgetsBundle.message("too.broad.scope.allow.option"), "m_allowConstructorAsInitializer");
     return checkboxOptionsPanel;
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "too.broad.scope.problem.descriptor");
+    return InspectionGadgetsBundle.message("too.broad.scope.problem.descriptor");
   }
 
   @Override
@@ -94,6 +87,7 @@ public class TooBroadScopeInspection extends BaseInspection {
   }
 
   private class TooBroadScopeInspectionFix extends InspectionGadgetsFix {
+
     private final String variableName;
 
     TooBroadScopeInspectionFix(String variableName) {
@@ -102,91 +96,69 @@ public class TooBroadScopeInspection extends BaseInspection {
 
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "too.broad.scope.narrow.quickfix", variableName);
+      return InspectionGadgetsBundle.message("too.broad.scope.narrow.quickfix", variableName);
     }
 
     @Override
-    protected void doFix(@NotNull Project project,
-                         ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(@NotNull Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement variableIdentifier = descriptor.getPsiElement();
       if (!(variableIdentifier instanceof PsiIdentifier)) {
         return;
       }
-      final PsiVariable variable =
-        (PsiVariable)variableIdentifier.getParent();
+      final PsiVariable variable = (PsiVariable)variableIdentifier.getParent();
       assert variable != null;
-      final Query<PsiReference> query =
-        ReferencesSearch.search(variable, variable.getUseScope());
-      final Collection<PsiReference> referenceCollection =
-        query.findAll();
-      final PsiElement[] referenceElements =
-        new PsiElement[referenceCollection.size()];
+      final Query<PsiReference> query = ReferencesSearch.search(variable, variable.getUseScope());
+      final Collection<PsiReference> referenceCollection = query.findAll();
+      final PsiElement[] referenceElements = new PsiElement[referenceCollection.size()];
       int index = 0;
       for (PsiReference reference : referenceCollection) {
         final PsiElement referenceElement = reference.getElement();
         referenceElements[index] = referenceElement;
         index++;
       }
-      PsiElement commonParent =
-        ScopeUtils.getCommonParent(referenceElements);
+      PsiElement commonParent = ScopeUtils.getCommonParent(referenceElements);
       assert commonParent != null;
       final PsiExpression initializer = variable.getInitializer();
       if (initializer != null) {
-        final PsiElement variableScope =
-          PsiTreeUtil.getParentOfType(variable,
-                                      PsiCodeBlock.class, PsiForStatement.class);
+        final PsiElement variableScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, PsiForStatement.class);
         assert variableScope != null;
-        commonParent = ScopeUtils.moveOutOfLoopsAndClasses(
-          commonParent, variableScope);
+        commonParent = ScopeUtils.moveOutOfLoopsAndClasses(commonParent, variableScope);
         if (commonParent == null) {
           return;
         }
       }
       final PsiElement referenceElement = referenceElements[0];
-      final PsiElement firstReferenceScope =
-        PsiTreeUtil.getParentOfType(referenceElement,
-                                    PsiCodeBlock.class, PsiForStatement.class);
+      final PsiElement firstReferenceScope = PsiTreeUtil.getParentOfType(referenceElement, PsiCodeBlock.class, PsiForStatement.class);
       if (firstReferenceScope == null) {
         return;
       }
       PsiDeclarationStatement newDeclaration;
       if (firstReferenceScope.equals(commonParent)) {
-        newDeclaration = moveDeclarationToLocation(variable,
-                                                   referenceElement);
+        newDeclaration = moveDeclarationToLocation(variable, referenceElement);
       }
       else {
-        final PsiElement commonParentChild =
-          ScopeUtils.getChildWhichContainsElement(
-            commonParent, referenceElement);
+        final PsiElement commonParentChild = ScopeUtils.getChildWhichContainsElement(commonParent, referenceElement);
         if (commonParentChild == null) {
           return;
         }
         final PsiElement location = commonParentChild.getPrevSibling();
         newDeclaration = createNewDeclaration(variable, initializer);
-        newDeclaration = (PsiDeclarationStatement)
-          commonParent.addAfter(newDeclaration, location);
+        newDeclaration = (PsiDeclarationStatement)commonParent.addAfter(newDeclaration, location);
       }
-      final CodeStyleManager codeStyleManager =
-        CodeStyleManager.getInstance(project);
-      newDeclaration = (PsiDeclarationStatement)
-        codeStyleManager.reformat(newDeclaration);
+      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+      newDeclaration = (PsiDeclarationStatement)codeStyleManager.reformat(newDeclaration);
       removeOldVariable(variable);
       if (isOnTheFly()) {
         HighlightUtils.highlightElement(newDeclaration);
       }
     }
 
-    private void removeOldVariable(@NotNull PsiVariable variable)
-      throws IncorrectOperationException {
-      final PsiDeclarationStatement declaration =
-        (PsiDeclarationStatement)variable.getParent();
+    private void removeOldVariable(@NotNull PsiVariable variable) throws IncorrectOperationException {
+      final PsiDeclarationStatement declaration = (PsiDeclarationStatement)variable.getParent();
       if (declaration == null) {
         return;
       }
-      final PsiElement[] declaredElements =
-        declaration.getDeclaredElements();
+      final PsiElement[] declaredElements = declaration.getDeclaredElements();
       if (declaredElements.length == 1) {
         declaration.delete();
       }
@@ -195,9 +167,7 @@ public class TooBroadScopeInspection extends BaseInspection {
       }
     }
 
-    private PsiDeclarationStatement createNewDeclaration(
-      @NotNull PsiVariable variable,
-      @Nullable PsiExpression initializer)
+    private PsiDeclarationStatement createNewDeclaration(@NotNull PsiVariable variable, @Nullable PsiExpression initializer)
       throws IncorrectOperationException {
       final Project project = variable.getProject();
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
@@ -211,28 +181,20 @@ public class TooBroadScopeInspection extends BaseInspection {
       @NonNls final String statementText;
       final String typeText = type.getCanonicalText();
       if (initializer == null) {
-        statementText = typeText + ' ' + name +
-                        ';' + comment;
+        statementText = typeText + ' ' + name + ';' + comment;
       }
       else {
         final String initializerText = initializer.getText();
-        statementText = typeText + ' ' + name +
-                        '=' + initializerText + ';' + comment;
+        statementText = typeText + ' ' + name + '=' + initializerText + ';' + comment;
       }
-      final PsiDeclarationStatement newDeclaration =
-        (PsiDeclarationStatement)factory.createStatementFromText(
-          statementText, variable);
-      final PsiLocalVariable newVariable =
-        (PsiLocalVariable)newDeclaration.getDeclaredElements()[0];
-      final PsiModifierList newModifierList =
-        newVariable.getModifierList();
+      final PsiDeclarationStatement newDeclaration = (PsiDeclarationStatement)factory.createStatementFromText(statementText, variable);
+      final PsiLocalVariable newVariable = (PsiLocalVariable)newDeclaration.getDeclaredElements()[0];
+      final PsiModifierList newModifierList = newVariable.getModifierList();
       final PsiModifierList modifierList = variable.getModifierList();
       if (newModifierList != null && modifierList != null) {
         // remove final when PsiDeclarationFactory adds one by mistake
-        newModifierList.setModifierProperty(PsiModifier.FINAL,
-                                            variable.hasModifierProperty(PsiModifier.FINAL));
-        final PsiAnnotation[] annotations =
-          modifierList.getAnnotations();
+        newModifierList.setModifierProperty(PsiModifier.FINAL, variable.hasModifierProperty(PsiModifier.FINAL));
+        final PsiAnnotation[] annotations = modifierList.getAnnotations();
         for (PsiAnnotation annotation : annotations) {
           newModifierList.add(annotation);
         }
@@ -241,10 +203,8 @@ public class TooBroadScopeInspection extends BaseInspection {
     }
 
     private String getCommentText(PsiVariable variable) {
-      final PsiDeclarationStatement parentDeclaration =
-        (PsiDeclarationStatement)variable.getParent();
-      final PsiElement[] declaredElements =
-        parentDeclaration.getDeclaredElements();
+      final PsiDeclarationStatement parentDeclaration = (PsiDeclarationStatement)variable.getParent();
+      final PsiElement[] declaredElements = parentDeclaration.getDeclaredElements();
       if (declaredElements.length != 1) {
         return "";
       }
@@ -259,58 +219,40 @@ public class TooBroadScopeInspection extends BaseInspection {
       return lastChild.getText();
     }
 
-    private PsiDeclarationStatement moveDeclarationToLocation(
-      @NotNull PsiVariable variable, @NotNull PsiElement location)
+    private PsiDeclarationStatement moveDeclarationToLocation(@NotNull PsiVariable variable, @NotNull PsiElement location)
       throws IncorrectOperationException {
-      PsiStatement statement = PsiTreeUtil.getParentOfType(location,
-                                                           PsiStatement.class, false);
+      PsiStatement statement = PsiTreeUtil.getParentOfType(location, PsiStatement.class, false);
       assert statement != null;
       PsiElement statementParent = statement.getParent();
-      while (statementParent instanceof PsiStatement &&
-             !(statementParent instanceof PsiForStatement)) {
+      while (statementParent instanceof PsiStatement && !(statementParent instanceof PsiForStatement)) {
         statement = (PsiStatement)statementParent;
         statementParent = statement.getParent();
       }
       assert statementParent != null;
       final PsiExpression initializer = variable.getInitializer();
-      if (isMoveable(initializer) &&
-          statement instanceof PsiExpressionStatement) {
-        final PsiExpressionStatement expressionStatement =
-          (PsiExpressionStatement)statement;
-        final PsiExpression expression =
-          expressionStatement.getExpression();
+      if (isMoveable(initializer) && statement instanceof PsiExpressionStatement) {
+        final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
+        final PsiExpression expression = expressionStatement.getExpression();
         if (expression instanceof PsiAssignmentExpression) {
-          final PsiAssignmentExpression assignmentExpression =
-            (PsiAssignmentExpression)expression;
-          final PsiExpression rhs =
-            assignmentExpression.getRExpression();
-          final PsiExpression lhs =
-            assignmentExpression.getLExpression();
-          final IElementType tokenType =
-            assignmentExpression.getOperationTokenType();
-          if (location.equals(lhs) && JavaTokenType.EQ == tokenType &&
-              !VariableAccessUtils.variableIsUsed(variable, rhs)) {
-            PsiDeclarationStatement newDeclaration =
-              createNewDeclaration(variable, rhs);
-            newDeclaration = (PsiDeclarationStatement)
-              statementParent.addBefore(newDeclaration,
-                                        statement);
-            final PsiElement parent =
-              assignmentExpression.getParent();
+          final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
+          final PsiExpression rhs = assignmentExpression.getRExpression();
+          final PsiExpression lhs = assignmentExpression.getLExpression();
+          final IElementType tokenType = assignmentExpression.getOperationTokenType();
+          if (location.equals(lhs) && JavaTokenType.EQ == tokenType && !VariableAccessUtils.variableIsUsed(variable, rhs)) {
+            PsiDeclarationStatement newDeclaration = createNewDeclaration(variable, rhs);
+            newDeclaration = (PsiDeclarationStatement)statementParent.addBefore(newDeclaration, statement);
+            final PsiElement parent = assignmentExpression.getParent();
             assert parent != null;
             parent.delete();
             return newDeclaration;
           }
         }
       }
-      PsiDeclarationStatement newDeclaration =
-        createNewDeclaration(variable, initializer);
+      PsiDeclarationStatement newDeclaration = createNewDeclaration(variable, initializer);
       if (statement instanceof PsiForStatement) {
         final PsiForStatement forStatement = (PsiForStatement)statement;
-        final PsiStatement initialization =
-          forStatement.getInitialization();
-        newDeclaration = (PsiDeclarationStatement)
-          forStatement.addBefore(newDeclaration, initialization);
+        final PsiStatement initialization = forStatement.getInitialization();
+        newDeclaration = (PsiDeclarationStatement)forStatement.addBefore(newDeclaration, initialization);
         if (initialization != null) {
           initialization.delete();
         }
@@ -327,15 +269,12 @@ public class TooBroadScopeInspection extends BaseInspection {
     if (expression == null) {
       return true;
     }
-    if (PsiUtil.isConstantExpression(expression) ||
-        ExpressionUtils.isNullLiteral(expression)) {
+    if (PsiUtil.isConstantExpression(expression) || ExpressionUtils.isNullLiteral(expression)) {
       return true;
     }
     if (expression instanceof PsiNewExpression) {
-      final PsiNewExpression newExpression =
-        (PsiNewExpression)expression;
-      final PsiExpression[] arrayDimensions =
-        newExpression.getArrayDimensions();
+      final PsiNewExpression newExpression = (PsiNewExpression)expression;
+      final PsiExpression[] arrayDimensions = newExpression.getArrayDimensions();
       if (arrayDimensions.length > 0) {
         for (PsiExpression arrayDimension : arrayDimensions) {
           if (!isMoveable(arrayDimension)) {
@@ -344,14 +283,11 @@ public class TooBroadScopeInspection extends BaseInspection {
         }
         return true;
       }
-      final PsiArrayInitializerExpression arrayInitializer =
-        newExpression.getArrayInitializer();
+      final PsiArrayInitializerExpression arrayInitializer = newExpression.getArrayInitializer();
       boolean result = true;
       if (arrayInitializer != null) {
-        final PsiExpression[] initializers =
-          arrayInitializer.getInitializers();
-        for (final PsiExpression initializerExpression :
-          initializers) {
+        final PsiExpression[] initializers = arrayInitializer.getInitializers();
+        for (final PsiExpression initializerExpression : initializers) {
           result &= isMoveable(initializerExpression);
         }
       }
@@ -361,21 +297,18 @@ public class TooBroadScopeInspection extends BaseInspection {
           return false;
         }
       }
-      final PsiExpressionList argumentList =
-        newExpression.getArgumentList();
+      final PsiExpressionList argumentList = newExpression.getArgumentList();
       if (argumentList == null) {
         return result;
       }
-      final PsiExpression[] expressions =
-        argumentList.getExpressions();
+      final PsiExpression[] expressions = argumentList.getExpressions();
       for (final PsiExpression argumentExpression : expressions) {
         result &= isMoveable(argumentExpression);
       }
       return result;
     }
     if (expression instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)expression;
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
       final PsiElement target = referenceExpression.resolve();
       if (!(target instanceof PsiField)) {
         return false;
@@ -405,37 +338,29 @@ public class TooBroadScopeInspection extends BaseInspection {
       if (!isMoveable(initializer)) {
         return;
       }
-      final PsiElement variableScope =
-        PsiTreeUtil.getParentOfType(variable,
-                                    PsiCodeBlock.class, PsiForStatement.class);
+      final PsiElement variableScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, PsiForStatement.class);
       if (variableScope == null) {
         return;
       }
-      final Query<PsiReference> query =
-        ReferencesSearch.search(variable, variable.getUseScope());
-      final Collection<PsiReference> referencesCollection =
-        query.findAll();
+      final Query<PsiReference> query = ReferencesSearch.search(variable, variable.getUseScope());
+      final Collection<PsiReference> referencesCollection = query.findAll();
       final int size = referencesCollection.size();
       if (size == 0) {
         return;
       }
-      final PsiElement[] referenceElements =
-        new PsiElement[referencesCollection.size()];
+      final PsiElement[] referenceElements = new PsiElement[referencesCollection.size()];
       int index = 0;
       for (PsiReference reference : referencesCollection) {
         final PsiElement referenceElement = reference.getElement();
         referenceElements[index] = referenceElement;
         index++;
       }
-      PsiElement commonParent =
-        ScopeUtils.getCommonParent(referenceElements);
+      PsiElement commonParent = ScopeUtils.getCommonParent(referenceElements);
       if (commonParent == null) {
         return;
       }
       if (initializer != null) {
-        commonParent =
-          ScopeUtils.moveOutOfLoopsAndClasses(commonParent,
-                                              variableScope);
+        commonParent = ScopeUtils.moveOutOfLoopsAndClasses(commonParent, variableScope);
         if (commonParent == null) {
           return;
         }
@@ -454,48 +379,37 @@ public class TooBroadScopeInspection extends BaseInspection {
         return;
       }
       final PsiElement referenceElement = referenceElements[0];
-      final PsiElement blockChild =
-        ScopeUtils.getChildWhichContainsElement(variableScope,
-                                                referenceElement);
+      final PsiElement blockChild = ScopeUtils.getChildWhichContainsElement(variableScope, referenceElement);
       if (blockChild == null) {
         return;
       }
-      final PsiElement insertionPoint =
-        ScopeUtils.findTighterDeclarationLocation(
-          blockChild, variable);
+      final PsiElement insertionPoint = ScopeUtils.findTighterDeclarationLocation(blockChild, variable);
       if (insertionPoint == null) {
         if (!(blockChild instanceof PsiExpressionStatement)) {
           return;
         }
-        final PsiExpressionStatement expressionStatement =
-          (PsiExpressionStatement)blockChild;
-        final PsiExpression expression =
-          expressionStatement.getExpression();
+        final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)blockChild;
+        final PsiExpression expression = expressionStatement.getExpression();
         if (!(expression instanceof PsiAssignmentExpression)) {
           return;
         }
-        final PsiAssignmentExpression assignmentExpression =
-          (PsiAssignmentExpression)expression;
-        final IElementType tokenType =
-          assignmentExpression.getOperationTokenType();
+        final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
+        final IElementType tokenType = assignmentExpression.getOperationTokenType();
         if (tokenType != JavaTokenType.EQ) {
           return;
         }
-        final PsiExpression lhs =
-          assignmentExpression.getLExpression();
+        final PsiExpression lhs = assignmentExpression.getLExpression();
         if (!lhs.equals(referenceElement)) {
           return;
         }
         final PsiExpression rhs = assignmentExpression.getRExpression();
-        if (rhs != null &&
-            VariableAccessUtils.variableIsUsed(variable, rhs)) {
+        if (rhs != null && VariableAccessUtils.variableIsUsed(variable, rhs)) {
           return;
         }
       }
       if (insertionPoint != null && JspPsiUtil.isInJspFile(insertionPoint)) {
         PsiElement elementBefore = insertionPoint.getPrevSibling();
-        elementBefore = PsiTreeUtil.skipSiblingsBackward(elementBefore,
-                                                         PsiWhiteSpace.class);
+        elementBefore = PsiTreeUtil.skipSiblingsBackward(elementBefore, PsiWhiteSpace.class);
         if (elementBefore instanceof PsiDeclarationStatement) {
           final PsiElement variableParent = variable.getParent();
           if (elementBefore.equals(variableParent)) {

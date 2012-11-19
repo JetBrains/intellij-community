@@ -1,8 +1,12 @@
 package org.jetbrains.jps.incremental;
 
 /**
- * @author Eugene Zhuravlev
- *         Date: 9/20/11
+ * Use this exception to signal that the build must be stopped
+ * If Throwable cause of the stop is provided, the reason is assumed to be an unexpected internal error,
+ * so the corresponding error message "internal error" with stacktrace is additionally reported
+ *
+ * If no Throwable cause is provided, it is assumed that all the errors were reported by the builder previously and the build is just stopped
+ * Optional message, if provided, is reported as a progress message.
  */
 public class ProjectBuildException extends Exception{
   public ProjectBuildException() {

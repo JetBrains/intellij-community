@@ -901,6 +901,17 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       highlightReferencedMethodOrClassName(ref, resolved);
     }
 
+    if (!myHolder.hasErrorResults() && resolved instanceof PsiClass) {
+      final PsiClass aClass = ((PsiClass)resolved).getContainingClass();
+      if (aClass != null) {
+        final PsiElement qualifier = ref.getQualifier();
+        final PsiElement place = qualifier instanceof PsiJavaCodeReferenceElement ? ((PsiJavaCodeReferenceElement)qualifier).resolve() : ref;
+        if (PsiTreeUtil.isAncestor(aClass, place, false) && aClass.hasTypeParameters()) {
+          myHolder.add(HighlightClassUtil.checkCreateInnerClassFromStaticContext(ref, place, (PsiClass)resolved));
+        }
+      }
+    }
+    
     return result;
   }
 

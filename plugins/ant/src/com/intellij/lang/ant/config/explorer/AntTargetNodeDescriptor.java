@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -71,7 +72,7 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
     myHighlightedText = new CompositeAppearance();
 
     final AntBuildFile buildFile = isMeta ? ((MetaTarget)myTarget).getBuildFile() : myTarget.getModel().getBuildFile();
-    final Color color = buildFile.isTargetVisible(myTarget) ? Color.black : Color.gray;
+    final Color color = buildFile.isTargetVisible(myTarget) ? UIUtil.getLabelForeground() : UIUtil.getLabelDisabledForeground();
     TextAttributes nameAttributes = new TextAttributes(color, null, null, EffectType.BOXED, myTarget.isDefault() ? Font.BOLD : Font.PLAIN);
 
     myHighlightedText.getEnding().addText(myTarget.getDisplayName(), nameAttributes);

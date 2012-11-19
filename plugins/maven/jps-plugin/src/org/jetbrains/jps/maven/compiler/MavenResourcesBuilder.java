@@ -91,7 +91,7 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
           else {
             FileUtil.copyContent(file, outputFile);
           }
-          outputConsumer.registerOutputFile(outputFile.getPath(), Collections.singleton(sourcePath));
+          outputConsumer.registerOutputFile(outputFile, Collections.singleton(sourcePath));
         }
         catch (UnsupportedEncodingException e) {
           context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO, "Resource was not copied: " + e.getMessage(), sourcePath));

@@ -255,6 +255,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
    */
   public void setEnabled(boolean enabled) {
     myEnabled = enabled;
+    setSelected(false);
   }
 
   @Nullable

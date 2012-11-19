@@ -396,6 +396,14 @@
       <add-to-group group-id="WelcomeScreen.Documentation" anchor="last"/>
     </group>
 
+    <group id="WelcomeScreen.Configure.IDEA">
+      <!-- TODO: Icons -->
+      <action id="WelcomeScreen.Configure.Template_Project_Settings" class="com.intellij.ide.actions.TemplateProjectPropertiesAction"/>
+      <action id="WelcomeScreen.Configure.Template_Project_Structure" class="com.intellij.ide.actions.TemplateProjectStructureAction"/>
+
+      <add-to-group group-id="WelcomeScreen.Configure" anchor="last"/>
+    </group>
+
     <action id="AddFrameworkSupport" class="com.intellij.ide.util.frameworkSupport.AddFrameworkSupportAction">
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>
       <add-to-group group-id="NavbarPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>

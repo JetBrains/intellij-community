@@ -109,7 +109,10 @@ public class JBCardLayout extends CardLayout {
         linearProgress[0] = Math.min(1, Math.max(0, (float)timePassed / mySwipeTime));
         double naturalProgress = (1 - Math.cos(Math.PI * linearProgress[0])) / 2;
         Rectangle bounds = parent.getBounds();
-        bounds.setLocation(0, 0);
+        Insets insets = parent.getInsets();
+        bounds.setLocation(insets.left, insets.top);
+        bounds.width -= insets.left + insets.right;
+        bounds.height -= insets.top + insets.bottom;
         Rectangle r = new Rectangle(bounds);
         int x = (int)((naturalProgress * r.width));
         r.translate(isForward ? -x : x, 0);

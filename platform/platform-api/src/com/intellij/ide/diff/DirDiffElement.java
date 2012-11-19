@@ -27,4 +27,7 @@ public interface DirDiffElement {
   DiffElement getSource();
 
   DiffElement getTarget();
+
+  DirDiffOperation getOperation();
+
 }
