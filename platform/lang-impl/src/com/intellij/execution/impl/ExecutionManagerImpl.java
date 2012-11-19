@@ -339,10 +339,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
     return (Messages.OK == Messages.showOkCancelDialog(
       project,
       ExecutionBundle.message("rerun.singleton.confirmation.message", configName, instancesCount),
-      ExecutionBundle.message("rerun.confirmation.title") +
-      " (" +
-      configName +
-      ")",
+      ExecutionBundle.message("rerun.confirmation.title", configName),
       CommonBundle.message("button.ok"),
       CommonBundle.message("button.cancel"),
       Messages.getQuestionIcon(), option));
