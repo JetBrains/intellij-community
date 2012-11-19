@@ -199,9 +199,7 @@ public class AndroidUtils {
     return null;
   }
 
-  public static void addRunConfiguration(@NotNull final AndroidFacet facet,
-                                         @Nullable final String activityClass,
-                                         final boolean ask,
+  public static void addRunConfiguration(@NotNull final AndroidFacet facet, @Nullable final String activityClass, final boolean ask,
                                          @Nullable final TargetSelectionMode targetSelectionMode,
                                          @Nullable final String preferredAvdName) {
     final Module module = facet.getModule();

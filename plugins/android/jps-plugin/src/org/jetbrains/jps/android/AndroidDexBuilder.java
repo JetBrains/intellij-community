@@ -142,40 +142,29 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
       return true;
     }
     final Set<String> externalLibraries = AndroidJpsUtil.getExternalLibraries(context, module, platform);
+    final ProGuardOptions proGuardOptions = AndroidJpsUtil.getProGuardConfigIfShouldRun(context, extension);
 
-    boolean includeSystemProguardCfg = false;
-    String proguardCfgPath = context.getBuilderParameter(AndroidCommonUtils.PROGUARD_CFG_PATH_OPTION);
-
-    if (proguardCfgPath != null) {
-      final String includeSystemProguardCfgOption = context.getBuilderParameter(AndroidCommonUtils.INCLUDE_SYSTEM_PROGUARD_FILE_OPTION);
-      includeSystemProguardCfg = Boolean.parseBoolean(includeSystemProguardCfgOption);
-    }
-    else if (extension.isRunProguard()) {
-      final File proguardCfgFile = extension.getProguardConfigFile();
-      if (proguardCfgFile == null) {
+    if (proGuardOptions != null) {
+      if (proGuardOptions.getCfgFile() == null) {
         context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
                                                    AndroidJpsBundle
                                                      .message("android.jps.errors.cannot.find.proguard.cfg", module.getName())));
         return false;
       }
-
-      proguardCfgPath = proguardCfgFile.getPath();
-      includeSystemProguardCfg = extension.isIncludeSystemProguardCfgFile();
     }
-
     final Set<String> fileSet;
     final Set<String> jars;
     final Set<String> outputDirs;
 
     try {
-      if (proguardCfgPath != null) {
+      if (proGuardOptions != null) {
         final File proguardCfgOutputFile = new File(dexOutputDir, AndroidCommonUtils.PROGUARD_CFG_OUTPUT_FILE_NAME);
-        final String[] proguardCfgFilePaths = new String[]{proguardCfgPath, proguardCfgOutputFile.getPath()};
+        final String[] proguardCfgFilePaths = new String[]{proGuardOptions.getCfgFile().getAbsolutePath(), proguardCfgOutputFile.getPath()};
         final String outputJarPath =
           FileUtil.toSystemDependentName(dexOutputDir.getPath() + '/' + AndroidCommonUtils.PROGUARD_OUTPUT_JAR_NAME);
 
         if (!runProguardIfNecessary(extension, classesDir, platform, externalLibraries, context, outputJarPath,
-                                    proguardCfgFilePaths, includeSystemProguardCfg, proguardStateStorage)) {
+                                    proguardCfgFilePaths, proGuardOptions.isIncludeSystemCfgFile(), proguardStateStorage)) {
           return false;
         }
         fileSet = jars = Collections.singleton(outputJarPath);

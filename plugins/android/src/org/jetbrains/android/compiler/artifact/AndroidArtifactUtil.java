@@ -1,16 +1,10 @@
 package org.jetbrains.android.compiler.artifact;
 
 import com.intellij.CommonBundle;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
@@ -23,7 +17,6 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -87,30 +80,5 @@ public class AndroidArtifactUtil {
       return null;
     }
     return facet;
-  }
-
-  @Nullable
-  public static String executeZipAlign(String zipAlignPath, File source, File destination) {
-    GeneralCommandLine commandLine = new GeneralCommandLine();
-    commandLine.setExePath(zipAlignPath);
-    commandLine.addParameters("-f", "4", source.getAbsolutePath(), destination.getAbsolutePath());
-    OSProcessHandler handler;
-    try {
-      handler = new OSProcessHandler(commandLine.createProcess(), "");
-    }
-    catch (ExecutionException e) {
-      return e.getMessage();
-    }
-    final StringBuilder builder = new StringBuilder();
-    handler.addProcessListener(new ProcessAdapter() {
-      @Override
-      public void onTextAvailable(ProcessEvent event, Key outputType) {
-        builder.append(event.getText());
-      }
-    });
-    handler.startNotify();
-    handler.waitFor();
-    int exitCode = handler.getProcess().exitValue();
-    return exitCode != 0 ? builder.toString() : null;
   }
 }
