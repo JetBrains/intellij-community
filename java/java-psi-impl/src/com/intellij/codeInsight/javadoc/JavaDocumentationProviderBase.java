@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
+import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -167,11 +167,8 @@ public class JavaDocumentationProviderBase {
   }
 
   private static void createElementLink(@NonNls final StringBuilder sb, final PsiElement element, final String str) {
-    sb.append("&nbsp;&nbsp;<a href=\"" + DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL);
-    sb.append(JavaDocUtil.getReferenceText(element.getProject(), element));
-    sb.append("\">");
-    sb.append(str);
-    sb.append("</a>");
+    sb.append("&nbsp;&nbsp;");
+    DocumentationManagerUtil.createHyperlink(sb, element, JavaDocUtil.getReferenceText(element.getProject(), element), str, true);
     sb.append("<br>");
   }
 

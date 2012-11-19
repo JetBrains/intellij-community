@@ -1477,7 +1477,7 @@ public class JavaDocInfoGenerator {
   private void generateLink(StringBuilder buffer, PsiElement element, String label) {
     String refText = JavaDocUtil.getReferenceText(myProject, element);
     if (refText != null) {
-      DocumentationManagerUtil.createHyperlink(buffer, refText,label,false);
+      DocumentationManagerUtil.createHyperlink(buffer, element, refText, label, false);
       //return generateLink(buffer, refText, label, context, false);
     }
   }
@@ -1504,7 +1504,7 @@ public class JavaDocInfoGenerator {
     }
 
 
-    DocumentationManagerUtil.createHyperlink(buffer, JavaDocUtil.getReferenceText(context.getProject(), target), label, plainLink);
+    DocumentationManagerUtil.createHyperlink(buffer, target, JavaDocUtil.getReferenceText(context.getProject(), target), label, plainLink);
     return label.length();
   }
 

@@ -46,6 +46,9 @@
   <applicationService serviceInterface="com.intellij.lang.PsiBuilderFactory"
                       serviceImplementation="com.intellij.lang.impl.PsiBuilderFactoryImpl"/>
 
+  <applicationService serviceInterface="com.intellij.codeInsight.documentation.DocumentationManagerUtil"
+                      serviceImplementation="com.intellij.codeInsight.documentation.DocumentationManagerUtil"/>
+
   <applicationService serviceInterface="com.intellij.navigation.ChooseByNameRegistry"
                       serviceImplementation="com.intellij.navigation.ChooseByNameRegistry"/>
 
