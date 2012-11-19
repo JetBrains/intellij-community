@@ -22,9 +22,13 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.updateSettings.impl.CheckForUpdateAction;
+import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.ui.LightColors;
+import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.labels.LinkListener;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -90,20 +94,33 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
                              ApplicationInfo.getInstance().getFullVersion() +
                              " Build " +
                              ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode());
-    versionLabel.setFont(versionLabel.getFont().deriveFont((float) 10));
+    makeSmallFont(versionLabel);
     versionLabel.setForeground(WelcomeScreenColors.FOOTER_FOREGROUND);
 
-    JPanel footerPanel = new JPanel(new BorderLayout());
+    JPanel footerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
     footerPanel.setBackground(WelcomeScreenColors.FOOTER_BACKGROUND);
-    footerPanel.setBorder(new EmptyBorder(5, 5, 5, 5) {
+    footerPanel.setBorder(new EmptyBorder(2, 5, 2, 5) {
       @Override
       public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
         g.setColor(WelcomeScreenColors.BORDER_COLOR);
         g.drawLine(x, y, x + width, y);
       }
     });
-    footerPanel.add(versionLabel, BorderLayout.WEST);
+    footerPanel.add(versionLabel);
+    footerPanel.add(makeSmallFont(new JLabel(".  ")));
+    footerPanel.add(makeSmallFont(new LinkLabel("Check", null, new LinkListener() {
+      @Override
+      public void linkSelected(LinkLabel aSource, Object aLinkData) {
+        CheckForUpdateAction.actionPerformed(null, true, null, UpdateSettings.getInstance());
+      }
+    })));
+    footerPanel.add(makeSmallFont(new JLabel(" for updates now.")));
     return footerPanel;
+  }
+
+  private static JLabel makeSmallFont(JLabel label) {
+    label.setFont(label.getFont().deriveFont((float)10));
+    return label;
   }
 
   private JPanel createHeaderPanel() {

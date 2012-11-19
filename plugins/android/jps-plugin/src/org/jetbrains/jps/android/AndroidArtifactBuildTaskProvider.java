@@ -1,7 +1,6 @@
 package org.jetbrains.jps.android;
 
 import com.intellij.util.Base64Converter;
-import com.sun.xml.internal.messaging.saaj.util.Base64;
 import org.jetbrains.android.compiler.artifact.AndroidArtifactSigningMode;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidCompilerMessageKind;

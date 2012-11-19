@@ -2097,7 +2097,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         if (onlyRemoveOutdatedData) {
           // on shutdown there is no need to re-index the file, just remove outdated data from indices
           final List<ID<?, ?>> affected = new ArrayList<ID<?,?>>();
-          for (final ID<?, ?> indexId : myIndices.keySet()) {
+          for (final ID<?, ?> indexId : myRequiringContentIndices) {  // non requiring content indices should be flushed
             if (getInputFilter(indexId).acceptInput(file)) {
               affected.add(indexId);
             }

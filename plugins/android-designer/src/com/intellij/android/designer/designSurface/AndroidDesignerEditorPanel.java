@@ -79,6 +79,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author Alexander Lobas
@@ -92,6 +94,8 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   private FolderConfiguration myLastRenderedConfiguration;
   private IAndroidTarget myLastTarget;
   private volatile RenderSession mySession;
+  private volatile long mySessionId;
+  private final Lock myRendererLock = new ReentrantLock();
   private boolean myParseTime;
   private int myProfileLastVersion;
   private WrapInProvider myWrapInProvider;
@@ -260,7 +264,21 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       }
     }, 500);
 
+    final long sessionId = ++mySessionId;
+
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      private void cancel() {
+        mySessionAlarm.cancelAllRequests();
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            if (!isProjectClosed()) {
+              hideProgress();
+            }
+          }
+        });
+      }
+
       @Override
       public void run() {
         try {
@@ -304,18 +322,40 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
             throw new RenderingException();
           }
 
-          RenderingResult result = RenderUtil.renderLayout(getModule(),
-                                                           layoutXmlText,
-                                                           myFile,
-                                                           null,
-                                                           myLastTarget,
-                                                           facet,
-                                                           myLastRenderedConfiguration,
-                                                           xdpi,
-                                                           ydpi,
-                                                           theme,
-                                                           10000,
-                                                           true);
+          if (sessionId != mySessionId) {
+            cancel();
+            return;
+          }
+
+          RenderingResult result = null;
+          if (myRendererLock.tryLock()) {
+            try {
+              result = RenderUtil.renderLayout(getModule(),
+                                               layoutXmlText,
+                                               myFile,
+                                               null,
+                                               myLastTarget,
+                                               facet,
+                                               myLastRenderedConfiguration,
+                                               xdpi,
+                                               ydpi,
+                                               theme,
+                                               10000,
+                                               true);
+            }
+            finally {
+              myRendererLock.unlock();
+            }
+          }
+          else {
+            cancel();
+            return;
+          }
+
+          if (sessionId != mySessionId) {
+            cancel();
+            return;
+          }
 
           if (ApplicationManagerEx.getApplicationEx().isInternal()) {
             System.out.println("Render time: " + (System.currentTimeMillis() - time)); // XXX
@@ -336,11 +376,13 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
               try {
                 if (!isProjectClosed()) {
                   hideProgress();
-                  runnable.consume(session);
-                  if (updatePalette) {
-                    updatePalette(myLastTarget);
+                  if (sessionId == mySessionId) {
+                    runnable.consume(session);
+                    if (updatePalette) {
+                      updatePalette(myLastTarget);
+                    }
+                    showWarnings(warnMessages);
                   }
-                  showWarnings(warnMessages);
                 }
               }
               catch (Throwable e) {
@@ -365,7 +407,9 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
           });
         }
       }
-    });
+    }
+
+    );
   }
 
   private void showWarnings(@Nullable List<FixableIssueMessage> warnMessages) {

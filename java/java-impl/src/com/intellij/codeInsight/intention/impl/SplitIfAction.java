@@ -125,8 +125,7 @@ public class SplitIfAction extends PsiElementBaseIntentionAction {
   }
 
   private static PsiExpression getROperands(PsiPolyadicExpression expression, PsiJavaToken separator) throws IncorrectOperationException {
-    PsiElement next = separator.getNextSibling();
-    if (next instanceof PsiWhiteSpace) next = next.getNextSibling();
+    PsiElement next = PsiTreeUtil.skipSiblingsForward(separator.getNextSibling(), PsiWhiteSpace.class, PsiComment.class);
     if (next == null) {
       throw new IncorrectOperationException("Unable to split '"+expression.getText()+"' at '"+separator+"' (offset "+separator.getStartOffsetInParent()+")");
     }

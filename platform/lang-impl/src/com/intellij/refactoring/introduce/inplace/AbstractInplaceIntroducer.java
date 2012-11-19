@@ -614,7 +614,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
         myLocalMarker.getStartOffset() == localVariable.getTextOffset()) {
       return true;
     }
-    return false;
+    return isRestart();
   }
 
   public static void unableToStartWarning(Project project, Editor editor, AbstractInplaceIntroducer introducer) {

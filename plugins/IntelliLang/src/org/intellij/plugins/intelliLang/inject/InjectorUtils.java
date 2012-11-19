@@ -19,14 +19,18 @@ package org.intellij.plugins.intelliLang.inject;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.injected.MultiHostRegistrarImpl;
 import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.util.ArrayUtil;
+import org.intellij.plugins.intelliLang.Configuration;
+import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -165,5 +169,17 @@ public class InjectorUtils {
     if (settingsAvailable) {
       psiFile.putUserData(LanguageInjectionSupport.SETTINGS_EDITOR, support);
     }
+  }
+
+  @SuppressWarnings("UnusedParameters")
+  public static Configuration getEditableInstance(Project project) {
+    return Configuration.getInstance();
+  }
+
+  public static boolean canBeRemoved(BaseInjection injection) {
+    if (injection.isEnabled()) return false;
+    if (StringUtil.isNotEmpty(injection.getPrefix()) || StringUtil.isNotEmpty(injection.getSuffix())) return false;
+    if (StringUtil.isNotEmpty(injection.getValuePattern())) return false;
+    return true;
   }
 }

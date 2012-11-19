@@ -17,7 +17,6 @@ package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.InheritanceUtil;
@@ -37,6 +36,30 @@ public class PsiMethodReferenceUtil {
   public static ThreadLocal<Map<PsiMethodReferenceExpression, PsiType>> ourRefs = new ThreadLocal<Map<PsiMethodReferenceExpression, PsiType>>();
 
   public static final Logger LOG = Logger.getInstance("#" + PsiMethodReferenceUtil.class.getName());
+  
+  public static class QualifierResolveResult {
+    private final PsiClass myContainingClass;
+    private final PsiSubstitutor mySubstitutor;
+    private final boolean myReferenceTypeQualified;
+
+    public QualifierResolveResult(PsiClass containingClass, PsiSubstitutor substitutor, boolean referenceTypeQualified) {
+      myContainingClass = containingClass;
+      mySubstitutor = substitutor;
+      myReferenceTypeQualified = referenceTypeQualified;
+    }
+
+    public PsiClass getContainingClass() {
+      return myContainingClass;
+    }
+
+    public PsiSubstitutor getSubstitutor() {
+      return mySubstitutor;
+    }
+
+    public boolean isReferenceTypeQualified() {
+      return myReferenceTypeQualified;
+    }
+  }
 
   public static boolean isValidQualifier(PsiMethodReferenceExpression expression) {
     final PsiElement referenceNameElement = expression.getReferenceNameElement();
@@ -52,6 +75,45 @@ public class PsiMethodReferenceUtil {
     return false;
   }
 
+  public static QualifierResolveResult getQualifierResolveResult(PsiMethodReferenceExpression methodReferenceExpression) {
+    PsiClass containingClass = null;
+    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+    final PsiExpression expression = methodReferenceExpression.getQualifierExpression();
+    if (expression != null) {
+      final PsiType expressionType = expression.getType();
+      if (expressionType instanceof PsiArrayType) {
+        containingClass = JavaPsiFacade.getInstance(methodReferenceExpression.getProject())
+          .findClass(CommonClassNames.JAVA_LANG_OBJECT, methodReferenceExpression.getResolveScope());
+        return new QualifierResolveResult(containingClass, substitutor, false);
+      }
+      PsiClassType.ClassResolveResult result = PsiUtil.resolveGenericsClassInType(expressionType);
+      containingClass = result.getElement();
+      if (containingClass != null) {
+        substitutor = result.getSubstitutor();
+      }
+      if (containingClass == null && expression instanceof PsiReferenceExpression) {
+        final JavaResolveResult resolveResult = ((PsiReferenceExpression)expression).advancedResolve(false);
+        final PsiElement resolve = resolveResult.getElement();
+        if (resolve instanceof PsiClass) {
+          containingClass = (PsiClass)resolve;
+          substitutor = resolveResult.getSubstitutor();
+          return new QualifierResolveResult(containingClass, substitutor, true);
+        }
+      }
+    }
+    else {
+      final PsiTypeElement typeElement = methodReferenceExpression.getQualifierType();
+      if (typeElement != null) {
+        PsiClassType.ClassResolveResult result = PsiUtil.resolveGenericsClassInType(typeElement.getType());
+        containingClass = result.getElement();
+        if (containingClass != null) {
+          substitutor = result.getSubstitutor();
+        }
+      }
+    }
+    return new QualifierResolveResult(containingClass, substitutor, false);
+  }
+  
   public static boolean isAcceptable(@Nullable final PsiMethodReferenceExpression methodReferenceExpression, PsiType left) {
     if (methodReferenceExpression == null) return false;
     Map<PsiMethodReferenceExpression, PsiType> map = ourRefs.get();
@@ -74,14 +136,12 @@ public class PsiMethodReferenceUtil {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(left);
     final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
     if (method != null) {
-      final Ref<PsiClass> classRef = new Ref<PsiClass>();
-      final Ref<PsiSubstitutor> substRef = new Ref<PsiSubstitutor>();
-      methodReferenceExpression.process(classRef, substRef);
+      final QualifierResolveResult qualifierResolveResult = getQualifierResolveResult(methodReferenceExpression);
       final PsiElement resolve = result.getElement();
       if (resolve instanceof PsiMethod) {
         final MethodSignature signature1 = method.getSignature(resolveResult.getSubstitutor());
         PsiSubstitutor subst = PsiSubstitutor.EMPTY;
-        subst = subst.putAll(substRef.get());
+        subst = subst.putAll(qualifierResolveResult.getSubstitutor());
         subst = subst.putAll(result.getSubstitutor());
         final MethodSignature signature2 = ((PsiMethod)resolve).getSignature(subst);
 
@@ -93,7 +153,7 @@ public class PsiMethodReferenceUtil {
           }
           if (!TypeConversionUtil.isAssignable(interfaceReturnType, methodReturnType, false)) return false;
         }
-        if (areAcceptable(signature1, signature2, classRef.get(), substRef.get(), ((PsiMethod)resolve).isVarArgs())) return true;
+        if (areAcceptable(signature1, signature2, qualifierResolveResult.getContainingClass(), qualifierResolveResult.getSubstitutor(), ((PsiMethod)resolve).isVarArgs())) return true;
       } else if (resolve instanceof PsiClass) {
         final PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(left);
         if (interfaceReturnType != null) {
@@ -103,7 +163,7 @@ public class PsiMethodReferenceUtil {
             final PsiParameter[] parameters = method.getParameterList().getParameters();
             if (parameters.length == 0) return true;
             if (parameters.length == 1) {
-              if (isReceiverType(resolveResult.getSubstitutor().substitute(parameters[0].getType()), classRef.get(), substRef.get())) return true;
+              if (isReceiverType(resolveResult.getSubstitutor().substitute(parameters[0].getType()), qualifierResolveResult.getContainingClass(), qualifierResolveResult.getSubstitutor())) return true;
             }
           }
         }
