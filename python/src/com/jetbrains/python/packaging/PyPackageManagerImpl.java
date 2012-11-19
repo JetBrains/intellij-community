@@ -414,19 +414,14 @@ public class PyPackageManagerImpl extends PyPackageManager {
    * @return the list of packages or null
    */
   @Nullable
-  public synchronized List<PyPackage> getPackagesFast() {
+  public synchronized List<PyPackage> getPackagesFast() throws PyExternalProcessException {
     if (myPackagesCache != null) {
       return myPackagesCache;
     }
     if (PySdkUtil.isRemote(mySdk)) {
       return null;
     }
-    try {
-      return getPackages();
-    }
-    catch (PyExternalProcessException e) {
-      throw new UnsupportedOperationException("can't have PyExternalProcessException when running tool for local SDK");
-    }
+    return getPackages();
   }
 
   @NotNull
@@ -465,7 +460,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   }
 
   @Nullable
-  public PyPackage findPackageFast(String name) {
+  public PyPackage findPackageFast(String name) throws PyExternalProcessException {
     final List<PyPackage> packages = getPackagesFast();
     return packages != null ? findPackageByName(name, packages) : null;
   }
@@ -480,7 +475,12 @@ public class PyPackageManagerImpl extends PyPackageManager {
   }
 
   public boolean hasPip() {
-    return findPackageFast(PACKAGE_PIP) != null;
+    try {
+      return findPackageFast(PACKAGE_PIP) != null;
+    }
+    catch (PyExternalProcessException e) {
+      return false;
+    }
   }
 
   @NotNull
