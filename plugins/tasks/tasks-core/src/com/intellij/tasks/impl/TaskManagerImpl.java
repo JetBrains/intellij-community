@@ -717,10 +717,10 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         toolWindow =
           ToolWindowManager.getInstance(myProject).registerToolWindow(ToolWindowId.TASKS, true, ToolWindowAnchor.RIGHT, myProject, true);
         new TasksToolWindowFactory().createToolWindowContent(myProject, toolWindow);
+        toolWindow.setAvailable(true, null);
+        toolWindow.show(null);
+        toolWindow.activate(null);
       }
-      toolWindow.setAvailable(true, null);
-      toolWindow.show(null);
-      toolWindow.activate(null);
     }
     else {
       if (toolWindow != null) {
