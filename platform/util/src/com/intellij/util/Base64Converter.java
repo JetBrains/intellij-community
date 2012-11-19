@@ -32,6 +32,24 @@ public class Base64Converter {
     'w', 'x', 'y', 'z', '0', '1', '2', '3',   // 48 to 55
     '4', '5', '6', '7', '8', '9', '+', '/'};  // 56 to 63
 
+  private final static byte[] decodeTable = {
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63, 52, 53, 54, 55, 56, 57,
+    58, 59, 60, 61, -1, -1, -1, -1, -1, -1, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+    10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1,
+    -1, -1, -1, -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+    40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1,
+  };
+
   public static String encode(@NotNull String s) {
     return encode(s.getBytes());
   }
@@ -92,5 +110,74 @@ public class Base64Converter {
     }
 
     return new String(out);
+  }
+
+  public static String decode(@NotNull String s) {
+    return new String(decode(s.getBytes()));
+  }
+
+  public static byte[] decode(@NotNull byte[] bytes) {
+    int paddingCount = 0;
+    int realLength = 0;
+
+    for (int i = bytes.length - 1; i >= 0; i--) {
+      if (bytes[i] > ' ') {
+        realLength++;
+      }
+
+      if (bytes[i] == '=') {
+        paddingCount++;
+      }
+    }
+
+    if (realLength % 4 != 0) {
+      throw new IllegalArgumentException("Incorrect length " + realLength + ". Must be a multiple of 4");
+    }
+    final byte[] out = new byte[realLength / 4 * 3 - paddingCount];
+    final byte[] t = new byte[4];
+    int outIndex = 0;
+    int index = 0;
+    t[0] = t[1] = t[2] = t[3] = '=';
+
+    for (byte c : bytes) {
+      if (c > ' ') {
+        t[index++] = c;
+      }
+
+      if (index == 4) {
+        outIndex += decode(out, outIndex, t[0], t[1], t[2], t[3]);
+        index = 0;
+        t[0] = t[1] = t[2] = t[3] = '=';
+      }
+    }
+
+    if (index > 0) {
+      decode(out, outIndex, t[0], t[1], t[2], t[3]);
+    }
+    return out;
+  }
+
+  private static int decode(byte[] output, int outIndex, byte a, byte b, byte c, byte d) {
+    byte da = decodeTable[a];
+    byte db = decodeTable[b];
+    byte dc = decodeTable[c];
+    byte dd = decodeTable[d];
+
+    if ((da == -1) || (db == -1) || ((dc == -1) && (c != '=')) || ((dd == -1) && (d != '='))) {
+      throw new IllegalArgumentException(
+        "Invalid character [" + (a & 0xFF) + ", " + (b & 0xFF) + ", " + (c & 0xFF) + ", " + (d & 0xFF) + "]");
+    }
+    output[outIndex++] = (byte)((da << 2) | db >>> 4);
+
+    if (c == '=') {
+      return 1;
+    }
+    output[outIndex++] = (byte)((db << 4) | dc >>> 2);
+
+    if (d == '=') {
+      return 2;
+    }
+    output[outIndex] = (byte)((dc << 6) | dd);
+    return 3;
   }
 }
