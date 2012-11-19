@@ -24,7 +24,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -33,31 +35,37 @@ import java.util.List;
 */
 public class InterpreterPathChooser extends BaseListPopupStep<String> {
   private final Project myProject;
+  private final Component myOwnerComponent;
   private final Sdk[] myExistingSdks;
   private final NullableConsumer<Sdk> myCallback;
 
   private static final String LOCAL = "Local...";
   private static final String REMOTE = "Remote...";
+  private static final String VIRTUALENV = "Create VirtualEnv...";
 
   public static void show(final Project project,
                           final Sdk[] existingSdks,
                           final RelativePoint popupPoint,
+                          final boolean showVirtualEnv,
                           final NullableConsumer<Sdk> callback) {
-    ListPopupStep sdkHomesStep = new InterpreterPathChooser(project, existingSdks, callback);
+    ListPopupStep sdkHomesStep = new InterpreterPathChooser(project, popupPoint.getComponent(), existingSdks, showVirtualEnv, callback);
     final ListPopup popup = JBPopupFactory.getInstance().createListPopup(sdkHomesStep);
     popup.show(popupPoint);
   }
 
   public InterpreterPathChooser(Project project,
+                                Component ownerComponent,
                                 Sdk[] existingSdks,
+                                boolean showVirtualEnv,
                                 NullableConsumer<Sdk> callback) {
-    super("Select Interpreter Path", getSuggestedPythonSdkPaths(existingSdks));
+    super("Select Interpreter Path", getSuggestedPythonSdkPaths(existingSdks, showVirtualEnv));
     myProject = project;
+    myOwnerComponent = ownerComponent;
     myExistingSdks = existingSdks;
     myCallback = callback;
   }
 
-  private static List<String> getSuggestedPythonSdkPaths(Sdk[] existingSdks) {
+  private static List<String> getSuggestedPythonSdkPaths(Sdk[] existingSdks, boolean showVirtualEnv) {
     List<String> paths = new ArrayList<String>();
     Collection<String> sdkHomes = PythonSdkType.getInstance().suggestHomePaths();
     for (String sdkHome : SdkConfigurationUtil.filterExistingPaths(PythonSdkType.getInstance(), sdkHomes, existingSdks)) {
@@ -65,13 +73,16 @@ public class InterpreterPathChooser extends BaseListPopupStep<String> {
     }
     paths.add(LOCAL);
     paths.add(REMOTE);
+    if (showVirtualEnv) {
+      paths.add(VIRTUALENV);
+    }
     return paths;
   }
 
   @Nullable
   @Override
   public Icon getIconFor(String aValue) {
-    if (LOCAL.equals(aValue) || REMOTE.equals(aValue)) return null;
+    if (LOCAL.equals(aValue) || REMOTE.equals(aValue) || VIRTUALENV.equals(aValue)) return null;
     String filePath = aValue;
     if (StringUtil.startsWithChar(filePath, '~')) {
       String home = SystemProperties.getUserHome();
@@ -87,37 +98,72 @@ public class InterpreterPathChooser extends BaseListPopupStep<String> {
     return FileUtil.toSystemDependentName(value);
   }
 
-  private void addToModel(final String selectedValue) {
+  private void sdkSelected(final String selectedValue) {
     if (LOCAL.equals(selectedValue)) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          SdkConfigurationUtil.createSdk(myProject, myExistingSdks, myCallback, PythonSdkType.getInstance());
-        }
-      }, ModalityState.any());
+      createLocalSdk();
     }
     else if (REMOTE.equals(selectedValue)) {
-      PythonRemoteInterpreterManager remoteInterpreterManager = PythonRemoteInterpreterManager.getInstance();
-      if (remoteInterpreterManager != null) {
-        Sdk sdk = remoteInterpreterManager.addRemoteSdk(myProject, Lists.newArrayList(myExistingSdks));
-        if (sdk != null) {
-          myCallback.consume(sdk);
-        }
+      createRemoteSdk();
+    }
+    else if (VIRTUALENV.equals(selectedValue)) {
+      createVirtualEnvSdk();
+    }
+    else {
+      createSdkFromPath(selectedValue);
+    }
+  }
+
+  private void createLocalSdk() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        SdkConfigurationUtil.createSdk(myProject, myExistingSdks, myCallback, PythonSdkType.getInstance());
       }
-      else {
-        Messages.showErrorDialog("WebDeployment is missing. Please enable WebDeployment plugin.", "Add Remote Interpreter");
+    }, ModalityState.any());
+  }
+
+  private void createRemoteSdk() {
+    PythonRemoteInterpreterManager remoteInterpreterManager = PythonRemoteInterpreterManager.getInstance();
+    if (remoteInterpreterManager != null) {
+      Sdk sdk = remoteInterpreterManager.addRemoteSdk(myProject, Lists.newArrayList(myExistingSdks));
+      if (sdk != null) {
+        myCallback.consume(sdk);
       }
     }
     else {
-      String filePath = selectedValue;
-      if (StringUtil.startsWithChar(filePath, '~')) {
-        String home = SystemProperties.getUserHome();
-        filePath = home + filePath.substring(1);
-      }
-      Sdk sdk = SdkConfigurationUtil.setupSdk(myExistingSdks,
-                                              LocalFileSystem.getInstance().findFileByPath(filePath),
-                                              PythonSdkType.getInstance(), false, null, null);
-      myCallback.consume(sdk);
+      Messages.showErrorDialog("WebDeployment is missing. Please enable WebDeployment plugin.", "Add Remote Interpreter");
+    }
+  }
+
+  private void createSdkFromPath(String selectedPath) {
+    String filePath = selectedPath;
+    if (StringUtil.startsWithChar(filePath, '~')) {
+      String home = SystemProperties.getUserHome();
+      filePath = home + filePath.substring(1);
+    }
+    Sdk sdk = SdkConfigurationUtil.setupSdk(myExistingSdks,
+                                            LocalFileSystem.getInstance().findFileByPath(filePath),
+                                            PythonSdkType.getInstance(), false, null, null);
+    myCallback.consume(sdk);
+  }
+
+  private void createVirtualEnvSdk() {
+    final CreateVirtualEnvDialog dialog;
+    final List<Sdk> allSdks = Arrays.asList(myExistingSdks);
+    if (myProject != null) {
+      dialog = new CreateVirtualEnvDialog(myProject, false, allSdks, null);
+    }
+    else {
+      dialog = new CreateVirtualEnvDialog(myOwnerComponent, false, allSdks, null);
+    }
+    dialog.show();
+    if (dialog.isOK()) {
+      dialog.createVirtualEnv(allSdks, new CreateVirtualEnvDialog.VirtualEnvCallback() {
+        @Override
+        public void virtualEnvCreated(Sdk sdk, boolean associateWithProject, boolean setAsProjectInterpreter) {
+          myCallback.consume(sdk);
+        }
+      });
     }
   }
 
@@ -130,7 +176,7 @@ public class InterpreterPathChooser extends BaseListPopupStep<String> {
   public PopupStep onChosen(final String selectedValue, boolean finalChoice) {
     return doFinalStep(new Runnable() {
       public void run() {
-        addToModel(selectedValue);
+        sdkSelected(selectedValue);
       }
     });
   }
