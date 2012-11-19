@@ -1,4 +1,4 @@
-package com.jetbrains.python.sdk;
+package com.jetbrains.python.sdk.flavors;
 
 import org.jetbrains.annotations.NotNull;
 

@@ -5,8 +5,8 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.RunnerMediator;
 import com.intellij.openapi.util.SystemInfo;
-import com.jetbrains.python.sdk.JythonSdkFlavor;
-import com.jetbrains.python.sdk.PythonSdkFlavor;
+import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 
 /**
  * @author traff

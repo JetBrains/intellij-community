@@ -19,6 +19,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.SystemProperties;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

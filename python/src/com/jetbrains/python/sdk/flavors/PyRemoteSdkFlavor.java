@@ -1,4 +1,4 @@
-package com.jetbrains.python.sdk;
+package com.jetbrains.python.sdk.flavors;
 
 import com.google.common.collect.Lists;
 import com.intellij.openapi.util.text.StringUtil;
