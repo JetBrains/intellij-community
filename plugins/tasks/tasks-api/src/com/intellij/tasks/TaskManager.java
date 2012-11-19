@@ -110,4 +110,8 @@ public abstract class TaskManager {
   public abstract void updateTimeTrackingToolWindow();
 
   public abstract boolean isTimeTrackingToolWindowAvailable();
+
+  public abstract boolean isTimeTrackingAutoMode();
+
+  public abstract void setTimeTrackingAutoMode(final boolean state);
 }

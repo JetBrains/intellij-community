@@ -14,6 +14,7 @@ public class TasksIcons {
   }
 
   public static final Icon Assembla = load("/icons/assembla.png"); // 16x16
+  public static final Icon AutoMode = load("/icons/autoMode.png"); // 16x16
   public static final Icon Bug = load("/icons/bug.png"); // 16x16
   public static final Icon Clock = load("/icons/clock.png"); // 16x16
   public static final Icon Exception = load("/icons/exception.png"); // 16x16
@@ -34,6 +35,8 @@ public class TasksIcons {
   public static final Icon Pivotal = load("/icons/pivotal.png"); // 16x16
   public static final Icon Redmine = load("/icons/redmine.png"); // 16x16
   public static final Icon SavedContext = load("/icons/savedContext.png"); // 16x16
+  public static final Icon StartTimer = load("/icons/startTimer.png"); // 16x16
+  public static final Icon StopTimer = load("/icons/stopTimer.png"); // 16x16
   public static final Icon Trac = load("/icons/trac.png"); // 16x16
   public static final Icon Unknown = load("/icons/unknown.png"); // 16x16
   public static final Icon Youtrack = load("/icons/youtrack.png"); // 16x16

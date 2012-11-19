@@ -37,7 +37,7 @@ public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider
   private JComponent myContent;
 
   private boolean myBorderless;
-  private boolean myVertical;
+  protected boolean myVertical;
   private boolean myProvideQuickActions;
 
   public SimpleToolWindowPanel(boolean vertical) {
