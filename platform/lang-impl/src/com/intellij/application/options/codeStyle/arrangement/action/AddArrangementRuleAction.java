@@ -49,7 +49,7 @@ public class AddArrangementRuleAction extends AnAction implements DumbAware {
     int rowToEdit;
     if (rows.size() == 1) {
       rowToEdit = rows.get(0) + 1;
-      model.insertRow(rowToEdit, new Object[] { new EmptyArrangementRuleComponent(control.getRowHeight(rowToEdit)) });
+      model.insertRow(rowToEdit, new Object[] { new EmptyArrangementRuleComponent(control.getEmptyRowHeight()) });
     }
     else {
       rowToEdit = model.getSize();

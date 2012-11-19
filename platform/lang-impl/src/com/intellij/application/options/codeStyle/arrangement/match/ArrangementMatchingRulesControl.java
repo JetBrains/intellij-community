@@ -423,6 +423,11 @@ public class ArrangementMatchingRulesControl extends JBTable {
     }
     return -1;
   }
+
+  public int getEmptyRowHeight() {
+    return myMinRowHeight;
+  }
+
   @NotNull
   private JComponent adjustHeight(@NotNull JComponent component, int row) {
     int height = component.getPreferredSize().height;
