@@ -153,12 +153,15 @@ public class ChangelistConflictTracker {
     }
 
     String path = file.getPath();
-    Conflict conflict = myConflicts.get(path);
     boolean newConflict = false;
-    if (conflict == null) {
-      conflict = new Conflict();
-      myConflicts.put(path, conflict);
-      newConflict = true;
+    Conflict conflict;
+    synchronized (myConflicts) {
+      conflict = myConflicts.get(path);
+      if (conflict == null) {
+        conflict = new Conflict();
+        myConflicts.put(path, conflict);
+        newConflict = true;
+      }
     }
     conflict.timestamp = System.currentTimeMillis();
     conflict.changelistId = defaultList.getId();
