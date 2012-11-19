@@ -1,5 +1,6 @@
 package com.intellij.tasks.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.ide.util.gotoByName.ChooseByNameItemProvider;
@@ -19,6 +20,7 @@ import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.IconUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +37,7 @@ public class GotoTaskAction extends GotoActionBase {
 
   public GotoTaskAction() {
     getTemplatePresentation().setText("Open Task...");
+    getTemplatePresentation().setIcon(IconUtil.getAddIcon());
   }
 
   @Override

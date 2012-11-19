@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebuggerBundle;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
 import java.util.Enumeration;
@@ -71,10 +72,12 @@ public class WatchDebuggerTree extends DebuggerTree {
     return node;
   }
 
-  public DebuggerTreeNodeImpl addWatch(TextWithImports text) {
+  public DebuggerTreeNodeImpl addWatch(TextWithImports text, @Nullable String customName) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final DebuggerTreeNodeImpl root = (DebuggerTreeNodeImpl) getModel().getRoot();
-    DebuggerTreeNodeImpl node = DebuggerTreeNodeImpl.createNodeNoUpdate(this, new WatchItemDescriptor(getProject(), text));
+    final WatchItemDescriptor descriptor = new WatchItemDescriptor(getProject(), text);
+    descriptor.setCustomName(customName);
+    DebuggerTreeNodeImpl node = DebuggerTreeNodeImpl.createNodeNoUpdate(this, descriptor);
     root.add(node);
 
     treeChanged();

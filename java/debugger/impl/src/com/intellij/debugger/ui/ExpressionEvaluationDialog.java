@@ -135,7 +135,7 @@ public class ExpressionEvaluationDialog extends EvaluationDialog {
     if (tab != null) {
       final TextWithImports evaluate = getCodeToEvaluate();
       if (evaluate != null) {
-        tab.getWatchPanel().getWatchTree().addWatch(evaluate);
+        tab.getWatchPanel().getWatchTree().addWatch(evaluate, null);
       }
     }
   }

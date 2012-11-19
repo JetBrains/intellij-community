@@ -114,4 +114,8 @@ public abstract class TaskManager {
   public abstract boolean isTimeTrackingAutoMode();
 
   public abstract void setTimeTrackingAutoMode(final boolean state);
+
+  public abstract boolean isHideClosedTasks();
+
+  public abstract void setHideClosedTasks(final boolean state);
 }

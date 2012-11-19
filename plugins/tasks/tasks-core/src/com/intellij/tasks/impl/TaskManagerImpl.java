@@ -745,6 +745,16 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     getState().isTimeTrackingAutoMode = state;
   }
 
+  @Override
+  public boolean isHideClosedTasks() {
+    return getState().hideClosedTasks;
+  }
+
+  @Override
+  public void setHideClosedTasks(final boolean state) {
+    getState().hideClosedTasks = state;
+  }
+
   private static LocalTaskImpl createDefaultTask() {
     return new LocalTaskImpl(LocalTaskImpl.DEFAULT_TASK_ID, "Default task");
   }
@@ -987,6 +997,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     public boolean enableTimeTracking = true;
     public int timeTrackingSuspendDelayInSeconds = 600;
     public boolean isTimeTrackingAutoMode = true;
+    public boolean hideClosedTasks = true;
   }
 
   private abstract class TestConnectionTask extends com.intellij.openapi.progress.Task.Modal {

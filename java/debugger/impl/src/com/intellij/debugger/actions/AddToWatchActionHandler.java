@@ -104,7 +104,7 @@ public class AddToWatchActionHandler extends DebuggerActionHandler {
 
   public static void doAddWatch(final MainWatchPanel watchPanel, final TextWithImports expression, final NodeDescriptorImpl descriptor) {
     final WatchDebuggerTree watchTree = watchPanel.getWatchTree();
-    final DebuggerTreeNodeImpl node = watchTree.addWatch(expression);
+    final DebuggerTreeNodeImpl node = watchTree.addWatch(expression, null);
     if (descriptor != null) {
       node.getDescriptor().displayAs(descriptor);
     }
