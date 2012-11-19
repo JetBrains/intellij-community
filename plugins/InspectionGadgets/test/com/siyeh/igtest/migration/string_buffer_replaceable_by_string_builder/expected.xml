@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>StringBufferReplaceableByStringBuilder.java</file>
+    <line>7</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'StringBuffer' may be 'StringBuilder'</problem_class>
+    <description>&lt;code&gt;StringBuffer buffer&lt;/code&gt; may be declared as 'StringBuilder' #loc</description>
+  </problem>
+</problems>
