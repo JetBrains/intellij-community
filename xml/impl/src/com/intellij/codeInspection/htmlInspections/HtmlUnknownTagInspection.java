@@ -252,7 +252,9 @@ public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool {
         ProblemHighlightType highlightType = tag.getContainingFile().getContext() == null ?
                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING :
                                              ProblemHighlightType.INFORMATION;
-        holder.registerProblem(startTagName, message, highlightType, quickfixes.toArray(new LocalQuickFix[quickfixes.size()]));
+        if (startTagName.getTextLength() > 0) {
+          holder.registerProblem(startTagName, message, highlightType, quickfixes.toArray(new LocalQuickFix[quickfixes.size()]));
+        }
 
         if (endTagName != null) {
           holder.registerProblem(endTagName, message, highlightType, quickfixes.toArray(new LocalQuickFix[quickfixes.size()]));
