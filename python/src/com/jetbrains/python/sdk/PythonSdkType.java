@@ -33,8 +33,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.util.ArrayUtil;
 import com.intellij.remotesdk.RemoteSdkDataHolder;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.NullableConsumer;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
@@ -212,6 +215,24 @@ public class PythonSdkType extends SdkType {
     };
     result.setTitle(PyBundle.message("sdk.select.path"));
     return result;
+  }
+
+  @Override
+  public boolean supportsCustomCreateUI() {
+    return true;
+  }
+
+  @Override
+  public void showCustomCreateUI(SdkModel sdkModel, JComponent parentComponent, final Consumer<Sdk> sdkCreatedCallback) {
+    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent));
+    InterpreterPathChooser.show(project, sdkModel.getSdks(), RelativePoint.getCenterOf(parentComponent), new NullableConsumer<Sdk>() {
+      @Override
+      public void consume(@Nullable Sdk sdk) {
+        if (sdk != null) {
+          sdkCreatedCallback.consume(sdk);
+        }
+      }
+    });
   }
 
   public static boolean isVirtualEnv(Sdk sdk) {
