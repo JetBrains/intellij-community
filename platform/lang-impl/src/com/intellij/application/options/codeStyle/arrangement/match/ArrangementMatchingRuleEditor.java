@@ -380,10 +380,7 @@ public class ArrangementMatchingRuleEditor extends JPanel {
 
   private void removeCondition(@NotNull ArrangementAtomMatchConditionComponent component) {
     myRuleInfo.removeCondition(component.getMatchCondition().getValue());
-    ensureConsistency();
-  }
-
-  private void ensureConsistency() {
+    component.setSelected(false);
     ArrangementMatchCondition condition = myRuleInfo.buildCondition();
     Map<ArrangementSettingType, Set<?>> map = ArrangementConfigUtil.buildAvailableConditions(myFilter, condition);
     for (ArrangementAtomMatchConditionComponent c : myConditionComponents.values()) {
@@ -399,8 +396,7 @@ public class ArrangementMatchingRuleEditor extends JPanel {
         }
       }
       if (!remain) {
-        myRuleInfo.removeCondition(v);
-        ensureConsistency();
+        removeCondition(c);
         return;
       }
     }
