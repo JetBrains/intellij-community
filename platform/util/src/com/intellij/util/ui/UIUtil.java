@@ -180,7 +180,7 @@ public class UIUtil {
 
         String vendor = SystemProperties.getJavaVmVendor();
         if (SystemInfo.isJavaVersionAtLeast("1.6.0_33") && vendor != null && StringUtil.containsIgnoreCase(vendor, "Apple")) {
-          if (!Registry.is("ide.mac.disableRetina", false)) {
+          if (!"false".equals(System.getProperty("ide.mac.retina"))) {
             ourRetina.set(IsRetina.isRetina());
           }
         }
@@ -1392,14 +1392,14 @@ public class UIUtil {
   }
 
   public static void paintWithRetina(@NotNull Dimension size, @NotNull Graphics g, boolean useRetinaCondition, Consumer<Graphics2D> paintRoutine) {
-    if (!useRetinaCondition || !isRetina() || Registry.is("ide.mac.disableRetinaDrawingFix", false)) {
+    if (!useRetinaCondition || !isRetina() || Registry.is("ide.mac.retina.disableDrawingFix", false)) {
       paintRoutine.consume((Graphics2D)g);
     }
     else {
       Rectangle rect = g.getClipBounds();
       if (rect == null) rect = new Rectangle(size);
 
-      Image image = ((Graphics2D)g).getDeviceConfiguration().createCompatibleImage(rect.width * 2, rect.height * 2);
+      Image image = new BufferedImage(rect.width * 2, rect.height * 2, BufferedImage.TYPE_INT_ARGB);
       Graphics2D imageGraphics = (Graphics2D)image.getGraphics();
 
       imageGraphics.scale(2, 2);

@@ -416,7 +416,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       Rectangle componentBounds = c.getBounds();
       ProperTextRange docRange = ProperTextRange.create(0, (int)componentBounds.getHeight());
       if (myCachedTrack == null || myCachedTrack.getHeight() != componentBounds.getHeight()) {
-        myCachedTrack = new BufferedImage(componentBounds.width, componentBounds.height, BufferedImage.TYPE_INT_ARGB);
+        myCachedTrack = UIUtil.createImage(componentBounds.width, componentBounds.height, BufferedImage.TYPE_INT_ARGB);
         myDirtyYPositions = docRange;
         paintTrackBasement(myCachedTrack.getGraphics(), new Rectangle(0, 0, componentBounds.width, componentBounds.height));
       }
