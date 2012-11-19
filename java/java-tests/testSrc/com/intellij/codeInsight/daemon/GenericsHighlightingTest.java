@@ -201,6 +201,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInferenceWithBoxingCovariant() throws Exception { doTest17Incompatibility(false); }
   public void testSuperWildcardIsNotWithinItsBound() throws Exception { doTest17Incompatibility(false); }
   public void testSpecificReturnType() throws Exception { doTest17Incompatibility(false); }
+  public void testParameterizedParameterBound() throws Exception { doTest17Incompatibility(false); }
   public void testInstanceClassInStaticContextAccess() throws Exception { doTest17Incompatibility(false); }
 
   public void testJavaUtilCollections_NoVerify() throws Exception {

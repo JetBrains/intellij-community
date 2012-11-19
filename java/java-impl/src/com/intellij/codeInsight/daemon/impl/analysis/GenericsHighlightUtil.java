@@ -187,14 +187,14 @@ public class GenericsHighlightUtil {
         final PsiType[] types = inferenceResult.getTypes();
         for (int i = 0; i < typeParameters.length; i++) {
           final PsiType type = types[i];
-          final HighlightInfo highlightInfo = checkTypeParameterWithinItsBound(typeParameters[i], substitutor, type, referenceElements[0]);
+          final HighlightInfo highlightInfo = checkTypeParameterWithinItsBound(typeParameters[i], substitutor, type, referenceElements[0], referenceParameterList);
           if (highlightInfo != null) return highlightInfo;
         }
       }
       else {
         for (int i = 0; i < typeParameters.length; i++) {
           final PsiTypeElement typeElement = referenceElements[i];
-          final HighlightInfo highlightInfo = checkTypeParameterWithinItsBound(typeParameters[i], substitutor, typeElement.getType(), typeElement);
+          final HighlightInfo highlightInfo = checkTypeParameterWithinItsBound(typeParameters[i], substitutor, typeElement.getType(), typeElement, referenceParameterList);
           if (highlightInfo != null) return highlightInfo;
         }
       }
@@ -243,7 +243,8 @@ public class GenericsHighlightUtil {
   private static HighlightInfo checkTypeParameterWithinItsBound(PsiTypeParameter classParameter,
                                                                 final PsiSubstitutor substitutor,
                                                                 final PsiType type,
-                                                                final PsiElement typeElement2Highlight) {
+                                                                final PsiElement typeElement2Highlight,
+                                                                PsiReferenceParameterList referenceParameterList) {
     final PsiClass referenceClass;
     if (type instanceof PsiClassType) {
       referenceClass = ((PsiClassType)type).resolve();
@@ -253,7 +254,7 @@ public class GenericsHighlightUtil {
     }
     final PsiType psiType = substitutor.substitute(classParameter);
     if (psiType instanceof PsiClassType && !(PsiUtil.resolveClassInType(psiType) instanceof PsiTypeParameter)) {
-      if (checkNotInBounds(type, psiType)) {
+      if (checkNotInBounds(type, psiType, referenceParameterList)) {
         final String description = "Actual type argument and inferred type contradict each other";
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, typeElement2Highlight, description);
       }
@@ -262,7 +263,7 @@ public class GenericsHighlightUtil {
     final PsiClassType[] bounds = classParameter.getSuperTypes();
     for (PsiClassType type1 : bounds) {
       PsiType bound = substitutor.substitute(type1);
-      if (!bound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) && checkNotInBounds(type, bound)) {
+      if (!bound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) && checkNotInBounds(type, bound, referenceParameterList)) {
         PsiClass boundClass = bound instanceof PsiClassType ? ((PsiClassType)bound).resolve() : null;
 
         @NonNls final String messageKey = boundClass == null || referenceClass == null || referenceClass.isInterface() == boundClass.isInterface()
@@ -287,9 +288,9 @@ public class GenericsHighlightUtil {
     return null;
   }
 
-  private static boolean checkNotInBounds(PsiType type, PsiType bound) {
+  private static boolean checkNotInBounds(PsiType type, PsiType bound, PsiReferenceParameterList referenceParameterList) {
     if (type instanceof PsiClassType) {
-      return checkNotAssignable(bound, type);
+      return checkNotAssignable(bound, type, allowUncheckedConversions((PsiClassType)type, referenceParameterList));
     }
     else {
       if (type instanceof PsiWildcardType) {
@@ -326,10 +327,6 @@ public class GenericsHighlightUtil {
            !TypeConversionUtil.areTypesConvertible(extendsBound, boundBound);
   }
 
-  private static boolean checkNotAssignable(final PsiType bound, final PsiType type) {
-    return checkNotAssignable(bound, type, allowUncheckedConversions(type));
-  }
-
   private static boolean checkNotAssignable(final PsiType bound,
                                             final PsiType type,
                                             final boolean allowUncheckedConversion) {
@@ -349,17 +346,18 @@ public class GenericsHighlightUtil {
     }
   }
 
-  private static boolean allowUncheckedConversions(PsiType type) {
-    boolean allowUncheckedConversions = true;
-    if (type instanceof PsiClassType) {
-      final PsiClass classType = ((PsiClassType)type).resolve();
-      if (classType != null) {
-        for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(classType)) {
-          allowUncheckedConversions &= parameter.getExtendsListTypes().length == 0;
+  private static boolean allowUncheckedConversions(PsiClassType type, PsiReferenceParameterList referenceParameterList) {
+    final PsiClass psiClass = type.resolve();
+    if (psiClass != null) {
+      for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(psiClass)) {
+        if (parameter.getExtendsListTypes().length != 0) {
+          return false;
         }
       }
     }
-    return allowUncheckedConversions;
+    if (!type.isRaw()) return true;
+    //allow unchecked conversions in method calls but not in type declaration
+    return referenceParameterList.getParent() instanceof PsiReferenceExpression;
   }
 
   private static String typeParameterListOwnerDescription(final PsiTypeParameterListOwner typeParameterListOwner) {
