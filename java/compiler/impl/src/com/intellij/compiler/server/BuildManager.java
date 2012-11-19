@@ -55,7 +55,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.SavingRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -183,9 +182,6 @@ public class BuildManager implements ApplicationComponent{
         }
         List<Project> activeProjects = null;
         for (VFileEvent event : events) {
-          if (!event.isFromRefresh() && !(event.getRequestor() instanceof SavingRequestor)) {
-            continue;
-          }
           final VirtualFile eventFile = event.getFile();
           if (eventFile == null || ProjectCoreUtil.isProjectOrWorkspaceFile(eventFile)) {
             continue;
