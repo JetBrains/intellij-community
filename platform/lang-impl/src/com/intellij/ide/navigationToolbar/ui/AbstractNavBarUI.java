@@ -133,7 +133,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     int w = item.getWidth();
     int h = item.getHeight();
 
-    BufferedImage result = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+    BufferedImage result = UIUtil.createImage(w, h, BufferedImage.TYPE_INT_ARGB);
 
     Color defaultBg = UIUtil.isUnderDarcula() ? Gray._100 : Color.WHITE;
     final Paint bg = floating ? defaultBg : new GradientPaint(0, 0, new Color(255, 255, 255, 30), 0, h, new Color(255, 255, 255, 10));
