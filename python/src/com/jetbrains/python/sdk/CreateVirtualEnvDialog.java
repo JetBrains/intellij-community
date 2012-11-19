@@ -2,19 +2,34 @@ package com.jetbrains.python.sdk;
 
 import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.FacetValidatorsManager;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.LocationNameFieldsBinding;
+import com.intellij.remotesdk.RemoteSdkDataHolder;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.PathUtil;
-import com.intellij.remotesdk.RemoteSdkDataHolder;
+import com.jetbrains.python.packaging.PyExternalProcessException;
+import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyPackageManagerImpl;
 import com.jetbrains.python.packaging.PyPackageService;
 import com.jetbrains.python.ui.IdeaDialog;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.CaretEvent;
@@ -37,6 +52,74 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
   private JBCheckBox mySetAsProjectInterpreterCheckbox;
   private Project myProject;
   private String myInitialPath;
+
+  public interface VirtualEnvCallback {
+    void virtualEnvCreated(Sdk sdk, boolean associateWithProject, boolean setAsProjectInterpreter);
+  }
+
+  public static void createVirtualEnv(Sdk sdk, Project project, boolean isNewProject, final List<Sdk> allSdks,
+                                      final VirtualEnvCallback callback) {
+    final CreateVirtualEnvDialog dialog = new CreateVirtualEnvDialog(sdk, project, isNewProject, allSdks);
+    dialog.show();
+    if (dialog.isOK()) {
+      final ProgressManager progman = ProgressManager.getInstance();
+      final Sdk basicSdk = dialog.getSdk();
+      final Task.Modal createTask = new Task.Modal(project, "Creating virtual environment for " + basicSdk.getName(), false) {
+        String myPath;
+
+        public void run(@NotNull final ProgressIndicator indicator) {
+          final PyPackageManagerImpl packageManager = (PyPackageManagerImpl)PyPackageManager.getInstance(basicSdk);
+          try {
+            indicator.setText("Creating virtual environment for " + basicSdk.getName());
+            myPath = packageManager.createVirtualEnv(dialog.getDestination(), dialog.useGlobalSitePackages());
+          }
+          catch (final PyExternalProcessException e) {
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                packageManager.showInstallationError(myProject, "Failed to Create Virtual Environment", e.toString());
+              }
+            }, ModalityState.any());
+          }
+        }
+
+        @Override
+        public void onSuccess() {
+          if (myPath != null) {
+            final Application application = ApplicationManager.getApplication();
+            application.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                setupVirtualEnvSdk(allSdks, myPath, dialog.associateWithProject(), dialog.setAsProjectInterpreter(), callback);
+              }
+            }, ModalityState.any());
+          }
+        }
+      };
+      progman.run(createTask);
+    }
+  }
+
+  private static void setupVirtualEnvSdk(List<Sdk> allSdks,
+                                         final String path,
+                                         boolean associateWithProject,
+                                         final boolean makeActive,
+                                         VirtualEnvCallback callback) {
+    final VirtualFile sdkHome =
+      ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+        @Nullable
+        public VirtualFile compute() {
+          return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+        }
+      });
+    if (sdkHome != null) {
+      final String name =
+        SdkConfigurationUtil.createUniqueSdkName(PythonSdkType.getInstance(), sdkHome.getPath(), allSdks);
+      final ProjectJdkImpl sdk = new ProjectJdkImpl(name, PythonSdkType.getInstance());
+      sdk.setHomePath(sdkHome.getPath());
+      callback.virtualEnvCreated(sdk, associateWithProject, makeActive);
+    }
+  }
 
   public CreateVirtualEnvDialog(Sdk sdk, Project project, boolean isNewProject, final List<Sdk> allSdks) {
     super(project);
