@@ -39,7 +39,7 @@ public class CompilerWorkspaceConfiguration implements PersistentStateComponent<
   public boolean CLEAR_OUTPUT_DIRECTORY = true;
   public boolean USE_COMPILE_SERVER = true;
   public boolean MAKE_PROJECT_ON_SAVE = false;
-  public boolean PARALLEL_COMPILATION = true;
+  public boolean PARALLEL_COMPILATION = false;
   public int COMPILER_PROCESS_HEAP_SIZE = DEFAULT_COMPILE_PROCESS_HEAP_SIZE;
   public String COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS = DEFAULT_COMPILE_PROCESS_VM_OPTIONS;
 
