@@ -1,13 +1,12 @@
-package org.hanuna.gitalk.graphmodel.builder;
+package org.hanuna.gitalk.graph.builder;
 
+import org.hanuna.gitalk.graph.Node;
+import org.hanuna.gitalk.graph.select.AbstractSelect;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.readonly.ReadOnlyList;
-import org.hanuna.gitalk.common.readonly.SimpleReadOnlyList;
-import org.hanuna.gitalk.graphmodel.Branch;
-import org.hanuna.gitalk.graphmodel.Edge;
-import org.hanuna.gitalk.graphmodel.Node;
-import org.hanuna.gitalk.graphmodel.NodeRow;
-import org.hanuna.gitalk.graphmodel.select.AbstractSelect;
+import org.hanuna.gitalk.graph.Branch;
+import org.hanuna.gitalk.graph.Edge;
+import org.hanuna.gitalk.graph.NodeRow;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -24,10 +23,10 @@ public class MutableNode extends AbstractSelect implements Node {
     private final Branch branch;
 
     private final List<Edge> upEdges = new ArrayList<Edge>(2);
-    private final ReadOnlyList<Edge> readOnlyUpEdges = new SimpleReadOnlyList<Edge>(upEdges);
+    private final ReadOnlyList<Edge> readOnlyUpEdges = ReadOnlyList.newReadOnlyList(upEdges);
 
     private final List<Edge> downEdges = new ArrayList<Edge>(2);
-    private final ReadOnlyList<Edge> readOnlyDownEdges = new SimpleReadOnlyList<Edge>(downEdges);
+    private final ReadOnlyList<Edge> readOnlyDownEdges = ReadOnlyList.newReadOnlyList(downEdges);
 
 
     public MutableNode(@NotNull Commit commit, @NotNull Branch branch) {
@@ -92,8 +91,4 @@ public class MutableNode extends AbstractSelect implements Node {
         return branch;
     }
 
-    @Override
-    public int getLogIndex() {
-        return logIndex;
-    }
 }

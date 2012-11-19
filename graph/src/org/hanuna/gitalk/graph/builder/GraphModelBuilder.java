@@ -1,13 +1,13 @@
-package org.hanuna.gitalk.graphmodel.builder;
+package org.hanuna.gitalk.graph.builder;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitData;
 import org.hanuna.gitalk.commitmodel.Hash;
 import org.hanuna.gitalk.common.readonly.ReadOnlyList;
-import org.hanuna.gitalk.graphmodel.Branch;
-import org.hanuna.gitalk.graphmodel.Edge;
-import org.hanuna.gitalk.graphmodel.GraphModel;
-import org.hanuna.gitalk.graphmodel.Node;
+import org.hanuna.gitalk.graph.Branch;
+import org.hanuna.gitalk.graph.Edge;
+import org.hanuna.gitalk.graph.GraphModel;
+import org.hanuna.gitalk.graph.Node;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -50,10 +50,8 @@ public class GraphModelBuilder {
         node.setRow(nextRow);
         node.setType(Node.Type.commitNode);
         nextRow.add(node);
-        nextRow.setRowIndex(rows.size());
         rows.add(nextRow);
 
-        nextRow = new MutableNodeRow();
         return node;
     }
 
@@ -95,7 +93,6 @@ public class GraphModelBuilder {
 
     private void prepare(int lastLogIndex) {
         this.lastLogIndex = lastLogIndex;
-        nextRow = new MutableNodeRow();
     }
 
     private void lastActions() {
@@ -106,7 +103,7 @@ public class GraphModelBuilder {
             node.setType(Node.Type.endCommitNode);
             nextRow.add(node);
         }
-        if (nextRow.size() > 0) {
+        if (nextRow.getNodes().size() > 0) {
             rows.add(nextRow);
         }
     }

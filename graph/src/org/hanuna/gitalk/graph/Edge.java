@@ -1,6 +1,6 @@
-package org.hanuna.gitalk.graphmodel;
+package org.hanuna.gitalk.graph;
 
-import org.hanuna.gitalk.graphmodel.select.AbstractSelect;
+import org.hanuna.gitalk.graph.select.AbstractSelect;
 import org.jetbrains.annotations.NotNull;
 
 /**

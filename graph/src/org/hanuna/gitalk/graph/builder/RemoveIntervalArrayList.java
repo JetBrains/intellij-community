@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.graphmodel.builder;
+package org.hanuna.gitalk.graph.builder;
 
 import org.hanuna.gitalk.common.Interval;
 import org.jetbrains.annotations.NotNull;

@@ -1,6 +1,4 @@
-package org.hanuna.gitalk.graphmodel.select;
-
-import org.hanuna.gitalk.graphmodel.select.Select;
+package org.hanuna.gitalk.graph.select;
 
 /**
  * @author erokhins

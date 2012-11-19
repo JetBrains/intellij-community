@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.graphmodel;
+package org.hanuna.gitalk.graph;
 
 import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 import org.hanuna.gitalk.common.Interval;
@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
  * @author erokhins
  */
 public interface GraphModel {
+
     @NotNull
     public ReadOnlyList<NodeRow> getNodeRows();
 
@@ -25,7 +26,7 @@ public interface GraphModel {
      * where branchIndex will be equal branchIndex all intermediate edges
      * @return [a, b)
      * before 1, 2, ...
-     * now a-1, a, b, b+1...
+     * now 1, 2, ... a-1, a, b, b+1...
      */
     @NotNull
     public Interval hideBranch(Node upNode, Node downNode);

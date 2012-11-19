@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.graphmodel.select;
+package org.hanuna.gitalk.graph.select;
 
 /**
  * @author erokhins
