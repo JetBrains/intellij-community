@@ -150,7 +150,7 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
   }
 
   public void newWatch() {
-    final DebuggerTreeNodeImpl node = getWatchTree().addWatch(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, ""));
+    final DebuggerTreeNodeImpl node = getWatchTree().addWatch(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, ""), null);
     editNode(node);
   }
 
