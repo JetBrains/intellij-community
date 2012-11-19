@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -32,7 +31,7 @@ public class LibraryTreeRenderer extends ColoredTreeCellRenderer {
       if (userObject instanceof NodeDescriptor) {
         final NodeDescriptor descriptor = (NodeDescriptor)userObject;
         setIcon(descriptor.getIcon());
-        append(descriptor.toString(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, descriptor.getColor()));
+        append(descriptor.toString());
       }
     }
 
