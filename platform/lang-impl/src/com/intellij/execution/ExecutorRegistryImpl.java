@@ -22,7 +22,6 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -248,9 +247,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       }
 
       ExecutionTarget target = ExecutionTargetManager.getActiveTarget(project);
-      RunContentDescriptor runContentDescriptor = RunContentManager.RUN_CONTENT_DESCRIPTOR.getData(dataContext);
-      ProcessHandler processHandler = runContentDescriptor != null ? runContentDescriptor.getProcessHandler(): null;
-      ExecutionManager.getInstance(project).restartRunProfile(project, myExecutor, target, configuration, processHandler);
+      ExecutionManager.getInstance(project).restartRunProfile(project, myExecutor, target, configuration, (RunContentDescriptor)null);
     }
   }
 }

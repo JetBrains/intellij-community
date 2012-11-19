@@ -20,7 +20,6 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -45,16 +44,16 @@ public class RestartAction extends FakeRerunAction implements DumbAware, AnActio
 
   private ProcessHandler myProcessHandler;
   private final ProgramRunner myRunner;
-  private final RunContentDescriptor myDescriptor;
+  @NotNull private final RunContentDescriptor myDescriptor;
   @NotNull private final Executor myExecutor;
   private final Icon myIcon;
   private final ExecutionEnvironment myEnvironment;
 
   public RestartAction(@NotNull final Executor executor,
                        final ProgramRunner runner,
-                       final ProcessHandler processHandler,
+                       final ProcessHandler processHandler,//todo kill ProcessHandler here, use descriptor.getProcessHandler() is need
                        final Icon icon,
-                       final RunContentDescriptor descriptor,
+                       @NotNull final RunContentDescriptor descriptor,
                        @NotNull final ExecutionEnvironment env) {
     getTemplatePresentation().setIcon(icon);
     Disposer.register(descriptor, this);
@@ -110,12 +109,21 @@ public class RestartAction extends FakeRerunAction implements DumbAware, AnActio
     RunnerAndConfigurationSettings settings = myEnvironment.getRunnerAndConfigurationSettings();
     if (project == null)
       return;
-    if (settings != null && !Boolean.getBoolean(IdeaApplication.IDEA_IS_INTERNAL_PROPERTY)) {
-      ExecutionManager.getInstance(project).restartRunProfile(project,
-                                                              myExecutor,
-                                                              myEnvironment.getExecutionTarget(),
-                                                              settings,
-                                                              myProcessHandler);
+    if (settings != null) {
+      if (myProcessHandler != null) {
+        ExecutionManager.getInstance(project).restartRunProfile(project,
+                                                                myExecutor,
+                                                                myEnvironment.getExecutionTarget(),
+                                                                settings,
+                                                                myProcessHandler);
+      }
+      else {
+        ExecutionManager.getInstance(project).restartRunProfile(project,
+                                                                myExecutor,
+                                                                myEnvironment.getExecutionTarget(),
+                                                                settings,
+                                                                myDescriptor);
+      }
     }
     else {
       restart();
@@ -148,7 +156,8 @@ public class RestartAction extends FakeRerunAction implements DumbAware, AnActio
   public void update(final AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
     String name = myEnvironment.getRunProfile().getName();
-    final boolean isRunning = myProcessHandler != null && !myProcessHandler.isProcessTerminated();
+    ProcessHandler processHandler = myDescriptor.getProcessHandler();
+    final boolean isRunning = processHandler != null && !processHandler.isProcessTerminated();
 
     presentation.setText(ExecutionBundle.message("rerun.configuration.action.name", name));
     presentation.setIcon(isRunning ? AllIcons.Actions.Restart : myIcon);
@@ -156,7 +165,8 @@ public class RestartAction extends FakeRerunAction implements DumbAware, AnActio
   }
 
   boolean isEnabled() {
-    boolean isTerminating = myProcessHandler != null && myProcessHandler.isProcessTerminating();
+    ProcessHandler processHandler = myDescriptor.getProcessHandler();
+    boolean isTerminating = processHandler != null && processHandler.isProcessTerminating();
     boolean isStarting = ExecutorRegistry.getInstance().isStarting(myEnvironment.getProject(), myExecutor.getId(), myRunner.getRunnerId());
     return !isStarting && !isTerminating;
   }

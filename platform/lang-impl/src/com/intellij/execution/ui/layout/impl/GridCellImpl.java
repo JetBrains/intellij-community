@@ -29,6 +29,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
@@ -414,19 +415,22 @@ public class GridCellImpl implements GridCell {
   }
 
   public void updateSelection(final boolean isShowing) {
+    ContentManager contentManager = myContext.getContentManager();
+    if (contentManager.isDisposed()) return;
+
     for (Content each : myContents.getKeys()) {
       final TabInfo eachTab = getTabFor(each);
       boolean isSelected = eachTab != null && myTabs.getSelectedInfo() == eachTab;
       if (isSelected && isShowing) {
-        myContext.getContentManager().addSelectedContent(each);
+        contentManager.addSelectedContent(each);
       }
       else {
-        myContext.getContentManager().removeFromSelection(each);
+        contentManager.removeFromSelection(each);
       }
     }
 
     for (Content each : myMinimizedContents) {
-      myContext.getContentManager().removeFromSelection(each);
+      contentManager.removeFromSelection(each);
     }
   }
 

@@ -24,6 +24,7 @@ import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
@@ -745,7 +746,7 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
                                                             executor,
                                                             ExecutionTargetManager.getActiveTarget(project),
                                                             configuration,
-                                                            null);
+                                                            (RunContentDescriptor)null);
   }
 
   private static final class ConfigurationActionsStep extends BaseListPopupStep<ActionWrapper> {

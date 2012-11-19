@@ -933,8 +933,14 @@ class RunConfigurable extends BaseConfigurable {
     }
     int oldIndex = rows[0];
     int newIndex = oldIndex + direction;
+
+    if (!getKind((DefaultMutableTreeNode)myTree.getPathForRow(oldIndex).getLastPathComponent()).supportsDnD())
+      return null;
+
     while (newIndex > 0 && newIndex < myTree.getRowCount()) {
-      RowsDnDSupport.RefinedDropSupport.Position position = myTreeModel.isDropInto(myTree, oldIndex, newIndex) ?
+      TreePath targetPath = myTree.getPathForRow(newIndex);
+      boolean allowInto = getKind((DefaultMutableTreeNode)targetPath.getLastPathComponent()) == FOLDER && !myTree.isExpanded(targetPath);
+      RowsDnDSupport.RefinedDropSupport.Position position = allowInto && myTreeModel.isDropInto(myTree, oldIndex, newIndex) ?
                                                             INTO :
                                                             direction > 0 ? BELOW : ABOVE;
       if (myTreeModel.canDrop(oldIndex, newIndex, position)) {
@@ -1674,6 +1680,8 @@ class RunConfigurable extends BaseConfigurable {
       if (!oldKind.supportsDnD() || !newKind.supportsDnD()) {
         return false;
       }
+      if (oldKind.isConfiguration() && newKind == FOLDER && position == ABOVE)
+        return false;
       if (oldKind == TEMPORARY_CONFIGURATION && newKind == CONFIGURATION && position == ABOVE)
         return false;
       if (oldKind == CONFIGURATION && newKind == TEMPORARY_CONFIGURATION && position == BELOW)
@@ -1714,12 +1722,23 @@ class RunConfigurable extends BaseConfigurable {
       if (isDropInto(myTree, oldIndex, newIndex)) { //Drop in folder
         removeNodeFromParent(oldNode);
         int index = newNode.getChildCount();
-        if (oldKind == CONFIGURATION) {
+        if (oldKind.isConfiguration()) {
+          int middleIndex = newNode.getChildCount();
           for (int i = 0; i < newNode.getChildCount(); i++) {
             if (getKind((DefaultMutableTreeNode)newNode.getChildAt(i)) == TEMPORARY_CONFIGURATION) {
-              index = i;
+              middleIndex = i;//index of first temporary configuration in target folder
               break;
             }
+          }
+          if (position != INTO) {
+            if (oldIndex<newIndex) {
+              index = oldKind == CONFIGURATION ? 0 : middleIndex;
+            }
+            else {
+              index = oldKind == CONFIGURATION ? middleIndex : newNode.getChildCount();
+            }
+          } else {
+            index = oldKind == TEMPORARY_CONFIGURATION ? newNode.getChildCount() : middleIndex;
           }
         }
         insertNodeInto(oldNode, newNode, index);
