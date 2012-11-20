@@ -39,6 +39,7 @@ class Foo {
     myFixture.testStructureView(new Consumer<StructureViewComponent>() {
       @Override
       public void consume(StructureViewComponent component) {
+        component.setActionActive(InheritedMembersNodeProvider.ID, false);
         assertTreeEqual(component.getTree(), """-a.groovy
  -Foo
   Foo(int, int)
