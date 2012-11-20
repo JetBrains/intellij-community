@@ -135,7 +135,7 @@ public class ExecutionHelper {
     final int messageCategory,
     @NotNull final List<? extends Exception> exceptions,
     @NotNull ErrorViewPanel errorTreeView,
-    @NotNull final VirtualFile file,
+    @Nullable final VirtualFile file,
     @NotNull final String defaultMessage)
   {
     for (final Exception exception : exceptions) {
