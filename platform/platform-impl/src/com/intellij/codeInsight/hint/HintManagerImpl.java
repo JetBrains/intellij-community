@@ -151,7 +151,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
       @Override
       public void documentChanged(DocumentEvent event) {
         LOG.assertTrue(SwingUtilities.isEventDispatchThread());
-        HintInfo[] infos = myHintsStack.toArray(new HintInfo[myHintsStack.size()]);
+        HintInfo[] infos = getHintsStackArray();
         for (HintInfo info : infos) {
           if ((info.flags & HIDE_BY_TEXT_CHANGE) != 0) {
             if (info.hint.isVisible()) {
@@ -166,6 +166,11 @@ public class HintManagerImpl extends HintManager implements Disposable {
         }
       }
     };
+  }
+
+  @NotNull
+  private HintInfo[] getHintsStackArray() {
+    return myHintsStack.toArray(new HintInfo[myHintsStack.size()]);
   }
 
   public boolean performCurrentQuestionAction() {
@@ -192,8 +197,8 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
   private void updateScrollableHints(VisibleAreaEvent e) {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
-    for (HintInfo info : myHintsStack) {
-      if (info.hint instanceof LightweightHint && (info.flags & UPDATE_BY_SCROLLING) != 0) {
+    for (HintInfo info : getHintsStackArray()) {
+      if (info.hint != null && (info.flags & UPDATE_BY_SCROLLING) != 0) {
         updateScrollableHintPosition(e, info.hint, (info.flags & HIDE_IF_OUT_OF_EDITOR) != 0);
       }
     }
@@ -202,7 +207,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
   @Override
   public boolean hasShownHintsThatWillHideByOtherHint(boolean willShowTooltip) {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
-    for (HintInfo hintInfo : myHintsStack) {
+    for (HintInfo hintInfo : getHintsStackArray()) {
       if (hintInfo.hint.isVisible() && (hintInfo.flags & HIDE_BY_OTHER_HINT) != 0) return true;
       if (willShowTooltip && hintInfo.hint.isAwtTooltip()) {
         // only one AWT tooltip can be visible, so this hint will hide even though it's not marked with HIDE_BY_OTHER_HINT
@@ -430,8 +435,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
   @Override
   public void hideAllHints() {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
-    List<HintInfo> hints = new ArrayList<HintInfo>(myHintsStack);
-    for (HintInfo info : hints) {
+    for (HintInfo info : getHintsStackArray()) {
       if (!info.hint.vetoesHiding()) {
         info.hint.hide();
       }
@@ -456,7 +460,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     if (dominantArea == null) {
-      for (HintInfo info : myHintsStack) {
+      for (HintInfo info : getHintsStackArray()) {
         if (!info.hint.isSelectingHint()) continue;
         IdeTooltip tooltip = info.hint.getCurrentIdeTooltip();
         if (tooltip != null) {
