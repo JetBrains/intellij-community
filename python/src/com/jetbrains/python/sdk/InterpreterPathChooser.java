@@ -125,7 +125,7 @@ public class InterpreterPathChooser extends BaseListPopupStep<String> {
   private void createRemoteSdk() {
     PythonRemoteInterpreterManager remoteInterpreterManager = PythonRemoteInterpreterManager.getInstance();
     if (remoteInterpreterManager != null) {
-      Sdk sdk = remoteInterpreterManager.addRemoteSdk(myProject, Lists.newArrayList(myExistingSdks));
+      Sdk sdk = remoteInterpreterManager.addRemoteSdk(myProject, myOwnerComponent, Lists.newArrayList(myExistingSdks));
       if (sdk != null) {
         myCallback.consume(sdk);
       }

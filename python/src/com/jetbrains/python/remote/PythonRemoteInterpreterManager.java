@@ -21,6 +21,7 @@ import com.jetbrains.python.sdk.skeletons.PySkeletonGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 
@@ -48,7 +49,7 @@ public abstract class PythonRemoteInterpreterManager {
     throws RemoteInterpreterException;
 
   @Nullable
-  public abstract Sdk addRemoteSdk(Project project, Collection<Sdk> existingSdks);
+  public abstract Sdk addRemoteSdk(Project project, Component parentComponent, Collection<Sdk> existingSdks);
 
 
   public abstract ProcessOutput runRemoteProcess(@Nullable Project project,

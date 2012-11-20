@@ -449,7 +449,7 @@ public class PythonSdkType extends SdkType {
     setupSdkPaths(sdk, project);
   }
 
-  public static void setupSdkPaths(Sdk sdk, Project project) {
+  public static void setupSdkPaths(Sdk sdk, @Nullable Project project) {
     final SdkModificator sdkModificator = sdk.getSdkModificator();
     final boolean success = setupSdkPaths(project, sdk, sdkModificator);
     if (success) {
