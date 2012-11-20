@@ -15,6 +15,8 @@
  */
 package com.intellij.compiler.actions;
 
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -34,6 +36,7 @@ import com.intellij.openapi.ui.popup.MultiSelectionListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -57,6 +60,8 @@ import java.util.*;
  * @author nik
  */
 public class BuildArtifactAction extends DumbAwareAction {
+  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.balloonGroup("Clean artifact");
+
   public BuildArtifactAction() {
     super("Build Artifacts...", "Select and build artifacts configured in the project", null);
   }
@@ -165,12 +170,12 @@ public class BuildArtifactAction extends DumbAwareAction {
       }
 
       Map<String, String> outputPathContainingSourceRoots = new HashMap<String, String>();
-      final List<File> files = new ArrayList<File>();
+      final List<Pair<File, Artifact>> toClean = new ArrayList<Pair<File, Artifact>>();
       Set<Artifact> artifacts = getArtifacts(myArtifactPopupItems, myProject);
       for (Artifact artifact : artifacts) {
         String outputPath = artifact.getOutputFilePath();
         if (outputPath != null) {
-          files.add(new File(FileUtil.toSystemDependentName(outputPath)));
+          toClean.add(Pair.create(new File(FileUtil.toSystemDependentName(outputPath)), artifact));
           final VirtualFile outputFile = LocalFileSystem.getInstance().findFileByPath(outputPath);
           if (parents.contains(outputFile)) {
             outputPathContainingSourceRoots.put(artifact.getName(), outputPath);
@@ -202,11 +207,18 @@ public class BuildArtifactAction extends DumbAwareAction {
       new Task.Backgroundable(myProject, "Cleaning artifacts...", true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          for (File file : files) {
+          List<File> deleted = new ArrayList<File>();
+          for (Pair<File, Artifact> pair : toClean) {
             indicator.checkCanceled();
-            FileUtil.delete(file);
+            File file = pair.getFirst();
+            if (!FileUtil.delete(file)) {
+              NOTIFICATION_GROUP.createNotification("Cannot clean '" + pair.getSecond().getName() + "' artifact", "cannot delete '" + file.getAbsolutePath() + "'", NotificationType.ERROR, null).notify(myProject);
+            }
+            else {
+              deleted.add(file);
+            }
           }
-          LocalFileSystem.getInstance().refreshIoFiles(files, true, true, null);
+          LocalFileSystem.getInstance().refreshIoFiles(deleted, true, true, null);
         }
       }.queue();
     }
