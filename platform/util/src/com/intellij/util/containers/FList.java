@@ -119,6 +119,10 @@ public class FList<E> extends AbstractList<E> {
     return mySize;
   }
 
+  /**
+   * @deprecated this method will be removed in IDEA 13
+   */
+  @Deprecated
   public List<E> getReversedList() {
     List<E> res = myReversedList;
     if (res == null) {
