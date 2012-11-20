@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -574,8 +574,9 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
 
               anchor = argumentList.addAfter(comma, anchor);
             }
-            anchor = argumentList.addAfter(value, anchor);
-
+            if (value != null) {
+              anchor = argumentList.addAfter(value, anchor);
+            }
           }
           catch (IncorrectOperationException e) {
             LOG.error(e.getMessage());
