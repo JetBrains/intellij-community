@@ -18,6 +18,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -49,6 +50,7 @@ public class StringComboboxEditor extends EditorComboBoxEditor {
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     assert document != null;
     document.putUserData(COMBO_BOX_KEY, comboBox);
+    document.putUserData(UndoConstants.DONT_RECORD_UNDO, true);
     super.setItem(document);
   }
 

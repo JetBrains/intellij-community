@@ -19,20 +19,26 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+
 /**
  * @author Dmitry Avdeev
  *         Date: 9/28/12
  */
-public interface ProjectTemplatesFactory {
+public abstract class ProjectTemplatesFactory {
 
-  ExtensionPointName<ProjectTemplatesFactory> EP_NAME = ExtensionPointName.create("com.intellij.projectTemplatesFactory");
+  public static final ExtensionPointName<ProjectTemplatesFactory> EP_NAME = ExtensionPointName.create("com.intellij.projectTemplatesFactory");
 
-  String OTHER_GROUP = "Other";
-  String CUSTOM_GROUP = "User-defined";
-
-  @NotNull
-  String[] getGroups();
+  public static final String OTHER_GROUP = "Other";
+  public static final String CUSTOM_GROUP = "User-defined";
 
   @NotNull
-  ProjectTemplate[] createTemplates(String group, WizardContext context);
+  public abstract String[] getGroups();
+
+  @NotNull
+  public abstract ProjectTemplate[] createTemplates(String group, WizardContext context);
+
+  public Icon getGroupIcon(String group) {
+    return null;
+  }
 }

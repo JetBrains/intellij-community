@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.idea.maven.dom.converters;
 
-// Generated on Mon Mar 17 18:02:09 MSK 2008
-// DTD/Schema  :    http://maven.apache.org/POM/4.0.0
+import com.intellij.util.xml.ConvertContext;
+import org.jetbrains.annotations.NotNull;
 
-package org.jetbrains.idea.maven.dom.model;
-
-import com.intellij.util.xml.DefinesXml;
+import java.util.Arrays;
+import java.util.Collection;
 
 /**
- * http://maven.apache.org/POM/4.0.0:configurationElemType interface.
+ * @author Sergey Evdokimov
  */
-@DefinesXml
-public interface MavenDomConfiguration extends MavenDomMergedElement {
-
+public class MavenCombineChildConverter extends MavenConstantListConverter {
+  @Override
+  protected Collection<String> getValues(@NotNull ConvertContext context) {
+    return Arrays.asList("append", "override");
+  }
 }
