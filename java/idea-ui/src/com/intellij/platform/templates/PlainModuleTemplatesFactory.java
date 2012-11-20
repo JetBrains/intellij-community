@@ -27,6 +27,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 
 /**
@@ -76,5 +77,16 @@ public class PlainModuleTemplatesFactory extends ProjectTemplatesFactory {
         return builder.getGroupName().equals(group) ? new BuilderBasedTemplate(builder) : null;
       }
     }, ProjectTemplate.EMPTY_ARRAY);
+  }
+
+  @Override
+  public Icon getGroupIcon(String group) {
+    List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
+    for (ModuleBuilder builder : builders) {
+      if (group.equals(builder.getGroupName())) {
+        return builder.getNodeIcon();
+      }
+    }
+    return null;
   }
 }
