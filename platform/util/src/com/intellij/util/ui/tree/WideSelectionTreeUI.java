@@ -220,7 +220,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
                                           final boolean isExpanded,
                                           final boolean hasBeenExpanded,
                                           final boolean isLeaf) {
-    if (myForceDontPaintLines) return;
+    if (!shouldPaintLines()) return;
     if (!UIUtil.isUnderAquaBasedLookAndFeel() || !UIUtil.isUnderDarcula()) {
       if (UIUtil.isUnderAlloyIDEALookAndFeel()) {
         invertLineColor = tree.getSelectionModel().isRowSelected(row) && tree.hasFocus();
@@ -228,6 +228,10 @@ public class WideSelectionTreeUI extends BasicTreeUI {
       super.paintHorizontalPartOfLeg(g, clipBounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
       invertLineColor = false;
     }
+  }
+
+  private boolean shouldPaintLines() {
+    return myForceDontPaintLines || "None".equals(tree.getClientProperty("JTree.lineStyle"));
   }
 
   @Override
