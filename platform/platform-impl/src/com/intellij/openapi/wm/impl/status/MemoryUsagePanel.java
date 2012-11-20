@@ -21,6 +21,7 @@ import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
@@ -45,10 +46,10 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
   @NonNls private static final String SAMPLE_STRING = "0000M of 0000M";
   private static final int MEGABYTE = 1024 * 1024;
   private static final int HEIGHT = 16;
-  private static final Color USED_COLOR_1 = Gray._185;
-  private static final Color USED_COLOR_2 = Gray._145;
-  private static final Color UNUSED_COLOR_1 = Gray._200.withAlpha(100);
-  private static final Color UNUSED_COLOR_2 = Gray._150.withAlpha(130);
+  private static final Color USED_COLOR_1 = new JBColor(Gray._185, Gray._150);
+  private static final Color USED_COLOR_2 = new JBColor(Gray._145, Gray._120);
+  private static final Color UNUSED_COLOR_1 = new JBColor(Gray._200.withAlpha(100), Gray._120);
+  private static final Color UNUSED_COLOR_2 = new JBColor(Gray._150.withAlpha(130), Gray._100);
   private static final Color UNUSED_COLOR_3 = Gray._175;
 
   private long myLastTotal = -1;
@@ -147,7 +148,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
         g2.setColor(UIUtil.getControlColor());
       }
       else {
-        g2.setPaint(new GradientPaint(0, 0, Gray._190, 0, barHeight, Gray._230));
+        g2.setPaint(new GradientPaint(0, 0, new JBColor(Gray._190, Gray._120), 0, barHeight, new JBColor(Gray._230, Gray._160)));
       }
       g2.fillRect(xOffset, yOffset, totalBarLength, barHeight);
 
