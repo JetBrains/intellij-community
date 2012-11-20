@@ -170,8 +170,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
     if (!IS_ENABLED.get(context, Boolean.TRUE)) {
       return ExitCode.NOTHING_DONE;
     }
-    final JpsProject project = context.getProjectDescriptor().getProject();
-    final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
     try {
       final Map<File, ModuleBuildTarget> filesToCompile = new THashMap<File, ModuleBuildTarget>(FileUtil.FILE_HASHING_STRATEGY);
       final Map<File, ModuleBuildTarget> formsToCompile = new THashMap<File, ModuleBuildTarget>(FileUtil.FILE_HASHING_STRATEGY);
@@ -190,7 +188,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
       if (OPTION_ENABLE_FORMS_INSTRUMENTATION) {
         // todo: track changes source-generation <-> bytecode-instrumentation in UIDesigner's config. Full forms rebuild required on switching configuration
-
+        final JpsProject project = context.getProjectDescriptor().getProject();
+        final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
         // force compilation of bound source file if the form is dirty
         final JpsCompilerExcludes excludes = configuration.getCompilerExcludes();
         if (!context.isProjectRebuild()) {
