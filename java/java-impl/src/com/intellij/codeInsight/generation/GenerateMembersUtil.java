@@ -466,7 +466,7 @@ public class GenerateMembersUtil {
     PsiModifierList sourceModifierList = sourceParam.getModifierList();
     PsiModifierList targetModifierList = targetParam.getModifierList();
     if (sourceModifierList != null && targetModifierList != null) {
-      if (sourceParam.getLanguage() == targetParam.getLanguage()) {
+      if (sourceParam.getLanguage() == targetParam.getLanguage() && targetParam.isPhysical()) {
         targetModifierList.replace(sourceModifierList);
       }
       else {
