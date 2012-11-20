@@ -645,10 +645,7 @@ public final class UpdateChecker {
 
     String productCode = ApplicationInfo.getInstance().getBuild().getProductCode();
 
-    String osSuffix = "";
-    if (SystemInfo.isWindows) osSuffix = "-win";
-    else if (SystemInfo.isMac) osSuffix = "-mac";
-    else if (SystemInfo.isUnix) osSuffix = "-unix";
+    String osSuffix = "-" + patch.getOSSuffix();
 
     String fromBuildNumber = patch.getFromBuild().asStringWithoutProductCode();
     String toBuildNumber = newVersion.getNumber().asStringWithoutProductCode();
