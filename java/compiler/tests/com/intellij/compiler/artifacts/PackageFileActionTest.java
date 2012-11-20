@@ -3,6 +3,7 @@ package com.intellij.compiler.artifacts;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.impl.ui.actions.PackageFileWorker;
 
 import java.io.IOException;
@@ -159,7 +160,7 @@ public class PackageFileActionTest extends ArtifactCompilerTestCase {
   }
 
   private void packageFile(VirtualFile file) throws IOException {
-    PackageFileWorker.packageFile(file, myProject);
+    PackageFileWorker.packageFile(file, myProject, ArtifactManager.getInstance(myProject).getArtifacts());
   }
 
 }
