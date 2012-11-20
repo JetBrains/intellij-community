@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -26,6 +25,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.annotator.intentions.GrModifierFix;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
@@ -133,7 +133,7 @@ public class GroovyAccessibilityInspection extends BaseInspection {
         String modifier = modifiers[i];
         modifierListCopy.setModifierProperty(modifier, true);
         if (facade.getResolveHelper().isAccessible(refElement, modifierListCopy, location, accessObjectClass, null)) {
-          fixes.add(new GrModifierFix(refElement, refElement.getModifierList(), modifier, true));
+          fixes.add(new GrModifierFix(refElement, refElement.getModifierList(), modifier, true, true));
         }
       }
     }
@@ -141,57 +141,6 @@ public class GroovyAccessibilityInspection extends BaseInspection {
       LOG.error(e);
     }
     return fixes.toArray(new GroovyFix[fixes.size()]);
-  }
-
-  private static class GrModifierFix extends GroovyFix {
-    private PsiMember myMember;
-    private PsiModifierList myModifierList;
-    private String myModifier;
-    private boolean myDoSet;
-
-    public GrModifierFix(@NotNull PsiMember member,
-                       @NotNull PsiModifierList modifierList,
-                       String modifier,
-                       boolean doSet) {
-      myMember = member;
-      myModifierList = modifierList;
-      myModifier = modifier;
-      myDoSet = doSet;
-    }
-
-    @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
-      myModifierList.setModifierProperty(myModifier, myDoSet);
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-      String name;
-      final PsiClass containingClass = myMember.getContainingClass();
-      String containingClassName;
-      if (containingClass != null) {
-        containingClassName = containingClass.getName() + ".";
-      }
-      else {
-        containingClassName = "";
-      }
-
-      name = containingClassName + myMember.getName();
-
-      String modifierText = toPresentableText(myModifier);
-
-      if (myDoSet) {
-        return GroovyBundle.message("change.modifier", name, modifierText);
-      }
-      else {
-        return GroovyBundle.message("change.modifier.not", name, modifierText);
-      }
-    }
-  }
-
-  private static String toPresentableText(String modifier) {
-    return GroovyBundle.message(modifier + ".visibility.presentation");
   }
 
   @Override
