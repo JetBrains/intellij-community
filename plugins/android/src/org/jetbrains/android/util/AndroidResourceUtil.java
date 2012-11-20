@@ -169,7 +169,11 @@ public class AndroidResourceUtil {
     if (packageName != null) {
       ModulePackageIndex.getInstance(module).getDirsByPackageName(packageName, false).forEach(new Processor<VirtualFile>() {
         public boolean process(final VirtualFile directory) {
-          dirs.add(PsiManager.getInstance(project).findDirectory(directory));
+          final PsiDirectory psiDir = PsiManager.getInstance(project).findDirectory(directory);
+
+          if (psiDir != null) {
+            dirs.add(psiDir);
+          }
           return true;
         }
       });
@@ -184,7 +188,11 @@ public class AndroidResourceUtil {
       if (ownPackageName != null && !ownPackageName.equals(packageName)) {
         ModulePackageIndex.getInstance(module).getDirsByPackageName(ownPackageName, false).forEach(new Processor<VirtualFile>() {
           public boolean process(final VirtualFile directory) {
-            dirs.add(PsiManager.getInstance(project).findDirectory(directory));
+            final PsiDirectory psiDir = PsiManager.getInstance(project).findDirectory(directory);
+
+            if (psiDir != null) {
+              dirs.add(psiDir);
+            }
             return true;
           }
         });

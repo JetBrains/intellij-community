@@ -35,6 +35,7 @@ public class DocumentFragmentTooltipRenderer implements TooltipRenderer {
     myDocumentFragment = documentFragment;
   }
 
+  @Override
   public LightweightHint show(final Editor editor, Point p, boolean alignToRight, TooltipGroup group, HintHint intInfo) {
     LightweightHint hint;
 

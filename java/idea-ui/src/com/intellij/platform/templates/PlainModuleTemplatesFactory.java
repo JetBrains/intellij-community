@@ -27,13 +27,14 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 
 /**
  * @author Dmitry Avdeev
  *         Date: 10/9/12
  */
-public class PlainModuleTemplatesFactory implements ProjectTemplatesFactory {
+public class PlainModuleTemplatesFactory extends ProjectTemplatesFactory {
 
   @NotNull
   @Override
@@ -76,5 +77,16 @@ public class PlainModuleTemplatesFactory implements ProjectTemplatesFactory {
         return builder.getGroupName().equals(group) ? new BuilderBasedTemplate(builder) : null;
       }
     }, ProjectTemplate.EMPTY_ARRAY);
+  }
+
+  @Override
+  public Icon getGroupIcon(String group) {
+    List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
+    for (ModuleBuilder builder : builders) {
+      if (group.equals(builder.getGroupName())) {
+        return builder.getNodeIcon();
+      }
+    }
+    return null;
   }
 }

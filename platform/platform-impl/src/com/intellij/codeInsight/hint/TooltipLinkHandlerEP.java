@@ -38,6 +38,7 @@ public class TooltipLinkHandlerEP extends AbstractExtensionPointBean {
   public String handlerClassName;
 
   private final LazyInstance<TooltipLinkHandler> myHandler = new LazyInstance<TooltipLinkHandler>() {
+    @Override
     protected Class<TooltipLinkHandler> getInstanceClass() throws ClassNotFoundException {
       return findClass(handlerClassName);
     }

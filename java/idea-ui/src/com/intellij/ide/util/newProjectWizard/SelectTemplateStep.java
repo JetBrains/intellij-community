@@ -21,6 +21,7 @@ import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -36,7 +37,10 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -58,6 +62,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.Matcher;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.ComparableObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -209,8 +214,11 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     };
 
     myTemplatesTree.setRootVisible(false);
-//    myTemplatesTree.setShowsRootHandles(false);
-    myTemplatesTree.setCellRenderer(new ColoredTreeCellRenderer() {
+    myTemplatesTree.setShowsRootHandles(false);
+    myTemplatesTree.putClientProperty("JTree.lineStyle", "None");
+
+    myTemplatesTree.setCellRenderer(new NodeRenderer() {
+
       @Override
       public void customizeCellRenderer(JTree tree,
                                         Object value,
@@ -219,14 +227,18 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
                                         boolean leaf,
                                         int row,
                                         boolean hasFocus) {
+
         SimpleNode node = getSimpleNode(value);
+        boolean group = node instanceof GroupNode;
         if (node != null) {
           String name = node.getName();
           if (name != null) {
-            append(name);
+            append(name, group ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
           }
           setIcon(node.getIcon());
         }
+        setFont(group ? UIUtil.getListFont().deriveFont(Font.BOLD) : UIUtil.getListFont());
+        setBorder(group ? BorderFactory.createEmptyBorder(3, 3, 3, 3) : BorderFactory.createEmptyBorder());
       }
     });
 
@@ -267,12 +279,17 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
         InputEvent event = e.getInputEvent();
         if (event instanceof KeyEvent) {
           int row = myTemplatesTree.getMaxSelectionRow();
+          int toSelect;
           switch (((KeyEvent)event).getKeyCode()) {
             case KeyEvent.VK_UP:
-              myTemplatesTree.setSelectionRow(row == 0 ? myTemplatesTree.getRowCount() - 1 : row - 1);
+              toSelect = row == 0 ? myTemplatesTree.getRowCount() - 1 : row - 1;
+              myTemplatesTree.setSelectionRow(toSelect);
+              myTemplatesTree.scrollRowToVisible(toSelect);
               break;
             case KeyEvent.VK_DOWN:
-              myTemplatesTree.setSelectionRow(row < myTemplatesTree.getRowCount() - 1 ? row + 1 : 0);
+              toSelect = row < myTemplatesTree.getRowCount() - 1 ? row + 1 : 0;
+              myTemplatesTree.setSelectionRow(toSelect);
+              myTemplatesTree.scrollRowToVisible(toSelect);
               break;
           }
         }

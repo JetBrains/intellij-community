@@ -279,7 +279,7 @@
     <facet.toolWindow id="Android"
                       facetIdList="android"
                       anchor="bottom"
-                      icon="AndroidIcons.Android"
+                      icon="AndroidIcons.AndroidToolWindow"
                       factoryClass="org.jetbrains.android.logcat.AndroidLogcatToolWindowFactory"/>
     <projectService serviceInterface="org.jetbrains.android.logcat.AndroidLogcatFiltersPreferences"
                     serviceImplementation="org.jetbrains.android.logcat.AndroidLogcatFiltersPreferences"/>

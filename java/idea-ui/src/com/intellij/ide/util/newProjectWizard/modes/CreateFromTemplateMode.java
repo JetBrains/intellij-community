@@ -32,6 +32,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -60,7 +61,18 @@ public class CreateFromTemplateMode extends WizardMode {
         List<ProjectTemplate> values = context.isCreatingNewProject() ? Arrays.asList(templates) : ContainerUtil.filter(templates,
                                                                                                                         TEMPLATE_CONDITION);
         if (!values.isEmpty()) {
-          groups.putValues(new TemplatesGroup(group, null, null), values);
+          Icon icon = factory.getGroupIcon(group);
+          TemplatesGroup templatesGroup = new TemplatesGroup(group, null, icon);
+          if (icon != null) {
+            Collection<ProjectTemplate> collection = groups.remove(templatesGroup);
+            groups.putValues(templatesGroup, values);
+            if (collection != null) {
+              groups.putValues(templatesGroup, collection);
+            }
+          }
+          else {
+            groups.putValues(templatesGroup, values);
+          }
         }
       }
     }
