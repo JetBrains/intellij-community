@@ -47,7 +47,7 @@ public abstract  class IdeaDialog extends DialogWrapper {
         field.getDocument().addDocumentListener(new MyDocumentListener());
     }
 
-    protected void addUpdater(JCheckBox check) {
+    protected void addUpdater(JToggleButton check) {
         check.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
                 updateOkButton();
