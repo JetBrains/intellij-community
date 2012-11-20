@@ -144,7 +144,7 @@ class GrChangeSignatureConflictSearcher {
         prototype.setName(newMethodName);
       }
       else {
-        prototype = factory.createMethodFromText("", newMethodName, returnType.getTypeText(), ArrayUtil.EMPTY_STRING_ARRAY, method);
+        prototype = factory.createMethodFromText("", newMethodName, returnType != null ? returnType.getTypeText() : null, ArrayUtil.EMPTY_STRING_ARRAY, method);
       }
 
       JavaParameterInfo[] parameters = myChangeInfo.getNewParameters();
