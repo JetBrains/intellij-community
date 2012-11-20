@@ -25,6 +25,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorConfigurable;
 import com.intellij.openapi.options.SettingsEditorListener;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.NonNls;
@@ -226,7 +227,10 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   }
 
   public void setFolderName(@Nullable String folderName) {
-    myFolderName = folderName;
+    if (!Comparing.equal(myFolderName, folderName)) {
+      myFolderName = folderName;
+      setModified(true);
+    }
   }
 
   @Nullable
