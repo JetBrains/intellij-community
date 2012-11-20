@@ -445,19 +445,20 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   @NotNull
   private Converter createConverter(final JavaMethod method) {
-    Converter converter;
     final Type returnType = method.getGenericReturnType();
     final Type type = returnType == void.class ? method.getGenericParameterTypes()[0] : returnType;
     final Class parameter = ReflectionUtil.substituteGenericType(type, myType);
-    LOG.assertTrue(parameter != null, type + " " + myType);
-    converter = getConverter(new AnnotatedElement() {
+    if (parameter == null) {
+      LOG.error(type + " " + myType);
+    }
+    Converter converter = getConverter(new AnnotatedElement() {
       @Override
       public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
         return myInvocationCache.getMethodAnnotation(method, annotationClass);
       }
     }, parameter);
     if (converter == null && type instanceof TypeVariable) {
-      converter = getConverter(DomInvocationHandler.this, DomUtil.getGenericValueParameter(myType));
+      converter = getConverter(this, DomUtil.getGenericValueParameter(myType));
     }
     if (converter == null) {
       converter =  myManager.getConverterManager().getConverterByClass(parameter);
