@@ -50,13 +50,15 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
   @NotNull private final Project myProject;
   @NotNull private final ModuleScopeProvider myModuleScopeProvider;
 
-  public CoreModule(@NotNull Disposable parentDisposable, Project project, String moduleFilePath) {
+  public CoreModule(@NotNull Disposable parentDisposable, @NotNull Project project, String moduleFilePath) {
     super(project.getPicoContainer(), parentDisposable);
     myLifetime = parentDisposable;
     myProject = project;
     myPath = moduleFilePath;
 
-    Extensions.instantiateArea(ExtensionAreas.IDEA_MODULE, this, null);
+    synchronized (Extensions.getRootArea()) {
+      Extensions.instantiateArea(ExtensionAreas.IDEA_MODULE, this, null);
+    }
     CoreApplicationEnvironment.registerExtensionPoint(Extensions.getArea(this), ModuleExtension.EP_NAME, ModuleExtension.class);
     Disposer.register(parentDisposable, new Disposable() {
       @Override
