@@ -23,9 +23,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.android.compiler.tools.AndroidApt;
 import org.jetbrains.android.dom.manifest.Application;
@@ -151,10 +153,17 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
     }
 
     final VirtualFile preprocessedManifestFile;
+    File manifestTmpDir = null;
+
     try {
-      preprocessedManifestFile = releasePackage
-                                 ? item.myManifestFile
-                                 : copyManifestAndSetDebuggableToTrue(item.myModule, item.myManifestFile);
+      if (releasePackage) {
+        preprocessedManifestFile = item.myManifestFile;
+      }
+      else {
+        final Pair<VirtualFile, File> pair = copyManifestAndSetDebuggableToTrue(item.myModule, item.myManifestFile);
+        preprocessedManifestFile = pair.getFirst();
+        manifestTmpDir = pair.getSecond();
+      }
     }
     catch (IOException e) {
       LOG.info(e);
@@ -196,9 +205,15 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
         }
       });
     }
+    finally {
+      if (manifestTmpDir != null) {
+        FileUtil.delete(manifestTmpDir);
+      }
+    }
   }
 
-  private static VirtualFile copyManifestAndSetDebuggableToTrue(@NotNull final Module module, @NotNull final VirtualFile manifestFile)
+  @NotNull
+  private static Pair<VirtualFile, File> copyManifestAndSetDebuggableToTrue(@NotNull final Module module, @NotNull final VirtualFile manifestFile)
     throws IOException {
 
     final File dir = FileUtil.createTempDirectory("android_manifest_copy", "tmp");
@@ -240,14 +255,19 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
             }
           });
 
+          if (manifestFileCopy[0] != null) {
+            EncodingManager.getInstance().setEncoding(manifestFileCopy[0], null);
+          }
+
           ApplicationManager.getApplication().saveAll();
         }
       }, ModalityState.defaultModalityState());
 
     if (manifestFileCopy[0] == null) {
+      FileUtil.delete(dir);
       throw new IOException("Cannot copy manifest file to " + vDir.getPath());
     }
-    return manifestFileCopy[0];
+    return Pair.create(manifestFileCopy[0], dir);
   }
 
   @NotNull
