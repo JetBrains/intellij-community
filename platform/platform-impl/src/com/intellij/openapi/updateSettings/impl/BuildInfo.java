@@ -96,7 +96,8 @@ public class BuildInfo implements Comparable<BuildInfo> {
   public PatchInfo findPatchForCurrentBuild() {
     BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
     for (PatchInfo each : myPatches) {
-      if (each.getFromBuild().asStringWithoutProductCode().equals(currentBuild.asStringWithoutProductCode())) return each;
+      if (each.isAvailable() && each.getFromBuild().asStringWithoutProductCode().equals(currentBuild.asStringWithoutProductCode())) 
+        return each;
     }
     return null;
   }
