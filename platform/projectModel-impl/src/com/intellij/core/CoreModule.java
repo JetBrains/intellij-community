@@ -63,7 +63,9 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {
-        Extensions.disposeArea(CoreModule.this);
+        synchronized (Extensions.getRootArea()) {
+          Extensions.disposeArea(CoreModule.this);
+        }
       }
     });
     initModuleExtensions();
