@@ -166,76 +166,78 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     try {
-      final Set<File> filesToCompile = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-      final Set<File> formsToCompile = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+      final Map<File, ModuleBuildTarget> filesToCompile = new THashMap<File, ModuleBuildTarget>(FileUtil.FILE_HASHING_STRATEGY);
+      final Map<File, ModuleBuildTarget> formsToCompile = new THashMap<File, ModuleBuildTarget>(FileUtil.FILE_HASHING_STRATEGY);
 
       dirtyFilesHolder.processDirtyFiles(new FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>() {
         public boolean apply(ModuleBuildTarget target, File file, JavaSourceRootDescriptor descriptor) throws IOException {
           if (JAVA_SOURCES_FILTER.accept(file)) {
-            filesToCompile.add(file);
+            filesToCompile.put(file, target);
           }
           else if (FORM_SOURCES_FILTER.accept(file)) {
-            formsToCompile.add(file);
+            formsToCompile.put(file, target);
           }
           return true;
         }
       });
 
-      // force compilation of bound source file if the form is dirty
-      final JpsCompilerExcludes excludes = configuration.getCompilerExcludes();
-      if (!context.isProjectRebuild()) {
-        for (Iterator<File> formsIterator = formsToCompile.iterator(); formsIterator.hasNext(); ) {
-          final File form = formsIterator.next();
-          final JavaSourceRootDescriptor descriptor = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, form);
-          if (descriptor == null) {
-            continue;
-          }
-          for (JavaSourceRootDescriptor rd : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(descriptor.target, context)) {
-            final File boundSource = getBoundSource(rd.root, form);
-            if (boundSource == null) {
-              continue;
-            }
-            if (!excludes.isExcluded(boundSource)) {
-              filesToCompile.add(boundSource);
-            }
-            else {
-              formsIterator.remove();
-            }
-            break;
-          }
-        }
+      if (OPTION_ENABLE_FORMS_INSTRUMENTATION) {
+        // todo: track changes source-generation <-> bytecode-instrumentation in UIDesigner's config. Full forms rebuild required on switching configuration
 
-        // form should be considered dirty if the class it is bound to is dirty
-        final OneToManyPathsMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap();
-        for (File srcFile : filesToCompile) {
-          final String srcPath = srcFile.getPath();
-          final Collection<String> boundForms = sourceToFormMap.getState(srcPath);
-          if (boundForms != null) {
-            for (String formPath : boundForms) {
-              final File formFile = new File(formPath);
-              if (!excludes.isExcluded(formFile)) {
-                if (formFile.exists()) {
-                  FSOperations.markDirty(context, formFile);
-                  formsToCompile.add(formFile);
-                }
+        // force compilation of bound source file if the form is dirty
+        final JpsCompilerExcludes excludes = configuration.getCompilerExcludes();
+        if (!context.isProjectRebuild()) {
+          for (Iterator<Map.Entry<File,ModuleBuildTarget>> formsIterator = formsToCompile.entrySet().iterator(); formsIterator.hasNext(); ) {
+            final Map.Entry<File, ModuleBuildTarget> entry = formsIterator.next();
+            final File form = entry.getKey();
+            final ModuleBuildTarget target = entry.getValue();
+            final File boundSource = findBoundSource(context, target, form);
+            if (boundSource != null) {
+              if (!excludes.isExcluded(boundSource)) {
+                filesToCompile.put(boundSource, target);
+              }
+              else {
+                formsIterator.remove();
               }
             }
-            sourceToFormMap.remove(srcPath);
+          }
+
+          // form should be considered dirty if the class it is bound to is dirty
+          final OneToManyPathsMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap();
+          for (Map.Entry<File, ModuleBuildTarget> entry : filesToCompile.entrySet()) {
+            final File srcFile = entry.getKey();
+            final ModuleBuildTarget target = entry.getValue();
+            final String srcPath = srcFile.getPath();
+            final Collection<String> boundForms = sourceToFormMap.getState(srcPath);
+            if (boundForms != null) {
+              for (String formPath : boundForms) {
+                final File formFile = new File(formPath);
+                if (!excludes.isExcluded(formFile)) {
+                  if (formFile.exists()) {
+                    FSOperations.markDirty(context, formFile);
+                    formsToCompile.put(formFile, target);
+                  }
+                }
+              }
+              sourceToFormMap.remove(srcPath);
+            }
           }
         }
       }
 
-      final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
-      if (logger.isEnabled() && context.isMake()) {
-        if (filesToCompile.size() > 0) {
-          logger.logCompiledFiles(filesToCompile, BUILDER_NAME, "Compiling files:");
-        }
-        if (!formsToCompile.isEmpty()) {
-          logger.logCompiledFiles(formsToCompile, FORMS_BUILDER_NAME, "Compiling forms:");
+      if (context.isMake()) {
+        final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
+        if (logger.isEnabled()) {
+          if (filesToCompile.size() > 0) {
+            logger.logCompiledFiles(filesToCompile.keySet(), BUILDER_NAME, "Compiling files:");
+          }
+          if (!formsToCompile.isEmpty()) {
+            logger.logCompiledFiles(formsToCompile.keySet(), FORMS_BUILDER_NAME, "Compiling forms:");
+          }
         }
       }
 
-      return compile(context, chunk, dirtyFilesHolder, filesToCompile, formsToCompile, outputConsumer);
+      return compile(context, chunk, dirtyFilesHolder, filesToCompile.keySet(), formsToCompile.keySet(), outputConsumer);
     }
     catch (ProjectBuildException e) {
       throw e;
@@ -264,8 +266,26 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   @Nullable
-  private static File getBoundSource(File srcRoot, File formFile) throws IOException {
-    final String boundClassName = FormsParsing.readBoundClassName(formFile);
+  private static File findBoundSource(CompileContext context, final ModuleBuildTarget target, File form) throws IOException {
+    final List<JavaSourceRootDescriptor> targetRoots = context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context);
+    if (targetRoots.isEmpty()) {
+      return null;
+    }
+    final String className = FormsParsing.readBoundClassName(form);
+    if (className == null) {
+      return null;
+    }
+    for (JavaSourceRootDescriptor rd : targetRoots) {
+      final File boundSource = findSourceForClass(rd.root, className);
+      if (boundSource != null) {
+        return boundSource;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static File findSourceForClass(File srcRoot, final @Nullable String boundClassName) throws IOException {
     if (boundClassName == null) {
       return null;
     }

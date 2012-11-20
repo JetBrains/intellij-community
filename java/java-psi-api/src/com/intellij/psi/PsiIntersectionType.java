@@ -68,9 +68,12 @@ public class PsiIntersectionType extends PsiType {
         PsiType type = iterator.next();
 
         for (PsiType existing : array) {
-          if (type != existing && TypeConversionUtil.isAssignable(type, existing, false)) {
-            iterator.remove();
-            break;
+          if (type != existing) {
+            final boolean allowUncheckedConversion = type instanceof PsiClassType && ((PsiClassType)type).isRaw();
+            if (TypeConversionUtil.isAssignable(type, existing, allowUncheckedConversion)) {
+              iterator.remove();
+              break;
+            }
           }
         }
       }

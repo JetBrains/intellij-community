@@ -19,10 +19,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.incremental.artifacts.JarPathUtil;
-import org.jetbrains.jps.incremental.storage.BuildDataManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -115,8 +115,8 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
     }
 
     @Override
-    public boolean accept(@NotNull String fullFilePath, BuildDataManager dataManager) throws IOException {
-      if (myBaseFilter != null && !myBaseFilter.accept(fullFilePath, dataManager)) return false;
+    public boolean accept(@NotNull String fullFilePath, ProjectDescriptor projectDescriptor) throws IOException {
+      if (myBaseFilter != null && !myBaseFilter.accept(fullFilePath, projectDescriptor)) return false;
 
       if (myIgnoredFileIndex.isIgnored(PathUtilRt.getFileName(fullFilePath))) {
         return false;

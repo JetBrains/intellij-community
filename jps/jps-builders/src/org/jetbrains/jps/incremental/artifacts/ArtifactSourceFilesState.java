@@ -58,13 +58,13 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
       IncProjectBuilder.clearOutputFiles(context, myTarget);
       ((SourceToOutputMappingImpl)myProjectDescriptor.dataManager.getSourceToOutputMap(myTarget)).clean();
       getOrCreateOutSrcMapping().clean();
-      markDirtyFiles(dataManager, null, true, context);
+      markDirtyFiles(null, true, context);
       configuration.save();
     }
     else if (fsState.markInitialScanPerformed(myTarget)) {
       final Set<File> currentPaths = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
       fsState.clearDeletedPaths(myTarget);
-      markDirtyFiles(dataManager, currentPaths, false, context);
+      markDirtyFiles(currentPaths, false, context);
       final SourceToOutputMapping mapping = dataManager.getSourceToOutputMap(myTarget);
       final Iterator<String> iterator = mapping.getSourcesIterator();
       while (iterator.hasNext()) {
@@ -77,27 +77,27 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
     }
   }
 
-  private void markDirtyFiles(BuildDataManager dataManager, @Nullable Set<File> currentPaths,
+  private void markDirtyFiles(@Nullable Set<File> currentPaths,
                               final boolean forceMarkDirty, CompileContext context) throws IOException {
     for (ArtifactRootDescriptor descriptor : myProjectDescriptor.getBuildRootIndex().getTargetRoots(myTarget, context)) {
       myProjectDescriptor.fsState.clearRecompile(descriptor);
       final File rootFile = descriptor.getRootFile();
       if (rootFile.exists()) {
-        processRecursively(rootFile, descriptor, dataManager, descriptor.getFilter(), currentPaths, forceMarkDirty);
+        processRecursively(rootFile, descriptor, descriptor.getFilter(), currentPaths, forceMarkDirty);
       }
     }
   }
 
-  private void processRecursively(File file, ArtifactRootDescriptor descriptor, BuildDataManager dataManager, SourceFileFilter filter,
+  private void processRecursively(File file, ArtifactRootDescriptor descriptor, SourceFileFilter filter,
                                   @Nullable Set<File> currentPaths, final boolean forceMarkDirty) throws IOException {
     final String filePath = FileUtil.toSystemIndependentName(FileUtil.toCanonicalPath(file.getPath()));
-    if (!filter.accept(filePath, dataManager)) return;
+    if (!filter.accept(filePath, myProjectDescriptor)) return;
 
     if (file.isDirectory()) {
       final File[] children = file.listFiles();
       if (children != null) {
         for (File child : children) {
-          processRecursively(child, descriptor, dataManager, filter, currentPaths, forceMarkDirty);
+          processRecursively(child, descriptor, filter, currentPaths, forceMarkDirty);
         }
       }
     }

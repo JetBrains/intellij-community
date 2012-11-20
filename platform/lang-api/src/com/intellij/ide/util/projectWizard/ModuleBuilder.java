@@ -280,6 +280,10 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     return getModuleType().getBigIcon();
   }
 
+  public Icon getNodeIcon() {
+    return getModuleType().getNodeIcon(false);
+  }
+
   public String getDescription() {
     return getModuleType().getDescription();
   }

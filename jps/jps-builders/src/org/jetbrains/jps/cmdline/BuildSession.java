@@ -286,10 +286,14 @@ final class BuildSession implements Runnable, CanceledStatus {
         if (Utils.IS_TEST_MODE) {
           LOG.info("Applying dirty path from fs event: " + file.getPath());
         }
+        long fileStamp = -1L;
         for (BuildRootDescriptor descriptor : descriptors) {
           if (!descriptor.isGenerated()) { // ignore generates sources as they are processed at the time of generation
+            if (fileStamp == -1L) {
+              fileStamp = FileSystemUtil.lastModified(file); // lazy init
+            }
             long stamp = timestamps.getStamp(file, descriptor.getTarget());
-            if (stamp != FileSystemUtil.lastModified(file)) {
+            if (stamp != fileStamp) {
               pd.fsState.markDirty(null, file, descriptor, timestamps, saveEventStamp);
             }
           }

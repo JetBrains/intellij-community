@@ -17,7 +17,29 @@ import java.util.List;
  * @author nik
  */
 public class ArtifactOutputToSourceMapping extends AbstractStateStorage<String, List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex>> {
-  public static DataExternalizer<List<SourcePathAndRootIndex>> EXTERNALIZER = new DataExternalizer<List<SourcePathAndRootIndex>>() {
+  public ArtifactOutputToSourceMapping(@NonNls File storePath) throws IOException {
+    super(storePath, new PathStringDescriptor(), new SourcePathListExternalizer());
+  }
+
+  public static class SourcePathAndRootIndex {
+    private final String myPath;
+    private final int myRootIndex;
+
+    public SourcePathAndRootIndex(String path, int rootIndex) {
+      myPath = path;
+      myRootIndex = rootIndex;
+    }
+
+    public String getPath() {
+      return myPath;
+    }
+
+    public int getRootIndex() {
+      return myRootIndex;
+    }
+  }
+
+  private static class SourcePathListExternalizer implements DataExternalizer<List<SourcePathAndRootIndex>> {
     private final byte[] myBuffer = IOUtil.allocReadWriteUTFBuffer();
 
     @Override
@@ -38,28 +60,6 @@ public class ArtifactOutputToSourceMapping extends AbstractStateStorage<String, 
         result.add(new SourcePathAndRootIndex(path, index));
       }
       return result;
-    }
-  };
-
-  public ArtifactOutputToSourceMapping(@NonNls File storePath) throws IOException {
-    super(storePath, new PathStringDescriptor(), EXTERNALIZER);
-  }
-
-  public static class SourcePathAndRootIndex {
-    private final String myPath;
-    private final int myRootIndex;
-
-    public SourcePathAndRootIndex(String path, int rootIndex) {
-      myPath = path;
-      myRootIndex = rootIndex;
-    }
-
-    public String getPath() {
-      return myPath;
-    }
-
-    public int getRootIndex() {
-      return myRootIndex;
     }
   }
 }

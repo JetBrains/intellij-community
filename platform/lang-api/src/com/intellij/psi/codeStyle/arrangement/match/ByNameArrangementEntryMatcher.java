@@ -18,6 +18,7 @@ package com.intellij.psi.codeStyle.arrangement.match;
 import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.NameAwareArrangementEntry;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Pattern;
 
@@ -27,16 +28,27 @@ import java.util.regex.Pattern;
  */
 public class ByNameArrangementEntryMatcher implements ArrangementEntryMatcher {
 
-  @NotNull private final String  myPattern;
-  @NotNull private final Pattern myCompiledPattern;
-  
+  @NotNull private final String myPattern;
+
+  @Nullable private final Pattern myCompiledPattern;
+
   public ByNameArrangementEntryMatcher(@NotNull String pattern) {
     myPattern = pattern;
-    myCompiledPattern = Pattern.compile(pattern);
+    Pattern p = null;
+    try {
+      p = Pattern.compile(pattern);
+    }
+    catch (Exception e) {
+      // ignore
+    }
+    myCompiledPattern = p;
   }
 
   @Override
   public boolean isMatched(@NotNull ArrangementEntry entry) {
+    if (myCompiledPattern == null) {
+      return false;
+    }
     if (entry instanceof NameAwareArrangementEntry) {
       String name = ((NameAwareArrangementEntry)entry).getName();
       if (name == null) {

@@ -25,6 +25,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -45,7 +46,7 @@ public class LocationNameFieldsBinding {
   private String myBaseDir;
   private String mySuggestedProjectName;
 
-  public LocationNameFieldsBinding(Project project, final TextFieldWithBrowseButton locationTextField,
+  public LocationNameFieldsBinding(@Nullable Project project, final TextFieldWithBrowseButton locationTextField,
                                    final JTextField nameTextField, String baseDir, final String browseFolderTitle) {
 
     myBaseDir = baseDir;
