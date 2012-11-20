@@ -39,15 +39,11 @@ public class MockProject extends MockComponentManager implements Project {
 
   public MockProject(PicoContainer parent, @NotNull Disposable parentDisposable) {
     super(parent, parentDisposable);
-    synchronized (Extensions.getRootArea()) {
-      Extensions.instantiateArea(ExtensionAreas.IDEA_PROJECT, this, null);
-    }
+    Extensions.instantiateArea(ExtensionAreas.IDEA_PROJECT, this, null);
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {
-        synchronized (Extensions.getRootArea()) {
-          Extensions.disposeArea(MockProject.this);
-        }
+        Extensions.disposeArea(MockProject.this);
       }
     });
   }
