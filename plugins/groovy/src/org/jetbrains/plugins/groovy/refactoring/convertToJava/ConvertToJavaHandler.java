@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,9 +53,8 @@ public class ConvertToJavaHandler implements RefactoringActionHandler {
     for (PsiElement element : elements) {
       if (!(element instanceof GroovyFile)) {
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          CommonRefactoringUtil.showErrorHint(project, editor, GroovyRefactoringBundle
-            .message(GroovyRefactoringBundle.message("convert.to.java.can.work.only.with.groovy")), REFACTORING_NAME,
-                                              HelpID.EXTRACT_METHOD);
+          CommonRefactoringUtil.showErrorHint(project, editor, GroovyRefactoringBundle.message("convert.to.java.can.work.only.with.groovy"), REFACTORING_NAME, HelpID.EXTRACT_METHOD);
+          return;
         }
       }
     }
