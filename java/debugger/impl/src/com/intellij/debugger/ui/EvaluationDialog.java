@@ -108,7 +108,7 @@ public abstract class EvaluationDialog extends DialogWrapper {
     }
     try {
       setOKActionEnabled(false);
-      NodeDescriptorImpl descriptor = myEvaluationPanel.getWatchTree().addWatch(codeToEvaluate, "Result").getDescriptor();
+      NodeDescriptorImpl descriptor = myEvaluationPanel.getWatchTree().addWatch(codeToEvaluate, "result").getDescriptor();
       if (descriptor instanceof EvaluationDescriptor) {
         final EvaluationDescriptor evalDescriptor = (EvaluationDescriptor)descriptor;
         evalDescriptor.setCodeFragmentFactory(myEditor.getCurrentFactory());
