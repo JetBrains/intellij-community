@@ -61,4 +61,9 @@ public class TemplatesGroup {
   public int hashCode() {
     return myName.hashCode();
   }
+
+  @Override
+  public String toString() {
+    return myName;
+  }
 }
