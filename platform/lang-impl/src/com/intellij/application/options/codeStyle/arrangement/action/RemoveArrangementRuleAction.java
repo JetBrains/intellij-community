@@ -46,6 +46,8 @@ public class RemoveArrangementRuleAction extends AnAction {
     if (control == null) {
       return;
     }
+    
+    control.hideEditor();
 
     final TIntArrayList rowsToRemove = control.getSelectedModelRows();
     if (rowsToRemove.isEmpty()) {
