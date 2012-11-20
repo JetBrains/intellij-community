@@ -26,7 +26,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.updateSettings.impl.CheckForUpdateAction;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.wm.WelcomeScreen;
-import com.intellij.ui.LightColors;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 
@@ -44,27 +43,6 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
   }
 
   private WelcomePane createInnerPanel() {
-    Icon placeholderIcon = new Icon() {
-      @Override
-      public void paintIcon(Component c, Graphics g, int x, int y) {
-        g.setColor(LightColors.SLIGHTLY_GREEN);
-        g.fillRoundRect(x + 4, y + 4, 32 - 8, 32 - 8, 8, 8);
-        g.setColor(Color.GRAY);
-        g.drawRoundRect(x + 4, y + 4, 32 - 8, 32 - 8, 8, 8);
-      }
-
-      @Override
-      public int getIconWidth() {
-        return 32;
-      }
-
-      @Override
-      public int getIconHeight() {
-        return 32;
-      }
-    };
-
-
     WelcomeScreenGroup root = new WelcomeScreenGroup(null, "Root");
 
     ActionManager actionManager = ActionManager.getInstance();
