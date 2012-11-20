@@ -126,7 +126,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   @Nullable
   private ModuleBuilder myModuleBuilder;
 
-  public SelectTemplateStep(WizardContext context, StepSequence sequence, final MultiMap<String, ProjectTemplate> map) {
+  public SelectTemplateStep(WizardContext context, StepSequence sequence, final MultiMap<TemplatesGroup, ProjectTemplate> map) {
 
     myWizardContext = context;
     mySequence = sequence;
@@ -148,14 +148,15 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     myExpertDecorator.setContentComponent(myExpertPanel);
 
     final RemoteTemplatesFactory factory = new RemoteTemplatesFactory();
-    final DynamicGroupNode dynamicGroupNode = new DynamicGroupNode(factory.getGroups()[0], factory);
+    String group = factory.getGroups()[0];
+    final DynamicGroupNode dynamicGroupNode = new DynamicGroupNode(new TemplatesGroup(group, null, null), factory);
     SimpleTreeStructure.Impl structure = new SimpleTreeStructure.Impl(new SimpleNode() {
       @Override
       public SimpleNode[] getChildren() {
         SimpleNode[] nodes =
-          ContainerUtil.map2Array(map.entrySet(), NO_CHILDREN, new Function<Map.Entry<String, Collection<ProjectTemplate>>, SimpleNode>() {
+          ContainerUtil.map2Array(map.entrySet(), NO_CHILDREN, new Function<Map.Entry<TemplatesGroup, Collection<ProjectTemplate>>, SimpleNode>() {
             @Override
-            public SimpleNode fun(Map.Entry<String, Collection<ProjectTemplate>> entry) {
+            public SimpleNode fun(Map.Entry<TemplatesGroup, Collection<ProjectTemplate>> entry) {
               return new GroupNode(entry.getKey(), entry.getValue());
             }
           });
@@ -224,9 +225,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
           if (name != null) {
             append(name);
           }
-        }
-        if (node instanceof GroupNode) {
-//          setIcon(UIUtil.getTreeIcon(expanded));
+          setIcon(node.getIcon());
         }
       }
     });
@@ -569,7 +568,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
     private final ProjectTemplatesFactory myFactory;
 
-    private DynamicGroupNode(String group, ProjectTemplatesFactory factory) {
+    private DynamicGroupNode(TemplatesGroup group, ProjectTemplatesFactory factory) {
       super(group, Collections.<ProjectTemplate>emptyList());
       myFactory = factory;
     }
@@ -591,12 +590,13 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   }
 
   private static class GroupNode extends SimpleNode {
-    private final String myGroup;
+    private final TemplatesGroup myGroup;
     private final Collection<ProjectTemplate> myTemplates;
 
-    public GroupNode(String group, Collection<ProjectTemplate> templates) {
+    public GroupNode(TemplatesGroup group, Collection<ProjectTemplate> templates) {
       myGroup = group;
       myTemplates = templates;
+      setIcon(group.getIcon());
     }
 
     @Override
@@ -614,7 +614,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
     @Override
     public String getName() {
-      return myGroup;
+      return myGroup.getName();
     }
   }
 
@@ -626,6 +626,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     public TemplateNode(GroupNode groupNode, ProjectTemplate template) {
       myGroupNode = groupNode;
       myTemplate = template;
+      setIcon(template.createModuleBuilder().getNodeIcon());
     }
 
     @Override

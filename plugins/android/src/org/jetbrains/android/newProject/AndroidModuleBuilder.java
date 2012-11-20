@@ -727,6 +727,11 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     return AndroidIcons.Android24;
   }
 
+  @Override
+  public Icon getNodeIcon() {
+    return AndroidIcons.Android;
+  }
+
   public String getDescription() {
     return AndroidBundle.message("android.module.type.description");
   }
