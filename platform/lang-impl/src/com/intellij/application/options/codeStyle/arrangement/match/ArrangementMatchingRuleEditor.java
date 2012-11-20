@@ -258,6 +258,13 @@ public class ArrangementMatchingRuleEditor extends JPanel {
     ArrangementRuleInfo infoWithConditions = ArrangementUtil.extractConditions(condition);
     myRuleInfo.copyConditionsFrom(infoWithConditions);
     myNameField.setText(myRuleInfo.getNamePattern());
+
+    for (ArrangementAtomMatchConditionComponent component : myConditionComponents.values()) {
+      if (myRuleInfo.hasCondition(component.getMatchCondition().getValue())) {
+        component.setEnabled(true);
+        component.setSelected(true);
+      }
+    }
     
     refreshConditions();
   }
