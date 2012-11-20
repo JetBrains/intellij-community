@@ -75,6 +75,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static final String FORM_EXTENSION = ".form";
   public static final boolean USE_EMBEDDED_JAVAC = System.getProperty(GlobalOptions.USE_EXTERNAL_JAVAC_OPTION) == null;
   private static final Key<Integer> JAVA_COMPILER_VERSION_KEY = Key.create("_java_compiler_version_");
+  private static final Key<Boolean> IS_ENABLED = Key.create("_java_compiler_enabled_");
   private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Arrays.<String>asList(
     "-target"
   ));
@@ -114,8 +115,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static boolean OPTION_ENABLE_FORMS_INSTRUMENTATION = false;
   private static boolean OPTION_COPY_FORMS_RUNTIME_CLASSES = false;
 
-  private static final Key<Boolean> USE_ECLIPSE_COMPILER = Key.create("java.builder.use.eclipse.compiler");
-
   public static void registerClassPostProcessor(ClassPostProcessor processor) {
     ourClassProcessors.add(processor);
   }
@@ -147,24 +146,32 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return BUILDER_NAME;
   }
 
+  @Override
+  public void buildStarted(CompileContext context) {
+    final JpsProject project = context.getProjectDescriptor().getProject();
+    final String compilerId = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project).getJavaCompilerId();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Java compiler ID: " + compilerId);
+    }
+    boolean isJavacOrEclipse = false;
+    for (String id : Arrays.asList(JavaCompilers.JAVAC_ID, JavaCompilers.ECLIPSE_ID, JavaCompilers.JAVAC_API_ID, JavaCompilers.ECLIPSE_EMBEDDED_ID)) {
+      if (id.equalsIgnoreCase(compilerId)) {
+        isJavacOrEclipse = true;
+        break;
+      }
+    }
+    IS_ENABLED.set(context, isJavacOrEclipse);
+  }
+
   public ExitCode build(final CompileContext context,
                         final ModuleChunk chunk,
                         DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                         OutputConsumer outputConsumer) throws ProjectBuildException {
-    final JpsProject project = context.getProjectDescriptor().getProject();
-    final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
-
-    final String compilerId = configuration.getJavaCompilerId();
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Java compiler ID: " + compilerId);
-    }
-    if (JavaCompilers.ECLIPSE_ID.equals(compilerId) || JavaCompilers.ECLIPSE_EMBEDDED_ID.equals(compilerId)) {
-      context.putUserData(USE_ECLIPSE_COMPILER, true);
-    }
-    else if (!(JavaCompilers.JAVAC_ID.equals(compilerId) || JavaCompilers.JAVAC_API_ID.equals(compilerId))) {
+    if (!IS_ENABLED.get(context, Boolean.TRUE)) {
       return ExitCode.NOTHING_DONE;
     }
-
+    final JpsProject project = context.getProjectDescriptor().getProject();
+    final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
     try {
       final Map<File, ModuleBuildTarget> filesToCompile = new THashMap<File, ModuleBuildTarget>(FileUtil.FILE_HASHING_STRATEGY);
       final Map<File, ModuleBuildTarget> formsToCompile = new THashMap<File, ModuleBuildTarget>(FileUtil.FILE_HASHING_STRATEGY);
@@ -503,7 +510,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     try {
       final boolean rc;
       if (USE_EMBEDDED_JAVAC) {
-        final boolean useEclipse = USE_ECLIPSE_COMPILER.isIn(context);
+        final boolean useEclipse = useEclipseCompiler(context);
         rc = JavacMain.compile(
           options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer, context.getCancelStatus(), useEclipse
         );
@@ -525,6 +532,15 @@ public class JavaBuilder extends ModuleLevelBuilder {
     finally {
       counter.await();
     }
+  }
+
+  private static boolean useEclipseCompiler(CompileContext context) {
+    if (!USE_EMBEDDED_JAVAC) {
+      return false;
+    }
+    JpsProject project = context.getProjectDescriptor().getProject();
+    final String compilerId = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project).getJavaCompilerId();
+    return JavaCompilers.ECLIPSE_ID.equalsIgnoreCase(compilerId) || JavaCompilers.ECLIPSE_EMBEDDED_ID.equalsIgnoreCase(compilerId);
   }
 
   private void submitAsyncTask(CompileContext context, final Runnable taskRunnable) {
@@ -882,7 +898,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
     }
 
-    if (USE_ECLIPSE_COMPILER.isIn(context)) {
+    if (useEclipseCompiler(context)) {
       for (String option : options) {
         if (option.startsWith("-proceedOnError")) {
           Utils.PROCEED_ON_ERROR_KEY.set(context, Boolean.TRUE);
