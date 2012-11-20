@@ -58,6 +58,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.Matcher;
+import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.util.ui.update.ComparableObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,6 +68,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.plaf.TreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -209,6 +211,10 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     };
 
     myTemplatesTree.setRootVisible(false);
+    final TreeUI ui = myTemplatesTree.getUI();
+    if (ui instanceof WideSelectionTreeUI) {
+      ((WideSelectionTreeUI)ui).setForceDontPaintLines();
+    }
 //    myTemplatesTree.setShowsRootHandles(false);
     myTemplatesTree.setCellRenderer(new ColoredTreeCellRenderer() {
       @Override
