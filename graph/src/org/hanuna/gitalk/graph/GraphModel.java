@@ -18,7 +18,7 @@ public interface GraphModel {
      * before operation rows was a-1, a, b, b+1...
      */
     @NotNull
-    public Interval showBranch(Edge edge);
+    public Interval showBranch(@NotNull Edge edge);
 
     /**
      * from upNode to downNode will be simple way 1:1 (1 parent & 1 children)
@@ -29,6 +29,6 @@ public interface GraphModel {
      * now 1, 2, ... a-1, a, b, b+1...
      */
     @NotNull
-    public Interval hideBranch(Node upNode, Node downNode);
+    public Interval hideBranch(@NotNull Node upNode, @NotNull Node downNode);
 
 }

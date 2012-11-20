@@ -15,6 +15,12 @@ import java.util.List;
  * @author erokhins
  */
 public class MutableNode extends AbstractSelect implements Node {
+    public static void createEdge(MutableNode upNode, MutableNode downNode, Edge.Type type, Branch branch) {
+        Edge edge = new Edge(upNode, downNode, type, branch);
+        upNode.addDownEdge(edge);
+        downNode.addUpEdge(edge);
+    }
+
     private final Commit commit;
     private final Branch branch;
     private Type type = null;
@@ -46,6 +52,18 @@ public class MutableNode extends AbstractSelect implements Node {
         downEdges.add(edge);
     }
 
+    public void removeUpEdge(@NotNull Edge edge) {
+        upEdges.remove(edge);
+    }
+
+    public void removeDownEdge(@NotNull Edge edge) {
+        downEdges.remove(edge);
+    }
+
+    @NotNull
+    public MutableNodeRow getRow() {
+        return row;
+    }
 
     @NotNull
     @Override

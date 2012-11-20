@@ -14,6 +14,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.hanuna.gitalk.graph.builder.MutableNode.createEdge;
+
 /**
  * @author erokhins
  */
@@ -34,11 +36,7 @@ public class GraphModelBuilder {
         }
     }
 
-    private void createEdge(MutableNode from, MutableNode to, Edge.Type type, Branch branch) {
-        Edge edge = new Edge(from, to, type, branch);
-        from.addDownEdge(edge);
-        to.addUpEdge(edge);
-    }
+
 
     // return add's node
     private MutableNode addCurrentCommit(Commit commit) {
