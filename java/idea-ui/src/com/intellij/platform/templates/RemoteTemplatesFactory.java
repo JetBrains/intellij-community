@@ -45,7 +45,7 @@ import java.util.zip.ZipInputStream;
  * @author Dmitry Avdeev
  *         Date: 11/14/12
  */
-public class RemoteTemplatesFactory implements ProjectTemplatesFactory {
+public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
 
   private static final String URL = "http://download.jetbrains.com/idea/project_templates/";
 

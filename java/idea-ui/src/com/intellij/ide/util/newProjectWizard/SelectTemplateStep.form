@@ -162,7 +162,7 @@
                 <constraints/>
                 <properties/>
                 <clientProperties>
-                  <JTree.lineStyle class="java.lang.String" value="Angled"/>
+                  <JTree.lineStyle class="java.lang.String" value="None"/>
                 </clientProperties>
               </component>
             </children>

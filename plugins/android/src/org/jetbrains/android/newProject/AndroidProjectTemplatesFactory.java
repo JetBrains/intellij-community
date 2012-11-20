@@ -22,14 +22,17 @@ import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.platform.templates.BuilderBasedTemplate;
 import com.intellij.util.ArrayUtil;
+import icons.AndroidIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * @author Dmitry Avdeev
  *         Date: 11/9/12
  */
-public class AndroidProjectTemplatesFactory implements ProjectTemplatesFactory {
+public class AndroidProjectTemplatesFactory extends ProjectTemplatesFactory {
 
   public static final String ANDROID = "Android";
   public static final String EMPTY_MODULE = "Empty Module";
@@ -40,6 +43,11 @@ public class AndroidProjectTemplatesFactory implements ProjectTemplatesFactory {
   @Override
   public String[] getGroups() {
     return new String[] {ANDROID};
+  }
+
+  @Override
+  public Icon getGroupIcon(String group) {
+    return AndroidIcons.Android;
   }
 
   @NotNull

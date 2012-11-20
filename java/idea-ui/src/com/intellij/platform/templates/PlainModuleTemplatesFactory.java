@@ -33,7 +33,7 @@ import java.util.List;
  * @author Dmitry Avdeev
  *         Date: 10/9/12
  */
-public class PlainModuleTemplatesFactory implements ProjectTemplatesFactory {
+public class PlainModuleTemplatesFactory extends ProjectTemplatesFactory {
 
   @NotNull
   @Override

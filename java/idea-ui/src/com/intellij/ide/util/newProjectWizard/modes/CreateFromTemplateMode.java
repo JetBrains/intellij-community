@@ -60,7 +60,7 @@ public class CreateFromTemplateMode extends WizardMode {
         List<ProjectTemplate> values = context.isCreatingNewProject() ? Arrays.asList(templates) : ContainerUtil.filter(templates,
                                                                                                                         TEMPLATE_CONDITION);
         if (!values.isEmpty()) {
-          groups.putValues(new TemplatesGroup(group, null, null), values);
+          groups.putValues(new TemplatesGroup(group, null, factory.getGroupIcon(group)), values);
         }
       }
     }
