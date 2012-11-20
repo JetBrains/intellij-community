@@ -105,6 +105,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     actionManagerEx.addAnActionListener(myAnActionListener);
 
     myCaretMoveListener = new CaretListener() {
+      @Override
       public void caretPositionChanged(CaretEvent e) {
         hideHints(HIDE_BY_ANY_KEY, false, false);
       }
@@ -113,12 +114,14 @@ public class HintManagerImpl extends HintManager implements Disposable {
     projectManager.addProjectManagerListener(new MyProjectManagerListener());
 
     myEditorMouseListener = new EditorMouseAdapter() {
+      @Override
       public void mousePressed(EditorMouseEvent event) {
         hideAllHints();
       }
     };
 
     myVisibleAreaListener = new VisibleAreaListener() {
+      @Override
       public void visibleAreaChanged(VisibleAreaEvent e) {
         updateScrollableHints(e);
         hideHints(HIDE_BY_SCROLLING, false, false);
@@ -126,8 +129,10 @@ public class HintManagerImpl extends HintManager implements Disposable {
     };
 
     myEditorFocusListener = new FocusAdapter() {
+      @Override
       public void focusLost(final FocusEvent e) {
         myHideAlarm.addRequest(new Runnable() {
+          @Override
           public void run() {
             if (!JBPopupFactory.getInstance().isChildPopupFocused(e.getComponent())) {
               hideAllHints();
@@ -136,15 +141,17 @@ public class HintManagerImpl extends HintManager implements Disposable {
         }, 200);
       }
 
+      @Override
       public void focusGained(FocusEvent e) {
         myHideAlarm.cancelAllRequests();
       }
     };
 
     myEditorDocumentListener = new DocumentAdapter() {
+      @Override
       public void documentChanged(DocumentEvent event) {
         LOG.assertTrue(SwingUtilities.isEventDispatchThread());
-        HintInfo[] infos = myHintsStack.toArray(new HintInfo[myHintsStack.size()]);
+        HintInfo[] infos = getHintsStackArray();
         for (HintInfo info : infos) {
           if ((info.flags & HIDE_BY_TEXT_CHANGE) != 0) {
             if (info.hint.isVisible()) {
@@ -159,6 +166,11 @@ public class HintManagerImpl extends HintManager implements Disposable {
         }
       }
     };
+  }
+
+  @NotNull
+  private HintInfo[] getHintsStackArray() {
+    return myHintsStack.toArray(new HintInfo[myHintsStack.size()]);
   }
 
   public boolean performCurrentQuestionAction() {
@@ -185,16 +197,17 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
   private void updateScrollableHints(VisibleAreaEvent e) {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
-    for (HintInfo info : myHintsStack) {
-      if (info.hint instanceof LightweightHint && (info.flags & UPDATE_BY_SCROLLING) != 0) {
+    for (HintInfo info : getHintsStackArray()) {
+      if (info.hint != null && (info.flags & UPDATE_BY_SCROLLING) != 0) {
         updateScrollableHintPosition(e, info.hint, (info.flags & HIDE_IF_OUT_OF_EDITOR) != 0);
       }
     }
   }
 
+  @Override
   public boolean hasShownHintsThatWillHideByOtherHint(boolean willShowTooltip) {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
-    for (HintInfo hintInfo : myHintsStack) {
+    for (HintInfo hintInfo : getHintsStackArray()) {
       if (hintInfo.hint.isVisible() && (hintInfo.flags & HIDE_BY_OTHER_HINT) != 0) return true;
       if (willShowTooltip && hintInfo.hint.isAwtTooltip()) {
         // only one AWT tooltip can be visible, so this hint will hide even though it's not marked with HIDE_BY_OTHER_HINT
@@ -204,6 +217,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     return false;
   }
 
+  @Override
   public void dispose() {
     ActionManagerEx.getInstanceEx().removeAnActionListener(myAnActionListener);
   }
@@ -297,11 +311,13 @@ public class HintManagerImpl extends HintManager implements Disposable {
     doShowInGivenLocation(hint, editor, p, hintInfo, true);
 
     ListenerUtil.addMouseListener(component, new MouseAdapter() {
+      @Override
       public void mousePressed(MouseEvent e) {
         myHideAlarm.cancelAllRequests();
       }
     });
     ListenerUtil.addFocusListener(component, new FocusAdapter() {
+      @Override
       public void focusGained(FocusEvent e) {
         myHideAlarm.cancelAllRequests();
       }
@@ -320,6 +336,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     myHintsStack.add(info);
     if (timeout > 0) {
       Timer timer = UIUtil.createNamedTimer("Hint timeout",timeout, new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent event) {
           hint.hide();
         }
@@ -329,6 +346,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     }
   }
 
+  @Override
   public void showHint(@NotNull final JComponent component, @NotNull RelativePoint p, int flags, int timeout) {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     myHideAlarm.cancelAllRequests();
@@ -341,17 +359,20 @@ public class HintManagerImpl extends HintManager implements Disposable {
     popup.show(p);
 
     ListenerUtil.addMouseListener(component, new MouseAdapter() {
+      @Override
       public void mousePressed(MouseEvent e) {
         myHideAlarm.cancelAllRequests();
       }
     });
     ListenerUtil.addFocusListener(component, new FocusAdapter() {
+      @Override
       public void focusGained(FocusEvent e) {
         myHideAlarm.cancelAllRequests();
       }
     });
 
     final HintInfo info = new HintInfo(new LightweightHint(component) {
+      @Override
       public void hide() {
         popup.cancel();
       }
@@ -359,6 +380,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     myHintsStack.add(info);
     if (timeout > 0) {
       Timer timer = UIUtil.createNamedTimer("Popup timeout",timeout, new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent event) {
           popup.dispose();
         }
@@ -410,10 +432,10 @@ public class HintManagerImpl extends HintManager implements Disposable {
     doShowInGivenLocation(hint, editor, p, createHintHint(editor, p, hint, constraint), true);
   }
 
+  @Override
   public void hideAllHints() {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
-    List<HintInfo> hints = new ArrayList<HintInfo>(myHintsStack);
-    for (HintInfo info : hints) {
+    for (HintInfo info : getHintsStackArray()) {
       if (!info.hint.vetoesHiding()) {
         info.hint.hide();
       }
@@ -438,7 +460,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     if (dominantArea == null) {
-      for (HintInfo info : myHintsStack) {
+      for (HintInfo info : getHintsStackArray()) {
         if (!info.hint.isSelectingHint()) continue;
         IdeTooltip tooltip = info.hint.getCurrentIdeTooltip();
         if (tooltip != null) {
@@ -637,10 +659,12 @@ public class HintManagerImpl extends HintManager implements Disposable {
     return location;
   }
 
+  @Override
   public void showErrorHint(@NotNull Editor editor, @NotNull String text) {
     showErrorHint(editor, text, ABOVE);
   }
 
+  @Override
   public void showErrorHint(@NotNull Editor editor, @NotNull String text, short position) {
     JComponent label = HintUtil.createErrorLabel(text);
     LightweightHint hint = new LightweightHint(label);
@@ -648,6 +672,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     showEditorHint(hint, editor, p, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | HIDE_BY_SCROLLING, 0, false, position);
   }
 
+  @Override
   public void showInformationHint(@NotNull Editor editor, @NotNull String text) {
     JComponent label = HintUtil.createInformationLabel(text);
     showInformationHint(editor, label);
@@ -664,6 +689,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     showEditorHint(hint, editor, p, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | HIDE_BY_SCROLLING, 0, false);
   }
 
+  @Override
   public void showErrorHint(@NotNull Editor editor,
                             @NotNull String hintText,
                             int offset1,
@@ -720,6 +746,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     }
 
     hint.addHintListener(new HintListener() {
+      @Override
       public void hintHidden(EventObject event) {
         highlighter.dispose();
 
@@ -809,6 +836,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
   }
 
   private class MyAnActionListener implements AnActionListener {
+    @Override
     public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
       if (action instanceof ActionToIgnore) return;
 
@@ -819,9 +847,11 @@ public class HintManagerImpl extends HintManager implements Disposable {
     }
 
 
+    @Override
     public void afterActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
     }
 
+    @Override
     public void beforeEditorTyping(char c, DataContext dataContext) {
     }
   }
@@ -832,6 +862,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
    * fired by ActionManager.
    */
   private final class MyEditorManagerListener extends FileEditorManagerAdapter {
+    @Override
     public void selectionChanged(FileEditorManagerEvent event) {
       hideHints(0, false, true);
     }
@@ -842,10 +873,12 @@ public class HintManagerImpl extends HintManager implements Disposable {
    * all opened projects.
    */
   private final class MyProjectManagerListener extends ProjectManagerAdapter {
+    @Override
     public void projectOpened(Project project) {
       project.getMessageBus().connect(project).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, myEditorManagerListener);
     }
 
+    @Override
     public void projectClosed(Project project) {
       // avoid leak through com.intellij.codeInsight.hint.TooltipController.myCurrentTooltip
       TooltipController.getInstance().cancelTooltips();
@@ -877,6 +910,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     return false;
   }
 
+  @Override
   public boolean hideHints(int mask, boolean onlyOne, boolean editorChanged) {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     try {

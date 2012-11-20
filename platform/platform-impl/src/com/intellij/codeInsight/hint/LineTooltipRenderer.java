@@ -62,6 +62,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     myCurrentWidth = width;
   }
 
+  @Override
   public LightweightHint show(final Editor editor,
                               final Point p,
                               final boolean alignToRight,
@@ -101,6 +102,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
     final Ref<AnAction> actionRef = new Ref<AnAction>();
     final LightweightHint hint = new LightweightHint(scrollPane) {
+      @Override
       public void hide() {
         onHide(pane);
         super.hide();
@@ -118,12 +120,14 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
           contentComponent);
       }
 
+      @Override
       public void actionPerformed(final AnActionEvent e) {
         expand(hint, editor, p, pane, alignToRight, group, hintHint);
       }
     });
 
     pane.addHyperlinkListener(new HyperlinkListener() {
+      @Override
       public void hyperlinkUpdate(final HyperlinkEvent e) {
         myActiveLink = true;
         if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
@@ -160,6 +164,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     // This listener makes hint transparent for mouse events. It means that hint is closed
     // by MousePressed and this MousePressed goes into the underlying editor component.
     pane.addMouseListener(new MouseAdapter() {
+      @Override
       public void mouseReleased(final MouseEvent e) {
         if (!myActiveLink) {
           MouseEvent newMouseEvent = SwingUtilities.convertMouseEvent(e.getComponent(), e, contentComponent);
@@ -168,6 +173,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
         }
       }
 
+      @Override
       public void mouseExited(final MouseEvent e) {
         if (!expanded) {
           hint.hide();
