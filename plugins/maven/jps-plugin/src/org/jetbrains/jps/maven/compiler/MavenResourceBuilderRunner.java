@@ -54,7 +54,7 @@ public class MavenResourceBuilderRunner extends ModuleLevelBuilder{
     BuildTargetRegistry targetRegistry = context.getProjectDescriptor().getBuildTargetIndex();
     PRODUCTION_TARGETS_KEY.set(context, targetRegistry.getAllTargets(MavenResourcesTargetType.PRODUCTION));
     TEST_TARGETS_KEY.set(context, targetRegistry.getAllTargets(MavenResourcesTargetType.TEST));
-    for (TargetBuilder<?, ?> builder : BuilderRegistry.getInstance().getTargetBuilders()) {
+    for (TargetBuilder builder : BuilderRegistry.getInstance().getTargetBuilders()) {
       if (builder instanceof MavenResourcesBuilder) {
         BUILDER_KEY.set(context, (MavenResourcesBuilder)builder);
         break;
