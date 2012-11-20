@@ -425,7 +425,7 @@ public class Messages {
     return showCheckboxMessageDialog(message, title, new String[]{OK_BUTTON}, checkboxText, true, -1, -1, icon, null);
   }
 
-  public static void showErrorDialog(Project project, @Nls String message, @Nls String title) {
+  public static void showErrorDialog(@Nullable Project project, @Nls String message, @Nls String title) {
     if (canShowMacSheetPanel()) {
       MacMessages.getInstance().showErrorDialog(title, message, OK_BUTTON, WindowManager.getInstance().suggestParentWindow(project));
       return;
