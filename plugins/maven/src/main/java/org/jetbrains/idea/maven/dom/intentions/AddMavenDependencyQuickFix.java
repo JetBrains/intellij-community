@@ -78,11 +78,17 @@ public class AddMavenDependencyQuickFix implements IntentionAction, LowPriorityA
   }
 
   private String getReferenceText() {
-    PsiElement result = myRef;
-    while (result.getParent() instanceof PsiJavaCodeReferenceElement) {
-      result = result.getParent();
+    PsiJavaCodeReferenceElement result = myRef;
+    while (true) {
+      PsiElement parent = result.getParent();
+      if (!(parent instanceof PsiJavaCodeReferenceElement)) {
+        break;
+      }
+
+      result = (PsiJavaCodeReferenceElement)parent;
     }
-    return result.getText();
+
+    return result.getQualifiedName();
   }
 
   public boolean startInWriteAction() {
