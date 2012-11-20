@@ -150,6 +150,26 @@ public class CardActionsPanel extends JPanel {
   }
 
   private static class Button extends ActionButtonWithText {
+    private static final Icon DEFAULT_ICON = new Icon() {
+      @Override
+      public void paintIcon(Component c, Graphics g, int x, int y) {
+        g.setColor(LightColors.SLIGHTLY_GREEN);
+        g.fillRoundRect(x + 4, y + 4, 32 - 8, 32 - 8, 8, 8);
+        g.setColor(Color.GRAY);
+        g.drawRoundRect(x + 4, y + 4, 32 - 8, 32 - 8, 8, 8);
+      }
+
+      @Override
+      public int getIconWidth() {
+        return 32;
+      }
+
+      @Override
+      public int getIconHeight() {
+        return 32;
+      }
+    };
+
     public Button(AnAction action, Presentation presentation) {
       super(action, wrapIcon(presentation), ActionPlaces.WELCOME_SCREEN, new Dimension(32, 32));
       setBorder(new EmptyBorder(3, 3, 3, 3));
@@ -167,32 +187,8 @@ public class CardActionsPanel extends JPanel {
 
     private static Presentation wrapIcon(Presentation presentation) {
       Icon original = presentation.getIcon();
-      if (original == null) original = defaultIcon();
-
-      presentation.setIcon(new CenteredIcon(original, 40, 40, false));
+      presentation.setIcon(new CenteredIcon(original != null ? original : DEFAULT_ICON, 40, 40, false));
       return presentation;
-    }
-
-    private static Icon defaultIcon() {
-      return new Icon() {
-        @Override
-        public void paintIcon(Component c, Graphics g, int x, int y) {
-          g.setColor(LightColors.SLIGHTLY_GREEN);
-          g.fillRoundRect(x + 4, y + 4, 32 - 8, 32 - 8, 8, 8);
-          g.setColor(Color.GRAY);
-          g.drawRoundRect(x + 4, y + 4, 32 - 8, 32 - 8, 8, 8);
-        }
-
-        @Override
-        public int getIconWidth() {
-          return 32;
-        }
-
-        @Override
-        public int getIconHeight() {
-          return 32;
-        }
-      };
     }
   }
 }
