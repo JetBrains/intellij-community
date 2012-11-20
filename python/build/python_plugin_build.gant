@@ -266,7 +266,6 @@ target(name: "compile", description: "Compile module python") {
       pathelement(location: "${contribHome}/${it}/src")
     }
     pathelement(location: "${pluginHome}/../ultimate/ultimate-verifier/src")
-    pathelement(location: "${pluginHome}/../plugins/remote-run/src")
   }
   //The task requires the following libraries from IntelliJ IDEA distribution:
   //javac2.jar; jdom.jar; asm.jar; asm-commons.jar
