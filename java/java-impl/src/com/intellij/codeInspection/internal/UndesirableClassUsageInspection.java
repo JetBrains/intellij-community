@@ -28,6 +28,7 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.image.BufferedImage;
 import java.util.Map;
 
 public class UndesirableClassUsageInspection extends InternalInspection {
@@ -38,6 +39,7 @@ public class UndesirableClassUsageInspection extends InternalInspection {
     CLASSES.put(JTree.class.getName(), Tree.class.getName());
     CLASSES.put(JScrollPane.class.getName(), JBScrollPane.class.getName());
     CLASSES.put(QueryExecutor.class.getName(), QueryExecutorBase.class.getName());
+    CLASSES.put(BufferedImage.class.getName(), "UIUtil.createImage()");
   }
 
   @NotNull
