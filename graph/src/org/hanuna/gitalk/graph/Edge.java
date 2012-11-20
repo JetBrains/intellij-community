@@ -7,24 +7,24 @@ import org.jetbrains.annotations.NotNull;
  * @author erokhins
  */
 public class Edge extends AbstractSelect {
-    private final Node from;
-    private final Node to;
+    private final Node upNode;
+    private final Node downNode;
     private final Type type;
     private final Branch branch;
 
-    public Edge(@NotNull Node from, @NotNull Node to, @NotNull Type type, Branch branch) {
-        this.from = from;
-        this.to = to;
+    public Edge(@NotNull Node upNode, @NotNull Node downNode, @NotNull Type type, Branch branch) {
+        this.upNode = upNode;
+        this.downNode = downNode;
         this.type = type;
         this.branch = branch;
     }
 
-    public Node getFrom() {
-        return from;
+    public Node getUpNode() {
+        return upNode;
     }
 
-    public Node getTo() {
-        return to;
+    public Node getDownNode() {
+        return downNode;
     }
 
     public Type getType() {

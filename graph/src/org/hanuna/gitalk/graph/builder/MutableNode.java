@@ -1,12 +1,11 @@
 package org.hanuna.gitalk.graph.builder;
 
-import org.hanuna.gitalk.graph.Node;
-import org.hanuna.gitalk.graph.select.AbstractSelect;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 import org.hanuna.gitalk.graph.Branch;
 import org.hanuna.gitalk.graph.Edge;
-import org.hanuna.gitalk.graph.NodeRow;
+import org.hanuna.gitalk.graph.Node;
+import org.hanuna.gitalk.graph.select.AbstractSelect;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -17,16 +16,12 @@ import java.util.List;
  */
 public class MutableNode extends AbstractSelect implements Node {
     private final Commit commit;
-    private Type type = null;
-    private NodeRow row = null;
-    private int logIndex;
     private final Branch branch;
+    private Type type = null;
+    private MutableNodeRow row = null;
 
     private final List<Edge> upEdges = new ArrayList<Edge>(2);
-    private final ReadOnlyList<Edge> readOnlyUpEdges = ReadOnlyList.newReadOnlyList(upEdges);
-
     private final List<Edge> downEdges = new ArrayList<Edge>(2);
-    private final ReadOnlyList<Edge> readOnlyDownEdges = ReadOnlyList.newReadOnlyList(downEdges);
 
 
     public MutableNode(@NotNull Commit commit, @NotNull Branch branch) {
@@ -38,11 +33,8 @@ public class MutableNode extends AbstractSelect implements Node {
         this.type = type;
     }
 
-    public void setLogIndex(int logIndex) {
-        this.logIndex = logIndex;
-    }
 
-    public void setRow(@NotNull NodeRow row) {
+    public void setRow(@NotNull MutableNodeRow row) {
         this.row = row;
     }
 
@@ -61,22 +53,21 @@ public class MutableNode extends AbstractSelect implements Node {
         return type;
     }
 
-    @NotNull
     @Override
-    public NodeRow getRow() {
-        return row;
+    public int getRowIndex() {
+        return row.getRowIndex();
     }
 
     @NotNull
     @Override
     public ReadOnlyList<Edge> getUpEdges() {
-        return readOnlyUpEdges;
+        return ReadOnlyList.newReadOnlyList(upEdges);
     }
 
     @NotNull
     @Override
     public ReadOnlyList<Edge> getDownEdges() {
-        return readOnlyDownEdges;
+        return ReadOnlyList.newReadOnlyList(downEdges);
     }
 
     @NotNull

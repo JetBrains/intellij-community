@@ -42,16 +42,16 @@ public class GraphModelBuilder {
 
     // return add's node
     private MutableNode addCurrentCommit(Commit commit) {
-        MutableNode node = hashMutableNode.get(commit.hash());
+        MutableNode node = hashMutableNode.remove(commit.hash());
         if (node == null) {
             node = new MutableNode(commit, new Branch());
         }
-        node.setLogIndex(rows.size());
         node.setRow(nextRow);
         node.setType(Node.Type.commitNode);
         nextRow.add(node);
         rows.add(nextRow);
 
+        nextRow = new MutableNodeRow(rows.size());
         return node;
     }
 
@@ -64,11 +64,19 @@ public class GraphModelBuilder {
         } else {
             int index = getLogIndexOfCommit(parent);
             createEdge(node, parentNode, Edge.Type.usual, branch);
-            // i.e. we need create new Node (
+            // i.e. we need create new Node
             if (index != rows.size()) {
+                // remove old node
+                hashMutableNode.remove(parent.hash());
+
                 MutableNode newParentNode = new MutableNode(parentNode.getCommit(), parentNode.getBranch());
                 createEdge(parentNode, newParentNode, Edge.Type.usual, parentNode.getBranch());
+                hashMutableNode.put(parent.hash(), newParentNode);
+
+                parentNode.setType(Node.Type.edgeNode);
+                parentNode.setRow(nextRow);
                 nextRow.add(parentNode);
+
             }
         }
     }
@@ -93,13 +101,13 @@ public class GraphModelBuilder {
 
     private void prepare(int lastLogIndex) {
         this.lastLogIndex = lastLogIndex;
+        nextRow = new MutableNodeRow(0);
     }
 
     private void lastActions() {
         final Collection<MutableNode> lastNodes = hashMutableNode.values();
         for (MutableNode node : lastNodes) {
             node.setRow(nextRow);
-            node.setLogIndex(rows.size());
             node.setType(Node.Type.endCommitNode);
             nextRow.add(node);
         }
@@ -111,8 +119,8 @@ public class GraphModelBuilder {
     @NotNull
     public GraphModel build(ReadOnlyList<Commit> listOfCommits) {
         prepare(listOfCommits.size() - 1);
-        for (int i = 0; i < listOfCommits.size(); i++) {
-            append(listOfCommits.get(i));
+        for (Commit listOfCommit : listOfCommits) {
+            append(listOfCommit);
         }
         lastActions();
         return new GraphModelImpl(rows);

@@ -19,10 +19,6 @@ public class GraphModelImpl implements GraphModel {
     }
 
 
-    @Override
-    public int getCurrentRowIndex(int logRowIndex) {
-        return 0;
-    }
 
     @NotNull
     @Override

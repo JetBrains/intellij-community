@@ -10,6 +10,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface Node extends Select {
 
+    public int getRowIndex();
+
     @NotNull
     public Type getType();
 
@@ -30,7 +32,6 @@ public interface Node extends Select {
 
     @NotNull
     public Branch getBranch();
-
 
     public static enum Type{
         commitNode,
