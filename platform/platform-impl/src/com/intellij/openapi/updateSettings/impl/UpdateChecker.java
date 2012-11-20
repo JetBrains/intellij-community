@@ -20,7 +20,10 @@ import com.intellij.ide.plugins.*;
 import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.*;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -609,14 +612,7 @@ public final class UpdateChecker {
 
     String productCode = ApplicationInfo.getInstance().getBuild().getProductCode();
 
-    String osSuffix = "";
-    if (SystemInfo.isWindows) {
-      osSuffix = "-win";
-    }
-    else if (SystemInfo.isMac) {
-      osSuffix = "-mac";
-    }
-    else if (SystemInfo.isUnix) osSuffix = "-unix";
+    String osSuffix = "-" + patch.getOSSuffix();
 
     String fromBuildNumber = patch.getFromBuild().asStringWithoutProductCode();
     String toBuildNumber = newVersion.getNumber().asStringWithoutProductCode();
