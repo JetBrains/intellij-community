@@ -81,13 +81,13 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
     else if (aClass.isInterface()) {
       type = ArrangementEntryType.INTERFACE;
     }
-    JavaElementArrangementEntry entry = createNewEntry(aClass, type, aClass.getName(), true);
+    JavaElementArrangementEntry entry = createNewEntry(aClass, aClass.getTextRange(), type, aClass.getName(), true);
     processEntry(entry, aClass, aClass);
   }
 
   @Override
   public void visitAnonymousClass(PsiAnonymousClass aClass) {
-    JavaElementArrangementEntry entry = createNewEntry(aClass, ArrangementEntryType.CLASS, aClass.getName(), false);
+    JavaElementArrangementEntry entry = createNewEntry(aClass, aClass.getTextRange(), ArrangementEntryType.CLASS, aClass.getName(), false);
     processEntry(entry, null, aClass);
   }
 
@@ -100,7 +100,7 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
 
   @Override
   public void visitField(PsiField field) {
-    // There is a possible case that more than one field is declared at the same line like 'int i, j;'. We want to process only
+    // There is a possible case that more than one field is declared for the same type like 'int i, j;'. We want to process only
     // the first one then.
     for (PsiElement e = field.getPrevSibling(); e != null; e = e.getPrevSibling()) {
       if (e instanceof PsiWhiteSpace) {
@@ -113,14 +113,55 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
         break;
       }
     }
-
-    JavaElementArrangementEntry entry = createNewEntry(field, ArrangementEntryType.FIELD, field.getName(), true);
+    
+    // There is a possible case that fields which share the same type declaration are located on different document lines, e.g.:
+    //    int i1,
+    //        i2;
+    // We want to consider only the first declaration then but need to expand its range to all affected lines (up to semicolon).
+    TextRange range = field.getTextRange();
+    PsiElement child = field.getLastChild();
+    boolean needProcessing;
+    if (child instanceof PsiJavaToken) {
+      needProcessing = ((PsiJavaToken)child).getTokenType() != JavaTokenType.SEMICOLON;
+    }
+    else {
+      needProcessing = true;
+    }
+    if (needProcessing) {
+      for (PsiElement e = field.getNextSibling(); e != null; e = e.getNextSibling()) {
+        if (e instanceof PsiWhiteSpace) { // Skip white space
+          continue;
+        }
+        else if (e instanceof PsiJavaToken) {
+          if (((PsiJavaToken)e).getTokenType() == JavaTokenType.COMMA) { // Skip comma
+            continue;
+          }
+          else {
+            break;
+          }
+        }
+        else if (e instanceof PsiField) {
+          PsiElement c = e.getLastChild();
+          // Stop is field with semicolon has been found.
+          if (c instanceof PsiErrorElement // Incomplete field without trailing semicolon
+              || (c instanceof PsiJavaToken && ((PsiJavaToken)c).getTokenType() == JavaTokenType.SEMICOLON))
+          {
+            range = TextRange.create(range.getStartOffset(), c.getTextRange().getEndOffset());
+          }
+          else {
+            continue;
+          }
+        }
+        break;
+      }
+    }
+    JavaElementArrangementEntry entry = createNewEntry(field, range, ArrangementEntryType.FIELD, field.getName(), true);
     processEntry(entry, field, field.getInitializer());
   }
 
   @Override
   public void visitClassInitializer(PsiClassInitializer initializer) {
-    JavaElementArrangementEntry entry = createNewEntry(initializer, ArrangementEntryType.FIELD, null, true);
+    JavaElementArrangementEntry entry = createNewEntry(initializer, initializer.getTextRange(), ArrangementEntryType.FIELD, null, true);
     if (entry == null) {
       return;
     }
@@ -150,7 +191,7 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
   @Override
   public void visitMethod(PsiMethod method) {
     ArrangementEntryType type = method.isConstructor() ? ArrangementEntryType.CONSTRUCTOR : ArrangementEntryType.METHOD;
-    JavaElementArrangementEntry entry = createNewEntry(method, type, method.getName(), true);
+    JavaElementArrangementEntry entry = createNewEntry(method, method.getTextRange(), type, method.getName(), true);
     if (entry == null) {
       return;
     }
@@ -214,7 +255,7 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
       return;
     }
     JavaElementArrangementEntry entry =
-      createNewEntry(anonymousClass, ArrangementEntryType.CLASS, anonymousClass.getName(), false);
+      createNewEntry(anonymousClass, anonymousClass.getTextRange(), ArrangementEntryType.CLASS, anonymousClass.getName(), false);
     processEntry(entry, null, anonymousClass);
   }
 
@@ -256,11 +297,11 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
   
   @Nullable
   private JavaElementArrangementEntry createNewEntry(@NotNull PsiElement element,
+                                                     @NotNull TextRange range,
                                                      @NotNull ArrangementEntryType type,
                                                      @Nullable String name,
                                                      boolean canArrange)
   {
-    TextRange range = element.getTextRange();
     if (!isWithinBounds(range)) {
       return null;
     }

@@ -18,6 +18,7 @@ package com.intellij.psi.codeStyle.arrangement
 import org.junit.Before
 
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.*
+import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.PRIVATE
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.PROTECTED
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.PUBLIC
 /**
@@ -251,5 +252,59 @@ class Test {
   private long l;
 }'''
     )
+  }
+  
+  void "test multiline multiple field variables declaration"() {
+    doTest(
+      initial:  '''\
+class Test {
+  private String a1,
+                 a2;
+  public String a3;
+}''',
+      rules: [rule(FIELD, PUBLIC), rule(FIELD, PRIVATE)],
+      expected: '''\
+class Test {
+  public String a3;
+  private String a1,
+                 a2;
+}'''
+    )
+  }
+
+  void "test multiline multiple field variables declaration with initializers"() {
+    doTest(
+      initial:  '''\
+class Test {
+  private String a1 = "one",
+                 a2 = "two";
+  public String a3;
+}''',
+      rules: [rule(FIELD, PUBLIC), rule(FIELD, PRIVATE)],
+      expected: '''\
+class Test {
+  public String a3;
+  private String a1 = "one",
+                 a2 = "two";
+}'''
+    )
+  }
+  
+  void "test incomplete multiple multiline field "() {
+    doTest(
+      initial:  '''\
+class Test {
+  private String a1,
+                 a2
+  public String a3;
+}''',
+      rules: [rule(FIELD, PUBLIC), rule(FIELD, PRIVATE)],
+      expected: '''\
+class Test {
+  public String a3;
+  private String a1,
+                 a2
+}'''
+    )    
   }
 }
