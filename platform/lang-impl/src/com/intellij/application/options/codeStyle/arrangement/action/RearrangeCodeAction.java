@@ -15,7 +15,6 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.action;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -45,11 +44,8 @@ public class RearrangeCodeAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    Language language = LangDataKeys.LANGUAGE.getData(e.getDataContext());
-    boolean enabled = false;
-    if (language != null) {
-      enabled = Rearranger.EXTENSION.forLanguage(language) != null;
-    }
+    PsiFile file = LangDataKeys.PSI_FILE.getData(e.getDataContext());
+    boolean enabled = file != null && Rearranger.EXTENSION.forLanguage(file.getLanguage()) != null;
     e.getPresentation().setEnabled(enabled);
   }
 
