@@ -137,7 +137,8 @@ public class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDes
       return moduleOutput;
     }
     final File targetPathFile = new File(targetPath);
-    return targetPathFile.isAbsolute()? targetPathFile : new File(moduleOutput, targetPath);
+    final File outputFile = targetPathFile.isAbsolute() ? targetPathFile : new File(moduleOutput, targetPath);
+    return new File(FileUtil.toCanonicalPath(outputFile.getPath()));
   }
 
   @Override
