@@ -245,6 +245,9 @@ target(name: "compile", description: "Compile module python") {
     fileset(dir: "${ideaPlugins}/DatabaseSupport/lib") {
       include(name: "*.jar")
     }
+    fileset(dir: "${ideaPlugins}/remote-run/lib") {
+      include(name: "*.jar")
+    }
     pathelement(location: restJarName)
     pathelement(location: localizationJarName)
   }
