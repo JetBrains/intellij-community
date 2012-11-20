@@ -464,7 +464,7 @@
 
     <group id="WelcomeScreen.Configure">
       <!-- TODO: Bigger icon for settings -->
-      <action id="WelcomeScreen.Settings" class="com.intellij.ide.actions.ShowSettingsAction" icon="AllIcons.General.Settings"/>
+      <action id="WelcomeScreen.Settings" class="com.intellij.ide.actions.ShowSettingsAction" icon="AllIcons.General.Configure"/>
       <action id="WelcomeScreen.Plugins" class="com.intellij.ide.actions.ShowPluginManagerAction" icon="AllIcons.General.PluginManager"/>
 
      <!-- TODO: Actions -->

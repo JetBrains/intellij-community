@@ -19,12 +19,12 @@
  */
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.updateSettings.impl.CheckForUpdateAction;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -73,8 +73,8 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
       root.add(child);
     }
 
-    root.add(buildRootGroup(placeholderIcon, "Configure", IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE));
-    root.add(buildRootGroup(placeholderIcon, "Docs and How-Tos", IdeActions.GROUP_WELCOME_SCREEN_DOC));
+    root.add(buildRootGroup(AllIcons.General.Configure, "Configure", IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE));
+    root.add(buildRootGroup(AllIcons.General.ReadHelp, "Docs and How-Tos", IdeActions.GROUP_WELCOME_SCREEN_DOC));
 
     return new WelcomePane(root);
   }
@@ -125,8 +125,8 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
 
   private JPanel createHeaderPanel() {
     JPanel header = new JPanel(new BorderLayout());
-    JLabel welcome = new JLabel("Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName(), IconLoader.getIcon("/idea_logo_welcome.png"), SwingConstants.LEFT);
-    welcome.setBorder(new EmptyBorder(15, 15, 15, 15));
+    JLabel welcome = new JLabel("Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName(), AllIcons.General.Logo_welcomeScreen, SwingConstants.LEFT);
+    welcome.setBorder(new EmptyBorder(10, 15, 10, 15));
     welcome.setFont(welcome.getFont().deriveFont((float) 32));
     welcome.setIconTextGap(30);
     welcome.setForeground(WelcomeScreenColors.WELCOME_HEADER_FOREGROUND);
