@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
@@ -40,7 +41,7 @@ public class PlainModuleTemplatesFactory extends ProjectTemplatesFactory {
   @Override
   public String[] getGroups() {
     List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
-    List<String> groups = ContainerUtil.map(builders, new Function<ModuleBuilder, String>() {
+    Set<String> groups = ContainerUtil.map2Set(builders, new Function<ModuleBuilder, String>() {
       @Override
       public String fun(ModuleBuilder builder) {
         return builder.getGroupName();

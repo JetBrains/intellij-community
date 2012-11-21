@@ -16,10 +16,15 @@
 
 package org.jetbrains.android.sdk;
 
+import com.android.SdkConstants;
 import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.DdmPreferences;
 import com.android.ddmlib.Log;
-import com.android.sdklib.*;
+import com.android.sdklib.AndroidVersion;
+import com.android.sdklib.IAndroidTarget;
+import com.android.sdklib.ISystemImage;
+import com.android.sdklib.SdkManager;
+import com.android.utils.ILogger;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -140,7 +145,7 @@ public class AndroidSdkData {
   }
 
   @Nullable
-  public static AndroidSdkData parse(@NotNull String path, @NotNull ISdkLog log) {
+  public static AndroidSdkData parse(@NotNull String path, @NotNull ILogger log) {
     final SdkManager manager = AndroidCommonUtils.createSdkManager(path, log);
     return manager != null ? new AndroidSdkData(manager, path) : null;
   }

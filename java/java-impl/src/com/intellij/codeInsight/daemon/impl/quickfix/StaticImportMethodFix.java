@@ -125,9 +125,22 @@ public class StaticImportMethodFix implements IntentionAction {
         final JavaResolveResult resolveResult = ((PsiCallExpression)pParent).resolveMethodGenerics();
         final PsiElement psiElement = resolveResult.getElement();
         if (psiElement instanceof PsiMethod) {
-          final PsiParameter[] parameters = ((PsiMethod)psiElement).getParameterList().getParameters();
+          final PsiMethod psiMethod = (PsiMethod)psiElement;
+          final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
           final int idx = ArrayUtilRt.find(((PsiExpressionList)parent).getExpressions(), PsiResolveHelperImpl.skipParenthesizedExprUp(methodCall));
-          return idx > -1 ? resolveResult.getSubstitutor().substitute(parameters[idx].getType()) : null;
+          if (idx > -1) {
+            PsiType parameterType = parameters[Math.min(idx, parameters.length - 1)].getType();
+            if (idx >= parameters.length - 1) {
+              final PsiParameter lastParameter = parameters[parameters.length - 1];
+              if (lastParameter.isVarArgs()) {
+                parameterType = ((PsiEllipsisType)lastParameter.getType()).getComponentType();
+              }
+            }
+            return resolveResult.getSubstitutor().substitute(parameterType);
+          }
+          else {
+            return null;
+          }
         }
       }
     }

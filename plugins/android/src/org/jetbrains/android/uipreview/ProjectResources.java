@@ -6,6 +6,7 @@ import com.android.ide.common.resources.IntArrayWrapper;
 import com.android.ide.common.resources.ResourceItem;
 import com.android.ide.common.resources.ResourceRepository;
 import com.android.ide.common.resources.configuration.FolderConfiguration;
+import com.android.io.IAbstractFolder;
 import com.android.resources.ResourceType;
 import com.android.util.Pair;
 import com.intellij.util.containers.HashMap;
@@ -38,8 +39,8 @@ public class ProjectResources extends ResourceRepository {
 
   private final List<ProjectResources> myLibResources;
 
-  public ProjectResources(@NotNull List<ProjectResources> libResources) {
-    super(false);
+  public ProjectResources(@NotNull IAbstractFolder resFolder, @NotNull List<ProjectResources> libResources) {
+    super(resFolder, false);
     myLibResources = libResources;
   }
 

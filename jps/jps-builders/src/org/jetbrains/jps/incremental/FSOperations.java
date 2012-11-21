@@ -19,6 +19,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
@@ -54,11 +55,10 @@ public class FSOperations {
     }
   }
 
-  public static void markDirty(CompileContext context, final ModuleChunk chunk) throws IOException {
+  public static void markDirty(CompileContext context, final ModuleChunk chunk, @Nullable FileFilter filter) throws IOException {
     final ProjectDescriptor pd = context.getProjectDescriptor();
-    pd.fsState.clearContextRoundData(context);
     for (ModuleBuildTarget target : chunk.getTargets()) {
-      markDirtyFiles(context, target, pd.timestamps.getStorage(), true, null);
+      markDirtyFiles(context, target, pd.timestamps.getStorage(), true, null, filter);
     }
   }
 
@@ -95,7 +95,7 @@ public class FSOperations {
 
     final Timestamps timestamps = context.getProjectDescriptor().timestamps.getStorage();
     for (ModuleBuildTarget target : dirtyTargets) {
-      markDirtyFiles(context, target, timestamps, true, null);
+      markDirtyFiles(context, target, timestamps, true, null, null);
     }
 
     if (context.isMake()) {
@@ -120,15 +120,22 @@ public class FSOperations {
     context.getProjectDescriptor().fsState.processFilesToRecompile(context, target, processor);
   }
 
-  static void markDirtyFiles(CompileContext context, BuildTarget<?> target, Timestamps timestamps, boolean forceMarkDirty, @Nullable THashSet<File> currentFiles) throws IOException {
+  static void markDirtyFiles(CompileContext context,
+                             BuildTarget<?> target,
+                             Timestamps timestamps,
+                             boolean forceMarkDirty,
+                             @Nullable THashSet<File> currentFiles,
+                             @Nullable FileFilter filter) throws IOException {
     for (BuildRootDescriptor rd : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context)) {
       if (!rd.getRootFile().exists() ||
           //temp roots are managed by compilers themselves
           (rd instanceof JavaSourceRootDescriptor && ((JavaSourceRootDescriptor)rd).isTemp)) {
         continue;
       }
-      context.getProjectDescriptor().fsState.clearRecompile(rd);
-      traverseRecursively(context, rd, rd.getRootFile(), timestamps, forceMarkDirty, currentFiles);
+      if (filter == null) {
+        context.getProjectDescriptor().fsState.clearRecompile(rd);
+      }
+      traverseRecursively(context, rd, rd.getRootFile(), timestamps, forceMarkDirty, currentFiles, filter);
     }
   }
 
@@ -137,7 +144,7 @@ public class FSOperations {
                                           final File file,
                                           @NotNull final Timestamps tsStorage,
                                           final boolean forceDirty,
-                                          @Nullable Set<File> currentFiles) throws IOException {
+                                          @Nullable Set<File> currentFiles, @Nullable FileFilter filter) throws IOException {
     if (context.getProjectDescriptor().getIgnoredFileIndex().isIgnored(file.getName())) {
       return;
     }
@@ -145,28 +152,32 @@ public class FSOperations {
     if (children != null) { // is directory
       if (children.length > 0 && !rd.getExcludedRoots().contains(file)) {
         for (File child : children) {
-          traverseRecursively(context, rd, child, tsStorage, forceDirty, currentFiles);
+          traverseRecursively(context, rd, child, tsStorage, forceDirty, currentFiles, filter);
         }
       }
     }
     else { // is file
-      boolean markDirty = forceDirty;
-      if (!markDirty) {
-        markDirty = tsStorage.getStamp(file, rd.getTarget()) != FileSystemUtil.lastModified(file);
-      }
-      if (markDirty) {
-        // if it is full project rebuild, all storages are already completely cleared;
-        // so passing null because there is no need to access the storage to clear non-existing data
-        final Timestamps marker = context.isProjectRebuild() ? null : tsStorage;
-        context.getProjectDescriptor().fsState.markDirty(context, file, rd, marker, false);
-      }
-      if (currentFiles != null) {
-        currentFiles.add(file);
+      if (filter == null || filter.accept(file)) {
+        boolean markDirty = forceDirty;
+        if (!markDirty) {
+          markDirty = tsStorage.getStamp(file, rd.getTarget()) != FileSystemUtil.lastModified(file);
+        }
+        if (markDirty) {
+          // if it is full project rebuild, all storages are already completely cleared;
+          // so passing null because there is no need to access the storage to clear non-existing data
+          final Timestamps marker = context.isProjectRebuild() ? null : tsStorage;
+          context.getProjectDescriptor().fsState.markDirty(context, file, rd, marker, false);
+        }
+        if (currentFiles != null) {
+          currentFiles.add(file);
+        }
       }
     }
   }
 
   public static void pruneEmptyDirs(CompileContext context, @Nullable final Set<File> dirsToDelete) {
+    if (dirsToDelete == null || dirsToDelete.isEmpty()) return;
+
     Set<File> doNotDelete = ALL_OUTPUTS_KEY.get(context);
     if (doNotDelete == null) {
       doNotDelete = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
@@ -178,16 +189,13 @@ public class FSOperations {
 
     Set<File> additionalDirs = null;
     Set<File> toDelete = dirsToDelete;
-    if (toDelete != null) {
-      toDelete.removeAll(doNotDelete);
-    }
     while (toDelete != null) {
       for (File file : toDelete) {
         // important: do not force deletion if the directory is not empty!
-        final boolean deleted = file.delete();
+        final boolean deleted = !doNotDelete.contains(file) && file.delete();
         if (deleted) {
           final File parentFile = file.getParentFile();
-          if (parentFile != null && !doNotDelete.contains(parentFile)) {
+          if (parentFile != null) {
             if (additionalDirs == null) {
               additionalDirs = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
             }

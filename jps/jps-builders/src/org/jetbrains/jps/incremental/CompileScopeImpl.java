@@ -1,5 +1,8 @@
 package org.jetbrains.jps.incremental;
 
+import com.intellij.openapi.util.io.FileUtil;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
@@ -9,6 +12,7 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -20,6 +24,7 @@ public class CompileScopeImpl extends CompileScope {
   private final Collection<? extends BuildTargetType<?>> myTypes;
   private final Collection<BuildTarget<?>> myTargets;
   private final Map<BuildTarget<?>, Set<File>> myFiles;
+  private final Map<BuildTarget<?>, Set<File>> myAppendedFiles = Collections.synchronizedMap(new THashMap<BuildTarget<?>, Set<File>>());
 
   public CompileScopeImpl(boolean forcedCompilation, Collection<? extends BuildTargetType<?>> types, Collection<BuildTarget<?>> targets,
                           Map<BuildTarget<?>, Set<File>> files) {
@@ -41,14 +46,32 @@ public class CompileScopeImpl extends CompileScope {
 
   @Override
   public boolean isAffected(BuildTarget<?> target, @NotNull File file) {
-    if (myFiles.isEmpty()) {//optimization
+    if (myFiles.isEmpty() && myAppendedFiles.isEmpty()) {//optimization
       return true;
     }
     if (myTypes.contains(target.getTargetType()) || myTargets.contains(target) || isAffectedByAssociatedModule(target)) {
       return true;
     }
-    Set<File> files = myFiles.get(target);
-    return files != null && files.contains(file);
+    final Set<File> files = myFiles.get(target);
+    if (files != null && files.contains(file)) {
+      return true;
+    }
+    synchronized (myAppendedFiles) {
+      final Set<File> appended = myAppendedFiles.get(target);
+      return appended != null && appended.contains(file);
+    }
+  }
+
+  @Override
+  public void expandScope(BuildTarget<?> target, @NotNull File file) {
+    synchronized (myAppendedFiles) {
+      Set<File> files = myAppendedFiles.get(target);
+      if (files == null) {
+        files = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+        myAppendedFiles.put(target, files);
+      }
+      files.add(file);
+    }
   }
 
   private boolean isAffectedByAssociatedModule(BuildTarget<?> target) {

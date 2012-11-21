@@ -19,6 +19,7 @@ import com.android.ide.common.rendering.api.RenderSession;
 import com.android.ide.common.rendering.api.ViewInfo;
 import com.android.ide.common.resources.configuration.*;
 import com.android.sdklib.IAndroidTarget;
+import com.android.sdklib.devices.State;
 import com.intellij.android.designer.actions.ProfileAction;
 import com.intellij.android.designer.componentTree.AndroidTreeDecorator;
 import com.intellij.android.designer.inspection.ErrorAnalyzer;
@@ -49,6 +50,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -59,6 +61,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.android.actions.RunAndroidAvdManagerAction;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.refactoring.AndroidExtractAsIncludeAction;
@@ -294,13 +297,13 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
           AndroidFacet facet = AndroidFacet.getInstance(getModule());
           ProfileManager manager = myProfileAction.getProfileManager();
 
-          LayoutDeviceConfiguration deviceConfiguration = manager.getSelectedDeviceConfiguration();
+          State deviceConfiguration = manager.getSelectedDeviceConfiguration();
           if (deviceConfiguration == null) {
             throw new DeviceIsNotSpecifiedException();
           }
 
           myLastRenderedConfiguration = new FolderConfiguration();
-          myLastRenderedConfiguration.set(deviceConfiguration.getConfiguration());
+          myLastRenderedConfiguration.set(DeviceConfigHelper.getFolderConfig(deviceConfiguration));
           myLastRenderedConfiguration.setUiModeQualifier(new UiModeQualifier(manager.getSelectedDockMode()));
           myLastRenderedConfiguration.setNightModeQualifier(new NightModeQualifier(manager.getSelectedNightMode()));
 
@@ -311,8 +314,8 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
           myLastRenderedConfiguration.setLanguageQualifier(new LanguageQualifier(locale.getLanguage()));
           myLastRenderedConfiguration.setRegionQualifier(new RegionQualifier(locale.getRegion()));
 
-          float xdpi = deviceConfiguration.getDevice().getXDpi();
-          float ydpi = deviceConfiguration.getDevice().getYDpi();
+          double xdpi = deviceConfiguration.getHardware().getScreen().getXdpi();
+          double ydpi = deviceConfiguration.getHardware().getScreen().getYdpi();
 
           final boolean updatePalette = !Comparing.equal(myProfileAction.getProfileManager().getSelectedTarget(), myLastTarget);
           myLastTarget = manager.getSelectedTarget();
@@ -505,10 +508,10 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       info.myShowLog = false;
       info.myShowStack = false;
 
-      info.myMessages.add(new FixableMessageInfo(true, "Device is not specified, click ", "here", " to configure", new Runnable() {
+      info.myMessages.add(new FixableMessageInfo(true, "Device is not specified, click ", "here", " to launch AVD Manager", new Runnable() {
         @Override
         public void run() {
-          myProfileAction.getProfileManager().showCustomDevicesDialog();
+          new RunAndroidAvdManagerAction().doAction(getProject());
         }
       }, null));
     }
@@ -621,6 +624,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
   @Override
   public void dispose() {
+    Disposer.dispose(myProfileAction);
     myPSIChangeListener.dispose();
     super.dispose();
     disposeRenderer();

@@ -15,12 +15,11 @@
  */
 package com.intellij.android.designer.profile;
 
-import com.android.ide.common.resources.ResourceResolver;
-import com.android.ide.common.resources.configuration.ScreenSizeQualifier;
+import com.android.SdkConstants;
 import com.android.resources.ResourceType;
 import com.android.resources.ScreenSize;
 import com.android.sdklib.IAndroidTarget;
-import com.android.sdklib.SdkConstants;
+import com.android.sdklib.devices.State;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.hash.HashSet;
@@ -33,7 +32,6 @@ import org.jetbrains.android.dom.resources.Style;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidTargetData;
-import org.jetbrains.android.uipreview.LayoutDeviceConfiguration;
 import org.jetbrains.android.uipreview.ThemeData;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
@@ -158,12 +156,9 @@ public class ThemeManager {
       AndroidPlatform platform = AndroidPlatform.getInstance(myProfile.getModule());
       IAndroidTarget target = platform != null ? platform.getTarget() : null;
       IAndroidTarget renderingTarget = myProfile.getSelectedTarget();
-      LayoutDeviceConfiguration configuration = myProfile.getSelectedDeviceConfiguration();
+      State configuration = myProfile.getSelectedDeviceConfiguration();
 
-      ScreenSizeQualifier screenSizeQualifier = configuration != null
-                                                ? configuration.getConfiguration().getScreenSizeQualifier()
-                                                : null;
-      ScreenSize screenSize = screenSizeQualifier != null ? screenSizeQualifier.getValue() : null;
+      ScreenSize screenSize = configuration.getHardware().getScreen().getSize();
       preferredTheme = getThemeByRef(getDefaultTheme(target, renderingTarget, screenSize));
     }
 
@@ -297,12 +292,12 @@ public class ThemeManager {
 
   @NotNull
   private static ThemeData getThemeByRef(@NotNull String themeRef) {
-    boolean isProjectTheme = !themeRef.startsWith(ResourceResolver.PREFIX_ANDROID_STYLE);
-    if (themeRef.startsWith(ResourceResolver.PREFIX_STYLE)) {
-      themeRef = themeRef.substring(ResourceResolver.PREFIX_STYLE.length());
+    boolean isProjectTheme = !themeRef.startsWith(SdkConstants.ANDROID_STYLE_RESOURCE_PREFIX);
+    if (themeRef.startsWith(SdkConstants.STYLE_RESOURCE_PREFIX)) {
+      themeRef = themeRef.substring(SdkConstants.STYLE_RESOURCE_PREFIX.length());
     }
-    else if (themeRef.startsWith(ResourceResolver.PREFIX_ANDROID_STYLE)) {
-      themeRef = themeRef.substring(ResourceResolver.PREFIX_ANDROID_STYLE.length());
+    else if (themeRef.startsWith(SdkConstants.ANDROID_STYLE_RESOURCE_PREFIX)) {
+      themeRef = themeRef.substring(SdkConstants.ANDROID_STYLE_RESOURCE_PREFIX.length());
     }
     return new ThemeData(themeRef, isProjectTheme);
   }
@@ -318,7 +313,7 @@ public class ThemeManager {
                                   : targetApiLevel;
 
     return targetApiLevel >= 11 && renderingTargetApiLevel >= 11 && screenSize == ScreenSize.XLARGE
-           ? ResourceResolver.PREFIX_ANDROID_STYLE + "Theme.Holo"
-           : ResourceResolver.PREFIX_ANDROID_STYLE + "Theme";
+           ? SdkConstants.ANDROID_STYLE_RESOURCE_PREFIX + "Theme.Holo"
+           : SdkConstants.ANDROID_STYLE_RESOURCE_PREFIX + "Theme";
   }
 }

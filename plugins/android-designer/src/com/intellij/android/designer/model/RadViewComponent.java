@@ -16,7 +16,7 @@
 package com.intellij.android.designer.model;
 
 import com.android.ide.common.rendering.api.ViewInfo;
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.intellij.designer.model.*;
 import com.intellij.designer.propertyTable.PropertyTable;
 import com.intellij.openapi.application.ApplicationManager;

@@ -15,7 +15,7 @@
  */
 package org.jetbrains.android.inspections;
 
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;

@@ -16,13 +16,14 @@
 
 package org.jetbrains.android.sdk;
 
+import com.android.SdkConstants;
+import com.android.annotations.NonNull;
 import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.Client;
 import com.android.ddmlib.ClientData;
 import com.android.ddmlib.IDevice;
 import com.android.sdklib.IAndroidTarget;
-import com.android.sdklib.ISdkLog;
-import com.android.sdklib.SdkConstants;
+import com.android.utils.ILogger;
 import com.intellij.CommonBundle;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.OSProcessManager;
@@ -410,16 +411,27 @@ public class AndroidSdkUtils {
   }
 
   @NotNull
-  public static ISdkLog getSdkLog(@NotNull final Object o) {
+  public static ILogger getSdkLog(@NotNull final Object o) {
     if (!(o instanceof Component || o instanceof Project)) {
       throw new IllegalArgumentException();
     }
 
-    return new ISdkLog() {
+    return new ILogger() {
       public void warning(String warningFormat, Object... args) {
         if (warningFormat != null) {
           LOG.warn(String.format(warningFormat, args));
         }
+      }
+
+      @Override
+      public void info(@NonNull String msgFormat, Object... args) {
+        if (msgFormat != null) {
+          LOG.debug(String.format(msgFormat, args));
+        }
+      }
+
+      @Override
+      public void verbose(@NonNull String msgFormat, Object... args) {
       }
 
       public void error(Throwable t, String errorFormat, Object... args) {
@@ -435,12 +447,6 @@ public class AndroidSdkUtils {
           else {
             Messages.showErrorDialog((Component)o, message, CommonBundle.getErrorTitle());
           }
-        }
-      }
-
-      public void printf(String msgFormat, Object... args) {
-        if (msgFormat != null) {
-          LOG.info(String.format(msgFormat, args));
         }
       }
     };

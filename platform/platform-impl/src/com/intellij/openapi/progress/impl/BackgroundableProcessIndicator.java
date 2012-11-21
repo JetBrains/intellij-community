@@ -66,7 +66,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   }
 
   public BackgroundableProcessIndicator(@Nullable final Project project, @NotNull TaskInfo info, @NotNull PerformInBackgroundOption option) {
-    super(info.isCancellable(), true, project, info.getCancelText());
+    super(info.isCancellable(), project != null && !project.isDefault(), project, info.getCancelText());
     if (project != null) {
       final ProjectManagerAdapter myListener = new ProjectManagerAdapter() {
         public void projectClosing(Project closingProject) {

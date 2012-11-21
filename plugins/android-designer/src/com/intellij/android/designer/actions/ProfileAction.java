@@ -21,10 +21,12 @@ import com.intellij.android.designer.profile.ProfileDialog;
 import com.intellij.android.designer.profile.ProfileList;
 import com.intellij.android.designer.profile.ProfileManager;
 import com.intellij.designer.actions.AbstractComboBoxAction;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -33,7 +35,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class ProfileAction {
+public class ProfileAction implements Disposable {
   private static final Profile EDIT_PROFILE = new Profile();
 
   static {
@@ -59,6 +61,7 @@ public class ProfileAction {
         myVersion = myProfileList.getVersion();
       }
     });
+    Disposer.register(this, myProfileManager);
 
     myProfileAction = new AbstractComboBoxAction<Profile>() {
       @Override
@@ -169,5 +172,9 @@ public class ProfileAction {
 
   public int getVersion() {
     return myVersion;
+  }
+
+  @Override
+  public void dispose() {
   }
 }

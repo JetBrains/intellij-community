@@ -17,8 +17,9 @@ package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.LinkedList;
+import java.util.ArrayDeque;
 import java.util.Queue;
 
 @SomeQueue
@@ -32,7 +33,7 @@ public abstract class AbstractTaskQueue<T> {
 
   public AbstractTaskQueue() {
     myLock = new Object();
-    myQueue = new LinkedList<T>();
+    myQueue = new ArrayDeque<T>();
     myActive = false;
     myQueueWorker = new MyWorker();
   }
@@ -44,26 +45,22 @@ public abstract class AbstractTaskQueue<T> {
   protected abstract void runMe();
   protected abstract void runStuff(T stuff);
 
-  public void run(final T stuff) {
+  public void run(@NotNull final T stuff) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       runStuff(stuff);
       return;
     }
-    boolean impulseGiven = false;
     synchronized (myLock) {
       try {
         myQueue.add(stuff);
         if (! myActive) {
           runMe();
-          impulseGiven = true;
         }
       } catch (Throwable t) {
         LOG.info(t);
         throw t instanceof RuntimeException ? ((RuntimeException) t) : new RuntimeException(t);
       } finally {
-        if ((! myActive) && impulseGiven) {
-          myActive = true;
-        }
+        myActive = true;
       }
     }
   }
@@ -76,8 +73,10 @@ public abstract class AbstractTaskQueue<T> {
           synchronized (myLock) {
             stuff = myQueue.poll();
           }
-          // each task is executed only once, once it has been taken from the queue..
-          runStuff(stuff);
+          if (stuff != null) {
+            // each task is executed only once, once it has been taken from the queue..
+            runStuff(stuff);
+          }
         } catch (Throwable t) {
           LOG.info(t);
         } finally {

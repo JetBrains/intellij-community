@@ -783,16 +783,20 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     if ("selectNextRow".equals(action)) {
       if (ensureSelectionExists()) {
         ListScrollingUtil.moveDown(myList, e.getModifiersEx());
+        e.consume();
       }
     }
     else if ("selectPreviousRow".equals(action)) {
       ListScrollingUtil.moveUp(myList, e.getModifiersEx());
+      e.consume();
     }
     else if ("scrollDown".equals(action)) {
       ListScrollingUtil.movePageDown(myList);
+      e.consume();
     }
     else if ("scrollUp".equals(action)) {
       ListScrollingUtil.movePageUp(myList);
+      e.consume();
     }
     else if (getSelectedFileFromCompletionPopup() != null && (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_TAB) && e.getModifiers() == 0) {
       hideCurrentPopup();

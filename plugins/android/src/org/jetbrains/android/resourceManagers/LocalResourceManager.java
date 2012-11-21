@@ -16,7 +16,7 @@
 
 package org.jetbrains.android.resourceManagers;
 
-import com.android.AndroidConstants;
+import com.android.SdkConstants;
 import com.android.resources.ResourceType;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -235,9 +235,9 @@ public class LocalResourceManager extends ResourceManager {
                                CommonBundle.getErrorTitle());
       return null;
     }
-    final VirtualFile valuesDir = findOrCreateChildDir(dir, AndroidConstants.FD_RES_VALUES);
+    final VirtualFile valuesDir = findOrCreateChildDir(dir, SdkConstants.FD_RES_VALUES);
     if (valuesDir == null) {
-      String errorMessage = AndroidBundle.message("android.directory.cannot.be.found.error", AndroidConstants.FD_RES_VALUES);
+      String errorMessage = AndroidBundle.message("android.directory.cannot.be.found.error", SdkConstants.FD_RES_VALUES);
       Messages.showErrorDialog(myModule.getProject(), errorMessage, CommonBundle.getErrorTitle());
       return null;
     }

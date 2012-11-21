@@ -94,6 +94,7 @@ public class ProjectPaths {
    * @param chunk
    * @return mapping "sourceRoot" -> "package prefix" Package prefix uses slashes instead of dots and ends with trailing slash
    */
+  @NotNull
   public static Map<File, String> getSourceRootsWithDependents(ModuleChunk chunk) {
     final boolean includeTests = chunk.containsTests();
     final Map<File, String> result = new LinkedHashMap<File, String>();

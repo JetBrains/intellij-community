@@ -18,7 +18,7 @@ package com.intellij.android.designer.model;
 import com.android.ide.common.rendering.api.RenderSession;
 import com.android.ide.common.rendering.api.ViewInfo;
 import com.android.ide.common.resources.configuration.FolderConfiguration;
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.intellij.android.designer.designSurface.AndroidPasteFactory;
 import com.intellij.android.designer.designSurface.RootView;
 import com.intellij.designer.model.MetaManager;

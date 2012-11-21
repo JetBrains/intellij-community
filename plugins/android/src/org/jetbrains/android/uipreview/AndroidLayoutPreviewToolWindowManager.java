@@ -18,6 +18,7 @@ package org.jetbrains.android.uipreview;
 import com.android.ide.common.rendering.api.RenderParams;
 import com.android.ide.common.resources.configuration.*;
 import com.android.sdklib.IAndroidTarget;
+import com.android.sdklib.devices.State;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -66,7 +67,10 @@ import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
 import org.jetbrains.android.sdk.AndroidSdkType;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
-import org.jetbrains.android.util.*;
+import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidResourceUtil;
+import org.jetbrains.android.util.AndroidSdkNotConfiguredException;
+import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -368,13 +372,13 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
       if (AndroidPlatform.getInstance(facet.getModule()) == null) {
         throw new AndroidSdkNotConfiguredException();
       }
+      final State deviceConfiguration = myToolWindowForm.getSelectedDeviceConfiguration();
 
-      final LayoutDeviceConfiguration deviceConfiguration = myToolWindowForm.getSelectedDeviceConfiguration();
       if (deviceConfiguration == null) {
         throw new RenderingException("Device is not specified");
       }
       final FolderConfiguration config = new FolderConfiguration();
-      config.set(deviceConfiguration.getConfiguration());
+      config.set(DeviceConfigHelper.getFolderConfig(deviceConfiguration));
       config.setUiModeQualifier(new UiModeQualifier(myToolWindowForm.getSelectedDockMode()));
       config.setNightModeQualifier(new NightModeQualifier(myToolWindowForm.getSelectedNightMode()));
 
@@ -389,8 +393,8 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
       final IAndroidTarget target = myToolWindowForm.getSelectedTarget();
       final ThemeData theme = myToolWindowForm.getSelectedTheme();
 
-      final float xdpi = deviceConfiguration.getDevice().getXDpi();
-      final float ydpi = deviceConfiguration.getDevice().getYDpi();
+      final double xdpi = deviceConfiguration.getHardware().getScreen().getXdpi();
+      final double ydpi = deviceConfiguration.getHardware().getScreen().getYdpi();
 
       final String layoutXmlText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
         @Override

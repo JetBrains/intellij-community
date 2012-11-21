@@ -1,6 +1,6 @@
 package org.jetbrains.android.dom;
 
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import org.jetbrains.android.inspections.AndroidElementNotAllowedInspection;
 import org.jetbrains.android.inspections.AndroidUnknownAttributeInspection;
 

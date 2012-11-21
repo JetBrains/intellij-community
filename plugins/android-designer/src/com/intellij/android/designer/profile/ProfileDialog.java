@@ -19,6 +19,7 @@ import com.intellij.designer.ModuleProvider;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnActionButton;
@@ -114,7 +115,7 @@ public class ProfileDialog extends DialogWrapper {
     decorator.setMoveDownAction(null);
 
     myProfileManager = new ProfileManager(moduleProvider, EmptyRunnable.INSTANCE, EmptyRunnable.INSTANCE);
-
+    Disposer.register(myDisposable, myProfileManager);
 
     myContentPanel = new JPanel(new GridBagLayout());
     myContentPanel.setPreferredSize(new Dimension(600, 500));

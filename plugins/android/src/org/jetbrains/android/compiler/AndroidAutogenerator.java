@@ -1,6 +1,7 @@
 package org.jetbrains.android.compiler;
 
-import com.android.AndroidConstants;
+
+import com.android.SdkConstants;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.internal.build.BuildConfigGenerator;
 import com.intellij.compiler.impl.CompilerUtil;
@@ -553,7 +554,7 @@ public class AndroidAutogenerator {
               return null;
             }
 
-            final String rawDirPath = resourceDirPath + '/' + AndroidConstants.FD_RES_RAW;
+            final String rawDirPath = resourceDirPath + '/' + SdkConstants.FD_RES_RAW;
 
             return new RenderscriptAutogenerationItem(sdkLocation, target, sourceRootPath, rawDirPath);
           }

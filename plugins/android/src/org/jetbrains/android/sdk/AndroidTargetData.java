@@ -1,6 +1,6 @@
 package org.jetbrains.android.sdk;
 
-import com.android.AndroidConstants;
+import com.android.SdkConstants;
 import com.android.resources.ResourceType;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -104,7 +104,7 @@ public class AndroidTargetData {
   @Nullable
   private Map<String, Set<String>> parsePublicResCache() {
     final String resDirPath = myTarget.getPath(IAndroidTarget.RESOURCES);
-    final String publicXmlPath = resDirPath + '/' + AndroidConstants.FD_RES_VALUES + "/public.xml";
+    final String publicXmlPath = resDirPath + '/' + SdkConstants.FD_RES_VALUES + "/public.xml";
     final VirtualFile publicXml = LocalFileSystem.getInstance().findFileByPath(
       FileUtil.toSystemIndependentName(publicXmlPath));
 
