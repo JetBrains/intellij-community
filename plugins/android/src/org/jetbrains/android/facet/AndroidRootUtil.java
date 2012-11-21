@@ -372,8 +372,7 @@ public class AndroidRootUtil {
 
   @Nullable
   public static String getBuildconfigGenSourceRootPath(@NotNull AndroidFacet facet) {
-    // todo: return correct path for mavenized module when it'll be supported
-    return getDefaultGenSourceRoot(facet);
+    return getAptGenSourceRootPath(facet);
   }
 
   @Nullable
