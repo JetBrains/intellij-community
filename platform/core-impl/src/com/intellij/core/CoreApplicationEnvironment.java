@@ -266,7 +266,7 @@ public class CoreApplicationEnvironment {
     container.registerComponentInstance(key, implementation);
   }
 
-  protected <T> void addExplicitExtension(final LanguageExtension<T> instance, final Language language, final T object) {
+  public <T> void addExplicitExtension(final LanguageExtension<T> instance, final Language language, final T object) {
     instance.addExplicitExtension(language, object);
     Disposer.register(myParentDisposable, new Disposable() {
       @Override
@@ -276,7 +276,7 @@ public class CoreApplicationEnvironment {
     });
   }
 
-  protected <T> void addExplicitExtension(final FileTypeExtension<T> instance, final FileType fileType, final T object) {
+  public <T> void addExplicitExtension(final FileTypeExtension<T> instance, final FileType fileType, final T object) {
     instance.addExplicitExtension(fileType, object);
     Disposer.register(myParentDisposable, new Disposable() {
       @Override
@@ -286,7 +286,7 @@ public class CoreApplicationEnvironment {
     });
   }
 
-  protected <T> void addExtension(ExtensionPointName<T> name, final T extension) {
+  public <T> void addExtension(ExtensionPointName<T> name, final T extension) {
     final ExtensionPoint<T> extensionPoint = Extensions.getRootArea().getExtensionPoint(name);
     extensionPoint.registerExtension(extension);
     Disposer.register(myParentDisposable, new Disposable() {
