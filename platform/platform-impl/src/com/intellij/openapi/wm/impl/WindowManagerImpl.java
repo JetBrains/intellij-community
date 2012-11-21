@@ -479,6 +479,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
       Container eachParent = getMostRecentFocusedWindow();
       while(eachParent != null) {
         if (eachParent instanceof IdeFrame) {
+
           frame = (IdeFrame)eachParent;
           break;
         }
@@ -489,8 +490,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
         frame = tryToFindTheOnlyFrame();
       }
     }
-
-    LOG.assertTrue(frame != null, "Project: " + project);
 
     return frame;
   }
