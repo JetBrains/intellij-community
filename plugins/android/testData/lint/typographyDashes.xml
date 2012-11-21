@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <warning><string name="s">10-2<caret>0</string></warning>
+    <string name="s"><warning>10-2<caret>0</warning></string>
 </resources>
