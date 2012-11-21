@@ -56,7 +56,7 @@ public class NotNullInstrumentingBuilder extends ModuleLevelBuilder{
 
     final ProjectDescriptor pd = context.getProjectDescriptor();
     final boolean addNotNullAssertions = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(pd.getProject()).isAddNotNullAssertions();
-    if (addNotNullAssertions) {
+    if (addNotNullAssertions && !outputConsumer.getCompiledClasses().isEmpty()) {
       final ProjectPaths paths = context.getProjectPaths();
       final Collection<File> classpath = paths.getCompilationClasspath(chunk, false);
       final Collection<File> platformCp = paths.getPlatformCompilationClasspath(chunk, false);
