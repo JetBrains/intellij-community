@@ -17,10 +17,12 @@ package org.jetbrains.jps.uiDesigner.compiler;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.compiler.instrumentation.InstrumenterClassWriter;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.uiDesigner.compiler.*;
 import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import gnu.trove.THashSet;
@@ -266,6 +268,8 @@ public class FormsInstrumenter extends FormsBuilder {
     for (File file : cp) {
       urls.add(file.toURI().toURL());
     }
+    urls.add(getResourcePath(GridConstraints.class).toURI().toURL()); // forms_rt.jar
+
     for (File file : sourcePath.keySet()) { // sourcepath for loading forms resources
       urls.add(file.toURI().toURL());
     }
@@ -279,6 +283,10 @@ public class FormsInstrumenter extends FormsBuilder {
         return null;
       }
     };
+  }
+
+  private static File getResourcePath(Class aClass) {
+    return new File(PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class"));
   }
 
   private static class MyNestedFormLoader implements NestedFormLoader {
