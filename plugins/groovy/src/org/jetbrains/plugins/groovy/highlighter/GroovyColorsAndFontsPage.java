@@ -63,7 +63,7 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
       new AttributesDescriptor("Parentheses", DefaultHighlighter.PARENTHESES),
       new AttributesDescriptor("Operation sign", DefaultHighlighter.OPERATION_SIGN),
       new AttributesDescriptor("Bad character", DefaultHighlighter.BAD_CHARACTER),
-      new AttributesDescriptor("Wrong string literal", DefaultHighlighter.WRONG_STRING),
+      //new AttributesDescriptor("Wrong string literal", DefaultHighlighter.WRONG_STRING),
       new AttributesDescriptor("Unresolved reference access", DefaultHighlighter.UNRESOLVED_ACCESS),
       new AttributesDescriptor("List/map to object conversion", DefaultHighlighter.LITERAL_CONVERSION),
       new AttributesDescriptor("Annotation", DefaultHighlighter.ANNOTATION),
@@ -111,7 +111,7 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
            "//This is a line comment\n" +
            "/* This is a block comment */\n" +
            "  <keyword>static</keyword> <keyword>def</keyword> <method>foo</method>(<keyword>int</keyword> <param>i</param>, <keyword>int</keyword> <reParam>j</reParam>) {\n" +
-           "    <classref>Map</classref> map = [<mapkey>key</mapkey>:1, <mapkey>b</mapkey>:2]\n" +
+           "    <classref>Map</classref> <local>map</local> = [<mapkey>key</mapkey>:1, <mapkey>b</mapkey>:2]\n" +
            "    <reParam>j</reParam>++\n" +
            "    print map.<mapkey>key</mapkey>\n" +
            "    return [<param>i</param>, <instfield>property</instfield>]\n" +
@@ -128,7 +128,7 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
            "<keyword>def</keyword> <local>x</local>=1 + <unresolved>unresolved</unresolved>\n" +
            "<label>label</label>:<keyword>def</keyword> <reLocal>f1</reLocal> = []\n" +
            "<reLocal>f1</reLocal> = [2]\n" +
-           "<classref>File</classref> f=<literal>[</literal>'path'<literal>]</literal>\n" +
+           "<classref>File</classref> <local>f</local>=<literal>[</literal>'path'<literal>]</literal>\n" +
            "print <keyword>new</keyword> <classref>Demo</classref>().<prop>property</prop>\n" +
            "print '<validescape>\\n</validescape> <invalidescape>\\x</invalidescape>'"
 
@@ -146,6 +146,7 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
     map.put("gdoc", DefaultHighlighter.DOC_COMMENT_CONTENT);
     map.put("doctag", DefaultHighlighter.DOC_COMMENT_TAG);
     map.put("unresolved", DefaultHighlighter.UNRESOLVED_ACCESS);
+    //map.put("wrongstring", DefaultHighlighter.WRONG_STRING);
     map.put("classref", DefaultHighlighter.CLASS_REFERENCE);
     map.put("typeparam", DefaultHighlighter.TYPE_PARAMETER);
     map.put("literal", DefaultHighlighter.LITERAL_CONVERSION);
