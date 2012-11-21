@@ -5,6 +5,7 @@ import org.hanuna.gitalk.graph.Edge;
 import org.hanuna.gitalk.graph.GraphModel;
 import org.hanuna.gitalk.graph.Node;
 import org.hanuna.gitalk.graph.NodeRow;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author erokhins
@@ -48,7 +49,7 @@ public class TestUtils {
             s.append(toStr(nodes.get(0)));
         }
         for (int i = 1; i < nodes.size(); i++) {
-            s.append(" ").append(toStr(nodes.get(i)));
+            s.append("\n   ").append(toStr(nodes.get(i)));
         }
         return s.toString();
     }
@@ -64,4 +65,16 @@ public class TestUtils {
         }
         return s.toString();
     }
+
+    @NotNull
+    public static Node getNode(GraphModel graph, int rowIndex) {
+        NodeRow row = graph.getNodeRows().get(rowIndex);
+        for (Node node : row.getNodes()) {
+            if (node.getType() == Node.Type.commitNode) {
+                return node;
+            }
+        }
+        return null;
+    }
+
 }

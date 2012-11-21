@@ -74,11 +74,7 @@ public class GitLogParser {
             builder.append(logData);
             countLines++;
         }
-        if (line == null) {
-            return builder.build(true);
-        } else {
-            return builder.build(false);
-        }
+        return builder.build(false);
     }
 
     public ReadOnlyList<Commit> getFullModel() throws IOException  {
