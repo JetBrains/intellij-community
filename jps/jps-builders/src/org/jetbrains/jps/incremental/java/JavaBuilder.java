@@ -1,12 +1,8 @@
 package org.jetbrains.jps.incremental.java;
 
-import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
-import com.intellij.compiler.instrumentation.InstrumenterClassWriter;
-import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,10 +12,6 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.asm4.ClassReader;
-import org.jetbrains.asm4.ClassVisitor;
-import org.jetbrains.asm4.ClassWriter;
-import org.jetbrains.asm4.Opcodes;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.api.GlobalOptions;
@@ -49,9 +41,7 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 import javax.tools.*;
 import java.io.*;
-import java.net.MalformedURLException;
 import java.net.ServerSocket;
-import java.net.URL;
 import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -195,7 +185,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     final ProjectPaths paths = context.getProjectPaths();
     final ProjectDescriptor pd = context.getProjectDescriptor();
-    final boolean addNotNullAssertions = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(pd.getProject()).isAddNotNullAssertions();
 
     JavaBuilderUtil.ensureModuleHasJdk(chunk.representativeTarget().getModule(), context, BUILDER_NAME);
     final Collection<File> classpath = paths.getCompilationClasspath(chunk, false/*context.isProjectRebuild()*/);
@@ -218,7 +207,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
           }
         }
 
-        final String chunkName = getChunkPresentableName(chunk);
+        final String chunkName = chunk.getName();
         context.processMessage(new ProgressMessage("Compiling java [" + chunkName + "]"));
 
         final int filesCount = files.size();
@@ -239,26 +228,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
             }
           }
           compiledOk = compileJava(context, chunk, files, classpath, platformCp, srcPath, diagnosticSink, outputSink);
-        }
-
-        context.checkCanceled();
-
-        if (diagnosticSink.getErrorCount() == 0 && addNotNullAssertions) {
-          context.checkCanceled();
-          final InstrumentationClassFinder finder = createInstrumentationClassFinder(platformCp, classpath, outputConsumer);
-          try {
-            try {
-              context.processMessage(new ProgressMessage("Adding NotNull assertions [" + chunkName + "]"));
-              final Set<File> problems = instrumentNotNull(context, outputConsumer, finder);
-              outputSink.markError(problems);
-            }
-            finally {
-              context.processMessage(new ProgressMessage("Finished adding NotNull assertions [" + chunkName + "]"));
-            }
-          }
-          finally {
-            finder.releaseResources();
-          }
         }
 
         context.checkCanceled();
@@ -285,24 +254,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return exitCode;
   }
 
-  private static String getChunkPresentableName(ModuleChunk chunk) {
-    final Set<JpsModule> modules = chunk.getModules();
-    if (modules.isEmpty()) {
-      return "<empty>";
-    }
-    if (modules.size() == 1) {
-      return modules.iterator().next().getName();
-    }
-    final StringBuilder buf = new StringBuilder();
-    for (JpsModule module : modules) {
-      if (buf.length() > 0) {
-        buf.append(",");
-      }
-      buf.append(module.getName());
-    }
-    return buf.toString();
-  }
-
   private boolean compileJava(
     final CompileContext context,
     ModuleChunk chunk,
@@ -326,7 +277,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       for (JpsModule module : modules) {
         final ProcessorConfigProfile prof = context.getAnnotationProcessingProfile(module);
         if (prof.isEnabled()) {
-          String message = "Annotation processing is not supported for module cycles. Please ensure that all modules from cycle [" + getChunkPresentableName(chunk) + "] are excluded from annotation processing";
+          String message = "Annotation processing is not supported for module cycles. Please ensure that all modules from cycle [" + chunk.getName() + "] are excluded from annotation processing";
           context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message));
           return true;
         }
@@ -494,31 +445,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return options.MAXIMUM_HEAP_SIZE;
   }
 
-  private static InstrumentationClassFinder createInstrumentationClassFinder(Collection<File> platformCp,
-                                                                             Collection<File> classpath,
-                                                                             final OutputConsumer outputConsumer) throws MalformedURLException {
-    final URL[] platformUrls = new URL[platformCp.size()];
-    int index = 0;
-    for (File file : platformCp) {
-      platformUrls[index++] = file.toURI().toURL();
-    }
-    
-    final List<URL> urls = new ArrayList<URL>(classpath.size());
-    for (File file : classpath) {
-      urls.add(file.toURI().toURL());
-    }
-
-    return new InstrumentationClassFinder(platformUrls, urls.toArray(new URL[urls.size()])) {
-      protected InputStream lookupClassBeforeClasspath(String internalClassName) {
-        final BinaryContent content = outputConsumer.lookupClassBytes(internalClassName.replace("/", "."));
-        if (content != null) {
-          return new ByteArrayInputStream(content.getBuffer(), content.getOffset(), content.getLength());
-        }
-        return null;
-      }
-    };
-  }
-
   private static final Key<List<String>> JAVAC_OPTIONS = Key.create("_javac_options_");
   private static final Key<List<String>> JAVAC_VM_OPTIONS = Key.create("_javac_vm_options_");
 
@@ -544,7 +470,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       final String encoding = config.getPreferredModuleChunkEncoding(chunk);
       if (config.getAllModuleChunkEncodings(chunk).size() > 1) {
         final StringBuilder msgBuilder = new StringBuilder();
-        msgBuilder.append("Multiple encodings set for module chunk ").append(getChunkPresentableName(chunk));
+        msgBuilder.append("Multiple encodings set for module chunk ").append(chunk.getName());
         if (encoding != null) {
           msgBuilder.append("\n\"").append(encoding).append("\" will be used by compiler");
         }
@@ -754,60 +680,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
       map.put(outputDir, roots);
     }
     return map;
-  }
-
-  // todo: probably instrument other NotNull-like annotations defined in project settings?
-  private static Set<File> instrumentNotNull(CompileContext context, OutputConsumer outputConsumer, final InstrumentationClassFinder finder) {
-    final Set<File> problematic = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-    for (final CompiledClass compiledClass : outputConsumer.getCompiledClasses().values()) {
-      final BinaryContent originalContent = compiledClass.getContent();
-      final ClassReader reader = new ClassReader(originalContent.getBuffer(), originalContent.getOffset(), originalContent.getLength());
-      final int version = getClassFileVersion(reader);
-      if (version >= Opcodes.V1_5) {
-        boolean success = false;
-        final ClassWriter writer = new InstrumenterClassWriter(getAsmClassWriterFlags(version), finder);
-        try {
-          final NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer);
-          reader.accept(instrumenter, 0);
-          if (instrumenter.isModification()) {
-            compiledClass.setContent(new BinaryContent(writer.toByteArray()));
-          }
-          success = true;
-        }
-        catch (Throwable e) {
-          final StringBuilder msg = new StringBuilder();
-          msg.append("@NotNull instrumentation failed ");
-          final File sourceFile = compiledClass.getSourceFile();
-          if (sourceFile != null) {
-            msg.append(" for ").append(sourceFile.getName());
-          }
-          msg.append(": ").append(e.getMessage());
-          context.processMessage(
-            new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, msg.toString(), sourceFile != null ? sourceFile.getPath() : null));
-        }
-        finally {
-          if (!success) {
-            problematic.add(compiledClass.getSourceFile());
-          }
-        }
-      }
-    }
-    return problematic;
-  }
-
-
-  private static int getClassFileVersion(ClassReader reader) {
-    final Ref<Integer> result = new Ref<Integer>(0);
-    reader.accept(new ClassVisitor(Opcodes.ASM4) {
-      public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-        result.set(version);
-      }
-    }, 0);
-    return result.get();
-  }
-
-  private static int getAsmClassWriterFlags(int version) {
-    return version >= Opcodes.V1_6 && version != Opcodes.V1_1 ? ClassWriter.COMPUTE_FRAMES : ClassWriter.COMPUTE_MAXS;
   }
 
   private class DiagnosticSink implements DiagnosticOutputConsumer {
