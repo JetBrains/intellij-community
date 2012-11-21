@@ -473,8 +473,9 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
   public IdeFrame findFrameFor(@Nullable final Project project) {
     IdeFrame frame = null;
     if (project != null) {
-      frame =  getFrame(project);
-    } else {
+      frame = project.isDefault() ? WelcomeFrame.getInstance() : getFrame(project);
+    }
+    else {
       Container eachParent = getMostRecentFocusedWindow();
       while(eachParent != null) {
         if (eachParent instanceof IdeFrame) {
