@@ -8,11 +8,13 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeInfo;
 import com.intellij.refactoring.changeSignature.ChangeSignatureUsageProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
+import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
+import com.jetbrains.python.refactoring.rename.RenamePyFileProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,6 +57,10 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     if (!(changeInfo instanceof PyChangeInfo)) return false;
     if (!beforeMethodChange) return false;
     PsiElement element = usageInfo.getElement();
+
+    final RenamePsiElementProcessor processor = RenamePyFileProcessor.forElement(changeInfo.getMethod());
+    processor.renameElement(changeInfo.getMethod(), changeInfo.getNewName(), usages, null);
+
     if (element == null || !(element.getParent() instanceof PyCallExpression)) {
       return false;
     }
