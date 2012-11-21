@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring.ui;
 
-import com.intellij.openapi.actionSystem.MacOtherAction;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -27,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -127,6 +127,10 @@ public abstract class RefactoringDialog extends DialogWrapper {
 
     if (hasHelpAction ())
       actions.add(getHelpAction());
+    
+    if (SystemInfo.isMac) {
+      Collections.reverse(actions);
+    }
     return actions.toArray(new Action[actions.size()]);
   }
 
@@ -145,7 +149,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
     }
   }
 
-  private class PreviewAction extends AbstractAction implements MacOtherAction {
+  private class PreviewAction extends AbstractAction {
     public PreviewAction() {
       putValue(Action.NAME, RefactoringBundle.message("preview.button"));
       
