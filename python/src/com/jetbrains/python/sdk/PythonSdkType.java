@@ -57,9 +57,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
+import java.awt.*;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.*;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -446,12 +448,12 @@ public class PythonSdkType extends SdkType {
 
   public void setupSdkPaths(@NotNull final Sdk sdk) {
     final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    setupSdkPaths(sdk, project);
+    setupSdkPaths(sdk, project, null);
   }
 
-  public static void setupSdkPaths(Sdk sdk, @Nullable Project project) {
+  public static void setupSdkPaths(Sdk sdk, @Nullable Project project, @Nullable Component ownerComponent) {
     final SdkModificator sdkModificator = sdk.getSdkModificator();
-    final boolean success = setupSdkPaths(project, sdk, sdkModificator);
+    final boolean success = setupSdkPaths(project, ownerComponent, sdk, sdkModificator);
     if (success) {
       sdkModificator.commitChanges();
     }
@@ -464,8 +466,13 @@ public class PythonSdkType extends SdkType {
     }
   }
 
-  public static boolean setupSdkPaths(@Nullable final Project project, @NotNull final Sdk sdk,
+  public static boolean setupSdkPaths(@Nullable final Project project,
+                                      @Nullable final Component ownerComponent,
+                                      @NotNull final Sdk sdk,
                                       @NotNull final SdkModificator sdkModificator) {
+    if (isRemote(sdk) && project == null && ownerComponent == null) {
+      LOG.error("For refreshing skeletons of remote SDK, either project or owner component must be specified");
+    }
     final ProgressManager progressManager = ProgressManager.getInstance();
     final Ref<Boolean> success = new Ref<Boolean>();
     success.set(true);
@@ -477,7 +484,10 @@ public class PythonSdkType extends SdkType {
           updateSdkRootsFromSysPath(sdk, sdkModificator, indicator);
           updateUserAddedPaths(sdk, sdkModificator, indicator);
           if (!ApplicationManager.getApplication().isUnitTestMode()) {
-            PySkeletonRefresher.refreshSkeletonsOfSdk(project, sdk, getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath()), null);
+            PySkeletonRefresher.refreshSkeletonsOfSdk(project, ownerComponent,
+                                                      getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath()),
+                                                      null, sdk
+            );
             PythonSdkUpdater.getInstance().markAlreadyUpdated(sdk.getHomePath());
           }
         }

@@ -64,7 +64,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
         List<String> assemblyRefs = collectAssemblyReferences(descriptor.getPsiElement().getContainingFile());
 
         try {
-          final PySkeletonRefresher refresher = new PySkeletonRefresher(project, mySdk, null, null);
+          final PySkeletonRefresher refresher = new PySkeletonRefresher(project, null, mySdk, null, null);
           refresher.generateSkeleton(myQualifiedName, "", assemblyRefs, Consumer.EMPTY_CONSUMER);
           final VirtualFile skeletonDir;
           skeletonDir = LocalFileSystem.getInstance().findFileByPath(refresher.getSkeletonsPath());

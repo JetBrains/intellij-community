@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -116,7 +115,7 @@ public class PythonSdkUpdater implements StartupActivity {
     }
   }
 
-  private static void updateSdk(@Nullable Project project, @NotNull final Sdk sdk) throws InvalidSdkException {
+  private static void updateSdk(@NotNull Project project, @NotNull final Sdk sdk) throws InvalidSdkException {
     PySkeletonRefresher.refreshSkeletonsOfSdk(project, sdk); // NOTE: whole thing would need a rename
     if (!PySdkUtil.isRemote(sdk)) {
       updateSysPath(sdk);

@@ -67,7 +67,10 @@ public abstract class PythonRemoteInterpreterManager {
 
   public abstract boolean editSdk(@NotNull Project project, @NotNull SdkModificator sdkModificator, Collection<Sdk> existingSdks);
 
-  public abstract PySkeletonGenerator createRemoteSkeletonGenerator(@Nullable Project project, String path, @NotNull Sdk sdk);
+  public abstract PySkeletonGenerator createRemoteSkeletonGenerator(@Nullable Project project,
+                                                                    @Nullable Component ownerComponent,
+                                                                    @NotNull Sdk sdk,
+                                                                    String path);
 
   public abstract boolean ensureCanWrite(@Nullable Object projectOrComponent, RemoteSdkData data, String path);
 
