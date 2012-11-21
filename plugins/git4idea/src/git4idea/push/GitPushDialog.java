@@ -16,13 +16,19 @@
 package git4idea.push;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.UIUtil;
 import git4idea.*;
+import git4idea.branch.GitBranchUtil;
+import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -33,111 +39,67 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Kirill Likhodedov
  */
 public class GitPushDialog extends DialogWrapper {
 
-  private static final Logger LOG = GitLogger.PUSH_LOG;
+  private static final Logger LOG = Logger.getInstance(GitPushDialog.class);
   private static final String DEFAULT_REMOTE = "origin";
 
-  @NotNull private final GitPushSpecs myInitialPushSpecs;
-  @NotNull private final GitOutgoingCommitsCollector myOutgoingCommitsCollector;
+  private Project myProject;
+  private final GitRepositoryManager myRepositoryManager;
+  private final GitPusher myPusher;
+  private final GitPushLog myListPanel;
+  private GitCommitsByRepoAndBranch myGitCommitsToPush;
+  private Map<GitRepository, GitPushSpec> myPushSpecs;
+  private final Collection<GitRepository> myRepositories;
+  private final JBLoadingPanel myLoadingPanel;
+  private final Object COMMITS_LOADING_LOCK = new Object();
+  private final GitManualPushToBranch myRefspecPanel;
+  private final AtomicReference<String> myDestBranchInfoOnRefresh = new AtomicReference<String>();
 
-  @NotNull private final GitPushLog myListPanel;
-  @NotNull private final JBLoadingPanel myLoadingPanel;
-  @NotNull private final GitManualPushToBranch myRefspecPanel;
+  private final boolean myPushPossible;
 
-  public GitPushDialog(@NotNull Project project, @NotNull GitPushSpecs pushSpecs) {
+  public GitPushDialog(@NotNull Project project) {
     super(project);
-    myInitialPushSpecs = pushSpecs;
-    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
+    myProject = project;
+    myPusher = new GitPusher(myProject, ServiceManager.getService(project, GitPlatformFacade.class), new EmptyProgressIndicator());
+    myRepositoryManager = GitUtil.getRepositoryManager(myProject);
 
-    Collection<GitRepository> repositories = myInitialPushSpecs.getRepositories();
-
-    myOutgoingCommitsCollector = GitOutgoingCommitsCollector.getInstance(project);
+    myRepositories = getRepositoriesWithRemotes();
 
     myLoadingPanel = new JBLoadingPanel(new BorderLayout(), this.getDisposable());
 
-    myListPanel = new GitPushLog(project, manager.getRepositories(), new RepositoryCheckboxListener());
-    myRefspecPanel = new GitManualPushToBranch(repositories.size() > 1, new RefreshButtonListener());
+    myListPanel = new GitPushLog(myProject, myRepositories, new RepositoryCheckboxListener());
+    myRefspecPanel = new GitManualPushToBranch(myRepositories, new RefreshButtonListener());
+
+    if (GitManualPushToBranch.getRemotesWithCommonNames(myRepositories).isEmpty()) {
+      myRefspecPanel.setVisible(false);
+      setErrorText("Can't push, because no remotes are defined");
+      setOKActionEnabled(false);
+      myPushPossible = false;
+    } else {
+      myPushPossible = true;
+    }
 
     init();
     setOKButtonText("Push");
     setOKButtonMnemonic('P');
     setTitle("Git Push");
-    update();
   }
 
-  private void update() {
-    Collection<GitRepository> repositories = myListPanel.getSelectedRepositories();
-    Collection<GitRemote> commonRemotes = getRemotesWithCommonNames(repositories);
-    myRefspecPanel.setRemotes(commonRemotes, getDefaultRemote(repositories));
-
-    String commonTargetBranch = getCommonTargetBranch(repositories);
-
-    setOKActionEnabled(false);
-    if (repositories.isEmpty()) {
-      setErrorText("No repositories were selected");
-    }
-    else if (commonRemotes.isEmpty()) {
-      setErrorText(repositories.size() > 1 ? "No common remotes are defined in the selected repositories" : "No remotes are defined");
-    }
-    else if (commonTargetBranch == null) {
-      setErrorText(repositories.size() > 1 ? "No common target branch" : "No target branch");
-    }
-    else {
-      myRefspecPanel.setTargetBranch(commonTargetBranch);
-      setErrorText(null);
-      setOKActionEnabled(true);
-    }
-  }
-
-  @Nullable
-  private static String getCommonTargetBranch(Collection<GitRepository> repositories) {
-    String commonName = null;
-    for (GitRepository repository : repositories) {
-      GitLocalBranch currentBranch = repository.getCurrentBranch();
-      if (currentBranch == null) {
-        return null;
-      }
-      GitRemoteBranch trackedBranch = currentBranch.findTrackedBranch(repository);
-      if (trackedBranch == null) {
-        return null;
-      }
-
-      String name = trackedBranch.getNameForRemoteOperations();
-      if (commonName == null) {
-        commonName = name;
-      }
-      else if (!name.equals(commonName)) {
-        return null;
+  @NotNull
+  private List<GitRepository> getRepositoriesWithRemotes() {
+    List<GitRepository> repositories = new ArrayList<GitRepository>();
+    for (GitRepository repository : myRepositoryManager.getRepositories()) {
+      if (!repository.getRemotes().isEmpty()) {
+        repositories.add(repository);
       }
     }
-    return commonName;
-  }
-
-  private static String getDefaultRemote(@NotNull Collection<GitRepository> repositories) {
-    String commonName = null;
-    for (GitRepository repository : repositories) {
-      GitLocalBranch currentBranch = repository.getCurrentBranch();
-      if (currentBranch == null) {
-        return DEFAULT_REMOTE;
-      }
-      GitRemoteBranch trackedBranch = currentBranch.findTrackedBranch(repository);
-      if (trackedBranch == null) {
-        return DEFAULT_REMOTE;
-      }
-      String name = trackedBranch.getRemote().getName();
-      if (commonName == null) {
-        commonName = name;
-      }
-      else if (!name.equals(commonName)) {
-        return DEFAULT_REMOTE;
-      }
-    }
-    return commonName == null ? DEFAULT_REMOTE : commonName;
+    return repositories;
   }
 
   @Override
@@ -158,54 +120,141 @@ public class GitPushDialog extends DialogWrapper {
 
   private JComponent createCommitListPanel() {
     myLoadingPanel.add(myListPanel, BorderLayout.CENTER);
-    loadCommitsInBackground(myInitialPushSpecs);
+    if (myPushPossible) {
+      loadCommitsInBackground();
+    } else {
+      myLoadingPanel.startLoading();
+      myLoadingPanel.stopLoading();
+    }
 
     JPanel commitListPanel = new JPanel(new BorderLayout());
     commitListPanel.add(myLoadingPanel, BorderLayout.CENTER);
     return commitListPanel;
   }
 
-  private void loadCommitsInBackground(final GitPushSpecs pushSpecs) {
-    final ModalityState modalityState = ModalityState.stateForComponent(getRootPane());
+  private void loadCommitsInBackground() {
     myLoadingPanel.startLoading();
-    myOutgoingCommitsCollector.collect(new GitOutgoingCommitsCollector.ResultHandler() {
-      @Override
-      public void onSuccess(final GitCommitsByRepoAndBranch commits) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      public void run() {
+        final AtomicReference<String> error = new AtomicReference<String>();
+        synchronized (COMMITS_LOADING_LOCK) {
+          error.set(collectInfoToPush());
+        }
+
+        final Pair<String, String> remoteAndBranch = getRemoteAndTrackedBranchForCurrentBranch();
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
-            myListPanel.setCommits(pushSpecs.getRepositories(), commits);
+            if (error.get() != null) {
+              myListPanel.displayError(error.get());
+            } else {
+              myListPanel.setCommits(myGitCommitsToPush);
+            }
+            if (!myRefspecPanel.turnedOn()) {
+              myRefspecPanel.selectRemote(remoteAndBranch.getFirst());
+              myRefspecPanel.setBranchToPushIfNotSet(remoteAndBranch.getSecond());
+            }
             myLoadingPanel.stopLoading();
           }
-        }, modalityState);
-      }
-
-      @Override
-      public void onError(final String error) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            myListPanel.displayError(error);
-          }
-        }, modalityState);
+        });
       }
     });
   }
 
   @NotNull
-  public GitPushSpecs getPushSpecs() {
-    Collection<GitRepository> selectedRepositories = myListPanel.getSelectedRepositories();
-    Map<GitRepository, GitPushSpec> specs = new HashMap<GitRepository, GitPushSpec>();
-    for (GitRepository repository : selectedRepositories) {
-      GitPushSpec spec = new GitPushSpec(repository.getCurrentBranch(), getTargetBranch());      // TODO what to do with detached head
-      specs.put(repository, spec);
+  private Pair<String, String> getRemoteAndTrackedBranchForCurrentBranch() {
+    if (myGitCommitsToPush != null) {
+      Collection<GitRepository> repositories = myGitCommitsToPush.getRepositories();
+      if (!repositories.isEmpty()) {
+        GitRepository repository = repositories.iterator().next();
+        GitBranch currentBranch = repository.getCurrentBranch();
+        assert currentBranch != null;
+        if (myGitCommitsToPush.get(repository).get(currentBranch).getDestBranch() == GitPusher.NO_TARGET_BRANCH) { // push to branch with the same name
+          return Pair.create(DEFAULT_REMOTE, currentBranch.getName());
+        }
+        String remoteName;
+        try {
+          remoteName = GitBranchUtil.getTrackedRemoteName(myProject, repository.getRoot(), currentBranch.getName());
+          if (remoteName == null) {
+            remoteName = DEFAULT_REMOTE;
+          }
+        }
+        catch (VcsException e) {
+          LOG.info("Couldn't retrieve tracked branch for current branch " + currentBranch, e);
+          remoteName = DEFAULT_REMOTE;
+        }
+        String targetBranch = myGitCommitsToPush.get(repository).get(currentBranch).getDestBranch().getNameForRemoteOperations();
+        return Pair.create(remoteName, targetBranch);
+      }
     }
-    return new GitPushSpecs(specs);
+    return Pair.create(DEFAULT_REMOTE, "");
   }
 
-  @NotNull
-  private GitRemoteBranch getTargetBranch() {
-    return new GitStandardRemoteBranch(myRefspecPanel.getSelectedRemote(), myRefspecPanel.getBranchToPush(), GitBranch.DUMMY_HASH);
+  @Nullable
+  private String collectInfoToPush() {
+    try {
+      LOG.info("collectInfoToPush...");
+      myPushSpecs = pushSpecsForCurrentOrEnteredBranches();
+      myGitCommitsToPush = myPusher.collectCommitsToPush(myPushSpecs);
+      LOG.info(String.format("collectInfoToPush | Collected commits to push. Push spec: %s, commits: %s",
+                             myPushSpecs, logMessageForCommits(myGitCommitsToPush)));
+      return null;
+    }
+    catch (VcsException e) {
+      myGitCommitsToPush = GitCommitsByRepoAndBranch.empty();
+      LOG.error("collectInfoToPush | Couldn't collect commits to push. Push spec: " + myPushSpecs, e);
+      return e.getMessage();
+    }
+  }
+
+  private static String logMessageForCommits(GitCommitsByRepoAndBranch commitsToPush) {
+    StringBuilder logMessage = new StringBuilder();
+    for (GitCommit commit : commitsToPush.getAllCommits()) {
+      logMessage.append(commit.getShortHash());
+    }
+    return logMessage.toString();
+  }
+
+  private Map<GitRepository, GitPushSpec> pushSpecsForCurrentOrEnteredBranches() throws VcsException {
+    Map<GitRepository, GitPushSpec> defaultSpecs = new HashMap<GitRepository, GitPushSpec>();
+    for (GitRepository repository : myRepositories) {
+      GitLocalBranch currentBranch = repository.getCurrentBranch();
+      if (currentBranch == null) {
+        continue;
+      }
+      String remoteName = GitBranchUtil.getTrackedRemoteName(repository.getProject(), repository.getRoot(), currentBranch.getName());
+      String trackedBranchName = GitBranchUtil.getTrackedBranchName(repository.getProject(), repository.getRoot(), currentBranch.getName());
+      GitRemote remote = GitUtil.findRemoteByName(repository, remoteName);
+      GitRemoteBranch targetBranch;
+      if (remote != null && trackedBranchName != null) {
+        targetBranch = GitBranchUtil.findRemoteBranchByName(trackedBranchName, remote.getName(),
+                                                            repository.getBranches().getRemoteBranches());
+      }
+      else {
+        Pair<GitRemote, GitRemoteBranch> remoteAndBranch = GitUtil.findMatchingRemoteBranch(repository, currentBranch);
+        if (remoteAndBranch == null) {
+          targetBranch = GitPusher.NO_TARGET_BRANCH;
+        } else {
+          targetBranch = remoteAndBranch.getSecond();
+        }
+      }
+
+      if (myRefspecPanel.turnedOn()) {
+        String manualBranchName = myRefspecPanel.getBranchToPush();
+        remote = myRefspecPanel.getSelectedRemote();
+        GitRemoteBranch manualBranch = GitBranchUtil.findRemoteBranchByName(manualBranchName, remote.getName(),
+                                                                            repository.getBranches().getRemoteBranches());
+        if (manualBranch == null) {
+          manualBranch = new GitStandardRemoteBranch(remote, manualBranchName, GitBranch.DUMMY_HASH);
+        }
+        targetBranch = manualBranch;
+      }
+
+      GitPushSpec pushSpec = new GitPushSpec(currentBranch, targetBranch == null ? GitPusher.NO_TARGET_BRANCH : targetBranch);
+      defaultSpecs.put(repository, pushSpec);
+    }
+    return defaultSpecs;
   }
 
   @Override
@@ -219,44 +268,60 @@ public class GitPushDialog extends DialogWrapper {
   }
 
   @NotNull
-  private static Collection<GitRemote> getRemotesWithCommonNames(@NotNull Collection<GitRepository> repositories) {
-    if (repositories.isEmpty()) {
-      return Collections.emptyList();
-    }
-    Iterator<GitRepository> iterator = repositories.iterator();
-    List<GitRemote> commonRemotes = new ArrayList<GitRemote>(iterator.next().getRemotes());
-    while (iterator.hasNext()) {
-      GitRepository repository = iterator.next();
-      Collection<String> remoteNames = getRemoteNames(repository);
-      for (Iterator<GitRemote> commonIter = commonRemotes.iterator(); commonIter.hasNext(); ) {
-        GitRemote remote = commonIter.next();
-        if (!remoteNames.contains(remote.getName())) {
-          commonIter.remove();
-        }
+  public GitPushInfo getPushInfo() {
+    // waiting for commit list loading, because this information is needed to correctly handle rejected push situation and correctly
+    // notify about pushed commits
+    // TODO optimize: don't refresh: information about pushed commits can be achieved from the successful push output
+    LOG.info("getPushInfo start");
+    synchronized (COMMITS_LOADING_LOCK) {
+      GitCommitsByRepoAndBranch selectedCommits;
+      if (myGitCommitsToPush == null) {
+        LOG.info("getPushInfo | myGitCommitsToPush == null. collecting...");
+        collectInfoToPush();
+        selectedCommits = myGitCommitsToPush;
       }
+      else {
+        if (refreshNeeded()) {
+          LOG.info("getPushInfo | refresh is needed, collecting...");
+          collectInfoToPush();
+        }
+        Collection<GitRepository> selectedRepositories = myListPanel.getSelectedRepositories();
+        selectedCommits = myGitCommitsToPush.retainAll(selectedRepositories);
+      }
+      LOG.info("getPushInfo | selectedCommits: " + logMessageForCommits(selectedCommits));
+      return new GitPushInfo(selectedCommits, myPushSpecs);
     }
-    return commonRemotes;
   }
 
-  @NotNull
-  private static Collection<String> getRemoteNames(@NotNull GitRepository repository) {
-    Collection<String> names = new ArrayList<String>(repository.getRemotes().size());
-    for (GitRemote remote : repository.getRemotes()) {
-      names.add(remote.getName());
+  private boolean refreshNeeded() {
+    String currentDestBranchValue = myRefspecPanel.turnedOn() ? myRefspecPanel.getBranchToPush(): null;
+    String savedValue = myDestBranchInfoOnRefresh.get();
+    if (savedValue == null) {
+      return currentDestBranchValue != null;
     }
-    return names;
+    return !savedValue.equals(currentDestBranchValue);
   }
 
   private class RepositoryCheckboxListener implements Consumer<Boolean> {
     @Override public void consume(Boolean checked) {
-      update();
+      if (checked) {
+        setOKActionEnabled(true);
+      } else {
+        Collection<GitRepository> repositories = myListPanel.getSelectedRepositories();
+        if (repositories.isEmpty()) {
+          setOKActionEnabled(false);
+        } else {
+          setOKActionEnabled(true);
+        }
+      }
     }
   }
 
   private class RefreshButtonListener implements Runnable {
     @Override
     public void run() {
-      loadCommitsInBackground(getPushSpecs());
+      myDestBranchInfoOnRefresh.set(myRefspecPanel.turnedOn() ? myRefspecPanel.getBranchToPush(): null);
+      loadCommitsInBackground();
     }
   }
 
