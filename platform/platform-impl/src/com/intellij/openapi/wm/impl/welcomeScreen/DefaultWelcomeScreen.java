@@ -257,7 +257,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
     myRecentProjectsPanel.add(caption, new GridBagConstraints(0, 0, 2, 1, 1, 0, NORTHWEST, HORIZONTAL, new Insets(0, 0, 20, 0), 0, 0));
 
     JLabel iconLabel = new JLabel();
-    iconLabel.setIcon(AllIcons.General.ReopenRecentProject);
+    //iconLabel.setIcon(AllIcons.General.ReopenRecentProject);
     myRecentProjectsPanel.add(iconLabel, new GridBagConstraints(0, 1, 1, 5, 0, 0, NORTHWEST, NONE, new Insets(5, 0, 15, 20), 0, 0));
 
     int row = 1;
