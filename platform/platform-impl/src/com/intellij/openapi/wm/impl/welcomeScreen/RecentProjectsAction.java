@@ -23,6 +23,8 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.ui.UIBundle;
 
+import javax.swing.*;
+
 /**
  * This action is not visible in the UI but we keep it available to let users invoke it from keyboard.
  *
@@ -56,7 +58,7 @@ public class RecentProjectsAction extends WelcomePopupAction {
   }
 
   @Override
-  protected void showPopup(DataContext context, ListPopup popup) {
+  protected void showPopup(DataContext context, ListPopup popup, JComponent contextComponent) {
     popup.showInBestPositionFor(context);
   }
 }
