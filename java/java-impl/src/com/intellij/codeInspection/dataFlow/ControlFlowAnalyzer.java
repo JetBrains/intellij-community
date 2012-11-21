@@ -34,10 +34,7 @@ import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 class ControlFlowAnalyzer extends JavaElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer");
@@ -639,26 +636,35 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     for (int i = myCatchStack.size() - 1; i >= 0; i--) {
       CatchDescriptor cd = myCatchStack.get(i);
       if (cd.isFinally()) {
-        pushUnknown();
-        final ConditionalGotoInstruction branch = new ConditionalGotoInstruction(-1, false, null);
-        addInstruction(branch);
-        addInstruction(new EmptyStackInstruction());
-        addInstruction(new GosubInstruction(cd.getJumpOffset()));
-        addInstruction(new ReturnInstruction());
-        branch.setOffset(myCurrentFlow.getInstructionCount());
+        addConditionalRuntimeThrow(cd, false);
+        continue;
       }
-      else if (cd.getType() instanceof PsiClassType &&
-               ExceptionUtil.isUncheckedExceptionOrSuperclass((PsiClassType)cd.getType())) {
-        pushUnknown();
-        final ConditionalGotoInstruction branch = new ConditionalGotoInstruction(-1, false, null);
-        addInstruction(branch);
-        addInstruction(new EmptyStackInstruction());
-        addInstruction(new PushInstruction(myFactory.getNotNullFactory().create(myRuntimeException), null));
-        addGotoCatch(cd);
-        branch.setOffset(myCurrentFlow.getInstructionCount());
-        return;
+
+      PsiType type = cd.getType();
+      if (type instanceof PsiDisjunctionType) {
+        type = ((PsiDisjunctionType)type).getLeastUpperBound();
+      }
+      if (type instanceof PsiClassType && ExceptionUtil.isUncheckedExceptionOrSuperclass((PsiClassType)type)) {
+        addConditionalRuntimeThrow(cd, true);
+        break;
       }
     }
+  }
+
+  private void addConditionalRuntimeThrow(CatchDescriptor cd, boolean forCatch) {
+    pushUnknown();
+    final ConditionalGotoInstruction branch = new ConditionalGotoInstruction(-1, false, null);
+    addInstruction(branch);
+    addInstruction(new EmptyStackInstruction());
+    if (forCatch) {
+      addInstruction(new PushInstruction(myFactory.getNotNullFactory().create(myRuntimeException), null));
+      addGotoCatch(cd);
+    }
+    else {
+      addInstruction(new GosubInstruction(cd.getJumpOffset()));
+      addInstruction(new ReturnInstruction());
+    }
+    branch.setOffset(myCurrentFlow.getInstructionCount());
   }
 
   private void addThrowCode(PsiType exceptionClass) {
