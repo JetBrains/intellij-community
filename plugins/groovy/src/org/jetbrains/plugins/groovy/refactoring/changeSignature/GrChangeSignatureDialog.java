@@ -303,7 +303,14 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
     if (!type.isEmpty()) {
       builder.append(type).append(' ');
     }
-    builder.append(name).append('(');
+
+    if (JavaPsiFacade.getInstance(getProject()).getNameHelper().isIdentifier(name)) {
+      builder.append(name);
+    }
+    else {
+      builder.append("'").append(name).append("'");
+    }
+    builder.append('(');
 
     final List<GrParameterInfo> infos = getParameters();
     if (infos.size() > 0) {

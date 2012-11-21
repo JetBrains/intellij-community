@@ -345,8 +345,9 @@ public class AllIcons {
     public static final Icon ConfigurableDefault = IconLoader.getIcon("/general/configurableDefault.png"); // 32x32
     public static final Icon Configure = IconLoader.getIcon("/general/Configure.png"); // 32x32
     public static final Icon CreateNewProject = IconLoader.getIcon("/general/createNewProject.png"); // 32x32
+    public static final Icon CreateNewProjectfromExistingFiles = IconLoader.getIcon("/general/CreateNewProjectfromExistingFiles.png"); // 32x32
     public static final Icon Debug = IconLoader.getIcon("/general/debug.png"); // 16x16
-    public static final Icon DefaultKeymap = IconLoader.getIcon("/general/defaultKeymap.png"); // 48x48
+    public static final Icon DefaultKeymap = IconLoader.getIcon("/general/defaultKeymap.png"); // 32x32
     public static final Icon Divider = IconLoader.getIcon("/general/divider.png"); // 2x19
     public static final Icon Dropdown = IconLoader.getIcon("/general/dropdown.png"); // 16x16
     public static final Icon EditColors = IconLoader.getIcon("/general/editColors.png"); // 16x16
@@ -360,6 +361,7 @@ public class AllIcons {
     public static final Icon ExclMark = IconLoader.getIcon("/general/exclMark.png"); // 16x16
     public static final Icon ExpandAll = IconLoader.getIcon("/general/expandAll.png"); // 11x16
     public static final Icon ExpandAllHover = IconLoader.getIcon("/general/expandAllHover.png"); // 11x16
+    public static final Icon ExportSettings = IconLoader.getIcon("/general/ExportSettings.png"); // 32x32
     public static final Icon ExternalTools = IconLoader.getIcon("/general/externalTools.png"); // 32x32
     public static final Icon ExternalToolsSmall = IconLoader.getIcon("/general/externalToolsSmall.png"); // 16x16
     public static final Icon Filter = IconLoader.getIcon("/general/filter.png"); // 16x16
@@ -387,13 +389,14 @@ public class AllIcons {
     public static final Icon IjLogo = IconLoader.getIcon("/general/ijLogo.png"); // 16x16
     public static final Icon ImplementingMethod = IconLoader.getIcon("/general/implementingMethod.png"); // 10x14
     public static final Icon ImportProject = IconLoader.getIcon("/general/importProject.png"); // 32x32
+    public static final Icon ImportSettings = IconLoader.getIcon("/general/ImportSettings.png"); // 32x32
     public static final Icon Information = IconLoader.getIcon("/general/information.png"); // 16x16
     public static final Icon InformationDialog = IconLoader.getIcon("/general/informationDialog.png"); // 32x32
     public static final Icon InheritedMethod = IconLoader.getIcon("/general/inheritedMethod.png"); // 11x14
     public static final Icon InspectionInProgress = IconLoader.getIcon("/general/inspectionInProgress.png"); // 11x11
     public static final Icon InspectionsOff = IconLoader.getIcon("/general/inspectionsOff.png"); // 16x16
     public static final Icon Jdk = IconLoader.getIcon("/general/jdk.png"); // 16x16
-    public static final Icon JetbrainsTvIdea = IconLoader.getIcon("/general/jetbrainsTvIdea.png"); // 48x48
+    public static final Icon JetbrainsTvIdea = IconLoader.getIcon("/general/jetbrainsTvIdea.png"); // 32x32
     public static final Icon KeyboardShortcut = IconLoader.getIcon("/general/keyboardShortcut.png"); // 13x13
     public static final Icon Keymap = IconLoader.getIcon("/general/keymap.png"); // 32x32
     public static final Icon Locate = IconLoader.getIcon("/general/locate.png"); // 14x16
@@ -412,9 +415,9 @@ public class AllIcons {
     public static final Icon OverridenMethod = IconLoader.getIcon("/general/overridenMethod.png"); // 10x14
     public static final Icon OverridingMethod = IconLoader.getIcon("/general/overridingMethod.png"); // 10x14
     public static final Icon PackagesTab = IconLoader.getIcon("/general/packagesTab.png"); // 16x16
-    public static final Icon PathVariables = IconLoader.getIcon("/general/pathVari`ables.png"); // 32x32
+    public static final Icon PathVariables = IconLoader.getIcon("/general/pathVariables.png"); // 32x32
     public static final Icon Pin_tab = IconLoader.getIcon("/general/pin_tab.png"); // 16x16
-    public static final Icon PluginManager = IconLoader.getIcon("/general/pluginManager.png"); // 48x48
+    public static final Icon PluginManager = IconLoader.getIcon("/general/pluginManager.png"); // 32x32
     public static final Icon Progress = IconLoader.getIcon("/general/progress.png"); // 8x10
     public static final Icon ProjectSettings = IconLoader.getIcon("/general/projectSettings.png"); // 16x16
     public static final Icon ProjectStructure = IconLoader.getIcon("/general/projectStructure.png"); // 16x16
@@ -422,7 +425,6 @@ public class AllIcons {
     public static final Icon QuestionDialog = IconLoader.getIcon("/general/questionDialog.png"); // 32x32
     public static final Icon ReadHelp = IconLoader.getIcon("/general/readHelp.png"); // 32x32
     public static final Icon Remove = IconLoader.getIcon("/general/remove.png"); // 16x16
-    public static final Icon ReopenRecentProject = IconLoader.getIcon("/general/reopenRecentProject.png"); // 48x48
     public static final Icon Reset = IconLoader.getIcon("/general/reset.png"); // 16x16
     public static final Icon Run = IconLoader.getIcon("/general/run.png"); // 7x10
     public static final Icon RunWithCoverage = IconLoader.getIcon("/general/runWithCoverage.png"); // 16x16
@@ -450,6 +452,8 @@ public class AllIcons {
     public static final Icon Tab_grey_right_inner = IconLoader.getIcon("/general/tab_grey_right_inner.png"); // 4x17
     public static final Icon TbHidden = IconLoader.getIcon("/general/tbHidden.png"); // 16x16
     public static final Icon TbShown = IconLoader.getIcon("/general/tbShown.png"); // 16x16
+    public static final Icon TemplateProjectSettings = IconLoader.getIcon("/general/TemplateProjectSettings.png"); // 32x32
+    public static final Icon TemplateProjectStructure = IconLoader.getIcon("/general/TemplateProjectStructure.png"); // 32x32
     public static final Icon Tip = IconLoader.getIcon("/general/tip.png"); // 32x32
     public static final Icon TipsOfTheDay = IconLoader.getIcon("/general/tipsOfTheDay.png"); // 32x32
     public static final Icon TodoDefault = IconLoader.getIcon("/general/todoDefault.png"); // 12x12
