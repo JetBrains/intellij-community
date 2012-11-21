@@ -193,24 +193,6 @@ class C {
     }
   }
 
-  /*void m11() {
-    try {
-      System.out.println();
-    }
-    catch (Exception e) {
-      throw e;
-    }
-  }
-
-  void m11() {
-    try {
-      System.out.println();
-    }
-    catch (Exception e) {
-      throw e;
-    }
-  }*/
-
   static class MyResource implements AutoCloseable {
     public void close() throws E1 { }
   }
