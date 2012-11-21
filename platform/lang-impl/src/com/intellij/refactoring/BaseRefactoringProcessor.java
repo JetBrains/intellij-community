@@ -400,6 +400,10 @@ public abstract class BaseRefactoringProcessor {
 
     String canNotMakeString = RefactoringBundle.message("usageView.need.reRun");
 
+    addDoRefactoringAction(usageView, refactoringRunnable, canNotMakeString);
+  }
+
+  protected void addDoRefactoringAction(UsageView usageView, Runnable refactoringRunnable, String canNotMakeString) {
     usageView.addPerformOperationAction(refactoringRunnable, getCommandName(), canNotMakeString,
                                         RefactoringBundle.message("usageView.doAction"));
   }

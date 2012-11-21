@@ -873,7 +873,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static int pathHashCode(@Nullable String path) {
-    return StringUtil.isEmpty(path) || path == null ? 0 : PATH_HASHING_STRATEGY.computeHashCode(toSystemIndependentName(path));
+    return StringUtil.isEmpty(path) || path == null ? 0 : PATH_HASHING_STRATEGY.computeHashCode(toCanonicalPath(path));
   }
 
   @NotNull

@@ -31,6 +31,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BuildNumber;
@@ -452,7 +453,7 @@ public final class UpdateChecker {
       dialog.setModal(alwaysShowResults);
       dialog.show();
     }
-    else if (updatedPlugins != null) {
+    else if (updatedPlugins != null || ProjectManager.getInstance().getOpenProjects().length == 0) {
       NoUpdatesDialog dialog = new NoUpdatesDialog(true, updatedPlugins, enableLink);
       dialog.setShowConfirmation(showConfirmation);
       dialog.show();

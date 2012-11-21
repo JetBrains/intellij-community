@@ -42,22 +42,13 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
   private final CompoundMembersHolder myDepot = new CompoundMembersHolder();
   private final GroovyClassDescriptor myDescriptor;
   @Nullable private final Map<String, List> myBindings;
-  private final String myQualifiedName;
+  private final PsiClass myPsiClass;
 
   public CustomMembersGenerator(GroovyClassDescriptor descriptor, PsiType type, @Nullable Map<String, List> bindings) {
     myDescriptor = descriptor;
     myBindings = bindings;
     myProject = descriptor.getProject();
-    if (type instanceof PsiClassType) {
-      final PsiClass psiClass = ((PsiClassType)type).resolve();
-      if (psiClass != null) {
-        myQualifiedName = psiClass.getQualifiedName();
-      } else {
-        myQualifiedName = null;
-      }
-    } else {
-      myQualifiedName = null;
-    }
+    myPsiClass = type instanceof PsiClassType ? ((PsiClassType)type).resolve() : null;
   }
 
   public PsiElement getPlace() {
@@ -76,8 +67,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
   @Nullable
   @Override
   public PsiClass getPsiClass() {
-    if (myQualifiedName==null) return null;
-    return JavaPsiFacade.getInstance(myProject).findClass(myQualifiedName, myDescriptor.getResolveScope());
+    return myPsiClass;
   }
 
   @Override

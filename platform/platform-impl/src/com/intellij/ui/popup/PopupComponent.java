@@ -113,8 +113,8 @@ public interface PopupComponent {
       myDialog.getContentPane().setLayout(new BorderLayout());
       myDialog.getContentPane().add(content, BorderLayout.CENTER);
       myDialog.getRootPane().putClientProperty(JBPopup.KEY, jbPopup);
-
       myDialog.setUndecorated(true);
+      myDialog.setBackground(UIUtil.getPanelBackground());
       myDialog.pack();
       myDialog.setLocation(x, y);
     }

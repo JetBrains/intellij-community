@@ -381,7 +381,7 @@
     <group id="WelcomeScreen.QuickStart.IDEA">
       <action id="WelcomeScreen.CreateNewProject" class="com.intellij.ide.actions.NewProjectAction"
               icon="AllIcons.General.CreateNewProject"/>
-      <action id="WelcomeScreen.ImportProject" class="com.intellij.ide.actions.ImportProjectAction" icon="AllIcons.General.ReopenRecentProject"/>
+      <action id="WelcomeScreen.ImportProject" class="com.intellij.ide.actions.ImportProjectAction" icon="AllIcons.General.ImportProject"/>
       <action id="WelcomeScreen.OpenProject" class="com.intellij.ide.actions.OpenProjectAction"
               icon="AllIcons.General.OpenProject"/>
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>

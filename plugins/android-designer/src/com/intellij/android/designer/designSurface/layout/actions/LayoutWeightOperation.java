@@ -15,7 +15,7 @@
  */
 package com.intellij.android.designer.designSurface.layout.actions;
 
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;

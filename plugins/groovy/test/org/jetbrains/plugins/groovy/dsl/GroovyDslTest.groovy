@@ -88,6 +88,24 @@ public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
 """)
   }
 
+  public void "test on anonymous class"() {
+    addGdsl '''
+import com.intellij.patterns.PsiJavaPatterns
+
+contribute(ctype:PsiJavaPatterns.psiClass()) {
+  method name:'foo' + psiClass.name, type:void, params:[:]
+}'''
+    myFixture.configureByText 'a.groovy', '''
+class Foo<T> {
+  def foo(T t) { 
+    t.f<caret>
+  }  
+}
+'''
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'finalize', 'fooT'
+  }
+
   public void testDelegateToThrowable() throws Throwable {
     doCustomTest("""
       def ctx = context(ctype: "java.lang.String")

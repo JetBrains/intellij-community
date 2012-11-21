@@ -15,7 +15,7 @@
  */
 package com.intellij.android.designer.model.layout;
 
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.intellij.android.designer.designSurface.TreeDropToOperation;
 import com.intellij.android.designer.designSurface.layout.LinearLayoutOperation;
 import com.intellij.android.designer.designSurface.layout.actions.LayoutMarginOperation;

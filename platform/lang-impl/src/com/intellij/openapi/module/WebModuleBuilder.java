@@ -15,15 +15,22 @@
  */
 package com.intellij.openapi.module;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ModifiableRootModel;
+
+import javax.swing.*;
 
 /**
 * @author Dmitry Avdeev
 *         Date: 9/27/12
 */
 public class WebModuleBuilder extends ModuleBuilder {
+
+  public static final String GROUP_NAME = "Static Web";
+  public static final Icon ICON = AllIcons.General.Web;
+
   @Override
   public void setupRootModel(ModifiableRootModel modifiableRootModel) throws ConfigurationException {
     doAddContentEntry(modifiableRootModel);
@@ -32,5 +39,15 @@ public class WebModuleBuilder extends ModuleBuilder {
   @Override
   public ModuleType getModuleType() {
     return WebModuleType.getInstance();
+  }
+
+  @Override
+  public String getGroupName() {
+    return GROUP_NAME;
+  }
+
+  @Override
+  public Icon getNodeIcon() {
+    return ICON;
   }
 }

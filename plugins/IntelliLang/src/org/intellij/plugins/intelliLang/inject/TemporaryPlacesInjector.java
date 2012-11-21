@@ -16,10 +16,11 @@
 
 package org.intellij.plugins.intelliLang.inject;
 
-import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.ElementManipulator;
 import com.intellij.psi.ElementManipulators;
@@ -49,17 +50,15 @@ public class TemporaryPlacesInjector implements MultiHostInjector {
   }
 
   public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull final PsiElement context) {
-    final PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)context;
-    final PsiLanguageInjectionHost originalHost = CompletionUtil.getOriginalElement(host);
-    final List<TemporaryPlacesRegistry.TemporaryPlace> list = myRegistry.getTempInjectionsSafe(originalHost);
-    if (list.isEmpty()) return;
-    final ElementManipulator<PsiLanguageInjectionHost> manipulator = ElementManipulators.getManipulator(host);
-    if (manipulator == null) return;
-    for (final TemporaryPlacesRegistry.TemporaryPlace place : list) {
-      LOG.assertTrue(place.language != null, "Language should not be NULL");
-      InjectorUtils.registerInjection(
-        place.language.getLanguage(),
-        Collections.singletonList(Trinity.create(host, place.language, manipulator.getRangeInElement(host))), context.getContainingFile(), registrar);
+    PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)context;
+    InjectedLanguage injectedLanguage = myRegistry.getLanguageFor(host);
+    Language language = injectedLanguage != null ? injectedLanguage.getLanguage() : null;
+    if (language != null) {
+      final ElementManipulator<PsiLanguageInjectionHost> manipulator = ElementManipulators.getManipulator(host);
+      if (manipulator == null) return;
+      List<Trinity<PsiLanguageInjectionHost, InjectedLanguage,TextRange>> trinities =
+        Collections.singletonList(Trinity.create(host, injectedLanguage, manipulator.getRangeInElement(host)));
+      InjectorUtils.registerInjection(language, trinities, context.getContainingFile(), registrar);
       InjectorUtils.registerSupport(myRegistry.getLanguageInjectionSupport(), false, registrar);
     }
   }

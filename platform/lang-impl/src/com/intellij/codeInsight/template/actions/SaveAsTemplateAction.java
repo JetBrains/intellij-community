@@ -91,6 +91,7 @@ public class SaveAsTemplateAction extends AnAction {
           for (PsiReference reference : element.getReferences()) {
             if (!(reference instanceof PsiQualifiedReference) || ((PsiQualifiedReference)reference).getQualifier() == null) {
               String canonicalText = reference.getCanonicalText();
+              LOG.assertTrue(canonicalText != null, reference.getClass());
               TextRange referenceRange = reference.getRangeInElement();
               final TextRange elementTextRange = element.getTextRange();
               LOG.assertTrue(elementTextRange != null, elementTextRange);

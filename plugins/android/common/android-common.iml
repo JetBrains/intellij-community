@@ -17,6 +17,7 @@
           <root url="jar://$MODULE_DIR$/../lib/common.jar!/" />
           <root url="jar://$MODULE_DIR$/../lib/jarutils.jar!/" />
           <root url="jar://$MODULE_DIR$/../lib/androidprefs.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/layoutlib_api.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
@@ -24,6 +25,7 @@
           <root url="jar://$MODULE_DIR$/../lib/src/common_src.zip!/src" />
           <root url="jar://$MODULE_DIR$/../lib/src/jarutils.zip!/src" />
           <root url="jar://$MODULE_DIR$/../lib/src/androidprefs_src.zip!/src" />
+          <root url="jar://$MODULE_DIR$/../lib/src/layoutlib_api_src.zip!/src" />
         </SOURCES>
       </library>
     </orderEntry>

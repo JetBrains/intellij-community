@@ -663,7 +663,13 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
         PsiType functionalInterfaceReturnType = functionalInterfaceMethod.getReturnType();
         if (functionalInterfaceReturnType != null && functionalInterfaceReturnType != PsiType.VOID) {
           functionalInterfaceReturnType = GenericsUtil.eliminateWildcards(subst.substitute(functionalInterfaceReturnType));
-          return getSubstitutionForTypeParameterConstraint(typeParam, functionalInterfaceReturnType, methReferenceResolveResult.getSubstitutor().substitute(subst.substitute(method.getReturnType())), true, PsiUtil.getLanguageLevel(functionalInterfaceMethod));
+          final PsiType argType;
+          if (method.isConstructor()) {
+            argType = JavaPsiFacade.getElementFactory(functionalInterfaceMethod.getProject()).createType(method.getContainingClass(), methReferenceResolveResult.getSubstitutor());
+          } else {
+            argType = methReferenceResolveResult.getSubstitutor().substitute(subst.substitute(method.getReturnType()));
+          }
+          return getSubstitutionForTypeParameterConstraint(typeParam, functionalInterfaceReturnType, argType, true, PsiUtil.getLanguageLevel(functionalInterfaceMethod));
         }
       }
     }

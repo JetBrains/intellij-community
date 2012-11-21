@@ -19,10 +19,10 @@ import com.android.jarutils.SignedJarBuilder;
 import com.android.resources.ResourceFolderType;
 import com.android.resources.ResourceType;
 import com.android.sdklib.IAndroidTarget;
-import com.android.sdklib.ISdkLog;
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.android.sdklib.SdkManager;
 import com.android.sdklib.internal.project.ProjectProperties;
+import com.android.utils.ILogger;
 import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -127,7 +127,7 @@ public class AndroidCommonUtils {
   }
 
   @Nullable
-  public static SdkManager createSdkManager(@NotNull String path, @NotNull ISdkLog log) {
+  public static SdkManager createSdkManager(@NotNull String path, @NotNull ILogger log) {
     path = FileUtil.toSystemDependentName(path);
 
     final File f = new File(path);

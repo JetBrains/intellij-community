@@ -79,7 +79,7 @@ public class ActionButtonWithText extends ActionButton {
     return SwingConstants.CENTER;
   }
 
-  private int iconTextSpace() {
+  protected int iconTextSpace() {
     return (getIcon() instanceof EmptyIcon || getIcon() == null ) ? 0 : ICON_TEXT_SPACE;
   }
 

@@ -89,6 +89,9 @@ abstract class ComponentStoreImpl implements IComponentStore {
         }
       });
     }
+    catch (StateStorageException e) {
+      throw e;
+    }
     catch (Exception e) {
       LOG.error(e);
     }

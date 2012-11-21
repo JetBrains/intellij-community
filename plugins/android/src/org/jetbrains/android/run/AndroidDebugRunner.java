@@ -191,8 +191,8 @@ public class AndroidDebugRunner extends DefaultProgramRunner {
   }
 
   private static boolean shouldActivateExecWindow(Project project) {
-    final ToolWindowManager manager = ToolWindowManager.getInstance(project);
-    return !manager.getToolWindow(AndroidLogcatToolWindowFactory.TOOL_WINDOW_ID).isVisible();
+    final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(AndroidLogcatToolWindowFactory.TOOL_WINDOW_ID);
+    return toolWindow == null || !toolWindow.isVisible();
   }
 
   @Nullable

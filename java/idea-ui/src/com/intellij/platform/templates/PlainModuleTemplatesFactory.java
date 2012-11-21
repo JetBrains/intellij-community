@@ -27,19 +27,21 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
  *         Date: 10/9/12
  */
-public class PlainModuleTemplatesFactory implements ProjectTemplatesFactory {
+public class PlainModuleTemplatesFactory extends ProjectTemplatesFactory {
 
   @NotNull
   @Override
   public String[] getGroups() {
     List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
-    List<String> groups = ContainerUtil.map(builders, new Function<ModuleBuilder, String>() {
+    Set<String> groups = ContainerUtil.map2Set(builders, new Function<ModuleBuilder, String>() {
       @Override
       public String fun(ModuleBuilder builder) {
         return builder.getGroupName();
@@ -76,5 +78,16 @@ public class PlainModuleTemplatesFactory implements ProjectTemplatesFactory {
         return builder.getGroupName().equals(group) ? new BuilderBasedTemplate(builder) : null;
       }
     }, ProjectTemplate.EMPTY_ARRAY);
+  }
+
+  @Override
+  public Icon getGroupIcon(String group) {
+    List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
+    for (ModuleBuilder builder : builders) {
+      if (group.equals(builder.getGroupName())) {
+        return builder.getNodeIcon();
+      }
+    }
+    return null;
   }
 }

@@ -51,10 +51,13 @@ public class FilteringListModel<T> extends AbstractListModel {
     }
   };
 
-  protected FilteringListModel(JList list) {
-    myOriginalModel = list.getModel();
+  public FilteringListModel(ListModel originalModel) {
+    myOriginalModel = originalModel;
     myOriginalModel.addListDataListener(myListDataListener);
+  }
 
+  protected FilteringListModel(JList list) {
+    this(list.getModel());
     list.setModel(this);
   }
 

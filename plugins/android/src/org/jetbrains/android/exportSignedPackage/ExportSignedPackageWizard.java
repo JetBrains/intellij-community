@@ -16,7 +16,7 @@
 
 package org.jetbrains.android.exportSignedPackage;
 
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.RevealFileAction;

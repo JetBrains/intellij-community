@@ -3,21 +3,12 @@
  */
 package com.intellij.packaging.impl.ui.actions;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -26,11 +17,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinder;
 import com.intellij.util.text.SyncDateFormat;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -90,29 +81,10 @@ public class PackageFileAction extends AnAction {
 
     FileDocumentManager.getInstance().saveAllDocuments();
     final List<VirtualFile> files = getFilesToPackage(event, project);
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Packaging Files") {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        for (final VirtualFile file : files) {
-          indicator.checkCanceled();
-          new ReadAction() {
-            protected void run(final Result result) {
-              try {
-                PackageFileWorker.packageFile(file, project);
-              }
-              catch (IOException e) {
-                Notifications.Bus.notify(
-                  new Notification("Package File", "Cannot package file", CompilerBundle.message("message.tect.package.file.io.error", e.toString()),
-                                   NotificationType.ERROR));
-              }
-            }
-          }.execute();
-        }
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            setStatusText(project, files);
-          }
-        });
+    Artifact[] allArtifacts = ArtifactManager.getInstance(project).getArtifacts();
+    PackageFileWorker.startPackagingFiles(project, files, allArtifacts, new Runnable() {
+      public void run() {
+        setStatusText(project, files);
       }
     });
   }

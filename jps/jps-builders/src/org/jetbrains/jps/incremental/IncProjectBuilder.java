@@ -848,6 +848,7 @@ public class IncProjectBuilder {
                   stageCount = myTotalModuleLevelBuilderCount;
                   buildersPassed = 0;
                   nextPassRequired = true;
+                  outputConsumer.clear();
                   break BUILDER_CATEGORY_LOOP;
                 }
                 catch (Exception e) {

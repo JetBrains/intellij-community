@@ -16,7 +16,7 @@
 
 package org.jetbrains.android.uipreview;
 
-import com.android.ide.common.log.ILogger;
+import com.android.SdkConstants;
 import com.android.ide.common.rendering.LayoutLibrary;
 import com.android.ide.common.rendering.api.IProjectCallback;
 import com.android.ide.common.rendering.api.RenderResources;
@@ -28,8 +28,8 @@ import com.android.ide.common.sdk.LoadStatus;
 import com.android.io.IAbstractFolder;
 import com.android.resources.ResourceType;
 import com.android.sdklib.IAndroidTarget;
-import com.android.sdklib.SdkConstants;
 import com.android.sdklib.internal.project.ProjectProperties;
+import com.android.utils.ILogger;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
@@ -106,8 +106,8 @@ public class RenderServiceFactory {
   public RenderService createService(RenderResources resources,
                                      RenderResources legacyResources,
                                      FolderConfiguration config,
-                                     float xdpi,
-                                     float ydpi,
+                                     double xdpi,
+                                     double ydpi,
                                      IProjectCallback projectCallback,
                                      int minSdkVersion) {
     return new RenderService(myLibrary, resources, legacyResources, config, xdpi, ydpi, projectCallback, minSdkVersion);
@@ -165,12 +165,12 @@ public class RenderServiceFactory {
   }
 
   private static FrameworkResources loadPlatformResources(File resFolder, ILogger log) throws IOException, RenderingException {
-    final FrameworkResources resources = new FrameworkResources();
     final IAbstractFolder resFolderWrapper = new BufferingFolderWrapper(resFolder);
+    final FrameworkResources resources = new FrameworkResources(resFolderWrapper);
 
     RenderUtil.loadResources(resources, null, null, resFolderWrapper);
 
-    resources.loadPublicResources(resFolderWrapper, log);
+    resources.loadPublicResources(log);
     return resources;
   }
 }

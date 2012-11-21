@@ -19,6 +19,7 @@ import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import icons.JetgroovyIcons;
 import org.jetbrains.plugins.groovy.mvc.GroovySdkForNewModuleWizardStep;
 import org.jetbrains.plugins.groovy.mvc.MvcFramework;
 
@@ -64,6 +65,11 @@ public class GroovyAwareModuleBuilder extends JavaModuleBuilder {
   @Override
   public Icon getBigIcon() {
     return myBigIcon;
+  }
+
+  @Override
+  public Icon getNodeIcon() {
+    return JetgroovyIcons.Groovy.Groovy_16x16;
   }
 
   @Override

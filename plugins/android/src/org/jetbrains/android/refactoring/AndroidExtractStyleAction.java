@@ -2,7 +2,7 @@ package org.jetbrains.android.refactoring;
 
 import com.android.resources.ResourceFolderType;
 import com.android.resources.ResourceType;
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.UndoConfirmationPolicy;

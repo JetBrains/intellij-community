@@ -39,7 +39,7 @@ import java.util.*;
  * @author Dmitry Avdeev
  *         Date: 10/1/12
  */
-public class ArchivedTemplatesFactory implements ProjectTemplatesFactory {
+public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
 
   private static final String ZIP = ".zip";
 

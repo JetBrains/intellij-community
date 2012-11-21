@@ -313,6 +313,18 @@ public class BuildManager implements ApplicationComponent{
   }
 
   @Nullable
+  public List<String> getFilesChangedSinceLastCompilation(Project project) {
+    String projectPath = getProjectPath(project);
+    synchronized (myProjectDataMap) {
+      ProjectData data = myProjectDataMap.get(projectPath);
+      if (data != null && !data.myNeedRescan) {
+        return new ArrayList<String>(data.myChanged);
+      }
+      return null;
+    }
+  }
+
+  @Nullable
   private static String getProjectPath(final Project project) {
     final String url = project.getPresentableUrl();
     if (url == null) {

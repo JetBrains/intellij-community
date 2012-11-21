@@ -197,7 +197,7 @@ libraryLicense(name: "JGoodies Common", libraryName: "jgoodies-common", version:
 libraryLicense(name: "JNA", libraryName: "jna", version: "3.4.0", license: "LGPL 2.1", url: "https://jna.dev.java.net/", licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1.php")
 libraryLicense(name: "JSch", libraryName: "JSch", version: "0.1.44", license: "BSD", url: "http://www.jcraft.com/jsch/", licenseUrl: "http://www.jcraft.com/jsch/LICENSE.txt")
 libraryLicense(name: "JUnit", libraryName: "JUnit3", version: "3.8.1", license: "CPL 1.0", url: "http://junit.org/")
-libraryLicense(name: "JUnit", libraryName: "JUnit4", version: "4.11", license: "CPL 1.0", url: "http://junit.org/")
+libraryLicense(name: "JUnit", libraryName: "JUnit4", version: "4.8", license: "CPL 1.0", url: "http://junit.org/")
 libraryLicense(name: "Log4j", libraryName: "Log4J", version: "1.2", license: "Apache 2.0", url: "http://logging.apache.org/log4j/1.2/index.html", licenseUrl: "http://logging.apache.org/license.html")
 libraryLicense(name: "Maven", version: "2.2.1", license: "Apache 2.0", url: "http://maven.apache.org/", licenseUrl: "http://maven.apache.org/license.html")
 libraryLicense(name: "Maven3", libraryNames: ["Maven3", "maven-dependency-tree-1.2.jar", "archetype-catalog-2.2.jar", "archetype-common-2.2.jar"], version: "3.0.3", license: "Apache 2.0", url: "http://maven.apache.org/", licenseUrl: "http://maven.apache.org/license.html")

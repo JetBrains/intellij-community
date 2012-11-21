@@ -159,9 +159,9 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
   }
 
   private static void registerPluginParameter(boolean isInPluginManagement, DomExtensionsRegistrar r, final ParameterData data, final String parameterName) {
-    DomExtension e;
+    DomExtension e = r.registerFixedNumberChildExtension(new XmlName(parameterName), MavenDomConfigurationParameter.class);
+
     if (isCollection(data.parameter)) {
-      e = r.registerFixedNumberChildExtension(new XmlName(parameterName), MavenDomConfigurationParameter.class);
       e.addExtender(new DomExtender() {
         public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
           for (String each : collectPossibleNameForCollectionParameter(parameterName)) {
@@ -172,8 +172,6 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
       });
     }
     else {
-      e = r.registerFixedNumberChildExtension(new XmlName(parameterName), MavenDomConfigurationParameter.class);
-
       addValueConverter(e, data.parameter);
       if (!isInPluginManagement) {
         addRequiredAnnotation(e, data);

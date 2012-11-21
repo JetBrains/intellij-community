@@ -15,7 +15,8 @@
  */
 package org.jetbrains.android.actions;
 
-import com.android.AndroidConstants;
+
+import com.android.SdkConstants;
 import com.android.resources.ResourceFolderType;
 import com.android.resources.ResourceType;
 import com.intellij.CommonBundle;
@@ -196,7 +197,7 @@ public class CreateXmlResourceDialog extends DialogWrapper {
         updateDirectories(true);
       }
     });
-    final JCheckBox valuesCheckBox = myCheckBoxes.get(AndroidConstants.FD_RES_VALUES);
+    final JCheckBox valuesCheckBox = myCheckBoxes.get(SdkConstants.FD_RES_VALUES);
     if (valuesCheckBox != null) {
       valuesCheckBox.setSelected(true);
     }

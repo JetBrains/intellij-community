@@ -15,7 +15,8 @@
  */
 package com.intellij.android.designer.model;
 
-import com.android.AndroidConstants;
+
+import com.android.SdkConstants;
 import com.android.ide.common.resources.configuration.Configurable;
 import com.android.ide.common.resources.configuration.FolderConfiguration;
 import com.intellij.android.designer.propertyTable.IdProperty;
@@ -152,7 +153,7 @@ public class RadIncludeLayout extends RadViewComponent implements IConfigurableC
         continue;
       }
 
-      FolderConfiguration includeConfig = FolderConfiguration.getConfig(folder.getName().split(AndroidConstants.RES_QUALIFIER_SEP));
+      FolderConfiguration includeConfig = FolderConfiguration.getConfig(folder.getName().split(SdkConstants.RES_QUALIFIER_SEP));
       configurables.add(new MyConfigurable(xmlFile, includeConfig));
     }
 

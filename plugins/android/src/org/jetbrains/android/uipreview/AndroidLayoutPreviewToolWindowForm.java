@@ -15,18 +15,17 @@
  */
 package org.jetbrains.android.uipreview;
 
-import com.android.AndroidConstants;
-import com.android.ide.common.resources.ResourceResolver;
-import com.android.ide.common.resources.configuration.FolderConfiguration;
-import com.android.ide.common.resources.configuration.LanguageQualifier;
-import com.android.ide.common.resources.configuration.RegionQualifier;
-import com.android.ide.common.resources.configuration.ScreenSizeQualifier;
+
+import com.android.SdkConstants;
+import com.android.ide.common.resources.configuration.*;
 import com.android.resources.NightMode;
 import com.android.resources.ResourceType;
 import com.android.resources.ScreenSize;
 import com.android.resources.UiMode;
 import com.android.sdklib.IAndroidTarget;
-import com.android.sdklib.SdkConstants;
+import com.android.sdklib.devices.Device;
+import com.android.sdklib.devices.DeviceManager;
+import com.android.sdklib.devices.State;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -39,7 +38,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -75,18 +73,16 @@ import java.util.List;
  * @author Eugene.Kudelevsky
  */
 class AndroidLayoutPreviewToolWindowForm implements Disposable {
-  private static final String CUSTOM_DEVICE_STRING = "Edit...";
-
   private JPanel myContentPanel;
   private AndroidLayoutPreviewPanel myPreviewPanel;
 
   private JBScrollPane myScrollPane;
 
   private ComboBox myDevicesCombo;
-  private List<LayoutDevice> myDevices = Collections.emptyList();
+  private List<Device> myDevices = Collections.emptyList();
 
   private ComboBox myDeviceConfigurationsCombo;
-  private List<LayoutDeviceConfiguration> myDeviceConfigurations = Collections.emptyList();
+  private List<State> myDeviceConfigurations = Collections.emptyList();
 
   private ComboBox myTargetCombo;
   private List<IAndroidTarget> myTargets = Collections.emptyList();
@@ -105,7 +101,15 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
   private PsiFile myFile;
 
   private AndroidPlatform myPrevPlatform = null;
-  private LayoutDeviceManager myLayoutDeviceManager = new LayoutDeviceManager();
+  private final DeviceManager myLayoutDeviceManager = new DeviceManager(new MessageBuildingSdkLog());
+
+  private final UserDeviceManager myUserDeviceManager = new UserDeviceManager() {
+    @Override
+    protected void userDevicesChanged() {
+      updateDevicesAndTargets(getPlatform(myFile));
+    }
+  };
+
   private final AndroidLayoutPreviewToolWindowManager myToolWindowManager;
   private final ActionToolbar myActionToolBar;
 
@@ -113,6 +117,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
 
   public AndroidLayoutPreviewToolWindowForm(final Project project, AndroidLayoutPreviewToolWindowManager toolWindowManager) {
     Disposer.register(this, myPreviewPanel);
+    Disposer.register(this, myUserDeviceManager);
 
     myToolWindowManager = toolWindowManager;
     mySettings = AndroidLayoutPreviewToolWindowSettings.getInstance(project);
@@ -155,11 +160,11 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     myDevicesCombo.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        if (value instanceof LayoutDevice) {
-          final LayoutDevice device = (LayoutDevice)value;
+        if (value instanceof Device) {
+          final Device device = (Device)value;
           setText(device.getName());
         }
-        else if (index == -1 || !CUSTOM_DEVICE_STRING.equals(value)) {
+        else if (index == -1) {
           setText("<html><font color='red'>[none]</font></html>");
         }
       }
@@ -168,8 +173,8 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     myDeviceConfigurationsCombo.setRenderer(new ListCellRendererWrapper() {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        if (value instanceof LayoutDeviceConfiguration) {
-          final LayoutDeviceConfiguration deviceConfiguration = (LayoutDeviceConfiguration)value;
+        if (value instanceof State) {
+          final State deviceConfiguration = (State)value;
           setText(deviceConfiguration.getName());
         }
         else {
@@ -182,68 +187,10 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
       @Override
       public void actionPerformed(ActionEvent e) {
         final Object selectedItem = myDevicesCombo.getSelectedItem();
-        if (selectedItem instanceof LayoutDevice) {
-          updateDeviceConfigurations((LayoutDevice)selectedItem);
+        if (selectedItem instanceof Device) {
+          updateDeviceConfigurations((Device)selectedItem);
           saveState();
           myToolWindowManager.render();
-        }
-      }
-    });
-
-    myDevicesCombo.addItemListener(new ItemListener() {
-      private LayoutDevice myPrevDevice = null;
-
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        final Object item = e.getItem();
-        if (item instanceof LayoutDevice) {
-          if (e.getStateChange() == ItemEvent.DESELECTED) {
-            myPrevDevice = (LayoutDevice)item;
-          }
-        }
-        else if (e.getStateChange() == ItemEvent.SELECTED) {
-          // "Custom..." element selected
-          if (myPrevDevice != null) {
-            myDevicesCombo.setSelectedItem(myPrevDevice);
-          }
-          else if (myDevices.size() > 0) {
-            myDevicesCombo.setSelectedItem(myDevices.get(0));
-          }
-
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              final LayoutDeviceConfiguration selectedConfig = getSelectedDeviceConfiguration();
-              final LayoutDeviceConfiguration configToSelectInDialog =
-                selectedConfig != null && selectedConfig.getDevice().getType() == LayoutDevice.Type.CUSTOM ? selectedConfig : null;
-              final LayoutDeviceConfigurationsDialog dialog =
-                new LayoutDeviceConfigurationsDialog(project, configToSelectInDialog, myLayoutDeviceManager);
-              dialog.show();
-
-              if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-                myLayoutDeviceManager.saveUserDevices();
-              }
-
-              final AndroidPlatform platform = myFile != null ? getPlatform(myFile) : null;
-              updateDevicesAndTargets(platform);
-
-              final String selectedDeviceName = dialog.getSelectedDeviceName();
-              if (selectedDeviceName != null) {
-                final LayoutDevice selectedDevice = findDeviceByName(selectedDeviceName);
-                if (selectedDevice != null) {
-                  myDevicesCombo.setSelectedItem(selectedDevice);
-                }
-              }
-
-              final String selectedDeviceConfigName = dialog.getSelectedDeviceConfigName();
-              if (selectedDeviceConfigName != null) {
-                final LayoutDeviceConfiguration selectedDeviceConfig = findDeviceConfigByName(selectedDeviceConfigName);
-                if (selectedDeviceConfig != null) {
-                  myDeviceConfigurationsCombo.setSelectedItem(selectedDeviceConfig);
-                }
-              }
-            }
-          });
         }
       }
     });
@@ -429,8 +376,8 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
   }
   
   @Nullable
-  private LayoutDevice findDeviceByName(@NotNull String name) {
-    for (LayoutDevice device : myDevices) {
+  private Device findDeviceByName(@NotNull String name) {
+    for (Device device : myDevices) {
       if (device.getName().equals(name)) {
         return device;
       }
@@ -439,8 +386,8 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
   }
   
   @Nullable
-  private LayoutDeviceConfiguration findDeviceConfigByName(@NotNull String name) {
-    for (LayoutDeviceConfiguration configuration : myDeviceConfigurations) {
+  private State findDeviceConfigByName(@NotNull String name) {
+    for (State configuration : myDeviceConfigurations) {
       if (configuration.getName().equals(name)) {
         return configuration;
       }
@@ -457,15 +404,15 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     final AndroidLayoutPreviewToolWindowSettings.GlobalState state = mySettings.getGlobalState();
 
     if (myResetFlag) {
-      final LayoutDevice selectedDevice = getSelectedDevice();
+      final Device selectedDevice = getSelectedDevice();
       if (selectedDevice != null) {
         state.setDevice(selectedDevice.getName());
       }
 
-      final LayoutDeviceConfiguration deviceConfig = getSelectedDeviceConfiguration();
+      final State deviceConfig = getSelectedDeviceConfiguration();
       final VirtualFile vFile = getVirtualFile();
       if (deviceConfig != null && vFile != null) {
-        final LayoutDeviceConfiguration defaultConfig = getDefaultDeviceConfigForFile(vFile);
+        final State defaultConfig = getDefaultDeviceConfigForFile(vFile);
         final String defaultConfigName = defaultConfig != null ? defaultConfig.getName() : null;
         final String deviceConfigName = deviceConfig.getName();
 
@@ -512,8 +459,8 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
 
     final String savedDeviceName = state.getDevice();
     if (savedDeviceName != null) {
-      LayoutDevice savedDevice = null;
-      for (LayoutDevice device : myDevices) {
+      Device savedDevice = null;
+      for (Device device : myDevices) {
         if (savedDeviceName.equals(device.getName())) {
           savedDevice = device;
           break;
@@ -529,8 +476,8 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
       final String savedDeviceConfigName = mySettings.getDeviceConfiguration(vFile);
 
       if (savedDeviceConfigName != null) {
-        LayoutDeviceConfiguration savedDeviceConfig = null;
-        for (LayoutDeviceConfiguration config : myDeviceConfigurations) {
+        State savedDeviceConfig = null;
+        for (State config : myDeviceConfigurations) {
           if (savedDeviceConfigName.equals(config.getName())) {
             savedDeviceConfig = config;
             break;
@@ -541,7 +488,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
         }
       }
       else {
-        final LayoutDeviceConfiguration defaultConfig = getDefaultDeviceConfigForFile(vFile);
+        final State defaultConfig = getDefaultDeviceConfigForFile(vFile);
         
         if (defaultConfig != null) {
           myDeviceConfigurationsCombo.setSelectedItem(defaultConfig);
@@ -603,13 +550,13 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
   }
 
   @Nullable
-  private LayoutDeviceConfiguration getDefaultDeviceConfigForFile(@NotNull VirtualFile vFile) {
+  private State getDefaultDeviceConfigForFile(@NotNull VirtualFile vFile) {
     final VirtualFile folder = vFile.getParent();
 
     if (folder == null) {
       return null;
     }
-    final String[] folderSegments = folder.getName().split(AndroidConstants.RES_QUALIFIER_SEP);
+    final String[] folderSegments = folder.getName().split(SdkConstants.RES_QUALIFIER_SEP);
 
     if (folderSegments.length == 0) {
       return null;
@@ -617,8 +564,8 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     final FolderConfiguration config = FolderConfiguration.getConfig(folderSegments);
 
     if (config != null) {
-      for (LayoutDeviceConfiguration deviceConfig : myDeviceConfigurations) {
-        if (deviceConfig.getConfiguration().isMatchFor(config)) {
+      for (State deviceConfig : myDeviceConfigurations) {
+        if (DeviceConfigHelper.getFolderConfig(deviceConfig).isMatchFor(config)) {
           return deviceConfig;
         }
       }
@@ -693,21 +640,23 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
 
   public void updateDevicesAndTargets(@Nullable AndroidPlatform platform) {
     final AndroidSdkData sdkData = platform != null ? platform.getSdkData() : null;
-    final LayoutDevice selectedDevice = getSelectedDevice();
+    final Device selectedDevice = getSelectedDevice();
     final String selectedDeviceName = selectedDevice != null ? selectedDevice.getName() : null;
 
-    final List<LayoutDevice> devices;
+    final List<Device> devices;
     if (sdkData != null) {
-      myLayoutDeviceManager.loadDevices(sdkData);
-      devices = myLayoutDeviceManager.getCombinedList();
+      devices = new ArrayList<Device>();
+      devices.addAll(myLayoutDeviceManager.getDefaultDevices());
+      devices.addAll(myLayoutDeviceManager.getVendorDevices(sdkData.getLocation()));
+      devices.addAll(myUserDeviceManager.parseUserDevices(new MessageBuildingSdkLog()));
     }
     else {
       devices = Collections.emptyList();
     }
 
-    LayoutDevice newSelectedDevice = devices.size() > 0 ? devices.get(0) : null;
+    Device newSelectedDevice = devices.size() > 0 ? devices.get(0) : null;
     if (selectedDeviceName != null) {
-      for (LayoutDevice device : devices) {
+      for (Device device : devices) {
         if (selectedDeviceName.equals(device.getName())) {
           newSelectedDevice = device;
         }
@@ -718,7 +667,6 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     }
     myDevices = devices;
     final List<Object> devicesCopy = new ArrayList<Object>(devices);
-    devicesCopy.add(CUSTOM_DEVICE_STRING);
     myDevicesCombo.setModel(new CollectionComboBoxModel(devicesCopy, newSelectedDevice));
 
     if (newSelectedDevice != null) {
@@ -777,20 +725,20 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     myTargetCombo.setModel(new CollectionComboBoxModel(targets, newSelectedTarget));
   }
 
-  private void updateDeviceConfigurations(@Nullable LayoutDevice device) {
-    final LayoutDeviceConfiguration selectedConfiguration = getSelectedDeviceConfiguration();
+  private void updateDeviceConfigurations(@Nullable Device device) {
+    final State selectedConfiguration = getSelectedDeviceConfiguration();
     final String selectedConfigurationName = selectedConfiguration != null
                                              ? selectedConfiguration.getName()
                                              : null;
-    final List<LayoutDeviceConfiguration> configurations = device != null
-                                                           ? device.getConfigurations()
-                                                           : Collections.<LayoutDeviceConfiguration>emptyList();
+    final List<State> configurations = device != null
+                                                           ? device.getAllStates()
+                                                           : Collections.<State>emptyList();
 
-    LayoutDeviceConfiguration newSelectedConfiguration = configurations.size() > 0
+    State newSelectedConfiguration = configurations.size() > 0
                                                          ? configurations.get(0)
                                                          : null;
     if (selectedConfigurationName != null) {
-      for (LayoutDeviceConfiguration configuration : configurations) {
+      for (State configuration : configurations) {
         if (selectedConfigurationName.equals(configuration.getName())) {
           newSelectedConfiguration = configuration;
         }
@@ -821,7 +769,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
       for (VirtualFile child : resourceDir.getChildren()) {
         if (child.isDirectory()) {
           final String resDirName = child.getName();
-          final String[] segments = resDirName.split(AndroidConstants.RES_QUALIFIER_SEP);
+          final String[] segments = resDirName.split(SdkConstants.RES_QUALIFIER_SEP);
 
           final List<String> languageQualifiers = new ArrayList<String>();
           final List<String> regionQualifiers = new ArrayList<String>();
@@ -1074,12 +1022,8 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
       final AndroidPlatform platform = AndroidPlatform.getInstance(facet.getModule());
       final IAndroidTarget target = platform != null ? platform.getTarget() : null;
       final IAndroidTarget renderingTarget = getSelectedTarget();
-      final LayoutDeviceConfiguration configuration = getSelectedDeviceConfiguration();
-
-      final ScreenSizeQualifier screenSizeQualifier = configuration != null
-                                                      ? configuration.getConfiguration().getScreenSizeQualifier()
-                                                      : null;
-      final ScreenSize screenSize = screenSizeQualifier != null ? screenSizeQualifier.getValue() : null;
+      final State configuration = getSelectedDeviceConfiguration();
+      final ScreenSize screenSize = configuration.getHardware().getScreen().getSize();
       preferredTheme = getThemeByRef(getDefaultTheme(target, renderingTarget, screenSize));
     }
 
@@ -1117,8 +1061,8 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
                                         : targetApiLevel;
 
     return targetApiLevel >= 11 && renderingTargetApiLevel >= 11 && screenSize == ScreenSize.XLARGE
-           ? ResourceResolver.PREFIX_ANDROID_STYLE + "Theme.Holo"
-           : ResourceResolver.PREFIX_ANDROID_STYLE + "Theme";
+           ? SdkConstants.ANDROID_STYLE_RESOURCE_PREFIX + "Theme.Holo"
+           : SdkConstants.ANDROID_STYLE_RESOURCE_PREFIX + "Theme";
   }
 
   private static void collectProjectThemes(AndroidFacet facet, Collection<ThemeData> resultList, Set<ThemeData> addedThemes) {
@@ -1203,26 +1147,26 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
 
   @NotNull
   private static ThemeData getThemeByRef(@NotNull String themeRef) {
-    final boolean isProjectTheme = !themeRef.startsWith(ResourceResolver.PREFIX_ANDROID_STYLE);
-    if (themeRef.startsWith(ResourceResolver.PREFIX_STYLE)) {
-      themeRef = themeRef.substring(ResourceResolver.PREFIX_STYLE.length());
+    final boolean isProjectTheme = !themeRef.startsWith(SdkConstants.ANDROID_STYLE_RESOURCE_PREFIX);
+    if (themeRef.startsWith(SdkConstants.STYLE_RESOURCE_PREFIX)) {
+      themeRef = themeRef.substring(SdkConstants.STYLE_RESOURCE_PREFIX.length());
     }
-    else if (themeRef.startsWith(ResourceResolver.PREFIX_ANDROID_STYLE)) {
-      themeRef = themeRef.substring(ResourceResolver.PREFIX_ANDROID_STYLE.length());
+    else if (themeRef.startsWith(SdkConstants.ANDROID_STYLE_RESOURCE_PREFIX)) {
+      themeRef = themeRef.substring(SdkConstants.ANDROID_STYLE_RESOURCE_PREFIX.length());
     }
     return new ThemeData(themeRef, isProjectTheme);
   }
 
   @Nullable
-  public LayoutDeviceConfiguration getSelectedDeviceConfiguration() {
-    return (LayoutDeviceConfiguration)myDeviceConfigurationsCombo.getSelectedItem();
+  public State getSelectedDeviceConfiguration() {
+    return (State)myDeviceConfigurationsCombo.getSelectedItem();
   }
 
   @Nullable
-  public LayoutDevice getSelectedDevice() {
+  public Device getSelectedDevice() {
     final Object selectedObj = myDevicesCombo.getSelectedItem();
-    if (selectedObj instanceof LayoutDevice) {
-      return (LayoutDevice)selectedObj;
+    if (selectedObj instanceof Device) {
+      return (Device)selectedObj;
     }
     return null;
   }

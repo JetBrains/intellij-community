@@ -310,7 +310,7 @@ public class ImportHelper{
   private static StringBuilder buildImportListText(@NotNull List<Pair<String, Boolean>> names,
                                                    @NotNull final Set<String> packagesOrClassesToImportOnDemand,
                                                    @NotNull final Set<String> namesToUseSingle) {
-    final Set<String> importedPackagesOrClasses = new THashSet<String>();
+    final Set<Pair<String, Boolean>> importedPackagesOrClasses = new THashSet<Pair<String, Boolean>>();
     @NonNls final StringBuilder buffer = new StringBuilder();
     for (Pair<String, Boolean> pair : names) {
       String name = pair.getFirst();
@@ -321,11 +321,12 @@ public class ImportHelper{
       if (useOnDemand && namesToUseSingle.remove(name)) {
         useOnDemand = false;
       }
-      if (useOnDemand && (importedPackagesOrClasses.contains(packageOrClassName) || implicitlyImported)) continue;
+      final Pair<String, Boolean> current = Pair.create(packageOrClassName, isStatic);
+      if (useOnDemand && (importedPackagesOrClasses.contains(current) || implicitlyImported)) continue;
       buffer.append("import ");
       if (isStatic) buffer.append("static ");
       if (useOnDemand) {
-        importedPackagesOrClasses.add(packageOrClassName);
+        importedPackagesOrClasses.add(current);
         buffer.append(packageOrClassName);
         buffer.append(".*");
       }
