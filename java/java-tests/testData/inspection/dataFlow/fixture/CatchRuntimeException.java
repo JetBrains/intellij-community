@@ -3,12 +3,34 @@ import org.jetbrains.annotations.NotNull;
 public class BrokenAlignment {
 
   @NotNull
-  Object test(){
-    try{
+  Object test1() {
+    try {
       bar(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
       return <warning descr="'null' is returned by the method declared as @NotNull">null</warning>;
     }
     catch (RuntimeException e) {
+      return <warning descr="'null' is returned by the method declared as @NotNull">null</warning>;
+    }
+  }
+
+  @NotNull
+  Object test2() {
+    try {
+      bar(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
+      return <warning descr="'null' is returned by the method declared as @NotNull">null</warning>;
+    }
+    catch (IllegalArgumentException | IllegalStateException e) {
+      return <warning descr="'null' is returned by the method declared as @NotNull">null</warning>;
+    }
+  }
+
+  @NotNull
+  Object test3() {
+    try {
+      bar(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
+      return <warning descr="'null' is returned by the method declared as @NotNull">null</warning>;
+    }
+    catch (AssertionError | IllegalStateException e) {
       return <warning descr="'null' is returned by the method declared as @NotNull">null</warning>;
     }
   }
