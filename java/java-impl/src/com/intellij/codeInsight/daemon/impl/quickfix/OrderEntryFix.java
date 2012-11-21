@@ -22,22 +22,17 @@ import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -59,7 +54,7 @@ import java.util.*;
  * @author cdr
  */
 public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
-  private OrderEntryFix() {
+  OrderEntryFix() {
   }
 
   @Override
@@ -180,63 +175,15 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     Set<Object> librariesToAdd = new THashSet<Object>();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(psiElement.getProject());
     final PsiClass[] classes = PsiShortNamesCache.getInstance(project).getClassesByName(referenceName, GlobalSearchScope.allScope(project));
+    final OrderEntryFix moduleDependencyFix = new AddModuleDependencyFix(currentModule, classVFile, classes, reference);
+    registrar.register(moduleDependencyFix);
+    result.add(moduleDependencyFix);
     for (final PsiClass aClass : classes) {
       if (!facade.getResolveHelper().isAccessible(aClass, psiElement, aClass)) continue;
       PsiFile psiFile = aClass.getContainingFile();
       if (psiFile == null) continue;
       VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile == null) continue;
-      final Module classModule = fileIndex.getModuleForFile(virtualFile);
-      if (classModule != null && classModule != currentModule && !ModuleRootManager.getInstance(currentModule).isDependsOn(classModule)) {
-        final OrderEntryFix fix = new OrderEntryFix() {
-          @Override
-          @NotNull
-          public String getText() {
-            return QuickFixBundle.message("orderEntry.fix.add.dependency.on.module", classModule.getName());
-          }
-
-          @Override
-          @NotNull
-          public String getFamilyName() {
-            return QuickFixBundle.message("orderEntry.fix.family.add.module.dependency");
-          }
-
-          @Override
-          public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-            return !project.isDisposed() && !classModule.isDisposed() && !currentModule.isDisposed();
-          }
-
-          @Override
-          public void invoke(@NotNull final Project project, @Nullable final Editor editor, PsiFile file) {
-            final Runnable doit = new Runnable() {
-              @Override
-              public void run() {
-                final boolean test = ModuleRootManager.getInstance(currentModule).getFileIndex().isInTestSourceContent(classVFile);
-                ModuleRootModificationUtil.addDependency(currentModule, classModule,
-                                                         test ? DependencyScope.TEST : DependencyScope.COMPILE, false);
-                if (editor != null) {
-                  final List<PsiClass> targetClasses = new ArrayList<PsiClass>();
-                  for (PsiClass psiClass : classes) {
-                    if (ModuleUtilCore.findModuleForPsiElement(psiClass) == classModule) {
-                      targetClasses.add(psiClass);
-                    }
-                  }
-                  new AddImportAction(project, reference, editor, targetClasses.toArray(new PsiClass[targetClasses.size()])).execute();
-                }
-              }
-            };
-            final Pair<Module, Module> circularModules = ModuleCompilerUtil.addingDependencyFormsCircularity(currentModule, classModule);
-            if (circularModules == null) {
-              doit.run();
-            }
-            else {
-              showCircularWarningAndContinue(project, circularModules, classModule, doit);
-            }
-          }
-        };
-        registrar.register(fix);
-        result.add(fix);
-      }
       ModuleFileIndex moduleFileIndex = ModuleRootManager.getInstance(currentModule).getFileIndex();
       for (OrderEntry orderEntry : fileIndex.getOrderEntriesForFile(virtualFile)) {
         if (orderEntry instanceof LibraryOrderEntry) {
@@ -347,26 +294,6 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     }
     ModuleRootModificationUtil.addModuleLibrary(module, null, Collections.singletonList(libVirtFile.getUrl()),
                                                 Collections.<String>emptyList(), inTests ? DependencyScope.TEST : DependencyScope.COMPILE);
-  }
-
-  private static void showCircularWarningAndContinue(final Project project, final Pair<Module, Module> circularModules,
-                                                     final Module classModule,
-                                                     final Runnable doit) {
-    final String message = QuickFixBundle.message("orderEntry.fix.circular.dependency.warning", classModule.getName(),
-                                                  circularModules.getFirst().getName(), circularModules.getSecond().getName());
-    if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (!project.isOpen()) return;
-        int ret = Messages.showOkCancelDialog(project, message,
-                                              QuickFixBundle.message("orderEntry.fix.title.circular.dependency.warning"),
-                                              Messages.getWarningIcon());
-        if (ret == 0) {
-          ApplicationManager.getApplication().runWriteAction(doit);
-        }
-      }
-    });
   }
 
   public static boolean ensureAnnotationsJarInPath(final Module module) {

@@ -164,7 +164,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
 
   protected JpsModule addModule(final String moduleName, final String srcRootRelativePath) {
     String srcPath = getAbsolutePath(srcRootRelativePath);
-    return addModule(moduleName, new String[]{srcPath}, null, getOrCreateJdk());
+    return addModule(moduleName, new String[]{srcPath}, null, null, getOrCreateJdk());
   }
 
   protected BuildResult doTestBuild(int makesCount) {

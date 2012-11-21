@@ -162,13 +162,16 @@ public class InjectorUtils {
   }
 
   public static void registerSupport(@NotNull LanguageInjectionSupport support, boolean settingsAvailable, @NotNull MultiHostRegistrar registrar) {
-    final List<Pair<Place,PsiFile>> result = ((MultiHostRegistrarImpl)registrar).getResult();
-    if (result == null || result.isEmpty()) return;
-    final PsiFile psiFile = result.get(result.size() - 1).second;
+    PsiFile psiFile = getInjectedFile(registrar);
     psiFile.putUserData(LanguageInjectionSupport.INJECTOR_SUPPORT, support);
     if (settingsAvailable) {
       psiFile.putUserData(LanguageInjectionSupport.SETTINGS_EDITOR, support);
     }
+  }
+
+  public static PsiFile getInjectedFile(MultiHostRegistrar registrar) {
+    final List<Pair<Place,PsiFile>> result = ((MultiHostRegistrarImpl)registrar).getResult();
+    return result == null || result.isEmpty() ? null : result.get(result.size() - 1).second;
   }
 
   @SuppressWarnings("UnusedParameters")

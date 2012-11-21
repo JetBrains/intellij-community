@@ -14,7 +14,6 @@ public class MavenIcons {
   }
 
   public static final Icon ChildrenProjects = load("/images/childrenProjects.png"); // 12x12
-  @SuppressWarnings("unused")
   public static final Icon MavenLogo = load("/images/mavenLogo.png"); // 16x16
   public static final Icon MavenPlugin = load("/images/mavenPlugin.png"); // 16x16
   public static final Icon MavenProject = load("/images/mavenProject.png"); // 16x16

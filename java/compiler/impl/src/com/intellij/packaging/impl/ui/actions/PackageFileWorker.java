@@ -15,8 +15,18 @@
  */
 package com.intellij.packaging.impl.ui.actions;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
@@ -54,9 +64,37 @@ public class PackageFileWorker {
     myRelativeOutputPath = relativeOutputPath;
   }
 
-  public static void packageFile(@NotNull VirtualFile file, @NotNull Project project) throws IOException {
+  public static void startPackagingFiles(final Project project, final List<VirtualFile> files,
+                                         final Artifact[] artifacts, final Runnable onFinished) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Packaging Files") {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          for (final VirtualFile file : files) {
+            indicator.checkCanceled();
+            new ReadAction() {
+              protected void run(final Result result) {
+                try {
+                  packageFile(file, project, artifacts);
+                }
+                catch (IOException e) {
+                  String message = CompilerBundle.message("message.tect.package.file.io.error", e.toString());
+                  Notifications.Bus.notify(new Notification("Package File", "Cannot package file", message, NotificationType.ERROR));
+                }
+              }
+            }.execute();
+          }
+        }
+        finally {
+          ApplicationManager.getApplication().invokeLater(onFinished);
+        }
+      }
+    });
+  }
+
+  public static void packageFile(@NotNull VirtualFile file, @NotNull Project project, final Artifact[] artifacts) throws IOException {
     LOG.debug("Start packaging file: " + file.getPath());
-    final Collection<Trinity<Artifact, PackagingElementPath, String>> items = ArtifactUtil.findContainingArtifactsWithOutputPaths(file, project);
+    final Collection<Trinity<Artifact, PackagingElementPath, String>> items = ArtifactUtil.findContainingArtifactsWithOutputPaths(file, project, artifacts);
     File ioFile = VfsUtil.virtualToIoFile(file);
     for (Trinity<Artifact, PackagingElementPath, String> item : items) {
       final Artifact artifact = item.getFirst();

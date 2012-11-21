@@ -16,6 +16,7 @@
 
 package org.intellij.plugins.intelliLang.inject;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -24,11 +25,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -38,7 +41,11 @@ import java.util.List;
  */
 public class TemporaryPlacesRegistry {
   private final Project myProject;
-  private final List<TemporaryPlace> myTempPlaces = ContainerUtil.createEmptyCOWList();
+  private final List<TempPlace> myTempPlaces = ContainerUtil.createEmptyCOWList();
+
+  private final PsiModificationTracker myModificationTracker;
+  private volatile long myPsiModificationCounter;
+
   private final LanguageInjectionSupport myInjectorSupport = new AbstractLanguageInjectionSupport() {
     @NotNull
     @Override
@@ -68,14 +75,25 @@ public class TemporaryPlacesRegistry {
     return ServiceManager.getService(project, TemporaryPlacesRegistry.class);
   }
 
-  public TemporaryPlacesRegistry(final Project project) {
+  public TemporaryPlacesRegistry(Project project, PsiModificationTracker modificationTracker) {
     myProject = project;
+    myModificationTracker = modificationTracker;
   }
 
-  public List<TemporaryPlace> getTempInjectionsSafe() {
-    final List<TemporaryPlace> placesToRemove = ContainerUtil.findAll(myTempPlaces, new Condition<TemporaryPlace>() {
-      public boolean value(final TemporaryPlace place) {
-        return place.elementPointer.getElement() == null;
+  private List<TempPlace> getInjectionPlacesSafe() {
+    long modificationCount = myModificationTracker.getModificationCount();
+    if (myPsiModificationCounter == modificationCount) return myTempPlaces;
+    myPsiModificationCounter = modificationCount;
+    final List<TempPlace> placesToRemove = ContainerUtil.findAll(myTempPlaces, new Condition<TempPlace>() {
+      public boolean value(final TempPlace place) {
+        PsiLanguageInjectionHost element = place.elementPointer.getElement();
+        if (element == null) {
+          return true;
+        }
+        else {
+          element.putUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE, place.language);
+          return false;
+        }
       }
     });
     if (!placesToRemove.isEmpty()) {
@@ -84,73 +102,77 @@ public class TemporaryPlacesRegistry {
     return myTempPlaces;
   }
 
-  public List<TemporaryPlace> getTempInjectionsSafe(final PsiLanguageInjectionHost host) {
-    return ContainerUtil.findAll(getTempInjectionsSafe(), new Condition<TemporaryPlace>() {
-      public boolean value(final TemporaryPlace pair) {
-        return pair.elementPointer.getElement() == host;
+  private void addInjectionPlace(TempPlace place) {
+    PsiLanguageInjectionHost element = place.elementPointer.getElement();
+    if (element == null) return;
+    List<TempPlace> injectionPoints = getInjectionPlacesSafe();
+    element.putUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE, place.language);
+
+    for (TempPlace tempPlace : injectionPoints) {
+      if (tempPlace.elementPointer.getElement() == element) {
+        injectionPoints.remove(tempPlace);
+        break;
       }
-    });
+    }
+    if (place.language != null) {
+      injectionPoints.add(place);
+    }
   }
 
   public boolean removeHostWithUndo(final Project project, final PsiLanguageInjectionHost host) {
-    final List<TemporaryPlace> places = getTempInjectionsSafe(host);
-    if (places.isEmpty()) return false;
-    Configuration.replaceInjectionsWithUndo(project, Collections.<TemporaryPlace>emptyList(), places, Collections.<PsiElement>emptyList(), new PairProcessor<List<TemporaryPlace>, List<TemporaryPlace>>() {
-      public boolean process(final List<TemporaryPlace> add,
-                             final List<TemporaryPlace> remove) {
-        myTempPlaces.addAll(add);
-        myTempPlaces.removeAll(remove);
-        return true;
-      }
-    });
+    InjectedLanguage prevLanguage = host.getUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE);
+    if (prevLanguage == null) return false;
+    SmartPointerManager manager = SmartPointerManager.getInstance(myProject);
+    SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = manager.createSmartPsiElementPointer(host);
+    TempPlace place = new TempPlace(prevLanguage, pointer);
+    TempPlace nextPlace = new TempPlace(null, pointer);
+    Configuration.replaceInjectionsWithUndo(
+      project, nextPlace, place, Collections.<PsiElement>emptyList(),
+      new PairProcessor<TempPlace, TempPlace>() {
+        public boolean process(final TempPlace add,
+                               final TempPlace remove) {
+          addInjectionPlace(add);
+          return true;
+        }
+      });
     return true;
   }
 
   public void addHostWithUndo(final PsiLanguageInjectionHost host, final InjectedLanguage language) {
-    final SmartPointerManager manager = SmartPointerManager.getInstance(myProject);
-    final SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = manager.createSmartPsiElementPointer(host);
-    final TemporaryPlace place = new TemporaryPlace(language, pointer);
-    if (myTempPlaces.contains(place)) return;
-    Configuration.replaceInjectionsWithUndo(myProject, Collections.singletonList(place), Collections.<TemporaryPlace>emptyList(), Collections.<PsiElement>emptyList(), new PairProcessor<List<TemporaryPlace>, List<TemporaryPlace>>() {
-      public boolean process(final List<TemporaryPlace> add, final List<TemporaryPlace> remove) {
-        myTempPlaces.addAll(add);
-        myTempPlaces.removeAll(remove);
-        return true;
-      }
-    });
+    InjectedLanguage prevLanguage = host.getUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE);
+    SmartPointerManager manager = SmartPointerManager.getInstance(myProject);
+    SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = manager.createSmartPsiElementPointer(host);
+    TempPlace prevPlace = new TempPlace(prevLanguage, pointer);
+    TempPlace place = new TempPlace(language, pointer);
+    Configuration.replaceInjectionsWithUndo(
+      myProject, place, prevPlace, Collections.<PsiElement>emptyList(),
+      new PairProcessor<TempPlace, TempPlace>() {
+        public boolean process(TempPlace add, final TempPlace remove) {
+          addInjectionPlace(add);
+          return true;
+        }
+      });
   }
 
   public LanguageInjectionSupport getLanguageInjectionSupport() {
     return myInjectorSupport;
   }
 
-  public static class TemporaryPlace {
-    final InjectedLanguage language;
-    final SmartPsiElementPointer<PsiLanguageInjectionHost> elementPointer;
+  @Nullable
+  public InjectedLanguage getLanguageFor(@NotNull PsiLanguageInjectionHost host) {
+    PsiLanguageInjectionHost originalHost = CompletionUtil.getOriginalElement(host);
+    PsiLanguageInjectionHost injectionHost = originalHost == null ? host : originalHost;
+    getInjectionPlacesSafe();
+    return injectionHost.getUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE);
+  }
 
-    public TemporaryPlace(final InjectedLanguage language, final SmartPsiElementPointer<PsiLanguageInjectionHost> elementPointer) {
+  private static class TempPlace {
+    public final InjectedLanguage language;
+    public final SmartPsiElementPointer<PsiLanguageInjectionHost> elementPointer;
+
+    public TempPlace(InjectedLanguage language, SmartPsiElementPointer<PsiLanguageInjectionHost> elementPointer) {
       this.language = language;
       this.elementPointer = elementPointer;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      final TemporaryPlace place = (TemporaryPlace)o;
-
-      if (!elementPointer.equals(place.elementPointer)) return false;
-      if (!language.equals(place.language)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = language.hashCode();
-      result = 31 * result + elementPointer.hashCode();
-      return result;
     }
   }
 }

@@ -74,6 +74,7 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -216,6 +217,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     myTemplatesTree.setRootVisible(false);
     myTemplatesTree.setShowsRootHandles(false);
     myTemplatesTree.putClientProperty("JTree.lineStyle", "None");
+    myTemplatesTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
     myTemplatesTree.setCellRenderer(new NodeRenderer() {
 

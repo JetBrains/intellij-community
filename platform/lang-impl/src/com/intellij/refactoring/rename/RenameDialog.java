@@ -91,6 +91,10 @@ public class RenameDialog extends RefactoringDialog {
     myHelpID = RenamePsiElementProcessor.forElement(psiElement).getHelpID(psiElement);
   }
 
+  public PsiElement getPsiElement() {
+    return myPsiElement;
+  }
+
   @Override
   protected boolean hasPreviewButton() {
     return RenamePsiElementProcessor.forElement(myPsiElement).showRenamePreviewButton(myPsiElement);
@@ -127,11 +131,15 @@ public class RenameDialog extends RefactoringDialog {
     }
     myNameChangedListener = new NameSuggestionsField.DataChanged() {
       public void dataChanged() {
-        validateButtons();
+        processNewNameChanged();
       }
     };
     myNameSuggestionsField.addDataChangedListener(myNameChangedListener);
 
+  }
+
+  protected void processNewNameChanged() {
+    validateButtons();
   }
 
   public String[] getSuggestedNames() {
@@ -268,8 +276,7 @@ public class RenameDialog extends RefactoringDialog {
       mySuggestedNameInfo.nameChosen(newName);
     }
 
-    final RenameProcessor processor = new RenameProcessor(getProject(), myPsiElement, newName, isSearchInComments(),
-                                                          isSearchInNonJavaFiles());
+    final RenameProcessor processor = createRenameProcessor(newName);
 
     for(Map.Entry<AutomaticRenamerFactory, JCheckBox> e: myAutomaticRenamers.entrySet()) {
       e.getKey().setEnabled(e.getValue().isSelected());
@@ -279,6 +286,11 @@ public class RenameDialog extends RefactoringDialog {
     }
 
     invokeRefactoring(processor);
+  }
+
+  protected RenameProcessor createRenameProcessor(String newName) {
+    return new RenameProcessor(getProject(), myPsiElement, newName, isSearchInComments(),
+                                                          isSearchInNonJavaFiles());
   }
 
   @Override

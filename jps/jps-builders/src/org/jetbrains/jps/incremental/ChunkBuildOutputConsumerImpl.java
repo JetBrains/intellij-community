@@ -62,4 +62,9 @@ class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputConsumer 
       consumer.fireFileGeneratedEvent();
     }
   }
+
+  public void clear() {
+    myTarget2Consumer.clear();
+    myClasses.clear();
+  }
 }

@@ -41,6 +41,7 @@ import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
+import org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
@@ -56,14 +57,16 @@ import java.util.*;
 public class ConcatenationInjector implements ConcatenationAwareInjector {
   private final Configuration myConfiguration;
   private final Project myProject;
+  private final TemporaryPlacesRegistry myTemporaryPlacesRegistry;
   private final CachedValue<Collection<String>> myAnnoIndex;
   private final CachedValue<Collection<String>> myXmlIndex;
   private final LanguageInjectionSupport mySupport;
 
 
-  public ConcatenationInjector(Configuration configuration, Project project) {
+  public ConcatenationInjector(Configuration configuration, Project project, TemporaryPlacesRegistry temporaryPlacesRegistry) {
     myConfiguration = configuration;
     myProject = project;
+    myTemporaryPlacesRegistry = temporaryPlacesRegistry;
     mySupport = InjectorUtils.findNotNullInjectionSupport(LanguageInjectionSupport.JAVA_SUPPORT_ID);
     myXmlIndex = CachedValuesManager.getManager(myProject).createCachedValue(new CachedValueProvider<Collection<String>>() {
       public Result<Collection<String>> compute() {
@@ -119,15 +122,18 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
   public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull PsiElement... operands) {
     if (operands.length == 0) return;
     boolean hasLiteral = false;
+    InjectedLanguage tempInjectedLanguage = null;
     for (PsiElement operand : operands) {
       if (PsiUtilEx.isStringOrCharacterLiteral(operand)) {
+        tempInjectedLanguage = myTemporaryPlacesRegistry.getLanguageFor((PsiLanguageInjectionHost)operand);
         hasLiteral = true;
-        break;
+        if (tempInjectedLanguage != null) break;
       }
     }
     if (!hasLiteral) return;
+    final Language tempLanguage = tempInjectedLanguage == null ? null : tempInjectedLanguage.getLanguage();
     final PsiFile containingFile = operands[0].getContainingFile();
-    new InjectionProcessor(myConfiguration, operands) {
+    InjectionProcessor injectionProcessor = new InjectionProcessor(myConfiguration, operands) {
       @Override
       protected void processInjection(Language language,
                                       List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
@@ -146,7 +152,15 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
         }
         return false;
       }
-    }.processInjections();
+    };
+    if (tempLanguage != null) {
+      injectionProcessor.processCommentInjectionInner(null, null, tempLanguage);
+      PsiFile file = InjectorUtils.getInjectedFile(registrar);
+      if (file != null) file.putUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE, tempInjectedLanguage);
+    }
+    else {
+      injectionProcessor.processInjections();
+    }
   }
 
   public static class InjectionProcessor {

@@ -1017,7 +1017,13 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
                                         final String commandName,
                                         final String cannotMakeString,
                                         @NotNull String shortDescription) {
-    addButtonToLowerPane(new MyPerformOperationRunnable(cannotMakeString, processRunnable, commandName), shortDescription);
+    addButtonToLowerPane(newPerformOperationRunnable(processRunnable, commandName, cannotMakeString), shortDescription);
+  }
+
+  public MyPerformOperationRunnable newPerformOperationRunnable(Runnable processRunnable,
+                                                                 String commandName,
+                                                                 String cannotMakeString) {
+    return new MyPerformOperationRunnable(cannotMakeString, processRunnable, commandName);
   }
 
   private boolean allTargetsAreValid() {

@@ -179,9 +179,10 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
 
   protected JpsModule addModule(String moduleName,
                                 String[] srcPaths,
-                                @Nullable final String outputPath,
-                                final JpsSdk<JpsDummyElement> jdk) {
-    final JpsModule module = myProject.addModule(moduleName, JpsJavaModuleType.INSTANCE);
+                                @Nullable String outputPath,
+                                @Nullable String testOutputPath,
+                                JpsSdk<JpsDummyElement> jdk) {
+    JpsModule module = myProject.addModule(moduleName, JpsJavaModuleType.INSTANCE);
     module.getSdkReferencesTable().setSdkReference(JpsJavaSdkType.INSTANCE, jdk.createReference());
     module.getDependenciesList().addSdkDependency(JpsJavaSdkType.INSTANCE);
     if (srcPaths.length > 0) {
@@ -192,6 +193,12 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       JpsJavaModuleExtension extension = JpsJavaExtensionService.getInstance().getOrCreateModuleExtension(module);
       if (outputPath != null) {
         extension.setOutputUrl(JpsPathUtil.pathToUrl(outputPath));
+        if (!StringUtil.isEmpty(testOutputPath)) {
+          extension.setTestOutputUrl(JpsPathUtil.pathToUrl(testOutputPath));
+        }
+        else {
+          extension.setTestOutputUrl(extension.getOutputUrl());
+        }
       }
       else {
         extension.setInheritOutput(true);
@@ -279,6 +286,6 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     if (myJdk == null) {
       myJdk = addJdk("1.6");
     }
-    return addModule(moduleName, srcPaths, getAbsolutePath("out/production/" + moduleName), myJdk);
+    return addModule(moduleName, srcPaths, getAbsolutePath("out/production/" + moduleName), null, myJdk);
   }
 }

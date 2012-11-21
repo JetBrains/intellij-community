@@ -34,6 +34,7 @@ public class OptimizeImportsTest extends PsiTestCase{
   public void testSCR18364() throws Exception { doTest(); }
   public void testStaticImports1() throws Exception { doTest(); }
   public void testStaticImportsToOptimize() throws Exception { doTest(); }
+  public void testStaticImportsToOptimizeMixed() throws Exception { doTest(); }
   public void testStaticImportsToOptimize2() throws Exception { doTest(); }
   public void testEmptyImportList() throws Exception { doTest(); }
   public void testIDEADEV10716() throws Exception { doTest(); }

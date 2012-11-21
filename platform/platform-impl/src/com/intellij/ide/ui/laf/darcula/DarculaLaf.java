@@ -23,15 +23,18 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
+import sun.awt.AppContext;
 
 import javax.swing.*;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.IconUIResource;
 import javax.swing.plaf.InsetsUIResource;
 import javax.swing.plaf.basic.BasicLookAndFeel;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 import java.awt.*;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Properties;
@@ -80,12 +83,29 @@ public final class DarculaLaf extends BasicLookAndFeel {
       final UIDefaults defaults = (UIDefaults)superMethod.invoke(base);
       LafManagerImpl.initInputMapDefaults(defaults);
       initIdeaDefaults(defaults);
+      //patchStyledEditorKit();
       return defaults;
     }
     catch (Exception ignore) {
       log(ignore);
     }
     return super.getDefaults();
+  }
+
+  private void patchStyledEditorKit() {
+    try {
+      StyleSheet defaultStyles = new StyleSheet();
+	InputStream is = DarculaLaf.class.getResourceAsStream("darcula.css");
+	Reader r = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+	defaultStyles.loadRules(r, null);
+	r.close();
+      final Field keyField = HTMLEditorKit.class.getDeclaredField("DEFAULT_STYLES_KEY");
+      keyField.setAccessible(true);
+      final Object key = keyField.get(null);
+      AppContext.getAppContext().put(key, defaultStyles);
+    } catch (Exception e) {
+      log(e);
+    }
   }
 
   private void call(String method) {
