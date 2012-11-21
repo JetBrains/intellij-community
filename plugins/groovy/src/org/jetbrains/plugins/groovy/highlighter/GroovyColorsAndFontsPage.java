@@ -123,14 +123,14 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
            "}\n" +
            "\n" +
            "<classref>Demo</classref>.<statfield>panel</statfield>.size = " +
-           "<classref>Demo</classref>.<statmet>foo</statmet>(\"123${456}789\".toInteger()) \n" +
-           "'JetBrains'.matches(/Jw+Bw+/) \n" +
+           "<classref>Demo</classref>.<statmet>foo</statmet>(\"123${456}789\".<instmet>toInteger</instmet>()) \n" +
+           "'JetBrains'.<instmet>matches</instmet>(/Jw+Bw+/) \n" +
            "<keyword>def</keyword> <local>x</local>=1 + <unresolved>unresolved</unresolved>\n" +
            "<label>label</label>:<keyword>def</keyword> <reLocal>f1</reLocal> = []\n" +
            "<reLocal>f1</reLocal> = [2]\n" +
            "<classref>File</classref> <local>f</local>=<literal>[</literal>'path'<literal>]</literal>\n" +
-           "print <keyword>new</keyword> <classref>Demo</classref>().<prop>property</prop>\n" +
-           "print '<validescape>\\n</validescape> <invalidescape>\\x</invalidescape>'"
+           "<instmet>print</instmet> <keyword>new</keyword> <classref>Demo</classref>().<prop>property</prop>\n" +
+           "<instmet>print</instmet> '<validescape>\\n</validescape> <invalidescape>\\x</invalidescape>'"
 
       ;
   }
@@ -141,12 +141,12 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
     map.put("keyword", DefaultHighlighter.KEYWORD);
     map.put("annotation", DefaultHighlighter.ANNOTATION);
     map.put("statmet", DefaultHighlighter.STATIC_METHOD_ACCESS);
+    map.put("instmet", DefaultHighlighter.METHOD_CALL);
     map.put("statfield", DefaultHighlighter.STATIC_FIELD);
     map.put("instfield", DefaultHighlighter.INSTANCE_FIELD);
     map.put("gdoc", DefaultHighlighter.DOC_COMMENT_CONTENT);
     map.put("doctag", DefaultHighlighter.DOC_COMMENT_TAG);
     map.put("unresolved", DefaultHighlighter.UNRESOLVED_ACCESS);
-    //map.put("wrongstring", DefaultHighlighter.WRONG_STRING);
     map.put("classref", DefaultHighlighter.CLASS_REFERENCE);
     map.put("typeparam", DefaultHighlighter.TYPE_PARAMETER);
     map.put("literal", DefaultHighlighter.LITERAL_CONVERSION);
