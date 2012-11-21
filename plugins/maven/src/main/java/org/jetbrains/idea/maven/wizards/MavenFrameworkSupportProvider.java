@@ -24,6 +24,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -83,25 +84,12 @@ public class MavenFrameworkSupportProvider extends FrameworkSupportProvider {
 
     if (ArrayUtil.contains(src, model.getSourceRoots())) {
       try {
-        VirtualFile main = src.findChild("main");
-        if (main == null) {
-          main = src.createChildDirectory(null, "main");
-        }
-        else if (!main.isDirectory()) {
-          return;
-        }
-
-        VirtualFile java = main.findChild("java");
-        if (java == null) {
-          java = main.createChildDirectory(null, "java");
-        }
-        else if (java.isDirectory()) {
-          return;
-        }
-
-        for (VirtualFile child : src.getChildren()) {
-          if (!main.equals(child)) {
-            child.move(null, java);
+        VirtualFile java = VfsUtil.createDirectories(src.getPath() + "/main/java");
+        if (java != null && java.isDirectory()) {
+          for (VirtualFile child : src.getChildren()) {
+            if (!child.getName().equals("main")) {
+              child.move(null, java);
+            }
           }
         }
       }
