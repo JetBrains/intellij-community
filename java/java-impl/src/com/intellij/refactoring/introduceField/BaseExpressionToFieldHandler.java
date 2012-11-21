@@ -760,7 +760,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
             anchorElementHere = myAnchorElementIfOne;
           }
           assignStatement = createAssignment(myField, initializer, anchorElementHere, myParentClass);
-          if (!RefactoringUtil.isLoopOrIf(anchorElementHere.getParent())) {
+          if (anchorElementHere != null && !RefactoringUtil.isLoopOrIf(anchorElementHere.getParent())) {
             anchorElementHere.getParent().addBefore(assignStatement, getNormalizedAnchor(anchorElementHere));
           }
         }
