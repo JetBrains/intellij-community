@@ -36,7 +36,7 @@
                 <properties>
                   <contentType value="text/html"/>
                   <editable value="false"/>
-                  <text value="&lt;html&gt;&#13;&#10;  &lt;head&gt;&#13;&#10;    &#13;&#10;  &lt;/head&gt;&#13;&#10;  &lt;body&gt;&#13;&#10;  &lt;/body&gt;&#13;&#10;&lt;/html&gt;&#13;&#10;"/>
+                  <text value="&lt;html&gt;&#13;&#10;  &lt;head&gt;&#13;&#10;&#13;&#10;  &lt;/head&gt;&#13;&#10;  &lt;body&gt;&#13;&#10;    &lt;p style=&quot;margin-top: 0&quot;&gt;&#13;&#10;      &#13;&#10;    &lt;/p&gt;&#13;&#10;  &lt;/body&gt;&#13;&#10;&lt;/html&gt;&#13;&#10;"/>
                 </properties>
               </component>
             </children>
@@ -140,6 +140,7 @@
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
             <minimum-size width="200" height="-1"/>
+            <preferred-size width="178" height="161"/>
           </grid>
         </constraints>
         <properties/>
@@ -158,12 +159,11 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="a0023" class="com.intellij.ui.treeStructure.SimpleTree" binding="myTemplatesTree">
+              <component id="11306" class="com.intellij.ui.components.JBList" binding="myTemplatesList">
                 <constraints/>
-                <properties/>
-                <clientProperties>
-                  <JTree.lineStyle class="java.lang.String" value="None"/>
-                </clientProperties>
+                <properties>
+                  <selectionMode value="0"/>
+                </properties>
               </component>
             </children>
           </scrollpane>
