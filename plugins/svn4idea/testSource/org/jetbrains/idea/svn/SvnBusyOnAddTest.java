@@ -20,6 +20,7 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.util.concurrency.Semaphore;
 import junit.framework.Assert;
 import junit.framework.TestCase;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNCancelException;
@@ -211,6 +212,7 @@ public class SvnBusyOnAddTest extends TestCase {
     }
   }
 
+  @Nullable
   private String getStatus(final File ioFile) throws SVNException {
     try {
     SVNStatusClient readClient = new SVNStatusClient((ISVNRepositoryPool)null, new DefaultSVNOptions());
