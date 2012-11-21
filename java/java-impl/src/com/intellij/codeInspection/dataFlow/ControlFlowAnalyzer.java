@@ -767,7 +767,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     throw new CantAnalyzeException();
   }
 
-  @Override public void visitTryStatement(PsiTryStatement statement) {
+  @Override
+  public void visitTryStatement(PsiTryStatement statement) {
     startElement(statement);
 
     PsiResourceList resourceList = statement.getResourceList();
@@ -786,27 +787,20 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiCatchSection section = sections[i];
       PsiCodeBlock catchBlock = section.getCatchBlock();
       PsiParameter parameter = section.getParameter();
-
       if (parameter != null && catchBlock != null) {
-        for (PsiType type : section.getPreciseCatchTypes()) {
-          if (type instanceof PsiClassType) {
-            myCatchStack.push(new CatchDescriptor(parameter, catchBlock));
-            catchesPushCount++;
-          }
-          else {
-            throw new CantAnalyzeException();
-          }
+        PsiType type = parameter.getType();
+        if (type instanceof PsiClassType || type instanceof PsiDisjunctionType) {
+          myCatchStack.push(new CatchDescriptor(parameter, catchBlock));
+          catchesPushCount++;
+          continue;
         }
       }
-      else {
-        throw new CantAnalyzeException();
-      }
+      throw new CantAnalyzeException();
     }
 
     int endOffset = finallyBlock == null ? getEndOffset(statement) : getStartOffset(finallyBlock) - 2;
 
     PsiCodeBlock tryBlock = statement.getTryBlock();
-
     if (tryBlock != null) {
       tryBlock.accept(this);
     }
