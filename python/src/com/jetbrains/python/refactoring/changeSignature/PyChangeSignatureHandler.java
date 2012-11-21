@@ -2,13 +2,15 @@ package com.jetbrains.python.refactoring.changeSignature;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyUtil;
@@ -53,7 +55,7 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
   @Nullable
   @Override
   public String getTargetNotFoundMessage() {
-    return RefactoringBundle.message("error.wrong.caret.position.method.or.class.name");
+    return PyBundle.message("refactoring.change.signature.error.wrong.caret.position.method.name");
   }
 
   private static void invokeOnElement(Project project, PsiElement element) {
@@ -77,8 +79,29 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
       return function;
     }
     final PsiElement result = PySuperMethodsSearch.search(function).findFirst();
-    if (result != null) {             // TODO: choose method to refactor
-      return (PyFunction)result;
+    if (result != null) {
+      final PyClass baseClass = ((PyFunction)result).getContainingClass();
+      String baseClassName = baseClass == null? "" : baseClass.getName();
+      final String message = PyBundle.message("refactoring.change.signature.find.usages.of.base.class",
+                                              function.getName(),
+                                              clazz.getName(),
+                                              baseClassName);
+      int choice;
+      if (ApplicationManagerEx.getApplicationEx().isUnitTestMode()) {
+        choice = 0;
+      }
+      else {
+        choice = Messages.showYesNoCancelDialog(function.getProject(), message, REFACTORING_NAME, Messages.getQuestionIcon());
+      }
+      switch (choice) {
+        case 0:
+          return (PyFunction)result;
+        case 1:
+          return function;
+        default:
+          return null;
+      }
+
     }
     return function;
   }

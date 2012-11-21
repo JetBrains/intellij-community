@@ -252,9 +252,9 @@ public class PyRefactoringUtil {
   }
 
   @NotNull
-  public static List<UsageInfo> findUsages(@NotNull PsiNamedElement element) {
+  public static List<UsageInfo> findUsages(@NotNull PsiNamedElement element, boolean forHighlightUsages) {
     final List<UsageInfo> usages = new ArrayList<UsageInfo>();
-    final FindUsagesHandler handler = new PyFindUsagesHandlerFactory().createFindUsagesHandler(element, false);
+    final FindUsagesHandler handler = new PyFindUsagesHandlerFactory().createFindUsagesHandler(element, forHighlightUsages);
     assert handler != null;
     final List<PsiElement> elementsToProcess = new ArrayList<PsiElement>();
     elementsToProcess.addAll(Arrays.asList(handler.getPrimaryElements()));

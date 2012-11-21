@@ -69,7 +69,7 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
   protected UsageInfo[] findUsages() {
     final List<UsageInfo> usages = new ArrayList<UsageInfo>();
     for (PsiNamedElement element : myElements) {
-      usages.addAll(PyRefactoringUtil.findUsages(element));
+      usages.addAll(PyRefactoringUtil.findUsages(element, false));
     }
     return usages.toArray(new UsageInfo[usages.size()]);
   }

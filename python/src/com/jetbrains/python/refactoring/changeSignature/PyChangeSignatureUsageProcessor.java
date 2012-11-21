@@ -8,16 +8,18 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeInfo;
 import com.intellij.refactoring.changeSignature.ChangeSignatureUsageProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
-import com.intellij.refactoring.rename.RenamePsiElementProcessor;
+import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.Query;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
-import com.jetbrains.python.refactoring.rename.RenamePyFileProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -29,7 +31,13 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   @Override
   public UsageInfo[] findUsages(ChangeInfo info) {
     if (info instanceof PyChangeInfo) {
-      final List<UsageInfo> usages = PyRefactoringUtil.findUsages(((PyChangeInfo)info).getMethod());
+      final List<UsageInfo> usages = PyRefactoringUtil.findUsages(((PyChangeInfo)info).getMethod(), true);
+      final Query<PyFunction> search = PyOverridingMethodsSearch.search(((PyChangeInfo)info).getMethod(), true);
+      final Collection<PyFunction> functions = search.findAll();
+      for (PyFunction function : functions) {
+        usages.add(new UsageInfo(function));
+        usages.addAll(PyRefactoringUtil.findUsages(function, true));
+      }
       return usages.toArray(new UsageInfo[usages.size()]);
     }
     return UsageInfo.EMPTY_ARRAY;
@@ -52,14 +60,18 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   }
 
   @Override
-  public boolean processUsage(ChangeInfo changeInfo, UsageInfo usageInfo, boolean beforeMethodChange, UsageInfo[] usages) {
+  public boolean processUsage(final ChangeInfo changeInfo, UsageInfo usageInfo, boolean beforeMethodChange, final UsageInfo[] usages) {
     if (!isPythonUsage(usageInfo)) return false;
     if (!(changeInfo instanceof PyChangeInfo)) return false;
     if (!beforeMethodChange) return false;
     PsiElement element = usageInfo.getElement();
 
-    final RenamePsiElementProcessor processor = RenamePyFileProcessor.forElement(changeInfo.getMethod());
-    processor.renameElement(changeInfo.getMethod(), changeInfo.getNewName(), usages, null);
+    if (changeInfo.isNameChanged()) {
+      final PsiElement method = changeInfo.getMethod();
+      RenameUtil.doRenameGenericNamedElement(method, changeInfo.getNewName(), usages, null);
+      if (element instanceof PyFunction)
+        RenameUtil.doRenameGenericNamedElement(element, changeInfo.getNewName(), usages, null);
+    }
 
     if (element == null || !(element.getParent() instanceof PyCallExpression)) {
       return false;
@@ -68,7 +80,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     final PyArgumentList argumentList = call.getArgumentList();
     if (argumentList != null) {
       final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(element.getProject());
-      StringBuilder builder = getSignature(changeInfo, argumentList);
+      StringBuilder builder = getSignature(changeInfo, call);
 
       final PyExpression newCall =
         elementGenerator.createExpressionFromText(LanguageLevel.forElement(element), builder.toString());
@@ -79,8 +91,11 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     return false;
   }
 
-  private StringBuilder getSignature(ChangeInfo changeInfo, PyArgumentList argumentList) {
-    StringBuilder builder = new StringBuilder(changeInfo.getNewName() + "(");
+  private StringBuilder getSignature(ChangeInfo changeInfo, PyCallExpression call) {
+    final PyArgumentList argumentList = call.getArgumentList();
+    final PyExpression callee = call.getCallee();
+    String name = callee != null? callee.getText() : changeInfo.getNewName();
+    StringBuilder builder = new StringBuilder(name + "(");
 
     final ParameterInfo[] newParameters = changeInfo.getNewParameters();
     final PyExpression[] arguments = argumentList.getArguments();
@@ -159,10 +174,6 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   }
 
   private static void processFunctionDeclaration(@NotNull PyChangeInfo changeInfo, @NotNull PyFunction function) {
-    if (changeInfo.isNameChanged()) {
-      updateIdentifier(function.getProject(), function.getNameIdentifier(), changeInfo.getNewName());
-    }
-
     if (changeInfo.isParameterSetOrOrderChanged()) {
       updateParameterList(changeInfo, function);
       fixDoc(function);

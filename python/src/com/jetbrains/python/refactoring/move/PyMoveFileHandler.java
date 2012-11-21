@@ -50,7 +50,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
   @Override
   public List<UsageInfo> findUsages(PsiFile file, PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles) {
     if (file != null) {
-      final List<UsageInfo> usages = PyRefactoringUtil.findUsages(file);
+      final List<UsageInfo> usages = PyRefactoringUtil.findUsages(file, false);
       for (UsageInfo usage : usages) {
         final PsiElement element = usage.getElement();
         if (element != null) {
