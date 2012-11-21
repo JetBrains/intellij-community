@@ -35,6 +35,10 @@ public abstract class AndroidRunSdkToolAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     assert project != null;
+    doAction(project);
+  }
+
+  public void doAction(@NotNull Project project) {
     List<AndroidFacet> facets = ProjectFacetManager.getInstance(project).getFacets(AndroidFacet.ID);
     assert facets.size() > 0;
     Set<String> sdkSet = new HashSet<String>();

@@ -15,8 +15,8 @@
  */
 package org.jetbrains.android.compiler;
 
+import com.android.SdkConstants;
 import com.android.sdklib.IAndroidTarget;
-import com.android.sdklib.SdkConstants;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;

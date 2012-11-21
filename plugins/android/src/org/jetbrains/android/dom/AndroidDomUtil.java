@@ -16,8 +16,8 @@
 
 package org.jetbrains.android.dom;
 
+import com.android.SdkConstants;
 import com.android.resources.ResourceType;
-import com.android.sdklib.SdkConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.xml.XmlAttribute;

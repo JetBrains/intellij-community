@@ -31,7 +31,7 @@
           <root url="jar://$MODULE_DIR$/lib/androidprefs.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/jarutils.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/common.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/ide_common.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/sdk_common.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/ninepatch.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/layoutlib_api.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/kxml2-2.3.0.jar!/" />
@@ -39,11 +39,15 @@
           <root url="jar://$MODULE_DIR$/lib/lint_checks.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/lint.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/lombok-ast-0.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/asm-4.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/asm-analysis-4.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/asm-tree-4.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/dvlib.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
           <root url="jar://$MODULE_DIR$/lib/src/ddmlib_src.zip!/src" />
-          <root url="jar://$MODULE_DIR$/lib/src/ide_common_src.zip!/src" />
+          <root url="jar://$MODULE_DIR$/lib/src/sdk_common_src.zip!/src" />
           <root url="jar://$MODULE_DIR$/lib/src/common_src.zip!/src" />
           <root url="jar://$MODULE_DIR$/lib/src/jarutils.zip!/src" />
           <root url="jar://$MODULE_DIR$/lib/src/layoutlib_api_src.zip!/src" />
@@ -53,6 +57,7 @@
           <root url="jar://$MODULE_DIR$/lib/src/lint_api_src.zip!/src" />
           <root url="jar://$MODULE_DIR$/lib/src/lint_checks_src.zip!/src" />
           <root url="jar://$MODULE_DIR$/lib/src/lint_src.zip!/src" />
+          <root url="jar://$MODULE_DIR$/lib/src/dvlib_src.zip!/src" />
         </SOURCES>
       </library>
     </orderEntry>

@@ -16,9 +16,9 @@
 
 package org.jetbrains.android.util;
 
+import com.android.SdkConstants;
 import com.android.resources.ResourceFolderType;
 import com.android.resources.ResourceType;
-import com.android.sdklib.SdkConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;

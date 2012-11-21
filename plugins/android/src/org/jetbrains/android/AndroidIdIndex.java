@@ -15,8 +15,7 @@
  */
 package org.jetbrains.android;
 
-import com.android.AndroidConstants;
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,7 +36,7 @@ import java.util.Map;
  * @author Eugene.Kudelevsky
  */
 public class AndroidIdIndex extends ScalarIndexExtension<String> {
-  public static final String[] RES_TYPES_CONTAINING_ID_DECLARATIONS = {AndroidConstants.FD_RES_LAYOUT, AndroidConstants.FD_RES_MENU};
+  public static final String[] RES_TYPES_CONTAINING_ID_DECLARATIONS = {SdkConstants.FD_RES_LAYOUT, SdkConstants.FD_RES_MENU};
   public static final ID<String, Void> INDEX_ID = ID.create("android.id.index");
   public static final String MARKER = "$";
 

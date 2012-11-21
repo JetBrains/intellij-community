@@ -1,6 +1,6 @@
 package org.jetbrains.android.compiler;
 
-import com.android.AndroidConstants;
+import com.android.SdkConstants;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -112,7 +112,7 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
     if (sourceRootPath == null) {
       return;
     }
-    final String rawDirPath = resourceDirPath + '/' + AndroidConstants.FD_RES_RAW;
+    final String rawDirPath = resourceDirPath + '/' + SdkConstants.FD_RES_RAW;
     items.add(new MyGenerationItem(facet.getModule(), sourceFiles, rawDirPath, sdkLocation, target));
   }
 

@@ -15,12 +15,12 @@
  */
 package org.jetbrains.android.facet;
 
+import com.android.SdkConstants;
 import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.IDevice;
 import com.android.prefs.AndroidLocation;
 import com.android.sdklib.AndroidVersion;
 import com.android.sdklib.IAndroidTarget;
-import com.android.sdklib.SdkConstants;
 import com.android.sdklib.SdkManager;
 import com.android.sdklib.internal.avd.AvdInfo;
 import com.android.sdklib.internal.avd.AvdManager;
@@ -394,7 +394,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
       Project project = getModule().getProject();
       if (sdkData != null) {
         SdkManager sdkManager = sdkData.getSdkManager();
-        myAvdManager = new AvdManager(sdkManager, AndroidSdkUtils.getSdkLog(project));
+        myAvdManager = AvdManager.getInstance(sdkManager, AndroidSdkUtils.getSdkLog(project));
       }
       else {
         throw new AvdsNotSupportedException();

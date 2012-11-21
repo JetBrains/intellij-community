@@ -1,7 +1,7 @@
 package org.jetbrains.android.compiler.tools;
 
+import com.android.SdkConstants;
 import com.android.sdklib.IAndroidTarget;
-import com.android.sdklib.SdkConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;

@@ -1,14 +1,14 @@
 package org.jetbrains.android.uipreview;
 
-import com.android.ide.common.log.ILogger;
+import com.android.annotations.NonNull;
 import com.android.ide.common.rendering.api.LayoutLog;
-import com.android.sdklib.ISdkLog;
+import com.android.utils.ILogger;
 import com.intellij.openapi.diagnostic.Logger;
 
 /**
 * @author Eugene.Kudelevsky
 */
-class SimpleLogger extends LayoutLog implements ISdkLog, ILogger {
+class SimpleLogger extends LayoutLog implements ILogger {
   private final Logger myLog;
 
   public SimpleLogger(Logger log) {
@@ -43,13 +43,17 @@ class SimpleLogger extends LayoutLog implements ISdkLog, ILogger {
   }
 
   @Override
-  public void error(Throwable t, String errorFormat, Object... args) {
-    myLog.debug(t);
-    myLog.debug(String.format(errorFormat, args));
+  public void info(@NonNull String msgFormat, Object... args) {
+    myLog.debug(String.format(msgFormat, args));
   }
 
   @Override
-  public void printf(String msgFormat, Object... args) {
-    myLog.debug(String.format(msgFormat, args));
+  public void verbose(@NonNull String msgFormat, Object... args) {
+  }
+
+  @Override
+  public void error(Throwable t, String errorFormat, Object... args) {
+    myLog.debug(t);
+    myLog.debug(String.format(errorFormat, args));
   }
 }

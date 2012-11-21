@@ -16,7 +16,7 @@
 
 package org.jetbrains.android.dom;
 
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 
 /**
  * Created by IntelliJ IDEA.

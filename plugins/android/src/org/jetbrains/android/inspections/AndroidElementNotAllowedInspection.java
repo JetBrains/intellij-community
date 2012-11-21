@@ -1,21 +1,15 @@
 package org.jetbrains.android.inspections;
 
 import com.android.resources.ResourceType;
-import com.android.sdklib.SdkConstants;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInspection.*;
-import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Key;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlRecursiveElementVisitor;
-import com.intellij.psi.xml.*;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomManager;
-import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlToken;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlTagUtil;
-import org.jetbrains.android.dom.AndroidAnyAttributeDescriptor;
 import org.jetbrains.android.dom.AndroidAnyTagDescriptor;
 import org.jetbrains.android.dom.xml.AndroidXmlResourcesUtil;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -25,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Eugene.Kudelevsky
