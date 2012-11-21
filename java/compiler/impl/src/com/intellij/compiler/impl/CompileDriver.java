@@ -405,7 +405,7 @@ public class CompileDriver {
                          CompilerMessage message,
                          final boolean checkCachesVersion,
                          final CompileScope compileScope) {
-    if (validateCompilerConfiguration(compileScope, true)) {
+    if (validateCompilerConfiguration(compileScope, !useOutOfProcessBuild())) {
       startup(compileScope, true, false, callback, message, checkCachesVersion);
     }
     else {
