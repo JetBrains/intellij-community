@@ -194,6 +194,7 @@ class ToolsPanel extends JPanel {
         update();
       }
     });
+    setMinimumSize(myTree.getEmptyText().getPreferredSize());
   }
 
   void reset() {
