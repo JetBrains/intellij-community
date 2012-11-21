@@ -1,7 +1,6 @@
 package org.jetbrains.android.inspections.lint;
 
 import com.android.tools.lint.checks.BuiltinIssueRegistry;
-import com.android.tools.lint.client.api.IssueRegistry;
 import com.android.tools.lint.client.api.LintDriver;
 import com.android.tools.lint.detector.api.Issue;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -93,12 +92,7 @@ public class AndroidLintExternalAnnotator extends ExternalAnnotator<State, State
   public State doAnnotate(final State state) {
     final IntellijLintClient client = new IntellijLintClient(state);
     try {
-      final LintDriver lint = new LintDriver(new IssueRegistry() {
-        @Override
-        public List<Issue> getIssues() {
-          return state.getIssues();
-        }
-      }, client);
+      final LintDriver lint = new LintDriver(new BuiltinIssueRegistry(), client);
 
       lint.analyze(Collections.singletonList(new File(state.getMainFile().getPath())), null);
     }

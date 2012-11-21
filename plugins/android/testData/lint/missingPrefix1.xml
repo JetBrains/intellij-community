@@ -6,7 +6,7 @@
   <TextView
       an:layout_width="fill_parent"
       an:layout_height="wrap_content"
-      <warning>id="@+id/id1<caret>23"</warning>
+      <error>id="@+id/id1<caret>23"</error>
       />
 </LinearLayout>
 
