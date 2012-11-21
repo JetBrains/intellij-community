@@ -56,7 +56,7 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
 
   public MavenRunnerParametersConfigurable(@NotNull Project project) {
     workingDirComponent.getComponent().addBrowseFolderListener(
-      RunnerBundle.message("maven.select.maven.project.file"), "", null,
+      RunnerBundle.message("maven.select.maven.project.file"), "", project,
       new FileChooserDescriptor(false, true, false, false, false, false) {
         @Override
         public boolean isFileSelectable(VirtualFile file) {
