@@ -176,9 +176,6 @@ public class FSOperations {
   }
 
   public static void pruneEmptyDirs(CompileContext context, @Nullable final Set<File> dirsToDelete) {
-    if (dirsToDelete != null && dirsToDelete.isEmpty()) {
-      return;  // optimization
-    }
     Set<File> doNotDelete = ALL_OUTPUTS_KEY.get(context);
     if (doNotDelete == null) {
       doNotDelete = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
@@ -190,16 +187,13 @@ public class FSOperations {
 
     Set<File> additionalDirs = null;
     Set<File> toDelete = dirsToDelete;
-    if (toDelete != null) {
-      toDelete.removeAll(doNotDelete);
-    }
     while (toDelete != null) {
       for (File file : toDelete) {
         // important: do not force deletion if the directory is not empty!
-        final boolean deleted = file.delete();
+        final boolean deleted = !doNotDelete.contains(file) && file.delete();
         if (deleted) {
           final File parentFile = file.getParentFile();
-          if (parentFile != null && !doNotDelete.contains(parentFile)) {
+          if (parentFile != null) {
             if (additionalDirs == null) {
               additionalDirs = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
             }
