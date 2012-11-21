@@ -15,13 +15,12 @@
  */
 package git4idea.push;
 
+import git4idea.GitBranch;
+import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Holds Git commits grouped by repositories and by branches.
@@ -35,13 +34,6 @@ final class GitCommitsByRepoAndBranch {
 
   GitCommitsByRepoAndBranch(@NotNull Map<GitRepository, GitCommitsByBranch> commitsByRepository) {
     myCommitsByRepository = commitsByRepository;
-  }
-
-  /**
-   * Copy constructor.
-   */
-  GitCommitsByRepoAndBranch(GitCommitsByRepoAndBranch original) {
-    this(new HashMap<GitRepository, GitCommitsByBranch>(original.myCommitsByRepository));
   }
 
   @NotNull
@@ -59,8 +51,44 @@ final class GitCommitsByRepoAndBranch {
     return new GitCommitsByBranch(myCommitsByRepository.get(repository));
   }
 
-  void clear() {
-    myCommitsByRepository.clear();
+  /**
+   * Creates new GitCommitByRepoAndBranch structure with only those repositories, which exist in the specified collection.
+   */
+  @NotNull
+  GitCommitsByRepoAndBranch retainAll(@NotNull Collection<GitRepository> repositories) {
+    Map<GitRepository, GitCommitsByBranch> commits = new HashMap<GitRepository, GitCommitsByBranch>();
+    for (GitRepository selectedRepository : repositories) {
+      GitCommitsByBranch value = myCommitsByRepository.get(selectedRepository);
+      if (value != null) {
+        commits.put(selectedRepository, value);
+      }
+    }
+    return new GitCommitsByRepoAndBranch(commits);
   }
+
+  /**
+   * Creates new GitCommitByRepoAndBranch structure with only those pairs repository-branch, which exist in the specified map.
+   */
+  @NotNull
+  GitCommitsByRepoAndBranch retainAll(@NotNull Map<GitRepository, GitBranch> repositoriesBranches) {
+    Map<GitRepository, GitCommitsByBranch> commits = new HashMap<GitRepository, GitCommitsByBranch>();
+    for (GitRepository repository : repositoriesBranches.keySet()) {
+      GitCommitsByBranch commitsByBranch = myCommitsByRepository.get(repository);
+      if (commitsByBranch != null) {
+        commits.put(repository, commitsByBranch.retain(repositoriesBranches.get(repository)));
+      }
+    }
+    return new GitCommitsByRepoAndBranch(commits);
+  }
+
+  @NotNull
+  public Collection<GitCommit> getAllCommits() {
+    Collection<GitCommit> commits = new ArrayList<GitCommit>();
+    for (GitCommitsByBranch commitsByBranch : myCommitsByRepository.values()) {
+      commits.addAll(commitsByBranch.getAllCommits());
+    }
+    return commits;
+  }
+
 }
 

@@ -158,11 +158,11 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
     return myTree;
   }
 
-  void setCommits(Collection<GitRepository> selectedRepositories, @NotNull GitCommitsByRepoAndBranch commits) {
+  void setCommits(@NotNull GitCommitsByRepoAndBranch commits) {
     try {
       TREE_CONSTRUCTION_LOCK.writeLock().lock();
       myRootNode.removeAllChildren();
-      createNodes(selectedRepositories, commits);
+      createNodes(commits);
       myTreeModel.nodeStructureChanged(myRootNode);
       myTree.setModel(myTreeModel);  // TODO: why doesn't it repaint otherwise?
       TreeUtil.expandAll(myTree);
@@ -215,26 +215,18 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
     }
   }
 
-  private void createNodes(Collection<GitRepository> selectedRepositories, @NotNull GitCommitsByRepoAndBranch commits) {
-    for (GitRepository repository : sortRepositories(selectedRepositories, commits)) {
+  private void createNodes(@NotNull GitCommitsByRepoAndBranch commits) {
+    for (GitRepository repository : sortRepositories(commits)) {
       GitCommitsByBranch commitsByBranch = commits.get(repository);
-      createRepoNode(repository, selectedRepositories.contains(repository), commitsByBranch, myRootNode);
+      createRepoNode(repository, commitsByBranch, myRootNode);
     }
   }
 
   @NotNull
-  private static List<GitRepository> sortRepositories(@NotNull final Collection<GitRepository> selectedRepositories,
-                                                      @NotNull final GitCommitsByRepoAndBranch commits) {
+  private static List<GitRepository> sortRepositories(@NotNull final GitCommitsByRepoAndBranch commits) {
     List<GitRepository> repos = new ArrayList<GitRepository>(commits.getRepositories());
     Collections.sort(repos, new Comparator<GitRepository>() {
       @Override public int compare(GitRepository r1, GitRepository r2) {
-        // deselected repositories - to the end
-        if (selectedRepositories.contains(r1) && !selectedRepositories.contains(r2)) {
-          return -1;
-        }
-        if (!selectedRepositories.contains(r1) && selectedRepositories.contains(r2)) {
-          return 1;
-        }
         // empty repositories - to the end
         if (commits.get(r1).isEmpty() && !commits.get(r2).isEmpty()) {
           return 1;
@@ -252,15 +244,16 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
    * Creates the node with subnodes for a repository and adds it to the rootNode.
    * If there is only one repo in the project, doesn't create a node for the repository, and adds subnodes directly to the rootNode.
    */
-  private void createRepoNode(@NotNull GitRepository repository, boolean selected, @NotNull GitCommitsByBranch commitsByBranch,
+  private void createRepoNode(@NotNull GitRepository repository, @NotNull GitCommitsByBranch commitsByBranch,
                               @NotNull DefaultMutableTreeNode rootNode) {
     DefaultMutableTreeNode parentNode;
     if (GitUtil.justOneGitRepository(myProject)) {
       parentNode = rootNode;
-    }
-    else {
+    } else {
       parentNode = new CheckedTreeNode(repository);
-      ((CheckedTreeNode)parentNode).setChecked(selected && !commitsByBranch.isEmpty());
+      if (commitsByBranch.isEmpty()) {
+        ((CheckedTreeNode)parentNode).setChecked(false);
+      }
       rootNode.add(parentNode);
     }
 
@@ -378,6 +371,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
         GitBranch dest = branchInfo.getDestBranch();
 
         GitPushBranchInfo.Type type = branchInfo.getType();
+        final String showingRecentCommits = ", showing " + GitPusher.RECENT_COMMITS_NUMBER + " recent commits";
         String text = fromBranch.getName();
         SimpleTextAttributes attrs = SimpleTextAttributes.REGULAR_ATTRIBUTES;
         String additionalText = "";
@@ -391,15 +385,15 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
           case NEW_BRANCH:
             text += " -> +" + dest.getName();
             attrs = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
-            additionalText = " new branch will be created";
+            additionalText = " new branch will be created" + showingRecentCommits;
             break;
           case NO_TRACKED_OR_TARGET:
             attrs = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
-            additionalText = " no tracked branch.";
+            additionalText = " no tracked branch. Use checkbox below to push branch to manually specified" + showingRecentCommits;
             break;
         }
         renderer.append(text, attrs);
-        renderer.append(additionalText, new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, UIUtil.getInactiveTextColor()));
+        renderer.append(additionalText, new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, UIUtil.getInactiveTextColor()));
       }
       else if (userObject instanceof FakeCommit) {
         int spaces = 6 + 15 + 3 + 30;
