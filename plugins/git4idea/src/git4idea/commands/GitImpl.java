@@ -370,7 +370,7 @@ public class GitImpl implements Git {
   @NotNull
   public GitCommandResult push(@NotNull GitRepository repository, @NotNull GitPushSpec pushSpec,
                                       @NotNull GitLineHandlerListener... listeners) {
-    GitRemote remote = pushSpec.getDest().getRemote();
+    GitRemote remote = pushSpec.getRemote();
     GitBranch remoteBranch = pushSpec.getDest();
     String destination = remoteBranch.getName().replaceFirst(remote.getName() + "/", "");
     return push(repository, remote.getName(), pushSpec.getSource().getName() + ":" + destination, listeners);

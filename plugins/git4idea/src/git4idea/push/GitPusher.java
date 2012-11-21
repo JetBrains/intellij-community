@@ -315,7 +315,7 @@ public final class GitPusher {
       return GitSimplePushResult.notPushed();
     }
 
-    GitRemote remote = pushSpec.getDest().getRemote();
+    GitRemote remote = pushSpec.getRemote();
     String httpUrl = null;
     for (String pushUrl : remote.getPushUrls()) {
       if (GitHttpAdapter.shouldUseJGit(pushUrl)) {
@@ -334,7 +334,7 @@ public final class GitPusher {
     }
     
     if (pushResult.getType() == GitSimplePushResult.Type.SUCCESS) {
-      setUpstream(repository, pushSpec.getSource(), pushSpec.getDest().getRemote(),  pushSpec.getDest());
+      setUpstream(repository, pushSpec.getSource(), pushSpec.getRemote(),  pushSpec.getDest());
     }
     
     return pushResult;

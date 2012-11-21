@@ -13,15 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea;
-
-import com.intellij.openapi.diagnostic.Logger;
+package git4idea.ui.branch;
 
 /**
  * @author Kirill Likhodedov
  */
-public class GitLogger {
-
-  public static final Logger PUSH_LOG = Logger.getInstance("GitPush");
-
+public enum GitBranchSyncSetting {
+  SYNC,
+  DONT,
+  NOT_DECIDED
 }
