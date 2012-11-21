@@ -842,7 +842,8 @@ public class IncProjectBuilder {
                 rebuildFromScratchRequested = true;
                 try {
                   // forcibly mark all files in the chunk dirty
-                  FSOperations.markDirty(context, chunk);
+                  context.getProjectDescriptor().fsState.clearContextRoundData(context);
+                  FSOperations.markDirty(context, chunk, null);
                   // reverting to the beginning
                   myTargetsProcessed -= (buildersPassed * modulesInChunk) / stageCount;
                   stageCount = myTotalModuleLevelBuilderCount;
@@ -868,7 +869,13 @@ public class IncProjectBuilder {
       while (nextPassRequired);
     }
     finally {
+      for (CompiledClass compiledClass : outputConsumer.getCompiledClasses().values()) {
+        if (compiledClass.isDirty()) {
+          compiledClass.save();
+        }
+      }
       outputConsumer.fireFileGeneratedEvents();
+      outputConsumer.clear();
       for (BuilderCategory category : BuilderCategory.values()) {
         for (ModuleLevelBuilder builder : myBuilderRegistry.getBuilders(category)) {
           builder.cleanupChunkResources(context);

@@ -41,7 +41,7 @@ public class BuildOperations {
     final BuildTargetConfiguration configuration = pd.getTargetsState().getTargetConfiguration(target);
 
     if (context.isProjectRebuild()) {
-      FSOperations.markDirtyFiles(context, target, timestamps, true, null);
+      FSOperations.markDirtyFiles(context, target, timestamps, true, null, null);
       configuration.save();
     }
     else if (context.getScope().isRecompilationForced(target) || configuration.isTargetDirty()) {
@@ -52,7 +52,7 @@ public class BuildOperations {
       }
       else {
         IncProjectBuilder.clearOutputFiles(context, target);
-        FSOperations.markDirtyFiles(context, target, timestamps, true, null);
+        FSOperations.markDirtyFiles(context, target, timestamps, true, null, null);
       }
       configuration.save();
     }
@@ -65,7 +65,7 @@ public class BuildOperations {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     final Timestamps timestamps = pd.timestamps.getStorage();
     final THashSet<File> currentFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-    FSOperations.markDirtyFiles(context, target, timestamps, forceMarkDirty, currentFiles);
+    FSOperations.markDirtyFiles(context, target, timestamps, forceMarkDirty, currentFiles, null);
 
     // handle deleted paths
     final BuildFSState fsState = pd.fsState;

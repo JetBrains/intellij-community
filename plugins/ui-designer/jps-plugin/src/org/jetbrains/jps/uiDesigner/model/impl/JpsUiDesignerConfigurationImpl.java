@@ -1,7 +1,6 @@
 package org.jetbrains.jps.uiDesigner.model.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.model.JpsElementChildRole;
 import org.jetbrains.jps.model.ex.JpsElementBase;
 import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
@@ -41,7 +40,6 @@ public class JpsUiDesignerConfigurationImpl extends JpsElementBase<JpsUiDesigner
   public void setCopyFormsRuntimeToOutput(boolean value) {
     if (myState.COPY_FORMS_RUNTIME_TO_OUTPUT != value) {
       myState.COPY_FORMS_RUNTIME_TO_OUTPUT = value;
-      JavaBuilder.setCopyFormsRuntime(value);
       fireElementChanged();
     }
   }
@@ -55,7 +53,6 @@ public class JpsUiDesignerConfigurationImpl extends JpsElementBase<JpsUiDesigner
   public void setInstrumentClasses(boolean value) {
     if (myState.INSTRUMENT_CLASSES != value) {
       myState.INSTRUMENT_CLASSES = value;
-      JavaBuilder.setFormsInstrumentationEnabled(value);
       fireElementChanged();
     }
   }

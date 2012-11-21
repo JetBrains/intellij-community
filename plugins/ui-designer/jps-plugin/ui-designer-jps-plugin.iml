@@ -13,6 +13,8 @@
     <orderEntry type="module" module-name="jps-model-impl" scope="TEST" />
     <orderEntry type="module" module-name="jps-model-serialization" />
     <orderEntry type="module" module-name="jps-builders" />
+    <orderEntry type="module" module-name="instrumentation-util" />
+    <orderEntry type="module" module-name="forms-compiler" />
   </component>
 </module>
 

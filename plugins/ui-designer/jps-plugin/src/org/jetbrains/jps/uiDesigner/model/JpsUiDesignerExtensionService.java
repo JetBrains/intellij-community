@@ -17,4 +17,7 @@ public abstract class JpsUiDesignerExtensionService {
   public abstract JpsUiDesignerConfiguration getUiDesignerConfiguration(@NotNull JpsProject project);
 
   public abstract void setUiDesignerConfiguration(@NotNull JpsProject project, @NotNull JpsUiDesignerConfiguration configuration);
+
+  @NotNull
+  public abstract JpsUiDesignerConfiguration getOrCreateUiDesignerConfiguration(@NotNull JpsProject project);
 }
