@@ -102,7 +102,7 @@ public class PythonSkeletonsTest extends PyTestCase {
     modificator.commitChanges();
 
     final SkeletonVersionChecker checker = new SkeletonVersionChecker(0);
-    final PySkeletonRefresher refresher = new PySkeletonRefresher(project, sdk, skeletonsPath, null);
+    final PySkeletonRefresher refresher = new PySkeletonRefresher(project, null, sdk, skeletonsPath, null);
     final List<String> errors = refresher.regenerateSkeletons(checker, null);
     assertEmpty(errors);
   }
