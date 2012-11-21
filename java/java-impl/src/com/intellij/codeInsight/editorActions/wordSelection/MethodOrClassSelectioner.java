@@ -54,6 +54,7 @@ public class MethodOrClassSelectioner extends BasicSelectioner {
       }
 
       TextRange range = new TextRange(children[i].getTextRange().getStartOffset(), e.getTextRange().getEndOffset());
+      result.add(range);
       result.addAll(expandToWholeLinesWithBlanks(editorText, range));
 
       range = TextRange.create(firstChild.getTextRange());
@@ -72,6 +73,7 @@ public class MethodOrClassSelectioner extends BasicSelectioner {
       }
 
       range = new TextRange(children[i].getTextRange().getStartOffset(), e.getTextRange().getEndOffset());
+      result.add(range);
       result.addAll(expandToWholeLinesWithBlanks(editorText, range));
     }
 

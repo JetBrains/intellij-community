@@ -58,6 +58,32 @@ public class CopyReferenceTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResult "/a.java:2"
   }
 
+  public void _testMethodOverloadCopy() {
+    myFixture.configureByText 'a.java', '''
+class Koo {
+  public void foo(int a) { }
+  public void foo(boolean a) { }
+  
+  {
+    fo<caret>o(true);
+  }
+}'''
+    performCopy()
+    myFixture.configureByText 'b.java', '''
+/**
+ * <caret>
+ */
+class Koo2 { }
+'''
+    performPaste()
+    myFixture.checkResult '''
+/**
+ * Koo#foo(boolean)<caret>
+ */
+class Koo2 { }
+'''
+  }
+
   private void doTest() throws Exception {
     String name = getTestName(false);
     myFixture.configureByFile(name + ".java");
