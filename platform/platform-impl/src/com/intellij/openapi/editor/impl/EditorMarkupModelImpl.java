@@ -308,6 +308,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   @Override
   public void dispose() {
+
+    final MyErrorPanel panel = getErrorPanel();
+    if (panel != null) {
+      panel.uninstallListeners();
+    }
+
     if (myErrorStripeRenderer instanceof Disposable)  {
       Disposer.dispose((Disposable)myErrorStripeRenderer);
     }
