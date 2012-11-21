@@ -461,6 +461,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     if (clearHistory) clearHistory();
   }
 
+  public void replaceText(String text, PsiElement element) {
+    if (element == null || getElement() != element) return;
+    setText(text, element, false);
+    if (!myBackStack.empty()) myBackStack.pop();
+  }
+
   private void clearHistory() {
     myForwardStack.clear();
     myBackStack.clear();
