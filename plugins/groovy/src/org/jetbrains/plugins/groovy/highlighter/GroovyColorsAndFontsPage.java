@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,37 +99,37 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
   @NonNls
   @NotNull
   public String getDemoText() {
-    return "import <classref>javax.swing.JPanel</classref>\n" +
+    return "<keyword>import</keyword> <classref>javax.swing.JPanel</classref>\n" +
            "  ### \n" +
            "<gdoc>/**\n" +
            " * This is Groovydoc comment\n" +
            " * <doctag>@see</doctag> <classref>java.lang.String</classref>#equals\n" +
            " */</gdoc>\n" +
            "<annotation>@SpecialBean</annotation> \n" +
-           "class <classref>Demo</classref> {\n" +
-           "  def <instfield>property</instfield>\n" +
+           "<keyword>class</keyword> <classref>Demo</classref> {\n" +
+           "  <keyword>def</keyword> <instfield>property</instfield>\n" +
            "//This is a line comment\n" +
            "/* This is a block comment */\n" +
-           "  static def <method>foo</method>(int <param>i</param>, int <reParam>j</reParam>) {\n" +
+           "  <keyword>static</keyword> <keyword>def</keyword> <method>foo</method>(<keyword>int</keyword> <param>i</param>, <keyword>int</keyword> <reParam>j</reParam>) {\n" +
            "    <classref>Map</classref> map = [<mapkey>key</mapkey>:1, <mapkey>b</mapkey>:2]\n" +
            "    <reParam>j</reParam>++\n" +
            "    print map.<mapkey>key</mapkey>\n" +
            "    return [<param>i</param>, <instfield>property</instfield>]\n" +
            "  }\n" +
-           "  static def <statfield>panel</statfield> = new <classref>JPanel</classref>()\n" +
-           "  def <<typeparam>T</typeparam>> foo() {" +
-           "    <typeparam>T</typeparam> list = null" +
+           "  <keyword>static</keyword> <keyword>def</keyword> <statfield>panel</statfield> = <keyword>new</keyword> <classref>JPanel</classref>()\n" +
+           "  <keyword>def</keyword> <<typeparam>T</typeparam>> foo() {" +
+           "    <typeparam>T</typeparam> list = <keyword>null</keyword>" +
            "  }\n" +
            "}\n" +
            "\n" +
            "<classref>Demo</classref>.<statfield>panel</statfield>.size = " +
            "<classref>Demo</classref>.<statmet>foo</statmet>(\"123${456}789\".toInteger()) \n" +
            "'JetBrains'.matches(/Jw+Bw+/) \n" +
-           "def <local>x</local>=1 + <unresolved>unresolved</unresolved>\n" +
-           "<label>label</label>:def <reLocal>f1</reLocal> = []\n" +
+           "<keyword>def</keyword> <local>x</local>=1 + <unresolved>unresolved</unresolved>\n" +
+           "<label>label</label>:<keyword>def</keyword> <reLocal>f1</reLocal> = []\n" +
            "<reLocal>f1</reLocal> = [2]\n" +
            "<classref>File</classref> f=<literal>[</literal>'path'<literal>]</literal>\n" +
-           "print new <classref>Demo</classref>().<prop>property</prop>\n" +
+           "print <keyword>new</keyword> <classref>Demo</classref>().<prop>property</prop>\n" +
            "print '<validescape>\\n</validescape> <invalidescape>\\x</invalidescape>'"
 
       ;
@@ -138,6 +138,7 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
   @Nullable
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     Map<String, TextAttributesKey> map = new HashMap<String, TextAttributesKey>();
+    map.put("keyword", DefaultHighlighter.KEYWORD);
     map.put("annotation", DefaultHighlighter.ANNOTATION);
     map.put("statmet", DefaultHighlighter.STATIC_METHOD_ACCESS);
     map.put("statfield", DefaultHighlighter.STATIC_FIELD);
