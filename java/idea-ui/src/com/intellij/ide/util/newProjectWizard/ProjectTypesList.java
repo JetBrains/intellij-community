@@ -84,7 +84,7 @@ public class ProjectTypesList  {
     mySearchField.addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        String text = mySearchField.getText().trim();
+        String text = "*" + mySearchField.getText().trim();
         myMatcher = NameUtil.buildMatcher(text, NameUtil.MatchingCaseSensitivity.NONE);
 
         Item value = (Item)myList.getSelectedValue();
