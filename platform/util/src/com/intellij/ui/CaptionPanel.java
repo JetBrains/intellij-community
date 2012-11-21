@@ -49,7 +49,7 @@ public class CaptionPanel extends JPanel {
     super.paintComponent(g);
     final Graphics2D g2d = (Graphics2D) g;
 
-    if (UIUtil.isUnderDarcula() && (getComponents().length != 1 || !(getComponents()[0] instanceof EngravedLabel))) {
+    if (UIUtil.isUnderDarcula() && !UIUtil.findComponentsOfType(this, JCheckBox.class).isEmpty()) {
       paintUnderDarcula(g2d);
       return;
     }
