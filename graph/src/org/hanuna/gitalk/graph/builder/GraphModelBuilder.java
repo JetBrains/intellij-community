@@ -49,7 +49,7 @@ public class GraphModelBuilder {
         nextRow.add(node);
         rows.add(nextRow);
 
-        nextRow = new MutableNodeRow(rows.size());
+        nextRow = new MutableNodeRow(rows.size(), rows.size());
         return node;
     }
 
@@ -99,7 +99,7 @@ public class GraphModelBuilder {
 
     private void prepare(int lastLogIndex) {
         this.lastLogIndex = lastLogIndex;
-        nextRow = new MutableNodeRow(0);
+        nextRow = new MutableNodeRow(0, 0);
     }
 
     private void lastActions() {
@@ -121,7 +121,7 @@ public class GraphModelBuilder {
             append(listOfCommit);
         }
         lastActions();
-        return new GraphModelImpl(rows);
+        return new GraphModelImpl(rows, lastLogIndex);
     }
 
 

@@ -1,6 +1,7 @@
 package org.hanuna.gitalk.graph.builder;
 
-import org.hanuna.gitalk.common.Interval;
+import org.hanuna.gitalk.commitmodel.Commit;
+import org.hanuna.gitalk.commitmodel.CommitData;
 import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 import org.hanuna.gitalk.graph.*;
 import org.jetbrains.annotations.NotNull;
@@ -10,9 +11,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public class GraphModelImpl implements GraphModel {
     private final RemoveIntervalArrayList<MutableNodeRow> rows;
+    private final int lastLogIndex;
 
-    public GraphModelImpl(RemoveIntervalArrayList<MutableNodeRow> rows) {
+    public GraphModelImpl(RemoveIntervalArrayList<MutableNodeRow> rows, int lastLogIndex) {
         this.rows = rows;
+        this.lastLogIndex = lastLogIndex;
     }
 
 
@@ -32,7 +35,7 @@ public class GraphModelImpl implements GraphModel {
     }
 
     private void checkHideBranch(MutableNode upNode, MutableNode downNode) {
-        boolean allRight = true;
+        boolean allRight;
         allRight = (upNode.getDownEdges().size() == 1) && (downNode.getUpEdges().size() == 1);
         if (allRight) {
             MutableNode t = nextNode(upNode);
@@ -65,9 +68,8 @@ public class GraphModelImpl implements GraphModel {
         }
     }
 
-    @NotNull
     @Override
-    public Interval hideBranch(@NotNull Node upNode, @NotNull Node downNode) {
+    public void hideBranch(@NotNull Node upNode, @NotNull Node downNode) {
         MutableNode upMutableNode = (MutableNode) upNode;
         MutableNode downMutableNode = (MutableNode) downNode;
         checkHideBranch(upMutableNode, downMutableNode);
@@ -82,13 +84,79 @@ public class GraphModelImpl implements GraphModel {
         }
         fixEdge(upMutableNode, downMutableNode);
         fixRowIndexs();
-        return new Interval(upMutableNode.getRowIndex(), downMutableNode.getRowIndex());
     }
 
-    @NotNull
+    /**
+     * @param commit Convention: commit.getData() != null && commit.getData().getParents().size() > 0
+     */
+    private Commit getParent(Commit commit) {
+        final CommitData data = commit.getData();
+        assert data != null;
+        assert data.getParents().size() == 1;
+        return data.getParents().get(0);
+    }
+
     @Override
-    public Interval showBranch(@NotNull Edge edge) {
-        return null;
+    public void showBranch(@NotNull Edge edge) {
+        assert edge.getType() == Edge.Type.hideBranch : "not hide branch";
+        MutableNode upNode = (MutableNode) edge.getUpNode();
+        MutableNode downNode = (MutableNode) edge.getDownNode();
+        upNode.removeDownEdge(edge);
+        downNode.removeUpEdge(edge);
+        Branch branch = edge.getBranch();
+
+        AddedNodes added = new AddedNodes(upNode.getRowIndex());
+        MutableNode prevNode = upNode;
+        Commit t = getParent(upNode.getCommit());
+        while (t != downNode.getCommit()) {
+            MutableNode newNode = added.addNewNode(t, branch);
+            MutableNode.createEdge(prevNode, newNode, Edge.Type.usual, branch);
+            prevNode = newNode;
+            t = getParent(t);
+        }
+        MutableNode.createEdge(prevNode, downNode, Edge.Type.usual, branch);
+        fixRowIndexs();
+    }
+
+    private class AddedNodes {
+        private int currentRowIndex;
+
+        private AddedNodes(int currentRowIndex) {
+            this.currentRowIndex = currentRowIndex;
+        }
+
+        private int logIndexOfRow(NodeRow row) {
+            ReadOnlyList<Node> nodes = row.getNodes();
+            assert nodes.size() > 0;
+            CommitData data = nodes.get(0).getCommit().getData();
+            if (data == null) {
+                return lastLogIndex;
+            } else {
+                return data.getLogIndex();
+            }
+        }
+
+        public MutableNode addNewNode(Commit commit, Branch branch) {
+            assert commit.getData() != null;
+            int searchLogIndex = commit.getData().getLogIndex();
+            MutableNode node = new MutableNode(commit, branch);
+            node.setType(Node.Type.commitNode);
+            int currentLogIndex = rows.get(currentRowIndex).getRowLogIndex();
+            while (currentLogIndex < searchLogIndex) {
+                currentRowIndex++;
+                currentLogIndex = rows.get(currentRowIndex).getRowLogIndex();
+            }
+            MutableNodeRow row;
+            if (currentLogIndex == searchLogIndex) {
+                row = rows.get(currentRowIndex);
+            } else {
+                row = new MutableNodeRow(searchLogIndex, currentRowIndex);
+                rows.add(currentRowIndex, row);
+            }
+            node.setRow(row);
+            row.add(node);
+            return node;
+        }
     }
 
 }

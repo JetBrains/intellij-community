@@ -12,11 +12,13 @@ import java.util.List;
  * @author erokhins
  */
 public class MutableNodeRow implements NodeRow {
-    private final List<MutableNode> nodes = new ArrayList<MutableNode>(2);;
+    private final List<MutableNode> nodes = new ArrayList<MutableNode>(2);
+    private final int rowLogIndex;
     private int rowIndex;
 
 
-    public MutableNodeRow(int rowIndex) {
+    public MutableNodeRow(int rowLogIndex, int rowIndex) {
+        this.rowLogIndex = rowLogIndex;
         this.rowIndex = rowIndex;
     }
 
@@ -38,6 +40,10 @@ public class MutableNodeRow implements NodeRow {
 
     public int getRowIndex() {
         return rowIndex;
+    }
+
+    public int getRowLogIndex() {
+        return rowLogIndex;
     }
 
     @NotNull
