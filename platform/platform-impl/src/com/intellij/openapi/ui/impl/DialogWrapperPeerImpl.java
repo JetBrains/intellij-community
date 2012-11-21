@@ -719,7 +719,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         final IdeFrame frame = WindowManager.getInstance().getIdeFrame(myProject.get());
         AppIcon.getInstance().requestFocus(frame);
       }
-
+      setBackground(UIUtil.getPanelBackground());
       superShow();
     }
 
