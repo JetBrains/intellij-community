@@ -6,7 +6,6 @@ import com.android.sdklib.SdkManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
@@ -714,26 +713,30 @@ public class AndroidJpsUtil {
 
   @Nullable
   public static JpsAndroidModuleExtension getPackagedFacet(@NotNull JpsArtifact artifact) {
-    final Ref<JpsAndroidFinalPackageElement> elementRef = Ref.create(null);
+    final List<JpsAndroidModuleExtension> facets = getAllPackagedFacets(artifact);
+    return facets.size() == 1 ? facets.get(0) : null;
+  }
+
+  @NotNull
+  public static List<JpsAndroidModuleExtension> getAllPackagedFacets(JpsArtifact artifact) {
+    final List<JpsAndroidModuleExtension> extensions = new ArrayList<JpsAndroidModuleExtension>();
 
     JpsArtifactUtil.processPackagingElements(artifact.getRootElement(), new Processor<JpsPackagingElement>() {
       @Override
       public boolean process(JpsPackagingElement element) {
         if (element instanceof JpsAndroidFinalPackageElement) {
-          elementRef.set((JpsAndroidFinalPackageElement)element);
-          return false;
+          final JpsModuleReference reference = ((JpsAndroidFinalPackageElement)element).getModuleReference();
+          final JpsModule module = reference != null ? reference.resolve() : null;
+          final JpsAndroidModuleExtension extension = module != null ? getExtension(module) : null;
+
+          if (extension != null) {
+            extensions.add(extension);
+          }
         }
         return true;
       }
     });
-    final JpsAndroidFinalPackageElement element = elementRef.get();
-
-    if (element == null) {
-      return null;
-    }
-    final JpsModuleReference reference = element.getModuleReference();
-    final JpsModule module = reference != null ? reference.resolve() : null;
-    return module != null ? getExtension(module) : null;
+    return extensions;
   }
 
   public static ProGuardOptions getProGuardConfigIfShouldRun(@NotNull CompileContext context, @NotNull JpsAndroidModuleExtension extension)
@@ -749,15 +752,20 @@ public class AndroidJpsUtil {
     }
 
     for (JpsArtifact artifact : getAndroidArtifactsToBuild(context)) {
-      final JpsElement props = artifact.getProperties();
+      final JpsAndroidModuleExtension facetFromArtifact = getPackagedFacet(artifact);
+      final JpsModule moduleFromArtifact = facetFromArtifact != null ? facetFromArtifact.getModule() : null;
 
-      if (props instanceof JpsAndroidApplicationArtifactProperties) {
-        final JpsAndroidApplicationArtifactProperties androidProps = (JpsAndroidApplicationArtifactProperties)props;
+      if (moduleFromArtifact != null && moduleFromArtifact.equals(extension.getModule())) {
+        final JpsElement props = artifact.getProperties();
 
-        if (androidProps.isRunProGuard()) {
-          final String cfgFileUrl = androidProps.getProGuardCfgFileUrl();
-          final String cfgPath = cfgFileUrl != null ? JpsPathUtil.urlToPath(cfgFileUrl) : null;
-          return new ProGuardOptions(new File(cfgPath), androidProps.isIncludeSystemProGuardCfgFile());
+        if (props instanceof JpsAndroidApplicationArtifactProperties) {
+          final JpsAndroidApplicationArtifactProperties androidProps = (JpsAndroidApplicationArtifactProperties)props;
+
+          if (androidProps.isRunProGuard()) {
+            final String cfgFileUrl = androidProps.getProGuardCfgFileUrl();
+            final String cfgPath = cfgFileUrl != null ? JpsPathUtil.urlToPath(cfgFileUrl) : null;
+            return new ProGuardOptions(new File(cfgPath), androidProps.isIncludeSystemProGuardCfgFile());
+          }
         }
       }
     }
