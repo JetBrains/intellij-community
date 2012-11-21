@@ -43,6 +43,7 @@ public class IntroduceConstantFix extends InspectionGadgetsFix {
     application.invokeLater(new Runnable() {
 
       public void run() {
+        if (!constant.isValid()) return;
         final JavaRefactoringActionHandlerFactory factory =
           JavaRefactoringActionHandlerFactory.getInstance();
         final RefactoringActionHandler introduceHandler =
