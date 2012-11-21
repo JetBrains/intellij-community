@@ -151,6 +151,7 @@ public class BuildOperations {
       ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
       final Collection<String> outputsToLog = logger.isEnabled() ? new LinkedList<String>() : null;
       final THashSet<File> dirsToDelete = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+      final THashSet<String> deletedPaths = new THashSet<String>();
 
       dirtyFilesHolder.processDirtyFiles(new FileProcessor<R, T>() {
         private final Map<T, SourceToOutputMapping> mappingsCache = new java.util.HashMap<T, SourceToOutputMapping>(); // cache the mapping locally
@@ -172,15 +173,15 @@ public class BuildOperations {
               }
               final File outFile = new File(output);
               final boolean deleted = outFile.delete();
-              if (deleted && shouldPruneOutputDirs) {
-                final File parent = outFile.getParentFile();
-                if (parent != null) {
-                  dirsToDelete.add(parent);
+              if (deleted) {
+                deletedPaths.add(output);
+                if (shouldPruneOutputDirs) {
+                  final File parent = outFile.getParentFile();
+                  if (parent != null) {
+                    dirsToDelete.add(parent);
+                  }
                 }
               }
-            }
-            if (!outputs.isEmpty()) {
-              context.processMessage(new FileDeletedEvent(outputs));
             }
             Set<File> cleaned = cleanedSources.get(target);
             if (cleaned == null) {
@@ -195,6 +196,9 @@ public class BuildOperations {
 
       if (outputsToLog != null && context.isMake()) {
         logger.logDeletedFiles(outputsToLog);
+      }
+      if (!deletedPaths.isEmpty()) {
+        context.processMessage(new FileDeletedEvent(deletedPaths));
       }
       // attempting to delete potentially empty directories
       FSOperations.pruneEmptyDirs(context, dirsToDelete);
