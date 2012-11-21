@@ -154,7 +154,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
     doSort();
 
-    TreeUtil.expandAll(myTree);
+    defaultExpandTree();
 
     if (myOptionControls == null) {
       myCopyJavadocCheckbox = new NonFocusableCheckBox(IdeBundle.message("checkbox.copy.javadoc"));
@@ -180,13 +180,22 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     final FactoryMap<MemberChooserObject,ParentNode> map = new FactoryMap<MemberChooserObject,ParentNode>() {
       protected ParentNode create(final MemberChooserObject key) {
         ParentNode node = null;
+        DefaultMutableTreeNode parentNode = rootNode;
+
+        if (supportsNestedContainers() && key instanceof ClassMember) {
+          MemberChooserObject parentNodeDelegate = ((ClassMember)key).getParentNodeDelegate();
+
+          if (parentNodeDelegate != null) {
+            parentNode = get(parentNodeDelegate);
+          }
+        }
         if (isContainerNode(key)) {
-            final ContainerNode containerNode = new ContainerNode(rootNode, key, count);
+            final ContainerNode containerNode = new ContainerNode(parentNode, key, count);
             node = containerNode;
             myContainerNodes.add(containerNode);
         }
         if (node == null) {
-          node = new ParentNode(rootNode, key, count);
+          node = new ParentNode(parentNode, key, count);
         }
         return node;
       }
@@ -199,6 +208,14 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       myElementToNodeMap.put(object, elementNode);
     }
     return new DefaultTreeModel(rootNode);
+  }
+
+  protected boolean supportsNestedContainers() {
+    return false;
+  }
+
+  protected void defaultExpandTree() {
+    TreeUtil.expandAll(myTree);
   }
 
   protected boolean isContainerNode(MemberChooserObject key) {
@@ -323,34 +340,8 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       myTree.expandRow(0);
       myTree.setSelectionRow(1);
     }
-    TreeUtil.expandAll(myTree);
-    final TreeSpeedSearch treeSpeedSearch = new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
-      @Nullable
-      public String convert(TreePath path) {
-        final ElementNode lastPathComponent = (ElementNode)path.getLastPathComponent();
-        if (lastPathComponent == null) return null;
-        String text = lastPathComponent.getDelegate().getText();
-        if (text != null) {
-          int i = text.indexOf(':');
-          if (i >= 0 && !PlatformUtils.isCidr()) { // In AppCode colons can occur in the method selectors and matching should work after them
-            text = text.substring(0, i);
-          }
-          i = text.indexOf('(');
-          if (i >= 0) {
-            text = text.substring(0, i);
-          }
-        }
-        return text;
-      }
-    });
-    treeSpeedSearch.setComparator(new SpeedSearchComparator(false));
-
-    treeSpeedSearch.addChangeListener(new PropertyChangeListener() {
-      @Override
-      public void propertyChange(PropertyChangeEvent evt) {
-        myTree.repaint(); // to update match highlighting
-      }
-    });
+    defaultExpandTree();
+    installSpeedSearch();
 
     new DoubleClickListener() {
       @Override
@@ -371,16 +362,48 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     return panel;
   }
 
+  protected void installSpeedSearch() {
+    final TreeSpeedSearch treeSpeedSearch = new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
+      @Nullable
+      public String convert(TreePath path) {
+        final ElementNode lastPathComponent = (ElementNode)path.getLastPathComponent();
+        if (lastPathComponent == null) return null;
+        String text = lastPathComponent.getDelegate().getText();
+        if (text != null) {
+          int i = text.indexOf(':');
+          if (i >= 0) {
+            text = text.substring(0, i);
+          }
+          i = text.indexOf('(');
+          if (i >= 0) {
+            text = text.substring(0, i);
+          }
+        }
+        return text;
+      }
+    });
+    treeSpeedSearch.setComparator(new SpeedSearchComparator(false));
+
+    treeSpeedSearch.addChangeListener(new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        myTree.repaint(); // to update match highlighting
+      }
+    });
+  }
+
   protected void fillToolbarActions(DefaultActionGroup group) {
     SortEmAction sortAction = new SortEmAction();
     sortAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.ALT_MASK)), myTree);
     setSorted(PropertiesComponent.getInstance().isTrueValue(PROP_SORTED));
     group.add(sortAction);
 
-    ShowContainersAction showContainersAction = getShowContainersAction();
-    showContainersAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.ALT_MASK)), myTree);
-    setShowClasses(PropertiesComponent.getInstance().isTrueValue(PROP_SHOWCLASSES));
-    group.add(showContainersAction);
+    if (!supportsNestedContainers()) {
+      ShowContainersAction showContainersAction = getShowContainersAction();
+      showContainersAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.ALT_MASK)), myTree);
+      setShowClasses(PropertiesComponent.getInstance().isTrueValue(PROP_SHOWCLASSES));
+      group.add(showContainersAction);
+    }
   }
 
   protected String getDimensionServiceKey() {
@@ -518,7 +541,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
     myTreeModel.nodeStructureChanged(root);
 
-    TreeUtil.expandAll(myTree);
+    defaultExpandTree();
 
     restoreSelection(selection);
   }
@@ -531,7 +554,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     return getRootNode().children();
   }
 
-  private DefaultMutableTreeNode getRootNode() {
+  protected DefaultMutableTreeNode getRootNode() {
     return (DefaultMutableTreeNode)myTreeModel.getRoot();
   }
 
@@ -624,7 +647,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
   }
 
-  private abstract static class ElementNode extends DefaultMutableTreeNode {
+  protected abstract static class ElementNode extends DefaultMutableTreeNode {
     private final int myOrder;
     private final MemberChooserObject myDelegate;
 
@@ -646,19 +669,19 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
   }
 
-  private static class MemberNode extends ElementNode {
+  protected static class MemberNode extends ElementNode {
     public MemberNode(ParentNode parent, ClassMember delegate, Ref<Integer> order) {
       super(parent, delegate, order);
     }
   }
 
-  private static class ParentNode extends ElementNode {
+  protected static class ParentNode extends ElementNode {
     public ParentNode(@Nullable DefaultMutableTreeNode parent, MemberChooserObject delegate, Ref<Integer> order) {
       super(parent, delegate, order);
     }
   }
 
-  private static class ContainerNode extends ParentNode {
+  protected static class ContainerNode extends ParentNode {
     public ContainerNode(DefaultMutableTreeNode parent, MemberChooserObject delegate, Ref<Integer> order) {
       super(parent, delegate, order);
     }
