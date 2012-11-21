@@ -487,6 +487,14 @@ public class MavenUtil {
       }
     }
 
+    String mavenHome = System.getenv("MAVEN_HOME");
+    if (!isEmptyOrSpaces(mavenHome)) {
+      final File mavenHomeFile = new File(mavenHome);
+      if (isValidMavenHome(mavenHomeFile)) {
+        return mavenHomeFile;
+      }
+    }
+
     String userHome = SystemProperties.getUserHome();
     if (!isEmptyOrSpaces(userHome)) {
       final File underUserHome = new File(userHome, M2_DIR);
@@ -506,7 +514,12 @@ public class MavenUtil {
       }
     }
     else if (SystemInfo.isLinux) {
-      File home = new File("/usr/share/maven2");
+      File home = new File("/usr/share/maven");
+      if (isValidMavenHome(home)) {
+        return home;
+      }
+
+      home = new File("/usr/share/maven2");
       if (isValidMavenHome(home)) {
         return home;
       }
