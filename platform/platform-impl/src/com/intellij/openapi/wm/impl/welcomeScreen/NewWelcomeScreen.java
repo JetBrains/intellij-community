@@ -106,7 +106,7 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
     JLabel welcome = new JLabel("Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName(), AllIcons.General.Logo_welcomeScreen, SwingConstants.LEFT);
     welcome.setBorder(new EmptyBorder(10, 15, 10, 15));
     welcome.setFont(welcome.getFont().deriveFont((float) 32));
-    welcome.setIconTextGap(30);
+    welcome.setIconTextGap(20);
     welcome.setForeground(WelcomeScreenColors.WELCOME_HEADER_FOREGROUND);
     header.add(welcome);
     header.setBackground(WelcomeScreenColors.WELCOME_HEADER_BACKGROUND);
