@@ -66,6 +66,9 @@ public interface PsiCatchSection extends PsiElement {
   /**
    * For language level 7 or higher returns the list of possible types for its parameter re-throw
    * (as defined in Project Coin/JSR 334 section "Multi-catch and more precise rethrow").
+   * Note that the list may be empty if exceptions of declared catch type are not explicitly thrown
+   * inside a try block.
+   *
    * Otherwise, returns parameter's declared type.
    *
    * @return the types, or empty list if the section is incomplete.
