@@ -1,6 +1,6 @@
 package org.jetbrains.android.refactoring;
 
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;

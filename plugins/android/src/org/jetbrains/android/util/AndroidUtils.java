@@ -15,11 +15,11 @@
  */
 package org.jetbrains.android.util;
 
+import com.android.SdkConstants;
 import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.ShellCommandUnresponsiveException;
 import com.android.ddmlib.TimeoutException;
-import com.android.sdklib.SdkConstants;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.navigation.NavigationUtil;

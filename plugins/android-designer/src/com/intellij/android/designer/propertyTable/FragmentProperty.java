@@ -15,7 +15,7 @@
  */
 package com.intellij.android.designer.propertyTable;
 
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.model.PropertiesContainer;

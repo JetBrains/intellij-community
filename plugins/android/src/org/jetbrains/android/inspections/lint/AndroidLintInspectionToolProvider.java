@@ -1,8 +1,8 @@
 package org.jetbrains.android.inspections.lint;
 
+import com.android.SdkConstants;
 import com.android.tools.lint.checks.*;
 import com.android.tools.lint.detector.api.Issue;
-import com.android.tools.lint.detector.api.LintConstants;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.android.util.AndroidBundle;
@@ -165,7 +165,7 @@ public class AndroidLintInspectionToolProvider {
     public AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
       return new AndroidLintQuickFix[]{
         new SetAttributeQuickFix(AndroidBundle.message("android.lint.inspections.add.content.description"),
-                                 LintConstants.ATTR_CONTENT_DESCRIPTION, null)
+                                 SdkConstants.ATTR_CONTENT_DESCRIPTION, null)
       };
     }
   }
@@ -357,7 +357,7 @@ public class AndroidLintInspectionToolProvider {
     public AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
       return new AndroidLintQuickFix[]{
         new SetAttributeQuickFix(AndroidBundle.message("android.lint.inspections.set.baseline.attribute"),
-                                 LintConstants.ATTR_BASELINE_ALIGNED, "false")
+                                 SdkConstants.ATTR_BASELINE_ALIGNED, "false")
       };
     }
   }
@@ -418,7 +418,7 @@ public class AndroidLintInspectionToolProvider {
 
   public static class AndroidLintPxUsageInspection extends AndroidLintInspectionBase {
     public AndroidLintPxUsageInspection() {
-      super(AndroidBundle.message("android.lint.inspections.px.usage"), PxUsageDetector.ISSUE);
+      super(AndroidBundle.message("android.lint.inspections.px.usage"), PxUsageDetector.PX_ISSUE);
     }
 
     @NotNull
@@ -450,7 +450,7 @@ public class AndroidLintInspectionToolProvider {
     public AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
       return new AndroidLintQuickFix[]{
         new SetAttributeQuickFix(AndroidBundle.message("android.lint.inspections.add.permission.attribute"),
-                                 LintConstants.ATTR_PERMISSION, null)
+                                 SdkConstants.ATTR_PERMISSION, null)
       };
     }
   }
@@ -483,7 +483,7 @@ public class AndroidLintInspectionToolProvider {
     public AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
       return new AndroidLintQuickFix[]{
         new SetAttributeQuickFix(AndroidBundle.message("android.lint.inspections.add.input.type.attribute"),
-                                 LintConstants.ATTR_INPUT_TYPE, null)
+                                 SdkConstants.ATTR_INPUT_TYPE, null)
       };
     }
   }

@@ -1,6 +1,6 @@
 package org.jetbrains.android.refactoring;
 
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

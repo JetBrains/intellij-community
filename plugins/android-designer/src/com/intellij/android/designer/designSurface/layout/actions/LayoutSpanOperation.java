@@ -15,7 +15,7 @@
  */
 package com.intellij.android.designer.designSurface.layout.actions;
 
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.intellij.android.designer.designSurface.layout.grid.GridSelectionDecorator;
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;

@@ -24,6 +24,7 @@ import com.android.resources.Density;
 import com.android.resources.ScreenOrientation;
 import com.android.resources.ScreenSize;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xmlpull.v1.XmlPullParser;
@@ -46,8 +47,8 @@ class RenderService {
   private final LayoutLibrary myLayoutLib;
   private final FolderConfiguration myConfig;
   private final int myMinSdkVersion;
-  private final float myXdpi;
-  private final float myYdpi;
+  private final double myXdpi;
+  private final double myYdpi;
 
   private static final Object PROJECT_KEY = new Object();
 
@@ -55,8 +56,8 @@ class RenderService {
                 @NotNull RenderResources resourceResolver,
                 @NotNull RenderResources legacyResourceResolver,
                 FolderConfiguration config,
-                float xdpi,
-                float ydpi,
+                double xdpi,
+                double ydpi,
                 IProjectCallback projectCallback,
                 int minSdkVersion) {
     myLayoutLib = layoutLibrary;
@@ -81,44 +82,53 @@ class RenderService {
     parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, true);
     parser.setInput(new StringReader(layoutXmlText));
 
-    final Dimension dimension = getDimension();
+    final Pair<Dimension, ScreenOrientation> pair = getDimension();
+
+    if (pair == null) {
+      return null;
+    }
+    final Dimension dimension = pair.getFirst();
+
     if (dimension == null) {
       return null;
     }
+    final ScreenOrientation orientation = pair.getSecond();
 
+    if (orientation == null) {
+      return  null;
+    }
     final VersionQualifier versionQualifier = myConfig.getVersionQualifier();
     if (versionQualifier == null) {
       return null;
     }
-
     final int targetSdkVersion = versionQualifier.getVersion();
     final int minSdkVersion = myMinSdkVersion >= 0 ? myMinSdkVersion : targetSdkVersion;
 
     final DensityQualifier densityQualifier = myConfig.getDensityQualifier();
     final Density density = densityQualifier != null ? densityQualifier.getValue() : Density.MEDIUM;
-    final float xdpi = Float.isNaN(myXdpi) ? density.getDpiValue() : myXdpi;
-    final float ydpi = Float.isNaN(myYdpi) ? density.getDpiValue() : myYdpi;
+    final double xdpi = Double.isNaN(myXdpi) ? density.getDpiValue() : myXdpi;
+    final double ydpi = Double.isNaN(myYdpi) ? density.getDpiValue() : myYdpi;
+
+    final ScreenSizeQualifier screenSizeQualifier = myConfig.getScreenSizeQualifier();
+    final ScreenSize screenSize = screenSizeQualifier != null ? screenSizeQualifier.getValue() : ScreenSize.NORMAL;
 
     final RenderResources resolver = myLayoutLib.getRevision() > 0 ? myResourceResolver : myLegacyResourceResolver;
 
     // todo: support caching
 
     myLayoutLib.clearCaches(PROJECT_KEY);
-    final SessionParams params =
-      new SessionParams(parser, RenderingMode.NORMAL, PROJECT_KEY, dimension.width, dimension.height, density, xdpi, ydpi, resolver,
-                        myProjectCallback, minSdkVersion, targetSdkVersion, log);
-
+    final SessionParams params = new SessionParams(parser, RenderingMode.NORMAL, PROJECT_KEY,
+                                                   new HardwareConfig(dimension.width, dimension.height, density, (float)xdpi, (float)ydpi,
+                                                                      screenSize, orientation, false), resolver,
+                                                   myProjectCallback, minSdkVersion, targetSdkVersion, log);
     params.setExtendedViewInfoMode(false);
     params.setAppLabel(appLabel);
     params.setTimeout(timeout);
-
-    final ScreenSizeQualifier screenSizeQualifier = myConfig.getScreenSizeQualifier();
-    params.setConfigScreenSize(screenSizeQualifier != null ? screenSizeQualifier.getValue() : ScreenSize.NORMAL);
     return myLayoutLib.createSession(params);
   }
 
   @Nullable
-  private Dimension getDimension() {
+  private Pair<Dimension, ScreenOrientation> getDimension() {
     final ScreenDimensionQualifier dimensionQualifier = myConfig.getScreenDimensionQualifier();
 
     final int size1 = dimensionQualifier != null ? dimensionQualifier.getValue1() : 320;
@@ -132,11 +142,11 @@ class RenderService {
 
     switch (orientation) {
       case LANDSCAPE:
-        return new Dimension(size1 < size2 ? size2 : size1, size1 < size2 ? size1 : size2);
+        return Pair.create(new Dimension(size1 < size2 ? size2 : size1, size1 < size2 ? size1 : size2), orientation);
       case PORTRAIT:
-        return new Dimension(size1 < size2 ? size1 : size2, size1 < size2 ? size2 : size1);
+        return Pair.create(new Dimension(size1 < size2 ? size1 : size2, size1 < size2 ? size2 : size1), orientation);
       case SQUARE:
-        return new Dimension(size1, size1);
+        return Pair.create(new Dimension(size1, size1), orientation);
       default:
         LOG.error("Unknown screen orientation " + orientation);
         return null;

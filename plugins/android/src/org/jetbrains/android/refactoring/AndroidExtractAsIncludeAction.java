@@ -1,6 +1,7 @@
 package org.jetbrains.android.refactoring;
 
-import com.android.AndroidConstants;
+
+import com.android.SdkConstants;
 import com.android.ide.common.resources.configuration.FolderConfiguration;
 import com.android.resources.ResourceType;
 import com.intellij.openapi.application.ApplicationManager;
@@ -49,6 +50,7 @@ public class AndroidExtractAsIncludeAction extends AndroidBaseLayoutRefactoringA
   @TestOnly
   public AndroidExtractAsIncludeAction(@Nullable MyTestConfig testConfig) {
     myTestConfig = testConfig;
+
   }
 
   @Override
@@ -137,7 +139,7 @@ public class AndroidExtractAsIncludeAction extends AndroidBaseLayoutRefactoringA
     final String fileName = myTestConfig != null ? myTestConfig.myLayoutFileName : null;
     final String dirName = dir.getName();
     final FolderConfiguration config = dirName.length() > 0
-                                       ? FolderConfiguration.getConfig(dirName.split(AndroidConstants.RES_QUALIFIER_SEP))
+                                       ? FolderConfiguration.getConfig(dirName.split(SdkConstants.RES_QUALIFIER_SEP))
                                        : null;
     final String title = "Extract Android Layout";
 

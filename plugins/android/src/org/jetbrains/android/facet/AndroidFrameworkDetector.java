@@ -15,7 +15,7 @@
  */
 package org.jetbrains.android.facet;
 
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.intellij.facet.FacetType;
 import com.intellij.framework.detection.FacetBasedFrameworkDetector;
 import com.intellij.framework.detection.FileContentPattern;

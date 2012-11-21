@@ -15,8 +15,7 @@
  */
 package org.jetbrains.android;
 
-import com.android.AndroidConstants;
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;

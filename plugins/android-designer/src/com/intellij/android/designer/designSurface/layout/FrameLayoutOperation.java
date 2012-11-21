@@ -15,7 +15,7 @@
  */
 package com.intellij.android.designer.designSurface.layout;
 
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.intellij.android.designer.designSurface.AbstractEditOperation;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.layout.Gravity;

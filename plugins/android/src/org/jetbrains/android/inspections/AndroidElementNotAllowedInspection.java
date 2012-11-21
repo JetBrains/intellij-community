@@ -1,7 +1,7 @@
 package org.jetbrains.android.inspections;
 
 import com.android.resources.ResourceType;
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.ASTNode;

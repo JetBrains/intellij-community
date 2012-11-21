@@ -15,7 +15,7 @@
  */
 package com.intellij.android.designer.designSurface.layout;
 
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.intellij.android.designer.designSurface.layout.actions.ResizeOperation;
 import com.intellij.android.designer.designSurface.layout.flow.FlowBaseOperation;
 import com.intellij.android.designer.model.ModelParser;

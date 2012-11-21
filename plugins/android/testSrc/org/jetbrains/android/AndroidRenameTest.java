@@ -16,7 +16,7 @@
 
 package org.jetbrains.android;
 
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;

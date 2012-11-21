@@ -18,7 +18,7 @@ package org.jetbrains.android.util;
 
 import com.android.resources.ResourceFolderType;
 import com.android.resources.ResourceType;
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.intellij.ide.actions.CreateElementActionBase;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;

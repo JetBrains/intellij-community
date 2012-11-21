@@ -15,26 +15,27 @@
  */
 package com.intellij.android.designer.profile;
 
-import com.android.AndroidConstants;
+
+import com.android.SdkConstants;
 import com.android.ide.common.resources.configuration.LanguageQualifier;
 import com.android.ide.common.resources.configuration.RegionQualifier;
 import com.android.resources.NightMode;
 import com.android.resources.UiMode;
 import com.android.sdklib.IAndroidTarget;
+import com.android.sdklib.devices.Device;
+import com.android.sdklib.devices.DeviceManager;
+import com.android.sdklib.devices.State;
 import com.intellij.designer.ModuleProvider;
 import com.intellij.designer.actions.AbstractComboBoxAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
-import org.jetbrains.android.sdk.AndroidSdkData;
-import org.jetbrains.android.sdk.AndroidSdkType;
+import org.jetbrains.android.sdk.*;
 import org.jetbrains.android.uipreview.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,9 +45,8 @@ import java.util.*;
  * @author Eugene.Kudelevsky
  * @author Alexander Lobas
  */
-public class ProfileManager {
-  private static final LayoutDevice NO_DEVICES = new LayoutDevice("[None]", LayoutDevice.Type.CUSTOM);
-  private static final LayoutDevice CUSTOM_DEVICE = new LayoutDevice("Edit Devices", LayoutDevice.Type.CUSTOM);
+public class ProfileManager implements Disposable {
+  private static final DeviceWrapper NO_DEVICES = new DeviceWrapper(null);
 
   private final ModuleProvider myModuleProvider;
   private final Runnable myRefreshAction;
@@ -54,16 +54,17 @@ public class ProfileManager {
 
   private Sdk mySdk;
 
-  private final AbstractComboBoxAction<LayoutDevice> myDeviceAction;
-  private final AbstractComboBoxAction<LayoutDeviceConfiguration> myDeviceConfigurationAction;
+  private final AbstractComboBoxAction<DeviceWrapper> myDeviceAction;
+  private final AbstractComboBoxAction<State> myDeviceConfigurationAction;
   private final AbstractComboBoxAction<IAndroidTarget> myTargetAction;
   private final AbstractComboBoxAction<LocaleData> myLocaleAction;
   private final AbstractComboBoxAction<UiMode> myDockModeAction;
   private final AbstractComboBoxAction<NightMode> myNightModeAction;
   private final AbstractComboBoxAction<ThemeData> myThemeAction;
 
-  private final LayoutDeviceManager myLayoutDeviceManager;
-  private List<LayoutDevice> myDevices;
+  private final DeviceManager myLayoutDeviceManager;
+  private final UserDeviceManager myUserDeviceManager;
+  private List<DeviceWrapper> myDevices;
   private ThemeManager myThemeManager;
 
   private Profile myProfile;
@@ -74,32 +75,26 @@ public class ProfileManager {
     mySelectionRunnable = selectionRunnable;
 
     myLayoutDeviceManager = ProfileList.getInstance(moduleProvider.getProject()).getLayoutDeviceManager();
-
-    myDeviceAction = new MyComboBoxAction<LayoutDevice>() {
+    myUserDeviceManager = new UserDeviceManager() {
       @Override
-      protected boolean addSeparator(DefaultActionGroup actionGroup, LayoutDevice item) {
-        if (item == CUSTOM_DEVICE && myDevices.size() > 1) {
-          actionGroup.addSeparator();
-        }
-        return false;
+      protected void userDevicesChanged() {
+        updatePlatform(getPlatform(getSdk()));
       }
+    };
+    Disposer.register(this, myUserDeviceManager);
 
+    myDeviceAction = new MyComboBoxAction<DeviceWrapper>() {
       @Override
-      protected boolean selectionChanged(LayoutDevice item) {
+      protected boolean selectionChanged(DeviceWrapper item) {
         if (item == NO_DEVICES) {
           return false;
         }
-        if (item == CUSTOM_DEVICE) {
-          configureCustomDevices(false);
-        }
-        else {
-          updateDevice(item);
-          setSelection(item);
-        }
+        updateDevice(item);
+        setSelection(item);
 
         mySelectionRunnable.run();
         myRefreshAction.run();
-        return item != CUSTOM_DEVICE;
+        return true;
       }
 
       @Override
@@ -108,9 +103,9 @@ public class ProfileManager {
       }
     };
 
-    myDeviceConfigurationAction = new MyComboBoxAction<LayoutDeviceConfiguration>() {
+    myDeviceConfigurationAction = new MyComboBoxAction<State>() {
       @Override
-      protected boolean selectionChanged(LayoutDeviceConfiguration item) {
+      protected boolean selectionChanged(State item) {
         updateDeviceConfiguration(item);
         mySelectionRunnable.run();
         setSelection(item);
@@ -201,58 +196,6 @@ public class ProfileManager {
     myThemeAction.showDisabledActions(true);
   }
 
-  //////////////////////////////////////////////////////////////////////////////////////////
-  //
-  //
-  //
-  //////////////////////////////////////////////////////////////////////////////////////////
-
-  public void showCustomDevicesDialog() {
-    if (configureCustomDevices(true)) {
-      myRefreshAction.run();
-    }
-  }
-
-  private boolean configureCustomDevices(boolean exitOnCancel) {
-    LayoutDeviceConfiguration configuration = myDeviceConfigurationAction.getSelection();
-    configuration = configuration != null && configuration.getDevice().getType() == LayoutDevice.Type.CUSTOM ? configuration : null;
-    LayoutDeviceConfigurationsDialog dialog =
-      new LayoutDeviceConfigurationsDialog(myModuleProvider.getProject(), configuration, myLayoutDeviceManager);
-    dialog.show();
-
-    if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-      myLayoutDeviceManager.saveUserDevices();
-    }
-    else if (exitOnCancel) {
-      return false;
-    }
-
-    updatePlatform(getPlatform(null));
-
-    String deviceName = dialog.getSelectedDeviceName();
-    if (deviceName != null) {
-      LayoutDevice newDevice = null;
-      for (LayoutDevice device : myDevices) {
-        if (device.getName().equals(deviceName)) {
-          newDevice = device;
-          break;
-        }
-      }
-
-      if (newDevice != null) {
-        String configurationName = dialog.getSelectedDeviceConfigName();
-        if (configurationName == null) {
-          updateDevice(newDevice);
-        }
-        else {
-          updateDevice(newDevice, configurationName);
-        }
-      }
-    }
-
-    return true;
-  }
-
   public void setProfile(Profile profile) {
     myProfile = profile;
 
@@ -301,7 +244,7 @@ public class ProfileManager {
   }
 
   @Nullable
-  public LayoutDeviceConfiguration getSelectedDeviceConfiguration() {
+  public State getSelectedDeviceConfiguration() {
     return myDeviceConfigurationAction.getSelection();
   }
 
@@ -330,11 +273,11 @@ public class ProfileManager {
     return myThemeAction.getSelection();
   }
 
-  public AbstractComboBoxAction<LayoutDevice> getDeviceAction() {
+  public AbstractComboBoxAction<DeviceWrapper> getDeviceAction() {
     return myDeviceAction;
   }
 
-  public AbstractComboBoxAction<LayoutDeviceConfiguration> getDeviceConfigurationAction() {
+  public AbstractComboBoxAction<State> getDeviceConfigurationAction() {
     return myDeviceConfigurationAction;
   }
 
@@ -374,7 +317,7 @@ public class ProfileManager {
       for (VirtualFile resourceDir : resourceDirs) {
         for (VirtualFile resourceFile : resourceDir.getChildren()) {
           if (resourceFile.isDirectory()) {
-            String[] segments = resourceFile.getName().split(AndroidConstants.RES_QUALIFIER_SEP);
+            String[] segments = resourceFile.getName().split(SdkConstants.RES_QUALIFIER_SEP);
             List<String> languageQualifiers = new ArrayList<String>();
             List<String> regionQualifiers = new ArrayList<String>();
 
@@ -459,18 +402,26 @@ public class ProfileManager {
     return localeWithoutRegion;
   }
 
+  private static void addWrappedDevices(Collection<DeviceWrapper> to, Collection<Device> from) {
+    for (Device device : from) {
+      to.add(new DeviceWrapper(device));
+    }
+  }
+
   private void updatePlatform(@Nullable AndroidPlatform platform) {
     AndroidSdkData sdkData = platform != null ? platform.getSdkData() : null;
 
     List<IAndroidTarget> targets = Collections.emptyList();
 
     if (sdkData != null) {
-      myLayoutDeviceManager.loadDevices(sdkData);
-      myDevices = new ArrayList<LayoutDevice>(myLayoutDeviceManager.getCombinedList());
+      myDevices = new ArrayList<DeviceWrapper>();
+      addWrappedDevices(myDevices, myLayoutDeviceManager.getDefaultDevices());
+      addWrappedDevices(myDevices, myLayoutDeviceManager.getVendorDevices(sdkData.getLocation()));
+      addWrappedDevices(myDevices, myUserDeviceManager.parseUserDevices(new MessageBuildingSdkLog()));
+
       if (myDevices.isEmpty()) {
         myDevices.add(NO_DEVICES);
       }
-      myDevices.add(CUSTOM_DEVICE);
 
       targets = new ArrayList<IAndroidTarget>();
       for (IAndroidTarget target : sdkData.getTargets()) {
@@ -483,10 +434,10 @@ public class ProfileManager {
       myDevices = Arrays.asList(NO_DEVICES);
     }
 
-    LayoutDevice newDevice = null;
+    DeviceWrapper newDevice = null;
     String deviceName = myProfile.getDevice();
     if (deviceName != null) {
-      for (LayoutDevice device : myDevices) {
+      for (DeviceWrapper device : myDevices) {
         if (deviceName.equals(device.getName())) {
           newDevice = device;
           break;
@@ -494,12 +445,7 @@ public class ProfileManager {
       }
     }
     if (newDevice == null && !myDevices.isEmpty()) {
-      for (LayoutDevice device : myDevices) {
-        if (device != CUSTOM_DEVICE) {
-          newDevice = device;
-          break;
-        }
-      }
+      newDevice = myDevices.get(0);
     }
     myDeviceAction.setItems(myDevices, newDevice);
     updateDevice(newDevice, myProfile.getDeviceConfiguration());
@@ -543,29 +489,29 @@ public class ProfileManager {
     updateTarget(newTarget);
   }
 
-  private void updateDevice(@Nullable LayoutDevice device) {
-    LayoutDeviceConfiguration configuration = myDeviceConfigurationAction.getSelection();
+  private void updateDevice(@Nullable DeviceWrapper device) {
+    State configuration = myDeviceConfigurationAction.getSelection();
     updateDevice(device, configuration == null ? null : configuration.getName());
   }
 
-  private void updateDevice(@Nullable LayoutDevice device, @Nullable String configurationName) {
-    myProfile.setDevice(device == null ? null : device.getName());
+  private void updateDevice(@Nullable DeviceWrapper wrapper, @Nullable String configurationName) {
+    myProfile.setDevice(wrapper == null ? null : wrapper.getName());
 
-    List<LayoutDeviceConfiguration> configurations;
-    if (device == null) {
+    List<State> configurations;
+    if (wrapper == null || wrapper.getDevice() == null) {
       configurations = Collections.emptyList();
     }
     else {
-      configurations = device.getConfigurations();
+      configurations = wrapper.getDevice().getAllStates();
       if (configurations == null) {
         configurations = Collections.emptyList();
       }
     }
 
-    LayoutDeviceConfiguration newConfiguration = null;
+    State newConfiguration = null;
 
     if (configurationName != null) {
-      for (LayoutDeviceConfiguration configuration : configurations) {
+      for (State configuration : configurations) {
         if (configurationName.equals(configuration.getName())) {
           newConfiguration = configuration;
           break;
@@ -580,7 +526,7 @@ public class ProfileManager {
     updateDeviceConfiguration(newConfiguration);
   }
 
-  private void updateDeviceConfiguration(@Nullable LayoutDeviceConfiguration configuration) {
+  private void updateDeviceConfiguration(@Nullable State configuration) {
     myProfile.setDeviceConfiguration(configuration == null ? null : configuration.getName());
   }
 
@@ -648,6 +594,10 @@ public class ProfileManager {
     return sdk != null && sdk.getSdkType() instanceof AndroidSdkType;
   }
 
+  @Override
+  public void dispose() {
+  }
+
   private static abstract class MyComboBoxAction<T> extends AbstractComboBoxAction<T> {
     @Override
     protected void update(T item, Presentation presentation, boolean popup) {
@@ -656,12 +606,12 @@ public class ProfileManager {
       if (item == null) {
         presentation.setText("[None]");
       }
-      else if (item instanceof LayoutDevice) {
-        LayoutDevice device = (LayoutDevice)item;
+      else if (item instanceof DeviceWrapper) {
+        DeviceWrapper device = (DeviceWrapper)item;
         presentation.setText(device.getName());
       }
-      else if (item instanceof LayoutDeviceConfiguration) {
-        LayoutDeviceConfiguration configuration = (LayoutDeviceConfiguration)item;
+      else if (item instanceof State) {
+        State configuration = (State)item;
         presentation.setText(configuration.getName());
       }
       else if (item instanceof IAndroidTarget) {

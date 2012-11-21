@@ -15,7 +15,7 @@
  */
 package org.jetbrains.android.dom;
 
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
