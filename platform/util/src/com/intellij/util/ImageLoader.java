@@ -33,7 +33,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.net.URL;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -98,13 +98,27 @@ public class ImageLoader implements Serializable {
     final boolean dark = UIUtil.isUnderDarcula();
     final boolean retina = UIUtil.isRetina();
     if (retina || dark) {
-      String suffix = "";
-      if (retina) suffix += "@2x";
-      if (dark) suffix += "_dark";
-      suffix += ".";
-      return Arrays.asList(Pair.create(FileUtil.getNameWithoutExtension(file) + suffix + FileUtil.getExtension(file), retina ? 2 : 1),
-                           Pair.create(file, 1));
+      List<Pair<String, Integer>> answer = new ArrayList<Pair<String, Integer>>(4);
+
+      final String name = FileUtil.getNameWithoutExtension(file);
+      final String ext = FileUtil.getExtension(file);
+      if (dark && retina) {
+        answer.add(Pair.create(name + "@2x_dark." + ext, 2));
+      }
+
+      if (dark) {
+        answer.add(Pair.create(name + "_dark." + ext, 1));
+      }
+
+      if (retina) {
+        answer.add(Pair.create(name + "@2x." + ext, 2));
+      }
+
+      answer.add(Pair.create(file, 1));
+
+      return answer;
     }
+
     return Collections.singletonList(Pair.create(file, 1));
   }
 
