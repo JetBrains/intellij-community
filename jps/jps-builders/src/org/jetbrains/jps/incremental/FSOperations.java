@@ -176,6 +176,8 @@ public class FSOperations {
   }
 
   public static void pruneEmptyDirs(CompileContext context, @Nullable final Set<File> dirsToDelete) {
+    if (dirsToDelete == null || dirsToDelete.isEmpty()) return;
+
     Set<File> doNotDelete = ALL_OUTPUTS_KEY.get(context);
     if (doNotDelete == null) {
       doNotDelete = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
