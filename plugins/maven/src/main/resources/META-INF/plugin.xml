@@ -73,6 +73,8 @@
                                 order="first"/>
     <lang.documentationProvider language="XML" implementationClass="org.jetbrains.idea.maven.dom.MavenPluginModelDocumentationProvider"
                                 order="first"/>
+    <lang.documentationProvider language="XML" implementationClass="org.jetbrains.idea.maven.dom.MavenPomXmlDocumentationProvider"/>
+
     <elementDescriptionProvider implementation="org.jetbrains.idea.maven.dom.MavenModelDocumentationProvider" order="first"/>
 
     <localInspection language="XML" shortName="MavenModelInspection" bundle="MavenDomBundle" key="inspection.name" groupKey="inspection.group"
