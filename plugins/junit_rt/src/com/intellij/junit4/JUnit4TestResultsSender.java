@@ -89,8 +89,14 @@ public class JUnit4TestResultsSender extends RunListener {
 
   private static boolean isComparisonFailure(Throwable throwable) {
     if (throwable == null) return false;
-    final String throwableClassName = throwable.getClass().getName();
-    return throwableClassName.equals(JUNIT_FRAMEWORK_COMPARISON_NAME) || throwableClassName.equals(ORG_JUNIT_COMPARISON_NAME);
+    return isComparisonFailure(throwable.getClass());
+  }
+
+  private static boolean isComparisonFailure(Class aClass) {
+    if (aClass == null) return false;
+    final String throwableClassName = aClass.getName();
+    if (throwableClassName.equals(JUNIT_FRAMEWORK_COMPARISON_NAME) || throwableClassName.equals(ORG_JUNIT_COMPARISON_NAME)) return true;
+    return isComparisonFailure(aClass.getSuperclass());
   }
 
   private static boolean isAssertionError(Class throwableClass) {

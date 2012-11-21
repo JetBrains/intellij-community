@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,35 +15,27 @@
  */
 package git4idea.push;
 
-import com.intellij.openapi.diagnostic.Logger;
 import git4idea.GitLocalBranch;
-import git4idea.GitLogger;
 import git4idea.GitRemoteBranch;
-import git4idea.repo.GitRepository;
+import git4idea.repo.GitRemote;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Kirill Likhodedov
  */
 public class GitPushSpec {
 
-  private static final Logger LOG = GitLogger.PUSH_LOG;
-
   @NotNull private final GitLocalBranch mySource;
-  @Nullable private final GitRemoteBranch myDest;
+  @NotNull private final GitRemoteBranch myDest;
 
-  @NotNull
-  public static GitPushSpec collect(GitRepository repository) {
-    repository.update();
-    GitLocalBranch currentBranch = repository.getCurrentBranch();
-    LOG.assertTrue(currentBranch != null, "Push shouldn't be available in the detached HEAD state");
-    return new GitPushSpec(currentBranch, currentBranch.findTrackedBranch(repository));
-  }
-
-  GitPushSpec(@NotNull GitLocalBranch source, @Nullable GitRemoteBranch dest) {
+  GitPushSpec(@NotNull GitLocalBranch source, @NotNull GitRemoteBranch dest) {
     myDest = dest;
     mySource = source;
+  }
+
+  @NotNull
+  public GitRemote getRemote() {
+    return myDest.getRemote();
   }
 
   @NotNull
@@ -51,12 +43,7 @@ public class GitPushSpec {
     return mySource;
   }
 
-  /**
-   * Returns the destination branch: branch on the remote which the source branch will be pushed to.
-   * @return destination branch or null if no destination branch has been defined (i. e. if there is no current branch, and no branch has
-   * been defined via the Push dialog).
-   */
-  @Nullable
+  @NotNull
   public GitRemoteBranch getDest() {
     return myDest;
   }
@@ -65,25 +52,4 @@ public class GitPushSpec {
   public String toString() {
     return mySource + "->" + myDest;
   }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    GitPushSpec spec = (GitPushSpec)o;
-
-    if (myDest != null ? !myDest.equals(spec.myDest) : spec.myDest != null) return false;
-    if (!mySource.equals(spec.mySource)) return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = mySource.hashCode();
-    result = 31 * result + (myDest != null ? myDest.hashCode() : 0);
-    return result;
-  }
-
 }
