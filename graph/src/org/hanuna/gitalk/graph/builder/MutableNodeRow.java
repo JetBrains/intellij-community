@@ -38,12 +38,13 @@ public class MutableNodeRow implements NodeRow {
         return nodes.isEmpty();
     }
 
-    public int getRowIndex() {
-        return rowIndex;
-    }
-
     public int getRowLogIndex() {
         return rowLogIndex;
+    }
+
+    @Override
+    public int getRowIndex() {
+        return rowIndex;
     }
 
     @NotNull

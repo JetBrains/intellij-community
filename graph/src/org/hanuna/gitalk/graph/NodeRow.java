@@ -11,4 +11,5 @@ public interface NodeRow {
     @NotNull
     public ReadOnlyList<Node> getNodes();
 
+    public int getRowIndex();
 }
