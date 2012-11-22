@@ -18,13 +18,17 @@ package com.intellij.ide.util.newProjectWizard;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.ui.popup.ListItemDescriptor;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -32,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
@@ -59,19 +62,36 @@ public class ProjectTypesList  {
     CollectionListModel<Item> model = new CollectionListModel<Item>(buildItems(map));
     myFilteringListModel = new FilteringListModel<Item>(model);
 
-    myList.setCellRenderer(new ColoredListCellRenderer() {
+    myList.setCellRenderer(new GroupedItemsListRenderer(new ListItemDescriptor() {
+      @Nullable
       @Override
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        Item item = (Item)value;
-        boolean group = item instanceof GroupItem;
-        append(item.getName(), group ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        setIcon(item.getIcon());
-        setIpad(group ? new Insets(2, 2, 2, 2) : new Insets(2, 20, 2, 2));
-        //if (group && !selected) {
-        //  setBackground(UIUtil.getPanelBackground());
-        //}
+      public String getTextFor(Object value) {
+        return ((Item)value).getName();
       }
-    });
+
+      @Nullable
+      @Override
+      public String getTooltipFor(Object value) {
+        return null;
+      }
+
+      @Nullable
+      @Override
+      public Icon getIconFor(Object value) {
+        return ((Item)value).getIcon();
+      }
+
+      @Override
+      public boolean hasSeparatorAboveOf(Object value) {
+        return ((Item)value).isFirstInGroup();
+      }
+
+      @Nullable
+      @Override
+      public String getCaptionAboveOf(Object value) {
+        return ((Item)value).getGroupName();
+      }
+    }));
 
     myFilteringListModel.setFilter(new Condition<Item>() {
       @Override
@@ -149,12 +169,11 @@ public class ProjectTypesList  {
       }
     });
     for (TemplatesGroup group : groups) {
-      GroupItem groupItem = new GroupItem(group);
-      items.add(groupItem);
+      boolean firstInGroup = true;
       for (ProjectTemplate template : map.get(group)) {
-        TemplateItem templateItem = new TemplateItem(template, group);
+        TemplateItem templateItem = new TemplateItem(template, group, firstInGroup);
+        firstInGroup = false;
         items.add(templateItem);
-        groupItem.addChild(templateItem);
       }
     }
     return items;
@@ -182,18 +201,23 @@ public class ProjectTypesList  {
 
     abstract String getName();
     abstract Icon getIcon();
+    boolean isFirstInGroup() { return false; }
 
     protected abstract int getMatchingDegree();
+
+    public abstract String getGroupName();
   }
 
   class TemplateItem extends Item {
 
     private final ProjectTemplate myTemplate;
     private final TemplatesGroup myGroup;
+    private final boolean myFirstInGroup;
 
-    TemplateItem(ProjectTemplate template, TemplatesGroup group) {
+    TemplateItem(ProjectTemplate template, TemplatesGroup group, boolean firstInGroup) {
       myTemplate = template;
       myGroup = group;
+      myFirstInGroup = firstInGroup;
     }
 
     @Override
@@ -201,7 +225,7 @@ public class ProjectTypesList  {
       return myTemplate.getName();
     }
 
-    String getGroupName() {
+    public String getGroupName() {
       return myGroup.getName();
     }
 
@@ -218,6 +242,11 @@ public class ProjectTypesList  {
         myBestMatch = Pair.create(this, i);
       }
       return i;
+    }
+
+    @Override
+    boolean isFirstInGroup() {
+      return myFirstInGroup;
     }
   }
 
@@ -248,6 +277,11 @@ public class ProjectTypesList  {
           return item.getMatchingDegree() > Integer.MIN_VALUE;
         }
       }) == null ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+    }
+
+    @Override
+    public String getGroupName() {
+      return getName();
     }
 
     public void addChild(TemplateItem item) {
