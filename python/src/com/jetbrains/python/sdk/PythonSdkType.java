@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -60,6 +61,7 @@ import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.io.File;
 import java.io.FilenameFilter;
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -76,6 +78,8 @@ public class PythonSdkType extends SdkType {
   private static final String[] DIRS_WITH_BINARY = new String[]{"", "bin", "Scripts"};
   private static final String[] UNIX_BINARY_NAMES = new String[]{"jython", "pypy", "python"};
   private static final String[] WIN_BINARY_NAMES = new String[]{"jython.bat", "ipy.exe", "pypy.exe", "python.exe"};
+
+  private static final Key<WeakReference<Component>> SDK_CREATOR_COMPONENT_KEY = Key.create("#com.jetbrains.python.sdk.creatorComponent");
 
   public static PythonSdkType getInstance() {
     return SdkType.findInstance(PythonSdkType.class);
@@ -224,12 +228,13 @@ public class PythonSdkType extends SdkType {
     return true;
   }
 
-  public void showCustomCreateUI(SdkModel sdkModel, JComponent parentComponent, final Consumer<Sdk> sdkCreatedCallback) {
+  public void showCustomCreateUI(SdkModel sdkModel, final JComponent parentComponent, final Consumer<Sdk> sdkCreatedCallback) {
     Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent));
     InterpreterPathChooser.show(project, sdkModel.getSdks(), RelativePoint.getCenterOf(parentComponent), true, new NullableConsumer<Sdk>() {
       @Override
       public void consume(@Nullable Sdk sdk) {
         if (sdk != null) {
+          sdk.putUserData(SDK_CREATOR_COMPONENT_KEY, new WeakReference<Component>(parentComponent));
           sdkCreatedCallback.consume(sdk);
         }
       }
@@ -447,8 +452,19 @@ public class PythonSdkType extends SdkType {
   }
 
   public void setupSdkPaths(@NotNull final Sdk sdk) {
-    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    setupSdkPaths(sdk, project, null);
+    final Project project;
+    Component ownerComponent = null;
+    final WeakReference<Component> ownerComponentRef = sdk.getUserData(SDK_CREATOR_COMPONENT_KEY);
+    if (ownerComponentRef != null) {
+      ownerComponent = ownerComponentRef.get();
+    }
+    if (ownerComponent != null) {
+      project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(ownerComponent));
+    }
+    else {
+      project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    }
+    setupSdkPaths(sdk, project, ownerComponent);
   }
 
   public static void setupSdkPaths(Sdk sdk, @Nullable Project project, @Nullable Component ownerComponent) {
