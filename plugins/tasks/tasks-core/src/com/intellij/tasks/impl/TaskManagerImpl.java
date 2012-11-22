@@ -711,20 +711,17 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   public void updateTimeTrackingToolWindow() {
-    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.TASKS);
     if (isTimeTrackingToolWindowAvailable()) {
-      if (toolWindow == null) {
-        toolWindow =
-          ToolWindowManager.getInstance(myProject).registerToolWindow(ToolWindowId.TASKS, true, ToolWindowAnchor.RIGHT, myProject, true);
+      ToolWindowManager windowManager = ToolWindowManager.getInstance(myProject);
+      if (windowManager.getToolWindow(ToolWindowId.TASKS) == null) {
+        final ToolWindow toolWindow =
+          windowManager.registerToolWindow(ToolWindowId.TASKS, true, ToolWindowAnchor.RIGHT, myProject, true);
         new TasksToolWindowFactory().createToolWindowContent(myProject, toolWindow);
-      }
-      toolWindow.setAvailable(true, null);
-      toolWindow.show(null);
-      toolWindow.activate(null);
-    }
-    else {
-      if (toolWindow != null) {
-        toolWindow.setAvailable(false, null);
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          public void run() {
+            toolWindow.setAvailable(true, null);
+          }
+        });
       }
     }
   }
