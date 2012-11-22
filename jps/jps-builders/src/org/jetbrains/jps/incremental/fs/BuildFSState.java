@@ -131,7 +131,7 @@ public class BuildFSState extends FSState {
       for (Map.Entry<BuildRootDescriptor, Set<File>> entry : data.entrySet()) {
         //noinspection unchecked
         R root = (R)entry.getKey();
-        FileFilter filter = rootIndex.getRootFilter(root);
+        FileFilter filter = rootIndex.getRootFilter(root, context.getProjectDescriptor());
         for (File file : entry.getValue()) {
           if (!scope.isAffected(target, file) || !filter.accept(file)) {
             continue;
@@ -153,7 +153,7 @@ public class BuildFSState extends FSState {
     final FilesDelta delta = getDelta(rd.getTarget());
     final Set<File> files = delta.clearRecompile(rd);
     if (files != null) {
-      FileFilter filter = context.getProjectDescriptor().getBuildRootIndex().getRootFilter(rd);
+      FileFilter filter = context.getProjectDescriptor().getBuildRootIndex().getRootFilter(rd, context.getProjectDescriptor());
       CompileScope scope = context.getScope();
       final long compilationStartStamp = context.getCompilationStartStamp();
       for (File file : files) {

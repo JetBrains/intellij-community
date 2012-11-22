@@ -44,7 +44,7 @@ public class BuildOperations {
       FSOperations.markDirtyFiles(context, target, timestamps, true, null, null);
       configuration.save();
     }
-    else if (context.getScope().isRecompilationForced(target) || configuration.isTargetDirty()) {
+    else if (context.getScope().isRecompilationForced(target) || configuration.isTargetDirty() || configuration.outputRootWasDeleted(context)) {
       if (target instanceof ModuleBuildTarget) {
         // Using special FSState initialization, because for correct results of "integrate" operation of JavaBuilder
         // we still need to know which sources were deleted from previous compilation
@@ -52,6 +52,7 @@ public class BuildOperations {
       }
       else {
         IncProjectBuilder.clearOutputFiles(context, target);
+        pd.dataManager.cleanTargetStorages(target);
         FSOperations.markDirtyFiles(context, target, timestamps, true, null, null);
       }
       configuration.save();
@@ -102,6 +103,9 @@ public class BuildOperations {
   public static void markTargetsUpToDate(CompileContext context, BuildTargetChunk chunk) throws IOException {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     final BuildFSState fsState = pd.fsState;
+    for (BuildTarget<?> target : chunk.getTargets()) {
+      pd.getTargetsState().getTargetConfiguration(target).storeNonexistentOutputRoots(context);
+    }
     if (!Utils.errorsDetected(context) && !context.getCancelStatus().isCanceled()) {
       boolean marked = dropRemovedPaths(context, chunk);
       for (BuildTarget<?> target : chunk.getTargets()) {
