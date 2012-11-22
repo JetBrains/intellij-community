@@ -137,10 +137,12 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   /**
    * @return tool window's anchor in internal mode.
    */
+  @Override
   public ToolWindowAnchor getAnchor(){
     return myAnchor;
   }
 
+  @Override
   public ToolWindowContentUiType getContentUiType() {
     return myContentUiType;
   }
@@ -152,6 +154,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   /**
    * @return bound of tool window in floating mode.
    */
+  @Override
   public Rectangle getFloatingBounds(){
     return myFloatingBounds;
   }
@@ -178,6 +181,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
    * @see com.intellij.openapi.wm.ToolWindowType#FLOATING
    * @see com.intellij.openapi.wm.ToolWindowType#SLIDING
    */
+  @Override
   public ToolWindowType getType(){
     return myType;
   }
@@ -203,22 +207,27 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     myOrder=order;
   }
 
+  @Override
   public boolean isActive(){
     return myActive;
   }
 
+  @Override
   public boolean isAutoHide(){
     return myAutoHide;
   }
 
+  @Override
   public boolean isDocked(){
     return ToolWindowType.DOCKED==myType;
   }
 
+  @Override
   public boolean isFloating(){
     return ToolWindowType.FLOATING==myType;
   }
 
+  @Override
   public boolean isSliding(){
     return ToolWindowType.SLIDING==myType;
   }
@@ -227,6 +236,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     return myVisible;
   }
 
+  @Override
   public boolean isSplit() {
     return mySplitMode;
   }
@@ -235,32 +245,36 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     mySplitMode =sideTool;
   }
 
-  private static ToolWindowType parseToolWindowType(final String text){
-    if(ToolWindowType.DOCKED.toString().equals(text)){
+  private static ToolWindowType parseToolWindowType(final String text) {
+    if (ToolWindowType.DOCKED.toString().equalsIgnoreCase(text)) {
       return ToolWindowType.DOCKED;
-    }else if(ToolWindowType.FLOATING.toString().equals(text)){
+    }
+    if (ToolWindowType.FLOATING.toString().equalsIgnoreCase(text)) {
       return ToolWindowType.FLOATING;
-    }else if(ToolWindowType.SLIDING.toString().equals(text)){
+    }
+    if (ToolWindowType.SLIDING.toString().equalsIgnoreCase(text)) {
       return ToolWindowType.SLIDING;
-    }else{
-      throw new IllegalArgumentException();
     }
+    throw new IllegalArgumentException(text);
   }
 
-  private static ToolWindowAnchor parseToolWindowAnchor(final String text){
-    if(ToolWindowAnchor.TOP.toString().equals(text)){
+  private static ToolWindowAnchor parseToolWindowAnchor(final String text) {
+    if (ToolWindowAnchor.TOP.toString().equalsIgnoreCase(text)) {
       return ToolWindowAnchor.TOP;
-    }else if(ToolWindowAnchor.LEFT.toString().equals(text)){
-      return ToolWindowAnchor.LEFT;
-    }else if(ToolWindowAnchor.BOTTOM.toString().equals(text)){
-      return ToolWindowAnchor.BOTTOM;
-    }else if(ToolWindowAnchor.RIGHT.toString().equals(text)){
-      return ToolWindowAnchor.RIGHT;
-    }else{
-      throw new IllegalArgumentException();
     }
+    if (ToolWindowAnchor.LEFT.toString().equalsIgnoreCase(text)) {
+      return ToolWindowAnchor.LEFT;
+    }
+    if (ToolWindowAnchor.BOTTOM.toString().equalsIgnoreCase(text)) {
+      return ToolWindowAnchor.BOTTOM;
+    }
+    if (ToolWindowAnchor.RIGHT.toString().equalsIgnoreCase(text)) {
+      return ToolWindowAnchor.RIGHT;
+    }
+    throw new IllegalArgumentException(text);
   }
 
+  @Override
   @SuppressWarnings({"EmptyCatchBlock"})
   public void readExternal(final Element element) {
     myId = element.getAttributeValue(ID_ATTR);
@@ -371,6 +385,7 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     mySideWeight = weight;
   }
 
+  @Override
   public void writeExternal(final Element element){
     element.setAttribute(ID_ATTR,myId);
     element.setAttribute(ACTIVE_ATTR,myActive?Boolean.TRUE.toString():Boolean.FALSE.toString());
