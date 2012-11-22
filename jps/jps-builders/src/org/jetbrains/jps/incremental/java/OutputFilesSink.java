@@ -31,12 +31,17 @@ class OutputFilesSink implements OutputFileConsumer {
   private final CompileContext myContext;
   private final ModuleLevelBuilder.OutputConsumer myOutputConsumer;
   private final Callbacks.Backend myMappingsCallback;
+  private final String myChunkName;
   private final Set<File> mySuccessfullyCompiled = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
 
-  public OutputFilesSink(CompileContext context, ModuleLevelBuilder.OutputConsumer outputConsumer, Callbacks.Backend callback) {
+  public OutputFilesSink(CompileContext context,
+                         ModuleLevelBuilder.OutputConsumer outputConsumer,
+                         Callbacks.Backend callback,
+                         String chunkName) {
     myContext = context;
     myOutputConsumer = outputConsumer;
     myMappingsCallback = callback;
+    myChunkName = "[" +chunkName + "]";
   }
 
   public void save(final @NotNull OutputFileObject fileObject) {
@@ -96,6 +101,8 @@ class OutputFilesSink implements OutputFileConsumer {
   }
 
   private void writeToDisk(@NotNull OutputFileObject fileObject, boolean isTemp) throws IOException {
+    myContext.processMessage(new ProgressMessage("Writing classes... " + myChunkName));
+
     final File file = fileObject.getFile();
     final BinaryContent content = fileObject.getContent();
     if (content == null) {
@@ -107,10 +114,10 @@ class OutputFilesSink implements OutputFileConsumer {
     final File source = fileObject.getSourceFile();
     if (!isTemp && source != null) {
       mySuccessfullyCompiled.add(source);
-      final String className = fileObject.getClassName();
-      if (className != null) {
-        myContext.processMessage(new ProgressMessage("Compiled " + className));
-      }
+      //final String className = fileObject.getClassName();
+      //if (className != null) {
+      //  myContext.processMessage(new ProgressMessage("Compiled " + className));
+      //}
     }
   }
 

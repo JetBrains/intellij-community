@@ -16,6 +16,7 @@ import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.TargetBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
+import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.maven.model.JpsMavenExtensionService;
 import org.jetbrains.jps.maven.model.impl.*;
 
@@ -85,6 +86,8 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
           shouldFilter = false;
         }
         try {
+          context.processMessage(new ProgressMessage("Copying resources... [" + target.getModule().getName() + "]"));
+
           if (shouldFilter) {
             copyWithFiltering(file, outputFile);
           }
@@ -104,7 +107,7 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
             }
           }
         }
-        return true;
+        return !context.getCancelStatus().isCanceled();
       }
 
       private void copyWithFiltering(File file, File outputFile) throws IOException {
@@ -154,6 +157,8 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
 
     });
 
+    context.checkCanceled();
+
     if (cleanedSources != null) {
       // cleanup mapping for the files that were copied before but not copied now
       for (Map.Entry<MavenResourcesTarget, Set<File>> entry : cleanedSources.entrySet()) {
@@ -166,6 +171,8 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
         }
       }
     }
+
+    context.processMessage(new ProgressMessage("Finished copying resources [" + target.getModule().getName() + "]"));
   }
 
 
