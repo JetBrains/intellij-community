@@ -32,6 +32,7 @@ import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -137,6 +138,9 @@ public class VcsHistoryProviderBackgroundableProxy {
     ProgressManager.getInstance().run(new Task.Backgroundable(myProject, VcsBundle.message("loading.file.history.progress"),
                                                               true, BackgroundFromStartOption.getInstance()) {
       public void run(@NotNull ProgressIndicator indicator) {
+        if (indicator != null) {
+          indicator.setText(VcsUtil.getPathForProgressPresentation(filePath.getIOFile()));
+        }
         try {
           VcsHistorySession cachedSession = null;
           if (canUseLastRevisionCheck && myCachesHistory && ((cachedSession = getSessionFromCacheWithLastRevisionCheck(filePath, vcsKey))) != null) {
