@@ -22,10 +22,8 @@ import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.conversion.AbstractIdeaSpecificSettings;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
-import org.jetbrains.jps.model.java.JpsJavaExtensionService;
-import org.jetbrains.jps.model.java.JpsJavaModuleExtension;
-import org.jetbrains.jps.model.java.JpsJavaSdkType;
+import org.jetbrains.jps.model.java.*;
+import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsDependenciesList;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
@@ -63,14 +61,26 @@ class JpsIdeaSpecificSettings extends AbstractIdeaSpecificSettings<JpsModule, St
   @Override
   protected void setupJdk(Element root, JpsModule model) {
     final String inheritJdk = root.getAttributeValue("inheritJdk");
+    final JpsDependenciesList dependenciesList = model.getDependenciesList();
     if (inheritJdk != null && Boolean.parseBoolean(inheritJdk)) {
-      final JpsDependenciesList dependenciesList = model.getDependenciesList();
       dependenciesList.addSdkDependency(JpsJavaSdkType.INSTANCE);
     }
     else {
       final String jdkName = root.getAttributeValue("jdk");
       if (jdkName != null) {
-        JpsSdkTableSerializer.setSdkReference(model.getSdkReferencesTable(), jdkName, JpsJavaSdkType.INSTANCE);
+        String jdkType = root.getAttributeValue("jdk_type");
+        JpsSdkType<?> sdkType = null;
+        if (jdkType != null) {
+          sdkType = JpsSdkTableSerializer.getSdkType(jdkType);
+        }
+        if (sdkType == null) {
+          sdkType = JpsJavaSdkType.INSTANCE;
+        }
+        dependenciesList.addSdkDependency(sdkType);
+        JpsSdkTableSerializer.setSdkReference(model.getSdkReferencesTable(), jdkName, sdkType);
+        if (sdkType instanceof JpsJavaSdkTypeWrapper) {
+          dependenciesList.addSdkDependency(JpsJavaSdkType.INSTANCE);
+        }
       }
     }
   }
