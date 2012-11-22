@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.platform.templates.RemoteTemplatesFactory;
@@ -225,7 +226,7 @@ public class ProjectTypesList  {
 
     protected int getMatchingDegree() {
       if (myMatcher == null) return Integer.MAX_VALUE;
-      int i = myMatcher.matchingDegree(getGroupName() + " " + getName());
+      int i = myMatcher.matchingDegree(getName() + " " + getGroupName() + " " + StringUtil.stripHtml(myTemplate.getDescription(), false));
       if (myBestMatch == null || i > myBestMatch.second) {
         myBestMatch = Pair.create(this, i);
       }
