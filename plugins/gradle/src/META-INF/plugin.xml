@@ -131,6 +131,7 @@
     </group>
 
     <!-- 'Sync project structure' tree filters -->
+    <action id="Gradle.SyncTreeFilter.None" class="org.jetbrains.plugins.gradle.action.GradleResetTreeFiltersAction"/>
     <action id="Gradle.SyncTreeFilter.GradleLocal" class="org.jetbrains.plugins.gradle.action.GradleLocalSyncTreeFilterAction"/>
     <action id="Gradle.SyncTreeFilter.IntellijLocal" class="org.jetbrains.plugins.gradle.action.IntellijLocalSyncTreeFilterAction"/>
     <action id="Gradle.SyncTreeFilter.Conflict" class="org.jetbrains.plugins.gradle.action.GradleConflictSyncTreeFilterAction"/>
@@ -140,6 +141,7 @@
       <reference id="Gradle.SyncTreeFilter.IntellijLocal"/>
       <reference id="Gradle.SyncTreeFilter.Conflict"/>
       <!--<reference id="Gradle.SyncTreeFilter.Confirmed"/>-->
+      <reference id="Gradle.SyncTreeFilter.None"/>
     </group>
     
     <action id="Gradle.RebuildChangesTree" class="org.jetbrains.plugins.gradle.action.GradleRebuildStructureChangesTreeAction"/>
