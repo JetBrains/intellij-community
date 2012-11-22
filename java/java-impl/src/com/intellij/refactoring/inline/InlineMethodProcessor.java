@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -250,7 +250,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private static ArrayList<PsiReference> convertUsagesToRefs(UsageInfo[] usagesIn) {
     ArrayList<PsiReference> refs = new ArrayList<PsiReference>();
     for (UsageInfo info : usagesIn) {
-      refs.add(info.getReference());
+      final PsiReference ref = info.getReference();
+      if (ref != null) { //ref can be null if it is conflict usage info
+        refs.add(ref);
+      }
     }
     return refs;
   }
