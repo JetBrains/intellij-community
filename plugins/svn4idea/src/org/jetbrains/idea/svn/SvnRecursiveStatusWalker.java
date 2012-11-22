@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Processor;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient;
 import org.jetbrains.idea.svn.portable.JavaHLSvnStatusClient;
@@ -33,6 +34,7 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
@@ -161,14 +163,44 @@ public class SvnRecursiveStatusWalker {
     }
     final SVNDepth newDepth = SVNDepth.INFINITY.equals(prevDepth) ? SVNDepth.INFINITY : SVNDepth.EMPTY;
 
-    final SVNStatusClient childClient = myPartner.createStatusClient();
-    final VirtualFile[] children = vFile.getChildren();
-    for (VirtualFile child : children) {
-      final FilePath filePath = VcsUtil.getFilePath(child.getPath(), child.isDirectory());
-      // recursiveness is used ONLY for search of working copies that have unversioned files above
-      final MyItem childItem = new MyItem(myProject, filePath, newDepth, childClient, true);
-      myQueue.add(childItem);
+    final File ioFile = new File(vFile.getPath());
+    final Processor<File> processor;
+    final Processor<File> directoryFilter;
+    if (SVNDepth.EMPTY.equals(newDepth)) {
+      directoryFilter = Processor.TRUE;
+      processor = new Processor<File>() {
+        @Override
+        public boolean process(File file) {
+          if (! FileUtil.filesEqual(ioFile, file)) return true;
+          if (! FileUtil.filesEqual(ioFile, file.getParentFile())) return false;
+          if (file.isDirectory() && new File(file, SVNFileUtil.getAdminDirectoryName()).exists()) {
+            final MyItem childItem = new MyItem(myProject, new FilePathImpl(file, true), newDepth, myPartner.createStatusClient(), true);
+            myQueue.add(childItem);
+          }
+          return true;
+        }
+      };
+    } else {
+      directoryFilter = new Processor<File>() {
+        @Override
+        public boolean process(File file) {
+          return myQueue.isEmpty() || ! FileUtil.filesEqual(myQueue.getLast().getPath().getIOFile(), file);
+        }
+      };
+      processor = new Processor<File>() {
+        @Override
+        public boolean process(File file) {
+          if (file.isDirectory() && new File(file, SVNFileUtil.getAdminDirectoryName()).exists()) {
+            final FilePathImpl path = new FilePathImpl(file, true);
+            path.hardRefresh();
+            final MyItem childItem = new MyItem(myProject, path, newDepth, myPartner.createStatusClient(), true);
+            myQueue.add(childItem);
+          }
+          return true;
+        }
+      };
     }
+    FileUtil.processFilesRecursively(ioFile, processor, directoryFilter);
   }
 
   private class MyHandler implements ISVNStatusHandler {
@@ -232,8 +264,8 @@ public class SvnRecursiveStatusWalker {
       if ((vFile != null) && (SvnVcs.svnStatusIsUnversioned(status))) {
         if (vFile.isDirectory()) {
           if (FileUtil.filesEqual(myCurrentItem.getPath().getIOFile(), ioFile)) {
-            myReceiver.processUnversioned(vFile);
-            processRecursively(vFile, myCurrentItem.getDepth());
+            //myReceiver.processUnversioned(vFile);
+            //processRecursively(vFile, myCurrentItem.getDepth());
           } else {
             final MyItem childItem = new MyItem(myProject, new FilePathImpl(vFile), SVNDepth.INFINITY,
                                                 myPartner.createStatusClient(), true);

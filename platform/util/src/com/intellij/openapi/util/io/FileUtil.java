@@ -1091,12 +1091,17 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<File> processor) {
+    return processFilesRecursively(root, processor, null);
+  }
+
+  public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<File> processor,
+                                                  final @Nullable Processor<File> directoryFilter) {
     final LinkedList<File> queue = new LinkedList<File>();
     queue.add(root);
     while (!queue.isEmpty()) {
       final File file = queue.removeFirst();
       if (!processor.process(file)) return false;
-      if (file.isDirectory()) {
+      if (file.isDirectory() && (directoryFilter == null || directoryFilter.process(file))) {
         final File[] children = file.listFiles();
         if (children != null) {
           ContainerUtil.addAll(queue, children);
