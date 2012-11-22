@@ -22,6 +22,8 @@ import com.intellij.openapi.ui.popup.ListItemDescriptor;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.platform.ProjectTemplate;
+import com.intellij.platform.ProjectTemplatesFactory;
+import com.intellij.platform.templates.RemoteTemplatesFactory;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.CollectionListModel;
@@ -59,6 +61,10 @@ public class ProjectTypesList  {
     mySearchField = searchField;
 
     CollectionListModel<TemplateItem> model = new CollectionListModel<TemplateItem>(buildItems(map));
+
+    RemoteTemplatesFactory factory = new RemoteTemplatesFactory();
+//    factory.createTemplates()
+
     myFilteringListModel = new FilteringListModel<TemplateItem>(model);
 
     myList.setCellRenderer(new GroupedItemsListRenderer(new ListItemDescriptor() {
@@ -163,6 +169,8 @@ public class ProjectTypesList  {
     Collections.sort(groups, new Comparator<TemplatesGroup>() {
       @Override
       public int compare(TemplatesGroup o1, TemplatesGroup o2) {
+        if (o1.getName().equals(ProjectTemplatesFactory.OTHER_GROUP)) return 2;
+        if (o1.getName().equals(ProjectTemplatesFactory.CUSTOM_GROUP)) return 1;
         return o1.getName().compareTo(o2.getName());
       }
     });
