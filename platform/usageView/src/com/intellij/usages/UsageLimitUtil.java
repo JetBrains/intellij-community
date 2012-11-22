@@ -21,7 +21,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.ui.GuiUtils;
 import com.intellij.usageView.UsageViewBundle;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -46,13 +45,10 @@ public class UsageLimitUtil {
   public static Result showTooManyUsagesWarning(@NotNull Project project, @NotNull String message) {
     String[] buttons = {UsageViewBundle.message("button.text.continue"), UsageViewBundle.message("button.text.abort")};
     int r = showMessage(project, message, UsageViewBundle.message("find.excessive.usages.title"), buttons);
-    if (r == 0) {
-      return Result.CONTINUE;
-    }
     if (r == 1) {
       return Result.ABORT;
     }
-    throw new IncorrectOperationException("unexpected return: " + r);
+    return Result.CONTINUE;
   }
 
   private static int runOrInvokeAndWait(final Computable<Integer> f) {
