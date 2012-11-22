@@ -6,6 +6,9 @@ import java.util.*;
  * @author erokhins
  */
 public class ReadOnlyList<E> implements List<E> {
+    public static <E> ReadOnlyList<E> emptyList() {
+        return new ReadOnlyList<E>(Collections.<E>emptyList());
+    }
 
     public static <E> ReadOnlyList<E> newReadOnlyList(List<? extends E> list) {
         return new ReadOnlyList<E>(Collections.unmodifiableList(list));

@@ -33,7 +33,7 @@ public class SpecialCell {
 
     public static enum Type {
         commitNode,
-        showNode,
-        hideNode
+        showEdge,
+        hideEdge
     }
 }
