@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.Collections;
@@ -79,6 +80,10 @@ public class ChooseClassDialog extends DialogWrapper implements ListSelectionLis
     setOKActionEnabled(false);
 
     init();
+
+    Dimension size = myComponent.getPreferredSize();
+    size.height = myList.getPreferredSize().height + 20;
+    myComponent.setPreferredSize(size);
   }
 
   protected void findClasses(Module module, boolean includeAll, DefaultListModel model, String[] classes) {
