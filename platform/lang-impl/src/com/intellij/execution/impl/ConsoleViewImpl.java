@@ -239,6 +239,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private final Set<MyFlushRunnable> myCurrentRequests = new HashSet<MyFlushRunnable>();
 
   protected final CompositeFilter myPredefinedMessageFilter;
+  protected final CompositeInputFilter myPredefinedInputMessageFilter;
   protected final CompositeFilter myCustomFilter;
 
   private final Alarm myFoldingAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
@@ -298,6 +299,14 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
     myHeavyUpdateTicket = 0;
     myHeavyAlarm = myPredefinedMessageFilter.isAnyHeavy() ? new Alarm(Alarm.ThreadToUse.SHARED_THREAD, this) : null;
+
+    myPredefinedInputMessageFilter = new CompositeInputFilter(project);
+    for (ConsoleInputFilterProvider eachProvider : Extensions.getExtensions(ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS)) {
+      InputFilter[] filters = eachProvider.getDefaultFilters(project);
+      for (InputFilter filter : filters) {
+        myPredefinedInputMessageFilter.addFilter(filter);
+      }
+    }
 
     Disposer.register(project, this);
     myFinishProgress = new Runnable() {
@@ -510,7 +519,17 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   @Override
   public void print(String s, final ConsoleViewContentType contentType) {
-    printHyperlink(s, contentType, null);
+    InputFilter.Result result = myPredefinedInputMessageFilter.applyFilter(s, contentType);
+    if (result == null) {
+      printHyperlink(s, contentType, null);
+    }
+    else {
+      String resultLine = result.getText();
+      if (resultLine != null) {
+        ConsoleViewContentType resultConsoleViewContentType = result.getConsoleViewContentType();
+        printHyperlink(resultLine, resultConsoleViewContentType == null ? contentType : resultConsoleViewContentType, null);
+      }
+    }
   }
 
   private void printHyperlink(String s, ConsoleViewContentType contentType, HyperlinkInfo info) {
