@@ -166,6 +166,18 @@ public class SvnRecursiveStatusWalker {
     final File ioFile = new File(vFile.getPath());
     final Processor<File> processor;
     final Processor<File> directoryFilter;
+    final Processor<File> checkDirProcessor = new Processor<File>() {
+      @Override
+      public boolean process(File file) {
+        if (file.isDirectory() && new File(file, SVNFileUtil.getAdminDirectoryName()).exists()) {
+          final FilePathImpl path = new FilePathImpl(file, true);
+          path.hardRefresh();
+          final MyItem childItem = new MyItem(myProject, path, newDepth, myPartner.createStatusClient(), true);
+          myQueue.add(childItem);
+        }
+        return true;
+      }
+    };
     if (SVNDepth.EMPTY.equals(newDepth)) {
       directoryFilter = Processor.TRUE;
       processor = new Processor<File>() {
@@ -173,11 +185,7 @@ public class SvnRecursiveStatusWalker {
         public boolean process(File file) {
           if (! FileUtil.filesEqual(ioFile, file)) return true;
           if (! FileUtil.filesEqual(ioFile, file.getParentFile())) return false;
-          if (file.isDirectory() && new File(file, SVNFileUtil.getAdminDirectoryName()).exists()) {
-            final MyItem childItem = new MyItem(myProject, new FilePathImpl(file, true), newDepth, myPartner.createStatusClient(), true);
-            myQueue.add(childItem);
-          }
-          return true;
+          return checkDirProcessor.process(file);
         }
       };
     } else {
@@ -187,18 +195,7 @@ public class SvnRecursiveStatusWalker {
           return myQueue.isEmpty() || ! FileUtil.filesEqual(myQueue.getLast().getPath().getIOFile(), file);
         }
       };
-      processor = new Processor<File>() {
-        @Override
-        public boolean process(File file) {
-          if (file.isDirectory() && new File(file, SVNFileUtil.getAdminDirectoryName()).exists()) {
-            final FilePathImpl path = new FilePathImpl(file, true);
-            path.hardRefresh();
-            final MyItem childItem = new MyItem(myProject, path, newDepth, myPartner.createStatusClient(), true);
-            myQueue.add(childItem);
-          }
-          return true;
-        }
-      };
+      processor = checkDirProcessor;
     }
     FileUtil.processFilesRecursively(ioFile, processor, directoryFilter);
   }
