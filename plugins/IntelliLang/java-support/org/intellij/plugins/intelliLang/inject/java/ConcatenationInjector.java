@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -137,9 +138,11 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       @Override
       protected void processInjection(Language language,
                                       List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
-                                      boolean xmlInjection) {
+                                      boolean xmlInjection,
+                                      boolean unparsable) {
         InjectorUtils.registerInjection(language, list, containingFile, registrar);
         InjectorUtils.registerSupport(mySupport, xmlInjection, registrar);
+        if (unparsable) InjectorUtils.putInjectedFileUserData(registrar, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, Boolean.TRUE);
       }
 
       @Override
@@ -155,8 +158,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     };
     if (tempLanguage != null) {
       injectionProcessor.processCommentInjectionInner(null, null, tempLanguage);
-      PsiFile file = InjectorUtils.getInjectedFile(registrar);
-      if (file != null) file.putUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE, tempInjectedLanguage);
+      InjectorUtils.putInjectedFileUserData(registrar, LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE, tempInjectedLanguage);
     }
     else {
       injectionProcessor.processInjections();
@@ -318,7 +320,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       //if (prefix != null) injection.setPrefix(prefix);
       //if (suffix != null) injection.setSuffix(suffix);
       injection.setInjectedLanguageId(language.getID());
-      processInjectionWithContext(myUnparsable, injection, false);
+      processInjectionWithContext(injection, false);
       return false;
     }
 
@@ -363,24 +365,24 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       if (prefix != null) injection.setPrefix(prefix);
       if (suffix != null) injection.setSuffix(suffix);
       if (id != null) injection.setInjectedLanguageId(id);
-      processInjectionWithContext(myUnparsable, injection, false);
+      processInjectionWithContext(injection, false);
       return false;
     }
 
     protected boolean processXmlInjections(BaseInjection injection, PsiModifierListOwner owner, PsiMethod method, int paramIndex) {
-      processInjectionWithContext(myUnparsable, injection, true);
+      processInjectionWithContext(injection, true);
       if (injection.isTerminal()) {
         return false;
       }
       return true;
     }
 
-    private void processInjectionWithContext(boolean unparsable, BaseInjection injection, boolean xmlInjection) {
+    private void processInjectionWithContext(BaseInjection injection, boolean xmlInjection) {
       final Language language = InjectedLanguage.findLanguageById(injection.getInjectedLanguageId());
       if (language == null) return;
       final boolean separateFiles = !injection.isSingleFile() && StringUtil.isNotEmpty(injection.getValuePattern());
 
-      final Ref<Boolean> unparsableRef = Ref.create(unparsable);
+      final Ref<Boolean> unparsableRef = Ref.create(myUnparsable);
       final List<Object> objects = ContextComputationProcessor.collectOperands(injection.getPrefix(), injection.getSuffix(), unparsableRef, myOperands);
       if (objects.isEmpty()) return;
       final List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> result =
@@ -430,21 +432,19 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       if (!result.isEmpty()) {
         if (separateFiles) {
           for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : result) {
-            processInjection(language, Collections.singletonList(trinity), xmlInjection);
+            processInjection(language, Collections.singletonList(trinity), xmlInjection, false);
           }
         }
         else {
-          for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : result) {
-            trinity.first.putUserData(LanguageInjectionSupport.HAS_UNPARSABLE_FRAGMENTS, unparsableRef.get());
-          }
-          processInjection(language, result, xmlInjection);
+          processInjection(language, result, xmlInjection, unparsableRef.get());
         }
       }
     }
 
     protected void processInjection(Language language,
                                     List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
-                                    boolean xmlInjection) {
+                                    boolean xmlInjection,
+                                    boolean unparsable) {
     }
 
     protected boolean areThereInjectionsWithName(String methodName, boolean annoOnly) {

@@ -28,6 +28,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.PatternValuesIndex;
@@ -74,7 +75,8 @@ public final class XmlLanguageInjector implements MultiHostInjector {
     if (!isInIndex(xmlElement)) return;
     final TreeSet<TextRange> ranges = new TreeSet<TextRange>(InjectorUtils.RANGE_COMPARATOR);
     final PsiFile containingFile = xmlElement.getContainingFile();
-    getInjectedLanguage(xmlElement, new PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>>() {
+    final Ref<Boolean> unparsableRef = Ref.create();
+    getInjectedLanguage(xmlElement, unparsableRef, new PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>>() {
       public boolean process(final Language language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list) {
         for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
           if (ranges.contains(trinity.third.shiftRight(trinity.first.getTextRange().getStartOffset()))) return true;
@@ -87,12 +89,17 @@ public final class XmlLanguageInjector implements MultiHostInjector {
         }
         InjectorUtils.registerInjection(language, list, containingFile, registrar);
         InjectorUtils.registerSupport(mySupport, true, registrar);
+        if (Boolean.TRUE.equals(unparsableRef.get())) {
+          InjectorUtils.putInjectedFileUserData(registrar, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, Boolean.TRUE);
+        }
         return true;
       }
     });
   }
 
-  void getInjectedLanguage(final PsiElement place, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
+  void getInjectedLanguage(final PsiElement place,
+                           final Ref<Boolean> unparsableRef,
+                           final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
     if (place instanceof XmlTag) {
       final XmlTag xmlTag = (XmlTag)place;
 
@@ -105,7 +112,6 @@ public final class XmlLanguageInjector implements MultiHostInjector {
           if (language == null) continue;
           final boolean separateFiles = !injection.isSingleFile() && StringUtil.isNotEmpty(injection.getValuePattern());
 
-          final Ref<Boolean> hasSubTags = Ref.create(Boolean.FALSE);
           final List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> result =
             new ArrayList<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>();
 
@@ -122,7 +128,7 @@ public final class XmlLanguageInjector implements MultiHostInjector {
                 }
               }
               else if (element instanceof XmlTag) {
-                hasSubTags.set(Boolean.TRUE);
+                if (!separateFiles) unparsableRef.set(Boolean.TRUE);
                 if (injection instanceof AbstractTagInjection && ((AbstractTagInjection)injection).isApplyToSubTagTexts()) {
                   element.acceptChildren(this);
                 }
@@ -136,9 +142,6 @@ public final class XmlLanguageInjector implements MultiHostInjector {
               }
             }
             else {
-              for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : result) {
-                trinity.first.putUserData(LanguageInjectionSupport.HAS_UNPARSABLE_FRAGMENTS, hasSubTags.get());
-              }
               processor.process(language, result);
             }
           }
