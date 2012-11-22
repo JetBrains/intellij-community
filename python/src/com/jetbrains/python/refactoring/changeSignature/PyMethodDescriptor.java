@@ -35,7 +35,7 @@ public class PyMethodDescriptor implements MethodDescriptor<PyParameterInfo, Str
                     ((PyNamedParameterImpl)parameter).isPositionalContainer() ||
                     ((PyNamedParameterImpl)parameter).isKeywordContainer()? parameter.getText() : parameter.getName();
       parameterInfos.add(new PyParameterInfo(i, name, defaultValue == null? null : defaultValue.getText(),
-                                             defaultValue == null || !StringUtil.isEmptyOrSpaces(defaultValue.getText())));
+                                             defaultValue != null && !StringUtil.isEmptyOrSpaces(defaultValue.getText())));
     }
     return parameterInfos;
   }

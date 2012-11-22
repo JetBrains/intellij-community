@@ -19,6 +19,7 @@ public class PyChangeInfo implements ChangeInfo {
   private final String myNewName;
 
   private boolean myIsParameterSetOrOrderChanged;
+  private boolean myIsParametersNameChanged;
   private final boolean myIsNameChanged;
 
 
@@ -44,25 +45,21 @@ public class PyChangeInfo implements ChangeInfo {
 
         if (i != parameterInfo.getOldIndex()) {
           myIsParameterSetOrOrderChanged = true;
-          break;
         }
         if (!parameterInfo.getName().equals(oldParameters[i].getName())) {
           myIsParameterSetOrOrderChanged = true;
-          break;
+          myIsParametersNameChanged = true;
         }
         final String defaultValue = parameterInfo.getDefaultValue();
         final PyExpression oldDefaultValue = oldParameters[i].getDefaultValue();
         if ((oldDefaultValue == null && defaultValue != null) || (defaultValue == null && oldDefaultValue != null)) {
           myIsParameterSetOrOrderChanged = true;
-          break;
         }
         if (oldDefaultValue != null && !oldDefaultValue.getText().equals(defaultValue)) {
           myIsParameterSetOrOrderChanged = true;
-          break;
         }
         if (parameterInfo.getDefaultInSignature() != oldParameters[i].hasDefaultValue()) {
           myIsParameterSetOrOrderChanged = true;
-          break;
         }
       }
     }
@@ -95,7 +92,7 @@ public class PyChangeInfo implements ChangeInfo {
 
   @Override
   public boolean isParameterNamesChanged() {
-    return false;
+    return myIsParametersNameChanged;
   }
 
   @Override

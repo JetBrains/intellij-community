@@ -52,6 +52,14 @@ public class PyChangeSignatureTest extends PyTestCase {
                                               new PyParameterInfo(1, "b", "None", true)));
   }
 
+  public void testUpdateDocstring() {
+    doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false), new PyParameterInfo(1, "d1", "1", true)));
+  }
+
+  public void testClassMethod() {
+    doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "self", null, false), new PyParameterInfo(1, "a", null, true), new PyParameterInfo(-1, "b", "2", false)));
+  }
+
   public void doChangeSignatureTest(@Nullable String newName, @Nullable List<PyParameterInfo> parameters) {
     myFixture.configureByFile("refactoring/changeSignature/" + getTestName(true) + ".before.py");
     changeSignature(newName, parameters);

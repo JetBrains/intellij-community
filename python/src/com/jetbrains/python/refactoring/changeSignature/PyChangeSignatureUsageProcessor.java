@@ -69,24 +69,23 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     if (changeInfo.isNameChanged()) {
       final PsiElement method = changeInfo.getMethod();
       RenameUtil.doRenameGenericNamedElement(method, changeInfo.getNewName(), usages, null);
-      if (element instanceof PyFunction)
-        RenameUtil.doRenameGenericNamedElement(element, changeInfo.getNewName(), usages, null);
     }
+    if (element == null) return false;
+    if (element.getParent() instanceof PyCallExpression) {
+      final PyCallExpression call = (PyCallExpression)element.getParent();
+      final PyArgumentList argumentList = call.getArgumentList();
+      if (argumentList != null) {
+        final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(element.getProject());
+        StringBuilder builder = getSignature(changeInfo, call);
 
-    if (element == null || !(element.getParent() instanceof PyCallExpression)) {
-      return false;
-    }
-    final PyCallExpression call = (PyCallExpression)element.getParent();
-    final PyArgumentList argumentList = call.getArgumentList();
-    if (argumentList != null) {
-      final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(element.getProject());
-      StringBuilder builder = getSignature(changeInfo, call);
+        final PyExpression newCall =
+          elementGenerator.createExpressionFromText(LanguageLevel.forElement(element), builder.toString());
+        call.replace(newCall);
 
-      final PyExpression newCall =
-        elementGenerator.createExpressionFromText(LanguageLevel.forElement(element), builder.toString());
-      call.replace(newCall);
-
-      return true;
+        return true;
+      }
+    } else if (element instanceof PyFunction) {
+      processFunctionDeclaration((PyChangeInfo)changeInfo, (PyFunction)element);
     }
     return false;
   }
@@ -174,23 +173,20 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   }
 
   private static void processFunctionDeclaration(@NotNull PyChangeInfo changeInfo, @NotNull PyFunction function) {
+    if (changeInfo.isParameterNamesChanged()) {
+      final PyParameterInfo[] parameters = changeInfo.getNewParameters();
+      for (int i = 0; i != parameters.length; ++i) {
+        PyParameterInfo paramInfo = parameters[i];
+        if (paramInfo.getOldIndex() == i) {
+          final PyParameter[] oldParameters = function.getParameterList().getParameters();
+          final UsageInfo[] usages = RenameUtil.findUsages(oldParameters[i], paramInfo.getName(), true, false, null);
+          for (UsageInfo info : usages)
+            RenameUtil.rename(info, paramInfo.getName());
+        }
+      }
+    }
     if (changeInfo.isParameterSetOrOrderChanged()) {
       updateParameterList(changeInfo, function);
-      fixDoc(function);
-    }
-  }
-
-  private static void fixDoc(@NotNull PyFunction function) {  //TODO: fix docstring params
-    //final PyStringLiteralExpression original = function.getDocStringExpression();
-    //if (original == null) return;
-  }
-
-  private static void updateIdentifier(@NotNull Project project, @Nullable PsiElement oldIdentifier, @Nullable String newName) {
-    if (oldIdentifier == null || StringUtil.isEmpty(newName)) return;
-
-    final PsiElement newIdentifier = PyElementGenerator.getInstance(project).createNameIdentifier(newName).getPsi();
-    if (newIdentifier != null) {
-      oldIdentifier.replace(newIdentifier);
     }
   }
 
