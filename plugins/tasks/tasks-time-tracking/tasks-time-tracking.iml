@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">
-  <component name="DevKit.ModuleBuildProperties" />
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
@@ -8,8 +7,8 @@
     </content>
     <orderEntry type="jdk" jdkName="IDEA jdk" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="tasks-api" exported="" />
-    <orderEntry type="module" module-name="tasks-core" exported="" />
+    <orderEntry type="module" module-name="tasks-api" />
+    <orderEntry type="module" module-name="tasks-core" />
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="core-api" />
     <orderEntry type="module" module-name="platform-api" />
