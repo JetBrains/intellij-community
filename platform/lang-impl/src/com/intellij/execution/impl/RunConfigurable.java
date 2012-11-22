@@ -784,7 +784,7 @@ class RunConfigurable extends BaseConfigurable {
     if (super.isModified()) return true;
     final RunManagerImpl runManager = getRunManager();
     final List<RunConfiguration> allConfigurations = Arrays.asList(runManager.getAllConfigurations());
-    final Set<RunConfiguration> currentConfigurations = new HashSet<RunConfiguration>();
+    final List<RunConfiguration> currentConfigurations = new ArrayList<RunConfiguration>();
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       DefaultMutableTreeNode typeNode = (DefaultMutableTreeNode)myRoot.getChildAt(i);
       final Object object = typeNode.getUserObject();
@@ -810,7 +810,7 @@ class RunConfigurable extends BaseConfigurable {
         }
       }
     }
-    if (!allConfigurations.containsAll(currentConfigurations)) return true;
+    if (allConfigurations.size() != currentConfigurations.size() || !allConfigurations.containsAll(currentConfigurations)) return true;
 
     for (Configurable configurable : myStoredComponents.values()) {
       if (configurable.isModified()) return true;

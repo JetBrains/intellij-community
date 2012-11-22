@@ -1,9 +1,7 @@
 <idea-plugin version="2">
   <id>com.intellij.tasks</id>
   <name>Task Management</name>
-
   <description>Enables task and context management</description>
-
   <version>1.0</version>
   <vendor>JetBrains</vendor>
 
@@ -124,10 +122,6 @@
     <tasks.repositoryType implementation="com.intellij.tasks.generic.assembla.AssemblaRepositoryType"/>
 
     <checkinHandlerFactory implementation="com.intellij.tasks.impl.TaskCheckinHandlerFactory"/>
-
-    <toolWindow id="Time Tracking" anchor="right" secondary="false" icon="TasksIcons.Clock"
-                factoryClass="com.intellij.tasks.timetracking.TasksToolWindowFactory"
-                conditionClass="com.intellij.tasks.timetracking.TasksToolWindowFactory"/>
   </extensions>
 
 </idea-plugin>

@@ -7,11 +7,9 @@ import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.builders.BuildOutputConsumer;
-import org.jetbrains.jps.builders.BuildRootDescriptor;
-import org.jetbrains.jps.builders.BuildRootIndex;
-import org.jetbrains.jps.builders.DirtyFilesHolder;
+import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.artifacts.ArtifactBuildTaskProvider;
+import org.jetbrains.jps.builders.artifacts.impl.ArtifactOutToSourceStorageProvider;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -62,21 +60,15 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
 
 
     try {
-      final ArtifactSourceFilesState state = pd.dataManager.getArtifactsBuildData().getOrCreateState(target, pd);
-      state.ensureFsStateInitialized(pd.dataManager, context);
-      final Collection<String> deletedFiles = pd.fsState.getAndClearDeletedPaths(target);
-      final Map<BuildRootDescriptor, Set<File>> filesToRecompile = pd.fsState.getSourcesToRecompile(context, target);
-      if (deletedFiles.isEmpty() && filesToRecompile.isEmpty()) {
-        return;
-      }
+      final Collection<String> deletedFiles = holder.getRemovedFiles(target);
 
       context.processMessage(new ProgressMessage("Building artifact '" + artifact.getName() + "'..."));
       runArtifactTasks(context, target.getArtifact(), ArtifactBuildTaskProvider.ArtifactBuildPhase.PRE_PROCESSING);
       final SourceToOutputMapping srcOutMapping = pd.dataManager.getSourceToOutputMap(target);
-      final ArtifactOutputToSourceMapping outSrcMapping = state.getOrCreateOutSrcMapping();
+      final ArtifactOutputToSourceMapping outSrcMapping = pd.dataManager.getStorage(target, ArtifactOutToSourceStorageProvider.INSTANCE);
 
       final TIntObjectHashMap<Set<String>> filesToProcess = new TIntObjectHashMap<Set<String>>();
-      MultiMap<String, String> filesToDelete = new MultiMap<String, String>();
+      final MultiMap<String, String> filesToDelete = new MultiMap<String, String>();
       for (String sourcePath : deletedFiles) {
         final Collection<String> outputPaths = srcOutMapping.getOutputs(sourcePath);
         if (outputPaths != null) {
@@ -92,37 +84,37 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
         }
       }
 
-      Set<String> changedOutputPaths = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+      final Set<String> changedOutputPaths = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
       //noinspection SynchronizationOnLocalVariableOrMethodParameter
-      synchronized (filesToRecompile) {
-        for (Map.Entry<BuildRootDescriptor, Set<File>> entry : filesToRecompile.entrySet()) {
-          int rootIndex = ((ArtifactRootDescriptor)entry.getKey()).getRootIndex();
-          for (File file : entry.getValue()) {
-            String sourcePath = FileUtil.toSystemIndependentName(file.getPath());
-            addFileToProcess(filesToProcess, rootIndex, sourcePath, deletedFiles);
-            final Collection<String> outputPaths = srcOutMapping.getOutputs(sourcePath);
-            if (outputPaths != null) {
-              changedOutputPaths.addAll(outputPaths);
-              for (String outputPath : outputPaths) {
-                filesToDelete.putValue(outputPath, sourcePath);
-                final List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex> sources = outSrcMapping.getState(outputPath);
-                if (sources != null) {
-                  for (ArtifactOutputToSourceMapping.SourcePathAndRootIndex source : sources) {
-                    addFileToProcess(filesToProcess, source.getRootIndex(), source.getPath(), deletedFiles);
-                  }
+      holder.processDirtyFiles(new FileProcessor<ArtifactRootDescriptor, ArtifactBuildTarget>() {
+        @Override
+        public boolean apply(ArtifactBuildTarget target, File file, ArtifactRootDescriptor root) throws IOException {
+          int rootIndex = root.getRootIndex();
+          String sourcePath = FileUtil.toSystemIndependentName(file.getPath());
+          addFileToProcess(filesToProcess, rootIndex, sourcePath, deletedFiles);
+          final Collection<String> outputPaths = srcOutMapping.getOutputs(sourcePath);
+          if (outputPaths != null) {
+            changedOutputPaths.addAll(outputPaths);
+            for (String outputPath : outputPaths) {
+              filesToDelete.putValue(outputPath, sourcePath);
+              final List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex> sources = outSrcMapping.getState(outputPath);
+              if (sources != null) {
+                for (ArtifactOutputToSourceMapping.SourcePathAndRootIndex source : sources) {
+                  addFileToProcess(filesToProcess, source.getRootIndex(), source.getPath(), deletedFiles);
                 }
               }
             }
           }
+          return true;
         }
-        for (Set<File> files : filesToRecompile.values()) {
-          for (File file : files) {
-            srcOutMapping.remove(file.getPath());
-          }
-        }
-      }
+      });
+
+      BuildOperations.cleanOutputsCorrespondingToChangedFiles(context, holder);
       for (String outputPath : changedOutputPaths) {
         outSrcMapping.remove(outputPath);
+      }
+      if (filesToDelete.isEmpty() && filesToProcess.isEmpty()) {
+        return;
       }
 
       deleteOutdatedFiles(filesToDelete, context, srcOutMapping, outSrcMapping);

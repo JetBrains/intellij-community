@@ -25,7 +25,6 @@ import org.jetbrains.jps.builders.JpsBuildTestCase;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.builders.logging.BuildLoggingManager;
 import org.jetbrains.jps.builders.impl.logging.ProjectBuilderLoggerBase;
-import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
@@ -59,7 +58,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    baseDir = new File(PathManagerEx.getTestDataPath() + File.separator + "compileServer" + File.separator + "incremental" + File.separator + groupName + File.separator + getProjectName());
+    baseDir = new File(PathManagerEx.getTestDataPath(getClass()) + File.separator + "compileServer" + File.separator + "incremental" + File.separator + groupName + File.separator + getProjectName());
     workDir = FileUtil.createTempDirectory("jps-build", null);
 
     FileUtil.copyDir(baseDir, workDir, new FileFilter() {
@@ -124,9 +123,9 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
         return true;
       }
     });
-    if (Utils.TIMESTAMP_ACCURACY > 1) {
+    if (TIMESTAMP_ACCURACY > 1) {
       try {
-        Thread.sleep(Utils.TIMESTAMP_ACCURACY);
+        Thread.sleep(TIMESTAMP_ACCURACY);
       }
       catch (InterruptedException ignored) {
       }

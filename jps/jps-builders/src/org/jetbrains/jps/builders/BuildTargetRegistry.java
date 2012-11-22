@@ -1,7 +1,6 @@
 package org.jetbrains.jps.builders;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.Collection;
@@ -21,5 +20,5 @@ public interface BuildTargetRegistry {
   enum ModuleTargetSelector {
     PRODUCTION, TEST, ALL
   }
-  Collection<ModuleBasedTarget<?>> getModuleBasedTargets(@Nullable JpsModule module, @NotNull ModuleTargetSelector selector);
+  Collection<ModuleBasedTarget<?>> getModuleBasedTargets(@NotNull JpsModule module, @NotNull ModuleTargetSelector selector);
 }

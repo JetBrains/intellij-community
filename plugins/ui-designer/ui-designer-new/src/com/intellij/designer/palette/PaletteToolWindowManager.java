@@ -76,6 +76,11 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
     }
   }
 
+  @Override
+  public void disposeComponent() {
+    myToolWindowPanel.dispose();
+  }
+
   @NotNull
   @Override
   public String getComponentName() {

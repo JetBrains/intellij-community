@@ -2,9 +2,14 @@ package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SmartList;
+import gnu.trove.THashSet;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.incremental.CompileContext;
 
 import java.io.*;
+import java.util.*;
 
 /**
  * @author nik
@@ -72,6 +77,10 @@ public class BuildTargetConfiguration {
     return new File(myTargetsState.getDataPaths().getTargetDataRoot(myTarget), "config.dat");
   }
 
+  private File getNonexistentOutputsFile() {
+    return new File(myTargetsState.getDataPaths().getTargetDataRoot(myTarget), "nonexistent-outputs.dat");
+  }
+
   private String getCurrentState() {
     String state = myCurrentState;
     if (state == null) {
@@ -87,4 +96,43 @@ public class BuildTargetConfiguration {
     return out.toString();
   }
 
+  public void storeNonexistentOutputRoots(CompileContext context) throws IOException {
+    Collection<File> outputRoots = myTarget.getOutputRoots(context);
+    List<String> nonexistentOutputRoots = new SmartList<String>();
+    for (File root : outputRoots) {
+      if (!root.exists()) {
+        nonexistentOutputRoots.add(root.getAbsolutePath());
+      }
+    }
+    File file = getNonexistentOutputsFile();
+    if (nonexistentOutputRoots.isEmpty()) {
+      if (file.exists()) {
+        FileUtil.delete(file);
+      }
+    }
+    else {
+      FileUtil.writeToFile(file, StringUtil.join(nonexistentOutputRoots, "\n"));
+    }
+  }
+
+  public boolean outputRootWasDeleted(CompileContext context) throws IOException {
+    List<String> nonexistentOutputRoots = new SmartList<String>();
+    for (File outputRoot : myTarget.getOutputRoots(context)) {
+      if (!outputRoot.exists()) {
+        nonexistentOutputRoots.add(outputRoot.getAbsolutePath());
+      }
+    }
+    if (nonexistentOutputRoots.isEmpty()) return false;
+    
+    Set<String> storedNonExistentOutputs;
+    File file = getNonexistentOutputsFile();
+    if (!file.exists()) {
+      storedNonExistentOutputs = Collections.emptySet();
+    }
+    else {
+      List<String> lines = StringUtil.split(FileUtil.loadFile(file), "\n");
+      storedNonExistentOutputs = new THashSet<String>(lines, FileUtil.PATH_HASHING_STRATEGY);
+    }
+    return !storedNonExistentOutputs.containsAll(nonexistentOutputRoots);
+  }
 }
