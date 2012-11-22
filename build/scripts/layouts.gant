@@ -123,6 +123,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
       jar("bootstrap.jar") { module("bootstrap") }
 
       jar("resources.jar") {
+        module("colorSchemes")
         module("resources")
         module("platform-resources")
         module("community-resources") {
