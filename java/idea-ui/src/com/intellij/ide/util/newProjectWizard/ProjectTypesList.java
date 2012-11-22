@@ -50,22 +50,22 @@ public class ProjectTypesList  {
 
   private final JBList myList;
   private final SearchTextField mySearchField;
-  private final FilteringListModel<Item> myFilteringListModel;
+  private final FilteringListModel<TemplateItem> myFilteringListModel;
   private MinusculeMatcher myMatcher;
-  private Pair<? extends Item, Integer> myBestMatch;
+  private Pair<TemplateItem, Integer> myBestMatch;
 
   public ProjectTypesList(JBList list, SearchTextField searchField, MultiMap<TemplatesGroup, ProjectTemplate> map) {
     myList = list;
     mySearchField = searchField;
 
-    CollectionListModel<Item> model = new CollectionListModel<Item>(buildItems(map));
-    myFilteringListModel = new FilteringListModel<Item>(model);
+    CollectionListModel<TemplateItem> model = new CollectionListModel<TemplateItem>(buildItems(map));
+    myFilteringListModel = new FilteringListModel<TemplateItem>(model);
 
     myList.setCellRenderer(new GroupedItemsListRenderer(new ListItemDescriptor() {
       @Nullable
       @Override
       public String getTextFor(Object value) {
-        return ((Item)value).getName();
+        return ((TemplateItem)value).getName();
       }
 
       @Nullable
@@ -77,12 +77,12 @@ public class ProjectTypesList  {
       @Nullable
       @Override
       public Icon getIconFor(Object value) {
-        return ((Item)value).getIcon();
+        return ((TemplateItem)value).getIcon();
       }
 
       @Override
       public boolean hasSeparatorAboveOf(Object value) {
-        Item item = (Item)value;
+        TemplateItem item = (TemplateItem)value;
         int index = myFilteringListModel.getElementIndex(item);
         return index == 0 || !myFilteringListModel.getElementAt(index -1).getGroupName().equals(item.getGroupName());
       }
@@ -90,13 +90,13 @@ public class ProjectTypesList  {
       @Nullable
       @Override
       public String getCaptionAboveOf(Object value) {
-        return ((Item)value).getGroupName();
+        return ((TemplateItem)value).getGroupName();
       }
     }));
 
-    myFilteringListModel.setFilter(new Condition<Item>() {
+    myFilteringListModel.setFilter(new Condition<TemplateItem>() {
       @Override
-      public boolean value(Item item) {
+      public boolean value(TemplateItem item) {
         return item.getMatchingDegree() > Integer.MIN_VALUE;
       }
     });
@@ -108,7 +108,7 @@ public class ProjectTypesList  {
         String text = "*" + mySearchField.getText().trim();
         myMatcher = NameUtil.buildMatcher(text, NameUtil.MatchingCaseSensitivity.NONE);
 
-        Item value = (Item)myList.getSelectedValue();
+        TemplateItem value = (TemplateItem)myList.getSelectedValue();
         int degree = value == null ? Integer.MIN_VALUE : value.getMatchingDegree();
         myBestMatch = Pair.create(degree > Integer.MIN_VALUE ? value : null, degree);
 
@@ -151,14 +151,14 @@ public class ProjectTypesList  {
   }
 
   void saveSelection() {
-    Item item = (Item)myList.getSelectedValue();
-    if (item instanceof TemplateItem) {
+    TemplateItem item = (TemplateItem)myList.getSelectedValue();
+    if (item != null) {
       SelectTemplateSettings.getInstance().setLastTemplate(item.getGroupName(), item.getName());
     }
   }
 
-  private List<? extends Item> buildItems(MultiMap<TemplatesGroup, ProjectTemplate> map) {
-    List<Item> items = new ArrayList<Item>();
+  private List<TemplateItem> buildItems(MultiMap<TemplatesGroup, ProjectTemplate> map) {
+    List<TemplateItem> items = new ArrayList<TemplateItem>();
     List<TemplatesGroup> groups = new ArrayList<TemplatesGroup>(map.keySet());
     Collections.sort(groups, new Comparator<TemplatesGroup>() {
       @Override
@@ -193,17 +193,7 @@ public class ProjectTypesList  {
     return false;
   }
 
-  abstract static class Item {
-
-    abstract String getName();
-    abstract Icon getIcon();
-
-    protected abstract int getMatchingDegree();
-
-    public abstract String getGroupName();
-  }
-
-  class TemplateItem extends Item {
+  class TemplateItem {
 
     private final ProjectTemplate myTemplate;
     private final TemplatesGroup myGroup;
@@ -213,7 +203,6 @@ public class ProjectTypesList  {
       myGroup = group;
     }
 
-    @Override
     String getName() {
       return myTemplate.getName();
     }
@@ -222,12 +211,10 @@ public class ProjectTypesList  {
       return myGroup.getName();
     }
 
-    @Override
     Icon getIcon() {
       return myTemplate.createModuleBuilder().getNodeIcon();
     }
 
-    @Override
     protected int getMatchingDegree() {
       if (myMatcher == null) return Integer.MAX_VALUE;
       int i = myMatcher.matchingDegree(getGroupName() + " " + getName());
