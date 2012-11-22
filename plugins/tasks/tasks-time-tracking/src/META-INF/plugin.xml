@@ -1,0 +1,24 @@
+<idea-plugin version="2">
+  <id>com.intellij.tasks.timeTracking</id>
+  <name>Time Tracking</name>
+  <description>Enables time tracking for "Task Management" plugin</description>
+  <vendor>JetBrains</vendor>
+  <version>1.0</version>
+
+  <depends>com.intellij.tasks</depends>
+
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.tasks.timeTracking.TimeTrackingManager</implementation-class>
+    </component>
+  </project-components>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectConfigurable instance="com.intellij.tasks.timeTracking.TimeTrackingConfigurable" displayName="Time Tracking" id="tasks.timeTracking"
+                  parentId="tasks"/>
+
+    <toolWindow id="Time Tracking" anchor="right" secondary="false" icon="TasksIcons.Clock"
+                factoryClass="com.intellij.tasks.timeTracking.TasksToolWindowFactory"
+                conditionClass="com.intellij.tasks.timeTracking.TasksToolWindowFactory"/>
+  </extensions>
+</idea-plugin>
