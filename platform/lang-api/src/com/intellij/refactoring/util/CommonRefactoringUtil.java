@@ -61,7 +61,7 @@ public class CommonRefactoringUtil {
 
   public static void showErrorHint(final Project project, @Nullable final Editor editor, final String message, final String title, @Nullable @NonNls final String helpId) {
     if (ApplicationManager.getApplication().isUnitTestMode()) throw new RefactoringErrorHintException(message);
-
+    //todo: fix must be moved into ActionManager (if there is popup menu - hide it and then, "later", do action)
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
