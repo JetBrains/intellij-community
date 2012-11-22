@@ -130,7 +130,9 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
           pattern.append("-");
         } else if (myLexer.getTokenType() == ScopeTokenTypes.TILDE) {
           pattern.append("~");
-        } 
+        } else if (myLexer.getTokenType() == ScopeTokenTypes.SHARP) {
+          pattern.append("#");
+        }
         else if (myLexer.getTokenType() == ScopeTokenTypes.COLON) {
           pattern.append(":");
         } else {
