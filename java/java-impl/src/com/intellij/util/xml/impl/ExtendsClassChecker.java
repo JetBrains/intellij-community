@@ -51,11 +51,7 @@ public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>
     if (!(_element instanceof GenericDomValue)) return Collections.emptyList();
     GenericDomValue element = (GenericDomValue)_element;
 
-    final Class genericValueParameter = DomUtil.getGenericValueParameter(element.getDomElementType());
-    if (genericValueParameter == null || (!ReflectionCache.isAssignable(genericValueParameter, PsiClass.class) &&
-                                           !ReflectionCache.isAssignable(genericValueParameter, PsiType.class))) {
-      return Collections.emptyList();
-    }
+    if (!isPsiClassType(element)) return Collections.emptyList();
 
     final Object valueObject = element.getValue();
     PsiClass psiClass = null;
@@ -139,6 +135,10 @@ public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>
   }
 
   public static List<DomElementProblemDescriptor> checkExtendsClassInReferences(final GenericDomValue element, final DomElementAnnotationHolder holder) {
+    if (!isPsiClassType(element)) {
+      return Collections.emptyList();
+    }
+
     final Object valueObject = element.getValue();
     if (!(valueObject instanceof PsiClass)) return Collections.emptyList();
 
@@ -160,5 +160,14 @@ public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>
       }
     }
     return Collections.emptyList();
+  }
+
+  private static boolean isPsiClassType(GenericDomValue element) {
+    final Class genericValueParameter = DomUtil.getGenericValueParameter(element.getDomElementType());
+    if (genericValueParameter != null && (ReflectionCache.isAssignable(genericValueParameter, PsiClass.class) ||
+                                          ReflectionCache.isAssignable(genericValueParameter, PsiType.class))) {
+      return true;
+    }
+    return false;
   }
 }

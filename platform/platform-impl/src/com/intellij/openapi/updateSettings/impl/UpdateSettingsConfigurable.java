@@ -25,6 +25,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.util.text.DateFormatUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -142,6 +143,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     }
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

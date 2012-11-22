@@ -27,7 +27,7 @@ public class FSState {
   public static final int VERSION = 3;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.fs.FSState");
   private final Map<BuildTarget<?>, FilesDelta> myDeltas = Collections.synchronizedMap(new HashMap<BuildTarget<?>, FilesDelta>());
-  protected final Set<BuildTarget<?>> myInitialScanPerformed = Collections.synchronizedSet(new HashSet<BuildTarget<?>>());
+  private final Set<BuildTarget<?>> myInitialScanPerformed = Collections.synchronizedSet(new HashSet<BuildTarget<?>>());
   private final TObjectLongHashMap<File> myRegistrationStamps = new TObjectLongHashMap<File>(FileUtil.FILE_HASHING_STRATEGY);
 
   public void save(DataOutput out) throws IOException {
@@ -75,6 +75,7 @@ public class FSState {
   }
 
   public void clearAll() {
+    myInitialScanPerformed.clear();
     myDeltas.clear();
     myRegistrationStamps.clear();
   }

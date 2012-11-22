@@ -102,7 +102,6 @@ public class BuildFSState extends FSState {
   public void clearAll() {
     clearContextRoundData(null);
     clearContextChunk(null);
-    myInitialScanPerformed.clear();
     super.clearAll();
   }
 

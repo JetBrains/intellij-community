@@ -37,7 +37,7 @@ public class ModuleChunk {
 
   public String getName() {
     if (myModules.size() == 1) return myModules.iterator().next().getName();
-    return "ModuleChunk(" + StringUtil.join(myModules, GET_NAME, ",") + ")";
+    return StringUtil.join(myModules, GET_NAME, ",");
   }
 
   public Set<JpsModule> getModules() {

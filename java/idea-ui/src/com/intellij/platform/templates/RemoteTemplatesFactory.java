@@ -36,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InterruptedIOException;
 import java.net.HttpURLConnection;
 import java.util.List;
 import java.util.zip.ZipInputStream;
@@ -67,7 +66,8 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
       String text = StreamUtil.readText(stream);
       return createFromText(text);
     }
-    catch (InterruptedIOException ex) {  // timeouts etc
+    catch (IOException ex) {  // timeouts, lost connection etc
+      LOG.info(ex);
       return ProjectTemplate.EMPTY_ARRAY;
     }
     catch (Exception e) {

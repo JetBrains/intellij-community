@@ -82,6 +82,7 @@ public class PaletteManager implements ProjectComponent {
 
   public void projectClosed() {
     if (myPaletteWindow != null) {
+      myPaletteWindow.dispose();
       ToolWindowManager.getInstance(myProject).unregisterToolWindow(IdeBundle.message("toolwindow.palette"));
       myPaletteWindow = null;
     }
@@ -96,6 +97,9 @@ public class PaletteManager implements ProjectComponent {
   }
 
   public void disposeComponent() {
+    if (myPaletteWindow != null) {
+      myPaletteWindow.dispose();
+    }
   }
 
   public static PaletteManager getInstance(final Project project) {
@@ -121,7 +125,7 @@ public class PaletteManager implements ProjectComponent {
     PaletteItem item = getActiveItem();
     if (item != null && item.getClass().isInstance(item)) {
       //noinspection unchecked
-      return (T) item;
+      return (T)item;
     }
     return null;
   }
@@ -175,7 +179,7 @@ public class PaletteManager implements ProjectComponent {
   }
 
   void notifyKeyEvent(final KeyEvent e) {
-    for(KeyListener l: myKeyListeners) {
+    for (KeyListener l : myKeyListeners) {
       if (e.getID() == KeyEvent.KEY_PRESSED) {
         l.keyPressed(e);
       }
@@ -189,13 +193,13 @@ public class PaletteManager implements ProjectComponent {
   }
 
   void notifyDropActionChanged(int gestureModifiers) {
-    for(PaletteDragEventListener l: myDragEventListeners) {
+    for (PaletteDragEventListener l : myDragEventListeners) {
       l.dropActionChanged(gestureModifiers);
     }
   }
 
   void notifySelectionChanged(final ListSelectionEvent event) {
-    for(ListSelectionListener l: mySelectionListeners) {
+    for (ListSelectionListener l : mySelectionListeners) {
       l.valueChanged(event);
     }
   }

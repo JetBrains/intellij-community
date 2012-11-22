@@ -1,4 +1,4 @@
-package com.intellij.tasks.timetracking;
+package com.intellij.tasks.timeTracking;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
@@ -13,7 +13,6 @@ import com.intellij.tasks.TaskListenerAdapter;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.actions.GotoTaskAction;
 import com.intellij.tasks.actions.SwitchTaskAction;
-import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleColoredComponent;
@@ -42,14 +41,16 @@ import java.util.Comparator;
 public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Disposable {
 
   private final ListTableModel<LocalTask> myTableModel;
-  private final TaskManager myTaskManager;
+  private final TimeTrackingManager myTimeTrackingManager;
   private final Project myProject;
   private Timer myTimer;
   private final TableView<LocalTask> myTable;
+  private final TaskManager myTaskManager;
 
   public TasksToolWindowPanel(final Project project, final boolean vertical) {
     super(vertical);
     myProject = project;
+    myTimeTrackingManager = TimeTrackingManager.getInstance(project);
     myTaskManager = TaskManager.getManager(project);
 
     myTable = new TableView<LocalTask>(createListModel());
@@ -81,7 +82,7 @@ public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Dispo
       }
     });
 
-    myTimer = new Timer(TaskManagerImpl.TIME_TRACKING_TIME_UNIT, new ActionListener() {
+    myTimer = new Timer(TimeTrackingManager.TIME_TRACKING_TIME_UNIT, new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
         myTable.repaint();
@@ -90,11 +91,11 @@ public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Dispo
     myTimer.start();
   }
 
-  private static SimpleTextAttributes getAttributes(final boolean isClosed, final boolean isRunning, final boolean isSelected) {
-    return new SimpleTextAttributes(isRunning ? SimpleTextAttributes.STYLE_BOLD : SimpleTextAttributes.STYLE_PLAIN,
+  private static SimpleTextAttributes getAttributes(final boolean isClosed, final boolean isActive, final boolean isSelected) {
+    return new SimpleTextAttributes(isActive ? SimpleTextAttributes.STYLE_BOLD : SimpleTextAttributes.STYLE_PLAIN,
                                     isSelected
                                     ? UIUtil.getTableSelectionForeground()
-                                    : isClosed && !isRunning ? UIUtil.getLabelDisabledForeground() : UIUtil.getTableForeground());
+                                    : isClosed && !isActive ? UIUtil.getLabelDisabledForeground() : UIUtil.getTableForeground());
   }
 
   private static String formatDuration(final long milliseconds) {
@@ -123,69 +124,70 @@ public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Dispo
     group.add(new ToggleAction("Hide closed tasks", "Hide closed tasks", AllIcons.Actions.Checked) {
       @Override
       public boolean isSelected(final AnActionEvent e) {
-        return myTaskManager.isHideClosedTasks();
+        return myTimeTrackingManager.isHideClosedTasks();
       }
 
       @Override
       public void setSelected(final AnActionEvent e, final boolean state) {
-        myTaskManager.setHideClosedTasks(state);
+        myTimeTrackingManager.setHideClosedTasks(state);
       }
     });
     group.add(new ToggleAction("Auto mode", "Automatic starting and stopping of timer", TasksIcons.AutoMode) {
       @Override
       public boolean isSelected(final AnActionEvent e) {
-        return myTaskManager.isTimeTrackingAutoMode();
+        return myTimeTrackingManager.isTimeTrackingAutoMode();
       }
 
       @Override
       public void setSelected(final AnActionEvent e, final boolean state) {
-        myTaskManager.setTimeTrackingAutoMode(state);
+        myTimeTrackingManager.setTimeTrackingAutoMode(state);
         updateTable();
       }
     });
     group.add(new AnAction() {
       @Override
-          public void update(final AnActionEvent e) {
-            if (myTaskManager.isTimeTrackingAutoMode()) {
-              e.getPresentation().setEnabled(false);
-              e.getPresentation().setIcon(TasksIcons.StartTimer);
-              e.getPresentation().setText("Start timer for active task");
-            }
-            else {
-              e.getPresentation().setEnabled(true);
-              if (myTaskManager.getActiveTask().isRunning()) {
-                e.getPresentation().setIcon(TasksIcons.StopTimer);
-                e.getPresentation().setText("Stop timer for active task");
-              }
-              else {
-                e.getPresentation().setIcon(TasksIcons.StartTimer);
-                e.getPresentation().setText("Start timer for active task");
-              }
-            }
+      public void update(final AnActionEvent e) {
+        if (myTimeTrackingManager.isTimeTrackingAutoMode()) {
+          e.getPresentation().setEnabled(false);
+          e.getPresentation().setIcon(TasksIcons.StartTimer);
+          e.getPresentation().setText("Start timer for active task");
+        }
+        else {
+          e.getPresentation().setEnabled(true);
+          if (myTaskManager.getActiveTask().isRunning()) {
+            e.getPresentation().setIcon(TasksIcons.StopTimer);
+            e.getPresentation().setText("Stop timer for active task");
           }
+          else {
+            e.getPresentation().setIcon(TasksIcons.StartTimer);
+            e.getPresentation().setText("Start timer for active task");
+          }
+        }
+      }
 
-          @Override
-          public void actionPerformed(final AnActionEvent e) {
-            final LocalTask activeTask = myTaskManager.getActiveTask();
-            if (activeTask.isRunning()) {
-              activeTask.setRunning(false);
-            }
-            else {
-              activeTask.setRunning(true);
-            }
-          }
-        });
+      @Override
+      public void actionPerformed(final AnActionEvent e) {
+        final LocalTask activeTask = myTaskManager.getActiveTask();
+        if (activeTask.isRunning()) {
+          activeTask.setRunning(false);
+        }
+        else {
+          activeTask.setRunning(true);
+        }
+      }
+    });
     final ActionToolbar actionToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, myVertical);
     return actionToolBar.getComponent();
   }
 
   private void updateTable() {
-    myTableModel.setItems(ContainerUtil.filter(myTaskManager.getLocalTasks(myTaskManager.isHideClosedTasks()), new Condition<LocalTask>() {
-      @Override
-      public boolean value(final LocalTask task) {
-        return task.isActive() || task.getTimeSpent() != 0;
-      }
-    }));
+    myTableModel
+      .setItems(ContainerUtil.filter(myTaskManager.getLocalTasks(myTimeTrackingManager.isHideClosedTasks()), new Condition<LocalTask>() {
+        @Override
+        public boolean value(final LocalTask task) {
+          return task.isActive() || task.getTimeSpent() != 0;
+        }
+      }));
   }
 
   private ListTableModel<LocalTask> createListModel() {
@@ -212,11 +214,12 @@ public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Dispo
             panel.setBackground(UIUtil.getTableBackground(isSelected));
             final SimpleColoredComponent component = new SimpleColoredComponent();
             final boolean isClosed = task.isClosed() || myTaskManager.isLocallyClosed(task);
-            final boolean isRunning = myTaskManager.isTimeTrackingAutoMode() ? task.isActive() : task.isRunning();
-            component.append((String)value, getAttributes(isClosed, isRunning, isSelected));
+            final boolean isActive = task.isActive();
+            final boolean isRunning = myTimeTrackingManager.isTimeTrackingAutoMode() ? isActive : isActive && task.isRunning();
+            component.append((String)value, getAttributes(isClosed, isActive, isSelected));
             component.setIcon(isRunning
                               ? LayeredIcon.create(task.getIcon(), AllIcons.General.Run)
-                              : isClosed ? IconLoader.getTransparentIcon(task.getIcon()) : task.getIcon());
+                              : isClosed && !isActive ? IconLoader.getTransparentIcon(task.getIcon()) : task.getIcon());
             component.setOpaque(false);
             panel.add(component, BorderLayout.CENTER);
             panel.setOpaque(true);
@@ -242,7 +245,7 @@ public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Dispo
       @Override
       public String valueOf(final LocalTask task) {
         long timeSpent = task.getTimeSpent();
-        if (myTaskManager.isTimeTrackingAutoMode() ? task.isActive() : task.isRunning()) {
+        if (myTimeTrackingManager.isTimeTrackingAutoMode() ? task.isActive() : task.isRunning()) {
           return formatDuration(timeSpent);
         }
         return DateFormatUtil.formatDuration(timeSpent);
@@ -263,8 +266,8 @@ public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Dispo
             panel.setBackground(UIUtil.getTableBackground(isSelected));
             final SimpleColoredComponent component = new SimpleColoredComponent();
             final boolean isClosed = task.isClosed() || myTaskManager.isLocallyClosed(task);
-            final boolean isRunning = myTaskManager.isTimeTrackingAutoMode() ? task.isActive() : task.isRunning();
-            component.append((String)value, getAttributes(isClosed, isRunning, isSelected));
+            final boolean isActive = task.isActive();
+            component.append((String)value, getAttributes(isClosed, isActive, isSelected));
             component.setOpaque(false);
             panel.add(component, BorderLayout.CENTER);
             panel.setOpaque(true);

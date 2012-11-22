@@ -35,6 +35,12 @@ public class JBColor extends Color {
     return UIUtil.isUnderDarcula();
   }
 
-  public final static Color red = isDark() ? DarculaColors.RED : Color.red;
-  public final static Color blue = isDark() ? DarculaColors.BLUE : Color.blue;
+  public final static JBColor red = new JBColor(Color.red, DarculaColors.RED);
+  public final static JBColor RED = red;
+  public final static JBColor blue = new JBColor(Color.blue, DarculaColors.BLUE);
+  public final static JBColor BLUE = blue;
+
+
+  public static Color foreground = UIUtil.getLabelForeground();
+  public static Color background = UIUtil.getListBackground();
 }
