@@ -87,7 +87,7 @@ public class SdkSettingsStep extends ModuleWizardStep {
     if (myWizardContext.isCreatingNewProject()) { // else, inherit project jdk
       Sdk jdk = myJdkComboBox.getSelectedJdk();
       myWizardContext.setProjectJdk(jdk);
-      myModuleBuilder.setModuleJdk(jdk);
+//      myModuleBuilder.setModuleJdk(jdk);        // inherit project sdk by default
     }
   }
 
