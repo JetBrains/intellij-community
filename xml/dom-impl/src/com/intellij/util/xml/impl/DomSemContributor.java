@@ -251,19 +251,25 @@ public class DomSemContributor extends SemContributor {
   }
 
   @Nullable
-  private static <T extends DomChildrenDescription> T findChildrenDescription(Collection<T> descriptions, XmlTag tag, DomInvocationHandler parent) {
+  private static <T extends DomChildrenDescription> T findChildrenDescription(List<T> descriptions, XmlTag tag, DomInvocationHandler parent) {
     final String localName = tag.getLocalName();
-    final String namespace = tag.getNamespace();
+    String namespace = null;
     final String qName = tag.getName();
 
     final XmlFile file = parent.getFile();
 
-    for (final T description : descriptions) {
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0, size = descriptions.size(); i < size; i++) {
+      final T description = descriptions.get(i);
       final XmlName xmlName = description.getXmlName();
 
       if (localName.equals(xmlName.getLocalName()) || qName.equals(xmlName.getLocalName())) {
         final EvaluatedXmlName evaluatedXmlName = parent.createEvaluatedXmlName(xmlName);
-        if (DomImplUtil.isNameSuitable(evaluatedXmlName, localName, qName, namespace, file)) {
+        if (DomImplUtil.isNameSuitable(evaluatedXmlName,
+                                       localName,
+                                       qName,
+                                       namespace == null ? namespace = tag.getNamespace() : namespace,
+                                       file)) {
           return description;
         }
       }
