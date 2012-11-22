@@ -688,6 +688,21 @@ public class TypesUtil {
     return facade.getElementFactory().createTypeByFQClassName(JAVA_UTIL_SET, resolveScope);
   }
 
+  public static boolean isAnnotatedCheckHierarchyWithCache(@NotNull PsiClass aClass, @NotNull String annotationFQN) {
+    Map<String, PsiClass> classMap = getSuperClassesWithCache(aClass);
+
+    for (PsiClass psiClass : classMap.values()) {
+      PsiModifierList modifierList = psiClass.getModifierList();
+      if (modifierList != null) {
+        if (modifierList.findAnnotation(annotationFQN) != null) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
   public static Map<String, PsiClass> getSuperClassesWithCache(@NotNull PsiClass aClass) {
     Map<String, PsiClass> superClassNames = PARENT_CACHE_KEY.getCachedValue(aClass);
     if (superClassNames == null) {
