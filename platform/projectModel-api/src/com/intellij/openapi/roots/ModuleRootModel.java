@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Interface providing root information model for a given module.
+ * It's implemented by {@link ModuleRootManager}.
  *
  * @author dsl
  */
