@@ -47,25 +47,25 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
   @NonNls public static final String HELP_TOPIC = "reference.settingsdialog.project.gradle";
 
   private static final long BALLOON_DELAY_MILLIS = TimeUnit.SECONDS.toMillis(1);
-  
+
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  private final GradleLibraryManager myLibraryManager;
-  private final Project              myProject;
+  private final GradleInstallationManager myLibraryManager;
+  private final Project                   myProject;
 
   private GradleHomeSettingType myGradleHomeSettingType = GradleHomeSettingType.UNKNOWN;
 
-  private JComponent         myComponent;
-  private NamePathComponent  myGradleHomeComponent;
-  private boolean            myPathManuallyModified;
-  private boolean            myShowBalloonIfNecessary;
+  private JComponent        myComponent;
+  private NamePathComponent myGradleHomeComponent;
+  private boolean           myPathManuallyModified;
+  private boolean           myShowBalloonIfNecessary;
 
   public GradleConfigurable(@Nullable Project project) {
-    this(project, ServiceManager.getService(GradleLibraryManager.class));
+    this(project, ServiceManager.getService(GradleInstallationManager.class));
   }
 
-  public GradleConfigurable(@Nullable Project project, @NotNull GradleLibraryManager gradleLibraryManager) {
-    myLibraryManager = gradleLibraryManager;
+  public GradleConfigurable(@Nullable Project project, @NotNull GradleInstallationManager gradleInstallationManager) {
+    myLibraryManager = gradleInstallationManager;
     myProject = project;
     doCreateComponent();
   }
@@ -166,7 +166,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
 
   @Override
   public boolean isModified() {
-    if (!myPathManuallyModified) {
+    if (myProject == null || !myPathManuallyModified) {
       return false;
     }
     String newPath = myGradleHomeComponent.getPath();
@@ -180,6 +180,9 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
 
   @Override
   public void apply() {
+    if (myProject == null) {
+      return;
+    }
     useNormalColorForPath();
     String path = myGradleHomeComponent.getPath();
     GradleSettings.applyGradleHome(path, myProject);
@@ -214,12 +217,15 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
   
   @Override
   public void reset() {
+    if (myProject == null) {
+      return;
+    }
     useNormalColorForPath();
     myPathManuallyModified = false;
     String valueToUse = GradleSettings.getInstance(myProject).getGradleHome();
     if (StringUtil.isEmpty(valueToUse)) {
       valueToUse = GradleSettings.getInstance(ProjectManager.getInstance().getDefaultProject()).getGradleHome();
-    } 
+    }
     if (!StringUtil.isEmpty(valueToUse)) {
       myGradleHomeSettingType = myLibraryManager.isGradleSdkHome(new File(valueToUse)) ?
                                 GradleHomeSettingType.EXPLICIT_CORRECT :

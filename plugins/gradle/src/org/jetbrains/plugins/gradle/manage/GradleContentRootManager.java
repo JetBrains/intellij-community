@@ -73,25 +73,31 @@ public class GradleContentRootManager {
     return LocalFileSystem.PROTOCOL_PREFIX + path;
   }
   
+  @SuppressWarnings("MethodMayBeStatic")
   public void removeContentRoots(@NotNull final Iterable<ModuleAwareContentRoot> contentRoots) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        for (final ModuleAwareContentRoot contentRoot : contentRoots) {
-          GradleUtil.executeProjectChangeAction(contentRoot.getModule().getProject(), contentRoot, new Runnable() {
-            @Override
-            public void run() {
-              final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(contentRoot.getModule());
-              ModifiableRootModel model = moduleRootManager.getModifiableModel();
-              try {
-                model.removeContentEntry(contentRoot);
-              }
-              finally {
-                model.commit();
-              } 
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            for (final ModuleAwareContentRoot contentRoot : contentRoots) {
+              GradleUtil.executeProjectChangeAction(contentRoot.getModule().getProject(), contentRoot, new Runnable() {
+                @Override
+                public void run() {
+                  final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(contentRoot.getModule());
+                  ModifiableRootModel model = moduleRootManager.getModifiableModel();
+                  try {
+                    model.removeContentEntry(contentRoot);
+                  }
+                  finally {
+                    model.commit();
+                  }
+                }
+              });
             }
-          });
-        }
+          }
+        });
       }
     });
   }

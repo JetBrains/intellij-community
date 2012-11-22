@@ -137,10 +137,10 @@ public class GradleLibraryManager {
     }
   }
 
-  public void removeLibrary(@NotNull Library library) {
-    // TODO den check
-    LibraryTable table = library.getTable();
-    table.removeLibrary(library);
+  public void removeLibraries(@NotNull List<Library> libraries) {
+    // TODO den implement
+    //LibraryTable table = library.getTable();
+    //table.removeLibrary(library);
   }
   
   

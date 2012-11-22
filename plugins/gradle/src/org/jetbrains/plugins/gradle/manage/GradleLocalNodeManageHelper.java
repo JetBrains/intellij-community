@@ -1,6 +1,8 @@
 package org.jetbrains.plugins.gradle.manage;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ExportableOrderEntry;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
@@ -12,6 +14,7 @@ import org.jetbrains.plugins.gradle.model.gradle.*;
 import org.jetbrains.plugins.gradle.model.id.GradleContentRootId;
 import org.jetbrains.plugins.gradle.model.id.GradleEntityId;
 import org.jetbrains.plugins.gradle.model.id.GradleEntityIdMapper;
+import org.jetbrains.plugins.gradle.model.intellij.IntellijEntityVisitor;
 import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
@@ -50,23 +53,23 @@ public class GradleLocalNodeManageHelper {
 
   @NotNull private final GradleProjectStructureHelper myProjectStructureHelper;
   @NotNull private final GradleEntityIdMapper         myIdMapper;
-  @NotNull private final GradleModuleImporter         myModuleImporter;
-  @NotNull private final GradleLibraryManager         myLibraryImporter;
-  @NotNull private final GradleDependencyImporter     myModuleDependencyImporter;
+  @NotNull private final GradleModuleManager          myModuleManager;
+  @NotNull private final GradleLibraryManager         myLibraryManager;
+  @NotNull private final GradleDependencyManager      myModuleDependencyManager;
   @NotNull private final GradleContentRootManager     myContentRootManager;
 
   public GradleLocalNodeManageHelper(@NotNull GradleProjectStructureHelper projectStructureHelper,
                                      @NotNull GradleEntityIdMapper idMapper,
-                                     @NotNull GradleModuleImporter moduleImporter,
-                                     @NotNull GradleLibraryManager libraryImporter,
-                                     @NotNull GradleDependencyImporter moduleDependencyImporter,
+                                     @NotNull GradleModuleManager moduleManager,
+                                     @NotNull GradleLibraryManager libraryManager,
+                                     @NotNull GradleDependencyManager moduleDependencyManager,
                                      @NotNull GradleContentRootManager contentRootManager)
   {
     myProjectStructureHelper = projectStructureHelper;
     myIdMapper = idMapper;
-    myModuleImporter = moduleImporter;
-    myModuleDependencyImporter = moduleDependencyImporter;
-    myLibraryImporter = libraryImporter;
+    myModuleManager = moduleManager;
+    myModuleDependencyManager = moduleDependencyManager;
+    myLibraryManager = libraryManager;
     myContentRootManager = contentRootManager;
   }
 
@@ -96,7 +99,7 @@ public class GradleLocalNodeManageHelper {
     }
     return context.getAll();
   }
-  
+
   private void collectEntitiesToImport(@NotNull GradleProjectStructureNode<?> node, @NotNull Context context) {
     // Collect up.
     for (GradleProjectStructureNode<?> n = node.getParent(); n != null; n = n.getParent()) {
@@ -110,7 +113,7 @@ public class GradleLocalNodeManageHelper {
       Object id = descriptor.getElement();
       final Object entity = myIdMapper.mapIdToEntity((GradleEntityId)id);
       if (entity instanceof GradleEntity) {
-        ((GradleEntity)entity).invite(context.visitor);
+        ((GradleEntity)entity).invite(context.gradleVisitor);
       }
     }
 
@@ -125,7 +128,7 @@ public class GradleLocalNodeManageHelper {
     context.recursive = true;
     while (!toProcess.isEmpty()) {
       final GradleEntity e = toProcess.pop();
-      e.invite(context.visitor);
+      e.invite(context.gradleVisitor);
     }
   }
 
@@ -140,10 +143,10 @@ public class GradleLocalNodeManageHelper {
       return;
     }
     for (GradleContentRoot contentRoot : module.getContentRoots()) {
-      contentRoot.invite(context.visitor);
+      contentRoot.invite(context.gradleVisitor);
     }
     for (GradleDependency dependency : module.getDependencies()) {
-      dependency.invite(context.visitor);
+      dependency.invite(context.gradleVisitor);
     }
   }
 
@@ -172,7 +175,7 @@ public class GradleLocalNodeManageHelper {
     boolean r = context.recursive;
     context.recursive = true;
     try {
-      gradleModule.invite(context.visitor);
+      gradleModule.invite(context.gradleVisitor);
     }
     finally {
       context.recursive = r;
@@ -208,7 +211,7 @@ public class GradleLocalNodeManageHelper {
 
         @Override
         public void visit(@NotNull GradleModule module) {
-          myModuleImporter.importModule(module, myProjectStructureHelper.getProject()); 
+          myModuleManager.importModule(module, myProjectStructureHelper.getProject()); 
         }
 
         @Override
@@ -226,21 +229,21 @@ public class GradleLocalNodeManageHelper {
 
         @Override
         public void visit(@NotNull GradleLibrary library) {
-          myLibraryImporter.importLibrary(library, myProjectStructureHelper.getProject()); 
+          myLibraryManager.importLibrary(library, myProjectStructureHelper.getProject()); 
         }
 
         @Override
         public void visit(@NotNull GradleModuleDependency dependency) {
           final Module module = myProjectStructureHelper.findIntellijModule(dependency.getOwnerModule());
           assert module != null;
-          myModuleDependencyImporter.importDependency(dependency, module); 
+          myModuleDependencyManager.importDependency(dependency, module); 
         }
 
         @Override
         public void visit(@NotNull GradleLibraryDependency dependency) {
           final Module module = myProjectStructureHelper.findIntellijModule(dependency.getOwnerModule());
           assert module != null;
-          myModuleDependencyImporter.importDependency(dependency, module); 
+          myModuleDependencyManager.importDependency(dependency, module); 
         }
       });
     }
@@ -248,28 +251,44 @@ public class GradleLocalNodeManageHelper {
   }
 
   public void removeNodes(@NotNull Collection<GradleProjectStructureNode<?>> nodes) {
-    Context context = new Context();
+    final List<Library> libraries = new ArrayList<Library>();
+    final List<Module> modules = new ArrayList<Module>();
+    final List<ModuleAwareContentRoot> contentRoots = new ArrayList<ModuleAwareContentRoot>();
+    final List<ExportableOrderEntry> dependencies = new ArrayList<ExportableOrderEntry>();
+    IntellijEntityVisitor visitor = new IntellijEntityVisitor() {
+      @Override public void visit(@NotNull Project project) { }
+      @Override public void visit(@NotNull Module module) { modules.add(module); }
+      @Override public void visit(@NotNull ModuleAwareContentRoot contentRoot) { contentRoots.add(contentRoot); }
+      @Override public void visit(@NotNull LibraryOrderEntry libraryDependency) { dependencies.add(libraryDependency); }
+      @Override public void visit(@NotNull ModuleOrderEntry moduleDependency) { dependencies.add(moduleDependency); } 
+      @Override public void visit(@NotNull Library library) { libraries.add(library); }
+    };
+    
     for (GradleProjectStructureNode<?> node : nodes) {
       GradleProjectStructureNodeDescriptor<? extends GradleEntityId> descriptor = node.getDescriptor();
       if (descriptor.getAttributes() != GradleTextAttributes.INTELLIJ_LOCAL_CHANGE) {
         continue;
       }
       Object entity = myIdMapper.mapIdToEntity(descriptor.getElement());
-      if (entity == null) {
-        continue;
+      if (entity != null) {
+        GradleUtil.dispatch(entity, visitor);
       }
-      // TODO den implement
-      //GradleUtil.dispatch(entity);
     }
+
+    myContentRootManager.removeContentRoots(contentRoots);
+    myModuleDependencyManager.removeDependencies(dependencies);
+    myModuleManager.removeModules(modules);
+    myLibraryManager.removeLibraries(libraries);
+    GradleUtil.refreshProject(myProjectStructureHelper.getProject());
   }
   
   private class Context {
 
-    public final Set<GradleModule>      modules      = new HashSet<GradleModule>();
-    public final Set<GradleContentRoot> contentRoots = new HashSet<GradleContentRoot>();
-    public final Set<GradleLibrary>     libraries    = new HashSet<GradleLibrary>();
-    public final Set<GradleDependency>  dependencies = new HashSet<GradleDependency>();
-    public final CollectingVisitor      visitor      = new CollectingVisitor(this);
+    public final Set<GradleModule>      modules       = new HashSet<GradleModule>();
+    public final Set<GradleContentRoot> contentRoots  = new HashSet<GradleContentRoot>();
+    public final Set<GradleLibrary>     libraries     = new HashSet<GradleLibrary>();
+    public final Set<GradleDependency>  dependencies  = new HashSet<GradleDependency>();
+    public final CollectingVisitor      gradleVisitor = new CollectingVisitor(this);
     public boolean recursive;
 
     @NotNull
@@ -282,7 +301,7 @@ public class GradleLocalNodeManageHelper {
       return result;
     }
   }
-  
+
   private class CollectingVisitor implements GradleEntityVisitor {
     @NotNull private final Context myContext;
 

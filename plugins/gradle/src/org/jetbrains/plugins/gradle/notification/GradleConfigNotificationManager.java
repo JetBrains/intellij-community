@@ -16,7 +16,7 @@ import org.jetbrains.plugins.gradle.config.GradleConfigNotifierAdapter;
 import org.jetbrains.plugins.gradle.config.GradleConfigurable;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleLibraryManager;
+import org.jetbrains.plugins.gradle.util.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.event.HyperlinkEvent;
@@ -34,16 +34,16 @@ import java.util.concurrent.atomic.AtomicReference;
  * @since 3/21/12 4:04 PM
  */
 public class GradleConfigNotificationManager extends AbstractProjectComponent {
-  
+
   @NotNull private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup(
     GradleBundle.message("gradle.notification.group.display.warning"), GradleConstants.TOOL_WINDOW_ID, true
   );
 
   @NotNull private final AtomicReference<Notification> myNotification = new AtomicReference<Notification>();
-  
-  @NotNull private final GradleLibraryManager myLibraryManager;
-  
-  public GradleConfigNotificationManager(@NotNull final Project project, @NotNull GradleLibraryManager manager) {
+
+  @NotNull private final GradleInstallationManager myLibraryManager;
+
+  public GradleConfigNotificationManager(@NotNull final Project project, @NotNull GradleInstallationManager manager) {
     super(project);
     myLibraryManager = manager;
     final GradleConfigNotifierAdapter handler = new GradleConfigNotifierAdapter() {
@@ -58,7 +58,7 @@ public class GradleConfigNotificationManager extends AbstractProjectComponent {
 
   private void processGradleHomeChange() {
     EditorNotifications.getInstance(myProject).updateAllNotifications();
-    
+
     if (!GradleUtil.isGradleAvailable(myProject)) {
       return;
     }

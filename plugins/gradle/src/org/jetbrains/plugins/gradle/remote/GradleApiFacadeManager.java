@@ -40,7 +40,7 @@ import org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManag
 import org.jetbrains.plugins.gradle.remote.impl.GradleApiFacadeImpl;
 import org.jetbrains.plugins.gradle.remote.wrapper.GradleApiFacadeWrapper;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
-import org.jetbrains.plugins.gradle.util.GradleLibraryManager;
+import org.jetbrains.plugins.gradle.util.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.util.GradleLog;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
@@ -70,18 +70,18 @@ import java.util.concurrent.atomic.AtomicReference;
 public class GradleApiFacadeManager {
 
   private static final Pair<GradleApiFacade, RemoteGradleProcessSettings> NULL_VALUE = Pair.empty();
-  
+
   private static final String REMOTE_PROCESS_TTL_IN_MS_KEY = "gradle.remote.process.ttl.ms";
-  
+
   private static final String MAIN_CLASS_NAME                      = GradleApiFacadeImpl.class.getName();
   private static final int    REMOTE_FAIL_RECOVERY_ATTEMPTS_NUMBER = 3;
 
-  private final ConcurrentMap<String /*project name*/, GradleApiFacade> myFacadeWrappers
+  private final ConcurrentMap<String /*project name*/, GradleApiFacade>                                    myFacadeWrappers
     = new ConcurrentWeakHashMap<String, GradleApiFacade>();
   private final ConcurrentMap<String /*project name*/, Pair<GradleApiFacade, RemoteGradleProcessSettings>> myRemoteFacades
     = new ConcurrentWeakHashMap<String, Pair<GradleApiFacade, RemoteGradleProcessSettings>>();
 
-  @NotNull private final GradleLibraryManager myGradleLibraryManager;
+  @NotNull private final GradleInstallationManager myGradleInstallationManager;
 
   private final AtomicReference<RemoteGradleProgressNotificationManager> myExportedProgressManager
     = new AtomicReference<RemoteGradleProgressNotificationManager>();
@@ -92,8 +92,10 @@ public class GradleApiFacadeManager {
   // 'GradleApiFacade.applySettings()'. So, we need to hold reference to the last returned 'GradleApiFacade' stub anyway.
   private final RemoteProcessSupport<Object, GradleApiFacade, String> mySupport;
 
-  public GradleApiFacadeManager(@NotNull GradleLibraryManager gradleLibraryManager, @NotNull GradleProgressNotificationManager manager) {
-    myGradleLibraryManager = gradleLibraryManager;
+  public GradleApiFacadeManager(@NotNull GradleInstallationManager gradleInstallationManager,
+                                @NotNull GradleProgressNotificationManager manager)
+  {
+    myGradleInstallationManager = gradleInstallationManager;
     myProgressManager = (GradleProgressNotificationManagerImpl)manager;
     mySupport = new RemoteProcessSupport<Object, GradleApiFacade, String>(GradleApiFacade.class) {
       @Override
@@ -110,7 +112,7 @@ public class GradleApiFacadeManager {
         return createRunProfileState(findProjectByName(configuration));
       }
     };
-    
+
     ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
       public void run() {
         shutdown(false);
@@ -128,11 +130,11 @@ public class GradleApiFacadeManager {
     }
     return projectManager.getDefaultProject();
   }
-  
+
   private RunProfileState createRunProfileState(@Nullable final Project project) {
     return new CommandLineState(null) {
       private SimpleJavaParameters createJavaParameters() throws ExecutionException {
-        Collection<File> gradleLibraries = myGradleLibraryManager.getAllLibraries(project);
+        Collection<File> gradleLibraries = myGradleInstallationManager.getAllLibraries(project);
         GradleLog.LOG.assertTrue(gradleLibraries != null, GradleBundle.message("gradle.generic.text.error.sdk.undefined"));
         if (gradleLibraries == null) {
           throw new ExecutionException("Can't find gradle libraries");
@@ -172,6 +174,7 @@ public class GradleApiFacadeManager {
         return params;
       }
 
+      @NotNull
       @Override
       public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
         ProcessHandler processHandler = startProcess();
@@ -333,7 +336,8 @@ public class GradleApiFacadeManager {
 
   @NotNull
   private RemoteGradleProcessSettings getRemoteSettings(@Nullable Project project) {
-    File gradleHome = myGradleLibraryManager.getGradleHome(project);
+    File gradleHome = myGradleInstallationManager.getGradleHome(project);
+    assert gradleHome != null;
     RemoteGradleProcessSettings result = new RemoteGradleProcessSettings(gradleHome.getAbsolutePath());
     String ttlAsString = System.getProperty(REMOTE_PROCESS_TTL_IN_MS_KEY);
     if (ttlAsString != null) {
