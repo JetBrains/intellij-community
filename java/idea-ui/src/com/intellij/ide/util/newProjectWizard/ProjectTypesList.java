@@ -30,7 +30,6 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.ui.speedSearch.FilteringListModel;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,7 +82,9 @@ public class ProjectTypesList  {
 
       @Override
       public boolean hasSeparatorAboveOf(Object value) {
-        return ((Item)value).isFirstInGroup();
+        Item item = (Item)value;
+        int index = myFilteringListModel.getElementIndex(item);
+        return index == 0 || !myFilteringListModel.getElementAt(index -1).getGroupName().equals(item.getGroupName());
       }
 
       @Nullable
@@ -152,10 +153,7 @@ public class ProjectTypesList  {
   void saveSelection() {
     Item item = (Item)myList.getSelectedValue();
     if (item instanceof TemplateItem) {
-      SelectTemplateSettings.getInstance().setLastTemplate(((TemplateItem)item).getGroupName(), item.getName());
-    }
-    else if (item instanceof GroupItem) {
-      SelectTemplateSettings.getInstance().setLastTemplate(item.getName(), null);
+      SelectTemplateSettings.getInstance().setLastTemplate(item.getGroupName(), item.getName());
     }
   }
 
@@ -169,10 +167,8 @@ public class ProjectTypesList  {
       }
     });
     for (TemplatesGroup group : groups) {
-      boolean firstInGroup = true;
       for (ProjectTemplate template : map.get(group)) {
-        TemplateItem templateItem = new TemplateItem(template, group, firstInGroup);
-        firstInGroup = false;
+        TemplateItem templateItem = new TemplateItem(template, group);
         items.add(templateItem);
       }
     }
@@ -201,7 +197,6 @@ public class ProjectTypesList  {
 
     abstract String getName();
     abstract Icon getIcon();
-    boolean isFirstInGroup() { return false; }
 
     protected abstract int getMatchingDegree();
 
@@ -212,12 +207,10 @@ public class ProjectTypesList  {
 
     private final ProjectTemplate myTemplate;
     private final TemplatesGroup myGroup;
-    private final boolean myFirstInGroup;
 
-    TemplateItem(ProjectTemplate template, TemplatesGroup group, boolean firstInGroup) {
+    TemplateItem(ProjectTemplate template, TemplatesGroup group) {
       myTemplate = template;
       myGroup = group;
-      myFirstInGroup = firstInGroup;
     }
 
     @Override
@@ -237,55 +230,11 @@ public class ProjectTypesList  {
     @Override
     protected int getMatchingDegree() {
       if (myMatcher == null) return Integer.MAX_VALUE;
-      int i = myMatcher.matchingDegree(getName());
+      int i = myMatcher.matchingDegree(getGroupName() + " " + getName());
       if (myBestMatch == null || i > myBestMatch.second) {
         myBestMatch = Pair.create(this, i);
       }
       return i;
-    }
-
-    @Override
-    boolean isFirstInGroup() {
-      return myFirstInGroup;
-    }
-  }
-
-  class GroupItem extends Item {
-
-    private final TemplatesGroup myGroup;
-    private final List<TemplateItem> myChildren = new ArrayList<TemplateItem>();
-
-    GroupItem(TemplatesGroup group) {
-      myGroup = group;
-    }
-
-    @Override
-    String getName() {
-      return myGroup.getName();
-    }
-
-    @Override
-    Icon getIcon() {
-      return myGroup.getIcon();
-    }
-
-    @Override
-    protected int getMatchingDegree() {
-      return ContainerUtil.find(myChildren, new Condition<TemplateItem>() {
-        @Override
-        public boolean value(TemplateItem item) {
-          return item.getMatchingDegree() > Integer.MIN_VALUE;
-        }
-      }) == null ? Integer.MIN_VALUE : Integer.MAX_VALUE;
-    }
-
-    @Override
-    public String getGroupName() {
-      return getName();
-    }
-
-    public void addChild(TemplateItem item) {
-      myChildren.add(item);
     }
   }
 }
