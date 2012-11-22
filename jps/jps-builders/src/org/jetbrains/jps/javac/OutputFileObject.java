@@ -91,10 +91,10 @@ public final class OutputFileObject extends SimpleJavaFileObject {
   @Override
   public InputStream openInputStream() throws IOException {
     final BinaryContent bytes = myContent;
-    if (bytes == null) {
-      throw new FileNotFoundException(toUri().getPath());
+    if (bytes != null) {
+      return new ByteArrayInputStream(bytes.getBuffer(), bytes.getOffset(), bytes.getLength());
     }
-    return new ByteArrayInputStream(bytes.getBuffer(), bytes.getOffset(), bytes.getLength());
+    return new BufferedInputStream(new FileInputStream(myFile));
   }
 
   @Override
