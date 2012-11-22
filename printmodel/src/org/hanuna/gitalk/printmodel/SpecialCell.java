@@ -1,29 +1,32 @@
-package org.hanuna.gitalk.printgraph;
+package org.hanuna.gitalk.printmodel;
 
-import org.hanuna.gitalk.graph.Node;
+import org.hanuna.gitalk.printmodel.cells.Cell;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author erokhins
  */
-public class SpecialNode {
-    private final Node node;
+public class SpecialCell {
+    private final Cell cell;
     private final int position;
     private final Type type;
 
-    public SpecialNode(Node node, int position, Type type) {
-        this.node = node;
+    public SpecialCell(@NotNull Cell cell, int position, @NotNull Type type) {
+        this.cell = cell;
         this.position = position;
         this.type = type;
     }
 
-    public Node getNode() {
-        return node;
+    @NotNull
+    public Cell getCell() {
+        return cell;
     }
 
     public int getPosition() {
         return position;
     }
 
+    @NotNull
     public Type getType() {
         return type;
     }
