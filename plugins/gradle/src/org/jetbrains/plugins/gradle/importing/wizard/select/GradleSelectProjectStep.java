@@ -78,11 +78,6 @@ public class GradleSelectProjectStep extends AbstractImportFromGradleWizardStep 
     if (myConfigurable != null) {
       myConfigurable.reset();
     }
-
-    GradleProjectImportBuilder builder = getBuilder();
-    if (builder != null && isPathChanged()) {
-      myProjectPathComponent.setText(builder.getProjectPath(getWizardContext()));
-    }
   }
 
   @Override
