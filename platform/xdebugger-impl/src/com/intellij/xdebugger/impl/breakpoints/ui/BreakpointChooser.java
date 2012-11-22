@@ -27,6 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.List;
@@ -96,17 +98,27 @@ public class BreakpointChooser {
     });
 
     ComboBoxModel model = new CollectionComboBoxModel(myBreakpointItems, breakpointItem);
-    myComboBox = new ComboBox(model) {
+    myComboBox = new ComboBox(model);
+
+    myComboBox.addPopupMenuListener(new PopupMenuListener() {
       @Override
-      public void setPopupVisible(boolean visible) {
-        super.setPopupVisible(visible);
-        if (!visible) {
-          if (myDetailView != null) {
-            myDetailView.clearEditor();
-          }
+      public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+      }
+
+      @Override
+      public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+        if (myDetailView != null) {
+          myDetailView.clearEditor();
         }
       }
-    };
+
+      @Override
+      public void popupMenuCanceled(PopupMenuEvent e) {
+        if (myDetailView != null) {
+          myDetailView.clearEditor();
+        }
+      }
+    });
     myComboBox.setRenderer(new ItemWrapperListRenderer(project, null) {
       @Override
       protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
