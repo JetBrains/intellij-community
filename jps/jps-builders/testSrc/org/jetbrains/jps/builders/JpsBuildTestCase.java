@@ -1,6 +1,7 @@
 package org.jetbrains.jps.builders;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -20,7 +21,6 @@ import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.IncProjectBuilder;
 import org.jetbrains.jps.incremental.RebuildRequestedException;
-import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
@@ -52,6 +52,7 @@ import static org.jetbrains.jps.builders.CompileScopeTestBuilder.make;
  * @author nik
  */
 public abstract class JpsBuildTestCase extends UsefulTestCase {
+  protected static final long TIMESTAMP_ACCURACY = SystemInfo.isMac ? 1000 : 1;
   private File myProjectDir;
   protected JpsProject myProject;
   protected JpsModel myModel;
@@ -95,8 +96,19 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       if (newContent != null) {
         FileUtil.writeToFile(file, newContent);
       }
-      boolean updated = file.setLastModified(FileSystemUtil.lastModified(file) + Utils.TIMESTAMP_ACCURACY);
-      assertTrue("Cannot modify timestamp for " + file.getAbsolutePath(), updated);
+      long oldTimestamp = FileSystemUtil.lastModified(file);
+      long time = System.currentTimeMillis();
+      boolean updated = file.setLastModified(time);
+      if (!updated || FileSystemUtil.lastModified(file) <= oldTimestamp) {
+        updated = file.setLastModified(time + TIMESTAMP_ACCURACY);
+        assertTrue("Cannot modify timestamp for " + file.getAbsolutePath(), updated);
+        try {
+          //we need to ensure that time is changed. Otherwise this file will be treated as changed by user during compilation and marked for recompilation
+          Thread.sleep(TIMESTAMP_ACCURACY);
+        }
+        catch (InterruptedException ignored) {
+        }
+      }
     }
     catch (IOException e) {
       throw new RuntimeException(e);
