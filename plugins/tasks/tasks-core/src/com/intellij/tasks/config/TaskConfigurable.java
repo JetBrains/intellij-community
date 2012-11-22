@@ -25,7 +25,7 @@ import java.awt.event.ActionListener;
  */
 @SuppressWarnings({"UnusedDeclaration"})
 public class TaskConfigurable extends BindableConfigurable implements SearchableConfigurable.Parent,
-                                                                      NonDefaultProjectConfigurable {
+                                                                      NonDefaultProjectConfigurable, Configurable.NoScroll {
   
   private JPanel myPanel;
 
@@ -50,12 +50,6 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
   private JBCheckBox myAlwaysDisplayTaskCombo;
   private JTextField myConnectionTimeout;
 
-  @BindControl("enableTimeTracking")
-  private JBCheckBox myEnableTimeTrackingCheckBox;
-  @BindControl("timeTrackingSuspendDelayInSeconds")
-  private JTextField myTimeTrackingSuspendDelay;
-  private JPanel myTimeTrackingSettings;
-
   private final Project myProject;
   private Configurable[] myConfigurables;
   private final NotNullLazyValue<ControlBinder> myControlBinder = new NotNullLazyValue<ControlBinder>() {
@@ -74,11 +68,6 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
         enableCachePanel();
       }
     });
-    myEnableTimeTrackingCheckBox.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        enableTimeTrackingPanel();
-      }
-    });
   }
 
   private TaskManagerImpl.Config getConfig() {
@@ -94,15 +83,10 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
     GuiUtils.enableChildren(myCacheSettings, myUpdateCheckBox.isSelected());
   }
 
-  private void enableTimeTrackingPanel() {
-    GuiUtils.enableChildren(myTimeTrackingSettings, myEnableTimeTrackingCheckBox.isSelected());
-  }
-
   @Override
   public void reset() {
     super.reset();
     enableCachePanel();
-    enableTimeTrackingPanel();
     myAlwaysDisplayTaskCombo.setSelected(TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO);
     myConnectionTimeout.setText(Integer.toString(TaskSettings.getInstance().CONNECTION_TIMEOUT));
   }
@@ -110,13 +94,9 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
   @Override
   public void apply() throws ConfigurationException {
     boolean oldUpdateEnabled = getConfig().updateEnabled;
-    boolean oldTimeTrackingEnabled = getConfig().enableTimeTracking;
     super.apply();
     if (getConfig().updateEnabled && !oldUpdateEnabled) {
       TaskManager.getManager(myProject).updateIssues(null);
-    }
-    if (getConfig().enableTimeTracking != oldTimeTrackingEnabled) {
-      TaskManager.getManager(myProject).updateTimeTrackingToolWindow();
     }
     TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO = myAlwaysDisplayTaskCombo.isSelected();
     TaskSettings.getInstance().CONNECTION_TIMEOUT = Integer.valueOf(myConnectionTimeout.getText());

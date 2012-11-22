@@ -106,16 +106,4 @@ public abstract class TaskManager {
   public abstract boolean testConnection(TaskRepository repository);
 
   public final static TaskRepositoryType[] ourRepositoryTypes = Extensions.getExtensions(TaskRepositoryType.EP_NAME);
-
-  public abstract void updateTimeTrackingToolWindow();
-
-  public abstract boolean isTimeTrackingToolWindowAvailable();
-
-  public abstract boolean isTimeTrackingAutoMode();
-
-  public abstract void setTimeTrackingAutoMode(final boolean state);
-
-  public abstract boolean isHideClosedTasks();
-
-  public abstract void setHideClosedTasks(final boolean state);
 }
