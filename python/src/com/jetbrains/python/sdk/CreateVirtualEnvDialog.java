@@ -23,6 +23,7 @@ import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.PathUtil;
+import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.packaging.PyExternalProcessException;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyPackageManagerImpl;
@@ -108,7 +109,7 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
     updateSdkList(allSdks, suggestedBaseSdk);
 
     myMakeAvailableToAllProjectsCheckbox.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
-    if (project == null || project.isDefault()) {
+    if (project == null || project.isDefault() || !PlatformUtils.isPyCharm()) {
       myMakeAvailableToAllProjectsCheckbox.setSelected(true);
       myMakeAvailableToAllProjectsCheckbox.setVisible(false);
     }
