@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.spellchecker.SpellCheckerManager;
-import com.intellij.spellchecker.quickfixes.AcceptWordAsCorrect;
-import com.intellij.spellchecker.quickfixes.ChangeTo;
-import com.intellij.spellchecker.quickfixes.RenameTo;
 import com.intellij.spellchecker.quickfixes.SpellCheckerQuickFix;
 import com.intellij.spellchecker.tokenizer.*;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
@@ -46,8 +43,6 @@ import java.util.Set;
 public class SpellCheckingInspection extends LocalInspectionTool implements CustomSuppressableInspectionTool {
 
   public static final String SPELL_CHECKING_INSPECTION_TOOL_NAME = "SpellCheckingInspection";
-  private static final AcceptWordAsCorrect BATCH_ACCEPT_FIX = new AcceptWordAsCorrect();
-  private static final SpellCheckerQuickFix[] BATCH_FIXES = new SpellCheckerQuickFix[]{BATCH_ACCEPT_FIX};
 
   @Nls
   @NotNull
@@ -158,19 +153,25 @@ public class SpellCheckingInspection extends LocalInspectionTool implements Cust
 
 
   private static void addBatchDescriptor(PsiElement element, int offset, @NotNull TextRange textRange, @NotNull ProblemsHolder holder) {
-    final ProblemDescriptor problemDescriptor = createProblemDescriptor(element, offset, textRange, holder, BATCH_FIXES, false);
+    final SpellcheckingStrategy strategy = getFactoryByLanguage(element.getLanguage());
+
+    SpellCheckerQuickFix[] fixes = strategy != null
+                                   ? strategy.getBatchFixes(element, offset, textRange)
+                                   : SpellcheckingStrategy.getDefaultBatchFixes();
+    final ProblemDescriptor problemDescriptor = createProblemDescriptor(element, offset, textRange, holder, fixes, false);
     holder.registerProblem(problemDescriptor);
   }
 
   private static void addRegularDescriptor(PsiElement element, int offset, @NotNull TextRange textRange, @NotNull ProblemsHolder holder,
                                            boolean useRename, String wordWithTypo) {
-      SpellCheckerQuickFix[] fixes = new SpellCheckerQuickFix[]{
-        (useRename ? new RenameTo(wordWithTypo) : new ChangeTo(wordWithTypo)),
-        new AcceptWordAsCorrect(wordWithTypo)
-      };
+    SpellcheckingStrategy strategy = getFactoryByLanguage(element.getLanguage());
 
-      final ProblemDescriptor problemDescriptor = createProblemDescriptor(element, offset, textRange, holder, fixes, true);
-      holder.registerProblem(problemDescriptor);
+    SpellCheckerQuickFix[] fixes = strategy != null
+                                   ? strategy.getRegularFixes(element, offset, textRange, useRename, wordWithTypo)
+                                   : SpellcheckingStrategy.getDefaultRegularFixes(useRename, wordWithTypo);
+
+    final ProblemDescriptor problemDescriptor = createProblemDescriptor(element, offset, textRange, holder, fixes, true);
+    holder.registerProblem(problemDescriptor);
   }
 
   private static ProblemDescriptor createProblemDescriptor(PsiElement element, int offset, TextRange textRange, ProblemsHolder holder,

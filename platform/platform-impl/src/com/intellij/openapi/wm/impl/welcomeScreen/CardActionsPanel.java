@@ -74,7 +74,7 @@ public class CardActionsPanel extends JPanel {
       title = group.getTemplatePresentation().getText();
     }
     else {
-      title = "Quick Starts";
+      title = "Quick Start";
     }
     card.add(new HeaderPanel(title, parentId), BorderLayout.NORTH);
   }

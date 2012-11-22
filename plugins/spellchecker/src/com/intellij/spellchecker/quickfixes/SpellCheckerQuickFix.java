@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Iconable;
 import org.jetbrains.annotations.NotNull;
 
 public interface SpellCheckerQuickFix extends LocalQuickFix, Iconable {
+  SpellCheckerQuickFix[] EMPTY_ARRAY = new SpellCheckerQuickFix[0];
 
   @NotNull
   Anchor getPopupActionAnchor();

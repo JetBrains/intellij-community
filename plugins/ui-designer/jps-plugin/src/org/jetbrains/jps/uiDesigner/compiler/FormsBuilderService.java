@@ -13,15 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea;
+package org.jetbrains.jps.uiDesigner.compiler;
 
-import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.incremental.BuilderService;
+import org.jetbrains.jps.incremental.ModuleLevelBuilder;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
- * @author Kirill Likhodedov
+ * @author Eugene Zhuravlev
+ *         Date: 11/20/12
  */
-public class GitLogger {
-
-  public static final Logger PUSH_LOG = Logger.getInstance("GitPush");
-
+public class FormsBuilderService extends BuilderService{
+  @NotNull
+  @Override
+  public List<? extends ModuleLevelBuilder> createModuleLevelBuilders() {
+    return Arrays.asList(new FormsBindingManager(), new FormsInstrumenter());
+  }
 }

@@ -221,7 +221,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
                                           final boolean hasBeenExpanded,
                                           final boolean isLeaf) {
     if (!shouldPaintLines()) return;
-    if (!UIUtil.isUnderAquaBasedLookAndFeel() || !UIUtil.isUnderDarcula()) {
+    if (!UIUtil.isUnderAquaBasedLookAndFeel() && !UIUtil.isUnderDarcula()) {
       if (UIUtil.isUnderAlloyIDEALookAndFeel()) {
         invertLineColor = tree.getSelectionModel().isRowSelected(row) && tree.hasFocus();
       }

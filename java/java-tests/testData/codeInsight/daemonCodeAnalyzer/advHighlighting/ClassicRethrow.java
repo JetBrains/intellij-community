@@ -1,9 +1,8 @@
-import java.lang.Exception;
-
 class C {
   static class E extends Exception { }
   static class E1 extends E { }
   static class E2 extends E { }
+  static class Err extends Error { }
 
   void m1() {
     try {
@@ -111,6 +110,44 @@ class C {
       E x = e;
       // no chained exception type evaluation
       <error descr="Unhandled exception: C.E">throw x;</error>
+    }
+  }
+
+  void m9_1() {
+    try {
+      System.out.println();
+    }
+    catch (Throwable t) {
+      // throws Throwable before JDK7
+      <error descr="Unhandled exception: java.lang.Throwable">throw t;</error>
+    }
+  }
+
+  void m9_2() {
+    try {
+      System.out.println();
+    }
+    catch (Error e) {
+      throw e;
+    }
+  }
+
+  void m9_3() {
+    try {
+      System.out.println();
+    }
+    catch (Err e) {
+      throw e;
+    }
+  }
+
+  void m9_4() {
+    try {
+      if (false) throw new RuntimeException();
+    }
+    catch (Exception e) {
+      // throws Exception before JDK7
+      <error descr="Unhandled exception: java.lang.Exception">throw e;</error>
     }
   }
 }

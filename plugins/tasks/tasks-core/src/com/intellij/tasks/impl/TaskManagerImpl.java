@@ -57,7 +57,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.event.ActionEvent;
@@ -585,25 +584,22 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       myTimeTrackingTimer = UIUtil.createNamedTimer("TaskManager time tracking", TIME_TRACKING_TIME_UNIT, new ActionListener() {
         @Override
         public void actionPerformed(final ActionEvent e) {
+          final LocalTask activeTask = getActiveTask();
           if (isTimeTrackingAutoMode()) {
-            getActiveTask().setTimeSpent(getActiveTask().getTimeSpent() + TIME_TRACKING_TIME_UNIT);
+            activeTask.setTimeSpent(activeTask.getTimeSpent() + TIME_TRACKING_TIME_UNIT);
             getState().myTotallyTimeSpent += TIME_TRACKING_TIME_UNIT;
           }
           else {
-            boolean runningTaskExist = false;
-            for (LocalTask localTask : getLocalTasks()) {
-              if (localTask.isRunning()) {
-                localTask.setTimeSpent(localTask.getTimeSpent() + TIME_TRACKING_TIME_UNIT);
-                runningTaskExist = true;
-              }
+            if (activeTask.isRunning()) {
+              activeTask.setTimeSpent(activeTask.getTimeSpent() + TIME_TRACKING_TIME_UNIT);
+              getState().myTotallyTimeSpent += TIME_TRACKING_TIME_UNIT;
             }
-            if (runningTaskExist) getState().myTotallyTimeSpent += TIME_TRACKING_TIME_UNIT;
           }
         }
       });
       StartupManager.getInstance(myProject).registerStartupActivity(new Runnable() {
         public void run() {
-          SwingUtilities.invokeLater(new Runnable() {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
               startTimeTrackingTimer();
@@ -717,14 +713,26 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         toolWindow =
           ToolWindowManager.getInstance(myProject).registerToolWindow(ToolWindowId.TASKS, true, ToolWindowAnchor.RIGHT, myProject, true);
         new TasksToolWindowFactory().createToolWindowContent(myProject, toolWindow);
+        final ToolWindow finalToolWindow = toolWindow;
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            finalToolWindow.setAvailable(true, null);
+            finalToolWindow.show(null);
+            finalToolWindow.activate(null);
+          }
+        });
       }
-      toolWindow.setAvailable(true, null);
-      toolWindow.show(null);
-      toolWindow.activate(null);
     }
     else {
       if (toolWindow != null) {
-        toolWindow.setAvailable(false, null);
+        final ToolWindow finalToolWindow = toolWindow;
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            finalToolWindow.setAvailable(false, null);
+          }
+        });
       }
     }
   }

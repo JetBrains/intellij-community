@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.android.model.AndroidApplicationArtifactType;
 import org.jetbrains.jps.android.model.JpsAndroidApplicationArtifactProperties;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
@@ -1059,8 +1060,29 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     return null;
   }
 
+  private static boolean checkUnambiguousArtifacts(CompileContext context, List<JpsArtifact> artifacts) {
+    for (JpsArtifact artifact : artifacts) {
+      if (artifact.getArtifactType() instanceof AndroidApplicationArtifactType) {
+        final List<JpsAndroidModuleExtension> facets = AndroidJpsUtil.getAllPackagedFacets(artifact);
+
+        if (facets.size() > 1) {
+          context.processMessage(new CompilerMessage(
+            ANDROID_VALIDATOR, BuildMessage.Kind.ERROR, "Cannot build artifact '" + artifact.getName() +
+                                                        "' because it contains more than one Android package"));
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
   private static boolean checkArtifacts(@NotNull CompileContext context) {
     final List<JpsArtifact> artifacts = AndroidJpsUtil.getAndroidArtifactsToBuild(context);
+
+    if (!checkUnambiguousArtifacts(context, artifacts)) {
+      return false;
+    }
+
     final Set<JpsArtifact> debugArtifacts = new HashSet<JpsArtifact>();
     final Set<JpsArtifact> releaseArtifacts = new HashSet<JpsArtifact>();
     final Map<String, List<JpsArtifact>> moduleName2Artifact = new HashMap<String, List<JpsArtifact>>();
@@ -1145,7 +1167,11 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
     if (properties instanceof JpsAndroidApplicationArtifactProperties) {
       final JpsAndroidApplicationArtifactProperties p = (JpsAndroidApplicationArtifactProperties)properties;
-      return new Object[] {p.isRunProGuard(), p.getProGuardCfgFileUrl(), p.isIncludeSystemProGuardCfgFile()};
+      final boolean runProGuard = p.isRunProGuard();
+
+      return runProGuard
+             ? new Object[] {runProGuard, p.getProGuardCfgFileUrl(), p.isIncludeSystemProGuardCfgFile()}
+             : new Object[] {runProGuard};
     }
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }

@@ -237,7 +237,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     return buf.toString();
   }
 
-  public static String findDocRightAfterElement(final PsiElement parent, final String referenceName) {
+  public String findDocRightAfterElement(final PsiElement parent, final String referenceName) {
     // Check for comment right after the xml attlist decl
     PsiElement uncleElement = parent.getNextSibling();
     if (uncleElement instanceof PsiWhiteSpace && uncleElement.getText().indexOf('\n') == -1) uncleElement = uncleElement.getNextSibling();
@@ -267,7 +267,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     return curElement;
   }
 
-  private static String formatDocFromComment(final PsiElement curElement, final String name) {
+  private String formatDocFromComment(final PsiElement curElement, final String name) {
     String text = curElement.getText();
     text = text.substring("<!--".length(),text.length()-"-->".length()).trim();
     text = escapeDocumentationTextText(text);
@@ -317,7 +317,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
-  private static String generateDoc(String str, String name, String typeName, String version) {
+  protected String generateDoc(String str, String name, String typeName, String version) {
     if (str == null) return null;
     StringBuilder buf = new StringBuilder(str.length() + 20);
 

@@ -26,7 +26,6 @@ import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.EditorBasedWidget;
 import com.intellij.util.Consumer;
 import git4idea.GitUtil;
-import git4idea.branch.GitBranchUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryChangeListener;
@@ -95,7 +94,7 @@ public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidge
     if (project == null) {
       return null;
     }
-    GitRepository repo = GitBranchUtil.getCurrentRepository(project);
+    GitRepository repo = GitBranchUiUtil.getCurrentRepository(project);
     if (repo == null) {
       return null;
     }
@@ -139,14 +138,14 @@ public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidge
           return;
         }
 
-        GitRepository repo = GitBranchUtil.getCurrentRepository(getProject());
+        GitRepository repo = GitBranchUiUtil.getCurrentRepository(getProject());
         if (repo == null) { // the file is not under version control => display nothing
           emptyTextAndTooltip();
           return;
         }
 
         int maxLength = myMaxString.length() - 1; // -1, because there are arrows indicating that it is a popup
-        myText = StringUtil.shortenTextWithEllipsis(GitBranchUtil.getDisplayableBranchText(repo), maxLength, 5);
+        myText = StringUtil.shortenTextWithEllipsis(GitBranchUiUtil.getDisplayableBranchText(repo), maxLength, 5);
         myTooltip = getDisplayableBranchTooltip(repo);
         myStatusBar.updateWidget(ID());
         mySettings.setRecentRoot(repo.getRoot().getPath());
@@ -161,7 +160,7 @@ public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidge
 
   @NotNull
   private static String getDisplayableBranchTooltip(GitRepository repo) {
-    String text = GitBranchUtil.getDisplayableBranchText(repo);
+    String text = GitBranchUiUtil.getDisplayableBranchText(repo);
     if (!GitUtil.justOneGitRepository(repo.getProject())) {
       return text + "\n" + "Root: " + repo.getRoot().getName();
     }

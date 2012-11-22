@@ -453,7 +453,7 @@ public final class UpdateChecker {
       dialog.setModal(alwaysShowResults);
       dialog.show();
     }
-    else if (updatedPlugins != null || ProjectManager.getInstance().getOpenProjects().length == 0) {
+    else if (updatedPlugins != null || alwaysShowResults && ProjectManager.getInstance().getOpenProjects().length == 0) {
       NoUpdatesDialog dialog = new NoUpdatesDialog(true, updatedPlugins, enableLink);
       dialog.setShowConfirmation(showConfirmation);
       dialog.show();

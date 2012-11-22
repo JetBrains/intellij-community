@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.spellchecker.tokenizer;
 
 import com.intellij.codeInsight.daemon.impl.actions.AbstractSuppressByNoInspectionCommentFix;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
@@ -25,6 +26,10 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.inspections.TextSplitter;
+import com.intellij.spellchecker.quickfixes.AcceptWordAsCorrect;
+import com.intellij.spellchecker.quickfixes.ChangeTo;
+import com.intellij.spellchecker.quickfixes.RenameTo;
+import com.intellij.spellchecker.quickfixes.SpellCheckerQuickFix;
 import org.jetbrains.annotations.NotNull;
 
 public class SpellcheckingStrategy {
@@ -41,6 +46,8 @@ public class SpellcheckingStrategy {
 
   public static final Tokenizer<PsiElement> TEXT_TOKENIZER = new TokenizerBase<PsiElement>(PlainTextSplitter.getInstance());
 
+  private static final SpellCheckerQuickFix[] BATCH_FIXES = new SpellCheckerQuickFix[]{new AcceptWordAsCorrect()};
+
   @NotNull
   public Tokenizer getTokenizer(PsiElement element) {
     if (element instanceof PsiNameIdentifierOwner) return new PsiIdentifierOwnerTokenizer();
@@ -54,5 +61,28 @@ public class SpellcheckingStrategy {
     if (element instanceof XmlText) return myXmlTextTokenizer;
     if (element instanceof PsiPlainText) return TEXT_TOKENIZER;
     return EMPTY_TOKENIZER;
+  }
+
+  public SpellCheckerQuickFix[] getRegularFixes(PsiElement element,
+                                                int offset,
+                                                @NotNull TextRange textRange,
+                                                boolean useRename,
+                                                String wordWithTypo) {
+    return getDefaultRegularFixes(useRename, wordWithTypo);
+  }
+
+  public static SpellCheckerQuickFix[] getDefaultRegularFixes(boolean useRename, String wordWithTypo) {
+    return new SpellCheckerQuickFix[]{
+      (useRename ? new RenameTo(wordWithTypo) : new ChangeTo(wordWithTypo)),
+      new AcceptWordAsCorrect(wordWithTypo)
+    };
+  }
+
+  public SpellCheckerQuickFix[] getBatchFixes(PsiElement element, int offset, @NotNull TextRange textRange) {
+    return getDefaultBatchFixes();
+  }
+
+  public static SpellCheckerQuickFix[] getDefaultBatchFixes() {
+    return BATCH_FIXES;
   }
 }

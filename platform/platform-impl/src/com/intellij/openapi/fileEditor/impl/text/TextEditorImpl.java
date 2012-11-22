@@ -36,7 +36,7 @@ import java.beans.PropertyChangeSupport;
 public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   protected final Project myProject;
   private final PropertyChangeSupport myChangeSupport;
-  private final TextEditorComponent myComponent;
+  @NotNull private final TextEditorComponent myComponent;
   private final TextEditorProvider myProvider;
 
   TextEditorImpl(@NotNull final Project project, @NotNull final VirtualFile file, final TextEditorProvider provider) {
@@ -46,6 +46,7 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
     myComponent = createEditorComponent(project, file);
   }
 
+  @NotNull
   protected TextEditorComponent createEditorComponent(final Project project, final VirtualFile file) {
     return new TextEditorComponent(project, file, this);
   }

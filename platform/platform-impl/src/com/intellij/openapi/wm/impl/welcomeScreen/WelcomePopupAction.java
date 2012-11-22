@@ -24,6 +24,8 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -76,12 +78,19 @@ public abstract class WelcomePopupAction extends AnAction implements DumbAware {
                               JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING,
                               true);
 
+    JComponent contextComponent = null;
+    InputEvent inputEvent = e.getInputEvent();
+    if (inputEvent instanceof MouseEvent) {
+      if (inputEvent.getSource() instanceof JComponent) {
+        contextComponent = (JComponent)inputEvent.getSource();
+      }
+    }
 
-    showPopup(context, popup);
+    showPopup(context, popup, contextComponent);
   }
 
-  protected void showPopup(DataContext context, ListPopup popup) {
-    Component focusedComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(context);
+  protected void showPopup(DataContext context, ListPopup popup, JComponent contextComponent) {
+    Component focusedComponent = contextComponent != null ? contextComponent : PlatformDataKeys.CONTEXT_COMPONENT.getData(context);
     if (focusedComponent != null) {
       popup.showUnderneathOf(focusedComponent);
     }

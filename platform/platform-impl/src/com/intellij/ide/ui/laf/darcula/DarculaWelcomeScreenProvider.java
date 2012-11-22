@@ -17,8 +17,6 @@ package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.openapi.wm.WelcomeScreenProvider;
-import com.intellij.util.PlatformUtils;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -35,6 +33,6 @@ public class DarculaWelcomeScreenProvider implements WelcomeScreenProvider {
 
   @Override
   public boolean isAvailable() {
-    return UIUtil.isUnderDarcula() && PlatformUtils.isIntelliJ();
+    return false; // UIUtil.isUnderDarcula() && PlatformUtils.isIntelliJ();
   }
 }

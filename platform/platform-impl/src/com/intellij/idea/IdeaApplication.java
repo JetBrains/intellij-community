@@ -41,6 +41,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.WindowManagerListener;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.Splash;
 import com.intellij.util.SystemProperties;
@@ -313,6 +314,9 @@ public class IdeaApplication {
           WelcomeFrame.showNow();
           lifecyclePublisher.welcomeScreenDisplayed();
           splashDisposer.frameCreated(null);
+        }
+        else {
+          ((WindowManagerImpl)windowManager).showFrame();
         }
       }
       catch (PluginException e) {

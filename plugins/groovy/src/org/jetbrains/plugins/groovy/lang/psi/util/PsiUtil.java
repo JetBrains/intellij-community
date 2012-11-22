@@ -249,11 +249,13 @@ public class PsiUtil {
 
     if (parent instanceof GrIndexProperty) {
       GrIndexProperty index = (GrIndexProperty)parent;
-      PsiType[] argTypes =
-        getArgumentTypes(index.getNamedArguments(), index.getExpressionArguments(), index.getClosureArguments(), nullAsBottom, stopAt,
-                         byShape);
+      PsiType[] argTypes = getArgumentTypes(index.getNamedArguments(), index.getExpressionArguments(), index.getClosureArguments(), nullAsBottom, stopAt, byShape);
       if (isLValue(index) && argTypes != null) {
-        return ArrayUtil.append(argTypes, TypeInferenceHelper.getInitializerFor(index));
+        PsiType initializer = TypeInferenceHelper.getInitializerFor(index);
+        if (initializer == null && !nullAsBottom) {
+          initializer = TypesUtil.getJavaLangObject(index);
+        }
+        return ArrayUtil.append(argTypes, initializer);
       }
       else {
         return argTypes;
@@ -333,7 +335,7 @@ public class PsiUtil {
         if (stopAt == closure) {
           closureType = TypeConversionUtil.erasure(closureType);
         }
-        result.add(closureType);
+        result.add(closureType == null && !nullAsBottom ? TypesUtil.getJavaLangObject(closure) : closureType);
       }
       if (stopAt == closure) {
         break;

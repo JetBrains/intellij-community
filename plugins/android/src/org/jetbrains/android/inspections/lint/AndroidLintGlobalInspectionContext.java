@@ -2,6 +2,7 @@ package org.jetbrains.android.inspections.lint;
 
 import com.android.tools.lint.LintCliXmlParser;
 import com.android.tools.lint.LombokParser;
+import com.android.tools.lint.checks.BuiltinIssueRegistry;
 import com.android.tools.lint.client.api.*;
 import com.android.tools.lint.detector.api.*;
 import com.intellij.analysis.AnalysisScope;
@@ -79,12 +80,7 @@ class AndroidLintGlobalInspectionContext implements GlobalInspectionContextExten
     final AnalysisScope scope = context.getRefManager().getScope();
 
     final LintClient client = new MyLintClient(project, problemMap, scope, issues);
-    final LintDriver lint = new LintDriver(new IssueRegistry() {
-      @Override
-      public List<Issue> getIssues() {
-        return issues;
-      }
-    }, client);
+    final LintDriver lint = new LintDriver(new BuiltinIssueRegistry(), client);
 
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {

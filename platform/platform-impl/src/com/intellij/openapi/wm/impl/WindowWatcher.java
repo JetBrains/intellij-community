@@ -231,7 +231,7 @@ public final class WindowWatcher implements PropertyChangeListener{
       Window window=getFocusedWindowForProject(project);
       if(window==null){
         if (project != null) {
-          return WindowManagerEx.getInstanceEx().getFrame(project);
+          return (Window)WindowManagerEx.getInstanceEx().findFrameFor(project);
         }
         else{
           return null;

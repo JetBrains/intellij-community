@@ -868,7 +868,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  </plugins>" +
                      "</build>");
 
-    assertCompletionVariants(myProjectPom);
+    assertCompletionVariants(myProjectPom, "combine.children", "combine.self");
   }
 
   public void testWorksWithPropertiesInPluginId() throws Throwable {

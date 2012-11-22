@@ -68,7 +68,7 @@ class MavenCombineChildAttributeTest extends MavenDomTestCase {
             <goals><goal>compile</goal></goals>
             <configuration combine.self="<error>appendd</error>">
               <compilerArgument combine.children="override" />
-              <compilerReuseStrategy combine.self="<error>qqq</error>" />
+              <fork combine.self="<error>qqq</error>" />
             </configuration>
           </execution>
         </executions>
@@ -91,7 +91,7 @@ class MavenCombineChildAttributeTest extends MavenDomTestCase {
                 <goals><goal>compile</goal></goals>
                 <configuration combine.self="<error>appendd</error>">
                   <compilerArgument combine.children="override" />
-                  <compilerReuseStrategy combine.self="<error>qqq</error>" />
+                  <fork combine.self="<error>qqq</error>" />
                 </configuration>
               </execution>
             </executions>
