@@ -37,10 +37,8 @@ public class SdkSettingsStep extends ModuleWizardStep {
   protected final JdkComboBox myJdkComboBox;
   protected final WizardContext myWizardContext;
   protected final ProjectSdksModel myModel;
-  private final ModuleBuilder myModuleBuilder;
 
   public SdkSettingsStep(SettingsStep settingsStep, ModuleBuilder moduleBuilder, @NotNull Condition<SdkTypeId> sdkFilter) {
-    myModuleBuilder = moduleBuilder;
 
     myWizardContext = settingsStep.getContext();
     myModel = new ProjectSdksModel();
@@ -65,7 +63,7 @@ public class SdkSettingsStep extends ModuleWizardStep {
       }
     }
 
-    JButton button = new JButton("\u001BNew...");
+    JButton button = new JButton("Ne\u001Bw...");
     myJdkComboBox.setSetupButton(button, project, myModel,
                                  project == null ? new JdkComboBox.NoneJdkComboBoxItem() : new JdkComboBox.ProjectJdkComboBoxItem(),
                                  null,
@@ -87,7 +85,6 @@ public class SdkSettingsStep extends ModuleWizardStep {
     if (myWizardContext.isCreatingNewProject()) { // else, inherit project jdk
       Sdk jdk = myJdkComboBox.getSelectedJdk();
       myWizardContext.setProjectJdk(jdk);
-//      myModuleBuilder.setModuleJdk(jdk);        // inherit project sdk by default
     }
   }
 
