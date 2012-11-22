@@ -59,6 +59,7 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
   }
 
   private static void invokeOnElement(Project project, PsiElement element) {
+    if (!(element instanceof PyFunction)) return;
     final PyFunction newFunction = getSuperMethod((PyFunction)element);
     if (newFunction == null) return;
     if (!newFunction.equals(element)) {
