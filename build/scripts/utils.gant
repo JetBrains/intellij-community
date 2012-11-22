@@ -626,7 +626,9 @@ binding.setVariable("buildWinZip", { String zipPath, List paths ->
   notifyArtifactBuilt(zipPath)
 })
 
-binding.setVariable("prepareMacZip", { String zipRoot, String zipPath, List paths, String macPath, List extraBins = [] ->
+binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths, String macPath, List extraBins = [] ->
+  projectBuilder.stage(".mac.zip")
+
   allPaths = paths + [macPath]
   ant.zip(zipfile: zipPath) {
     allPaths.each {
@@ -656,12 +658,6 @@ binding.setVariable("prepareMacZip", { String zipRoot, String zipPath, List path
 
     zipfileset(file: "$macPath/bin/idea.properties", prefix: "$zipRoot/bin")
   }
-})
-
-binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths, String macPath, List extraBins = [] ->
-  projectBuilder.stage(".mac.zip")
-
-  prepareMacZip(zipRoot, zipPath, paths, macPath, extraBins)
 
   notifyArtifactBuilt(zipPath)
 })
