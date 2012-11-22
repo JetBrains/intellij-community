@@ -264,9 +264,18 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
   public boolean hasFilter(@NotNull GradleProjectStructureNodeFilter filter) {
     return myFilters.contains(filter);
   }
+
+  public boolean hasAnyFilter() {
+    return !myFilters.isEmpty();
+  }
   
   public void removeFilter(@NotNull GradleProjectStructureNodeFilter filter) {
     myFilters.remove(filter);
+    rebuild();
+  }
+
+  public void removeAllFilters() {
+    myFilters.clear();
     rebuild();
   }
 
