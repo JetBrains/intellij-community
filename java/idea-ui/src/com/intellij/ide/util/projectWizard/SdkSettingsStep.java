@@ -84,9 +84,11 @@ public class SdkSettingsStep extends ModuleWizardStep {
 
   @Override
   public void updateDataModel() {
-    Sdk jdk = myJdkComboBox.getSelectedJdk();
-    myWizardContext.setProjectJdk(jdk);
-    myModuleBuilder.setModuleJdk(jdk);
+    if (myWizardContext.isCreatingNewProject()) { // else, inherit project jdk
+      Sdk jdk = myJdkComboBox.getSelectedJdk();
+      myWizardContext.setProjectJdk(jdk);
+      myModuleBuilder.setModuleJdk(jdk);
+    }
   }
 
   @Override
