@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.ui.popup.util.DetailViewImpl;
@@ -257,7 +258,14 @@ public class BreakpointMasterDetailPopupBuilder {
 
   private void saveBreakpointsDialogState() {
     final XBreakpointsDialogState dialogState = new XBreakpointsDialogState();
-    dialogState.setSelectedGroupingRules(new HashSet<String>(ContainerUtil.map(myRulesEnabled, new Function<XBreakpointGroupingRule, String>() {
+    final List<XBreakpointGroupingRule> rulesEnabled = ContainerUtil.filter(myRulesEnabled, new Condition<XBreakpointGroupingRule>() {
+      @Override
+      public boolean value(XBreakpointGroupingRule rule) {
+        return !rule.isAlwaysEnabled();
+      }
+    });
+
+    dialogState.setSelectedGroupingRules(new HashSet<String>(ContainerUtil.map(rulesEnabled, new Function<XBreakpointGroupingRule, String>() {
       @Override
       public String fun(XBreakpointGroupingRule rule) {
         return rule.getId();
