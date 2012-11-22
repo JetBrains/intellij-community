@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
 import org.jetbrains.jps.incremental.artifacts.IncArtifactBuilder;
@@ -34,12 +35,15 @@ public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
   public void copyFromRoot(String filePath,
                            int rootIndex, String outputPath,
                            CompileContext context, BuildOutputConsumer outputConsumer,
-                           ArtifactOutputToSourceMapping outSrcMapping) throws IOException {
+                           ArtifactOutputToSourceMapping outSrcMapping) throws IOException, ProjectBuildException {
     final File file = new File(FileUtil.toSystemDependentName(filePath));
     if (!file.exists()) return;
     String targetPath;
     if (!FileUtil.filesEqual(file, getRootFile())) {
       final String relativePath = FileUtil.getRelativePath(FileUtil.toSystemIndependentName(getRootFile().getPath()), filePath, '/');
+      if (relativePath == null || relativePath.startsWith("..")) {
+        throw new ProjectBuildException(new AssertionError(filePath + " is not under " + getRootFile().getPath()));
+      }
       targetPath = JpsArtifactPathUtil.appendToPath(outputPath, relativePath);
     }
     else {

@@ -20,6 +20,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -70,7 +71,7 @@ public class MavenResourceRootDescriptor extends BuildRootDescriptor {
   }
 
   @Override
-  public FileFilter createFileFilter() {
+  public FileFilter createFileFilter(@NotNull ProjectDescriptor descriptor) {
     return new FileFilter() {
       @Override
       public boolean accept(File pathname) {
