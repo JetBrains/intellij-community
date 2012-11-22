@@ -35,6 +35,7 @@ public class FullSaveGenerateModel<T> implements GenerateModel<T> {
     }
 
     private void generate() {
+        calcList.clear();
         calcList.add(first);
         T t = first;
         for (int i = 1; i < size; i++) {

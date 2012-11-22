@@ -15,7 +15,7 @@ public interface GenerateModel<T> {
     public void prepare(Generator<T> generator, T firstRow, int size);
 
     /**
-     *  [a, b) -> [a, d) i.e. 1, 2, 3... a-1, a, ... b-1, b, .. -> 1, 2...a-1, {a}, {a+1}... {d-1}, d, d+1...
+     *  (a, b) -> (a, d) i.e. 1, 2, 3... a-1, a, ... b-1, b, .. -> 1, 2...a-1, a, {a+1}... {d-1}, d[was b], d+1[was b+1]...
      *  regenerate - {i}
      */
     public void update(Interval oldInterval, Interval newInterval);
