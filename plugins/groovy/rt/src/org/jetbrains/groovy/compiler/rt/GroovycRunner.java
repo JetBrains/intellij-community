@@ -403,8 +403,12 @@ public class GroovycRunner {
                 }
 
                 public void visitClass(ClassNode node) {
-                  if (node.isEnum()) {
-                    node.setModifiers(node.getModifiers() & ~Opcodes.ACC_FINAL);
+                  try {
+                    if (node.isEnum()) {
+                      node.setModifiers(node.getModifiers() & ~Opcodes.ACC_FINAL);
+                    }
+                  }
+                  catch (NoSuchMethodError ignore) {
                   }
                   super.visitClass(node);
                 }

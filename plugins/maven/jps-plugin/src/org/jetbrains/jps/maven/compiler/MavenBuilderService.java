@@ -18,7 +18,6 @@ package org.jetbrains.jps.maven.compiler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.incremental.BuilderService;
-import org.jetbrains.jps.incremental.ModuleLevelBuilder;
 import org.jetbrains.jps.incremental.TargetBuilder;
 import org.jetbrains.jps.maven.model.impl.MavenResourcesTargetType;
 
@@ -34,12 +33,6 @@ public class MavenBuilderService extends BuilderService{
   @Override
   public List<? extends BuildTargetType<?>> getTargetTypes() {
     return Arrays.asList(MavenResourcesTargetType.PRODUCTION, MavenResourcesTargetType.TEST);
-  }
-
-  @NotNull
-  @Override
-  public List<? extends ModuleLevelBuilder> createModuleLevelBuilders() {
-    return Collections.singletonList(new MavenResourceBuilderRunner());
   }
 
   @NotNull

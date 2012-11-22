@@ -92,6 +92,11 @@ public class SupportForFrameworksStep extends ModuleWizardStep {
   }
 
   @Override
+  public JComponent getPreferredFocusedComponent() {
+    return mySupportForFrameworksPanel.getFrameworksTree();
+  }
+
+  @Override
   public void updateStep() {
     ProjectBuilder builder = myContext.getProjectBuilder();
     if (builder instanceof ModuleBuilder) {
