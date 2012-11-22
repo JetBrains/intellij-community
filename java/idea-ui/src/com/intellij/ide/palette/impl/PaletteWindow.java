@@ -38,6 +38,7 @@ import java.awt.*;
 import java.awt.dnd.DragSource;
 import java.awt.dnd.DragSourceAdapter;
 import java.awt.dnd.DragSourceDropEvent;
+import java.awt.dnd.DragSourceListener;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -60,6 +61,18 @@ public class PaletteWindow extends JPanel implements DataProvider {
   @NonNls private static final String ourHelpID = "guiDesigner.uiTour.palette";
   private PaletteManager myPaletteManager;
 
+  private final DragSourceListener myDragSourceListener = new DragSourceAdapter() {
+    @Override
+    public void dragDropEnd(DragSourceDropEvent event) {
+      Component component = event.getDragSourceContext().getComponent();
+      if (!event.getDropSuccess() &&
+          component instanceof PaletteComponentList &&
+          getRootPane() == ((JComponent)component).getRootPane()) {
+        clearActiveItem();
+      }
+    }
+  };
+
   public PaletteWindow(Project project) {
     myProject = project;
     myPaletteManager = PaletteManager.getInstance(myProject);
@@ -75,14 +88,11 @@ public class PaletteWindow extends JPanel implements DataProvider {
     new ClearActiveItemAction().registerCustomShortcutSet(new CustomShortcutSet(escStroke), myScrollPane);
     refreshPalette();
 
-    DragSource.getDefaultDragSource().addDragSourceListener(new DragSourceAdapter() {
-      @Override
-      public void dragDropEnd(DragSourceDropEvent event) {
-        if (!event.getDropSuccess() && event.getDragSourceContext().getComponent() instanceof PaletteComponentList) {
-          clearActiveItem();
-        }
-      }
-    });
+    DragSource.getDefaultDragSource().addDragSourceListener(myDragSourceListener);
+  }
+
+  public void dispose() {
+    DragSource.getDefaultDragSource().removeDragSourceListener(myDragSourceListener);
   }
 
   public void refreshPalette() {
