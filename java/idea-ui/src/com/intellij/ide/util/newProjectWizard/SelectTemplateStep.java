@@ -133,9 +133,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
         myWizardContext.requestWizardButtonsUpdate();
       }
     });
-//    final RemoteTemplatesFactory factory = new RemoteTemplatesFactory();
 
-    myDescriptionPanel.setVisible(false);
     if (myWizardContext.isCreatingNewProject()) {
       addField("Project \u001bformat:", myFormatPanel.getStorageFormatComboBox(), myModulePanel);
     }

@@ -71,7 +71,7 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
   public boolean contains(VirtualFile file, NamedScopesHolder holder) {
     Project project = holder.getProject();
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    return file != null && fileIndex.isInContent(file) && fileMatcher(file, fileIndex, holder.getProjectBaseDir()) &&
+    return file != null && fileMatcher(file, fileIndex, holder.getProjectBaseDir()) &&
            matchesModule(myModuleGroupPattern, myModulePattern, file, fileIndex);
   }
 
@@ -86,15 +86,14 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
                                       final VirtualFile file,
                                       final ProjectFileIndex fileIndex) {
     final Module module = fileIndex.getModuleForFile(file);
-    if (module == null) {
-      LOG.error("url: " + file.getUrl());
-    }
-    if (modulePattern != null && modulePattern.matcher(module.getName()).matches()) return true;
-    if (moduleGroupPattern != null) {
-      final String[] groupPath = ModuleManager.getInstance(module.getProject()).getModuleGroupPath(module);
-      if (groupPath != null) {
-        for (String node : groupPath) {
-          if (moduleGroupPattern.matcher(node).matches()) return true;
+    if (module != null) {
+      if (modulePattern != null && modulePattern.matcher(module.getName()).matches()) return true;
+      if (moduleGroupPattern != null) {
+        final String[] groupPath = ModuleManager.getInstance(module.getProject()).getModuleGroupPath(module);
+        if (groupPath != null) {
+          for (String node : groupPath) {
+            if (moduleGroupPattern.matcher(node).matches()) return true;
+          }
         }
       }
     }

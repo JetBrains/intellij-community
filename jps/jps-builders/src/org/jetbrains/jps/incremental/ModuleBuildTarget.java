@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetRegistry;
+import org.jetbrains.jps.builders.ModuleBasedTarget;
 import org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
@@ -72,6 +73,11 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
   }
 
   @Override
+  public final boolean isCompiledBeforeModuleLevelBuilders() {
+    return false;
+  }
+
+  @Override
   public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry) {
     JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(myModule).compileOnly();
     if (!isTests()) {
@@ -86,6 +92,14 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     });
     if (isTests()) {
       dependencies.add(new ModuleBuildTarget(myModule, JavaModuleBuildTargetType.PRODUCTION));
+    }
+    final Collection<ModuleBasedTarget<?>> moduleBased = targetRegistry.getModuleBasedTargets(
+      getModule(), isTests() ? BuildTargetRegistry.ModuleTargetSelector.TEST : BuildTargetRegistry.ModuleTargetSelector.PRODUCTION
+    );
+    for (ModuleBasedTarget<?> target : moduleBased) {
+      if (target != this && target.isCompiledBeforeModuleLevelBuilders()) {
+        dependencies.add(target);
+      }
     }
     dependencies.trimToSize();
     return dependencies;

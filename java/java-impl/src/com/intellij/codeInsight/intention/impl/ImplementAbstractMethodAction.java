@@ -120,6 +120,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
     public boolean execute(@NotNull PsiElement element) {
       if (element instanceof PsiClass) {
         PsiClass aClass = (PsiClass) element;
+        if (aClass.isInterface()) return true;
         final PsiMethod existingImplementation = findExistingImplementation(aClass, myMethod);
         if (existingImplementation != null && !existingImplementation.hasModifierProperty(PsiModifier.ABSTRACT)) {
           myHasExistingImplementations = true;
@@ -141,7 +142,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
   static PsiMethod findExistingImplementation(final PsiClass aClass, PsiMethod method) {
     final PsiMethod[] methods = aClass.findMethodsByName(method.getName(), false);
     for(PsiMethod candidate: methods) {
-      final PsiMethod[] superMethods = candidate.findSuperMethods(aClass);
+      final PsiMethod[] superMethods = candidate.findSuperMethods(false);
       for(PsiMethod superMethod: superMethods) {
         if (superMethod.equals(method)) {
           return candidate;

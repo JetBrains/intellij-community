@@ -24,10 +24,8 @@ import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetRegistry;
 import org.jetbrains.jps.builders.ModuleBasedTarget;
-import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.maven.model.JpsMavenExtensionService;
@@ -56,8 +54,12 @@ public class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDes
 
   @Override
   public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry) {
-    final JavaModuleBuildTargetType targetType = isTests() ? JavaModuleBuildTargetType.TEST : JavaModuleBuildTargetType.PRODUCTION;
-    return Collections.<BuildTarget<?>>singletonList(new ModuleBuildTarget(myModule, targetType));
+    return Collections.emptyList();
+  }
+
+  @Override
+  public boolean isCompiledBeforeModuleLevelBuilders() {
+    return true;
   }
 
   @NotNull

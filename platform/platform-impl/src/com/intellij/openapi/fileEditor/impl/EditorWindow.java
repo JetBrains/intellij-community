@@ -16,6 +16,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -39,6 +40,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.EmptyIcon;
@@ -564,17 +566,25 @@ public class EditorWindow {
     }
   }
 
-  protected static class TCompForTablessMode extends TComp{
+  protected static class TCompForTablessMode extends TComp implements CloseAction.CloseTarget {
     TCompForTablessMode(final EditorWindow window, final EditorWithProviderComposite editor) {
       super(window, editor);
     }
 
     public Object getData(String dataId) {
-      if (EditorWindow.DATA_KEY.is(dataId)){
-        // this is essintial for ability to close opened file
+      // this is essential for ability to close opened file
+      if (DATA_KEY.is(dataId)){
         return myWindow;
       }
+      if (CloseAction.CloseTarget.KEY.is(dataId)) {
+        return this;
+      }
       return super.getData(dataId);
+    }
+
+    @Override
+    public void close() {
+      myWindow.closeFile(myEditor.getFile());
     }
   }
 

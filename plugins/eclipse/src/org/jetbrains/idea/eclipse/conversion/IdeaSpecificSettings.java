@@ -27,6 +27,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -308,13 +309,20 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
           isModified = true;
         }
       }
-      if (entry instanceof JdkOrderEntry && EclipseModuleManagerImpl.getInstance(entry.getOwnerModule()).getInvalidJdk() != null) {
-        if (entry instanceof InheritedJdkOrderEntry) {
-          root.setAttribute(INHERIT_JDK, "true");
-        } else {
-          root.setAttribute("jdk", ((JdkOrderEntry)entry).getJdkName());
+      if (entry instanceof JdkOrderEntry) {
+        final Sdk jdk = ((JdkOrderEntry)entry).getJdk();
+        if (EclipseModuleManagerImpl.getInstance(entry.getOwnerModule()).getInvalidJdk() != null || 
+            (jdk != null && !(jdk.getSdkType() instanceof JavaSdk))) {
+          if (entry instanceof InheritedJdkOrderEntry) {
+            root.setAttribute(INHERIT_JDK, "true");
+          } else {
+            root.setAttribute("jdk", ((JdkOrderEntry)entry).getJdkName());
+            if (jdk != null) {
+              root.setAttribute("jdk_type", jdk.getSdkType().getName());
+            }
+          }
+          isModified = true;
         }
-        isModified = true;
       }
       if (!(entry instanceof LibraryOrderEntry)) continue;
 
