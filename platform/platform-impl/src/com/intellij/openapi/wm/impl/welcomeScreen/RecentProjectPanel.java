@@ -157,6 +157,12 @@ public class RecentProjectPanel extends JPanel {
   private static String getTitle2Text(String fullText, JComponent pathLabel) {
     int labelWidth = pathLabel.getWidth();
     if (fullText == null || fullText.length() == 0) return " ";
+
+    String home = SystemProperties.getUserHome();
+    if (FileUtil.startsWith(fullText, home)) {
+      fullText = "~" + fullText.substring(home.length());
+    }
+
     while (pathLabel.getFontMetrics(pathLabel.getFont()).stringWidth(fullText) > labelWidth) {
       int sep = fullText.indexOf(File.separatorChar, 4);
       if (sep < 0) return fullText;
