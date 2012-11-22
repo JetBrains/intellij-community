@@ -93,7 +93,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
 
   @JdkConstants.HorizontalAlignment private int myTextAlign = SwingConstants.LEFT;
 
-  private boolean myIconOpaque = true;
+  private boolean myIconOpaque = false;
 
   private boolean myAutoInvalidate = !(this instanceof TreeCellRenderer);
 
