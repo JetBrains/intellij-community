@@ -20,6 +20,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
@@ -162,11 +163,15 @@ public class InjectorUtils {
   }
 
   public static void registerSupport(@NotNull LanguageInjectionSupport support, boolean settingsAvailable, @NotNull MultiHostRegistrar registrar) {
-    PsiFile psiFile = getInjectedFile(registrar);
-    psiFile.putUserData(LanguageInjectionSupport.INJECTOR_SUPPORT, support);
+    putInjectedFileUserData(registrar, LanguageInjectionSupport.INJECTOR_SUPPORT, support);
     if (settingsAvailable) {
-      psiFile.putUserData(LanguageInjectionSupport.SETTINGS_EDITOR, support);
+      putInjectedFileUserData(registrar, LanguageInjectionSupport.SETTINGS_EDITOR, support);
     }
+  }
+
+  public static <T> void putInjectedFileUserData(MultiHostRegistrar registrar, Key<T> key, T value) {
+    PsiFile psiFile = getInjectedFile(registrar);
+    if (psiFile != null) psiFile.putUserData(key, value);
   }
 
   public static PsiFile getInjectedFile(MultiHostRegistrar registrar) {
