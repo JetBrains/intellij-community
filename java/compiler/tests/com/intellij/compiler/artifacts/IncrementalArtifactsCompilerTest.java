@@ -96,6 +96,19 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
       assertOutput(a, fs().file("file.txt", "b"));
     }
 
+    public void testDeleteFileInIncludedArtifact() {
+      VirtualFile file1 = createFile("d/1.txt");
+      createFile("d/2.txt");
+      Artifact included = addArtifact("i", root().dirCopy(file1.getParent()));
+      Artifact a = addArtifact(root().artifact(included));
+      make(a);
+      assertOutput(a, fs().file("1.txt").file("2.txt"));
+
+      delete(file1);
+      make(a);
+      assertOutput(a, fs().file("2.txt"));
+    }
+
     public void testChangeFileInArtifactIncludedInArchive() {
       VirtualFile file = createFile("file.txt", "a");
       Artifact included = addArtifact("i", root().file(file));
