@@ -25,7 +25,6 @@ import org.jetbrains.jps.builders.JpsBuildTestCase;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.builders.logging.BuildLoggingManager;
 import org.jetbrains.jps.builders.impl.logging.ProjectBuilderLoggerBase;
-import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
@@ -124,9 +123,9 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
         return true;
       }
     });
-    if (Utils.TIMESTAMP_ACCURACY > 1) {
+    if (TIMESTAMP_ACCURACY > 1) {
       try {
-        Thread.sleep(Utils.TIMESTAMP_ACCURACY);
+        Thread.sleep(TIMESTAMP_ACCURACY);
       }
       catch (InterruptedException ignored) {
       }
