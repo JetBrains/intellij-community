@@ -15,11 +15,10 @@
  */
 package com.intellij.xdebugger.impl.breakpoints.ui.tree;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -74,6 +73,7 @@ public class BreakpointMasterDetailPopupBuilder {
 
   private boolean myPlainView = false;
   private JBPopup myPopup;
+  private AddBreakpointAction myAddAction;
 
   public boolean isPlainView() {
     return myPlainView;
@@ -253,6 +253,12 @@ public class BreakpointMasterDetailPopupBuilder {
       }
     });
 
+    final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
+    final Shortcut[] generateShortcuts = keymap.getShortcuts("Generate");
+    myAddAction.registerCustomShortcutSet(new CustomShortcutSet(generateShortcuts), myPopup.getContent());
+
+    new GotoSourceAction();
+
     return myPopup;
   }
 
@@ -316,15 +322,11 @@ public class BreakpointMasterDetailPopupBuilder {
     for (BreakpointPanelProvider provider : myBreakpointsPanelProviders) {
       breakpointTypes.addAll(provider.getAddBreakpointActions(myProject));
     }
-    actions.add(new AnAction("Add Breakpoint", null, IconUtil.getAddIcon()) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
 
-        JBPopupFactory.getInstance()
-          .createActionGroupPopup(null, breakpointTypes, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, false)
-          .showUnderneathOf(myPopupBuilder.getActionToolbar().getComponent());
-      }
-    });
+    myAddAction = new AddBreakpointAction(breakpointTypes);
+    actions.add(myAddAction);
+
+
     actions.add(new AnAction("Remove Breakpoint", null, PlatformIcons.DELETE_ICON) {
       @Override
       public void update(AnActionEvent e) {
@@ -397,6 +399,46 @@ public class BreakpointMasterDetailPopupBuilder {
         myRulesEnabled.remove(myRule);
       }
       myTreeController.setGroupingRules(myRulesEnabled);
+    }
+  }
+
+  private class GotoSourceAction extends AnAction {
+
+    public GotoSourceAction() {
+      ShortcutSet shortcutSet = ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet();
+      registerCustomShortcutSet(shortcutSet, myPopup.getContent());
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setEnabled(!myTreeController.getSelectedBreakpoints().isEmpty());
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      final List<BreakpointItem> res = myTreeController.getSelectedBreakpoints();
+      if (!res.isEmpty()) {
+        myCallback.breakpointChosen(myProject, res.get(0), myPopup, true);
+      }
+    }
+  }
+
+  private class AddBreakpointAction extends AnAction {
+
+    private final DefaultActionGroup myBreakpointTypes;
+
+    public AddBreakpointAction(DefaultActionGroup breakpointTypes) {
+      super("Add Breakpoint", null, IconUtil.getAddIcon());
+      myBreakpointTypes = breakpointTypes;
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      final JComponent toolbarComponent = myPopupBuilder.getActionToolbar().getComponent();
+      JBPopupFactory.getInstance()
+        .createActionGroupPopup(null, myBreakpointTypes, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, false)
+        .showUnderneathOf(toolbarComponent);
     }
   }
 }
