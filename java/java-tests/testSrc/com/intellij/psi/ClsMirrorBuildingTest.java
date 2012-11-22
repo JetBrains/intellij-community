@@ -29,6 +29,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   public void testSimpleEnum() { doTest(); }
   public void testEnumWithFields() { doTest(); }
   public void testNormalClass() { doTest(); }
+  public void testNested() { doTest(); }
   public void testDeprecated() { doTest(); }
   public void testAnnotations() { doTest(); }
   public void testParameterNames() { doTest(); }
@@ -61,6 +62,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
       fail(e.getMessage());
       return;
     }
+
     assertEquals(expected, ((ClsFileImpl)clsFile).getMirror().getText());
   }
 }

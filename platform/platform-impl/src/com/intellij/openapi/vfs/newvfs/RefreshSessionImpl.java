@@ -71,12 +71,19 @@ public class RefreshSessionImpl extends RefreshSession {
   }
 
   @Override
-  public void addAllFiles(final Collection<VirtualFile> files) {
-    myWorkQueue.addAll(files);
+  public void addAllFiles(@NotNull Collection<VirtualFile> files) {
+    for (VirtualFile file : files) {
+      if (file == null) {
+        LOG.error("null passed among " + files);
+      }
+      else {
+        myWorkQueue.add(file);
+      }
+    }
   }
 
   @Override
-  public void addFile(@NotNull final VirtualFile file) {
+  public void addFile(@NotNull VirtualFile file) {
     myWorkQueue.add(file);
   }
 
