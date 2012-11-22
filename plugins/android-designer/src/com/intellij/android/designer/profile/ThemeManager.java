@@ -158,11 +158,11 @@ public class ThemeManager {
       IAndroidTarget renderingTarget = myProfile.getSelectedTarget();
       State configuration = myProfile.getSelectedDeviceConfiguration();
 
-      ScreenSize screenSize = configuration.getHardware().getScreen().getSize();
+      ScreenSize screenSize = configuration == null ? null : configuration.getHardware().getScreen().getSize();
       preferredTheme = getThemeByRef(getDefaultTheme(target, renderingTarget, screenSize));
     }
 
-    if (!myAddedThemes.contains(preferredTheme) && fromProject == preferredTheme.isProjectTheme()) {
+    if (preferredTheme != null && !myAddedThemes.contains(preferredTheme) && fromProject == preferredTheme.isProjectTheme()) {
       myAddedThemes.add(preferredTheme);
       resultList.add(preferredTheme);
     }

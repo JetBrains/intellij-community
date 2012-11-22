@@ -86,7 +86,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
 
   @Override
   public void dispose() {
-    DimensionService.getInstance().setLocation(DIMENSION_KEY, getLocation());
+    saveLocation(getBounds());
 
     super.dispose();
 
@@ -94,6 +94,11 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
 
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     ourInstance = null;
+  }
+
+  private static void saveLocation(Rectangle location) {
+    Point middle = new Point(location.x + location.width / 2, location.y = location.height / 2);
+    DimensionService.getInstance().setLocation(DIMENSION_KEY, middle, null);
   }
 
   private void setupCloseAction() {
@@ -150,7 +155,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
     if (ourInstance == null) {
       WelcomeFrame frame = new WelcomeFrame();
       frame.pack();
-      Point location = DimensionService.getInstance().getLocation(DIMENSION_KEY);
+      Point location = DimensionService.getInstance().getLocation(DIMENSION_KEY, null);
       Rectangle screenBounds = ScreenUtil.getScreenRectangle(location != null ? location : new Point(0, 0));
       frame.setLocation(new Point(
         screenBounds.x + (screenBounds.width - frame.getWidth()) / 2,
@@ -208,5 +213,9 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
   @Override
   public JComponent getComponent() {
     return getRootPane();
+  }
+
+  public static void notifyFrameClosed(JFrame frame) {
+    saveLocation(frame.getBounds());
   }
 }

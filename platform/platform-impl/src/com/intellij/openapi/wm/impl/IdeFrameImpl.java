@@ -387,6 +387,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
 
   public void dispose() {
     MouseGestureManager.getInstance().remove(this);
+    WelcomeFrame.notifyFrameClosed(this);
 
     if (myRootPane != null) {
       myRootPane = null;

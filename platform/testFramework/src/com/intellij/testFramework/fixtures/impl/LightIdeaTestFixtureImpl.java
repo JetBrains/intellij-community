@@ -26,7 +26,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestDataProvider;
 import com.intellij.testFramework.fixtures.LightIdeaTestFixture;
 
@@ -56,7 +55,6 @@ class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixtu
     Project project = getProject();
     CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
     checkForSettingsDamage();
-    PlatformTestCase.cleanupApplicationCaches(project);
     LightPlatformTestCase.doTearDown(project, LightPlatformTestCase.getApplication(), true);
     super.tearDown();
     InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);

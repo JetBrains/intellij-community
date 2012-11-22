@@ -16,6 +16,7 @@
 package org.jetbrains.jps.incremental.artifacts;
 
 import com.intellij.util.PathUtil;
+import org.jetbrains.jps.builders.CompileScopeTestBuilder;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 
 import static com.intellij.util.io.TestFileSystemItem.fs;
@@ -115,6 +116,26 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
     buildArtifacts(a2); assertUpToDate();
     buildArtifacts(a1); assertUpToDate();
     buildAllAndAssertUpToDate();
+  }
+
+  public void testDeleteFileAndRebuildIncludedArtifact() {
+    String file1 = createFile("d/1.txt");
+    createFile("d/2.txt");
+    JpsArtifact included = addArtifact("i", root().parentDirCopy(file1));
+    JpsArtifact a = addArtifact(root().artifact(included));
+    makeAll();
+    assertOutput(included, fs().file("1.txt").file("2.txt"));
+    assertOutput(a, fs().file("1.txt").file("2.txt"));
+
+    delete(file1);
+    delete(included.getOutputPath());//to trigger rebuild only for 'i'
+    //doBuild(CompileScopeTestBuilder.rebuild().artifact(included)).assertSuccessful();
+    doBuild(CompileScopeTestBuilder.make().artifact(included)).assertSuccessful();
+    assertOutput(included, fs().file("2.txt"));
+    assertOutput(a, fs().file("1.txt").file("2.txt"));
+
+    makeAll();
+    assertOutput(a, fs().file("2.txt"));
   }
 
   //IDEADEV-40714

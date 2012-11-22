@@ -52,7 +52,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   private final Map<XBreakpointType, XBreakpointBase<?,?,?>> myDefaultBreakpoints = new LinkedHashMap<XBreakpointType, XBreakpointBase<?, ?, ?>>();
   private final Set<XBreakpointBase<?,?,?>> myAllBreakpoints = new HashSet<XBreakpointBase<?, ?, ?>>();
   private final Map<XBreakpointType, EventDispatcher<XBreakpointListener>> myDispatchers = new HashMap<XBreakpointType, EventDispatcher<XBreakpointListener>>();
-  private XBreakpointsDialogState myBreakpointsDialogSettings = new XBreakpointsDialogState();
+  private XBreakpointsDialogState myBreakpointsDialogSettings;
   private final EventDispatcher<XBreakpointListener> myAllBreakpointsDispatcher;
   private final XLineBreakpointManager myLineBreakpointManager;
   private final Project myProject;
@@ -398,7 +398,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   public static class BreakpointManagerState {
     private List<BreakpointState> myDefaultBreakpoints = new ArrayList<BreakpointState>();
     private List<BreakpointState> myBreakpoints = new ArrayList<BreakpointState>();
-    private XBreakpointsDialogState myBreakpointsDialogProperties = new XBreakpointsDialogState();
+    private XBreakpointsDialogState myBreakpointsDialogProperties;
 
     private long myTime;
 

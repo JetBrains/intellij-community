@@ -12,6 +12,7 @@ import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
@@ -249,10 +250,10 @@ public class BuildRootIndexImpl implements BuildRootIndex {
 
   @NotNull
   @Override
-  public FileFilter getRootFilter(@NotNull BuildRootDescriptor descriptor) {
+  public FileFilter getRootFilter(@NotNull BuildRootDescriptor descriptor, @NotNull ProjectDescriptor projectDescriptor) {
     FileFilter filter = myFileFilters.get(descriptor);
     if (filter == null) {
-      filter = descriptor.createFileFilter();
+      filter = descriptor.createFileFilter(projectDescriptor);
       myFileFilters.put(descriptor, filter);
     }
     return filter;

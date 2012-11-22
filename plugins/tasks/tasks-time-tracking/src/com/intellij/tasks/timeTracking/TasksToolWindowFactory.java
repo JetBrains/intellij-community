@@ -1,4 +1,4 @@
-package com.intellij.tasks.timetracking;
+package com.intellij.tasks.timeTracking;
 
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowFactory;
-import com.intellij.tasks.TaskManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
@@ -19,7 +18,7 @@ public class TasksToolWindowFactory implements ToolWindowFactory, Condition<Proj
 
   @Override
   public boolean value(final Project project) {
-    return TaskManager.getManager(project).isTimeTrackingToolWindowAvailable();
+    return TimeTrackingManager.getInstance(project).isTimeTrackingToolWindowAvailable();
   }
 
   @Override

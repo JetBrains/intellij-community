@@ -1,6 +1,7 @@
 package org.jetbrains.jps.builders;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -17,7 +18,7 @@ public abstract class BuildRootDescriptor {
 
   public abstract BuildTarget<?> getTarget();
 
-  public abstract FileFilter createFileFilter();
+  public abstract FileFilter createFileFilter(@NotNull ProjectDescriptor descriptor);
 
   /**
    * @return the set of excluded directories under this root
