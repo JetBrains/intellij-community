@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
  * @since 8/4/11 11:06 AM
  */
 @SuppressWarnings("MethodMayBeStatic")
-public class GradleLibraryManager {
+public class GradleInstallationManager {
 
   public static final Pattern  GRADLE_JAR_FILE_PATTERN;
   public static final Pattern  ANY_GRADLE_JAR_FILE_PATTERN;

@@ -46,14 +46,14 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyStructureChangesCalculator"/>
     
     <!--Import services-->
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleModuleImporter"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleModuleManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleLibraryManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleContentRootManager"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleDependencyImporter"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleDependencyManager"/>
 
     <!--Generic application services-->
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.util.GradleLibraryManager"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.util.GradleInstallationManager"/>
     <applicationService serviceInterface="org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManager"
                         serviceImplementation="org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManagerImpl"/>
     <applicationService serviceInterface="org.jetbrains.plugins.gradle.config.PlatformFacade"

@@ -13,6 +13,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.gradle.GradleModule;
 import org.jetbrains.plugins.gradle.util.GradleLog;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
 import java.util.Collections;
@@ -25,7 +26,7 @@ import java.util.concurrent.TimeUnit;
  * @author Denis Zhdanov
  * @since 2/7/12 2:49 PM
  */
-public class GradleModuleImporter {
+public class GradleModuleManager {
 
   /**
    * We can't modify project modules (add/remove) until it's initialised, so, we delay that activity. Current constant
@@ -36,10 +37,10 @@ public class GradleModuleImporter {
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   @NotNull private final GradleContentRootManager myContentRootImporter;
-  @NotNull private final GradleDependencyImporter myDependencyImporter;
+  @NotNull private final GradleDependencyManager  myDependencyImporter;
 
-  public GradleModuleImporter(@NotNull GradleContentRootManager contentRootImporter,
-                              @NotNull GradleDependencyImporter dependencyImporter)
+  public GradleModuleManager(@NotNull GradleContentRootManager contentRootImporter,
+                             @NotNull GradleDependencyManager dependencyImporter)
   {
     myContentRootImporter = contentRootImporter;
     myDependencyImporter = dependencyImporter;
@@ -134,6 +135,37 @@ public class GradleModuleImporter {
     }
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
+  public void removeModules(@NotNull final Iterable<Module> modules) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            for (final Module module : modules) {
+              GradleUtil.executeProjectChangeAction(module.getProject(), module, new Runnable() {
+                @Override
+                public void run() {
+                  ModuleManager moduleManager = ModuleManager.getInstance(module.getProject());
+                  String path = module.getModuleFilePath();
+                  moduleManager.disposeModule(module);
+                  File file = new File(path);
+                  if (file.isFile()) {
+                    boolean success = file.delete();
+                    if (!success) {
+                      GradleLog.LOG.warn("Can't remove module file at '" + path + "'");
+                    }
+                  }
+                }
+              });
+            } 
+          }
+        });
+      }
+    });
+  }
+  
   private class ImportModulesTask implements Runnable {
 
     private final Project                myProject;
