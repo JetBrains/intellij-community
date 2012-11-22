@@ -194,7 +194,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final DiagnosticSink diagnosticSink = new DiagnosticSink(context);
     final Mappings delta = pd.dataManager.getMappings().createDelta();
     final Callbacks.Backend mappingsCallback = delta.getCallback();
-    final OutputFilesSink outputSink = new OutputFilesSink(context, outputConsumer, mappingsCallback);
+    final OutputFilesSink outputSink = new OutputFilesSink(context, outputConsumer, mappingsCallback, chunk.getName());
     try {
       if (hasSourcesToCompile) {
         exitCode = ExitCode.OK;
@@ -208,7 +208,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
 
         final String chunkName = chunk.getName();
-        context.processMessage(new ProgressMessage("Compiling java [" + chunkName + "]"));
+        context.processMessage(new ProgressMessage("Parsing java... [" + chunkName + "]"));
 
         final int filesCount = files.size();
         boolean compiledOk = true;

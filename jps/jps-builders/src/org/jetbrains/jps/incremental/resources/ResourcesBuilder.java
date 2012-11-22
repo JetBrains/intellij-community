@@ -73,14 +73,13 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
         public boolean apply(ResourcesTarget target, final File file, final ResourceRootDescriptor sourceRoot) throws IOException {
           if (patterns.isResourceFile(file, sourceRoot.getRootFile())) {
             try {
-              context.processMessage(new ProgressMessage("Copying " + file.getPath()));
               copyResource(context, sourceRoot, file, outputConsumer);
             }
             catch (IOException e) {
               LOG.info(e);
               context.processMessage(
                 new CompilerMessage(
-                  "Resource Compiler", BuildMessage.Kind.ERROR, e.getMessage(), FileUtil.toSystemIndependentName(file.getPath())
+                  "resources", BuildMessage.Kind.ERROR, e.getMessage(), FileUtil.toSystemIndependentName(file.getPath())
                 )
               );
               return false;
@@ -94,9 +93,11 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
               }
             }
           }
-          return true;
+          return !context.getCancelStatus().isCanceled();
         }
       });
+
+      context.checkCanceled();
 
       if (cleanedSources != null) {
         // cleanup mapping for the files that were copied before but not copied now
@@ -111,6 +112,7 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
         }
       }
 
+      context.processMessage(new ProgressMessage("Finished copying resources [" + target.getModule().getName() + "]"));
     }
     catch (Exception e) {
       throw new ProjectBuildException(e.getMessage(), e);
@@ -141,6 +143,8 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
       targetPath.append('/').append(prefix.replace('.', '/'));
     }
     targetPath.append('/').append(relativePath);
+
+    context.processMessage(new ProgressMessage("Copying resources... [" + rd.getTarget().getModule().getName() + "]"));
 
     final String outputPath = targetPath.toString();
     final File targetFile = new File(outputPath);
