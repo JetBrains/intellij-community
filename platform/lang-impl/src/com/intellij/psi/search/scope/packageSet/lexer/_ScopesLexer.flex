@@ -46,5 +46,6 @@ DIGIT=[0-9]+
 <YYINITIAL> "*" { return ScopeTokenTypes.ASTERISK; }
 <YYINITIAL> "/" { return ScopeTokenTypes.DIV; }
 
+<YYINITIAL> "#" { return ScopeTokenTypes.SHARP; }
 <YYINITIAL> . { return ScopeTokenTypes.BAD_CHARACTER; }
 
