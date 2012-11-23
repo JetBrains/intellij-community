@@ -42,8 +42,8 @@ public class PrintCellRowModel {
 
 
     @NotNull
-    public PrintCellRow getPrintCellRow(final int index) {
-        prePrintCellRow.prepare(index);
+    public PrintCellRow getPrintCellRow(final int rowIndex) {
+        prePrintCellRow.prepare(rowIndex);
 
         return new PrintCellRow() {
             @Override
@@ -54,7 +54,7 @@ public class PrintCellRowModel {
             @NotNull
             @Override
             public ReadOnlyList<ShortEdge> getUpEdges() {
-                return PrintCellRowModel.this.getUpEdges(index);
+                return PrintCellRowModel.this.getUpEdges(rowIndex);
             }
 
             @NotNull
