@@ -219,7 +219,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     if (nonWatched) {
       String title = ApplicationBundle.message("watcher.slow.sync");
       String message = ApplicationBundle.message("watcher.non.watchable.project");
-      Notifications.Bus.notify(FileWatcher.NOTIFICATION_GROUP.createNotification(title, message, NotificationType.WARNING, null));
+      Notifications.Bus.notify(FileWatcher.NOTIFICATION_GROUP.getValue().createNotification(title, message, NotificationType.WARNING, null));
     }
   }
 
