@@ -30,7 +30,7 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleP
 
   @Override
   protected boolean doQuickImport(VirtualFile file, WizardContext wizardContext) {
-    AddModuleWizard dialog = new AddModuleWizard(null, ModulesProvider.EMPTY_MODULES_PROVIDER, null);
+    AddModuleWizard dialog = new AddModuleWizard(null, null, new GradleProjectImportProvider(new GradleProjectImportBuilder()));
     getBuilder().setCurrentProjectPath(file.getPath());
     dialog.getWizardContext().setProjectBuilder(getBuilder());
     dialog.navigateToStep(new Function<Step, Boolean>() {
