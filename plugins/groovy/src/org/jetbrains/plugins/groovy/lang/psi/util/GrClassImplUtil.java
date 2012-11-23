@@ -373,21 +373,27 @@ public class GrClassImplUtil {
     return true;
   }
 
-  private static List<PsiClass> getInnerClassesForResolve(GrTypeDefinition grType, PsiElement lastParent) {
+  private static List<PsiClass> getInnerClassesForResolve(final GrTypeDefinition grType, PsiElement lastParent) {
     if (lastParent instanceof GrReferenceList) {
       return Arrays.asList(grType.getInnerClasses());
     }
-    List<PsiClass> result = new ArrayList<PsiClass>();
-    try {
-      for (CandidateInfo info : CollectClassMembersUtil.getAllInnerClasses(grType, false).values()) {
-        ContainerUtil.addIfNotNull(result, (PsiClass)info.getElement());
+    
+    List<PsiClass> classes = RecursionManager.doPreventingRecursion(grType, true, new Computable<List<PsiClass>>() {
+      @Override
+      public List<PsiClass> compute() {
+        List<PsiClass> result = new ArrayList<PsiClass>();
+        for (CandidateInfo info : CollectClassMembersUtil.getAllInnerClasses(grType, false).values()) {
+          ContainerUtil.addIfNotNull(result, (PsiClass)info.getElement());
+        }
+        return result;
       }
+    });
+    
+    if (classes == null) {
+      return Arrays.asList(grType.getInnerClasses());
     }
-    catch (StackOverflowError e) {
-
-      throw new RuntimeException("lastParent=" + lastParent, e);
-    }
-    return result;
+    
+    return classes;
   }
 
   public static boolean isSameDeclaration(PsiElement place, PsiElement element) {
