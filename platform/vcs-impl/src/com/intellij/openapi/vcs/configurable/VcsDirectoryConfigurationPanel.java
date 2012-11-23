@@ -538,7 +538,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
       actionsPanel.setOpaque(false);
       actionsPanel.add(myAddLabel, BorderLayout.CENTER);
 
-      add(label, BorderLayout.WEST);
+      add(label, BorderLayout.CENTER);
       add(actionsPanel, BorderLayout.EAST);
     }
 
