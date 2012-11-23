@@ -18,13 +18,10 @@ package com.intellij.openapi.util;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Compute-once keep-forever lazy value.
- * Thread-safe version: {@link AtomicNotNullLazyValue}.
- * Clearable version: {@link ClearableLazyValue}.
- *
- * @author peter
+ * Lazy value with ability to reset (and recompute) the value.
+ * Thread-safe version: {@link AtomicClearableLazyValue}.
  */
-public abstract class NotNullLazyValue<T> {
+public abstract class ClearableLazyValue<T> {
   private T myValue;
 
   @NotNull
@@ -36,5 +33,9 @@ public abstract class NotNullLazyValue<T> {
       myValue = compute();
     }
     return myValue;
+  }
+
+  public void drop() {
+    myValue = null;
   }
 }
