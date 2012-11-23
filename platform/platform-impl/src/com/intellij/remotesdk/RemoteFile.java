@@ -86,6 +86,10 @@ public class RemoteFile {
     return detectSystemByPath(path).createRemoteFile(path, script);
   }
 
+  public static RemoteFile createRemoteFile(final String path, final String script, final boolean isWindows) {
+    return new RemoteFileBuilder(isWindows).createRemoteFile(path, script);
+  }
+
   public static class RemoteFileBuilder {
     private final boolean isWin;
 
