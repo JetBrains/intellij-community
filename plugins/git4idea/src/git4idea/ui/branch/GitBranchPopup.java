@@ -229,7 +229,7 @@ class GitBranchPopup  {
   }
 
   private void warnThatBranchesDivergedIfNeeded() {
-    if (myMultiRootBranchConfig.diverged() && userWantsSyncControl()) {
+    if (myRepositoryManager.moreThanOneRoot() && myMultiRootBranchConfig.diverged() && userWantsSyncControl()) {
       myPopup.setWarning("Branches have diverged");
     }
   }
