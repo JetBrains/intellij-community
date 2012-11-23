@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,13 +29,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
  */
 public class GrFileStub extends PsiFileStubImpl<GroovyFile> {
   private final String[] myAnnotations;
-  private final StringRef myPackageName;
   private final StringRef myName;
   private final boolean isScript;
 
   public GrFileStub(GroovyFile file) {
     super(file);
-    myPackageName = StringRef.fromString(file.getPackageName());
     myName = StringRef.fromString(StringUtil.trimEnd(file.getName(), ".groovy"));
     isScript = file.isScript();
     final GrPackageDefinition definition = file.getPackageDefinition();
@@ -46,9 +44,8 @@ public class GrFileStub extends PsiFileStubImpl<GroovyFile> {
     }
   }
 
-  public GrFileStub(StringRef packName, StringRef name, boolean isScript, String[] annotations) {
+  public GrFileStub(StringRef name, boolean isScript, String[] annotations) {
     super(null);
-    myPackageName = packName;
     myName = name;
     this.isScript = isScript;
     myAnnotations = annotations;
@@ -56,10 +53,6 @@ public class GrFileStub extends PsiFileStubImpl<GroovyFile> {
 
   public IStubFileElementType getType() {
     return GroovyParserDefinition.GROOVY_FILE;
-  }
-
-  public StringRef getPackageName() {
-    return myPackageName;
   }
 
   public StringRef getName() {

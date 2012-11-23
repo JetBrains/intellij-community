@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.packaging;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.StubBasedPsiElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -25,16 +27,26 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrPackageDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author ilyas
  */
-public class GrPackageDefinitionImpl extends GroovyPsiElementImpl implements GrPackageDefinition {
+public class GrPackageDefinitionImpl extends GrStubElementBase<GrPackageDefinitionStub> implements GrPackageDefinition, StubBasedPsiElement<GrPackageDefinitionStub> {
 
   public GrPackageDefinitionImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  @Override
+  public PsiElement getParent() {
+    return getParentByStub();
+  }
+
+  public GrPackageDefinitionImpl(@NotNull GrPackageDefinitionStub stub) {
+    super(stub, GroovyElementTypes.PACKAGE_DEFINITION);
   }
 
   public void accept(GroovyElementVisitor visitor) {
@@ -46,6 +58,11 @@ public class GrPackageDefinitionImpl extends GroovyPsiElementImpl implements GrP
   }
 
   public String getPackageName() {
+    final GrPackageDefinitionStub stub = getStub();
+    if (stub != null) {
+      return stub.getPackageName();
+    }
+
     GrCodeReferenceElement ref = getPackageReference();
     if (ref == null) return "";
     return PsiUtil.getQualifiedReferenceText(ref);
@@ -56,7 +73,7 @@ public class GrPackageDefinitionImpl extends GroovyPsiElementImpl implements GrP
   }
 
   public GrModifierList getAnnotationList() {
-    return (GrModifierList)findChildByType(GroovyElementTypes.MODIFIERS);
+    return getStubOrPsiChild(GroovyElementTypes.MODIFIERS);
   }
 
   @Override

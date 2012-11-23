@@ -85,18 +85,25 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   @NotNull
   public String getPackageName() {
-    final StubElement stub = getStub();
-    if (stub instanceof GrFileStub) {
-      return ((GrFileStub)stub).getPackageName().toString();
-    }
     GrPackageDefinition packageDef = getPackageDefinition();
     if (packageDef != null) {
-      return packageDef.getPackageName();
+      final String name = packageDef.getPackageName();
+      if (name != null) {
+        return name;
+      }
     }
     return "";
   }
 
   public GrPackageDefinition getPackageDefinition() {
+    final StubElement<?> stub = getStub();
+    if (stub != null) {
+      for (StubElement element : stub.getChildrenStubs()) {
+        if (element instanceof GrPackageDefinition) return (GrPackageDefinition)element;
+      }
+      return null;
+    }
+
     ASTNode node = calcTreeElement().findChildByType(GroovyElementTypes.PACKAGE_DEFINITION);
     return node != null ? (GrPackageDefinition)node.getPsi() : null;
   }
