@@ -27,21 +27,22 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This storage is needed for indexing yet unsaved data without saving those changes to 'main' backend storage
- * 
+ *
  * @author Eugene Zhuravlev
  *         Date: Dec 10, 2007
  */
 public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
-  private final Map<Key, ChangeTrackingValueContainer<Value>> myMap = new HashMap<Key,ChangeTrackingValueContainer<Value>>();
+  private final Map<Key, ChangeTrackingValueContainer<Value>> myMap = new HashMap<Key, ChangeTrackingValueContainer<Value>>();
   private final IndexStorage<Key, Value> myBackendStorage;
   private final List<BufferingStateListener> myListeners = ContainerUtil.createEmptyCOWList();
   private final AtomicBoolean myBufferingEnabled = new AtomicBoolean(false);
-  
+
   public interface BufferingStateListener {
     void bufferingStateChanged(boolean newState);
+
     void memoryStorageCleared();
   }
-  
+
   public MemoryIndexStorage(IndexStorage<Key, Value> backend) {
     myBackendStorage = backend;
   }
@@ -57,7 +58,7 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   public void removeBufferingStateListsner(BufferingStateListener listener) {
     myListeners.remove(listener);
   }
-  
+
   public void setBufferingEnabled(boolean enabled) {
     final boolean wasEnabled = myBufferingEnabled.getAndSet(enabled);
     if (wasEnabled != enabled) {
@@ -189,8 +190,7 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
     if (valueContainer != null) {
       return valueContainer;
     }
-    
+
     return myBackendStorage.read(key);
   }
-
 }

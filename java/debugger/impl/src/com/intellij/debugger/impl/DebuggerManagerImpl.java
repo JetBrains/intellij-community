@@ -70,7 +70,8 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
   private final HashMap<ProcessHandler, DebuggerSession> mySessions = new HashMap<ProcessHandler, DebuggerSession>();
   private final BreakpointManager myBreakpointManager;
   private final List<NameMapper> myNameMappers = ContainerUtil.createEmptyCOWList();
-  private final List<Function<DebugProcess, PositionManager>> myCustomPositionManagerFactories = new ArrayList<Function<DebugProcess, PositionManager>>();
+  private final List<Function<DebugProcess, PositionManager>> myCustomPositionManagerFactories =
+    new ArrayList<Function<DebugProcess, PositionManager>>();
 
   private final EventDispatcher<DebuggerManagerListener> myDispatcher = EventDispatcher.create(DebuggerManagerListener.class);
   private final MyDebuggerStateManager myDebuggerStateManager = new MyDebuggerStateManager();
@@ -85,7 +86,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
         return;
       }
 
-      if(myDebuggerStateManager.myDebuggerSession == session) {
+      if (myDebuggerStateManager.myDebuggerSession == session) {
         myDebuggerStateManager.fireStateChanged(newContext, event);
       }
       if (event == DebuggerSession.EVENT_ATTACHED) {
@@ -94,10 +95,11 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
       else if (event == DebuggerSession.EVENT_DETACHED) {
         myDispatcher.getMulticaster().sessionDetached(session);
       }
-      else if(event == DebuggerSession.EVENT_DISPOSE) {
+      else if (event == DebuggerSession.EVENT_DISPOSE) {
         dispose(session);
-        if(myDebuggerStateManager.myDebuggerSession == session) {
-          myDebuggerStateManager.setState(DebuggerContextImpl.EMPTY_CONTEXT, DebuggerSession.STATE_DISPOSED, DebuggerSession.EVENT_DISPOSE, null);
+        if (myDebuggerStateManager.myDebuggerSession == session) {
+          myDebuggerStateManager
+            .setState(DebuggerContextImpl.EMPTY_CONTEXT, DebuggerSession.STATE_DISPOSED, DebuggerSession.EVENT_DISPOSE, null);
         }
       }
     }
@@ -211,17 +213,21 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
             process.appendPositionManager(positionManager);
           }
         }
-        for(PositionManagerFactory factory: Extensions.getExtensions(PositionManagerFactory.EP_NAME, myProject)) {
+        for (PositionManagerFactory factory : Extensions.getExtensions(PositionManagerFactory.EP_NAME, myProject)) {
           final PositionManager manager = factory.createPositionManager(debugProcess);
           if (manager != null) {
             process.appendPositionManager(manager);
           }
         }
       }
+
       public void processDetached(final DebugProcess process, final boolean closedByUser) {
         debugProcess.removeDebugProcessListener(this);
       }
-      public void attachException(final RunProfileState state, final ExecutionException exception, final RemoteConnection remoteConnection) {
+
+      public void attachException(final RunProfileState state,
+                                  final ExecutionException exception,
+                                  final RemoteConnection remoteConnection) {
         debugProcess.removeDebugProcessListener(this);
       }
     });
@@ -232,7 +238,9 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
       return null;
     }
     session.getContextManager().addListener(mySessionListener);
-    getContextManager().setState(DebuggerContextUtil.createDebuggerContext(session, session.getContextManager().getContext().getSuspendContext()), session.getState(), DebuggerSession.EVENT_CONTEXT, null);
+    getContextManager()
+      .setState(DebuggerContextUtil.createDebuggerContext(session, session.getContextManager().getContext().getSuspendContext()),
+                session.getState(), DebuggerSession.EVENT_CONTEXT, null);
 
     final ProcessHandler processHandler = executionResult.getProcessHandler();
 
@@ -330,11 +338,15 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     return myBreakpointManager;
   }
 
-  public DebuggerContextImpl getContext() { return getContextManager().getContext(); }
+  public DebuggerContextImpl getContext() {
+    return getContextManager().getContext();
+  }
 
-  public DebuggerStateManager getContextManager() { return myDebuggerStateManager;}
+  public DebuggerStateManager getContextManager() {
+    return myDebuggerStateManager;
+  }
 
-  public void registerPositionManagerFactory(final Function<DebugProcess,PositionManager> factory) {
+  public void registerPositionManagerFactory(final Function<DebugProcess, PositionManager> factory) {
     myCustomPositionManagerFactories.add(factory);
   }
 
@@ -421,7 +433,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
 
     final boolean useSockets = transport == DebuggerSettings.SOCKET_TRANSPORT;
 
-    String address  = "";
+    String address = "";
     if (debugPort == null || "".equals(debugPort)) {
       try {
         address = DebuggerUtils.getInstance().findAvailableDebugAddress(useSockets);
@@ -439,7 +451,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     final TransportServiceWrapper transportService = TransportServiceWrapper.getTransportService(useSockets);
     final String debugAddress = debuggerInServerMode && useSockets ? "127.0.0.1:" + address : address;
     String debuggeeRunProperties = "transport=" + transportService.transportId() + ",address=" + debugAddress;
-    if(debuggerInServerMode) {
+    if (debuggerInServerMode) {
       debuggeeRunProperties += ",suspend=y,server=n";
     }
     else {
@@ -514,18 +526,18 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     }
 
     //if (ApplicationManager.getApplication().isUnitTestMode()) {
-      // need this in unit tests to avoid false alarms when comparing actual output with expected output
-      //return true;
+    // need this in unit tests to avoid false alarms when comparing actual output with expected output
+    //return true;
     //}
 
     final String version = JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION);
-    return version == null    ||
-    //version.startsWith("1.5") ||
-    version.startsWith("1.4") ||
-    version.startsWith("1.3") ||
-    version.startsWith("1.2") ||
-    version.startsWith("1.1") ||
-    version.startsWith("1.0");
+    return version == null ||
+           //version.startsWith("1.5") ||
+           version.startsWith("1.4") ||
+           version.startsWith("1.3") ||
+           version.startsWith("1.2") ||
+           version.startsWith("1.1") ||
+           version.startsWith("1.0");
   }
 
   private static boolean isJVMTIAvailable(Sdk jdk) {
@@ -537,10 +549,16 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     if (version == null) {
       return false;
     }
-    return !(version.startsWith("1.4") || version.startsWith("1.3") || version.startsWith("1.2") || version.startsWith("1.1") || version.startsWith("1.0"));
+    return !(version.startsWith("1.4") ||
+             version.startsWith("1.3") ||
+             version.startsWith("1.2") ||
+             version.startsWith("1.1") ||
+             version.startsWith("1.0"));
   }
 
-  public static RemoteConnection createDebugParameters(final JavaParameters parameters, GenericDebuggerRunnerSettings settings, boolean checkValidity)
+  public static RemoteConnection createDebugParameters(final JavaParameters parameters,
+                                                       GenericDebuggerRunnerSettings settings,
+                                                       boolean checkValidity)
     throws ExecutionException {
     return createDebugParameters(parameters, settings.LOCAL, settings.getTransport(), settings.DEBUG_PORT, checkValidity);
   }
@@ -572,6 +590,5 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
       LOG.assertTrue(removed != null);
       myDispatcher.getMulticaster().sessionRemoved(session);
     }
-
   }
 }

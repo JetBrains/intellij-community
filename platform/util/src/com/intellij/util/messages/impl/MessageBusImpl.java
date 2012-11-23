@@ -50,7 +50,8 @@ public class MessageBusImpl implements MessageBus {
   };
   private final ConcurrentMap<Topic, Object> mySyncPublishers = new ConcurrentHashMap<Topic, Object>();
   private final ConcurrentMap<Topic, Object> myAsyncPublishers = new ConcurrentHashMap<Topic, Object>();
-  private final ConcurrentMap<Topic, List<MessageBusConnectionImpl>> mySubscribers = new ConcurrentHashMap<Topic, List<MessageBusConnectionImpl>>();
+  private final ConcurrentMap<Topic, List<MessageBusConnectionImpl>> mySubscribers =
+    new ConcurrentHashMap<Topic, List<MessageBusConnectionImpl>>();
   private final List<MessageBusImpl> myChildBuses = ContainerUtil.createEmptyCOWList();
 
   private static final Object NA = new Object();
@@ -168,7 +169,7 @@ public class MessageBusImpl implements MessageBus {
     checkNotDisposed();
     Queue<DeliveryJob> jobs = myMessageQueue.get();
     if (!jobs.isEmpty()) {
-      LOG.error("Not delivered events in the queue: "+jobs);
+      LOG.error("Not delivered events in the queue: " + jobs);
     }
     myMessageQueue.remove();
     if (myParentBus != null) {

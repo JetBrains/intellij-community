@@ -190,7 +190,8 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     private List<MyBreakpointManagerListener> myListeners = ContainerUtil.createEmptyCOWList();
 
     @NotNull
-    public Collection<AbstractBreakpointPanel<Breakpoint>> getBreakpointPanels(@NotNull final Project project, @NotNull final DialogWrapper parentDialog) {
+    public Collection<AbstractBreakpointPanel<Breakpoint>> getBreakpointPanels(@NotNull final Project project,
+                                                                               @NotNull final DialogWrapper parentDialog) {
       List<AbstractBreakpointPanel<Breakpoint>> panels = new ArrayList<AbstractBreakpointPanel<Breakpoint>>();
       final BreakpointFactory[] allFactories = BreakpointFactory.getBreakpointFactories();
       for (BreakpointFactory factory : allFactories) {

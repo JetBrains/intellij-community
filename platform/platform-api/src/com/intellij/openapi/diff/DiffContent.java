@@ -29,14 +29,20 @@ import java.util.List;
 
 /**
  * Represents some data that probably can be compared with some other.
- * @see com.intellij.openapi.diff.DiffRequest
+ *
+ * @see DiffRequest
  */
 public abstract class DiffContent {
   private final List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
   private boolean myIsEmpty;
 
-  public void addListener(Listener listener) { myListeners.add(listener); }
-  public void removeListener(Listener listener) { myListeners.remove(listener); }
+  public void addListener(Listener listener) {
+    myListeners.add(listener);
+  }
+
+  public void removeListener(Listener listener) {
+    myListeners.remove(listener);
+  }
 
   /**
    * This content becomes invalid for some reason. Diff tool should stop show it.
@@ -50,9 +56,12 @@ public abstract class DiffContent {
   /**
    * Means this content represents binary data. It should be used only for byte by byte comparison.
    * E.g. directories aren't binary (in spite of they aren't text)
+   *
    * @return true if this content represents binary data
    */
-  public boolean isBinary() { return false; }
+  public boolean isBinary() {
+    return false;
+  }
 
   public void setIsEmpty(boolean isEmpty) {
     myIsEmpty = isEmpty;
@@ -63,17 +72,20 @@ public abstract class DiffContent {
   }
 
   /**
-   * Called by {@link com.intellij.openapi.diff.DiffTool}
+   * Called by {@link DiffTool}
    * when document returned by {@link #getDocument()} is opened in editor. Implementors may use this notification to
    * add listeners when document is editing and remove when editing done to avoid memory leaks.
+   *
    * @param isAssigned true means editing started, false means editing stopped.
-   * Total number of calls with true should be same as for false
+   *                   Total number of calls with true should be same as for false
    */
-  public void onAssigned(boolean isAssigned) {}
+  public void onAssigned(boolean isAssigned) {
+  }
 
   /**
    * Represents this content as Document
    * null means content has no text representation
+   *
    * @return document associated with this content
    */
   public abstract Document getDocument();
@@ -81,36 +93,35 @@ public abstract class DiffContent {
   /**
    * Provides a way to open given text place in editor
    * null means given offset can't be opened in editor
+   *
    * @param offset in document returned by {@link #getDocument()}
-   * @return {@link OpenFileDescriptor} to open this content in editor
+   * @return {@link com.intellij.openapi.fileEditor.OpenFileDescriptor} to open this content in editor
    */
   public abstract OpenFileDescriptor getOpenFileDescriptor(int offset);
 
   /**
-   *
    * @return VirtualFile from which this content gets data.
-   * null means this content has no file associated
+   *         null means this content has no file associated
    */
   @Nullable
   public abstract VirtualFile getFile();
 
   /**
-   *
    * @return FileType of content.
-   * null means use other content's type for this one
+   *         null means use other content's type for this one
    */
   public abstract FileType getContentType();
 
   /**
-   *
    * @return Binary represntation of content.
-   * Should not be null if {@link #getFile()} returns existing not directory file
-   * @throws IOException
+   *         Should not be null if {@link #getFile()} returns existing not directory file
+   * @throws java.io.IOException
    */
   public abstract byte[] getBytes() throws IOException;
 
   /**
    * Creates DiffContent associated with given file.
+   *
    * @param project
    * @param file
    * @return content associated with file
@@ -121,6 +132,7 @@ public abstract class DiffContent {
 
   /**
    * Creates DiffContent associated with given document
+   *
    * @param project
    * @param document
    * @return content associated with document

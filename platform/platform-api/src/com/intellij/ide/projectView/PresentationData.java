@@ -31,15 +31,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Default implementation of the {@link ItemPresentation} interface.
  */
 
 public class PresentationData implements ColoredItemPresentation, ComparableObject, LocationPresentation {
-
-  protected final CopyOnWriteArrayList<PresentableNodeDescriptor.ColoredFragment> myColoredText = ContainerUtil.createEmptyCOWList();
+  protected final List<PresentableNodeDescriptor.ColoredFragment> myColoredText = ContainerUtil.createEmptyCOWList();
 
   private Icon myIcon;
 
@@ -93,6 +91,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
   public PresentationData() {
   }
 
+  @Override
   public Icon getIcon(boolean open) {
     return myIcon;
   }
@@ -106,10 +105,12 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
     myForcedTextForeground = forcedTextForeground;
   }
 
+  @Override
   public String getLocationString() {
     return myLocationString;
   }
 
+  @Override
   public String getPresentableText() {
     return myPresentableText;
   }
@@ -264,6 +265,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
     myLocationPrefix = null;
   }
 
+  @Override
   @NotNull
   public Object[] getEqualityObjects() {
     return new Object[]{myIcon, myColoredText, myAttributesKey, myFont, myForcedTextForeground, myPresentableText,
@@ -298,6 +300,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
     myLocationSuffix = from.myLocationSuffix;
   }
 
+  @Override
   public PresentationData clone() {
     PresentationData clone = new PresentationData();
     clone.copyFrom(this);
@@ -308,7 +311,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
     myAttributesKey = getValue(myAttributesKey, from.myAttributesKey);
     myIcon = getValue(myIcon, from.myIcon);
 
-    if (myColoredText.size() == 0) {
+    if (myColoredText.isEmpty()) {
       myColoredText.addAll(from.myColoredText);
     }
 
@@ -322,7 +325,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
     myLocationSuffix = getValue(myLocationSuffix, from.myLocationSuffix);
   }
 
-  private <T> T getValue(T ownValue, T fromValue) {
+  private static <T> T getValue(T ownValue, T fromValue) {
     return ownValue != null ? ownValue : fromValue;
   }
 

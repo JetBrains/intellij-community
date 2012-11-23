@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.gradle.ui;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.GradleTextAttributes;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
@@ -9,7 +10,6 @@ import org.jetbrains.plugins.gradle.model.id.GradleEntityId;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Not thread-safe.
@@ -23,7 +23,7 @@ public class GradleProjectStructureNode<T extends GradleEntityId> extends Defaul
 {
 
   private final Set<GradleProjectStructureChange> myConflictChanges = new HashSet<GradleProjectStructureChange>();
-  private final List<Listener>                    myListeners       = new CopyOnWriteArrayList<Listener>();
+  private final List<Listener>                    myListeners       = ContainerUtil.createEmptyCOWList();
 
   @NotNull private final Comparator<GradleProjectStructureNode<?>> myComparator;
   @NotNull private final GradleProjectStructureNodeDescriptor<T>   myDescriptor;

@@ -49,7 +49,7 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
 
   public KeyedExtensionCollector(@NonNls String epName) {
     myEpName = epName;
-    lock = new String("lock for KeyedExtensionCollector "+epName);
+    lock = new String("lock for KeyedExtensionCollector " + epName);
     resetAreaListener();
   }
 
@@ -158,7 +158,8 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
             synchronized (lock) {
               if (bean.getKey() == null) {
                 if (pluginDescriptor != null) {
-                  throw new PluginException("No key specified for extension of class " + bean.getInstance().getClass(), pluginDescriptor.getPluginId());
+                  throw new PluginException("No key specified for extension of class " + bean.getInstance().getClass(),
+                                            pluginDescriptor.getPluginId());
                 }
                 LOG.error("No key specified for extension of class " + bean.getInstance().getClass());
                 return;

@@ -24,12 +24,12 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.List;
 
 public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.IdePopupManager");
 
-  private final CopyOnWriteArrayList<IdePopupEventDispatcher> myDispatchStack = ContainerUtil.createEmptyCOWList();
+  private final List<IdePopupEventDispatcher> myDispatchStack = ContainerUtil.createEmptyCOWList();
 
   boolean isPopupActive() {
     for (IdePopupEventDispatcher each : myDispatchStack) {

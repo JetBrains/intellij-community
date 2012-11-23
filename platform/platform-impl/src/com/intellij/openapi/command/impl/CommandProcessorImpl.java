@@ -32,8 +32,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Stack;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class CommandProcessorImpl extends CommandProcessorEx {
   private static class CommandDescriptor {
@@ -69,7 +69,7 @@ public class CommandProcessorImpl extends CommandProcessorEx {
 
 //  private HashMap myStatisticsMap = new HashMap(); // command name --> count
 
-  private final CopyOnWriteArrayList<CommandListener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<CommandListener> myListeners = ContainerUtil.createEmptyCOWList();
 
   private int myUndoTransparentCount = 0;
 

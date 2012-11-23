@@ -35,20 +35,21 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.ProcessHandler");
   /**
    * todo: replace with an overridable method [nik]
+   *
    * @deprecated
    */
   public static final Key<Boolean> SILENTLY_DESTROY_ON_CLOSE = Key.create("SILENTLY_DESTROY_ON_CLOSE");
 
   private final List<ProcessListener> myListeners = ContainerUtil.createEmptyCOWList();
 
-  private static final int STATE_INITIAL     = 0;
-  private static final int STATE_RUNNING     = 1;
+  private static final int STATE_INITIAL = 0;
+  private static final int STATE_RUNNING = 1;
   private static final int STATE_TERMINATING = 2;
-  private static final int STATE_TERMINATED  = 3;
+  private static final int STATE_TERMINATED = 3;
 
   private final AtomicInteger myState = new AtomicInteger(STATE_INITIAL);
 
-  private final Semaphore    myWaitSemaphore;
+  private final Semaphore myWaitSemaphore;
   private final ProcessListener myEventMulticaster;
   private final TasksRunner myAfterStartNotifiedRunner;
 
@@ -61,7 +62,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   }
 
   public void startNotify() {
-    if(myState.compareAndSet(STATE_INITIAL, STATE_RUNNING)) {
+    if (myState.compareAndSet(STATE_INITIAL, STATE_RUNNING)) {
       myEventMulticaster.startNotified(new ProcessEvent(this));
     }
     else {
@@ -77,6 +78,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
 
   /**
    * Wait for process execution.
+   *
    * @return true if target process has actually ended; false if we stopped watching the process execution and don't know if it has completed.
    */
   public boolean waitFor() {
@@ -189,14 +191,14 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   public boolean isStartNotified() {
     return myState.get() > STATE_INITIAL;
   }
-  
+
   public boolean isSilentlyDestroyOnClose() {
     return false;
   }
 
   private ProcessListener createEventMulticaster() {
     final Class<ProcessListener> listenerClass = ProcessListener.class;
-    return (ProcessListener)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[] {listenerClass}, new InvocationHandler() {
+    return (ProcessListener)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, new InvocationHandler() {
       public Object invoke(Object object, Method method, Object[] params) throws Throwable {
         for (ProcessListener listener : myListeners) {
           try {
@@ -210,10 +212,10 @@ public abstract class ProcessHandler extends UserDataHolderBase {
       }
     });
   }
-  
+
   private final class TasksRunner extends ProcessAdapter {
     private final List<Runnable> myPendingTasks = new ArrayList<Runnable>();
-    
+
     public void startNotified(ProcessEvent event) {
       removeProcessListener(this);
       // at this point it is guaranteed that nothing will be added to myPendingTasks
@@ -244,6 +246,5 @@ public abstract class ProcessHandler extends UserDataHolderBase {
         task.run();
       }
     }
-    
   }
 }

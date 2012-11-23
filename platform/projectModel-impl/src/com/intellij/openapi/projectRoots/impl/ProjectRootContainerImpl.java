@@ -53,7 +53,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
   public ProjectRootContainerImpl(boolean noCopyJars) {
     myNoCopyJars = noCopyJars;
 
-    for(OrderRootType rootType: OrderRootType.getAllTypes()) {
+    for (OrderRootType rootType : OrderRootType.getAllTypes()) {
       myRoots.put(rootType, new CompositeProjectRoot());
       myFiles.put(rootType, VirtualFile.EMPTY_ARRAY);
     }
@@ -83,7 +83,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
     LOG.assertTrue(myInsideChange);
     HashMap<OrderRootType, VirtualFile[]> oldRoots = new HashMap<OrderRootType, VirtualFile[]>(myFiles);
 
-    for (OrderRootType orderRootType: OrderRootType.getAllTypes()) {
+    for (OrderRootType orderRootType : OrderRootType.getAllTypes()) {
       final VirtualFile[] roots = myRoots.get(orderRootType).getVirtualFiles();
       final boolean same = Comparing.equal(roots, oldRoots.get(orderRootType));
 
@@ -139,7 +139,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
   }
 
   @Override
-  public void removeAllRoots(@NotNull OrderRootType type ) {
+  public void removeAllRoots(@NotNull OrderRootType type) {
     LOG.assertTrue(myInsideChange);
     myRoots.get(type).clear();
   }
@@ -176,9 +176,9 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
       @Override
       public void run() {
         myFiles = new HashMap<OrderRootType, VirtualFile[]>();
-        for(OrderRootType rootType: myRoots.keySet()) {
+        for (OrderRootType rootType : myRoots.keySet()) {
           CompositeProjectRoot root = myRoots.get(rootType);
-          if (myNoCopyJars){
+          if (myNoCopyJars) {
             setNoCopyJars(root);
           }
           myFiles.put(rootType, root.getVirtualFiles());
@@ -203,10 +203,10 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
     }
   }
 
-  private static void setNoCopyJars(ProjectRoot root){
-    if (root instanceof SimpleProjectRoot){
+  private static void setNoCopyJars(ProjectRoot root) {
+    if (root instanceof SimpleProjectRoot) {
       String url = ((SimpleProjectRoot)root).getUrl();
-      if (StandardFileSystems.JAR_PROTOCOL.equals(VirtualFileManager.extractProtocol(url))){
+      if (StandardFileSystems.JAR_PROTOCOL.equals(VirtualFileManager.extractProtocol(url))) {
         String path = VirtualFileManager.extractPath(url);
         final VirtualFileSystem fileSystem = StandardFileSystems.jar();
         if (fileSystem instanceof JarCopyingFileSystem) {
@@ -214,7 +214,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
         }
       }
     }
-    else if (root instanceof CompositeProjectRoot){
+    else if (root instanceof CompositeProjectRoot) {
       ProjectRoot[] roots = ((CompositeProjectRoot)root).getProjectRoots();
       for (ProjectRoot root1 : roots) {
         setNoCopyJars(root1);
@@ -224,7 +224,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
 
   private void read(Element element, PersistentOrderRootType type) throws InvalidDataException {
     Element child = element.getChild(type.getSdkRootName());
-    if (child == null){
+    if (child == null) {
       myRoots.put(type, new CompositeProjectRoot());
       return;
     }
@@ -253,7 +253,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
       SimpleProjectRoot projectRoot = new SimpleProjectRoot(url);
       String type = root.getChild("property").getAttributeValue("value");
 
-      for(PersistentOrderRootType rootType: OrderRootType.getAllPersistentTypes()) {
+      for (PersistentOrderRootType rootType : OrderRootType.getAllPersistentTypes()) {
         if (type.equals(rootType.getOldSdkRootName())) {
           addRoot(projectRoot, rootType);
           break;
@@ -262,7 +262,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
     }
 
     myFiles = new HashMap<OrderRootType, VirtualFile[]>();
-    for(OrderRootType rootType: myRoots.keySet()) {
+    for (OrderRootType rootType : myRoots.keySet()) {
       myFiles.put(rootType, myRoots.get(rootType).getVirtualFiles());
     }
     for (OrderRootType type : OrderRootType.getAllTypes()) {
@@ -273,5 +273,4 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
       }
     }
   }
-
 }

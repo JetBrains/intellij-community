@@ -60,7 +60,10 @@ public class LaterInvocator {
     final Condition<Object> expired;
     final ActionCallback callback;
 
-    public RunnableInfo(Runnable runnable, ModalityState modalityState, @NotNull Condition<Object> expired, @NotNull ActionCallback callback) {
+    public RunnableInfo(@NotNull Runnable runnable,
+                        @NotNull ModalityState modalityState,
+                        @NotNull Condition<Object> expired,
+                        @NotNull ActionCallback callback) {
       this.runnable = runnable;
       this.modalityState = modalityState;
       this.expired = expired;
@@ -82,33 +85,35 @@ public class LaterInvocator {
 
   static boolean IS_TEST_MODE = false;
 
-  private static final EventDispatcher<ModalityStateListener> ourModalityStateMulticaster = EventDispatcher.create(ModalityStateListener.class);
+  private static final EventDispatcher<ModalityStateListener> ourModalityStateMulticaster =
+    EventDispatcher.create(ModalityStateListener.class);
 
 
   private static final ArrayList<RunnableInfo> ourForcedFlushQueue = new ArrayList<RunnableInfo>();
 
-  public static void addModalityStateListener(@NotNull ModalityStateListener listener){
+  public static void addModalityStateListener(@NotNull ModalityStateListener listener) {
     ourModalityStateMulticaster.addListener(listener);
   }
-  public static void addModalityStateListener(@NotNull ModalityStateListener listener, @NotNull Disposable parentDisposable){
-    ourModalityStateMulticaster.addListener(listener,parentDisposable);
+
+  public static void addModalityStateListener(@NotNull ModalityStateListener listener, @NotNull Disposable parentDisposable) {
+    ourModalityStateMulticaster.addListener(listener, parentDisposable);
   }
 
-  public static void removeModalityStateListener(@NotNull ModalityStateListener listener){
+  public static void removeModalityStateListener(@NotNull ModalityStateListener listener) {
     ourModalityStateMulticaster.removeListener(listener);
   }
 
   @NotNull
-  static ModalityStateEx modalityStateForWindow(@NotNull Window window){
+  static ModalityStateEx modalityStateForWindow(@NotNull Window window) {
     int index = ourModalEntities.indexOf(window);
-    if (index < 0){
+    if (index < 0) {
       Window owner = window.getOwner();
       if (owner == null) return (ModalityStateEx)ApplicationManager.getApplication().getNoneModalityState();
       ModalityStateEx ownerState = modalityStateForWindow(owner);
       if (window instanceof Dialog && ((Dialog)window).isModal()) {
         return ownerState.appendEntity(window);
       }
-      else{
+      else {
         return ownerState;
       }
     }
@@ -140,7 +145,9 @@ public class LaterInvocator {
     return invokeLater(runnable, modalityState, Conditions.FALSE);
   }
 
-  public static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition<Object> expired) {
+  public static ActionCallback invokeLater(@NotNull Runnable runnable,
+                                           @NotNull ModalityState modalityState,
+                                           @NotNull Condition<Object> expired) {
     final ActionCallback callback = new ActionCallback();
     synchronized (LOCK) {
       ourQueue.add(new RunnableInfo(runnable, modalityState, expired, callback));
@@ -150,13 +157,13 @@ public class LaterInvocator {
   }
 
 
-
   public static void invokeAndWait(@NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
     LOG.assertTrue(!isDispatchThread());
 
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     Runnable runnable1 = new Runnable() {
+      @Override
       public void run() {
         try {
           runnable.run();
@@ -172,7 +179,7 @@ public class LaterInvocator {
       }
     };
     invokeLater(runnable1, modalityState);
-    semaphore.waitFor();                                          
+    semaphore.waitFor();
   }
 
   public static void enterModal(@NotNull Object modalEntity) {
@@ -213,10 +220,10 @@ public class LaterInvocator {
 
   private static void cleanupQueueForModal(@NotNull final Object modalEntity) {
     synchronized (LOCK) {
-      for (Iterator<RunnableInfo> iterator = ourQueue.iterator(); iterator.hasNext();) {
+      for (Iterator<RunnableInfo> iterator = ourQueue.iterator(); iterator.hasNext(); ) {
         RunnableInfo runnableInfo = iterator.next();
         if (runnableInfo.modalityState instanceof ModalityStateEx) {
-          ModalityStateEx stateEx = (ModalityStateEx) runnableInfo.modalityState;
+          ModalityStateEx stateEx = (ModalityStateEx)runnableInfo.modalityState;
           if (stateEx.contains(modalEntity)) {
             ourForcedFlushQueue.add(runnableInfo);
             iterator.remove();
@@ -276,7 +283,8 @@ public class LaterInvocator {
         ourForcedFlushQueue.remove(0);
         if (!toRun.expired.value(null)) {
           return toRun;
-        } else {
+        }
+        else {
           toRun.callback.setDone();
         }
       }
@@ -285,13 +293,14 @@ public class LaterInvocator {
       ModalityStateEx currentModality;
       if (ourModalEntities.isEmpty()) {
         Application application = ApplicationManager.getApplication();
-        currentModality = application == null ? (ModalityStateEx)ModalityState.NON_MODAL : (ModalityStateEx)application.getNoneModalityState();
+        currentModality =
+          application == null ? (ModalityStateEx)ModalityState.NON_MODAL : (ModalityStateEx)application.getNoneModalityState();
       }
       else {
         currentModality = new ModalityStateEx(ourModalEntities.toArray());
       }
 
-      while(ourQueueSkipCount < ourQueue.size()){
+      while (ourQueueSkipCount < ourQueue.size()) {
         RunnableInfo info = ourQueue.get(ourQueueSkipCount);
 
         if (info.expired.value(null)) {
@@ -317,6 +326,7 @@ public class LaterInvocator {
   private static class FlushQueue implements Runnable {
     private RunnableInfo myLastInfo;
 
+    @Override
     public void run() {
       FLUSHER_SCHEDULED.set(false);
 

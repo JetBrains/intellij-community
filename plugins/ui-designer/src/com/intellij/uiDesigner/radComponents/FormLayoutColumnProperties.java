@@ -39,6 +39,7 @@ import java.util.Map;
  */
 public class FormLayoutColumnProperties implements CustomPropertiesPanel {
   private static final Map<Object, String> UNITS_MAP;
+
   static {
     UNITS_MAP = new HashMap<Object, String>();
     UNITS_MAP.put("px", UIDesignerBundle.message("unit.pixels"));
@@ -79,7 +80,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
   private boolean mySaving = false;
 
   public FormLayoutColumnProperties() {
-    @NonNls String[] unitNames = new String[] { "px", "dlu", "pt", "in", "cm", "mm" };
+    @NonNls String[] unitNames = new String[]{"px", "dlu", "pt", "in", "cm", "mm"};
     myConstantSizeUnitsCombo.setModel(new DefaultComboBoxModel(unitNames));
     myMinSizeUnitsCombo.setModel(new DefaultComboBoxModel(unitNames));
     myMaxSizeUnitsCombo.setModel(new DefaultComboBoxModel(unitNames));
@@ -139,8 +140,8 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
       showControls(true);
       myShowing = true;
       try {
-        myLayout = (FormLayout) container.getLayout();
-        myIndex = selectedIndices [0] + 1;
+        myLayout = (FormLayout)container.getLayout();
+        myIndex = selectedIndices[0] + 1;
         myIsRow = row;
 
         myTitleLabel.setText(myIsRow
@@ -209,7 +210,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
     Size minimumSize = null;
     Size maximumSize = null;
     if (size instanceof BoundedSize) {
-      BoundedSize boundedSize = (BoundedSize) size;
+      BoundedSize boundedSize = (BoundedSize)size;
       minimumSize = boundedSize.getLowerBound();
       maximumSize = boundedSize.getUpperBound();
       size = boundedSize.getBasis();
@@ -221,7 +222,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
       myMinimumCheckBox.setSelected(false);
       myMaximumCheckBox.setEnabled(false);
       myMaximumCheckBox.setSelected(false);
-      showConstantSize((ConstantSize) size, myConstantSizeUnitsCombo, myConstantSizeSpinner);
+      showConstantSize((ConstantSize)size, myConstantSizeUnitsCombo, myConstantSizeSpinner);
     }
     else {
       @NonNls String s = size.toString();
@@ -240,7 +241,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
       if (minimumSize instanceof ConstantSize) {
         myMinimumCheckBox.setSelected(true);
         myMaximumCheckBox.setEnabled(false);       // TODO: remove this code when IDEADEV-9678 is implemented
-        showConstantSize((ConstantSize) minimumSize, myMinSizeUnitsCombo, myMinSizeSpinner);
+        showConstantSize((ConstantSize)minimumSize, myMinSizeUnitsCombo, myMinSizeSpinner);
       }
       else {
         myMinimumCheckBox.setSelected(false);
@@ -248,7 +249,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
       if (maximumSize instanceof ConstantSize) {
         myMaximumCheckBox.setSelected(true);
         myMinimumCheckBox.setEnabled(false);       // TODO: remove this code when IDEADEV-9678 is implemented 
-        showConstantSize((ConstantSize) maximumSize, myMaxSizeUnitsCombo, myMaxSizeSpinner);
+        showConstantSize((ConstantSize)maximumSize, myMaxSizeUnitsCombo, myMaxSizeSpinner);
       }
       else {
         myMaximumCheckBox.setSelected(false);
@@ -297,7 +298,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
     try {
       Size size = getSelectedSize();
 
-      final SpinnerNumberModel model = (SpinnerNumberModel) myGrowSpinner.getModel();
+      final SpinnerNumberModel model = (SpinnerNumberModel)myGrowSpinner.getModel();
       double resizeWeight = myGrowCheckBox.isSelected() ? model.getNumber().doubleValue() : 0.0;
       FormSpec.DefaultAlignment alignment = getSelectedAlignment();
 
@@ -307,7 +308,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
       else {
         myLayout.setColumnSpec(myIndex, new ColumnSpec(alignment, size, resizeWeight));
       }
-      for(ChangeListener listener: myListeners) {
+      for (ChangeListener listener : myListeners) {
         listener.stateChanged(new ChangeEvent(this));
       }
     }

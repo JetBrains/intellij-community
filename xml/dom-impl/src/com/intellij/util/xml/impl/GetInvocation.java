@@ -9,16 +9,19 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.DomReferenceInjector;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.SubTag;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.List;
 
 /**
  * @author peter
  */
 public class GetInvocation implements Invocation {
-  private static final Key<CachedValue<CopyOnWriteArrayList<Pair<Converter,Object>>>> DOM_VALUE_KEY = Key.create("Dom element value key");
+  private static final Key<CachedValue<List<Pair<Converter,Object>>>> DOM_VALUE_KEY = Key.create("Dom element value key");
   private final Converter myConverter;
 
   protected GetInvocation(final Converter converter) {
@@ -26,20 +29,22 @@ public class GetInvocation implements Invocation {
     myConverter = converter;
   }
 
+  @Override
   public Object invoke(final DomInvocationHandler<?, ?> handler, final Object[] args) throws Throwable {
     if (myConverter == Converter.EMPTY_CONVERTER) {
       return getValueInner(handler, myConverter);
     }
 
-    CachedValue<CopyOnWriteArrayList<Pair<Converter,Object>>> value = handler.getUserData(DOM_VALUE_KEY);
+    CachedValue<List<Pair<Converter,Object>>> value = handler.getUserData(DOM_VALUE_KEY);
     if (value == null) {
       final DomManagerImpl domManager = handler.getManager();
       final Project project = domManager.getProject();
       final CachedValuesManager cachedValuesManager = CachedValuesManager.getManager(project);
-      handler.putUserData(DOM_VALUE_KEY, value = cachedValuesManager.createCachedValue(new CachedValueProvider<CopyOnWriteArrayList<Pair<Converter,Object>>>() {
-        public Result<CopyOnWriteArrayList<Pair<Converter,Object>>> compute() {
-          return Result.create(ContainerUtil.<Pair<Converter,Object>>createEmptyCOWList(), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, domManager,
-                               ProjectRootManager.getInstance(project));
+      handler.putUserData(DOM_VALUE_KEY, value = cachedValuesManager.createCachedValue(new CachedValueProvider<List<Pair<Converter,Object>>>() {
+        @Override
+        public Result<List<Pair<Converter,Object>>> compute() {
+          List<Pair<Converter, Object>> list = ContainerUtil.createEmptyCOWList();
+          return Result.create(list, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, domManager, ProjectRootManager.getInstance(project));
         }
       }, false));
     }
@@ -48,7 +53,7 @@ public class GetInvocation implements Invocation {
   }
 
   @Nullable
-  private Object getOrCalcValue(final DomInvocationHandler<?, ?> handler, final CopyOnWriteArrayList<Pair<Converter, Object>> list) {
+  private Object getOrCalcValue(final DomInvocationHandler<?, ?> handler, final List<Pair<Converter, Object>> list) {
     if (!list.isEmpty()) {
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < list.size(); i++) {

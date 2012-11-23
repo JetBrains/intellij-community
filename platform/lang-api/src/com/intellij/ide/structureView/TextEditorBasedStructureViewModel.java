@@ -36,9 +36,9 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * The standard {@link StructureViewModel} implementation which is linked to a text editor.
+ * The standard {@link com.intellij.ide.structureView.StructureViewModel} implementation which is linked to a text editor.
  *
- * @see com.intellij.ide.structureView.TreeBasedStructureViewBuilder#createStructureViewModel()
+ * @see TreeBasedStructureViewBuilder#createStructureViewModel()
  */
 
 public abstract class TextEditorBasedStructureViewModel implements StructureViewModel, ProvidingTreeModel {
@@ -80,7 +80,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
             }
           }
         }
-      },myDisposable);
+      }, myDisposable);
     }
   }
 
@@ -152,7 +152,8 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
    *
    * @return the list of classes
    */
-  @NotNull protected Class[] getSuitableClasses() {
+  @NotNull
+  protected Class[] getSuitableClasses() {
     return ArrayUtil.EMPTY_CLASS_ARRAY;
   }
 

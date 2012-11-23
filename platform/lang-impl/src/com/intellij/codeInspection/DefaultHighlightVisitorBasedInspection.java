@@ -144,7 +144,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
   private static class MyPsiElementVisitor extends PsiElementVisitor {
     private final boolean highlightErrorElements;
     private final boolean runAnnotators;
-    final List<Pair<PsiFile,HighlightInfo>> result = ContainerUtil.createEmptyCOWList();
+    final List<Pair<PsiFile, HighlightInfo>> result = ContainerUtil.createEmptyCOWList();
 
     public MyPsiElementVisitor(boolean highlightErrorElements, boolean runAnnotators) {
       this.highlightErrorElements = highlightErrorElements;
@@ -172,17 +172,17 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
 
           @Override
           protected HighlightInfoHolder createInfoHolder(final PsiFile file) {
-            return new HighlightInfoHolder(file, getColorsScheme(), filters){
-                @Override
-                public boolean add(@Nullable HighlightInfo info) {
-                  if (info == null) return true;
-                  if (info.type == HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT) return true;
-                  if (info.severity == HighlightSeverity.INFORMATION) return true;
+            return new HighlightInfoHolder(file, getColorsScheme(), filters) {
+              @Override
+              public boolean add(@Nullable HighlightInfo info) {
+                if (info == null) return true;
+                if (info.type == HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT) return true;
+                if (info.severity == HighlightSeverity.INFORMATION) return true;
 
-                  result.add(Pair.create(file, info));
+                result.add(Pair.create(file, info));
 
-                  return true;
-                }
+                return true;
+              }
             };
           }
 

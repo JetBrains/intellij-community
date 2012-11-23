@@ -47,7 +47,6 @@ import java.awt.image.MemoryImageSource;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author pegov
@@ -464,7 +463,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
     private Color myColor;
 
-    private CopyOnWriteArrayList<ColorListener> myListeners = ContainerUtil.createEmptyCOWList();
+    private final List<ColorListener> myListeners = ContainerUtil.createEmptyCOWList();
     private int myOpacity;
 
     private ColorWheel() {

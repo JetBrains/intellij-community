@@ -45,13 +45,13 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author dyoma
@@ -64,7 +64,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   private RunContentManagerImpl myContentManager;
   private final Alarm awaitingTerminationAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final List<Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor>> myRunningConfigurations =
-    new CopyOnWriteArrayList<Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor>>();
+    ContainerUtil.createEmptyCOWList();
 
   /**
    * reflection

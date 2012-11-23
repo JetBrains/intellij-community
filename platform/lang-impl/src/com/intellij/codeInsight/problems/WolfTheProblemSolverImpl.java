@@ -118,7 +118,9 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   }
 
-  public WolfTheProblemSolverImpl(@NotNull Project project, @NotNull PsiManager psiManager, @NotNull VirtualFileManager virtualFileManager) {
+  public WolfTheProblemSolverImpl(@NotNull Project project,
+                                  @NotNull PsiManager psiManager,
+                                  @NotNull VirtualFileManager virtualFileManager) {
     myProject = project;
     PsiTreeChangeListener changeListener = new PsiTreeChangeAdapter() {
       @Override
@@ -238,7 +240,9 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
   }
 
-  public void startCheckingIfVincentSolvedProblemsYet(@NotNull ProgressIndicator progress, @NotNull ProgressableTextEditorHighlightingPass pass) throws ProcessCanceledException{
+  public void startCheckingIfVincentSolvedProblemsYet(@NotNull ProgressIndicator progress,
+                                                      @NotNull ProgressableTextEditorHighlightingPass pass)
+    throws ProcessCanceledException {
     if (!myProject.isOpen()) return;
 
     List<VirtualFile> files;
@@ -247,7 +251,8 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
     long progressLimit = 0;
     for (VirtualFile file : files) {
-      if (file.isValid()) progressLimit += file.getLength(); // (rough approx number of PSI elements = file length/2) * (visitor count = 2 usually)
+      if (file.isValid())
+        progressLimit += file.getLength(); // (rough approx number of PSI elements = file length/2) * (visitor count = 2 usually)
     }
     pass.setProgressLimit(progressLimit);
     for (final VirtualFile virtualFile : files) {
@@ -458,7 +463,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
                                   final HighlightSeverity severity,
                                   @NotNull final TextRange textRange,
                                   final String messageText) {
-    if (virtualFile == null || textRange.getStartOffset() < 0 || textRange.getLength() < 0 ) return null;
+    if (virtualFile == null || textRange.getStartOffset() < 0 || textRange.getLength() < 0) return null;
     HighlightInfo info = ApplicationManager.getApplication().runReadAction(new Computable<HighlightInfo>() {
       @Override
       public HighlightInfo compute() {
@@ -469,7 +474,10 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   }
 
   @Override
-  public Problem convertToProblem(@Nullable final VirtualFile virtualFile, final int line, final int column, @NotNull final String[] message) {
+  public Problem convertToProblem(@Nullable final VirtualFile virtualFile,
+                                  final int line,
+                                  final int column,
+                                  @NotNull final String[] message) {
     if (virtualFile == null || virtualFile.isDirectory() || virtualFile.getFileType().isBinary()) return null;
     HighlightInfo info = ApplicationManager.getApplication().runReadAction(new Computable<HighlightInfo>() {
       @Override

@@ -46,7 +46,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *  @author dsl
+ * @author dsl
  */
 public class IntentionManagerImpl extends IntentionManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl");
@@ -102,13 +102,14 @@ public class IntentionManagerImpl extends IntentionManager {
     // * while waiting, check for ProcessCanceledException
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       runnable.run();
-    } else {
+    }
+    else {
       myInitActionsAlarm.addRequest(runnable, 300);
     }
   }
 
   private static IntentionAction createIntentionActionWrapper(final IntentionActionBean intentionActionBean, final String[] categories) {
-    return new IntentionActionWrapper(intentionActionBean,categories);
+    return new IntentionActionWrapper(intentionActionBean, categories);
   }
 
   @Override
@@ -132,7 +133,9 @@ public class IntentionManagerImpl extends IntentionManager {
   }
 
   @Override
-  public void registerIntentionAndMetaData(@NotNull IntentionAction action, @NotNull String[] category, @NotNull @NonNls String descriptionDirectoryName) {
+  public void registerIntentionAndMetaData(@NotNull IntentionAction action,
+                                           @NotNull String[] category,
+                                           @NotNull @NonNls String descriptionDirectoryName) {
     addAction(action);
     mySettings.registerIntentionMetaData(action, category, descriptionDirectoryName);
   }
@@ -162,14 +165,15 @@ public class IntentionManagerImpl extends IntentionManager {
   private static TextDescriptor[] mapToDescriptors(String[] texts, @NonNls String fileName) {
     TextDescriptor[] result = new TextDescriptor[texts.length];
     for (int i = 0; i < texts.length; i++) {
-      result [i] = new PlainTextDescriptor(texts[i], fileName);
+      result[i] = new PlainTextDescriptor(texts[i], fileName);
     }
     return result;
   }
 
   @Override
   @NotNull
-  public List<IntentionAction> getStandardIntentionOptions(@NotNull final HighlightDisplayKey displayKey, @NotNull final PsiElement context) {
+  public List<IntentionAction> getStandardIntentionOptions(@NotNull final HighlightDisplayKey displayKey,
+                                                           @NotNull final PsiElement context) {
     List<IntentionAction> options = new ArrayList<IntentionAction>(9);
     options.add(new EditInspectionToolsSettingsAction(displayKey));
     options.add(new RunInspectionIntention(displayKey));
