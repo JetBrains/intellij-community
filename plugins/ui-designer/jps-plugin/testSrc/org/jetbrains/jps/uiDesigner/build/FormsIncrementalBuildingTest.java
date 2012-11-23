@@ -5,8 +5,8 @@ import org.jetbrains.ether.IncrementalTestCase;
 /**
  * @author nik
  */
-public class UiDesignerIncrementalCompilationTest extends IncrementalTestCase {
-  public UiDesignerIncrementalCompilationTest() throws Exception {
+public class FormsIncrementalBuildingTest extends IncrementalTestCase {
+  public FormsIncrementalBuildingTest() throws Exception {
     super("uiDesigner");
   }
 

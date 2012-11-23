@@ -1,6 +1,7 @@
 package org.jetbrains.jps.builders;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -272,6 +273,24 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  protected String copyToProject(String relativeSourcePath, String relativeTargetPath) {
+    File source = PathManagerEx.findFileUnderProjectHome(relativeSourcePath, getClass());
+    String fullTargetPath = getAbsolutePath(relativeTargetPath);
+    File target = new File(fullTargetPath);
+    try {
+      if (source.isDirectory()) {
+        FileUtil.copyDir(source, target);
+      }
+      else {
+        FileUtil.copy(source, target);
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    return fullTargetPath;
   }
 
   private File getOrCreateProjectDir() {
