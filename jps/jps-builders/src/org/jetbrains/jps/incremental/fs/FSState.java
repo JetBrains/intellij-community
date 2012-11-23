@@ -160,7 +160,11 @@ public class FSState {
     return delta != null && delta.hasChanges();
   }
 
-  public boolean markInitialScanPerformed(BuildTarget<?> target) {
-    return myInitialScanPerformed.add(target);
+  public void markInitialScanPerformed(BuildTarget<?> target) {
+    myInitialScanPerformed.add(target);
+  }
+
+  public boolean isInitialScanPerformed(BuildTarget<?> target) {
+    return myInitialScanPerformed.contains(target);
   }
 }

@@ -149,18 +149,21 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     return make(scope, CompilerFilter.ALL);
   }
 
-  protected CompilationLog make(Module module) {
-    return make(getCompilerManager().createModuleCompileScope(module, false), CompilerFilter.ALL);
+  protected CompilationLog make(Module... modules) {
+    return make(getCompilerManager().createModulesCompileScope(modules, false), CompilerFilter.ALL);
   }
 
-  private CompilerManager getCompilerManager() {
+  protected CompilationLog recompile(Module... modules) {
+    return compile(getCompilerManager().createModulesCompileScope(modules, false), CompilerFilter.ALL, true);
+  }
+
+  protected CompilerManager getCompilerManager() {
     return CompilerManager.getInstance(myProject);
   }
 
   protected void assertModulesUpToDate() {
-    //todo[nik,jeka] uncomment this when isUpToDate become supported in external compiler
-    //boolean upToDate = getCompilerManager().isUpToDate(getCompilerManager().createProjectCompileScope(myProject));
-    //assertTrue("Modules are not up to date", upToDate);
+    boolean upToDate = getCompilerManager().isUpToDate(getCompilerManager().createProjectCompileScope(myProject));
+    assertTrue("Modules are not up to date", upToDate);
   }
 
   protected CompilationLog compile(boolean force, VirtualFile... files) {
