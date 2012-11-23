@@ -60,6 +60,7 @@ public class IncProjectBuilder {
 
   private static final String CLASSPATH_INDEX_FINE_NAME = "classpath.index";
   private static final boolean GENERATE_CLASSPATH_INDEX = Boolean.parseBoolean(System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION, "false"));
+  private static final Key<Set<BuildTarget<?>>> TARGET_WITH_CLEARED_OUTPUT = Key.create("_targets_with_cleared_output_");
   private static final int MAX_BUILDER_THREADS;
   static {
     int maxThreads = 4;
@@ -362,9 +363,24 @@ public class IncProjectBuilder {
         context.processMessage(new FileDeletedEvent(outs));
       }
     }
+    registerTargetsWithClearedOutput(context, Collections.singletonList(target));
     if (dirsToDelete != null) {
       FSOperations.pruneEmptyDirs(context, dirsToDelete);
     }
+  }
+
+  private static void registerTargetsWithClearedOutput(CompileContext context, Collection<? extends BuildTarget<?>> targets) {
+    Set<BuildTarget<?>> data = context.getUserData(TARGET_WITH_CLEARED_OUTPUT);
+    if (data == null) {
+      data = new THashSet<BuildTarget<?>>();
+      context.putUserData(TARGET_WITH_CLEARED_OUTPUT, data);
+    }
+    data.addAll(targets);
+  }
+
+  private static boolean isTargetOutputCleared(CompileContext context, BuildTarget<?> target) {
+    Set<BuildTarget<?>> data = context.getUserData(TARGET_WITH_CLEARED_OUTPUT);
+    return data != null && data.contains(target);
   }
 
   private void clearOutputs(CompileContext context) throws ProjectBuildException, IOException {
@@ -417,6 +433,7 @@ public class IncProjectBuilder {
         else if (outputRoot.isFile()) {
           filesToDelete.add(outputRoot);
         }
+        registerTargetsWithClearedOutput(context, entry.getValue());
       }
       else {
         context.processMessage(new CompilerMessage(
@@ -594,13 +611,11 @@ public class IncProjectBuilder {
   }
 
   private void buildTargetsChunk(CompileContext context, final BuildTargetChunk chunk) throws ProjectBuildException {
-    boolean doneSomething = false;
+    boolean doneSomething;
     try {
       Utils.ERRORS_DETECTED_KEY.set(context, Boolean.FALSE);
       BuildOperations.ensureFSStateInitialized(context, chunk);
-      if (context.isMake()) {
-        doneSomething = processDeletedPaths(context, chunk.getTargets());
-      }
+      doneSomething = processDeletedPaths(context, chunk.getTargets());
 
       myProjectDescriptor.fsState.beforeChunkBuildStart(context, chunk);
 
@@ -696,11 +711,16 @@ public class IncProjectBuilder {
 
       final THashSet<File> dirsToDelete = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
       for (BuildTarget<?> target : targets) {
+
         final Collection<String> deletedPaths = myProjectDescriptor.fsState.getAndClearDeletedPaths(target);
         if (deletedPaths.isEmpty()) {
           continue;
         }
         targetToRemovedSources.put(target, deletedPaths);
+        if (isTargetOutputCleared(context, target)) {
+          continue;
+        }
+
         final boolean shouldPruneEmptyDirs = target instanceof ModuleBasedTarget;
         final SourceToOutputMapping sourceToOutputStorage = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
         final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
@@ -821,9 +841,7 @@ public class IncProjectBuilder {
           }
 
           for (ModuleLevelBuilder builder : builders) {
-            if (context.isMake()) {
-              processDeletedPaths(context, chunk.getTargets());
-            }
+            processDeletedPaths(context, chunk.getTargets());
             final ModuleLevelBuilder.ExitCode buildResult = builder.build(context, chunk, dirtyFilesHolder, outputConsumer);
 
             doneSomething |= (buildResult != ModuleLevelBuilder.ExitCode.NOTHING_DONE);
@@ -953,6 +971,7 @@ public class IncProjectBuilder {
     // keys for data that must be visible to all threads
     GLOBAL_CONTEXT_KEYS.add(ExternalJavacDescriptor.KEY);
     GLOBAL_CONTEXT_KEYS.add(FSOperations.ALL_OUTPUTS_KEY);
+    GLOBAL_CONTEXT_KEYS.add(TARGET_WITH_CLEARED_OUTPUT);
   }
 
   private static CompileContext createContextWrapper(final CompileContext delegate) {
