@@ -64,7 +64,7 @@ abstract class InspectionsConfigTreeRenderer extends CheckboxTree.CheckboxTreeCe
       style = SimpleTextAttributes.STYLE_BOLD;
     }
     else {
-      final Descriptor descriptor = node.getDesriptor();
+      final Descriptor descriptor = node.getDescriptor();
       final String scopeName = node.getScopeName();
       if (scopeName != null) {
         if (node.isByDefault()) {

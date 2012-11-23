@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ public abstract class MoveScopeAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final InspectionConfigTreeNode[] nodes = myTree.getSelectedNodes(InspectionConfigTreeNode.class, null);
     final InspectionConfigTreeNode node = nodes[0];
-    final Descriptor descriptor = node.getDesriptor();
+    final Descriptor descriptor = node.getDescriptor();
     final TreeNode parent = node.getParent();
     final int index = parent.getIndex(node);
     getSelectedProfile().moveScope(descriptor.getKey().toString(), index, myDir);

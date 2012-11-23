@@ -35,7 +35,7 @@ public class InspectionConfigTreeNode extends CheckedTreeNode {
     @NotNull
     @Override
     protected Boolean compute() {
-      Descriptor descriptor = getDesriptor();
+      Descriptor descriptor = getDescriptor();
       if (descriptor != null) return descriptor.getInspectionProfile().isProperSetting(descriptor.getTool().getShortName());
       for (int i = 0; i < getChildCount(); i++) {
         InspectionConfigTreeNode node = (InspectionConfigTreeNode)getChildAt(i);
@@ -64,7 +64,7 @@ public class InspectionConfigTreeNode extends CheckedTreeNode {
   }
 
   @Nullable
-  public Descriptor getDesriptor() {
+  public Descriptor getDescriptor() {
     if (userObject instanceof String) return null;
     return (Descriptor)userObject;
   }
