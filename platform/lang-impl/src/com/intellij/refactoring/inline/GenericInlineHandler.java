@@ -169,7 +169,9 @@ public class GenericInlineHandler {
                                       final PsiElement element,
                                       final Map<Language, InlineHandler.Inliner> inliners,
                                       final MultiMap<PsiElement, String> conflicts) {
-    final Language language = reference.getElement().getLanguage();
+    final PsiElement referenceElement = reference.getElement();
+    if (referenceElement == null) return;
+    final Language language = referenceElement.getLanguage();
     final InlineHandler.Inliner inliner = inliners.get(language);
     if (inliner != null) {
       final MultiMap<PsiElement, String> refConflicts = inliner.getConflicts(reference, element);
@@ -180,7 +182,7 @@ public class GenericInlineHandler {
       }
     }
     else {
-      conflicts.putValue(reference.getElement(), "Cannot inline reference from " + language.getID());
+      conflicts.putValue(referenceElement, "Cannot inline reference from " + language.getID());
     }
   }
 
