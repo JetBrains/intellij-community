@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -14,6 +13,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.documentation.PyDocstringGenerator;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
+import com.jetbrains.python.editor.PythonDocCommentUtil;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -104,46 +104,12 @@ public class DocstringQuickFix implements LocalQuickFix {
       replacement = createMissingReplacement(docStringOwner);
     }
     if (myUnexpected != null) {
-      replacement = createUnexpectedReplacement(replacement);
+      replacement = PythonDocCommentUtil.removeParamFromDocstring(replacement, myPrefix, myUnexpected);
     }
     if (!replacement.equals(docStringExpression.getText())) {
       PyExpression str = elementGenerator.createDocstring(replacement).getExpression();
       docStringExpression.replace(str);
     }
-  }
-
-  private String createUnexpectedReplacement(String text) {
-    StringBuilder newText = new StringBuilder();
-    String[] lines = LineTokenizer.tokenize(text, true);
-    boolean skipNext = false;
-    for (String line : lines) {
-      if (line.contains(myPrefix)) {
-        String[] subLines = line.split(" ");
-        boolean lookNext = false;
-        boolean add = true;
-        for (String s : subLines) {
-          if (s.trim().equals(myPrefix + "param")) {
-            lookNext = true;
-          }
-          if (lookNext && s.trim().endsWith(":")) {
-            String tmp = s.trim().substring(0, s.trim().length() - 1);
-            if (myUnexpected.equals(tmp)) {
-              lookNext = false;
-              skipNext = true;
-              add = false;
-            }
-          }
-        }
-        if (add) {
-          newText.append(line);
-          skipNext = false;
-        }
-      }
-      else if (!skipNext || line.contains("\"\"\"") || line.contains("'''")) {
-        newText.append(line);
-      }
-    }
-    return newText.toString();
   }
 
   private String createMissingReplacement(PyDocStringOwner docStringOwner) {

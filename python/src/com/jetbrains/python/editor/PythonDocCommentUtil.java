@@ -1,5 +1,6 @@
 package com.jetbrains.python.editor;
 
+import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiWhiteSpace;
@@ -55,5 +56,39 @@ public class PythonDocCommentUtil {
       }
     }
     return ws+suffix;
+  }
+
+  static public String removeParamFromDocstring(String text, String prefix, String paramName) {
+    StringBuilder newText = new StringBuilder();
+    String[] lines = LineTokenizer.tokenize(text, true);
+    boolean skipNext = false;
+    for (String line : lines) {
+      if (line.contains(prefix)) {
+        String[] subLines = line.split(" ");
+        boolean lookNext = false;
+        boolean add = true;
+        for (String s : subLines) {
+          if (s.trim().equals(prefix + "param")) {
+            lookNext = true;
+          }
+          if (lookNext && s.trim().endsWith(":")) {
+            String tmp = s.trim().substring(0, s.trim().length() - 1);
+            if (paramName.equals(tmp)) {
+              lookNext = false;
+              skipNext = true;
+              add = false;
+            }
+          }
+        }
+        if (add) {
+          newText.append(line);
+          skipNext = false;
+        }
+      }
+      else if (!skipNext || line.contains("\"\"\"") || line.contains("'''")) {
+        newText.append(line);
+      }
+    }
+    return newText.toString();
   }
 }

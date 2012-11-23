@@ -11,8 +11,12 @@ import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Query;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.documentation.PyDocstringGenerator;
+import com.jetbrains.python.documentation.PyDocumentationSettings;
+import com.jetbrains.python.editor.PythonDocCommentUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
@@ -22,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * User : ktisha
@@ -194,7 +199,28 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       }
     }
     if (changeInfo.isParameterSetOrOrderChanged()) {
+
+      fixDoc(changeInfo, function);
       updateParameterList(changeInfo, function);
+    }
+  }
+
+  private static void fixDoc(PyChangeInfo changeInfo, @NotNull PyFunction function) {
+    final PyStringLiteralExpression docStringExpression = function.getDocStringExpression();
+    if (docStringExpression == null) return;
+    final PyParameterInfo[] parameters = changeInfo.getNewParameters();
+    Set<String> names = new HashSet<String>();
+    for (PyParameterInfo info : parameters) {
+      names.add(info.getName());
+    }
+    for (PyParameter p : function.getParameterList().getParameters()) {
+      if (!names.contains(p.getName())) {
+        PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(function.getProject());
+        String prefix = documentationSettings.isEpydocFormat(docStringExpression.getContainingFile())? "@" : ":";
+        final String replacement = PythonDocCommentUtil.removeParamFromDocstring(docStringExpression.getText(), prefix, p.getName());
+        PyExpression str = PyElementGenerator.getInstance(function.getProject()).createDocstring(replacement).getExpression();
+        docStringExpression.replace(str);
+      }
     }
   }
 
@@ -203,8 +229,16 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
 
     final PyParameterInfo[] parameters = changeInfo.getNewParameters();
     StringBuilder builder = new StringBuilder("def foo(");
-    for(int i = 0; i != parameters.length; ++i) {
+    final PyStringLiteralExpression docstring = baseMethod.getDocStringExpression();
+    for (int i = 0; i != parameters.length; ++i) {
       PyParameterInfo info = parameters[i];
+
+      if (docstring != null && info.getOldIndex() == -1) {
+        final String replacement = new PyDocstringGenerator(baseMethod).withParam("param", info.getName()).docStringAsText();
+        PyExpression str = PyElementGenerator.getInstance(baseMethod.getProject()).createDocstring(replacement).getExpression();
+        docstring.replace(str);
+      }
+
       builder.append(info.getName());
       final String defaultValue = info.getDefaultValue();
       if (defaultValue != null && info.getDefaultInSignature() && !StringUtil.isEmpty(defaultValue)) {

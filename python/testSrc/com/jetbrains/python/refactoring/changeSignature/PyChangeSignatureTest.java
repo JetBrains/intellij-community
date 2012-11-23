@@ -56,8 +56,13 @@ public class PyChangeSignatureTest extends PyTestCase {
     doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false), new PyParameterInfo(1, "d1", "1", true)));
   }
 
+  public void testFixDocstringRemove() {
+    doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false)));
+  }
+
   public void testClassMethod() {
-    doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "self", null, false), new PyParameterInfo(1, "a", null, true), new PyParameterInfo(-1, "b", "2", false)));
+    doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "self", null, false), new PyParameterInfo(1, "a", null, true),
+                                              new PyParameterInfo(-1, "b", "2", false)));
   }
 
   public void doChangeSignatureTest(@Nullable String newName, @Nullable List<PyParameterInfo> parameters) {
