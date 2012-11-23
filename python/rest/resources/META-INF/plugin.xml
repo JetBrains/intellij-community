@@ -4,7 +4,7 @@
   <description>This plugin enables support for reStructuredText files (*.rst)</description>
   <vendor>JetBrains</vendor>
   <version>122.SNAPSHOT</version>
-  <idea-version since-build="122.0" until-build="123.0"/>
+  <idea-version since-build="124.0" until-build="124.9999"/>
   <depends>com.intellij.modules.lang</depends>
 
   <xi:include href="/META-INF/rest.xml" xpointer="xpointer(/idea-plugin/*)"/>
