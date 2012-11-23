@@ -335,7 +335,7 @@ public class RegExHelpPopup extends JPanel {
 
   public static JBPopup createRegExHelpPopup() throws BadLocationException {
     final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(new RegExHelpPopup(), null);
-    return builder.setCancelOnClickOutside(false).setBelongsToGlobalPopupStack(true).setFocusable(true).setMovable(true).setResizable(true)
+    return builder.setCancelOnClickOutside(false).setBelongsToGlobalPopupStack(true).setFocusable(true).setRequestFocus(true).setMovable(true).setResizable(true)
       .setCancelOnOtherWindowOpen(false).setCancelButton(new MinimizeButton("Hide"))
       .setTitle("Regular expressions syntax").setDimensionServiceKey(null, "RegExHelpPopup", true).createPopup();
   }

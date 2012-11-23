@@ -2011,7 +2011,7 @@ public class GitLogUI implements Disposable {
         sortedListModel.add(virtualFile.getPath());
       }
 
-      JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(jbList, jbList).createPopup();
+      JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(jbList, jbList).setRequestFocus(true).createPopup();
       if (e.getInputEvent() instanceof MouseEvent) {
         popup.show(new RelativePoint((MouseEvent)e.getInputEvent()));
       } else {
@@ -2185,6 +2185,7 @@ public class GitLogUI implements Disposable {
       checkBoxList.setStringItems(map);
 
       final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(checkBoxList, checkBoxList).
+        setRequestFocus(true).
         addListener(new JBPopupListener() {
           @Override
           public void beforeShown(LightweightWindowEvent event) {
@@ -2645,6 +2646,7 @@ public class GitLogUI implements Disposable {
       popup[0] = builder.setTitle("Goto")
         .setResizable(true)
         .setFocusable(true)
+        .setRequestFocus(true)
         .setMovable(true)
         .setModalContext(true)
         .setAdText("Commit hash, or reference, or regexp for commit message")
