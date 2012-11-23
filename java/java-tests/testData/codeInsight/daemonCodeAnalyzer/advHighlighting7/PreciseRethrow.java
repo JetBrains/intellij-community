@@ -210,4 +210,22 @@ class C {
       <error descr="Unhandled exceptions: C.E1, C.E2">throw e;</error>
     }
   }
+
+  void m13() throws E1 {
+    try {
+      try {
+        if (true)
+          throw new E1();
+        else if (false)
+          throw new E2();
+      }
+      catch (E1 | E2 e) {
+        e = new E();
+        throw e;
+      }
+    }
+    catch (E2 e) {
+      throw new RuntimeException(e);
+    }
+  }
 }
