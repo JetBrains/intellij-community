@@ -214,6 +214,10 @@ public class PyIntentionTest extends PyTestCase {
     doTest(PyBundle.message("INTN.quoted.string.double.to.single"));
   }
 
+  public void testMultilineQuotedString() { //PY-8064
+    doTest(PyBundle.message("INTN.quoted.string.double.to.single"));
+  }
+
   public void testConvertLambdaToFunction() {
     doTest(PyBundle.message("INTN.convert.lambda.to.function"));
   }

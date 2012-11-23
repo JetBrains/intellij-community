@@ -1,1 +1,2 @@
-test_function('String resuming string'.format(a, b))
+test_function('String '
+              'resuming string'.format(a, b))

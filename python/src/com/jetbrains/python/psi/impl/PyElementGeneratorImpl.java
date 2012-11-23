@@ -56,9 +56,9 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
   }
 
   public PyStringLiteralExpression createStringLiteralAlreadyEscaped(String str) {
-    final PsiFile dummyFile = createDummyFile(LanguageLevel.getDefault(), "a=" + str);
+    final PsiFile dummyFile = createDummyFile(LanguageLevel.getDefault(), "a=(" + str + ")");
     final PyAssignmentStatement expressionStatement = (PyAssignmentStatement)dummyFile.getFirstChild();
-    return (PyStringLiteralExpression)expressionStatement.getAssignedValue();
+    return (PyStringLiteralExpression)((PyParenthesizedExpression)expressionStatement.getAssignedValue()).getContainedExpression();
   }
 
 
