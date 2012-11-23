@@ -177,7 +177,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       Collection<VirtualFile> allRoots = new ArrayList<VirtualFile>(Arrays.asList(
         ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs)));
 
-      Collection<VirtualFile> affectedRoots = myPanel.getRoots();
+      Collection<VirtualFile> affectedRoots = getSelectedRoots();
       for (VirtualFile root : affectedRoots) {
         try {
           Pair<String, String> nameAndEmail = getUserNameAndEmailFromGitConfig(project, root);
