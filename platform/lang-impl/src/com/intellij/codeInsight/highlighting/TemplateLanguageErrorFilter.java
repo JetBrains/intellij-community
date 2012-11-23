@@ -22,6 +22,8 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.*;
+
 /**
  * @author Dennis.Ushakov
  */
@@ -31,12 +33,33 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
   @NotNull
   private final Class myTemplateFileViewProviderClass;
 
+  private final Set<Language> knownLanguageSet;
+
   protected TemplateLanguageErrorFilter(
     final @NotNull TokenSet templateExpressionStartTokens,
     final @NotNull Class templateFileViewProviderClass)
   {
+    this(templateExpressionStartTokens, templateFileViewProviderClass, new String[0]);
+  }
+
+  protected TemplateLanguageErrorFilter(
+    final @NotNull TokenSet templateExpressionStartTokens,
+    final @NotNull Class templateFileViewProviderClass,
+    final @NotNull String... knownSubLanguageNames)
+  {
     myTemplateExpressionStartTokens = TokenSet.create(templateExpressionStartTokens.getTypes());
     myTemplateFileViewProviderClass = templateFileViewProviderClass;
+
+    List<String> knownSubLanguageList = new ArrayList<String>(Arrays.asList(knownSubLanguageNames));
+    knownSubLanguageList.add("JavaScript");
+    knownSubLanguageList.add("CSS");
+    knownLanguageSet = new HashSet<Language>();
+    for (String name : knownSubLanguageList) {
+      final Language language = Language.findLanguageByID(name);
+      if (language != null) {
+        knownLanguageSet.add(language);
+      }
+    }
   }
 
   @Override
@@ -55,8 +78,11 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
   }
 
   protected boolean isKnownSubLanguage(final @NotNull Language language) {
-    final Language javaScript = Language.findLanguageByID("JavaScript");
-    final Language css = Language.findLanguageByID("CSS");
-    return javaScript != null && language.is(javaScript) || css != null && language.is(css);
+    for (Language knownLanguage : knownLanguageSet) {
+      if (language.is(knownLanguage)) {
+        return true;
+      }
+    }
+    return false;
   }
 }
