@@ -56,7 +56,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Prohibits commiting with an empty messages.
+ * Prohibits committing with an empty messages, warns if committing into detached HEAD, checks if user name and correct CRLF attributes
+ * are set.
  * @author Kirill Likhodedov
 */
 public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
@@ -327,9 +328,6 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     @Nullable
     private DetachedRoot getDetachedRoot() {
       GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(myPanel.getProject());
-      if (repositoryManager == null) {
-        return null;
-      }
       for (VirtualFile root : getSelectedRoots()) {
         GitRepository repository = repositoryManager.getRepositoryForRoot(root);
         if (repository == null) {
