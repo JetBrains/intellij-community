@@ -20,12 +20,14 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestDataProvider;
 import com.intellij.testFramework.fixtures.LightIdeaTestFixture;
 
@@ -55,6 +57,8 @@ class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixtu
     Project project = getProject();
     CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
     checkForSettingsDamage();
+    PersistentFS.getInstance().clearIdCache();
+
     LightPlatformTestCase.doTearDown(project, LightPlatformTestCase.getApplication(), true);
     super.tearDown();
     InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
