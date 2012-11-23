@@ -119,7 +119,21 @@ public class VariableTypeFromCallFix implements IntentionAction {
           }
         }
       }
-      if (expression instanceof PsiReferenceExpression) {
+      registerParameterTypeChange(highlightInfo, method, expression, parameterType);
+    }
+  }
+
+  private static void registerParameterTypeChange(HighlightInfo highlightInfo,
+                                                  PsiMethod method,
+                                                  PsiExpression expression,
+                                                  PsiType parameterType) {
+    if (expression instanceof PsiReferenceExpression) {
+      final PsiManager manager = method.getManager();
+      if (manager.isInProject(method)) {
+        final PsiMethod[] superMethods = method.findDeepestSuperMethods();
+        for (PsiMethod superMethod : superMethods) {
+          if (!manager.isInProject(superMethod)) return;
+        }
         final PsiElement resolve = ((PsiReferenceExpression)expression).resolve();
         if (resolve instanceof PsiVariable) {
           HighlightUtil.registerChangeVariableTypeFixes((PsiVariable)resolve, parameterType, highlightInfo);
