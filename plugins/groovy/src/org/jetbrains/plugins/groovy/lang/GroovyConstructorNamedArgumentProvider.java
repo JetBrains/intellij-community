@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
@@ -23,10 +24,8 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
@@ -41,9 +40,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.Map;
 
-import static org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor.*;
+import static org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor.Priority;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind.*;
 
 /**
@@ -94,13 +94,55 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
   public static void processClass(@NotNull GrCall call,
                                   PsiClassType type,
                                   @Nullable String argumentName,
-                                  Map<String, NamedArgumentDescriptor> result) {
+                                  final Map<String, NamedArgumentDescriptor> result) {
     if (argumentName == null) {
-      ResolveUtil.processAllDeclarations(type, new MyPsiScopeProcessor(result, call), ResolveState.initial(), call);
+      final HashMap<String, Pair<PsiType, PsiElement>> map = new HashMap<String, Pair<PsiType, PsiElement>>();
+
+      MyPsiScopeProcessor processor = new MyPsiScopeProcessor() {
+        @Override
+        protected void addNamedArgument(String propertyName, PsiType type, PsiElement element) {
+          if (result.containsKey(propertyName)) return;
+
+          Pair<PsiType, PsiElement> pair = map.get(propertyName);
+          if (pair != null) {
+            if (element instanceof PsiMethod && pair.second instanceof PsiField) {
+              // methods should override fields
+            }
+            else {
+              return;
+            }
+          }
+
+          map.put(propertyName, Pair.create(type, element));
+        }
+      };
+
+      processor.setResolveTargetKinds(ResolverProcessor.RESOLVE_KINDS_METHOD_PROPERTY);
+
+      ResolveUtil.processAllDeclarations(type, processor, ResolveState.initial(), call);
+
+      for (Map.Entry<String, Pair<PsiType, PsiElement>> entry : map.entrySet()) {
+        result.put(entry.getKey(), new NamedArgumentDescriptor.TypeCondition(entry.getValue().first, entry.getValue().getSecond()).setPriority(Priority.AS_LOCAL_VARIABLE));
+      }
     }
     else {
-      ResolveUtil.processAllDeclarations(type, new MyPsiScopeProcessor(argumentName, true, result, call), ResolveState.initial(), call);
-      ResolveUtil.processAllDeclarations(type, new MyPsiScopeProcessor(argumentName, false, result, call), ResolveState.initial(), call);
+      MyPsiScopeProcessor processor = new MyPsiScopeProcessor() {
+        @Override
+        protected void addNamedArgument(String propertyName, PsiType type, PsiElement element) {
+          if (result.containsKey(propertyName)) return;
+          result.put(propertyName, new NamedArgumentDescriptor.TypeCondition(type, element).setPriority(Priority.AS_LOCAL_VARIABLE));
+        }
+      };
+
+      processor.setResolveTargetKinds(ResolverProcessor.RESOLVE_KINDS_METHOD);
+      processor.setNameHint(GroovyPropertyUtils.getSetterName(argumentName));
+
+      ResolveUtil.processAllDeclarations(type, processor, ResolveState.initial(), call);
+
+      processor.setResolveTargetKinds(ResolverProcessor.RESOLVE_KINDS_PROPERTY);
+      processor.setNameHint(argumentName);
+
+      ResolveUtil.processAllDeclarations(type, processor, ResolveState.initial(), call);
     }
   }
 
@@ -126,29 +168,9 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
     return false;
   }
 
-  private static class MyPsiScopeProcessor implements PsiScopeProcessor, NameHint, ClassHint, ElementClassHint {
-    private final String myNameHint;
-    private final Map<String, NamedArgumentDescriptor> myResult;
-    private final EnumSet<ResolveKind> myResolveTargetKinds;
-
-    private MyPsiScopeProcessor(Map<String, NamedArgumentDescriptor> result, GroovyPsiElement context) {
-      myResolveTargetKinds = ResolverProcessor.RESOLVE_KINDS_METHOD_PROPERTY;
-      myNameHint = null;
-      myResult = result;
-    }
-
-    private MyPsiScopeProcessor(@NotNull String propertyName, boolean findSetter, Map<String, NamedArgumentDescriptor> result, GroovyPsiElement context) {
-      if (findSetter) {
-        myResolveTargetKinds = ResolverProcessor.RESOLVE_KINDS_METHOD;
-        myNameHint = GroovyPropertyUtils.getSetterName(propertyName);
-      }
-      else {
-        myResolveTargetKinds = ResolverProcessor.RESOLVE_KINDS_PROPERTY;
-        myNameHint = propertyName;
-      }
-
-      myResult = result;
-    }
+  private static abstract class MyPsiScopeProcessor implements PsiScopeProcessor, NameHint, ClassHint, ElementClassHint {
+    private String myNameHint;
+    private EnumSet<ResolveKind> myResolveTargetKinds;
 
     @Override
     public boolean execute(@NotNull PsiElement element, ResolveState state) {
@@ -157,6 +179,8 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
         PsiType type;
 
         if (element instanceof PsiMethod) {
+          if (!myResolveTargetKinds.contains(METHOD)) return true;
+
           PsiMethod method = (PsiMethod)element;
           if (!GroovyPropertyUtils.isSimplePropertySetter(method)) return true;
 
@@ -166,24 +190,28 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
           type = method.getParameterList().getParameters()[0].getType();
         }
         else {
+          if (!myResolveTargetKinds.contains(PROPERTY)) return true;
+
           type = ((PsiField)element).getType();
           propertyName = ((PsiField)element).getName();
         }
 
-        if (((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) return true;
+        if (propertyName.equals(METACLASS)) return true;
 
-        if (myResult.containsKey(propertyName) || propertyName.equals(METACLASS)) return true;
+        if (((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) return true;
 
         PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
         if (substitutor != null) {
           type = substitutor.substitute(type);
         }
 
-        myResult.put(propertyName, new NamedArgumentDescriptor.TypeCondition(type, element).setPriority(Priority.AS_LOCAL_VARIABLE));
+        addNamedArgument(propertyName, type, element);
       }
 
       return true;
     }
+
+    protected abstract void addNamedArgument(String propertyName, PsiType type, PsiElement element);
 
     @Override
     public <T> T getHint(@NotNull Key<T> hintKey) {
@@ -230,6 +258,14 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
     @Override
     public String getName(ResolveState state) {
       return myNameHint;
+    }
+
+    public void setNameHint(String nameHint) {
+      myNameHint = nameHint;
+    }
+
+    public void setResolveTargetKinds(EnumSet<ResolveKind> resolveTargetKinds) {
+      myResolveTargetKinds = resolveTargetKinds;
     }
   }
 }
