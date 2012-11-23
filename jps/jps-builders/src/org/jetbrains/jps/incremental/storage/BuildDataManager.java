@@ -57,11 +57,15 @@ public class BuildDataManager implements StorageOwner {
     synchronized (mySourceToOutputLock) {
       mapping = mySourceToOutputs.get(target);
       if (mapping == null) {
-        mapping = new SourceToOutputMappingImpl(new File(myDataPaths.getTargetDataRoot(target), "src-out" + File.separator + "data"));
+        mapping = new SourceToOutputMappingImpl(new File(getSourceToOutputMapRoot(target), "data"));
         mySourceToOutputs.put(target, mapping);
       }
     }
     return mapping;
+  }
+
+  private File getSourceToOutputMapRoot(BuildTarget<?> target) {
+    return new File(myDataPaths.getTargetDataRoot(target), "src-out");
   }
 
   @NotNull
@@ -94,16 +98,15 @@ public class BuildDataManager implements StorageOwner {
       }
     }
     finally {
-      try {
-        synchronized (mySourceToOutputLock) {
-          SourceToOutputMappingImpl mapping = mySourceToOutputs.remove(target);
-          if (mapping != null) {
-            mapping.close();
+      // delete all data except src-out mapping which is cleaned in a special way
+      final File[] targetData = myDataPaths.getTargetDataRoot(target).listFiles();
+      if (targetData != null) {
+        final File srcOutputMapRoot = getSourceToOutputMapRoot(target);
+        for (File dataFile : targetData) {
+          if (!FileUtil.filesEqual(dataFile, srcOutputMapRoot)) {
+            FileUtil.delete(dataFile);
           }
         }
-      }
-      finally {
-        FileUtil.delete(myDataPaths.getTargetDataRoot(target));
       }
     }
   }
