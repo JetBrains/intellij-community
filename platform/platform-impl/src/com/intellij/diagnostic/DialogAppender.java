@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.ErrorLogger;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.Priority;
 import org.apache.log4j.spi.LoggingEvent;
@@ -30,34 +31,50 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Mike
  */
 public class DialogAppender extends AppenderSkeleton {
   private static final DefaultIdeaErrorLogger DEFAULT_LOGGER = new DefaultIdeaErrorLogger();
+  private static final int MAX_ASYNC_LOGGING_EVENTS = 5;
 
   private volatile Runnable myDialogRunnable = null;
+  private final AtomicInteger myPendingAppendCounts = new AtomicInteger();
 
   @Override
   protected synchronized void append(@NotNull final LoggingEvent event) {
     if (!event.level.isGreaterOrEqual(Priority.ERROR)) return;
 
-    SwingUtilities.invokeLater(new Runnable() {
+    Runnable action = new Runnable() {
       @Override
       public void run() {
-        List<ErrorLogger> loggers = new ArrayList<ErrorLogger>();
-        loggers.add(DEFAULT_LOGGER);
+        try {
+          List<ErrorLogger> loggers = new ArrayList<ErrorLogger>();
+          loggers.add(DEFAULT_LOGGER);
 
-        Application application = ApplicationManager.getApplication();
-        if (application != null) {
-          if (application.isHeadlessEnvironment() || application.isDisposed()) return;
-          ContainerUtil.addAll(loggers, application.getComponents(ErrorLogger.class));
+          Application application = ApplicationManager.getApplication();
+          if (application != null) {
+            if (application.isHeadlessEnvironment() || application.isDisposed()) return;
+            ContainerUtil.addAll(loggers, application.getComponents(ErrorLogger.class));
+          }
+
+          appendToLoggers(event, loggers.toArray(new ErrorLogger[loggers.size()]));
         }
-
-        appendToLoggers(event, loggers.toArray(new ErrorLogger[loggers.size()]));
+        finally {
+          myPendingAppendCounts.decrementAndGet();
+        }
       }
-    });
+    };
+
+    if (myPendingAppendCounts.addAndGet(1) > MAX_ASYNC_LOGGING_EVENTS) {
+      // Stop adding requests to the queue or we can get OOME on pending logging requests (IDEA-95327)
+      // Note, we MUST avoid SYNCHRONOUS invokeAndWait to prevent deadlocks
+      // UIUtil.invokeAndWaitIfNeeded(action);
+    } else {
+      SwingUtilities.invokeLater(action);
+    }
   }
 
   void appendToLoggers(@NotNull LoggingEvent event, @NotNull ErrorLogger[] errorLoggers) {
