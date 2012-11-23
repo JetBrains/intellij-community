@@ -55,9 +55,10 @@ import java.util.*;
  *         Date: 11/20/12
  */
 public class FormsInstrumenter extends FormsBuilder {
+  public static final String BUILDER_NAME = "forms";
 
   public FormsInstrumenter() {
-    super(BuilderCategory.CLASS_INSTRUMENTER, "forms");
+    super(BuilderCategory.CLASS_INSTRUMENTER, BUILDER_NAME);
   }
 
   @Override
