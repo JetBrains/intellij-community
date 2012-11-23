@@ -105,7 +105,10 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
 
           Pair<PsiType, PsiElement> pair = map.get(propertyName);
           if (pair != null) {
-            if (!(element instanceof PsiMethod) && !(element instanceof PsiField)) { // methods should override fields otherwise return
+            if (element instanceof PsiMethod && pair.second instanceof PsiField) {
+              // methods should override fields
+            }
+            else {
               return;
             }
           }
