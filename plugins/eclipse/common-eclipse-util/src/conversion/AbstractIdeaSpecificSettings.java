@@ -17,6 +17,7 @@ package org.jetbrains.idea.eclipse.conversion;
 
 import com.intellij.openapi.util.InvalidDataException;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.IdeaXml;
 
 import java.util.List;
@@ -25,8 +26,8 @@ import java.util.List;
  * User: anna
  * Date: 11/8/12
  */
-public abstract class AbstractIdeaSpecificSettings<T, C> {
-  public void readIDEASpecific(final Element root, T model) throws InvalidDataException {
+public abstract class AbstractIdeaSpecificSettings<T, C, SdkType> {
+  public void readIDEASpecific(final Element root, T model, @Nullable SdkType projectSdkType) throws InvalidDataException {
     expandElement(root, model);
 
     readLanguageLevel(root, model);
@@ -45,7 +46,7 @@ public abstract class AbstractIdeaSpecificSettings<T, C> {
       }
     }
 
-    setupJdk(root, model);
+    setupJdk(root, model, projectSdkType);
     setupLibraryRoots(root, model);
     overrideModulesScopes(root, model);
   }
@@ -56,7 +57,7 @@ public abstract class AbstractIdeaSpecificSettings<T, C> {
 
   protected abstract void setupLibraryRoots(Element root, T model);
 
-  protected abstract void setupJdk(Element root, T model);
+  protected abstract void setupJdk(Element root, T model, @Nullable SdkType projectSdkType);
 
   protected abstract void setupCompilerOutputs(Element root, T model);
 
