@@ -144,10 +144,8 @@ public class BuildOperations {
     try {
       final Map<T, Set<File>> cleanedSources = new java.util.HashMap<T, Set<File>>();
 
-      ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
-      final Collection<String> outputsToLog = logger.isEnabled() ? new LinkedList<String>() : null;
       final THashSet<File> dirsToDelete = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-      final THashSet<String> deletedPaths = new THashSet<String>();
+      final Collection<String> deletedPaths = new ArrayList<String>();
 
       dirtyFilesHolder.processDirtyFiles(new FileProcessor<R, T>() {
         private final Map<T, SourceToOutputMapping> mappingsCache = new java.util.HashMap<T, SourceToOutputMapping>(); // cache the mapping locally
@@ -164,9 +162,6 @@ public class BuildOperations {
           if (outputs != null) {
             final boolean shouldPruneOutputDirs = target instanceof ModuleBasedTarget;
             for (String output : outputs) {
-              if (outputsToLog != null) {
-                outputsToLog.add(output);
-              }
               final File outFile = new File(output);
               final boolean deleted = outFile.delete();
               if (deleted) {
@@ -190,9 +185,13 @@ public class BuildOperations {
         }
       });
 
-      if (outputsToLog != null && context.isMake()) {
-        logger.logDeletedFiles(outputsToLog);
+      if (context.isMake()) {
+        final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
+        if (logger.isEnabled()) {
+          logger.logDeletedFiles(deletedPaths);
+        }
       }
+
       if (!deletedPaths.isEmpty()) {
         context.processMessage(new FileDeletedEvent(deletedPaths));
       }
