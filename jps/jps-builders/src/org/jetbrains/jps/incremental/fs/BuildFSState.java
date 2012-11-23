@@ -43,8 +43,8 @@ public class BuildFSState extends FSState {
   }
 
   @Override
-  public boolean markInitialScanPerformed(BuildTarget<?> target) {
-    return myAlwaysScanFS || super.markInitialScanPerformed(target);
+  public boolean isInitialScanPerformed(BuildTarget<?> target) {
+    return !myAlwaysScanFS && super.isInitialScanPerformed(target);
   }
 
   @Override

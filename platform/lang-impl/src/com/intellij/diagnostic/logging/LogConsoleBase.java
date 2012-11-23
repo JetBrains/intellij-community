@@ -365,6 +365,8 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
       LOG.assertTrue(editor != null);
       final Document document = editor.getDocument();
       final int caretOffset = editor.getCaretModel().getOffset();
+      myLineUnderSelection = null;
+      myLineOffset = -1;
       if (caretOffset > -1 && caretOffset < document.getTextLength()) {
         int line;
         try {

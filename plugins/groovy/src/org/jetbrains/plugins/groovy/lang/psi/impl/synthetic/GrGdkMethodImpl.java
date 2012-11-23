@@ -55,7 +55,6 @@ public class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
     setMethodReturnType(method.getReturnType());
     setBaseIcon(JetgroovyIcons.Groovy.Method);
     setMethodKind("GrGdkMethod");
-    setNavigationElement(method);
 
     if (originInfo != null) {
       setOriginInfo(originInfo);
@@ -115,5 +114,25 @@ public class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
     }
 
     return cachedValue.getValue();
+  }
+
+  /*
+   * Override LightElement.isValid() to avoid calling getNavigationElement()
+   */
+  @Override
+  public boolean isValid() {
+    return myMethod.isValid();
+  }
+
+  @NotNull
+  @Override
+  public PsiElement getNavigationElement() {
+    PsiElement navigationElement = myMethod.getNavigationElement();
+    return navigationElement == null ? myMethod : navigationElement;
+  }
+
+  @Override
+  public void setNavigationElement(@NotNull PsiElement navigationElement) {
+    throw new UnsupportedOperationException();
   }
 }

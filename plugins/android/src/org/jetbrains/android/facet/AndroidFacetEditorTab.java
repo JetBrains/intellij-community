@@ -36,6 +36,7 @@ import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.android.compiler.AndroidAptCompiler;
 import org.jetbrains.android.compiler.AndroidAutogeneratorMode;
@@ -55,7 +56,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -584,13 +584,8 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     }
     String moduleDirPath = AndroidRootUtil.getModuleDirPath(myContext.getModule());
     if (moduleDirPath == null) return null;
-    try {
-      return new File(moduleDirPath + genRelativePath).getCanonicalPath();
-    }
-    catch (IOException e) {
-      LOG.info(e);
-      return moduleDirPath + genRelativePath;
-    }
+    final String path = PathUtil.getCanonicalPath(new File(moduleDirPath, genRelativePath).getPath());
+    return path != null ? PathUtil.getLocalPath(path) : null;
   }
 
   public void disposeUIResources() {
