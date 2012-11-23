@@ -148,6 +148,14 @@ public class ResourceEditor extends PropertyEditor {
       );
     }
 
+    if (myCheckBox == null) {
+      myEditor.registerKeyboardAction(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+        }
+      }, KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    }
+
     myEditor.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
