@@ -328,14 +328,6 @@ public class GroovycRunner {
                                                        final CompilerConfiguration config,
                                                        final String finalOutput, final GroovyClassLoader classLoader) {
 
-    try {
-      if (forStubs) {
-        return createStubGenerator(config, classLoader);
-      }
-    }
-    catch (NoClassDefFoundError ignore) { // older groovy distributions just don't have stub generation capability
-    }
-
     final GroovyClassLoader transformLoader = new GroovyClassLoader(classLoader) {
       public Enumeration<URL> getResources(String name) throws IOException {
         if (name.endsWith("org.codehaus.groovy.transform.ASTTransformation")) {
@@ -358,6 +350,15 @@ public class GroovycRunner {
         return super.getResources(name);
       }
     };
+
+    try {
+      if (forStubs) {
+        return createStubGenerator(config, classLoader, transformLoader);
+      }
+    }
+    catch (NoClassDefFoundError ignore) { // older groovy distributions just don't have stub generation capability
+    }
+
     CompilationUnit unit;
     try {
       unit = new CompilationUnit(config, null, classLoader, transformLoader) {
@@ -385,9 +386,13 @@ public class GroovycRunner {
     return unit;
   }
 
-  private static CompilationUnit createStubGenerator(final CompilerConfiguration config, final GroovyClassLoader classLoader) {
+  private static CompilationUnit createStubGenerator(final CompilerConfiguration config, final GroovyClassLoader classLoader, final GroovyClassLoader transformLoader) {
     JavaAwareCompilationUnit unit = new JavaAwareCompilationUnit(config, classLoader) {
       private boolean annoRemovedAdded;
+
+      public GroovyClassLoader getTransformLoader() {
+        return transformLoader;
+      }
 
       @Override
       public void addPhaseOperation(PrimaryClassNodeOperation op, int phase) {
