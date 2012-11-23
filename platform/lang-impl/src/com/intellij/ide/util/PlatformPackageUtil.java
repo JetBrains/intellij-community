@@ -129,6 +129,8 @@ public class PlatformPackageUtil {
         psiDirectory = DirectoryChooserUtil.selectDirectory(project, dirs.toArray(new PsiDirectory[dirs.size()]), baseDir,
                                                             File.separatorChar + packageName.replace('.', File.separatorChar));
         if (psiDirectory == null) return null;
+        final VirtualFile sourceRoot = ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(psiDirectory.getVirtualFile());
+        psiDirectory = PsiManager.getInstance(project).findDirectory(sourceRoot);
       }
     }
 
