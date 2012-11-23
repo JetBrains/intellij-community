@@ -51,6 +51,11 @@ public class AttributePropertyWithDefault extends AttributeProperty {
   }
 
   @Override
+  public void setDefaultValue(@NotNull RadViewComponent component) throws Exception {
+    super.setValue(component, myDefaultValue);
+  }
+
+  @Override
   public void setValue(@NotNull RadViewComponent component, Object value) throws Exception {
     if (StringUtil.isEmpty((String)value)) {
       value = myDefaultValue;
