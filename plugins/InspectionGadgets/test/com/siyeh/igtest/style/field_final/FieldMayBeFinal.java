@@ -1,5 +1,5 @@
 package com.siyeh.igtest.style.field_final;
-import java.awt.*; import java.awt.event.KeyEvent;import java.io.File;import java.io.IOException;
+import java.awt.*; import java.awt.event.KeyEvent;import java.io.File;import java.io.IOException; import java.util.*;
 public class FieldMayBeFinal {
 
     private static String string;
@@ -369,4 +369,33 @@ class P {
     P() {
         if (true || (p = 1) == 1) {}
     }
+}
+
+
+class Q implements Iterator<String> {
+    private final String[] strings;
+    private int index = 0;
+    
+    public ArrayIterator(String[] strings) {
+            this.strings = strings;
+    }
+    
+    @Override
+    public boolean hasNext() {
+            return index < strings.length;
+    }
+    
+    @Override
+    public String next() {
+            if(!hasNext()) {
+                    throw new NoSuchElementException();
+            }
+    
+            return strings[index++].substring(1);
+    }
+    
+    @Override
+    public void remove() {
+            throw new UnsupportedOperationException();
+}
 }

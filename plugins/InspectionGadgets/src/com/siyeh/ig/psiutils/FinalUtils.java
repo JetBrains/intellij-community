@@ -244,8 +244,8 @@ public class FinalUtils {
     }
 
     @Override
-    public void visitReferenceExpression(
-      PsiReferenceExpression expression) {
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
+      super.visitReferenceExpression(expression);
       if (PsiType.BOOLEAN.equals(expression.getType())) {
         final Object constant =
           ExpressionUtils.computeConstantExpression(expression);
@@ -290,7 +290,6 @@ public class FinalUtils {
           finalCandidate = false;
         }
       }
-      super.visitReferenceExpression(expression);
     }
 
     @Override
