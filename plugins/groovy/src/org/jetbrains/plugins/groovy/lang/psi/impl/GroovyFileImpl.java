@@ -52,6 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFileStub;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrPackageDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
@@ -99,7 +100,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     final StubElement<?> stub = getStub();
     if (stub != null) {
       for (StubElement element : stub.getChildrenStubs()) {
-        if (element instanceof GrPackageDefinition) return (GrPackageDefinition)element;
+        if (element instanceof GrPackageDefinitionStub) return (GrPackageDefinition)element.getPsi();
       }
       return null;
     }
