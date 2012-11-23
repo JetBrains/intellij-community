@@ -704,7 +704,8 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
     }
 
-    private static LocalQuickFix[] genCastFixes(GrSignature signature, PsiType[] argumentTypes, GrArgumentList argumentList) {
+    private static LocalQuickFix[] genCastFixes(GrSignature signature, PsiType[] argumentTypes, @Nullable GrArgumentList argumentList) {
+      if (argumentList == null) return LocalQuickFix.EMPTY_ARRAY;
 
       final List<GrClosureSignature> signatures = GrClosureSignatureUtil.generateSimpleSignature(signature);
 
