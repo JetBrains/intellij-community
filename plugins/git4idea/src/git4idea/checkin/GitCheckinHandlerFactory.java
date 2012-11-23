@@ -25,8 +25,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory;
@@ -328,7 +330,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       if (repositoryManager == null) {
         return null;
       }
-      for (VirtualFile root : myPanel.getRoots()) {
+      for (VirtualFile root : getSelectedRoots()) {
         GitRepository repository = repositoryManager.getRepositoryForRoot(root);
         if (repository == null) {
           continue;
@@ -338,6 +340,19 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
         }
       }
       return null;
+    }
+
+    @NotNull
+    private Collection<VirtualFile> getSelectedRoots() {
+      ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+      Collection<VirtualFile> result = new HashSet<VirtualFile>();
+      for (FilePath path : ChangesUtil.getPaths(myPanel.getSelectedChanges())) {
+        VirtualFile root = vcsManager.getVcsRootFor(path);
+        if (root != null) {
+          result.add(root);
+        }
+      }
+      return result;
     }
 
     private class DetachedRoot {
