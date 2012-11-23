@@ -481,12 +481,17 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
       }
     }
 
-    private boolean isValidVariant(XmlAttributeDescriptor descriptor, final XmlAttribute[] attributes, final XmlExtension extension) {
+    private boolean isValidVariant(@NotNull XmlAttributeDescriptor descriptor, final XmlAttribute[] attributes, final XmlExtension extension) {
       if (extension.isIndirectSyntax(descriptor)) return false;
-      for (final XmlAttribute attribute : attributes) {
-        if (attribute != XmlAttributeImpl.this && attribute.getName().equals(descriptor.getName())) return false;
+      String descriptorName = descriptor.getName();
+      if (descriptorName == null) {
+        LOG.error("Null descriptor name for " + descriptor + " " + descriptor.getClass() + " ");
+        return false;
       }
-      return !descriptor.getName().contains(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED);
+      for (final XmlAttribute attribute : attributes) {
+        if (attribute != XmlAttributeImpl.this && attribute.getName().equals(descriptorName)) return false;
+      }
+      return !descriptorName.contains(DUMMY_IDENTIFIER_TRIMMED);
     }
 
     public boolean isSoft() {
