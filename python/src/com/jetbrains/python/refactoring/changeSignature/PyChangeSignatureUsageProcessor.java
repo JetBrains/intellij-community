@@ -19,6 +19,7 @@ import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -98,61 +99,68 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
 
     final ParameterInfo[] newParameters = changeInfo.getNewParameters();
     final PyExpression[] arguments = argumentList.getArguments();
-    boolean useKeywords = false;
-    for (int i = 0; i != newParameters.length; ++i) {
-      ParameterInfo info = newParameters[i];
-
-      final int oldIndex = info.getOldIndex();
-      if (oldIndex == i && i < arguments.length) {
-        addNewParameter(builder, arguments[i], useKeywords, i, info);
-      }
-      else {
-        useKeywords = addOldParameter(builder, newParameters, arguments, useKeywords, i, info, oldIndex);
-      }
-    }
-
+    List<String> params = collectParameters(newParameters, arguments);
+    builder.append(StringUtil.join(params, ","));
     builder.append(")");
     return builder;
   }
 
-  private boolean addOldParameter(StringBuilder builder,
-                                  ParameterInfo[] newParameters,
+  private List<String> collectParameters(ParameterInfo[] newParameters, PyExpression[] arguments) {
+    boolean useKeywords = false;
+    boolean isMethod = false;
+    List<String> params = new ArrayList<String>();
+    for (int currentIndex = 0; currentIndex != newParameters.length; ++currentIndex) {
+      ParameterInfo info = newParameters[currentIndex];
+      if (info.getName().equals("self")) {
+        isMethod = true;
+        continue;
+      }
+      int oldIndex = info.getOldIndex();
+      oldIndex = isMethod && oldIndex != -1? oldIndex - 1 : oldIndex;
+
+      if (oldIndex == currentIndex && currentIndex < arguments.length) {
+        addOldParameter(params, arguments[currentIndex], useKeywords, info);
+      }
+      else {
+        useKeywords = addNewParameter(params, arguments, useKeywords, info, oldIndex);
+      }
+    }
+    return params;
+  }
+
+  private boolean addNewParameter(List<String> params,
                                   PyExpression[] arguments,
-                                  boolean useKeywords,
-                                  int index, ParameterInfo info, int oldIndex) {
+                                  boolean useKeywords, ParameterInfo info, int oldIndex) {
     if (oldIndex != -1 && oldIndex < arguments.length) {
       final PyExpression parameter = arguments[oldIndex];
-      appendParameter(builder, index, useKeywords && !(parameter instanceof PyKeywordArgument)?
-                                  info.getName() + " = " + parameter.getText() : parameter.getText());
+      params.add(useKeywords && !(parameter instanceof PyKeywordArgument)?
+                 info.getName() + " = " + parameter.getText() : parameter.getText());
     }
     else if (!((PyParameterInfo)info).getDefaultInSignature()){
-      appendParameter(builder, index, info.getDefaultValue());
+      params.add(info.getDefaultValue());
     }
-    else if (index != newParameters.length) {
+    else {
       useKeywords = true;
     }
     return useKeywords;
   }
 
-  private void addNewParameter(StringBuilder builder, PyExpression argument, boolean useKeywords, int index, ParameterInfo info) {
+  private void addOldParameter(List<String> params,
+                               PyExpression argument,
+                               boolean useKeywords,
+                               ParameterInfo info) {
     if (!(argument instanceof PyKeywordArgument)) {
-      appendParameter(builder, index, useKeywords? info.getName() + " = " + argument.getText() : argument.getText());
+      params.add(useKeywords? info.getName() + " = " + argument.getText() : argument.getText());
     }
     else {
       if (info.getName().equals(argument.getName())){
-        appendParameter(builder, index, argument.getText());
+        params.add(argument.getText());
       }
       else {
         final PyExpression valueExpression = ((PyKeywordArgument)argument).getValueExpression();
-        appendParameter(builder, index, valueExpression == null?info.getName():info.getName() + " = " + valueExpression.getText());
+        params.add(valueExpression == null?info.getName():info.getName() + " = " + valueExpression.getText());
       }
     }
-  }
-
-  private void appendParameter(StringBuilder builder, int index, String value) {
-    if (index != 0)
-      builder.append(", ");
-    builder.append(value);
   }
 
   private static boolean isPythonUsage(UsageInfo info) {
