@@ -13,6 +13,7 @@ import org.hanuna.gitalk.printmodel.cells.builder.PrintCellRowModel;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableModel;
 
 /**
  * @author erokhins
@@ -30,6 +31,10 @@ public class Controller {
         CellModelBuilder cellModelBuilder = new CellModelBuilder(graphModel);
         cellModel = cellModelBuilder.build();
         printCellRowModel = new PrintCellRowModel(cellModel);
+    }
+
+    public TableModel getTableModel() {
+        return new GitAlkTableModel();
     }
 
     @Nullable

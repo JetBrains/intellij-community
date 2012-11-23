@@ -20,6 +20,14 @@ public class ShortEdge {
         return edge;
     }
 
+    public boolean isUsual() {
+        return edge.getType() == Edge.Type.usual;
+    }
+
+    public boolean isSelect() {
+        return edge.isSelect();
+    }
+
     public int getUpPosition() {
         return upPosition;
     }

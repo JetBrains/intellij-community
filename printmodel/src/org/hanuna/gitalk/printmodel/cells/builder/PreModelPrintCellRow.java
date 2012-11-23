@@ -147,6 +147,7 @@ public class PreModelPrintCellRow {
                 Node node = ((NodeCell) cell).getNode();
                 for (Edge edge : node.getDownEdges()) {
                     int to = getter.getPosition(edge);
+                    assert to != -1;
                     shortEdges.add(new ShortEdge(edge, p, to));
                 }
             }
@@ -156,7 +157,9 @@ public class PreModelPrintCellRow {
             if (cell.getClass() == EdgeCell.class) {
                 final Edge edge = ((EdgeCell) cell).getEdge();
                 int to = getter.getPosition(edge);
-                shortEdges.add(new ShortEdge(edge, p, to));
+                if (to >= 0) {
+                    shortEdges.add(new ShortEdge(edge, p, to));
+                }
             }
         }
 
@@ -188,7 +191,8 @@ public class PreModelPrintCellRow {
         public int getPosition(Edge edge) {
             Integer p = mapNodes.get(edge.getDownNode());
             if (p == null) {
-                throw new IllegalStateException();
+                // i.e. hide branch
+                return -1;
             }
             return p;
         }

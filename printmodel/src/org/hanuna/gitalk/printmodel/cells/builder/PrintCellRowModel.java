@@ -26,18 +26,7 @@ public class PrintCellRowModel {
     private ReadOnlyList<ShortEdge> getUpEdges(int rowIndex) {
         PreModelPrintCellRow prevPreModel = new PreModelPrintCellRow(cellModel);
         prevPreModel.prepare(rowIndex - 1);
-        final ReadOnlyList<ShortEdge> downEdges = prevPreModel.downShortEdges();
-        return ReadOnlyList.newReadOnlyList(new ReadOnlyList.SimpleAbstractList<ShortEdge>() {
-            @Override
-            public ShortEdge get(int index) {
-                return inverseEdge(downEdges.get(index));
-            }
-
-            @Override
-            public int size() {
-                return downEdges.size();
-            }
-        });
+        return prevPreModel.downShortEdges();
     }
 
 
