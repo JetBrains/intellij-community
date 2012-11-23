@@ -46,6 +46,7 @@ import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.config.CachedXmlDocumentSet;
 import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl;
@@ -62,7 +63,7 @@ import static org.jetbrains.idea.eclipse.conversion.EPathUtil.areUrlsPointTheSam
 /**
  * Read/write .eml
  */
-public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<ModifiableRootModel, ContentEntry> {
+public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<ModifiableRootModel, ContentEntry, Sdk> {
   @NonNls private static final String RELATIVE_MODULE_SRC = "relative-module-src";
   @NonNls private static final String RELATIVE_MODULE_CLS = "relative-module-cls";
   @NonNls private static final String RELATIVE_MODULE_JAVADOC = "relative-module-javadoc";
@@ -78,7 +79,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
   }
 
   public static void readIDEASpecific(ModifiableRootModel model, CachedXmlDocumentSet documentSet, String eml) throws InvalidDataException, IOException, JDOMException {
-    new IdeaSpecificSettings().readIDEASpecific(documentSet.read(eml).getRootElement(), model);
+    new IdeaSpecificSettings().readIDEASpecific(documentSet.read(eml).getRootElement(), model, null);
   }
 
   @Override
@@ -119,7 +120,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
   }
 
   @Override
-  protected void setupJdk(Element root, ModifiableRootModel model) {
+  protected void setupJdk(Element root, ModifiableRootModel model, @Nullable Sdk sdk) {
     final String inheritJdk = root.getAttributeValue(INHERIT_JDK);
     if (inheritJdk != null && Boolean.parseBoolean(inheritJdk)) {
       model.inheritSdk();
