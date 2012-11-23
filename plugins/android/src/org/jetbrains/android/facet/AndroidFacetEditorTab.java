@@ -105,6 +105,9 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     myConfiguration = androidFacetConfiguration;
     myContext = context;
 
+    // todo: remove checkbox and related setting from facet
+    myGenerateUnsignedApk.setVisible(false);
+
     myManifestFileLabel.setLabelFor(myManifestFileField);
     myResFolderLabel.setLabelFor(myResFolderField);
     myAssetsFolderLabel.setLabelFor(myAssetsFolderField);
