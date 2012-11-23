@@ -2,6 +2,7 @@ package com.jetbrains.python.refactoring.changeSignature;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -9,11 +10,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,13 +44,14 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
     if (element == null) {
       element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     }
-    invokeOnElement(project, element);
+    invokeOnElement(project, element, editor);
   }
 
   @Override
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, @Nullable DataContext dataContext) {
     if (elements.length != 1) return;
-    invokeOnElement(project, elements[0]);
+    Editor editor = dataContext == null ? null : PlatformDataKeys.EDITOR.getData(dataContext);
+    invokeOnElement(project, elements[0], editor);
   }
 
   @Nullable
@@ -58,14 +60,26 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
     return PyBundle.message("refactoring.change.signature.error.wrong.caret.position.method.name");
   }
 
-  private static void invokeOnElement(Project project, PsiElement element) {
+  private static void invokeOnElement(Project project, PsiElement element, Editor editor) {
     if (!(element instanceof PyFunction)) return;
     final PyFunction newFunction = getSuperMethod((PyFunction)element);
     if (newFunction == null) return;
     if (!newFunction.equals(element)) {
-      invokeOnElement(project, newFunction);
+      invokeOnElement(project, newFunction, editor);
     }
     else {
+      final PyFunction function = (PyFunction)element;
+      final PyParameter[] parameters = function.getParameterList().getParameters();
+      for (PyParameter p : parameters) {
+        if (p instanceof PyTupleParameter) {
+          String message =
+            RefactoringBundle.getCannotRefactorMessage("Function contains tuple parameters");
+          CommonRefactoringUtil.showErrorHint(project, editor, message,
+                                              REFACTORING_NAME, REFACTORING_NAME);
+          return;
+        }
+      }
+
       final PyMethodDescriptor method = new PyMethodDescriptor((PyFunction)element);
       PyChangeSignatureDialog dialog = new PyChangeSignatureDialog(project, method);
       dialog.show();
