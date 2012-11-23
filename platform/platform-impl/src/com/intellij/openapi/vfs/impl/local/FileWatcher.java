@@ -54,8 +54,12 @@ public class FileWatcher {
   @NonNls public static final String PROPERTY_WATCHER_DISABLED = "idea.filewatcher.disabled";
   @NonNls public static final String PROPERTY_WATCHER_EXECUTABLE_PATH = "idea.filewatcher.executable.path";
 
-  public static final NotificationGroup NOTIFICATION_GROUP =
-    new NotificationGroup("File Watcher Messages", NotificationDisplayType.STICKY_BALLOON, true);
+  public static final NotNullLazyValue<NotificationGroup> NOTIFICATION_GROUP = new NotNullLazyValue<NotificationGroup>() {
+    @NotNull @Override
+    protected NotificationGroup compute() {
+      return new NotificationGroup("File Watcher Messages", NotificationDisplayType.STICKY_BALLOON, true);
+    }
+  };
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.FileWatcher");
 
@@ -170,7 +174,7 @@ public class FileWatcher {
     if (!myFailureShownToTheUser) {
       myFailureShownToTheUser = true;
       String title = ApplicationBundle.message("watcher.slow.sync");
-      Notifications.Bus.notify(NOTIFICATION_GROUP.createNotification(title, cause, NotificationType.WARNING, listener));
+      Notifications.Bus.notify(NOTIFICATION_GROUP.getValue().createNotification(title, cause, NotificationType.WARNING, listener));
     }
   }
 
