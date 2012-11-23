@@ -21,7 +21,7 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.util.ArrayUtil;
@@ -37,13 +37,13 @@ import java.util.*;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 10/1/12
+ * @since 10/1/12
  */
 public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
 
   private static final String ZIP = ".zip";
 
-  private final NotNullLazyValue<MultiMap<String, URL>> myGroups = new NotNullLazyValue<MultiMap<String, URL>>() {
+  private final ClearableLazyValue<MultiMap<String, URL>> myGroups = new ClearableLazyValue<MultiMap<String, URL>>() {
     @NotNull
     @Override
     protected MultiMap<String, URL> compute() {
@@ -117,7 +117,6 @@ public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
   @NotNull
   @Override
   public ProjectTemplate[] createTemplates(String group, WizardContext context) {
-
     Collection<URL> urls = myGroups.getValue().get(group);
     List<ProjectTemplate> templates = new ArrayList<ProjectTemplate>();
     for (URL url : urls) {
