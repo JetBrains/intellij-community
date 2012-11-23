@@ -5,7 +5,6 @@ import org.hanuna.gitalk.commitmodel.CommitData;
 import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 import org.hanuna.gitalk.graph.GraphModel;
 import org.hanuna.gitalk.graph.Node;
-import org.hanuna.gitalk.printmodel.PrintCellRow;
 import org.hanuna.gitalk.printmodel.SpecialCell;
 import org.hanuna.gitalk.printmodel.cells.CellModel;
 import org.hanuna.gitalk.printmodel.cells.NodeCell;
@@ -61,27 +60,33 @@ public class Controller {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            Commit commit;
+            Commit commit = getCommitInRow(rowIndex);
             CommitData data;
+            if (commit == null) {
+                data = null;
+            } else {
+                data = commit.getData();
+                assert data != null;
+            }
             switch (columnIndex) {
                 case 0:
-                    return printCellRowModel.getPrintCellRow(rowIndex);
+                    String message = "";
+                    if (data != null) {
+                        message = data.getMessage();
+                    }
+                    return new GraphTableCell(printCellRowModel.getPrintCellRow(rowIndex), message);
                 case 1:
-                    commit = getCommitInRow(rowIndex);
-                    if (commit == null) {
+                    if (data == null) {
                         return "";
+                    } else {
+                        return data.getAuthor();
                     }
-                    data = commit.getData();
-                    assert data != null;
-                    return data.getAuthor();
                 case 2:
-                    commit = getCommitInRow(rowIndex);
-                    if (commit == null) {
+                    if (data == null) {
                         return "";
+                    } else {
+                        return DateConverter.getStringOfDate(data.getTimeStamp());
                     }
-                    data = commit.getData();
-                    assert data != null;
-                    return DateConverter.getStringOfDate(data.getTimeStamp());
                 default:
                     throw new IllegalArgumentException("columnIndex > 2");
             }
@@ -91,7 +96,7 @@ public class Controller {
         public Class<?> getColumnClass(int column) {
             switch (column) {
                 case 0:
-                    return PrintCellRow.class;
+                    return GraphTableCell.class;
                 case 1:
                     return String.class;
                 case 2:
@@ -100,7 +105,6 @@ public class Controller {
                     throw new IllegalArgumentException("column > 2");
             }
         }
-
 
         @Override
         public String getColumnName(int column) {
