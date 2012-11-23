@@ -80,6 +80,6 @@ public class PsiTypeVisitor<A> {
     final PsiMethodReferenceExpression expression = methodReferenceType.getExpression();
     final PsiType interfaceType = expression.getFunctionalInterfaceType();
     if (interfaceType != null) return interfaceType.accept(this);
-    return visitType(methodReferenceType);
+    return visitType(interfaceType);
   }
 }
