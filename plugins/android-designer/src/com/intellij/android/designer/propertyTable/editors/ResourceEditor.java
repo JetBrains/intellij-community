@@ -102,14 +102,13 @@ public class ResourceEditor extends PropertyEditor {
       model.insertElementAt(StringsComboEditor.UNSET, 0);
       comboBox.setModel(model);
       comboBox.setEditable(true);
-      ComboEditor.addEditorSupport(this, comboBox);
-      comboBox.addActionListener(new ActionListener() {
+      ComboEditor.installListeners(comboBox, new ComboEditor.ComboEditorListener(this) {
         @Override
-        public void actionPerformed(ActionEvent e) {
+        protected void onValueChosen() {
           if (comboBox.getSelectedItem() == StringsComboEditor.UNSET) {
             comboBox.setSelectedItem(null);
           }
-          fireValueCommitted(true, true);
+          super.onValueChosen();
         }
       });
       myEditor = editor;
