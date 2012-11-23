@@ -220,7 +220,6 @@ class C {
           throw new E2();
       }
       catch (E1 | E2 e) {
-        e = new E();
         throw e;
       }
     }
