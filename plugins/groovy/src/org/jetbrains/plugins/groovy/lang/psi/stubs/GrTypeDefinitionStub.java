@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ public class GrTypeDefinitionStub extends StubBase<GrTypeDefinition> implements 
   private static final int ENUM = 0x04;
   private static final int ANNOTATION = 0x08;
   private static final int IS_IN_QUALIFIED_NEW = 0x10;
+  private static final int DEPRECATED = 0x20;
 
   private final StringRef myName;
   private final String[] mySuperClasses;
@@ -94,6 +95,10 @@ public class GrTypeDefinitionStub extends StubBase<GrTypeDefinition> implements 
     return myFlags;
   }
 
+  public boolean isDeprecated() {
+    return (myFlags & DEPRECATED) != 0;
+  }
+
   public static byte buildFlags(GrTypeDefinition typeDefinition) {
     byte flags = 0;
     if (typeDefinition.isAnonymous()) {
@@ -106,6 +111,7 @@ public class GrTypeDefinitionStub extends StubBase<GrTypeDefinition> implements 
     if (typeDefinition.isAnnotationType()) flags |= ANNOTATION;
     if (typeDefinition.isInterface()) flags |= INTERFACE;
     if (typeDefinition.isEnum()) flags |= ENUM;
+    if (typeDefinition.isDeprecated()) flags |= DEPRECATED;
     return flags;
   }
 
