@@ -39,8 +39,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
+import java.awt.*;
 import java.io.*;
 import java.util.*;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -82,19 +84,19 @@ public class PySkeletonRefresher {
 
   private PySkeletonGenerator mySkeletonsGenerator;
 
-  public static void refreshSkeletonsOfSdk(@Nullable Project project, @NotNull Sdk sdk) throws InvalidSdkException {
-    refreshSkeletonsOfSdk(project, sdk, PythonSdkType.findSkeletonsPath(sdk), new Ref<Boolean>(false));
+  public static void refreshSkeletonsOfSdk(@NotNull Project project, @NotNull Sdk sdk) throws InvalidSdkException {
+    refreshSkeletonsOfSdk(project, null, PythonSdkType.findSkeletonsPath(sdk), new Ref<Boolean>(false), sdk);
   }
 
   public static void refreshSkeletonsOfSdk(@Nullable Project project,
-                                           @NotNull Sdk sdk,
+                                           Component ownerComponent,
                                            String skeletonsPath,
-                                           @Nullable Ref<Boolean> migrationFlag)
+                                           @Nullable Ref<Boolean> migrationFlag,
+                                           @NotNull Sdk sdk)
     throws InvalidSdkException {
     final Map<String, List<String>> errors = new TreeMap<String, List<String>>();
     final List<String> failedSdks = new SmartList<String>();
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    List<String> sdk_errors;
     final String homePath = sdk.getHomePath();
     if (skeletonsPath == null) {
       LOG.info("Could not find skeletons path for SDK path " + homePath);
@@ -102,15 +104,16 @@ public class PySkeletonRefresher {
     else {
       LOG.info("Refreshing skeletons for " + homePath);
       SkeletonVersionChecker checker = new SkeletonVersionChecker(0); // this default version won't be used
-      sdk_errors = new PySkeletonRefresher(project, sdk, skeletonsPath, indicator).regenerateSkeletons(checker, migrationFlag);
-      if (sdk_errors.size() > 0) {
+      final PySkeletonRefresher refresher = new PySkeletonRefresher(project, ownerComponent, sdk, skeletonsPath, indicator);
+      List<String> sdkErrors = refresher.regenerateSkeletons(checker, migrationFlag);
+      if (sdkErrors.size() > 0) {
         String sdkName = sdk.getName();
         List<String> knownErrors = errors.get(sdkName);
         if (knownErrors == null) {
-          errors.put(sdkName, sdk_errors);
+          errors.put(sdkName, sdkErrors);
         }
         else {
-          knownErrors.addAll(sdk_errors);
+          knownErrors.addAll(sdkErrors);
         }
       }
     }
@@ -147,6 +150,7 @@ public class PySkeletonRefresher {
    * @param indicator     to report progress of long operations
    */
   public PySkeletonRefresher(@Nullable Project project,
+                             @Nullable Component ownerComponent,
                              @NotNull Sdk sdk,
                              @Nullable String skeletonsPath,
                              @Nullable ProgressIndicator indicator)
@@ -155,9 +159,9 @@ public class PySkeletonRefresher {
     myIndicator = indicator;
     mySdk = sdk;
     mySkeletonsPath = skeletonsPath;
-    if (PySdkUtil.isRemote(sdk) && PythonRemoteInterpreterManager.getInstance() != null) {
-      //noinspection ConstantConditions
-      mySkeletonsGenerator = PythonRemoteInterpreterManager.getInstance().createRemoteSkeletonGenerator(myProject, getSkeletonsPath(), sdk);
+    final PythonRemoteInterpreterManager remoteInterpreterManager = PythonRemoteInterpreterManager.getInstance();
+    if (PySdkUtil.isRemote(sdk) && remoteInterpreterManager != null) {
+      mySkeletonsGenerator = remoteInterpreterManager.createRemoteSkeletonGenerator(myProject, ownerComponent, sdk, getSkeletonsPath());
     }
     else {
       mySkeletonsGenerator = new PySkeletonGenerator(getSkeletonsPath());

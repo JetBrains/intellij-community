@@ -207,7 +207,13 @@ public class PyPackageRequirementsInspection extends PyInspection {
   private static Set<PyRequirement> getTransitiveRequirements(@NotNull Sdk sdk, @NotNull Collection<PyRequirement> requirements,
                                                               @NotNull Set<PyPackage> visited) {
     final Set<PyRequirement> results = new HashSet<PyRequirement>(requirements);
-    final List<PyPackage> packages = ((PyPackageManagerImpl) PyPackageManager.getInstance(sdk)).getPackagesFast();
+    final List<PyPackage> packages;
+    try {
+      packages = ((PyPackageManagerImpl) PyPackageManager.getInstance(sdk)).getPackagesFast();
+    }
+    catch (PyExternalProcessException e) {
+      return null;
+    }
     if (packages == null) return null;
     for (PyRequirement req : requirements) {
       final PyPackage pkg = req.match(packages);
@@ -237,7 +243,13 @@ public class PyPackageRequirementsInspection extends PyInspection {
     final PyPackageManagerImpl manager = (PyPackageManagerImpl)PyPackageManager.getInstance(sdk);
     List<PyRequirement> requirements = PyPackageManagerImpl.getRequirements(module);
     if (requirements != null) {
-      final List<PyPackage> packages = manager.getPackagesFast();
+      final List<PyPackage> packages;
+      try {
+        packages = manager.getPackagesFast();
+      }
+      catch (PyExternalProcessException e) {
+        return null;
+      }
       if (packages == null) return null;
       final List<PyRequirement> unsatisfied = new ArrayList<PyRequirement>();
       for (PyRequirement req : requirements) {

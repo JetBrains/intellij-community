@@ -21,6 +21,7 @@ import com.jetbrains.python.sdk.skeletons.PySkeletonGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 
@@ -48,7 +49,7 @@ public abstract class PythonRemoteInterpreterManager {
     throws RemoteInterpreterException;
 
   @Nullable
-  public abstract Sdk addRemoteSdk(Project project, Collection<Sdk> existingSdks);
+  public abstract Sdk addRemoteSdk(Project project, Component parentComponent, Collection<Sdk> existingSdks);
 
 
   public abstract ProcessOutput runRemoteProcess(@Nullable Project project,
@@ -66,7 +67,10 @@ public abstract class PythonRemoteInterpreterManager {
 
   public abstract boolean editSdk(@NotNull Project project, @NotNull SdkModificator sdkModificator, Collection<Sdk> existingSdks);
 
-  public abstract PySkeletonGenerator createRemoteSkeletonGenerator(@Nullable Project project, String path, @NotNull Sdk sdk);
+  public abstract PySkeletonGenerator createRemoteSkeletonGenerator(@Nullable Project project,
+                                                                    @Nullable Component ownerComponent,
+                                                                    @NotNull Sdk sdk,
+                                                                    String path);
 
   public abstract boolean ensureCanWrite(@Nullable Object projectOrComponent, RemoteSdkData data, String path);
 
@@ -78,7 +82,7 @@ public abstract class PythonRemoteInterpreterManager {
                                         RemoteProjectSettings settings,
                                         RemoteSdkData data);
 
-  public abstract void copyFromRemote(Project project,
+  public abstract void copyFromRemote(@NotNull Project project,
                                       RemoteSdkData data,
                                       List<PathMappingSettings.PathMapping> mappings);
 

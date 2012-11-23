@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -18,6 +19,10 @@ public abstract  class IdeaDialog extends DialogWrapper {
     public IdeaDialog(Project project) {
         super(project, true);
     }
+
+  public IdeaDialog(Component owner) {
+    super(owner, true);
+  }
 
     private void updateOkButton() {
       initValidation();

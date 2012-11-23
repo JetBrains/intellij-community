@@ -245,6 +245,9 @@ target(name: "compile", description: "Compile module python") {
     fileset(dir: "${ideaPlugins}/DatabaseSupport/lib") {
       include(name: "*.jar")
     }
+    fileset(dir: "${ideaPlugins}/remote-run/lib") {
+      include(name: "*.jar")
+    }
     pathelement(location: restJarName)
     pathelement(location: localizationJarName)
   }
@@ -266,7 +269,6 @@ target(name: "compile", description: "Compile module python") {
       pathelement(location: "${contribHome}/${it}/src")
     }
     pathelement(location: "${pluginHome}/../ultimate/ultimate-verifier/src")
-    pathelement(location: "${pluginHome}/../plugins/remote-run/src")
   }
   //The task requires the following libraries from IntelliJ IDEA distribution:
   //javac2.jar; jdom.jar; asm.jar; asm-commons.jar

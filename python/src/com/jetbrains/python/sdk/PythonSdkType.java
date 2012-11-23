@@ -27,14 +27,18 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.util.ArrayUtil;
 import com.intellij.remotesdk.RemoteSdkDataHolder;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.NullableConsumer;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
@@ -44,6 +48,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import icons.PythonIcons;
 import org.jdom.Element;
@@ -53,9 +58,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
+import java.awt.*;
 import java.io.File;
 import java.io.FilenameFilter;
+import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -70,6 +78,8 @@ public class PythonSdkType extends SdkType {
   private static final String[] DIRS_WITH_BINARY = new String[]{"", "bin", "Scripts"};
   private static final String[] UNIX_BINARY_NAMES = new String[]{"jython", "pypy", "python"};
   private static final String[] WIN_BINARY_NAMES = new String[]{"jython.bat", "ipy.exe", "pypy.exe", "python.exe"};
+
+  private static final Key<WeakReference<Component>> SDK_CREATOR_COMPONENT_KEY = Key.create("#com.jetbrains.python.sdk.creatorComponent");
 
   public static PythonSdkType getInstance() {
     return SdkType.findInstance(PythonSdkType.class);
@@ -212,6 +222,23 @@ public class PythonSdkType extends SdkType {
     };
     result.setTitle(PyBundle.message("sdk.select.path"));
     return result;
+  }
+
+  public boolean supportsCustomCreateUI() {
+    return true;
+  }
+
+  public void showCustomCreateUI(SdkModel sdkModel, final JComponent parentComponent, final Consumer<Sdk> sdkCreatedCallback) {
+    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent));
+    InterpreterPathChooser.show(project, sdkModel.getSdks(), RelativePoint.getCenterOf(parentComponent), true, new NullableConsumer<Sdk>() {
+      @Override
+      public void consume(@Nullable Sdk sdk) {
+        if (sdk != null) {
+          sdk.putUserData(SDK_CREATOR_COMPONENT_KEY, new WeakReference<Component>(parentComponent));
+          sdkCreatedCallback.consume(sdk);
+        }
+      }
+    });
   }
 
   public static boolean isVirtualEnv(Sdk sdk) {
@@ -425,13 +452,24 @@ public class PythonSdkType extends SdkType {
   }
 
   public void setupSdkPaths(@NotNull final Sdk sdk) {
-    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    setupSdkPaths(sdk, project);
+    final Project project;
+    Component ownerComponent = null;
+    final WeakReference<Component> ownerComponentRef = sdk.getUserData(SDK_CREATOR_COMPONENT_KEY);
+    if (ownerComponentRef != null) {
+      ownerComponent = ownerComponentRef.get();
+    }
+    if (ownerComponent != null) {
+      project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(ownerComponent));
+    }
+    else {
+      project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    }
+    setupSdkPaths(sdk, project, ownerComponent);
   }
 
-  public static void setupSdkPaths(Sdk sdk, Project project) {
+  public static void setupSdkPaths(Sdk sdk, @Nullable Project project, @Nullable Component ownerComponent) {
     final SdkModificator sdkModificator = sdk.getSdkModificator();
-    final boolean success = setupSdkPaths(project, sdk, sdkModificator);
+    final boolean success = setupSdkPaths(project, ownerComponent, sdk, sdkModificator);
     if (success) {
       sdkModificator.commitChanges();
     }
@@ -444,8 +482,13 @@ public class PythonSdkType extends SdkType {
     }
   }
 
-  public static boolean setupSdkPaths(@Nullable final Project project, @NotNull final Sdk sdk,
+  public static boolean setupSdkPaths(@Nullable final Project project,
+                                      @Nullable final Component ownerComponent,
+                                      @NotNull final Sdk sdk,
                                       @NotNull final SdkModificator sdkModificator) {
+    if (isRemote(sdk) && project == null && ownerComponent == null) {
+      LOG.error("For refreshing skeletons of remote SDK, either project or owner component must be specified");
+    }
     final ProgressManager progressManager = ProgressManager.getInstance();
     final Ref<Boolean> success = new Ref<Boolean>();
     success.set(true);
@@ -457,7 +500,10 @@ public class PythonSdkType extends SdkType {
           updateSdkRootsFromSysPath(sdk, sdkModificator, indicator);
           updateUserAddedPaths(sdk, sdkModificator, indicator);
           if (!ApplicationManager.getApplication().isUnitTestMode()) {
-            PySkeletonRefresher.refreshSkeletonsOfSdk(project, sdk, getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath()), null);
+            PySkeletonRefresher.refreshSkeletonsOfSdk(project, ownerComponent,
+                                                      getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath()),
+                                                      null, sdk
+            );
             PythonSdkUpdater.getInstance().markAlreadyUpdated(sdk.getHomePath());
           }
         }
