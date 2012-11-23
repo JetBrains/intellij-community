@@ -44,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
+import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.EnumSet;
@@ -90,7 +91,7 @@ public class ResourceEditor extends PropertyEditor {
       });
     }
     else if (formats.contains(AttributeFormat.Enum)) {
-      ComboboxWithBrowseButton editor = new ComboboxWithBrowseButton(SystemInfo.isWindows ? new ComboBox() : new JComboBox()) {
+      ComboboxWithBrowseButton editor = new ComboboxWithBrowseButton(SystemInfo.isWindows ? new MyComboBox() : new JComboBox()) {
         @Override
         public Dimension getPreferredSize() {
           return getComponentPreferredSize();
@@ -332,5 +333,21 @@ public class ResourceEditor extends PropertyEditor {
       return (JTextField)combo.getEditor().getEditorComponent();
     }
     return null;
+  }
+
+  private static final class MyComboBox extends ComboBox {
+    public MyComboBox() {
+      ((JTextField)getEditor().getEditorComponent()).addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          if (isPopupVisible()) {
+            ComboPopup popup = getPopup();
+            if (popup != null) {
+              setSelectedItem(popup.getList().getSelectedValue());
+            }
+          }
+        }
+      });
+    }
   }
 }
