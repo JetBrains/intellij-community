@@ -32,6 +32,7 @@ import com.intellij.navigation.AnonymousElementProvider;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -44,6 +45,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.playback.commands.ActionCommand;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
@@ -58,16 +60,26 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GotoClassAction extends GotoActionBase implements DumbAware {
+  @Override
+  public void actionPerformed(final AnActionEvent e) {
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    assert project != null;
+    if (!DumbService.getInstance(project).isDumb()) {
+      super.actionPerformed(e);
+    }
+    else {
+      DumbService.getInstance(project)
+        .showDumbModeNotification("Goto Class action is not available until indices are built, using Goto File instead");
+      ActionManager.getInstance()
+        .tryToExecute(ActionManager.getInstance().getAction(GotoFileAction.ID), ActionCommand.getInputEvent(GotoFileAction.ID),
+                      e.getData(PlatformDataKeys.CONTEXT_COMPONENT), e.getPlace(), true);
+    }
+  }
+
+  @Override
   public void gotoActionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     assert project != null;
-    if (DumbService.getInstance(project).isDumb()) {
-      DumbService.getInstance(project).showDumbModeNotification("Goto Class action is not available until indices are built, using Goto File instead");
-
-      myInAction = null;
-      new GotoFileAction().actionPerformed(e);
-      return;
-    }
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -87,7 +99,8 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
             final PsiElement psiElement = getElement(((PsiElement)element), popup);
             final VirtualFile file = PsiUtilCore.getVirtualFile(psiElement);
             if (popup.getLinePosition() != -1 && file != null) {
-              Navigatable n = new OpenFileDescriptor(project, file, popup.getLinePosition(), popup.getColumnPosition()).setUseCurrentWindow(popup.isOpenInCurrentWindowRequested());
+              Navigatable n = new OpenFileDescriptor(project, file, popup.getLinePosition(), popup.getColumnPosition()).setUseCurrentWindow(
+                popup.isOpenInCurrentWindowRequested());
               if (n.canNavigate()) {
                 n.navigate(true);
                 return;
@@ -165,29 +178,30 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
   }
 
   private static PsiElement getElement(PsiElement element, ChooseByNamePopup popup) {
-    final String path = popup.getPathToAnonymous();    
+    final String path = popup.getPathToAnonymous();
     if (path != null) {
-      
-        final String[] classes = path.split("\\$");
-        List<Integer> indexes = new ArrayList<Integer>();
-        for (String cls : classes) {
-          if (cls.isEmpty()) continue;
-          try {
-            indexes.add(Integer.parseInt(cls) - 1);
-          } catch (Exception e) {
-            return element;
-          }            
+      final String[] classes = path.split("\\$");
+      List<Integer> indexes = new ArrayList<Integer>();
+      for (String cls : classes) {
+        if (cls.isEmpty()) continue;
+        try {
+          indexes.add(Integer.parseInt(cls) - 1);
         }
-        PsiElement current = element;
-        for (int index : indexes) {
-          final PsiElement[] anonymousClasses = getAnonymousClasses(current);
-          if (anonymousClasses.length > index) {
-            current = anonymousClasses[index];
-          } else {
-            return current;
-          }
+        catch (Exception e) {
+          return element;
         }
-        return current;
+      }
+      PsiElement current = element;
+      for (int index : indexes) {
+        final PsiElement[] anonymousClasses = getAnonymousClasses(current);
+        if (anonymousClasses.length > index) {
+          current = anonymousClasses[index];
+        }
+        else {
+          return current;
+        }
+      }
+      return current;
     }
     return element;
   }

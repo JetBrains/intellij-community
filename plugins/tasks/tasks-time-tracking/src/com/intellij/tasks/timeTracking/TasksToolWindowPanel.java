@@ -112,7 +112,10 @@ public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Dispo
 
   private JComponent createToolbar() {
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new GotoTaskAction());
+    final AnAction action = ActionManager.getInstance().getAction(GotoTaskAction.ID);
+    assert action instanceof GotoTaskAction;
+    final GotoTaskAction gotoTaskAction = (GotoTaskAction)action;
+    group.add(gotoTaskAction);
     group.add(new AnAction("Remove Task", "Remove Task", IconUtil.getRemoveIcon()) {
       @Override
       public void actionPerformed(final AnActionEvent e) {
