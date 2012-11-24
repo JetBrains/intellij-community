@@ -82,7 +82,7 @@ public class Controller {
         }
     }
 
-    public void click(@Nullable Cell cell) {
+    public int click(@Nullable Cell cell) {
         Edge edge = hideShowBranch.hideBranchOver(cell);
         if (edge != null) {
             selectController.clearSelect();
@@ -92,7 +92,7 @@ public class Controller {
             graphModel.showBranch(edge);
             Interval upd = new Interval(up.getRowIndex(), down.getRowIndex());
             cellModel.update(old, upd);
-            return;
+            return upd.from();
         }
         NodeInterval nodeInterval = hideShowBranch.branchInterval(cell);
         if (nodeInterval != null) {
@@ -101,7 +101,9 @@ public class Controller {
             graphModel.hideBranch(nodeInterval.getUp(), nodeInterval.getDown());
             Interval upd = new Interval(nodeInterval.getUp().getRowIndex(), nodeInterval.getDown().getRowIndex());
             cellModel.update(old, upd);
+            return upd.from();
         }
+        return -1;
     }
 
     private class GitAlkTableModel extends AbstractTableModel {

@@ -57,7 +57,11 @@ public class GitAlkUI extends JFrame {
 
         @Override
         public void mouseClicked(MouseEvent e) {
-            controller.click(overCell(e));
+            int jumpToIndex = controller.click(overCell(e));
+            if (jumpToIndex >= 0) {
+                table.scrollRectToVisible(new Rectangle(table.getCellRect(jumpToIndex, 0, false)));
+                table.setRowSelectionInterval(jumpToIndex, jumpToIndex);
+            }
             table.updateUI();
         }
 
