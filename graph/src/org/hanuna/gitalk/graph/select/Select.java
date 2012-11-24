@@ -6,6 +6,5 @@ package org.hanuna.gitalk.graph.select;
 public interface Select {
     public boolean isSelect();
 
-    public void select();
-    public void unSelect();
+    public void setSelect(boolean select);
 }

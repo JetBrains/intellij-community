@@ -11,13 +11,8 @@ public class AbstractSelect implements Select {
         return select;
     }
 
-    @Override
-    public void select() {
-        select = true;
+    public void setSelect(boolean select) {
+        this.select = select;
     }
 
-    @Override
-    public void unSelect() {
-        select = false;
-    }
 }
