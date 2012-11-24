@@ -65,44 +65,38 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
   private static class AppendStream extends DataOutputStream {
     private AppendStream() {
-      super(new BufferExposingByteArrayOutputStream());
+      super(null);
     }
 
-    private void reset() {
-      ((UnsyncByteArrayOutputStream)out).reset();
-    }
-    
-    @NotNull
-    private BufferExposingByteArrayOutputStream getInternalBuffer() {
-      return (BufferExposingByteArrayOutputStream)out;      
+    private void setOut(BufferExposingByteArrayOutputStream stream) {
+      out = stream;
     }
   }
 
-  private final LimitedPool<AppendStream> myStreamPool = new LimitedPool<AppendStream>(10, new LimitedPool.ObjectFactory<AppendStream>() {
+  private final LimitedPool<BufferExposingByteArrayOutputStream> myStreamPool = new LimitedPool<BufferExposingByteArrayOutputStream>(10, new LimitedPool.ObjectFactory<BufferExposingByteArrayOutputStream>() {
     @Override
     @NotNull
-    public AppendStream create() {
-      return new AppendStream();
+    public BufferExposingByteArrayOutputStream create() {
+      return new BufferExposingByteArrayOutputStream();
     }
 
     @Override
-    public void cleanup(@NotNull final AppendStream appendStream) {
+    public void cleanup(@NotNull final BufferExposingByteArrayOutputStream appendStream) {
       appendStream.reset();
     }
-  });  
+  });
 
-  private final SLRUCache<Key, AppendStream> myAppendCache = new SLRUCache<Key, AppendStream>(16 * 1024, 4 * 1024) {
+  private final SLRUCache<Key, BufferExposingByteArrayOutputStream> myAppendCache = new SLRUCache<Key, BufferExposingByteArrayOutputStream>(16 * 1024, 4 * 1024) {
     @Override
     @NotNull
-    public AppendStream createValue(final Key key) {
+    public BufferExposingByteArrayOutputStream createValue(final Key key) {
       return myStreamPool.alloc();
     }
 
     @Override
-    protected void onDropFromCache(final Key key, @NotNull final AppendStream value) {
+    protected void onDropFromCache(final Key key, @NotNull final BufferExposingByteArrayOutputStream bytes) {
       myEnumerator.lockStorage();
       try {
-        final BufferExposingByteArrayOutputStream bytes = value.getInternalBuffer();
         final int id = enumerate(key);
         long oldHeaderRecord = readValueId(id);
 
@@ -113,7 +107,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
           myLiveAndGarbageKeysCounter += LIVE_KEY_MASK;
         }
 
-        myStreamPool.recycle(value);
+        myStreamPool.recycle(bytes);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -131,7 +125,6 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   private final LowMemoryWatcher myAppendCacheFlusher = LowMemoryWatcher.register(new Runnable() {
     @Override
     public void run() {
-      //System.out.println("Flushing caches: " + myFile.getPath());
       dropMemoryCaches();
     }
   });
@@ -294,9 +287,12 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       myEnumerator.markDirty(true);
       myAppendCache.remove(key);
 
-      final AppendStream record = new AppendStream();
-      myValueExternalizer.save(record, value);
-      final BufferExposingByteArrayOutputStream bytes = record.getInternalBuffer();
+      final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
+      if (myFlyweightAppenderStream == null) myFlyweightAppenderStream = new AppendStream();
+      myFlyweightAppenderStream.setOut(bytes);
+      myValueExternalizer.save(myFlyweightAppenderStream, value);
+      myFlyweightAppenderStream.setOut(null);
+
       final int id = enumerate(key);
 
       long oldheader = readValueId(id);
@@ -334,11 +330,17 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
   }
 
+  private AppendStream myFlyweightAppenderStream;
+
   protected void doAppendData(Key key, @NotNull ValueDataAppender appender) throws IOException {
     myEnumerator.markDirty(true);
 
-    final AppendStream stream = myAppendCache.get(key);
-    appender.append(stream);
+    // we are invoked under myEnumerator lock so it is safe to initialize the field / see its state
+    if (myFlyweightAppenderStream == null) myFlyweightAppenderStream = new AppendStream();
+    BufferExposingByteArrayOutputStream stream = myAppendCache.get(key);
+    myFlyweightAppenderStream.setOut(stream);
+    appender.append(myFlyweightAppenderStream);
+    myFlyweightAppenderStream.setOut(null);
   }
 
   /**
