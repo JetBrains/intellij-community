@@ -53,6 +53,7 @@ public class FullSaveGenerateModel<T> implements GenerateModel<T> {
 
     @Override
     public void update(Interval oldInterval, Interval newInterval) {
+        size = newInterval.to() - oldInterval.to() + size;
         generate();
     }
 }
