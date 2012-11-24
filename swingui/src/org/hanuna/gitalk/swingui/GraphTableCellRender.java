@@ -7,6 +7,7 @@ import javax.swing.border.Border;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
 
 /**
  * @author erokhins
@@ -14,16 +15,22 @@ import java.awt.*;
 public class GraphTableCellRender implements TableCellRenderer {
     private final DrawGraphTableCell drawGraph;
     private final ExtDefaultCellRender cellRender = new ExtDefaultCellRender();
-    public GraphTableCellRender(DrawGraphTableCell drawGraph) {
+    private final MouseAdapter mouseAdapter;
+
+    public GraphTableCellRender(DrawGraphTableCell drawGraph, MouseAdapter mouseAdapter) {
         this.drawGraph = drawGraph;
+        this.mouseAdapter = mouseAdapter;
     }
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-        return cellRender.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        Component component =  cellRender.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        component.addMouseListener(mouseAdapter);
+        component.addMouseMotionListener(mouseAdapter);
+        return component;
     }
 
-    private class ExtDefaultCellRender extends DefaultTableCellRenderer {
+    public class ExtDefaultCellRender extends DefaultTableCellRenderer {
         private GraphTableCell cell;
 
         public Component getTableCellRendererComponent(JTable table, Object value,
@@ -36,6 +43,10 @@ public class GraphTableCellRender implements TableCellRenderer {
             Border paddingBorder = BorderFactory.createEmptyBorder(0, padding, 0, 0);
             this.setBorder(BorderFactory.createCompoundBorder(this.getBorder(), paddingBorder));
             return this;
+        }
+
+        public GraphTableCell getCell() {
+            return cell;
         }
 
         @Override
