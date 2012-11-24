@@ -271,7 +271,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
         JpsModuleClasspathSerializer classpathSerializer = extension.getClasspathSerializer();
         if (classpathSerializer != null && classpathSerializer.getClasspathId().equals(classpath)) {
           String classpathDir = moduleRoot.getAttributeValue(CLASSPATH_DIR_ATTRIBUTE);
-          classpathSerializer.loadClasspath(module, classpathDir, baseModulePath, expander, paths);
+          classpathSerializer.loadClasspath(module, classpathDir, baseModulePath, expander, paths, projectSdkType);
         }
       }
     }

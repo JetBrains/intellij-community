@@ -56,16 +56,13 @@ public abstract class ProblemsView {
 
   public abstract void clearOldMessages(CompileScope scope, UUID currentSessionId);
 
-  public abstract void addMessage(int type, @NotNull String[] text, @Nullable String groupName, @NotNull Navigatable navigatable, @Nullable String exportTextPrefix, @Nullable String rendererTextPrefix, @NotNull UUID sessionId);
+  public abstract void addMessage(int type, @NotNull String[] text, @Nullable String groupName, @Nullable Navigatable navigatable, @Nullable String exportTextPrefix, @Nullable String rendererTextPrefix, @NotNull UUID sessionId);
 
   public final void addMessage(CompilerMessage message, @NotNull UUID sessionId) {
     final VirtualFile file = message.getVirtualFile();
     Navigatable navigatable = message.getNavigatable();
-    if (navigatable == null) {
-      if (file == null) {
-        return; // both navigatable and file must not be null
-      }
-      navigatable = new OpenFileDescriptor(myProject, file, -1, -1);    
+    if (navigatable == null && file != null) {
+      navigatable = new OpenFileDescriptor(myProject, file, -1, -1);
     }
     final CompilerMessageCategory category = message.getCategory();
     final int type = CompilerTask.translateCategory(category);

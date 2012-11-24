@@ -42,22 +42,16 @@ public class BuildOperations {
 
     if (context.isProjectRebuild()) {
       FSOperations.markDirtyFiles(context, target, timestamps, true, null, null);
+      pd.fsState.markInitialScanPerformed(target);
       configuration.save();
     }
     else if (context.getScope().isRecompilationForced(target) || configuration.isTargetDirty() || configuration.outputRootWasDeleted(context)) {
-      if (target instanceof ModuleBuildTarget) {
-        // Using special FSState initialization, because for correct results of "integrate" operation of JavaBuilder
-        // we still need to know which sources were deleted from previous compilation
-        initTargetFSState(context, target, true);
-      }
-      else {
-        IncProjectBuilder.clearOutputFiles(context, target);
-        pd.dataManager.cleanTargetStorages(target);
-        FSOperations.markDirtyFiles(context, target, timestamps, true, null, null);
-      }
+      initTargetFSState(context, target, true);
+      IncProjectBuilder.clearOutputFiles(context, target);
+      pd.dataManager.cleanTargetStorages(target);
       configuration.save();
     }
-    else if (pd.fsState.markInitialScanPerformed(target)) {
+    else if (!pd.fsState.isInitialScanPerformed(target)) {
       initTargetFSState(context, target, false);
     }
   }
@@ -80,6 +74,7 @@ public class BuildOperations {
         fsState.registerDeleted(target, file, timestamps);
       }
     }
+    pd.fsState.markInitialScanPerformed(target);
   }
 
   public static <R extends BuildRootDescriptor, T extends BuildTarget<R>>
@@ -112,9 +107,6 @@ public class BuildOperations {
         if (context.isMake() && target instanceof ModuleBuildTarget) {
           // ensure non-incremental flag cleared
           context.clearNonIncrementalMark((ModuleBuildTarget)target);
-        }
-        if (context.isProjectRebuild()) {
-          fsState.markInitialScanPerformed(target);
         }
         final Timestamps timestamps = pd.timestamps.getStorage();
         for (BuildRootDescriptor rd : pd.getBuildRootIndex().getTargetRoots(target, context)) {
@@ -152,10 +144,8 @@ public class BuildOperations {
     try {
       final Map<T, Set<File>> cleanedSources = new java.util.HashMap<T, Set<File>>();
 
-      ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
-      final Collection<String> outputsToLog = logger.isEnabled() ? new LinkedList<String>() : null;
       final THashSet<File> dirsToDelete = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-      final THashSet<String> deletedPaths = new THashSet<String>();
+      final Collection<String> deletedPaths = new ArrayList<String>();
 
       dirtyFilesHolder.processDirtyFiles(new FileProcessor<R, T>() {
         private final Map<T, SourceToOutputMapping> mappingsCache = new java.util.HashMap<T, SourceToOutputMapping>(); // cache the mapping locally
@@ -172,9 +162,6 @@ public class BuildOperations {
           if (outputs != null) {
             final boolean shouldPruneOutputDirs = target instanceof ModuleBasedTarget;
             for (String output : outputs) {
-              if (outputsToLog != null) {
-                outputsToLog.add(output);
-              }
               final File outFile = new File(output);
               final boolean deleted = outFile.delete();
               if (deleted) {
@@ -198,9 +185,13 @@ public class BuildOperations {
         }
       });
 
-      if (outputsToLog != null && context.isMake()) {
-        logger.logDeletedFiles(outputsToLog);
+      if (context.isMake()) {
+        final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
+        if (logger.isEnabled()) {
+          logger.logDeletedFiles(deletedPaths);
+        }
       }
+
       if (!deletedPaths.isEmpty()) {
         context.processMessage(new FileDeletedEvent(deletedPaths));
       }

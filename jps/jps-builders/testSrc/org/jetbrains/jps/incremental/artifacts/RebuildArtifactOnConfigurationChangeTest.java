@@ -23,7 +23,7 @@ public class RebuildArtifactOnConfigurationChangeTest extends ArtifactBuilderTes
     a.getRootElement().addChild(JpsPackagingElementFactory.getInstance().createDirectoryCopy(dir2));
     buildAll();
     assertOutput(a, fs().file("a.txt", "a").file("b.txt", "b"));
-    assertCopied("dir1/a.txt", "dir2/b.txt");
+    assertDeletedAndCopied("out/artifacts/a/a.txt", "dir1/a.txt", "dir2/b.txt");
     buildAllAndAssertUpToDate();
   }
 

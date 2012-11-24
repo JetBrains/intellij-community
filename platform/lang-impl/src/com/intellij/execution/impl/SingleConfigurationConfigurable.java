@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
@@ -185,6 +186,10 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
   public final void addNameListener(DocumentListener listener) {
     myNameDocument.addDocumentListener(listener);
+  }
+
+  public final void addSharedListener(ChangeListener changeListener) {
+    myComponent.myCbStoreProjectConfiguration.addChangeListener(changeListener);
   }
 
   public final void setNameText(final String name) {

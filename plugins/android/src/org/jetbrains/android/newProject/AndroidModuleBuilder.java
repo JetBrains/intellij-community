@@ -189,7 +189,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
       }
     }
     Project project = facet.getModule().getProject();
-    createManifestFileAndAntFiles(project, contentRoot);
+    createManifestFileAndAntFiles(project, contentRoot, facet.getModule());
     createResourcesAndLibs(project, contentRoot);
     PsiDirectory sourceDir = sourceRoot != null ? PsiManager.getInstance(project).findDirectory(sourceRoot) : null;
     createActivityAndSetupManifest(facet, sourceDir);
@@ -216,7 +216,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
                                              final AndroidFacet facet) {
     final Module module = facet.getModule();
 
-    Sdk sdk = getModuleJdk();
+    Sdk sdk = getAndroidSdkForModule(module);
     if (sdk == null) {
       return true;
     }
@@ -409,6 +409,10 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     return true;
   }
 
+  private static Sdk getAndroidSdkForModule(@NotNull Module module) {
+    return ModuleRootManager.getInstance(module).getSdk();
+  }
+
   private static void copyGeneratedAndroidProject(File tempDir, VirtualFile contentRoot, VirtualFile sourceRoot) {
     final File[] children = tempDir.listFiles();
     if (children != null) {
@@ -502,7 +506,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
       }
     }
 
-  private void createManifestFileAndAntFiles(Project project, VirtualFile contentRoot) {
+  private void createManifestFileAndAntFiles(Project project, VirtualFile contentRoot, Module module) {
     VirtualFile existingManifestFile = contentRoot.findChild(FN_ANDROID_MANIFEST_XML);
     if (existingManifestFile != null) {
       return;
@@ -511,7 +515,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
       AndroidFileTemplateProvider
         .createFromTemplate(project, contentRoot, AndroidFileTemplateProvider.ANDROID_MANIFEST_TEMPLATE, FN_ANDROID_MANIFEST_XML);
 
-      Sdk sdk = getModuleJdk();
+      Sdk sdk = getAndroidSdkForModule(module);
       if (sdk == null) return;
       AndroidPlatform platform = AndroidPlatform.parse(sdk);
 
@@ -606,7 +610,8 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
               final Manifest manifest = facet.getManifest();
               if (manifest != null) {
                 manifest.getPackage().setValue(myPackageName);
-                final Project project = facet.getModule().getProject();
+                final Module module = facet.getModule();
+                final Project project = module.getProject();
                 StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
                   public void run() {
                     FileDocumentManager.getInstance().saveAllDocuments();
@@ -615,7 +620,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
 
                 assignApplicationName(facet);
 
-                Sdk sdk = getModuleJdk();
+                Sdk sdk = getAndroidSdkForModule(module);
                 if (sdk != null) {
                   final AndroidPlatform platform = AndroidPlatform.parse(sdk);
                   if (platform != null) {

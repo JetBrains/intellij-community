@@ -605,6 +605,8 @@ public class JavaCompletionData extends JavaAwareCompletionData {
     boolean typeFragment = position.getContainingFile() instanceof PsiTypeCodeFragment && PsiTreeUtil.prevVisibleLeaf(position) == null;
     boolean declaration = DECLARATION_START.accepts(position);
     boolean expressionPosition = isExpressionPosition(position);
+    boolean afterNew = psiElement().afterLeaf(
+      psiElement().withText(PsiKeyword.NEW).andNot(psiElement().afterLeaf(PsiKeyword.THROW, "."))).accepts(position);
     boolean inGenerics = PsiTreeUtil.getParentOfType(position, PsiReferenceParameterList.class) != null;
     if (START_FOR.accepts(position) ||
         isInsideParameterList(position) ||
@@ -613,9 +615,10 @@ public class JavaCompletionData extends JavaAwareCompletionData {
         inCast ||
         declaration ||
         typeFragment ||
+        afterNew ||
         expressionPosition ||
         isStatementPosition(position)) {
-      boolean needSpace = !inCast && !typeFragment && !expressionPosition && !inGenerics;
+      boolean needSpace = !inCast && !typeFragment && !expressionPosition && !inGenerics && !afterNew;
       for (String primitiveType : PRIMITIVE_TYPES) {
         LookupElement keyword = createKeyword(position, primitiveType);
         result.addElement(needSpace ? new OverrideableSpace(keyword, TailType.HUMBLE_SPACE_BEFORE_WORD) : keyword);

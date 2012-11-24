@@ -167,7 +167,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
           controlFlow = HighlightControlFlowUtil.getControlFlowNoConstantEvaluate(method.getBody());
         }
         catch (AnalysisCanceledException e) {
-          controlFlow = null; //must be an error
+          return null; //must be an error
         }
         PsiReturnStatement returnStatement;
         if (controlFlow != null && ControlFlowUtil.processReturns(controlFlow, visitor)) {

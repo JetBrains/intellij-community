@@ -16,9 +16,8 @@
 package com.intellij.util.xml.stubs;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.stubs.ObjectStubBase;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.io.StringRef;
 import com.intellij.util.xml.EvaluatedXmlNameImpl;
 import com.intellij.util.xml.XmlName;
@@ -30,6 +29,7 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -68,24 +68,40 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
   }
 
   public List<DomStub> getChildrenByName(final CharSequence name, @Nullable final String nsKey) {
+    final List<DomStub> stubs = getChildrenStubs();
+    if (stubs.isEmpty()) {
+      return Collections.emptyList();
+    }
+
     final String s = nsKey == null ? "" : nsKey;
-    return ContainerUtil.filter(getChildrenStubs(), new Condition<DomStub>() {
-      @Override
-      public boolean value(DomStub stub) {
-        return XmlUtil.getLocalName(stub.getName()).equals(name) &&
-               Comparing.equal(s, stub.getNamespaceKey());
+    final List<DomStub> result = new SmartList<DomStub>();
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0, size = stubs.size(); i < size; i++) {
+      final DomStub stub = stubs.get(i);
+      if (XmlUtil.getLocalName(stub.getName()).equals(name) &&
+          Comparing.equal(s, stub.getNamespaceKey())) {
+        result.add(stub);
       }
-    });
+    }
+    return result;
   }
 
   @Nullable
   public AttributeStub getAttributeStub(final XmlName name) {
-    return (AttributeStub)ContainerUtil.find(getChildrenStubs(), new Condition<DomStub>() {
-      @Override
-      public boolean value(DomStub o) {
-        return o instanceof AttributeStub && o.getName().equals(name.getLocalName());
+    final List<DomStub> stubs = getChildrenStubs();
+    if (stubs.isEmpty()) {
+      return null;
+    }
+
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0, size = stubs.size(); i < size; i++) {
+      final DomStub stub = stubs.get(i);
+      if (stub instanceof AttributeStub &&
+          stub.getName().equals(name.getLocalName())) {
+        return (AttributeStub)stub;
       }
-    });
+    }
+    return null;
   }
 
   @Nullable

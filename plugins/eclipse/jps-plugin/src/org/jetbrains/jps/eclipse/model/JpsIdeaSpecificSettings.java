@@ -20,6 +20,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.conversion.AbstractIdeaSpecificSettings;
 import org.jetbrains.jps.model.java.*;
@@ -36,7 +37,7 @@ import java.util.List;
 * User: anna
 * Date: 11/8/12
 */
-class JpsIdeaSpecificSettings extends AbstractIdeaSpecificSettings<JpsModule, String> {
+class JpsIdeaSpecificSettings extends AbstractIdeaSpecificSettings<JpsModule, String, JpsSdkType<?>> {
   private JpsMacroExpander myExpander;
 
   JpsIdeaSpecificSettings(JpsMacroExpander expander) {
@@ -59,11 +60,11 @@ class JpsIdeaSpecificSettings extends AbstractIdeaSpecificSettings<JpsModule, St
   protected void setupLibraryRoots(Element root, JpsModule model) {}
 
   @Override
-  protected void setupJdk(Element root, JpsModule model) {
+  protected void setupJdk(Element root, JpsModule model, @Nullable JpsSdkType<?> projectSdkType) {
     final String inheritJdk = root.getAttributeValue("inheritJdk");
     final JpsDependenciesList dependenciesList = model.getDependenciesList();
     if (inheritJdk != null && Boolean.parseBoolean(inheritJdk)) {
-      dependenciesList.addSdkDependency(JpsJavaSdkType.INSTANCE);
+      dependenciesList.addSdkDependency(projectSdkType != null ? projectSdkType : JpsJavaSdkType.INSTANCE);
     }
     else {
       final String jdkName = root.getAttributeValue("jdk");

@@ -183,7 +183,7 @@ class RunConfigurable extends BaseConfigurable {
               snapshot = settings.getSettings();
               configuration = settings.getConfiguration();
               name = settings.getNameText();
-              shared = runManager.isConfigurationShared(snapshot);
+              shared = settings.isStoreProjectConfiguration();
               setIcon(ProgramRunnerUtil.getConfigurationIcon(snapshot, !settings.isValid(), runManager.isTemporary(configuration)));
             }
             else if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
@@ -455,6 +455,14 @@ class RunConfigurable extends BaseConfigurable {
     info.addNameListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
+        changed[0] = true;
+        update();
+      }
+    });
+
+    info.addSharedListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
         changed[0] = true;
         update();
       }

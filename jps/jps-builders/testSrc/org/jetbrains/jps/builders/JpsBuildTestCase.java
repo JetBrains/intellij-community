@@ -1,6 +1,7 @@
 package org.jetbrains.jps.builders;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -98,21 +99,31 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       }
       long oldTimestamp = FileSystemUtil.lastModified(file);
       long time = System.currentTimeMillis();
-      boolean updated = file.setLastModified(time);
-      if (!updated || FileSystemUtil.lastModified(file) <= oldTimestamp) {
-        updated = file.setLastModified(time + TIMESTAMP_ACCURACY);
-        assertTrue("Cannot modify timestamp for " + file.getAbsolutePath(), updated);
-        try {
-          //we need to ensure that time is changed. Otherwise this file will be treated as changed by user during compilation and marked for recompilation
-          Thread.sleep(TIMESTAMP_ACCURACY);
-        }
-        catch (InterruptedException ignored) {
+      setLastModified(file, time);
+      if (FileSystemUtil.lastModified(file) <= oldTimestamp) {
+        setLastModified(file, time + TIMESTAMP_ACCURACY);
+        long newTimeStamp = FileSystemUtil.lastModified(file);
+        assertTrue("Failed to change timestamp for " + file.getAbsolutePath(), newTimeStamp > oldTimestamp);
+        long delta;
+        while ((delta = newTimeStamp - System.currentTimeMillis()) > 0) {
+          try {
+            //we need this to ensure that the file won't be treated as changed by user during compilation and marked for recompilation
+            //noinspection BusyWait
+            Thread.sleep(delta);
+          }
+          catch (InterruptedException ignored) {
+          }
         }
       }
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private static void setLastModified(File file, long time) {
+    boolean updated = file.setLastModified(time);
+    assertTrue("Cannot modify timestamp for " + file.getAbsolutePath(), updated);
   }
 
   protected static void delete(String filePath) {
@@ -272,6 +283,24 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  protected String copyToProject(String relativeSourcePath, String relativeTargetPath) {
+    File source = PathManagerEx.findFileUnderProjectHome(relativeSourcePath, getClass());
+    String fullTargetPath = getAbsolutePath(relativeTargetPath);
+    File target = new File(fullTargetPath);
+    try {
+      if (source.isDirectory()) {
+        FileUtil.copyDir(source, target);
+      }
+      else {
+        FileUtil.copy(source, target);
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    return fullTargetPath;
   }
 
   private File getOrCreateProjectDir() {
