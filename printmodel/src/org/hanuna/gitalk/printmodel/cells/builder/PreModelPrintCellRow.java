@@ -107,7 +107,9 @@ public class PreModelPrintCellRow {
         for (int i = 0; i < visibleCells.size(); i++) {
             Cell cell = visibleCells.get(i);
             if (cell.getClass() == NodeCell.class) {
-                specialCells.add(new SpecialCell(cell, i, SpecialCell.Type.commitNode));
+                if (((NodeCell) cell).getNode().getType() == Node.Type.commitNode) {
+                    specialCells.add(new SpecialCell(cell, i, SpecialCell.Type.commitNode));
+                }
             } else {
                 if (cell.getClass() != EdgeCell.class) {
                     throw new IllegalStateException();
