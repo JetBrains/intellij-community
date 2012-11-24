@@ -49,6 +49,7 @@ public class DarculaTest {
   private JTextField myTextField2;
   private JTextField myTextField3;
   private JTextField myTextField4;
+  private JSpinner mySpinner1;
 
   public static void main(String[] args) {
     try {

@@ -27,6 +27,19 @@ import java.awt.event.FocusEvent;
  * @author Konstantin Bulenkov
  */
 public class DarculaSpinnerUI extends BasicSpinnerUI {
+
+  private FocusAdapter myFocusListener = new FocusAdapter() {
+    @Override
+    public void focusGained(FocusEvent e) {
+      spinner.repaint();
+    }
+
+    @Override
+    public void focusLost(FocusEvent e) {
+      spinner.repaint();
+    }
+  };
+
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
     return new DarculaSpinnerUI();
@@ -35,19 +48,19 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
   @Override
   protected void replaceEditor(JComponent oldEditor, JComponent newEditor) {
     super.replaceEditor(oldEditor, newEditor);
-    if (newEditor != null) {
-      newEditor.getComponents()[0].addFocusListener(new FocusAdapter() {
-        @Override
-        public void focusGained(FocusEvent e) {
-          spinner.repaint();
-        }
-
-        @Override
-        public void focusLost(FocusEvent e) {
-          spinner.repaint();
-        }
-      });
+    if (oldEditor != null) {
+      oldEditor.getComponents()[0].removeFocusListener(myFocusListener);
     }
+    if (newEditor != null) {
+      newEditor.getComponents()[0].addFocusListener(myFocusListener);
+    }
+  }
+
+  @Override
+  protected JComponent createEditor() {
+    final JComponent editor = super.createEditor();
+    editor.getComponents()[0].addFocusListener(myFocusListener);
+    return editor;
   }
 
   @Override
