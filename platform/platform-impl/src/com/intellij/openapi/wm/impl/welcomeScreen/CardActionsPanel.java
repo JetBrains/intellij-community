@@ -176,6 +176,11 @@ public class CardActionsPanel extends JPanel {
     }
 
     @Override
+    public String getToolTipText() {
+      return null;
+    }
+
+    @Override
     protected int horizontalTextAlignment() {
       return SwingConstants.LEFT;
     }
