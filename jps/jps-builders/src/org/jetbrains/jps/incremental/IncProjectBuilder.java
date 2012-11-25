@@ -772,6 +772,12 @@ public class IncProjectBuilder {
 
   // return true if changed something, false otherwise
   private boolean runModuleLevelBuilders(final CompileContext context, final ModuleChunk chunk) throws ProjectBuildException, IOException {
+    for (BuilderCategory category : BuilderCategory.values()) {
+      for (ModuleLevelBuilder builder : myBuilderRegistry.getBuilders(category)) {
+        builder.chunkBuildStarted(context, chunk);
+      }
+    }
+
     boolean doneSomething = false;
     boolean rebuildFromScratchRequested = false;
     float stageCount = myTotalModuleLevelBuilderCount;
@@ -878,7 +884,7 @@ public class IncProjectBuilder {
       outputConsumer.clear();
       for (BuilderCategory category : BuilderCategory.values()) {
         for (ModuleLevelBuilder builder : myBuilderRegistry.getBuilders(category)) {
-          builder.cleanupChunkResources(context);
+          builder.chunkBuildFinished(context, chunk);
         }
       }
     }
