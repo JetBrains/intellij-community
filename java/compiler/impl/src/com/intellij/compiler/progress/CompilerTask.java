@@ -131,27 +131,37 @@ public class CompilerTask extends Task.Backgroundable {
     projectManager.addProjectManagerListener(myProject, myCloseListener = new CloseListener());
 
     final Semaphore semaphore = ((CompilerManagerImpl)CompilerManager.getInstance(myProject)).getCompilationSemaphore();
+    boolean acquired = false;
     try {
-      while (!semaphore.tryAcquire(500, TimeUnit.MILLISECONDS)) {
-        if (indicator.isCanceled()) {
-          // give up obtaining the semaphore,
-          // let compile work begin in order to stop gracefuly on cancel event
-          break;
+
+      try {
+        while (!acquired) {
+          acquired = semaphore.tryAcquire(500, TimeUnit.MILLISECONDS);
+          if (indicator.isCanceled()) {
+            // give up obtaining the semaphore,
+            // let compile work begin in order to stop gracefuly on cancel event
+            break;
+          }
         }
       }
-    }
-    catch (InterruptedException ignored) {
-    }
-    try {
+      catch (InterruptedException ignored) {
+      }
+
       if (!isHeadless()) {
         addIndicatorDelegate();
       }
       myCompileWork.run();
     }
     finally {
-      indicator.stop();
-      projectManager.removeProjectManagerListener(myProject, myCloseListener);
-      semaphore.release();
+      try {
+        indicator.stop();
+        projectManager.removeProjectManagerListener(myProject, myCloseListener);
+      }
+      finally {
+        if (acquired) {
+          semaphore.release();
+        }
+      }
     }
   }
 
