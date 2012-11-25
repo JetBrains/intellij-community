@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.compiler.server.BuildManager;
 import com.intellij.facet.Facet;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
@@ -287,6 +288,11 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     }
 
     myContext.getDaemonAnalyzer().clearCaches();
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        BuildManager.getInstance().clearState(myProject);
+      }
+    });
   }
 
   @Override

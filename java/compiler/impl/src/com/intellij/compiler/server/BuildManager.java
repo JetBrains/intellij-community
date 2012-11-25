@@ -302,6 +302,7 @@ public class BuildManager implements ApplicationComponent{
         data.dropChanges();
       }
     }
+    scheduleAutoMake();
   }
 
   public boolean rescanRequired(Project project) {
