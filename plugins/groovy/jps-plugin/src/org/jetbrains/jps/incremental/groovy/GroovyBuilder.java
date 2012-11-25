@@ -252,7 +252,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   }
 
   @Override
-  public void cleanupChunkResources(CompileContext context) {
+  public void chunkBuildFinished(CompileContext context, ModuleChunk chunk) {
     JavaBuilderUtil.cleanupChunkResources(context);
     STUB_TO_SRC.set(context, null);
   }
