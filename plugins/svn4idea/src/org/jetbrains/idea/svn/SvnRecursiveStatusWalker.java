@@ -18,7 +18,9 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
@@ -166,14 +168,24 @@ public class SvnRecursiveStatusWalker {
     final File ioFile = new File(vFile.getPath());
     final Processor<File> processor;
     final Processor<File> directoryFilter;
+    final Ref<File> lastIgnored = new Ref<File>();
     final Processor<File> checkDirProcessor = new Processor<File>() {
       @Override
       public boolean process(File file) {
+        final FilePathImpl path = new FilePathImpl(file, true);
+        path.refresh();
+        path.hardRefresh();
+        VirtualFile vf = path.getVirtualFile();
+        if (vf != null && myPartner.isIgnoredIdeaLevel(vf)) {
+          lastIgnored.set(file);
+          myReceiver.processIgnored(vf);
+          return true;
+        }
         if (file.isDirectory() && new File(file, SVNFileUtil.getAdminDirectoryName()).exists()) {
-          final FilePathImpl path = new FilePathImpl(file, true);
-          path.hardRefresh();
           final MyItem childItem = new MyItem(myProject, path, newDepth, myPartner.createStatusClient(), true);
           myQueue.add(childItem);
+        } else if (vf != null) {
+          myReceiver.processUnversioned(vf);
         }
         return true;
       }
@@ -183,6 +195,8 @@ public class SvnRecursiveStatusWalker {
       processor = new Processor<File>() {
         @Override
         public boolean process(File file) {
+          // here we deal only with immediate children - so ignored on IDEA level for children is not important - we nevertheless do not go into
+          // other levels
           if (! FileUtil.filesEqual(ioFile, file)) return true;
           if (! FileUtil.filesEqual(ioFile, file.getParentFile())) return false;
           return checkDirProcessor.process(file);
@@ -192,7 +206,7 @@ public class SvnRecursiveStatusWalker {
       directoryFilter = new Processor<File>() {
         @Override
         public boolean process(File file) {
-          return myQueue.isEmpty() || ! FileUtil.filesEqual(myQueue.getLast().getPath().getIOFile(), file);
+          return ! Comparing.equal(lastIgnored, file) && (myQueue.isEmpty() || ! FileUtil.filesEqual(myQueue.getLast().getPath().getIOFile(), file));
         }
       };
       processor = checkDirProcessor;

@@ -39,6 +39,8 @@ import org.junit.Test;
 import java.io.File;
 
 /**
+ * Here we check the situation when there's no working copy - nevertheless we think that ignored on IDEA level files should be
+ * marked even under unversioned directories
  * @author irengrig
  */
 public class IgnoredFilesTest extends Svn17TestCase {
