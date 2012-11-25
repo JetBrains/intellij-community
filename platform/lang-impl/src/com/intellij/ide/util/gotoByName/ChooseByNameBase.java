@@ -987,7 +987,7 @@ public abstract class ChooseByNameBase {
     if (checkDisposed()) return;
     if (elements.isEmpty()) {
       myListModel.clear();
-      myTextField.setForeground(Color.red);
+      myTextField.setForeground(JBColor.red);
       myListUpdater.cancelAll();
       hideList();
       clearPosponedOkAction(false);
