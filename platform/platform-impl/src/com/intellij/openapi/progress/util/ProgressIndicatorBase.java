@@ -31,10 +31,10 @@ import com.intellij.util.containers.DoubleArrayList;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ProgressIndicatorBase extends UserDataHolderBase implements ProgressIndicatorEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressIndicatorBase");
@@ -57,52 +57,61 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
   private volatile ModalityState myModalityState = ModalityState.NON_MODAL;
   private volatile boolean myModalityEntered;
 
-  private volatile CopyOnWriteArrayList<ProgressIndicatorEx> myStateDelegates;
+  private volatile List<ProgressIndicatorEx> myStateDelegates;
   private volatile WeakList<TaskInfo> myFinished;
   private volatile boolean myWasStarted;
 
   private TaskInfo myOwnerTask;
   private static final IndicatorAction CHECK_CANCELED_ACTION = new IndicatorAction() {
-    public void execute(final ProgressIndicatorEx each) {
+    @Override
+    public void execute(@NotNull ProgressIndicatorEx each) {
       each.checkCanceled();
     }
   };
   private static final IndicatorAction STOP_ACTION = new IndicatorAction() {
-    public void execute(final ProgressIndicatorEx each) {
+    @Override
+    public void execute(@NotNull final ProgressIndicatorEx each) {
       each.stop();
     }
   };
   private static final IndicatorAction START_ACTION = new IndicatorAction() {
-    public void execute(final ProgressIndicatorEx each) {
+    @Override
+    public void execute(@NotNull final ProgressIndicatorEx each) {
       each.start();
     }
   };
   private static final IndicatorAction CANCEL_ACTION = new IndicatorAction() {
-    public void execute(final ProgressIndicatorEx each) {
+    @Override
+    public void execute(@NotNull final ProgressIndicatorEx each) {
       each.cancel();
     }
   };
   private static final IndicatorAction PUSH_ACTION = new IndicatorAction() {
-    public void execute(final ProgressIndicatorEx each) {
+    @Override
+    public void execute(@NotNull final ProgressIndicatorEx each) {
       each.pushState();
     }
   };
   private static final IndicatorAction POP_ACTION = new IndicatorAction() {
-    public void execute(final ProgressIndicatorEx each) {
+    @Override
+    public void execute(@NotNull final ProgressIndicatorEx each) {
       each.popState();
     }
   };
   private static final IndicatorAction STARTNC_ACTION = new IndicatorAction() {
-    public void execute(final ProgressIndicatorEx each) {
+    @Override
+    public void execute(@NotNull final ProgressIndicatorEx each) {
       each.startNonCancelableSection();
     }
   };
   private static final IndicatorAction FINISHNC_ACTION = new IndicatorAction() {
-    public void execute(final ProgressIndicatorEx each) {
+    @Override
+    public void execute(@NotNull final ProgressIndicatorEx each) {
       each.finishNonCancelableSection();
     }
   };
 
+  @Override
   public void start() {
     synchronized (this) {
       LOG.assertTrue(!isRunning(), "Attempt to start ProgressIndicator which is already running");
@@ -122,6 +131,7 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
   protected final void enterModality() {
     if (myModalityProgress == this) {
       UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
         public void run() {
           doEnterModality();
         }
@@ -136,6 +146,7 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
     }
   }
 
+  @Override
   public void stop() {
     LOG.assertTrue(myRunning, "stop() should be called only if start() called before");
     myRunning = false;
@@ -147,6 +158,7 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
   protected final void exitModality() {
     if (myModalityProgress == this) {
       UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
         public void run() {
           doExitModality();
          }
@@ -161,10 +173,12 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
     }
   }
 
+  @Override
   public boolean isRunning() {
     return myRunning;
   }
 
+  @Override
   public void cancel() {
     myCanceled = true;
 
@@ -173,6 +187,7 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
     delegateRunningChange(CANCEL_ACTION);
   }
 
+  @Override
   public void finish(@NotNull final TaskInfo task) {
     WeakList<TaskInfo> finished = myFinished;
     if (finished == null) {
@@ -186,12 +201,14 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
     if (!finished.addIfAbsent(task)) return;
 
     delegateRunningChange(new IndicatorAction() {
-      public void execute(final ProgressIndicatorEx each) {
+      @Override
+      public void execute(@NotNull final ProgressIndicatorEx each) {
         each.finish(task);
       }
     });
   }
 
+  @Override
   public boolean isFinished(@NotNull final TaskInfo task) {
     WeakList<TaskInfo> list = myFinished;
     return list != null && list.contains(task);
@@ -201,6 +218,7 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
     myOwnerTask = owner;
   }
 
+  @Override
   public void processFinish() {
     if (myOwnerTask != null) {
       finish(myOwnerTask);
@@ -208,10 +226,12 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
     }
   }
 
+  @Override
   public boolean isCanceled() {
     return myCanceled;
   }
 
+  @Override
   public final void checkCanceled() {
     if (isCanceled() && isCancelable()) {
       throw new ProcessCanceledException();
@@ -220,48 +240,58 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
     delegate(CHECK_CANCELED_ACTION);
   }
 
+  @Override
   public void setText(final String text) {
     myText = text;
 
     delegateProgressChange(new IndicatorAction() {
-      public void execute(final ProgressIndicatorEx each) {
+      @Override
+      public void execute(@NotNull final ProgressIndicatorEx each) {
         each.setText(text);
       }
     });
   }
 
+  @Override
   public String getText() {
     return myText;
   }
 
+  @Override
   public void setText2(final String text) {
     myText2 = text;
 
     delegateProgressChange(new IndicatorAction() {
-      public void execute(final ProgressIndicatorEx each) {
+      @Override
+      public void execute(@NotNull final ProgressIndicatorEx each) {
         each.setText2(text);
       }
     });
   }
 
+  @Override
   public String getText2() {
     return myText2;
   }
 
+  @Override
   public double getFraction() {
     return myFraction;
   }
 
+  @Override
   public void setFraction(final double fraction) {
     myFraction = fraction;
 
     delegateProgressChange(new IndicatorAction() {
-      public void execute(final ProgressIndicatorEx each) {
+      @Override
+      public void execute(@NotNull final ProgressIndicatorEx each) {
         each.setFraction(fraction);
       }
     });
   }
 
+  @Override
   public synchronized void pushState() {
     if (myTextStack == null) myTextStack = new Stack<String>(2);
     myTextStack.push(myText);
@@ -273,6 +303,7 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
     delegateProgressChange(PUSH_ACTION);
   }
 
+  @Override
   public synchronized void popState() {
     LOG.assertTrue(!myTextStack.isEmpty());
     String oldText = myTextStack.pop();
@@ -285,12 +316,14 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
     delegateProgressChange(POP_ACTION);
   }
 
+  @Override
   public void startNonCancelableSection() {
     myNonCancelableCount++;
 
     delegateProgressChange(STARTNC_ACTION);
   }
 
+  @Override
   public void finishNonCancelableSection() {
     myNonCancelableCount--;
 
@@ -301,15 +334,18 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
     return myNonCancelableCount == 0;
   }
 
+  @Override
   public final boolean isModal() {
     return myModalityProgress != null;
   }
 
+  @Override
   @NotNull
   public final ModalityState getModalityState() {
     return myModalityState;
   }
 
+  @Override
   public void setModalityProgress(ProgressIndicator modalityProgress) {
     LOG.assertTrue(!isRunning());
     myModalityProgress = modalityProgress;
@@ -317,46 +353,50 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
     myModalityState = myModalityProgress != null ? ((ModalityStateEx)currentModality).appendProgress(myModalityProgress) : currentModality;
   }
 
+  @Override
   public boolean isIndeterminate() {
     return myIndeterminate;
   }
 
+  @Override
   public void setIndeterminate(final boolean indeterminate) {
     myIndeterminate = indeterminate;
 
 
     delegateProgressChange(new IndicatorAction() {
-      public void execute(final ProgressIndicatorEx each) {
+      @Override
+      public void execute(@NotNull final ProgressIndicatorEx each) {
         each.setIndeterminate(indeterminate);
       }
     });
   }
 
+  @Override
   public final void addStateDelegate(@NotNull ProgressIndicatorEx delegate) {
     delegate.initStateFrom(this);
-    CopyOnWriteArrayList<ProgressIndicatorEx> stateDelegates = myStateDelegates;
-    if (stateDelegates == null) {
-      synchronized (this) {
-        stateDelegates = myStateDelegates;
-        if (stateDelegates == null) {
-          myStateDelegates = stateDelegates = ContainerUtil.createEmptyCOWList();
-        }
+    synchronized (this) {
+      List<ProgressIndicatorEx> stateDelegates = myStateDelegates;
+      if (stateDelegates == null) {
+        myStateDelegates = stateDelegates = ContainerUtil.createEmptyCOWList();
       }
+      else {
+        LOG.assertTrue(!stateDelegates.contains(delegate), "Already registered: " + delegate);
+      }
+      stateDelegates.add(delegate);
     }
-    stateDelegates.addIfAbsent(delegate);
   }
 
-  private void delegateProgressChange(IndicatorAction action) {
+  private void delegateProgressChange(@NotNull IndicatorAction action) {
     delegate(action);
     onProgressChange();
   }
 
-  private void delegateRunningChange(IndicatorAction action) {
+  private void delegateRunningChange(@NotNull IndicatorAction action) {
     delegate(action);
     onRunningChange();
   }
 
-  private void delegate(IndicatorAction action) {
+  private void delegate(@NotNull IndicatorAction action) {
     List<ProgressIndicatorEx> list = myStateDelegates;
     if (list != null && !list.isEmpty()) {
       for (ProgressIndicatorEx each : list) {
@@ -366,7 +406,7 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
   }
 
   private interface IndicatorAction {
-    void execute(ProgressIndicatorEx each);
+    void execute(@NotNull ProgressIndicatorEx each);
   }
 
 
@@ -378,37 +418,44 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
 
   }
 
+  @Override
   @NotNull
   public Stack<String> getTextStack() {
     if (myTextStack == null) myTextStack = new Stack<String>(2);
     return myTextStack;
   }
 
+  @Override
   @NotNull
   public DoubleArrayList getFractionStack() {
     if (myFractionStack == null) myFractionStack = new DoubleArrayList(2);
     return myFractionStack;
   }
 
+  @Override
   @NotNull
   public Stack<String> getText2Stack() {
     if (myText2Stack == null) myText2Stack = new Stack<String>(2);
     return myText2Stack;
   }
 
+  @Override
   public int getNonCancelableCount() {
     return myNonCancelableCount;
   }
 
 
+  @Override
   public boolean isModalityEntered() {
     return myModalityEntered;
   }
 
+  @Override
   public boolean wasStarted() {
     return myWasStarted;
   }
 
+  @Override
   public synchronized void initStateFrom(@NotNull final ProgressIndicatorEx indicator) {
     myRunning = indicator.isRunning();
     myCanceled = indicator.isCanceled();
@@ -427,6 +474,7 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
     myFraction = indicator.getFraction();
   }
 
+  @NonNls
   @Override
   public String toString() {
     return "ProgressIndicator " + System.identityHashCode(this) + ": running="+isRunning()+"; canceled="+isCanceled();

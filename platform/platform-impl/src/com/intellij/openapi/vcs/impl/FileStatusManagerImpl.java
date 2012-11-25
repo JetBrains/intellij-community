@@ -52,7 +52,8 @@ import java.util.Map;
  */
 public class FileStatusManagerImpl extends FileStatusManager implements ProjectComponent {
   private final Map<VirtualFile, FileStatus> myCachedStatuses = Collections.synchronizedMap(new HashMap<VirtualFile, FileStatus>());
-  private final Map<VirtualFile, Boolean> myWhetherExactlyParentToChanged = Collections.synchronizedMap(new HashMap<VirtualFile, Boolean>());
+  private final Map<VirtualFile, Boolean> myWhetherExactlyParentToChanged =
+    Collections.synchronizedMap(new HashMap<VirtualFile, Boolean>());
   private final Project myProject;
   private final List<FileStatusListener> myListeners = ContainerUtil.createEmptyCOWList();
   private FileStatusProvider myFileStatusProvider;
@@ -67,19 +68,23 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   private static class FileStatusNull implements FileStatus {
     private static final FileStatus INSTANCE = new FileStatusNull();
 
-    @Override public String getText() {
+    @Override
+    public String getText() {
       throw new AssertionError("Should not be called");
     }
 
-    @Override public Color getColor() {
+    @Override
+    public Color getColor() {
       throw new AssertionError("Should not be called");
     }
 
-    @Override public ColorKey getColorKey() {
+    @Override
+    public ColorKey getColorKey() {
       throw new AssertionError("Should not be called");
     }
 
-    @Override public String getId() {
+    @Override
+    public String getId() {
       throw new AssertionError("Should not be called");
     }
   }
@@ -145,7 +150,8 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     return "FileStatusManager";
   }
 
-  public void initComponent() { }
+  public void initComponent() {
+  }
 
   public void addFileStatusListener(@NotNull FileStatusListener listener) {
     myListeners.add(listener);
@@ -187,10 +193,12 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
       final ThreeState parentingStatus = myFileStatusProvider.getNotChangedDirectoryParentingStatus(vf);
       if (ThreeState.YES.equals(parentingStatus)) {
         myWhetherExactlyParentToChanged.put(vf, true);
-      } else if (ThreeState.UNSURE.equals(parentingStatus)) {
+      }
+      else if (ThreeState.UNSURE.equals(parentingStatus)) {
         myWhetherExactlyParentToChanged.put(vf, false);
       }
-    } else {
+    }
+    else {
       myWhetherExactlyParentToChanged.remove(vf);
     }
   }
@@ -206,7 +214,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
       return;
     }
 
-    if ((file == null) || (! file.isValid())) return;
+    if ((file == null) || (!file.isValid())) return;
     FileStatus cachedStatus = getCachedStatus(file);
     if (cachedStatus == FileStatusNull.INSTANCE) {
       return;
@@ -249,11 +257,13 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   @Override
   public Color getNotChangedDirectoryColor(VirtualFile vf) {
     final Color notChangedColor = FileStatus.NOT_CHANGED.getColor();
-    if (vf == null || ! vf.isDirectory()) {
+    if (vf == null || !vf.isDirectory()) {
       return notChangedColor;
     }
     final Boolean exactMatch = myWhetherExactlyParentToChanged.get(vf);
-    return exactMatch == null ? notChangedColor : (exactMatch ? FileStatus.NOT_CHANGED_IMMEDIATE.getColor() : FileStatus.NOT_CHANGED_RECURSIVE.getColor());
+    return exactMatch == null
+           ? notChangedColor
+           : (exactMatch ? FileStatus.NOT_CHANGED_IMMEDIATE.getColor() : FileStatus.NOT_CHANGED_RECURSIVE.getColor());
   }
 
   public void refreshFileStatusFromDocument(final VirtualFile file, final Document doc) {

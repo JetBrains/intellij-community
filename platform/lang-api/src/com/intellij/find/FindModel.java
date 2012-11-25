@@ -39,7 +39,8 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     if (!StringUtil.isEmpty(s)) {
       if (!s.contains("\r") && !s.contains("\n")) {
         findModel.setStringToFind(s);
-      } else {
+      }
+      else {
         findModel.setStringToFind(StringUtil.escapeToRegexp(s));
         findModel.setRegularExpressions(true);
       }
@@ -104,7 +105,8 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     if (multiline != isMultiline) {
       if (!multiline) {
         initStringToFindNoMultiline(this, getStringToFind());
-      } else {
+      }
+      else {
         setRegularExpressions(false);
       }
       isMultiline = multiline;
@@ -873,6 +875,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
 
   private static final Pattern NO_PATTERN = Pattern.compile("");
   private Pattern myPattern = NO_PATTERN;
+
   public Pattern compileRegExp() {
     String toFind = getStringToFind();
 
@@ -881,8 +884,8 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
       try {
         myPattern = pattern = Pattern.compile(toFind, isCaseSensitive() ? Pattern.MULTILINE : Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
       }
-      catch(PatternSyntaxException e){
-        LOG.error("Regexp:'"+toFind+"'", e);
+      catch (PatternSyntaxException e) {
+        LOG.error("Regexp:'" + toFind + "'", e);
         myPattern = null;
         return null;
       }

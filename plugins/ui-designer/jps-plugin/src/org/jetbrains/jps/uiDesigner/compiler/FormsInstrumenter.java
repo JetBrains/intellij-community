@@ -92,7 +92,6 @@ public class FormsInstrumenter extends FormsBuilder {
     }
 
     try {
-      context.processMessage(new ProgressMessage("Instrumenting forms [" + chunk.getName() + "]"));
       final ProjectPaths paths = context.getProjectPaths();
       final Collection<File> classpath = paths.getCompilationClasspath(chunk, false);
       final Collection<File> platformCp = paths.getPlatformCompilationClasspath(chunk, false);
@@ -176,6 +175,8 @@ public class FormsInstrumenter extends FormsBuilder {
       class2form.put(classToBind, formFile);
 
       try {
+        context.processMessage(new ProgressMessage("Instrumenting forms... [" + chunk.getName() + "]"));
+
         final BinaryContent originalContent = compiled.getContent();
         final ClassReader classReader =
           new ClassReader(originalContent.getBuffer(), originalContent.getOffset(), originalContent.getLength());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +43,8 @@ public class InspectionsConfigTreeComparator implements Comparator<InspectionCon
       return getDisplayTextToSort(s1).compareToIgnoreCase(getDisplayTextToSort(s2));
     }
 
-    final Descriptor descriptor1 = o1.getDesriptor();
-    final Descriptor descriptor2 = o2.getDesriptor();
+    final Descriptor descriptor1 = o1.getDescriptor();
+    final Descriptor descriptor2 = o2.getDescriptor();
     if (descriptor1 != null && descriptor2 != null) {
       s1 = descriptor1.getText();
       s2 = descriptor2.getText();

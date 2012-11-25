@@ -38,4 +38,5 @@ public interface ScopeTokenTypes extends TokenType {
   IElementType COLON = new ScopeTokenType("Scope.COLON");
   IElementType ASTERISK = new ScopeTokenType("Scope.ASTERISK");
   IElementType DIV = new ScopeTokenType("Scope.DIV");
+  IElementType SHARP = new ScopeTokenType("Scope.SHARP");
 }

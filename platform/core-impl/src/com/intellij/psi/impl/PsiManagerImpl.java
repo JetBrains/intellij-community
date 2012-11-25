@@ -68,7 +68,8 @@ public class PsiManagerImpl extends PsiManagerEx {
   private final AtomicInteger myBatchFilesProcessingModeCount = new AtomicInteger(0);
 
   private static final Key<PsiFile> CACHED_PSI_FILE_COPY_IN_FILECONTENT = Key.create("CACHED_PSI_FILE_COPY_IN_FILECONTENT");
-  public static final Topic<AnyPsiChangeListener> ANY_PSI_CHANGE_TOPIC = Topic.create("ANY_PSI_CHANGE_TOPIC",AnyPsiChangeListener.class, Topic.BroadcastDirection.TO_PARENT);
+  public static final Topic<AnyPsiChangeListener> ANY_PSI_CHANGE_TOPIC =
+    Topic.create("ANY_PSI_CHANGE_TOPIC", AnyPsiChangeListener.class, Topic.BroadcastDirection.TO_PARENT);
 
   public PsiManagerImpl(Project project,
                         FileDocumentManager fileDocumentManager,
@@ -88,7 +89,7 @@ public class PsiManagerImpl extends PsiManagerEx {
 
     myFileManager = isProjectDefault ? new EmptyFileManager(this) : new FileManagerImpl(this, fileDocumentManager, excludedFileIndex);
 
-    myTreeChangePreprocessors.add((PsiTreeChangePreprocessor) modificationTracker);
+    myTreeChangePreprocessors.add((PsiTreeChangePreprocessor)modificationTracker);
     Collections.addAll(myTreeChangePreprocessors, Extensions.getExtensions(PsiTreeChangePreprocessor.EP_NAME, myProject));
 
     Disposer.register(project, new Disposable() {
@@ -120,7 +121,7 @@ public class PsiManagerImpl extends PsiManagerEx {
     if (file != null && file.isPhysical() && file.getViewProvider().getVirtualFile() instanceof LightVirtualFile) return true;
 
     if (element instanceof PsiDirectoryContainer) {
-      PsiDirectory[] dirs = ((PsiDirectoryContainer) element).getDirectories();
+      PsiDirectory[] dirs = ((PsiDirectoryContainer)element).getDirectories();
       for (PsiDirectory dir : dirs) {
         if (!isInProject(dir)) return false;
       }
@@ -409,7 +410,7 @@ public class PsiManagerImpl extends PsiManagerEx {
       myTreeChangeEventIsFiring = true;
     }
     try {
-      for(PsiTreeChangePreprocessor preprocessor: myTreeChangePreprocessors) {
+      for (PsiTreeChangePreprocessor preprocessor : myTreeChangePreprocessors) {
         preprocessor.treeChanged(event);
       }
 

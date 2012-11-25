@@ -137,6 +137,10 @@ public abstract class BaseCompleteMacro extends Macro {
       }
 
       final Project project = myContext.getProject();
+      if (project == null) {
+        return;
+      }
+      
       Runnable runnable = new Runnable() {
         @Override
         public void run() {

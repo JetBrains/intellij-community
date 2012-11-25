@@ -29,47 +29,48 @@ import java.util.List;
 public class AltStateManager implements AWTEventListener {
 
   private static final AltStateManager ourInstance;
-  
+
   static {
     ourInstance = new AltStateManager();
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       Toolkit.getDefaultToolkit().addAWTEventListener(ourInstance, AWTEvent.KEY_EVENT_MASK);
     }
   }
-  
+
   private final List<AltListener> myListeners = ContainerUtil.createEmptyCOWList();
 
   public interface AltListener {
     void altPressed();
+
     void altReleased();
-  } 
-  
+  }
+
   private AltStateManager() {
   }
-  
+
   public static AltStateManager getInstance() {
-    return ourInstance; 
+    return ourInstance;
   }
 
   public void addListener(AltListener listener) {
     myListeners.add(listener);
   }
-  
+
   public void removeListener(AltListener listener) {
     myListeners.remove(listener);
   }
-  
+
   @Override
   public void eventDispatched(AWTEvent event) {
     KeyEvent keyEvent = (KeyEvent)event;
     if ((keyEvent.getKeyCode() == KeyEvent.VK_ALT)) {
       if (keyEvent.getID() == KeyEvent.KEY_PRESSED) {
         firePressed();
-      } else if (keyEvent.getID() == KeyEvent.KEY_RELEASED) {
+      }
+      else if (keyEvent.getID() == KeyEvent.KEY_RELEASED) {
         fireReleased();
       }
     }
-      
   }
 
   private void fireReleased() {

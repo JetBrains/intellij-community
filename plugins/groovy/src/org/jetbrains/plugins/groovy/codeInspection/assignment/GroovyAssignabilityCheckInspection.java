@@ -698,26 +698,33 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         message = GroovyBundle.message("cannot.apply.method1", method.getName(), canonicalText, typesString);
       }
 
-      registerError(getElementToHighlight(place, PsiUtil.getArgumentsList(place)), message,
-                    genCastFixes(GrClosureSignatureUtil.createSignature(methodResolveResult), argumentTypes, place),
+      final GrArgumentList argumentsList = PsiUtil.getArgumentsList(place);
+      registerError(getElementToHighlight(place, argumentsList), message,
+                    genCastFixes(GrClosureSignatureUtil.createSignature(methodResolveResult), argumentTypes, argumentsList),
                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
     }
 
-    private static LocalQuickFix[] genCastFixes(GrSignature signature, PsiType[] argumentTypes, GroovyPsiElement context) {
+    private static LocalQuickFix[] genCastFixes(GrSignature signature, PsiType[] argumentTypes, @Nullable GrArgumentList argumentList) {
+      if (argumentList == null) return LocalQuickFix.EMPTY_ARRAY;
 
       final List<GrClosureSignature> signatures = GrClosureSignatureUtil.generateSimpleSignature(signature);
 
-      List<Pair<Integer, PsiType>> errors = new ArrayList<Pair<Integer, PsiType>>();
+      List<Pair<Integer, PsiType>> allErrors = new ArrayList<Pair<Integer, PsiType>>();
       for (GrClosureSignature closureSignature : signatures) {
         final GrClosureSignatureUtil.MapResultWithError<PsiType> map =
-          GrClosureSignatureUtil.mapSimpleSignatureWithErrors(closureSignature, argumentTypes, Function.ID, context, 1);
+          GrClosureSignatureUtil.mapSimpleSignatureWithErrors(closureSignature, argumentTypes, Function.ID, argumentList, 1);
         if (map != null) {
-          errors.addAll(map.getErrors());
+          final List<Pair<Integer, PsiType>> errors = map.getErrors();
+          for (Pair<Integer, PsiType> error : errors) {
+            if (!(error.first == 0 && PsiImplUtil.hasNamedArguments(argumentList))) {
+              allErrors.add(error);
+            }
+          }
         }
       }
 
       final ArrayList<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
-      for (Pair<Integer, PsiType> error : errors) {
+      for (Pair<Integer, PsiType> error : allErrors) {
         fixes.add(new ParameterCastFix(error.first, error.second));
       }
 

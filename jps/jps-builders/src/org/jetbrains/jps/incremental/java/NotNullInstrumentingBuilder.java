@@ -63,11 +63,11 @@ public class NotNullInstrumentingBuilder extends ModuleLevelBuilder{
       final InstrumentationClassFinder finder = createInstrumentationClassFinder(platformCp, classpath, outputConsumer);
       try {
         try {
-          context.processMessage(new ProgressMessage("Adding NotNull assertions [" + chunk.getName() + "]"));
+          context.processMessage(new ProgressMessage("Adding @NotNull assertions... [" + chunk.getName() + "]"));
           exitCode = instrumentNotNull(context, outputConsumer, finder);
         }
         finally {
-          context.processMessage(new ProgressMessage("Finished adding NotNull assertions [" + chunk.getName() + "]"));
+          context.processMessage(new ProgressMessage("Finished adding @NotNull assertions [" + chunk.getName() + "]"));
         }
       }
       finally {

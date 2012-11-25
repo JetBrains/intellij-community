@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@ package com.intellij.ide.startup.impl;
 
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.notification.*;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -25,9 +27,15 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.*;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.impl.local.FileWatcher;
+import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -177,10 +185,42 @@ public class StartupManagerImpl extends StartupManagerEx {
     });
 
     if (!app.isUnitTestMode()) {
-      VirtualFileManager.getInstance().refresh(!app.isHeadlessEnvironment());
+      boolean headless = app.isHeadlessEnvironment();
+      if (!headless && !myProject.isDisposed()) checkProjectRoots();
+      VirtualFileManager.getInstance().refresh(!headless);
     }
 
     Registry.get("ide.firstStartup").setValue(false);
+  }
+
+  private void checkProjectRoots() {
+    LocalFileSystem fs = LocalFileSystem.getInstance();
+    if (!(fs instanceof LocalFileSystemImpl)) return;
+    FileWatcher watcher = ((LocalFileSystemImpl)fs).getFileWatcher();
+    if (!watcher.isOperational()) return;
+    List<String> manualWatchRoots = watcher.getManualWatchRoots();
+    if (manualWatchRoots.isEmpty()) return;
+    VirtualFile[] roots = ProjectRootManager.getInstance(myProject).getContentRoots();
+    if (roots.length == 0) return;
+
+    boolean nonWatched = false;
+    loop:
+    for (VirtualFile root : roots) {
+      if (!(root.getFileSystem() instanceof LocalFileSystem)) continue;
+      String rootPath = root.getPath();
+      for (String manualWatchRoot : manualWatchRoots) {
+        if (FileUtil.isAncestor(manualWatchRoot, rootPath, false)) {
+          nonWatched = true;
+          break loop;
+        }
+      }
+    }
+
+    if (nonWatched) {
+      String title = ApplicationBundle.message("watcher.slow.sync");
+      String message = ApplicationBundle.message("watcher.non.watchable.project");
+      Notifications.Bus.notify(FileWatcher.NOTIFICATION_GROUP.getValue().createNotification(title, message, NotificationType.WARNING, null));
+    }
   }
 
   public void startCacheUpdate() {

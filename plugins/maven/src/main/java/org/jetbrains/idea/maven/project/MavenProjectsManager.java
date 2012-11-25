@@ -66,7 +66,7 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@State(name = "MavenProjectsManager", storages = {@Storage( file = StoragePathMacros.PROJECT_FILE)})
+@State(name = "MavenProjectsManager", storages = {@Storage(file = StoragePathMacros.PROJECT_FILE)})
 public class MavenProjectsManager extends MavenSimpleProjectComponent
   implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponent {
   private static final int IMPORT_DELAY = 1000;
@@ -888,10 +888,10 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         if (!StartupManagerEx.getInstanceEx(myProject).postStartupActivityPassed()) {
           myInitializationAlarm.addRequest(new Runnable() { // should not remove previously schedules tasks
 
-              public void run() {
-                wrapper.get().run();
-              }
-            }, 1000);
+            public void run() {
+              wrapper.get().run();
+            }
+          }, 1000);
           return;
         }
         runnable.run();

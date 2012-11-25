@@ -206,7 +206,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     final TreePath selectionPath = myTree.getSelectionPath();
     if (selectionPath != null) {
       InspectionConfigTreeNode node = (InspectionConfigTreeNode)selectionPath.getLastPathComponent();
-      final Descriptor descriptor = node.getDesriptor();
+      final Descriptor descriptor = node.getDescriptor();
       if (descriptor != null) {
         final boolean properSetting = mySelectedProfile.isProperSetting(descriptor.getKey().toString());
         if (node.isProperSetting() != properSetting) {
@@ -424,7 +424,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private static InspectionConfigTreeNode findNodeByKey(String name, InspectionConfigTreeNode root) {
     for (int i = 0; i < root.getChildCount(); i++) {
       final InspectionConfigTreeNode child = (InspectionConfigTreeNode)root.getChildAt(i);
-      final Descriptor descriptor = child.getDesriptor();
+      final Descriptor descriptor = child.getDescriptor();
       if (descriptor != null) {
         if (descriptor.getKey().toString().equals(name)) {
           return child;
@@ -506,7 +506,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
       public String convert(TreePath o) {
         final InspectionConfigTreeNode node = (InspectionConfigTreeNode)o.getLastPathComponent();
-        final Descriptor descriptor = node.getDesriptor();
+        final Descriptor descriptor = node.getDescriptor();
         return descriptor != null ? InspectionsConfigTreeComparator.getDisplayTextToSort(descriptor.getText()) : InspectionsConfigTreeComparator
           .getDisplayTextToSort(node.getGroupName());
       }
@@ -584,7 +584,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   private void toggleToolNode(final InspectionConfigTreeNode toolNode) {
-    final Descriptor descriptor = toolNode.getDesriptor();
+    final Descriptor descriptor = toolNode.getDescriptor();
     if (descriptor!= null) {
       final HighlightDisplayKey key = descriptor.getKey();
       final String toolShortName = key.toString();
@@ -720,7 +720,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private void updateOptionsAndDescriptionPanel(TreePath path) {
     if (path == null) return;
     final InspectionConfigTreeNode node = (InspectionConfigTreeNode)path.getLastPathComponent();
-    final Descriptor descriptor = node.getDesriptor();
+    final Descriptor descriptor = node.getDescriptor();
     if (descriptor != null) {
       final String description = descriptor.loadDescription();
 
@@ -1096,7 +1096,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private void updateErrorLevel(final InspectionConfigTreeNode child,
                                 final boolean showOptionsAndDescriptorPanels, final HighlightDisplayLevel level) {
-    final HighlightDisplayKey key = child.getDesriptor().getKey();
+    final HighlightDisplayKey key = child.getDescriptor().getKey();
     mySelectedProfile.setErrorLevel(key, level, child.isInspectionNode() || child.isByDefault() ? -1 : child.getParent().getIndex(child));
     child.dropCache();
     if (showOptionsAndDescriptorPanels) {

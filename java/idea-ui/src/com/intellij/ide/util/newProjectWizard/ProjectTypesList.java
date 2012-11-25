@@ -18,21 +18,26 @@ package com.intellij.ide.util.newProjectWizard;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.ui.popup.ListItemDescriptor;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
+import com.intellij.platform.ProjectTemplatesFactory;
+import com.intellij.platform.templates.RemoteTemplatesFactory;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.ui.speedSearch.FilteringListModel;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
@@ -48,34 +53,57 @@ public class ProjectTypesList  {
 
   private final JBList myList;
   private final SearchTextField mySearchField;
-  private final FilteringListModel<Item> myFilteringListModel;
+  private final FilteringListModel<TemplateItem> myFilteringListModel;
   private MinusculeMatcher myMatcher;
-  private Pair<? extends Item, Integer> myBestMatch;
+  private Pair<TemplateItem, Integer> myBestMatch;
 
   public ProjectTypesList(JBList list, SearchTextField searchField, MultiMap<TemplatesGroup, ProjectTemplate> map) {
     myList = list;
     mySearchField = searchField;
 
-    CollectionListModel<Item> model = new CollectionListModel<Item>(buildItems(map));
-    myFilteringListModel = new FilteringListModel<Item>(model);
+    CollectionListModel<TemplateItem> model = new CollectionListModel<TemplateItem>(buildItems(map));
 
-    myList.setCellRenderer(new ColoredListCellRenderer() {
+    RemoteTemplatesFactory factory = new RemoteTemplatesFactory();
+//    factory.createTemplates()
+
+    myFilteringListModel = new FilteringListModel<TemplateItem>(model);
+
+    myList.setCellRenderer(new GroupedItemsListRenderer(new ListItemDescriptor() {
+      @Nullable
       @Override
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        Item item = (Item)value;
-        boolean group = item instanceof GroupItem;
-        append(item.getName(), group ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        setIcon(item.getIcon());
-        setIpad(group ? new Insets(2, 2, 2, 2) : new Insets(2, 20, 2, 2));
-        //if (group && !selected) {
-        //  setBackground(UIUtil.getPanelBackground());
-        //}
+      public String getTextFor(Object value) {
+        return ((TemplateItem)value).getName();
       }
-    });
 
-    myFilteringListModel.setFilter(new Condition<Item>() {
+      @Nullable
       @Override
-      public boolean value(Item item) {
+      public String getTooltipFor(Object value) {
+        return null;
+      }
+
+      @Nullable
+      @Override
+      public Icon getIconFor(Object value) {
+        return ((TemplateItem)value).getIcon();
+      }
+
+      @Override
+      public boolean hasSeparatorAboveOf(Object value) {
+        TemplateItem item = (TemplateItem)value;
+        int index = myFilteringListModel.getElementIndex(item);
+        return index == 0 || !myFilteringListModel.getElementAt(index -1).getGroupName().equals(item.getGroupName());
+      }
+
+      @Nullable
+      @Override
+      public String getCaptionAboveOf(Object value) {
+        return ((TemplateItem)value).getGroupName();
+      }
+    }));
+
+    myFilteringListModel.setFilter(new Condition<TemplateItem>() {
+      @Override
+      public boolean value(TemplateItem item) {
         return item.getMatchingDegree() > Integer.MIN_VALUE;
       }
     });
@@ -87,7 +115,7 @@ public class ProjectTypesList  {
         String text = "*" + mySearchField.getText().trim();
         myMatcher = NameUtil.buildMatcher(text, NameUtil.MatchingCaseSensitivity.NONE);
 
-        Item value = (Item)myList.getSelectedValue();
+        TemplateItem value = (TemplateItem)myList.getSelectedValue();
         int degree = value == null ? Integer.MIN_VALUE : value.getMatchingDegree();
         myBestMatch = Pair.create(degree > Integer.MIN_VALUE ? value : null, degree);
 
@@ -130,31 +158,27 @@ public class ProjectTypesList  {
   }
 
   void saveSelection() {
-    Item item = (Item)myList.getSelectedValue();
-    if (item instanceof TemplateItem) {
-      SelectTemplateSettings.getInstance().setLastTemplate(((TemplateItem)item).getGroupName(), item.getName());
-    }
-    else if (item instanceof GroupItem) {
-      SelectTemplateSettings.getInstance().setLastTemplate(item.getName(), null);
+    TemplateItem item = (TemplateItem)myList.getSelectedValue();
+    if (item != null) {
+      SelectTemplateSettings.getInstance().setLastTemplate(item.getGroupName(), item.getName());
     }
   }
 
-  private List<? extends Item> buildItems(MultiMap<TemplatesGroup, ProjectTemplate> map) {
-    List<Item> items = new ArrayList<Item>();
+  private List<TemplateItem> buildItems(MultiMap<TemplatesGroup, ProjectTemplate> map) {
+    List<TemplateItem> items = new ArrayList<TemplateItem>();
     List<TemplatesGroup> groups = new ArrayList<TemplatesGroup>(map.keySet());
     Collections.sort(groups, new Comparator<TemplatesGroup>() {
       @Override
       public int compare(TemplatesGroup o1, TemplatesGroup o2) {
+        if (o1.getName().equals(ProjectTemplatesFactory.OTHER_GROUP)) return 2;
+        if (o1.getName().equals(ProjectTemplatesFactory.CUSTOM_GROUP)) return 1;
         return o1.getName().compareTo(o2.getName());
       }
     });
     for (TemplatesGroup group : groups) {
-      GroupItem groupItem = new GroupItem(group);
-      items.add(groupItem);
       for (ProjectTemplate template : map.get(group)) {
         TemplateItem templateItem = new TemplateItem(template, group);
         items.add(templateItem);
-        groupItem.addChild(templateItem);
       }
     }
     return items;
@@ -178,15 +202,7 @@ public class ProjectTypesList  {
     return false;
   }
 
-  abstract static class Item {
-
-    abstract String getName();
-    abstract Icon getIcon();
-
-    protected abstract int getMatchingDegree();
-  }
-
-  class TemplateItem extends Item {
+  class TemplateItem {
 
     private final ProjectTemplate myTemplate;
     private final TemplatesGroup myGroup;
@@ -196,62 +212,25 @@ public class ProjectTypesList  {
       myGroup = group;
     }
 
-    @Override
     String getName() {
       return myTemplate.getName();
     }
 
-    String getGroupName() {
+    public String getGroupName() {
       return myGroup.getName();
     }
 
-    @Override
     Icon getIcon() {
       return myTemplate.createModuleBuilder().getNodeIcon();
     }
 
-    @Override
     protected int getMatchingDegree() {
       if (myMatcher == null) return Integer.MAX_VALUE;
-      int i = myMatcher.matchingDegree(getName());
+      int i = myMatcher.matchingDegree(getName() + " " + getGroupName() + " " + StringUtil.stripHtml(myTemplate.getDescription(), false));
       if (myBestMatch == null || i > myBestMatch.second) {
         myBestMatch = Pair.create(this, i);
       }
       return i;
-    }
-  }
-
-  class GroupItem extends Item {
-
-    private final TemplatesGroup myGroup;
-    private final List<TemplateItem> myChildren = new ArrayList<TemplateItem>();
-
-    GroupItem(TemplatesGroup group) {
-      myGroup = group;
-    }
-
-    @Override
-    String getName() {
-      return myGroup.getName();
-    }
-
-    @Override
-    Icon getIcon() {
-      return myGroup.getIcon();
-    }
-
-    @Override
-    protected int getMatchingDegree() {
-      return ContainerUtil.find(myChildren, new Condition<TemplateItem>() {
-        @Override
-        public boolean value(TemplateItem item) {
-          return item.getMatchingDegree() > Integer.MIN_VALUE;
-        }
-      }) == null ? Integer.MIN_VALUE : Integer.MAX_VALUE;
-    }
-
-    public void addChild(TemplateItem item) {
-      myChildren.add(item);
     }
   }
 }

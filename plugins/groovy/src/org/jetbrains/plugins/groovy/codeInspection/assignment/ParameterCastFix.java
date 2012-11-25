@@ -24,18 +24,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author Max Medvedev
  */
 public class ParameterCastFix extends GroovyFix {
-  private final int param;
+  private final int myParam;
   private final PsiType myType;
   private String myName;
 
   public ParameterCastFix(int param, PsiType type) {
-    this.param = param;
+    myParam = param;
     myType = type;
 
     StringBuilder builder = new StringBuilder();
@@ -70,7 +71,7 @@ public class ParameterCastFix extends GroovyFix {
 
     final GrExpression[] arguments = list.getExpressionArguments();
 
-    final int p = list.getNamedArguments().length > 0 ? param - 1 : param;
+    final int p = PsiImplUtil.hasNamedArguments(list) ? myParam - 1 : myParam;
     if (arguments.length <= p) return;
 
     GrCastFix.doCast(project, myType, arguments[p]);

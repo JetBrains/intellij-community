@@ -25,8 +25,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory;
@@ -54,7 +56,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Prohibits commiting with an empty messages.
+ * Prohibits committing with an empty messages, warns if committing into detached HEAD, checks if user name and correct CRLF attributes
+ * are set.
  * @author Kirill Likhodedov
 */
 public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
@@ -174,7 +177,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       Collection<VirtualFile> allRoots = new ArrayList<VirtualFile>(Arrays.asList(
         ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs)));
 
-      Collection<VirtualFile> affectedRoots = myPanel.getRoots();
+      Collection<VirtualFile> affectedRoots = getSelectedRoots();
       for (VirtualFile root : affectedRoots) {
         try {
           Pair<String, String> nameAndEmail = getUserNameAndEmailFromGitConfig(project, root);
@@ -325,10 +328,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     @Nullable
     private DetachedRoot getDetachedRoot() {
       GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(myPanel.getProject());
-      if (repositoryManager == null) {
-        return null;
-      }
-      for (VirtualFile root : myPanel.getRoots()) {
+      for (VirtualFile root : getSelectedRoots()) {
         GitRepository repository = repositoryManager.getRepositoryForRoot(root);
         if (repository == null) {
           continue;
@@ -338,6 +338,19 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
         }
       }
       return null;
+    }
+
+    @NotNull
+    private Collection<VirtualFile> getSelectedRoots() {
+      ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+      Collection<VirtualFile> result = new HashSet<VirtualFile>();
+      for (FilePath path : ChangesUtil.getPaths(myPanel.getSelectedChanges())) {
+        VirtualFile root = vcsManager.getVcsRootFor(path);
+        if (root != null) {
+          result.add(root);
+        }
+      }
+      return result;
     }
 
     private class DetachedRoot {

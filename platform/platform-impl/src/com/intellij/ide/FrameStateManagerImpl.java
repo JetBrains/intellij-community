@@ -26,17 +26,16 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.List;
 
 public class FrameStateManagerImpl extends FrameStateManager implements ApplicationComponent {
-
-  private final CopyOnWriteArrayList<FrameStateListener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<FrameStateListener> myListeners = ContainerUtil.createEmptyCOWList();
 
   private boolean myShouldSynchronize;
   private final Alarm mySyncAlarm;
 
-  private BusyObject.Impl myActive;
-  private ApplicationImpl myApp;
+  private final BusyObject.Impl myActive;
+  private final ApplicationImpl myApp;
 
   public FrameStateManagerImpl(final ApplicationImpl app) {
     myApp = app;

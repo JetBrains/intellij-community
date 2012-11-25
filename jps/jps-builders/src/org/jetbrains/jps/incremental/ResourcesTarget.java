@@ -10,7 +10,6 @@ import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetRegistry;
 import org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider;
-import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.ResourceRootDescriptor;
 import org.jetbrains.jps.builders.java.ResourcesTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
@@ -67,10 +66,13 @@ public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDesc
   }
 
   @Override
+  public boolean isCompiledBeforeModuleLevelBuilders() {
+    return true;
+  }
+
+  @Override
   public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry) {
-    return Collections.<BuildTarget<?>>singleton(
-      new ModuleBuildTarget(myModule, isTests()? JavaModuleBuildTargetType.TEST: JavaModuleBuildTargetType.PRODUCTION)
-    );
+    return Collections.emptyList();
   }
 
   @NotNull

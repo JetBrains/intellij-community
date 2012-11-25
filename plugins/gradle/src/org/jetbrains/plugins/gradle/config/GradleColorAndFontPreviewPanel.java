@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +30,6 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author Denis Zhdanov
@@ -39,7 +39,7 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
   
   private final Map<TextAttributesKey, DefaultMutableTreeNode> myNodes = new HashMap<TextAttributesKey, DefaultMutableTreeNode>();
 
-  private final List<ColorAndFontSettingsListener> myListeners                = new CopyOnWriteArrayList<ColorAndFontSettingsListener>();
+  private final List<ColorAndFontSettingsListener> myListeners                = ContainerUtil.createEmptyCOWList();
   private final JPanel                             myContent                  = new JPanel(new GridBagLayout());
   private final JPanel                             myNodeRenderPanel          = new JPanel(new GridBagLayout());
   private final Ref<Boolean>                       myAllowTreeExpansion       = new Ref<Boolean>(true);

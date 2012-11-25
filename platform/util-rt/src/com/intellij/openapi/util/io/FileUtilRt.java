@@ -367,10 +367,6 @@ public class FileUtilRt {
 
   @NotNull
   public static byte[] loadBytes(@NotNull InputStream stream, int length) throws IOException {
-    if (isTooLarge(length)) {
-      throw new FileTooBigException("Too large file, size is " + length + " bytes.");
-    }
-
     byte[] bytes = new byte[length];
     int count = 0;
     while (count < length) {

@@ -13,6 +13,7 @@
 package org.zmlx.hg4idea.action;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.zmlx.hg4idea.HgVcs;
@@ -56,7 +57,7 @@ public class HgSwitchWorkingDirectoryAction extends HgAbstractGlobalAction {
         if (dialog.isTagSelected()) {
           command.setRevision(dialog.getTag().getName());
         }
-
+        FileDocumentManager.getInstance().saveAllDocuments();
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           @Override
           public void run() {

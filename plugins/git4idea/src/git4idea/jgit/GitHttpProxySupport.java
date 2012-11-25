@@ -15,12 +15,15 @@
  */
 package git4idea.jgit;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.*;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -37,8 +40,8 @@ final class GitHttpProxySupport {
   }
 
   @NotNull
-  static ProxySelector newProxySelector() {
-    return new IdeaProxySelector();
+  static ProxySelector newProxySelector(@Nullable ProxySelector defaultProxySelector, @NotNull String url) {
+    return new IdeaProxySelector(defaultProxySelector, url);
   }
 
   static boolean shouldUseProxy() {
@@ -48,16 +51,47 @@ final class GitHttpProxySupport {
   
   private static class IdeaProxySelector extends ProxySelector {
     
-    private final HttpConfigurable myConfigurable;
-    
-    IdeaProxySelector() {
+    private static final Logger LOG = Logger.getInstance(IdeaProxySelector.class);
+
+    @NotNull private final HttpConfigurable myConfigurable;
+    @Nullable private final ProxySelector myDefaultProxySelector;
+    @NotNull private final String myUrl;
+
+    IdeaProxySelector(@Nullable ProxySelector defaultProxySelector, @NotNull String url) {
+      myDefaultProxySelector = defaultProxySelector;
+      myUrl = url;
       myConfigurable = HttpConfigurable.getInstance();
     }
 
     @Override
     public List<Proxy> select(URI uri) {
-      Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(myConfigurable.PROXY_HOST, myConfigurable.PROXY_PORT));
-      return Collections.singletonList(proxy);
+      if (urlMatches(uri)) {
+        Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(myConfigurable.PROXY_HOST, myConfigurable.PROXY_PORT));
+        List<Proxy> proxies = new ArrayList<Proxy>();
+        proxies.add(proxy);
+        if (myDefaultProxySelector != null) {
+          proxies.addAll(myDefaultProxySelector.select(uri));
+        }
+        return proxies;
+      }
+      else if (myDefaultProxySelector != null) {
+        return myDefaultProxySelector.select(uri);
+      }
+      else {
+        return Collections.singletonList(Proxy.NO_PROXY);
+      }
+    }
+
+    private boolean urlMatches(URI uri) {
+      try {
+        // comparing with the host, because the HttpClient requests not only the given git-http url,
+        // but also opens a socket connected with the server through the URL like "socket://github.com:443".
+        return uri.getHost().endsWith(new URL(myUrl).getHost());
+      }
+      catch (MalformedURLException e) {
+        LOG.info("Couldn't create URL object from " + myUrl, e);
+        return false;
+      }
     }
 
     @Override

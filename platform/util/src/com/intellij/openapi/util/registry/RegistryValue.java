@@ -82,16 +82,17 @@ public class RegistryValue {
   }
 
   public Color asColor(Color defaultValue) {
-      final String s = get(myKey, null, true);
-      if (s != null) {
-        final String[] rgb = s.split(",");
-        if (rgb.length == 3) {
-          try {
-            return new Color(Integer.parseInt(rgb[0]), Integer.parseInt(rgb[1]), Integer.parseInt(rgb[2]));
-          } catch (Exception e) {//
-          }
+    final String s = get(myKey, null, true);
+    if (s != null) {
+      final String[] rgb = s.split(",");
+      if (rgb.length == 3) {
+        try {
+          return new Color(Integer.parseInt(rgb[0]), Integer.parseInt(rgb[1]), Integer.parseInt(rgb[2]));
+        }
+        catch (Exception e) {//
         }
       }
+    }
     return defaultValue;
   }
 
@@ -132,10 +133,12 @@ public class RegistryValue {
       final String bundleValue = getBundleValue(key, mustExistInBundle);
       if (bundleValue != null) {
         return bundleValue;
-      } else {
+      }
+      else {
         return defaultValue;
       }
-    } else {
+    }
+    else {
       return userValue;
     }
   }

@@ -72,6 +72,7 @@ public class MavenShortcutsManager extends MavenSimpleProjectComponent {
     if (!isNormalProject()) return;
 
     MavenUtil.runWhenInitialized(myProject, new DumbAwareRunnable() {
+      @Override
       public void run() {
         doInit();
       }
@@ -147,6 +148,7 @@ public class MavenShortcutsManager extends MavenSimpleProjectComponent {
       keymapManager.addKeymapManagerListener(this);
     }
 
+    @Override
     public void activeKeymapChanged(Keymap keymap) {
       listenTo(keymap);
       fireShortcutsUpdated();
@@ -162,6 +164,7 @@ public class MavenShortcutsManager extends MavenSimpleProjectComponent {
       }
     }
 
+    @Override
     public void onShortcutChanged(String actionId) {
       fireShortcutsUpdated();
     }
@@ -177,10 +180,12 @@ public class MavenShortcutsManager extends MavenSimpleProjectComponent {
     private final MergingUpdateQueue myUpdateQueue = new MavenMergingUpdateQueue(getComponentName() + ": Keymap Update",
                                                                                  500, true, myProject);
 
+    @Override
     public void activated() {
       scheduleKeymapUpdate(myProjectsManager.getNonIgnoredProjects(), true);
     }
 
+    @Override
     public void projectsScheduled() {
     }
 
@@ -219,6 +224,7 @@ public class MavenShortcutsManager extends MavenSimpleProjectComponent {
       }
 
       myUpdateQueue.queue(new Update(MavenShortcutsManager.this) {
+        @Override
         public void run() {
           List<MavenProject> projectToUpdate;
           List<MavenProject> projectToDelete;
@@ -235,6 +241,7 @@ public class MavenShortcutsManager extends MavenSimpleProjectComponent {
 
     private List<MavenProject> selectScheduledProjects(final boolean forUpdate) {
       return ContainerUtil.mapNotNull(mySheduledProjects.entrySet(), new Function<Map.Entry<MavenProject, Boolean>, MavenProject>() {
+        @Override
         public MavenProject fun(Map.Entry<MavenProject, Boolean> eachEntry) {
           return forUpdate == eachEntry.getValue() ? eachEntry.getKey() : null;
         }

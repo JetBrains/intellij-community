@@ -20,6 +20,10 @@ public abstract class ModuleBasedTarget<R extends BuildRootDescriptor> extends B
     return myModule;
   }
 
+  public boolean isCompiledBeforeModuleLevelBuilders() {
+    return false;
+  }
+
   public abstract boolean isTests();
 
   @Override

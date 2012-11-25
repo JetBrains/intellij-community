@@ -132,7 +132,8 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     ApplicationManager.getApplication().assertIsDispatchThread();
     RangeHighlighterEx highlighter = isPersistent
                                      ? new PersistentRangeHighlighterImpl(this, startOffset, layer, targetArea, textAttributes)
-                                     : new RangeHighlighterImpl(this, startOffset, endOffset, layer, targetArea, textAttributes, false, false);
+                                     : new RangeHighlighterImpl(this, startOffset, endOffset, layer, targetArea, textAttributes, false,
+                                                                false);
 
     myCachedHighlighters = null;
     if (changeAttributesAction != null) {
@@ -143,7 +144,8 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   @Override
-  public void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter, @NotNull Consumer<RangeHighlighterEx> changeAttributesAction) {
+  public void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter,
+                                      @NotNull Consumer<RangeHighlighterEx> changeAttributesAction) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     boolean changed = ((RangeHighlighterImpl)highlighter).changeAttributesNoEvents(changeAttributesAction);
     if (changed) {
@@ -221,6 +223,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
       listener.attributesChanged(segmentHighlighter);
     }
   }
+
   private void fireAfterAdded(RangeHighlighterEx segmentHighlighter) {
     for (MarkupModelListener listener : myListeners) {
       listener.afterAdded(segmentHighlighter);
@@ -236,12 +239,13 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   @Override
   public boolean containsHighlighter(@NotNull final RangeHighlighter highlighter) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    return !myHighlighterTree.processOverlappingWith(highlighter.getStartOffset(), highlighter.getEndOffset(), new Processor<RangeHighlighterEx>() {
-      @Override
-      public boolean process(RangeHighlighterEx h) {
-        return h.getId() != ((RangeHighlighterEx)highlighter).getId();
-      }
-    });
+    return !myHighlighterTree
+      .processOverlappingWith(highlighter.getStartOffset(), highlighter.getEndOffset(), new Processor<RangeHighlighterEx>() {
+        @Override
+        public boolean process(RangeHighlighterEx h) {
+          return h.getId() != ((RangeHighlighterEx)highlighter).getId();
+        }
+      });
   }
 
   @Override

@@ -54,7 +54,7 @@ binding.setVariable("isEap", {
 
 binding.setVariable("mem32", "-Xms128m -Xmx512m -XX:MaxPermSize=250m -XX:ReservedCodeCacheSize=64m -XX:+UseCodeCacheFlushing")
 binding.setVariable("mem64", "-Xms128m -Xmx800m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=64m -XX:+UseCodeCacheFlushing")
-binding.setVariable("common_vmoptions", "-ea")
+binding.setVariable("common_vmoptions", "-ea -Dsun.io.useCanonCaches=false")
 
 binding.setVariable("vmOptions", { "$common_vmoptions ${isEap() ? '-XX:+HeapDumpOnOutOfMemoryError' : ''}".trim() })
 binding.setVariable("vmOptions32", { "$mem32 ${vmOptions()}".trim() })
@@ -626,7 +626,9 @@ binding.setVariable("buildWinZip", { String zipPath, List paths ->
   notifyArtifactBuilt(zipPath)
 })
 
-binding.setVariable("prepareMacZip", { String zipRoot, String zipPath, List paths, String macPath, List extraBins = [] ->
+binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths, String macPath, List extraBins = [] ->
+  projectBuilder.stage(".mac.zip")
+
   allPaths = paths + [macPath]
   ant.zip(zipfile: zipPath) {
     allPaths.each {
@@ -656,14 +658,6 @@ binding.setVariable("prepareMacZip", { String zipRoot, String zipPath, List path
 
     zipfileset(file: "$macPath/bin/idea.properties", prefix: "$zipRoot/bin")
   }
-})
-
-binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths, String macPath, List extraBins = [] ->
-  projectBuilder.stage(".mac.zip")
-
-  prepareMacZip(zipRoot, zipPath, paths, macPath, extraBins)
-
-  notifyArtifactBuilt(zipPath)
 })
 
 binding.setVariable("buildTarGz", { String tarRoot, String tarPath, List paths ->

@@ -20,17 +20,13 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.ide.actions.ShowFilePathAction;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.notification.*;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -57,6 +53,13 @@ import static com.intellij.util.containers.ContainerUtil.*;
 public class FileWatcher {
   @NonNls public static final String PROPERTY_WATCHER_DISABLED = "idea.filewatcher.disabled";
   @NonNls public static final String PROPERTY_WATCHER_EXECUTABLE_PATH = "idea.filewatcher.executable.path";
+
+  public static final NotNullLazyValue<NotificationGroup> NOTIFICATION_GROUP = new NotNullLazyValue<NotificationGroup>() {
+    @NotNull @Override
+    protected NotificationGroup compute() {
+      return new NotificationGroup("File Watcher Messages", NotificationDisplayType.STICKY_BALLOON, true);
+    }
+  };
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.FileWatcher");
 
@@ -92,7 +95,7 @@ public class FileWatcher {
   FileWatcher(@NotNull final ManagingFS managingFS) {
     myManagingFS = managingFS;
 
-    final boolean disabled = Boolean.parseBoolean(System.getProperty(PROPERTY_WATCHER_DISABLED));
+    boolean disabled = Boolean.parseBoolean(System.getProperty(PROPERTY_WATCHER_DISABLED));
     myExecutable = getExecutable();
 
     if (disabled) {
@@ -102,12 +105,10 @@ public class FileWatcher {
       LOG.info("Native file watcher is not supported on this platform");
     }
     else if (!myExecutable.exists()) {
-      final String message = "Native file watcher executable not found";
-      notifyOnFailure(message, null);
+      notifyOnFailure(ApplicationBundle.message("watcher.exe.not.found"), null);
     }
     else if (!myExecutable.canExecute()) {
-      final String message = "Native file watcher is not executable: <a href=\"" + myExecutable + "\">" + myExecutable + "</a>";
-      notifyOnFailure(message, new NotificationListener() {
+      notifyOnFailure(ApplicationBundle.message("watcher.exe.not.exe", myExecutable), new NotificationListener() {
         @Override
         public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
           ShowFilePathAction.openFile(myExecutable);
@@ -121,8 +122,7 @@ public class FileWatcher {
       }
       catch (IOException e) {
         LOG.warn(e.getMessage());
-        final String message = "File watcher failed to startup";
-        notifyOnFailure(message, null);
+        notifyOnFailure(ApplicationBundle.message("watcher.failed.to.start"), null);
       }
     }
   }
@@ -173,9 +173,8 @@ public class FileWatcher {
 
     if (!myFailureShownToTheUser) {
       myFailureShownToTheUser = true;
-      final Notification notification = new Notification(
-        Notifications.SYSTEM_MESSAGES_GROUP_ID, "External file sync may be slow", cause, NotificationType.WARNING, listener);
-      Notifications.Bus.notify(notification);
+      String title = ApplicationBundle.message("watcher.slow.sync");
+      Notifications.Bus.notify(NOTIFICATION_GROUP.getValue().createNotification(title, cause, NotificationType.WARNING, listener));
     }
   }
 
@@ -183,7 +182,7 @@ public class FileWatcher {
     if (myIsShuttingDown) return;
 
     if (myStartAttemptCount++ > MAX_PROCESS_LAUNCH_ATTEMPT_COUNT) {
-      notifyOnFailure("File watcher cannot be started", null);
+      notifyOnFailure(ApplicationBundle.message("watcher.failed.to.start"), null);
       throw new IOException("Can't launch process anymore");
     }
 

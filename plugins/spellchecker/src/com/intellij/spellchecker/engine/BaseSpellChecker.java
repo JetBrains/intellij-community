@@ -52,9 +52,9 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   private final List<Dictionary> bundledDictionaries = ContainerUtil.createEmptyCOWList();
   private final Metrics metrics = new LevenshteinDistance();
 
-  private AtomicBoolean myLoadingDictionaries = new AtomicBoolean(false); 
-  private List<Pair<Loader, Consumer<Dictionary>>> myDictionariesToLoad = ContainerUtil.createEmptyCOWList();
-  private Project myProject;
+  private final AtomicBoolean myLoadingDictionaries = new AtomicBoolean(false);
+  private final List<Pair<Loader, Consumer<Dictionary>>> myDictionariesToLoad = ContainerUtil.createEmptyCOWList();
+  private final Project myProject;
 
   public BaseSpellChecker(final Project project) {
     myProject = project;
@@ -71,7 +71,6 @@ public class BaseSpellChecker implements SpellCheckerEngine {
     else {
       loadCompressedDictionary(loader);
     }
-
   }
 
   private void loadCompressedDictionary(@NotNull Loader loader) {
@@ -90,7 +89,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
       });
     }
   }
-  
+
   private void loadDictionaryAsync(@NotNull final Loader loader, @NotNull final Consumer<Dictionary> consumer) {
     if (myLoadingDictionaries.compareAndSet(false, true)) {
       LOG.debug("Loading " + loader.getName());
@@ -127,18 +126,18 @@ public class BaseSpellChecker implements SpellCheckerEngine {
                 LOG.debug(loader.getName() + " loaded!");
                 consumer.consume(dictionary);
               }
-              
+
               while (!myDictionariesToLoad.isEmpty()) {
                 final Pair<Loader, Consumer<Dictionary>> nextDictionary = myDictionariesToLoad.remove(0);
                 Loader nextDictionaryLoader = nextDictionary.getFirst();
                 indicator.setText(String.format("Loading %s...", nextDictionaryLoader.getName()));
                 CompressedDictionary dictionary1 = CompressedDictionary.create(nextDictionaryLoader, transform);
-                if(dictionary1 != null) {
+                if (dictionary1 != null) {
                   LOG.debug(nextDictionaryLoader.getName() + " loaded!");
                   nextDictionary.getSecond().consume(dictionary1);
                 }
               }
-              
+
               LOG.debug("Loading finished, restarting daemon...");
               myLoadingDictionaries.set(false);
               final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
@@ -158,7 +157,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
           });
       }
     };
-    
+
 
     if (!myProject.isInitialized()) {
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
@@ -169,8 +168,8 @@ public class BaseSpellChecker implements SpellCheckerEngine {
           }
         }
       );
-      
-    } else {
+    }
+    else {
       UIUtil.invokeLaterIfNeeded(runnable);
     }
   }
@@ -178,7 +177,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   private void queueDictionaryLoad(final Loader loader, final Consumer<Dictionary> consumer) {
     LOG.debug("Queuing load for: " + loader.getName());
     myDictionariesToLoad.add(Pair.create(loader, consumer));
-  } 
+  }
 
   private void addModifiableDictionary(@NotNull EditableDictionary dictionary) {
     dictionaries.add(dictionary);
@@ -203,7 +202,6 @@ public class BaseSpellChecker implements SpellCheckerEngine {
       if (o instanceof Dictionary) {
         results.addAll(restore(startFrom, i, j, (Dictionary)o));
       }
-
     }
     return results;
   }
@@ -259,7 +257,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
         //return true;
       }
     }
-    if(errors==dictionaries.size()) return errors;
+    if (errors == dictionaries.size()) return errors;
     return -1;
   }
 
@@ -273,7 +271,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
     int user = isCorrect(transformed, dictionaries);
     //System.out.println("bundled = " + bundled);
     //System.out.println("user = " + user);
-    return bundled == 0 || user==0 || bundled>0 && user>0;
+    return bundled == 0 || user == 0 || bundled > 0 && user > 0;
   }
 
 

@@ -35,7 +35,6 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author yole
@@ -43,7 +42,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
   private final JScrollPane myScrollPane;
   private final JList myValueList;
-  private final CopyOnWriteArrayList<ChangeListener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<ChangeListener> myListeners = ContainerUtil.createEmptyCOWList();
   private final ChangeListColumn myColumn;
   private final Class<? extends CommittedChangesProvider> myProviderClass;
   private final MyListModel myModel;

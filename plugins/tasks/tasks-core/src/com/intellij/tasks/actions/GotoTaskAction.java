@@ -1,6 +1,5 @@
 package com.intellij.tasks.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.ide.util.gotoByName.ChooseByNameItemProvider;
@@ -34,6 +33,7 @@ import java.util.List;
  */
 public class GotoTaskAction extends GotoActionBase {
   public static final CreateNewTaskAction CREATE_NEW_TASK_ACTION = new CreateNewTaskAction();
+  public static final String ID = "tasks.goto";
 
   public GotoTaskAction() {
     getTemplatePresentation().setText("Open Task...");
@@ -205,7 +205,8 @@ public class GotoTaskAction extends GotoActionBase {
 
     @Override
     public String getCheckBoxName() {
-      return "Include closed tasks";
+      return null;
+      //return "Include closed tasks";
     }
 
     @Override

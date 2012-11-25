@@ -52,13 +52,14 @@ public class MetaRegistry extends MetaDataRegistrar {
   private static final Key<CachedValue<PsiMetaData>> META_DATA_KEY = Key.create("META DATA KEY");
 
   public static void bindDataToElement(final PsiElement element, final PsiMetaData data) {
-    CachedValue<PsiMetaData> value = CachedValuesManager.getManager(element.getProject()).createCachedValue(new CachedValueProvider<PsiMetaData>() {
-      @Override
-      public Result<PsiMetaData> compute() {
-        data.init(element);
-        return new Result<PsiMetaData>(data, data.getDependences());
-      }
-    });
+    CachedValue<PsiMetaData> value =
+      CachedValuesManager.getManager(element.getProject()).createCachedValue(new CachedValueProvider<PsiMetaData>() {
+        @Override
+        public Result<PsiMetaData> compute() {
+          data.init(element);
+          return new Result<PsiMetaData>(data, data.getDependences());
+        }
+      });
     element.putUserData(META_DATA_KEY, value);
   }
 
@@ -101,7 +102,7 @@ public class MetaRegistry extends MetaDataRegistrar {
     if (!ourContributorsLoaded) {
       synchronized (ourBindings) {
         if (!ourContributorsLoaded) {
-          for(MetaDataContributor contributor: Extensions.getExtensions(MetaDataContributor.EP_NAME)) {
+          for (MetaDataContributor contributor : Extensions.getExtensions(MetaDataContributor.EP_NAME)) {
             contributor.contributeMetaData(MetaDataRegistrar.getInstance());
           }
           ourContributorsLoaded = true;
@@ -109,7 +110,7 @@ public class MetaRegistry extends MetaDataRegistrar {
       }
     }
   }
-  
+
   @Nullable
   public static PsiMetaData getMetaBase(final PsiElement element) {
     ProgressIndicatorProvider.checkCanceled();
@@ -117,10 +118,12 @@ public class MetaRegistry extends MetaDataRegistrar {
   }
 
   /**
+   * @see com.intellij.psi.meta.MetaDataContributor
    * @deprecated
-   * @see MetaDataContributor
    */
-  public static <T extends PsiMetaData> void addMetadataBinding(ElementFilter filter, Class<T> aMetadataClass, Disposable parentDisposable) {
+  public static <T extends PsiMetaData> void addMetadataBinding(ElementFilter filter,
+                                                                Class<T> aMetadataClass,
+                                                                Disposable parentDisposable) {
     final MyBinding binding = new MyBinding(filter, aMetadataClass);
     addBinding(binding);
     Disposer.register(parentDisposable, new Disposable() {
@@ -132,8 +135,8 @@ public class MetaRegistry extends MetaDataRegistrar {
   }
 
   /**
+   * @see com.intellij.psi.meta.MetaDataContributor
    * @deprecated
-   * @see MetaDataContributor
    */
   public static <T extends PsiMetaData> void addMetadataBinding(ElementFilter filter, Class<T> aMetadataClass) {
     addBinding(new MyBinding(filter, aMetadataClass));

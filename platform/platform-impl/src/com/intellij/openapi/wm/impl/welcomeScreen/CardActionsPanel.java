@@ -185,6 +185,11 @@ public class CardActionsPanel extends JPanel {
       return 8;
     }
 
+    @Override
+    public String getToolTipText() {
+      return null;
+    }
+
     private static Presentation wrapIcon(Presentation presentation) {
       Icon original = presentation.getIcon();
       presentation.setIcon(new CenteredIcon(original != null ? original : DEFAULT_ICON, 40, 40, false));

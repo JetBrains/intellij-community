@@ -50,6 +50,7 @@ import java.util.List;
  * @author Constantine.Plotnikov
  */
 public class GotoFileAction extends GotoActionBase implements DumbAware {
+  public static final String ID = "GotoFile";
 
   @Override
   public void gotoActionPerformed(AnActionEvent e) {

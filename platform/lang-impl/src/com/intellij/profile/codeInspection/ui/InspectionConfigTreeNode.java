@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,30 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 14-May-2009
- */
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.codeInspection.ex.ScopeToolState;
-import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.CheckedTreeNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @author anna
+ * @since 14-May-2009
+ */
 public class InspectionConfigTreeNode extends CheckedTreeNode {
   private ScopeToolState myState;
   private boolean myByDefault;
   private boolean myInspectionNode;
-  private final NotNullLazyValue<Boolean> myProperSetting = new NotNullLazyValue<Boolean>() {
+  private final ClearableLazyValue<Boolean> myProperSetting = new ClearableLazyValue<Boolean>() {
     @NotNull
     @Override
     protected Boolean compute() {
-      Descriptor descriptor = getDesriptor();
+      Descriptor descriptor = getDescriptor();
       if (descriptor != null) return descriptor.getInspectionProfile().isProperSetting(descriptor.getTool().getShortName());
       for (int i = 0; i < getChildCount(); i++) {
         InspectionConfigTreeNode node = (InspectionConfigTreeNode)getChildAt(i);
@@ -65,7 +64,7 @@ public class InspectionConfigTreeNode extends CheckedTreeNode {
   }
 
   @Nullable
-  public Descriptor getDesriptor() {
+  public Descriptor getDescriptor() {
     if (userObject instanceof String) return null;
     return (Descriptor)userObject;
   }

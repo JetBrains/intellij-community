@@ -41,13 +41,12 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author yole
  */
 public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
-  private final CopyOnWriteArrayList<ChangeListener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<ChangeListener> myListeners = ContainerUtil.createEmptyCOWList();
   private MyUI myUI;
   private final Project myProject;
   private final List<FilePath> mySelection = new ArrayList<FilePath>();

@@ -64,7 +64,7 @@ public class JavaBuilderUtil {
 
       if (!context.isProjectRebuild()) {
         if (context.shouldDifferentiate(chunk)) {
-          context.processMessage(new ProgressMessage("Checking dependencies"));
+          context.processMessage(new ProgressMessage("Checking dependencies... [" + chunk.getName() + "]"));
           final Set<File> allCompiledFiles = getAllCompiledFilesContainer(context);
           final Set<File> allAffectedFiles = getAllAffectedFilesContainer(context);
 
@@ -146,7 +146,7 @@ public class JavaBuilderUtil {
         globalMappings.differentiateOnRebuild(delta);
       }
 
-      context.processMessage(new ProgressMessage("Updating dependency information"));
+      context.processMessage(new ProgressMessage("Updating dependency information... [" + chunk.getName() + "]"));
 
       globalMappings.integrate(delta);
 

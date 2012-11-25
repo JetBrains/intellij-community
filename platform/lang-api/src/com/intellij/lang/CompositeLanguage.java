@@ -22,7 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CompositeLanguage extends Language{
+public class CompositeLanguage extends Language {
   private final List<LanguageFilter> myFilters = ContainerUtil.createEmptyCOWList();
 
   protected CompositeLanguage(final String id) {
@@ -33,21 +33,22 @@ public class CompositeLanguage extends Language{
     super(ID, mimeTypes);
   }
 
-  protected CompositeLanguage(Language baseLanguage,final String ID, final String... mimeTypes) {
+  protected CompositeLanguage(Language baseLanguage, final String ID, final String... mimeTypes) {
     super(baseLanguage, ID, mimeTypes);
   }
 
-  public void registerLanguageExtension(LanguageFilter filter){
-    if(!myFilters.contains(filter)) myFilters.add(filter);
+  public void registerLanguageExtension(LanguageFilter filter) {
+    if (!myFilters.contains(filter)) myFilters.add(filter);
   }
-  public boolean unregisterLanguageExtension(LanguageFilter filter){
+
+  public boolean unregisterLanguageExtension(LanguageFilter filter) {
     return myFilters.remove(filter);
   }
 
   public Language[] getLanguageExtensionsForFile(final PsiFile psi) {
     final List<Language> extensions = new ArrayList<Language>(1);
     for (LanguageFilter filter : myFilters) {
-      if(filter.isRelevantForFile(psi)) extensions.add(filter.getLanguage());
+      if (filter.isRelevantForFile(psi)) extensions.add(filter.getLanguage());
     }
     return extensions.toArray(new Language[extensions.size()]);
   }

@@ -56,4 +56,13 @@ def foo(char c, int x) {}
 foo(<caret>'a', 'a')
 ''', "Cast 1st parameter to char", GroovyAssignabilityCheckInspection)
   }
+
+  void testMapArgIsIncorrect() {
+    doAntiTest('''\
+    void foo(Map<int, int> m, String o) {}
+
+
+    foo('',<caret> g:4 )
+    ''', 'Cast', GroovyAssignabilityCheckInspection)
+  }
 }

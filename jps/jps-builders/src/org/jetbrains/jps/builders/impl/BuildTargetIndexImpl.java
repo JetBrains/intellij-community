@@ -9,7 +9,6 @@ import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetIndex;
 import org.jetbrains.jps.builders.BuildTargetType;
@@ -25,45 +24,56 @@ import java.util.*;
  */
 public class BuildTargetIndexImpl implements BuildTargetIndex {
   private Map<BuildTargetType<?>, List<? extends BuildTarget<?>>> myTargets;
+  private Map<JpsModule, List<ModuleBasedTarget>> myModuleBasedTargets;
   private Map<BuildTarget<?>, Collection<BuildTarget<?>>> myDependencies;
   private List<BuildTargetChunk> myTargetChunks;
   private final List<BuildTarget<?>> myAllTargets;
 
   public BuildTargetIndexImpl(@NotNull JpsModel model) {
     myTargets = new THashMap<BuildTargetType<?>, List<? extends BuildTarget<?>>>();
+    myModuleBasedTargets = new THashMap<JpsModule, List<ModuleBasedTarget>>();
     List<List<? extends BuildTarget<?>>> targetsByType = new ArrayList<List<? extends BuildTarget<?>>>();
     for (BuildTargetType<?> type : BuilderRegistry.getInstance().getTargetTypes()) {
       List<? extends BuildTarget<?>> targets = type.computeAllTargets(model);
       myTargets.put(type, targets);
       targetsByType.add(targets);
+      for (BuildTarget<?> target : targets) {
+        if (target instanceof ModuleBasedTarget) {
+          final ModuleBasedTarget t = (ModuleBasedTarget)target;
+          final JpsModule module = t.getModule();
+          List<ModuleBasedTarget> list = myModuleBasedTargets.get(module);
+          if (list == null) {
+            list = new ArrayList<ModuleBasedTarget>();
+            myModuleBasedTargets.put(module, list);
+          }
+          list.add(t);
+        }
+      }
     }
     myDependencies = new THashMap<BuildTarget<?>, Collection<BuildTarget<?>>>();
     myAllTargets = Collections.unmodifiableList(ContainerUtil.concat(targetsByType));
   }
 
   @Override
-  public Collection<ModuleBasedTarget<?>> getModuleBasedTargets(@Nullable JpsModule module, @NotNull ModuleTargetSelector selector) {
+  public Collection<ModuleBasedTarget<?>> getModuleBasedTargets(@NotNull JpsModule module, @NotNull ModuleTargetSelector selector) {
+    final List<ModuleBasedTarget> targets = myModuleBasedTargets.get(module);
+    if (targets == null || targets.isEmpty()) {
+      return Collections.emptyList();
+    }
     final List<ModuleBasedTarget<?>> result = new SmartList<ModuleBasedTarget<?>>();
-    for (BuildTarget<?> target : getAllTargets()) {
-      if (!(target instanceof ModuleBasedTarget)) {
-        continue;
-      }
-      final ModuleBasedTarget _target = (ModuleBasedTarget)target;
-      if (module != null && !module.equals(_target.getModule())) {
-        continue;
-      }
+    for (ModuleBasedTarget target : targets) {
       switch (selector) {
         case ALL:
-          result.add(_target);
+          result.add(target);
           break;
         case PRODUCTION:
-          if (!_target.isTests()) {
-            result.add(_target);
+          if (!target.isTests()) {
+            result.add(target);
           }
           break;
         case TEST:
-          if (_target.isTests()) {
-            result.add(_target);
+          if (target.isTests()) {
+            result.add(target);
           }
       }
     }

@@ -38,7 +38,7 @@ import java.util.List;
 public class SimpleProviderBinding<Provider> implements ProviderBinding<Provider> {
   private final List<ProviderInfo<Provider, ElementPattern>> myProviderPairs = ContainerUtil.createEmptyCOWList();
 
-  public void registerProvider(Provider provider,ElementPattern pattern, double priority){
+  public void registerProvider(Provider provider, ElementPattern pattern, double priority) {
     myProviderPairs.add(new ProviderInfo<Provider, ElementPattern>(provider, pattern, priority));
   }
 
@@ -46,7 +46,7 @@ public class SimpleProviderBinding<Provider> implements ProviderBinding<Provider
   public void addAcceptableReferenceProviders(@NotNull PsiElement position,
                                               @NotNull List<ProviderInfo<Provider, ProcessingContext>> list,
                                               @NotNull PsiReferenceService.Hints hints) {
-    for(ProviderInfo<Provider, ElementPattern> trinity:myProviderPairs) {
+    for (ProviderInfo<Provider, ElementPattern> trinity : myProviderPairs) {
       if (hints != PsiReferenceService.Hints.NO_HINTS && !((PsiReferenceProvider)trinity.provider).acceptsHints(position, hints)) {
         continue;
       }
@@ -75,5 +75,4 @@ public class SimpleProviderBinding<Provider> implements ProviderBinding<Provider
       }
     }
   }
-
 }

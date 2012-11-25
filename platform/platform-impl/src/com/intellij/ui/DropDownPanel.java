@@ -20,6 +20,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.util.IconUtil;
+import com.intellij.util.containers.ContainerUtil;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * User: Vassiliy.Kudryashov
@@ -42,7 +42,7 @@ public class DropDownPanel extends JPanel {
   private final SeparatorButton myLabel;
   private @Nullable JComponent myContent;
   private boolean myExpanded = true;
-  private final List<ChangeListener> myListeners = new CopyOnWriteArrayList<ChangeListener>();
+  private final List<ChangeListener> myListeners = ContainerUtil.createEmptyCOWList();
 
   public DropDownPanel() {
     this(null, null);

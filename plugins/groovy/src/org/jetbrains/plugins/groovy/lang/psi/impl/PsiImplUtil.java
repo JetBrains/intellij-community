@@ -53,6 +53,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
@@ -67,6 +68,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGd
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrAdditiveExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrMultiplicativeExpressionImpl;
@@ -715,4 +717,17 @@ public class PsiImplUtil {
     final ASTNode astNode = next.getNode();
     return astNode != null && set.contains(astNode.getElementType());
   }
+
+  public static boolean hasNamedArguments(GrNamedArgumentsOwner list) {
+    for (PsiElement child = list.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (child instanceof GrNamedArgument) return true;
+    }
+    return false;
+  }
+
+  public static boolean hasExpressionArguments(GrNamedArgumentsOwner list) {
+    for (PsiElement child = list.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (child instanceof GrExpression) return true;
+    }
+    return false;  }
 }

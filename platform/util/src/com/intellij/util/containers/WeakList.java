@@ -40,12 +40,14 @@ public class WeakList<T> extends UnsafeWeakList<T> {
     super(array);
   }
 
+  @Override
   public T get(int index) {
     synchronized (myArray) {
       return super.get(index);
     }
   }
 
+  @Override
   public boolean add(T element) {
     synchronized (myArray) {
       return super.add(element);
@@ -59,12 +61,14 @@ public class WeakList<T> extends UnsafeWeakList<T> {
     }
   }
 
+  @Override
   public boolean addIfAbsent(T element) {
     synchronized (myArray) {
       return super.addIfAbsent(element);
     }
   }
 
+  @Override
   public void add(int index, T element) {
     synchronized (myArray) {
       super.add(index, element);
@@ -113,6 +117,7 @@ public class WeakList<T> extends UnsafeWeakList<T> {
     }
   }
 
+  @Override
   public T remove(int index) {
     synchronized (myArray) {
       return super.remove(index);
@@ -126,16 +131,20 @@ public class WeakList<T> extends UnsafeWeakList<T> {
     }
   }
 
+  @Override
+  @NotNull
   public Iterator<T> iterator() {
     return new MySyncIterator();
   }
 
+  @Override
   public int size() {
     synchronized (myArray) {
       return myArray.size();
     }
   }
 
+  @Override
   public List<T> toStrongList() {
     synchronized (myArray) {
       List<T> result = new ArrayList<T>(myArray.size());
@@ -154,12 +163,14 @@ public class WeakList<T> extends UnsafeWeakList<T> {
   }
 
   private class MySyncIterator extends MyIterator {
+    @Override
     protected void findNext() {
       synchronized (myArray) {
         super.findNext();
       }
     }
 
+    @Override
     public void remove() {
       synchronized (myArray) {
         super.remove();

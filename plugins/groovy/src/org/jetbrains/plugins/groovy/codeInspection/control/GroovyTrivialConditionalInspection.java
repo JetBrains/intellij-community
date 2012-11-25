@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
+import org.jetbrains.plugins.groovy.intentions.base.ErrorUtil;
 import org.jetbrains.plugins.groovy.intentions.utils.BoolUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -95,6 +96,8 @@ public class GroovyTrivialConditionalInspection extends BaseInspection {
       if (type == null || !(PsiType.BOOLEAN.isAssignableFrom(type))) {
         return;
       }
+
+      if (ErrorUtil.containsError(exp)) return;
 
       final GrExpression thenExpression = exp.getThenBranch();
       if (thenExpression == null) {

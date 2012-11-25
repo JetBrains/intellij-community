@@ -31,15 +31,20 @@ import java.util.List;
 /**
  * @author ven
  */
-public class ReferenceEditorWithBrowseButton extends ComponentWithBrowseButton<EditorTextField> implements TextAccessor{
-  private final Function<String,Document> myFactory;
+public class ReferenceEditorWithBrowseButton extends ComponentWithBrowseButton<EditorTextField> implements TextAccessor {
+  private final Function<String, Document> myFactory;
   private final List<DocumentListener> myDocumentListeners = ContainerUtil.createEmptyCOWList();
 
-  public ReferenceEditorWithBrowseButton(final ActionListener browseActionListener, final Project project, final Function<String,Document> factory, String text) {
+  public ReferenceEditorWithBrowseButton(final ActionListener browseActionListener,
+                                         final Project project,
+                                         final Function<String, Document> factory,
+                                         String text) {
     this(browseActionListener, new EditorTextField(factory.fun(text), project, StdFileTypes.JAVA), factory);
   }
 
-  public ReferenceEditorWithBrowseButton(final ActionListener browseActionListener, final EditorTextField editorTextField, final Function<String,Document> factory) {
+  public ReferenceEditorWithBrowseButton(final ActionListener browseActionListener,
+                                         final EditorTextField editorTextField,
+                                         final Function<String, Document> factory) {
     super(editorTextField, browseActionListener);
     myFactory = factory;
   }
@@ -58,19 +63,19 @@ public class ReferenceEditorWithBrowseButton extends ComponentWithBrowseButton<E
     return getChildComponent();
   }
 
-  public String getText(){
+  public String getText() {
     return getEditorTextField().getText().trim();
   }
 
   public void setText(final String text) {
     Document oldDocument = getEditorTextField().getDocument();
     String oldText = oldDocument.getText();
-    for(DocumentListener listener: myDocumentListeners) {
+    for (DocumentListener listener : myDocumentListeners) {
       oldDocument.removeDocumentListener(listener);
     }
     Document document = myFactory.fun(text);
     getEditorTextField().setDocument(document);
-    for(DocumentListener listener: myDocumentListeners) {
+    for (DocumentListener listener : myDocumentListeners) {
       document.addDocumentListener(listener);
       listener.documentChanged(new DocumentEventImpl(document, 0, oldText, text, -1, false));
     }

@@ -56,7 +56,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
 
   private int myRefreshCount = 0;
 
-  public VirtualFileManagerImpl(VirtualFileSystem[] fileSystems, MessageBus bus, FileSystemPersistence persistence) {
+  public VirtualFileManagerImpl(@NotNull VirtualFileSystem[] fileSystems, @NotNull MessageBus bus, @NotNull FileSystemPersistence persistence) {
     myPersistence = persistence;
 
     for (VirtualFileSystem fileSystem : fileSystems) {

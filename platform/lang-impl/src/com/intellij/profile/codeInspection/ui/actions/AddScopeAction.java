@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,7 +86,7 @@ public abstract class AddScopeAction extends AnAction {
     final NamedScope chosenScope = NamedScopesHolder.getScope(project, availableScopes.get(idx));
 
     for (InspectionConfigTreeNode node : nodes) {
-      final Descriptor descriptor = node.getDesriptor();
+      final Descriptor descriptor = node.getDescriptor();
       if (node.getScopeName() != null || descriptor == null) continue;
       final InspectionProfileEntry tool = descriptor.getTool(); //copy
       final ScopeToolState scopeToolState = getSelectedProfile().addScope(tool, chosenScope,
@@ -108,7 +108,7 @@ public abstract class AddScopeAction extends AnAction {
   private static void collect(List<Descriptor> descriptors,
                               List<InspectionConfigTreeNode> nodes,
                               InspectionConfigTreeNode node) {
-    final Descriptor descriptor = node.getDesriptor();
+    final Descriptor descriptor = node.getDescriptor();
     if (descriptor != null) {
       if (node.getScopeName() == null) {
         descriptors.add(descriptor);

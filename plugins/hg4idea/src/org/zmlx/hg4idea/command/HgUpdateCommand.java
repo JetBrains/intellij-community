@@ -14,6 +14,7 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,6 +70,7 @@ public class HgUpdateCommand {
     executor.setShowOutput(true);
     final HgCommandResult result = executor.executeInCurrentThread(repo, "update", arguments,new HgDeleteModifyPromptHandler());
     project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
+    VfsUtil.markDirtyAndRefresh(true, true, false, repo);
     return result;
   }
 

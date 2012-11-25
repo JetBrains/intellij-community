@@ -28,13 +28,15 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements SettingsSavingComponent {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.SchemesManagerFactoryImpl");
 
-  private final Collection<SchemesManagerImpl> myRegisteredManagers = ContainerUtil.createEmptyCOWList();
+  private final List<SchemesManagerImpl> myRegisteredManagers = ContainerUtil.createEmptyCOWList();
 
+  @Override
   public <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> createSchemesManager(final String fileSpec,
                                                                    final SchemeProcessor<E> processor, final RoamingType roamingType) {
     final Application application = ApplicationManager.getApplication();
@@ -51,40 +53,50 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
     }
     else {
       return new AbstractSchemesManager<T,E>(){
+        @Override
         @NotNull
         public Collection<E> loadSchemes() {
           return Collections.emptyList();
         }
 
+        @Override
         @NotNull
         public Collection<SharedScheme<E>> loadSharedSchemes(final Collection<T> currentSchemeList) {
           return Collections.emptyList();
         }
 
+        @Override
         public void exportScheme(final E scheme, final String name, final String description) {
         }
 
+        @Override
         public boolean isImportAvailable() {
           return false;
         }
 
+        @Override
         public boolean isShared(final Scheme scheme) {
           return false;
         }
 
+        @Override
         public void save() {
         }
 
+        @Override
         protected void onSchemeDeleted(final Scheme toDelete) {
         }
 
+        @Override
         protected void onSchemeAdded(final T scheme) {
         }
 
+        @Override
         public boolean isExportAvailable() {
           return false;
         }
 
+        @Override
         public File getRootDirectory() {
           return null;
         }
@@ -105,6 +117,7 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
     }
   }
 
+  @Override
   public void save() {
     ServiceBean.loadServicesFromBeans(SCHEME_OWNER, Object.class);
     for (SchemesManager registeredManager : myRegisteredManagers) {

@@ -442,7 +442,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     final FileInputStream stream = new FileInputStream(convertToIOFileAndCheck(file));
     try {
       final int length = (int)file.getLength();
-      assert length >= 0 : file;
+      if (length < 0) throw new IOException("Invalid file length: " + length + ", " + file);
       return FileUtil.loadBytes(stream, length);
     }
     finally {

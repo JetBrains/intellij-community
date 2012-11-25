@@ -100,7 +100,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   private final Map<VirtualFile, byte[]> mySavedCopies = new HashMap<VirtualFile, byte[]>();
   private final TObjectLongHashMap<VirtualFile> mySavedTimestamps = new TObjectLongHashMap<VirtualFile>();
-  private final Map<Project, List<Pair<VirtualFile, StateStorage>>> myChangedProjectFiles = new HashMap<Project, List<Pair<VirtualFile, StateStorage>>>();
+  private final Map<Project, List<Pair<VirtualFile, StateStorage>>> myChangedProjectFiles =
+    new HashMap<Project, List<Pair<VirtualFile, StateStorage>>>();
   private final Alarm myChangedFilesAlarm = new Alarm();
   private final List<Pair<VirtualFile, StateStorage>> myChangedApplicationFiles = new ArrayList<Pair<VirtualFile, StateStorage>>();
   private final AtomicInteger myReloadBlockCount = new AtomicInteger(0);
@@ -272,7 +273,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     try {
       if (template != null) {
         project.getStateStore().loadProjectFromTemplate(template);
-      } else {
+      }
+      else {
         project.getStateStore().load();
       }
       project.loadProjectComponents();
@@ -288,7 +290,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
   }
 
-  private ProjectImpl createProject(@Nullable String projectName, @Nullable String filePath, boolean isDefault, boolean isOptimiseTestLoadSpeed) {
+  private ProjectImpl createProject(@Nullable String projectName,
+                                    @Nullable String filePath,
+                                    boolean isDefault,
+                                    boolean isOptimiseTestLoadSpeed) {
     assert isDefault || filePath != null : filePath;
     return isDefault ? new DefaultProject(this, null, isOptimiseTestLoadSpeed, projectName)
                      : new ProjectImpl(this, filePath, isOptimiseTestLoadSpeed, projectName);
@@ -370,13 +375,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public Project[] getOpenProjects() {
     synchronized (myOpenProjects) {
       if (myOpenProjectsArrayCache.length != myOpenProjects.size()) {
-        LOG.error("Open projects: "+myOpenProjects+"; cache: "+Arrays.asList(myOpenProjectsArrayCache));
+        LOG.error("Open projects: " + myOpenProjects + "; cache: " + Arrays.asList(myOpenProjectsArrayCache));
       }
       if (myOpenProjectsArrayCache.length > 0 && myOpenProjectsArrayCache[0] != myOpenProjects.get(0)) {
-        LOG.error("Open projects cache corrupted. Open projects: "+myOpenProjects+"; cache: "+Arrays.asList(myOpenProjectsArrayCache));
+        LOG
+          .error("Open projects cache corrupted. Open projects: " + myOpenProjects + "; cache: " + Arrays.asList(myOpenProjectsArrayCache));
       }
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-         return ArrayUtil.mergeArrays(myOpenProjectsArrayCache, myTestProjects.toArray(new Project[myTestProjects.size()]));
+        return ArrayUtil.mergeArrays(myOpenProjectsArrayCache, myTestProjects.toArray(new Project[myTestProjects.size()]));
       }
       return myOpenProjectsArrayCache;
     }
@@ -583,7 +589,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
   }
 
-  private boolean tryToReloadApplication(){
+  private boolean tryToReloadApplication() {
     try {
       final Application app = ApplicationManager.getApplication();
 
@@ -643,7 +649,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     finally {
       myChangedApplicationFiles.clear();
     }
-
   }
 
   private boolean shouldReloadProject(final Project project) {
@@ -729,20 +734,20 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     //ApplicationManager.getApplication().invokeLater(new Runnable() {
     //  public void run() {
-        //IdeEventQueue.getInstance().addIdleListener(new Runnable() {
-        //  @Override
-        //  public void run() {
-        //    IdeEventQueue.getInstance().removeIdleListener(this);
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                if (!tryToReloadApplication()) return;
-                askToReloadProjectIfConfigFilesChangedExternally();
-              }
-            }, ModalityState.NON_MODAL);
-          //}
-        //}, 2000);
-      //}
+    //IdeEventQueue.getInstance().addIdleListener(new Runnable() {
+    //  @Override
+    //  public void run() {
+    //    IdeEventQueue.getInstance().removeIdleListener(this);
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        if (!tryToReloadApplication()) return;
+        askToReloadProjectIfConfigFilesChangedExternally();
+      }
+    }, ModalityState.NON_MODAL);
+    //}
+    //}, 2000);
+    //}
     //}, ModalityState.NON_MODAL);
   }
 
@@ -1059,7 +1064,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     for (ProjectManagerListener listener : myListeners) {
       try {
         if (!listener.canCloseProject(project)) return false;
-      } catch (Throwable e) {
+      }
+      catch (Throwable e) {
         LOG.warn(e); // DO NOT LET ANY PLUGIN to prevent closing due to exception
       }
     }

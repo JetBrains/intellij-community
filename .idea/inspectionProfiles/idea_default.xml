@@ -309,7 +309,7 @@
     <inspection_tool class="MavenDuplicateDependenciesInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="MavenModelInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="MethodMayBeStatic" enabled="true" level="WARNING" enabled_by_default="true">
-      <option name="m_onlyPrivateOrFinal" value="false" />
+      <option name="m_onlyPrivateOrFinal" value="true" />
       <option name="m_ignoreEmptyMethods" value="true" />
     </inspection_tool>
     <inspection_tool class="MethodNamesDifferOnlyByCase" enabled="true" level="WARNING" enabled_by_default="true" />

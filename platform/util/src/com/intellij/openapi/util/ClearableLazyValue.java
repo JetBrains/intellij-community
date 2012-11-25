@@ -13,28 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui;
+package com.intellij.openapi.util;
 
-import com.intellij.util.ui.UIUtil;
-
-import java.awt.*;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Konstantin Bulenkov
+ * Lazy value with ability to reset (and recompute) the value.
+ * Thread-safe version: {@link AtomicClearableLazyValue}.
  */
-public class JBColor extends Color {
-  public JBColor(int rgb, int darkRGB) {
-    super(isDark() ? darkRGB : rgb);
+public abstract class ClearableLazyValue<T> {
+  private T myValue;
+
+  @NotNull
+  protected abstract T compute();
+
+  @NotNull
+  public T getValue() {
+    if (myValue == null) {
+      myValue = compute();
+    }
+    return myValue;
   }
 
-  public JBColor(Color regular, Color dark) {
-    super(isDark() ? dark.getRGB() : regular.getRGB(), (isDark() ? dark : regular).getAlpha() != 255);
+  public void drop() {
+    myValue = null;
   }
-
-  private static boolean isDark() {
-    return UIUtil.isUnderDarcula();
-  }
-
-  public final static Color red = isDark() ? DarculaColors.RED : Color.red;
-  public final static Color blue = isDark() ? DarculaColors.BLUE : Color.blue;
 }
