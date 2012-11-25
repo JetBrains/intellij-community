@@ -21,6 +21,11 @@ public class CacheGet<K, V> implements Get<K, V>{
         this.moreMap = new HashMap<K, V>(2 * size);
     }
 
+    public void clear() {
+        this.map = new HashMap<K, V>(2 * size);
+        this.moreMap = new HashMap<K, V>(2 * size);
+    }
+
     @Override
     public V get(K key) {
         V value = moreMap.get(key);

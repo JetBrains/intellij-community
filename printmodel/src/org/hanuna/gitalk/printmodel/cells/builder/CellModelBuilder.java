@@ -1,8 +1,8 @@
 package org.hanuna.gitalk.printmodel.cells.builder;
 
 import org.hanuna.gitalk.common.Interval;
-import org.hanuna.gitalk.common.generatemodel.FullSaveGenerateModel;
 import org.hanuna.gitalk.common.generatemodel.GenerateModel;
+import org.hanuna.gitalk.common.generatemodel.PartSaveGenerateModel;
 import org.hanuna.gitalk.common.generatemodel.generator.Generator;
 import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 import org.hanuna.gitalk.graph.GraphModel;
@@ -21,7 +21,7 @@ import java.util.List;
  */
 public class CellModelBuilder {
     private final GraphModel graphModel;
-    private final GenerateModel<CellRow> generateModel = new FullSaveGenerateModel<CellRow>();
+    private final GenerateModel<CellRow> generateModel = new PartSaveGenerateModel<CellRow>();
     private final Generator<CellRow> generator;
 
 
