@@ -201,9 +201,12 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       }
     }
     if (changeInfo.isParameterSetOrOrderChanged()) {
-
       fixDoc(changeInfo, function);
       updateParameterList(changeInfo, function);
+    }
+    if (changeInfo.isNameChanged()) {
+      final PsiElement method = changeInfo.getMethod();
+      RenameUtil.doRenameGenericNamedElement(method, changeInfo.getNewName(), UsageInfo.EMPTY_ARRAY, null);
     }
   }
 
