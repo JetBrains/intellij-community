@@ -20,7 +20,10 @@ import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -764,13 +767,24 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   }
 
   private int getAnnotationWrap(final PsiElement parent) {
-    return parent instanceof PsiMethod ? mySettings.METHOD_ANNOTATION_WRAP :
-           parent instanceof PsiClass ? mySettings.CLASS_ANNOTATION_WRAP :
-           parent instanceof GrVariableDeclaration &&
-           ((GrVariableDeclaration)parent).getVariables()[0] instanceof PsiField ? mySettings.FIELD_ANNOTATION_WRAP :
-           parent instanceof GrVariableDeclaration ? mySettings.VARIABLE_ANNOTATION_WRAP :
-           parent instanceof PsiParameter ? mySettings.PARAMETER_ANNOTATION_WRAP :
-           CommonCodeStyleSettings.DO_NOT_WRAP;
+    if (parent instanceof PsiMethod) {
+      return mySettings.METHOD_ANNOTATION_WRAP;
+    }
+    else if (parent instanceof PsiClass) {
+      return mySettings.CLASS_ANNOTATION_WRAP;
+    }
+    else if (parent instanceof GrVariableDeclaration && parent.getParent() instanceof GrTypeDefinitionBody) {
+      return mySettings.FIELD_ANNOTATION_WRAP;
+    }
+    else if (parent instanceof GrVariableDeclaration) {
+      return mySettings.VARIABLE_ANNOTATION_WRAP;
+    }
+    else if (parent instanceof PsiParameter) {
+      return mySettings.PARAMETER_ANNOTATION_WRAP;
+    }
+    else {
+      return CommonCodeStyleSettings.DO_NOT_WRAP;
+    }
   }
 
   public Spacing getSpacing() {
