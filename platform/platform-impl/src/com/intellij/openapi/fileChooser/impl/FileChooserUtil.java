@@ -44,7 +44,7 @@ public final class FileChooserUtil {
   }
 
   public static void setLastOpenedFile(@Nullable final Project project, @Nullable final VirtualFile file) {
-    if (project != null && file != null) {
+    if (project != null && !project.isDisposed() && file != null) {
       PropertiesComponent.getInstance(project).setValue(LAST_OPENED_FILE_PATH, file.getPath());
     }
   }
