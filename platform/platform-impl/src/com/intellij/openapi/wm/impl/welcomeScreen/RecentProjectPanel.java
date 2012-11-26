@@ -56,10 +56,15 @@ public class RecentProjectPanel extends JPanel {
     new ClickListener(){
       @Override
       public boolean onClick(MouseEvent event, int clickCount) {
-        Object selection = myList.getSelectedValue();
+        int selectedIndex = myList.getSelectedIndex();
+        if (selectedIndex >= 0) {
+          if (myList.getCellBounds(selectedIndex, selectedIndex).contains(event.getPoint())) {
+            Object selection = myList.getSelectedValue();
 
-        if (selection != null) {
-          ((AnAction)selection).actionPerformed(AnActionEvent.createFromInputEvent((AnAction)selection, event, ActionPlaces.WELCOME_SCREEN));
+            if (selection != null) {
+              ((AnAction)selection).actionPerformed(AnActionEvent.createFromInputEvent((AnAction)selection, event, ActionPlaces.WELCOME_SCREEN));
+            }
+          }
         }
 
         return true;

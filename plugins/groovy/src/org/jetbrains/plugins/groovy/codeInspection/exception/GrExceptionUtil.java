@@ -13,22 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.api.util;
+package org.jetbrains.plugins.groovy.codeInspection.exception;
 
-import com.intellij.psi.PsiElement;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
-/**
- * @author Sergey Evdokimov
- */
-public interface GrNamedArgumentsOwner extends PsiElement {
-
-  @NotNull
-  GrNamedArgument[] getNamedArguments();
-
-  @Nullable
-  GrNamedArgument findNamedArgument(@NotNull String label);
-
+public class GrExceptionUtil {
+  public static boolean ignore(@NotNull GrParameter parameter) {
+    final String name = StringUtil.toLowerCase(parameter.getName());
+    return "ignore".equals(name) || "ignored".equals(name);
+  }
 }

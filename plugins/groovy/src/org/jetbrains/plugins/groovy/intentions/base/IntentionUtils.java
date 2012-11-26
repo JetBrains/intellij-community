@@ -65,7 +65,7 @@ public class IntentionUtils {
                                              PsiClass owner,
                                              TypeConstraint[] constraints,
                                              boolean isConstructor,
-                                             final PsiElement context) {
+                                             @NotNull final PsiElement context) {
 
     final Project project = owner.getProject();
     PsiTypeElement typeElement = method.getReturnTypeElement();

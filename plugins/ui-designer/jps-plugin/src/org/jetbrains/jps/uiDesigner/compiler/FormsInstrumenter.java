@@ -18,7 +18,6 @@ package org.jetbrains.jps.uiDesigner.compiler;
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.compiler.instrumentation.InstrumenterClassWriter;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.uiDesigner.compiler.*;
 import com.intellij.uiDesigner.compiler.Utils;
@@ -28,9 +27,6 @@ import com.intellij.uiDesigner.lw.LwRootContainer;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassReader;
-import org.jetbrains.asm4.ClassVisitor;
-import org.jetbrains.asm4.ClassWriter;
-import org.jetbrains.asm4.Opcodes;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
@@ -38,6 +34,7 @@ import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.instrumentation.BaseInstrumentingBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -48,8 +45,6 @@ import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerConfiguration;
 import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerExtensionService;
 
 import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.*;
 
 /**
@@ -94,10 +89,16 @@ public class FormsInstrumenter extends FormsBuilder {
 
     try {
       final ProjectPaths paths = context.getProjectPaths();
-      final Collection<File> classpath = paths.getCompilationClasspath(chunk, false);
       final Collection<File> platformCp = paths.getPlatformCompilationClasspath(chunk, false);
+
+      final List<File> classpath = new ArrayList<File>();
+      classpath.addAll(paths.getCompilationClasspath(chunk, false));
+      classpath.add(getResourcePath(GridConstraints.class)); // forms_rt.jar
       final Map<File, String> chunkSourcePath = ProjectPaths.getSourceRootsWithDependents(chunk);
-      final InstrumentationClassFinder finder = createInstrumentationClassFinder(platformCp, classpath, chunkSourcePath, outputConsumer);
+      classpath.addAll(chunkSourcePath.keySet()); // sourcepath for loading forms resources
+
+      final InstrumentationClassFinder finder =
+        BaseInstrumentingBuilder.createInstrumentationClassFinder(platformCp, classpath, outputConsumer);
 
       try {
         instrumentForms(context, chunk, chunkSourcePath, finder, forms, outputConsumer);
@@ -182,8 +183,8 @@ public class FormsInstrumenter extends FormsBuilder {
         final ClassReader classReader =
           new ClassReader(originalContent.getBuffer(), originalContent.getOffset(), originalContent.getLength());
 
-        final int version = getClassFileVersion(classReader);
-        final InstrumenterClassWriter classWriter = new InstrumenterClassWriter(getAsmClassWriterFlags(version), finder);
+        final int version = BaseInstrumentingBuilder.getClassFileVersion(classReader);
+        final InstrumenterClassWriter classWriter = new InstrumenterClassWriter(BaseInstrumentingBuilder.getAsmClassWriterFlags(version), finder);
         final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, finder, nestedFormsLoader, false, classWriter);
         final byte[] patchedBytes = codeGenerator.patchClass(classReader);
         if (patchedBytes != null) {
@@ -240,51 +241,6 @@ public class FormsInstrumenter extends FormsBuilder {
       }
       classToBind = classToBind.substring(0, dotIndex) + "$" + classToBind.substring(dotIndex + 1);
     }
-  }
-
-  private static int getClassFileVersion(ClassReader reader) {
-    final Ref<Integer> result = new Ref<Integer>(0);
-    reader.accept(new ClassVisitor(Opcodes.ASM4) {
-      public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-        result.set(version);
-      }
-    }, 0);
-    return result.get();
-  }
-
-  private static int getAsmClassWriterFlags(int version) {
-    return version >= Opcodes.V1_6 && version != Opcodes.V1_1 ? ClassWriter.COMPUTE_FRAMES : ClassWriter.COMPUTE_MAXS;
-  }
-
-  private static InstrumentationClassFinder createInstrumentationClassFinder(
-    Collection<File> platformCp, Collection<File> cp, Map<File, String> sourcePath, final OutputConsumer outputConsumer
-  ) throws MalformedURLException {
-
-    final URL[] platformUrls = new URL[platformCp.size()];
-    int index = 0;
-    for (File file : platformCp) {
-      platformUrls[index++] = file.toURI().toURL();
-    }
-
-    final List<URL> urls = new ArrayList<URL>(cp.size() + sourcePath.size() + 1);
-    for (File file : cp) {
-      urls.add(file.toURI().toURL());
-    }
-    urls.add(getResourcePath(GridConstraints.class).toURI().toURL()); // forms_rt.jar
-
-    for (File file : sourcePath.keySet()) { // sourcepath for loading forms resources
-      urls.add(file.toURI().toURL());
-    }
-
-    return new InstrumentationClassFinder(platformUrls, urls.toArray(new URL[urls.size()])) {
-      protected InputStream lookupClassBeforeClasspath(String internalClassName) {
-        final BinaryContent content = outputConsumer.lookupClassBytes(internalClassName.replace("/", "."));
-        if (content != null) {
-          return new ByteArrayInputStream(content.getBuffer(), content.getOffset(), content.getLength());
-        }
-        return null;
-      }
-    };
   }
 
   private static File getResourcePath(Class aClass) {

@@ -71,10 +71,6 @@
     <action id="Android.EnableDdms" class="org.jetbrains.android.actions.AndroidEnableAdbServiceAction">
       <add-to-group group-id="AndroidToolsGroup" anchor="last"/>
     </action>
-    <action id="RegenerateRJavaFile" class="org.jetbrains.android.actions.AndroidRegenerateRJavaFileAction">
-      <add-to-group group-id="EditorPopupMenu" anchor="last"/>
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
-    </action>
     <action id="AndroidConnectDebuggerAction"
             class="org.jetbrains.android.actions.AndroidConnectDebuggerAction"
             text="Attach debugger to Android process"

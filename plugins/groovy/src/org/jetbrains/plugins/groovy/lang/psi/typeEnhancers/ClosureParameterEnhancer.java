@@ -76,6 +76,12 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     simpleTypes.put("transformLine", "String");
     simpleTypes.put("filterLine", "String");
     simpleTypes.put("accept", "java.net.Socket");
+    simpleTypes.put("dropWhile", "java.lang.Character");
+    simpleTypes.put("eachMatch", "java.lang.String");
+    simpleTypes.put("replaceAll", "java.util.regex.Matcher");
+    simpleTypes.put("replaceFirst", "java.util.regex.Matcher");
+    simpleTypes.put("splitEachLine", "java.util.List<java.lang.String>");
+    simpleTypes.put("takeWhile", "java.lang.Character");
 
     iterations.add("each");
     iterations.add("any");
@@ -128,7 +134,14 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     final PsiParameter[] params = closure.getAllParameters();
 
     if (params.length == 1 && simpleTypes.containsKey(methodName)) {
-      return TypesUtil.createTypeByFQClassName(simpleTypes.get(methodName), closure);
+
+      final String typeText = simpleTypes.get(methodName);
+      if (typeText.indexOf('<') < 0) {
+        return TypesUtil.createTypeByFQClassName(typeText, closure);
+      }
+      else {
+        return JavaPsiFacade.getElementFactory(closure.getProject()).createTypeFromText(typeText, closure);
+      }
     }
 
     if (iterations.contains(methodName)) {

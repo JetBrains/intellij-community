@@ -28,6 +28,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.light.LightTypeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -466,7 +467,7 @@ public class GenerateMembersUtil {
     PsiModifierList sourceModifierList = sourceParam.getModifierList();
     PsiModifierList targetModifierList = targetParam.getModifierList();
     if (sourceModifierList != null && targetModifierList != null) {
-      if (sourceParam.getLanguage() == targetParam.getLanguage()) {
+      if (sourceParam.getLanguage() == targetParam.getLanguage() && !(sourceParam instanceof LightElement)) {
         targetModifierList.replace(sourceModifierList);
       }
       else {

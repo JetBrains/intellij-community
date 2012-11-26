@@ -59,7 +59,8 @@ public final class ErrorAnalyzer {
           continue;
         }
 
-        Pair<AndroidLintInspectionBase, HighlightDisplayLevel> pair = AndroidLintUtil.getHighlighLevelAndInspection(issue, xmlFile);
+        Pair<AndroidLintInspectionBase, HighlightDisplayLevel> pair =
+          AndroidLintUtil.getHighlighLevelAndInspection(project, issue, xmlFile);
         if (pair == null) {
           continue;
         }

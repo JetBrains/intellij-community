@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,12 +139,14 @@ class GrChangeSignatureConflictSearcher {
       GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(manager.getProject());
       final CanonicalTypes.Type returnType = myChangeInfo.getNewReturnType();
       String newMethodName = myChangeInfo.getNewName();
-      if (returnType != null) {
-        prototype = factory.createMethodFromText("", newMethodName, returnType.getTypeText(), ArrayUtil.EMPTY_STRING_ARRAY, method);
+      if (method.isConstructor()) {
+        prototype = factory.createConstructorFromText("foo", ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY, "{}", method);
+        prototype.setName(newMethodName);
       }
       else {
-        prototype = factory.createConstructorFromText(newMethodName, ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY, "{}", method);
+        prototype = factory.createMethodFromText("", newMethodName, returnType != null ? returnType.getTypeText() : null, ArrayUtil.EMPTY_STRING_ARRAY, method);
       }
+
       JavaParameterInfo[] parameters = myChangeInfo.getNewParameters();
 
       for (JavaParameterInfo info : parameters) {

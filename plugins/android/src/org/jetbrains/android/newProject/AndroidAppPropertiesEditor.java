@@ -15,20 +15,16 @@
  */
 package org.jetbrains.android.newProject;
 
-import com.intellij.lexer.JavaLexer;
-import com.intellij.lexer.Lexer;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidCommonUtils;
+import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -135,7 +131,7 @@ public class AndroidAppPropertiesEditor {
     if (candidate.length() == 0) {
       return AndroidBundle.message("specify.package.name.error");
     }
-    if (!isValidPackageName(candidate)) {
+    if (!AndroidUtils.isValidPackageName(candidate)) {
       return AndroidBundle.message("not.valid.package.name.error", candidate);
     }
     if (!AndroidCommonUtils.contains2Identifiers(candidate)) {
@@ -161,30 +157,10 @@ public class AndroidAppPropertiesEditor {
 
   private String validateActivityName() {
     String candidate = myActivityNameField.getText().trim();
-    if (!isIdentifier(candidate)) {
+    if (!AndroidUtils.isIdentifier(candidate)) {
       return AndroidBundle.message("not.valid.acvitiy.name.error", candidate);
     }
     return "";
-  }
-
-  public static boolean isValidPackageName(@NotNull String name) {
-    int index = 0;
-    while (true) {
-      int index1 = name.indexOf('.', index);
-      if (index1 < 0) index1 = name.length();
-      if (!isIdentifier(name.substring(index, index1))) return false;
-      if (index1 == name.length()) return true;
-      index = index1 + 1;
-    }
-  }
-
-  private static boolean isIdentifier(@NotNull String candidate) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    Lexer lexer = new JavaLexer(LanguageLevel.JDK_1_3);
-    lexer.start(candidate);
-    if (lexer.getTokenType() != JavaTokenType.IDENTIFIER) return false;
-    lexer.advance();
-    return lexer.getTokenType() == null;
   }
 
   public JPanel getContentPanel() {

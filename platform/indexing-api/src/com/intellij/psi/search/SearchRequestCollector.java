@@ -58,6 +58,9 @@ public class SearchRequestCollector {
     if (searchScope instanceof LocalSearchScope && ((LocalSearchScope)searchScope).getScope().length == 0) {
       return;
     }
+    if (searchScope == GlobalSearchScope.EMPTY_SCOPE) {
+      return;
+    }
     if (StringUtil.isEmpty(word)) {
       return;
     }
