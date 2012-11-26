@@ -81,21 +81,24 @@ public class GravityProperty extends FlagProperty {
       }
     });
 
-    myOptions.remove(getProperty("clip_vertical"));
-    myOptions.set(getProperty("clip_horizontal"), new ComboOptionProperty(this, "clip", CLIP) {
-      @Override
-      protected void setValue(RadViewComponent component, int index) throws Exception {
-        if (index == 0) {
-          setOptions(component, new String[]{"clip_horizontal"}, new String[]{"clip_vertical"});
+    int clip_vertical = getProperty("clip_vertical");
+    if (clip_vertical != -1) {
+      myOptions.remove(clip_vertical);
+      myOptions.set(getProperty("clip_horizontal"), new ComboOptionProperty(this, "clip", CLIP) {
+        @Override
+        protected void setValue(RadViewComponent component, int index) throws Exception {
+          if (index == 0) {
+            setOptions(component, new String[]{"clip_horizontal"}, new String[]{"clip_vertical"});
+          }
+          else if (index == 1) {
+            setOptions(component, new String[]{"clip_vertical"}, new String[]{"clip_horizontal"});
+          }
+          else {
+            setOptions(component, CLIP, null);
+          }
         }
-        else if (index == 1) {
-          setOptions(component, new String[]{"clip_vertical"}, new String[]{"clip_horizontal"});
-        }
-        else {
-          setOptions(component, CLIP, null);
-        }
-      }
-    });
+      });
+    }
   }
 
   private int getProperty(String name) {
