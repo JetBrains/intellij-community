@@ -124,7 +124,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       oldIndex = isMethod && oldIndex != -1? oldIndex - 1 : oldIndex;
 
       if (oldIndex == currentIndex && currentIndex < arguments.length) {
-        addOldParameter(params, arguments[currentIndex], useKeywords, info);
+        useKeywords = addOldParameter(params, arguments[currentIndex], useKeywords, info);
       }
       else {
         useKeywords = addNewParameter(params, arguments, useKeywords, info, oldIndex);
@@ -142,7 +142,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
                  info.getName() + " = " + parameter.getText() : parameter.getText());
     }
     else if (!((PyParameterInfo)info).getDefaultInSignature()){
-      params.add(info.getDefaultValue());
+      params.add(useKeywords? info.getName() + " = " + info.getDefaultValue() : info.getDefaultValue());
     }
     else {
       useKeywords = true;
@@ -150,10 +150,10 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     return useKeywords;
   }
 
-  private void addOldParameter(List<String> params,
-                               PyExpression argument,
-                               boolean useKeywords,
-                               ParameterInfo info) {
+  private boolean addOldParameter(List<String> params,
+                                  PyExpression argument,
+                                  boolean useKeywords,
+                                  ParameterInfo info) {
     if (!(argument instanceof PyKeywordArgument)) {
       params.add(useKeywords? info.getName() + " = " + argument.getText() : argument.getText());
     }
@@ -165,7 +165,9 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
         final PyExpression valueExpression = ((PyKeywordArgument)argument).getValueExpression();
         params.add(valueExpression == null?info.getName():info.getName() + " = " + valueExpression.getText());
       }
+      useKeywords = true;
     }
+    return useKeywords;
   }
 
   private static boolean isPythonUsage(UsageInfo info) {
