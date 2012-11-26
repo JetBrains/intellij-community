@@ -160,6 +160,8 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
         if (item.parameter.getOldIndex() < 0 && !item.parameter.getName().startsWith("*")) {
           if (StringUtil.isEmpty(item.defaultValueCodeFragment.getText()))
             return PyBundle.message("refactoring.change.signature.dialog.validation.default.missing");
+          if (StringUtil.isEmptyOrSpaces(item.parameter.getName()))
+            return PyBundle.message("refactoring.change.signature.dialog.validation.parameter.missing");
         }
       }
     }
