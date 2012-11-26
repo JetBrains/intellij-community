@@ -658,8 +658,6 @@ binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths,
 
     zipfileset(file: "$macPath/bin/idea.properties", prefix: "$zipRoot/bin")
   }
-
-  notifyArtifactBuilt(zipPath)
 })
 
 binding.setVariable("buildTarGz", { String tarRoot, String tarPath, List paths ->
