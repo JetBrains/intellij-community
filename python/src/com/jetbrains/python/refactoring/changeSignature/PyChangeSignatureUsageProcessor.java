@@ -123,7 +123,13 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       int oldIndex = info.getOldIndex();
       oldIndex = isMethod && oldIndex != -1? oldIndex - 1 : oldIndex;
 
-      if (oldIndex == currentIndex && currentIndex < arguments.length) {
+      if (info.getName().startsWith("**")) {
+        addKwArgs(params, arguments, currentIndex);
+      }
+      else if (info.getName().startsWith("*")) {
+        addPositional(params, arguments, currentIndex);
+      }
+      else if (oldIndex == currentIndex && currentIndex < arguments.length) {
         useKeywords = addOldParameter(params, arguments[currentIndex], useKeywords, info);
       }
       else {
@@ -131,6 +137,21 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       }
     }
     return params;
+  }
+
+
+  private void addPositional(List<String> params, PyExpression[] arguments, int index) {
+    for (int i = index; i != arguments.length; ++i) {
+      if (!(arguments[i] instanceof PyKeywordArgument))
+        params.add(arguments[i].getText());
+    }
+  }
+
+  private void addKwArgs(List<String> params, PyExpression[] arguments, int index) {
+    for (int i = index; i != arguments.length; ++i) {
+      if (arguments[i] instanceof PyKeywordArgument)
+        params.add(arguments[i].getText());
+    }
   }
 
   private boolean addNewParameter(List<String> params,
