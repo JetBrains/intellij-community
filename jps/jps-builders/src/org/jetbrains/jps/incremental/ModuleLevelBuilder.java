@@ -57,6 +57,9 @@ public abstract class ModuleLevelBuilder extends Builder {
     return myCategory;
   }
 
-  public void cleanupChunkResources(CompileContext context) {
+  public void chunkBuildStarted(CompileContext context, ModuleChunk chunk) {
+  }
+
+  public void chunkBuildFinished(CompileContext context, ModuleChunk chunk) {
   }
 }

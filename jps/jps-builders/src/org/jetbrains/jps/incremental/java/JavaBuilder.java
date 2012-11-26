@@ -2,7 +2,9 @@ package org.jetbrains.jps.incremental.java;
 
 import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -273,12 +275,29 @@ public class JavaBuilder extends ModuleLevelBuilder {
       profile = context.getAnnotationProcessingProfile(modules.iterator().next());
     }
     else {
+      // perform cycle-related validations
+      final JpsJavaExtensionService javaExt = JpsJavaExtensionService.getInstance();
+      Pair<String, LanguageLevel> pair = null;
+      for (JpsModule module : modules) {
+        final LanguageLevel moduleLevel = javaExt.getLanguageLevel(module);
+        if (pair == null) {
+          pair = Pair.create(module.getName(), moduleLevel); // first value
+        }
+        else {
+          if (!Comparing.equal(pair.getSecond(), moduleLevel)) {
+            final String message = "Modules " + pair.getFirst()+ " and " +module.getName() + " must have the same language level because of cyclic dependencies between them";
+            diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, message));
+            return true;
+          }
+        }
+      }
+
       // check that all chunk modules are excluded from annotation processing
       for (JpsModule module : modules) {
         final ProcessorConfigProfile prof = context.getAnnotationProcessingProfile(module);
         if (prof.isEnabled()) {
-          String message = "Annotation processing is not supported for module cycles. Please ensure that all modules from cycle [" + chunk.getName() + "] are excluded from annotation processing";
-          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message));
+          final String message = "Annotation processing is not supported for module cycles. Please ensure that all modules from cycle [" + chunk.getName() + "] are excluded from annotation processing";
+          diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, message));
           return true;
         }
       }
@@ -662,7 +681,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   @Override
-  public void cleanupChunkResources(CompileContext context) {
+  public void chunkBuildFinished(CompileContext context, ModuleChunk chunk) {
     JavaBuilderUtil.cleanupChunkResources(context);
   }
 

@@ -2,6 +2,7 @@ package org.jetbrains.jps.model.serialization.module;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.JpsMacroExpander;
 
@@ -24,5 +25,7 @@ public abstract class JpsModuleClasspathSerializer {
   public abstract void loadClasspath(@NotNull JpsModule module,
                                      @Nullable String classpathDir,
                                      @NotNull String baseModulePath,
-                                     JpsMacroExpander expander, List<String> paths);
+                                     JpsMacroExpander expander,
+                                     List<String> paths,
+                                     JpsSdkType<?> projectSdkType);
 }

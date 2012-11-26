@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,7 +148,21 @@ public class GroovyOverrideImplementUtil {
       }
     }
 
-    buffer.append(") {}");
+    buffer.append(") ");
+    final PsiReferenceList list = superMethod.getThrowsList();
+    if (list != null) {
+      final PsiClassType[] types = list.getReferencedTypes();
+      if (types.length > 0) {
+        buffer.append("throws ");
+        for (PsiClassType type : types) {
+          buffer.append(type.getCanonicalText());
+          buffer.append(" ,");
+        }
+
+        buffer.delete(buffer.length() - 2, buffer.length());
+      }
+    }
+    buffer.append("{}");
 
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
     if (isConstructor) {

@@ -4,8 +4,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.ResourcesTargetType;
+import org.jetbrains.jps.incremental.instrumentation.NotNullInstrumentingBuilder;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
-import org.jetbrains.jps.incremental.java.NotNullInstrumentingBuilder;
 import org.jetbrains.jps.incremental.resources.ResourcesBuilder;
 import org.jetbrains.jps.service.SharedThreadPool;
 

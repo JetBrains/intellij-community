@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EclipseXml;
+import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsDependenciesList;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.JpsMacroExpander;
@@ -32,7 +33,9 @@ public class JpsEclipseClasspathSerializer extends JpsModuleClasspathSerializer 
   public void loadClasspath(@NotNull JpsModule module,
                             @Nullable String classpathDir,
                             @NotNull String baseModulePath,
-                            JpsMacroExpander expander, List<String> paths) {
+                            JpsMacroExpander expander,
+                            List<String> paths,
+                            JpsSdkType<?> projectSdkType) {
     final JpsDependenciesList dependenciesList = module.getDependenciesList();
     dependenciesList.clear();
     try {
@@ -46,7 +49,7 @@ public class JpsEclipseClasspathSerializer extends JpsModuleClasspathSerializer 
       if (emlFile.isFile()) {
         final Document emlDocument = JDOMUtil.loadDocument(emlFile);
         final Element root = emlDocument.getRootElement();
-        new JpsIdeaSpecificSettings(expander).readIDEASpecific(root, module);
+        new JpsIdeaSpecificSettings(expander).readIDEASpecific(root, module, projectSdkType);
       }
     }
     catch (Exception e) {

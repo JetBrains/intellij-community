@@ -82,8 +82,12 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
       final int offset = editor.getCaretModel().getOffset();
       final PsiElement[] statementsInRange = IntroduceVariableBase.findStatementsAtOffset(editor, file, offset);
       final List<PsiExpression> expressions = IntroduceVariableBase.collectExpressions(file, editor, offset, statementsInRange);
-      if (expressions.size() < 2) {
+      if (expressions.isEmpty()) {
         editor.getSelectionModel().selectLineAtCaret();
+      }
+      else if (expressions.size() == 1) {
+        callback.pass(new PsiElement[]{expressions.get(0)});
+        return;
       }
       else {
         IntroduceTargetChooser.showChooser(editor, expressions, new Pass<PsiExpression>() {

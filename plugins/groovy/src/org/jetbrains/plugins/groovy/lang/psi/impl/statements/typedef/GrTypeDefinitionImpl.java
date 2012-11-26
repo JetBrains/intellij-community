@@ -642,6 +642,10 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   }
 
   public boolean isDeprecated() {
+    final GrTypeDefinitionStub stub = getStub();
+    if (stub != null) {
+      return stub.isDeprecated();
+    }
     return com.intellij.psi.impl.PsiImplUtil.isDeprecatedByDocTag(this) || com.intellij.psi.impl.PsiImplUtil.isDeprecatedByAnnotation(this);
   }
 

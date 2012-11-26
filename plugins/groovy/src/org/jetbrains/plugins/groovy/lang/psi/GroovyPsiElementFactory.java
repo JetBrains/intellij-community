@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -212,7 +212,7 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
 
   public abstract GroovyFile createGroovyFile(CharSequence idText, boolean isPhysical, @Nullable PsiElement context);
 
-  public abstract GrMethod createMethodFromText(String modifier, String name, String type, String[] paramTypes, @Nullable PsiElement context);
+  public abstract GrMethod createMethodFromText(String modifier, String name, @Nullable String type, String[] paramTypes, @Nullable PsiElement context);
 
   public abstract GrMethod createConstructorFromText(@NotNull String constructorName,
                                                      String[] paramTypes,

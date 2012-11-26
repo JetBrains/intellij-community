@@ -617,7 +617,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   }
 
   public void buildProject() {
-    if (myPSIChangeListener.ensureUpdateRenderer()) {
+    if (myPSIChangeListener.ensureUpdateRenderer() && myRootComponent != null) {
       updateRenderer(true);
     }
   }

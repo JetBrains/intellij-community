@@ -149,6 +149,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     myConfigurationToBeforeTasksMap.put(runConfiguration, getBeforeRunTasks(template.getConfiguration()));
     shareConfiguration(runConfiguration, isConfigurationShared(template));
     RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl(this, runConfiguration, false);
+    settings.setSingleton(factory.isConfigurationSingletonByDefault());
     settings.importRunnerAndConfigurationSettings((RunnerAndConfigurationSettingsImpl)template);
     return settings;
   }
