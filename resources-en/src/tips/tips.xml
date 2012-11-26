@@ -61,7 +61,7 @@
   <tip file="NextPrevError.html"/>
   <tip file="InsertLiveTemplate.html"/>
   <tip file="MethodSeparators.html"/>
-  <tip file="CamelHumpsInCodeCompletion.html"/>
+  <tip file="CodeCompletionMiddle.html"/>
   <!--covered-->
   <tip file="MethodUpDown.html"/>
   <tip file="JoinLines.html"/>
@@ -143,4 +143,12 @@
   <tip file="ExcludeFromProject.html"/>
   <tip file="CodeCompletionNoShift.html"/>
   <tip file="CommitCtrlK.html"/>
+  <tip file="FindReplaceToggle.html"/>
+  <tip file="ScopesInTODO.html"/>
+  <tip file="PreviewTODO.html"/>
+  <tip file="FixDocComment.html"/>
+  <tip file="SelectTasks.html"/>
+  <tip file="RunConfigFolders.html"/>
+  <tip file="SpeedSearchinLiveTemplates.html"/>
+  <tip file="EditRegExp.html"/>
 </tips>
