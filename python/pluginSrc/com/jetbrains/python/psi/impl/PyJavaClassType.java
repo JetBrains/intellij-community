@@ -61,7 +61,7 @@ public class PyJavaClassType implements PyType {
 
   @Override
   public boolean isBuiltin(TypeEvalContext context) {
-    return false;  // TODO: JSDK's types could be considered built-in.
+    return false;  // TODO: JDK's types could be considered built-in.
   }
 
   @Override
