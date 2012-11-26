@@ -41,10 +41,12 @@ public class UnsafeWeakList<T> extends AbstractList<T> {
     myArray = array;
   }
 
+  @Override
   public T get(int index) {
     return myArray.get(index);
   }
 
+  @Override
   public boolean add(T element) {
     tryReduceCapacity(-1);
     myArray.add(element);
@@ -63,22 +65,31 @@ public class UnsafeWeakList<T> extends AbstractList<T> {
     return true;
   }
 
+  @Override
   public void add(int index, T element) {
     tryReduceCapacity(-1);
     myArray.add(index, element);
   }
 
+  @Override
   public T remove(int index) {
     tryReduceCapacity(-1);
     return myArray.remove(index);
   }
 
+  @NotNull
+  @Override
   public Iterator<T> iterator() {
     return new MyIterator();
   }
 
+  @Override
   public int size() {
     return myArray.size();
+  }
+
+  public void clear(int index) {
+    myArray.removeReference(index);
   }
 
   public List<T> toStrongList() {
@@ -134,10 +145,12 @@ public class UnsafeWeakList<T> extends AbstractList<T> {
       }
     }
 
+    @Override
     public boolean hasNext() {
       return myNextElement != null;
     }
 
+    @Override
     public T next() {
       if (modCount != myModCount) throw new ConcurrentModificationException();
       if (myNextElement == null) throw new NoSuchElementException();
@@ -147,6 +160,7 @@ public class UnsafeWeakList<T> extends AbstractList<T> {
       return element;
     }
 
+    @Override
     public void remove() {
       if (myCurrentIndex == -1) throw new IllegalStateException();
       myArray.remove(myCurrentIndex);

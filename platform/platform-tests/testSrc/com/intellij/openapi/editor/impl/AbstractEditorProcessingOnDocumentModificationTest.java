@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.TestFileType;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -44,7 +45,7 @@ import java.util.regex.Pattern;
  * @since 11/18/10 7:43 PM
  */
 public abstract class AbstractEditorProcessingOnDocumentModificationTest extends LightPlatformCodeInsightTestCase {
-  protected void init(@NotNull String fileText, @NotNull TestFileType type) throws IOException {
+  protected void init(@NotNull @NonNls String fileText, @NotNull TestFileType type) throws IOException {
     configureFromFileText(getFileName(type), fileText);
   }
 
@@ -52,18 +53,21 @@ public abstract class AbstractEditorProcessingOnDocumentModificationTest extends
     return getTestName(false) + type.getExtension();
   }
 
-  protected static void addFoldRegion(final int startOffset, final int endOffset, final String placeholder) {
+  protected static FoldRegion addFoldRegion(final int startOffset, final int endOffset, final String placeholder) {
+    final FoldRegion[] result = new FoldRegion[1];
     myEditor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
       @Override
       public void run() {
-        myEditor.getFoldingModel().addFoldRegion(startOffset, endOffset, placeholder);
+        result[0] = myEditor.getFoldingModel().addFoldRegion(startOffset, endOffset, placeholder);
       }
     });
+    return result[0];
   }
 
-  protected static void addCollapsedFoldRegion(final int startOffset, final int endOffset, final String placeholder) {
-    addFoldRegion(startOffset, endOffset, placeholder);
+  protected static FoldRegion addCollapsedFoldRegion(final int startOffset, final int endOffset, final String placeholder) {
+    FoldRegion region = addFoldRegion(startOffset, endOffset, placeholder);
     toggleFoldRegionState(getFoldRegion(startOffset), false);
+    return region;
   }
 
   protected static void toggleFoldRegionState(final FoldRegion foldRegion, final boolean expanded) {
@@ -199,11 +203,5 @@ public abstract class AbstractEditorProcessingOnDocumentModificationTest extends
       
       mapper.rawAdd(visualLine, startOffset, endOffset, startLogicalLine, startLogicalColumn, endLogicalLine, endLogicalColumn, endVisualColumn, foldRegions, tabData);
     }
-  }
-
-  public static void main(String[] args) {
-    setupFolding(
-      "FoldRegion +(0:600), FoldRegion +(640:1573), FoldRegion +(8130:8233), FoldRegion +(10189:10257), FoldRegion +(13582:13686), FoldRegion +(22805:22829), FoldRegion +(24069:24147), FoldRegion +(25024:25214), FoldRegion +(28313:28362), FoldRegion -(-1:-1)(invalid), FoldRegion -(-1:-1)(invalid), FoldRegion -(-1:-1)(invalid), FoldRegion -(-1:-1)(invalid)"
-    );
   }
 }

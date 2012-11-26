@@ -55,6 +55,14 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase{
     myModule = moduleFixtureBuilder.getFixture().getModule();
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    myModule = null;
+    myFixture.tearDown();
+    myFixture = null;
+    super.tearDown();
+  }
+
   /**
    * Return relative path to the test data. Path is relative to the
    * {@link com.intellij.openapi.application.PathManager#getHomePath()}
@@ -78,13 +86,6 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase{
 
   protected void tuneFixture(final JavaModuleFixtureBuilder moduleBuilder) throws Exception {}
 
-  @Override
-  protected void tearDown() throws Exception {
-    myModule = null;
-    myFixture.tearDown();
-    myFixture = null;
-    super.tearDown();
-  }
 
   protected Project getProject() {
     return myFixture.getProject();
