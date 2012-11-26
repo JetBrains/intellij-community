@@ -28,6 +28,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.SimpleTree;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -171,7 +172,8 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
       MavenProject project = projectNode.getMavenProject();
       String goal = project.getDefaultGoal();
       if (!StringUtil.isEmptyOrSpaces(goal)) {
-        return Collections.singletonList(goal);
+        // Maven uses StringTokenizer to split defaultGoal. See DefaultLifecycleTaskSegmentCalculator#calculateTaskSegments()
+        return ContainerUtil.newArrayList(StringUtil.tokenize(new StringTokenizer(goal)));
       }
     }
     else {
