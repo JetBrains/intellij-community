@@ -246,7 +246,7 @@ public final class GitDeprecatedRemote {
   public static GitDeprecatedRemote parseRemoteInternal(String name, String output) {
     StringScanner in = new StringScanner(output);
     if (!in.tryConsume("* ")) {
-      throw new IllegalStateException("Unexpected format for 'git remote show'");
+      throw new IllegalStateException(unexpectedFormat(name, output));
     }
     String nameLine = in.line();
     if (!nameLine.endsWith(name)) {
@@ -268,9 +268,13 @@ public final class GitDeprecatedRemote {
       }
     }
     else {
-      throw new IllegalStateException("Unexpected format for 'git remote show':\n" + output);
+      throw new IllegalStateException(unexpectedFormat(name, output));
     }
     return new GitDeprecatedRemote(name, fetch, push);
+  }
+
+  private static String unexpectedFormat(String remoteName, String output) {
+    return String.format("Unexpected format for 'git remote show'. Remote: %s, output:%n%s", remoteName, output);
   }
 
 
