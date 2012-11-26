@@ -157,8 +157,9 @@ public class MockRunManager extends RunManagerEx {
   }
 
   @Override
+  @NotNull
   public Collection<RunnerAndConfigurationSettings> getSortedConfigurations() {
-    return null;
+    return Collections.emptyList();
   }
 
   @Override

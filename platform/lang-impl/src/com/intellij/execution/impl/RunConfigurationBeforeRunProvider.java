@@ -106,7 +106,16 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
   }
 
   @Override
+  @Nullable
   public RunConfigurableBeforeRunTask createTask(RunConfiguration runConfiguration) {
+    if (runConfiguration.getProject().isInitialized()) {
+      Collection<RunnerAndConfigurationSettings> configurations =
+        RunManagerImpl.getInstanceImpl(runConfiguration.getProject()).getSortedConfigurations();
+      if (configurations.isEmpty()
+          || (configurations.size() == 1 && configurations.iterator().next().getConfiguration() == runConfiguration)) {
+        return null;
+      }
+    }
     return new RunConfigurableBeforeRunTask();
   }
 
@@ -120,7 +129,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
     for (Iterator<RunnerAndConfigurationSettings> iterator = configurations.iterator(); iterator.hasNext();) {
       RunnerAndConfigurationSettings settings = iterator.next();
       final ProgramRunner runner = ProgramRunnerUtil.getRunner(executorId, settings);
-      if (runner == null)
+      if (runner == null || settings.getConfiguration() == runConfiguration)
         iterator.remove();
     }
 
