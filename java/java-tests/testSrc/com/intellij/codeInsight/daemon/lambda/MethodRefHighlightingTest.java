@@ -145,6 +145,10 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest(true);
   }
 
+  public void testResolveConflicts() throws Exception {
+    doTest(true);
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }
