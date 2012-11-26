@@ -213,7 +213,7 @@ class AssociationsEditor {
 
     public void actionPerformed(AnActionEvent e) {
       final PsiFile selection = (PsiFile)getTreeSelection(myTree);
-      addAssociation(e, selection);
+      addAssociation(selection);
       myListModel.update(selection);
     }
 
