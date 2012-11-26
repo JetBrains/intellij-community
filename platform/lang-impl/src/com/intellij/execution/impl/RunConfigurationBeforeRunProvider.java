@@ -108,11 +108,13 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
   @Override
   @Nullable
   public RunConfigurableBeforeRunTask createTask(RunConfiguration runConfiguration) {
-    Collection<RunnerAndConfigurationSettings> configurations =
-      RunManagerImpl.getInstanceImpl(runConfiguration.getProject()).getSortedConfigurations();
-    if (configurations.isEmpty()
-        || (configurations.size() == 1 && configurations.iterator().next().getConfiguration() == runConfiguration)) {
-      return null;
+    if (runConfiguration.getProject().isInitialized()) {
+      Collection<RunnerAndConfigurationSettings> configurations =
+        RunManagerImpl.getInstanceImpl(runConfiguration.getProject()).getSortedConfigurations();
+      if (configurations.isEmpty()
+          || (configurations.size() == 1 && configurations.iterator().next().getConfiguration() == runConfiguration)) {
+        return null;
+      }
     }
     return new RunConfigurableBeforeRunTask();
   }
