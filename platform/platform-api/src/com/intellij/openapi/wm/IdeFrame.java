@@ -17,6 +17,7 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.BalloonLayout;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -40,6 +41,9 @@ public interface IdeFrame {
   IdeRootPaneNorthExtension getNorthExtension(String key);
 
   JComponent getComponent();
+
+  @Nullable
+  BalloonLayout getBalloonLayout();
 
   interface Child extends IdeFrame {
 

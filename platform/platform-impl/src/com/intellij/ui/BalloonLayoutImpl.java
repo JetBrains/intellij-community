@@ -28,7 +28,7 @@ import java.awt.event.ComponentEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BalloonLayout {
+public class BalloonLayoutImpl implements BalloonLayout {
 
   private final JLayeredPane myParent;
   private final Insets myInsets;
@@ -42,7 +42,7 @@ public class BalloonLayout {
     }
   };
 
-  public BalloonLayout(@NotNull JLayeredPane parent, @NotNull Insets insets) {
+  public BalloonLayoutImpl(@NotNull JLayeredPane parent, @NotNull Insets insets) {
     myParent = parent;
     myInsets = insets;
     myParent.addComponentListener(new ComponentAdapter() {
@@ -53,6 +53,7 @@ public class BalloonLayout {
     });
   }
 
+  @Override
   public void add(final Balloon balloon) {
     myBalloons.add(balloon);
     Disposer.register(balloon, new Disposable() {

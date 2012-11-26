@@ -32,8 +32,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.BalloonImpl;
+import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ArrayUtil;
@@ -175,18 +175,21 @@ public class NotificationsManagerImpl extends NotificationsManager {
     if (isDummyEnvironment()) return null;
 
     Window window = findWindowForBalloon(project);
-    if (window instanceof IdeFrameImpl) {
+    if (window instanceof IdeFrame) {
       final ProjectManager projectManager = ProjectManager.getInstance();
       final boolean noProjects = projectManager.getOpenProjects().length == 0;
       final boolean sticky = NotificationDisplayType.STICKY_BALLOON == displayType || noProjects;
-      final Balloon balloon = createBalloon((IdeFrameImpl)window, notification, false, false);
+      final Balloon balloon = createBalloon((IdeFrame)window, notification, false, false);
       Disposer.register(project != null ? project : ApplicationManager.getApplication(), balloon);
 
       if (notification.isExpired()) {
         return null;
       }
 
-      ((IdeFrameImpl)window).getBalloonLayout().add(balloon);
+      BalloonLayout layout = ((IdeFrame)window).getBalloonLayout();
+
+      if (layout == null) return null;
+      layout.add(balloon);
       if (NotificationDisplayType.BALLOON == displayType) {
         FrameStateManager.getInstance().getApplicationActive().doWhenDone(new Runnable() {
           @Override
