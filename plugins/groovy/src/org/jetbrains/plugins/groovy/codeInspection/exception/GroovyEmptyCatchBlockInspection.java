@@ -15,14 +15,17 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.exception;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.RenameElementFix;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
 public class GroovyEmptyCatchBlockInspection extends BaseInspection {
 
@@ -38,11 +41,6 @@ public class GroovyEmptyCatchBlockInspection extends BaseInspection {
     return "Empty 'catch' block";
   }
 
-  @Nullable
-  protected String buildErrorString(Object... args) {
-    return "Empty '#ref' block #loc";
-  }
-
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
@@ -55,10 +53,16 @@ public class GroovyEmptyCatchBlockInspection extends BaseInspection {
       if (body == null || !isEmpty(body)) {
         return;
       }
-      registerError(catchClause.getFirstChild());
+
+      final GrParameter parameter = catchClause.getParameter();
+      if (parameter == null) return;
+      if (GrExceptionUtil.ignore(parameter)) return;
+
+      final LocalQuickFix[] fixes = {new RenameElementFix(parameter, "ignored")};
+      registerError(catchClause.getFirstChild(), "Empty '#ref' block #loc", fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
     }
 
-    private static boolean isEmpty(GrOpenBlock body) {
+    private static boolean isEmpty(@NotNull GrOpenBlock body) {
       final GrStatement[] statements = body.getStatements();
       return statements.length == 0;
     }

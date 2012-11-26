@@ -61,10 +61,7 @@ public class GroovyUnusedCatchParameterInspection extends BaseInspection {
       if (parameter == null) {
         return;
       }
-      final String name = parameter.getName();
-      if ("ignore".equals(name) || "ignored".equals(name)) {
-        return;
-      }
+      if (GrExceptionUtil.ignore(parameter)) return;
       final CatchParameterUsedVisitor visitor = new CatchParameterUsedVisitor(parameter);
       block.accept(visitor);
       if (!visitor.isUsed()) {
