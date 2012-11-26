@@ -44,7 +44,8 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
 
   public void renameElement(final PsiElement element,
                             final String newName,
-                            final UsageInfo[] usages, final RefactoringElementListener listener) throws IncorrectOperationException {
+                            final UsageInfo[] usages,
+                            @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
     final PsiPackage psiPackage = (PsiPackage)element;
     psiPackage.handleQualifiedNameChange(PsiUtilCore.getQualifiedNameAfterRename(psiPackage.getQualifiedName(), newName));
     RenameUtil.doRenameGenericNamedElement(element, newName, usages, listener);

@@ -61,7 +61,8 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
 
   public void renameElement(final PsiElement element,
                             final String newName,
-                            final UsageInfo[] usages, final RefactoringElementListener listener) throws IncorrectOperationException {
+                            final UsageInfo[] usages,
+                            @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
     PsiClass aClass = (PsiClass) element;
     ArrayList<UsageInfo> postponedCollisions = new ArrayList<UsageInfo>();
     List<MemberHidesOuterMemberUsageInfo> hidesOut = new ArrayList<MemberHidesOuterMemberUsageInfo>();
@@ -111,7 +112,9 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
     }*/
 
 
-    listener.elementRenamed(aClass);
+    if (listener != null) {
+      listener.elementRenamed(aClass);
+    }
   }
 
   @Nullable

@@ -164,7 +164,7 @@ public class RenameUtil {
   }
 
   public static void doRename(final PsiElement element, String newName, UsageInfo[] usages, final Project project,
-                              final RefactoringElementListener listener) throws IncorrectOperationException{
+                              @Nullable final RefactoringElementListener listener) throws IncorrectOperationException{
     final RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(element);
     final String fqn = element instanceof PsiFile ? ((PsiFile)element).getVirtualFile().getPath() : CopyReferenceAction.elementToFqn(element);
     if (fqn != null) {
