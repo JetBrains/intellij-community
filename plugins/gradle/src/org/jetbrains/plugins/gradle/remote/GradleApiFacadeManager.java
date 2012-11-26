@@ -30,6 +30,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiBundle;
 import com.intellij.util.Alarm;
 import com.intellij.util.PathUtil;
+import com.intellij.util.PathsList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -158,7 +159,8 @@ public class GradleApiFacadeManager {
           classPath.add(library.getAbsolutePath());
         }
         params.getClassPath().addAll(classPath);
-        params.getClassPath().add(PathManager.getResourceRoot(getClass(), "/messages/CommonBundle.properties"));
+        addBundle(params.getClassPath(), "messages.CommonBundle");
+        addBundle(params.getClassPath(), GradleBundle.PATH_TO_BUNDLE);
 
         params.setMainClass(MAIN_CLASS_NAME);
         
@@ -172,6 +174,17 @@ public class GradleApiFacadeManager {
         );
         //params.getVMParametersList().addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5009");
         return params;
+      }
+
+      private void addBundle(@NotNull PathsList classPath, @NotNull String bundlePath) {
+        String pathToUse = bundlePath.replace('.', '/');
+        if (!pathToUse.endsWith(".properties")) {
+          pathToUse += ".properties";
+        }
+        if (!pathToUse.startsWith("/")) {
+          pathToUse = '/' + pathToUse;
+        }
+        classPath.add(PathManager.getResourceRoot(getClass(), pathToUse));
       }
 
       @NotNull

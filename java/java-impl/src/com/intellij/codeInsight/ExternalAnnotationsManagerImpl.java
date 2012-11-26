@@ -43,8 +43,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -87,7 +85,6 @@ import java.util.List;
 public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManager {
   private static final Logger LOG = Logger.getInstance("#" + ExternalAnnotationsManagerImpl.class.getName());
 
-  @NotNull private volatile ThreeState myHasAnyAnnotationsRoots = ThreeState.UNSURE;
   private final MessageBus myBus;
 
   public ExternalAnnotationsManagerImpl(@NotNull final Project project, final PsiManager psiManager) {
@@ -118,31 +115,6 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
   private void notifyChangedExternally() {
     myBus.syncPublisher(TOPIC).externalAnnotationsChangedExternally();
   }
-
-  @Override
-  protected void dropCache() {
-    super.dropCache();
-    myHasAnyAnnotationsRoots = ThreeState.UNSURE;
-  }
-
-  @Override
-  protected boolean hasAnyAnnotationsRoots() {
-    if (myHasAnyAnnotationsRoots == ThreeState.UNSURE) {
-      final Module[] modules = ModuleManager.getInstance(myPsiManager.getProject()).getModules();
-      for (Module module : modules) {
-        for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
-          final String[] urls = AnnotationOrderRootType.getUrls(entry);
-          if (urls.length > 0) {
-            myHasAnyAnnotationsRoots = ThreeState.YES;
-            return true;
-          }
-        }
-      }
-      myHasAnyAnnotationsRoots = ThreeState.NO;
-    }
-    return myHasAnyAnnotationsRoots == ThreeState.YES;
-  }
-
 
   @Override
   public void annotateExternally(@NotNull final PsiModifierListOwner listOwner,
@@ -657,27 +629,6 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
       LOG.error(e);
     }
     return null;
-  }
-
-  @Override
-  @NotNull
-  protected List<VirtualFile> getExternalAnnotationsRoots(@NotNull VirtualFile libraryFile) {
-    final List<OrderEntry> entries = ProjectRootManager.getInstance(myPsiManager.getProject()).getFileIndex().getOrderEntriesForFile(
-      libraryFile);
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
-    for (OrderEntry entry : entries) {
-      if (entry instanceof ModuleOrderEntry) {
-        continue;
-      }
-      final String[] externalUrls = AnnotationOrderRootType.getUrls(entry);
-      for (String url : externalUrls) {
-        VirtualFile root = VirtualFileManager.getInstance().findFileByUrl(url);
-        if (root != null) {
-          result.add(root);
-        }
-      }
-    }
-    return result;
   }
 
   private static class MyExternalPromptDialog extends OptionsMessageDialog {

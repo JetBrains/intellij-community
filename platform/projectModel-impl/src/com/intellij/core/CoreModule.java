@@ -22,6 +22,8 @@ import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.ExtensionAreas;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.impl.ModulePathMacroManager;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.impl.ModuleEx;
 import com.intellij.openapi.module.impl.ModuleScopeProvider;
@@ -44,11 +46,13 @@ import org.jetbrains.annotations.NotNull;
  */
 public class CoreModule extends MockComponentManager implements ModuleEx {
   private final String myPath;
-  private final Project myProject;
-  private final ModuleScopeProvider myModuleScopeProvider;
+  @NotNull private final Disposable myLifetime;
+  @NotNull private final Project myProject;
+  @NotNull private final ModuleScopeProvider myModuleScopeProvider;
 
-  public CoreModule(@NotNull Disposable parentDisposable, Project project, String moduleFilePath) {
+  public CoreModule(@NotNull Disposable parentDisposable, @NotNull Project project, String moduleFilePath) {
     super(project.getPicoContainer(), parentDisposable);
+    myLifetime = parentDisposable;
     myProject = project;
     myPath = moduleFilePath;
 
@@ -60,6 +64,7 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
         Extensions.disposeArea(CoreModule.this);
       }
     });
+    initModuleExtensions();
 
     final ModuleRootManagerImpl moduleRootManager = new ModuleRootManagerImpl(this,
                                                                         DirectoryIndex.getInstance(project),
@@ -74,6 +79,20 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
     getPicoContainer().registerComponentInstance(ModuleRootManager.class, moduleRootManager);
     getPicoContainer().registerComponentInstance(PathMacroManager.class, new ModulePathMacroManager(PathMacros.getInstance(), this));
     myModuleScopeProvider = createModuleScopeProvider();
+  }
+
+  protected void initModuleExtensions() {
+  }
+
+  protected <T> void addModuleExtension(final ExtensionPointName<T> name, final T extension) {
+    final ExtensionPoint<T> extensionPoint = Extensions.getArea(this).getExtensionPoint(name);
+    extensionPoint.registerExtension(extension);
+    Disposer.register(myLifetime, new Disposable() {
+      @Override
+      public void dispose() {
+        extensionPoint.unregisterExtension(extension);
+      }
+    });
   }
 
   protected ModuleScopeProvider createModuleScopeProvider() {

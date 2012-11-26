@@ -99,7 +99,7 @@ public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
 
   public boolean ensureUpdateRenderer() {
     if (myRunState) {
-      return true;
+      return myInitialize && !myDesigner.isProjectClosed();
     }
     myUpdateRenderer = true;
     return false;

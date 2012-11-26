@@ -180,11 +180,11 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     generateModifiers(buffer, aClass);
 
     final String classString = aClass.isAnnotationType() ? "java.terms.annotation.interface"
-                               : aClass.isInterface()
-                                 ? "java.terms.interface"
-                                 : aClass instanceof PsiTypeParameter
-                                   ? "java.terms.type.parameter"
-                                   : aClass.isEnum() ? "java.terms.enum" : "java.terms.class";
+                                                         : aClass.isInterface()
+                                                           ? "java.terms.interface"
+                                                           : aClass instanceof PsiTypeParameter
+                                                             ? "java.terms.type.parameter"
+                                                             : aClass.isEnum() ? "java.terms.enum" : "java.terms.class";
     buffer.append(LangBundle.message(classString)).append(" ");
 
     buffer.append(JavaDocUtil.getShortestClassName(aClass, aClass));
@@ -600,8 +600,8 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
             urls.add(classUrl + "#" + signature);
           }
           signature = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
-                                                        PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
-                                                        PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES, 999);
+                                                 PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
+                                                 PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES, 999);
           for (String classUrl : classUrls) {
             urls.add(classUrl + "#" + signature);
           }
@@ -681,7 +681,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       String[] javadocPaths = JavaModuleExternalPaths.getInstance(module).getJavadocUrls();
       final List<String> httpRoots = PlatformDocumentationUtil.getHttpRoots(javadocPaths, relPath);
       // if found nothing and the file is from library classes, fall back to order entries
-      if (httpRoots != null || !fileIndex.isInLibraryClasses(virtualFile)) { 
+      if (httpRoots != null || !fileIndex.isInLibraryClasses(virtualFile)) {
         return httpRoots;
       }
     }

@@ -58,6 +58,8 @@ public class AddMavenDependencyQuickFix implements IntentionAction, LowPriorityA
   }
 
   public void invoke(@NotNull final Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
+    if (!myRef.isValid()) return;
+
     MavenProject mavenProject = MavenDomUtil.findContainingProject(file);
     if (mavenProject == null) return;
 

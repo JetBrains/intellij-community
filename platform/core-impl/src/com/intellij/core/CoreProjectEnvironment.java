@@ -98,7 +98,7 @@ public class CoreProjectEnvironment {
     CoreApplicationEnvironment.registerExtensionPoint(Extensions.getArea(myProject), extensionPointName, aClass);
   }
 
-  protected <T> void addProjectExtension(final ExtensionPointName<T> name, final T extension) {
+  public <T> void addProjectExtension(final ExtensionPointName<T> name, final T extension) {
     final ExtensionPoint<T> extensionPoint = Extensions.getArea(myProject).getExtensionPoint(name);
     extensionPoint.registerExtension(extension);
     Disposer.register(myParentDisposable, new Disposable() {

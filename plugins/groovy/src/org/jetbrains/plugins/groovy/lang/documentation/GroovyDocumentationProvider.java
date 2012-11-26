@@ -332,7 +332,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     }
 
     element = getDocumentationElement(element, originalElement);
-    
+
     if (element == null) return null;
 
     String standard = JavaDocumentationProvider.generateExternalJavadoc(element);

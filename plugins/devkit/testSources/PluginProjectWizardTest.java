@@ -25,6 +25,6 @@ import com.intellij.openapi.module.JavaModuleType;
 public class PluginProjectWizardTest extends ProjectWizardTestCase {
 
   public void testPluginProject() throws Exception {
-    createProjectFromTemplate(JavaModuleType.JAVA_GROUP, "Intellij IDEA Plugin", null);
+    createProjectFromTemplate(JavaModuleType.JAVA_GROUP, "IntelliJ IDEA Plugin", null);
   }
 }

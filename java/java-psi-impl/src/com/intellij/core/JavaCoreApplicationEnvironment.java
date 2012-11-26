@@ -80,7 +80,7 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
     addExplicitExtension(ItemPresentationProviders.INSTANCE, PsiParameter.class, new VariablePresentationProvider());
   }
 
-  protected <T> void addExplicitExtension(final ClassExtension<T> instance, final Class clazz, final T object) {
+  public <T> void addExplicitExtension(final ClassExtension<T> instance, final Class clazz, final T object) {
     instance.addExplicitExtension(clazz, object);
     Disposer.register(getParentDisposable(), new Disposable() {
       @Override
@@ -89,6 +89,4 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
       }
     });
   }
-
-
 }

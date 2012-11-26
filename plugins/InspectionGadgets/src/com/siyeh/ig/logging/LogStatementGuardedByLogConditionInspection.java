@@ -54,8 +54,8 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
     "fine,isLoggable(java.util.logging.Level.FINE)," +
     "finer,isLoggable(java.util.logging.Level.FINER)," +
     "finest,isLoggable(java.util.logging.Level.FINEST)";
-  private final List<String> logMethodNameList = new ArrayList();
-  private final List<String> logConditionMethodNameList = new ArrayList();
+  final List<String> logMethodNameList = new ArrayList();
+  final List<String> logConditionMethodNameList = new ArrayList();
 
   public LogStatementGuardedByLogConditionInspection() {
     parseString(loggerMethodAndconditionMethodNames, logMethodNameList, logConditionMethodNameList);
@@ -181,8 +181,7 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
       if (qualifier == null) {
         return false;
       }
-      final PsiType type = qualifier.getType();
-      return type != null && type.equalsToText(loggerClassName);
+      return TypeUtils.expressionHasTypeOrSubtype(qualifier, loggerClassName);
     }
   }
 
@@ -208,7 +207,7 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
       if (!TypeUtils.expressionHasTypeOrSubtype(qualifier, loggerClassName)) {
         return;
       }
-      if (isSurroundedByLogGuard(expression)) {
+      if (isSurroundedByLogGuard(expression, referenceName)) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
@@ -223,21 +222,21 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
       registerMethodCallError(expression);
     }
 
-    private boolean isSurroundedByLogGuard(PsiElement element) {
+    private boolean isSurroundedByLogGuard(PsiElement element, String logMethodName) {
       while (true) {
         final PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class);
         if (ifStatement == null) {
           return false;
         }
         final PsiExpression condition = ifStatement.getCondition();
-        if (isLogGuardCheck(condition)) {
+        if (isLogGuardCheck(condition, logMethodName)) {
           return true;
         }
         element = ifStatement;
       }
     }
 
-    private boolean isLogGuardCheck(@Nullable PsiExpression expression) {
+    private boolean isLogGuardCheck(@Nullable PsiExpression expression, String logMethodName) {
       if (expression instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
         final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
@@ -245,17 +244,22 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
         if (qualifier == null) {
           return false;
         }
-        final PsiType qualifierType = qualifier.getType();
-        return !(qualifierType == null || !qualifierType.equalsToText(loggerClassName));
-      }
-      else if (expression instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
-        final PsiExpression lhs = binaryExpression.getLOperand();
-        if (isLogGuardCheck(lhs)) {
-          return true;
+        if (!TypeUtils.expressionHasTypeOrSubtype(qualifier, loggerClassName)) {
+          return false;
         }
-        final PsiExpression rhs = binaryExpression.getROperand();
-        return isLogGuardCheck(rhs);
+        final String referenceName = methodExpression.getReferenceName();
+        final int index = logMethodNameList.indexOf(logMethodName);
+        final String conditionName = logConditionMethodNameList.get(index);
+        return conditionName.startsWith(referenceName);
+      }
+      else if (expression instanceof PsiPolyadicExpression) {
+        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+        final PsiExpression[] operands = polyadicExpression.getOperands();
+        for (PsiExpression operand : operands) {
+          if (isLogGuardCheck(operand, logMethodName)) {
+            return true;
+          }
+        }
       }
       return false;
     }
