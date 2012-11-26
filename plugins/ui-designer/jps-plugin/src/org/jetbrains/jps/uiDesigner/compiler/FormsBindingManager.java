@@ -48,6 +48,7 @@ import java.util.Map;
  */
 public class FormsBindingManager extends FormsBuilder {
   private static final Key<Boolean> FORCE_FORMS_REBUILD_FLAG = Key.create("_forms_rebuild_flag_");
+  private static final Key<Boolean> FORMS_REBUILD_FORCED = Key.create("_forms_rebuild_forced_flag_");
   public FormsBindingManager() {
     super(BuilderCategory.SOURCE_PROCESSOR, "form-bindings");
   }
@@ -55,6 +56,12 @@ public class FormsBindingManager extends FormsBuilder {
   @Override
   public void buildStarted(CompileContext context) {
     FORCE_FORMS_REBUILD_FLAG.set(context, getMarkerFile(context).exists());
+  }
+
+  @Override
+  public void chunkBuildFinished(CompileContext context, ModuleChunk chunk) {
+    FORMS_REBUILD_FORCED.set(context, null); // clear the flag on per-chunk basis
+    super.chunkBuildFinished(context, chunk);
   }
 
   @Override
@@ -90,10 +97,14 @@ public class FormsBindingManager extends FormsBuilder {
 
     final Map<File, ModuleBuildTarget> filesToCompile = new THashMap<File, ModuleBuildTarget>(FileUtil.FILE_HASHING_STRATEGY);
     final Map<File, ModuleBuildTarget> formsToCompile = new THashMap<File, ModuleBuildTarget>(FileUtil.FILE_HASHING_STRATEGY);
+    final Map<File, Collection<File>> srcToForms = new THashMap<File, Collection<File>>(FileUtil.FILE_HASHING_STRATEGY);
 
     if (!context.isProjectRebuild() && config.isInstrumentClasses() && FORCE_FORMS_REBUILD_FLAG.get(context, Boolean.FALSE)) {
-      // force compilation of all forms
-      FSOperations.markDirty(context, chunk, FORM_SOURCES_FILTER);
+      // force compilation of all forms, but only once per chunk
+      if (!FORMS_REBUILD_FORCED.get(context, Boolean.FALSE)) {
+        FORMS_REBUILD_FORCED.set(context, Boolean.TRUE);
+        FSOperations.markDirty(context, chunk, FORM_SOURCES_FILTER);
+      }
     }
 
     dirtyFilesHolder.processDirtyFiles(new FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>() {
@@ -108,7 +119,7 @@ public class FormsBindingManager extends FormsBuilder {
       }
     });
 
-    if (!context.isProjectRebuild() && config.isInstrumentClasses()) {
+    if (config.isInstrumentClasses()) {
       final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
       final JpsCompilerExcludes excludes = configuration.getCompilerExcludes();
 
@@ -118,6 +129,7 @@ public class FormsBindingManager extends FormsBuilder {
         final ModuleBuildTarget target = entry.getValue();
         final File boundSource = findBoundSource(context, target, form);
         if (boundSource != null && !excludes.isExcluded(boundSource)) {
+          addBinding(boundSource, form, srcToForms);
           FSOperations.markDirty(context, boundSource);
           filesToCompile.put(boundSource, target);
           context.getScope().expandScope(target, boundSource);
@@ -135,16 +147,18 @@ public class FormsBindingManager extends FormsBuilder {
           for (String formPath : boundForms) {
             final File formFile = new File(formPath);
             if (!excludes.isExcluded(formFile) && formFile.exists()) {
+              addBinding(srcFile, formFile, srcToForms);
               FSOperations.markDirty(context, formFile);
               formsToCompile.put(formFile, target);
               context.getScope().expandScope(target, formFile);
               exitCode = ExitCode.OK;
             }
           }
-          sourceToFormMap.remove(srcFile.getPath());
         }
       }
     }
+
+    FORMS_TO_COMPILE.set(context, srcToForms.isEmpty()? null : srcToForms);
 
     if (config.isCopyFormsRuntimeToOutput() && !formsToCompile.isEmpty()) {
       for (ModuleBuildTarget target : chunk.getTargets()) {

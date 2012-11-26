@@ -24,13 +24,13 @@ import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
-import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.incremental.*;
@@ -66,24 +66,22 @@ public class FormsInstrumenter extends FormsBuilder {
       return ExitCode.NOTHING_DONE;
     }
 
-    final List<File> forms = new ArrayList<File>();
-    dirtyFilesHolder.processDirtyFiles(new FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>() {
-      public boolean apply(ModuleBuildTarget target, File file, JavaSourceRootDescriptor descriptor) throws IOException {
-        if (FORM_SOURCES_FILTER.accept(file)) {
-          forms.add(file);
-        }
-        return true;
-      }
-    });
+    final Map<File, Collection<File>> srcToForms = FORMS_TO_COMPILE.get(context);
+    FORMS_TO_COMPILE.set(context, null);
 
-    if (forms.isEmpty()) {
+    if (srcToForms == null || srcToForms.isEmpty()) {
       return ExitCode.NOTHING_DONE;
+    }
+
+    final Set<File> formsToCompile = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+    for (Collection<File> files : srcToForms.values()) {
+      formsToCompile.addAll(files);
     }
 
     if (context.isMake()) {
       final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
       if (logger.isEnabled()) {
-        logger.logCompiledFiles(forms, getPresentableName(), "Compiling forms:");
+        logger.logCompiledFiles(formsToCompile, getPresentableName(), "Compiling forms:");
       }
     }
 
@@ -101,7 +99,25 @@ public class FormsInstrumenter extends FormsBuilder {
         BaseInstrumentingBuilder.createInstrumentationClassFinder(platformCp, classpath, outputConsumer);
 
       try {
-        instrumentForms(context, chunk, chunkSourcePath, finder, forms, outputConsumer);
+        final Map<File, Collection<File>> processed = instrumentForms(context, chunk, chunkSourcePath, finder, formsToCompile, outputConsumer);
+
+        final OneToManyPathsMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap();
+
+        for (Map.Entry<File, Collection<File>> entry : processed.entrySet()) {
+          final File src = entry.getKey();
+          final Collection<File> forms = entry.getValue();
+
+          final Collection<String> formPaths = new ArrayList<String>(forms.size());
+          for (File form : forms) {
+            formPaths.add(form.getPath());
+          }
+          sourceToFormMap.update(src.getPath(), formPaths);
+          srcToForms.remove(src);
+        }
+        // clean mapping
+        for (File srcFile : srcToForms.keySet()) {
+          sourceToFormMap.remove(srcFile.getPath());
+        }
       }
       finally {
         finder.releaseResources();
@@ -114,13 +130,12 @@ public class FormsInstrumenter extends FormsBuilder {
     return ExitCode.OK;
   }
 
-  private void instrumentForms(
+  private Map<File, Collection<File>> instrumentForms(
     CompileContext context, ModuleChunk chunk, final Map<File, String> chunkSourcePath, final InstrumentationClassFinder finder, Collection<File> forms, OutputConsumer outConsumer
   ) throws ProjectBuildException {
 
+    final Map<File, Collection<File>> instrumented = new THashMap<File, Collection<File>>(FileUtil.FILE_HASHING_STRATEGY);
     final Map<String, File> class2form = new HashMap<String, File>();
-    final OneToManyPathsMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap();
-    final Set<File> touchedFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
 
     final MyNestedFormLoader nestedFormsLoader =
       new MyNestedFormLoader(chunkSourcePath, ProjectPaths.getOutputPathsWithDependents(chunk));
@@ -175,6 +190,7 @@ public class FormsInstrumenter extends FormsBuilder {
       }
 
       class2form.put(classToBind, formFile);
+      addBinding(compiled.getSourceFile(), formFile, instrumented);
 
       try {
         context.processMessage(new ProgressMessage("Instrumenting forms... [" + chunk.getName() + "]"));
@@ -209,22 +225,12 @@ public class FormsInstrumenter extends FormsBuilder {
           }
           context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, message.toString()));
         }
-        else {
-          final File sourceFile = compiled.getSourceFile();
-          if (sourceFile != null) {
-            if (touchedFiles.add(sourceFile)) { // clear data once before updating
-              sourceToFormMap.update(sourceFile.getPath(), formFile.getPath());
-            }
-            else {
-              sourceToFormMap.appendData(sourceFile.getPath(), formFile.getPath());
-            }
-          }
-        }
       }
       catch (Exception e) {
         context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, "Forms instrumentation failed" + e.getMessage(), formFile.getAbsolutePath()));
       }
     }
+    return instrumented;
   }
 
 
