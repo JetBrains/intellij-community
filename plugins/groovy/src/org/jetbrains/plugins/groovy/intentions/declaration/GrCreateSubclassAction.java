@@ -71,7 +71,7 @@ public class GrCreateSubclassAction extends CreateSubclassAction {
   @Nullable
   public static PsiClass createSubclassGroovy(final GrTypeDefinition psiClass, final PsiDirectory targetDirectory, final String className) {
     final Project project = psiClass.getProject();
-    final Ref<GrTypeDefinition> targetClass = new Ref<GrTypeDefinition>();
+    final Ref<GrTypeDefinition> targetClassRef = new Ref<GrTypeDefinition>();
 
     new WriteCommandAction(project, getTitle(psiClass), getTitle(psiClass)) {
       @Override
@@ -81,7 +81,7 @@ public class GrCreateSubclassAction extends CreateSubclassAction {
         final GrTypeParameterList oldTypeParameterList = psiClass.getTypeParameterList();
 
         try {
-          targetClass.set(CreateClassActionBase.createClassByType(targetDirectory, className, PsiManager.getInstance(project), psiClass,
+          targetClassRef.set(CreateClassActionBase.createClassByType(targetDirectory, className, PsiManager.getInstance(project), psiClass,
                                                                   GroovyTemplates.GROOVY_CLASS));
         }
         catch (final IncorrectOperationException e) {
@@ -95,18 +95,22 @@ public class GrCreateSubclassAction extends CreateSubclassAction {
           });
           return;
         }
-        startTemplate(oldTypeParameterList, project, psiClass, targetClass.get(), false);
-        GrReferenceAdjuster.shortenReferences(targetClass.get());
+        final GrTypeDefinition targetClass = targetClassRef.get();
+        if (targetClass == null) return;
+
+        startTemplate(oldTypeParameterList, project, psiClass, targetClass, false);
+        GrReferenceAdjuster.shortenReferences(targetClass);
       }
     }.execute();
-    if (targetClass.get() == null) return null;
+    final GrTypeDefinition targetClass = targetClassRef.get();
+    if (targetClass == null) return null;
     if (!ApplicationManager.getApplication().isUnitTestMode() && !psiClass.hasTypeParameters()) {
 
-      final Editor editor = CodeInsightUtil.positionCursor(project, targetClass.get().getContainingFile(), targetClass.get().getLBrace());
-      if (editor == null) return targetClass.get();
-      chooseAndImplement(psiClass, project, targetClass.get(), editor);
+      final Editor editor = CodeInsightUtil.positionCursor(project, targetClass.getContainingFile(), targetClass.getLBrace());
+      if (editor == null) return targetClass;
+      chooseAndImplement(psiClass, project, targetClass, editor);
     }
-    return targetClass.get();
+    return targetClass;
   }
 
 
