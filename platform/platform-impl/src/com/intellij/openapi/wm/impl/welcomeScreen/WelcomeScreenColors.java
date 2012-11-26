@@ -31,7 +31,10 @@ public class WelcomeScreenColors {
   static final Color WELCOME_HEADER_FOREGROUND = new JBColor(Gray._80, Gray._197);
 
   // This is for border around recent projects, action cards and also lines separating header and footer from main contents.
-  static final Color BORDER_COLOR = new JBColor(Gray._190, Gray._54);
+  static final Color BORDER_COLOR = new JBColor(Gray._190, Gray._85);
+
+  // This is for circle around hovered (next) icon
+  static final Color GROUP_ICON_BORDER_COLOR = new JBColor(Gray._190, Gray._55);
 
   // These two are for footer (Full product with build #, small letters)
   static final Color FOOTER_BACKGROUND = new JBColor(Gray._210, Gray._75);
