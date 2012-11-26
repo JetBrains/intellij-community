@@ -110,7 +110,7 @@ public class DirDiffTableCellRenderer extends DefaultTableCellRenderer {
     }
     final int w = myTable.getWidth();
     final int h = myTable.getRowHeight();
-    final BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+    final BufferedImage img = UIUtil.createImage(w, h, BufferedImage.TYPE_INT_ARGB);
     final Graphics g = img.getGraphics();
     if (icon != null) {
       g.drawImage(IconUtil.toImage(icon), 2, (h - icon.getIconHeight()) / 2, null);

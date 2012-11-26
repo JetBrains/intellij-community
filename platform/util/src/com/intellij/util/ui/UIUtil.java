@@ -1378,7 +1378,7 @@ public class UIUtil {
   }
 
   private static BufferedImage createAppleDotStamp(final Color color) {
-    final BufferedImage image = new BufferedImage(3, 3, BufferedImage.TYPE_INT_ARGB);
+    final BufferedImage image = createImage(3, 3, BufferedImage.TYPE_INT_ARGB);
     final Graphics2D g = image.createGraphics();
 
     g.setColor(color);
@@ -1423,6 +1423,7 @@ public class UIUtil {
     if (isRetina()) {
       return RetinaImage.create(width, height, type);
     }
+      //noinspection UndesirableClassUsage
     return new BufferedImage(width, height, type);
   }
 
@@ -1438,6 +1439,7 @@ public class UIUtil {
       Rectangle rect = g.getClipBounds();
       if (rect == null) rect = new Rectangle(size);
 
+      //noinspection UndesirableClassUsage
       Image image = new BufferedImage(rect.width * 2, rect.height * 2, BufferedImage.TYPE_INT_ARGB);
       Graphics2D imageGraphics = (Graphics2D)image.getGraphics();
 
@@ -2503,7 +2505,7 @@ public class UIUtil {
   @Nullable
   public static Color getColorAt(final Icon icon, final int x, final int y) {
     if (0 <= x && x < icon.getIconWidth() && 0 <= y && y < icon.getIconHeight()) {
-      final BufferedImage image = new BufferedImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_RGB);
+      final BufferedImage image = createImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_RGB);
       icon.paintIcon(null, image.getGraphics(), 0, 0);
 
       final int[] pixels = new int[1];

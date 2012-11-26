@@ -20,6 +20,7 @@
 package com.intellij.ui.components;
 
 import com.intellij.ui.Gray;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -111,7 +112,7 @@ public class ZoomingDelegate {
 
       if (myCachedImage == null) {
         Rectangle bounds = myViewportComponent.getBounds();
-        BufferedImage image = new BufferedImage(bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB);
+        BufferedImage image = UIUtil.createImage(bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB);
 
         Graphics graphics = image.getGraphics();
         graphics.setClip(0, 0, bounds.width, bounds.height);

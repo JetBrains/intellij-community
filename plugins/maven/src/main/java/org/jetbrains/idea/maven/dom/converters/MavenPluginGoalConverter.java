@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.dom.converters;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.ResolvingConverter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +31,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class MavenPluginGoalConverter extends ResolvingConverter<String> {
+public class MavenPluginGoalConverter extends ResolvingConverter<String> implements MavenDomSoftAwareConverter {
   @Override
   public String fromString(@Nullable @NonNls String s, ConvertContext context) {
     return getVariants(context).contains(s) ? s : null;
@@ -63,5 +64,10 @@ public class MavenPluginGoalConverter extends ResolvingConverter<String> {
       if (text.equals(goal)) return each.getXmlElement();
     }
     return super.resolve(text, context);
+  }
+
+  @Override
+  public boolean isSoft(@NotNull DomElement element) {
+    return MavenPluginDomUtil.getMavenPluginModel(element) == null;
   }
 }

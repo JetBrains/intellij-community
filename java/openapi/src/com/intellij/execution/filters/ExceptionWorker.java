@@ -199,6 +199,15 @@ public class ExceptionWorker {
     return pos;
   }
 
+  @Nullable
+  static OpenFileHyperlinkInfo getOpenFileHyperlinkInfo(Filter.Result result) {
+    if (result.hyperlinkInfo instanceof MyHyperlinkInfo) {
+      MyHyperlinkInfo info = (MyHyperlinkInfo)result.hyperlinkInfo;
+      return new OpenFileHyperlinkInfo(info.myProject, info.myVirtualFile, info.myLineNumber);
+    }
+    return null;
+  }
+
   private static class MyHyperlinkInfo implements HyperlinkInfo {
     private final VirtualFile myVirtualFile;
     private final int myLineNumber;

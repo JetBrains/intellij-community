@@ -17,7 +17,6 @@ package com.intellij.openapi.ui;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.Animator;
@@ -26,8 +25,6 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 
 public class LoadingDecorator {
@@ -170,7 +167,7 @@ public class LoadingDecorator {
 
       if (myVisible) {
         if (takeSnapshot && getWidth() > 0 && getHeight() > 0) {
-          mySnapshot = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
+          mySnapshot = UIUtil.createImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
           final Graphics2D g = mySnapshot.createGraphics();
           myPane.paint(g);
           final Component opaque = UIUtil.findNearestOpaque(this);

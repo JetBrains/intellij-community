@@ -53,6 +53,7 @@ import com.intellij.openapi.wm.impl.status.ToggleReadOnlyAttributePanel;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
+import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.PlatformUtils;
@@ -105,7 +106,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     setupCloseAction();
     new MnemonicHelper().register(this);
 
-    myBalloonLayout = new BalloonLayout(myRootPane.getLayeredPane(), new Insets(8, 8, 8, 8));
+    myBalloonLayout = new BalloonLayoutImpl(myRootPane.getLayeredPane(), new Insets(8, 8, 8, 8));
 
     if (!Registry.is("ide.windowSystem.focusAppOnStartup") && !isThereActiveFrame()) {
       setFocusableWindowState(false);

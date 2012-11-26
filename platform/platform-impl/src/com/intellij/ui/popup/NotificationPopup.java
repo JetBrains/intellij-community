@@ -20,9 +20,10 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.components.panels.Wrapper;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,8 +45,8 @@ public class NotificationPopup {
   }
 
   public NotificationPopup(final JComponent owner, final JComponent content, Color backgroud, final boolean useDefaultPreferredSize, ActionListener clickHandler, boolean closeOnClick) {
-    final IdeFrameImpl frame = findFrame(owner);
-    if (frame == null || !frame.isShowing()) {
+    final IdeFrame frame = findFrame(owner);
+    if (frame == null || !((Window)frame).isShowing() || frame.getBalloonLayout() == null) {
       final FramelessNotificationPopup popup = new FramelessNotificationPopup(owner, content, backgroud, useDefaultPreferredSize, clickHandler);
 
       myImpl = new Impl() {
@@ -83,7 +84,10 @@ public class NotificationPopup {
         .setClickHandler(clickHandler, closeOnClick)
         .createBalloon();
 
-      frame.getBalloonLayout().add(balloon);
+      BalloonLayout layout = frame.getBalloonLayout();
+      assert layout != null;
+
+      layout.add(balloon);
 
       myImpl = new Impl() {
         public void addListener(JBPopupListener listener) {
@@ -97,10 +101,10 @@ public class NotificationPopup {
     }
   }
 
-  private IdeFrameImpl findFrame(JComponent owner) {
+  private static IdeFrame findFrame(JComponent owner) {
     final Window frame = SwingUtilities.getWindowAncestor(owner);
-    if (frame instanceof IdeFrameImpl) {
-      return (IdeFrameImpl)frame;
+    if (frame instanceof IdeFrame) {
+      return (IdeFrame)frame;
     }
 
     return null;

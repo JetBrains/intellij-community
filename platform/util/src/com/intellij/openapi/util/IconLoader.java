@@ -75,7 +75,7 @@ public final class IconLoader {
     ourDeprecatedIconsReplacements.put("/inspector/useFilter.png", "AllIcons.General.Filter");
   }
 
-  private static final ImageIcon EMPTY_ICON = new ImageIcon(new BufferedImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)) {
+  private static final ImageIcon EMPTY_ICON = new ImageIcon(UIUtil.createImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)) {
     @NonNls
     public String toString() {
       return "Empty icon " + super.toString();
@@ -248,7 +248,7 @@ public final class IconLoader {
         LOG.error(icon); // # 22481
         return EMPTY_ICON;
       }
-      final BufferedImage image = new BufferedImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+      final BufferedImage image = UIUtil.createImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
       final Graphics2D graphics = image.createGraphics();
 
       graphics.setColor(UIUtil.TRANSPARENT_COLOR);

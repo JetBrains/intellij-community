@@ -2413,6 +2413,12 @@ public class StringUtil extends StringUtilRt {
       }
     }
 
+    @Override
+    public String toString() {
+      check();
+      return delegate.toString();
+    }
+
     protected abstract void checkCanceled();
 
     @Override

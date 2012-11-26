@@ -22,6 +22,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -105,7 +106,7 @@ class SwitcherToolWindowsListRenderer extends ColoredListCellRenderer {
     icon.paintIcon(null, g, 0, 0);
     g.dispose();
 
-    final BufferedImage img = new BufferedImage(16, 16, BufferedImage.TRANSLUCENT);
+    final BufferedImage img = UIUtil.createImage(16, 16, BufferedImage.TRANSLUCENT);
     final int offX = Math.max((16 - w) / 2, 0);
     final int offY = Math.max((16 - h) / 2, 0);
     for (int col = 0; col < w; col++) {

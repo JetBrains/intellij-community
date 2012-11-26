@@ -17,7 +17,6 @@ package git4idea.roots;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
@@ -28,12 +27,13 @@ import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBus;
 import git4idea.GitUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Kirill Likhodedov
@@ -45,11 +45,13 @@ public class GitRootScanner implements BulkFileListener, ModuleRootListener, Dis
 
   private volatile boolean myProjectIsInitialized;
   private volatile boolean myMappingsAreReady;
-  private volatile boolean myScanning;
-  @NotNull private final Object SCAN_LOCK = new Object();
+
+  @NotNull private final Alarm myAlarm;
+  private static final long WAIT_BEFORE_SCAN = TimeUnit.SECONDS.toMillis(1);
 
   public GitRootScanner(@NotNull Project project, @NotNull Runnable executeAfterScan) {
     myExecuteAfterScan = executeAfterScan;
+    myRootProblemNotifier = GitRootProblemNotifier.getInstance(project);
 
     StartupManager.getInstance(project).runWhenProjectIsInitialized(new DumbAwareRunnable() {
       @Override
@@ -64,7 +66,7 @@ public class GitRootScanner implements BulkFileListener, ModuleRootListener, Dis
     messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, this);
     messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, this);
 
-    myRootProblemNotifier = GitRootProblemNotifier.getInstance(project);
+    myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, project);
   }
 
   @Override
@@ -102,45 +104,23 @@ public class GitRootScanner implements BulkFileListener, ModuleRootListener, Dis
 
   private void scanIfReady() {
     if (readyToScan()) {
-      scan();
-    }
-  }
-
-  private void scan() {
-    if (myScanning) {
-      return;
-    }
-
-    if (SwingUtilities.isEventDispatchThread()) {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        public void run() {
-          scanWithLock();
-        }
-      });
-    }
-    else {
-      scanWithLock();
-    }
-  }
-
-  private void scanWithLock() {
-    synchronized (SCAN_LOCK) {
-      if (myScanning) {
-        return;
-      }
-      myScanning = true;
-      try {
-        myRootProblemNotifier.rescanAndNotifyIfNeeded();
-        myExecuteAfterScan.run();
-      }
-      finally {
-        myScanning = false;
-      }
+      scheduleScan();
     }
   }
 
   private boolean readyToScan() {
     return myMappingsAreReady && myProjectIsInitialized;
+  }
+
+  private void scheduleScan() {
+    myAlarm.cancelAllRequests(); // one scan is enough, no need to queue, they all do the same
+    myAlarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        myRootProblemNotifier.rescanAndNotifyIfNeeded();
+        myExecuteAfterScan.run();
+      }
+    }, WAIT_BEFORE_SCAN);
   }
 
 }

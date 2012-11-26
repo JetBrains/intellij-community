@@ -343,6 +343,40 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
 
     checkHighlighting();
   }
+  public void testDontHighlightGoalsForUnresolvedPlugin() throws Throwable {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <executions>" +
+                     "        <execution>" +
+                     "          <goals>" +
+                     "            <goal>compile</goal>" +
+                     "            <goal><error>unknownGoal</error></goal>" +
+                     "          </goals>" +
+                     "        </execution>" +
+                     "      </executions>" +
+                     "    </plugin>" +
+                     "    <plugin>" +
+                     "      <artifactId><error>unresolved-plugin</error></artifactId>" +
+                     "      <executions>" +
+                     "        <execution>" +
+                     "          <goals>" +
+                     "            <goal>compile</goal>" +
+                     "            <goal>unknownGoal</goal>" +
+                     "          </goals>" +
+                     "        </execution>" +
+                     "      </executions>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    checkHighlighting();
+  }
 
   public void testGoalsCompletionAndHighlightingInPluginManagement() throws Throwable {
     createProjectPom("<groupId>test</groupId>" +

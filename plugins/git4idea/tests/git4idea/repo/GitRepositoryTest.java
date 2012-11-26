@@ -241,9 +241,9 @@ public class GitRepositoryTest extends GitTest {
     if (waitForEvent) {
       final AtomicBoolean repoChanged = new AtomicBoolean();
       final Object LOCK = new Object();
-      myRepository.addListener(new GitRepositoryChangeListener() {
+      myProject.getMessageBus().connect().subscribe(GitRepository.GIT_REPO_CHANGE, new GitRepositoryChangeListener() {
         @Override
-        public void repositoryChanged() {
+        public void repositoryChanged(@NotNull GitRepository repository) {
           repoChanged.set(true);
           synchronized (LOCK) {
             LOCK.notifyAll();

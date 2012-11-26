@@ -33,6 +33,12 @@ public class AndroidLintTest extends AndroidTestCase {
     super(false);
   }
 
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    AndroidLintInspectionBase.invalidateInspectionShortName2IssueMap();
+  }
+
   public void testHardcodedQuickfix() throws Exception {
     doTestHardcodedQuickfix();
   }

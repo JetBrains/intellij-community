@@ -56,10 +56,6 @@ public class GitFakeRepositoryManager implements GitRepositoryManager {
   }
 
   @Override
-  public void addListenerToAllRepositories(@NotNull GitRepositoryChangeListener listener) {
-  }
-
-  @Override
   public void updateRepository(VirtualFile root) {
   }
 

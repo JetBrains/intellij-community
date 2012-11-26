@@ -56,12 +56,6 @@ public interface GitRepositoryManager {
   boolean moreThanOneRoot();
 
   /**
-   * Adds the listener to all existing repositories AND all future repositories.
-   * I.e. if a new GitRepository is be created via this GitRepositoryManager, the listener will be added to the repository.
-   */
-  void addListenerToAllRepositories(@NotNull GitRepositoryChangeListener listener);
-
-  /**
    * Synchronously updates the specified information about Git repository under the given root.
    * @param root   root directory of the Git repository.
    *

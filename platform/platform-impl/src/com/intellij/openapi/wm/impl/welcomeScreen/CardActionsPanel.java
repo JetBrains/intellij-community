@@ -24,6 +24,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.LightColors;
 import com.intellij.util.ui.CenteredIcon;
@@ -97,14 +98,8 @@ public class CardActionsPanel extends JPanel {
         if (childGroup.isPopup()) {
           final String id = String.valueOf(++nCards);
           createCardForGroup(childGroup, id, parentId);
-          AnAction activateCard = new AnAction() {
-            @Override
-            public void actionPerformed(AnActionEvent e) {
-              myLayout.swipe(myContent, id, JBCardLayout.SwipeDirection.FORWARD);
-            }
-          };
 
-          buttons.add(new Button(activateCard, presentation));
+          buttons.add(new Button(new ActivateCard(id), presentation));
         }
         else {
           buttons.addAll(buildButtons(childGroup, parentId));
@@ -177,8 +172,38 @@ public class CardActionsPanel extends JPanel {
       }
     };
 
+    @Override
+    public void paintComponent(Graphics g) {
+      super.paintComponent(g);
+
+      AnAction action = getAction();
+      if (action instanceof ActivateCard) {
+        Rectangle bounds = getBounds();
+
+        Icon icon = AllIcons.Actions.Forward; //AllIcons.Icons.Ide.NextStepGrayed;
+        int y = (bounds.height - icon.getIconHeight()) / 2;
+        int x = bounds.width - icon.getIconWidth() - 15;
+
+        if (getPopState() == POPPED) {
+          g.setColor(WelcomeScreenColors.CAPTION_BACKGROUND);
+          g.fillOval(x - 3, y - 3, icon.getIconWidth() + 6, icon.getIconHeight() + 6);
+
+          g.setColor(WelcomeScreenColors.GROUP_ICON_BORDER_COLOR);
+          g.drawOval(x - 3, y - 3, icon.getIconWidth() + 6, icon.getIconHeight() + 6);
+        }
+        else {
+          icon = IconLoader.getDisabledIcon(icon);
+        }
+
+        icon.paintIcon(this, g, x, y);
+      }
+    }
+
     public Button(AnAction action, Presentation presentation) {
-      super(action, wrapIcon(presentation), ActionPlaces.WELCOME_SCREEN, new Dimension(32, 32));
+      super(action,
+            wrapIcon(presentation),
+            ActionPlaces.WELCOME_SCREEN,
+            new Dimension(32, 32));
       setBorder(new EmptyBorder(3, 3, 3, 3));
     }
 
@@ -199,8 +224,22 @@ public class CardActionsPanel extends JPanel {
 
     private static Presentation wrapIcon(Presentation presentation) {
       Icon original = presentation.getIcon();
-      presentation.setIcon(new CenteredIcon(original != null ? original : DEFAULT_ICON, 40, 40, false));
+      CenteredIcon centered = new CenteredIcon(original != null ? original : DEFAULT_ICON, 40, 40, false);
+      presentation.setIcon(centered);
       return presentation;
+    }
+  }
+
+  private class ActivateCard extends AnAction {
+    private final String myId;
+
+    public ActivateCard(String id) {
+      myId = id;
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      myLayout.swipe(myContent, myId, JBCardLayout.SwipeDirection.FORWARD);
     }
   }
 }

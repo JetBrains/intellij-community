@@ -79,47 +79,47 @@ public class JpsAndroidModuleExtensionImpl extends JpsElementBase<JpsAndroidModu
   @Override
   public File getResourceDir() throws IOException {
     File resDir = findFileByRelativeModulePath(myProperties.RES_FOLDER_RELATIVE_PATH, true);
-    return resDir != null ? resDir.getCanonicalFile() : null;
+    return resDir != null ? canonizeFilePath(resDir) : null;
   }
 
   @Override
   public File getResourceDirForCompilation() throws IOException {
     File resDir = findFileByRelativeModulePath(myProperties.CUSTOM_APK_RESOURCE_FOLDER, false);
-    return resDir != null ? resDir.getCanonicalFile() : null;
+    return resDir != null ? canonizeFilePath(resDir) : null;
   }
 
   @Override
   public File getManifestFile() throws IOException {
     File manifestFile = findFileByRelativeModulePath(myProperties.MANIFEST_FILE_RELATIVE_PATH, true);
-    return manifestFile != null ? manifestFile.getCanonicalFile() : null;
+    return manifestFile != null ? canonizeFilePath(manifestFile) : null;
   }
 
   @Override
   public File getManifestFileForCompilation() throws IOException {
     File manifestFile = findFileByRelativeModulePath(myProperties.CUSTOM_COMPILER_MANIFEST, false);
-    return manifestFile != null ? manifestFile.getCanonicalFile() : null;
+    return manifestFile != null ? canonizeFilePath(manifestFile) : null;
   }
 
   @Override
   public File getProguardConfigFile() throws IOException {
     File proguardFile = findFileByRelativeModulePath(myProperties.PROGUARD_CFG_PATH, false);
-    return proguardFile != null ? proguardFile.getCanonicalFile() : null;
+    return proguardFile != null ? canonizeFilePath(proguardFile) : null;
   }
 
   @Override
   public File getAssetsDir() throws IOException {
     File manifestFile = findFileByRelativeModulePath(myProperties.ASSETS_FOLDER_RELATIVE_PATH, false);
-    return manifestFile != null ? manifestFile.getCanonicalFile() : null;
+    return manifestFile != null ? canonizeFilePath(manifestFile) : null;
   }
 
   public File getAaptGenDir() throws IOException {
     File aaptGenDir = findFileByRelativeModulePath(myProperties.GEN_FOLDER_RELATIVE_PATH_APT, false);
-    return aaptGenDir != null ? aaptGenDir.getCanonicalFile() : null;
+    return aaptGenDir != null ? canonizeFilePath(aaptGenDir) : null;
   }
 
   public File getAidlGenDir() throws IOException {
     File aidlGenDir = findFileByRelativeModulePath(myProperties.GEN_FOLDER_RELATIVE_PATH_AIDL, false);
-    return aidlGenDir != null ? aidlGenDir.getCanonicalFile() : null;
+    return aidlGenDir != null ? canonizeFilePath(aidlGenDir) : null;
   }
 
   public JpsAndroidModuleProperties getProperties() {
@@ -129,7 +129,11 @@ public class JpsAndroidModuleExtensionImpl extends JpsElementBase<JpsAndroidModu
   @Override
   public File getNativeLibsDir() throws IOException {
     File nativeLibsFolder = findFileByRelativeModulePath(myProperties.LIBS_FOLDER_RELATIVE_PATH, false);
-    return nativeLibsFolder != null ? nativeLibsFolder.getCanonicalFile() : null;
+    return nativeLibsFolder != null ? canonizeFilePath(nativeLibsFolder) : null;
+  }
+
+  private static File canonizeFilePath(@NotNull File file) throws IOException {
+    return new File(FileUtil.toCanonicalPath(file.getPath()));
   }
 
   @Nullable
