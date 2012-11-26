@@ -22,6 +22,7 @@ import com.intellij.designer.model.RadComponent;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,7 +85,7 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
 
   @Override
   public void valueChanged(TreeSelectionEvent e) {
-    if (!myTreeBuilder.isSelectionBeingAdjusted()) {
+    if (!myTreeBuilder.isSelectionBeingAdjusted() && ApplicationManager.getApplication().isDispatchThread()) {
       fireSelectionChanged();
     }
   }
