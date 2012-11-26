@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,11 +70,24 @@ public class PyChangeSignatureTest extends PyTestCase {
     doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false),
                                               new PyParameterInfo(-1, "b", "2", false)));
   }
+  public void testParamAnnotation() {
+    doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "b", null, false)), LanguageLevel.PYTHON32);
+  }
 
   public void doChangeSignatureTest(@Nullable String newName, @Nullable List<PyParameterInfo> parameters) {
     myFixture.configureByFile("refactoring/changeSignature/" + getTestName(true) + ".before.py");
     changeSignature(newName, parameters);
     myFixture.checkResultByFile("refactoring/changeSignature/" + getTestName(true) + ".after.py");
+  }
+
+  private void doChangeSignatureTest(String newName, @Nullable List<PyParameterInfo> parameters, LanguageLevel level) {
+    setLanguageLevel(level);
+    try {
+      doChangeSignatureTest(newName, parameters);
+    }
+    finally {
+      setLanguageLevel(null);
+    }
   }
 
   private void changeSignature(@Nullable String newName, @Nullable List<PyParameterInfo> parameters) {

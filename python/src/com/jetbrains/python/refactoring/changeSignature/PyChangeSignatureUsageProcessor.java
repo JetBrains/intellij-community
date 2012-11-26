@@ -235,6 +235,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     final PyParameterInfo[] parameters = changeInfo.getNewParameters();
     StringBuilder builder = new StringBuilder("def foo(");
     final PyStringLiteralExpression docstring = baseMethod.getDocStringExpression();
+    final PyParameter[] oldParameters = baseMethod.getParameterList().getParameters();
     for (int i = 0; i != parameters.length; ++i) {
       PyParameterInfo info = parameters[i];
 
@@ -245,6 +246,14 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       }
 
       builder.append(info.getName());
+      if (info.getOldIndex() != -1) {
+        final PyParameter parameter = oldParameters[info.getOldIndex()];
+        if (parameter instanceof PyNamedParameter) {
+          final PyAnnotation annotation = ((PyNamedParameter)parameter).getAnnotation();
+          if (annotation != null)
+            builder.append(annotation.getText());
+        }
+      }
       final String defaultValue = info.getDefaultValue();
       if (defaultValue != null && info.getDefaultInSignature() && !StringUtil.isEmpty(defaultValue)) {
         builder.append(" = ").append(defaultValue);
