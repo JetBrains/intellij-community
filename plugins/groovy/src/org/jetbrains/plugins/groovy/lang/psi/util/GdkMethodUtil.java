@@ -239,19 +239,26 @@ public class GdkMethodUtil {
   }
 
   @Nullable
-  private static Trinity<PsiClassType, GrReferenceExpression, PsiClass> getMixinTypes(GrStatement statement) {
-    if (statement instanceof GrMethodCall) {
-      GrMethodCall call = (GrMethodCall)statement;
-      Pair<PsiClassType, GrReferenceExpression> original = getTypeToMixIn(call);
-      PsiClass mix = getTypeToMix(call);
+  private static Trinity<PsiClassType, GrReferenceExpression, PsiClass> getMixinTypes(final GrStatement statement) {
+    if (!(statement instanceof GrMethodCall)) return null;
 
-      if (original != null && mix != null) {
-        return new Trinity<PsiClassType, GrReferenceExpression, PsiClass>(original.first, original.second, mix);
+    final CachedValuesManager manager = CachedValuesManager.getManager(statement.getProject());
+    return manager.getCachedValue(statement, new CachedValueProvider<Trinity<PsiClassType, GrReferenceExpression, PsiClass>>() {
+      @Nullable
+      @Override
+      public Result<Trinity<PsiClassType, GrReferenceExpression, PsiClass>> compute() {
+        GrMethodCall call = (GrMethodCall)statement;
 
+        Pair<PsiClassType, GrReferenceExpression> original = getTypeToMixIn(call);
+        if (original == null) return null;
+
+        PsiClass mix = getTypeToMix(call);
+        if (mix == null) return null;
+
+        return Result.create(new Trinity<PsiClassType, GrReferenceExpression, PsiClass>(original.first, original.second, mix),
+                             PsiModificationTracker.MODIFICATION_COUNT);
       }
-    }
-
-    return null;
+    });
   }
 
   @Nullable
