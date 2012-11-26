@@ -457,6 +457,9 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   @NotNull
   public static GlobalSearchScope getScopeRestrictedByFileTypes (@NotNull GlobalSearchScope scope, final FileType... fileTypes) {
+    if (scope == EMPTY_SCOPE) {
+      return EMPTY_SCOPE;
+    }
     LOG.assertTrue(fileTypes.length > 0);
     return new FileTypeRestrictionScope(scope, fileTypes);
   }

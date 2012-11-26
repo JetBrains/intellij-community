@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.search;
 
+import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -40,6 +41,9 @@ public class PsiSearchRequest {
     this.searchContext = searchContext;
     this.caseSensitive = caseSensitive;
     this.processor = processor;
+    if (ApplicationManager.getApplication().isInternal() && searchScope instanceof GlobalSearchScope && ((GlobalSearchScope)searchScope).getProject() == null) {
+      throw new AssertionError("Every search scope must be associated with a project");
+    }
   }
 
   @Override
