@@ -173,7 +173,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
       if (new File("c:").exists()) {
         root = LocalFileSystem.getInstance().findFileByPath("c:");
         assertNotNull(root);
-        assertEquals("C:", root.getPath());
+        assertEquals("C:/", root.getPath());
 
         root2 = LocalFileSystem.getInstance().findFileByPath("C:\\");
         assertEquals(String.valueOf(root2), root, root2);
