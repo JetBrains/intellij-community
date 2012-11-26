@@ -157,7 +157,7 @@ public class HighlighterUtil {
     private static Object formatTooltip(Editor e, PsiElement element) {
         if (!(element instanceof XmlTag)) {
           final String text = element.getText();
-          if (text == null || text.length() == 0 && MyPsiUtil.isNameElement(element)) {
+          if ((text == null || text.length() == 0) && MyPsiUtil.isNameElement(element)) {
             final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class, true);
             if (tag != null) {
               return tag.getName();
