@@ -280,7 +280,8 @@ public class NotificationsManagerImpl extends NotificationsManager {
     builder.setFillColor(NotificationsUtil.getBackground(notification)).setCloseButtonEnabled(true).setShowCallout(showCallout)
       .setHideOnClickOutside(hideOnClickOutside)
       .setHideOnAction(hideOnClickOutside)
-      .setHideOnKeyOutside(hideOnClickOutside).setHideOnFrameResize(false);
+      .setHideOnKeyOutside(hideOnClickOutside).setHideOnFrameResize(false)
+      .setBorderColor(NotificationsUtil.getBorderColor(notification));
 
     final Balloon balloon = builder.createBalloon();
     notification.setBalloon(balloon);
