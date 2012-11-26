@@ -201,11 +201,6 @@ public class GitLightRepository implements GitRepository {
   }
 
   @Override
-  public void addListener(@NotNull GitRepositoryChangeListener listener) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void update() {
     throw new UnsupportedOperationException();
   }
