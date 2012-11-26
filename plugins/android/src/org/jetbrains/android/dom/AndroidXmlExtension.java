@@ -17,6 +17,8 @@ package org.jetbrains.android.dom;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
@@ -46,12 +48,14 @@ public class AndroidXmlExtension extends DefaultXmlExtension {
       if (!DirectoryIndex.getInstance(file.getProject()).isInitialized()) {
         return false;
       }
-
-      if (AndroidFacet.getInstance(file) == null) {
-        return false;
-      }
       return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
         public Boolean compute() {
+          final Module module = ModuleUtilCore.findModuleForPsiElement(file);
+          if (module == null ||
+              module.isDisposed() ||
+              AndroidFacet.getInstance(module) == null) {
+            return false;
+          }
           return AndroidResourceUtil.isInResourceSubdirectory(file, null) ||
                  ManifestDomFileDescription.isManifestFile((XmlFile)file);
         }
