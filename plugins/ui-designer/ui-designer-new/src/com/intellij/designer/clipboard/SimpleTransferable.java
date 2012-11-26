@@ -78,9 +78,11 @@ public class SimpleTransferable implements Transferable {
   public static <T> T getData(Transferable transferable, Class<T> dataClass) {
     try {
       for (DataFlavor dataFlavor : transferable.getTransferDataFlavors()) {
-        Object transferData = transferable.getTransferData(dataFlavor);
-        if (dataClass.isInstance(transferData)) {
-          return (T)transferData;
+        if (transferable.isDataFlavorSupported(dataFlavor)) {
+          Object transferData = transferable.getTransferData(dataFlavor);
+          if (dataClass.isInstance(transferData)) {
+            return (T)transferData;
+          }
         }
       }
     }
