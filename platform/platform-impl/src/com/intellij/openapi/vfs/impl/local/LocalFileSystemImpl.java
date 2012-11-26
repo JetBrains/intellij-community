@@ -58,7 +58,12 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
 
     public WatchRequestImpl(String rootPath, final boolean toWatchRecursively) throws FileNotFoundException {
       final int index = rootPath.indexOf(JarFileSystem.JAR_SEPARATOR);
-      if (index >= 0) rootPath = rootPath.substring(0, index);
+      if (index >= 0) {
+        rootPath = rootPath.substring(0, index);
+      }
+      else if (SystemInfo.isWindows && rootPath.endsWith(":")) {
+        rootPath += "\\";
+      }
 
       File rootFile = new File(FileUtil.toSystemDependentName(rootPath));
       if (index > 0 || !rootFile.isDirectory()) {
