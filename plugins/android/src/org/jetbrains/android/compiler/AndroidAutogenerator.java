@@ -141,6 +141,12 @@ public class AndroidAutogenerator {
                                -1, -1);
             return null;
           }
+
+          if (!AndroidUtils.isValidPackageName(packageName)) {
+            context.addMessage(CompilerMessageCategory.ERROR, AndroidBundle.message("not.valid.package.name.error", packageName),
+                               manifestFile.getUrl(), -1, -1);
+            return null;
+          }
           return new BuildconfigAutogenerationItem(packageName, FileUtil.toSystemDependentName(sourceRootPath));
         }
       });
@@ -153,7 +159,14 @@ public class AndroidAutogenerator {
     final boolean debug = true;
     final BuildConfigGenerator generator = new BuildConfigGenerator(item.mySourceRootOsPath, item.myPackage, debug);
     try {
-      generator.generate();
+      try {
+        generator.generate();
+      }
+      catch (RuntimeException e) {
+        // todo: report to context
+        LOG.debug(e);
+        return;
+      }
 
       final VirtualFile genSourceRoot = LocalFileSystem.getInstance().findFileByPath(item.mySourceRootOsPath);
       if (genSourceRoot != null) {
@@ -211,6 +224,12 @@ public class AndroidAutogenerator {
         if (packageName == null || packageName.length() <= 0) {
           context.addMessage(CompilerMessageCategory.ERROR, AndroidBundle.message("package.not.found.error"), manifestFile.getUrl(),
                              -1, -1);
+          return null;
+        }
+
+        if (!AndroidUtils.isValidPackageName(packageName)) {
+          context.addMessage(CompilerMessageCategory.ERROR, AndroidBundle.message("not.valid.package.name.error", packageName),
+                             manifestFile.getUrl(), -1, -1);
           return null;
         }
 

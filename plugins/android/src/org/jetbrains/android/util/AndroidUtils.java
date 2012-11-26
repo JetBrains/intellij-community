@@ -41,6 +41,8 @@ import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.facet.ProjectFacetManager;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.wizard.CommitStepException;
+import com.intellij.lexer.JavaLexer;
+import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -65,6 +67,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -753,5 +756,25 @@ public class AndroidUtils {
     };
     wrapper.setTitle("Stack trace");
     wrapper.show();
+  }
+
+  public static boolean isValidPackageName(@NotNull String name) {
+    int index = 0;
+    while (true) {
+      int index1 = name.indexOf('.', index);
+      if (index1 < 0) index1 = name.length();
+      if (!isIdentifier(name.substring(index, index1))) return false;
+      if (index1 == name.length()) return true;
+      index = index1 + 1;
+    }
+  }
+
+  public static boolean isIdentifier(@NotNull String candidate) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    Lexer lexer = new JavaLexer(LanguageLevel.JDK_1_3);
+    lexer.start(candidate);
+    if (lexer.getTokenType() != JavaTokenType.IDENTIFIER) return false;
+    lexer.advance();
+    return lexer.getTokenType() == null;
   }
 }
