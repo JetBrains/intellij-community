@@ -15,6 +15,7 @@ import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +36,15 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
   @Override
   public PsiElement findTargetMember(PsiElement element) {
     final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
-    return function;
+    if (function != null)
+      return function;
+    else {
+      final PyCallExpression callExpression = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
+      if (callExpression != null) {
+        return callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
+      }
+    }
+    return null;
   }
 
   @Override

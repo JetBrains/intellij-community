@@ -1,7 +1,6 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -58,29 +57,25 @@ public class PyQuotedStringIntention extends BaseIntentionAction {
     PyStringLiteralExpression string = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyStringLiteralExpression.class);
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     if (string != null) {
-      StringBuilder strBuilder = new StringBuilder();
-      for (ASTNode node : string.getStringNodes())
-        strBuilder.append(node.getText());
-      String stringText = strBuilder.toString();
+      final String stringText = string.getText();
       int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
-      String prefix = stringText.substring(0, prefixLength);
-      stringText = stringText.substring(prefixLength);
+      final String text = stringText.substring(prefixLength);
 
-      if (stringText.startsWith("'") && stringText.endsWith("'")) {
+      if (text.startsWith("'") && text.endsWith("'")) {
         String result = convertSingleToDoubleQuoted(stringText);
-        PyStringLiteralExpression st = elementGenerator.createStringLiteralAlreadyEscaped(prefix + result);
+        PyStringLiteralExpression st = elementGenerator.createStringLiteralAlreadyEscaped(result);
         string.replace(st);
       }
-      if (stringText.startsWith("\"") && stringText.endsWith("\"")) {
+      if (text.startsWith("\"") && text.endsWith("\"")) {
         String result = convertDoubleToSingleQuoted(stringText);
-        PyStringLiteralExpression st = elementGenerator.createStringLiteralAlreadyEscaped(prefix + result);
+        PyStringLiteralExpression st = elementGenerator.createStringLiteralAlreadyEscaped(result);
         string.replace(st);
       }
     }
   }
 
   private static String convertDoubleToSingleQuoted(String stringText) {
-    StringBuilder stringBuilder = new StringBuilder("'");
+    StringBuilder stringBuilder = new StringBuilder();
 
     boolean skipNext = false;
     char[] charArr = stringText.toCharArray();
@@ -91,8 +86,8 @@ public class PyQuotedStringIntention extends BaseIntentionAction {
         continue;
       }
       if (ch == '"') {
+        stringBuilder.append('\'');
         continue;
-      //    stringBuilder.append('\'');
       }
       else if (ch == '\'') {
         stringBuilder.append("\\\'");
@@ -106,12 +101,11 @@ public class PyQuotedStringIntention extends BaseIntentionAction {
       }
     }
 
-    stringBuilder.append("'");
     return stringBuilder.toString();
   }
 
   private static String convertSingleToDoubleQuoted(String stringText) {
-    StringBuilder stringBuilder = new StringBuilder("\"");
+    StringBuilder stringBuilder = new StringBuilder();
     boolean skipNext = false;
     char[] charArr = stringText.toCharArray();
     for (int i = 0; i != charArr.length; ++i) {
@@ -121,8 +115,8 @@ public class PyQuotedStringIntention extends BaseIntentionAction {
         continue;
       }
       if (ch == '\'') {
+        stringBuilder.append('"');
         continue;
-        //stringBuilder.append('"');
       }
       else if (ch == '"') {
         stringBuilder.append("\\\"");
@@ -135,7 +129,6 @@ public class PyQuotedStringIntention extends BaseIntentionAction {
         stringBuilder.append(ch);
       }
     }
-    stringBuilder.append("\"");
     return stringBuilder.toString();
   }
 }
