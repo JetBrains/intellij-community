@@ -39,7 +39,8 @@ import java.util.List;
  * Manages the version control systems used by a specific project.
  */
 public abstract class ProjectLevelVcsManager {
-  @NonNls public static final String FILE_VIEW_TOOL_WINDOW_ID = "File View";
+
+  public static final Topic<VcsListener> VCS_CONFIGURATION_CHANGED = Topic.create("VCS configuration changed", VcsListener.class);
 
   public abstract void iterateVfUnderVcsRoot(VirtualFile file, Processor<VirtualFile> processor);
 
@@ -262,8 +263,6 @@ public abstract class ProjectLevelVcsManager {
   public abstract AbstractVcs findVersioningVcs(VirtualFile file);
 
   public abstract CheckoutProvider.Listener getCompositeCheckoutListener();
-
-  public static Topic<VcsListener> VCS_CONFIGURATION_CHANGED = Topic.create("VCS configuration changed", VcsListener.class);
 
   public abstract VcsEventsListenerManager getVcsEventsListenerManager();
   protected abstract VcsEnvironmentsProxyCreator getProxyCreator();

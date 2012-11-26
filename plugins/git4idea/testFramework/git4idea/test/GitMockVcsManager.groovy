@@ -27,6 +27,8 @@ import com.intellij.openapi.vcs.update.UpdatedFiles
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Processor
 import com.intellij.dvcs.DvcsPlatformFacade
+import org.jetbrains.annotations.NotNull
+
 /**
  * 
  * @author Kirill Likhodedov
@@ -106,7 +108,7 @@ public class GitMockVcsManager extends ProjectLevelVcsManager {
   }
 
   @Override
-  AbstractVcs getVcsFor(VirtualFile file) {
+  AbstractVcs getVcsFor(@NotNull VirtualFile file) {
     throw new UnsupportedOperationException()
   }
 
@@ -165,18 +167,21 @@ public class GitMockVcsManager extends ProjectLevelVcsManager {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  VcsShowSettingOption getStandardOption(VcsConfiguration.StandardOption option, AbstractVcs vcs) {
+  VcsShowSettingOption getStandardOption(@NotNull VcsConfiguration.StandardOption option, @NotNull AbstractVcs vcs) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  VcsShowConfirmationOption getStandardConfirmation(VcsConfiguration.StandardConfirmation option, AbstractVcs vcs) {
+  VcsShowConfirmationOption getStandardConfirmation(@NotNull VcsConfiguration.StandardConfirmation option, AbstractVcs vcs) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  VcsShowSettingOption getOrCreateCustomOption(String vcsActionName, AbstractVcs vcs) {
+  VcsShowSettingOption getOrCreateCustomOption(@NotNull String vcsActionName, @NotNull AbstractVcs vcs) {
     throw new UnsupportedOperationException()
   }
 
@@ -225,6 +230,7 @@ public class GitMockVcsManager extends ProjectLevelVcsManager {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
   VcsRoot[] getAllVcsRoots() {
     myPlatformFacade.getRepositoryManager(myProject).repositories.collect {
