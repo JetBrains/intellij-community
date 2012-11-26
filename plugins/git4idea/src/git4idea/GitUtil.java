@@ -351,7 +351,7 @@ public class GitUtil {
    */
   @Deprecated
   @Nullable
-  public static VirtualFile getGitRootOrNull(final FilePath filePath) {
+  public static VirtualFile getGitRootOrNull(@NotNull final FilePath filePath) {
     return getGitRootOrNull(filePath.getIOFile());
   }
 

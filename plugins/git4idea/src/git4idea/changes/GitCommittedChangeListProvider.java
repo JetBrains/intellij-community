@@ -34,15 +34,15 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
-import git4idea.GitBranch;
-import git4idea.GitDeprecatedRemote;
 import git4idea.GitFileRevision;
+import git4idea.GitLocalBranch;
+import git4idea.GitRemoteBranch;
 import git4idea.GitUtil;
-import git4idea.branch.GitBranchUtil;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.browser.GitCommit;
 import git4idea.history.browser.SymbolicRefs;
+import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +54,7 @@ import java.util.*;
  */
 public class GitCommittedChangeListProvider implements CommittedChangesProvider<CommittedChangeList, ChangeBrowserSettings> {
 
-  private static final Logger LOG = Logger.getInstance(GitCommittedChangeListProvider.class.getName());
+  private static final Logger LOG = Logger.getInstance(GitCommittedChangeListProvider.class);
 
   @NotNull private final Project myProject;
 
@@ -71,37 +71,26 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
     return new GitVersionFilterComponent(showDateFilter);
   }
 
-  public RepositoryLocation getLocationFor(FilePath root) {
-    // TODO !!! consider some caching for the case when we do not have tracked remote branch
-    // TODO - in this case returned NULL is NOT cached (in ProjectKeyComponent)
+  public RepositoryLocation getLocationFor(@NotNull FilePath root) {
     VirtualFile gitRoot = GitUtil.getGitRootOrNull(root);
     if (gitRoot == null) {
       return null;
     }
-    try {
-      GitBranch c = GitBranchUtil.getCurrentBranch(myProject, gitRoot);
-      if (c == null) {
-        return null;
-      }
-      String remote = GitBranchUtil.getTrackedRemoteName(myProject, gitRoot, c.getName());
-      if (StringUtil.isEmpty(remote)) {
-        return null;
-      }
-      File rootFile = new File(gitRoot.getPath());
-      if (".".equals(remote)) {
-        return new GitRepositoryLocation(gitRoot.getUrl(), rootFile);
-      }
-      else {
-        GitDeprecatedRemote r = GitDeprecatedRemote.find(myProject, gitRoot, remote);
-        return r == null ? null : new GitRepositoryLocation(r.fetchUrl(), rootFile);
-      }
-    }
-    catch (VcsException e) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Exception for determining repository location", e);
-      }
+    GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(gitRoot);
+    if (repository == null) {
+      LOG.info("No GitRepository for " + gitRoot);
       return null;
     }
+    GitLocalBranch currentBranch = repository.getCurrentBranch();
+    if (currentBranch == null) {
+      return null;
+    }
+    GitRemoteBranch trackedBranch = currentBranch.findTrackedBranch(repository);
+    if (trackedBranch == null) {
+      return null;
+    }
+    File rootFile = new File(gitRoot.getPath());
+    return new GitRepositoryLocation(trackedBranch.getRemote().getFirstUrl(), rootFile);
   }
 
   public RepositoryLocation getLocationFor(FilePath root, String repositoryPath) {
