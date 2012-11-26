@@ -1,10 +1,14 @@
 enum TestEnum {
-  ONE(Constants.xxx);
+  ONE(Constants1.xxx);
 
   TestEnum(String str) {
   }
 
-    private class Constants {
+    private static class Constants1 {
         public static final String xxx = "testString";
     }
+
+    private class Constants {
+    void foo(){}
+  }
 }
