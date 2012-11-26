@@ -17,13 +17,14 @@ package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -38,7 +39,7 @@ import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.util.GradleLibraryManager;
+import org.jetbrains.plugins.gradle.util.GradleInstallationManager;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -53,15 +54,16 @@ import java.util.regex.Pattern;
  * @author John Murph
  */
 public class GradlePositionManager extends ScriptPositionManagerHelper {
-  
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.gradle.config.GradlePositionManager");
-  private static final Pattern GRADLE_CLASS_PATTERN = Pattern.compile(".*_gradle_.*");
-  private static final Key<CachedValue<ClassLoader>> GRADLE_CLASS_LOADER = Key.create("GRADLE_CLASS_LOADER");
-  private static final Key<CachedValue<FactoryMap<File, String>>> GRADLE_CLASS_NAME = Key.create("GRADLE_CLASS_NAME");
-  
-  private final GradleLibraryManager myLibraryManager;
 
-  public GradlePositionManager(@NotNull GradleLibraryManager manager) {
+  private static final Logger                                     LOG                  =
+    Logger.getInstance("#org.jetbrains.plugins.gradle.config.GradlePositionManager");
+  private static final Pattern                                    GRADLE_CLASS_PATTERN = Pattern.compile(".*_gradle_.*");
+  private static final Key<CachedValue<ClassLoader>>              GRADLE_CLASS_LOADER  = Key.create("GRADLE_CLASS_LOADER");
+  private static final Key<CachedValue<FactoryMap<File, String>>> GRADLE_CLASS_NAME    = Key.create("GRADLE_CLASS_NAME");
+
+  private final GradleInstallationManager myLibraryManager;
+
+  public GradlePositionManager(@NotNull GradleInstallationManager manager) {
     myLibraryManager = manager;
   }
 
@@ -70,7 +72,8 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
   }
 
   public boolean isAppropriateScriptFile(@NotNull final PsiFile scriptFile) {
-    return scriptFile instanceof GroovyFile && GroovyScriptTypeDetector.isSpecificScriptFile((GroovyFile)scriptFile, GradleScriptType.INSTANCE);
+    return scriptFile instanceof GroovyFile &&
+           GroovyScriptTypeDetector.isSpecificScriptFile((GroovyFile)scriptFile, GradleScriptType.INSTANCE);
   }
 
   @NotNull
@@ -78,12 +81,12 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
     VirtualFile virtualFile = groovyFile.getVirtualFile();
     if (virtualFile == null) return "";
 
-    final Module module = ModuleUtil.findModuleForPsiElement(groovyFile);
+    final Module module = ModuleUtilCore.findModuleForPsiElement(groovyFile);
     if (module == null) {
       return "";
     }
 
-    final File scriptFile = VfsUtil.virtualToIoFile(virtualFile);
+    final File scriptFile = VfsUtilCore.virtualToIoFile(virtualFile);
     final String className = CachedValuesManager.getManager(module.getProject())
       .getCachedValue(module, GRADLE_CLASS_NAME, new ScriptSourceMapCalculator(module), false).get(scriptFile);
     return className == null ? "" : className;

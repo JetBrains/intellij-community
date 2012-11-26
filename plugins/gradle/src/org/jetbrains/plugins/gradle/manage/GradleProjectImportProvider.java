@@ -1,12 +1,12 @@
-package org.jetbrains.plugins.gradle.importing;
+package org.jetbrains.plugins.gradle.manage;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportProvider;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.importing.wizard.adjust.GradleAdjustImportSettingsStep;
-import org.jetbrains.plugins.gradle.importing.wizard.select.GradleSelectProjectStep;
+import org.jetbrains.plugins.gradle.manage.wizard.adjust.GradleAdjustImportSettingsStep;
+import org.jetbrains.plugins.gradle.manage.wizard.select.GradleSelectProjectStep;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 /**

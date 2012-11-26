@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.NonClasspathClassFinder;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.util.GradleLibraryManager;
+import org.jetbrains.plugins.gradle.util.GradleInstallationManager;
 
 import java.util.Collections;
 import java.util.List;
@@ -29,10 +29,10 @@ import java.util.List;
  * @author peter
  */
 public class GradleClassFinder extends NonClasspathClassFinder {
-  
-  @NotNull private final GradleLibraryManager myLibraryManager;
 
-  public GradleClassFinder(Project project, @NotNull GradleLibraryManager manager) {
+  @NotNull private final GradleInstallationManager myLibraryManager;
+
+  public GradleClassFinder(Project project, @NotNull GradleInstallationManager manager) {
     super(project);
     myLibraryManager = manager;
   }

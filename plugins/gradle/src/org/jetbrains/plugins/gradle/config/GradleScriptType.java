@@ -21,14 +21,14 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
@@ -36,11 +36,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.NonClasspathDirectoryScope;
+import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleLibraryManager;
+import org.jetbrains.plugins.gradle.util.GradleInstallationManager;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -79,7 +80,7 @@ public class GradleScriptType extends GroovyScriptType {
   @NotNull
   @Override
   public Icon getScriptIcon() {
-    return icons.GradleIcons.Gradle;
+    return GradleIcons.Gradle;
   }
 
   @Override
@@ -150,18 +151,18 @@ public class GradleScriptType extends GroovyScriptType {
 
       @Override
       public boolean isValidModule(@NotNull Module module) {
-        GradleLibraryManager libraryManager = ServiceManager.getService(GradleLibraryManager.class);
+        GradleInstallationManager libraryManager = ServiceManager.getService(GradleInstallationManager.class);
         return libraryManager.isGradleSdk(OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots());
       }
 
       @Override
       public boolean ensureRunnerConfigured(@Nullable Module module, RunProfile profile, Executor executor, final Project project) throws ExecutionException {
-        final GradleLibraryManager libraryManager = ServiceManager.getService(GradleLibraryManager.class);
+        final GradleInstallationManager libraryManager = ServiceManager.getService(GradleInstallationManager.class);
         if (libraryManager.getGradleHome(module, project) == null) {
           int result = Messages.showOkCancelDialog(
             GradleBundle.message("gradle.run.no.sdk.text"),
             GradleBundle.message("gradle.run.no.sdk.title"),
-            icons.GradleIcons.Gradle
+            GradleIcons.Gradle
           );
           if (result == 0) {
             ShowSettingsUtil.getInstance().editConfigurable(project, new GradleConfigurable(project));
@@ -181,7 +182,7 @@ public class GradleScriptType extends GroovyScriptType {
         throws CantRunException
       {
         final Project project = configuration.getProject();
-        final GradleLibraryManager libraryManager = ServiceManager.getService(GradleLibraryManager.class);
+        final GradleInstallationManager libraryManager = ServiceManager.getService(GradleInstallationManager.class);
         final VirtualFile gradleHome = libraryManager.getGradleHome(module, project);
         assert gradleHome != null;
 
@@ -239,7 +240,7 @@ public class GradleScriptType extends GroovyScriptType {
     }
     if (launcher != null) {
       try {
-        final String text = StringUtil.convertLineSeparators(VfsUtil.loadText(launcher));
+        final String text = StringUtil.convertLineSeparators(VfsUtilCore.loadText(launcher));
         final Matcher matcher = MAIN_CLASS_NAME_PATTERN.matcher(text);
         if (matcher.find()) {
           String candidate = matcher.group(1);
@@ -262,8 +263,8 @@ public class GradleScriptType extends GroovyScriptType {
 
   @Override
   public GlobalSearchScope patchResolveScope(@NotNull GroovyFile file, @NotNull GlobalSearchScope baseScope) {
-    final Module module = ModuleUtil.findModuleForPsiElement(file);
-    final GradleLibraryManager libraryManager = ServiceManager.getService(GradleLibraryManager.class);
+    final Module module = ModuleUtilCore.findModuleForPsiElement(file);
+    final GradleInstallationManager libraryManager = ServiceManager.getService(GradleInstallationManager.class);
     if (module != null) {
       if (libraryManager.getGradleHome(module) != null) {
         return baseScope;
