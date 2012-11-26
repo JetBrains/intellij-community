@@ -253,7 +253,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
         ratio = requiredSize / height;
       }
 
-      BufferedImage buffer = new BufferedImage((int)width, (int)height, BufferedImage.TYPE_INT_ARGB);
+      BufferedImage buffer = UIUtil.createImage((int)width, (int)height, BufferedImage.TYPE_INT_ARGB);
       buffer.createGraphics().drawImage(previewImage, 0, 0, (int)width, (int)height, null);
 
       myDefaultDragImage = buffer.getScaledInstance((int)(width * ratio), (int)(height * ratio), Image.SCALE_SMOOTH);

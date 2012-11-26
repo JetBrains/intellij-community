@@ -86,7 +86,7 @@ class ComboContentLayout extends ContentLayout {
       return;
     }
     if (myImage == null || myImage.getHeight() != r.height || myImage.getWidth() != r.width) {
-      myImage = new BufferedImage(r.width, r.height, BufferedImage.TYPE_INT_ARGB);
+      myImage = UIUtil.createImage(r.width, r.height, BufferedImage.TYPE_INT_ARGB);
       final Graphics2D g2d = myImage.createGraphics();
       final GraphicsConfig c = new GraphicsConfig(g);
       c.setAntialiasing(true);

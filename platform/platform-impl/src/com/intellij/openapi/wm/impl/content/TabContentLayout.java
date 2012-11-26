@@ -320,7 +320,7 @@ class TabContentLayout extends ContentLayout {
   @Nullable
   private static BufferedImage drawToBuffer(Rectangle r, boolean selected, boolean last, boolean prevSelected, boolean active) {
     if (r.width <= 0 || r.height <= 0) return null;
-    BufferedImage image = new BufferedImage(r.width, r.height, BufferedImage.TYPE_INT_ARGB);
+    BufferedImage image = UIUtil.createImage(r.width, r.height, BufferedImage.TYPE_INT_ARGB);
     Graphics2D g2d = image.createGraphics();
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 

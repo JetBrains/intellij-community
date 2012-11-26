@@ -26,6 +26,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.util.ui.UIUtil;
 import org.apache.sanselan.ImageFormat;
 import org.apache.sanselan.Sanselan;
 
@@ -179,7 +180,7 @@ public abstract class AppIcon {
 
         int width = appImage.getWidth(null);
         int height = appImage.getHeight(null);
-        BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage img = UIUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = img.createGraphics();
         g2d.drawImage(appImage, null, null);
         myAppImage = img;
@@ -330,7 +331,7 @@ public abstract class AppIcon {
     }
 
     private AppImage createAppImage() {
-      BufferedImage current = new BufferedImage(getAppImage().getWidth(), getAppImage().getHeight(), BufferedImage.TYPE_INT_ARGB);
+      BufferedImage current = UIUtil.createImage(getAppImage().getWidth(), getAppImage().getHeight(), BufferedImage.TYPE_INT_ARGB);
       Graphics2D g = current.createGraphics();
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g.drawImage(getAppImage(), null, null);
@@ -425,7 +426,7 @@ public abstract class AppIcon {
       if (text != null) {
         try {
           int size = 55;
-          BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+          BufferedImage image = UIUtil.createImage(size, size, BufferedImage.TYPE_INT_ARGB);
           Graphics2D g = image.createGraphics();
 
           int roundSize = 40;

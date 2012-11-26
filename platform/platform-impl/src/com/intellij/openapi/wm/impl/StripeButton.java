@@ -186,7 +186,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
 
       myDragPane = findLayeredPane(e);
       if (myDragPane == null) return;
-      final BufferedImage image = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+      final BufferedImage image = UIUtil.createImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
       paint(image.getGraphics());
       myDragButtonImage = new JLabel(new ImageIcon(image)) {
 

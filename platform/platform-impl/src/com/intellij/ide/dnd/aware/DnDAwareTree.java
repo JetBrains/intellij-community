@@ -19,8 +19,9 @@ import com.intellij.ide.dnd.DnDAware;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ui.tree.WideSelectionTreeUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -92,7 +93,7 @@ public class DnDAwareTree extends Tree implements DnDAware {
     c.setBackground(tree.getBackground());
     c.setFont(tree.getFont());
     c.setSize(c.getPreferredSize());
-    final BufferedImage image = new BufferedImage(c.getWidth(), c.getHeight(), BufferedImage.TYPE_INT_ARGB);
+    final BufferedImage image = UIUtil.createImage(c.getWidth(), c.getHeight(), BufferedImage.TYPE_INT_ARGB);
     Graphics2D g2 = (Graphics2D)image.getGraphics();
     g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
     c.paint(g2);

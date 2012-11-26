@@ -73,7 +73,7 @@ public class ImageComponentUI extends ComponentUI {
         // Create pattern
         int cellSize = ic.getTransparencyChessboardCellSize();
         int patternSize = 2 * cellSize;
-        BufferedImage pattern = new BufferedImage(patternSize, patternSize, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage pattern = UIUtil.createImage(patternSize, patternSize, BufferedImage.TYPE_INT_ARGB);
         Graphics imageGraphics = pattern.getGraphics();
         imageGraphics.setColor(ic.getTransparencyChessboardWhiteColor());
         imageGraphics.fillRect(0, 0, patternSize, patternSize);
