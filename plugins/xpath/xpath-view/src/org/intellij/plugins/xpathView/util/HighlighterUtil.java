@@ -15,6 +15,7 @@
  */
 package org.intellij.plugins.xpathView.util;
 
+import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.plugins.xpathView.Config;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -155,11 +156,18 @@ public class HighlighterUtil {
 
     private static Object formatTooltip(Editor e, PsiElement element) {
         if (!(element instanceof XmlTag)) {
-            return element.getText();
+          final String text = element.getText();
+          if (text == null || text.length() == 0 && MyPsiUtil.isNameElement(element)) {
+            final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class, true);
+            if (tag != null) {
+              return tag.getName();
+            }
+          }
+          return text;
         }
         // have to use html/preformatted or else the tooltip gets formatted totally weird.
 
-        final CodeStyleSettingsManager instance = CodeStyleSettingsManager.getInstance(e.getProject());
+        final CodeStyleSettingsManager instance = CodeStyleSettingsManager.getInstance(element.getProject());
         final int tabSize = instance.getCurrentSettings().getTabSize(FileTypeManager.getInstance().getFileTypeByExtension("xml"));
         final char[] spaces = new char[tabSize];
         for (int i = 0; i < spaces.length; i++) {

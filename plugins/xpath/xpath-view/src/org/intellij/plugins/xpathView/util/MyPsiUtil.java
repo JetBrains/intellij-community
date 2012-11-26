@@ -80,7 +80,18 @@ public class MyPsiUtil {
     }
 
     public static boolean isNameElement(@Nullable PsiElement child) {
-        return child != null && child.getParent() instanceof XmlTag && child instanceof XmlToken && ((XmlToken)child).getTokenType() == XmlTokenType.XML_NAME;
+      if (child != null) {
+        if (child.getParent() instanceof XmlTag) {
+          if (child instanceof XmlToken) {
+            if (((XmlToken)child).getTokenType() == XmlTokenType.XML_NAME) {
+              return true;
+            }
+          } else if (child instanceof ASTNode) {
+            return ((ASTNode)child).getElementType() == XmlTokenType.XML_NAME;
+          }
+        }
+      }
+      return false;
     }
 
     public static String getAttributePrefix(@NotNull XmlAttribute attribute) {
