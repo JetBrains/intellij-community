@@ -21,12 +21,13 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import icons.GradleIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleLibraryManager;
+import org.jetbrains.plugins.gradle.util.GradleInstallationManager;
 import org.jetbrains.plugins.groovy.config.GroovyLibraryPresentationProviderBase;
 
 import javax.swing.*;
@@ -37,19 +38,20 @@ import java.util.regex.Matcher;
  * @author nik
  */
 public class GradleLibraryPresentationProvider extends GroovyLibraryPresentationProviderBase {
-  
+
   private static final LibraryKind GRADLE_KIND = LibraryKind.create(GradleConstants.EXTENSION);
-  
-  private final GradleLibraryManager myLibraryManager;
-  
-  public GradleLibraryPresentationProvider(@NotNull GradleLibraryManager libraryManager) {
+
+  private final GradleInstallationManager myLibraryManager;
+
+  public GradleLibraryPresentationProvider(@NotNull GradleInstallationManager libraryManager) {
     super(GRADLE_KIND);
     myLibraryManager = libraryManager;
   }
+
   @NotNull
   @Override
   public Icon getIcon() {
-    return icons.GradleIcons.Gradle;
+    return GradleIcons.Gradle;
   }
 
   @Nls
@@ -72,7 +74,10 @@ public class GradleLibraryPresentationProvider extends GroovyLibraryPresentation
   @Override
   public String getSDKVersion(String path) {
     final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
-    for (VirtualFile virtualFile : file.findChild("lib").getChildren()) {
+    assert file != null;
+    VirtualFile lib = file.findChild("lib");
+    assert lib != null;
+    for (VirtualFile virtualFile : lib.getChildren()) {
       final String version = getGradleJarVersion(virtualFile);
       if (version != null) {
         return version;
@@ -114,7 +119,7 @@ public class GradleLibraryPresentationProvider extends GroovyLibraryPresentation
 
   @Nullable
   private static String getGradleJarVersion(VirtualFile file) {
-    final Matcher matcher = GradleLibraryManager.GRADLE_JAR_FILE_PATTERN.matcher(file.getName());
+    final Matcher matcher = GradleInstallationManager.GRADLE_JAR_FILE_PATTERN.matcher(file.getName());
     if (matcher.matches()) {
       return matcher.group(2);
     }

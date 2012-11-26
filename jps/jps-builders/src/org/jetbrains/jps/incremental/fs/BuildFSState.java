@@ -43,8 +43,8 @@ public class BuildFSState extends FSState {
   }
 
   @Override
-  public boolean markInitialScanPerformed(BuildTarget<?> target) {
-    return myAlwaysScanFS || super.markInitialScanPerformed(target);
+  public boolean isInitialScanPerformed(BuildTarget<?> target) {
+    return !myAlwaysScanFS && super.isInitialScanPerformed(target);
   }
 
   @Override
@@ -102,7 +102,6 @@ public class BuildFSState extends FSState {
   public void clearAll() {
     clearContextRoundData(null);
     clearContextChunk(null);
-    myInitialScanPerformed.clear();
     super.clearAll();
   }
 
@@ -132,7 +131,7 @@ public class BuildFSState extends FSState {
       for (Map.Entry<BuildRootDescriptor, Set<File>> entry : data.entrySet()) {
         //noinspection unchecked
         R root = (R)entry.getKey();
-        FileFilter filter = rootIndex.getRootFilter(root);
+        FileFilter filter = rootIndex.getRootFilter(root, context.getProjectDescriptor());
         for (File file : entry.getValue()) {
           if (!scope.isAffected(target, file) || !filter.accept(file)) {
             continue;
@@ -154,7 +153,7 @@ public class BuildFSState extends FSState {
     final FilesDelta delta = getDelta(rd.getTarget());
     final Set<File> files = delta.clearRecompile(rd);
     if (files != null) {
-      FileFilter filter = context.getProjectDescriptor().getBuildRootIndex().getRootFilter(rd);
+      FileFilter filter = context.getProjectDescriptor().getBuildRootIndex().getRootFilter(rd, context.getProjectDescriptor());
       CompileScope scope = context.getScope();
       final long compilationStartStamp = context.getCompilationStartStamp();
       for (File file : files) {

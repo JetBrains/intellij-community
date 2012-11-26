@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,31 +20,31 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-class VariablePassedAsArgumentExcludedVisitor
-  extends JavaRecursiveElementVisitor {
+class VariablePassedAsArgumentExcludedVisitor extends JavaRecursiveElementVisitor {
 
   @NotNull
   private final PsiVariable variable;
   private final Set<String> excludes;
+  private final boolean myBuilderPattern;
+
   private boolean passed = false;
 
-  public VariablePassedAsArgumentExcludedVisitor(
-    @NotNull PsiVariable variable, @NotNull Set<String> excludes) {
-    super();
+  public VariablePassedAsArgumentExcludedVisitor(@NotNull PsiVariable variable, @NotNull Set<String> excludes, boolean builderPattern) {
     this.variable = variable;
     this.excludes = excludes;
+    myBuilderPattern = builderPattern;
   }
 
   @Override
   public void visitElement(@NotNull PsiElement element) {
-    if (!passed) {
-      super.visitElement(element);
+    if (passed) {
+      return;
     }
+    super.visitElement(element);
   }
 
   @Override
-  public void visitMethodCallExpression(
-    @NotNull PsiMethodCallExpression call) {
+  public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
     if (passed) {
       return;
     }
@@ -52,7 +52,7 @@ class VariablePassedAsArgumentExcludedVisitor
     final PsiExpressionList argumentList = call.getArgumentList();
     final PsiExpression[] arguments = argumentList.getExpressions();
     for (PsiExpression argument : arguments) {
-      if (!VariableAccessUtils.mayEvaluateToVariable(argument, variable)) {
+      if (!VariableAccessUtils.mayEvaluateToVariable(argument, variable, myBuilderPattern)) {
         continue;
       }
       final PsiMethod method = call.resolveMethod();
@@ -70,8 +70,7 @@ class VariablePassedAsArgumentExcludedVisitor
   }
 
   @Override
-  public void visitNewExpression(
-    @NotNull PsiNewExpression newExpression) {
+  public void visitNewExpression(@NotNull PsiNewExpression newExpression) {
     if (passed) {
       return;
     }
@@ -82,7 +81,7 @@ class VariablePassedAsArgumentExcludedVisitor
     }
     final PsiExpression[] arguments = argumentList.getExpressions();
     for (PsiExpression argument : arguments) {
-      if (!VariableAccessUtils.mayEvaluateToVariable(argument, variable)) {
+      if (!VariableAccessUtils.mayEvaluateToVariable(argument, variable, myBuilderPattern)) {
         continue;
       }
       final PsiMethod constructor = newExpression.resolveConstructor();

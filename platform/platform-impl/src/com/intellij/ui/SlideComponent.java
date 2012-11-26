@@ -28,9 +28,9 @@ import java.awt.event.*;
 import java.util.List;
 
 /**
-* @author Alexey Pegov
-* @author Konstantin Bulenkov
-*/
+ * @author Alexey Pegov
+ * @author Konstantin Bulenkov
+ */
 class SlideComponent extends JComponent {
   private static final int OFFSET = 11;
   private int myPointerValue = 0;
@@ -124,7 +124,8 @@ class SlideComponent extends JComponent {
 
       final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
       myTooltipHint.show(this, point.x, point.y, owner instanceof JComponent ? (JComponent)owner : null, hint);
-    } else {
+    }
+    else {
       myTooltipHint.setLocation(new RelativePoint(this, point));
     }
   }
@@ -220,8 +221,6 @@ class SlideComponent extends JComponent {
 
       g.setColor(Gray._250);
       g.drawRect(11, 8, getWidth() - 22, 10);
-
-
     }
 
     drawKnob(g2d, myVertical ? 7 : myPointerValue, myVertical ? myPointerValue : 7, myVertical);

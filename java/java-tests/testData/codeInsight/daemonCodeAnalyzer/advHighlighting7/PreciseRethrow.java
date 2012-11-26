@@ -2,6 +2,7 @@ class C {
   static class E extends Exception { }
   static class E1 extends E { }
   static class E2 extends E { }
+  static class Err extends Error { }
 
   void m0() {
     try {
@@ -156,13 +157,39 @@ class C {
     }
   }
 
-  void m11() {
+  void m11_1() {
     try {
       System.out.println();
     }
     catch (Exception e) {
-      // test for precise types calculation fix
-      <error descr="Unhandled exception: java.lang.Exception">throw e;</error>
+      throw e;
+    }
+  }
+
+  void m11_2() {
+    try {
+      System.out.println();
+    }
+    catch (Error e) {
+      throw e;
+    }
+  }
+
+  void m11_3() {
+    try {
+      System.out.println();
+    }
+    catch (Err e) {
+      throw e;
+    }
+  }
+
+  void m11_4() {
+    try {
+      if (false) throw new RuntimeException();
+    }
+    catch (Exception e) {
+      throw e;
     }
   }
 
@@ -181,6 +208,23 @@ class C {
     catch (Exception e) {
       // test for another precise types calculation fix
       <error descr="Unhandled exceptions: C.E1, C.E2">throw e;</error>
+    }
+  }
+
+  void m13() throws E1 {
+    try {
+      try {
+        if (true)
+          throw new E1();
+        else if (false)
+          throw new E2();
+      }
+      catch (E1 | E2 e) {
+        throw e;
+      }
+    }
+    catch (E2 e) {
+      throw new RuntimeException(e);
     }
   }
 }

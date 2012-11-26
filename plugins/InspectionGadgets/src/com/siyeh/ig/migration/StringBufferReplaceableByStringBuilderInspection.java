@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,18 +84,15 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
     return null;
   }
 
-  private static class StringBufferMayBeStringBuilderFix
-    extends InspectionGadgetsFix {
+  private static class StringBufferMayBeStringBuilderFix extends InspectionGadgetsFix {
 
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "string.buffer.replaceable.by.string.builder.replace.quickfix");
+      return InspectionGadgetsBundle.message("string.buffer.replaceable.by.string.builder.replace.quickfix");
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
@@ -193,10 +190,10 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
       if (VariableAccessUtils.variableIsAssignedFrom(variable, context)) {
         return false;
       }
-      if (VariableAccessUtils.variableIsReturned(variable, context)) {
+      if (VariableAccessUtils.variableIsReturned(variable, context, true)) {
         return false;
       }
-      if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable, excludes, context)) {
+      if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable, excludes, context, true)) {
         return false;
       }
       if (VariableAccessUtils.variableIsUsedInInnerClass(variable, context)) {

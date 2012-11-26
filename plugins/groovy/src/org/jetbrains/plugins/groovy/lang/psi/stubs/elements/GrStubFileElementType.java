@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.stubs.*;
@@ -54,7 +55,7 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
 
   @Override
   public int getStubVersion() {
-    return super.getStubVersion() + 13;
+    return super.getStubVersion() + 14;
   }
 
   public String getExternalId() {
@@ -68,7 +69,6 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
 
   @Override
   public void serialize(final GrFileStub stub, final StubOutputStream dataStream) throws IOException {
-    dataStream.writeName(stub.getPackageName().toString());
     dataStream.writeName(stub.getName().toString());
     dataStream.writeBoolean(stub.isScript());
     GrStubUtils.writeStringArray(dataStream, stub.getAnnotations());
@@ -76,18 +76,17 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
 
   @Override
   public GrFileStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
-    StringRef packName = dataStream.readName();
     StringRef name = dataStream.readName();
     boolean isScript = dataStream.readBoolean();
-    return new GrFileStub(packName, name, isScript, GrStubUtils.readStringArray(dataStream));
+    return new GrFileStub(name, isScript, GrStubUtils.readStringArray(dataStream));
   }
 
   public void indexStub(GrFileStub stub, IndexSink sink) {
     String name = stub.getName().toString();
     if (stub.isScript() && name != null) {
       sink.occurrence(GrScriptClassNameIndex.KEY, name);
-      final String pName = stub.getPackageName().toString();
-      final String fqn = pName == null || pName.length() == 0 ? name : pName + "." + name;
+      final String pName = GrStubUtils.getPackageName(stub);
+      final String fqn = StringUtil.isEmpty(pName) ? name : pName + "." + name;
       sink.occurrence(GrFullScriptNameIndex.KEY, fqn.hashCode());
     }
 

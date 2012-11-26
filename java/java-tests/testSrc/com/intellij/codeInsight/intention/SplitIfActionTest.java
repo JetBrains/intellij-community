@@ -51,6 +51,12 @@ public class SplitIfActionTest extends LightCodeInsightTestCase {
     checkResultByFile("/codeInsight/splitIfAction/afterOrParenthesis.java");
   }
 
+  public void testComment() throws Exception {
+    configureByFile("/codeInsight/splitIfAction/beforeComment.java");
+    perform();
+    checkResultByFile("/codeInsight/splitIfAction/afterComment.java");
+  }
+
    public void test8() throws Exception {
     configureByFile("/codeInsight/splitIfAction/beforeOrAndMixed.java");
     SplitIfAction action = new SplitIfAction();

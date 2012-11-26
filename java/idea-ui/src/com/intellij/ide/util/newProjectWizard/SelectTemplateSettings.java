@@ -15,14 +15,9 @@
  */
 package com.intellij.ide.util.newProjectWizard;
 
-import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.xmlb.annotations.Tag;
-import com.intellij.util.xmlb.annotations.Transient;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
@@ -31,46 +26,41 @@ import org.jetbrains.annotations.NotNull;
 @State(name = "SelectProjectTemplateSettings", storages = {@Storage( file = StoragePathMacros.APP_CONFIG + "/other.xml")})
 public class SelectTemplateSettings implements PersistentStateComponent<SelectTemplateSettings> {
 
-  private static final String STATE_ELEMENT_NAME = "treeState";
-
   public static SelectTemplateSettings getInstance() {
     return ServiceManager.getService(SelectTemplateSettings.class);
   }
 
-  @Transient
-  public TreeState getTreeState() {
-    return myTreeState;
+  @Nullable
+  public String getLastGroup() {
+    return LAST_TEMPLATE == null ? null : LAST_TEMPLATE.split("/")[0];
   }
 
-  @Transient
-  public void setTreeState(TreeState state) {
-    myTreeState = state;
+  @Nullable
+  public String getLastTemplate() {
+    if (LAST_TEMPLATE == null) {
+      return null;
+    }
+    else {
+      String[] split = LAST_TEMPLATE.split("/");
+      return split.length > 1 ? split[1] : null;
+    }
+  }
+
+  public void setLastTemplate(String group, String template) {
+    LAST_TEMPLATE = group + "/" + template;
   }
 
   @NotNull
   @Override
   public SelectTemplateSettings getState() {
-    try {
-      myTreeState.writeExternal(myElement = new Element(STATE_ELEMENT_NAME));
-    }
-    catch (WriteExternalException ignore) {
-    }
     return this;
   }
 
   @Override
   public void loadState(SelectTemplateSettings state) {
-    try {
-      myTreeState.readExternal(state.myElement);
-    }
-    catch (InvalidDataException ignore) {
-    }
+    EXPERT_MODE = state.EXPERT_MODE;
   }
 
-  @Tag("treeState")
-  public Element myElement = new Element(STATE_ELEMENT_NAME);
-
   public boolean EXPERT_MODE = false;
-
-  private TreeState myTreeState = new TreeState();
+  public String LAST_TEMPLATE = null;
 }

@@ -72,29 +72,47 @@ final class Stripe extends JPanel{
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
       Insets insets = ((JComponent)c).getInsets();
 
-      g.setColor(UIUtil.getPanelBackground());
-      drawBorder(g, x, y, width, height, insets);
-      g.setColor(Gray._155);
-      drawBorder(g, x, y, width, height, insets);
+      if (UIUtil.isUnderDarcula()) {
+        g.setColor(Gray._40);
+        drawBorder(g, x, y, width, height, insets);
+      } else {
+        g.setColor(UIUtil.getPanelBackground());
+        drawBorder(g, x, y, width, height, insets);
+        g.setColor(Gray._155);
+        drawBorder(g, x, y, width, height, insets);
+      }
     }
 
     private static void drawBorder(Graphics g, int x, int y, int width, int height, Insets insets) {
-      if (insets.top == 1) {
-        g.drawLine(x, y, x + width, y);
-      }
+      if (insets.top == 1) g.drawLine(x, y, x + width, y);
+      if (insets.right == 1) g.drawLine(x + width - 1, y, x + width - 1, y + height);
+      if (insets.left == 1) g.drawLine(x, y, x, y + height);
+      if (insets.bottom == 1) g.drawLine(x, y + height - 1, x + width, y + height - 1);
 
-      if (insets.right == 1) {
-        g.drawLine(x + width - 1, y, x + width - 1, y + height);
+      if (UIUtil.isUnderDarcula()) {
+        final Color c = g.getColor();
+        if (insets.top == 2) {
+          g.setColor(c);
+          g.drawLine(x, y, x + width, y);
+          g.setColor(Gray._85);
+          g.drawLine(x, y+1, x + width, y+1);
+        }
+        if (insets.right == 2) {
+          g.setColor(Gray._85);
+          g.drawLine(x + width - 1, y, x + width - 1, y + height);
+          g.setColor(c);
+          g.drawLine(x + width - 2, y, x + width - 2, y + height);
+        }
+        if (insets.left == 2) {
+          g.setColor(Gray._85);
+          g.drawLine(x + 1, y, x + 1, y + height);
+          g.setColor(c);
+          g.drawLine(x, y, x, y + height);
+        }
+        if (insets.bottom == 2) {
+          //do nothing
+        }
       }
-    
-      if (insets.left == 1) {
-        g.drawLine(x, y, x, y + height);
-      }
-
-      if (insets.bottom == 1) {
-        g.drawLine(x, y + height - 1, x + width, y + height - 1);
-      }
-      
     }
     
     @Override
@@ -103,18 +121,19 @@ final class Stripe extends JPanel{
       ToolWindowAnchor anchor = stripe.getAnchor();
 
       Insets result = new Insets(0, 0, 0, 0);
+      final int off = UIUtil.isUnderDarcula() ? 1 : 0;
       if (anchor == ToolWindowAnchor.LEFT) {
         result.top = 1;
-        result.right = 1;
+        result.right = 1 + off;
       } else if (anchor == ToolWindowAnchor.RIGHT) {
-        result.left = 1;
+        result.left = 1 + off;
         result.top = 1;
       } else if (anchor == ToolWindowAnchor.TOP) {
         result.bottom = 0;
         //result.bottom = 1;
         result.top = 1;
       } else {
-        result.top = 1;
+        result.top = 1+off;
       }
 
       return result;
@@ -586,7 +605,7 @@ final class Stripe extends JPanel{
       g.setColor(getBackground().brighter());
       g.fillRect(0, 0, getWidth(), getHeight());
     }
-
+    if (UIUtil.isUnderDarcula()) return;
     ToolWindowAnchor anchor = getAnchor();
     g.setColor(new Color(255, 255, 255, 40));
     Rectangle r = getBounds();

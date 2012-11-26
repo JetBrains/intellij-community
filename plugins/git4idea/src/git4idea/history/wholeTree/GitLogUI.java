@@ -62,7 +62,6 @@ import com.intellij.util.ui.UIUtil;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBrancher;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
@@ -70,6 +69,7 @@ import git4idea.config.GitVcsSettings;
 import git4idea.history.browser.*;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.ui.branch.GitBranchUiUtil;
 import icons.Git4ideaIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -2011,7 +2011,7 @@ public class GitLogUI implements Disposable {
         sortedListModel.add(virtualFile.getPath());
       }
 
-      JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(jbList, jbList).createPopup();
+      JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(jbList, jbList).setRequestFocus(true).createPopup();
       if (e.getInputEvent() instanceof MouseEvent) {
         popup.show(new RelativePoint((MouseEvent)e.getInputEvent()));
       } else {
@@ -2185,6 +2185,7 @@ public class GitLogUI implements Disposable {
       checkBoxList.setStringItems(map);
 
       final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(checkBoxList, checkBoxList).
+        setRequestFocus(true).
         addListener(new JBPopupListener() {
           @Override
           public void beforeShown(LightweightWindowEvent event) {
@@ -2566,8 +2567,7 @@ public class GitLogUI implements Disposable {
       if (repository == null) return;
 
       String reference = commitAt.getHash().getString();
-      final String name = GitBranchUtil
-        .getNewBranchNameFromUser(myProject, Collections.singleton(repository), "Checkout New Branch From " + reference);
+      final String name = GitBranchUiUtil.getNewBranchNameFromUser(myProject, Collections.singleton(repository), "Checkout New Branch From " + reference);
       if (name != null) {
         GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
         brancher.checkoutNewBranchStartingFrom(name, reference, Collections.singletonList(repository), myRefresh);
@@ -2646,6 +2646,7 @@ public class GitLogUI implements Disposable {
       popup[0] = builder.setTitle("Goto")
         .setResizable(true)
         .setFocusable(true)
+        .setRequestFocus(true)
         .setMovable(true)
         .setModalContext(true)
         .setAdText("Commit hash, or reference, or regexp for commit message")

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,31 +15,37 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.psi.JavaRecursiveElementVisitor;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiReturnStatement;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 class VariableReturnedVisitor extends JavaRecursiveElementVisitor {
 
-  private boolean returned = false;
   @NotNull private final PsiVariable variable;
+  private final boolean myBuilderPattern;
 
-  public VariableReturnedVisitor(@NotNull PsiVariable variable) {
-    super();
+  private boolean returned = false;
+
+  public VariableReturnedVisitor(@NotNull PsiVariable variable, boolean builderPattern) {
     this.variable = variable;
+    myBuilderPattern = builderPattern;
   }
 
   @Override
-  public void visitReturnStatement(
-    @NotNull PsiReturnStatement returnStatement) {
+  public void visitElement(PsiElement element) {
+    if (returned) {
+      return;
+    }
+    super.visitElement(element);
+  }
+
+  @Override
+  public void visitReturnStatement(@NotNull PsiReturnStatement returnStatement) {
     if (returned) {
       return;
     }
     super.visitReturnStatement(returnStatement);
     final PsiExpression returnValue = returnStatement.getReturnValue();
-    if (VariableAccessUtils.mayEvaluateToVariable(returnValue, variable)) {
+    if (VariableAccessUtils.mayEvaluateToVariable(returnValue, variable, myBuilderPattern)) {
       returned = true;
     }
   }

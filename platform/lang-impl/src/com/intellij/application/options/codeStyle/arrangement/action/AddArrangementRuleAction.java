@@ -16,13 +16,15 @@
 package com.intellij.application.options.codeStyle.arrangement.action;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
-import com.intellij.application.options.codeStyle.arrangement.match.EmptyArrangementRuleComponent;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesModel;
+import com.intellij.application.options.codeStyle.arrangement.match.EmptyArrangementRuleComponent;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.SystemInfoRt;
 import gnu.trove.TIntArrayList;
 
 /**
@@ -34,6 +36,11 @@ public class AddArrangementRuleAction extends AnAction implements DumbAware {
   public AddArrangementRuleAction() {
     getTemplatePresentation().setText(ApplicationBundle.message("arrangement.action.rule.add.text"));
     getTemplatePresentation().setDescription(ApplicationBundle.message("arrangement.action.rule.add.description"));
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    e.getPresentation().setIcon(SystemInfoRt.isMac ? AllIcons.ToolbarDecorator.Mac.Add : AllIcons.ToolbarDecorator.Add);
   }
 
   @Override
@@ -49,11 +56,11 @@ public class AddArrangementRuleAction extends AnAction implements DumbAware {
     int rowToEdit;
     if (rows.size() == 1) {
       rowToEdit = rows.get(0) + 1;
-      model.insertRow(rowToEdit, new Object[] { new EmptyArrangementRuleComponent(control.getRowHeight(rowToEdit)) });
+      model.insertRow(rowToEdit, new Object[] { new EmptyArrangementRuleComponent(control.getEmptyRowHeight()) });
     }
     else {
       rowToEdit = model.getSize();
-      model.add(new EmptyArrangementRuleComponent(control.getRowHeight(rowToEdit)));
+      model.add(new EmptyArrangementRuleComponent(control.getEmptyRowHeight()));
     }
     control.showEditor(rowToEdit);
     control.getSelectionModel().setSelectionInterval(rowToEdit, rowToEdit);

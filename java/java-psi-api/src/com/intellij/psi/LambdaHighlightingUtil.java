@@ -39,7 +39,7 @@ public class LambdaHighlightingUtil {
     if (functionalInterfaceReturnType == PsiType.VOID) {
       final PsiElement body = lambdaExpression.getBody();
       if (body instanceof PsiCodeBlock) {
-        if (!lambdaExpression.getReturnExpressions().isEmpty()) return "Unexpected return value";
+        if (!LambdaUtil.getReturnExpressions(lambdaExpression).isEmpty()) return "Unexpected return value";
       } else if (body instanceof PsiExpression) {
         final PsiType type = ((PsiExpression)body).getType();
         if (type != PsiType.VOID) {
@@ -47,14 +47,14 @@ public class LambdaHighlightingUtil {
         }
       }
     } else if (functionalInterfaceReturnType != null) {
-      final List<PsiExpression> returnExpressions = lambdaExpression.getReturnExpressions();
+      final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(lambdaExpression);
       for (PsiExpression expression : returnExpressions) {
         final PsiType expressionType = expression.getType();
         if (expressionType != null && !functionalInterfaceReturnType.isAssignableFrom(expressionType)) {
           return "Incompatible return type " + expressionType.getPresentableText() + " in lambda expression";
         }
       }
-      if (lambdaExpression.getReturnStatements().size() > returnExpressions.size() || returnExpressions.isEmpty() && !lambdaExpression.isVoidCompatible()) {
+      if (LambdaUtil.getReturnStatements(lambdaExpression).size() > returnExpressions.size() || returnExpressions.isEmpty() && !lambdaExpression.isVoidCompatible()) {
         return "Missing return value";
       }
     }

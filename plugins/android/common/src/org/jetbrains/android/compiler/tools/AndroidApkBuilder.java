@@ -19,7 +19,7 @@ import com.android.jarutils.DebugKeyProvider;
 import com.android.jarutils.JavaResourceFilter;
 import com.android.jarutils.SignedJarBuilder;
 import com.android.prefs.AndroidLocation;
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;

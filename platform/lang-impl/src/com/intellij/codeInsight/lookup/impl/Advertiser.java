@@ -68,7 +68,8 @@ public class Advertiser {
 
   public Advertiser() {
     myNextLabel = new JLabel(">>");
-    myNextLabel.setFont(adFont().deriveFont(ContainerUtil.<TextAttribute, Object>immutableMapBuilder().put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON).build()));
+    myNextLabel.setFont(adFont().deriveFont(
+      ContainerUtil.<TextAttribute, Object>immutableMapBuilder().put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON).build()));
     myNextLabel.setForeground(Color.blue);
     new ClickListener() {
       @Override
@@ -92,7 +93,8 @@ public class Advertiser {
     if (!myTexts.isEmpty()) {
       String text = myTexts.get(myCurrentItem % myTexts.size());
       myTextPanel.setText(prepareText(text));
-    } else {
+    }
+    else {
       myTextPanel.setText("");
     }
     myCachedPrefSize = null;

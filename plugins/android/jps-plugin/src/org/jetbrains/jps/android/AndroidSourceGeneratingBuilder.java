@@ -13,6 +13,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.android.compiler.artifact.AndroidArtifactSigningMode;
 import org.jetbrains.android.compiler.tools.AndroidApt;
 import org.jetbrains.android.compiler.tools.AndroidIdl;
 import org.jetbrains.android.compiler.tools.AndroidRenderscript;
@@ -21,6 +22,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.android.model.AndroidApplicationArtifactType;
+import org.jetbrains.jps.android.model.JpsAndroidApplicationArtifactProperties;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
@@ -32,6 +35,8 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
@@ -87,7 +92,8 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
   private static ModuleLevelBuilder.ExitCode doBuild(CompileContext context,
                                                      ModuleChunk chunk,
-                                                     DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws IOException {
+                                                     DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder)
+    throws IOException {
     final Map<JpsModule, MyModuleData> moduleDataMap = computeModuleDatas(chunk.getModules(), context);
     if (moduleDataMap == null || moduleDataMap.size() == 0) {
       return ExitCode.ABORT;
@@ -97,6 +103,10 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       return ExitCode.ABORT;
     }
     checkAndroidDependencies(moduleDataMap, context);
+
+    if (!checkArtifacts(context)) {
+      return ExitCode.ABORT;
+    }
 
     if (context.isProjectRebuild()) {
       if (!clearAndroidStorages(context, chunk.getModules())) {
@@ -250,7 +260,8 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         continue;
       }
 
-      for (JpsDependencyElement item : JpsJavaExtensionService.getInstance().getDependencies(module, JpsJavaClasspathKind.PRODUCTION_RUNTIME, false)) {
+      for (JpsDependencyElement item : JpsJavaExtensionService.getInstance()
+        .getDependencies(module, JpsJavaClasspathKind.PRODUCTION_RUNTIME, false)) {
         if (item instanceof JpsModuleDependency) {
           final JpsModule depModule = ((JpsModuleDependency)item).getModule();
           if (depModule != null) {
@@ -382,7 +393,8 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         success = false;
         continue;
       }
-      final File generatedSourcesDir = AndroidJpsUtil.getGeneratedSourcesStorage(buildTarget.getModule(), context.getProjectDescriptor().dataManager);
+      final File generatedSourcesDir =
+        AndroidJpsUtil.getGeneratedSourcesStorage(buildTarget.getModule(), context.getProjectDescriptor().dataManager);
       final File aidlOutputDirectory = new File(generatedSourcesDir, AndroidJpsUtil.AIDL_GENERATED_SOURCE_ROOT_NAME);
 
       if (!aidlOutputDirectory.exists() && !aidlOutputDirectory.mkdirs()) {
@@ -585,7 +597,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         depLibPackagesSet.remove(packageName);
         final String proguardOutputCfgFilePath;
 
-        if (toLaunchProGuard(context, extension)) {
+        if (AndroidJpsUtil.getProGuardConfigIfShouldRun(context, extension) != null) {
           final File outputDirForArtifacts = AndroidJpsUtil.getDirectoryForIntermediateArtifacts(context, module);
 
           if (AndroidJpsUtil.createDirIfNotExist(outputDirForArtifacts, context, BUILDER_NAME) == null) {
@@ -868,7 +880,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         @Override
         public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr)
           throws Exception {
-          myLastName = null;
+            myLastName = null;
         }
 
         @Override
@@ -953,9 +965,10 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       }
 
       if (!AndroidCommonUtils.contains2Identifiers(packageName)) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, extension.isLibrary() ? BuildMessage.Kind.WARNING : BuildMessage.Kind.ERROR,
-                                                   AndroidJpsBundle
-                                                     .message("android.jps.errors.incorrect.package.name", module.getName())));
+        context
+          .processMessage(new CompilerMessage(BUILDER_NAME, extension.isLibrary() ? BuildMessage.Kind.WARNING : BuildMessage.Kind.ERROR,
+                                              AndroidJpsBundle
+                                                .message("android.jps.errors.incorrect.package.name", module.getName())));
         success = false;
         continue;
       }
@@ -1026,14 +1039,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     }
   }
 
-  private static boolean toLaunchProGuard(@NotNull CompileContext context, @NotNull JpsAndroidModuleExtension extension) {
-    return extension.isRunProguard() ||
-           context.getBuilderParameter(AndroidCommonUtils.PROGUARD_CFG_PATH_OPTION) != null;
-  }
-
   @Nullable
   public static JpsModule findCircularDependencyOnLibraryWithSamePackage(@NotNull JpsAndroidModuleExtension extension,
-                                                                      @NotNull Map<JpsModule, String> packageMap) {
+                                                                         @NotNull Map<JpsModule, String> packageMap) {
     final String aPackage = packageMap.get(extension.getModule());
     if (aPackage == null || aPackage.length() == 0) {
       return null;
@@ -1050,6 +1058,135 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       }
     }
     return null;
+  }
+
+  private static boolean checkUnambiguousArtifacts(CompileContext context, List<JpsArtifact> artifacts) {
+    for (JpsArtifact artifact : artifacts) {
+      if (artifact.getArtifactType() instanceof AndroidApplicationArtifactType) {
+        final List<JpsAndroidModuleExtension> facets = AndroidJpsUtil.getAllPackagedFacets(artifact);
+
+        if (facets.size() > 1) {
+          context.processMessage(new CompilerMessage(
+            ANDROID_VALIDATOR, BuildMessage.Kind.ERROR, "Cannot build artifact '" + artifact.getName() +
+                                                        "' because it contains more than one Android package"));
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  private static boolean checkArtifacts(@NotNull CompileContext context) {
+    final List<JpsArtifact> artifacts = AndroidJpsUtil.getAndroidArtifactsToBuild(context);
+
+    if (!checkUnambiguousArtifacts(context, artifacts)) {
+      return false;
+    }
+
+    final Set<JpsArtifact> debugArtifacts = new HashSet<JpsArtifact>();
+    final Set<JpsArtifact> releaseArtifacts = new HashSet<JpsArtifact>();
+    final Map<String, List<JpsArtifact>> moduleName2Artifact = new HashMap<String, List<JpsArtifact>>();
+
+    for (JpsArtifact artifact : artifacts) {
+      final JpsElement properties = artifact.getProperties();
+
+      if (!(properties instanceof JpsAndroidApplicationArtifactProperties)) {
+        continue;
+      }
+
+      final AndroidArtifactSigningMode mode = ((JpsAndroidApplicationArtifactProperties)properties).getSigningMode();
+
+      if (mode == AndroidArtifactSigningMode.DEBUG) {
+        debugArtifacts.add(artifact);
+      }
+      else {
+        releaseArtifacts.add(artifact);
+      }
+      final JpsAndroidModuleExtension facet = AndroidJpsUtil.getPackagedFacet(artifact);
+
+      if (facet != null) {
+        final String moduleName = facet.getModule().getName();
+        List<JpsArtifact> list = moduleName2Artifact.get(moduleName);
+
+        if (list == null) {
+          list = new ArrayList<JpsArtifact>();
+          moduleName2Artifact.put(moduleName, list);
+        }
+        list.add(artifact);
+      }
+    }
+    boolean success = true;
+
+    if (debugArtifacts.size() > 0 && releaseArtifacts.size() > 0) {
+      final String message = "Cannot build debug and release Android artifacts in the same session\n" +
+                             "Debug artifacts: " + artifactsToString(debugArtifacts) + "\n" +
+                             "Release artifacts: " + artifactsToString(releaseArtifacts);
+      context.processMessage(new CompilerMessage(ANDROID_VALIDATOR, BuildMessage.Kind.ERROR, message));
+      success = false;
+    }
+
+    if (releaseArtifacts.size() > 0 &&
+        AndroidJpsUtil.getRunConfigurationTypeId(context) != null) {
+      final String message = "Cannot build release Android artifacts in the 'make before run' session\n" +
+                             "Release artifacts: " + artifactsToString(releaseArtifacts);
+      context.processMessage(new CompilerMessage(ANDROID_VALIDATOR, BuildMessage.Kind.ERROR, message));
+      success = false;
+    }
+
+    for (Map.Entry<String, List<JpsArtifact>> entry : moduleName2Artifact.entrySet()) {
+      final List<JpsArtifact> list = entry.getValue();
+      final String moduleName = entry.getKey();
+
+      if (list.size() > 1) {
+        final JpsArtifact firstArtifact = list.get(0);
+        final Object[] firstArtifactProGuardOptions = getProGuardOptions(firstArtifact);
+
+        for (int i = 1; i < list.size(); i++) {
+          final JpsArtifact artifact = list.get(i);
+          if (!Arrays.equals(getProGuardOptions(artifact), firstArtifactProGuardOptions)) {
+            context.processMessage(new CompilerMessage(
+              ANDROID_VALIDATOR, BuildMessage.Kind.ERROR, "Artifacts related to the same module '" +
+                                                     moduleName +
+                                                     "' have different ProGuard options: " +
+                                                     firstArtifact.getName() +
+                                                     ", " +
+                                                     artifact.getName()));
+            success = false;
+            break;
+          }
+        }
+      }
+    }
+
+    return success;
+  }
+
+  @NotNull
+  private static Object[] getProGuardOptions(@NotNull JpsArtifact artifact) {
+    final JpsElement properties = artifact.getProperties();
+
+    if (properties instanceof JpsAndroidApplicationArtifactProperties) {
+      final JpsAndroidApplicationArtifactProperties p = (JpsAndroidApplicationArtifactProperties)properties;
+      final boolean runProGuard = p.isRunProGuard();
+
+      return runProGuard
+             ? new Object[] {runProGuard, p.getProGuardCfgFileUrl(), p.isIncludeSystemProGuardCfgFile()}
+             : new Object[] {runProGuard};
+    }
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+
+  @NotNull
+  private static String artifactsToString(Collection<JpsArtifact> artifacts) {
+    final StringBuilder result = new StringBuilder();
+
+    for (JpsArtifact artifact : artifacts) {
+      if (result.length() > 0) {
+        result.append(", ");
+      }
+      result.append(artifact.getName());
+    }
+    return result.toString();
   }
 
   private static class MyModuleData {

@@ -1,5 +1,6 @@
 package org.jetbrains.android.uipreview;
 
+import com.android.SdkConstants;
 import com.android.ide.common.rendering.api.RenderResources;
 import com.android.ide.common.rendering.api.RenderSession;
 import com.android.ide.common.rendering.api.Result;
@@ -14,7 +15,6 @@ import com.android.io.IAbstractFolder;
 import com.android.io.IAbstractResource;
 import com.android.io.StreamException;
 import com.android.sdklib.IAndroidTarget;
-import com.android.sdklib.SdkConstants;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -74,8 +74,8 @@ public class RenderUtil {
                                              @NotNull IAndroidTarget target,
                                              @NotNull AndroidFacet facet,
                                              @NotNull FolderConfiguration config,
-                                             float xdpi,
-                                             float ydpi,
+                                             double xdpi,
+                                             double ydpi,
                                              @NotNull ThemeData theme,
                                              long timeout,
                                              boolean checkTimeout)
@@ -221,15 +221,17 @@ public class RenderUtil {
                                                        @Nullable VirtualFile layoutXmlFile,
                                                        @NotNull List<ProjectResources> libResources)
     throws IOException, RenderingException {
-    final ProjectResources projectResources = new ProjectResources(libResources);
+
     final VirtualFile resourceDir = facet.getLocalResourceManager().getResourceDir();
 
     if (resourceDir != null) {
       final IAbstractFolder resFolder = new BufferingFolderWrapper(new File(
         FileUtil.toSystemDependentName(resourceDir.getPath())));
+      final ProjectResources projectResources = new ProjectResources(resFolder, libResources);
       loadResources(projectResources, layoutXmlText, layoutXmlFile, resFolder);
+      return projectResources;
     }
-    return projectResources;
+    return new ProjectResources(new NullFolderWrapper(), libResources);
   }
 
   private static void reportBrokenClassesWarning(@NotNull final Project project,

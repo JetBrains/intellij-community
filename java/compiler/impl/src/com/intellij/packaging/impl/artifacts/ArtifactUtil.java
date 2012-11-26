@@ -322,11 +322,13 @@ public class ArtifactUtil {
     processPackagingElements(artifact, PackagingElementFactoryImpl.EXTRACTED_DIRECTORY_ELEMENT_TYPE, processor, context, processSubstitutions);
   }
 
-  public static Collection<Trinity<Artifact, PackagingElementPath, String>> findContainingArtifactsWithOutputPaths(@NotNull final VirtualFile file, @NotNull Project project) {
+  public static Collection<Trinity<Artifact, PackagingElementPath, String>> findContainingArtifactsWithOutputPaths(@NotNull final VirtualFile file,
+                                                                                                                   @NotNull Project project,
+                                                                                                                   final Artifact[] artifacts) {
     final boolean isResourceFile = CompilerConfiguration.getInstance(project).isResourceFile(file);
-    final List<Trinity<Artifact, PackagingElementPath, String>> artifacts = new ArrayList<Trinity<Artifact, PackagingElementPath, String>>();
+    final List<Trinity<Artifact, PackagingElementPath, String>> result = new ArrayList<Trinity<Artifact, PackagingElementPath, String>>();
     final PackagingElementResolvingContext context = ArtifactManager.getInstance(project).getResolvingContext();
-    for (final Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {
+    for (final Artifact artifact : artifacts) {
       processPackagingElements(artifact, null, new PackagingElementProcessor<PackagingElement<?>>() {
         @Override
         public boolean process(@NotNull PackagingElement<?> element, @NotNull PackagingElementPath path) {
@@ -340,14 +342,14 @@ public class ArtifactUtil {
               else {
                 relativePath = VfsUtilCore.getRelativePath(file, root, '/');
               }
-              artifacts.add(Trinity.create(artifact, path, relativePath));
+              result.add(Trinity.create(artifact, path, relativePath));
               return false;
             }
           }
           else if (isResourceFile && element instanceof ModuleOutputPackagingElement) {
             final String relativePath = getRelativePathInSources(file, (ModuleOutputPackagingElement)element, context);
             if (relativePath != null) {
-              artifacts.add(Trinity.create(artifact, path, relativePath));
+              result.add(Trinity.create(artifact, path, relativePath));
               return false;
             }
           }
@@ -355,7 +357,7 @@ public class ArtifactUtil {
         }
       }, context, true);
     }
-    return artifacts;
+    return result;
   }
 
   @Nullable

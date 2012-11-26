@@ -49,6 +49,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   private boolean myWideSelection;
   private boolean myOldRepaintAllRowValue;
   private boolean invertLineColor;
+  private boolean myForceDontPaintLines = false;
 
   @SuppressWarnings("unchecked")
   public WideSelectionTreeUI() {
@@ -202,6 +203,10 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     });
   }
 
+  public void setForceDontPaintLines() {
+    myForceDontPaintLines = true;
+  }
+
   private abstract static class TreeUIAction extends AbstractAction implements UIResource {
   }
 
@@ -215,13 +220,18 @@ public class WideSelectionTreeUI extends BasicTreeUI {
                                           final boolean isExpanded,
                                           final boolean hasBeenExpanded,
                                           final boolean isLeaf) {
-    if (!UIUtil.isUnderAquaBasedLookAndFeel() || !UIUtil.isUnderDarcula()) {
+    if (!shouldPaintLines()) return;
+    if (!UIUtil.isUnderAquaBasedLookAndFeel() && !UIUtil.isUnderDarcula()) {
       if (UIUtil.isUnderAlloyIDEALookAndFeel()) {
         invertLineColor = tree.getSelectionModel().isRowSelected(row) && tree.hasFocus();
       }
       super.paintHorizontalPartOfLeg(g, clipBounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
       invertLineColor = false;
     }
+  }
+
+  private boolean shouldPaintLines() {
+    return myForceDontPaintLines || !"None".equals(tree.getClientProperty("JTree.lineStyle"));
   }
 
   @Override
@@ -231,7 +241,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
 
   @Override
   protected void paintVerticalPartOfLeg(final Graphics g, final Rectangle clipBounds, final Insets insets, final TreePath path) {
-    if (!UIUtil.isUnderAquaBasedLookAndFeel() && !UIUtil.isUnderDarcula()) {
+    if (!UIUtil.isUnderAquaBasedLookAndFeel() && !UIUtil.isUnderDarcula() && shouldPaintLines()) {
       invertLineColor = UIUtil.isUnderAlloyIDEALookAndFeel() && tree.hasFocus() && tree.getSelectionModel().isPathSelected(path);
       super.paintVerticalPartOfLeg(g, clipBounds, insets, path);
       invertLineColor = false;
@@ -240,6 +250,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
 
   @Override
   protected void paintVerticalLine(Graphics g, JComponent c, int x, int top, int bottom) {
+    if (!shouldPaintLines()) return;
     if (tree.hasFocus() && UIUtil.isUnderAlloyIDEALookAndFeel()) {
       int y0, y1 = top;
       while (y1 < bottom) {

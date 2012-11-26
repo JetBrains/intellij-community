@@ -70,6 +70,7 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
                              @NotNull PsiElement endElement) {
     final PsiVariable myVariable = (PsiVariable)startElement;
     return myVariable.isValid()
+        && myVariable.getTypeElement() != null
         && myVariable.getManager().isInProject(myVariable)
         && getReturnType() != null
         && getReturnType().isValid()
@@ -88,8 +89,10 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
     if (!CodeInsightUtilBase.prepareFileForWrite(myVariable.getContainingFile())) return;
     try {
       myVariable.normalizeDeclaration();
-      myVariable.getTypeElement().replace(JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createTypeElement(
-          getReturnType()));
+      final PsiTypeElement typeElement = myVariable.getTypeElement();
+      LOG.assertTrue(typeElement != null, myVariable.getClass());
+      final PsiTypeElement newTypeElement = JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createTypeElement(getReturnType());
+      typeElement.replace(newTypeElement);
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(myVariable);
       UndoUtil.markPsiFileForUndo(file);
     } catch (IncorrectOperationException e) {

@@ -19,19 +19,22 @@
  */
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.updateSettings.impl.CheckForUpdateAction;
+import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.wm.WelcomeScreen;
-import com.intellij.ui.Gray;
-import com.intellij.ui.LightColors;
+import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.labels.LinkListener;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
+
   public NewWelcomeScreen(JRootPane rootPane) {
     super(new BorderLayout());
     add(createHeaderPanel(), BorderLayout.NORTH);
@@ -40,27 +43,6 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
   }
 
   private WelcomePane createInnerPanel() {
-    Icon placeholderIcon = new Icon() {
-      @Override
-      public void paintIcon(Component c, Graphics g, int x, int y) {
-        g.setColor(LightColors.SLIGHTLY_GREEN);
-        g.fillRoundRect(x + 4, y + 4, 32 - 8, 32 - 8, 8, 8);
-        g.setColor(Color.GRAY);
-        g.drawRoundRect(x + 4, y + 4, 32 - 8, 32 - 8, 8, 8);
-      }
-
-      @Override
-      public int getIconWidth() {
-        return 32;
-      }
-
-      @Override
-      public int getIconHeight() {
-        return 32;
-      }
-    };
-
-
     WelcomeScreenGroup root = new WelcomeScreenGroup(null, "Root");
 
     ActionManager actionManager = ActionManager.getInstance();
@@ -69,8 +51,8 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
       root.add(child);
     }
 
-    root.add(buildRootGroup(placeholderIcon, "Configure", IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE));
-    root.add(buildRootGroup(placeholderIcon, "Docs and How-Tos", IdeActions.GROUP_WELCOME_SCREEN_DOC));
+    root.add(buildRootGroup(AllIcons.General.Configure, "Configure", IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE));
+    root.add(buildRootGroup(AllIcons.General.ReadHelp, "Docs and How-Tos", IdeActions.GROUP_WELCOME_SCREEN_DOC));
 
     return new WelcomePane(root);
   }
@@ -90,30 +72,44 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
                              ApplicationInfo.getInstance().getFullVersion() +
                              " Build " +
                              ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode());
-    versionLabel.setFont(versionLabel.getFont().deriveFont((float) 10));
+    makeSmallFont(versionLabel);
+    versionLabel.setForeground(WelcomeScreenColors.FOOTER_FOREGROUND);
 
-    JPanel footerPanel = new JPanel(new BorderLayout());
-    footerPanel.setBackground(Gray._210);
-    footerPanel.setBorder(new EmptyBorder(5, 5, 5, 5) {
+    JPanel footerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+    footerPanel.setBackground(WelcomeScreenColors.FOOTER_BACKGROUND);
+    footerPanel.setBorder(new EmptyBorder(2, 5, 2, 5) {
       @Override
       public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-        g.setColor(Gray._190);
+        g.setColor(WelcomeScreenColors.BORDER_COLOR);
         g.drawLine(x, y, x + width, y);
       }
     });
-    footerPanel.add(versionLabel, BorderLayout.WEST);
+    footerPanel.add(versionLabel);
+    footerPanel.add(makeSmallFont(new JLabel(".  ")));
+    footerPanel.add(makeSmallFont(new LinkLabel("Check", null, new LinkListener() {
+      @Override
+      public void linkSelected(LinkLabel aSource, Object aLinkData) {
+        CheckForUpdateAction.actionPerformed(null, true, null, UpdateSettings.getInstance());
+      }
+    })));
+    footerPanel.add(makeSmallFont(new JLabel(" for updates now.")));
     return footerPanel;
+  }
+
+  private static JLabel makeSmallFont(JLabel label) {
+    label.setFont(label.getFont().deriveFont((float)10));
+    return label;
   }
 
   private JPanel createHeaderPanel() {
     JPanel header = new JPanel(new BorderLayout());
-    JLabel welcome = new JLabel("Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName(), IconLoader.getIcon("/idea_logo_welcome.png"), SwingConstants.LEFT);
-    welcome.setBorder(new EmptyBorder(15, 15, 15, 15));
+    JLabel welcome = new JLabel("Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName(), AllIcons.General.Logo_welcomeScreen, SwingConstants.LEFT);
+    welcome.setBorder(new EmptyBorder(10, 15, 10, 15));
     welcome.setFont(welcome.getFont().deriveFont((float) 32));
-    welcome.setIconTextGap(30);
-    welcome.setForeground(Gray._80);
+    welcome.setIconTextGap(20);
+    welcome.setForeground(WelcomeScreenColors.WELCOME_HEADER_FOREGROUND);
     header.add(welcome);
-    header.setBackground(Gray._220);
+    header.setBackground(WelcomeScreenColors.WELCOME_HEADER_BACKGROUND);
 
     header.setBorder(new BottomLineBorder());
     return header;

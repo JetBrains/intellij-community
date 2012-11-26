@@ -94,7 +94,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     super(applicationInfoEx.getFullApplicationName());
     myRootPane = new IdeRootPane(actionManager, uiSettings, dataManager, application, this);
     setRootPane(myRootPane);
-
+    setBackground(UIUtil.getPanelBackground());
     AppUIUtil.updateFrameIcon(this);
     final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
     setBounds(10, 10, screenSize.width - 20, screenSize.height - 40);
@@ -387,6 +387,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
 
   public void dispose() {
     MouseGestureManager.getInstance().remove(this);
+    WelcomeFrame.notifyFrameClosed(this);
 
     if (myRootPane != null) {
       myRootPane = null;

@@ -67,17 +67,21 @@ public class TransferToEDTQueue<T> {
     }
   };
 
+  public TransferToEDTQueue(@NotNull @NonNls String name, @NotNull Processor<T> processor, @NotNull Condition<?> shutUpCondition, int maxUnitOfWorkThresholdMs) {
+    myName = name;
+    myProcessor = processor;
+    myShutUpCondition = shutUpCondition;
+    myMaxUnitOfWorkThresholdMs = maxUnitOfWorkThresholdMs;
+  }
+
   private boolean isEmpty() {
     synchronized (myQueue) {
       return myQueue.isEmpty();
     }
   }
 
-  private boolean processNext() {
-    T thing;
-    synchronized (myQueue) {
-      thing = myQueue.isEmpty() ? null : myQueue.pullFirst();
-    }
+  protected boolean processNext() {
+    T thing = pullFirst();
     if (thing == null) return false;
     if (!myProcessor.process(thing)) {
       stop();
@@ -86,11 +90,12 @@ public class TransferToEDTQueue<T> {
     return true;
   }
 
-  public TransferToEDTQueue(@NotNull @NonNls String name, @NotNull Processor<T> processor, @NotNull Condition<?> shutUpCondition, int maxUnitOfWorkThresholdMs) {
-    myName = name;
-    myProcessor = processor;
-    myShutUpCondition = shutUpCondition;
-    myMaxUnitOfWorkThresholdMs = maxUnitOfWorkThresholdMs;
+  protected T pullFirst() {
+    T thing;
+    synchronized (myQueue) {
+      thing = myQueue.isEmpty() ? null : myQueue.pullFirst();
+    }
+    return thing;
   }
 
   public boolean offer(@NotNull T thing) {

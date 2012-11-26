@@ -157,7 +157,7 @@
       </extensionMap>
     </filetype>
 
-    <filetype binary="false" default_extension="php" extensions="php" description="PHP files" name="PHP files">
+    <filetype binary="false" default_extension="php" extensions="" description="PHP files" name="PHP files">
       <highlighting>
         <options>
           <option name="LINE_COMMENT" value="//" />

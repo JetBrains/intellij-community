@@ -51,6 +51,7 @@ import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.AbstractLanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.EditInjectionSettingsAction;
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction;
+import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
 import org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection;
@@ -114,7 +115,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
         final String placeText = getPatternStringForJavaPlace(pair.first, pair.second);
         final BaseInjection newInjection = injection.copy();
         newInjection.setPlaceEnabled(placeText, false);
-        return newInjection;
+        return InjectorUtils.canBeRemoved(newInjection)? null : newInjection;
       }
     });
     configuration.replaceInjectionsWithUndo(project, newInjections, originalInjections, annotations);
@@ -307,7 +308,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
   }
 
   private static void doEditInjection(final Project project, final MethodParameterInjection template, final PsiMethod contextMethod) {
-    final Configuration configuration = Configuration.getProjectInstance(project);
+    final Configuration configuration = InjectorUtils.getEditableInstance(project);
     final BaseInjection baseTemplate = new BaseInjection(template.getSupportId()).copyFrom(template);
     final MethodParameterInjection allMethodParameterInjection = createFrom(project, baseTemplate, contextMethod, true);
     // find existing injection for this class.

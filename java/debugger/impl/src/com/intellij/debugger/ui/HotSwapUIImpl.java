@@ -58,7 +58,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * Date: Oct 2, 2003
  * Time: 6:00:55 PM
  */
-public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
+public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
   private final List<HotSwapVetoableListener> myListeners = ContainerUtil.createEmptyCOWList();
   private boolean myAskBeforeHotswap = true;
   private final Project myProject;
@@ -162,7 +162,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
           break;
         }
       }
-      findClassesProgress = createProgress? new HotSwapProgressImpl(myProject) : null;
+      findClassesProgress = createProgress ? new HotSwapProgressImpl(myProject) : null;
     }
 
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
@@ -175,7 +175,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
           final List<DebuggerSession> toScan = new ArrayList<DebuggerSession>();
           final List<DebuggerSession> toUseGenerated = new ArrayList<DebuggerSession>();
           for (DebuggerSession session : sessions) {
-            (session.isModifiedClassesScanRequired()? toScan : toUseGenerated).add(session);
+            (session.isModifiedClassesScanRequired() ? toScan : toUseGenerated).add(session);
             session.setModifiedClassesScanRequired(false);
           }
           modifiedClasses = new HashMap<DebuggerSession, Map<String, HotSwapFile>>();
@@ -252,7 +252,9 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
     });
   }
 
-  private static Map<DebuggerSession, Map<String, HotSwapFile>> scanForModifiedClassesWithProgress(final List<DebuggerSession> sessions, final HotSwapProgressImpl progress, final boolean scanWithVFS) {
+  private static Map<DebuggerSession, Map<String, HotSwapFile>> scanForModifiedClassesWithProgress(final List<DebuggerSession> sessions,
+                                                                                                   final HotSwapProgressImpl progress,
+                                                                                                   final boolean scanWithVFS) {
     final Ref<Map<DebuggerSession, Map<String, HotSwapFile>>> result = Ref.create(null);
     ProgressManager.getInstance().runProcess(new Runnable() {
       public void run() {
@@ -267,7 +269,8 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
     return result.get();
   }
 
-  private static void reloadModifiedClasses(final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses, final HotSwapProgressImpl progress) {
+  private static void reloadModifiedClasses(final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses,
+                                            final HotSwapProgressImpl progress) {
     ProgressManager.getInstance().runProcess(new Runnable() {
       public void run() {
         HotSwapManager.reloadModifiedClasses(modifiedClasses, progress);
@@ -282,7 +285,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
       CompilerManager.getInstance(session.getProject()).make(null);
     }
     else {
-      if(session.isAttached()) {
+      if (session.isAttached()) {
         hotSwapSessions(Collections.singletonList(session), null);
       }
     }

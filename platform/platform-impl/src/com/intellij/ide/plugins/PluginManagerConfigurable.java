@@ -166,7 +166,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
   }
 
   public static int showShutDownIDEADialog(final String title) {
-    String message = IdeBundle.message("message.idea.shutdown.required", ApplicationNamesInfo.getInstance().getProductName());
+    String message = IdeBundle.message("message.idea.shutdown.required", ApplicationNamesInfo.getInstance().getFullProductName());
     return Messages.showYesNoDialog(message, title, "Shut Down", POSTPONE, Messages.getQuestionIcon());
   }
 
@@ -175,7 +175,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
   }
 
   public static int showRestartIDEADialog(final String title) {
-    String message = IdeBundle.message("message.idea.restart.required", ApplicationNamesInfo.getInstance().getProductName());
+    String message = IdeBundle.message("message.idea.restart.required", ApplicationNamesInfo.getInstance().getFullProductName());
     return Messages.showYesNoDialog(message, title, "Restart", POSTPONE, Messages.getQuestionIcon());
   }
 

@@ -17,7 +17,6 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -25,6 +24,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManagerQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -62,6 +62,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
   private final Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
   private final SvnLoadedBrachesStorage myStorage;
+  private final ProgressManagerQueue myBranchesLoader;
 
   public SvnBranchConfigurationManager(final Project project,
                                        final ProjectLevelVcsManager vcsManager,
@@ -69,7 +70,8 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
     myProject = project;
     myVcsManager = vcsManager;
     myStorage = storage;
-    myBunch = new NewRootBunch(project);
+    myBranchesLoader = new ProgressManagerQueue(myProject, "Subversion Branches Preloader");
+    myBunch = new NewRootBunch(project, myBranchesLoader);
   }
 
   public static SvnBranchConfigurationManager getInstance(final Project project) {
@@ -102,7 +104,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
 
   public void setConfiguration(final VirtualFile vcsRoot, final SvnBranchConfigurationNew configuration) {
     myBunch.updateForRoot(vcsRoot, new InfoStorage<SvnBranchConfigurationNew>(configuration, InfoReliability.setByUser),
-                          new BranchesPreloader(myProject, myBunch, vcsRoot));
+                          new BranchesPreloader(myProject, myBunch, vcsRoot, myBranchesLoader));
 
     SvnBranchMapperManager.getInstance().notifyBranchesChanged(myProject, vcsRoot, configuration);
 
@@ -136,18 +138,20 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
   private static class BranchesPreloader implements PairConsumer<SvnBranchConfigurationNew, SvnBranchConfigurationNew> {
     private final Project myProject;
     private final VirtualFile myRoot;
+    private final ProgressManagerQueue myQueue;
     private final SvnBranchConfigManager myBunch;
     private boolean myAll;
 
-    public BranchesPreloader(Project project, @NotNull final SvnBranchConfigManager bunch, VirtualFile root) {
+    public BranchesPreloader(Project project, @NotNull final SvnBranchConfigManager bunch, VirtualFile root,
+                             final ProgressManagerQueue queue) {
       myBunch = bunch;
       myProject = project;
       myRoot = root;
+      myQueue = queue;
     }
 
     public void consume(final SvnBranchConfigurationNew prev, final SvnBranchConfigurationNew next) {
-      final Application application = ApplicationManager.getApplication();
-      application.executeOnPooledThread(new Runnable() {
+      myQueue.run(new Runnable() {
         public void run() {
           loadImpl(prev, next);
         }
@@ -215,7 +219,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
           public void run() {
             try {
               for (Pair<VirtualFile, SvnBranchConfigurationNew> pair : whatToInit) {
-                final BranchesPreloader branchesPreloader = new BranchesPreloader(myProject, myBunch, pair.getFirst());
+                final BranchesPreloader branchesPreloader = new BranchesPreloader(myProject, myBunch, pair.getFirst(), myBranchesLoader);
                 branchesPreloader.setAll(true);
                 branchesPreloader.loadImpl(null, pair.getSecond());
               }

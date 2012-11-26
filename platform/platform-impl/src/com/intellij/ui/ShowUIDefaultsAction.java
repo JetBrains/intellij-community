@@ -67,6 +67,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
     new DialogWrapper(project) {
       {
         setTitle("Edit LaF Defaults");
+        setModal(false);
         init();
       }
 

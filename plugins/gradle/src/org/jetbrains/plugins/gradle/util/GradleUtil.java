@@ -15,7 +15,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
@@ -40,6 +39,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleSettings;
+import org.jetbrains.plugins.gradle.manage.GradleProjectEntityChangeListener;
 import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
 import org.jetbrains.plugins.gradle.model.id.GradleEntityId;
 import org.jetbrains.plugins.gradle.model.id.GradleSyntheticId;
@@ -59,6 +59,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -71,11 +72,11 @@ public class GradleUtil {
 
   public static final String PATH_SEPARATOR = "/";
 
-  private static final NotNullLazyValue<GradleLibraryManager> LIBRARY_MANAGER      = new NotNullLazyValue<GradleLibraryManager>() {
+  private static final NotNullLazyValue<GradleInstallationManager> LIBRARY_MANAGER = new NotNullLazyValue<GradleInstallationManager>() {
     @NotNull
     @Override
-    protected GradleLibraryManager compute() {
-      return ServiceManager.getService(GradleLibraryManager.class);
+    protected GradleInstallationManager compute() {
+      return ServiceManager.getService(GradleInstallationManager.class);
     }
   };
 
@@ -96,7 +97,7 @@ public class GradleUtil {
 
   /**
    * @param path    target path
-   * @return        absolute path that points to the same location as the given one and that uses only slashes
+   * @return absolute path that points to the same location as the given one and that uses only slashes
    */
   @NotNull
   public static String toCanonicalPath(@NotNull String path) {
@@ -105,7 +106,7 @@ public class GradleUtil {
 
   /**
    * Asks to show balloon that contains information related to the given component.
-   *  
+   *
    * @param component    component for which we want to show information
    * @param messageType  balloon message type
    * @param message      message to show
@@ -139,7 +140,7 @@ public class GradleUtil {
    *   <li>any problem occurred during the refresh is reported to the {@link GradleLog#LOG};</li>
    * </ul>
    * </pre>
-   * 
+   *
    * @param project  target intellij project to use
    */
   public static void refreshProject(@NotNull Project project) {
@@ -423,20 +424,27 @@ public class GradleUtil {
     return new MatrixControlBuilder(gradle, intellij);
   }
   
-  public static boolean isGradleAvailable() {
-    final Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    final Project project;
-    if (projects.length == 1) {
-      project = projects[0];
-    }
-    else {
-      project = null;
-    }
-    return isGradleAvailable(project);
-  }
-  
   public static boolean isGradleAvailable(@Nullable Project project) {
     return LIBRARY_MANAGER.getValue().getGradleHome(project) != null;
+  }
+
+  public static void executeProjectChangeAction(@NotNull Project project, @NotNull Object entityToChange, @NotNull Runnable task) {
+    executeProjectChangeAction(project, Collections.singleton(entityToChange), task);
+  }
+  
+  public static void executeProjectChangeAction(@NotNull Project project, @NotNull Iterable<?> entitiesToChange, @NotNull Runnable task) {
+    final GradleProjectEntityChangeListener publisher = project.getMessageBus().syncPublisher(GradleProjectEntityChangeListener.TOPIC);
+    for (Object e : entitiesToChange) {
+      publisher.onChangeStart(e);
+    }
+    try {
+      task.run();
+    }
+    finally {
+      for (Object e : entitiesToChange) {
+        publisher.onChangeEnd(e);
+      }
+    }
   }
   
   private interface TaskUnderProgress {

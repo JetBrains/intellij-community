@@ -74,6 +74,7 @@ public class ContextComputationProcessor {
     else if (expression instanceof PsiConditionalExpression) {
       unparsable.set(Boolean.TRUE);
       collectOperands(((PsiConditionalExpression)expression).getThenExpression(), result, unparsable);
+      addStringFragment(" ", result); // do not glue branches together
       collectOperands(((PsiConditionalExpression)expression).getElseExpression(), result, unparsable);
     }
     else if (expression instanceof PsiPolyadicExpression &&

@@ -5,7 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleLibraryManager;
+import org.jetbrains.plugins.gradle.util.GradleInstallationManager;
 import org.jetbrains.plugins.groovy.annotator.DefaultGroovyFrameworkConfigNotification;
 
 /**
@@ -14,10 +14,10 @@ import org.jetbrains.plugins.groovy.annotator.DefaultGroovyFrameworkConfigNotifi
  */
 public class GradleGroovyConfigNotification extends DefaultGroovyFrameworkConfigNotification {
 
-  @NotNull private final PlatformFacade myPlatformFacade;
-  @NotNull private final GradleLibraryManager myLibraryManager;
+  @NotNull private final PlatformFacade            myPlatformFacade;
+  @NotNull private final GradleInstallationManager myLibraryManager;
 
-  public GradleGroovyConfigNotification(@NotNull PlatformFacade facade, @NotNull GradleLibraryManager libraryManager) {
+  public GradleGroovyConfigNotification(@NotNull PlatformFacade facade, @NotNull GradleInstallationManager libraryManager) {
     myPlatformFacade = facade;
     myLibraryManager = libraryManager;
   }

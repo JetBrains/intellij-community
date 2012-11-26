@@ -15,10 +15,7 @@
  */
 package com.intellij.ide.util.projectWizard;
 
-import com.intellij.openapi.module.ModifiableModuleModel;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.WebModuleType;
+import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -88,6 +85,11 @@ public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> imple
           }
         };
       }
+
+      @Override
+      public Icon getNodeIcon() {
+        return getIcon();
+      }
     };
   }
 
@@ -95,5 +97,9 @@ public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> imple
   @Override
   public ValidationInfo validateSettings() {
     return myPeer.getValue().validate();
+  }
+
+  protected Icon getIcon() {
+    return WebModuleBuilder.ICON;
   }
 }

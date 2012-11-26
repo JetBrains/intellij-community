@@ -26,14 +26,14 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * A default implementation of {@link ActionGroup}. Provides the ability
+ * A default implementation of {@link com.intellij.openapi.actionSystem.ActionGroup}. Provides the ability
  * to add children actions and separators between them. In most of the
  * cases you will be using this implementation but note that there are
  * cases (for example "Recent files" dialog) where children are determined
  * on rules different than just positional constraints, that's when you need
  * to implement your own <code>ActionGroup</code>.
  *
- * @see Constraints
+ * @see com.intellij.openapi.actionSystem.Constraints
  */
 public class DefaultActionGroup extends ActionGroup {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.DefaultActionGroup");
@@ -46,7 +46,7 @@ public class DefaultActionGroup extends ActionGroup {
    */
   private final List<Pair<AnAction,Constraints>> myPairs = ContainerUtil.createEmptyCOWList();
 
-  public DefaultActionGroup(){
+  public DefaultActionGroup() {
     this(null, false);
   }
 
@@ -63,50 +63,50 @@ public class DefaultActionGroup extends ActionGroup {
     }
   }
 
-  public DefaultActionGroup(String shortName, boolean popup){
+  public DefaultActionGroup(String shortName, boolean popup) {
     super(shortName, popup);
   }
 
   /**
    * Adds the specified action to the tail.
    *
-   * @param action Action to be added
+   * @param action        Action to be added
    * @param actionManager ActionManager instance
    */
-  public final void add(@NotNull AnAction action, @NotNull ActionManager actionManager){
+  public final void add(@NotNull AnAction action, @NotNull ActionManager actionManager) {
     add(action, new Constraints(Anchor.LAST, null), actionManager);
   }
 
-  public final void add(@NotNull AnAction action){
+  public final void add(@NotNull AnAction action) {
     addAction(action, new Constraints(Anchor.LAST, null));
   }
 
-  public final ActionInGroup addAction(@NotNull AnAction action){
+  public final ActionInGroup addAction(@NotNull AnAction action) {
     return addAction(action, new Constraints(Anchor.LAST, null));
   }
 
   /**
    * Adds a separator to the tail.
    */
-  public final void addSeparator(){
+  public final void addSeparator() {
     add(Separator.getInstance());
   }
 
   /**
    * Adds the specified action with the specified constraint.
    *
-   * @param action Action to be added; cannot be null
+   * @param action     Action to be added; cannot be null
    * @param constraint Constraint to be used for determining action's position; cannot be null
    * @throws IllegalArgumentException in case when:
-   * <li>action is null
-   * <li>constraint is null
-   * <li>action is already in the group
+   *                                  <li>action is null
+   *                                  <li>constraint is null
+   *                                  <li>action is already in the group
    */
-  public final void add(@NotNull AnAction action, @NotNull Constraints constraint){
+  public final void add(@NotNull AnAction action, @NotNull Constraints constraint) {
     add(action, constraint, ActionManager.getInstance());
   }
 
-  public final ActionInGroup addAction(@NotNull AnAction action, @NotNull Constraints constraint){
+  public final ActionInGroup addAction(@NotNull AnAction action, @NotNull Constraints constraint) {
     return addAction(action, constraint, ActionManager.getInstance());
   }
 
@@ -150,16 +150,16 @@ public class DefaultActionGroup extends ActionGroup {
     return new ActionInGroup(this, action);
   }
 
-  private void actionAdded(AnAction addedAction, ActionManager actionManager){
+  private void actionAdded(AnAction addedAction, ActionManager actionManager) {
     String addedActionId = addedAction instanceof ActionStub ? ((ActionStub)addedAction).getId() : actionManager.getId(addedAction);
-    if (addedActionId == null){
+    if (addedActionId == null) {
       return;
     }
     outer:
-    while(!myPairs.isEmpty()){
-      for(int i = 0; i < myPairs.size(); i++){
+    while (!myPairs.isEmpty()) {
+      for (int i = 0; i < myPairs.size(); i++) {
         Pair<AnAction, Constraints> pair = myPairs.get(i);
-        if (addToSortedList(pair.first, pair.second, actionManager)){
+        if (addToSortedList(pair.first, pair.second, actionManager)) {
           myPairs.remove(i);
           continue outer;
         }
@@ -170,13 +170,13 @@ public class DefaultActionGroup extends ActionGroup {
 
   private boolean addToSortedList(@NotNull AnAction action, Constraints constraint, ActionManager actionManager){
     int index = findIndex(constraint.myRelativeToActionId, mySortedChildren, actionManager);
-    if (index == -1){
+    if (index == -1) {
       return false;
     }
-    if (constraint.myAnchor == Anchor.BEFORE){
+    if (constraint.myAnchor == Anchor.BEFORE) {
       mySortedChildren.add(index, action);
     }
-    else{
+    else {
       mySortedChildren.add(index + 1, action);
     }
     return true;
@@ -205,11 +205,11 @@ public class DefaultActionGroup extends ActionGroup {
    *
    * @param action Action to be removed
    */
-  public final void remove(AnAction action){
-    if (!mySortedChildren.remove(action)){
-      for(int i = 0; i < myPairs.size(); i++){
+  public final void remove(AnAction action) {
+    if (!mySortedChildren.remove(action)) {
+      for (int i = 0; i < myPairs.size(); i++) {
         Pair<AnAction, Constraints> pair = myPairs.get(i);
-        if (pair.first.equals(action)){
+        if (pair.first.equals(action)) {
           myPairs.remove(i);
           break;
         }
@@ -220,7 +220,7 @@ public class DefaultActionGroup extends ActionGroup {
   /**
    * Removes all children actions (separators as well) from the group.
    */
-  public final void removeAll(){
+  public final void removeAll() {
     mySortedChildren.clear();
     myPairs.clear();
   }
@@ -229,17 +229,16 @@ public class DefaultActionGroup extends ActionGroup {
    * Returns group's children in the order determined by constraints.
    *
    * @param e not used
-   *
    * @return An array of children actions
    */
   @NotNull
-  public final AnAction[] getChildren(@Nullable AnActionEvent e){
+  public final AnAction[] getChildren(@Nullable AnActionEvent e) {
     boolean hasNulls = false;
     
     // Mix sorted actions and pairs
     int sortedSize = mySortedChildren.size();
     AnAction[] children = new AnAction[sortedSize + myPairs.size()];
-    for(int i = 0; i < sortedSize; i++){
+    for (int i = 0; i < sortedSize; i++) {
       AnAction action = mySortedChildren.get(i);
       if (action == null) {
         LOG.error("Empty sorted child: " + this + ", " + getClass() + "; index=" + i);
@@ -252,7 +251,7 @@ public class DefaultActionGroup extends ActionGroup {
       hasNulls |= action == null;
       children[i] = action;
     }
-    for(int i = 0; i < myPairs.size(); i++){
+    for (int i = 0; i < myPairs.size(); i++) {
       final Pair<AnAction, Constraints> pair = myPairs.get(i);
       AnAction action = pair.first;
       if (action == null) {
@@ -297,21 +296,21 @@ public class DefaultActionGroup extends ActionGroup {
    *
    * @return number of children in the group
    */
-  public final int getChildrenCount(){
+  public final int getChildrenCount() {
     return mySortedChildren.size() + myPairs.size();
   }
 
   @NotNull
-  public final AnAction[] getChildActionsOrStubs(){
+  public final AnAction[] getChildActionsOrStubs() {
     // Mix sorted actions and pairs
     int sortedSize = mySortedChildren.size();
     AnAction[] children = new AnAction[sortedSize + myPairs.size()];
-    for(int i = 0; i < sortedSize; i++){
+    for (int i = 0; i < sortedSize; i++) {
       children[i] = mySortedChildren.get(i);
     }
-    for(int i = 0; i < myPairs.size(); i++){
+    for (int i = 0; i < myPairs.size(); i++) {
       children[i + sortedSize] = myPairs.get(i).first;
-    }    
+    }
     return children;
   }
 

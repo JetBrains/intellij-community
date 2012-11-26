@@ -663,7 +663,13 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
         PsiType functionalInterfaceReturnType = functionalInterfaceMethod.getReturnType();
         if (functionalInterfaceReturnType != null && functionalInterfaceReturnType != PsiType.VOID) {
           functionalInterfaceReturnType = GenericsUtil.eliminateWildcards(subst.substitute(functionalInterfaceReturnType));
-          return getSubstitutionForTypeParameterConstraint(typeParam, functionalInterfaceReturnType, methReferenceResolveResult.getSubstitutor().substitute(subst.substitute(method.getReturnType())), true, PsiUtil.getLanguageLevel(functionalInterfaceMethod));
+          final PsiType argType;
+          if (method.isConstructor()) {
+            argType = JavaPsiFacade.getElementFactory(functionalInterfaceMethod.getProject()).createType(method.getContainingClass(), methReferenceResolveResult.getSubstitutor());
+          } else {
+            argType = methReferenceResolveResult.getSubstitutor().substitute(subst.substitute(method.getReturnType()));
+          }
+          return getSubstitutionForTypeParameterConstraint(typeParam, functionalInterfaceReturnType, argType, true, PsiUtil.getLanguageLevel(functionalInterfaceMethod));
         }
       }
     }
@@ -698,7 +704,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       final PsiType returnType = subst.substitute(method.getReturnType());
       if (returnType != null && returnType != PsiType.VOID) {
         Pair<PsiType, ConstraintType> constraint = null;
-        final List<PsiExpression> expressions = lambdaExpression.getReturnExpressions();
+        final List<PsiExpression> expressions = LambdaUtil.getReturnExpressions(lambdaExpression);
         for (final PsiExpression expression : expressions) {
           final boolean independent = LambdaUtil.isFreeFromTypeInferenceArgs(methodParameters, lambdaExpression, expression, subst, functionalInterfaceType, typeParam);
           if (!independent) {

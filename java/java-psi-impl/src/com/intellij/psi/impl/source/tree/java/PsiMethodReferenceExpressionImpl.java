@@ -18,7 +18,6 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -226,51 +225,6 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
     return "PsiMethodReferenceExpression:" + getText();
   }
 
-  @Override
-  public boolean process(Ref<PsiClass> psiClassRef, Ref<PsiSubstitutor> substRef) {
-    PsiClass containingClass = null;
-    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
-    try {
-      final PsiExpression expression = getQualifierExpression();
-      if (expression != null) {
-        final PsiType expressionType = expression.getType();
-        if (expressionType instanceof PsiArrayType) {
-          containingClass = JavaPsiFacade.getInstance(getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, getResolveScope());
-          return false;
-        }
-        PsiClassType.ClassResolveResult result = PsiUtil.resolveGenericsClassInType(expressionType);
-        containingClass = result.getElement();
-        if (containingClass != null) {
-          substitutor = result.getSubstitutor();
-        }
-        if (containingClass == null && expression instanceof PsiReferenceExpression) {
-          final JavaResolveResult resolveResult = ((PsiReferenceExpression)expression).advancedResolve(false);
-          final PsiElement resolve = resolveResult.getElement();
-          if (resolve instanceof PsiClass) {
-            containingClass = (PsiClass)resolve;
-            substitutor = resolveResult.getSubstitutor();
-            return true;
-          }
-        }
-      }
-      else {
-        final PsiTypeElement typeElement = getQualifierType();
-        if (typeElement != null) {
-          PsiClassType.ClassResolveResult result = PsiUtil.resolveGenericsClassInType(typeElement.getType());
-          containingClass = result.getElement();
-          if (containingClass != null) {
-            substitutor = result.getSubstitutor();
-          }
-        }
-      }
-      return false;
-    }
-    finally {
-      psiClassRef.set(containingClass);
-      substRef.set(substitutor);
-    }
-  }
-
   private boolean isLocatedInStaticContext(PsiClass containingClass) {
     final PsiClass gContainingClass = containingClass.getContainingClass();
     if (gContainingClass == null || !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
@@ -289,12 +243,10 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
     @NotNull
     @Override
     public ResolveResult[] resolve(@NotNull PsiJavaReference reference, boolean incompleteCode) {
-      final Ref<PsiClass> classRef = new Ref<PsiClass>();
-      final Ref<PsiSubstitutor> substRef = new Ref<PsiSubstitutor>();
-      final boolean beginsWithReferenceType = process(classRef, substRef);
+      final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(PsiMethodReferenceExpressionImpl.this);
 
-      final PsiClass containingClass = classRef.get();
-      PsiSubstitutor substitutor = substRef.get();
+      final PsiClass containingClass = qualifierResolveResult.getContainingClass();
+      PsiSubstitutor substitutor = qualifierResolveResult.getSubstitutor();
 
       if (containingClass != null) {
         final PsiElement element = getReferenceNameElement();
@@ -341,7 +293,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           }
 
           final MethodReferenceConflictResolver conflictResolver =
-            new MethodReferenceConflictResolver(containingClass, substitutor, signature, beginsWithReferenceType);
+            new MethodReferenceConflictResolver(qualifierResolveResult, signature);
           final PsiConflictResolver[] resolvers;
           if (signature != null) {
             final PsiType[] parameterTypes = signature.getParameterTypes();
@@ -375,7 +327,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
             processor.setAccessClass(containingClass);
           }
 
-          if (beginsWithReferenceType && isLocatedInStaticContext(containingClass)) {
+          if (qualifierResolveResult.isReferenceTypeQualified() && isLocatedInStaticContext(containingClass)) {
              processor.handleEvent(JavaScopeProcessorEvent.START_STATIC, null);
           }
           ResolveState state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor);
@@ -425,13 +377,12 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       private final MethodSignature mySignature;
       private final boolean myBeginsWithReferenceType;
 
-      private MethodReferenceConflictResolver(PsiClass containingClass,
-                                              PsiSubstitutor psiSubstitutor,
-                                              @Nullable MethodSignature signature, boolean beginsWithReferenceType) {
-        myContainingClass = containingClass;
-        mySubstitutor = psiSubstitutor;
+      private MethodReferenceConflictResolver(PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult,
+                                              @Nullable MethodSignature signature) {
+        myContainingClass = qualifierResolveResult.getContainingClass();
+        mySubstitutor = qualifierResolveResult.getSubstitutor();
         mySignature = signature;
-        myBeginsWithReferenceType = beginsWithReferenceType;
+        myBeginsWithReferenceType = qualifierResolveResult.isReferenceTypeQualified();
       }
 
       @Nullable

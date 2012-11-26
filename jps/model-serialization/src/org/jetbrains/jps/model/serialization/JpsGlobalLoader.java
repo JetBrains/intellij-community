@@ -1,5 +1,6 @@
 package org.jetbrains.jps.model.serialization;
 
+import com.intellij.openapi.util.io.FileUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +34,7 @@ public class JpsGlobalLoader extends JpsLoaderBase {
   }
 
   public static void loadGlobalSettings(JpsGlobal global, Map<String, String> pathVariables, String optionsPath) throws IOException {
-    File optionsDir = new File(optionsPath).getCanonicalFile();
+    File optionsDir = new File(FileUtil.toCanonicalPath(optionsPath));
     new JpsGlobalLoader(global, pathVariables).load(optionsDir);
   }
 

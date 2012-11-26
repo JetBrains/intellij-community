@@ -23,6 +23,7 @@ import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
@@ -55,6 +56,7 @@ public class ProgramRunnerUtil {
                                           @NotNull final RunnerAndConfigurationSettings configuration,
                                           @NotNull final Executor executor,
                                           @NotNull final ExecutionTarget target,
+                                          @Nullable RunContentDescriptor contentToReuse,
                                           final boolean showSettings) {
     ProgramRunner runner = getRunner(executor.getId(), configuration);
     if (runner == null) {
@@ -95,24 +97,18 @@ public class ProgramRunnerUtil {
     }
 
     try {
-      runner.execute(executor, new ExecutionEnvironment(runner, target, configuration, project));
+      runner.execute(executor, new ExecutionEnvironment(runner, target, configuration, contentToReuse, project));
     }
     catch (ExecutionException e) {
       ExecutionUtil.handleExecutionError(project, executor.getToolWindowId(), configuration.getConfiguration(), e);
     }
   }
 
-  public static void executeConfiguration(@NotNull Project project,
-                                          @NotNull RunnerAndConfigurationSettings configuration,
-                                          @NotNull Executor executor,
-                                          @NotNull ExecutionTarget target) {
-    executeConfiguration(project, configuration, executor, target, true);
-  }
 
   public static void executeConfiguration(@NotNull Project project,
                                           @NotNull RunnerAndConfigurationSettings configuration,
                                           @NotNull Executor executor) {
-    executeConfiguration(project, configuration, executor, ExecutionTargetManager.getActiveTarget(project));
+    executeConfiguration(project, configuration, executor, ExecutionTargetManager.getActiveTarget(project), null, true);
   }
 
   public static Icon getConfigurationIcon(final Project project, final RunnerAndConfigurationSettings settings, final boolean invalid) {

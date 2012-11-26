@@ -26,7 +26,6 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,6 +38,7 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
     super(project, file, provider);
   }
 
+  @NotNull
   @Override
   protected TextEditorComponent createEditorComponent(final Project project, final VirtualFile file) {
     return new PsiAwareTextEditorComponent(project, file, this);

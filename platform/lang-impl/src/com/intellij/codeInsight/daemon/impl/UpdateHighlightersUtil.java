@@ -409,15 +409,16 @@ public class UpdateHighlightersUtil {
                                                               @Nullable HighlightersRecycler infosToRemove,
                                                               @NotNull final Map<TextRange, RangeMarker> ranges2markersCache,
                                                               SeverityRegistrar severityRegistrar) {
-    final int infoStartOffset = info.startOffset;
+    int infoStartOffset = info.startOffset;
     int infoEndOffset = info.endOffset;
 
-    if (infoEndOffset == infoStartOffset && !info.isAfterEndOfLine) {
-      infoEndOffset++; //show something in case of empty highlightinfo
-    }
     final int docLength = document.getTextLength();
     if (infoEndOffset > docLength) {
       infoEndOffset = docLength;
+      infoStartOffset = Math.min(infoStartOffset, infoEndOffset);
+    }
+    if (infoEndOffset == infoStartOffset && !info.isAfterEndOfLine) {
+      infoEndOffset++; //show something in case of empty highlightinfo
     }
 
     info.text = document.getText().substring(infoStartOffset, infoEndOffset);
@@ -426,11 +427,12 @@ public class UpdateHighlightersUtil {
     int layer = getLayer(info, severityRegistrar);
     RangeHighlighterEx highlighter = infosToRemove == null ? null : (RangeHighlighterEx)infosToRemove.pickupHighlighterFromGarbageBin(info.startOffset, info.endOffset, layer);
 
-    final int finalInfoEndOffset = infoEndOffset;
+    final TextRange finalInfoRange = new TextRange(infoStartOffset, infoEndOffset);
+    final TextAttributes infoAttributes = info.getTextAttributes(psiFile, colorsScheme);
     Consumer<RangeHighlighterEx> changeAttributes = new Consumer<RangeHighlighterEx>() {
       @Override
       public void consume(RangeHighlighterEx finalHighlighter) {
-        finalHighlighter.setTextAttributes(info.getTextAttributes(psiFile, colorsScheme));
+        finalHighlighter.setTextAttributes(infoAttributes);
 
         info.highlighter = finalHighlighter;
         finalHighlighter.setAfterEndOfLine(info.isAfterEndOfLine);
@@ -443,7 +445,7 @@ public class UpdateHighlightersUtil {
         GutterIconRenderer renderer = info.getGutterIconRenderer();
         finalHighlighter.setGutterIconRenderer(renderer);
 
-        ranges2markersCache.put(new TextRange(infoStartOffset, finalInfoEndOffset), info.highlighter);
+        ranges2markersCache.put(finalInfoRange, info.highlighter);
         if (info.quickFixActionRanges != null) {
           List<Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker>> list =
             new ArrayList<Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker>>(info.quickFixActionRanges.size());
@@ -454,11 +456,11 @@ public class UpdateHighlightersUtil {
           }
           info.quickFixActionMarkers = new CopyOnWriteArrayList<Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker>>(list);
         }
-        TextRange fixRange = new TextRange(info.fixStartOffset, info.fixEndOffset);
-        if (fixRange.equalsToRange(infoStartOffset, finalInfoEndOffset)) {
+        if (finalInfoRange.equalsToRange(info.fixStartOffset, info.fixEndOffset)) {
           info.fixMarker = null; // null means it the same as highlighter'
         }
         else {
+          TextRange fixRange = new TextRange(info.fixStartOffset, info.fixEndOffset);
           info.fixMarker = getOrCreate(document, ranges2markersCache, fixRange);
         }
       }
@@ -472,11 +474,10 @@ public class UpdateHighlightersUtil {
       markup.changeAttributesInBatch(highlighter, changeAttributes);
     }
 
-    assert Comparing.equal(info.getTextAttributes(psiFile, colorsScheme), highlighter.getTextAttributes()) : "Info: " +
-                                                                                               info.getTextAttributes(psiFile, colorsScheme) +
-                                                                                               "; colorsSheme: " + (colorsScheme == null ? "[global]" : colorsScheme.getName()) +
-                                                                                               "; highlighter:" +
-                                                                                               highlighter.getTextAttributes();
+    boolean attributesSet = Comparing.equal(infoAttributes, highlighter.getTextAttributes());
+    assert attributesSet : "Info: " + infoAttributes +
+                           "; colorsScheme: " + (colorsScheme == null ? "[global]" : colorsScheme.getName()) +
+                           "; highlighter:" + highlighter.getTextAttributes();
     return highlighter;
   }
 
@@ -697,7 +698,7 @@ public class UpdateHighlightersUtil {
       boolean contains = !DaemonCodeAnalyzerImpl.processHighlights(document, project, null, info.getActualStartOffset(), info.getActualEndOffset(), new Processor<HighlightInfo>() {
         @Override
         public boolean process(HighlightInfo highlightInfo) {
-          return UpdateHighlightersUtil.BY_START_OFFSET_NODUPS.compare(highlightInfo, info) != 0;
+          return BY_START_OFFSET_NODUPS.compare(highlightInfo, info) != 0;
         }
       });
       assert contains: info;

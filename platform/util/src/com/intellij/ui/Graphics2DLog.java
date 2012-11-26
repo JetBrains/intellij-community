@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,16 +98,19 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public void drawString(AttributedCharacterIterator iterator, int x, int y) {
+    log(String.format("drawString(%s, %d, %d)", iterator, x, y));
     myPeer.drawString(iterator, x, y);
   }
 
   @Override
   public void drawString(AttributedCharacterIterator iterator, float x, float y) {
+    log(String.format("drawString(%s, %f, %f)", iterator, x, y));
     myPeer.drawString(iterator, x, y);
   }
 
   @Override
   public void drawGlyphVector(GlyphVector g, float x, float y) {
+    log(String.format("drawGlyphVector(%s, %f, %f)", g, x, y));
     myPeer.drawGlyphVector(g, x, y);
   }
 
@@ -119,6 +122,7 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public boolean hit(Rectangle rect, Shape s, boolean onStroke) {
+    log(String.format("hit(%s, %s, %s)", rect, s, onStroke));
     return myPeer.hit(rect, s, onStroke);
   }
 
@@ -147,6 +151,7 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public void setRenderingHint(RenderingHints.Key hintKey, Object hintValue) {
+    if (hintKey.toString().startsWith("y.")) return;
     log(String.format("setRenderingHint(%s, %s)", hintKey, hintValue));
     myPeer.setRenderingHint(hintKey, hintValue);
   }
@@ -187,11 +192,13 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public void rotate(double theta) {
+    log(String.format("rotate(%f)", theta));
     myPeer.rotate(theta);
   }
 
   @Override
   public void rotate(double theta, double x, double y) {
+    log(String.format("rotate(%f, %f, %f)", theta, x, y));
     myPeer.rotate(theta, x, y);
   }
 
@@ -250,6 +257,7 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public void clip(Shape s) {
+    log(String.format("clip(%s)", s));
     myPeer.clip(s);
   }
 
@@ -332,6 +340,7 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public Shape getClip() {
+    log("getClip()");
     return myPeer.getClip();
   }
 
@@ -343,6 +352,7 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public void copyArea(int x, int y, int width, int height, int dx, int dy) {
+    log(String.format("copyArea(%d, %d, %d, %d, %d, %d)", x, y, width, height, dx, dy));
     myPeer.copyArea(x, y, width, height, dx, dy);
   }
 
@@ -429,36 +439,43 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public void drawChars(char[] data, int offset, int length, int x, int y) {
+    log("drawChars()");
     myPeer.drawChars(data, offset, length, x, y);
   }
 
   @Override
   public void drawBytes(byte[] data, int offset, int length, int x, int y) {
+    log("drawBytes");
     myPeer.drawBytes(data, offset, length, x, y);
   }
 
   @Override
   public boolean drawImage(Image img, int x, int y, ImageObserver observer) {
+    log("drawImage(Image,int,int)");
     return myPeer.drawImage(img, x, y, observer);
   }
 
   @Override
   public boolean drawImage(Image img, int x, int y, int width, int height, ImageObserver observer) {
+    log("drawImage(Image,int,int,int,int,ImageObserver)");
     return myPeer.drawImage(img, x, y, width, height, observer);
   }
 
   @Override
   public boolean drawImage(Image img, int x, int y, Color bgcolor, ImageObserver observer) {
+    log("drawImage(Image,int,int,Color,ImageObserver)");
     return myPeer.drawImage(img, x, y, bgcolor, observer);
   }
 
   @Override
   public boolean drawImage(Image img, int x, int y, int width, int height, Color bgcolor, ImageObserver observer) {
+    log("drawImage(Image,int,int,int,int,Color,ImageObserver)");
     return myPeer.drawImage(img, x, y, width, height, bgcolor, observer);
   }
 
   @Override
   public boolean drawImage(Image img, int dx1, int dy1, int dx2, int dy2, int sx1, int sy1, int sx2, int sy2, ImageObserver observer) {
+    log("drawImage(Image,int,int,int,int,int,int,int,int,ImageObserver)");
     return myPeer.drawImage(img, dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2, observer);
   }
 
@@ -474,6 +491,7 @@ public class Graphics2DLog extends Graphics2D {
                            int sy2,
                            Color bgcolor,
                            ImageObserver observer) {
+    log("drawImage(Image,int,int,int,int,int,int,int,int,Color,ImageObserver)");
     return myPeer.drawImage(img, dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2, bgcolor, observer);
   }
 

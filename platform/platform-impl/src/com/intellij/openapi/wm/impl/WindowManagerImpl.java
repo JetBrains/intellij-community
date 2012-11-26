@@ -40,6 +40,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManagerListener;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.messages.MessageBus;
@@ -471,14 +472,16 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
   }
 
   public IdeFrame findFrameFor(@Nullable final Project project) {
-    IdeFrameImpl frame = null;
+    IdeFrame frame = null;
     if (project != null) {
-      frame =  getFrame(project);
-    } else {
+      frame = project.isDefault() ? WelcomeFrame.getInstance() : getFrame(project);
+    }
+    else {
       Container eachParent = getMostRecentFocusedWindow();
       while(eachParent != null) {
-        if (eachParent instanceof IdeFrameImpl) {
-          frame = (IdeFrameImpl)eachParent;
+        if (eachParent instanceof IdeFrame) {
+
+          frame = (IdeFrame)eachParent;
           break;
         }
         eachParent = eachParent.getParent();
@@ -489,18 +492,16 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
       }
     }
 
-    LOG.assertTrue(frame != null, "Project: " + project);
-
     return frame;
   }
 
-  private static IdeFrameImpl tryToFindTheOnlyFrame() {
-    IdeFrameImpl candidate = null;
+  private static IdeFrame tryToFindTheOnlyFrame() {
+    IdeFrame candidate = null;
     final Frame[] all = Frame.getFrames();
     for (Frame each : all) {
-      if (each instanceof IdeFrameImpl) {
+      if (each instanceof IdeFrame) {
         if (candidate == null) {
-          candidate = (IdeFrameImpl)each;
+          candidate = (IdeFrame)each;
         } else {
           candidate = null;
           break;
@@ -532,6 +533,25 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     }
 
     return null;
+  }
+
+  public void showFrame() {
+    final IdeFrameImpl frame = new IdeFrameImpl(myApplicationInfoEx,
+                                                myActionManager, myUiSettings, myDataManager,
+                                                ApplicationManager.getApplication());
+    myProject2Frame.put(null, frame);
+
+    if (myFrameBounds == null
+        || !ScreenUtil.isVisible(myFrameBounds)) { //avoid situations when IdeFrame is out of all screens
+      Rectangle rect = ScreenUtil.getScreenRectangle(0, 0);
+      int yParts = rect.height / 6;
+      int xParts = rect.width / 5;
+      myFrameBounds = new Rectangle(xParts, yParts, xParts * 3, yParts * 4);
+    }
+
+    frame.setBounds(myFrameBounds);
+    frame.setVisible(true);
+    frame.setExtendedState(myFrameExtendedState);
   }
 
   public final IdeFrameImpl allocateFrame(final Project project) {

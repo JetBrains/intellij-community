@@ -116,7 +116,7 @@ public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBa
     result.add(range);
     while (true) {
       TextRange next = expandSelection(e, editorText, range.getStartOffset(), range.getEndOffset());
-      if (next == null || next.equals(range)) {
+      if (next == null || range.contains(next)) {
         break;
       }
       result.add(next);

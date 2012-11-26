@@ -2,6 +2,8 @@ package org.jetbrains.jps.incremental.artifacts;
 
 import com.intellij.util.PathUtil;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement;
+import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 import org.jetbrains.jps.model.artifact.elements.JpsPackagingElementFactory;
 
 import static com.intellij.util.io.TestFileSystemBuilder.fs;
@@ -64,5 +66,24 @@ public class RebuildArtifactOnConfigurationChangeTest extends ArtifactBuilderTes
     buildAll();
     assertOutput(a, fs().dir("dir").file("a.txt", "a"));
     buildAllAndAssertUpToDate();
+  }
+
+  public void testAddRootChangingRootIndices() {
+    String file1 = createFile("d1/a/b/1.txt");
+    String file2 = createFile("d2/x/y/2.txt");
+    JpsArtifact a = addArtifact(root().fileCopy(file1).fileCopy(file2));
+    buildAll();
+    assertOutput(a, fs().file("1.txt").file("2.txt"));
+
+    JpsCompositePackagingElement root = a.getRootElement();
+    assertEquals(2, root.getChildren().size());
+    JpsPackagingElement last = root.getChildren().get(1);
+    root.removeChild(last);
+    String file3 = createFile("d3/1/2/3.txt");
+    root.addChild(JpsPackagingElementFactory.getInstance().createFileCopy(file3, null));
+    root.addChild(last);
+
+    buildAll();
+    assertOutput(a, fs().file("1.txt").file("2.txt").file("3.txt"));
   }
 }

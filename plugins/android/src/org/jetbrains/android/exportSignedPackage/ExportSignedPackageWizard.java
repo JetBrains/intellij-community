@@ -16,7 +16,7 @@
 
 package org.jetbrains.android.exportSignedPackage;
 
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.RevealFileAction;
@@ -38,8 +38,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.android.AndroidCommonBundle;
 import org.jetbrains.android.compiler.AndroidCompileUtil;
-import org.jetbrains.android.compiler.artifact.AndroidArtifactUtil;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
@@ -235,7 +235,7 @@ public class ExportSignedPackageWizard extends AbstractWizard<ExportSignedPackag
 
     if (runZipAlign) {
       File realDestFile = new File(apkPath);
-      final String message = AndroidArtifactUtil.executeZipAlign(zipAlignPath, destFile, realDestFile);
+      final String message = AndroidCommonUtils.executeZipAlign(zipAlignPath, destFile, realDestFile);
       if (message != null) {
         showErrorInDispatchThread(message);
         return;
@@ -253,7 +253,8 @@ public class ExportSignedPackageWizard extends AbstractWizard<ExportSignedPackag
         }
 
         if (!runZipAlign) {
-          Messages.showWarningDialog(project, AndroidBundle.message("cannot.find.zip.align"), title);
+          Messages.showWarningDialog(project, AndroidCommonBundle.message(
+            "android.artifact.building.cannot.find.zip.align.error"), title);
         }
 
         if (ShowFilePathAction.isSupported()) {

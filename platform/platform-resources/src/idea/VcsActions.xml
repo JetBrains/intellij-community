@@ -86,7 +86,7 @@
       <action id="ChangesView.SetDefault" class="com.intellij.openapi.vcs.changes.actions.SetDefaultChangeListAction"
               icon="AllIcons.Actions.Submit1"/>
       <action id="ChangesView.Move" class="com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction"
-              icon="AllIcons.Actions.FileStatus"/>
+              icon="AllIcons.Actions.MoveToAnotherChangelist"/>
       <action id="ChangesView.Diff" class="com.intellij.openapi.vcs.changes.actions.ShowDiffAction"
               icon="AllIcons.Actions.Diff"/>
     </group>

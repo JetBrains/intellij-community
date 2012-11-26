@@ -152,7 +152,7 @@ public class LookupManagerImpl extends LookupManager {
       public void run() {
         if (myActiveLookup == lookup && lookup.getCurrentItem() != null) {
           final CompletionProcess completion = CompletionService.getCompletionService().getCurrentCompletion();
-          if (completion == null || !completion.isAutopopupCompletion()) {
+          if (completion != null && !completion.isAutopopupCompletion()) {
             DocumentationManager.getInstance(myProject).showJavaDocInfo(editor, psiFile, false);
           }
         }

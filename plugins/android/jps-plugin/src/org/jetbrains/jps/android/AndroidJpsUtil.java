@@ -1,7 +1,7 @@
 package org.jetbrains.jps.android;
 
 import com.android.sdklib.IAndroidTarget;
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.android.sdklib.SdkManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
@@ -10,20 +10,26 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.android.compiler.artifact.AndroidArtifactSigningMode;
 import org.jetbrains.android.sdk.MessageBuildingSdkLog;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidCompilerMessageKind;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.android.model.*;
+import org.jetbrains.jps.android.model.impl.JpsAndroidFinalPackageElement;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
+import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
+import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactUtil;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.jetbrains.jps.model.artifact.JpsArtifactService;
+import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
 import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
-import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
-import org.jetbrains.jps.android.model.JpsAndroidSdkProperties;
-import org.jetbrains.jps.android.model.JpsAndroidSdkType;
 import org.jetbrains.jps.android.model.impl.JpsAndroidModuleExtensionImpl;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ModuleLevelBuilder;
@@ -52,6 +58,9 @@ import java.util.regex.Matcher;
  */
 public class AndroidJpsUtil {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.android.AndroidJpsUtil");
+
+  @NonNls public static final String ANDROID_FACET_TYPE_ID = "android";
+  @NonNls public static final String ANDROID_FACET_NAME = "Android";
 
   @NonNls public static final String ANDROID_STORAGE_DIR = "android";
   @NonNls private static final String RESOURCE_CACHE_STORAGE = "res_cache";
@@ -106,7 +115,7 @@ public class AndroidJpsUtil {
   public static void addMessages(@NotNull CompileContext context,
                                  @NotNull Map<AndroidCompilerMessageKind, List<String>> messages,
                                  @NotNull String builderName,
-                                 @NotNull String moduleName) {
+                                 @NotNull String entryName) {
     for (Map.Entry<AndroidCompilerMessageKind, List<String>> entry : messages.entrySet()) {
       for (String message : entry.getValue()) {
         String filePath = null;
@@ -120,7 +129,7 @@ public class AndroidJpsUtil {
         final BuildMessage.Kind category = toBuildMessageKind(entry.getKey());
         if (category != null) {
           context.processMessage(
-            new CompilerMessage(builderName, category, '[' + moduleName + "] " + message, filePath, -1L, -1L, -1L, line, -1L));
+            new CompilerMessage(builderName, category, '[' + entryName + "] " + message, filePath, -1L, -1L, -1L, line, -1L));
         }
       }
     }
@@ -514,12 +523,43 @@ public class AndroidJpsUtil {
   }
 
   public static boolean isLightBuild(@NotNull CompileContext context) {
-    final String typeId = context.getBuilderParameter("RUN_CONFIGURATION_TYPE_ID");
+    final String typeId = getRunConfigurationTypeId(context);
     return typeId != null && AndroidCommonUtils.isTestConfiguration(typeId);
   }
 
+  @Nullable
+  public static String getRunConfigurationTypeId(@NotNull CompileContext context) {
+    return context.getBuilderParameter("RUN_CONFIGURATION_TYPE_ID");
+  }
+
   public static boolean isReleaseBuild(@NotNull CompileContext context) {
-    return Boolean.parseBoolean(context.getBuilderParameter(AndroidCommonUtils.RELEASE_BUILD_OPTION));
+    if (Boolean.parseBoolean(context.getBuilderParameter(AndroidCommonUtils.RELEASE_BUILD_OPTION))) {
+      return true;
+    }
+
+    for (JpsArtifact artifact : getAndroidArtifactsToBuild(context)) {
+      final JpsElement props = artifact.getProperties();
+
+      if (props instanceof JpsAndroidApplicationArtifactProperties &&
+          ((JpsAndroidApplicationArtifactProperties)props).getSigningMode() != AndroidArtifactSigningMode.DEBUG) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @NotNull
+  public static List<JpsArtifact> getAndroidArtifactsToBuild(@NotNull CompileContext context) {
+    final List<JpsArtifact> artifacts = JpsArtifactService.getInstance().getArtifacts(context.getProjectDescriptor().getProject());
+    final List<JpsArtifact> result = new ArrayList<JpsArtifact>();
+
+    for (JpsArtifact artifact : artifacts) {
+      if (artifact.getArtifactType() instanceof AndroidApplicationArtifactType &&
+          context.getScope().isAffected(new ArtifactBuildTarget(artifact))) {
+        result.add(artifact);
+      }
+    }
+    return result;
   }
 
   @NotNull
@@ -669,5 +709,66 @@ public class AndroidJpsUtil {
       result.add(dir.getPath());
     }
     return result;
+  }
+
+  @Nullable
+  public static JpsAndroidModuleExtension getPackagedFacet(@NotNull JpsArtifact artifact) {
+    final List<JpsAndroidModuleExtension> facets = getAllPackagedFacets(artifact);
+    return facets.size() == 1 ? facets.get(0) : null;
+  }
+
+  @NotNull
+  public static List<JpsAndroidModuleExtension> getAllPackagedFacets(JpsArtifact artifact) {
+    final List<JpsAndroidModuleExtension> extensions = new ArrayList<JpsAndroidModuleExtension>();
+
+    JpsArtifactUtil.processPackagingElements(artifact.getRootElement(), new Processor<JpsPackagingElement>() {
+      @Override
+      public boolean process(JpsPackagingElement element) {
+        if (element instanceof JpsAndroidFinalPackageElement) {
+          final JpsModuleReference reference = ((JpsAndroidFinalPackageElement)element).getModuleReference();
+          final JpsModule module = reference != null ? reference.resolve() : null;
+          final JpsAndroidModuleExtension extension = module != null ? getExtension(module) : null;
+
+          if (extension != null) {
+            extensions.add(extension);
+          }
+        }
+        return true;
+      }
+    });
+    return extensions;
+  }
+
+  public static ProGuardOptions getProGuardConfigIfShouldRun(@NotNull CompileContext context, @NotNull JpsAndroidModuleExtension extension)
+    throws IOException {
+    if (extension.isRunProguard()) {
+      return new ProGuardOptions(extension.getProguardConfigFile(), extension.isIncludeSystemProguardCfgFile());
+    }
+
+    final String cfgPathFromContext = context.getBuilderParameter(AndroidCommonUtils.PROGUARD_CFG_PATH_OPTION);
+    if (cfgPathFromContext != null) {
+      final String includeSystemProGuardFile = context.getBuilderParameter(AndroidCommonUtils.INCLUDE_SYSTEM_PROGUARD_FILE_OPTION);
+      return new ProGuardOptions(new File(cfgPathFromContext), Boolean.parseBoolean(includeSystemProGuardFile));
+    }
+
+    for (JpsArtifact artifact : getAndroidArtifactsToBuild(context)) {
+      final JpsAndroidModuleExtension facetFromArtifact = getPackagedFacet(artifact);
+      final JpsModule moduleFromArtifact = facetFromArtifact != null ? facetFromArtifact.getModule() : null;
+
+      if (moduleFromArtifact != null && moduleFromArtifact.equals(extension.getModule())) {
+        final JpsElement props = artifact.getProperties();
+
+        if (props instanceof JpsAndroidApplicationArtifactProperties) {
+          final JpsAndroidApplicationArtifactProperties androidProps = (JpsAndroidApplicationArtifactProperties)props;
+
+          if (androidProps.isRunProGuard()) {
+            final String cfgFileUrl = androidProps.getProGuardCfgFileUrl();
+            final String cfgPath = cfgFileUrl != null ? JpsPathUtil.urlToPath(cfgFileUrl) : null;
+            return new ProGuardOptions(new File(cfgPath), androidProps.isIncludeSystemProGuardCfgFile());
+          }
+        }
+      }
+    }
+    return null;
   }
 }

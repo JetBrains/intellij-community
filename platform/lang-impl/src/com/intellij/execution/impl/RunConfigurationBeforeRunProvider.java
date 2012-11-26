@@ -47,9 +47,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -107,25 +105,13 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
 
   @Override
   public RunConfigurableBeforeRunTask createTask(RunConfiguration runConfiguration) {
-    return new RunConfigurableBeforeRunTask();
+    return getAvailableConfigurations(runConfiguration).isEmpty() ? null : new RunConfigurableBeforeRunTask();
   }
 
   @Override
   public boolean configureTask(RunConfiguration runConfiguration, RunConfigurableBeforeRunTask task) {
-    final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
-
-    final ArrayList<RunnerAndConfigurationSettings> configurations
-      = new ArrayList<RunnerAndConfigurationSettings>(runManager.getSortedConfigurations());
-    String executorId = DefaultRunExecutor.getRunExecutorInstance().getId();
-    for (Iterator<RunnerAndConfigurationSettings> iterator = configurations.iterator(); iterator.hasNext();) {
-      RunnerAndConfigurationSettings settings = iterator.next();
-      final ProgramRunner runner = ProgramRunnerUtil.getRunner(executorId, settings);
-      if (runner == null)
-        iterator.remove();
-    }
-
     SelectionDialog dialog =
-      new SelectionDialog(task.getSettings(), configurations);
+      new SelectionDialog(task.getSettings(), getAvailableConfigurations(runConfiguration));
     dialog.show();
     RunnerAndConfigurationSettings settings = dialog.getSelectedSettings();
     if (settings != null) {
@@ -135,6 +121,25 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
     else {
       return false;
     }
+  }
+
+  @NotNull
+  private List<RunnerAndConfigurationSettings> getAvailableConfigurations(RunConfiguration runConfiguration) {
+    Project project = runConfiguration.getProject();
+    if (project == null || !project.isInitialized())
+      return Collections.emptyList();
+    final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
+
+    final ArrayList<RunnerAndConfigurationSettings> configurations
+      = new ArrayList<RunnerAndConfigurationSettings>(runManager.getSortedConfigurations());
+    String executorId = DefaultRunExecutor.getRunExecutorInstance().getId();
+    for (Iterator<RunnerAndConfigurationSettings> iterator = configurations.iterator(); iterator.hasNext();) {
+      RunnerAndConfigurationSettings settings = iterator.next();
+      final ProgramRunner runner = ProgramRunnerUtil.getRunner(executorId, settings);
+      if (runner == null || settings.getConfiguration() == runConfiguration)
+        iterator.remove();
+    }
+    return configurations;
   }
 
   @Override
@@ -306,7 +311,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
 
     private SelectionDialog(RunnerAndConfigurationSettings selectedSettings, @NotNull List<RunnerAndConfigurationSettings> settings) {
       super(myProject);
-      setTitle("Choose Configuration to Execute");
+      setTitle(ExecutionBundle.message("before.launch.run.another.configuration.choose"));
       mySelectedSettings = selectedSettings;
       mySettings = settings;
       init();
@@ -317,7 +322,13 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
         maxWidth = Math.max(fontMetrics.stringWidth(setting.getConfiguration().getName()), maxWidth);
       }
       maxWidth += 24;//icon and gap
-      myJBList.setPreferredSize(new Dimension(maxWidth, myJBList.getPreferredSize().height));
+      myJBList.setMinimumSize(new Dimension(maxWidth, myJBList.getPreferredSize().height));
+    }
+
+    @Nullable
+    @Override
+    protected String getDimensionServiceKey() {
+      return "com.intellij.execution.impl.RunConfigurationBeforeRunProvider.dimensionServiceKey;";
     }
 
     @Override

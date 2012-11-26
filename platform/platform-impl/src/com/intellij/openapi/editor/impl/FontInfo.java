@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntHashSet;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +50,7 @@ public class FontInfo {
   
   private void parseProblemGlyphs() {
     myCheckedForProblemGlyphs = true;
-    BufferedImage buffer = new BufferedImage(20, 20, BufferedImage.TYPE_INT_RGB);
+    BufferedImage buffer = UIUtil.createImage(20, 20, BufferedImage.TYPE_INT_RGB);
     final Graphics graphics = buffer.getGraphics();
     if (!(graphics instanceof Graphics2D)) {
       return;
@@ -132,7 +133,7 @@ public class FontInfo {
     if (myFontMetrics == null) {
       // We need to use antialising-aware font metrics because we've alrady encountered a situation when non-antialiased symbol
       // width is not equal to the antialiased one (IDEA-81539).
-      final Graphics graphics = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB).getGraphics();
+      final Graphics graphics = UIUtil.createImage(1, 1, BufferedImage.TYPE_INT_RGB).getGraphics();
       UISettings.setupAntialiasing(graphics);
       graphics.setFont(myFont);
       myFontMetrics = graphics.getFontMetrics();

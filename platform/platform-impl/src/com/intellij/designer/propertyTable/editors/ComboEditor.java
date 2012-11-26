@@ -41,11 +41,7 @@ public abstract class ComboEditor extends PropertyEditor {
     return new ComboEditorListener(this);
   }
 
-  public static void addEditorSupport(PropertyEditor editor, JComboBox myCombo) {
-    installListeners(myCombo, new ComboEditorListener(editor));
-  }
-
-  private static void installListeners(JComboBox myCombo, final ComboEditorListener listener) {
+  public static void installListeners(JComboBox myCombo, final ComboEditorListener listener) {
     myCombo.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent event) {
@@ -81,7 +77,7 @@ public abstract class ComboEditor extends PropertyEditor {
     }
   }
 
-  protected static class ComboEditorListener {
+  public static class ComboEditorListener {
     private final PropertyEditor myEditor;
 
     public ComboEditorListener(PropertyEditor editor) {

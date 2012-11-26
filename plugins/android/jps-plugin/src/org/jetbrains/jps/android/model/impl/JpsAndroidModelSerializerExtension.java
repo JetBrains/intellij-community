@@ -19,15 +19,16 @@ import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.android.AndroidJpsUtil;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.android.model.JpsAndroidSdkProperties;
 import org.jetbrains.jps.android.model.JpsAndroidSdkType;
-import org.jetbrains.jps.model.JpsElement;
-import org.jetbrains.jps.model.JpsElementFactory;
-import org.jetbrains.jps.model.JpsSimpleElement;
+import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 import org.jetbrains.jps.model.serialization.JpsProjectExtensionSerializer;
+import org.jetbrains.jps.model.serialization.artifact.JpsArtifactPropertiesSerializer;
+import org.jetbrains.jps.model.serialization.artifact.JpsPackagingElementSerializer;
 import org.jetbrains.jps.model.serialization.library.JpsSdkPropertiesSerializer;
 import org.jetbrains.jps.model.serialization.facet.JpsFacetConfigurationSerializer;
 
@@ -39,8 +40,11 @@ import java.util.List;
  * @author nik
  */
 public class JpsAndroidModelSerializerExtension extends JpsModelSerializerExtension {
+
   private static final List<? extends JpsFacetConfigurationSerializer<JpsAndroidModuleExtension>> FACET_PROPERTIES_LOADERS =
-    Arrays.asList(new JpsFacetConfigurationSerializer<JpsAndroidModuleExtension>(JpsAndroidModuleExtensionImpl.KIND, "android", "Android") {
+    Arrays.asList(new JpsFacetConfigurationSerializer<JpsAndroidModuleExtension>(JpsAndroidModuleExtensionImpl.KIND,
+                                                                                 AndroidJpsUtil.ANDROID_FACET_TYPE_ID,
+                                                                                 AndroidJpsUtil.ANDROID_FACET_NAME) {
       @Override
       public JpsAndroidModuleExtension loadExtension(@NotNull Element facetConfigurationElement,
                                                      String name,
@@ -87,6 +91,16 @@ public class JpsAndroidModelSerializerExtension extends JpsModelSerializerExtens
   @Override
   public List<? extends JpsFacetConfigurationSerializer<?>> getFacetConfigurationSerializers() {
     return FACET_PROPERTIES_LOADERS;
+  }
+
+  @Override
+  public List<? extends JpsPackagingElementSerializer<?>> getPackagingElementSerializers() {
+    return Collections.singletonList(new JpsAndroidFinalPackageElementSerializer());
+  }
+
+  @Override
+  public List<? extends JpsArtifactPropertiesSerializer<?>> getArtifactTypePropertiesSerializers() {
+    return Collections.singletonList(new JpsAndroidApplicationArtifactPropertiesSerializer());
   }
 
   @NotNull

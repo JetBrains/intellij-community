@@ -138,21 +138,26 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     return (PathMacrosImpl)ApplicationManager.getApplication().getComponent(PathMacros.class);
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "PathMacrosImpl";
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
   }
 
+  @Override
   public String getExternalFileName() {
     return EXT_FILE_NAME;
   }
 
+  @Override
   public Set<String> getUserMacroNames() {
     myLock.readLock().lock();
     try {
@@ -167,8 +172,9 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     return ourToolsMacros;
   }
 
+  @Override
   public Set<String> getSystemMacroNames() {
-      return SYSTEM_MACROS;
+    return SYSTEM_MACROS;
   }
 
   @Override
@@ -176,6 +182,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     return myIgnoredMacros;
   }
 
+  @Override
   public void setIgnoredMacroNames(@NotNull final Collection<String> names) {
     myIgnoredMacros.clear();
     myIgnoredMacros.addAll(names);
@@ -192,12 +199,13 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     map.put(USER_HOME_MACRO_NAME, getUserHome());
     return map;
   }
-  
+
   @Override
   public boolean isIgnoredMacroName(@NotNull String macro) {
     return myIgnoredMacros.contains(macro);
   }
 
+  @Override
   public Set<String> getAllMacroNames() {
     final Set<String> userMacroNames = getUserMacroNames();
     final Set<String> systemMacroNames = getSystemMacroNames();
@@ -207,6 +215,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     return allNames;
   }
 
+  @Override
   public String getValue(String name) {
     try {
       myLock.readLock().lock();
@@ -217,6 +226,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     }
   }
 
+  @Override
   public void removeAllMacros() {
     try {
       myLock.writeLock().lock();
@@ -238,8 +248,9 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     }
   }
 
+  @Override
   public void setMacro(@NotNull String name, @NotNull String value) {
-    if (value.trim().length() == 0) return;
+    if (value.trim().isEmpty()) return;
     try {
       myLock.writeLock().lock();
       myMacros.put(name, value);
@@ -261,6 +272,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     }
   }
 
+  @Override
   public void removeMacro(String name) {
     try {
       myLock.writeLock().lock();
@@ -272,6 +284,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     }
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     try {
       myLock.writeLock().lock();
@@ -290,9 +303,9 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
         }
 
         if (value.length() > 1 && value.charAt(value.length() - 1) == '/') {
-          value = value.substring(0, value.length() - 1); 
+          value = value.substring(0, value.length() - 1);
         }
-        
+
         myMacros.put(name, value);
       }
 
@@ -300,7 +313,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
       for (final Object child : ignoredChildren) {
         final Element macroElement = (Element)child;
         final String ignoredName = macroElement.getAttributeValue(NAME_ATTR);
-        if (ignoredName != null && ignoredName.length() > 0 && !myIgnoredMacros.contains(ignoredName)) {
+        if (ignoredName != null && !ignoredName.isEmpty() && !myIgnoredMacros.contains(ignoredName)) {
           myIgnoredMacros.add(ignoredName);
         }
       }
@@ -310,6 +323,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     }
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     try {
       myLock.writeLock().lock();
@@ -317,7 +331,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
       final Set<Map.Entry<String, String>> entries = myMacros.entrySet();
       for (Map.Entry<String, String> entry : entries) {
         final String value = entry.getValue();
-        if (value != null && value.trim().length() > 0) {
+        if (value != null && !value.trim().isEmpty()) {
           final Element macro = new Element(MACRO_ELEMENT);
           macro.setAttribute(NAME_ATTR, entry.getKey());
           macro.setAttribute(VALUE_ATTR, value);
@@ -339,7 +353,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   public void addMacroReplacements(ReplacePathToMacroMap result) {
     for (final String name : getUserMacroNames()) {
       final String value = getValue(name);
-      if (value != null && value.trim().length() > 0) result.addMacroReplacement(value, name);
+      if (value != null && !value.trim().isEmpty()) result.addMacroReplacement(value, name);
     }
   }
 
@@ -347,7 +361,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   public void addMacroExpands(ExpandMacroToPathMap result) {
     for (final String name : getUserMacroNames()) {
       final String value = getValue(name);
-      if (value != null && value.trim().length() > 0) result.addMacroExpand(name, value);
+      if (value != null && !value.trim().isEmpty()) result.addMacroExpand(name, value);
     }
 
     myLock.readLock().lock();

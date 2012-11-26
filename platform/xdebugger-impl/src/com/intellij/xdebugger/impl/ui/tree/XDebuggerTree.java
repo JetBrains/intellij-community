@@ -54,7 +54,7 @@ import java.util.List;
  */
 public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposable {
   private static final DataKey<XDebuggerTree> XDEBUGGER_TREE_KEY = DataKey.create("xdebugger.tree");
-  private static final Convertor<TreePath,String> SPEED_SEARCH_CONVERTER = new Convertor<TreePath, String>() {
+  private static final Convertor<TreePath, String> SPEED_SEARCH_CONVERTER = new Convertor<TreePath, String>() {
     public String convert(TreePath o) {
       String text = null;
       if (o != null) {
@@ -205,7 +205,9 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     }
   }
 
-  public void childrenLoaded(final @NotNull XDebuggerTreeNode node, final @NotNull List<XValueContainerNode<?>> children, final boolean last) {
+  public void childrenLoaded(final @NotNull XDebuggerTreeNode node,
+                             final @NotNull List<XValueContainerNode<?>> children,
+                             final boolean last) {
     for (XDebuggerTreeListener listener : myListeners) {
       listener.childrenLoaded(node, children, last);
     }
@@ -234,10 +236,12 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
 
   private void registerShortcuts() {
     ActionManager actionManager = ActionManager.getInstance();
-    actionManager.getAction(XDebuggerActions.SET_VALUE).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), this);
+    actionManager.getAction(XDebuggerActions.SET_VALUE)
+      .registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), this);
     actionManager.getAction(XDebuggerActions.COPY_VALUE).registerCustomShortcutSet(CommonShortcuts.getCopy(), this);
     actionManager.getAction(XDebuggerActions.JUMP_TO_SOURCE).registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
-    actionManager.getAction(XDebuggerActions.MARK_OBJECT).registerCustomShortcutSet(new CustomShortcutSet( KeymapManager.getInstance().getActiveKeymap().getShortcuts("ToggleBookmark")), this);
+    actionManager.getAction(XDebuggerActions.MARK_OBJECT)
+      .registerCustomShortcutSet(new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts("ToggleBookmark")), this);
   }
 
   private static void markNodesObsolete(final XValueContainerNode<?> node) {

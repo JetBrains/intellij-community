@@ -38,20 +38,21 @@ import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.Animator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.*;
+import java.util.List;
 
 public class ScrollingModelImpl implements ScrollingModelEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.ScrollingModelImpl");
 
   private final EditorImpl myEditor;
-  private final CopyOnWriteArrayList<VisibleAreaListener> myVisibleAreaListeners = ContainerUtil.createEmptyCOWList();
+  private final List<VisibleAreaListener> myVisibleAreaListeners = ContainerUtil.createEmptyCOWList();
 
   private AnimatedScrollingRunnable myCurrentAnimationRequest = null;
   private boolean                   myAnimationDisabled       = false;
@@ -113,6 +114,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     return false; 
   }
 
+  @NotNull
   @Override
   public Rectangle getVisibleArea() {
     assertIsDispatchThread();

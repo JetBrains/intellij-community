@@ -812,12 +812,8 @@
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
 
-    <action id="Arrangement.Rule.Add"
-            class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementRuleAction"
-            icon="AllIcons.ToolbarDecorator.Add"/>
-    <action id="Arrangement.Rule.Remove"
-            class="com.intellij.application.options.codeStyle.arrangement.action.RemoveArrangementRuleAction"
-            icon="AllIcons.ToolbarDecorator.Remove"/>
+    <action id="Arrangement.Rule.Add" class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementRuleAction"/>
+    <action id="Arrangement.Rule.Remove" class="com.intellij.application.options.codeStyle.arrangement.action.RemoveArrangementRuleAction"/>
     <action id="Arrangement.Rule.Edit"
             class="com.intellij.application.options.codeStyle.arrangement.action.EditArrangementRuleAction"
             icon="AllIcons.Actions.Edit"/>

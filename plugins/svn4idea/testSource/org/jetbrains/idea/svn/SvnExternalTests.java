@@ -112,6 +112,54 @@ public class SvnExternalTests extends Svn17TestCase {
     clManager.ensureUpToDate(false);
   }
 
+  private void prepareInnerCopy() throws Exception {
+    final SubTree subTree = new SubTree(myWorkingCopyDir);
+    checkin();
+    clManager.stopEveryThingIfInTestMode();
+    sleep(100);
+    final File rootFile = new File(subTree.myRootDir.getPath());
+    FileUtil.delete(rootFile);
+    FileUtil.delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn"));
+    Assert.assertTrue(!rootFile.exists());
+    sleep(200);
+    myWorkingCopyDir.refresh(false, true);
+
+    verify(runSvn("co", myMainUrl));
+    final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
+    final File innerDir = new File(sourceDir, "inner1/inner2/inner");
+    verify(runSvn("co", myExternalURL, innerDir.getPath()));
+    sleep(100);
+    myWorkingCopyDir.refresh(false, true);
+    // above is preparation
+
+    // start change list manager again
+    clManager.forceGoInTestMode();
+    SvnConfiguration.getInstance(myProject).DETECT_NESTED_COPIES = true;
+    myVcs.invokeRefreshSvnRoots(false);
+    clManager.ensureUpToDate(false);
+    clManager.ensureUpToDate(false);
+  }
+
+  @Test
+  public void testInnerCopyDetected() throws Exception {
+    prepareInnerCopy();
+
+    final SvnFileUrlMapping workingCopies = myVcs.getSvnFileUrlMapping();
+    final List<RootUrlInfo> infos = workingCopies.getAllWcInfos();
+    Assert.assertEquals(2, infos.size());
+    final Set<String> expectedUrls = new HashSet<String>();
+    expectedUrls.add(StringUtil.toLowerCase(myExternalURL));
+    expectedUrls.add(StringUtil.toLowerCase(myMainUrl));
+
+    boolean sawInner = false;
+    for (RootUrlInfo info : infos) {
+      expectedUrls.remove(StringUtil.toLowerCase(info.getAbsoluteUrl()));
+      sawInner |= NestedCopyType.inner.equals(info.getType());
+    }
+    Assert.assertTrue(expectedUrls.isEmpty());
+    Assert.assertTrue(sawInner);
+  }
+
   @Test
   public void testSimpleExternalsStatus() throws Exception {
     prepareExternal();

@@ -16,7 +16,7 @@
 package com.intellij.android.designer.propertyTable;
 
 import com.android.resources.ResourceType;
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.propertyTable.editors.EventHandlerEditor;
 import com.intellij.android.designer.propertyTable.editors.ResourceEditor;
@@ -26,7 +26,7 @@ import com.intellij.android.designer.propertyTable.renderers.ResourceRenderer;
 import com.intellij.designer.model.Property;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.PropertyRenderer;
-import com.intellij.designer.propertyTable.editors.TextEditor;
+import com.intellij.designer.propertyTable.editors.TextEditorWrapper;
 import com.intellij.designer.propertyTable.renderers.LabelPropertyRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -67,7 +67,7 @@ public class AttributeProperty extends Property<RadViewComponent> implements IXm
     if (formats.size() == 1) {
       if (formats.contains(AttributeFormat.Float)) {
         myRenderer = new LabelPropertyRenderer(null);
-        myEditor = new TextEditor();
+        myEditor = new TextEditorWrapper();
         return;
       }
       if (formats.contains(AttributeFormat.Enum)) {

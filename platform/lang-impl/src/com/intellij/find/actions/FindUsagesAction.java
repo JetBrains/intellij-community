@@ -51,23 +51,25 @@ public class FindUsagesAction extends AnAction {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     UsageTarget[] usageTargets = e.getData(UsageView.USAGE_TARGETS_KEY);
-    if (usageTargets != null) {
+    if (usageTargets == null) {
+      final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+      chooseAmbiguousTargetAndPerform(project, editor, new PsiElementProcessor<PsiElement>() {
+        @Override
+        public boolean execute(@NotNull final PsiElement element) {
+          startFindUsages(element);
+          return false;
+        }
+      });
+    }
+    else {
       UsageTarget target = usageTargets[0];
       if (target instanceof PsiElementUsageTarget) {
         PsiElement element = ((PsiElementUsageTarget)target).getElement();
-        startFindUsages(element);
+        if (element != null) {
+          startFindUsages(element);
+        }
       }
-      return;
     }
-
-    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
-    chooseAmbiguousTargetAndPerform(project, editor, new PsiElementProcessor<PsiElement>() {
-      @Override
-      public boolean execute(@NotNull final PsiElement element) {
-        startFindUsages(element);
-        return false;
-      }
-    });
   }
 
   protected void startFindUsages(@NotNull PsiElement element) {

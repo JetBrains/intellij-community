@@ -51,10 +51,13 @@ public class FilteringListModel<T> extends AbstractListModel {
     }
   };
 
-  protected FilteringListModel(JList list) {
-    myOriginalModel = list.getModel();
+  public FilteringListModel(ListModel originalModel) {
+    myOriginalModel = originalModel;
     myOriginalModel.addListDataListener(myListDataListener);
+  }
 
+  protected FilteringListModel(JList list) {
+    this(list.getModel());
     list.setModel(this);
   }
 
@@ -99,8 +102,12 @@ public class FilteringListModel<T> extends AbstractListModel {
     return myData.size();
   }
 
-  public Object getElementAt(int index) {
+  public T getElementAt(int index) {
     return myData.get(index);
+  }
+
+  public int getElementIndex(T element) {
+    return myData.indexOf(element);
   }
 
   private boolean passElement(T element) {

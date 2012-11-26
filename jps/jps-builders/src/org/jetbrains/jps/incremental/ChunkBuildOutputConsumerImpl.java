@@ -1,9 +1,11 @@
 package org.jetbrains.jps.incremental;
 
-import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.impl.BuildOutputConsumerImpl;
+import org.jetbrains.jps.javac.BinaryContent;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,20 +20,31 @@ import java.util.Map;
 class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputConsumer {
   private final CompileContext myContext;
   private Map<BuildTarget<?>, BuildOutputConsumerImpl> myTarget2Consumer = new THashMap<BuildTarget<?>, BuildOutputConsumerImpl>();
-  private Map<File, byte[]> myClasses = new THashMap<File, byte[]>(FileUtil.FILE_HASHING_STRATEGY);
+  private Map<String, CompiledClass> myClasses = new THashMap<String, CompiledClass>();
 
   public ChunkBuildOutputConsumerImpl(CompileContext context) {
     myContext = context;
   }
 
-  public Map<File, byte[]> getClasses() {
-    return myClasses;
+  @NotNull
+  @Override
+  public Map<String, CompiledClass> getCompiledClasses() {
+    return Collections.unmodifiableMap(myClasses);
   }
 
   @Override
-  public void registerCompiledClass(BuildTarget<?> target, File outputFile, File sourceFile, byte[] bytecode) throws IOException {
-    myClasses.put(outputFile, bytecode);
-    registerOutputFile(target, outputFile, Collections.<String>singleton(sourceFile.getPath()));
+  @Nullable
+  public BinaryContent lookupClassBytes(String className) {
+    final CompiledClass object = myClasses.get(className);
+    return object != null ? object.getContent() : null;
+  }
+
+  @Override
+  public void registerCompiledClass(BuildTarget<?> target, CompiledClass compiled) throws IOException {
+    if (compiled.getClassName() != null) {
+      myClasses.put(compiled.getClassName(), compiled);
+    }
+    registerOutputFile(target, compiled.getOutputFile(), Collections.<String>singleton(compiled.getSourceFile().getPath()));
   }
 
   @Override
@@ -48,5 +61,10 @@ class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputConsumer 
     for (BuildOutputConsumerImpl consumer : myTarget2Consumer.values()) {
       consumer.fireFileGeneratedEvent();
     }
+  }
+
+  public void clear() {
+    myTarget2Consumer.clear();
+    myClasses.clear();
   }
 }

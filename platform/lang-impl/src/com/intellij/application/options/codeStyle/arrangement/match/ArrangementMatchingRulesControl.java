@@ -41,6 +41,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -281,6 +282,13 @@ public class ArrangementMatchingRulesControl extends JBTable {
     if (myEditorRow < 0) {
       return;
     }
+    if (isEditing()) {
+      TableCellEditor editor = getCellEditor();
+      if (editor != null) {
+        editor.stopCellEditing();
+      }
+    }
+    
     mySkipSelectionChange = true;
     try {
       ArrangementMatchingRulesModel model = getModel();
@@ -423,6 +431,11 @@ public class ArrangementMatchingRulesControl extends JBTable {
     }
     return -1;
   }
+
+  public int getEmptyRowHeight() {
+    return myMinRowHeight;
+  }
+
   @NotNull
   private JComponent adjustHeight(@NotNull JComponent component, int row) {
     int height = component.getPreferredSize().height;

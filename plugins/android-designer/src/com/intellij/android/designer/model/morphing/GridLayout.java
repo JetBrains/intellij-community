@@ -15,7 +15,7 @@
  */
 package com.intellij.android.designer.model.morphing;
 
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.intellij.android.designer.model.*;
 import com.intellij.android.designer.model.grid.GridInfo;
 import com.intellij.android.designer.model.layout.grid.RadGridLayoutComponent;

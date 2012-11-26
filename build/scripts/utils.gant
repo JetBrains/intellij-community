@@ -52,18 +52,18 @@ binding.setVariable("isEap", {
   return "true" == p("component.version.eap")
 })
 
-binding.setVariable("mem32", "-Xms128m -Xmx512m -XX:MaxPermSize=430m -XX:ReservedCodeCacheSize=64m -XX:+UseCodeCacheFlushing")
-binding.setVariable("mem64", "-Xms128m -Xmx800m -XX:MaxPermSize=430m -XX:ReservedCodeCacheSize=64m -XX:+UseCodeCacheFlushing")
-binding.setVariable("common_vmoptions", "-ea")
+binding.setVariable("mem32", "-Xms128m -Xmx512m -XX:MaxPermSize=250m -XX:ReservedCodeCacheSize=64m -XX:+UseCodeCacheFlushing")
+binding.setVariable("mem64", "-Xms128m -Xmx800m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=64m -XX:+UseCodeCacheFlushing")
+binding.setVariable("common_vmoptions", "-ea -Dsun.io.useCanonCaches=false")
 
 binding.setVariable("vmOptions", { "$common_vmoptions ${isEap() ? '-XX:+HeapDumpOnOutOfMemoryError' : ''}".trim() })
 binding.setVariable("vmOptions32", { "$mem32 ${vmOptions()}".trim() })
 binding.setVariable("vmOptions64", { "$mem64 ${vmOptions()}".trim() })
 binding.setVariable("vmOptions32yjp", { String systemSelector ->
-  "${vmOptions32()} -agentlib:yjpagent=disablej2ee,disablealloc,sessionname=$systemSelector".trim()
+  "${vmOptions32()} -agentlib:yjpagent=disablej2ee,disablealloc,onlylocal,sessionname=$systemSelector".trim()
 })
 binding.setVariable("vmOptions64yjp", { String systemSelector ->
-  "${vmOptions64()} -agentlib:yjpagent64=disablej2ee,disablealloc,sessionname=$systemSelector".trim()
+  "${vmOptions64()} -agentlib:yjpagent64=disablej2ee,disablealloc,onlylocal,sessionname=$systemSelector".trim()
 })
 
 binding.setVariable("isDefined", {String key ->
@@ -658,8 +658,6 @@ binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths,
 
     zipfileset(file: "$macPath/bin/idea.properties", prefix: "$zipRoot/bin")
   }
-
-  notifyArtifactBuilt(zipPath)
 })
 
 binding.setVariable("buildTarGz", { String tarRoot, String tarPath, List paths ->

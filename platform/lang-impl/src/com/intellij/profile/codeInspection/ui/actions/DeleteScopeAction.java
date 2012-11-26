@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public abstract class DeleteScopeAction extends AnAction {
     InspectionConfigTreeNode parent = null;
     final InspectionConfigTreeNode[] nodes = myTree.getSelectedNodes(InspectionConfigTreeNode.class, null);
     for (InspectionConfigTreeNode node : nodes) {
-      final Descriptor descriptor = node.getDesriptor();
+      final Descriptor descriptor = node.getDescriptor();
       LOG.assertTrue(descriptor != null);
       parent = (InspectionConfigTreeNode)node.getParent();
       final HighlightDisplayKey key = descriptor.getKey();

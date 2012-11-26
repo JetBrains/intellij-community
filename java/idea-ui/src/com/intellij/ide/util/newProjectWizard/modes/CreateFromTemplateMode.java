@@ -17,6 +17,7 @@ package com.intellij.ide.util.newProjectWizard.modes;
 
 import com.intellij.ide.util.newProjectWizard.SelectTemplateStep;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
+import com.intellij.ide.util.newProjectWizard.TemplatesGroup;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.project.ProjectBundle;
@@ -31,6 +32,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -50,28 +52,39 @@ public class CreateFromTemplateMode extends WizardMode {
   };
   private SelectTemplateStep mySelectTemplateStep;
 
-  public static MultiMap<String, ProjectTemplate> getTemplatesMap(WizardContext context) {
+  public static MultiMap<TemplatesGroup, ProjectTemplate> getTemplatesMap(WizardContext context) {
     ProjectTemplatesFactory[] factories = ProjectTemplatesFactory.EP_NAME.getExtensions();
-    final MultiMap<String, ProjectTemplate> groups = new MultiMap<String, ProjectTemplate>();
+    final MultiMap<TemplatesGroup, ProjectTemplate> groups = new MultiMap<TemplatesGroup, ProjectTemplate>();
     for (ProjectTemplatesFactory factory : factories) {
       for (String group : factory.getGroups()) {
         ProjectTemplate[] templates = factory.createTemplates(group, context);
         List<ProjectTemplate> values = context.isCreatingNewProject() ? Arrays.asList(templates) : ContainerUtil.filter(templates,
                                                                                                                         TEMPLATE_CONDITION);
         if (!values.isEmpty()) {
-          groups.putValues(group, values);
+          Icon icon = factory.getGroupIcon(group);
+          TemplatesGroup templatesGroup = new TemplatesGroup(group, null, icon);
+          if (icon != null) {
+            Collection<ProjectTemplate> collection = groups.remove(templatesGroup);
+            groups.putValues(templatesGroup, values);
+            if (collection != null) {
+              groups.putValues(templatesGroup, collection);
+            }
+          }
+          else {
+            groups.putValues(templatesGroup, values);
+          }
         }
       }
     }
-    final MultiMap<String, ProjectTemplate> sorted = new MultiMap<String, ProjectTemplate>();
+    final MultiMap<TemplatesGroup, ProjectTemplate> sorted = new MultiMap<TemplatesGroup, ProjectTemplate>();
     // put single leafs under "Other"
-    for (Map.Entry<String, Collection<ProjectTemplate>> entry : groups.entrySet()) {
+    for (Map.Entry<TemplatesGroup, Collection<ProjectTemplate>> entry : groups.entrySet()) {
       Collection<ProjectTemplate> templates = entry.getValue();
       if (templates.size() == 1 &&
-          !ProjectTemplatesFactory.CUSTOM_GROUP.equals(entry.getKey())) {
+          !ProjectTemplatesFactory.CUSTOM_GROUP.equals(entry.getKey().getName())) {
 
         if (!(templates.iterator().next() instanceof LocalArchivedTemplate)) {
-          sorted.putValues(ProjectTemplatesFactory.OTHER_GROUP, templates);
+          sorted.putValues(new TemplatesGroup(ProjectTemplatesFactory.OTHER_GROUP, null, null), templates);
           continue;
         }
       }
@@ -100,7 +113,7 @@ public class CreateFromTemplateMode extends WizardMode {
   @Nullable
   @Override
   protected StepSequence createSteps(WizardContext context, @NotNull ModulesProvider modulesProvider) {
-    MultiMap<String, ProjectTemplate> map = getTemplatesMap(context);
+    MultiMap<TemplatesGroup, ProjectTemplate> map = getTemplatesMap(context);
     StepSequence sequence = new StepSequence();
     for (ProjectTemplate template : map.values()) {
       sequence.addStepsForBuilder(template.createModuleBuilder(), context, modulesProvider);

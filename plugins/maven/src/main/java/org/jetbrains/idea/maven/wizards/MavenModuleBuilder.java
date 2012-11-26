@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import icons.MavenIcons;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenEnvironmentForm;
@@ -101,6 +102,11 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
   @Override
   public Icon getBigIcon() {
     return AllIcons.Modules.Types.JavaModule;
+  }
+
+  @Override
+  public Icon getNodeIcon() {
+    return MavenIcons.MavenLogo;
   }
 
   public ModuleType getModuleType() {

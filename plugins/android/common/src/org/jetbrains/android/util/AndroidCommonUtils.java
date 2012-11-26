@@ -19,10 +19,10 @@ import com.android.jarutils.SignedJarBuilder;
 import com.android.resources.ResourceFolderType;
 import com.android.resources.ResourceType;
 import com.android.sdklib.IAndroidTarget;
-import com.android.sdklib.ISdkLog;
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.android.sdklib.SdkManager;
 import com.android.sdklib.internal.project.ProjectProperties;
+import com.android.utils.ILogger;
 import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -33,14 +33,17 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashMap;
+import org.jetbrains.android.AndroidCommonBundle;
 import org.jetbrains.android.sdk.MessageBuildingSdkLog;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.security.GeneralSecurityException;
-import java.security.PrivateKey;
+import java.security.*;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.jar.JarEntry;
@@ -124,7 +127,7 @@ public class AndroidCommonUtils {
   }
 
   @Nullable
-  public static SdkManager createSdkManager(@NotNull String path, @NotNull ISdkLog log) {
+  public static SdkManager createSdkManager(@NotNull String path, @NotNull ILogger log) {
     path = FileUtil.toSystemDependentName(path);
 
     final File f = new File(path);
@@ -605,5 +608,164 @@ public class AndroidCommonUtils {
       }
     }
     return false;
+  }
+
+  @Nullable
+  public static String executeZipAlign(@NotNull String zipAlignPath, @NotNull File source, @NotNull File destination) {
+    final ProcessBuilder processBuilder = new ProcessBuilder(
+      zipAlignPath, "-f", "4", source.getAbsolutePath(), destination.getAbsolutePath());
+
+    BaseOSProcessHandler handler;
+    try {
+      handler = new BaseOSProcessHandler(processBuilder.start(), "", null);
+    }
+    catch (IOException e) {
+      return e.getMessage();
+    }
+    final StringBuilder builder = new StringBuilder();
+    handler.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void onTextAvailable(ProcessEvent event, Key outputType) {
+        builder.append(event.getText());
+      }
+    });
+    handler.startNotify();
+    handler.waitFor();
+    int exitCode = handler.getProcess().exitValue();
+    return exitCode != 0 ? builder.toString() : null;
+  }
+
+  @NotNull
+  public static Map<AndroidCompilerMessageKind, List<String>> buildArtifact(@NotNull String artifactName,
+                                                                            @NotNull String messagePrefix,
+                                                                            @NotNull String sdkLocation,
+                                                                            @Nullable String artifactFilePath,
+                                                                            @NotNull String keyStorePath,
+                                                                            @Nullable String keyAlias,
+                                                                            @Nullable String keyStorePassword,
+                                                                            @Nullable String keyPassword)
+    throws GeneralSecurityException, IOException {
+    final Map<AndroidCompilerMessageKind, List<String>> messages = new HashMap<AndroidCompilerMessageKind, List<String>>();
+    messages.put(AndroidCompilerMessageKind.ERROR, new ArrayList<String>());
+    messages.put(AndroidCompilerMessageKind.WARNING, new ArrayList<String>());
+    messages.put(AndroidCompilerMessageKind.INFORMATION, new ArrayList<String>());
+
+    final Pair<PrivateKey, X509Certificate> pair = getPrivateKeyAndCertificate(messagePrefix, messages, keyAlias, keyStorePath,
+                                                                               keyStorePassword, keyPassword);
+    if (pair == null) {
+      return messages;
+    }
+    final String prefix = "Cannot sign artifact " + artifactName + ": ";
+
+    if (artifactFilePath == null) {
+      messages.get(AndroidCompilerMessageKind.ERROR).add(prefix + "output path is not specified");
+      return messages;
+    }
+
+    final File artifactFile = new File(artifactFilePath);
+    if (!artifactFile.exists()) {
+      messages.get(AndroidCompilerMessageKind.ERROR).add(prefix + "file " + artifactFilePath + " hasn't been generated");
+      return messages;
+    }
+    final String zipAlignPath =
+      FileUtil.toSystemDependentName(sdkLocation + '/' + toolPath(SdkConstants.FN_ZIPALIGN));
+    final boolean runZipAlign = new File(zipAlignPath).isFile();
+
+    File tmpDir = null;
+    try {
+      tmpDir = FileUtil.createTempDirectory("android_artifact", "tmp");
+      final File tmpArtifact = new File(tmpDir, "tmpArtifact.apk");
+
+      if (runZipAlign) {
+        final String errorMessage = executeZipAlign(zipAlignPath, artifactFile, tmpArtifact);
+        if (errorMessage != null) {
+          messages.get(AndroidCompilerMessageKind.ERROR).add(messagePrefix + "zip-align: " + errorMessage);
+          return messages;
+        }
+      }
+      else {
+        messages.get(AndroidCompilerMessageKind.WARNING).add(messagePrefix + AndroidCommonBundle.message(
+          "android.artifact.building.cannot.find.zip.align.error"));
+        FileUtil.copy(artifactFile, tmpArtifact);
+      }
+
+      if (!FileUtil.delete(artifactFile)) {
+        messages.get(AndroidCompilerMessageKind.ERROR).add("Cannot delete file " + artifactFile.getPath());
+        return messages;
+      }
+      signApk(tmpArtifact, artifactFile, pair.getFirst(), pair.getSecond());
+    }
+    finally {
+      if (tmpDir != null) {
+        FileUtil.delete(tmpDir);
+      }
+    }
+    return messages;
+  }
+
+  @Nullable
+  private static Pair<PrivateKey, X509Certificate> getPrivateKeyAndCertificate(@NotNull String errorPrefix,
+                                                                               @NotNull Map<AndroidCompilerMessageKind, List<String>> messages,
+                                                                               @Nullable String keyAlias,
+                                                                               @Nullable String keyStoreFilePath,
+                                                                               @Nullable String keyStorePasswordStr,
+                                                                               @Nullable String keyPasswordStr)
+    throws IOException, KeyStoreException, CertificateException, NoSuchAlgorithmException, UnrecoverableEntryException {
+
+    if (keyStoreFilePath == null || keyStoreFilePath.length() == 0) {
+      messages.get(AndroidCompilerMessageKind.ERROR).add(errorPrefix + "Key store file is not specified");
+      return null;
+    }
+    if (keyStorePasswordStr == null) {
+      messages.get(AndroidCompilerMessageKind.ERROR).add(errorPrefix + "Key store password is not specified");
+      return null;
+    }
+    if (keyAlias == null || keyAlias.length() == 0) {
+      messages.get(AndroidCompilerMessageKind.ERROR).add(errorPrefix + "Key alias is not specified");
+      return null;
+    }
+    if (keyPasswordStr == null) {
+      messages.get(AndroidCompilerMessageKind.ERROR).add(errorPrefix + "Key password is not specified");
+      return null;
+    }
+    final File keyStoreFile = new File(keyStoreFilePath);
+    final char[] keystorePassword = keyStorePasswordStr.toCharArray();
+    final char[] plainKeyPassword = keyPasswordStr.toCharArray();
+
+    final KeyStore keyStore;
+    InputStream is = null;
+    try {
+      //noinspection IOResourceOpenedButNotSafelyClosed
+      is = new FileInputStream(keyStoreFile);
+      keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+      keyStore.load(is, keystorePassword);
+
+      final KeyStore.PrivateKeyEntry entry =
+        (KeyStore.PrivateKeyEntry)keyStore.getEntry(keyAlias, new KeyStore.PasswordProtection(plainKeyPassword));
+      if (entry == null) {
+        messages.get(AndroidCompilerMessageKind.ERROR).add(errorPrefix + AndroidCommonBundle.message(
+          "android.artifact.building.cannot.find.key.error", keyAlias));
+        return null;
+      }
+
+      final PrivateKey privateKey = entry.getPrivateKey();
+      final Certificate certificate = entry.getCertificate();
+      if (privateKey == null || certificate == null) {
+        messages.get(AndroidCompilerMessageKind.ERROR).add(errorPrefix + AndroidCommonBundle.message(
+          "android.artifact.building.cannot.find.key.error", keyAlias));
+        return null;
+      }
+      return Pair.create(privateKey, (X509Certificate)certificate);
+    }
+    finally {
+      if (is != null) {
+        try {
+          is.close();
+        }
+        catch (IOException e) {
+          LOG.info(e);
+        }
+      }
+    }
   }
 }

@@ -34,6 +34,7 @@ import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.Disposer;
@@ -46,6 +47,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.io.SafeFileOutputStream;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.xml.XppReader;
@@ -151,8 +153,8 @@ public class ConsoleHistoryController {
    * @return true if some text has been loaded; otherwise false
    */
   public boolean loadHistory(String id) {
-    boolean result = myHelper.loadHistory(id);
     String prev = myHelper.getContent();
+    boolean result = myHelper.loadHistory(id);
     String userValue = myHelper.getContent();
     if (prev != userValue && userValue != null) {
       setConsoleText(userValue, false, false);
@@ -258,9 +260,14 @@ public class ConsoleHistoryController {
     @Override
     public void actionPerformed(final AnActionEvent e) {
       final String command;
-      command = myNext?
-                getModel().getHistoryNext()
-                : StringUtil.notNullize(getModel().getHistoryPrev(), myMultiline ? "" : StringUtil.notNullize(myHelper.getContent()));
+      if (myNext) {
+        command = getModel().getHistoryNext();
+        if (!myMultiline && command == null) return;
+      }
+      else {
+        if (!myMultiline && getModel().getHistoryCursor() < 0) return;
+        command = ObjectUtils.chooseNotNull(getModel().getHistoryPrev(), myMultiline ? "" : StringUtil.notNullize(myHelper.getContent()));
+      }
       setConsoleText(command, myNext && getModel().getHistoryCursor() == 0, true);
     }
 
@@ -299,7 +306,11 @@ public class ConsoleHistoryController {
 
     @Override
     public void actionPerformed(final AnActionEvent e) {
-      final ContentChooser<String> chooser = new ContentChooser<String>(myConsole.getProject(), myConsole.getTitle() + " History", true) {
+      String s1 = KeymapUtil.getFirstKeyboardShortcutText(myHistoryNext);
+      String s2 = KeymapUtil.getFirstKeyboardShortcutText(myHistoryPrev);
+      String title = myConsole.getTitle() + " History" +
+                     (StringUtil.isNotEmpty(s1) && StringUtil.isNotEmpty(s2) ?" (" +s1+ " and " +s2+ " while in editor)" : "");
+      final ContentChooser<String> chooser = new ContentChooser<String>(myConsole.getProject(), title, true) {
 
         @Override
         protected void removeContentAt(String content) {

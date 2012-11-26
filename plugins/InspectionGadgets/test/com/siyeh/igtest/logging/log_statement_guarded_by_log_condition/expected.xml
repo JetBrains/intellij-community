@@ -1,22 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  ~ Copyright 2000-2010 JetBrains s.r.o.
-  ~ Licensed under the Apache License, Version 2.0 (the "License");
-  ~ you may not use this file except in compliance with the License.
-  ~ You may obtain a copy of the License at
-  ~ http://www.apache.org/licenses/LICENSE-2.0
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and
-  ~ limitations under the License.
-  -->
 <problems>
   
   <problem>
     <file>LogStatementGuardedByLogCondition.java</file>
-    <line>34</line>
+    <line>20</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Log statement not guarded by log condition</problem_class>
-    <description>&lt;code&gt;fine()&lt;/code&gt; log statement not guarded by log condition #loc</description>
+    <description>&lt;code&gt;debug()&lt;/code&gt; log statement not guarded by log condition #loc</description>
+  </problem>
+
+  <problem>
+    <file>LogStatementGuardedByLogCondition.java</file>
+    <line>29</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Log statement not guarded by log condition</problem_class>
+    <description>&lt;code&gt;debug()&lt;/code&gt; log statement not guarded by log condition #loc</description>
   </problem>
 </problems>

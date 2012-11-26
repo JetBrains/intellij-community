@@ -5,6 +5,7 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../rt/resources" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/resources" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -16,6 +17,7 @@
           <root url="jar://$MODULE_DIR$/../lib/common.jar!/" />
           <root url="jar://$MODULE_DIR$/../lib/jarutils.jar!/" />
           <root url="jar://$MODULE_DIR$/../lib/androidprefs.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/layoutlib_api.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
@@ -23,6 +25,7 @@
           <root url="jar://$MODULE_DIR$/../lib/src/common_src.zip!/src" />
           <root url="jar://$MODULE_DIR$/../lib/src/jarutils.zip!/src" />
           <root url="jar://$MODULE_DIR$/../lib/src/androidprefs_src.zip!/src" />
+          <root url="jar://$MODULE_DIR$/../lib/src/layoutlib_api_src.zip!/src" />
         </SOURCES>
       </library>
     </orderEntry>

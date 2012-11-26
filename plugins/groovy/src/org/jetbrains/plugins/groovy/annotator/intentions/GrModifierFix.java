@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -25,16 +27,26 @@ import com.intellij.psi.PsiModifierList;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 
 /**
  * @author Maxim.Medvedev
  */
-public class GrModifierFix implements IntentionAction {
-  @NotNull private final PsiMember myMember;
-  @GrModifier.GrModifierConstant private final String myModifier;
-  private final boolean myShowContainingClass;
+public class GrModifierFix extends GroovyFix implements IntentionAction {
+  private static final Logger LOG = Logger.getInstance(GrModifierFix.class);
+
+
+  @NotNull
   private final PsiModifierList myModifierList;
+
+  @GrModifier.GrModifierConstant
+  private final String myModifier;
+
+  @NotNull
+  private final String myText;
+
+  private final boolean myShowContainingClass;
   private final boolean myDoSet;
 
   public GrModifierFix(@NotNull PsiMember member,
@@ -42,18 +54,29 @@ public class GrModifierFix implements IntentionAction {
                        @GrModifier.GrModifierConstant String modifier,
                        boolean showContainingClass,
                        boolean doSet) {
-    myMember = member;
     myModifier = modifier;
     myShowContainingClass = showContainingClass;
     myModifierList = modifierList;
     myDoSet = doSet;
+
+    myText = initText(member);
   }
 
   @NotNull
   public String getText() {
+    return myText;
+  }
+
+  @NotNull
+  @Override
+  public String getName() {
+    return getText();
+  }
+
+  private String initText(final PsiMember member) {
     String name;
     if (myShowContainingClass) {
-      final PsiClass containingClass = myMember.getContainingClass();
+      final PsiClass containingClass = member.getContainingClass();
       String containingClassName;
       if (containingClass != null) {
         containingClassName = containingClass.getName() + ".";
@@ -62,10 +85,10 @@ public class GrModifierFix implements IntentionAction {
         containingClassName = "";
       }
 
-      name = containingClassName + myMember.getName();
+      name = containingClassName + member.getName();
     }
     else {
-      name = myMember.getName();
+      name = member.getName();
     }
     String modifierText = toPresentableText(myModifier);
 
@@ -86,12 +109,22 @@ public class GrModifierFix implements IntentionAction {
     return GroovyBundle.message("change.modifier.family.name");
   }
 
+  @Override
+  protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+   invokeImpl();
+  }
+
+  private void invokeImpl() {
+    LOG.assertTrue(myModifierList.isValid());
+    myModifierList.setModifierProperty(myModifier, myDoSet);
+  }
+
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myModifierList.isValid();
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    myModifierList.setModifierProperty(myModifier, myDoSet);
+    invokeImpl();
   }
 
   public boolean startInWriteAction() {

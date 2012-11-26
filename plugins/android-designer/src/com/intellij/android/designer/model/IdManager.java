@@ -15,7 +15,7 @@
  */
 package com.intellij.android.designer.model;
 
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadComponentVisitor;
 import com.intellij.openapi.application.ApplicationManager;

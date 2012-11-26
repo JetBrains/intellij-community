@@ -15,7 +15,7 @@
  */
 package org.jetbrains.android.facet;
 
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
 import com.intellij.openapi.diagnostic.Logger;

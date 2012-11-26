@@ -19,6 +19,7 @@ package com.intellij.execution.actions;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -50,7 +51,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
                                                             myExecutor,
                                                             ExecutionTargetManager.getActiveTarget(project),
                                                             configuration,
-                                                            null);
+                                                            (RunContentDescriptor)null);
   }
 
   @Override

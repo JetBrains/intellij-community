@@ -148,4 +148,9 @@ public class RunContentDescriptor implements Disposable {
   public void setActivateToolWindowWhenAdded(boolean activateToolWindowWhenAdded) {
     myActivateToolWindowWhenAdded = activateToolWindowWhenAdded;
   }
+
+  @Override
+  public String toString() {
+    return getClass().getName() + "#" + hashCode() + "(" + getDisplayName() + ")";
+  }
 }

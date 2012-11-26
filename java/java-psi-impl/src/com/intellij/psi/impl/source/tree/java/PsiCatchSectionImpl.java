@@ -33,6 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -103,51 +104,54 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
       return ContainerUtil.emptyList();
     }
 
-    final PsiType declaredType = parameter.getType();
+    PsiType declaredType = parameter.getType();
 
     // When the thrown expression is an ... exception parameter Ej (parameter) of a catch clause Cj (this) ...
     if (PsiUtil.getLanguageLevel(parameter).isAtLeast(LanguageLevel.JDK_1_7) &&
         isCatchParameterEffectivelyFinal(parameter, getCatchBlock())) {
+      PsiTryStatement statement = getTryStatement();
       // ... and the try block of the try statement which declares Cj (tryBlock) can throw T ...
-      final List<PsiClassType> thrownTypes = ContainerUtil.newArrayList();
-      final PsiCodeBlock tryBlock = getTryStatement().getTryBlock();
-      if (tryBlock != null) {
-        thrownTypes.addAll(ExceptionUtil.getThrownExceptions(tryBlock));
-      }
-      final PsiResourceList resourceList = getTryStatement().getResourceList();
-      if (resourceList != null) {
-        thrownTypes.addAll(ExceptionUtil.getThrownExceptions(resourceList));
-      }
-      if (!thrownTypes.isEmpty()) {
-        // ... and for all exception parameters Ei declared by any catch clauses Ci, 1 <= i < j,
-        //     declared to the left of Cj for the same try statement, T is not assignable to Ei ...
-        final PsiParameter[] parameters = getTryStatement().getCatchBlockParameters();
-        final List<PsiType> uncaughtTypes = ContainerUtil.mapNotNull(thrownTypes, new NullableFunction<PsiClassType, PsiType>() {
-          @Override
-          public PsiType fun(final PsiClassType thrownType) {
-            for (int i = 0; i < parameters.length && parameters[i] != parameter; i++) {
-              final PsiType catchType = parameters[i].getType();
-              if (catchType.isAssignableFrom(thrownType)) return null;
-            }
-            return thrownType;
+      Collection<PsiClassType> thrownTypes = getThrownTypes(statement);
+      if (thrownTypes.isEmpty()) return Collections.emptyList();
+      // ... and for all exception parameters Ei declared by any catch clauses Ci, 1 <= i < j,
+      //     declared to the left of Cj for the same try statement, T is not assignable to Ei ...
+      final PsiParameter[] parameters = statement.getCatchBlockParameters();
+      List<PsiType> uncaughtTypes = ContainerUtil.mapNotNull(thrownTypes, new NullableFunction<PsiClassType, PsiType>() {
+        @Override
+        public PsiType fun(final PsiClassType thrownType) {
+          for (int i = 0; i < parameters.length && parameters[i] != parameter; i++) {
+            final PsiType catchType = parameters[i].getType();
+            if (catchType.isAssignableFrom(thrownType)) return null;
           }
-        });
-        // ... and T is assignable to Ej ...
-        if (!uncaughtTypes.isEmpty()) {
-          boolean passed = true;
-          for (PsiType type : uncaughtTypes) {
-            if (!declaredType.isAssignableFrom(type)) {
-              passed = false;
-              break;
-            }
-          }
-          // ... the throw statement throws precisely the set of exception types T.
-          if (passed) return uncaughtTypes;
+          return thrownType;
+        }
+      });
+      // ... and T is assignable to Ej ...
+      boolean passed = true;
+      for (PsiType type : uncaughtTypes) {
+        if (!declaredType.isAssignableFrom(type)) {
+          passed = false;
+          break;
         }
       }
+      // ... the throw statement throws precisely the set of exception types T.
+      if (passed) return uncaughtTypes;
     }
 
     return Collections.singletonList(declaredType);
+  }
+
+  private static Collection<PsiClassType> getThrownTypes(@NotNull PsiTryStatement statement) {
+    Collection<PsiClassType> types = ContainerUtil.newArrayList();
+    PsiCodeBlock tryBlock = statement.getTryBlock();
+    if (tryBlock != null) {
+      types.addAll(ExceptionUtil.getThrownExceptions(tryBlock));
+    }
+    PsiResourceList resourceList = statement.getResourceList();
+    if (resourceList != null) {
+      types.addAll(ExceptionUtil.getThrownExceptions(resourceList));
+    }
+    return types;
   }
 
   // do not use control flow here to avoid dead loop

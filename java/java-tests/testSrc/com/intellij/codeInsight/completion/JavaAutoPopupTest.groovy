@@ -1359,4 +1359,23 @@ class Foo {
     myTester.joinAlarm()
   }
 
+  public void "test new primitive array in Object variable"() {
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    myFixture.configureByText 'a.java', '''
+class Foo {
+  void foo() {
+    Object o = new <caret>
+  }
+}
+'''
+    type 'int['
+    myFixture.checkResult '''
+class Foo {
+  void foo() {
+    Object o = new int[<caret>]
+  }
+}
+'''
+  }
+
 }

@@ -593,7 +593,7 @@ public class PagedFileStorage implements Forceable {
 
       int min = Math.min((int)(owner.length() - off), owner.myPageSize);
       ByteBufferWrapper wrapper = ByteBufferWrapper.readWriteDirect(owner.myFile, off, min);
-      IOException oome = null;
+      Throwable oome = null;
       while (true) {
         try {
           // ensure it's allocated
@@ -606,24 +606,23 @@ public class PagedFileStorage implements Forceable {
           return wrapper;
         }
         catch (IOException e) {
-          if (e.getCause() instanceof OutOfMemoryError) {
-            oome = e;
-            if (mySizeLimit > LOWER_LIMIT) {
-              mySizeLimit -= owner.myPageSize;
-            }
-            long newSize = mySize - owner.myPageSize;
-            if (newSize >= 0) {
-              ensureSize(newSize);
-              continue; // next try
-            }
-            else {
-              throw new MappingFailedException(
-                "Cannot recover from OOME in memory mapping: -Xmx=" + Runtime.getRuntime().maxMemory() / MB + "MB " +
-                "new size limit: " + mySizeLimit / MB + "MB " +
-                "trying to allocate " + wrapper.myLength + " block", e);
-            }
-          }
           throw new MappingFailedException("Cannot map buffer", e);
+        } catch (OutOfMemoryError e) {
+          oome = e;
+          if (mySizeLimit > LOWER_LIMIT) {
+            mySizeLimit -= owner.myPageSize;
+          }
+          long newSize = mySize - owner.myPageSize;
+          if (newSize >= 0) {
+            ensureSize(newSize);
+            continue; // next try
+          }
+          else {
+            throw new MappingFailedException(
+              "Cannot recover from OOME in memory mapping: -Xmx=" + Runtime.getRuntime().maxMemory() / MB + "MB " +
+              "new size limit: " + mySizeLimit / MB + "MB " +
+              "trying to allocate " + wrapper.myLength + " block", e);
+          }
         }
       }
     }

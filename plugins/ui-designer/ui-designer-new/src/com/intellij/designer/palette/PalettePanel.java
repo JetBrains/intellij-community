@@ -28,6 +28,7 @@ import java.awt.*;
 import java.awt.dnd.DragSource;
 import java.awt.dnd.DragSourceAdapter;
 import java.awt.dnd.DragSourceDropEvent;
+import java.awt.dnd.DragSourceListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
@@ -61,6 +62,19 @@ public class PalettePanel extends JPanel implements DataProvider {
     }
   };
 
+  private final DragSourceListener myDragSourceListener = new DragSourceAdapter() {
+    @Override
+    public void dragDropEnd(DragSourceDropEvent event) {
+      Component component = event.getDragSourceContext().getComponent();
+      if (!event.getDropSuccess() &&
+          component instanceof PaletteItemsComponent &&
+          myDesigner != null &&
+          myDesigner.getRootPane() == ((JComponent)component).getRootPane()) {
+        myDesigner.getToolProvider().loadDefaultTool();
+      }
+    }
+  };
+
   public PalettePanel() {
     super(new GridLayout(1, 1));
 
@@ -75,16 +89,11 @@ public class PalettePanel extends JPanel implements DataProvider {
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)), scrollPane);
 
-    DragSource.getDefaultDragSource().addDragSourceListener(new DragSourceAdapter() {
-      @Override
-      public void dragDropEnd(DragSourceDropEvent event) {
-        if (!event.getDropSuccess() &&
-            event.getDragSourceContext().getComponent() instanceof PaletteItemsComponent &&
-            myDesigner != null) {
-          myDesigner.getToolProvider().loadDefaultTool();
-        }
-      }
-    });
+    DragSource.getDefaultDragSource().addDragSourceListener(myDragSourceListener);
+  }
+
+  public void dispose() {
+    DragSource.getDefaultDragSource().removeDragSourceListener(myDragSourceListener);
   }
 
   @Nullable

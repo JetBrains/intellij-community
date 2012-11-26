@@ -50,6 +50,7 @@ import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -211,7 +212,7 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
     if (allowed == null) return;
     PsiElement scope = PsiUtil.getTopLevelEnclosingCodeBlock(expression, null);
     if (scope == null) scope = expression;
-    if (!isAllowed(scope, expression, allowed, expression.getManager())) {
+    if (!isAllowed(scope, expression, allowed, expression.getManager(), null)) {
       registerProblem(expression, allowed, holder);
     }
   }
@@ -296,8 +297,7 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
     final boolean canBeOred;
     if (TypeConversionUtil.getTypeRank(type) <= TypeConversionUtil.LONG_RANK) {
       PsiAnnotationMemberValue intValues = magic.findAttributeValue("intValues");
-      allowedValues = intValues instanceof PsiArrayInitializerMemberValue
-        ? ((PsiArrayInitializerMemberValue)intValues).getInitializers() : PsiAnnotationMemberValue.EMPTY_ARRAY;
+      allowedValues = intValues instanceof PsiArrayInitializerMemberValue ? ((PsiArrayInitializerMemberValue)intValues).getInitializers() : PsiAnnotationMemberValue.EMPTY_ARRAY;
       if (allowedValues.length == 0) {
         PsiAnnotationMemberValue orValue = magic.findAttributeValue("flags");
         allowedValues = orValue instanceof PsiArrayInitializerMemberValue ? ((PsiArrayInitializerMemberValue)orValue).getInitializers() : PsiAnnotationMemberValue.EMPTY_ARRAY;
@@ -462,7 +462,7 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
                                                   @NotNull ProblemsHolder holder) {
     final PsiManager manager = PsiManager.getInstance(holder.getProject());
 
-    if (!argument.getTextRange().isEmpty() && !isAllowed(parameter.getDeclarationScope(), argument, allowedValues, manager)) {
+    if (!argument.getTextRange().isEmpty() && !isAllowed(parameter.getDeclarationScope(), argument, allowedValues, manager, null)) {
       registerProblem(argument, allowedValues, holder);
     }
   }
@@ -488,29 +488,33 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
   private static boolean isAllowed(@NotNull final PsiElement scope,
                                    @NotNull final PsiExpression argument,
                                    @NotNull final AllowedValues allowedValues,
-                                   @NotNull final PsiManager manager) {
-    if (isGoodExpression(argument, allowedValues, scope, manager)) return true;
+                                   @NotNull final PsiManager manager,
+                                   final Set<PsiExpression> visited) {
+    if (isGoodExpression(argument, allowedValues, scope, manager, visited)) return true;
 
     return processValuesFlownTo(argument, scope, new Processor<PsiExpression>() {
       @Override
       public boolean process(PsiExpression expression) {
-        return isGoodExpression(expression, allowedValues, scope, manager);
+        return isGoodExpression(expression, allowedValues, scope, manager, visited);
       }
     });
   }
 
-  private static boolean isGoodExpression(PsiExpression expression,
+  private static boolean isGoodExpression(@NotNull PsiExpression e,
                                           @NotNull AllowedValues allowedValues,
                                           @NotNull PsiElement scope,
-                                          @NotNull PsiManager manager) {
-    expression = PsiUtil.deparenthesizeExpression(expression);
+                                          @NotNull PsiManager manager,
+                                          @Nullable Set<PsiExpression> visited) {
+    PsiExpression expression = PsiUtil.deparenthesizeExpression(e);
     if (expression == null) return true;
+    if (visited == null) visited = new THashSet<PsiExpression>();
+    if (!visited.add(expression)) return true;
     if (expression instanceof PsiConditionalExpression) {
       PsiExpression thenExpression = ((PsiConditionalExpression)expression).getThenExpression();
-      boolean thenAllowed = thenExpression == null || isAllowed(scope, thenExpression, allowedValues, manager);
+      boolean thenAllowed = thenExpression == null || isAllowed(scope, thenExpression, allowedValues, manager, visited);
       if (!thenAllowed) return false;
       PsiExpression elseExpression = ((PsiConditionalExpression)expression).getElseExpression();
-      return elseExpression == null || isAllowed(scope, elseExpression, allowedValues, manager);
+      return elseExpression == null || isAllowed(scope, elseExpression, allowedValues, manager, visited);
     }
 
     if (isOneOf(expression, allowedValues, manager)) return true;
@@ -524,7 +528,7 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
         IElementType tokenType = ((PsiPolyadicExpression)expression).getOperationTokenType();
         if (JavaTokenType.OR.equals(tokenType) || JavaTokenType.AND.equals(tokenType) || JavaTokenType.PLUS.equals(tokenType)) {
           for (PsiExpression operand : ((PsiPolyadicExpression)expression).getOperands()) {
-            if (!isAllowed(scope, operand, allowedValues, manager)) return false;
+            if (!isAllowed(scope, operand, allowedValues, manager, visited)) return false;
           }
           return true;
         }
@@ -532,7 +536,7 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
       if (expression instanceof PsiPrefixExpression &&
           JavaTokenType.TILDE.equals(((PsiPrefixExpression)expression).getOperationTokenType())) {
         PsiExpression operand = ((PsiPrefixExpression)expression).getOperand();
-        return operand == null || isAllowed(scope, operand, allowedValues, manager);
+        return operand == null || isAllowed(scope, operand, allowedValues, manager, visited);
       }
     }
 

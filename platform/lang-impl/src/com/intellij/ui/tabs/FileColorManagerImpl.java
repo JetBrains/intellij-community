@@ -282,7 +282,7 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
 
   static String getAlias(String text) {
     if (UIUtil.isUnderDarcula()) {
-      if (text.equals("Yellow")) return "Brawn";
+      if (text.equals("Yellow")) return "Brown";
     }
     return text;
   }

@@ -68,6 +68,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.*;
@@ -81,7 +82,7 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
   private static final String TYPE_KEY = "ResourceType";
 
   private static final String TEXT = "Text";
-  private static final String TABS = "Tabs";
+  private static final String COMBO = "Combo";
   private static final String IMAGE = "Image";
   private static final String NONE = "None";
 
@@ -348,7 +349,8 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
 
     private final JPanel myPreviewPanel;
     private final JTextArea myTextArea;
-    private final JBTabbedPane myTabbedPane;
+    private final JTextArea myComboTextArea;
+    private final JComboBox myComboBox;
     private final JLabel myImageComponent;
     private final JLabel myNoPreviewComponent;
 
@@ -420,9 +422,35 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
       myComponent.setSecondComponent(myPreviewPanel);
 
       myTextArea = new JTextArea(5, 20);
+      myTextArea.setEditable(false);
       myPreviewPanel.add(ScrollPaneFactory.createScrollPane(myTextArea), TEXT);
 
-      myPreviewPanel.add(myTabbedPane = new JBTabbedPane(JTabbedPane.BOTTOM, JTabbedPane.SCROLL_TAB_LAYOUT), TABS);
+      myComboTextArea = new JTextArea(5, 20);
+      myComboTextArea.setEditable(false);
+
+      myComboBox = new JComboBox();
+      myComboBox.setMaximumRowCount(15);
+      myComboBox.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          List<ResourceElement> resources = (List<ResourceElement>)myComboBox.getClientProperty(COMBO);
+          myComboTextArea.setText(getResourceElementValue(resources.get(myComboBox.getSelectedIndex())));
+        }
+      });
+
+      JPanel comboPanel = new JPanel(new BorderLayout(0, 1) {
+        @Override
+        public void layoutContainer(Container target) {
+          super.layoutContainer(target);
+          Rectangle bounds = myComboBox.getBounds();
+          Dimension size = myComboBox.getPreferredSize();
+          size.width += 20;
+          myComboBox.setBounds((int)bounds.getMaxX() - size.width, bounds.y, size.width, size.height);
+        }
+      });
+      comboPanel.add(ScrollPaneFactory.createScrollPane(myComboTextArea), BorderLayout.CENTER);
+      comboPanel.add(myComboBox, BorderLayout.SOUTH);
+      myPreviewPanel.add(comboPanel, COMBO);
 
       myImageComponent = new JLabel();
       myImageComponent.setHorizontalAlignment(SwingConstants.CENTER);
@@ -448,11 +476,11 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
         if (file == null) {
           String value = element.getPreviewString();
           if (value == null) {
-            String[] values = element.getPreviewStrings();
+            List<ResourceElement> resources = element.getPreviewResources();
 
-            if (values == null) {
+            if (resources == null) {
               long time = System.currentTimeMillis();
-              List<ResourceElement> resources = myManager.findValueResources(element.getGroup().getType().getName(), element.toString());
+              resources = myManager.findValueResources(element.getGroup().getType().getName(), element.toString());
               if (ApplicationManagerEx.getApplicationEx().isInternal()) {
                 System.out.println("Time: " + (System.currentTimeMillis() - time)); // XXX
               }
@@ -463,50 +491,50 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
                 element.setPreviewString(value);
               }
               else if (size > 1) {
-                values = new String[size];
-                String[] tabNames = new String[size];
+                resources = new ArrayList<ResourceElement>(resources);
+                Collections.sort(resources, new Comparator<ResourceElement>() {
+                  @Override
+                  public int compare(ResourceElement element1, ResourceElement element2) {
+                    PsiDirectory directory1 = element1.getXmlTag().getContainingFile().getParent();
+                    PsiDirectory directory2 = element2.getXmlTag().getContainingFile().getParent();
+
+                    if (directory1 == null && directory2 == null) {
+                      return 0;
+                    }
+                    if (directory2 == null) {
+                      return 1;
+                    }
+                    if (directory1 == null) {
+                      return -1;
+                    }
+
+                    return directory1.getName().compareTo(directory2.getName());
+                  }
+                });
+
+                DefaultComboBoxModel model = new DefaultComboBoxModel();
+                String defaultSelection = null;
                 for (int i = 0; i < size; i++) {
                   ResourceElement resource = resources.get(i);
-                  values[i] = getResourceElementValue(resource);
-
                   PsiDirectory directory = resource.getXmlTag().getContainingFile().getParent();
-                  String tabName = directory == null ? "unknown-" + i : directory.getName();
-                  tabNames[i] = tabName.substring(tabName.indexOf('-') + 1);
+                  String name = directory == null ? "unknown-" + i : directory.getName();
+                  model.addElement(name);
+                  if (defaultSelection == null && "values".equalsIgnoreCase(name)) {
+                    defaultSelection = name;
+                  }
                 }
-                element.setPreviewStrings(values, tabNames);
+                element.setPreviewResources(resources, model, defaultSelection);
+
+                showComboPreview(element);
+                return;
               }
               else {
                 layout.show(myPreviewPanel, NONE);
                 return;
               }
             }
-
-            if (values != null) {
-              int selectedIndex = myTabbedPane.getSelectedIndex();
-              myTabbedPane.removeAll();
-
-              String[] tabNames = element.getTabNames();
-
-              if (selectedIndex == -1) {
-                for (int i = 0; i < tabNames.length; i++) {
-                  if (tabNames[i].startsWith("en")) {
-                    selectedIndex = i;
-                    break;
-                  }
-                }
-              }
-
-              for (int i = 0; i < tabNames.length; i++) {
-                JTextArea textArea = new JTextArea(5, 20);
-                textArea.setText(values[i]);
-                textArea.setEditable(false);
-                myTabbedPane.addTab(tabNames[i], ScrollPaneFactory.createScrollPane(textArea));
-              }
-
-              if (selectedIndex >= 0 && selectedIndex < tabNames.length) {
-                myTabbedPane.setSelectedIndex(selectedIndex);
-              }
-              layout.show(myPreviewPanel, TABS);
+            else {
+              showComboPreview(element);
               return;
             }
           }
@@ -516,7 +544,6 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
           }
 
           myTextArea.setText(value);
-          myTextArea.setEditable(false);
           layout.show(myPreviewPanel, TEXT);
         }
         else if (ImageFileTypeManager.getInstance().isImage(file)) {
@@ -545,6 +572,27 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
       catch (IOException e) {
         layout.show(myPreviewPanel, NONE);
       }
+    }
+
+    private void showComboPreview(ResourceItem element) {
+      List<ResourceElement> resources = element.getPreviewResources();
+      String selection = (String)myComboBox.getSelectedItem();
+      if (selection == null) {
+        selection = element.getPreviewComboDefaultSelection();
+      }
+
+      int index = element.getPreviewComboModel().getIndexOf(selection);
+      if (index == -1) {
+        index = 0;
+      }
+
+      myComboBox.setModel(element.getPreviewComboModel());
+      myComboBox.putClientProperty(COMBO, resources);
+      myComboBox.setSelectedIndex(index);
+      myComboTextArea.setText(getResourceElementValue(resources.get(index)));
+
+      CardLayout layout = (CardLayout)myPreviewPanel.getLayout();
+      layout.show(myPreviewPanel, COMBO);
     }
 
     private void select(String type, String name) {
@@ -635,8 +683,9 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
     private final VirtualFile myFile;
     private final Icon myIcon;
     private String myPreviewString;
-    private String[] myPreviewStrings;
-    private String[] myNames;
+    private List<ResourceElement> myPreviewResources;
+    private DefaultComboBoxModel myPreviewComboModel;
+    private String myDefaultSelection;
     private Icon myPreviewIcon;
 
     public ResourceItem(@NotNull ResourceGroup group, @NotNull String name, @Nullable VirtualFile file, Icon icon) {
@@ -670,17 +719,24 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
       myPreviewString = previewString;
     }
 
-    public String[] getPreviewStrings() {
-      return myPreviewStrings;
+    public List<ResourceElement> getPreviewResources() {
+      return myPreviewResources;
     }
 
-    public String[] getTabNames() {
-      return myNames;
+    public DefaultComboBoxModel getPreviewComboModel() {
+      return myPreviewComboModel;
     }
 
-    public void setPreviewStrings(String[] previewStrings, String[] names) {
-      myPreviewStrings = previewStrings;
-      myNames = names;
+    public String getPreviewComboDefaultSelection() {
+      return myDefaultSelection;
+    }
+
+    public void setPreviewResources(List<ResourceElement> previewResources,
+                                    DefaultComboBoxModel previewComboModel,
+                                    String defaultSelection) {
+      myPreviewResources = previewResources;
+      myPreviewComboModel = previewComboModel;
+      myDefaultSelection = defaultSelection;
     }
 
     public Icon getPreviewIcon() {

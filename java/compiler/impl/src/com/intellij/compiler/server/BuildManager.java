@@ -55,7 +55,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.SavingRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -183,9 +182,6 @@ public class BuildManager implements ApplicationComponent{
         }
         List<Project> activeProjects = null;
         for (VFileEvent event : events) {
-          if (!event.isFromRefresh() && !(event.getRequestor() instanceof SavingRequestor)) {
-            continue;
-          }
           final VirtualFile eventFile = event.getFile();
           if (eventFile == null || ProjectCoreUtil.isProjectOrWorkspaceFile(eventFile)) {
             continue;
@@ -306,6 +302,7 @@ public class BuildManager implements ApplicationComponent{
         data.dropChanges();
       }
     }
+    scheduleAutoMake();
   }
 
   public boolean rescanRequired(Project project) {
@@ -313,6 +310,18 @@ public class BuildManager implements ApplicationComponent{
     synchronized (myProjectDataMap) {
       final ProjectData data = myProjectDataMap.get(projectPath);
       return data == null || data.myNeedRescan;
+    }
+  }
+
+  @Nullable
+  public List<String> getFilesChangedSinceLastCompilation(Project project) {
+    String projectPath = getProjectPath(project);
+    synchronized (myProjectDataMap) {
+      ProjectData data = myProjectDataMap.get(projectPath);
+      if (data != null && !data.myNeedRescan) {
+        return new ArrayList<String>(data.myChanged);
+      }
+      return null;
     }
   }
 
@@ -741,10 +750,6 @@ public class BuildManager implements ApplicationComponent{
       heapSize = Math.max(heapSize, JavacConfiguration.getOptions(project, JavacConfiguration.class).MAXIMUM_HEAP_SIZE);
     }
 
-    final int xms = heapSize / 2;
-    if (xms > 32) {
-      cmdLine.addParameter("-Xms" + xms + "m");
-    }
     cmdLine.addParameter("-Xmx" + heapSize + "m");
 
     if (SystemInfo.isMac && sdkVersion != null && JavaSdkVersion.JDK_1_6.equals(sdkVersion) && Registry.is("compiler.process.32bit.vm.on.mac")) {

@@ -123,7 +123,7 @@ public class ProblemsViewImpl extends ProblemsView{
   public void addMessage(final int type,
                          @NotNull final String[] text,
                          @Nullable final String groupName,
-                         @NotNull final Navigatable navigatable,
+                         @Nullable final Navigatable navigatable,
                          @Nullable final String exportTextPrefix, @Nullable final String rendererTextPrefix, @Nullable final UUID sessionId) {
 
     myViewUpdater.execute(new Runnable() {
@@ -134,7 +134,12 @@ public class ProblemsViewImpl extends ProblemsView{
         if (group != null && !sessionId.equals(group.getData())) {
           structure.removeElement(group);
         }
-        myPanel.addMessage(type, text, groupName, navigatable, exportTextPrefix, rendererTextPrefix, sessionId);
+        if (navigatable != null) {
+          myPanel.addMessage(type, text, groupName, navigatable, exportTextPrefix, rendererTextPrefix, sessionId);
+        }
+        else {
+          myPanel.addMessage(type, text, null, -1, -1, sessionId);
+        }
       }
     });
   }

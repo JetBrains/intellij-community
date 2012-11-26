@@ -281,10 +281,13 @@ public class EditorHyperlinkSupport {
         result = predefinedMessageFilter.applyFilter(text, endOffset);
       }
       if (result != null) {
-        if (result.hyperlinkInfo != null) {
-          addHyperlink(result.highlightStartOffset, result.highlightEndOffset, result.highlightAttributes, result.hyperlinkInfo);
-        } else if (result.highlightAttributes != null) {
-          addHighlighter(result.highlightStartOffset, result.highlightEndOffset, result.highlightAttributes);
+        for (Filter.ResultItem resultItem : result.getResultItems()) {
+          if (resultItem.hyperlinkInfo != null) {
+            addHyperlink(resultItem.highlightStartOffset, resultItem.highlightEndOffset, resultItem.highlightAttributes, resultItem.hyperlinkInfo);
+          }
+          else if (resultItem.highlightAttributes != null) {
+            addHighlighter(resultItem.highlightStartOffset, resultItem.highlightEndOffset, resultItem.highlightAttributes);
+          }
         }
       }
     }

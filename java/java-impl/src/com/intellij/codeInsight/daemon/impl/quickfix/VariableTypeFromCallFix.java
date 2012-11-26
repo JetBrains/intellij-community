@@ -22,6 +22,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -99,24 +100,43 @@ public class VariableTypeFromCallFix implements IntentionAction {
       if (parameterType.isAssignableFrom(expressionType)) continue;
 
       final PsiExpression qualifierExpression = methodCall.getMethodExpression().getQualifierExpression();
-      if (!(qualifierExpression instanceof PsiReferenceExpression)) {
-        continue;
-      }
-      final PsiElement resolved = ((PsiReferenceExpression)qualifierExpression).resolve();
-      if (resolved instanceof PsiVariable) {
-        final PsiType varType = ((PsiVariable)resolved).getType();
-        final PsiClass varClass = PsiUtil.resolveClassInType(varType);
-        final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(expression.getProject()).getResolveHelper();
-        if (varClass != null) {
-          final PsiSubstitutor psiSubstitutor = resolveHelper.inferTypeArguments(varClass.getTypeParameters(),
-                                                                       parameters,
-                                                                       expressions, PsiSubstitutor.EMPTY, resolved,
-                                                                       DefaultParameterTypeInferencePolicy.INSTANCE);
-          final PsiClassType appropriateVarType = JavaPsiFacade.getElementFactory(expression.getProject()).createType(varClass, psiSubstitutor);
-          if (!varType.equals(appropriateVarType)) {
-            QuickFixAction.registerQuickFixAction(highlightInfo, new VariableTypeFromCallFix(appropriateVarType, (PsiVariable) resolved));
+      if (qualifierExpression instanceof PsiReferenceExpression) {
+        final PsiElement resolved = ((PsiReferenceExpression)qualifierExpression).resolve();
+        if (resolved instanceof PsiVariable) {
+          final PsiType varType = ((PsiVariable)resolved).getType();
+          final PsiClass varClass = PsiUtil.resolveClassInType(varType);
+          final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(expression.getProject()).getResolveHelper();
+          if (varClass != null) {
+            final PsiSubstitutor psiSubstitutor = resolveHelper.inferTypeArguments(varClass.getTypeParameters(),
+                                                                                   parameters,
+                                                                                   expressions, PsiSubstitutor.EMPTY, resolved,
+                                                                                   DefaultParameterTypeInferencePolicy.INSTANCE);
+            final PsiClassType appropriateVarType = JavaPsiFacade.getElementFactory(expression.getProject()).createType(varClass, psiSubstitutor);
+            if (!varType.equals(appropriateVarType)) {
+              QuickFixAction.registerQuickFixAction(highlightInfo, new VariableTypeFromCallFix(appropriateVarType, (PsiVariable) resolved));
+            }
+            break;
           }
-          break;
+        }
+      }
+      registerParameterTypeChange(highlightInfo, method, expression, parameterType);
+    }
+  }
+
+  private static void registerParameterTypeChange(HighlightInfo highlightInfo,
+                                                  PsiMethod method,
+                                                  PsiExpression expression,
+                                                  PsiType parameterType) {
+    if (expression instanceof PsiReferenceExpression) {
+      final PsiManager manager = method.getManager();
+      if (manager.isInProject(method)) {
+        final PsiMethod[] superMethods = method.findDeepestSuperMethods();
+        for (PsiMethod superMethod : superMethods) {
+          if (!manager.isInProject(superMethod)) return;
+        }
+        final PsiElement resolve = ((PsiReferenceExpression)expression).resolve();
+        if (resolve instanceof PsiVariable) {
+          HighlightUtil.registerChangeVariableTypeFixes((PsiVariable)resolve, parameterType, highlightInfo);
         }
       }
     }

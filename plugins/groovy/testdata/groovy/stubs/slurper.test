@@ -273,7 +273,8 @@ class ConfigBinding extends Binding {
 }
 -----
 [Groovy script]
-  [Modifiers]
+  [Package definition]
+    [Modifiers]
   [Modifiers]
   [Modifiers]
   [Class definition : ConfigSlurper]

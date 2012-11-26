@@ -731,7 +731,13 @@ public final class Generator {
 
           final String propertyName = PropertyUtil.getPropertyName(barMethod);
 
-          data.myBindings[index].myBeanProperty = new BeanProperty(propertyName, barMethod.getReturnType().getCanonicalText());
+          // There are two possible types: boolean and java.lang.String
+          String typeName = barMethod.getReturnType().getCanonicalText();
+          if(!"boolean".equals(typeName) && !"java.lang.String".equals(typeName)){
+            continue;
+          }
+
+          data.myBindings[index].myBeanProperty = new BeanProperty(propertyName, typeName);
         }
       }
     }

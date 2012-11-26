@@ -123,7 +123,7 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
     private final Project myProject;
 
     public MarkAllAsRead(Project project) {
-      super("Mark all as read", "Mark all unread notifications as read", AllIcons.General.Reset);
+      super("Mark all as read", "Mark all unread notifications as read", AllIcons.Actions.Selectall);
       myProject = project;
     }
 

@@ -925,6 +925,11 @@
           <xs:sequence>
             <xs:any minOccurs="0" maxOccurs="unbounded" processContents="skip"/>
           </xs:sequence>
+
+          <!-- These attributes are not exist in the original schema.  -->
+          <xs:attribute name="combine.children" type="xs:string"/>
+          <xs:attribute name="combine.self" type="xs:string"/>
+
         </xs:complexType>
       </xs:element>
       <xs:element name="reportSets" minOccurs="0">
@@ -1167,6 +1172,11 @@
           <xs:sequence>
             <xs:any minOccurs="0" maxOccurs="unbounded" processContents="skip"/>
           </xs:sequence>
+
+          <!-- These attributes are not exist in the original schema.  -->
+          <xs:attribute name="combine.children" type="xs:string"/>
+          <xs:attribute name="combine.self" type="xs:string"/>
+
         </xs:complexType>
       </xs:element>
     </xs:all>
@@ -1216,6 +1226,11 @@
           <xs:sequence>
             <xs:any minOccurs="0" maxOccurs="unbounded" processContents="skip"/>
           </xs:sequence>
+
+          <!-- These attributes are not exist in the original schema.  -->
+          <xs:attribute name="combine.children" type="xs:string"/>
+          <xs:attribute name="combine.self" type="xs:string"/>
+
         </xs:complexType>
       </xs:element>
     </xs:all>

@@ -18,6 +18,7 @@ package com.intellij.execution;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.Topic;
@@ -47,9 +48,17 @@ public abstract class ExecutionManager {
                                        @NotNull Executor executor,
                                        @NotNull ExecutionEnvironment env);
 
+  @Deprecated
   public abstract void restartRunProfile(@NotNull Project project,
                                          @NotNull Executor executor,
                                          @NotNull ExecutionTarget target,
                                          @NotNull RunnerAndConfigurationSettings configuration,
                                          @Nullable ProcessHandler processHandler);
+
+  //currentDescriptor is null for toolbar/popup action and not null for actions in run/debug toolwindows
+  public abstract void restartRunProfile(@NotNull Project project,
+                                         @NotNull Executor executor,
+                                         @NotNull ExecutionTarget target,
+                                         @NotNull RunnerAndConfigurationSettings configuration,
+                                         @Nullable RunContentDescriptor currentDescriptor);
 }

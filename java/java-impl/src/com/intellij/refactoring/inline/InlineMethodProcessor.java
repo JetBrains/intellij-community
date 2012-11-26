@@ -250,7 +250,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private static ArrayList<PsiReference> convertUsagesToRefs(UsageInfo[] usagesIn) {
     ArrayList<PsiReference> refs = new ArrayList<PsiReference>();
     for (UsageInfo info : usagesIn) {
-      refs.add(info.getReference());
+      final PsiReference ref = info.getReference();
+      if (ref != null) { //ref can be null if it is conflict usage info
+        refs.add(ref);
+      }
     }
     return refs;
   }

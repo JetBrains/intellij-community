@@ -70,8 +70,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.ui.SideBorder;
 import com.intellij.util.*;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -476,6 +478,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (myEditor != null) {
       cancelAllFlushRequests();
       mySpareTimeAlarm.cancelAllRequests();
+      JPanel fake = new JPanel();
+      fake.setBackground(myEditor.getBackgroundColor());
+      fake.setBorder(new SideBorder(UIUtil.getBorderColor(), SideBorder.LEFT));
+      removeAll();
+      add(fake, BorderLayout.CENTER);
       disposeEditor();
       synchronized (LOCK) {
         myBuffer.clear();

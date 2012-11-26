@@ -63,7 +63,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
   }
 
   public static void loadProject(final JpsProject project, Map<String, String> pathVariables, String projectPath) throws IOException {
-    File file = new File(projectPath).getCanonicalFile();
+    File file = new File(FileUtil.toCanonicalPath(projectPath));
     if (file.isFile() && projectPath.endsWith(".ipr")) {
       new JpsProjectLoader(project, pathVariables, file.getParentFile()).loadFromIpr(file);
     }
@@ -271,7 +271,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
         JpsModuleClasspathSerializer classpathSerializer = extension.getClasspathSerializer();
         if (classpathSerializer != null && classpathSerializer.getClasspathId().equals(classpath)) {
           String classpathDir = moduleRoot.getAttributeValue(CLASSPATH_DIR_ATTRIBUTE);
-          classpathSerializer.loadClasspath(module, classpathDir, baseModulePath, expander, paths);
+          classpathSerializer.loadClasspath(module, classpathDir, baseModulePath, expander, paths, projectSdkType);
         }
       }
     }

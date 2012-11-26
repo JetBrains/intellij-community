@@ -106,8 +106,9 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
   }
 
   @NotNull
-  public Collection<AbstractBreakpointPanel<XBreakpoint>> getBreakpointPanels(@NotNull final Project project, @NotNull final DialogWrapper parentDialog) {
-    XBreakpointType<?,?>[] types = XBreakpointUtil.getBreakpointTypes();
+  public Collection<AbstractBreakpointPanel<XBreakpoint>> getBreakpointPanels(@NotNull final Project project,
+                                                                              @NotNull final DialogWrapper parentDialog) {
+    XBreakpointType<?, ?>[] types = XBreakpointUtil.getBreakpointTypes();
     ArrayList<AbstractBreakpointPanel<XBreakpoint>> panels = new ArrayList<AbstractBreakpointPanel<XBreakpoint>>();
     for (XBreakpointType<? extends XBreakpoint<?>, ?> type : types) {
       if (type.shouldShowInBreakpointsDialog(project)) {
@@ -129,7 +130,9 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
     return result.toArray(new AnAction[result.size()]);
   }
 
-  private static <B extends XBreakpoint<?>> XBreakpointsPanel<B> createBreakpointsPanel(final Project project, DialogWrapper parentDialog, final XBreakpointType<B, ?> type) {
+  private static <B extends XBreakpoint<?>> XBreakpointsPanel<B> createBreakpointsPanel(final Project project,
+                                                                                        DialogWrapper parentDialog,
+                                                                                        final XBreakpointType<B, ?> type) {
     return new XBreakpointsPanel<B>(project, parentDialog, type);
   }
 

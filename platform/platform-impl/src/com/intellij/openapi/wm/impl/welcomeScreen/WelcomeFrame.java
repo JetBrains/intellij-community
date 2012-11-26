@@ -31,14 +31,12 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -69,10 +67,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
         dispose();
       }
     });
-    if (UIUtil.isUnderDarcula()) {
-      setUndecorated(!SystemInfo.isMac);
-      setTitle("Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName());
-    }
+
     myScreen = screen;
     setupCloseAction();
     new MnemonicHelper().register(this);
@@ -86,12 +81,19 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
 
   @Override
   public void dispose() {
+    saveLocation(getBounds());
+
     super.dispose();
 
     Disposer.dispose(myScreen);
 
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     ourInstance = null;
+  }
+
+  private static void saveLocation(Rectangle location) {
+    Point middle = new Point(location.x + location.width / 2, location.y = location.height / 2);
+    DimensionService.getInstance().setLocation(DIMENSION_KEY, middle, null);
   }
 
   private void setupCloseAction() {
@@ -148,17 +150,12 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
     if (ourInstance == null) {
       WelcomeFrame frame = new WelcomeFrame();
       frame.pack();
-      DimensionService dimensionService = DimensionService.getInstance();
-      Point location = dimensionService.getLocation(DIMENSION_KEY);
-      if (location == null) {
-        Rectangle screenBounds = ScreenUtil.getScreenRectangle(new Point(0, 0));
-        location = new Point(
-          screenBounds.x + (screenBounds.width - frame.getWidth()) / 2,
-          screenBounds.y + (screenBounds.height - frame.getHeight()) / 3
-        );
-      }
-      frame.setLocation(location);
-      dimensionService.setLocation(DIMENSION_KEY, location);
+      Point location = DimensionService.getInstance().getLocation(DIMENSION_KEY, null);
+      Rectangle screenBounds = ScreenUtil.getScreenRectangle(location != null ? location : new Point(0, 0));
+      frame.setLocation(new Point(
+        screenBounds.x + (screenBounds.width - frame.getWidth()) / 2,
+        screenBounds.y + (screenBounds.height - frame.getHeight()) / 3
+      ));
       frame.setVisible(true);
 
       ourInstance = frame;
@@ -211,5 +208,9 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
   @Override
   public JComponent getComponent() {
     return getRootPane();
+  }
+
+  public static void notifyFrameClosed(JFrame frame) {
+    saveLocation(frame.getBounds());
   }
 }

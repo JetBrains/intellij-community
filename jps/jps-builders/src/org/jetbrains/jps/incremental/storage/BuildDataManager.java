@@ -2,13 +2,15 @@ package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
+import org.jetbrains.jps.builders.impl.storage.BuildTargetStorages;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
-import org.jetbrains.jps.incremental.artifacts.ArtifactsBuildData;
+import org.jetbrains.jps.builders.storage.StorageProvider;
 
 import java.io.*;
 import java.util.Collection;
@@ -27,9 +29,16 @@ public class BuildDataManager implements StorageOwner {
 
   private final Object mySourceToOutputLock = new Object();
   private final Map<BuildTarget<?>, SourceToOutputMappingImpl> mySourceToOutputs = new HashMap<BuildTarget<?>, SourceToOutputMappingImpl>();
+  private final Object myTargetStoragesLock = new Object();
+  private final Map<BuildTarget<?>, BuildTargetStorages> myTargetStorages = new HashMap<BuildTarget<?>, BuildTargetStorages>();
+  private StorageOwner myTargetStoragesOwner = new CompositeStorageOwner() {
+    @Override
+    protected Iterable<? extends StorageOwner> getChildStorages() {
+      return myTargetStorages.values();
+    }
+  };
 
   private final OneToManyPathsMapping mySrcToFormMap;
-  private final ArtifactsBuildData myArtifactsBuildData;
   private final Mappings myMappings;
   private final BuildDataPaths myDataPaths;
   private final BuildTargetsState myTargetsState;
@@ -40,7 +49,6 @@ public class BuildDataManager implements StorageOwner {
     myTargetsState = targetsState;
     mySrcToFormMap = new OneToManyPathsMapping(new File(getSourceToFormsRoot(), "data"));
     myMappings = new Mappings(getMappingsRoot(), useMemoryTempCaches);
-    myArtifactsBuildData = new ArtifactsBuildData();
     myVersionFile = new File(myDataPaths.getDataStorageRoot(), "version.dat");
   }
 
@@ -49,15 +57,27 @@ public class BuildDataManager implements StorageOwner {
     synchronized (mySourceToOutputLock) {
       mapping = mySourceToOutputs.get(target);
       if (mapping == null) {
-        mapping = new SourceToOutputMappingImpl(new File(myDataPaths.getTargetDataRoot(target), "src-out" + File.separator + "data"));
+        mapping = new SourceToOutputMappingImpl(new File(getSourceToOutputMapRoot(target), "data"));
         mySourceToOutputs.put(target, mapping);
       }
     }
     return mapping;
   }
 
-  public ArtifactsBuildData getArtifactsBuildData() {
-    return myArtifactsBuildData;
+  private File getSourceToOutputMapRoot(BuildTarget<?> target) {
+    return new File(myDataPaths.getTargetDataRoot(target), "src-out");
+  }
+
+  @NotNull
+  public <S extends StorageOwner> S getStorage(@NotNull BuildTarget<?> target, @NotNull StorageProvider<S> provider) throws IOException {
+    synchronized (myTargetStoragesLock) {
+      BuildTargetStorages storages = myTargetStorages.get(target);
+      if (storages == null) {
+        storages = new BuildTargetStorages(target, myDataPaths);
+        myTargetStorages.put(target, storages);
+      }
+      return storages.getOrCreateStorage(provider);
+    }
   }
 
   public OneToManyPathsMapping getSourceToFormMap() {
@@ -68,9 +88,35 @@ public class BuildDataManager implements StorageOwner {
     return myMappings;
   }
 
+  public void cleanTargetStorages(BuildTarget<?> target) throws IOException {
+    try {
+      synchronized (myTargetStoragesLock) {
+        BuildTargetStorages storages = myTargetStorages.remove(target);
+        if (storages != null) {
+          storages.close();
+        }
+      }
+    }
+    finally {
+      // delete all data except src-out mapping which is cleaned in a special way
+      final File[] targetData = myDataPaths.getTargetDataRoot(target).listFiles();
+      if (targetData != null) {
+        final File srcOutputMapRoot = getSourceToOutputMapRoot(target);
+        for (File dataFile : targetData) {
+          if (!FileUtil.filesEqual(dataFile, srcOutputMapRoot)) {
+            FileUtil.delete(dataFile);
+          }
+        }
+      }
+    }
+  }
+
   public void clean() throws IOException {
     try {
-      myArtifactsBuildData.clean();
+      synchronized (myTargetStoragesLock) {
+        myTargetStoragesOwner.close();
+        myTargetStorages.clear();
+      }
     }
     finally {
       try {
@@ -100,7 +146,9 @@ public class BuildDataManager implements StorageOwner {
   }
 
   public void flush(boolean memoryCachesOnly) {
-    myArtifactsBuildData.flush(memoryCachesOnly);
+    synchronized (myTargetStoragesLock) {
+      myTargetStoragesOwner.flush(memoryCachesOnly);
+    }
     synchronized (mySourceToOutputLock) {
       for (SourceToOutputMappingImpl mapping : mySourceToOutputs.values()) {
         mapping.flush(memoryCachesOnly);
@@ -118,7 +166,14 @@ public class BuildDataManager implements StorageOwner {
   public void close() throws IOException {
     try {
       myTargetsState.save();
-      myArtifactsBuildData.close();
+      synchronized (myTargetStoragesLock) {
+        try {
+          myTargetStoragesOwner.close();
+        }
+        finally {
+          myTargetStorages.clear();
+        }
+      }
     }
     finally {
       try {

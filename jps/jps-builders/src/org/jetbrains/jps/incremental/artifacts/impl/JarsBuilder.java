@@ -324,7 +324,7 @@ public class JarsBuilder {
                                        List<String> packedFilePaths,
                                        int rootIndex) throws IOException {
     final String filePath = FileUtil.toSystemIndependentName(file.getAbsolutePath());
-    if (!filter.accept(filePath, myContext.getProjectDescriptor().dataManager)) {
+    if (!filter.accept(filePath, myContext.getProjectDescriptor())) {
       return;
     }
 

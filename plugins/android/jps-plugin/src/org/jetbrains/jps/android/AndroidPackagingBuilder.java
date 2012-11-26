@@ -431,6 +431,11 @@ public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, 
       .execute(resPackagePath, classesDexFilePath, sourceRoots, externalJars, nativeLibDirs, additionalNativeLibs,
                outputApkPath, release, sdkPath, customKeyStorePath, new MyExcludedSourcesFilter(context.getProjectDescriptor().getProject()));
 
+    if (messages.get(AndroidCompilerMessageKind.ERROR).size() == 0) {
+      final File dst = new File(
+        AndroidCommonUtils.addSuffixToFileName(outputPath, AndroidCommonUtils.ANDROID_FINAL_PACKAGE_FOR_ARTIFACT_SUFFIX));
+      FileUtil.copy(new File(outputApkPath), dst);
+    }
     AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME, module.getName());
     final boolean success = messages.get(AndroidCompilerMessageKind.ERROR).isEmpty();
 

@@ -40,6 +40,7 @@ import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.AbstractLanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.EditInjectionSettingsAction;
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction;
+import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.config.*;
 import org.intellij.plugins.intelliLang.inject.config.ui.AbstractInjectionPanel;
 import org.intellij.plugins.intelliLang.inject.config.ui.XmlAttributePanel;
@@ -109,6 +110,8 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     for (BaseInjection injection : injections) {
       final BaseInjection newInjection = injection.copy();
       newInjection.setPlaceEnabled(null, false);
+      if (InjectorUtils.canBeRemoved(newInjection)) continue;
+      newInjections.add(newInjection);
     }
     configuration.replaceInjectionsWithUndo(
       project, newInjections, injections, Collections.<PsiElement>emptyList());
@@ -274,7 +277,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
   }
 
   private static void doEditInjection(final Project project, final XmlTagInjection template) {
-    final Configuration configuration = Configuration.getProjectInstance(project);
+    final Configuration configuration = InjectorUtils.getEditableInstance(project);
     final AbstractTagInjection originalInjection = (AbstractTagInjection)configuration.findExistingInjection(template);
 
     final XmlTagInjection newInjection = originalInjection == null? template : new XmlTagInjection().copyFrom(originalInjection);
@@ -304,7 +307,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
   }
 
   private static void doEditInjection(final Project project, final XmlAttributeInjection template) {
-    final Configuration configuration = Configuration.getProjectInstance(project);
+    final Configuration configuration = InjectorUtils.getEditableInstance(project);
     final BaseInjection originalInjection = configuration.findExistingInjection(template);
     final BaseInjection newInjection = originalInjection == null ? template : originalInjection.copy();
     if (InjectLanguageAction.doEditConfigurable(project, new XmlAttributeInjectionConfigurable((XmlAttributeInjection)newInjection, null, project))) {

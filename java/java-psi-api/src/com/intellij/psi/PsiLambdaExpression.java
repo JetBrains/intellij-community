@@ -18,8 +18,6 @@ package com.intellij.psi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 /**
  * Represents a Java lambda expression.
  */
@@ -41,13 +39,17 @@ public interface PsiLambdaExpression extends PsiExpression {
   @Nullable
   PsiElement getBody();
 
-  List<PsiExpression> getReturnExpressions();
-  List<PsiReturnStatement> getReturnStatements();
-  
+  /**
+   * @return SAM type the lambda expression corresponds to
+   *         null when no SAM type could be found
+   */
   @Nullable
   PsiType getFunctionalInterfaceType();
 
   boolean isVoidCompatible();
 
+  /**
+   * @return true when lambda declares parameter types explicitly
+   */
   boolean hasFormalParameterTypes();
 }

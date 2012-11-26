@@ -27,10 +27,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements PsiLambdaExpression {
 
   public PsiLambdaExpressionImpl() {
@@ -63,45 +59,6 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
     return element instanceof PsiExpression || element instanceof PsiCodeBlock ? element : null;
   }
 
-  @Override
-  public List<PsiReturnStatement> getReturnStatements() {
-    final PsiElement body = getBody();
-    final List<PsiReturnStatement> result = new ArrayList<PsiReturnStatement>();
-    if (body != null) {
-      body.accept(new JavaRecursiveElementVisitor() {
-        @Override
-        public void visitReturnStatement(PsiReturnStatement statement) {
-          result.add(statement);
-        }
-
-        @Override
-        public void visitClass(PsiClass aClass) {
-        }
-
-        @Override
-        public void visitLambdaExpression(PsiLambdaExpression expression) {
-        }
-      });
-    }
-    return result;
-  }
-
-  @Override
-  public List<PsiExpression> getReturnExpressions() {
-    final PsiElement body = getBody();
-    if (body instanceof PsiExpression) {
-      //if (((PsiExpression)body).getType() != PsiType.VOID) return Collections.emptyList();
-      return Collections.singletonList((PsiExpression)body);
-    }
-    final List<PsiExpression> result = new ArrayList<PsiExpression>();
-    for (PsiReturnStatement returnStatement : getReturnStatements()) {
-      final PsiExpression returnValue = returnStatement.getReturnValue();
-      if (returnValue != null) {
-        result.add(returnValue);
-      }
-    }
-    return result;
-  }
 
   @Nullable
   @Override

@@ -15,7 +15,7 @@
  */
 package com.intellij.android.designer.designSurface.layout.actions;
 
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.intellij.android.designer.designSurface.layout.RelativeLayoutOperation;
 import com.intellij.android.designer.designSurface.layout.relative.*;
 import com.intellij.android.designer.model.RadViewComponent;

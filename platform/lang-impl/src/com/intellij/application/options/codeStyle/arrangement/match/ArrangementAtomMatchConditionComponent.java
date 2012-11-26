@@ -114,6 +114,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
     myText = manager.getDisplayValue(condition);
     myTextControl.setTextAlign(SwingConstants.CENTER);
     myTextControl.append(myText, SimpleTextAttributes.fromTextAttributes(colorsProvider.getTextAttributes(condition.getType(), false)));
+    myTextControl.setOpaque(false);
     int maxWidth = manager.getMaxWidth(condition.getType());
     if (maxWidth > 0) {
       myTextControlSize = new Dimension(maxWidth, myTextControl.getPreferredSize().height);
@@ -241,7 +242,6 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
     myTextControl.append(myText, SimpleTextAttributes.fromTextAttributes(attributes));
     myBorder.setColor(myColorsProvider.getBorderColor(selected));
     myBackgroundColor = attributes.getBackgroundColor();
-    myTextControl.setBackground(myBackgroundColor);
   }
 
   public boolean isEnabled() {

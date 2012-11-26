@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,7 @@ import java.util.Set;
 
 public class VariableAccessUtils {
 
-  private VariableAccessUtils() {
-  }
+  private VariableAccessUtils() {}
 
   public static boolean variableIsAssignedFrom(@NotNull PsiVariable variable,
                                                @Nullable PsiElement context) {
@@ -49,14 +48,16 @@ public class VariableAccessUtils {
     return visitor.isPassed();
   }
 
-  public static boolean variableIsPassedAsMethodArgument(
-    @NotNull PsiVariable variable, Set<String> excludes,
-    @Nullable PsiElement context) {
+  public static boolean variableIsPassedAsMethodArgument(@NotNull PsiVariable variable, Set<String> excludes, @Nullable PsiElement context) {
+    return variableIsPassedAsMethodArgument(variable, excludes, context, false);
+  }
+
+  public static boolean variableIsPassedAsMethodArgument(@NotNull PsiVariable variable, Set<String> excludes,
+                                                         @Nullable PsiElement context, boolean builderPattern) {
     if (context == null) {
       return false;
     }
-    final VariablePassedAsArgumentExcludedVisitor visitor =
-      new VariablePassedAsArgumentExcludedVisitor(variable, excludes);
+    final VariablePassedAsArgumentExcludedVisitor visitor = new VariablePassedAsArgumentExcludedVisitor(variable, excludes, builderPattern);
     context.accept(visitor);
     return visitor.isPassed();
   }
@@ -95,13 +96,15 @@ public class VariableAccessUtils {
     return visitor.isAssigned();
   }
 
-  public static boolean variableIsReturned(
-    @NotNull PsiVariable variable, @Nullable PsiElement context) {
+  public static boolean variableIsReturned(@NotNull PsiVariable variable, @Nullable PsiElement context) {
+    return variableIsReturned(variable, context, false);
+  }
+
+  public static boolean variableIsReturned(@NotNull PsiVariable variable, @Nullable PsiElement context, boolean builderPattern) {
     if (context == null) {
       return false;
     }
-    final VariableReturnedVisitor visitor =
-      new VariableReturnedVisitor(variable);
+    final VariableReturnedVisitor visitor = new VariableReturnedVisitor(variable, builderPattern);
     context.accept(visitor);
     return visitor.isReturned();
   }
@@ -150,33 +153,30 @@ public class VariableAccessUtils {
     return visitor.isUsedInInnerClass();
   }
 
-  public static boolean mayEvaluateToVariable(
-    @Nullable PsiExpression expression,
-    @NotNull PsiVariable variable) {
+  public static boolean mayEvaluateToVariable(@Nullable PsiExpression expression, @NotNull PsiVariable variable) {
+    return mayEvaluateToVariable(expression, variable, false);
+  }
+
+  public static boolean mayEvaluateToVariable(@Nullable PsiExpression expression, @NotNull PsiVariable variable, boolean builderPattern) {
     if (expression == null) {
       return false;
     }
     if (expression instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression =
-        (PsiParenthesizedExpression)expression;
-      final PsiExpression containedExpression =
-        parenthesizedExpression.getExpression();
-      return mayEvaluateToVariable(containedExpression, variable);
+      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+      final PsiExpression containedExpression = parenthesizedExpression.getExpression();
+      return mayEvaluateToVariable(containedExpression, variable, builderPattern);
     }
     if (expression instanceof PsiTypeCastExpression) {
-      final PsiTypeCastExpression typeCastExpression =
-        (PsiTypeCastExpression)expression;
-      final PsiExpression containedExpression =
-        typeCastExpression.getOperand();
-      return mayEvaluateToVariable(containedExpression, variable);
+      final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)expression;
+      final PsiExpression containedExpression = typeCastExpression.getOperand();
+      return mayEvaluateToVariable(containedExpression, variable, builderPattern);
     }
     if (expression instanceof PsiConditionalExpression) {
-      final PsiConditionalExpression conditional =
-        (PsiConditionalExpression)expression;
+      final PsiConditionalExpression conditional = (PsiConditionalExpression)expression;
       final PsiExpression thenExpression = conditional.getThenExpression();
       final PsiExpression elseExpression = conditional.getElseExpression();
-      return mayEvaluateToVariable(thenExpression, variable) ||
-             mayEvaluateToVariable(elseExpression, variable);
+      return mayEvaluateToVariable(thenExpression, variable, builderPattern) ||
+             mayEvaluateToVariable(elseExpression, variable, builderPattern);
     }
     if (expression instanceof PsiArrayAccessExpression) {
       final PsiElement parent = expression.getParent();
@@ -192,19 +192,30 @@ public class VariableAccessUtils {
       if (dimensions <= 1) {
         return false;
       }
-      PsiArrayAccessExpression arrayAccessExpression =
-        (PsiArrayAccessExpression)expression;
-      PsiExpression arrayExpression =
-        arrayAccessExpression.getArrayExpression();
+      PsiArrayAccessExpression arrayAccessExpression = (PsiArrayAccessExpression)expression;
+      PsiExpression arrayExpression = arrayAccessExpression.getArrayExpression();
       int count = 1;
       while (arrayExpression instanceof PsiArrayAccessExpression) {
-        arrayAccessExpression =
-          (PsiArrayAccessExpression)arrayExpression;
+        arrayAccessExpression = (PsiArrayAccessExpression)arrayExpression;
         arrayExpression = arrayAccessExpression.getArrayExpression();
         count++;
       }
-      return count != dimensions &&
-             mayEvaluateToVariable(arrayExpression, variable);
+      return count != dimensions && mayEvaluateToVariable(arrayExpression, variable, builderPattern);
+    }
+    if (builderPattern && expression instanceof PsiMethodCallExpression) {
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+      final PsiMethod method = methodCallExpression.resolveMethod();
+      if (method == null) {
+        return false;
+      }
+      final PsiType returnType = method.getReturnType();
+      final PsiType variableType = variable.getType();
+      if (!variableType.equals(returnType)) {
+        return false;
+      }
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
+      return mayEvaluateToVariable(qualifier, variable, builderPattern);
     }
     return evaluatesToVariable(expression, variable);
   }

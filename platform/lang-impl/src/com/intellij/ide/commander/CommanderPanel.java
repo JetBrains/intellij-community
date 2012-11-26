@@ -123,11 +123,13 @@ public class CommanderPanel extends JPanel {
         if (myBuilder == null) return;
         myBuilder.buildRoot();
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SLASH, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK), JComponent.WHEN_FOCUSED);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SLASH, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK),
+                                  JComponent.WHEN_FOCUSED);
 
     myList.getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), ACTION_DRILL_DOWN);
     myList.getInputMap(WHEN_FOCUSED)
-      .put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK), ACTION_DRILL_DOWN);
+      .put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK),
+           ACTION_DRILL_DOWN);
     myList.getActionMap().put(ACTION_DRILL_DOWN, new AbstractAction() {
       @Override
       public void actionPerformed(final ActionEvent e) {
@@ -179,7 +181,6 @@ public class CommanderPanel extends JPanel {
         setActive(false);
       }
     });
-
   }
 
   public boolean isEnableSearchHighlighting() {
@@ -195,7 +196,7 @@ public class CommanderPanel extends JPanel {
   }
 
   private void updateHistory(boolean elementExpanded) {
-    for(CommanderHistoryListener listener: myHistoryListeners) {
+    for (CommanderHistoryListener listener : myHistoryListeners) {
       listener.historyChanged(getSelectedElement(), elementExpanded);
     }
   }
@@ -505,7 +506,6 @@ public class CommanderPanel extends JPanel {
     }
 
     return elements.toArray(new Navigatable[elements.size()]);
-
   }
 
   @Nullable
@@ -618,15 +618,16 @@ public class CommanderPanel extends JPanel {
       return DirectoryChooserUtil.getOrChooseDirectory(this);
     }
   }
-  
-  public static final class MyModel extends AbstractListModel implements AbstractListBuilder.Model{
+
+  public static final class MyModel extends AbstractListModel implements AbstractListBuilder.Model {
     final List myElements = new ArrayList();
+
     @Override
     public void removeAllElements() {
-      int index1 = myElements.size()-1;
+      int index1 = myElements.size() - 1;
       myElements.clear();
       if (index1 >= 0) {
-          fireIntervalRemoved(this, 0, index1);
+        fireIntervalRemoved(this, 0, index1);
       }
     }
 

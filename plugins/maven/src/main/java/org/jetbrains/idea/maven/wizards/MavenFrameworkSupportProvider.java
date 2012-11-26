@@ -24,14 +24,18 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenLog;
 
 import javax.swing.*;
+import java.io.IOException;
 import java.util.Collections;
 
 public class MavenFrameworkSupportProvider extends FrameworkSupportProvider {
@@ -65,11 +69,34 @@ public class MavenFrameworkSupportProvider extends FrameworkSupportProvider {
           MavenProjectsManager.getInstance(module.getProject()).addManagedFiles(Collections.singletonList(existingPom));
         }
         else {
+          prepareProjectStructure(model, root);
+
           new MavenModuleBuilderHelper(new MavenId("groupId", module.getName(), "1.0-SNAPSHOT"), null, null, false, false, null,
                                        null, "Add Maven Support").configure(model.getProject(), root, true);
         }
       }
     };
+  }
+
+  private static void prepareProjectStructure(@NotNull ModifiableRootModel model, @NotNull VirtualFile root) {
+    VirtualFile src = root.findChild("src");
+    if (src == null || !src.isDirectory()) return;
+
+    if (ArrayUtil.contains(src, model.getSourceRoots())) {
+      try {
+        VirtualFile java = VfsUtil.createDirectories(src.getPath() + "/main/java");
+        if (java != null && java.isDirectory()) {
+          for (VirtualFile child : src.getChildren()) {
+            if (!child.getName().equals("main")) {
+              child.move(null, java);
+            }
+          }
+        }
+      }
+      catch (IOException e) {
+        MavenLog.LOG.info(e);
+      }
+    }
   }
 
   @Override

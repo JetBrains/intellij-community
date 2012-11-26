@@ -20,9 +20,11 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.util.concurrency.Semaphore;
 import junit.framework.Assert;
 import junit.framework.TestCase;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
@@ -210,9 +212,17 @@ public class SvnBusyOnAddTest extends TestCase {
     }
   }
 
+  @Nullable
   private String getStatus(final File ioFile) throws SVNException {
+    try {
     SVNStatusClient readClient = new SVNStatusClient((ISVNRepositoryPool)null, new DefaultSVNOptions());
     final SVNStatus status = readClient.doStatus(ioFile, false);
     return status == null ? null : status.getNodeStatus().toString();
+    } catch (SVNException e) {
+      if (SVNErrorCode.WC_NOT_WORKING_COPY.equals(e.getErrorMessage().getErrorCode())) {
+        return null;
+      }
+      throw e;
+    }
   }
 }

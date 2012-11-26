@@ -18,12 +18,15 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Processor;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient;
 import org.jetbrains.idea.svn.portable.JavaHLSvnStatusClient;
@@ -33,6 +36,7 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
@@ -161,14 +165,53 @@ public class SvnRecursiveStatusWalker {
     }
     final SVNDepth newDepth = SVNDepth.INFINITY.equals(prevDepth) ? SVNDepth.INFINITY : SVNDepth.EMPTY;
 
-    final SVNStatusClient childClient = myPartner.createStatusClient();
-    final VirtualFile[] children = vFile.getChildren();
-    for (VirtualFile child : children) {
-      final FilePath filePath = VcsUtil.getFilePath(child.getPath(), child.isDirectory());
-      // recursiveness is used ONLY for search of working copies that have unversioned files above
-      final MyItem childItem = new MyItem(myProject, filePath, newDepth, childClient, true);
-      myQueue.add(childItem);
+    final File ioFile = new File(vFile.getPath());
+    final Processor<File> processor;
+    final Processor<File> directoryFilter;
+    final Ref<File> lastIgnored = new Ref<File>();
+    final Processor<File> checkDirProcessor = new Processor<File>() {
+      @Override
+      public boolean process(File file) {
+        final FilePathImpl path = new FilePathImpl(file, true);
+        path.refresh();
+        path.hardRefresh();
+        VirtualFile vf = path.getVirtualFile();
+        if (vf != null && myPartner.isIgnoredIdeaLevel(vf)) {
+          lastIgnored.set(file);
+          myReceiver.processIgnored(vf);
+          return true;
+        }
+        if (file.isDirectory() && new File(file, SVNFileUtil.getAdminDirectoryName()).exists()) {
+          final MyItem childItem = new MyItem(myProject, path, newDepth, myPartner.createStatusClient(), true);
+          myQueue.add(childItem);
+        } else if (vf != null) {
+          myReceiver.processUnversioned(vf);
+        }
+        return true;
+      }
+    };
+    if (SVNDepth.EMPTY.equals(newDepth)) {
+      directoryFilter = Processor.TRUE;
+      processor = new Processor<File>() {
+        @Override
+        public boolean process(File file) {
+          // here we deal only with immediate children - so ignored on IDEA level for children is not important - we nevertheless do not go into
+          // other levels
+          if (! FileUtil.filesEqual(ioFile, file)) return true;
+          if (! FileUtil.filesEqual(ioFile, file.getParentFile())) return false;
+          return checkDirProcessor.process(file);
+        }
+      };
+    } else {
+      directoryFilter = new Processor<File>() {
+        @Override
+        public boolean process(File file) {
+          return ! Comparing.equal(lastIgnored, file) && (myQueue.isEmpty() || ! FileUtil.filesEqual(myQueue.getLast().getPath().getIOFile(), file));
+        }
+      };
+      processor = checkDirProcessor;
     }
+    FileUtil.processFilesRecursively(ioFile, processor, directoryFilter);
   }
 
   private class MyHandler implements ISVNStatusHandler {
@@ -232,8 +275,8 @@ public class SvnRecursiveStatusWalker {
       if ((vFile != null) && (SvnVcs.svnStatusIsUnversioned(status))) {
         if (vFile.isDirectory()) {
           if (FileUtil.filesEqual(myCurrentItem.getPath().getIOFile(), ioFile)) {
-            myReceiver.processUnversioned(vFile);
-            processRecursively(vFile, myCurrentItem.getDepth());
+            //myReceiver.processUnversioned(vFile);
+            //processRecursively(vFile, myCurrentItem.getDepth());
           } else {
             final MyItem childItem = new MyItem(myProject, new FilePathImpl(vFile), SVNDepth.INFINITY,
                                                 myPartner.createStatusClient(), true);

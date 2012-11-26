@@ -42,6 +42,8 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
   private final ProjectFileIndex myIndex;
   private final LinkedHashSet<VirtualFile> myEntries = new LinkedHashSet<VirtualFile>();
 
+  private int myCachedHashCode = 0;
+
   public LibraryRuntimeClasspathScope(final Project project, final List<Module> modules) {
     super(project);
     myIndex = ProjectRootManager.getInstance(project).getFileIndex();
@@ -70,7 +72,11 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
   }
 
   public int hashCode() {
-    return myEntries.hashCode();
+    if (myCachedHashCode == 0) {
+      myCachedHashCode = myEntries.hashCode();
+    }
+
+    return myCachedHashCode;
   }
 
   public boolean equals(Object object) {

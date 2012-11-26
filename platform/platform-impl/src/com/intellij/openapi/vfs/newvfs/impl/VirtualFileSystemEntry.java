@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -439,6 +440,9 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
         Charset configured = EncodingManager.getInstance().getEncoding(this, true);
         charset = configured == null ? Charset.defaultCharset() : configured;
         setCharset(charset);
+      }
+      else if (SingleRootFileViewProvider.isTooLargeForContentLoading(this)) {
+        charset = super.getCharset();
       }
       else {
         try {

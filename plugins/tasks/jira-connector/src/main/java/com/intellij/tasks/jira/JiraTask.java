@@ -26,6 +26,7 @@ import com.intellij.tasks.TaskType;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import icons.JiraConnectorIcons;
+import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,9 +39,9 @@ import java.util.Locale;
 
 /**
  * @author Dmitry Avdeev
-*/
+ */
 class JiraTask extends Task {
-  
+
   private final JIRAIssue myJiraIssue;
 
   public JiraTask(JIRAIssue jiraIssue) {
@@ -75,8 +76,10 @@ class JiraTask extends Task {
   @NotNull
   public Icon getIcon() {
     String iconUrl = myJiraIssue.getTypeIconUrl();
-    return iconUrl == null ? JiraConnectorIcons.Jira_blue_16 : isClosed() ? CachedIconLoader.getDisabledIcon(iconUrl) : CachedIconLoader
-      .getIcon(iconUrl);
+    final Icon icon = iconUrl == null
+                      ? JiraConnectorIcons.Jira_blue_16
+                      : isClosed() ? CachedIconLoader.getDisabledIcon(iconUrl) : CachedIconLoader.getIcon(iconUrl);
+    return icon != null ? icon : TasksIcons.Other;
   }
 
   @NotNull
@@ -85,13 +88,17 @@ class JiraTask extends Task {
     String type = myJiraIssue.getType();
     if (type == null) {
       return TaskType.OTHER;
-    } else if (type.equals("Bug")) {
+    }
+    else if (type.equals("Bug")) {
       return TaskType.BUG;
-    } else if (type.equals("Exception")) {
+    }
+    else if (type.equals("Exception")) {
       return TaskType.EXCEPTION;
-    } else if (type.equals("New Feature")) {
+    }
+    else if (type.equals("New Feature")) {
       return TaskType.FEATURE;
-    } else {
+    }
+    else {
       return TaskType.OTHER;
     }
   }
@@ -107,7 +114,7 @@ class JiraTask extends Task {
         return TaskState.REOPENED;
       case 5: // resolved
       case 6: // closed
-        return TaskState.RESOLVED; 
+        return TaskState.RESOLVED;
     }
     return null;
   }

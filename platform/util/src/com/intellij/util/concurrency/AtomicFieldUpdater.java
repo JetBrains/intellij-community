@@ -65,7 +65,7 @@ public class AtomicFieldUpdater<T,V> {
     return new AtomicFieldUpdater<T,Long>(ownerClass, long.class);
   }
 
-  private AtomicFieldUpdater(Class<T> ownerClass, Class<V> fieldType) {
+  private AtomicFieldUpdater(@NotNull Class<T> ownerClass, @NotNull Class<V> fieldType) {
     Field[] declaredFields = ownerClass.getDeclaredFields();
     Field found = null;
     for (Field field : declaredFields) {

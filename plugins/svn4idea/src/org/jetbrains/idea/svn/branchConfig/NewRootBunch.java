@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.branchConfig;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManagerQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Ref;
@@ -41,10 +42,12 @@ public class NewRootBunch implements SvnBranchConfigManager {
   private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.branchConfig.NewRootBunch");
   private final Object myLock = new Object();
   private final Project myProject;
+  private final ProgressManagerQueue myBranchesLoader;
   private final Map<VirtualFile, InfoStorage<SvnBranchConfigurationNew>> myMap;
 
-  public NewRootBunch(final Project project) {
+  public NewRootBunch(final Project project, ProgressManagerQueue branchesLoader) {
     myProject = project;
+    myBranchesLoader = branchesLoader;
     myMap = new HashMap<VirtualFile, InfoStorage<SvnBranchConfigurationNew>>();
   }
 
@@ -83,7 +86,7 @@ public class NewRootBunch implements SvnBranchConfigManager {
       if (value == null) {
         result = new SvnBranchConfigurationNew();
         myMap.put(root, new InfoStorage<SvnBranchConfigurationNew>(result, InfoReliability.empty));
-        ApplicationManager.getApplication().executeOnPooledThread(new DefaultBranchConfigInitializer(myProject, this, root));
+        myBranchesLoader.run(new DefaultBranchConfigInitializer(myProject, this, root));
       } else {
         result = value.getValue();
       }

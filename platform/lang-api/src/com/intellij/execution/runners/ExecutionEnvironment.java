@@ -59,6 +59,20 @@ public class ExecutionEnvironment extends UserDataHolderBase {
   public ExecutionEnvironment(@NotNull final ProgramRunner runner,
                               @NotNull final ExecutionTarget target,
                               @NotNull final RunnerAndConfigurationSettings configuration,
+                              @Nullable RunContentDescriptor contentToReuse,
+                              Project project) {
+    this(configuration.getConfiguration(),
+         target,
+         project,
+         configuration.getRunnerSettings(runner),
+         configuration.getConfigurationSettings(runner),
+         contentToReuse,
+         configuration);
+  }
+
+  public ExecutionEnvironment(@NotNull final ProgramRunner runner,
+                              @NotNull final ExecutionTarget target,
+                              @NotNull final RunnerAndConfigurationSettings configuration,
                               Project project) {
     this(configuration.getConfiguration(),
          target,

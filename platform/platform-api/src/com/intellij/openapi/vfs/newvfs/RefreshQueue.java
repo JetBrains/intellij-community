@@ -71,7 +71,6 @@ public abstract class RefreshQueue {
 
   public abstract void processSingleEvent(@NotNull VFileEvent event);
 
-  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   protected ModalityState getDefaultModalityState() {
     return ModalityState.NON_MODAL;

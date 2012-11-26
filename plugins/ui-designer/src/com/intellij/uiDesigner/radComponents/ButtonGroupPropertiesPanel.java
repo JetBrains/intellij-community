@@ -27,7 +27,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -38,7 +38,7 @@ public class ButtonGroupPropertiesPanel implements CustomPropertiesPanel {
   private JPanel myPanel;
   private final RadRootContainer myRootContainer;
   private final RadButtonGroup myGroup;
-  private final CopyOnWriteArrayList<ChangeListener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<ChangeListener> myListeners = ContainerUtil.createEmptyCOWList();
 
   public ButtonGroupPropertiesPanel(final RadRootContainer rootContainer, final RadButtonGroup group) {
     myRootContainer = rootContainer;

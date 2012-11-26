@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -238,7 +238,7 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
       doTest(new SimpleInfo('optional', -1, null, '1', 'int'));
     }
     catch (ConflictsInTestsException e) {
-      assertEquals('Method with signature foo(int) is already defined in class <b><code>Test</code></b>', e.message)
+      assertEquals('Method foo(int) is already defined in the class <b><code>Test</code></b>.', e.message)
       return
     }
     assertFalse('conflicts are not detected!', true);

@@ -127,4 +127,14 @@ public class GrStubUtils {
     }
     return PsiNameHelper.getShortClassName(text.substring(0, i)) + text.substring(i);
   }
+
+  @Nullable
+  public static String getPackageName(final GrFileStub stub) {
+    for (StubElement child : stub.getChildrenStubs()) {
+      if (child instanceof GrPackageDefinitionStub) {
+        return ((GrPackageDefinitionStub)child).getPackageName();
+      }
+    }
+    return null;
+  }
 }

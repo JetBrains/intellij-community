@@ -18,9 +18,11 @@ package com.intellij.application.options.codeStyle.arrangement.action;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesModel;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.util.SystemInfoRt;
 import gnu.trove.TIntArrayList;
 
 /**
@@ -38,6 +40,7 @@ public class RemoveArrangementRuleAction extends AnAction {
   public void update(AnActionEvent e) {
     ArrangementMatchingRulesControl control = ArrangementConstants.MATCHING_RULES_CONTROL_KEY.getData(e.getDataContext());
     e.getPresentation().setEnabled(control != null && !control.getSelectedModelRows().isEmpty());
+    e.getPresentation().setIcon(SystemInfoRt.isMac ? AllIcons.ToolbarDecorator.Mac.Remove : AllIcons.ToolbarDecorator.Remove);
   }
 
   @Override
@@ -46,6 +49,8 @@ public class RemoveArrangementRuleAction extends AnAction {
     if (control == null) {
       return;
     }
+    
+    control.hideEditor();
 
     final TIntArrayList rowsToRemove = control.getSelectedModelRows();
     if (rowsToRemove.isEmpty()) {

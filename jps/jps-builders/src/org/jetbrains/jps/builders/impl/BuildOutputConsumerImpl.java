@@ -32,19 +32,21 @@ public class BuildOutputConsumerImpl implements BuildOutputConsumer {
 
   @Override
   public void registerOutputFile(final File outputFile, Collection<String> sourcePaths) throws IOException {
+    final String outputFilePath = FileUtil.toSystemIndependentName(outputFile.getPath());
     for (File outputRoot : myOutputs) {
-      if (FileUtil.isAncestor(outputRoot, outputFile, false)) {
-        myFileGeneratedEvent.add(outputRoot.getPath(), FileUtil.getRelativePath(outputRoot, outputFile));
-        break;
+      String outputRootPath = FileUtil.toSystemIndependentName(outputRoot.getPath());
+      final String relativePath = FileUtil.getRelativePath(outputRootPath, outputFilePath, '/');
+      if (relativePath != null) {
+        myFileGeneratedEvent.add(outputRootPath, relativePath);
       }
     }
     final SourceToOutputMapping mapping = myContext.getProjectDescriptor().dataManager.getSourceToOutputMap(myTarget);
     for (String sourcePath : sourcePaths) {
       if (myRegisteredSources.add(FileUtil.toSystemIndependentName(sourcePath))) {
-        mapping.setOutput(sourcePath, outputFile.getPath());
+        mapping.setOutput(sourcePath, outputFilePath);
       }
       else {
-        mapping.appendOutput(sourcePath, outputFile.getPath());
+        mapping.appendOutput(sourcePath, outputFilePath);
       }
     }
   }

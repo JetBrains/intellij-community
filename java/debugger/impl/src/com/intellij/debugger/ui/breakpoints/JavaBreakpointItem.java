@@ -28,13 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
-* Created with IntelliJ IDEA.
-* User: intendia
-* Date: 10.05.12
-* Time: 3:16
-* To change this template use File | Settings | File Templates.
-*/
 class JavaBreakpointItem extends BreakpointItem {
   private final Breakpoint myBreakpoint;
   private BreakpointFactory myBreakpointFactory;
@@ -75,15 +68,15 @@ class JavaBreakpointItem extends BreakpointItem {
 
   @Override
   protected void doUpdateDetailView(DetailView panel, boolean editorOnly) {
+    BreakpointPropertiesPanel breakpointPropertiesPanel = null;
     if (!editorOnly) {
-      BreakpointPropertiesPanel breakpointPropertiesPanel = myBreakpointFactory != null ? myBreakpointFactory
+      breakpointPropertiesPanel = myBreakpointFactory != null ? myBreakpointFactory
         .createBreakpointPropertiesPanel(myBreakpoint.getProject(), false) : null;
 
       if (breakpointPropertiesPanel != null) {
         breakpointPropertiesPanel.initFrom(myBreakpoint, true);
 
         breakpointPropertiesPanel.setSaveOnRemove(true);
-        breakpointPropertiesPanel.setDetailView(panel);
 
         final JPanel mainPanel = breakpointPropertiesPanel.getPanel();
         panel.setPropertiesPanel(mainPanel);
@@ -99,6 +92,9 @@ class JavaBreakpointItem extends BreakpointItem {
       showInEditor(panel, virtualFile, sourcePosition.getLine());
     } else {
       panel.clearEditor();
+    }
+    if (breakpointPropertiesPanel != null) {
+      breakpointPropertiesPanel.setDetailView(panel);
     }
   }
 

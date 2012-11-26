@@ -19,6 +19,7 @@ import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.IconUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,9 +33,11 @@ import java.util.List;
  */
 public class GotoTaskAction extends GotoActionBase {
   public static final CreateNewTaskAction CREATE_NEW_TASK_ACTION = new CreateNewTaskAction();
+  public static final String ID = "tasks.goto";
 
   public GotoTaskAction() {
     getTemplatePresentation().setText("Open Task...");
+    getTemplatePresentation().setIcon(IconUtil.getAddIcon());
   }
 
   @Override
@@ -202,7 +205,8 @@ public class GotoTaskAction extends GotoActionBase {
 
     @Override
     public String getCheckBoxName() {
-      return "Include closed tasks";
+      return null;
+      //return "Include closed tasks";
     }
 
     @Override

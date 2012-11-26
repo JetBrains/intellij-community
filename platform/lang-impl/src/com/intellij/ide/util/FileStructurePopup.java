@@ -233,6 +233,7 @@ public class FileStructurePopup implements Disposable {
       .setResizable(true)
       .setModalContext(false)
       .setFocusable(true)
+      .setRequestFocus(true)
       .setMovable(true)
       .setBelongsToGlobalPopupStack(true)
       //.setCancelOnClickOutside(false) //for debug and snapshots

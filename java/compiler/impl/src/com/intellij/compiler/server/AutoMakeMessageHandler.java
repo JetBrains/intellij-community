@@ -110,7 +110,9 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
 
   @Override
   public void handleFailure(UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
-    CompilerManager.NOTIFICATION_GROUP.createNotification("Auto make failure: " + failure.getDescription(), MessageType.INFO);
+    final String msg = "Auto make failure: " + failure.getDescription();
+    CompilerManager.NOTIFICATION_GROUP.createNotification(msg, MessageType.INFO);
+    ProblemsView.SERVICE.getInstance(myProject).addMessage(new CompilerMessageImpl(myProject, CompilerMessageCategory.ERROR, msg), sessionId);
   }
 
   @Override

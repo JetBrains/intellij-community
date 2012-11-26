@@ -30,6 +30,7 @@ import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +59,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
                     namePattern.equals("@") && model instanceof GotoClassModel2;    // TODO[yole]: remove implicit dependency
     if (empty && !base.canShowListForEmptyPattern()) return true;
 
-    Set<String> names = new HashSet<String>(Arrays.asList(base.getNames(everywhere)));
+    Set<String> names = new THashSet<String>(Arrays.asList(base.getNames(everywhere)));
 
     if (base.isSearchInAnyPlace() && !namePattern.trim().isEmpty()) {
       String middleMatchPattern = "*" + namePattern + (namePattern.endsWith(" ") ? "" : "*");

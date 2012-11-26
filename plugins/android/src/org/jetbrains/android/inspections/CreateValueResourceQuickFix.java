@@ -1,6 +1,7 @@
 package org.jetbrains.android.inspections;
 
-import com.android.AndroidConstants;
+
+import com.android.SdkConstants;
 import com.android.resources.ResourceType;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -84,7 +85,7 @@ public class CreateValueResourceQuickFix implements LocalQuickFix, IntentionActi
       assert fileName != null;
 
       if (!AndroidResourceUtil.createValueResource(myFacet.getModule(), myResourceName, myResourceType, fileName,
-                                                   Collections.singletonList(AndroidConstants.FD_RES_VALUES), "a")) {
+                                                   Collections.singletonList(SdkConstants.FD_RES_VALUES), "a")) {
         return false;
       }
     }

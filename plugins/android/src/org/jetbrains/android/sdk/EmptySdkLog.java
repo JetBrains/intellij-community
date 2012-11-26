@@ -16,7 +16,8 @@
 
 package org.jetbrains.android.sdk;
 
-import com.android.sdklib.ISdkLog;
+import com.android.annotations.NonNull;
+import com.android.utils.ILogger;
 
 /**
 * Created by IntelliJ IDEA.
@@ -25,13 +26,18 @@ import com.android.sdklib.ISdkLog;
 * Time: 6:11:16 PM
 * To change this template use File | Settings | File Templates.
 */
-public class EmptySdkLog implements ISdkLog {
+public class EmptySdkLog implements ILogger {
   public void warning(String warningFormat, Object... args) {
   }
 
-  public void error(Throwable t, String errorFormat, Object... args) {
+  @Override
+  public void info(@NonNull String msgFormat, Object... args) {
   }
 
-  public void printf(String msgFormat, Object... args) {
+  @Override
+  public void verbose(@NonNull String msgFormat, Object... args) {
+  }
+
+  public void error(Throwable t, String errorFormat, Object... args) {
   }
 }

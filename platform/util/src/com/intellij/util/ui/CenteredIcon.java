@@ -43,12 +43,11 @@ public class CenteredIcon implements Icon {
   }
 
   public void paintIcon(Component c, Graphics g, int x, int y) {
-    final Dimension size = c.getSize();
-
     int offsetX;
     int offsetY;
 
     if (myCenteredInComponent) {
+      final Dimension size = c.getSize();
       offsetX = size.width / 2 - myIcon.getIconWidth() / 2;
       offsetY = size.height / 2 - myIcon.getIconHeight() / 2;
     }

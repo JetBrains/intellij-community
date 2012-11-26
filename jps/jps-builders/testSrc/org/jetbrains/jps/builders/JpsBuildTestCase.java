@@ -1,6 +1,8 @@
 package org.jetbrains.jps.builders;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -20,7 +22,6 @@ import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.IncProjectBuilder;
 import org.jetbrains.jps.incremental.RebuildRequestedException;
-import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
@@ -52,6 +53,7 @@ import static org.jetbrains.jps.builders.CompileScopeTestBuilder.make;
  * @author nik
  */
 public abstract class JpsBuildTestCase extends UsefulTestCase {
+  protected static final long TIMESTAMP_ACCURACY = SystemInfo.isMac ? 1000 : 1;
   private File myProjectDir;
   protected JpsProject myProject;
   protected JpsModel myModel;
@@ -95,12 +97,33 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       if (newContent != null) {
         FileUtil.writeToFile(file, newContent);
       }
-      boolean updated = file.setLastModified(FileSystemUtil.lastModified(file) + Utils.TIMESTAMP_ACCURACY);
-      assertTrue("Cannot modify timestamp for " + file.getAbsolutePath(), updated);
+      long oldTimestamp = FileSystemUtil.lastModified(file);
+      long time = System.currentTimeMillis();
+      setLastModified(file, time);
+      if (FileSystemUtil.lastModified(file) <= oldTimestamp) {
+        setLastModified(file, time + TIMESTAMP_ACCURACY);
+        long newTimeStamp = FileSystemUtil.lastModified(file);
+        assertTrue("Failed to change timestamp for " + file.getAbsolutePath(), newTimeStamp > oldTimestamp);
+        long delta;
+        while ((delta = newTimeStamp - System.currentTimeMillis()) > 0) {
+          try {
+            //we need this to ensure that the file won't be treated as changed by user during compilation and marked for recompilation
+            //noinspection BusyWait
+            Thread.sleep(delta);
+          }
+          catch (InterruptedException ignored) {
+          }
+        }
+      }
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private static void setLastModified(File file, long time) {
+    boolean updated = file.setLastModified(time);
+    assertTrue("Cannot modify timestamp for " + file.getAbsolutePath(), updated);
   }
 
   protected static void delete(String filePath) {
@@ -179,9 +202,10 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
 
   protected JpsModule addModule(String moduleName,
                                 String[] srcPaths,
-                                @Nullable final String outputPath,
-                                final JpsSdk<JpsDummyElement> jdk) {
-    final JpsModule module = myProject.addModule(moduleName, JpsJavaModuleType.INSTANCE);
+                                @Nullable String outputPath,
+                                @Nullable String testOutputPath,
+                                JpsSdk<JpsDummyElement> jdk) {
+    JpsModule module = myProject.addModule(moduleName, JpsJavaModuleType.INSTANCE);
     module.getSdkReferencesTable().setSdkReference(JpsJavaSdkType.INSTANCE, jdk.createReference());
     module.getDependenciesList().addSdkDependency(JpsJavaSdkType.INSTANCE);
     if (srcPaths.length > 0) {
@@ -192,6 +216,12 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       JpsJavaModuleExtension extension = JpsJavaExtensionService.getInstance().getOrCreateModuleExtension(module);
       if (outputPath != null) {
         extension.setOutputUrl(JpsPathUtil.pathToUrl(outputPath));
+        if (!StringUtil.isEmpty(testOutputPath)) {
+          extension.setTestOutputUrl(JpsPathUtil.pathToUrl(testOutputPath));
+        }
+        else {
+          extension.setTestOutputUrl(extension.getOutputUrl());
+        }
       }
       else {
         extension.setInheritOutput(true);
@@ -255,6 +285,24 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     }
   }
 
+  protected String copyToProject(String relativeSourcePath, String relativeTargetPath) {
+    File source = PathManagerEx.findFileUnderProjectHome(relativeSourcePath, getClass());
+    String fullTargetPath = getAbsolutePath(relativeTargetPath);
+    File target = new File(fullTargetPath);
+    try {
+      if (source.isDirectory()) {
+        FileUtil.copyDir(source, target);
+      }
+      else {
+        FileUtil.copy(source, target);
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    return fullTargetPath;
+  }
+
   private File getOrCreateProjectDir() {
     if (myProjectDir == null) {
       try {
@@ -279,6 +327,6 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     if (myJdk == null) {
       myJdk = addJdk("1.6");
     }
-    return addModule(moduleName, srcPaths, getAbsolutePath("out/production/" + moduleName), myJdk);
+    return addModule(moduleName, srcPaths, getAbsolutePath("out/production/" + moduleName), null, myJdk);
   }
 }

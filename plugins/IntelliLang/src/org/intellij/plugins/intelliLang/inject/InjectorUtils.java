@@ -19,14 +19,19 @@ package org.intellij.plugins.intelliLang.inject;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.injected.MultiHostRegistrarImpl;
 import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.util.ArrayUtil;
+import org.intellij.plugins.intelliLang.Configuration;
+import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -158,12 +163,31 @@ public class InjectorUtils {
   }
 
   public static void registerSupport(@NotNull LanguageInjectionSupport support, boolean settingsAvailable, @NotNull MultiHostRegistrar registrar) {
-    final List<Pair<Place,PsiFile>> result = ((MultiHostRegistrarImpl)registrar).getResult();
-    if (result == null || result.isEmpty()) return;
-    final PsiFile psiFile = result.get(result.size() - 1).second;
-    psiFile.putUserData(LanguageInjectionSupport.INJECTOR_SUPPORT, support);
+    putInjectedFileUserData(registrar, LanguageInjectionSupport.INJECTOR_SUPPORT, support);
     if (settingsAvailable) {
-      psiFile.putUserData(LanguageInjectionSupport.SETTINGS_EDITOR, support);
+      putInjectedFileUserData(registrar, LanguageInjectionSupport.SETTINGS_EDITOR, support);
     }
+  }
+
+  public static <T> void putInjectedFileUserData(MultiHostRegistrar registrar, Key<T> key, T value) {
+    PsiFile psiFile = getInjectedFile(registrar);
+    if (psiFile != null) psiFile.putUserData(key, value);
+  }
+
+  public static PsiFile getInjectedFile(MultiHostRegistrar registrar) {
+    final List<Pair<Place,PsiFile>> result = ((MultiHostRegistrarImpl)registrar).getResult();
+    return result == null || result.isEmpty() ? null : result.get(result.size() - 1).second;
+  }
+
+  @SuppressWarnings("UnusedParameters")
+  public static Configuration getEditableInstance(Project project) {
+    return Configuration.getInstance();
+  }
+
+  public static boolean canBeRemoved(BaseInjection injection) {
+    if (injection.isEnabled()) return false;
+    if (StringUtil.isNotEmpty(injection.getPrefix()) || StringUtil.isNotEmpty(injection.getSuffix())) return false;
+    if (StringUtil.isNotEmpty(injection.getValuePattern())) return false;
+    return true;
   }
 }

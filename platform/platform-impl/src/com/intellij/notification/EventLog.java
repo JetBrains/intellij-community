@@ -357,7 +357,6 @@ public class EventLog {
                              boolean shouldLog) {
         }
       });
-
     }
 
     EventLogConsole getConsole() {
@@ -402,7 +401,6 @@ public class EventLog {
         }
       });
     }
-
   }
 
   static ProjectTracker getProjectComponent(Project project) {

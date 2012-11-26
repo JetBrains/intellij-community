@@ -15,7 +15,7 @@
  */
 package com.intellij.android.designer.designSurface.layout.relative;
 
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.componentTree.AttributeWrapper;
 import com.intellij.designer.designSurface.feedbacks.TextFeedback;
