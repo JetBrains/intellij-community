@@ -35,6 +35,7 @@ import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.*;
@@ -200,6 +201,11 @@ public abstract class AndroidLintInspectionBase extends GlobalInspectionTool imp
       return XmlSuppressionProvider.isSuppressed(element, getShortName());
     }
     return false;
+  }
+
+  @TestOnly
+  public static void invalidateInspectionShortName2IssueMap() {
+    ourIssue2InspectionShortName = null;
   }
 
   public synchronized static String getInspectionShortNameByIssue(@NotNull Project project, @NotNull Issue issue) {
