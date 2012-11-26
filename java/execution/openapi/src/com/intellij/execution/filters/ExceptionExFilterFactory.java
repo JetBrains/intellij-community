@@ -84,9 +84,8 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
             worker.execute(text, lineEndOffset);
             Result result = worker.getResult();
             if (result == null) continue;
-            int offset = result.hyperlinkInfo instanceof OpenFileHyperlinkInfo
-                         ? ((OpenFileHyperlinkInfo)result.hyperlinkInfo).getDescriptor().getOffset()
-                         : -1;
+            OpenFileHyperlinkInfo hyperlinkInfo = ExceptionWorker.getOpenFileHyperlinkInfo(result);
+            int offset = hyperlinkInfo == null? -1 : hyperlinkInfo.getDescriptor().getOffset();
             PsiFile psiFile = worker.getFile();
             if (offset <= 0 || psiFile == null) continue;
             PsiElement element = psiFile.findElementAt(offset);
