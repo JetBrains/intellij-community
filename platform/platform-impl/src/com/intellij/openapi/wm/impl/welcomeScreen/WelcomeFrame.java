@@ -36,6 +36,8 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.BalloonLayout;
+import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.ui.ScreenUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,6 +51,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
   private static final String DIMENSION_KEY = "WELCOME_SCREEN";
   private static WelcomeFrame ourInstance;
   private final WelcomeScreen myScreen;
+  private final BalloonLayout myBalloonLayout;
 
   public WelcomeFrame() {
     JRootPane rootPane = getRootPane();
@@ -67,6 +70,8 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
         dispose();
       }
     });
+
+    myBalloonLayout = new BalloonLayoutImpl(rootPane.getLayeredPane(), new Insets(8, 8, 8, 8));
 
     myScreen = screen;
     setupCloseAction();
@@ -177,6 +182,11 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
   @Override
   public StatusBar getStatusBar() {
     return null;
+  }
+
+  @Override
+  public BalloonLayout getBalloonLayout() {
+    return myBalloonLayout;
   }
 
   @Override

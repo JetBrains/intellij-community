@@ -36,6 +36,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
+import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.HashMap;
@@ -398,6 +399,10 @@ public class FrameWrapper implements Disposable, DataProvider {
       return null;
     }
 
+    @Override
+    public BalloonLayout getBalloonLayout() {
+      return null;
+    }
 
     private void updateTitle() {
       IdeFrameImpl.updateTitle(this, myFrameTitle, myFileTitle, myFile);
@@ -473,6 +478,12 @@ public class FrameWrapper implements Disposable, DataProvider {
 
     @Override
     public StatusBar getStatusBar() {
+      return null;
+    }
+
+    @Nullable
+    @Override
+    public BalloonLayout getBalloonLayout() {
       return null;
     }
 
