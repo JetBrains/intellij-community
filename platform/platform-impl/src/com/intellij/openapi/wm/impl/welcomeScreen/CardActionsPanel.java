@@ -20,8 +20,10 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
+import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.LightColors;
 import com.intellij.util.ui.CenteredIcon;
@@ -83,6 +85,7 @@ public class CardActionsPanel extends JPanel {
     AnAction[] actions = group.getChildren(null);
 
     List<Button> buttons = new ArrayList<Button>();
+    PresentationFactory factory = new PresentationFactory();
 
     for (AnAction action : actions) {
       Presentation presentation = action.getTemplatePresentation();
@@ -108,7 +111,11 @@ public class CardActionsPanel extends JPanel {
         }
       }
       else {
-        buttons.add(new Button(action, presentation));
+        action.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(this),
+                                        ActionPlaces.WELCOME_SCREEN, presentation, ActionManager.getInstance(), 0));
+        if (presentation.isVisible()) {
+          buttons.add(new Button(action, presentation));
+        }
       }
     }
     return buttons;
@@ -188,11 +195,6 @@ public class CardActionsPanel extends JPanel {
     @Override
     protected int iconTextSpace() {
       return 8;
-    }
-
-    @Override
-    public String getToolTipText() {
-      return null;
     }
 
     private static Presentation wrapIcon(Presentation presentation) {
