@@ -188,7 +188,10 @@ def create_CreateProcess(original_name):
 CreateProcess(*args, **kwargs)
     """
     def new_CreateProcess(appName, commandLine, *args):
-        import _subprocess
+        try:
+            import _subprocess
+        except ImportError:
+            import _winapi as _subprocess
         return getattr(_subprocess, original_name)(appName, patch_arg_str_win(commandLine), *args)
     return new_CreateProcess
 
@@ -197,7 +200,10 @@ def create_CreateProcessWarnMultiproc(original_name):
 CreateProcess(*args, **kwargs)
     """
     def new_CreateProcess(*args):
-        import _subprocess
+        try:
+            import _subprocess
+        except ImportError:
+            import _winapi as _subprocess
         warn_multiproc()
         return getattr(_subprocess, original_name)(*args)
     return new_CreateProcess
