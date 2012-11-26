@@ -80,6 +80,23 @@ public class FormsBuilderTest extends JpsBuildTestCase {
     makeAll().assertUpToDate();
   }
 
+  public void testRecompileFormForChangedClassOnSecondCompilationRound() {
+    JpsModule m = addModule("m", copyToProject(SIMPLE_FORM_PATH, "src"));
+    makeAll().assertSuccessful();
+    assertInstrumented(m, "xxx/MyForm.class");
+
+    change(getAbsolutePath("src/xxx/Constants.java"), "package xxx;\n" +
+                                                      "\n" +
+                                                      "public class Constants {\n" +
+                                                      "  public static int CONST = 10;\n" +
+                                                      "}");
+    makeAll().assertSuccessful();
+    assertCompiled(JavaBuilder.BUILDER_NAME, "src/xxx/MyForm.java", "src/xxx/Constants.java");
+    assertCompiled(FormsInstrumenter.BUILDER_NAME, "src/xxx/MyForm.form");
+    assertInstrumented(m, "xxx/MyForm.class");
+    makeAll().assertUpToDate();
+  }
+
   private static void assertNotInstrumented(JpsModule m, final String classPath) {
     assertFalse(isInstrumented(m, classPath));
   }
