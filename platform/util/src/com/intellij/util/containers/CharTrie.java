@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.util.containers;
-
-import com.intellij.util.containers.IntArrayList;
+package com.intellij.util.containers;
 
 import java.util.ArrayList;
 
@@ -65,7 +63,7 @@ public class CharTrie {
   public int getHashCode(char[] chars, int offset, int length) {
     int index = 0;
     for (int i = offset; i < offset + length; i++) {
-      index = getSubNode(index, chars[i]);
+      index = getSubNode(index, chars[i], true);
     }
     return index;
   }
@@ -74,16 +72,16 @@ public class CharTrie {
     int index = 0;
     final int l = seq.length();
     for (int i = 0; i < l; i++) {
-      index = getSubNode(index, seq.charAt(i));
+      index = getSubNode(index, seq.charAt(i), true);
     }
     return index;
   }
 
-  public long getMaximumMatch(byte[] bytes, int offset, int length) {
+  public long getMaximumMatch(CharSequence seq, int offset, int length) {
     int index = 0;
     int resultingLength = 0;
     while (length-- > 0) {
-      int nextIndex = searchForSubNode(index, bytes[offset++]);
+      int nextIndex = findSubNode(index, seq.charAt(offset++));
       if (nextIndex == 0) {
         break;
       }
@@ -122,7 +120,7 @@ public class CharTrie {
   public int getHashCodeForReversedChars(char[] chars, int offset, int length) {
     int index = 0;
     while (length-- > 0) {
-      index = getSubNode(index, chars[offset--]);
+      index = getSubNode(index, chars[offset--], true);
     }
     return index;
   }
@@ -148,19 +146,24 @@ public class CharTrie {
     return result;
   }
 
-  private int getSubNode(int parentIndex, char c) {
+  public int findSubNode(int parentIndex, char c) {
+    return getSubNode(parentIndex, c, false);
+  }
+  
+  private int getSubNode(int parentIndex, char c, boolean createIfNotExists) {
     CharTrie.Node parentNode = myAllNodes.get(parentIndex);
     if (parentNode.myChildren == null) {
+      if (!createIfNotExists) {
+        return 0;
+      }
       parentNode.myChildren = new IntArrayList(1);
     }
     IntArrayList children = parentNode.myChildren;
     int left = 0;
     int right = children.size() - 1;
-    int middle;
-    int index;
     while (left <= right) {
-      middle = (left + right) >> 1;
-      index = children.get(middle);
+      int middle = (left + right) >> 1;
+      int index = children.get(middle);
       CharTrie.Node node = myAllNodes.get(index);
       int comp = node.myChar - c;
       if (comp == 0) {
@@ -173,37 +176,14 @@ public class CharTrie {
         right = middle - 1;
       }
     }
-    index = myAllNodes.size();
+    if (!createIfNotExists) {
+      return 0;
+    }
+    
+    int index = myAllNodes.size();
     children.add(left, index);
     myAllNodes.add(new CharTrie.Node(parentIndex, c));
     return index;
-  }
-
-  private int searchForSubNode(int parentIndex, byte b) {
-    CharTrie.Node parentNode = myAllNodes.get(parentIndex);
-    IntArrayList children = parentNode.myChildren;
-    if (children == null) {
-      return 0;
-    }
-    int left = 0;
-    int right = children.size() - 1;
-    int middle;
-    while (left <= right) {
-      middle = (left + right) >> 1;
-      int index = children.get(middle);
-      CharTrie.Node node = myAllNodes.get(index);
-      int comp = node.myChar - b;
-      if (comp == 0) {
-        return index;
-      }
-      if (comp < 0) {
-        left = middle + 1;
-      }
-      else {
-        right = middle - 1;
-      }
-    }
-    return 0;
   }
 
   public void clear() {

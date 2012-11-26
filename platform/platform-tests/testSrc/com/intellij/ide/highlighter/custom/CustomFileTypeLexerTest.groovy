@@ -1,7 +1,8 @@
 /*
  * Copyright 2000-2012 JetBrains s.r.o.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License")
+
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -17,7 +18,12 @@ package com.intellij.ide.highlighter.custom
 
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.fileTypes.PlainTextSyntaxHighlighterFactory
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.impl.CancellableRunnable
+import com.intellij.psi.impl.DebugUtil
 import com.intellij.testFramework.LexerTestCase
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.Nullable
@@ -340,5 +346,53 @@ R_PARENTH (')')
 '''
   }
 
+  public void testKeywordLexerPerformance() {
+    int count = 3000
+    List<String> keywords = []
+    for (i in 0..<count) {
+      char start = ('a' as char) + (i % 7)
+      char then = start
+      keywords.add((start as String) * i)
+    }
+    SyntaxTable table = new SyntaxTable()
+    for (s in keywords) {
+      table.addKeyword1(s)
+    }
+    
+    StringBuilder text = new StringBuilder()
+    for (i in 0..10) {
+      Collections.shuffle(keywords)
+      for (s in keywords[0..10]) {
+        text.append(s + "\n")
+      }
+    }
+    
+    CharSequence bombed = new SlowCharSequence(text)
+    ThrowableRunnable cl = { LexerTestCase.printTokens(bombed, 0, new CustomFileTypeLexer(table)) } as ThrowableRunnable
+    PlatformTestUtil.startPerformanceTest("slow", 10000, cl).cpuBound().assertTiming()
+  }
 
+
+}
+
+class SlowCharSequence extends StringUtil.BombedCharSequence {
+  SlowCharSequence(CharSequence sequence) {
+    super(sequence)
+  }
+
+  @Override
+  CharSequence subSequence(int i, int i1) {
+    return new SlowCharSequence(super.subSequence(i, i1))
+  }
+
+  @Override
+  char charAt(int i) {
+    (0..100).each {  }
+    return super.charAt(i)
+  }
+
+  @Override
+  protected void checkCanceled() {
+  }
+  
 }

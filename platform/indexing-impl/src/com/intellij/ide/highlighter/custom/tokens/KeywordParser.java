@@ -20,14 +20,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.CharTrie;
 import gnu.trove.THashSet;
+import gnu.trove.TIntHashSet;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 /**
  * @author dsl
@@ -35,46 +34,23 @@ import java.util.regex.PatternSyntaxException;
 public class KeywordParser extends TokenParser {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.highlighter.custom.tokens.KeywordParser");
   private final List<Set<String>> myKeywordSets = new ArrayList<Set<String>>();
-  private final Pattern myPattern;
+  private final CharTrie myTrie = new CharTrie();
+  private final TIntHashSet myHashCodes = new TIntHashSet();
   private final boolean myIgnoreCase;
 
   public KeywordParser(List<Set<String>> keywordSets, boolean ignoreCase) {
     myIgnoreCase = ignoreCase;
     LOG.assertTrue(keywordSets.size() == CustomHighlighterTokenType.KEYWORD_TYPE_COUNT);
-    StringBuilder regex = new StringBuilder();
     for (Set<String> keywordSet : keywordSets) {
-      myKeywordSets.add(getKeywordSet(keywordSet));
-      for (String word : keywordSet) {
-        if (regex.length() > 0) {
-          regex.append("|");
-        }
-        regex.append(escapeSpecialCharacters(word));
+      Set<String> normalized = normalizeKeywordSet(keywordSet);
+      myKeywordSets.add(normalized);
+      for (String s : normalized) {
+        myHashCodes.add(myTrie.getHashCode(s));
       }
     }
-    Pattern pattern = null;
-    try {
-      String pat = "(" + regex + ")($|[^\\w-])";
-      pattern = Pattern.compile(pat, (ignoreCase ? Pattern.CASE_INSENSITIVE : 0) | Pattern.DOTALL);
-    }
-    catch (PatternSyntaxException e) {
-      LOG.info(e);
-    }
-    myPattern = pattern;
   }
 
-  private static String escapeSpecialCharacters(String word) {
-    StringBuilder esc = new StringBuilder();
-    word = word.replace("\\", "\\\\");
-    for (int i = 0; i < word.length(); i++) {
-      char ch = word.charAt(i);
-      if ("-*+?$%^.(){}[]|".indexOf(ch) >= 0) esc.append('\\');
-      esc.append(ch);
-    }
-    word = esc.toString();
-    return word;
-  }
-
-  private Set<String> getKeywordSet(Set<String> keywordSet) {
+  private Set<String> normalizeKeywordSet(Set<String> keywordSet) {
     if (!myIgnoreCase) {
       return new THashSet<String>(keywordSet);
     }
@@ -87,25 +63,39 @@ public class KeywordParser extends TokenParser {
   }
 
   public boolean hasToken(int position) {
-    if (myPattern == null) {
-      return false;
-    }
-
-    Matcher matcher = myPattern.matcher(myBuffer.subSequence(position, myBuffer.length()));
-    if (!matcher.lookingAt()) {
-      return false;
-    }
-
-    String keyword = matcher.group(1);
-    String testKeyword = myIgnoreCase ? StringUtil.toUpperCase(keyword) : keyword;
-    for (int i = 0; i < CustomHighlighterTokenType.KEYWORD_TYPE_COUNT; i++) {
-      if (myKeywordSets.get(i).contains(testKeyword)) {
-        myTokenInfo.updateData(position, position + keyword.length(), getToken(i));
-        return true;
+    int index = 0;
+    int offset = position;
+    boolean found = false;
+    while (offset < myBuffer.length()) {
+      char c = myBuffer.charAt(offset++);
+      int nextIndex = myTrie.findSubNode(index, myIgnoreCase ? Character.toUpperCase(c) : c);
+      if (nextIndex == 0) {
+        break;
+      }
+      index = nextIndex;
+      if (myHashCodes.contains(index) && isWordEnd(offset)) {
+        String keyword = myBuffer.subSequence(position, offset).toString();
+        String testKeyword = myIgnoreCase ? StringUtil.toUpperCase(keyword) : keyword;
+        for (int i = 0; i < CustomHighlighterTokenType.KEYWORD_TYPE_COUNT; i++) {
+          if (myKeywordSets.get(i).contains(testKeyword)) {
+            myTokenInfo.updateData(position, position + keyword.length(), getToken(i));
+            found = true;
+            break;
+          }
+        }
       }
     }
 
-    return false;
+    return found;
+  }
+
+  private boolean isWordEnd(int offset) {
+    if (offset == myBuffer.length()) {
+      return true;
+    }
+
+    char ch = myBuffer.charAt(offset);
+    return ch != '-' && !Character.isLetterOrDigit(ch);
   }
 
   private static IElementType getToken(int keywordSetIndex) {
