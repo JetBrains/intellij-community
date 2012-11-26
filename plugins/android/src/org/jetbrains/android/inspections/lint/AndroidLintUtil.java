@@ -4,6 +4,7 @@ import com.android.tools.lint.detector.api.Issue;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
@@ -25,9 +26,10 @@ public class AndroidLintUtil {
   }
 
   @Nullable
-  public static Pair<AndroidLintInspectionBase, HighlightDisplayLevel> getHighlighLevelAndInspection(@NotNull Issue issue,
-                                                                                              @NotNull PsiElement context) {
-    final String inspectionShortName = AndroidLintInspectionBase.getInspectionShortNameByIssue(issue);
+  public static Pair<AndroidLintInspectionBase, HighlightDisplayLevel> getHighlighLevelAndInspection(@NotNull Project project,
+                                                                                                     @NotNull Issue issue,
+                                                                                                     @NotNull PsiElement context) {
+    final String inspectionShortName = AndroidLintInspectionBase.getInspectionShortNameByIssue(project, issue);
     if (inspectionShortName == null) {
       return null;
     }

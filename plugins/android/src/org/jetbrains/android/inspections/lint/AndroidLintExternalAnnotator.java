@@ -108,7 +108,7 @@ public class AndroidLintExternalAnnotator extends ExternalAnnotator<State, State
     final BuiltinIssueRegistry fullRegistry = new BuiltinIssueRegistry();
 
     for (Issue issue : fullRegistry.getIssues()) {
-      final String inspectionShortName = AndroidLintInspectionBase.getInspectionShortNameByIssue(issue);
+      final String inspectionShortName = AndroidLintInspectionBase.getInspectionShortNameByIssue(project, issue);
       if (inspectionShortName == null) {
         continue;
       }
@@ -134,6 +134,7 @@ public class AndroidLintExternalAnnotator extends ExternalAnnotator<State, State
     if (state.isDirty()) {
       return;
     }
+    final Project project = file.getProject();
 
     for (ProblemData problemData : state.getProblems()) {
       final Issue issue = problemData.getIssue();
@@ -144,7 +145,8 @@ public class AndroidLintExternalAnnotator extends ExternalAnnotator<State, State
         continue;
       }
 
-      final Pair<AndroidLintInspectionBase, HighlightDisplayLevel> pair = AndroidLintUtil.getHighlighLevelAndInspection(issue, file);
+      final Pair<AndroidLintInspectionBase, HighlightDisplayLevel> pair =
+        AndroidLintUtil.getHighlighLevelAndInspection(project, issue, file);
       if (pair == null) {
         continue;
       }
