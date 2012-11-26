@@ -84,7 +84,7 @@ public class CreateMethodFromUsageFix implements IntentionAction {
     info.insert(myTargetClass, findInsertionAnchor(info), false);
     method = info.getPsiMember();
 
-    final PsiElement context = PsiTreeUtil.getParentOfType(myRefExpression, PsiClass.class, PsiMethod.class);
+    final PsiElement context = PsiTreeUtil.getParentOfType(myRefExpression, PsiClass.class, PsiMethod.class, PsiFile.class);
     IntentionUtils.createTemplateForMethod(argTypes, paramTypesExpressions, method, myTargetClass, constraints, false, context);
   }
 
