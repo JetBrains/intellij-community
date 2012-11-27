@@ -34,7 +34,7 @@ import java.util.HashSet;
 public class GotoSymbolModel2 extends FilteringGotoByModel<Language> {
   private String[] mySeparators;
   
-  public GotoSymbolModel2(Project project) {
+  public GotoSymbolModel2(@NotNull Project project) {
     super(project, ChooseByNameRegistry.getInstance().getSymbolModelContributors());
   }
 

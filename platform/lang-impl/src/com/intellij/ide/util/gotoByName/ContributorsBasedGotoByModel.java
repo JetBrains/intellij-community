@@ -50,7 +50,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
   protected final Project myProject;
   private final ChooseByNameContributor[] myContributors;
 
-  protected ContributorsBasedGotoByModel(Project project, ChooseByNameContributor[] contributors) {
+  protected ContributorsBasedGotoByModel(@NotNull Project project, @NotNull ChooseByNameContributor[] contributors) {
     myProject = project;
     myContributors = contributors;
   }

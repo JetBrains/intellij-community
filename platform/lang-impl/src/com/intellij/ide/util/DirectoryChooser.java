@@ -67,11 +67,11 @@ public class DirectoryChooser extends DialogWrapper {
   private final TabbedPaneWrapper myTabbedPaneWrapper;
   private final ChooseByNamePanel myChooseByNamePanel;
 
-  public DirectoryChooser(Project project){
+  public DirectoryChooser(@NotNull Project project){
     this(project, new DirectoryChooserModuleTreeView(project));
   }
 
-  public DirectoryChooser(Project project, DirectoryChooserView view){
+  public DirectoryChooser(@NotNull Project project, @NotNull DirectoryChooserView view){
     super(project, true);
     myView = view;
     final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();

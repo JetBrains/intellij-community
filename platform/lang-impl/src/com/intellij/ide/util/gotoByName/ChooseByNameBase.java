@@ -161,12 +161,12 @@ public abstract class ChooseByNameBase {
    * @param initialText initial text which will be in the lookup text field
    * @param context
    */
-  protected ChooseByNameBase(Project project, ChooseByNameModel model, String initialText, PsiElement context) {
+  protected ChooseByNameBase(Project project, @NotNull ChooseByNameModel model, String initialText, PsiElement context) {
     this(project, model, new DefaultChooseByNameItemProvider(context), initialText, 0);
   }
 
   @SuppressWarnings("UnusedDeclaration") // Used in MPS
-  protected ChooseByNameBase(Project project, ChooseByNameModel model, ChooseByNameItemProvider provider, String initialText) {
+  protected ChooseByNameBase(Project project, @NotNull ChooseByNameModel model, @NotNull ChooseByNameItemProvider provider, String initialText) {
     this(project, model, provider, initialText, 0);
   }
 
@@ -175,8 +175,8 @@ public abstract class ChooseByNameBase {
    * @param initialIndex
    */
   protected ChooseByNameBase(Project project,
-                             ChooseByNameModel model,
-                             ChooseByNameItemProvider provider,
+                             @NotNull ChooseByNameModel model,
+                             @NotNull ChooseByNameItemProvider provider,
                              String initialText,
                              final int initialIndex) {
     myProject = project;
@@ -229,6 +229,7 @@ public abstract class ChooseByNameBase {
     initUI(callback, modalityState, allowMultipleSelection);
   }
 
+  @NotNull
   public ChooseByNameModel getModel() {
     return myModel;
   }
