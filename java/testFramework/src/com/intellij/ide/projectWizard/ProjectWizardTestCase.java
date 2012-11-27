@@ -133,25 +133,27 @@ public abstract class ProjectWizardTestCase extends PlatformTestCase {
   }
 
   protected Module importModuleFrom(ProjectImportProvider provider, String path) {
-    return importFrom(path, getProject(), provider);
+    return importFrom(path, getProject(), null, provider);
   }
 
-  protected Module importProjectFrom(String path, ProjectImportProvider... providers) {
-    Module module = importFrom(path, null, providers);
+  protected Module importProjectFrom(String path, Consumer<ModuleWizardStep> adjuster, ProjectImportProvider... providers) {
+    Module module = importFrom(path, null, adjuster, providers);
     if (module != null) {
       myCreatedProject = module.getProject();
     }
     return module;
   }
 
-  private Module importFrom(String path, @Nullable Project project, final ProjectImportProvider... providers) {
+  private Module importFrom(String path,
+                            @Nullable Project project, Consumer<ModuleWizardStep> adjuster,
+                            final ProjectImportProvider... providers) {
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     assertNotNull("Can't find " + path, file);
     assertTrue(providers[0].canImport(file, project));
 
     myWizard = ImportModuleAction.createImportWizard(project, null, file, providers);
     if (myWizard.getStepCount() > 0) {
-      runWizard(null);
+      runWizard(adjuster);
     }
     List<Module> modules = ImportModuleAction.createFromWizard(project, myWizard);
     return modules == null || modules.isEmpty() ? null : modules.get(0);
