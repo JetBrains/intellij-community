@@ -468,6 +468,8 @@
 
       <action id="WelcomeScreen.Configure.Import" class="com.intellij.ide.actions.ImportSettingsAction" icon="AllIcons.General.ImportSettings"/>
       <action id="WelcomeScreen.Configure.Export" class="com.intellij.ide.actions.ExportSettingsAction" icon="AllIcons.General.ExportSettings"/>
+
+      <action id="WelcomeScreen.Configure.DesktopEntry" class="com.intellij.ide.actions.CreateDesktopEntryAction" icon="AllIcons.General.ImportProject"/>
     </group>
 
     <group id="FileChooser">
