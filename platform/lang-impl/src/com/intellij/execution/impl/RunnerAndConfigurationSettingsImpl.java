@@ -182,7 +182,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
       myConfiguration = myManager.getConfigurationTemplate(factory).getConfiguration();
     } else {
       final String name = element.getAttributeValue(NAME_ATTR);
-      // souldn't call createConfiguration since it calls StepBeforeRunProviders that
+      // shouldn't call createConfiguration since it calls StepBeforeRunProviders that
       // may not be loaded yet. This creates initialization order issue. 
       myConfiguration = myManager.doCreateConfiguration(name, factory, false);
     }
