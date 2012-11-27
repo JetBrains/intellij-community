@@ -765,6 +765,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     if (!needsFileContentLoading(indexId)) {
       return; //indexed eagerly in foreground while building unindexed file list
     }
+    if (filter == GlobalSearchScope.EMPTY_SCOPE) {
+      return;
+    }
     if (isDumb(project)) {
       handleDumbMode(project);
     }

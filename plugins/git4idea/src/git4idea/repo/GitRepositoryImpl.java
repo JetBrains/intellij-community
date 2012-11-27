@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusConnection;
 import git4idea.GitLocalBranch;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
@@ -76,7 +75,7 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
     myReader = new GitRepositoryReader(VfsUtilCore.virtualToIoFile(myGitDir));
 
     myMessageBus = project.getMessageBus();
-    myNotifier = new QueueProcessor<Object>(new NotificationConsumer(myProject, myMessageBus), myProject.getDisposed());
+    myNotifier = new QueueProcessor<Object>(new NotificationConsumer(myProject, myMessageBus, this), myProject.getDisposed());
     if (!light) {
       myUntrackedFilesHolder = new GitUntrackedFilesHolder(this);
       Disposer.register(this, myUntrackedFilesHolder);
@@ -211,13 +210,6 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
   }
 
   @Override
-  public void addListener(@NotNull GitRepositoryChangeListener listener) {
-    MessageBusConnection connection = myMessageBus.connect();
-    Disposer.register(this, connection);
-    connection.subscribe(GIT_REPO_CHANGE, listener);
-  }
-
-  @Override
   public void update() {
     File configFile = new File(VfsUtilCore.virtualToIoFile(myGitDir), "config");
     GitConfig config = GitConfig.read(myPlatformFacade, configFile);
@@ -243,16 +235,18 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
 
     private final Project myProject;
     private final MessageBus myMessageBus;
+    private final GitRepository myRepository;
 
-    NotificationConsumer(Project project, MessageBus messageBus) {
+    NotificationConsumer(Project project, MessageBus messageBus, GitRepository repository) {
       myProject = project;
       myMessageBus = messageBus;
+      myRepository = repository;
     }
 
     @Override
     public void consume(Object o) {
       if (!Disposer.isDisposed(myProject)) {
-        myMessageBus.syncPublisher(GIT_REPO_CHANGE).repositoryChanged();
+        myMessageBus.syncPublisher(GIT_REPO_CHANGE).repositoryChanged(myRepository);
       }
     }
   }

@@ -47,7 +47,7 @@ public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidge
 
   public GitBranchWidget(Project project) {
     super(project);
-    GitUtil.getRepositoryManager(project).addListenerToAllRepositories(this);
+    project.getMessageBus().connect().subscribe(GitRepository.GIT_REPO_CHANGE, this);
     mySettings = GitVcsSettings.getInstance(project);
     myMaxString = "Git: Rebasing master";
   }
@@ -84,7 +84,7 @@ public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidge
   }
 
   @Override
-  public void repositoryChanged() {
+  public void repositoryChanged(@NotNull GitRepository repository) {
     update();
   }
 

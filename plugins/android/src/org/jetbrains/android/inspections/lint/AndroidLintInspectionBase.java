@@ -9,6 +9,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,6 +21,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -33,6 +35,7 @@ import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.*;
@@ -43,7 +46,7 @@ import java.util.*;
 public abstract class AndroidLintInspectionBase extends GlobalInspectionTool implements CustomSuppressableInspectionTool {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.inspections.lint.AndroidLintInspectionBase");
 
-  private static final Map<Issue, String> ourIssue2InspectionShortName = new HashMap<Issue, String>();
+  private static volatile Map<Issue, String> ourIssue2InspectionShortName;
 
   protected final Issue myIssue;
   private final String[] myGroupPath;
@@ -60,8 +63,6 @@ public abstract class AndroidLintInspectionBase extends GlobalInspectionTool imp
     myGroupPath = ArrayUtil.mergeArrays(new String[]{AndroidBundle.message("android.inspections.group.name"),
       AndroidBundle.message("android.lint.inspections.subgroup.name")}, categoryNames);
     myDisplayName = displayName;
-
-    addIssue(issue, getShortName());
   }
 
   @NotNull
@@ -202,11 +203,31 @@ public abstract class AndroidLintInspectionBase extends GlobalInspectionTool imp
     return false;
   }
 
-  private synchronized static void addIssue(@NotNull Issue issue, @NotNull String shortName) {
-    ourIssue2InspectionShortName.put(issue, shortName);
+  @TestOnly
+  public static void invalidateInspectionShortName2IssueMap() {
+    ourIssue2InspectionShortName = null;
   }
 
-  public synchronized static String getInspectionShortNameByIssue(@NotNull Issue issue) {
+  public synchronized static String getInspectionShortNameByIssue(@NotNull Project project, @NotNull Issue issue) {
+    if (ourIssue2InspectionShortName == null) {
+      ourIssue2InspectionShortName = new HashMap<Issue, String>();
+
+      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+
+      for (InspectionProfileEntry e : profile.getInspectionTools(null)) {
+        final String shortName = e.getShortName();
+
+        if (shortName.startsWith("AndroidLint")) {
+          final InspectionProfileEntry entry = e instanceof InspectionToolWrapper
+                                               ? ((InspectionToolWrapper)e).getTool()
+                                               : e;
+          if (entry instanceof AndroidLintInspectionBase) {
+            final Issue s = ((AndroidLintInspectionBase)entry).getIssue();
+            ourIssue2InspectionShortName.put(s, shortName);
+          }
+        }
+      }
+    }
     return ourIssue2InspectionShortName.get(issue);
   }
 
@@ -321,6 +342,11 @@ public abstract class AndroidLintInspectionBase extends GlobalInspectionTool imp
     return scope != Scope.MANIFEST &&
            scope != Scope.RESOURCE_FILE &&
            scope != Scope.PROGUARD_FILE;
+  }
+
+  @NotNull
+  public Issue getIssue() {
+    return myIssue;
   }
 
   static class MyLocalQuickFix implements LocalQuickFix {

@@ -40,6 +40,7 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -510,7 +511,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
       final int height = Math.max(20, Math.min(100, table.getSelectedRowCount() * table.getRowHeight()));
       final int width = table.getColumnModel().getColumn(column).getWidth();
 
-      final BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+      final BufferedImage image = UIUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB);
       Graphics2D g2 = (Graphics2D)image.getGraphics();
 
       g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
@@ -556,7 +557,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
       label.setBackground(tree.getBackground());
       label.setFont(tree.getFont());
       label.setSize(label.getPreferredSize());
-      final BufferedImage image = new BufferedImage(label.getWidth(), label.getHeight(), BufferedImage.TYPE_INT_ARGB);
+      final BufferedImage image = UIUtil.createImage(label.getWidth(), label.getHeight(), BufferedImage.TYPE_INT_ARGB);
 
       Graphics2D g2 = (Graphics2D)image.getGraphics();
       g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));

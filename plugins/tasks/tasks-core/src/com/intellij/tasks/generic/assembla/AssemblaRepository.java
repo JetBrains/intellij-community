@@ -1,5 +1,6 @@
 package com.intellij.tasks.generic.assembla;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.generic.GenericRepository;
 import com.intellij.tasks.generic.GenericRepositoryEditor;
@@ -71,6 +72,6 @@ public class AssemblaRepository extends GenericRepository {
 
   @Override
   public String getPresentableName() {
-    return getUsername() + "'s tickets";
+    return StringUtil.isEmpty(getUsername()) ? "<undefined>" : getUsername() + "'s tickets";
   }
 }

@@ -31,6 +31,7 @@ import com.intellij.ui.IconDeferrer;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,7 +80,7 @@ public class IconUtil {
     icon.paintIcon(new JPanel(), g, 0, 0);
     g.dispose();
 
-    final BufferedImage img = new BufferedImage(w, h, Transparency.TRANSLUCENT);
+    final BufferedImage img = UIUtil.createImage(w, h, Transparency.TRANSLUCENT);
     final int offX = icon.getIconWidth() > maxWidth ? (icon.getIconWidth() - maxWidth) / 2 : 0;
     final int offY = icon.getIconHeight() > maxHeight ? (icon.getIconHeight() - maxHeight) / 2 : 0;
     for (int col = 0; col < w; col++) {
@@ -95,12 +96,12 @@ public class IconUtil {
   public static Icon flip(@NotNull Icon icon, boolean horizontal) {
     int w = icon.getIconWidth();
     int h = icon.getIconHeight();
-    BufferedImage first = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+    BufferedImage first = UIUtil.createImage(w, h, BufferedImage.TYPE_INT_ARGB);
     Graphics2D g = first.createGraphics();
     icon.paintIcon(new JPanel(), g, 0, 0);
     g.dispose();
 
-    BufferedImage second = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+    BufferedImage second = UIUtil.createImage(w, h, BufferedImage.TYPE_INT_ARGB);
     g = second.createGraphics();
     if (horizontal) {
       g.drawImage(first, 0, 0, w, h, w, 0, 0, h, null);

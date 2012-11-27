@@ -1122,7 +1122,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
         myZoomRect = new Rectangle(0, 0, 32, 32);
 
-        myMaskImage = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
+        myMaskImage = UIUtil.createImage(32, 32, BufferedImage.TYPE_INT_ARGB);
         Graphics2D maskG = myMaskImage.createGraphics();
         maskG.setColor(Color.BLUE);
         maskG.fillRect(0, 0, 32, 32);
@@ -1132,7 +1132,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
         maskG.fillRect(0, 0, 32, 32);
         maskG.dispose();
 
-        myMagnifierImage = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
+        myMagnifierImage = UIUtil.createImage(32, 32, BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = myMagnifierImage.createGraphics();
 
         graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);

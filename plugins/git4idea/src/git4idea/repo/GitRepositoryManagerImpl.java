@@ -47,7 +47,6 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
   @NotNull private final ProjectLevelVcsManager myVcsManager;
 
   @NotNull private final Map<VirtualFile, GitRepository> myRepositories = new HashMap<VirtualFile, GitRepository>();
-  @NotNull private final Set<GitRepositoryChangeListener> myListeners = new HashSet<GitRepositoryChangeListener>();
 
   @NotNull private final ReentrantReadWriteLock REPO_LOCK = new ReentrantReadWriteLock();
   @NotNull private final GitPlatformFacade myPlatformFacade;
@@ -76,7 +75,6 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
     try {
       REPO_LOCK.writeLock().lock();
       myRepositories.clear();
-      myListeners.clear();
     }
     finally {
       REPO_LOCK.writeLock().unlock();
@@ -143,14 +141,6 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
   @Override
   public boolean moreThanOneRoot() {
     return myRepositories.size() > 1;
-  }
-
-  @Override
-  public void addListenerToAllRepositories(@NotNull GitRepositoryChangeListener listener) {
-    myListeners.add(listener);
-    for (GitRepository repo : getRepositories()) {
-      repo.addListener(listener);
-    }
   }
 
   @Override
@@ -229,11 +219,7 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
   }
 
   private GitRepository createGitRepository(VirtualFile root) {
-    GitRepository repository = GitRepositoryImpl.getFullInstance(root, myProject, myPlatformFacade, this);
-    for (GitRepositoryChangeListener listener : myListeners) {
-      repository.addListener(listener);
-    }
-    return repository;
+    return GitRepositoryImpl.getFullInstance(root, myProject, myPlatformFacade, this);
   }
 
   @Override

@@ -90,10 +90,7 @@ public class GitInit extends DumbAwareAction {
       return;
     }
 
-    if (project.isDefault()) return;
-    int rc = Messages.showYesNoDialog(project, GitBundle.getString("init.add.root.message"), GitBundle.getString("init.add.root.title"),
-                                      Messages.getQuestionIcon());
-    if (rc != 0) {
+    if (project.isDefault()) {
       return;
     }
     final String path = root.equals(baseDir) ? "" : root.getPath();

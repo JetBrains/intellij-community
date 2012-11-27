@@ -45,7 +45,6 @@ import java.util.Collection;
  * </p>
  * <p>
  *   Other components may subscribe to GitRepository changes via the {@link #GIT_REPO_CHANGE} {@link Topic}
- *   or preferably via {@link GitRepositoryManager#addListenerToAllRepositories(GitRepositoryChangeListener)}
  * </p>
  *
  * <p>
@@ -155,8 +154,6 @@ public interface GitRepository {
    * @return true if current repository is "fresh", i.e. if no commits have been made yet.
    */
   boolean isFresh();
-
-  void addListener(@NotNull GitRepositoryChangeListener listener);
 
   /**
    * Synchronously updates the GitRepository by reading information from .git/config and .git/refs/...

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.repo;
+package org.jetbrains.idea.maven.dom.converters;
 
+import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * {@link #repositoryChanged(GitRepository)} is called on every {@link GitRepository} change.
- * @author Kirill Likhodedov
+ * @author Sergey Evdokimov
  */
-public interface GitRepositoryChangeListener {
+public interface  MavenDomSoftAwareConverter {
 
-  void repositoryChanged(@NotNull GitRepository repository);
+  boolean isSoft(@NotNull DomElement element);
 
 }

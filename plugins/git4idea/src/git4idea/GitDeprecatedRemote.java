@@ -214,29 +214,6 @@ public final class GitDeprecatedRemote {
   }
 
   /**
-   * Get information about remote stored in locally (remote end is not queried about branches)
-   *
-   * @param project the context project
-   * @param root    the VCS root
-   * @param name    the name of the of the remote to find
-   * @return a information about remotes
-   * @throws VcsException if there is a problem with running git
-   */
-  @Nullable
-  public static GitDeprecatedRemote find(@NotNull Project project, @NotNull VirtualFile root, @NotNull String name) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
-    handler.setNoSSH(true);
-    handler.setSilent(true);
-    handler.ignoreErrorCode(1);
-    handler.addParameters("show", "-n", name);
-    String output = handler.run();
-    if (handler.getExitCode() != 0) {
-      return null;
-    }
-    return parseRemoteInternal(name, output);
-  }
-
-  /**
    * Parse output of the remote (internal method)
    *
    * @param name   the name of the remote
@@ -275,24 +252,6 @@ public final class GitDeprecatedRemote {
 
   private static String unexpectedFormat(String remoteName, String output) {
     return String.format("Unexpected format for 'git remote show'. Remote: %s, output:%n%s", remoteName, output);
-  }
-
-
-  /**
-   * Get information about remote stored in locally (remote end is not queried about branches)
-   *
-   * @param project the current project
-   * @param root    the VCS root
-   * @return a information about remotes
-   * @throws VcsException if there is a problem with running git
-   */
-  public Info localInfo(Project project, VirtualFile root) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
-    handler.setNoSSH(true);
-    handler.setSilent(true);
-    handler.addParameters("show", "-n", myName);
-    String output = handler.run();
-    return parseInfoInternal(output);
   }
 
 

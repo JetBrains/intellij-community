@@ -17,7 +17,6 @@ package git4idea.test
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
@@ -61,11 +60,6 @@ public class GitTestRepositoryManager implements GitRepositoryManager {
   @Override
   public boolean moreThanOneRoot() {
     myRepositories.size() > 1
-  }
-
-  @Override
-  public void addListenerToAllRepositories(@NotNull GitRepositoryChangeListener listener) {
-    throw new UnsupportedOperationException();
   }
 
   @Override

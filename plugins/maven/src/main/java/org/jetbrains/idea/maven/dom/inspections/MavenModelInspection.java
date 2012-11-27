@@ -15,9 +15,12 @@
  */
 package org.jetbrains.idea.maven.dom.inspections;
 
+import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.highlighting.BasicDomElementsInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
+import org.jetbrains.idea.maven.dom.converters.MavenDomSoftAwareConverter;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 
 public class MavenModelInspection extends BasicDomElementsInspection<MavenDomProjectModel> {
@@ -38,5 +41,15 @@ public class MavenModelInspection extends BasicDomElementsInspection<MavenDomPro
   @NotNull
   public String getShortName() {
     return "MavenModelInspection";
+  }
+
+  @Override
+  protected boolean shouldCheckResolveProblems(GenericDomValue value) {
+    Converter converter = value.getConverter();
+    if (converter instanceof MavenDomSoftAwareConverter) {
+      return !((MavenDomSoftAwareConverter)converter).isSoft(value);
+    }
+
+    return true;
   }
 }

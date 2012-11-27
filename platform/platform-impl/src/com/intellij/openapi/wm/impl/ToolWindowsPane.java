@@ -1038,7 +1038,7 @@ final class ToolWindowsPane extends JLayeredPane implements Disposable {
           // Under Linux we have found that images created by createCompatibleImage(),
           // createVolatileImage(), etc extremely slow for rendering. TrueColor buffered image
           // is MUCH faster.
-          image=new BufferedImage(width,height,BufferedImage.TYPE_INT_RGB);
+          image=UIUtil.createImage(width,height,BufferedImage.TYPE_INT_RGB);
         }
         myBottomImageRef=new SoftReference<BufferedImage>(image);
       }
@@ -1064,7 +1064,7 @@ final class ToolWindowsPane extends JLayeredPane implements Disposable {
           // Under Linux we have found that images created by createCompatibleImage(),
           // createVolatileImage(), etc extremely slow for rendering. TrueColor buffered image
           // is MUCH faster.
-          image=new BufferedImage(width,height,BufferedImage.TYPE_INT_RGB);
+          image=UIUtil.createImage(width,height,BufferedImage.TYPE_INT_RGB);
         }
         myTopImageRef=new SoftReference<BufferedImage>(image);
       }

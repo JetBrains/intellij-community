@@ -34,7 +34,6 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.image.BufferedImage;
 import java.lang.ref.WeakReference;
 
 public class DnDManagerImpl extends DnDManager implements Disposable {
@@ -61,7 +60,7 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
   private final DragGestureListener myDragGestureListener = new MyDragGestureListener();
   private final DropTargetListener myDropTargetListener = new MyDropTargetListener();
 
-  private static final Image EMPTY_IMAGE = new BufferedImage(1, 1, Transparency.TRANSLUCENT);
+  private static final Image EMPTY_IMAGE = UIUtil.createImage(1, 1, Transparency.TRANSLUCENT);
 
   private final Timer myTooltipTimer = UIUtil.createNamedTimer("DndManagerImpl tooltip timer",ToolTipManager.sharedInstance().getInitialDelay(), new ActionListener() {
     public void actionPerformed(ActionEvent e) {
