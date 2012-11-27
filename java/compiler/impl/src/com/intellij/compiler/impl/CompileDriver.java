@@ -708,7 +708,9 @@ public class CompileDriver {
             for (final String path : CompilerPathsEx.getOutputPaths(ModuleManager.getInstance(myProject).getModules())) {
               outputs.add(new File(path));
             }
-            CompilerUtil.refreshIOFiles(outputs);
+            if (!outputs.isEmpty()) {
+              LocalFileSystem.getInstance().refreshIoFiles(outputs, true, false, null);
+            }
           }
         }
       };
