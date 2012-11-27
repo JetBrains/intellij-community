@@ -108,7 +108,7 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
         return PyBundle.message("refactoring.change.signature.dialog.validation.name.defined");
       }
       if (!isNameValid(functionName, myProject)) {
-        return PyBundle.message("refactoring.change.signature.dialog.validation.name");
+        return PyBundle.message("refactoring.change.signature.dialog.validation.function.name");
       }
     }
     final List<PyParameterTableModelItem> parameters = myParametersTableModel.getItems();
@@ -124,7 +124,7 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
       final PyParameterInfo parameter = info.parameter;
       final String name = parameter.getName();
       if (!isNameValid(name, myProject)) {
-        return PyBundle.message("refactoring.change.signature.dialog.validation.name");
+        return PyBundle.message("refactoring.change.signature.dialog.validation.parameter.name");
       }
       if (parameterNames.contains(name)) {
         return PyBundle.message("ANN.duplicate.param.name");
