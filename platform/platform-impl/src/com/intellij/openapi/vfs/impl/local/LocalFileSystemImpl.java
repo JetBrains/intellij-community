@@ -139,7 +139,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   }
 
   @TestOnly
-  public void cleanupForNextTest(Set<VirtualFile> survivors) throws IOException {
+  public void cleanupForNextTest(@NotNull Set<VirtualFile> survivors) throws IOException {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {

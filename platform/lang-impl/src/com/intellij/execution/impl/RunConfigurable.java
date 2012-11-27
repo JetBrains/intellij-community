@@ -183,7 +183,7 @@ class RunConfigurable extends BaseConfigurable {
               snapshot = settings.getSettings();
               configuration = settings.getConfiguration();
               name = settings.getNameText();
-              shared = runManager.isConfigurationShared(snapshot);
+              shared = settings.isStoreProjectConfiguration();
               setIcon(ProgramRunnerUtil.getConfigurationIcon(snapshot, !settings.isValid(), runManager.isTemporary(configuration)));
             }
             else if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
@@ -459,6 +459,14 @@ class RunConfigurable extends BaseConfigurable {
         update();
       }
     });
+
+    info.addSharedListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        changed[0] = true;
+        update();
+      }
+    });
   }
 
   private void drawPressAddButtonMessage(final ConfigurationType configurationType) {
@@ -669,7 +677,7 @@ class RunConfigurable extends BaseConfigurable {
         RunnerAndConfigurationSettings settings = null;
         if (userObject instanceof SingleConfigurationConfigurable) {
           final SingleConfigurationConfigurable configurable = (SingleConfigurationConfigurable)userObject;
-           settings = (RunnerAndConfigurationSettings)configurable.getSettings();
+          settings = (RunnerAndConfigurationSettings)configurable.getSettings();
           if (manager.isTemporary(settings)) {
             applyConfiguration(typeNode, configurable);
           }
@@ -925,6 +933,11 @@ class RunConfigurable extends BaseConfigurable {
     return null;
   }
 
+  @NotNull
+  private DefaultMutableTreeNode getNode(int row) {
+    return (DefaultMutableTreeNode)myTree.getPathForRow(row).getLastPathComponent();
+  }
+
   @Nullable
   Trinity<Integer, Integer, RowsDnDSupport.RefinedDropSupport.Position> getAvailableDropPosition(int direction) {
     int[] rows = myTree.getSelectionRows();
@@ -944,6 +957,20 @@ class RunConfigurable extends BaseConfigurable {
                                                             INTO :
                                                             direction > 0 ? BELOW : ABOVE;
       if (myTreeModel.canDrop(oldIndex, newIndex, position)) {
+        DefaultMutableTreeNode oldNode = getNode(oldIndex);
+        DefaultMutableTreeNode newNode = getNode(newIndex);
+        if (oldNode.getParent() != newNode.getParent() && getKind(newNode) != FOLDER) {
+          RowsDnDSupport.RefinedDropSupport.Position copy = position;
+          if (position == BELOW) {
+            copy = ABOVE;
+          }
+          else if (position == ABOVE) {
+            copy = BELOW;
+          }
+          if (myTreeModel.canDrop(oldIndex, newIndex, copy)) {
+            return Trinity.create(oldIndex, newIndex, copy);
+          }
+        }
         return Trinity.create(oldIndex, newIndex, position);
       }
       if (position == BELOW && newIndex < myTree.getRowCount() - 1 && myTreeModel.canDrop(oldIndex, newIndex + 1, ABOVE)) {
@@ -996,7 +1023,7 @@ class RunConfigurable extends BaseConfigurable {
 
   private SingleConfigurationConfigurable<RunConfiguration> createNewConfiguration(final RunnerAndConfigurationSettings settings, final DefaultMutableTreeNode node) {
     final SingleConfigurationConfigurable<RunConfiguration> configurationConfigurable =
-        SingleConfigurationConfigurable.editSettings(settings, null);
+      SingleConfigurationConfigurable.editSettings(settings, null);
     installUpdateListeners(configurationConfigurable);
     DefaultMutableTreeNode nodeToAdd = new DefaultMutableTreeNode(configurationConfigurable);
     myTreeModel.insertNodeInto(nodeToAdd, node, node.getChildCount());
@@ -1057,76 +1084,76 @@ class RunConfigurable extends BaseConfigurable {
         }
       });
       final ListPopup popup =
-          popupFactory.createListPopup(new BaseListPopupStep<ConfigurationType>(
-            ExecutionBundle.message("add.new.run.configuration.acrtion.name"), configurationTypes) {
+        popupFactory.createListPopup(new BaseListPopupStep<ConfigurationType>(
+          ExecutionBundle.message("add.new.run.configuration.acrtion.name"), configurationTypes) {
 
-            @NotNull
-            public String getTextFor(final ConfigurationType type) {
-              return type.getDisplayName();
+          @NotNull
+          public String getTextFor(final ConfigurationType type) {
+            return type.getDisplayName();
+          }
+
+          @Override
+          public boolean isSpeedSearchEnabled() {
+            return true;
+          }
+
+          @Override
+          public boolean canBeHidden(ConfigurationType value) {
+            return true;
+          }
+
+          public Icon getIconFor(final ConfigurationType type) {
+            return type.getIcon();
+          }
+
+          public PopupStep onChosen(final ConfigurationType type, final boolean finalChoice) {
+            if (hasSubstep(type)) {
+              return getSupStep(type);
             }
-
-            @Override
-            public boolean isSpeedSearchEnabled() {
-              return true;
+            final ConfigurationFactory[] factories = type.getConfigurationFactories();
+            if (factories.length > 0) {
+              createNewConfiguration(factories[0]);
             }
+            return FINAL_CHOICE;
+          }
 
-            @Override
-            public boolean canBeHidden(ConfigurationType value) {
-              return true;
-            }
+          public int getDefaultOptionIndex() {
+            ConfigurationType type = getSelectedConfigurationType();
+            return type != null ? ArrayUtilRt.find(configurationTypes, type) : super.getDefaultOptionIndex();
+          }
 
-            public Icon getIconFor(final ConfigurationType type) {
-              return type.getIcon();
-            }
-
-            public PopupStep onChosen(final ConfigurationType type, final boolean finalChoice) {
-              if (hasSubstep(type)) {
-                return getSupStep(type);
+          private ListPopupStep getSupStep(final ConfigurationType type) {
+            final ConfigurationFactory[] factories = type.getConfigurationFactories();
+            Arrays.sort(factories, new Comparator<ConfigurationFactory>() {
+              public int compare(final ConfigurationFactory factory1, final ConfigurationFactory factory2) {
+                return factory1.getName().compareTo(factory2.getName());
               }
-              final ConfigurationFactory[] factories = type.getConfigurationFactories();
-              if (factories.length > 0) {
-                createNewConfiguration(factories[0]);
+            });
+            return new BaseListPopupStep<ConfigurationFactory>(
+              ExecutionBundle.message("add.new.run.configuration.action.name", type.getDisplayName()), factories) {
+
+              @NotNull
+              public String getTextFor(final ConfigurationFactory value) {
+                return value.getName();
               }
-              return FINAL_CHOICE;
-            }
 
-            public int getDefaultOptionIndex() {
-              ConfigurationType type = getSelectedConfigurationType();
-              return type != null ? ArrayUtilRt.find(configurationTypes, type) : super.getDefaultOptionIndex();
-            }
+              public Icon getIconFor(final ConfigurationFactory factory) {
+                return factory.getIcon();
+              }
 
-            private ListPopupStep getSupStep(final ConfigurationType type) {
-              final ConfigurationFactory[] factories = type.getConfigurationFactories();
-              Arrays.sort(factories, new Comparator<ConfigurationFactory>() {
-                public int compare(final ConfigurationFactory factory1, final ConfigurationFactory factory2) {
-                  return factory1.getName().compareTo(factory2.getName());
-                }
-              });
-              return new BaseListPopupStep<ConfigurationFactory>(
-                ExecutionBundle.message("add.new.run.configuration.action.name", type.getDisplayName()), factories) {
+              public PopupStep onChosen(final ConfigurationFactory factory, final boolean finalChoice) {
+                createNewConfiguration(factory);
+                return FINAL_CHOICE;
+              }
 
-                @NotNull
-                public String getTextFor(final ConfigurationFactory value) {
-                  return value.getName();
-                }
+            };
+          }
 
-                public Icon getIconFor(final ConfigurationFactory factory) {
-                  return factory.getIcon();
-                }
+          public boolean hasSubstep(final ConfigurationType type) {
+            return type.getConfigurationFactories().length > 1;
+          }
 
-                public PopupStep onChosen(final ConfigurationFactory factory, final boolean finalChoice) {
-                  createNewConfiguration(factory);
-                  return FINAL_CHOICE;
-                }
-
-              };
-            }
-
-            public boolean hasSubstep(final ConfigurationType type) {
-              return type.getConfigurationFactories().length > 1;
-            }
-
-          });
+        });
       //new TreeSpeedSearch(myTree);
       popup.showUnderneathOf(myToolbarDecorator.getActionsPanel());
     }
@@ -1800,7 +1827,7 @@ class RunConfigurable extends BaseConfigurable {
         } else {
           index = newParent.getIndex(newNode);
           if (position == BELOW)
-          index++;
+            index++;
         }
         insertNodeInto(oldNode, newParent, index);
       }

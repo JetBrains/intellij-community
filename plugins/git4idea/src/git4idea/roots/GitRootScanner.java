@@ -40,7 +40,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class GitRootScanner implements BulkFileListener, ModuleRootListener, Disposable, VcsListener {
 
-  @NotNull private final Runnable myExecuteAfterScan;
   @NotNull private final GitRootProblemNotifier myRootProblemNotifier;
 
   private volatile boolean myProjectIsInitialized;
@@ -49,8 +48,7 @@ public class GitRootScanner implements BulkFileListener, ModuleRootListener, Dis
   @NotNull private final Alarm myAlarm;
   private static final long WAIT_BEFORE_SCAN = TimeUnit.SECONDS.toMillis(1);
 
-  public GitRootScanner(@NotNull Project project, @NotNull Runnable executeAfterScan) {
-    myExecuteAfterScan = executeAfterScan;
+  public GitRootScanner(@NotNull Project project) {
     myRootProblemNotifier = GitRootProblemNotifier.getInstance(project);
 
     StartupManager.getInstance(project).runWhenProjectIsInitialized(new DumbAwareRunnable() {
@@ -118,7 +116,6 @@ public class GitRootScanner implements BulkFileListener, ModuleRootListener, Dis
       @Override
       public void run() {
         myRootProblemNotifier.rescanAndNotifyIfNeeded();
-        myExecuteAfterScan.run();
       }
     }, WAIT_BEFORE_SCAN);
   }

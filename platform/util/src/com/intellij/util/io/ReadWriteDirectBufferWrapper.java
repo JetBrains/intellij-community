@@ -64,6 +64,7 @@ public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
           channel.position(myPosition);
           buffer.rewind();
           channel.write(buffer);
+          myDirty = false;
         }
         finally {
           channel.close();

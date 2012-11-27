@@ -172,17 +172,21 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     myIsTemplate = Boolean.valueOf(element.getAttributeValue(TEMPLATE_FLAG_ATTRIBUTE)).booleanValue();
     myTemporary = Boolean.valueOf(element.getAttributeValue(TEMPORARY_ATTRIBUTE)).booleanValue() || TEMP_CONFIGURATION.equals(element.getName());
     myEditBeforeRun = Boolean.valueOf(element.getAttributeValue(EDIT_BEFORE_RUN)).booleanValue();
-    mySingleton = Boolean.valueOf(element.getAttributeValue(SINGLETON)).booleanValue();
     myFolderName = element.getAttributeValue(FOLDER_NAME);
+    // singleton is not configurable by user for template
+    if (!myIsTemplate) {
+      mySingleton = Boolean.valueOf(element.getAttributeValue(SINGLETON)).booleanValue();
+    }
 
     final ConfigurationFactory factory = getFactory(element);
     if (factory == null) return;
 
     if (myIsTemplate) {
+      mySingleton = factory.isConfigurationSingletonByDefault();
       myConfiguration = myManager.getConfigurationTemplate(factory).getConfiguration();
     } else {
       final String name = element.getAttributeValue(NAME_ATTR);
-      // souldn't call createConfiguration since it calls StepBeforeRunProviders that
+      // shouldn't call createConfiguration since it calls StepBeforeRunProviders that
       // may not be loaded yet. This creates initialization order issue. 
       myConfiguration = myManager.doCreateConfiguration(name, factory, false);
     }

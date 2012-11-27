@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>TryFinallyCanBeTryWithResources.java</file>
+    <line>16</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'try finally' replaceable with 'try' with resources</problem_class>
+    <description>&lt;code&gt;try&lt;/code&gt; can use automatic resource management #loc</description>
+  </problem>
+</problems>

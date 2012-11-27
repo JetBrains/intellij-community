@@ -35,6 +35,7 @@ public class HgPullAction extends HgAbstractGlobalAction {
         dialog.setRoots(repos);
         dialog.show();
         if (dialog.isOK()) {
+          dialog.rememberSettings();
           return buildCommand(dialog, project);
         }
         return null;
@@ -42,7 +43,7 @@ public class HgPullAction extends HgAbstractGlobalAction {
     };
   }
 
-  private HgGlobalCommand buildCommand(final HgPullDialog dialog, final Project project) {
+  private static HgGlobalCommand buildCommand(final HgPullDialog dialog, final Project project) {
     return new HgGlobalCommand() {
       public VirtualFile getRepo() {
         return dialog.getRepository();

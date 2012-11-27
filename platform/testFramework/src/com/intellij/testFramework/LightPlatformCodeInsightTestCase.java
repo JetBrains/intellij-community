@@ -595,7 +595,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     new CommentByLineCommentHandler().invoke(getProject(), getEditor(), getFile());
   }
   
-  protected static void executeAction(@NotNull final String actionId) {
+  protected static void executeAction(@NonNls @NotNull final String actionId) {
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       @Override
       public void run() {

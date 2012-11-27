@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -64,16 +63,16 @@ public class HgPusher {
           VcsBalloonProblemNotifier.showOverChangesView(myProject, "No Mercurial repositories in the project", MessageType.ERROR);
         }
         VirtualFile firstRepo = repositories.get(0);
-        final String defaultPushPath = getDefaultPushPath(myProject, firstRepo);
         final List<HgTagBranch> branches = getBranches(myProject, firstRepo);
 
         final AtomicReference<HgPushCommand> pushCommand = new AtomicReference<HgPushCommand>();
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           @Override
           public void run() {
-            final HgPushDialog dialog = new HgPushDialog(myProject, repositories, defaultPushPath, branches);
+            final HgPushDialog dialog = new HgPushDialog(myProject, repositories, branches);
             dialog.show();
             if (dialog.isOK()) {
+              dialog.rememberSettings();
               pushCommand.set(preparePushCommand(myProject, dialog));
             }
           }

@@ -56,7 +56,8 @@ public class RenamePsiDirectoryProcessor extends RenamePsiElementProcessor {
 
   public void renameElement(final PsiElement element,
                             final String newName,
-                            final UsageInfo[] usages, final RefactoringElementListener listener) throws IncorrectOperationException {
+                            final UsageInfo[] usages,
+                            @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
     PsiDirectory aDirectory = (PsiDirectory) element;
     // rename all non-package statement references
     for (UsageInfo usage : usages) {
@@ -71,7 +72,9 @@ public class RenamePsiDirectoryProcessor extends RenamePsiElementProcessor {
     }
 
     aDirectory.setName(newName);
-    listener.elementRenamed(aDirectory);
+    if (listener != null) {
+      listener.elementRenamed(aDirectory);
+    }
   }
 
   public String getQualifiedNameAfterRename(final PsiElement element, final String newName, final boolean nonJava) {

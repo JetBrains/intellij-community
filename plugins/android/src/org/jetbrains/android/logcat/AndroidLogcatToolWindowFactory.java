@@ -178,6 +178,7 @@ public class AndroidLogcatToolWindowFactory implements ToolWindowFactory {
   private static void checkFacetAndSdk(Project project, AndroidLogcatView view) {
     final List<AndroidFacet> facets = ProjectFacetManager.getInstance(project).getFacets(AndroidFacet.ID);
     final ConsoleView console = view.getLogConsole().getConsole();
+    assert console != null;
 
     if (facets.size() == 0) {
       console.clear();

@@ -24,7 +24,6 @@ import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
@@ -62,11 +61,13 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
     mySmartPointerManager = SmartPointerManager.getInstance(project);
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new InvertBooleanUsageViewDescriptor(myElement);
   }
 
+  @Override
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     if (myRenameProcessor.preprocessUsages(refUsages)) {
       prepareSuccessful();
@@ -75,6 +76,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
     return false;
   }
 
+  @Override
   @NotNull
   protected UsageInfo[] findUsages() {
     final List<SmartPsiElementPointer> toInvert = new ArrayList<SmartPsiElementPointer>();
@@ -175,7 +177,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
     for (PsiReference ref : refs) {
       final PsiElement element = ref.getElement();
       if (element instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression refExpr = ((PsiReferenceExpression)element);
+        final PsiReferenceExpression refExpr = (PsiReferenceExpression)element;
         PsiElement parent = refExpr.getParent();
         if (parent instanceof PsiAssignmentExpression && refExpr.equals(((PsiAssignmentExpression)parent).getLExpression())) {
           toInvert.add(mySmartPointerManager.createSmartPsiElementPointer(((PsiAssignmentExpression)parent).getRExpression()));
@@ -203,9 +205,10 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Override
   protected void refreshElements(PsiElement[] elements) {
     LOG.assertTrue(elements.length == 1 && elements[0] instanceof PsiMethod);
-    myElement = ((PsiMethod)elements[0]);
+    myElement = (PsiMethod)elements[0];
   }
 
   private static UsageInfo[] extractUsagesForElement(PsiElement element, UsageInfo[] usages) {
@@ -222,17 +225,11 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
   }
 
 
+  @Override
   protected void performRefactoring(UsageInfo[] usages) {
-
     for (final PsiElement element : myRenameProcessor.getElements()) {
       try {
-        RenameUtil.doRename(element, myRenameProcessor.getNewName(element), extractUsagesForElement(element, usages), myProject, new RefactoringElementListener() {
-          public void elementMoved(@NotNull PsiElement newElement) {
-          }
-
-          public void elementRenamed(@NotNull PsiElement newElement) {
-          }
-        });
+        RenameUtil.doRename(element, myRenameProcessor.getNewName(element), extractUsagesForElement(element, usages), myProject, null);
       }
       catch (final IncorrectOperationException e) {
         RenameUtil.showErrorMessage(e, element, myProject);
@@ -263,6 +260,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Override
   protected String getCommandName() {
     return InvertBooleanHandler.REFACTORING_NAME;
   }

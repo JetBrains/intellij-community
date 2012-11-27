@@ -97,6 +97,21 @@ public class XPath2ParsingTest extends TestBase {
     doXPathHighlighting();
   }
 
+  // IDEA-70681
+  public void testCastWithMultiplication() throws Throwable {
+    doXPathHighlighting();
+  }
+
+  // IDEA-70688
+  public void testKindTestWithStar() throws Throwable {
+    doXPathHighlighting();
+  }
+
+  public void testUnionSubExpression() throws Throwable {
+    doXPathHighlighting();
+  }
+
+  // IDEA-67413
   private void doXPathHighlighting() throws Throwable {
     final String name = getTestFileName();
     myFixture.testHighlighting(false, false, false, name + ".xpath2");
