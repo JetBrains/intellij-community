@@ -13,6 +13,7 @@ import com.intellij.tasks.mantis.model.*;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.apache.axis.utils.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +23,7 @@ import javax.xml.rpc.ServiceException;
 import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -141,7 +143,8 @@ public class MantisRepository extends BaseRepositoryImpl {
     if (id == null) return null;
     String summary = data.getSummary();
     if (summary == null) return null;
-    return new MantisTask(id, summary, myProject, this, data.getLast_updated().getTime()) {
+    final boolean closed = data.getStatus().getId().intValue() >= 90;
+    return new MantisTask(id, summary, myProject, this, data.getLast_updated().getTime(), closed) {
       @Override
       public String getDescription() {
         return data.getDescription();
@@ -190,7 +193,8 @@ public class MantisRepository extends BaseRepositoryImpl {
     if (id == null) return null;
     String summary = data.getSummary();
     if (summary == null) return null;
-    return new MantisTask(id, summary, myProject, this, data.getLast_updated().getTime());
+    final boolean closed = data.getStatus().intValue() >= 90;
+    return new MantisTask(id, summary, myProject, this, data.getLast_updated().getTime(), closed);
   }
 
   public List<MantisProject> getProjects() throws Exception {
@@ -217,14 +221,13 @@ public class MantisRepository extends BaseRepositoryImpl {
         return new MantisProject(data.getId().intValue(), data.getName());
       }
     });
-    projects.add(0, MantisProject.ALL_PROJECTS);
-    String version = soap.mc_version();
+    if (allProjectsAvailable(soap)){
+      projects.add(0, MantisProject.ALL_PROJECTS);
+    }
     for (MantisProject project : projects) {
       FilterData[] filterDatas = soap.mc_filter_get(getUsername(), getPassword(), BigInteger.valueOf(project.getId()));
       List<MantisFilter> filters = new ArrayList<MantisFilter>();
-      if (!MantisProject.ALL_PROJECTS.equals(project) || !version.startsWith("1.1")) {
-        filters.add(MantisFilter.LAST_TASKS);
-      }
+      filters.add(MantisFilter.LAST_TASKS);
       filters.addAll(ContainerUtil.map(filterDatas, new Function<FilterData, MantisFilter>() {
         @Override
         public MantisFilter fun(final FilterData data) {
@@ -236,6 +239,11 @@ public class MantisRepository extends BaseRepositoryImpl {
     }
 
 
+  }
+
+  private static boolean allProjectsAvailable(final MantisConnectPortType soap) throws RemoteException {
+    String version = soap.mc_version();
+    return VersionComparatorUtil.compare(version, "1.2.9") >= 0;
   }
 
   private synchronized MantisConnectPortType createSoap() throws ServiceException, MalformedURLException {

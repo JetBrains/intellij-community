@@ -18,13 +18,9 @@ package git4idea.repo;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsRoot;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import git4idea.GitPlatformFacade;
@@ -39,7 +35,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * @author Kirill Likhodedov
  */
-public class GitRepositoryManagerImpl extends AbstractProjectComponent implements Disposable, GitRepositoryManager {
+public class GitRepositoryManagerImpl extends AbstractProjectComponent implements Disposable, GitRepositoryManager, VcsListener {
 
   private static final Logger LOG = Logger.getInstance(GitRepositoryManager.class);
 
@@ -61,12 +57,8 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
   @Override
   public void initComponent() {
     Disposer.register(myProject, this);
-    GitRootScanner rootScanner = new GitRootScanner(myProject, new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        updateRepositoriesCollection();
-      }
-    });
+    myProject.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
+    GitRootScanner rootScanner = new GitRootScanner(myProject);
     Disposer.register(this, rootScanner);
   }
 
@@ -79,6 +71,11 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
     finally {
       REPO_LOCK.writeLock().unlock();
     }
+  }
+
+  @Override
+  public void directoryMappingChanged() {
+    updateRepositoriesCollection();
   }
 
   @Override
