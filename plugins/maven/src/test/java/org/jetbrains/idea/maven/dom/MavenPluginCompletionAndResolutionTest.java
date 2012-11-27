@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.dom;
 
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -24,6 +25,7 @@ import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture;
 
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.List;
 
 public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
@@ -343,36 +345,38 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
 
     checkHighlighting();
   }
-  public void testDontHighlightGoalsForUnresolvedPlugin() throws Throwable {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
 
-                     "<build>" +
-                     "  <plugins>" +
-                     "    <plugin>" +
-                     "      <artifactId>maven-compiler-plugin</artifactId>" +
-                     "      <executions>" +
-                     "        <execution>" +
-                     "          <goals>" +
-                     "            <goal>compile</goal>" +
-                     "            <goal><error>unknownGoal</error></goal>" +
-                     "          </goals>" +
-                     "        </execution>" +
-                     "      </executions>" +
-                     "    </plugin>" +
-                     "    <plugin>" +
-                     "      <artifactId><error>unresolved-plugin</error></artifactId>" +
-                     "      <executions>" +
-                     "        <execution>" +
-                     "          <goals>" +
-                     "            <goal>compile</goal>" +
-                     "            <goal>unknownGoal</goal>" +
-                     "          </goals>" +
-                     "        </execution>" +
-                     "      </executions>" +
-                     "    </plugin>" +
-                     "  </plugins>" +
+  @Bombed(day = 10, month = Calendar.DECEMBER, year = 2012)
+  public void testDontHighlightGoalsForUnresolvedPlugin() throws Throwable {
+    createProjectPom("<groupId>test</groupId>\n" +
+                     "<artifactId>project</artifactId>\n" +
+                     "<version>1</version>\n" +
+
+                     "<build>\n" +
+                     "  <plugins>\n" +
+                     "    <plugin>\n" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>\n" +
+                     "      <executions>\n" +
+                     "        <execution>\n" +
+                     "          <goals>\n" +
+                     "            <goal>compile</goal>\n" +
+                     "            <goal><error>unknownGoal</error></goal>\n" +
+                     "          </goals>\n" +
+                     "        </execution>\n" +
+                     "      </executions>\n" +
+                     "    </plugin>\n" +
+                     "    <plugin>\n" +
+                     "      <artifactId><error>unresolved-plugin</error></artifactId>\n" +
+                     "      <executions>\n" +
+                     "        <execution>\n" +
+                     "          <goals>\n" +
+                     "            <goal>compile</goal>\n" +
+                     "            <goal>unknownGoal</goal>\n" +
+                     "          </goals>\n" +
+                     "        </execution>\n" +
+                     "      </executions>\n" +
+                     "    </plugin>\n" +
+                     "  </plugins>\n" +
                      "</build>");
 
     checkHighlighting();
