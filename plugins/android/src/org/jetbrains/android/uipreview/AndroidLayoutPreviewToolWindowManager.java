@@ -345,7 +345,12 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
           @Override
           public void run() {
             DumbService.getInstance(myProject).waitForSmartMode();
-            doRender(facet, psiFile);
+            try {
+              doRender(facet, psiFile);
+            }
+            catch (Throwable e) {
+              LOG.error(e);
+            }
           }
         }, new AndroidPreviewProgressIndicator(myToolWindowForm, 1000));
       }
