@@ -391,15 +391,17 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
   
   protected void performInplaceIntroduce(IntroduceOperation operation) {
-    final PyAssignmentStatement statement = performRefactoring(operation);
-    PyTargetExpression target = (PyTargetExpression) statement.getTargets() [0];
-    final List<PsiElement> occurrences = operation.getOccurrences();
-    final PsiElement occurrence = findOccurrenceUnderCaret(occurrences, operation.getEditor());
-    PsiElement elementForCaret = occurrence != null ? occurrence : target;
-    operation.getEditor().getCaretModel().moveToOffset(elementForCaret.getTextRange().getStartOffset());
-    final InplaceVariableIntroducer<PsiElement> introducer =
-            new PyInplaceVariableIntroducer(target, operation, occurrences);
-    introducer.performInplaceRefactoring(new LinkedHashSet<String>(operation.getSuggestedNames()));
+    final PsiElement statement = performRefactoring(operation);
+    if (statement instanceof PyAssignmentStatement) {
+      PyTargetExpression target = (PyTargetExpression) ((PyAssignmentStatement)statement).getTargets() [0];
+      final List<PsiElement> occurrences = operation.getOccurrences();
+      final PsiElement occurrence = findOccurrenceUnderCaret(occurrences, operation.getEditor());
+      PsiElement elementForCaret = occurrence != null ? occurrence : target;
+      operation.getEditor().getCaretModel().moveToOffset(elementForCaret.getTextRange().getStartOffset());
+      final InplaceVariableIntroducer<PsiElement> introducer =
+              new PyInplaceVariableIntroducer(target, operation, occurrences);
+      introducer.performInplaceRefactoring(new LinkedHashSet<String>(operation.getSuggestedNames()));
+    }
   }
 
   protected void performIntroduceWithDialog(IntroduceOperation operation) {
@@ -415,14 +417,14 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       operation.setInitPlace(dialog.getInitPlace());
     }
 
-    PyAssignmentStatement declaration = performRefactoring(operation);
+    PsiElement declaration = performRefactoring(operation);
     final Editor editor = operation.getEditor();
     editor.getCaretModel().moveToOffset(declaration.getTextRange().getEndOffset());
     editor.getSelectionModel().removeSelection();
   }
 
-  protected PyAssignmentStatement performRefactoring(IntroduceOperation operation) {
-    PyAssignmentStatement declaration = createDeclaration(operation);
+  protected PsiElement performRefactoring(IntroduceOperation operation) {
+    PsiElement declaration = createDeclaration(operation);
 
     declaration = performReplace(declaration, operation);
     declaration = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(declaration);
@@ -506,12 +508,12 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     return PyRefactoringUtil.getOccurrences(expression, context);
   }
 
-  private PyAssignmentStatement performReplace(@NotNull final PyAssignmentStatement declaration,
-                                               final IntroduceOperation operation) {
+  private PsiElement performReplace(@NotNull final PsiElement declaration,
+                                    final IntroduceOperation operation) {
     final PyExpression expression = operation.getInitializer();
     final Project project = operation.getProject();
-    return new WriteCommandAction<PyAssignmentStatement>(project, expression.getContainingFile()) {
-      protected void run(final Result<PyAssignmentStatement> result) throws Throwable {
+    return new WriteCommandAction<PsiElement>(project, expression.getContainingFile()) {
+      protected void run(final Result<PsiElement> result) throws Throwable {
         result.setResult(addDeclaration(operation, declaration));
 
         PyExpression newExpression = createExpression(project, operation.getName(), declaration);
@@ -537,18 +539,18 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   @Nullable
-  public PyAssignmentStatement addDeclaration(IntroduceOperation operation, PyAssignmentStatement declaration) {
+  public PsiElement addDeclaration(IntroduceOperation operation, PsiElement declaration) {
     final PsiElement expression = operation.getInitializer();
     final Pair<PsiElement, TextRange> data = expression.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE);
     if (data == null) {
-      return (PyAssignmentStatement)addDeclaration(expression, declaration, operation);
+      return addDeclaration(expression, declaration, operation);
     }
     else {
-      return (PyAssignmentStatement)addDeclaration(data.first, declaration, operation);
+      return addDeclaration(data.first, declaration, operation);
     }
   }
 
-  protected PyExpression createExpression(Project project, String name, PyAssignmentStatement declaration) {
+  protected PyExpression createExpression(Project project, String name, PsiElement declaration) {
     return PyElementGenerator.getInstance(project).createExpressionFromText(name);
   }
 

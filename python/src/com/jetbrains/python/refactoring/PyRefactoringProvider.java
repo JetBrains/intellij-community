@@ -13,6 +13,7 @@ import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuper
 import com.jetbrains.python.refactoring.classes.pullUp.PyPullUpHandler;
 import com.jetbrains.python.refactoring.classes.pushDown.PyPushDownHandler;
 import com.jetbrains.python.refactoring.extractmethod.PyExtractMethodHandler;
+import com.jetbrains.python.refactoring.introduce.parameter.PyIntroduceParameterHandler;
 import com.jetbrains.python.refactoring.introduce.constant.PyIntroduceConstantHandler;
 import com.jetbrains.python.refactoring.introduce.field.PyIntroduceFieldHandler;
 import com.jetbrains.python.refactoring.introduce.variable.PyIntroduceVariableHandler;
@@ -73,5 +74,11 @@ public class PyRefactoringProvider extends RefactoringSupportProvider {
   @Override
   public ChangeSignatureHandler getChangeSignatureHandler() {
     return new PyChangeSignatureHandler();
+  }
+
+  @Nullable
+  @Override
+  public RefactoringActionHandler getIntroduceParameterHandler() {
+    return new PyIntroduceParameterHandler();
   }
 }

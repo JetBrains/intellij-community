@@ -196,7 +196,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
   }
 
   @Override
-  protected PyExpression createExpression(Project project, String name, PyAssignmentStatement declaration) {
+  protected PyExpression createExpression(Project project, String name, PsiElement declaration) {
     final String text = declaration.getText();
     final String self_name = text.substring(0, text.indexOf('.'));
     return PyElementGenerator.getInstance(project).createExpressionFromText(self_name + "." + name);
@@ -281,15 +281,17 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
 
   @Override
   protected void performInplaceIntroduce(IntroduceOperation operation) {
-    final PyAssignmentStatement statement = performRefactoring(operation);
+    final PsiElement statement = performRefactoring(operation);
     // put caret on identifier after "self."
-    final List<PsiElement> occurrences = operation.getOccurrences();
-    final PsiElement occurrence = findOccurrenceUnderCaret(occurrences, operation.getEditor());
-    PyTargetExpression target = (PyTargetExpression) statement.getTargets() [0];
-    putCaretOnFieldName(operation.getEditor(), occurrence != null ? occurrence : target);
-    final InplaceVariableIntroducer<PsiElement> introducer = new PyInplaceFieldIntroducer(target, operation, occurrences);
-    introducer.performInplaceRefactoring(new LinkedHashSet<String>(operation.getSuggestedNames()));
-  }
+    if (statement instanceof PyAssignmentStatement) {
+        final List<PsiElement> occurrences = operation.getOccurrences();
+        final PsiElement occurrence = findOccurrenceUnderCaret(occurrences, operation.getEditor());
+        PyTargetExpression target = (PyTargetExpression) ((PyAssignmentStatement)statement).getTargets() [0];
+        putCaretOnFieldName(operation.getEditor(), occurrence != null ? occurrence : target);
+        final InplaceVariableIntroducer<PsiElement> introducer = new PyInplaceFieldIntroducer(target, operation, occurrences);
+        introducer.performInplaceRefactoring(new LinkedHashSet<String>(operation.getSuggestedNames()));
+      }
+    }
 
   private static void putCaretOnFieldName(Editor editor, PsiElement occurrence) {
     PyQualifiedExpression qExpr = PsiTreeUtil.getParentOfType(occurrence, PyQualifiedExpression.class, false);
