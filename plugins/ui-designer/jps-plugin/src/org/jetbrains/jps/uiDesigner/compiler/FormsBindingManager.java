@@ -132,7 +132,6 @@ public class FormsBindingManager extends FormsBuilder {
           addBinding(boundSource, form, srcToForms);
           FSOperations.markDirty(context, boundSource);
           filesToCompile.put(boundSource, target);
-          context.getScope().expandScope(target, boundSource);
           exitCode = ExitCode.OK;
         }
       }
@@ -150,7 +149,6 @@ public class FormsBindingManager extends FormsBuilder {
               addBinding(srcFile, formFile, srcToForms);
               FSOperations.markDirty(context, formFile);
               formsToCompile.put(formFile, target);
-              context.getScope().expandScope(target, formFile);
               exitCode = ExitCode.OK;
             }
           }

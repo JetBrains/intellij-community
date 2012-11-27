@@ -57,7 +57,8 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
 
   public void renameElement(final PsiElement psiElement,
                             final String newName,
-                            final UsageInfo[] usages, final RefactoringElementListener listener) throws IncorrectOperationException {
+                            final UsageInfo[] usages,
+                            @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
     PsiVariable variable = (PsiVariable) psiElement;
     List<MemberHidesOuterMemberUsageInfo> outerHides = new ArrayList<MemberHidesOuterMemberUsageInfo>();
     List<MemberHidesStaticImportUsageInfo> staticImportHides = new ArrayList<MemberHidesStaticImportUsageInfo>();
@@ -104,7 +105,9 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
       }
     // do actual rename
     variable.setName(newName);
-    listener.elementRenamed(variable);
+    if (listener != null) {
+      listener.elementRenamed(variable);
+    }
 
     if (variable instanceof PsiField) {
       for (PsiElement occurrence : occurrencesToCheckForConflict) {

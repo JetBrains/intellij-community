@@ -18,17 +18,15 @@ package org.intellij.lang.xpath.xslt.associations.impl;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IconUtil;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
 
 class AddAssociationAction extends AnAction {
-    private final FileAssociationsManager myManager;
+  private final FileAssociationsManager myManager;
 
     public AddAssociationAction(FileAssociationsManager manager) {
         super("Add...", "Add File Association", IconUtil.getAddIcon());
@@ -38,16 +36,12 @@ class AddAssociationAction extends AnAction {
     public void actionPerformed(AnActionEvent e) {
         final PsiFile psiFile = AssociationsGroup.getPsiFile(e);
         if (psiFile == null) return;
-        final Project project = LangDataKeys.PROJECT.getData(e.getDataContext());
-        if (project == null) return;
 
-        addAssociation(e, psiFile);
-        DaemonCodeAnalyzer.getInstance(project).restart();
+        addAssociation(psiFile);
+        DaemonCodeAnalyzer.getInstance(psiFile.getProject()).restart(psiFile);
     }
 
-    protected void addAssociation(AnActionEvent e, PsiFile psiFile) {
-        final Project project = AssociationsGroup.getEventProject(e);
-        if (project == null) return;
+    protected void addAssociation(final PsiFile psiFile) {
 
         final VirtualFile virtualFile = psiFile.getVirtualFile();
         assert virtualFile != null;
@@ -58,7 +52,7 @@ class AddAssociationAction extends AnAction {
             }
         };
 
-        final VirtualFile[] virtualFiles = FileChooser.chooseFiles(descriptor, project, psiFile.getVirtualFile());
+        final VirtualFile[] virtualFiles = FileChooser.chooseFiles(descriptor, psiFile.getProject(), psiFile.getVirtualFile());
         if (virtualFiles.length == 0) return; // cancel
 
         for (VirtualFile file : virtualFiles) {
@@ -66,5 +60,4 @@ class AddAssociationAction extends AnAction {
             myManager.addAssociation(psiFile, file);
         }
     }
-
 }

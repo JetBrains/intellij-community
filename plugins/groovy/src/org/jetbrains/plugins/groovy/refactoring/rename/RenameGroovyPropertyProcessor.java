@@ -23,6 +23,7 @@ import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
@@ -57,7 +58,7 @@ public class RenameGroovyPropertyProcessor extends RenamePsiElementProcessor {
   }
 
   @Override
-  public void renameElement(PsiElement element, String newName, UsageInfo[] usages, RefactoringElementListener listener)
+  public void renameElement(PsiElement element, String newName, UsageInfo[] usages, @Nullable RefactoringElementListener listener)
     throws IncorrectOperationException {
 
     //do nothing

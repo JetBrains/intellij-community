@@ -59,7 +59,8 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
 
   public void renameElement(final PsiElement psiElement,
                             final String newName,
-                            final UsageInfo[] usages, final RefactoringElementListener listener) throws IncorrectOperationException {
+                            final UsageInfo[] usages,
+                            @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
     PsiMethod method = (PsiMethod) psiElement;
     Set<PsiMethod> methodAndOverriders = new HashSet<PsiMethod>();
     Set<PsiClass> containingClasses = new HashSet<PsiClass>();
@@ -115,7 +116,9 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
         ((PsiMethod)element).setName(newName);
       }
     }
-    listener.elementRenamed(method);
+    if (listener != null) {
+      listener.elementRenamed(method);
+    }
 
     for (PsiElement element: renamedReferences) {
       fixNameCollisionsWithInnerClassMethod(element, newName, methodAndOverriders, containingClasses,

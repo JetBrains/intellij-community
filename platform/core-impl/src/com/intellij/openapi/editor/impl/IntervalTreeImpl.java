@@ -764,8 +764,10 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
 
   // returns true if all markers are valid
   public boolean checkMax(boolean assertInvalid) {
-    if (!VERIFY) return false;
+    return VERIFY && doCheckMax(assertInvalid);
+  }
 
+  protected boolean doCheckMax(boolean assertInvalid) {
     try {
       l.readLock().lock();
 

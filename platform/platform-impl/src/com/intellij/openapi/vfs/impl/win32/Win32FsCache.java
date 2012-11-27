@@ -54,15 +54,16 @@ class Win32FsCache {
   @NotNull
   String[] list(@NotNull String path) {
     FileInfo[] fileInfo = myKernel.listChildren(path);
-    if (fileInfo == null) {
+    if (fileInfo == null || fileInfo.length == 0) {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
+    if (!path.endsWith("/")) path += "/";
     List<String> names = new ArrayList<String>(fileInfo.length);
     Map<String, FileInfo> map = getMap();
     for (FileInfo info : fileInfo) {
       String name = info.getName();
-      map.put(path + "/" + name, info);
+      map.put(path + name, info);
       names.add(name);
     }
 

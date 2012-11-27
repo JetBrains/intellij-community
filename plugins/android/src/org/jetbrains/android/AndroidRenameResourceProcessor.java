@@ -251,7 +251,7 @@ public class AndroidRenameResourceProcessor extends RenamePsiElementProcessor {
   }
 
   @Override
-  public void renameElement(PsiElement element, final String newName, UsageInfo[] usages, RefactoringElementListener listener)
+  public void renameElement(PsiElement element, final String newName, UsageInfo[] usages, @Nullable RefactoringElementListener listener)
     throws IncorrectOperationException {
     if (element instanceof PsiField) {
       new RenameJavaVariableProcessor().renameElement(element, newName, usages, listener);

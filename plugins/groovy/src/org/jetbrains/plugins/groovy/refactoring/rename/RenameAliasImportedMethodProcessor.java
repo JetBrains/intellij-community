@@ -70,7 +70,7 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
   public void renameElement(PsiElement psiElement,
                             String newName,
                             UsageInfo[] usages,
-                            RefactoringElementListener listener) throws IncorrectOperationException {
+                            @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
     boolean isGetter = isSimplePropertyGetter((PsiMethod)psiElement);
     boolean isSetter = isSimplePropertySetter((PsiMethod)psiElement);
 

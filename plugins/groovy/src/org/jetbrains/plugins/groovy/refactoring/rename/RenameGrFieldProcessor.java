@@ -33,6 +33,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -84,7 +85,7 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
   public void renameElement(final PsiElement psiElement,
                             String newName,
                             final UsageInfo[] usages,
-                            final RefactoringElementListener listener) throws IncorrectOperationException {
+                            @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
     final GrField field = (GrField)psiElement;
     String fieldName = field.getName();
     Map<PsiElement, String> renames = new HashMap<PsiElement, String>();
@@ -164,7 +165,9 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
         rename(element, info, newName, true, manager);
       }
     }
-    listener.elementRenamed(field);
+    if (listener != null) {
+      listener.elementRenamed(field);
+    }
   }
 
   private static void rename(PsiNamedElement element,

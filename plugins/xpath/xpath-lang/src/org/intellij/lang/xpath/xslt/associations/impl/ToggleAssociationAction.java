@@ -16,6 +16,7 @@
 package org.intellij.lang.xpath.xslt.associations.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.module.Module;
@@ -69,6 +70,6 @@ class ToggleAssociationAction extends ToggleAction {
     public void setSelected(AnActionEvent e, boolean state) {
         assert !state;
         myFileAssociationsManager.removeAssociation(myPsiFile, myAssoc);
-        DaemonCodeAnalyzer.getInstance(AssociationsGroup.getEventProject(e)).restart();
+        DaemonCodeAnalyzer.getInstance(AnAction.getEventProject(e)).restart();
     }
 }

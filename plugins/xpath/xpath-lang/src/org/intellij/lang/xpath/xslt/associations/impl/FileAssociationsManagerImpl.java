@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.xpath.xslt.associations.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.util.PsiUtilCore;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
 
@@ -40,6 +41,8 @@ import org.jdom.Element;
 import java.util.*;
 
 class FileAssociationsManagerImpl extends FileAssociationsManager implements ProjectComponent, JDOMExternalizable, ModificationTracker {
+  private static final Logger LOG = Logger.getInstance(FileAssociationsManagerImpl.class);
+
   private final Project myProject;
   private final VirtualFilePointerManager myFilePointerManager;
   private final Map<VirtualFilePointer, VirtualFilePointerContainer> myAssociations;
@@ -178,13 +181,19 @@ class FileAssociationsManagerImpl extends FileAssociationsManager implements Pro
 
   public void addAssociation(PsiFile file, PsiFile assoc) {
     final VirtualFile virtualFile = assoc.getVirtualFile();
-    if (virtualFile == null) return;
+    if (virtualFile == null) {
+      LOG.warn("No VirtualFile for " + file.getName());
+      return;
+    }
     addAssociation(file, virtualFile);
   }
 
   public void addAssociation(PsiFile file, VirtualFile assoc) {
     final VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile == null) return;
+    if (virtualFile == null) {
+      LOG.warn("No VirtualFile for " + file.getName());
+      return;
+    }
 
     for (VirtualFilePointer pointer : myAssociations.keySet()) {
       if (pointer.getUrl().equals(virtualFile.getUrl())) {
