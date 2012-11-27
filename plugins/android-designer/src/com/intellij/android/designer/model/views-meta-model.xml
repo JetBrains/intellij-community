@@ -520,6 +520,8 @@
         class="android.widget.ImageView"
         tag="ImageView">
 
+    <presentation title=" - &quot;%src%&quot;"/>
+
     <palette title="ImageView" icon="AndroidDesignerIcons.ImageView"
              tooltip="Displays an arbitrary image, such as an icon."/>
 
@@ -541,6 +543,8 @@
   <meta model="com.intellij.android.designer.model.RadViewComponent"
         class="android.widget.ImageButton"
         tag="ImageButton">
+
+    <presentation title=" - &quot;%src%&quot;"/>
 
     <palette title="ImageButton" icon="AndroidDesignerIcons.ImageButton"
              tooltip="Displays a button with an image (instead of text) that can be pressed or clicked by the user."/>
