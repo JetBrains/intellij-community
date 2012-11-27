@@ -77,7 +77,7 @@ public class AndroidDependencyProcessor implements DependencyProcessor {
 
   @Nullable
   private static PsiClass getOwnerClass(PsiElement element) {
-    while (!(element instanceof PsiFile)) {
+    while (!(element instanceof PsiFile) && element != null) {
       if (element instanceof PsiClass && element.getParent() instanceof PsiJavaFile) {
         return (PsiClass)element;
       }
