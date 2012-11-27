@@ -36,6 +36,7 @@ public class TimeTrackingManager implements ProjectComponent, PersistentStateCom
   private final Config myConfig = new Config();
   private Timer myTimeTrackingTimer;
   private Alarm myIdleAlarm;
+  private Runnable myActivityListener;
 
   public TimeTrackingManager(Project project,
                              TaskManager taskManager) {
@@ -130,7 +131,7 @@ public class TimeTrackingManager implements ProjectComponent, PersistentStateCom
 
       myIdleAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-      IdeEventQueue.getInstance().addActivityListener(new Runnable() {
+      myActivityListener = new Runnable() {
         @Override
         public void run() {
           final IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
@@ -139,7 +140,27 @@ public class TimeTrackingManager implements ProjectComponent, PersistentStateCom
           if (project == null || !myProject.equals(project)) return;
           startTimeTrackingTimer();
         }
-      }, myProject);
+      };
+      if (getState().autoMode) {
+        IdeEventQueue.getInstance().addActivityListener(myActivityListener, myProject);
+      }
+    }
+  }
+
+  public void setAutoMode(final boolean on) {
+    final boolean oldState = getState().autoMode;
+    if (on != oldState) {
+      getState().autoMode = on;
+      if (on) {
+        IdeEventQueue.getInstance().addActivityListener(myActivityListener, myProject);
+      }
+      else {
+        IdeEventQueue.getInstance().removeActivityListener(myActivityListener);
+        myIdleAlarm.cancelAllRequests();
+        if (!myTimeTrackingTimer.isRunning()) {
+          myTimeTrackingTimer.start();
+        }
+      }
     }
   }
 

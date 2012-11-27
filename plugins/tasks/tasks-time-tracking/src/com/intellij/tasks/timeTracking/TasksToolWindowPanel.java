@@ -144,7 +144,7 @@ public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Dispo
 
       @Override
       public void setSelected(final AnActionEvent e, final boolean state) {
-        myTimeTrackingManager.getState().autoMode = state;
+        myTimeTrackingManager.setAutoMode(state);
         updateTable();
       }
     });
