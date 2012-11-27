@@ -15,6 +15,9 @@
  */
 package com.intellij.ide.highlighter.custom;
 
+import com.intellij.ide.highlighter.custom.tokens.KeywordParser;
+
+import java.util.Arrays;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -41,6 +44,7 @@ public class SyntaxTable implements Cloneable {
   private boolean myHasBrackets;
   private boolean myHasParens;
   private boolean myHasStringEscapes;
+  private volatile KeywordParser myKeywordParser;
 
   // -------------------------------------------------------------------------
   // Constructor
@@ -53,13 +57,26 @@ public class SyntaxTable implements Cloneable {
     myKeywords4 = new TreeSet<String>();
   }
 
+  KeywordParser getKeywordParser() {
+    KeywordParser parser = myKeywordParser;
+    if (parser == null) {
+      synchronized (this) {
+        parser = myKeywordParser;
+        if (parser == null) {
+          myKeywordParser = parser = new KeywordParser(Arrays.asList(myKeywords1, myKeywords2, myKeywords3, myKeywords4), myIgnoreCase);
+        }
+      }
+    }
+    return parser;
+  }
+
   protected Object clone() throws CloneNotSupportedException {
     SyntaxTable cl = (SyntaxTable) super.clone();
     cl.myKeywords1 = new TreeSet<String>(myKeywords1);
     cl.myKeywords2 = new TreeSet<String>(myKeywords2);
     cl.myKeywords3 = new TreeSet<String>(myKeywords3);
     cl.myKeywords4 = new TreeSet<String>(myKeywords4);
-
+    cl.myKeywordParser = null;
     return cl;
   }
 
@@ -69,6 +86,7 @@ public class SyntaxTable implements Cloneable {
 
   public void addKeyword1(String keyword) {
     myKeywords1.add(keyword);
+    myKeywordParser = null;
   }
 
   public Set<String> getKeywords1() {
@@ -77,6 +95,7 @@ public class SyntaxTable implements Cloneable {
 
   public void addKeyword2(String keyword) {
     myKeywords2.add(keyword);
+    myKeywordParser = null;
   }
 
   public Set<String> getKeywords2() {
@@ -85,6 +104,7 @@ public class SyntaxTable implements Cloneable {
 
   public void addKeyword3(String keyword) {
     myKeywords3.add(keyword);
+    myKeywordParser = null;
   }
 
   public Set<String> getKeywords3() {
@@ -93,6 +113,7 @@ public class SyntaxTable implements Cloneable {
 
   public void addKeyword4(String keyword) {
     myKeywords4.add(keyword);
+    myKeywordParser = null;
   }
 
   public Set<String> getKeywords4() {
@@ -145,6 +166,7 @@ public class SyntaxTable implements Cloneable {
 
   public void setIgnoreCase(boolean ignoreCase) {
     myIgnoreCase = ignoreCase;
+    myKeywordParser = null;
   }
 
   public boolean isHasBraces() {
