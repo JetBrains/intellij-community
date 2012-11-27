@@ -19,6 +19,8 @@
                     serviceImplementation="org.zmlx.hg4idea.HgProjectSettings"/>
     <projectService serviceInterface="org.zmlx.hg4idea.HgRootsHandler"
                     serviceImplementation="org.zmlx.hg4idea.HgRootsHandler" />
+    <projectService serviceInterface="org.zmlx.hg4idea.HgRememberedInputs"
+                            serviceImplementation="org.zmlx.hg4idea.HgRememberedInputs"/>
   </extensions>
 
   <project-components>
