@@ -933,6 +933,11 @@ class RunConfigurable extends BaseConfigurable {
     return null;
   }
 
+  @NotNull
+  private DefaultMutableTreeNode getNode(int row) {
+    return (DefaultMutableTreeNode)myTree.getPathForRow(row).getLastPathComponent();
+  }
+
   @Nullable
   Trinity<Integer, Integer, RowsDnDSupport.RefinedDropSupport.Position> getAvailableDropPosition(int direction) {
     int[] rows = myTree.getSelectionRows();
@@ -952,6 +957,20 @@ class RunConfigurable extends BaseConfigurable {
                                                             INTO :
                                                             direction > 0 ? BELOW : ABOVE;
       if (myTreeModel.canDrop(oldIndex, newIndex, position)) {
+        DefaultMutableTreeNode oldNode = getNode(oldIndex);
+        DefaultMutableTreeNode newNode = getNode(newIndex);
+        if (oldNode.getParent() != newNode.getParent() && getKind(newNode) != FOLDER) {
+          RowsDnDSupport.RefinedDropSupport.Position copy = position;
+          if (position == BELOW) {
+            copy = ABOVE;
+          }
+          else if (position == ABOVE) {
+            copy = BELOW;
+          }
+          if (myTreeModel.canDrop(oldIndex, newIndex, copy)) {
+            return Trinity.create(oldIndex, newIndex, copy);
+          }
+        }
         return Trinity.create(oldIndex, newIndex, position);
       }
       if (position == BELOW && newIndex < myTree.getRowCount() - 1 && myTreeModel.canDrop(oldIndex, newIndex + 1, ABOVE)) {
