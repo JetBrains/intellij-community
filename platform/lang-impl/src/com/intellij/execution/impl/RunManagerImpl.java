@@ -411,6 +411,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   @Override
+  @NotNull
   public Collection<RunnerAndConfigurationSettings> getSortedConfigurations() {
     if (!myOrdered) { //compatibility
       List<Pair<String, RunnerAndConfigurationSettings>> order
