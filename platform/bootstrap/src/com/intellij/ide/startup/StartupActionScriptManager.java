@@ -13,15 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- * @author cdr
- */
 package com.intellij.ide.startup;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -31,6 +27,9 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @author cdr
+ */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class StartupActionScriptManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.StartupActionScriptManager");
@@ -109,7 +108,7 @@ public class StartupActionScriptManager {
   }
 
   private static boolean canCreateFile(File file) {
-    return FileUtil.ensureCanCreateFile(file);
+    return FileUtilRt.ensureCanCreateFile(file);
   }
 
   public interface ActionCommand {
@@ -156,7 +155,7 @@ public class StartupActionScriptManager {
                                       "Installing Plugin", JOptionPane.ERROR_MESSAGE);
       }
       else {
-        FileUtil.copy(mySource, myDestination);
+        FileUtilRt.copy(mySource, myDestination);
       }
     }
 
@@ -223,7 +222,7 @@ public class StartupActionScriptManager {
     }
 
     public void execute() throws IOException {
-      if (mySource != null && mySource.exists() && !FileUtil.delete(mySource)) {
+      if (mySource != null && mySource.exists() && !FileUtilRt.delete(mySource)) {
         //noinspection HardCodedStringLiteral
         System.err.println("Action " + this + " failed.");
         JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
