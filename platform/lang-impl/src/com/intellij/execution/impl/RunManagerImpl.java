@@ -149,7 +149,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     myConfigurationToBeforeTasksMap.put(runConfiguration, getBeforeRunTasks(template.getConfiguration()));
     shareConfiguration(runConfiguration, isConfigurationShared(template));
     RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl(this, runConfiguration, false);
-    settings.setSingleton(factory.isConfigurationSingletonByDefault());
     settings.importRunnerAndConfigurationSettings((RunnerAndConfigurationSettingsImpl)template);
     return settings;
   }
@@ -274,6 +273,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     RunnerAndConfigurationSettings template = myTemplateConfigurationsMap.get(factory.getType().getId() + "." + factory.getName());
     if (template == null) {
       template = new RunnerAndConfigurationSettingsImpl(this, factory.createTemplateConfiguration(myProject, this), true);
+      template.setSingleton(factory.isConfigurationSingletonByDefault());
       if (template.getConfiguration() instanceof UnknownRunConfiguration) {
         ((UnknownRunConfiguration)template.getConfiguration()).setDoNotStore(true);
       }
