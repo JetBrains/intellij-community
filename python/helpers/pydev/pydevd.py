@@ -915,13 +915,12 @@ class PyDB:
         thread_id = GetThreadId(t)
         pydevd_vars.addAdditionalFrameById(thread_id, frames_byid)
         try:
-            add_exception_to_frame(frame, additionalInfo.exception)
-            self.setSuspend(t, CMD_ADD_EXCEPTION_BREAK)
-            pydev_log.debug("setSuspend.\n")
-            self.doWaitSuspend(t, frame, 'exception', None)
-            pydev_log.debug("Wait suspend\n")
-        except:
-            pydev_log.error("We got an error while stopping in post-mortem: %s\n"%sys.exc_info()[0])
+            try:
+                add_exception_to_frame(frame, additionalInfo.exception)
+                self.setSuspend(t, CMD_ADD_EXCEPTION_BREAK)
+                self.doWaitSuspend(t, frame, 'exception', None)
+            except:
+                pydev_log.error("We've got an error while stopping in post-mortem: %s\n"%sys.exc_info()[0])
         finally:
             additionalInfo.pydev_force_stop_at_exception = None
             pydevd_vars.removeAdditionalFrameById(thread_id)

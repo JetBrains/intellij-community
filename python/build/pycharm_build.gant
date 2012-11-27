@@ -40,6 +40,7 @@ setProperty("pluginFilter", [   //modules to compile
             "coffeescript",
             "remote-run",
             "python-remote-interpreter",
+            "vagrant",
             "diagram-api", "uml",
             "python-uml", "localization",
             "python-localization",
@@ -180,6 +181,7 @@ private layoutPlugins(layouts) {
     layouts.layoutPlugin("python-javascript-debugger")
     layouts.layoutPlugin("remote-run")
     layouts.layoutPlugin("python-remote-interpreter")
+    layouts.layoutPlugin("vagrant")
     layouts.layoutPlugin("python-uml")
     layouts.layoutPlugin("localization")
     layouts.layoutPlugin("python-localization")
