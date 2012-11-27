@@ -42,7 +42,7 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
     if (paren != null && ")".equals(paren.getText())) {
       ASTNode beforeWhat = paren.getNode(); // the closing paren will be this
       PyParameter[] params = getParameters();
-      PyUtil.addListNode(this, param, beforeWhat, true, params.length == 0);
+      PyUtil.addListNode(this, param, beforeWhat, params.length == 0, true);
     }
   }
 
