@@ -14,6 +14,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
@@ -106,6 +107,8 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
     if (result != null) {
       final PyClass baseClass = ((PyFunction)result).getContainingClass();
       String baseClassName = baseClass == null? "" : baseClass.getName();
+      if (PyNames.OBJECT.equals(baseClassName) || PyNames.FAKE_OLD_BASE.equals(baseClassName))
+        return function;
       final String message = PyBundle.message("refactoring.change.signature.find.usages.of.base.class",
                                               function.getName(),
                                               clazz.getName(),
