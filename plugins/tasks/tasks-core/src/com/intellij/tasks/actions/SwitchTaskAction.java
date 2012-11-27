@@ -21,6 +21,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.playback.commands.ActionCommand;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
@@ -62,7 +63,7 @@ public class SwitchTaskAction extends BaseTaskAction {
     final Ref<Boolean> shiftPressed = Ref.create(false);
     final Ref<JComponent> componentRef = Ref.create();
     List<TaskListItem> items = project == null ? Collections.<TaskListItem>emptyList() :
-                               createPopupActionGroup(project, shiftPressed);
+                               createPopupActionGroup(project, shiftPressed, dataContext);
     final String title = withTitle ? "Switch to Task" : null;
     ListPopupStep<TaskListItem> step = new MultiSelectionListPopupStep<TaskListItem>(title, items) {
       @Override
@@ -162,14 +163,20 @@ public class SwitchTaskAction extends BaseTaskAction {
   }
 
   @NotNull
-  private static List<TaskListItem> createPopupActionGroup(@NotNull final Project project, final Ref<Boolean> shiftPressed) {
+  private static List<TaskListItem> createPopupActionGroup(@NotNull final Project project,
+                                                           final Ref<Boolean> shiftPressed,
+                                                           final DataContext dataContext) {
     List<TaskListItem> group = new ArrayList<TaskListItem>();
 
-    final GotoTaskAction gotoTaskAction = new GotoTaskAction();
+    final AnAction action = ActionManager.getInstance().getAction(GotoTaskAction.ID);
+    assert action instanceof GotoTaskAction;
+    final GotoTaskAction gotoTaskAction = (GotoTaskAction)action;
     group.add(new TaskListItem(gotoTaskAction.getTemplatePresentation().getText(),
                                gotoTaskAction.getTemplatePresentation().getIcon()) {
       @Override
       void select() {
+        ActionManager.getInstance().tryToExecute(gotoTaskAction, ActionCommand.getInputEvent(GotoTaskAction.ID),
+                                                 PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext), ActionPlaces.UNKNOWN, true);
         gotoTaskAction.perform(project);
       }
     });
