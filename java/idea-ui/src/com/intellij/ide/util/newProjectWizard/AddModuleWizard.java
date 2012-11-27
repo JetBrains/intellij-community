@@ -109,7 +109,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep>
     StringBuilder builder = new StringBuilder("Import ");
     builder.append(project == null ? "Project" : "Module");
     if (providers.length == 1) {
-      builder.append(" From ").append(providers[0].getName());
+      builder.append(" from ").append(providers[0].getName());
     }
     return builder.toString();
   }
