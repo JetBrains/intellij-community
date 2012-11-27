@@ -220,6 +220,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return myActiveTask;
   }
 
+  @Nullable
   @Override
   public LocalTask findTask(String id) {
     return myTasks.get(id);
@@ -279,7 +280,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       try {
         Task issue = repository.findTask(id);
         if (issue != null) {
-          LocalTask localTask = myTasks.get(id);
+          LocalTask localTask = findTask(id);
           if (localTask != null) {
             localTask.updateFromIssue(issue);
             return localTask;
@@ -544,6 +545,28 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     }
 
     myContextManager.pack(200, 50);
+
+    // make sure the task is associated with default changelist
+    LocalTask defaultTask = findTask(LocalTaskImpl.DEFAULT_TASK_ID);
+    LocalChangeList defaultList = myChangeListManager.findChangeList(LocalChangeList.DEFAULT_NAME);
+    if (defaultList != null && defaultTask != null) {
+      ChangeListInfo listInfo = new ChangeListInfo(defaultList);
+      if (!defaultTask.getChangeLists().contains(listInfo)) {
+        defaultTask.addChangelist(listInfo);
+      }
+    }
+
+    // remove already not existing changelists from tasks changelists
+    for (LocalTask localTask : getLocalTasks()) {
+      for (Iterator<ChangeListInfo> iterator = localTask.getChangeLists().iterator(); iterator.hasNext(); ) {
+        final ChangeListInfo changeListInfo = iterator.next();
+        if (myChangeListManager.getChangeList(changeListInfo.id) == null) {
+          iterator.remove();
+        }
+      }
+    }
+
+    myChangeListManager.addChangeListListener(myChangeListListener);
   }
 
   private TaskProjectConfiguration getProjectConfiguration() {
@@ -575,29 +598,14 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       });
     }
 
-    LocalTask defaultTask = myTasks.get(LocalTaskImpl.DEFAULT_TASK_ID);
+    // make sure that the default task is exist
+    LocalTask defaultTask = findTask(LocalTaskImpl.DEFAULT_TASK_ID);
     if (defaultTask == null) {
       defaultTask = createDefaultTask();
       addTask(defaultTask);
     }
-    // make sure the task is associated with default changelist
-    LocalChangeList defaultList = myChangeListManager.findChangeList(LocalChangeList.DEFAULT_NAME);
-    if (defaultList != null) {
-      ChangeListInfo listInfo = new ChangeListInfo(defaultList);
-      if (!defaultTask.getChangeLists().contains(listInfo)) {
-        defaultTask.addChangelist(listInfo);
-      }
-    }
 
-    for (LocalTask localTask : getLocalTasks()) {
-      for (Iterator<ChangeListInfo> iterator = localTask.getChangeLists().iterator(); iterator.hasNext(); ) {
-        final ChangeListInfo changeListInfo = iterator.next();
-        if (myChangeListManager.getChangeList(changeListInfo.id) == null) {
-          iterator.remove();
-        }
-      }
-    }
-
+    // search for active task
     LocalTask activeTask = null;
     final List<LocalTask> tasks = getLocalTasks();
     Collections.sort(tasks, TASK_UPDATE_COMPARATOR);
@@ -611,14 +619,13 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         task.setActive(false);
       }
     }
-
-    if (activeTask != null) {
-      myActiveTask = activeTask;
+    if (activeTask == null) {
+      activeTask = defaultTask;
     }
+
+    myActiveTask = activeTask;
     doActivate(myActiveTask, false);
     myDispatcher.getMulticaster().taskActivated(myActiveTask);
-
-    myChangeListManager.addChangeListListener(myChangeListListener);
   }
 
   private static LocalTaskImpl createDefaultTask() {
