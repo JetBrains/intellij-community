@@ -22,15 +22,20 @@ package com.intellij.projectImport;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
+import com.intellij.ide.util.projectWizard.ImportFromSourcesProvider;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DoubleClickListener;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBRadioButton;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -41,60 +46,66 @@ import java.util.Comparator;
 import java.util.List;
 
 public class ImportChooserStep extends ProjectImportWizardStep {
-  private static final String PREFFERED = "create.project.preffered.importer";
+  private static final String PREFERRED = "create.project.preferred.importer";
 
+  private final ProjectImportProvider[] myProviders;
   private final StepSequence mySequence;
-  private final JList myList;
-  private final JPanel myPanel;
+  private ProjectImportProvider myFromSourcesProvider;
+  private JBList myList;
+  private JPanel myPanel;
+
+  private JBRadioButton myCreateFromSources;
+  private JBRadioButton myImportFrom;
 
   public ImportChooserStep(final ProjectImportProvider[] providers, final StepSequence sequence, final WizardContext context) {
     super(context);
+    myProviders = providers;
     mySequence = sequence;
-    myPanel = new JPanel(new BorderLayout());
-    final DefaultListModel model = new DefaultListModel();
-    myList = new JBList(model);
 
+    myImportFrom.setText(ProjectBundle.message("project.new.wizard.import.title", context.getPresentationName()));
+    myCreateFromSources.setText(ProjectBundle.message("project.new.wizard.from.existent.sources.title", context.getPresentationName()));
+    final DefaultListModel model = new DefaultListModel();
     for (ProjectImportProvider provider : sorted(providers)) {
-      model.addElement(provider);
+      if (provider instanceof ImportFromSourcesProvider) {
+        myFromSourcesProvider = provider;
+      }
+      else {
+        model.addElement(provider);
+      }
     }
 
+    myList.setModel(model);
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myList.setCellRenderer(new DefaultListCellRenderer(){
+    myList.setCellRenderer(new DefaultListCellRenderer() {
       public Component getListCellRendererComponent(final JList list,
                                                     final Object value,
                                                     final int index, final boolean isSelected, final boolean cellHasFocus) {
         final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         setText(((ProjectImportProvider)value).getName());
-        setIcon(((ProjectImportProvider)value).getIcon());
+        Icon icon = ((ProjectImportProvider)value).getIcon();
+        setIcon(icon);
+        setDisabledIcon(IconLoader.getDisabledIcon(icon));
         return rendererComponent;
       }
     });
 
-    JLabel label = new JLabel("Please select importing \u001btarget:");
-    label.setLabelFor(myList);
-    label.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 5, 0));
-    myPanel.add(label, BorderLayout.NORTH);
+    ChangeListener changeListener = new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        if (myImportFrom.isSelected()) {
+          IdeFocusManager.getInstance(context.getProject()).requestFocus(myList, false);
+        }
+        updateSteps();
+      }
+    };
+    myImportFrom.addChangeListener(changeListener);
+    myCreateFromSources.addChangeListener(changeListener);
 
-    myPanel.add(ScrollPaneFactory.createScrollPane(myList), BorderLayout.CENTER);
     myList.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
-        final ProjectImportProvider provider = (ProjectImportProvider)myList.getSelectedValue();
-        if (provider != null) {
-          mySequence.setType(provider.getId());
-        }
+        updateSteps();
       }
     });
-    final String id = PropertiesComponent.getInstance().getValue(PREFFERED);
-    if (id == null) {
-      myList.setSelectedIndex(0);
-    } else {
-      for (ProjectImportProvider provider : providers) {
-        if (Comparing.strEqual(provider.getId(), id)) {
-          myList.setSelectedValue(provider, true);
-          break;
-        }
-      }
-    }
 
     new DoubleClickListener() {
       @Override
@@ -103,6 +114,36 @@ public class ImportChooserStep extends ProjectImportWizardStep {
         return true;
       }
     }.installOn(myList);
+  }
+
+  @Override
+  public void updateStep() {
+    if (myList.getSelectedValue() != null) return;
+
+    myList.setSelectedIndex(0);
+    final String id = PropertiesComponent.getInstance().getValue(PREFERRED);
+    if (id == null || id.equals(myFromSourcesProvider.getId())) {
+      myCreateFromSources.setSelected(true);
+    }
+    else {
+      myImportFrom.setSelected(true);
+      for (ProjectImportProvider provider : myProviders) {
+        if (Comparing.strEqual(provider.getId(), id)) {
+          myList.setSelectedValue(provider, true);
+          break;
+        }
+      }
+    }
+  }
+
+  private void updateSteps() {
+    myList.setEnabled(myImportFrom.isSelected());
+    final ProjectImportProvider provider = getSelectedProvider();
+    if (provider != null) {
+      mySequence.setType(provider.getId());
+      PropertiesComponent.getInstance().setValue(PREFERRED, provider.getId());
+      getWizardContext().requestWizardButtonsUpdate();
+    }
   }
 
   private static List<ProjectImportProvider> sorted(ProjectImportProvider[] providers) {
@@ -121,18 +162,28 @@ public class ImportChooserStep extends ProjectImportWizardStep {
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myList;
+    return myCreateFromSources.isSelected() ? myCreateFromSources : myList;
   }
 
   public void updateDataModel() {
-    final Object selectedValue = myList.getSelectedValue();
-    if (selectedValue instanceof ProjectImportProvider) {
-      mySequence.setType(((ProjectImportProvider)selectedValue).getId());
-      final ProjectImportBuilder builder = ((ProjectImportProvider)selectedValue).getBuilder();
+    final ProjectImportProvider provider = getSelectedProvider();
+    if (provider != null) {
+      mySequence.setType(provider.getId());
+      final ProjectImportBuilder builder = provider.getBuilder();
       getWizardContext().setProjectBuilder(builder);
       builder.setUpdate(getWizardContext().getProject() != null);
-      PropertiesComponent.getInstance().setValue(PREFFERED, ((ProjectImportProvider)selectedValue).getId());
     }
+  }
+
+  private ProjectImportProvider getSelectedProvider() {
+    final ProjectImportProvider provider;
+    if (myCreateFromSources.isSelected()) {
+      provider = myFromSourcesProvider;
+    }
+    else {
+      provider = (ProjectImportProvider)myList.getSelectedValue();
+    }
+    return provider;
   }
 
   @Override
