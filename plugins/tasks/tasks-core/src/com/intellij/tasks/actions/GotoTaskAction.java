@@ -48,7 +48,6 @@ public class GotoTaskAction extends GotoActionBase {
   }
 
   void perform(final Project project) {
-    myInAction = getClass();
     final Ref<Boolean> shiftPressed = Ref.create(false);
 
     final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, new GotoTaskPopupModel(project), new ChooseByNameItemProvider() {
@@ -134,8 +133,12 @@ public class GotoTaskAction extends GotoActionBase {
     });
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
     actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    actionToolbar.updateActionsImmediately();
+    actionToolbar.getComponent().setFocusable(false);
+    actionToolbar.getComponent().setBorder(null);
     popup.setToolArea(actionToolbar.getComponent());
     popup.setMaximumListSizeLimit(10);
+    popup.setListSizeIncreasing(10);
 
     showNavigationPopup(new GotoActionCallback<Object>() {
       @Override
@@ -205,8 +208,7 @@ public class GotoTaskAction extends GotoActionBase {
 
     @Override
     public String getCheckBoxName() {
-      return null;
-      //return "Include closed tasks";
+      return "Include closed tasks";
     }
 
     @Override
