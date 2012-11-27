@@ -57,7 +57,8 @@ public class ImportChooserStep extends ProjectImportWizardStep {
     for (ProjectImportProvider provider : sorted(providers)) {
       model.addElement(provider);
     }
-    
+
+    myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setCellRenderer(new DefaultListCellRenderer(){
       public Component getListCellRendererComponent(final JList list,
                                                     final Object value,
