@@ -63,12 +63,12 @@ public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Dispo
     myTaskManager.addTaskListener(new TaskListenerAdapter() {
       @Override
       public void taskDeactivated(final LocalTask task) {
-        updateTable();
+        myTable.repaint();
       }
 
       @Override
       public void taskActivated(final LocalTask task) {
-        updateTable();
+        myTable.repaint();
       }
 
       @Override
@@ -221,7 +221,7 @@ public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Dispo
             final boolean isRunning = myTimeTrackingManager.isTimeTrackingAutoMode() ? isActive : isActive && task.isRunning();
             component.append((String)value, getAttributes(isClosed, isActive, isSelected));
             component.setIcon(isRunning
-                              ? LayeredIcon.create(task.getIcon(), AllIcons.General.Run)
+                              ? LayeredIcon.create(task.getIcon(), AllIcons.Nodes.RunnableMark)
                               : isClosed && !isActive ? IconLoader.getTransparentIcon(task.getIcon()) : task.getIcon());
             component.setOpaque(false);
             panel.add(component, BorderLayout.CENTER);
@@ -248,7 +248,7 @@ public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Dispo
       @Override
       public String valueOf(final LocalTask task) {
         long timeSpent = task.getTimeSpent();
-        if (myTimeTrackingManager.isTimeTrackingAutoMode() ? task.isActive() : task.isRunning()) {
+        if (task.isActive()) {
           return formatDuration(timeSpent);
         }
         return DateFormatUtil.formatDuration(timeSpent);
