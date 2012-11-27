@@ -166,7 +166,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         assert myInitialized : "Disposing not initialized component";
         assert !myDisposed : "Double dispose";
 
-        stopProcess(false);
+        stopProcess(false, "Dispose");
 
         myDisposed = true;
         myLastSettings = null;
@@ -376,7 +376,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   @Override
   public void setUpdateByTimerEnabled(boolean value) {
     myUpdateByTimerEnabled = value;
-    stopProcess(value);
+    stopProcess(value, "Update by timer change");
   }
 
   private int myDisableCount = 0;
@@ -406,7 +406,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     VirtualFile vFile = file.getVirtualFile();
     if (value) {
       myDisabledHintsFiles.remove(vFile);
-      stopProcess(true);
+      stopProcess(true, "Import hints change");
     }
     else {
       myDisabledHintsFiles.add(vFile);
@@ -455,7 +455,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   @Override
   public void restart() {
     myFileStatusMap.markAllFilesDirty();
-    stopProcess(true);
+    stopProcess(true, "Global restart");
   }
 
   @Override
@@ -463,7 +463,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
     if (document == null) return;
     myFileStatusMap.markFileScopeDirty(document, new TextRange(0, document.getTextLength()), file.getTextLength());
-    stopProcess(true);
+    stopProcess(true, "Psi file restart");
   }
 
   @NotNull
@@ -503,10 +503,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return myUpdateProgress != null && !myUpdateProgress.isCanceled();
   }
 
-  synchronized void stopProcess(boolean toRestartAlarm) {
+  synchronized void stopProcess(boolean toRestartAlarm, @NonNls String reason) {
     if (!allowToInterrupt) throw new RuntimeException("Cannot interrupt daemon");
 
-    cancelUpdateProgress(toRestartAlarm, "by Stop process");
+    cancelUpdateProgress(toRestartAlarm, reason);
     myAlarm.cancelAllRequests();
     boolean restart = toRestartAlarm && !myDisposed && myInitialized;
     if (restart) {
@@ -515,7 +515,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   private synchronized void cancelUpdateProgress(final boolean start, @NonNls String reason) {
-    PassExecutorService.log(myUpdateProgress, null, reason, start);
+    PassExecutorService.log(myUpdateProgress, null, "CancelX", reason, start);
 
     if (myUpdateProgress != null) {
       myUpdateProgress.cancel();
