@@ -74,9 +74,7 @@ public class IgnoredFilesTest extends Svn16TestCase {
           myVcsManager.registerVcs(myVcs);
           myVcsManager.setDirectoryMapping(myWorkingCopyDir.getPath(), myVcs.getName());
 
-          ((ProjectComponent)myChangeListManager).projectOpened();
           myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
-          ((ProjectComponent)myVcsDirtyScopeManager).projectOpened();
           myLocalFileSystem = LocalFileSystem.getInstance();
         }
         catch (Exception e) {

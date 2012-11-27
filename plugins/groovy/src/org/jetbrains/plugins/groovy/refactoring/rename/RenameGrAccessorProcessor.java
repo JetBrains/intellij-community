@@ -24,6 +24,7 @@ import com.intellij.refactoring.rename.RenameJavaMethodProcessor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
@@ -46,7 +47,7 @@ public class RenameGrAccessorProcessor extends RenameJavaMethodProcessor {
   public void renameElement(PsiElement psiElement,
                             String newName,
                             UsageInfo[] usages,
-                            RefactoringElementListener listener) throws IncorrectOperationException {
+                            @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
 
   }
 

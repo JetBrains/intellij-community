@@ -32,7 +32,7 @@ public class WelcomePane extends JPanel {
     JPanel actionsPanel = new CardActionsPanel(actions) {
       @Override
       public Dimension getPreferredSize() {
-        return new Dimension(600, super.getPreferredSize().height);
+        return new Dimension(500, super.getPreferredSize().height);
       }
     };
 

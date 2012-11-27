@@ -30,6 +30,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class RenameXmlAttributeProcessor extends RenamePsiElementProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameXmlAttributeProcessor");
@@ -41,7 +42,7 @@ public class RenameXmlAttributeProcessor extends RenamePsiElementProcessor {
   public void renameElement(final PsiElement element,
                             final String newName,
                             final UsageInfo[] usages,
-                            final RefactoringElementListener listener) throws IncorrectOperationException {
+                            @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
     if (element instanceof XmlAttribute) {
       doRenameXmlAttribute((XmlAttribute)element, newName, listener);
     }
@@ -52,10 +53,12 @@ public class RenameXmlAttributeProcessor extends RenamePsiElementProcessor {
 
   private static void doRenameXmlAttribute(XmlAttribute attribute,
                                            String newName,
-                                           RefactoringElementListener listener) {
+                                           @Nullable RefactoringElementListener listener) {
     try {
       final PsiElement element = attribute.setName(newName);
-      listener.elementRenamed(element);
+      if (listener != null) {
+        listener.elementRenamed(element);
+      }
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -65,7 +68,7 @@ public class RenameXmlAttributeProcessor extends RenamePsiElementProcessor {
   private static void doRenameXmlAttributeValue(@NotNull XmlAttributeValue value,
                                                 String newName,
                                                 UsageInfo[] infos,
-                                                RefactoringElementListener listener)
+                                                @Nullable RefactoringElementListener listener)
     throws IncorrectOperationException {
     LOG.assertTrue(value.isValid());
 
@@ -75,7 +78,9 @@ public class RenameXmlAttributeProcessor extends RenamePsiElementProcessor {
     LOG.assertTrue(psiManager != null);
     XmlFile file = (XmlFile)PsiFileFactory.getInstance(psiManager.getProject()).createFileFromText("dummy.xml", "<a attr=\"" + newName + "\"/>");
     final PsiElement element = value.replace(file.getDocument().getRootTag().getAttributes()[0].getValueElement());
-    listener.elementRenamed(element);
+    if (listener != null) {
+      listener.elementRenamed(element);
+    }
   }
 
   private static void renameAll(PsiElement originalElement, UsageInfo[] infos, String newName,

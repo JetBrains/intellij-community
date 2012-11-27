@@ -12,11 +12,15 @@ import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
 import org.jetbrains.plugins.gradle.manage.GradleProjectEntityChangeListener;
+import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
 import org.jetbrains.plugins.gradle.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.task.GradleTaskType;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
+import java.util.Collection;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -26,21 +30,26 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Denis Zhdanov
  * @since 11/3/11 3:57 PM
  */
-public class GradleProjectStructureChangesDetector extends AbstractProjectComponent {
-  
+public class GradleProjectStructureChangesDetector extends AbstractProjectComponent implements GradleProjectStructureChangeListener {
+
   private static final int REFRESH_DELAY_MILLIS = (int)500;
 
-  private final Alarm          myAlarm            = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-  private final AtomicLong     myStartRefreshTime = new AtomicLong();
-  private final RefreshRequest myRequest          = new RefreshRequest();
-  private final AtomicInteger  myImportCounter    = new AtomicInteger();
-  
-  public GradleProjectStructureChangesDetector(@NotNull Project project) {
+  private final Alarm          myAlarm              = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private final AtomicLong     myStartRefreshTime   = new AtomicLong();
+  private final RefreshRequest myRequest            = new RefreshRequest();
+  private final AtomicInteger  myImportCounter      = new AtomicInteger();
+  private final AtomicBoolean  myNewChangesDetected = new AtomicBoolean();
+
+  @NotNull private final GradleProjectStructureChangesModel myChangesModel;
+
+  public GradleProjectStructureChangesDetector(@NotNull Project project, @NotNull GradleProjectStructureChangesModel model) {
     super(project);
+    myChangesModel = model;
+    myChangesModel.addListener(this);
     subscribeToGradleImport(project);
     subscribeToRootChanges(project);
   }
-  
+
   private void subscribeToGradleImport(@NotNull Project project) {
     MessageBusConnection connection = project.getMessageBus().connect(project);
     connection.subscribe(GradleProjectEntityChangeListener.TOPIC, new GradleProjectEntityChangeListener() {
@@ -77,11 +86,34 @@ public class GradleProjectStructureChangesDetector extends AbstractProjectCompon
       treeModel.rebuild();
     }
   }
-  
+
+  @Override
+  public void onChanges(@NotNull Collection<GradleProjectStructureChange> oldChanges,
+                        @NotNull Collection<GradleProjectStructureChange> currentChanges)
+  {
+    myNewChangesDetected.set(true); 
+  }
+
   private void scheduleUpdate() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
+    
+    // We experienced a situation when project root change event has been fired but no actual project structure change has
+    // occurred (e.g. compile output directory was modified externally). That's why we perform additional check here in order
+    // to ensure that project structure has really been changed.
+    //
+    // The idea is to check are there any new project structure changes comparing to the gradle project structure used last time.
+    // We don't do anything in case no new changes have been detected.
+    GradleProject project = myChangesModel.getGradleProject();
+    if (project != null) {
+      myNewChangesDetected.set(false);
+      myChangesModel.update(project);
+      if (!myNewChangesDetected.get()) {
+        return;
+      }
+    }
+
     myStartRefreshTime.set(System.currentTimeMillis() + REFRESH_DELAY_MILLIS);
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(myRequest, REFRESH_DELAY_MILLIS);

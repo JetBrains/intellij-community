@@ -154,6 +154,7 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
           @Override
           public void windowEnteredFullScreen(AppEvent.FullScreenEvent event) {
             myInFullScreen = true;
+            frame.storeFullScreenStateIfNeeded(true);
 
             JRootPane rootPane = frame.getRootPane();
             if (rootPane != null) rootPane.putClientProperty(FULL_SCREEN, Boolean.TRUE);

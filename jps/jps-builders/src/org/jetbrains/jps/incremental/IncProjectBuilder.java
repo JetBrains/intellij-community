@@ -321,7 +321,9 @@ public class IncProjectBuilder {
       }
       else {
         for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets()) {
-          clearOutputFiles(context, target);
+          if (context.getScope().isAffected(target)) {
+            clearOutputFiles(context, target);
+          }
         }
       }
     }
@@ -389,9 +391,11 @@ public class IncProjectBuilder {
 
     ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
     for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets()) {
-      final Collection<File> outputs = target.getOutputRoots(context);
-      for (File file : outputs) {
-        rootsToDelete.putValue(file, target);
+      if (context.getScope().isAffected(target)) {
+        final Collection<File> outputs = target.getOutputRoots(context);
+        for (File file : outputs) {
+          rootsToDelete.putValue(file, target);
+        }
       }
     }
 

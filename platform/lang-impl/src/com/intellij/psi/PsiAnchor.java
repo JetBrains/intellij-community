@@ -327,7 +327,7 @@ public abstract class PsiAnchor {
   @Nullable
   public static PsiElement restoreFromStubIndex(PsiFileWithStubSupport fileImpl,
                                                 int index,
-                                                IStubElementType elementType) {
+                                                @NotNull IStubElementType elementType) {
     if (fileImpl == null) return null;
     StubTree tree = fileImpl.getStubTree();
 

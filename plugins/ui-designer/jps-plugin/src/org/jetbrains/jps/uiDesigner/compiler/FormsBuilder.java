@@ -25,7 +25,9 @@ import org.jetbrains.jps.incremental.ModuleLevelBuilder;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -33,6 +35,7 @@ import java.util.Set;
  */
 public abstract class FormsBuilder extends ModuleLevelBuilder {
   protected static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.uiDesigner.compiler.FormsInstrumenter");
+  protected static final Key<Map<File, Collection<File>>> FORMS_TO_COMPILE = Key.create("_forms-to_compile_");
   protected static final String JAVA_EXTENSION = ".java";
   protected static final String FORM_EXTENSION = ".form";
   protected static final FileFilter JAVA_SOURCES_FILTER =
@@ -61,7 +64,6 @@ public abstract class FormsBuilder extends ModuleLevelBuilder {
       }
     }
     ;
-  protected static final Key<Set<File>> ADDITIONAL_FORMS_TO_REBUILD = Key.create("_forced_forms_to_rebuild_");
 
   private final String myBuilderName;
 
@@ -79,6 +81,15 @@ public abstract class FormsBuilder extends ModuleLevelBuilder {
   @Override
   public String getPresentableName() {
     return myBuilderName;
+  }
+
+  protected static void addBinding(File srcFile, File form, Map<File, Collection<File>> container) {
+    Collection<File> forms = container.get(srcFile);
+    if (forms == null) {
+      forms = new ArrayList<File>();
+      container.put(srcFile, forms);
+    }
+    forms.add(form);
   }
 
 }

@@ -6,11 +6,12 @@ package com.intellij.psi;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import org.jetbrains.annotations.NonNls;
 
 public class TreeIsCorrectAfterDiffReparseTest extends LightCodeInsightTestCase {
 
   public void testIDEADEV41862() throws Exception {
-    String part1 = "package com.test;\n" +
+    @NonNls String part1 = "package com.test;\n" +
                    "\n" +
                    "\n" +
                    "//------------------------------------------------------------------\n" +
@@ -952,7 +953,7 @@ public class TreeIsCorrectAfterDiffReparseTest extends LightCodeInsightTestCase 
                    "\n" +
                    "  ";
 
-    String part2 = "\n" +
+    @NonNls String part2 = "\n" +
                    "  private TransactionStatus getHighestPriorityError(TransactionStatus existingStatus, Message newError) {\n" +
                    "    if(existingStatus == null) {\n" +
                    "      return newError;\n" +

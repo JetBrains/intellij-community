@@ -86,7 +86,7 @@ public class ContainerUtilRt {
   }
 
   @NotNull
-  public static <T> LinkedList<T> newLinkedList(T... elements) {
+  public static <T> LinkedList<T> newLinkedList(@NotNull T... elements) {
     final LinkedList<T> list = newLinkedList();
     Collections.addAll(list, elements);
     return list;
@@ -103,7 +103,7 @@ public class ContainerUtilRt {
   }
 
   @NotNull
-  public static <T> ArrayList<T> newArrayList(T... elements) {
+  public static <T> ArrayList<T> newArrayList(@NotNull T... elements) {
     ArrayList<T> list = newArrayListWithCapacity(elements.length);
     Collections.addAll(list, elements);
     return list;
@@ -132,7 +132,8 @@ public class ContainerUtilRt {
     return 5 + size + size / 5;
   }
 
-  private static <T, C extends Collection<T>> C copy(C collection, @NotNull Iterable<? extends T> elements) {
+  @NotNull
+  private static <T, C extends Collection<T>> C copy(@NotNull C collection, @NotNull Iterable<? extends T> elements) {
     for (T element : elements) {
       collection.add(element);
     }
@@ -145,7 +146,7 @@ public class ContainerUtilRt {
   }
 
   @NotNull
-  public static <T> HashSet<T> newHashSet(T... elements) {
+  public static <T> HashSet<T> newHashSet(@NotNull T... elements) {
     return new com.intellij.util.containers.HashSet<T>(Arrays.asList(elements));
   }
 
@@ -171,7 +172,7 @@ public class ContainerUtilRt {
   }
 
   @NotNull
-  public static <T> LinkedHashSet<T> newLinkedHashSet(T... elements) {
+  public static <T> LinkedHashSet<T> newLinkedHashSet(@NotNull T... elements) {
     return newLinkedHashSet(Arrays.asList(elements));
   }
 
@@ -190,7 +191,7 @@ public class ContainerUtilRt {
   }
 
   @NotNull
-  public static <T> TreeSet<T> newTreeSet(T... elements) {
+  public static <T> TreeSet<T> newTreeSet(@NotNull T... elements) {
     TreeSet<T> set = newTreeSet();
     Collections.addAll(set, elements);
     return set;
@@ -212,48 +213,62 @@ public class ContainerUtilRt {
   }
 
   @NotNull
-  public static <T> Stack<T> newStack(Collection<T> elements) {
+  public static <T> Stack<T> newStack(@NotNull Collection<T> elements) {
     return new Stack<T>(elements);
   }
 
   @NotNull
-  public static <T> Stack<T> newStack(T... initial) {
+  public static <T> Stack<T> newStack(@NotNull T... initial) {
     return new Stack<T>(Arrays.asList(initial));
   }
 
   /**
    * Optimized toArray() as opposed to the {@link java.util.Collections#emptyList()}.
    */
-  private static class EmptyList extends AbstractList<Object> implements RandomAccess {
+  private static class EmptyList<T> extends AbstractList<T> implements RandomAccess {
     private static final EmptyList INSTANCE = new EmptyList();
 
+    @Override
     public int size() {
       return 0;
     }
 
+    @Override
     public boolean contains(Object obj) {
       return false;
     }
 
-    public Object get(int index) {
+    @Override
+    public T get(int index) {
       throw new IndexOutOfBoundsException("Index: " + index);
     }
 
+    @NotNull
     @Override
     public Object[] toArray() {
       return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
 
+    @NotNull
     @Override
-    public <T> T[] toArray(T[] a) {
+    public <T> T[] toArray(@NotNull T[] a) {
+      if (a.length != 0) {
+        a[0] = null;
+      }
       return a;
+    }
+
+    @NotNull
+    @Override
+    public Iterator<T> iterator() {
+      return EmptyIterator.getInstance();
     }
   }
 
   @NotNull
   public static <T> List<T> emptyList() {
-    @SuppressWarnings({"unchecked"}) final List<T> list = (List<T>)EmptyList.INSTANCE;
-    return list;
+    //noinspection unchecked
+    return (List<T>)EmptyList.INSTANCE;
   }
 
   @NotNull

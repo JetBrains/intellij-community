@@ -73,7 +73,7 @@ public abstract class LexerTestCase extends UsefulTestCase {
     return printTokens(text, start, createLexer());
   }
 
-  public static String printTokens(String text, int start, Lexer lexer) {
+  public static String printTokens(CharSequence text, int start, Lexer lexer) {
     lexer.start(text, start, text.length());
     String result = "";
     while (true) {
