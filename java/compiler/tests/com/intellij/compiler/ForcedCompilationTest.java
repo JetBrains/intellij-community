@@ -6,6 +6,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import java.io.File;
+import java.io.IOException;
+
 import static com.intellij.util.io.TestFileSystemBuilder.fs;
 
 /**
@@ -35,5 +38,16 @@ public class ForcedCompilationTest extends BaseCompilerTestCase {
     compile(getCompilerManager().createProjectCompileScope(myProject), CompilerFilter.ALL, false, true);
     assertOutput(dep, fs());
     assertOutput(m, fs());
+  }
+
+  public void testCleanOutputDirectoryOnRebuild() throws IOException {
+    Module m = addModule("m", createFile("src/A.java", "class A{}").getParent());
+    make(m);
+    boolean created = new File(getOutputDir(m), "X.class").createNewFile();
+    assertTrue(created);
+    assertOutput(m, fs().file("A.class").file("X.class"));
+
+    rebuild();
+    assertOutput(m, fs().file("A.class"));
   }
 }

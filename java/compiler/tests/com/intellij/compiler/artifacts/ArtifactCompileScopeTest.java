@@ -8,6 +8,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 
+import java.io.File;
+import java.io.IOException;
+
 import static com.intellij.compiler.artifacts.ArtifactsTestCase.commitModel;
 
 /**
@@ -18,6 +21,57 @@ public class ArtifactCompileScopeTest extends ArtifactCompilerTestCase {
     @Override
     protected boolean useExternalCompiler() {
       return true;
+    }
+
+    public void testDoNotCleanArtifactOutputOnRebuild()  {
+      Artifact a = addArtifact(root().file(createFile("a.txt")));
+      make(a);
+      createFileInOutput(a, "b.txt");
+      assertOutput(a, fs().file("a.txt").file("b.txt"));
+
+      rebuild();
+      assertOutput(a, fs().file("a.txt").file("b.txt"));
+    }
+
+    public void testMakeArtifactAfterRebuild()  {
+      Module m = addModule("m", createFile("src/A.java", "class A{}").getParent());
+      Artifact a = addArtifact(root().module(m));
+      make(a);
+      assertOutput(m, fs().file("A.class"));
+
+      createFileInOutput(a, "a.txt");
+      assertOutput(a, fs().file("A.class").file("a.txt"));
+
+      createFile("src/B.java", "class B{}");
+
+      rebuild();
+      assertOutput(m, fs().file("A.class").file("B.class"));
+      assertOutput(a, fs().file("A.class").file("a.txt"));
+
+      make(a);
+      assertOutput(a, fs().file("A.class").file("B.class").file("a.txt"));
+    }
+
+    public void testRebuildArtifactOnProjectRebuildIfBuildOnMakeOptionIsEnabled() {
+      Module m = addModule("m", createFile("src/A.java", "class A{}").getParent());
+      Artifact a = addArtifact(root().module(m));
+      setBuildOnMake(a);
+      make(a);
+      createFileInOutput(a, "a.txt");
+      assertOutput(a, fs().file("A.class").file("a.txt"));
+
+      rebuild();
+      assertOutput(a, fs().file("A.class"));
+    }
+
+    private static void createFileInOutput(Artifact a, final String name)  {
+      try {
+        boolean created = new File(a.getOutputPath(), name).createNewFile();
+        assertTrue(created);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 
@@ -48,7 +102,7 @@ public class ArtifactCompileScopeTest extends ArtifactCompilerTestCase {
     assertOutput(artifact, fs().file("A.class"));
   }
 
-  private void setBuildOnMake(Artifact artifact) {
+  protected void setBuildOnMake(Artifact artifact) {
     final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
     model.getOrCreateModifiableArtifact(artifact).setBuildOnMake(true);
     commitModel(model);
