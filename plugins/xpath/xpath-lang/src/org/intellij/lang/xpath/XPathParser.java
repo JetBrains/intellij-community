@@ -279,7 +279,7 @@ public class XPathParser implements PsiParser {
     if (builder.getTokenType() == XPathTokenTypes.MINUS) {
       final PsiBuilder.Marker expr = builder.mark();
       builder.advanceLexer();
-      if (!parsePathExpression(builder)) {
+      if (!parseUnionExpression(builder)) {
         builder.error("Expression expected");
       }
       expr.done(XPathElementTypes.PREFIX_EXPRESSION);
