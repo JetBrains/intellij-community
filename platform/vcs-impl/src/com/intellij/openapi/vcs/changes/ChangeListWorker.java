@@ -26,7 +26,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlusMinus;
+import com.intellij.util.PlusMinusModify;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -52,14 +52,14 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   private final ChangesDelta myDelta;
   private final List<String> myListsToDisappear;
 
-  public ChangeListWorker(final Project project, final PlusMinus<Pair<String, AbstractVcs>> deltaListener) {
+  public ChangeListWorker(final Project project, final PlusMinusModify<BaseRevision> deltaListener) {
     myProject = project;
     myMap = new LinkedHashMap<String, LocalChangeList>();
     myIdx = new ChangeListsIndexes();
     myLocallyDeleted = new DeletedFilesHolder();
     mySwitchedHolder = new SwitchedFileHolder(project, FileHolder.HolderType.SWITCHED);
 
-    myDelta = new ChangesDelta(project, deltaListener);
+    myDelta = new ChangesDelta(deltaListener);
     myListsToDisappear = new LinkedList<String>();
   }
 

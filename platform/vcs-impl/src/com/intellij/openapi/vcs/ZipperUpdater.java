@@ -16,6 +16,8 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.util.Alarm;
 
@@ -25,16 +27,19 @@ public class ZipperUpdater {
   private boolean myRaised;
   private final Object myLock = new Object();
   private final int myDelay;
+  private final Alarm.ThreadToUse myThreadToUse;
   private boolean myIsEmpty;
 
   public ZipperUpdater(final int delay, Disposable parentDisposable) {
     myDelay = delay;
     myIsEmpty = true;
+    myThreadToUse = Alarm.ThreadToUse.OWN_THREAD;
     myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, parentDisposable);
   }
 
   public ZipperUpdater(final int delay, final Alarm.ThreadToUse threadToUse, Disposable parentDisposable) {
     myDelay = delay;
+    myThreadToUse = threadToUse;
     myIsEmpty = true;
     myAlarm = new Alarm(threadToUse, parentDisposable);
   }
@@ -50,18 +55,23 @@ public class ZipperUpdater {
       myRaised = true;
       myIsEmpty = false;
       if (! wasRaised) {
-        myAlarm.addRequest(new Runnable() {
+        final Runnable request = new Runnable() {
           public void run() {
             synchronized (myLock) {
-              if (! myRaised) return;
+              if (!myRaised) return;
               myRaised = false;
             }
             runnable.run();
             synchronized (myLock) {
-              myIsEmpty = ! myRaised;
+              myIsEmpty = !myRaised;
             }
           }
-        }, urgent ? 0 : myDelay);
+        };
+        if (Alarm.ThreadToUse.SWING_THREAD.equals(myThreadToUse) && ! ApplicationManager.getApplication().isDispatchThread()) {
+          myAlarm.addRequest(request, urgent ? 0 : myDelay, ModalityState.NON_MODAL);
+        } else {
+          myAlarm.addRequest(request, urgent ? 0 : myDelay);
+        }
       }
     }
   }

@@ -16,11 +16,16 @@
 package com.intellij.cvsSupport2.annotate;
 
 import com.intellij.CvsBundle;
+import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.cvsoperations.cvsAnnotate.Annotation;
 import com.intellij.cvsSupport2.cvsstatuses.CvsEntriesListener;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
-import com.intellij.openapi.vcs.annotate.*;
+import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.annotate.AnnotationSourceSwitcher;
+import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
+import com.intellij.openapi.vcs.annotate.LineAnnotationAspectAdapter;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,14 +33,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class CvsFileAnnotation implements FileAnnotation{
+public class CvsFileAnnotation extends FileAnnotation{
   private final String myContent;
   private final Annotation[] myAnnotations;
   private final CvsEntriesListener myCvsEntriesListener;
   private final Map<String, String> myRevisionComments = new HashMap<String, String>();
   @Nullable private final List<VcsFileRevision> myRevisions;
   private final VirtualFile myFile;
-  private final List<AnnotationListener> myListeners = new ArrayList<AnnotationListener>();
+  private final String myCurrentRevision;
 
   private final LineAnnotationAspect USER = new CvsAnnotationAspect(CvsAnnotationAspect.AUTHOR, true) {
     public String getValue(int lineNumber) {
@@ -72,11 +77,12 @@ public class CvsFileAnnotation implements FileAnnotation{
 
 
   public CvsFileAnnotation(final String content, final Annotation[] annotations,
-                           @Nullable final List<VcsFileRevision> revisions, VirtualFile file) {
+                           @Nullable final List<VcsFileRevision> revisions, VirtualFile file, String currentRevision) {
     myContent = content;
     myAnnotations = annotations;
     myRevisions = revisions;
     myFile = file;
+    myCurrentRevision = currentRevision;
     if (revisions != null) {
       for(VcsFileRevision revision: revisions) {
         myRevisionComments.put(revision.getRevisionNumber().toString(), revision.getCommitMessage());
@@ -94,29 +100,14 @@ public class CvsFileAnnotation implements FileAnnotation{
         fireAnnotationChanged();*/
       }
 
-      private void fireAnnotationChanged() {
-        final AnnotationListener[] listeners = myListeners.toArray(new AnnotationListener[myListeners.size()]);
-        for (AnnotationListener listener : listeners) {
-          listener.onAnnotationChanged();
-        }
-      }
-
       public void entryChanged(VirtualFile file) {
         if (myFile == null) return;
-        fireAnnotationChanged();
+        CvsFileAnnotation.this.close();
       }
     };
 
     CvsEntriesManager.getInstance().addCvsEntriesListener(myCvsEntriesListener);
 
-  }
-
-  public void addListener(AnnotationListener listener) {
-    myListeners.add(listener);
-  }
-
-  public void removeListener(AnnotationListener listener) {
-    myListeners.remove(listener);
   }
 
   public void dispose() {
@@ -197,5 +188,16 @@ public class CvsFileAnnotation implements FileAnnotation{
     protected void showAffectedPaths(int lineNum) {
       //todo
     }
+  }
+
+  @Nullable
+  @Override
+  public VcsRevisionNumber getCurrentRevision() {
+    return new CvsRevisionNumber(myCurrentRevision);
+  }
+
+  @Override
+  public VcsKey getVcsKey() {
+    return CvsVcs2.getKey();
   }
 }

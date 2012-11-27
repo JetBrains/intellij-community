@@ -38,6 +38,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
+import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListenerImpl;
 import com.intellij.openapi.vcs.checkout.CompositeCheckoutListener;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.history.VcsHistoryCache;
@@ -115,6 +117,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private VcsListener myVcsListener;
   private final FileIndexFacade myExcludedIndex;
   private final VcsFileListenerContextHelper myVcsFileListenerContextHelper;
+  private final VcsAnnotationLocalChangesListenerImpl myAnnotationLocalChangesListener;
 
   public ProjectLevelVcsManagerImpl(Project project, final FileStatusManager manager, MessageBus messageBus,
                                     final FileIndexFacade excludedFileIndex) {
@@ -145,6 +148,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         myVcsFileListenerContextHelper.possiblySwitchActivation(hasActiveVcss());
       }
     };
+    myExcludedIndex = excludedFileIndex;
     myConnect.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myVcsListener);
     myConnect.subscribe(UpdatedFilesListener.UPDATED_FILES, new UpdatedFilesListener() {
       @Override
@@ -152,7 +156,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         myContentRevisionCache.clearCurrent(strings);
       }
     });
-    myExcludedIndex = excludedFileIndex;
+    myAnnotationLocalChangesListener = new VcsAnnotationLocalChangesListenerImpl(myProject, this);
   }
 
   public void initComponent() {
@@ -203,12 +207,17 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     }
     myMappings.disposeMe();
     myConnect.disconnect();
+    myAnnotationLocalChangesListener.dispose();
     myContentManager = null;
 
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
     if (toolWindowManager != null && toolWindowManager.getToolWindow(ToolWindowId.VCS) != null) {
       toolWindowManager.unregisterToolWindow(ToolWindowId.VCS);
     }
+  }
+
+  public VcsAnnotationLocalChangesListener getAnnotationLocalChangesListener() {
+    return myAnnotationLocalChangesListener;
   }
 
   public void projectOpened() {

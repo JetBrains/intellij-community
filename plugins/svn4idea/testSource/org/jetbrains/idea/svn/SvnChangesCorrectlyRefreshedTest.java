@@ -50,13 +50,6 @@ public class SvnChangesCorrectlyRefreshedTest extends Svn17TestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
   }
 
-  private static void sleep(final int millis) {
-    try {
-      Thread.sleep(millis);
-    }
-    catch (InterruptedException ignore) { }
-  }
-
   @Test
   public void testModificationAndAfterRevert() throws Exception {
     final SubTree subTree = new SubTree(myWorkingCopyDir);
