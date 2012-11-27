@@ -21,6 +21,7 @@ import java.util.Set;
 /**
  * @author Eugene.Kudelevsky
  */
+// todo: make target based
 public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
   @NonNls private static final String BUILDER_NAME = "Android Library Packaging";
 
