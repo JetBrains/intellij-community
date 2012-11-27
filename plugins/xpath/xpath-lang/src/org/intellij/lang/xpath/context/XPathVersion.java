@@ -15,6 +15,18 @@
  */
 package org.intellij.lang.xpath.context;
 
+import com.intellij.lang.Language;
+import org.intellij.lang.xpath.XPathFileType;
+
 public enum XPathVersion {
-  V1, V2
+  V1(XPathFileType.XPATH), V2(XPathFileType.XPATH2);
+
+  private final Language myLanguage;
+  XPathVersion(final XPathFileType type) {
+    myLanguage = type.getLanguage();
+  }
+
+  public Language getLanguage() {
+    return myLanguage;
+  }
 }

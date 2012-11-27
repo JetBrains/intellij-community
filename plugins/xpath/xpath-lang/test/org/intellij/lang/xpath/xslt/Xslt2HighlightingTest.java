@@ -67,6 +67,10 @@ public class Xslt2HighlightingTest extends TestBase {
     doXsltHighlighting();
   }
 
+  public void testAttributeValueTemplateWithComment() throws Throwable {
+    doXsltHighlighting();
+  }
+
   public void testSchemaTypeWithDashes() throws Throwable {
     doXsltHighlighting("move-def.xsd");
   }
