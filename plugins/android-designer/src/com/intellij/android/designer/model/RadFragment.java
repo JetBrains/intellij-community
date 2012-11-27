@@ -36,16 +36,21 @@ import java.util.List;
  */
 public class RadFragment extends RadViewComponent implements IConfigurableComponent {
   private static final Property NAME_PROPERTY =
-    new FragmentProperty("name", new ResourceEditor(null, Collections.<AttributeFormat>emptySet(), null) {
-      @Override
-      protected void showDialog() {
-        String fragment = chooseFragment(myRootComponent);
+    new FragmentProperty("name",
+                         new MyResourceEditor(),
+                         JavadocParser.build("name", "Supply the name of the fragment class to instantiate."));
 
-        if (fragment != null) {
-          setValue(fragment);
-        }
-      }
-    }, JavadocParser.build("name", "Supply the name of the fragment class to instantiate."));
+  private static final Property CLASS_PROPERTY = new FragmentProperty("class",
+                                                                      new MyResourceEditor(),
+                                                                      JavadocParser.build("class",
+                                                                                          "Supply the name of the fragment class to instantiate.")) {
+    @Nullable
+    @Override
+    protected String getNamespace() {
+      return null;
+    }
+  };
+
   private static final Property TAG_PROPERTY = new FragmentProperty("tag", new TextEditorWrapper(),
                                                                     JavadocParser.build(
                                                                       "tag",
@@ -56,6 +61,7 @@ public class RadFragment extends RadViewComponent implements IConfigurableCompon
                                                                       "         {@link android.app.admin.DeviceAdminReceiver#DEVICE_ADMIN_META_DATA}\n" +
                                                                       "         meta-data entry.  Described here are the attributes that can be\n" +
                                                                       "         included in that tag."));
+
   private static final String NAME_KEY = "fragment.name";
 
   @Override
@@ -97,9 +103,25 @@ public class RadFragment extends RadViewComponent implements IConfigurableCompon
     if (!properties.isEmpty()) {
       properties = new ArrayList<Property>(properties);
       properties.add(NAME_PROPERTY);
+      properties.add(CLASS_PROPERTY);
       properties.add(IdProperty.INSTANCE);
       properties.add(TAG_PROPERTY);
     }
     super.setProperties(properties);
+  }
+
+  private static final class MyResourceEditor extends ResourceEditor {
+    public MyResourceEditor() {
+      super(null, Collections.<AttributeFormat>emptySet(), null);
+    }
+
+    @Override
+    protected void showDialog() {
+      String fragment = chooseFragment(myRootComponent);
+
+      if (fragment != null) {
+        setValue(fragment);
+      }
+    }
   }
 }
