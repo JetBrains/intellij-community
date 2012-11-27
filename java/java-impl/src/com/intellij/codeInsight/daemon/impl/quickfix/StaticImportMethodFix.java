@@ -128,7 +128,7 @@ public class StaticImportMethodFix implements IntentionAction {
           final PsiMethod psiMethod = (PsiMethod)psiElement;
           final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
           final int idx = ArrayUtilRt.find(((PsiExpressionList)parent).getExpressions(), PsiResolveHelperImpl.skipParenthesizedExprUp(methodCall));
-          if (idx > -1) {
+          if (idx > -1 && parameters.length > 0) {
             PsiType parameterType = parameters[Math.min(idx, parameters.length - 1)].getType();
             if (idx >= parameters.length - 1) {
               final PsiParameter lastParameter = parameters[parameters.length - 1];
