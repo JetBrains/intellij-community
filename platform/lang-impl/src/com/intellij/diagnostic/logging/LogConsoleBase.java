@@ -167,7 +167,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     if (myActions != null) return myActions;
     DefaultActionGroup group = new DefaultActionGroup();
 
-    final AnAction[] actions = getConsole().createConsoleActions();
+    final AnAction[] actions = getConsoleNotNull().createConsoleActions();
     for (AnAction action : actions) {
       group.add(action);
     }
@@ -203,7 +203,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   public JComponent getComponent() {
     if (!myWasInitialized) {
       myWasInitialized = true;
-      add(getConsole().getComponent(), BorderLayout.CENTER);
+      add(getConsoleNotNull().getComponent(), BorderLayout.CENTER);
       add(createToolbar(), BorderLayout.NORTH);
     }
     return this;
@@ -285,7 +285,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   protected synchronized void addMessage(final String text) {
     if (text == null) return;
     if (myContentPreprocessor != null) {
-      final java.util.List<LogFragment> fragments = myContentPreprocessor.parseLogLine(text + "\n");
+      final List<LogFragment> fragments = myContentPreprocessor.parseLogLine(text + "\n");
       myOriginalDocument = getOriginalDocument();
       for (LogFragment fragment : fragments) {
         myProcessHandler.notifyTextAvailable(fragment.getText(), fragment.getOutputType());
@@ -391,7 +391,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   private synchronized void doFilter() {
-    final ConsoleView console = getConsole();
+    final ConsoleView console = getConsoleNotNull();
     console.clear();
     myModel.processingStarted();
 
@@ -424,7 +424,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   private int printMessageToConsole(String line) {
-    final ConsoleView console = getConsole();
+    final ConsoleView console = getConsoleNotNull();
     if (myContentPreprocessor != null) {
       List<LogFragment> fragments = myContentPreprocessor.parseLogLine(line + '\n');
       for (LogFragment fragment : fragments) {
@@ -455,9 +455,22 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     }
   }
 
-  @NotNull
+  @Nullable
   public synchronized ConsoleView getConsole() {
     return myConsole;
+  }
+
+  /**
+   * A shortcut for "getConsole()+assert console != null"
+   * Use this method when you are sure that console must not be null.
+   * If we get the assertion then it is a time to revisit logic of caller ;)
+   */
+
+  @NotNull
+  private synchronized ConsoleView getConsoleNotNull() {
+    final ConsoleView console = getConsole();
+    assert console != null: "it looks like console has been disposed";
+    return console;
   }
 
   public ActionGroup getToolbarActions() {
@@ -468,12 +481,14 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     return ActionPlaces.UNKNOWN;
   }
 
+  @Nullable
   public JComponent getToolbarContextComponent() {
-    return getConsole().getComponent();
+    final ConsoleView console = getConsole();
+    return console == null ? null : console.getComponent();
   }
 
   public JComponent getPreferredFocusableComponent() {
-    return getConsole().getPreferredFocusableComponent();
+    return getConsoleNotNull().getPreferredFocusableComponent();
   }
 
   public String getTitle() {
@@ -481,7 +496,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   public synchronized void clear() {
-    getConsole().clear();
+    getConsoleNotNull().clear();
     myOriginalDocument = null;
   }
 

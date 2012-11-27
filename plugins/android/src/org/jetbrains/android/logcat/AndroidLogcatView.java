@@ -21,6 +21,7 @@ import com.android.ddmlib.Log;
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.logging.LogConsoleBase;
 import com.intellij.diagnostic.logging.LogConsoleListener;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.facet.ProjectFacetManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
@@ -392,7 +393,10 @@ public abstract class AndroidLogcatView implements Disposable {
           }
         }
         if (device != null) {
-          myLogConsole.getConsole().clear();
+          final ConsoleView console = myLogConsole.getConsole();
+          if (console != null) {
+            console.clear();
+          }
           final Pair<Reader, Writer> pair = AndroidLogcatUtil.startLoggingThread(myProject, device, false, myLogConsole);
           if (pair != null) {
             myCurrentReader = pair.first;
