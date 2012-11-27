@@ -60,7 +60,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
     myProject = project;
     myLock = new Object();
     myUpdateStuff = createUpdateStuff();
-    myUpdater = new ZipperUpdater(ApplicationManager.getApplication().isUnitTestMode() ? 10 : 300, Alarm.ThreadToUse.SWING_THREAD, project);
+    myUpdater = new ZipperUpdater(ApplicationManager.getApplication().isUnitTestMode() ? 10 : 300, Alarm.ThreadToUse.OWN_THREAD, project);
     myConnection = myProject.getMessageBus().connect();
     myLocalFileSystem = LocalFileSystem.getInstance();
     myHandler = createHandler();

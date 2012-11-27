@@ -344,7 +344,9 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
         statusBar.addWidget(myBranchWidget, "after " + (SystemInfo.isMac ? "Encoding" : "InsertOverwrite"), myProject);
       }
     }
-    myRepositoryForAnnotationsListener = new GitRepositoryForAnnotationsListener(myProject);
+    if (myRepositoryForAnnotationsListener == null) {
+      myRepositoryForAnnotationsListener = new GitRepositoryForAnnotationsListener(myProject);
+    }
     ((GitCommitsSequentialIndex) ServiceManager.getService(GitCommitsSequentially.class)).activate();
   }
 

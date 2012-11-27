@@ -15,12 +15,9 @@
  */
 package git4idea.annotate;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
-import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryChangeListener;
@@ -54,11 +51,5 @@ public class GitRepositoryForAnnotationsListener {
         refresher.dirtyUnder(repository.getRoot());
       }
     };
-  }
-
-  public void imitateEvent(final VirtualFile root) {
-    assert ApplicationManager.getApplication().isUnitTestMode();
-    final GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
-    myListener.repositoryChanged(repository);
   }
 }

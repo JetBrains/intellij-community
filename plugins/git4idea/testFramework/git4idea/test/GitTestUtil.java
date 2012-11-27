@@ -15,7 +15,6 @@
  */
 package git4idea.test;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
@@ -24,10 +23,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
-import git4idea.GitUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +31,10 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.testng.Assert.*;
 
@@ -244,20 +242,5 @@ public class GitTestUtil {
   @NotNull
   public static String stringifyActualExpected(@NotNull Object actual, @NotNull Object expected) {
     return "\nExpected:\n" + expected + "\nActual:\n" + actual;
-  }
-
-  public static void imitateEvent(VirtualFile dir) {
-    final VirtualFile dotGit = GitUtil.findGitDir(dir);
-    assertNotNull(dotGit);
-
-    final VirtualFile head = dotGit.findChild("HEAD");
-    assertNotNull(head);
-
-    final BulkFileListener listener = ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
-    final VFileContentChangeEvent event =
-      new VFileContentChangeEvent(null, head, head.getModificationStamp() - 1, head.getModificationStamp(), true);
-    final List<VFileContentChangeEvent> events = Collections.singletonList(event);
-    listener.before(events);
-    listener.after(events);
   }
 }

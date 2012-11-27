@@ -46,6 +46,7 @@ import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.SortedList;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -191,7 +192,13 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
       @Override
       public void run() {
         if (project.isDisposed()) return;
-        editor.getGutter().closeAllAnnotations();
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            if (project.isDisposed()) return;
+            editor.getGutter().closeAllAnnotations();
+          }
+        });
         if (onCurrentRevision) {
           listener.unregisterAnnotation(file, fileAnnotation);
         }

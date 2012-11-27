@@ -112,6 +112,13 @@ public class ChangeListsIndexes {
     }
   }
 
+  /**
+   * this method is called after each local changes refresh and collects all:
+   * - paths that are new in local changes
+   * - paths that are no more changed locally
+   * - paths that were and are changed, but base revision has changed (ex. external update)
+   * (for RemoteRevisionsCache and annotation listener)
+   */
   public void getDelta(final ChangeListsIndexes newIndexes,
                        final Set<BaseRevision> toRemove,
                        Set<BaseRevision> toAdd,
@@ -123,7 +130,7 @@ public class ChangeListsIndexes {
     final Set<String> toAddSet = new HashSet<String>(newKeySet);
     toRemoveSet.removeAll(newKeySet);
     toAddSet.removeAll(oldKeySet);
-    // those that
+    // those that modified
     oldKeySet.removeAll(toRemoveSet);
 
     for (String s : toRemoveSet) {

@@ -36,8 +36,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.annotate.GitRepositoryForAnnotationsListener;
 import git4idea.repo.GitFakeRepositoryManager;
+import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryImpl;
 import git4idea.test.GitTest;
 import org.jetbrains.annotations.NonNls;
@@ -121,7 +121,8 @@ public class GitAnnotationsClosedTest extends GitTest {
 
     myRepo.addCommit("external_commit");
 
-    new GitRepositoryForAnnotationsListener(myProject).imitateEvent(myWorkingCopyDir);
+    registerGitRepository();
+    imitateEvent(myWorkingCopyDir);
     sleep(100);  // zipper-updater
 
     Assert.assertTrue(myFirstClosed);
@@ -138,7 +139,8 @@ public class GitAnnotationsClosedTest extends GitTest {
     Assert.assertFalse(mySecondClosed);
 
     myRepo.checkout(head);
-    new GitRepositoryForAnnotationsListener(myProject).imitateEvent(myWorkingCopyDir);
+    registerGitRepository();
+    imitateEvent(myWorkingCopyDir);
     sleep(100);  // zipper-updater
     Assert.assertFalse(myFirstClosed);
     Assert.assertTrue(mySecondClosed);
@@ -188,12 +190,16 @@ public class GitAnnotationsClosedTest extends GitTest {
     Assert.assertFalse(mySecondClosed);
   }
 
+  private void imitateEvent(final VirtualFile root) {
+    final GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
+    repository.update();
+  }
+
   private void imitInternalUpdate() {
     final ProjectLevelVcsManagerEx ex = ProjectLevelVcsManagerEx.getInstanceEx(myProject);
     ex.setDirectoryMappings(Collections.singletonList(
       new VcsDirectoryMapping(FileUtil.toSystemIndependentName(myWorkingCopyDir.getPath()), GitVcs.NAME)));
-    ((GitFakeRepositoryManager) GitUtil.getRepositoryManager(myProject)).add(
-      GitRepositoryImpl.getLightInstance(myWorkingCopyDir, myProject, ServiceManager.getService(myProject, GitPlatformFacade.class), myProject));
+    registerGitRepository();
     ex.getOptions(VcsConfiguration.StandardOption.UPDATE).setValue(false);
     final CommonUpdateProjectAction action = new CommonUpdateProjectAction();
     action.getTemplatePresentation().setText("1");
@@ -212,6 +218,12 @@ public class GitAnnotationsClosedTest extends GitTest {
     myChangeListManager.ensureUpToDate(false);
     myChangeListManager.ensureUpToDate(false);  // wait for after-events like annotations recalculation
     sleep(100); // zipper updater
+  }
+
+  private void registerGitRepository() {
+    ((GitFakeRepositoryManager) GitUtil.getRepositoryManager(myProject)).add(
+      GitRepositoryImpl
+        .getLightInstance(myWorkingCopyDir, myProject, ServiceManager.getService(myProject, GitPlatformFacade.class), myProject));
   }
 
   private void annotateFirst(final VirtualFile first) throws VcsException {
