@@ -114,17 +114,19 @@ public class SpecifyTypeInPy3AnnotationsIntention implements IntentionAction {
       final PyExpression callee = callExpression.getCallee();
       if (callee != null) {
         final PsiReference reference = callee.getReference();
-        final PyFunction pyFunction = (PyFunction)callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
-        if (reference instanceof PsiPolyVariantReference && pyFunction != null &&
-            ((PsiPolyVariantReference)reference).multiResolve(false).length == 1) {
-          PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(elementAt, PyAssignmentStatement.class);
-          if (assignmentStatement != null) {
-            final PyExpression assignedValue = assignmentStatement.getAssignedValue();
-            if (assignedValue != null) {
-              PyType type = assignedValue.getType(TypeEvalContext.slow());
-              if (type == null || type instanceof PyReturnTypeReference) {
-                myText = PyBundle.message("INTN.specify.returt.type.in.annotation");
-                return true;
+        final Callable callable = callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
+        if (callable instanceof PyFunction) {
+          if (reference instanceof PsiPolyVariantReference &&
+              ((PsiPolyVariantReference)reference).multiResolve(false).length == 1) {
+            PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(elementAt, PyAssignmentStatement.class);
+            if (assignmentStatement != null) {
+              final PyExpression assignedValue = assignmentStatement.getAssignedValue();
+              if (assignedValue != null) {
+                PyType type = assignedValue.getType(TypeEvalContext.slow());
+                if (type == null || type instanceof PyReturnTypeReference) {
+                  myText = PyBundle.message("INTN.specify.returt.type.in.annotation");
+                  return true;
+                }
               }
             }
           }
