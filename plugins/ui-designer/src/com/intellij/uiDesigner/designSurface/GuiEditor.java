@@ -965,6 +965,11 @@ public final class GuiEditor extends JPanel implements DataProvider, ModuleProvi
     return null;
   }
 
+  public boolean isUndoRedoInProgress() {
+    UndoManager undoManager = UndoManager.getInstance(getProject());
+    return undoManager.isUndoInProgress() || undoManager.isRedoInProgress();
+  }
+
   private boolean isActiveEditor() {
     return UIDesignerToolWindowManager.getInstance(getProject()).getActiveFormEditor() == this;
   }

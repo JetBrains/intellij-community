@@ -240,25 +240,28 @@ public final class InplaceEditingLayer extends JComponent{
    * Finishes current inplace editing
    */
   private void finishInplaceEditing(){
-    if(myInplaceComponent == null || myInsideChange){ // nothing to finish
+    if (myInplaceComponent == null || myInsideChange) { // nothing to finish
       return;
     }
     myInsideChange = true;
     try{
       // 1. Apply new value to the component
       LOG.assertTrue(myInplaceEditor != null);
-      CommandProcessor.getInstance().executeCommand(
-        myInplaceComponent.getProject(),
-        new Runnable() {
-          public void run() {
-            try {
-              final Object value = myInplaceEditor.getValue();
-              myInplaceProperty.setValue(myInplaceComponent, value);
-            } catch (Exception ignored){}
-            myEditor.refreshAndSave(true);
-          }
-        }, UIDesignerBundle.message("command.set.property.value"), null);
-
+      if (!myEditor.isUndoRedoInProgress()) {
+        CommandProcessor.getInstance().executeCommand(
+          myInplaceComponent.getProject(),
+          new Runnable() {
+            public void run() {
+              try {
+                final Object value = myInplaceEditor.getValue();
+                myInplaceProperty.setValue(myInplaceComponent, value);
+              }
+              catch (Exception ignored) {
+              }
+              myEditor.refreshAndSave(true);
+            }
+          }, UIDesignerBundle.message("command.set.property.value"), null);
+      }
       // 2. Remove editor from the layer
 
       if (myInplaceEditorComponent != null) {  // reenterability guard
