@@ -96,7 +96,8 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider {
       if (history == null) return null;
       // question is whether we need "not moved" path here?
       final ContentRevision fileContent = myVcs.getDiffProvider().createFileContent(revisionNumber, file);
-      final FileAnnotation restored = cacheableAnnotationProvider.restore(vcsAnnotation, history, fileContent.getContent(), currentRevision,
+      final FileAnnotation restored = cacheableAnnotationProvider.
+        restore(vcsAnnotation, history, fileContent.getContent(), currentRevision,
                                                                           revisionNumber);
       if (restored != null) {
         return restored;

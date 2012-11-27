@@ -17,8 +17,6 @@
 
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -29,7 +27,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.annotate.AnnotationListener;
+import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
@@ -74,6 +72,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   public static final String UPGRADE_AUTO_17 = "auto1.7";
   public static final String UPGRADE_NONE = "none";
   public static final String CLEANUP_ON_START_RUN = "cleanupOnStartRun";
+  private final Project myProject;
 
   public String USER = "";
   public String PASSWORD = "";
@@ -117,7 +116,6 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
 
   private final Map<File, MergeRootInfo> myMergeRootInfos = new HashMap<File, MergeRootInfo>();
   private final Map<File, UpdateRootInfo> myUpdateRootInfos = new HashMap<File, UpdateRootInfo>();
-  private final List<AnnotationListener> myAnnotationListeners;
   private SvnInteractiveAuthenticationProvider myInteractiveProvider;
 
   @Override
@@ -147,36 +145,15 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   }
 
   public SvnConfiguration(final Project project) {
-    myAnnotationListeners = new ArrayList<AnnotationListener>();
-  }
-
-  // accessed on AWT
-  public void addAnnotationListener(final AnnotationListener listener) {
-    myAnnotationListeners.add(listener);
-  }
-
-  public void removeAnnotationListener(final AnnotationListener listener) {
-    myAnnotationListeners.remove(listener);
+    myProject = project;
   }
 
   public void setIgnoreSpacesInAnnotate(final boolean value) {
     final boolean changed = IGNORE_SPACES_IN_ANNOTATE != value;
     IGNORE_SPACES_IN_ANNOTATE = value;
     if (changed) {
-      fireForAnnotationListeners();
+      myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).configurationChanged(SvnVcs.getKey());
     }
-  }
-
-  private void fireForAnnotationListeners() {
-    final AnnotationListener[] listeners = myAnnotationListeners.toArray(new AnnotationListener[myAnnotationListeners.size()]);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        for (int i = 0; i < listeners.length; i++) {
-          final AnnotationListener listener = listeners[i];
-          listener.onAnnotationChanged();
-        }
-      }
-    }, ModalityState.NON_MODAL);
   }
 
   public class SvnSupportOptions {

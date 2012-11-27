@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.EditorGutterAction;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.annotate.AnnotationListener;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
 import com.intellij.openapi.vcs.annotate.TextAnnotationPresentation;
@@ -44,7 +43,6 @@ public class AnnotationFieldGutter implements ActiveAnnotationGutter {
   private final Editor myEditor;
   protected final LineAnnotationAspect myAspect;
   private final TextAnnotationPresentation myPresentation;
-  private final AnnotationListener myListener;
   private final boolean myIsGutterAction;
   private Map<String, Color> myColorScheme;
   private boolean myShowBg = ShowAnnotationColorsAction.isColorsEnabled();
@@ -57,14 +55,6 @@ public class AnnotationFieldGutter implements ActiveAnnotationGutter {
     myPresentation = presentation;
     myIsGutterAction = myAspect instanceof EditorGutterAction;
     myColorScheme = colorScheme;
-
-    myListener = new AnnotationListener() {
-      public void onAnnotationChanged() {
-        myEditor.getGutter().closeAllAnnotations();
-      }
-    };
-
-    myAnnotation.addListener(myListener);
   }
 
   public boolean isGutterAction() {
@@ -142,8 +132,7 @@ public class AnnotationFieldGutter implements ActiveAnnotationGutter {
   }
 
   public void gutterClosed() {
-    myAnnotation.removeListener(myListener);
-    myAnnotation.dispose();    
+    myAnnotation.dispose();
     final Collection<ActiveAnnotationGutter> gutters = myEditor.getUserData(AnnotateToggleAction.KEY_IN_EDITOR);
     if (gutters != null) {
       gutters.remove(this);

@@ -15,12 +15,9 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.util.PlusMinus;
+import com.intellij.openapi.vcs.BaseRevision;
+import com.intellij.util.BeforeAfter;
+import com.intellij.util.PlusMinusModify;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -28,45 +25,42 @@ import java.util.List;
 import java.util.Set;
 
 public class ChangesDelta {
-  private final PlusMinus<Pair<String, AbstractVcs>> myDeltaListener;
-  private final ProjectLevelVcsManager myVcsManager;
+  private final PlusMinusModify<BaseRevision> myDeltaListener;
   private boolean myInitialized;
 
-  public ChangesDelta(final Project project, final PlusMinus<Pair<String, AbstractVcs>> deltaListener) {
+  public ChangesDelta(final PlusMinusModify<BaseRevision> deltaListener) {
     myDeltaListener = deltaListener;
-    myVcsManager = ProjectLevelVcsManager.getInstance(project);
   }
 
   // true -> something changed
   public boolean step(final ChangeListsIndexes was, final ChangeListsIndexes became) {
-    List<Pair<String, VcsKey>> wasAffected = was.getAffectedFilesUnderVcs();
+    List<BaseRevision> wasAffected = was.getAffectedFilesUnderVcs();
     if (! myInitialized) {
       sendPlus(wasAffected);
       myInitialized = true;
       return true;  //+-
     }
 
-    final Set<Pair<String,VcsKey>> toRemove = new HashSet<Pair<String,VcsKey>>();
-    final Set<Pair<String, VcsKey>> toAdd = new HashSet<Pair<String,VcsKey>>();
-    was.getDelta(became, toRemove, toAdd);
+    final Set<BaseRevision> toRemove = new HashSet<BaseRevision>();
+    final Set<BaseRevision> toAdd = new HashSet<BaseRevision>();
+    final Set<BeforeAfter<BaseRevision>> toModify = new HashSet<BeforeAfter<BaseRevision>>();
+    was.getDelta(became, toRemove, toAdd, toModify);
 
-    for (Pair<String, VcsKey> pair : toRemove) {
-      myDeltaListener.minus(convertPair(pair));
+    for (BaseRevision pair : toRemove) {
+      myDeltaListener.minus(pair);
     }
     sendPlus(toAdd);
+    for (BeforeAfter<BaseRevision> beforeAfter : toModify) {
+      myDeltaListener.modify(beforeAfter.getBefore(), beforeAfter.getAfter());
+    }
     return ! toRemove.isEmpty() || ! toAdd.isEmpty();
   }
 
-  private void sendPlus(final Collection<Pair<String, VcsKey>> toAdd) {
+  private void sendPlus(final Collection<BaseRevision> toAdd) {
     if (toAdd != null) {
-      for (Pair<String, VcsKey> pair : toAdd) {
-        myDeltaListener.plus(convertPair(pair));
+      for (BaseRevision pair : toAdd) {
+        myDeltaListener.plus(pair);
       }
     }
-  }
-
-  private Pair<String, AbstractVcs> convertPair(final Pair<String, VcsKey> pair) {
-    final VcsKey vcsKey = pair.getSecond();
-    return new Pair<String, AbstractVcs>(pair.getFirst(), (vcsKey == null) ? null : myVcsManager.findVcsByName(vcsKey.getName()));
   }
 }

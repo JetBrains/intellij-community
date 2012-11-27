@@ -77,13 +77,6 @@ public class SvnChangesCorrectlyRefreshedTest extends Svn16TestCase {
     }
   }
 
-  private static void sleep(final int millis) {
-    try {
-      Thread.sleep(millis);
-    }
-    catch (InterruptedException ignore) { }
-  }
-
   @Test
   public void testModificationAndAfterRevert() throws Exception {
     //ChangeListManagerImpl.DEBUG = true;
