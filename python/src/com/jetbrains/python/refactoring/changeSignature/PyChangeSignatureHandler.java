@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
@@ -36,6 +37,12 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
   @Nullable
   @Override
   public PsiElement findTargetMember(PsiElement element) {
+    final PyReferenceExpression referenceExpression = PsiTreeUtil.getParentOfType(element, PyReferenceExpression.class);
+    if (referenceExpression != null) {
+      final PsiReference reference = referenceExpression.getReference();
+      final PsiElement resolved = reference.resolve();
+      if (resolved instanceof PyFunction) return resolved;
+    }
     final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
     if (function != null)
       return function;
