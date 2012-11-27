@@ -273,6 +273,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     RunnerAndConfigurationSettings template = myTemplateConfigurationsMap.get(factory.getType().getId() + "." + factory.getName());
     if (template == null) {
       template = new RunnerAndConfigurationSettingsImpl(this, factory.createTemplateConfiguration(myProject, this), true);
+      template.setSingleton(factory.isConfigurationSingletonByDefault());
       if (template.getConfiguration() instanceof UnknownRunConfiguration) {
         ((UnknownRunConfiguration)template.getConfiguration()).setDoNotStore(true);
       }
