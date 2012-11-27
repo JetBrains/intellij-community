@@ -18,6 +18,7 @@ package com.intellij.openapi.diff.impl.dir;
 import com.intellij.ide.diff.DirDiffOperation;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 
@@ -50,6 +51,9 @@ public class DirDiffTableCellRenderer extends DefaultTableCellRenderer {
   public Component getTableCellRendererComponent(final JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, final int column) {
     final DirDiffTableModel model = (DirDiffTableModel)table.getModel();
     final DirDiffElementImpl element = model.getElementAt(row);
+    if (element == null) return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+    final int modelColumn = table.convertColumnIndexToModel(column);
+
     if (element.isSeparator()) {
       return new JPanel() {
         @Override
@@ -64,7 +68,7 @@ public class DirDiffTableCellRenderer extends DefaultTableCellRenderer {
           }
           int width = columnModel.getColumn(column).getWidth();
           int height = table.getRowHeight(row);
-          final BufferedImage image = getOrCreate(element.getName(), element.getIcon());
+          final BufferedImage image = getOrCreate(element.getName(), ObjectUtils.chooseNotNull(element.getSourceIcon(), element.getTargetIcon()));
           g.drawImage(image, 0, 0, width, height, offset, 0, offset + width, height, null);
         }
       };
@@ -78,7 +82,7 @@ public class DirDiffTableCellRenderer extends DefaultTableCellRenderer {
       label.setIcon(null);
 
       final DirDiffOperation op = element.getOperation();
-      if (column == (table.getColumnCount() - 1) / 2) {
+      if (modelColumn == (table.getColumnCount() - 1) / 2) {
         label.setIcon(op.getIcon());
         label.setHorizontalAlignment(CENTER);
         return label;
@@ -96,7 +100,7 @@ public class DirDiffTableCellRenderer extends DefaultTableCellRenderer {
         final String text = label.getText();
         label.setText("  " + text);
         if (text != null && text.trim().length() > 0) {
-          label.setIcon(element.getIcon());
+          label.setIcon(modelColumn == 0 ? element.getSourceIcon() : element.getTargetIcon());
         }
       }
     }
