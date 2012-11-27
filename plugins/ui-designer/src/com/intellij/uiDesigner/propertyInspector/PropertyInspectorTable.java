@@ -654,14 +654,18 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   public void editingStopped(final ChangeEvent ignored){
     LOG.assertTrue(isEditing());
     LOG.assertTrue(editingRow!=-1);
-    if (myStoppingEditing) return;
+    if (myStoppingEditing) {
+      return;
+    }
     myStoppingEditing = true;
     final Property property=myProperties.get(editingRow);
     final PropertyEditor editor=property.getEditor();
     editor.removePropertyEditorListener(myPropertyEditorListener);
     try {
-      final Object value = editor.getValue();
-      setValueAt(value, editingRow, editingColumn);
+      if (myEditor != null && !myEditor.isUndoRedoInProgress()) {
+        final Object value = editor.getValue();
+        setValueAt(value, editingRow, editingColumn);
+      }
     }
     catch (final Exception exc) {
       showInvalidInput(exc);
