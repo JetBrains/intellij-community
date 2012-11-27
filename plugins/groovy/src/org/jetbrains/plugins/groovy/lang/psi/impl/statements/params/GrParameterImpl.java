@@ -197,6 +197,16 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
   }
 
   @NotNull
+  @Override
+  public String getName() {
+    final GrParameterStub stub = getStub();
+    if (stub != null) {
+      return stub.getName();
+    }
+    return super.getName();
+  }
+
+  @NotNull
   public GrModifierList getModifierList() {
     return getStubOrPsiChild(GroovyElementTypes.MODIFIERS);
   }
