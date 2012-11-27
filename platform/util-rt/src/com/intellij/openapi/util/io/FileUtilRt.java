@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
+import java.nio.channels.FileChannel;
 import java.util.UUID;
 
 /**
@@ -36,7 +37,10 @@ import java.util.UUID;
 public class FileUtilRt {
   public static final int MEGABYTE = 1024 * 1024;
   public static final int LARGE_FOR_CONTENT_LOADING = 20 * MEGABYTE;
+
   private static final LoggerRt LOG = LoggerRt.getInstance("#com.intellij.openapi.util.io.FileUtilLight");
+  private static final int MAX_FILE_DELETE_ATTEMPTS = 10;
+  private static final boolean USE_FILE_CHANNELS = "true".equalsIgnoreCase(System.getProperty("idea.fs.useChannels"));
 
   protected static final ThreadLocal<byte[]> BUFFER = new ThreadLocal<byte[]>() {
     @Override
@@ -406,6 +410,124 @@ public class FileUtilRt {
         continue;
       }
       return parentFile;
+    }
+  }
+
+  public static boolean delete(@NotNull File file) {
+    if (file.isDirectory()) {
+      if (!deleteChildren(file)) return false;
+    }
+    return deleteFile(file);
+  }
+
+  protected static boolean deleteChildren(@NotNull File file) {
+    File[] files = file.listFiles();
+    if (files != null) {
+      for (File child : files) {
+        if (!delete(child)) return false;
+      }
+    }
+    return true;
+  }
+
+  protected static boolean deleteFile(@NotNull File file) {
+    for (int i = 0; i < MAX_FILE_DELETE_ATTEMPTS; i++) {
+      if (file.delete() || !file.exists()) return true;
+      try {
+        //noinspection BusyWait
+        Thread.sleep(10);
+      }
+      catch (InterruptedException ignored) { }
+    }
+    return false;
+  }
+
+  public static boolean ensureCanCreateFile(@NotNull File file) {
+    if (file.exists()) return file.canWrite();
+    if (!createIfNotExists(file)) return false;
+    return delete(file);
+  }
+
+  public static boolean createIfNotExists(@NotNull File file) {
+    if (file.exists()) return true;
+    try {
+      if (!createParentDirs(file)) return false;
+
+      OutputStream s = new FileOutputStream(file);
+      s.close();
+      return true;
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      return false;
+    }
+  }
+
+  public static boolean createParentDirs(@NotNull File file) {
+    if (!file.exists()) {
+      final File parentFile = file.getParentFile();
+      if (parentFile != null) {
+        return createDirectory(parentFile);
+      }
+    }
+    return true;
+  }
+
+  public static boolean createDirectory(@NotNull File path) {
+    return path.isDirectory() || path.mkdirs();
+  }
+
+  public static void copy(@NotNull File fromFile, @NotNull File toFile) throws IOException {
+    if (!ensureCanCreateFile(toFile)) {
+      return;
+    }
+
+    FileOutputStream fos = new FileOutputStream(toFile);
+    try {
+      FileInputStream fis = new FileInputStream(fromFile);
+      try {
+        copy(fis, fos);
+      }
+      finally {
+        fis.close();
+      }
+    }
+    finally {
+      fos.close();
+    }
+
+    long timeStamp = fromFile.lastModified();
+    if (timeStamp < 0) {
+      LOG.warn("Invalid timestamp " + timeStamp + " of '" + fromFile + "'");
+    }
+    else if (!toFile.setLastModified(timeStamp)) {
+      LOG.warn("Unable to set timestamp " + timeStamp + " to '" + toFile + "'");
+    }
+  }
+
+  public static void copy(@NotNull InputStream inputStream, @NotNull OutputStream outputStream) throws IOException {
+    if (USE_FILE_CHANNELS && inputStream instanceof FileInputStream && outputStream instanceof FileOutputStream) {
+      final FileChannel fromChannel = ((FileInputStream)inputStream).getChannel();
+      try {
+        final FileChannel toChannel = ((FileOutputStream)outputStream).getChannel();
+        try {
+          fromChannel.transferTo(0, Long.MAX_VALUE, toChannel);
+        }
+        finally {
+          toChannel.close();
+        }
+      }
+      finally {
+        fromChannel.close();
+      }
+    }
+    else {
+      final byte[] buffer = BUFFER.get();
+      while (true) {
+        int read = inputStream.read(buffer);
+        if (read < 0) break;
+        outputStream.write(buffer, 0, read);
+      }
     }
   }
 }

@@ -33,7 +33,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.lang.reflect.Method;
-import java.nio.channels.FileChannel;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.regex.Pattern;
@@ -64,10 +63,6 @@ public class FileUtil extends FileUtilRt {
     };
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtil");
-
-  private static final int MAX_FILE_DELETE_ATTEMPTS = 10;
-
-  private static final boolean USE_FILE_CHANNELS = SystemProperties.getBooleanProperty("idea.fs.useChannels", false);
 
   @NotNull
   public static String join(@NotNull final String... parts) {
@@ -419,59 +414,30 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static boolean delete(@NotNull File file) {
-    if (file.isDirectory() && !FileSystemUtil.isSymLink(file)) {
-      File[] files = file.listFiles();
-      if (files != null) {
-        for (File child : files) {
-          if (!delete(child)) return false;
-        }
-      }
+    FileAttributes attributes = FileSystemUtil.getAttributes(file);
+    if (attributes == null) return true;
+
+    if (attributes.isDirectory() && !attributes.isSymLink()) {
+      if (!deleteChildren(file)) return false;
     }
 
-    for (int i = 0; i < MAX_FILE_DELETE_ATTEMPTS; i++) {
-      if (file.delete() || !file.exists()) return true;
-      try {
-        //noinspection BusyWait
-        Thread.sleep(10);
-      }
-      catch (InterruptedException ignored) { }
-    }
-    return false;
+    return deleteFile(file);
   }
 
   public static boolean createParentDirs(@NotNull File file) {
-    if (!file.exists()) {
-      final File parentFile = file.getParentFile();
-      if (parentFile != null) {
-        return createDirectory(parentFile);
-      }
-    }
-    return true;
+    return FileUtilRt.createParentDirs(file);
   }
 
   public static boolean createDirectory(@NotNull File path) {
-    return path.isDirectory() || path.mkdirs();
+    return FileUtilRt.createDirectory(path);
   }
 
   public static boolean createIfDoesntExist(@NotNull File file) {
-    if (file.exists()) return true;
-    try {
-      if (!createParentDirs(file)) return false;
-
-      OutputStream s = new FileOutputStream(file);
-      s.close();
-      return true;
-    }
-    catch (IOException e) {
-      LOG.info(e);
-      return false;
-    }
+    return FileUtilRt.createIfNotExists(file);
   }
 
   public static boolean ensureCanCreateFile(@NotNull File file) {
-    if (file.exists()) return file.canWrite();
-    if (!createIfDoesntExist(file)) return false;
-    return delete(file);
+    return FileUtilRt.ensureCanCreateFile(file);
   }
 
   public static void copy(@NotNull File fromFile, @NotNull File toFile) throws IOException {
@@ -542,29 +508,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static void copy(@NotNull InputStream inputStream, @NotNull OutputStream outputStream) throws IOException {
-    if (USE_FILE_CHANNELS && inputStream instanceof FileInputStream && outputStream instanceof FileOutputStream) {
-      final FileChannel fromChannel = ((FileInputStream)inputStream).getChannel();
-      try {
-        final FileChannel toChannel = ((FileOutputStream)outputStream).getChannel();
-        try {
-          fromChannel.transferTo(0, Long.MAX_VALUE, toChannel);
-        }
-        finally {
-          toChannel.close();
-        }
-      }
-      finally {
-        fromChannel.close();
-      }
-    }
-    else {
-      final byte[] buffer = BUFFER.get();
-      while (true) {
-        int read = inputStream.read(buffer);
-        if (read < 0) break;
-        outputStream.write(buffer, 0, read);
-      }
-    }
+    FileUtilRt.copy(inputStream, outputStream);
   }
 
   public static void copy(@NotNull InputStream inputStream, int maxSize, @NotNull OutputStream outputStream) throws IOException {
