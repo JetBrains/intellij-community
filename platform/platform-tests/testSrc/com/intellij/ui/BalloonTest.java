@@ -60,7 +60,7 @@ public class BalloonTest {
           //pane.setBorder(new LineBorder(Color.blue));
 
           balloon.set(new BalloonImpl(new JLabel("FUCK"), Color.black, MessageType.ERROR.getPopupBackground(), true, true, true, true, true, 0, true, null, false, 500, 25, 0, 0, false, "This is the title",
-                                      new Insets(2, 2, 2, 2), true, false, false, Balloon.Layer.normal));
+                                      new Insets(2, 2, 2, 2), true, false, Balloon.Layer.normal));
           balloon.get().setShowPointer(true);
 
           if (e.isShiftDown()) {
