@@ -143,7 +143,8 @@ public class MantisRepository extends BaseRepositoryImpl {
     if (id == null) return null;
     String summary = data.getSummary();
     if (summary == null) return null;
-    return new MantisTask(id, summary, myProject, this, data.getLast_updated().getTime()) {
+    final boolean closed = data.getStatus().getId().intValue() >= 90;
+    return new MantisTask(id, summary, myProject, this, data.getLast_updated().getTime(), closed) {
       @Override
       public String getDescription() {
         return data.getDescription();
@@ -192,7 +193,8 @@ public class MantisRepository extends BaseRepositoryImpl {
     if (id == null) return null;
     String summary = data.getSummary();
     if (summary == null) return null;
-    return new MantisTask(id, summary, myProject, this, data.getLast_updated().getTime());
+    final boolean closed = data.getStatus().intValue() >= 90;
+    return new MantisTask(id, summary, myProject, this, data.getLast_updated().getTime(), closed);
   }
 
   public List<MantisProject> getProjects() throws Exception {
