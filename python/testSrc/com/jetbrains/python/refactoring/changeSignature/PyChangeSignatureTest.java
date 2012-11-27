@@ -86,6 +86,10 @@ public class PyChangeSignatureTest extends PyTestCase {
                      PyBundle.message("refactoring.change.signature.dialog.validation.parameter.missing"));
   }
 
+  public void testNonDefaultAfterDefault() {
+    doValidationTest(null, Arrays.asList(new PyParameterInfo(-1, "a", "2", false), new PyParameterInfo(1, "b", "2", false)), null);
+  }
+
   public void doChangeSignatureTest(@Nullable String newName, @Nullable List<PyParameterInfo> parameters) {
     myFixture.configureByFile("refactoring/changeSignature/" + getTestName(true) + ".before.py");
     changeSignature(newName, parameters);

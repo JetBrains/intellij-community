@@ -148,7 +148,7 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
           hadDefaultValue = true;
         }
         else {
-          if (hadDefaultValue && !hadSingleStar && (!languageLevel.isPy3K() || !hadPositionalContainer)) {
+          if (hadDefaultValue && parameter.getDefaultInSignature() && !hadSingleStar && (!languageLevel.isPy3K() || !hadPositionalContainer)) {
             return PyBundle.message("ANN.non.default.param.after.default");
           }
         }
