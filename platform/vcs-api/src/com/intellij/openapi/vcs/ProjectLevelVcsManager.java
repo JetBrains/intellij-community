@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
 import com.intellij.openapi.vcs.history.VcsHistoryCache;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
@@ -272,4 +273,6 @@ public abstract class ProjectLevelVcsManager {
   public abstract boolean isFileInContent(final VirtualFile vf);
 
   public abstract boolean dvcsUsedInProject();
+
+  public abstract VcsAnnotationLocalChangesListener getAnnotationLocalChangesListener();
 }

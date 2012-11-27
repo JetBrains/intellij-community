@@ -112,7 +112,7 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
         }
       }
 
-      context.processMessage(new ProgressMessage("Finished copying resources [" + target.getModule().getName() + "]"));
+      context.processMessage(new ProgressMessage(""));
     }
     catch (Exception e) {
       throw new ProjectBuildException(e.getMessage(), e);

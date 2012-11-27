@@ -124,8 +124,8 @@ public abstract class ChooseByNameBase {
   private final String[][] myNames = new String[2][];
   private volatile CalcElementsThread myCalcElementsThread;
   private static int VISIBLE_LIST_SIZE_LIMIT = 10;
-  public static final int MAXIMUM_LIST_SIZE_LIMIT = 30;
-  private int myMaximumListSizeLimit = MAXIMUM_LIST_SIZE_LIMIT;
+  private int myListSizeIncreasing = 30;
+  private int myMaximumListSizeLimit = 30;
   @NonNls private static final String NOT_FOUND_IN_PROJECT_CARD = "syslib";
   @NonNls private static final String NOT_FOUND_CARD = "nfound";
   @NonNls private static final String CHECK_BOX_CARD = "chkbox";
@@ -582,7 +582,7 @@ public abstract class ChooseByNameBase {
             break;
           case KeyEvent.VK_ENTER:
             if (myList.getSelectedValue() == EXTRA_ELEM) {
-              myMaximumListSizeLimit += MAXIMUM_LIST_SIZE_LIMIT;
+              myMaximumListSizeLimit += myListSizeIncreasing;
               rebuildList(myList.getSelectedIndex(), REBUILD_DELAY, null, ModalityState.current());
               e.consume();
             }
@@ -625,7 +625,7 @@ public abstract class ChooseByNameBase {
 
           if (selectedCellBounds != null && selectedCellBounds.contains(e.getPoint())) { // Otherwise it was reselected in the selection listener
             if (myList.getSelectedValue() == EXTRA_ELEM) {
-              myMaximumListSizeLimit += MAXIMUM_LIST_SIZE_LIMIT;
+              myMaximumListSizeLimit += myListSizeIncreasing;
               rebuildList(selectedIndex, REBUILD_DELAY, null, ModalityState.current());
             }
             else {
@@ -1545,6 +1545,10 @@ public abstract class ChooseByNameBase {
 
   public void setMaximumListSizeLimit(final int maximumListSizeLimit) {
     myMaximumListSizeLimit = maximumListSizeLimit;
+  }
+
+  public void setListSizeIncreasing(final int listSizeIncreasing) {
+    myListSizeIncreasing = listSizeIncreasing;
   }
 
   private static final String ACTION_NAME = "Show All in View";

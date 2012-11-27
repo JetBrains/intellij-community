@@ -12,8 +12,6 @@ import java.io.File;
 public abstract class CompileScope {
   public abstract boolean isAffected(BuildTarget<?> target, @NotNull File file);
 
-  public abstract void expandScope(BuildTarget<?> target, @NotNull File file);
-
   public abstract boolean isAffected(@NotNull BuildTarget<?> target);
 
   public abstract boolean isRecompilationForced(@NotNull BuildTarget<?> target);

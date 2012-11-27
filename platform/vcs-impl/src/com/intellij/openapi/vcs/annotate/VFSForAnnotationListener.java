@@ -21,40 +21,31 @@ import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 
-import java.util.List;
-
 public class VFSForAnnotationListener extends VirtualFileAdapter {
   private final VirtualFile myFile;
-  private final List<AnnotationListener> myListeners;
+  private final FileAnnotation myFileAnnotation;
 
-  public VFSForAnnotationListener(final VirtualFile file, final List<AnnotationListener> listeners) {
-    myListeners = listeners;
+  public VFSForAnnotationListener(final VirtualFile file, final FileAnnotation fileAnnotation) {
+    myFileAnnotation = fileAnnotation;
     myFile = file;
   }
 
   public void propertyChanged(VirtualFilePropertyEvent event) {
-    if (!Comparing.equal(myFile, event.getFile())) return;
+    if (! Comparing.equal(myFile, event.getFile())) return;
     if (! event.isFromRefresh()) return;
 
-    if (event.getPropertyName().equals(VirtualFile.PROP_WRITABLE)) {
+    if (VirtualFile.PROP_WRITABLE.equals(event.getPropertyName())) {
       if (((Boolean)event.getOldValue()).booleanValue()) {
-        fireAnnotationChanged();
+        myFileAnnotation.close();
       }
     }
   }
 
   public void contentsChanged(VirtualFileEvent event) {
-    if (!Comparing.equal(myFile, event.getFile())) return;
+    if (! Comparing.equal(myFile, event.getFile())) return;
     if (! event.isFromRefresh()) return;
     if (! myFile.isWritable()) {
-      fireAnnotationChanged();
-    }
-  }
-
-  private void fireAnnotationChanged() {
-    final AnnotationListener[] listeners = myListeners.toArray(new AnnotationListener[myListeners.size()]);
-    for (AnnotationListener listener : listeners) {
-      listener.onAnnotationChanged();
+      myFileAnnotation.close();
     }
   }
 }

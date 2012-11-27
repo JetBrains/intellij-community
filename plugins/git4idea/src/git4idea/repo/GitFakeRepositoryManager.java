@@ -20,16 +20,27 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Kirill Likhodedov
  */
 public class GitFakeRepositoryManager implements GitRepositoryManager {
-  @Nullable
+
+  private final List<GitRepository> myRepositories = new ArrayList<GitRepository>();
+
+  public void add(GitRepository repository) {
+    myRepositories.add(repository);
+  }
+
   @Override
   public GitRepository getRepositoryForRoot(@Nullable VirtualFile root) {
+    for (GitRepository repository : myRepositories) {
+      if (repository.getRoot().equals(root)) {
+        return repository;
+      }
+    }
     return null;
   }
 
@@ -47,12 +58,12 @@ public class GitFakeRepositoryManager implements GitRepositoryManager {
   @NotNull
   @Override
   public List<GitRepository> getRepositories() {
-    return Collections.emptyList();
+    return new ArrayList<GitRepository>(myRepositories);
   }
 
   @Override
   public boolean moreThanOneRoot() {
-    return false;
+    return myRepositories.size() > 1;
   }
 
   @Override

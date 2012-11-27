@@ -446,7 +446,8 @@ public class ParenthesesUtils {
 
   public static boolean areParenthesesNeeded(PsiExpression expression, PsiExpression parentExpression,
                                              boolean ignoreClarifyingParentheses) {
-    if (parentExpression instanceof PsiParenthesizedExpression) {
+    if (parentExpression instanceof PsiParenthesizedExpression || parentExpression instanceof PsiArrayAccessExpression ||
+        parentExpression instanceof PsiArrayInitializerExpression) {
       return false;
     }
     final int parentPrecedence = getPrecedence(parentExpression);

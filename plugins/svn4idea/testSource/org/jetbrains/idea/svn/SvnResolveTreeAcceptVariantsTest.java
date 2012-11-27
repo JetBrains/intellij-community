@@ -319,22 +319,15 @@ public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
 
     clearWc(false);
     mySvnClientRunner.checkin(myWorkingCopyDir);
-    sleep(10);
+    sleep(30);
     final SubTree subTree = new SubTree(myWorkingCopyDir);
     mySvnClientRunner.checkin(myWorkingCopyDir);
-    sleep(10);
+    sleep(30);
     mySvnClientRunner.update(myTheirs);
     mySvnClientRunner.update(myWorkingCopyDir);
-    sleep(10);
+    sleep(30);
 
     disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     disableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-  }
-
-  private static void sleep(final int millis) {
-    try {
-      Thread.sleep(millis);
-    }
-    catch (InterruptedException ignore) { }
   }
 }

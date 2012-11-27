@@ -1430,48 +1430,66 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     return myConflictTracker;
   }
 
-  private static class MyChangesDeltaForwarder implements PlusMinus<Pair<String, AbstractVcs>> {
+  private static class MyChangesDeltaForwarder implements PlusMinusModify<BaseRevision> {
     private RemoteRevisionsCache myRevisionsCache;
     private final ProjectLevelVcsManager myVcsManager;
+    private final Project myProject;
     private final AtomicReference<ScheduledExecutorService> myService;
 
-
     public MyChangesDeltaForwarder(final Project project, final AtomicReference<ScheduledExecutorService> service) {
+      myProject = project;
       myService = service;
       myRevisionsCache = RemoteRevisionsCache.getInstance(project);
       myVcsManager = ProjectLevelVcsManager.getInstance(project);
     }
 
-    public void plus(final Pair<String, AbstractVcs> stringAbstractVcsPair) {
+    @Override
+    public void modify(final BaseRevision was, final BaseRevision become) {
       myService.get().submit(new Runnable() {
         public void run() {
-          final Pair<String, AbstractVcs> correctedPair = getCorrectedPair(stringAbstractVcsPair);
-          if (correctedPair == null) return;
-          myRevisionsCache.plus(correctedPair);
+          final AbstractVcs vcs = getVcs(was);
+          if (vcs != null) {
+            myRevisionsCache.plus(Pair.create(was.getPath(), vcs));
+          }
+          // maybe define modify method?
+          myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(become);
         }
       });
     }
 
-    public void minus(final Pair<String, AbstractVcs> stringAbstractVcsPair) {
+    public void plus(final BaseRevision baseRevision) {
       myService.get().submit(new Runnable() {
         public void run() {
-          final Pair<String, AbstractVcs> correctedPair = getCorrectedPair(stringAbstractVcsPair);
-          if (correctedPair == null) return;
-          myRevisionsCache.minus(correctedPair);
+          final AbstractVcs vcs = getVcs(baseRevision);
+          if (vcs != null) {
+            myRevisionsCache.plus(Pair.create(baseRevision.getPath(), vcs));
+          }
+          myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision);
+        }
+      });
+    }
+
+    public void minus(final BaseRevision baseRevision) {
+      myService.get().submit(new Runnable() {
+        public void run() {
+          final AbstractVcs vcs = getVcs(baseRevision);
+          if (vcs != null) {
+            myRevisionsCache.minus(Pair.create(baseRevision.getPath(), vcs));
+          }
+          myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision.getPath());
         }
       });
     }
 
     @Nullable
-    private Pair<String, AbstractVcs> getCorrectedPair(final Pair<String, AbstractVcs> stringAbstractVcsPair) {
-      Pair<String, AbstractVcs> correctedPair = stringAbstractVcsPair;
-      if (stringAbstractVcsPair.getSecond() == null) {
-        final String path = stringAbstractVcsPair.getFirst();
-        final VcsKey vcsKey = findVcs(path);
+    private AbstractVcs getVcs(final BaseRevision baseRevision) {
+      VcsKey vcsKey = baseRevision.getVcs();
+      if (vcsKey == null) {
+        final String path = baseRevision.getPath();
+        vcsKey = findVcs(path);
         if (vcsKey == null) return null;
-        correctedPair = new Pair<String, AbstractVcs>(path, myVcsManager.findVcsByName(vcsKey.getName()));
       }
-      return correctedPair;
+      return myVcsManager.findVcsByName(vcsKey.getName());
     }
 
     @Nullable

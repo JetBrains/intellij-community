@@ -243,5 +243,4 @@ public class GitTestUtil {
   public static String stringifyActualExpected(@NotNull Object actual, @NotNull Object expected) {
     return "\nExpected:\n" + expected + "\nActual:\n" + actual;
   }
-
 }

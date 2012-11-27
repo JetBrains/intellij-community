@@ -77,6 +77,10 @@ public abstract class ConfigurationFactory {
   public void configureBeforeRunTaskDefaults(Key<? extends BeforeRunTask> providerID, BeforeRunTask task) {
   }
 
+  public boolean isConfigurationSingletonByDefault() {
+    return false;
+  }
+
   public boolean canConfigurationBeSingleton() {
     return true; // Configuration may be marked as singleton by default
   }

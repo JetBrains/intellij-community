@@ -14,14 +14,21 @@ import java.util.Date;
 public class MantisTask extends Task {
   private final String myId;
   private final String mySummary;
-  private final Date myTime;
+  private final Date myUpdated;
+  private final boolean myClosed;
   private String myProjectName;
   private MantisRepository myRepository;
 
-  public MantisTask(final String id, final String summary, MantisProject project, MantisRepository repository, final Date time) {
+  public MantisTask(final String id,
+                    final String summary,
+                    MantisProject project,
+                    MantisRepository repository,
+                    final Date updated,
+                    final boolean closed) {
     myId = id;
     mySummary = summary;
-    myTime = time;
+    myUpdated = updated;
+    myClosed = closed;
     myProjectName = !MantisProject.ALL_PROJECTS.equals(project) ? project.getName() : null;
     myRepository = repository;
   }
@@ -65,7 +72,7 @@ public class MantisTask extends Task {
   @Nullable
   @Override
   public Date getUpdated() {
-    return myTime;
+    return myUpdated;
   }
 
   @Nullable
@@ -76,7 +83,7 @@ public class MantisTask extends Task {
 
   @Override
   public boolean isClosed() {
-    return false;
+    return myClosed;
   }
 
   @Override

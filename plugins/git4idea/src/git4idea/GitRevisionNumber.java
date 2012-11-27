@@ -217,6 +217,7 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
   @NotNull
   public static GitRevisionNumber parseRevlistOutputAsRevisionNumber(@NotNull GitSimpleHandler h, @NotNull String output) {
     StringTokenizer tokenizer = new StringTokenizer(output, "\n\r \t", false);
+    assert tokenizer.hasMoreTokens() : "No required tokens in the output: \n" + output;
     Date timestamp = GitUtil.parseTimestampWithNFEReport(tokenizer.nextToken(), h, output);
     return new GitRevisionNumber(tokenizer.nextToken(), timestamp);
   }

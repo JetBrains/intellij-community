@@ -123,6 +123,10 @@ public class XsltHighlightingTest extends TestBase {
         doXsltHighlighting();
     }
 
+    public void testInvalidSingleClosingBrace() throws Throwable {
+        doXsltHighlighting();
+    }
+
     public void testEscapedXPathString() throws Throwable {
         doXsltHighlighting();
     }

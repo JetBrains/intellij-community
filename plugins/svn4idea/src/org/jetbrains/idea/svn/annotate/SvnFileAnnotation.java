@@ -15,51 +15,23 @@
  */
 package org.jetbrains.idea.svn.annotate;
 
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vcs.annotate.AnnotationListener;
 import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
+import com.intellij.openapi.vcs.history.VcsRevisionDescription;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.svn.SvnEntriesListener;
+import org.jetbrains.idea.svn.SvnDiffProvider;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 
 public class SvnFileAnnotation extends BaseSvnFileAnnotation {
   private final VirtualFile myFile;
-  private final SvnEntriesListener myListener = new SvnEntriesListener() {
-    public void onEntriesChanged(VirtualFile directory) {
-      if (!Comparing.equal(directory, myFile.getParent())) return;
-      final VcsRevisionNumber currentRevision = myVcs.getDiffProvider().getCurrentRevision(myFile);
-      if (currentRevision != null && currentRevision.equals(myBaseRevision)) return;
-
-      final AnnotationListener[] listeners = myListeners.toArray(new AnnotationListener[myListeners.size()]);
-      for (int i = 0; i < listeners.length; i++) {
-        listeners[i].onAnnotationChanged();
-      }
-    }
-
-    @Override
-    public void fileVersionProbablyChanged(VirtualFile file) {
-      if (myFile.equals(file)) {
-        final VcsRevisionNumber currentRevision = myVcs.getDiffProvider().getCurrentRevision(myFile);
-        if (currentRevision != null && currentRevision.equals(myBaseRevision)) return;
-
-        final AnnotationListener[] listeners = myListeners.toArray(new AnnotationListener[myListeners.size()]);
-        for (int i = 0; i < listeners.length; i++) {
-          listeners[i].onAnnotationChanged();
-        }
-      }
-    }
-  };
 
   public SvnFileAnnotation(SvnVcs vcs, VirtualFile file, String contents, VcsRevisionNumber baseRevision) {
     super(vcs, contents, baseRevision);
     myFile = file;
-    myVcs.addEntriesListener(myListener);
   }
 
   public void dispose() {
-    myVcs.removeEntriesListener(myListener);
   }
 
   public VirtualFile getFile() {
@@ -69,5 +41,11 @@ public class SvnFileAnnotation extends BaseSvnFileAnnotation {
   @Override
   protected void showAllAffectedPaths(SvnRevisionNumber number) {
     ShowAllAffectedGenericAction.showSubmittedFiles(myVcs.getProject(), number, myFile, myVcs.getKeyInstanceMethod());
+  }
+
+  @Override
+  public boolean isBaseRevisionChanged(VcsRevisionNumber number) {
+    final VcsRevisionDescription description = ((SvnDiffProvider)myVcs.getDiffProvider()).getCurrentRevisionDescription(myFile);
+    return description != null && ! description.getRevisionNumber().equals(myBaseRevision);
   }
 }

@@ -14,13 +14,17 @@ package org.zmlx.hg4idea.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.EditorComboBox;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgPusher;
+import org.zmlx.hg4idea.HgRememberedInputs;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgTagBranch;
 
@@ -39,21 +43,17 @@ public class HgPushDialog extends DialogWrapper {
   private final Project myProject;
 
   private JPanel contentPanel;
-  private JTextField repositoryTxt;
   private JCheckBox revisionCbx;
   private JTextField revisionTxt;
   private HgRepositorySelectorComponent hgRepositorySelectorComponent;
   private JCheckBox forceCheckBox;
   private JCheckBox branchCheckBox;
   private JComboBox branchComboBox;
+  private EditorComboBox myRepositoryURL;
 
-  public HgPushDialog(Project project, Collection<VirtualFile> repos, String defaultPushPath, List<HgTagBranch> branches) {
+  public HgPushDialog(Project project, Collection<VirtualFile> repos, List<HgTagBranch> branches) {
     super(project, false);
     myProject = project;
-
-    hgRepositorySelectorComponent.setRoots(repos);
-    updateBranchComboBox(branches);
-    updateRepositoryUrlText(defaultPushPath);
 
     hgRepositorySelectorComponent.setTitle("Select repository to push from");
     hgRepositorySelectorComponent.addActionListener(new ActionListener() {
@@ -65,12 +65,27 @@ public class HgPushDialog extends DialogWrapper {
     final UpdatingListener updatingListener = new UpdatingListener();
     revisionCbx.addChangeListener(updatingListener);
     branchCheckBox.addChangeListener(updatingListener);
-    repositoryTxt.getDocument().addDocumentListener(updatingListener);
     revisionTxt.getDocument().addDocumentListener(updatingListener);
 
     setTitle(HgVcsMessages.message("hg4idea.push.dialog.title"));
     setOKButtonText("Push");
     init();
+
+    hgRepositorySelectorComponent.setRoots(repos);
+    updateBranchComboBox(branches);
+    updateRepository();
+  }
+
+  public void createUIComponents() {
+    myRepositoryURL = new EditorComboBox("");
+    final HgRememberedInputs rememberedInputs = HgRememberedInputs.getInstance(myProject);
+    myRepositoryURL.setHistory(ArrayUtil.toObjectArray(rememberedInputs.getRepositoryUrls(), String.class));
+    myRepositoryURL.addDocumentListener(new DocumentAdapter() {
+      @Override
+      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+        setOKActionEnabled(!StringUtil.isEmptyOrSpaces(myRepositoryURL.getText()));
+      }
+    });
   }
 
   public VirtualFile getRepository() {
@@ -78,7 +93,7 @@ public class HgPushDialog extends DialogWrapper {
   }
 
   public String getTarget() {
-    return repositoryTxt.getText();
+    return myRepositoryURL.getText();
   }
 
   @Nullable
@@ -123,7 +138,7 @@ public class HgPushDialog extends DialogWrapper {
   }
 
   private void updateRepositoryUrlText(String defaultPath) {
-    repositoryTxt.setText(defaultPath);
+    myRepositoryURL.setText(defaultPath);
     update();
   }
 
@@ -138,7 +153,7 @@ public class HgPushDialog extends DialogWrapper {
   }
 
   private boolean validateOptions() {
-    return !StringUtil.isEmptyOrSpaces(repositoryTxt.getText())
+    return !StringUtil.isEmptyOrSpaces(myRepositoryURL.getText())
       && !(revisionCbx.isSelected() && StringUtil.isEmptyOrSpaces(revisionTxt.getText()))
       && !(branchCheckBox.isSelected() && (branchComboBox.getSelectedItem() == null));
   }
@@ -146,6 +161,11 @@ public class HgPushDialog extends DialogWrapper {
   @Override
   protected String getDimensionServiceKey() {
     return HgPushDialog.class.getName();
+  }
+
+  public void rememberSettings() {
+    final HgRememberedInputs rememberedInputs = HgRememberedInputs.getInstance(myProject);
+    rememberedInputs.addRepositoryUrl(myRepositoryURL.getText());
   }
 
   /**

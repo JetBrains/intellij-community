@@ -15,10 +15,12 @@
  */
 package git4idea.test
 
+import com.intellij.dvcs.DvcsPlatformFacade
 import com.intellij.dvcs.test.MockVirtualFile
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener
 import com.intellij.openapi.vcs.history.VcsHistoryCache
 import com.intellij.openapi.vcs.impl.ContentRevisionCache
 import com.intellij.openapi.vcs.impl.VcsDescriptor
@@ -26,7 +28,6 @@ import com.intellij.openapi.vcs.impl.VcsEnvironmentsProxyCreator
 import com.intellij.openapi.vcs.update.UpdatedFiles
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Processor
-import com.intellij.dvcs.DvcsPlatformFacade
 import org.jetbrains.annotations.NotNull
 
 /**
@@ -84,6 +85,11 @@ public class GitMockVcsManager extends ProjectLevelVcsManager {
 
   @Override
   void iterateVfUnderVcsRoot(VirtualFile file, Processor<VirtualFile> processor) {
+    throw new UnsupportedOperationException()
+  }
+
+  @Override
+  VcsAnnotationLocalChangesListener getAnnotationLocalChangesListener() {
     throw new UnsupportedOperationException()
   }
 
