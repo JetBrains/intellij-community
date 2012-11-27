@@ -14,8 +14,8 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+import org.jboss.netty.channel.socket.oio.OioClientSocketChannelFactory;
 import org.jboss.netty.handler.codec.http.*;
 import org.jboss.netty.util.CharsetUtil;
 import org.jetbrains.annotations.NonNls;
@@ -52,7 +52,7 @@ public class WebServer {
       application.executeOnPooledThread(command);
     }
   };
-  private final NioServerSocketChannelFactory channelFactory = new NioServerSocketChannelFactory(pooledThreadExecutor, pooledThreadExecutor, 2);
+  private final NioServerSocketChannelFactory channelFactory = new NioServerSocketChannelFactory(pooledThreadExecutor, pooledThreadExecutor, 1);
 
   public boolean isRunning() {
     return !openChannels.isEmpty();
@@ -82,11 +82,12 @@ public class WebServer {
   }
 
   private boolean checkPort(final InetSocketAddress remoteAddress) {
-    ClientBootstrap bootstrap = new ClientBootstrap(new NioClientSocketChannelFactory(pooledThreadExecutor, pooledThreadExecutor, 1));
+    final ClientBootstrap bootstrap = new ClientBootstrap(new OioClientSocketChannelFactory(pooledThreadExecutor));
     bootstrap.setOption("child.tcpNoDelay", true);
 
-    final AtomicBoolean result = new AtomicBoolean();
+    final AtomicBoolean result = new AtomicBoolean(false);
     final Semaphore semaphore = new Semaphore();
+    semaphore.down(); // must call to down() here to ensure that down was called _before_ up()
     bootstrap.setPipeline(
       pipeline(new HttpResponseDecoder(), new HttpChunkAggregator(1048576), new HttpRequestEncoder(), new SimpleChannelUpstreamHandler() {
         @Override
@@ -117,13 +118,12 @@ public class WebServer {
         }
       }));
 
-    ChannelFuture connectFuture = bootstrap.connect(remoteAddress);
+    ChannelFuture connectFuture = null;
+    try {
+      connectFuture = bootstrap.connect(remoteAddress);
     if (!waitComplete(connectFuture, "connect")) {
       return false;
     }
-
-    try {
-      semaphore.down();
       ChannelFuture writeFuture = connectFuture.getChannel().write(new DefaultHttpRequest(HTTP_1_1, HttpMethod.GET, START_TIME_PATH));
       if (!waitComplete(writeFuture, "write")) {
         return false;
@@ -141,7 +141,9 @@ public class WebServer {
       }
     }
     finally {
-      connectFuture.getChannel().close();
+      if (connectFuture != null) {
+        connectFuture.getChannel().close().awaitUninterruptibly();
+      }
       bootstrap.releaseExternalResources();
     }
     return result.get();
