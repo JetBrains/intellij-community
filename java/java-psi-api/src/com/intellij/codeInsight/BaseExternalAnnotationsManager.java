@@ -29,7 +29,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ConcurrentSoftHashMap;
 import com.intellij.util.containers.ConcurrentSoftValueHashMap;
-import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import org.jdom.Document;
@@ -118,7 +117,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     return result.isEmpty() ? null : result.values().toArray(new PsiAnnotation[result.size()]);
   }
 
-  private final ConcurrentMap<PsiModifierListOwner, Map<String, PsiAnnotation>> cache = new ConcurrentWeakHashMap<PsiModifierListOwner, Map<String, PsiAnnotation>>();
+  private final ConcurrentMap<PsiModifierListOwner, Map<String, PsiAnnotation>> cache = new ConcurrentSoftHashMap<PsiModifierListOwner, Map<String, PsiAnnotation>>();
   @NotNull
   private Map<String, PsiAnnotation> collectExternalAnnotations(@NotNull final PsiModifierListOwner listOwner) {
     if (!hasAnyAnnotationsRoots()) return Collections.emptyMap();

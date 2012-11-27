@@ -53,7 +53,7 @@ public abstract class GotoActionBase extends AnAction {
   private static final Map<Class, Pair<String, Integer>> ourLastStrings = ContainerUtil.newHashMap();
 
 
-  public final void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(AnActionEvent e) {
     LOG.assertTrue (!getClass ().equals (myInAction));
     try {
       myInAction = getClass();

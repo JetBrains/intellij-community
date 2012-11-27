@@ -189,7 +189,10 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
   @Override
   protected void uninstallListeners() {
-    super.uninstallListeners();
+    if (scrollTimer != null) {
+      // it is already called otherwise
+      super.uninstallListeners();
+    }
     scrollbar.removeAdjustmentListener(myAdjustmentListener);
     Disposer.dispose(myAnimator);
   }

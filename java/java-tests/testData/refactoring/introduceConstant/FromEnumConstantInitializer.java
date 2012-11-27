@@ -3,4 +3,8 @@ enum TestEnum {
 
   TestEnum(String str) {
   }
+  
+  private class Constants {
+    void foo(){}
+  }
 }

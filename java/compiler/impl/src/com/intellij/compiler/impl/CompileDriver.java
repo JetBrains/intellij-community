@@ -187,9 +187,15 @@ public class CompileDriver {
   }
 
   public void rebuild(CompileStatusNotification callback) {
-    CompileScope projectScope = ArtifactCompileScope.createScopeWithArtifacts(new ProjectCompileScope(myProject),
-                                                                              ArtifactUtil.getArtifactWithOutputPaths(myProject), false);
-    final CompileScope compileScope = useOutOfProcessBuild() ? projectScope : addAdditionalRoots(projectScope, ALL_EXCEPT_SOURCE_PROCESSING);
+    final CompileScope compileScope;
+    ProjectCompileScope projectScope = new ProjectCompileScope(myProject);
+    if (useOutOfProcessBuild()) {
+      compileScope = projectScope;
+    }
+    else {
+      CompileScope scopeWithArtifacts = ArtifactCompileScope.createScopeWithArtifacts(projectScope, ArtifactUtil.getArtifactWithOutputPaths(myProject), false);
+      compileScope = addAdditionalRoots(scopeWithArtifacts, ALL_EXCEPT_SOURCE_PROCESSING);
+    }
     doRebuild(callback, null, true, compileScope);
   }
 
