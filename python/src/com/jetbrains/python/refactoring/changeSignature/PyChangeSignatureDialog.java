@@ -1,5 +1,7 @@
 package com.jetbrains.python.refactoring.changeSignature;
 
+import com.intellij.lang.LanguageNamesValidation;
+import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -32,6 +34,7 @@ import com.intellij.util.ui.table.JBTableRow;
 import com.intellij.util.ui.table.JBTableRowEditor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyParameterList;
@@ -88,6 +91,13 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
     return null;
   }
 
+  public boolean isNameValid(final String name, final Project project) {
+    final NamesValidator validator = LanguageNamesValidation.INSTANCE.forLanguage(PythonLanguage.getInstance());
+    return (name != null) &&
+           (validator.isIdentifier(name, project)) &&
+           !(validator.isKeyword(name, project));
+  }
+
   @Nullable
   @Override
   protected String validateAndCommitData() {
@@ -96,6 +106,9 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
       final boolean defined = IntroduceValidator.isDefinedInScope(functionName, myMethod.getMethod());
       if (defined) {
         return PyBundle.message("refactoring.change.signature.dialog.validation.name.defined");
+      }
+      if (!isNameValid(functionName, myProject)) {
+        return PyBundle.message("refactoring.change.signature.dialog.validation.name");
       }
     }
     final List<PyParameterTableModelItem> parameters = myParametersTableModel.getItems();
@@ -110,6 +123,9 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
     for (PyParameterTableModelItem info : parameters) {
       final PyParameterInfo parameter = info.parameter;
       final String name = parameter.getName();
+      if (!isNameValid(name, myProject)) {
+        return PyBundle.message("refactoring.change.signature.dialog.validation.name");
+      }
       if (parameterNames.contains(name)) {
         return PyBundle.message("ANN.duplicate.param.name");
       }
