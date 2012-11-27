@@ -386,7 +386,7 @@ public class LambdaUtil {
     else if (parent instanceof PsiVariable) {
       return ((PsiVariable)parent).getType();
     }
-    else if (parent instanceof PsiAssignmentExpression) {
+    else if (parent instanceof PsiAssignmentExpression && expression instanceof PsiExpression && !PsiUtil.isOnAssignmentLeftHand((PsiExpression)expression)) {
       final PsiExpression lExpression = ((PsiAssignmentExpression)parent).getLExpression();
       return lExpression.getType();
     }
