@@ -27,7 +27,7 @@ public class AddDefaultConstructorFix extends AddMethodFix {
     this(aClass, GenerateConstructorHandler.getConstructorModifier(aClass));
   }
 
-  public AddDefaultConstructorFix(PsiClass aClass, @PsiModifier.ModifierConstant final String modifier) {
+  public AddDefaultConstructorFix(PsiClass aClass, @NotNull @PsiModifier.ModifierConstant final String modifier) {
     super(generateConstructor(aClass.getName(), modifier), aClass);
     setText(QuickFixBundle.message("add.default.constructor.text", VisibilityUtil.toPresentableText(modifier), aClass.getName()));
   }
