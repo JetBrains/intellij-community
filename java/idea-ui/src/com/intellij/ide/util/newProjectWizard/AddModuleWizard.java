@@ -169,6 +169,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep>
       getCurrentStepObject().updateStep();
     }
     super.updateStep();
+    myIcon.setIcon(null);
   }
 
   protected void dispose() {
