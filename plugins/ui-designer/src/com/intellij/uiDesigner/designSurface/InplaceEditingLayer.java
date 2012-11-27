@@ -228,6 +228,7 @@ public final class InplaceEditingLayer extends JComponent{
   }
 
   private void adjustEditorComponentSize(){
+    if (myInplaceEditorComponent == null) return;
     final Dimension preferredSize = myInplaceEditorComponent.getPreferredSize();
     int width = Math.max(preferredSize.width, myPreferredBounds.width);
     // Editor component should not be extended to invisible area
