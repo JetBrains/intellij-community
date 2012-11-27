@@ -109,7 +109,7 @@ public final class ExecutionHandler {
 
     final boolean startInBackground = buildFile.isRunInBackground();
     
-    new Task.Backgroundable(null, AntBundle.message("ant.build.progress.dialog.title"), true) {
+    new Task.Backgroundable(buildFile.getProject(), AntBundle.message("ant.build.progress.dialog.title"), true) {
 
       public boolean shouldStartInBackground() {
         return startInBackground;
