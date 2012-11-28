@@ -76,7 +76,7 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
     final Presentation presentation = event.getPresentation();
     final Project project = event.getData(PlatformDataKeys.PROJECT);
     presentation.setEnabled(project != null);
-    presentation.setVisible(ActionPlaces.MAIN_MENU.equals(event.getPlace()) && !PlatformUtils.isCidr());
+    presentation.setVisible(ActionPlaces.MAIN_MENU.equals(event.getPlace()) && !PlatformUtils.isAppCode());
   }
 
   public void actionPerformed(AnActionEvent event) {

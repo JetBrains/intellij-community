@@ -155,7 +155,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     });
 
     if (SystemInfo.isMac && myFrameDecorator == null) {
-      myFrameDecorator = new MacMainFrameDecorator(this, PlatformUtils.isCidr());
+      myFrameDecorator = new MacMainFrameDecorator(this, PlatformUtils.isAppCode());
     }
   }
 

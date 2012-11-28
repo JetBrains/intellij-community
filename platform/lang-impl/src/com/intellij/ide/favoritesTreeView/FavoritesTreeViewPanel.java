@@ -647,7 +647,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     window.setTitleActions(collapseAction);
 
     final DefaultActionGroup group = new DefaultActionGroup();
-    if (!PlatformUtils.isCidr()) {
+    if (!PlatformUtils.isAppCode()) {
       group.add(new FavoritesShowMembersAction(myProject, myBuilder));
     }
 
