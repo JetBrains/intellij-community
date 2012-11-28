@@ -39,7 +39,6 @@ import com.intellij.pom.NavigatableAdapter;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,9 +57,14 @@ public class EditorHyperlinkSupport {
   private static final int HYPERLINK_LAYER = HighlighterLayer.SELECTION - 123;
   private static final int HIGHLIGHT_LAYER = HighlighterLayer.SELECTION - 111;
   private static final int NO_INDEX = Integer.MIN_VALUE;
+  public static final Comparator<RangeHighlighter> START_OFFSET_COMPARATOR = new Comparator<RangeHighlighter>() {
+    public int compare(final RangeHighlighter o1, final RangeHighlighter o2) {
+      return o1.getStartOffset() - o2.getStartOffset();
+    }
+  };
 
   private final Editor myEditor;
-  private final Map<RangeHighlighter, HyperlinkInfo> myHighlighterToMessageInfoMap = new HashMap<RangeHighlighter, HyperlinkInfo>();
+  private final SortedMap<RangeHighlighter, HyperlinkInfo> myHighlighterToMessageInfoMap = new TreeMap<RangeHighlighter, HyperlinkInfo>(START_OFFSET_COMPARATOR);
   private int myLastIndex = NO_INDEX;
   private final Consumer<BeforeAfter<Filter.Result>> myRefresher;
   private final List<RangeHighlighter> myHighlighters;
@@ -80,10 +84,12 @@ public class EditorHyperlinkSupport {
           }
 
           RangeHighlighter range = findLinkRangeAt(myEditor.logicalPositionToOffset(logical));
-          final HyperlinkInfo info = myHighlighterToMessageInfoMap.get(range);
-          if (info != null) {
-            info.navigate(project);
-            linkFollowed(editor, getHyperlinks().keySet(), range);
+          if (range != null) {
+            final HyperlinkInfo info = myHighlighterToMessageInfoMap.get(range);
+            if (info != null) {
+              info.navigate(project);
+              linkFollowed(editor, getHyperlinks().keySet(), range);
+            }
           }
         }
       }
@@ -192,7 +198,8 @@ public class EditorHyperlinkSupport {
 
   @Nullable
   private HyperlinkInfo getHyperlinkAt(final int offset) {
-    return myHighlighterToMessageInfoMap.get(findLinkRangeAt(offset));
+    RangeHighlighter range = findLinkRangeAt(offset);
+    return range == null ? null : myHighlighterToMessageInfoMap.get(range);
   }
 
   @Nullable
@@ -219,7 +226,7 @@ public class EditorHyperlinkSupport {
     return list;
   }
 
-  public void removeHyperlink(RangeHighlighter hyperlink) {
+  public void removeHyperlink(@NotNull RangeHighlighter hyperlink) {
     myHighlighterToMessageInfoMap.remove(hyperlink);
     myEditor.getMarkupModel().removeHighlighter(hyperlink);
   }
@@ -312,21 +319,16 @@ public class EditorHyperlinkSupport {
 
   @Nullable
   public static OccurenceNavigator.OccurenceInfo getNextOccurrence(final Editor editor,
-                                                                   Collection<RangeHighlighter> highlighters,
+                                                                   Collection<RangeHighlighter> sortedHighlighters,
                                                                    final int delta,
                                                                    final Consumer<RangeHighlighter> action) {
-    final List<RangeHighlighter> ranges = new ArrayList<RangeHighlighter>(highlighters);
+    final List<RangeHighlighter> ranges = new ArrayList<RangeHighlighter>(sortedHighlighters);
     for (Iterator<RangeHighlighter> iterator = ranges.iterator(); iterator.hasNext();) {
       RangeHighlighter highlighter = iterator.next();
       if (editor.getFoldingModel().getCollapsedRegionAtOffset(highlighter.getStartOffset()) != null) {
         iterator.remove();
       }
     }
-    Collections.sort(ranges, new Comparator<RangeHighlighter>() {
-      public int compare(final RangeHighlighter o1, final RangeHighlighter o2) {
-        return o1.getStartOffset() - o2.getStartOffset();
-      }
-    });
     int i;
     for (i = 0; i < ranges.size(); i++) {
       RangeHighlighter range = ranges.get(i);
