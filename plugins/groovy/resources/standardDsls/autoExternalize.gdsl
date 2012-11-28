@@ -22,6 +22,6 @@ package standardDsls
  * @author Andres Almiray
  */
 
-contributor(ctype:hasAnnotation('groovy.transform.AutoExternalize'))) {
+contributor(ctype:hasAnnotation('groovy.transform.AutoExternalize')) {
   delegatesTo 'java.io.Externalizable'
 }
