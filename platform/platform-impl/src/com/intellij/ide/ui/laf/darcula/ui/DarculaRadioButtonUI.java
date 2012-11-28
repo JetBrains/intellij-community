@@ -24,6 +24,7 @@ import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
+import javax.swing.plaf.IconUIResource;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.plaf.metal.MetalRadioButtonUI;
 import javax.swing.text.View;
@@ -130,6 +131,6 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
 
   @Override
   public Icon getDefaultIcon() {
-    return EmptyIcon.create(20);
+    return new IconUIResource(EmptyIcon.create(20));
   }
 }

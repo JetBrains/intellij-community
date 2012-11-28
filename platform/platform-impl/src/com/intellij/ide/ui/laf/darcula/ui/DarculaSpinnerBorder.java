@@ -19,11 +19,11 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.plaf.InsetsUIResource;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
 
@@ -68,7 +68,7 @@ public class DarculaSpinnerBorder implements Border, UIResource {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return new JBInsets(6, 7, 6, 7);
+    return new InsetsUIResource(6, 7, 6, 7);
   }
 
   @Override
