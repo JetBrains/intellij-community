@@ -21,7 +21,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
 import com.intellij.openapi.vcs.changes.Change;
@@ -505,7 +504,6 @@ public class SvnHistoryProvider
                              final ThrowableConsumer<VcsFileRevision, SVNException> result,
                              SVNURL repoRootURL, Charset charset)
       throws SVNException, VcsException {
-      final VcsConfiguration configuration = VcsConfiguration.getInstance(vcs.getProject());
       myVcs = vcs;
       myLastPathCorrector = new SvnPathThroughHistoryCorrection(lastPath);
       myCharset = charset;

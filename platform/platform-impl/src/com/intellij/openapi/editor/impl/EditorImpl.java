@@ -3262,10 +3262,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int lineHeight = myLineHeight;
     if (lineHeight == -1) {
       FontMetrics fontMetrics = myEditorComponent.getFontMetrics(myScheme.getFont(EditorFontType.PLAIN));
-      lineHeight = (int)(fontMetrics.getHeight() * (isOneLineMode() ? 1 : myScheme.getLineSpacing()));
-      if (lineHeight == 0) {
-        lineHeight = fontMetrics.getHeight();
-        if (lineHeight == 0) {
+      int fontMetricsHeight = fontMetrics.getHeight();
+      lineHeight = (int)(fontMetricsHeight * (isOneLineMode() ? 1 : myScheme.getLineSpacing()));
+      if (lineHeight <= 0) {
+        lineHeight = fontMetricsHeight;
+        if (lineHeight <= 0) {
           lineHeight = 12;
         }
       }

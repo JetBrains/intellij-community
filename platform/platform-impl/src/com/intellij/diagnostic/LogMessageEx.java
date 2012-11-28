@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,7 +133,7 @@ public class LogMessageEx extends LogMessage {
     };
   }
 
-  public static void error(@NotNull Logger logger, @NotNull String message, @NotNull String... attachmentText) {
+  public static void error(@NotNull Logger logger, @NonNls @NotNull String message, @NotNull String... attachmentText) {
     error(logger, message, new Throwable(), attachmentText);
   }
 
