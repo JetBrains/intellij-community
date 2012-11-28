@@ -337,6 +337,11 @@ public class PyQuickFixTest extends PyTestCase {
                      PyBundle.message("QFIX.remove.decorator"), true, true);
   }
 
+  public void testAddParameter() {
+    doInspectionTest("AddParameter.py", PyUnresolvedReferencesInspection.class,
+                     PyBundle.message("QFIX.unresolved.reference.add.param"), true, true);
+  }
+
   public void testMoveDocstring() {                      //PY-4398
     doInspectionTest("MoveDocstring.py", PyStatementEffectInspection.class,
                      PyBundle.message("QFIX.statement.effect.move.docstring"), true, true);

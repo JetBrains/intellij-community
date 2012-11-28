@@ -2,7 +2,6 @@ package com.jetbrains.python.refactoring.introduce.parameter;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -18,7 +17,6 @@ import com.jetbrains.python.refactoring.introduce.variable.VariableValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
@@ -48,25 +46,7 @@ public class PyIntroduceParameterHandler extends IntroduceHandler {
     PyFunction function = PsiTreeUtil.getParentOfType(expression, PyFunction.class);
     if (function != null && declaration != null) {
       PyParameterList parameterList = function.getParameterList();
-      List<String> newParams = new ArrayList<String>();
-      if (parameterList.hasKeywordContainer()) {
-        for (PyParameter parameter : parameterList.getParameters()) {
-          if (parameter instanceof PyNamedParameter && ((PyNamedParameter)parameter).isKeywordContainer()) {
-            newParams.add(declaration.getText());
-          }
-          newParams.add(parameter.getText());
-        }
-        final PyParameterList replacementList =
-          PyElementGenerator.getInstance(function.getProject()).createFromText(LanguageLevel.forElement(parameterList),
-                                                                               PyFunction.class, "def f("
-                                                                                                 + StringUtil.join(newParams, ",")
-                                                                                                 + "): pass").getParameterList();
-        parameterList = (PyParameterList)parameterList.replace(replacementList);
-        CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(parameterList);
-      }
-      else {
-        parameterList.addParameter(PyElementGenerator.getInstance(function.getProject()).createParameter(declaration.getText()));
-      }
+      parameterList.addParameter(PyElementGenerator.getInstance(function.getProject()).createParameter(declaration.getText()));
       CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(function);
       return parameterList.findParameterByName(declaration.getTargets()[0].getText());
     }
