@@ -474,7 +474,7 @@
     </group>
 
     <group id="FileChooser">
-      <action id="FileChooser.TogglePathShowing" class="com.intellij.openapi.fileChooser.actions.TooglePathShowingAction"/>
+      <action id="FileChooser.TogglePathShowing" class="com.intellij.openapi.fileChooser.actions.TogglePathShowingAction"/>
     </group>
 
     <action id="Diff.FocusOppositePane" class="com.intellij.openapi.diff.actions.FocusOppositePaneAction"
