@@ -112,6 +112,13 @@ public class RecentProjectPanel extends JPanel {
           Point point = e.getPoint();
           int index = myList.locationToIndex(point);
           myList.setSelectedIndex(index);
+
+          if (myList.getCellBounds(index, index).contains(point)) {
+            myList.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+          }
+          else {
+            myList.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+          }
         }
         else {
           myIsEngaged = true;
