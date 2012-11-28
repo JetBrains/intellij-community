@@ -135,7 +135,7 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
   }
 
   public boolean refreshCacheByNumber() {
-    return false;
+    return true;
   }
 
   @Nls
@@ -198,8 +198,14 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
     List<CommittedChangeList> result = new LinkedList<CommittedChangeList>();
     HgLogCommand hgLogCommand = new HgLogCommand(project);
     hgLogCommand.setLogFile(false);
-    List<HgFileRevision> localRevisions =
-      hgLogCommand.execute(hgFile, maxCount == 0 ? -1 : maxCount, true); //can be empty
+    List<String> args = null;
+    if (changeBrowserSettings != null) {
+      args = new ArrayList<String>();
+      if (changeBrowserSettings.USE_CHANGE_AFTER_FILTER) {
+        args.add("-r " + changeBrowserSettings.getChangeAfterFilter());
+      }
+    }
+    List<HgFileRevision> localRevisions = hgLogCommand.execute(hgFile, maxCount == 0 ? -1 : maxCount, true, args);
 
     Collections.reverse(localRevisions);
 
