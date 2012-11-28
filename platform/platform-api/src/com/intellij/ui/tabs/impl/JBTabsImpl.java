@@ -2360,7 +2360,7 @@ public class JBTabsImpl extends JComponent
       boolean clearSelection = info.equals(mySelectedInfo);
       processRemove(info, false);
       if (clearSelection) {
-        mySelectedInfo = null;
+        mySelectedInfo = info;
       }
       _setSelected(toSelect, transferFocus).doWhenProcessed(new Runnable() {
         public void run() {
