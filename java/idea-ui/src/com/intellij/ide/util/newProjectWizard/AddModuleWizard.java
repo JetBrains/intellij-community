@@ -46,12 +46,14 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.ProjectImportProvider;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 
@@ -152,6 +154,14 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep>
         addStep(step);
       }
     }
+  }
+
+  @Override
+  protected String addStepComponent(Component component) {
+    if (component instanceof JComponent) {
+      ((JComponent)component).setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 0));
+    }
+    return super.addStepComponent(component);
   }
 
   protected void updateStep() {
