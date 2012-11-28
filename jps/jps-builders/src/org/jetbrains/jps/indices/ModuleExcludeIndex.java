@@ -12,4 +12,6 @@ public interface ModuleExcludeIndex {
   boolean isExcluded(File file);
 
   Collection<File> getModuleExcludes(JpsModule module);
+
+  boolean isInContent(File file);
 }

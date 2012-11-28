@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,8 @@ import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
 import com.intellij.openapi.fileChooser.ex.PathField;
 import com.intellij.openapi.project.DumbAware;
 
-public class TooglePathShowingAction extends AnAction implements DumbAware {
-
-  {
+public class TogglePathShowingAction extends AnAction implements DumbAware {
+  public TogglePathShowingAction() {
     setEnabledInModalContext(true);
   }
 
@@ -39,6 +38,4 @@ public class TooglePathShowingAction extends AnAction implements DumbAware {
       f.toggleVisible();
     }
   }
-
-
 }

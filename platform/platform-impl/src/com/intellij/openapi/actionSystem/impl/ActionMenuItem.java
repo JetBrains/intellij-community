@@ -33,6 +33,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.MenuItemUI;
@@ -62,7 +63,7 @@ public class ActionMenuItem extends JCheckBoxMenuItem {
 
   public ActionMenuItem(final AnAction action,
                         final Presentation presentation,
-                        final String place,
+                        @NotNull final String place,
                         final DataContext context,
                         final boolean enableMnemonics,
                         final boolean prepareNow) {

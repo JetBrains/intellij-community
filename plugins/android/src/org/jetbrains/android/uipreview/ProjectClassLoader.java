@@ -12,10 +12,7 @@ import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidTargetData;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -103,19 +100,15 @@ public final class ProjectClassLoader extends ClassLoader {
 
     final String[] segments = name.split("\\.");
 
-    final VirtualFile vClassFile = findClassFile(vOutFolder, segments, 0);
-    if (vClassFile == null) {
+    final File classFile = findClassFile(new File(vOutFolder.getPath()), segments, 0);
+
+    if (classFile == null || !classFile.exists()) {
       return null;
     }
 
-    final File classFile = new File(vClassFile.getPath());
-    if (!classFile.exists()) {
-      return null;
-    }
-
-    final FileInputStream fis;
+    final DataInputStream fis;
     try {
-      fis = new FileInputStream(classFile);
+      fis = new DataInputStream(new FileInputStream(classFile));
     }
     catch (FileNotFoundException e) {
       LOG.error(e);
@@ -124,15 +117,14 @@ public final class ProjectClassLoader extends ClassLoader {
 
     try {
       byte[] data = new byte[(int)classFile.length()];
-      int read = 0;
       try {
-        read = fis.read(data);
+        fis.readFully(data);
       }
       catch (IOException e) {
         data = null;
       }
       if (data != null) {
-        final Class<?> aClass = defineClass(null, data, 0, read);
+        final Class<?> aClass = defineClass(null, data, 0, data.length);
         if (aClass != null) {
           return aClass;
         }
@@ -150,17 +142,21 @@ public final class ProjectClassLoader extends ClassLoader {
   }
 
   @Nullable
-  private static VirtualFile findClassFile(VirtualFile parent, String[] segments, int index) {
+  private static File findClassFile(File parent, String[] segments, int index) {
     if (index == segments.length) {
       return null;
     }
+    final File[] children = parent.listFiles();
 
+    if (children == null || children.length == 0) {
+      return null;
+    }
     String toMatch = segments[index];
 
     if (index == segments.length - 1) {
       toMatch += ".class";
 
-      for (VirtualFile file : parent.getChildren()) {
+      for (File file : children) {
         if (file.getName().equals(toMatch)) {
           return file;
         }
@@ -170,7 +166,7 @@ public final class ProjectClassLoader extends ClassLoader {
 
     String innerClassName = null;
 
-    for (VirtualFile file : parent.getChildren()) {
+    for (File file : children) {
       if (file.isDirectory()) {
         if (toMatch.equals(file.getName())) {
           return findClassFile(file, segments, index + 1);

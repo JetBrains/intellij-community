@@ -79,8 +79,9 @@ public class Utils{
   public static void expandActionGroup(@NotNull ActionGroup group,
                                        List<AnAction> list,
                                        PresentationFactory presentationFactory,
-                                       DataContext context,
-                                       String place, ActionManager actionManager){
+                                       @NotNull DataContext context,
+                                       String place,
+                                       ActionManager actionManager){
     expandActionGroup(group, list, presentationFactory, context, place, actionManager, false);
   }
   /**
@@ -91,7 +92,8 @@ public class Utils{
                                        List<AnAction> list,
                                        PresentationFactory presentationFactory,
                                        DataContext context,
-                                       String place, ActionManager actionManager,
+                                       @NotNull String place,
+                                       ActionManager actionManager,
                                        boolean transparentOnly) {
     Presentation presentation = presentationFactory.getPresentation(group);
     AnActionEvent e = new AnActionEvent(

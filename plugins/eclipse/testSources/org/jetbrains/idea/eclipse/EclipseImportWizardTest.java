@@ -31,7 +31,7 @@ public class EclipseImportWizardTest extends ProjectWizardTestCase {
   public void testNothingToImport() throws Exception {
     try {
       File file = createTempFile("Foo.java", "class Foo {}");
-      importProjectFrom(file.getParent(), new ImportFromSourcesProvider(), new EclipseProjectImportProvider(new EclipseImportBuilder()));
+      importProjectFrom(file.getParent(), null, new ImportFromSourcesProvider(), new EclipseProjectImportProvider(new EclipseImportBuilder()));
       fail("Exception should be frown");
     }
     catch (RuntimeException e) {

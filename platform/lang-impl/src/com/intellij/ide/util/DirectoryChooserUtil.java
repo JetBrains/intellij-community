@@ -78,8 +78,9 @@ public class DirectoryChooserUtil {
   @Nullable
   public static
   PsiDirectory chooseDirectory(PsiDirectory[] targetDirectories,
-                                                       @Nullable PsiDirectory initialDirectory, Project project,
-                                                       Map<PsiDirectory, String> relativePathsToCreate) {
+                               @Nullable PsiDirectory initialDirectory,
+                               @NotNull Project project,
+                               Map<PsiDirectory, String> relativePathsToCreate) {
     final DirectoryChooser chooser = new DirectoryChooser(project, new DirectoryChooserModuleTreeView(project));
     chooser.setTitle(RefactoringBundle.message("choose.destination.directory"));
     chooser.fillList(

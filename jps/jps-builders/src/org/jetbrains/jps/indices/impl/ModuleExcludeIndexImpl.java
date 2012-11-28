@@ -17,6 +17,7 @@ import java.util.*;
  */
 public class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
   private final Set<File> myExcludedRoots = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+  private final Set<File> myContentRoots = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
   private final Map<JpsModule, List<File>> myModuleToExcludesMap = new THashMap<JpsModule, List<File>>();
 
   public ModuleExcludeIndexImpl(JpsModel model) {
@@ -56,6 +57,9 @@ public class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
         if (parentModule != null) {
           myModuleToExcludesMap.get(parentModule).add(contentRoot);
         }
+        else {
+          myContentRoots.add(contentRoot);
+        }
         for (File file : parents) {
           contentToModule.put(file, parentModule);
         }
@@ -69,6 +73,11 @@ public class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
   @Override
   public boolean isExcluded(File file) {
     return JpsPathUtil.isUnder(myExcludedRoots, file);
+  }
+
+  @Override
+  public boolean isInContent(File file) {
+    return JpsPathUtil.isUnder(myContentRoots, file);
   }
 
   @Override

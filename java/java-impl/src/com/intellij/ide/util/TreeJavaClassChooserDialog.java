@@ -47,7 +47,7 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
   }
 
   public TreeJavaClassChooserDialog(String title,
-                                    Project project,
+                                    @NotNull Project project,
                                     GlobalSearchScope scope,
                                     final ClassFilter classFilter, @Nullable PsiClass initialClass) {
     super(title, project, scope, PsiClass.class, createFilter(classFilter), initialClass);
@@ -55,9 +55,9 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
 
 
   public TreeJavaClassChooserDialog(String title,
-                                    Project project,
+                                    @NotNull Project project,
                                     GlobalSearchScope scope,
-                                    final @Nullable ClassFilter classFilter,
+                                    @Nullable ClassFilter classFilter,
                                     PsiClass baseClass,
                                     @Nullable PsiClass initialClass, boolean isShowMembers) {
     super(title, project, scope, PsiClass.class, createFilter(classFilter), baseClass, initialClass, isShowMembers);
@@ -73,7 +73,7 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
   }
 
   public static TreeJavaClassChooserDialog withInnerClasses(String title,
-                                                            Project project,
+                                                            @NotNull Project project,
                                                             GlobalSearchScope scope,
                                                             final ClassFilter classFilter,
                                                             @Nullable PsiClass initialClass) {

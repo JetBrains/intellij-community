@@ -1,10 +1,9 @@
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
-import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
-import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -36,12 +35,6 @@ public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuil
   }
 
   public boolean addDestination(@NotNull ArtifactRootDescriptor descriptor) {
-    @NotNull DestinationInfo destinationInfo = descriptor.getDestinationInfo();
-    if (destinationInfo instanceof ExplodedDestinationInfo && descriptor instanceof FileBasedArtifactRootDescriptor
-        && FileUtil.filesEqual(descriptor.getRootFile(), new File(FileUtil.toSystemDependentName(destinationInfo.getOutputFilePath())))) {
-      return false;
-    }
-
     myDescriptors.add(descriptor);
     return true;
   }
