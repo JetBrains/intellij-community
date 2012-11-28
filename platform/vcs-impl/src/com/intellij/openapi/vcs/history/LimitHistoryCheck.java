@@ -51,11 +51,10 @@ public class LimitHistoryCheck {
   public void checkNumber() {
     if (myLimit <= 0) return;
     ++ myCnt;
-    if (myCnt >= myLimit) {
+    if (isOver()) {
       if (! myWarningShown) {
-        VcsBalloonProblemNotifier.showOverChangesView(myProject, "History loading for file " + myFilePath +
-          "\nwas interrupted. Only " + myLimit + " rows were loaded (allowed maximum).\n" +
-          "To change the history limit setting, go to Version Control settings.", MessageType.WARNING);
+        VcsBalloonProblemNotifier.showOverChangesView(myProject, "File History: only " + myLimit + " revisions were loaded for " + myFilePath +
+          "\nTo change the history limit, go to Settings | Version Control.", MessageType.WARNING);
         myWarningShown = true;
       }
       throw new ProcessCanceledException();
@@ -67,6 +66,6 @@ public class LimitHistoryCheck {
   }
 
   public boolean isOver() {
-    return myLimit > 0 && myLimit <= myCnt;
+    return myLimit > 0 && myLimit < myCnt;
   }
 }

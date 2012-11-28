@@ -219,7 +219,11 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   }
 
   private boolean isCanceledException(Throwable e) {
-    return e instanceof InvocationTargetException && e.getCause() instanceof ProcessCanceledException;
+    final boolean value = e instanceof InvocationTargetException && e.getCause() instanceof ProcessCanceledException;
+    if (value) {
+      LOG.info(e);
+    }
+    return value;
   }
 
   private final class TasksRunner extends ProcessAdapter {
