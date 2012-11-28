@@ -39,7 +39,7 @@ public class ModuleCompileScopeTest extends BaseCompilerTestCase {
     assertModulesUpToDate();
   }
 
-  public void testChangeExcludedFile() {
+  public void testExcludedFile() {
     VirtualFile a = createFile("src/a/A.java", "package a; class A{}");
     createFile("src/b/B.java", "package b; class B{}");
     Module m = addModule("m", a.getParent().getParent());
@@ -50,5 +50,26 @@ public class ModuleCompileScopeTest extends BaseCompilerTestCase {
     changeFile(a);
     make(m);
     assertOutput(m, fs().dir("b").file("B.class"));
+
+    rebuild();
+    assertOutput(m, fs().dir("b").file("B.class"));
+  }
+
+  public void testFileUnderIgnoredFolder() {
+    VirtualFile src = createFile("src/A.java", "class A{}").getParent();
+    Module m = addModule("m", src);
+    make(m);
+    assertOutput(m, fs().file("A.class"));
+
+    VirtualFile b = createFile("src/CVS/B.java", "package CVS; class B{}");
+    make(m);
+    assertOutput(m, fs().file("A.class"));
+
+    changeFile(b);
+    make(m);
+    assertOutput(m, fs().file("A.class"));
+
+    rebuild();
+    assertOutput(m, fs().file("A.class"));
   }
 }

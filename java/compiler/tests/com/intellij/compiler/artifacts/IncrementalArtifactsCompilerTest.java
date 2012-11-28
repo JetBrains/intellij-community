@@ -1,13 +1,19 @@
 package com.intellij.compiler.artifacts;
 
 import com.intellij.compiler.CompilerTestUtil;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
+import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
+
+import java.io.IOException;
 
 import static com.intellij.compiler.artifacts.ArtifactsTestCase.commitModel;
 import static com.intellij.compiler.artifacts.ArtifactsTestCase.renameFile;
@@ -149,6 +155,46 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
       make(a);
       assertOutput(a, fs().file("A.class"));
       make(a).assertUpToDate();
+    }
+
+    public void testDoNotCopyFilesFromIgnoredFolder() {
+      VirtualFile file1 = createFile("d/1.txt");
+      Artifact a = addArtifact(root().dirCopy(file1.getParent()));
+      make(a);
+      assertOutput(a, fs().file("1.txt"));
+
+      VirtualFile file2 = createFile("d/CVS/2.txt");
+      make(a);
+      assertOutput(a, fs().file("1.txt"));
+
+      changeFile(file2);
+      make(a);
+      assertOutput(a, fs().file("1.txt"));
+    }
+
+    public void testChangeFileOutsideContentRoot() throws IOException {
+      final Artifact a = addArtifact(root().file(createFile("1.txt")));
+      make(a);
+      assertOutput(a, fs().file("1.txt"));
+
+      VirtualFile virtualDir = getVirtualFile(createTempDir("externalDir"));
+      final VirtualFile file = VfsTestUtil.createFile(virtualDir, "2.txt", "a");
+      new WriteAction() {
+        protected void run(final Result result) {
+          ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
+          model.getOrCreateModifiableArtifact(a).getRootElement()
+            .addFirstChild(PackagingElementFactory.getInstance().createFileCopy(file.getPath(), null));
+          model.commit();
+        }
+      }.execute();
+
+
+      make(a);
+      assertOutput(a, fs().file("1.txt").file("2.txt", "a"));
+
+      changeFile(file, "b");
+      make(a);
+      assertOutput(a, fs().file("1.txt").file("2.txt", "b"));
     }
   }
 
