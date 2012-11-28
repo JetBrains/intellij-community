@@ -68,6 +68,8 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.CommonProcessors;
@@ -140,6 +142,21 @@ public abstract class InplaceRefactoring {
         myRenameOffset = myElementToRename != null && myElementToRename.getTextRange() != null ? myEditor.getDocument()
           .createRangeMarker(myElementToRename.getTextRange()) : null;
       }
+    }
+  }
+
+  public static void unableToStartWarning(Project project, Editor editor) {
+    final StartMarkAction startMarkAction = StartMarkAction.canStart(project);
+    final String message = startMarkAction.getCommandName() + " is not finished yet.";
+    final Document oldDocument = startMarkAction.getDocument();
+    if (editor == null || oldDocument != editor.getDocument()) {
+      final int exitCode = Messages.showYesNoDialog(project, message,
+                                                    RefactoringBundle.getCannotRefactorMessage(null),
+                                                    "Continue Started", "Cancel Started", Messages.getErrorIcon());
+      navigateToStarted(oldDocument, project, exitCode);
+    }
+    else {
+      CommonRefactoringUtil.showErrorHint(project, editor, message, RefactoringBundle.getCannotRefactorMessage(null), null);
     }
   }
 
@@ -391,11 +408,15 @@ public abstract class InplaceRefactoring {
   }
 
   protected void navigateToAlreadyStarted(Document oldDocument, int exitCode) {
-    final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(oldDocument);
+    navigateToStarted(oldDocument, myProject, exitCode);
+  }
+
+  private static void navigateToStarted(final Document oldDocument, final Project project, final int exitCode) {
+    final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(oldDocument);
     if (file != null) {
       final VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile != null) {
-        final FileEditor[] editors = FileEditorManager.getInstance(myProject).getEditors(virtualFile);
+        final FileEditor[] editors = FileEditorManager.getInstance(project).getEditors(virtualFile);
         for (FileEditor editor : editors) {
           if (editor instanceof TextEditor) {
             final Editor textEditor = ((TextEditor)editor).getEditor();
@@ -404,11 +425,11 @@ public abstract class InplaceRefactoring {
               if (exitCode == DialogWrapper.OK_EXIT_CODE) {
                 final TextRange range = templateState.getVariableRange(PRIMARY_VARIABLE_NAME);
                 if (range != null) {
-                  new OpenFileDescriptor(myProject, virtualFile, range.getStartOffset()).navigate(true);
+                  new OpenFileDescriptor(project, virtualFile, range.getStartOffset()).navigate(true);
                   return;
                 }
               }
-              else {
+              else if (exitCode > 0){
                 templateState.gotoEnd();
                 return;
               }
@@ -666,6 +687,16 @@ public abstract class InplaceRefactoring {
     return isRestart != null && isRestart;
   }
 
+  public static boolean canStartAnotherRefactoring(Editor editor, Project project, RefactoringActionHandler handler, PsiElement... element) {
+    final InplaceRefactoring inplaceRefactoring = editor != null ? editor.getUserData(INPLACE_RENAMER) : null;
+    return StartMarkAction.canStart(project) == null || 
+           (inplaceRefactoring != null && element.length == 1 && inplaceRefactoring.startsOnTheSameElement(handler, element[0]));
+  }
+  
+  protected boolean startsOnTheSameElement(RefactoringActionHandler handler, PsiElement element) {
+    return getVariable() == element;
+  }
+  
   protected void releaseResources() {
   }
 

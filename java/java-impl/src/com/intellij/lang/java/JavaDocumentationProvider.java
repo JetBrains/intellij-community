@@ -618,7 +618,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       }
     }
 
-    if (urls == null) {
+    if (urls == null || urls.isEmpty()) {
       return null;
     }
     else {

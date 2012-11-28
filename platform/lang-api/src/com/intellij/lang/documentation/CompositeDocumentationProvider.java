@@ -239,4 +239,9 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
     }
     return null;
   }
+
+  @Override
+  public String toString() {
+    return myProviders.toString();
+  }
 }
