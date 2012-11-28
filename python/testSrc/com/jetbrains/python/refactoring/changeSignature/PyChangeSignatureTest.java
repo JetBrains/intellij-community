@@ -87,6 +87,10 @@ public class PyChangeSignatureTest extends PyTestCase {
                                               new PyParameterInfo(-1, "a", "2", false)), LanguageLevel.PYTHON32);
   }
 
+  public void testRenameOverriding() {
+    doChangeSignatureTest("m1", Arrays.asList(new PyParameterInfo(0, "self", null, false)));
+  }
+
   public void testEmptyParameterName() {
     doValidationTest(null, Arrays.asList(new PyParameterInfo(-1, "", "2", true)),
                      PyBundle.message("refactoring.change.signature.dialog.validation.parameter.name"));
