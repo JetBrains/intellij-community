@@ -37,6 +37,10 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
       return ExitCode.NOTHING_DONE;
     }
 
+    if (outputConsumer.getCompiledClasses().size() == 0) {
+      return ExitCode.NOTHING_DONE;
+    }
+
     try {
       return doBuild(context, chunk);
     }
@@ -66,14 +70,6 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
       final File classesDir = projectPaths.getModuleOutputDir(module, false);
       if (classesDir == null || !classesDir.isDirectory()) {
         continue;
-      }
-
-      if (context.isMake()) {
-        final Set<String> dirtyOutputDirs = AndroidDexBuilder.DIRTY_OUTPUT_DIRS.get(context);
-        assert dirtyOutputDirs != null;
-        if (!dirtyOutputDirs.contains(classesDir.getPath())) {
-          continue;
-        }
       }
       final Set<String> subdirs = new HashSet<String>();
       AndroidJpsUtil.addSubdirectories(classesDir, subdirs);
