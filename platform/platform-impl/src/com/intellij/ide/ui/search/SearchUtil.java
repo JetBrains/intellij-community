@@ -60,6 +60,7 @@ public class SearchUtil {
   private static final Pattern QUOTED = Pattern.compile("\\\"([^\\\"]+)\\\"");
 
   public static final String HIGHLIGHT_WITH_BORDER = "searchUtil.highlightWithBorder";
+  public static final String STYLE_END = "</style>";
 
   private SearchUtil() {
   }
@@ -381,18 +382,32 @@ public class SearchUtil {
 
   private static String markup(@NonNls String textToMarkup, final Pattern insideHtmlTagPattern, final String option) {
     @NonNls String result = "";
+    final int styleIdx = textToMarkup.indexOf("<style");
+    final int styleEndIdx = textToMarkup.indexOf("</style>");
+    if (styleIdx < 0 || styleEndIdx < 0) {
+      result = markupInText(textToMarkup, insideHtmlTagPattern, option);
+    } else {
+      result = markup(textToMarkup.substring(0, styleIdx), insideHtmlTagPattern, option) + markup(textToMarkup.substring(styleEndIdx + STYLE_END.length()), insideHtmlTagPattern, option);
+    }
+    return result;
+  }
+
+  private static String markupInText(String textToMarkup, Pattern insideHtmlTagPattern, String option) {
+    String result = "";
     int beg = 0;
     int idx;
     while ((idx = StringUtil.indexOfIgnoreCase(textToMarkup, option, beg)) != -1) {
       final String prefix = textToMarkup.substring(beg, idx);
       final String toMark = textToMarkup.substring(idx, idx + option.length());
       if (insideHtmlTagPattern.matcher(prefix).matches()) {
-        result += prefix + toMark;
+        final int lastIdx = textToMarkup.indexOf(">", idx);
+        result += prefix + textToMarkup.substring(idx, lastIdx + 1);
+        beg = lastIdx + 1;
       }
       else {
         result += prefix + "<font color='#ffffff' bgColor='#1d5da7'>" + toMark + "</font>";
+        beg = idx + option.length();
       }
-      beg = idx + option.length();
     }
     result += textToMarkup.substring(beg);
     return result;
