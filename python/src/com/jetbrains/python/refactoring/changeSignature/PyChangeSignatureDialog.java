@@ -160,11 +160,11 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
           return PyBundle.message("ANN.regular.param.after.keyword");
         }
         final String defaultValue = parameter.getDefaultValue();
-        if (defaultValue != null && !StringUtil.isEmptyOrSpaces(defaultValue)) {
+        if (defaultValue != null && !StringUtil.isEmptyOrSpaces(defaultValue) && parameter.getDefaultInSignature()) {
           hadDefaultValue = true;
         }
         else {
-          if (hadDefaultValue && parameter.getDefaultInSignature() && !hadSingleStar && (!languageLevel.isPy3K() || !hadPositionalContainer)) {
+          if (hadDefaultValue && !hadSingleStar && (!languageLevel.isPy3K() || !hadPositionalContainer)) {
             return PyBundle.message("ANN.non.default.param.after.default");
           }
         }
