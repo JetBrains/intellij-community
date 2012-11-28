@@ -23,7 +23,7 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.Gray;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +40,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   @Nullable private Disposable myAnchor;
 
   JComponent myContent;
-  Color   myBorder             = UIUtil.isUnderDarcula() ? Gray._200 : Color.gray;
+  Color   myBorder             = new JBColor(Color.gray, Gray._200);
   Color   myFill               = new Color(186, 238, 186, 230);
   boolean myHideOnMouseOutside = true;
   boolean myHideOnKeyOutside   = true;

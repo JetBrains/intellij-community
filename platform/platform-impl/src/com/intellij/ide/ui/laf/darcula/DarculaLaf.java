@@ -83,7 +83,7 @@ public final class DarculaLaf extends BasicLookAndFeel {
       final UIDefaults defaults = (UIDefaults)superMethod.invoke(base);
       LafManagerImpl.initInputMapDefaults(defaults);
       initIdeaDefaults(defaults);
-      //patchStyledEditorKit();
+      patchStyledEditorKit();
       return defaults;
     }
     catch (Exception ignore) {
@@ -92,7 +92,7 @@ public final class DarculaLaf extends BasicLookAndFeel {
     return super.getDefaults();
   }
 
-  private void patchStyledEditorKit() {
+  private static void patchStyledEditorKit() {
     try {
       StyleSheet defaultStyles = new StyleSheet();
 	InputStream is = DarculaLaf.class.getResourceAsStream("darcula.css");
