@@ -43,9 +43,9 @@ public class DarculaButtonPainter implements Border, UIResource {
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_DEFAULT);
       g2d.setPaint(new GradientPaint(width / 2, y + yOff + 1, Gray._80.withAlpha(90), width / 2, height - 2*yOff, Gray._90.withAlpha(90)));
-      g.drawRoundRect(x + offset + 1, y + yOff + 1, width - 2 * offset, height - 2*yOff, 5, 5);
+      //g.drawRoundRect(x + offset + 1, y + yOff + 1, width - 2 * offset, height - 2*yOff, 5, 5);
 
-      ((Graphics2D)g).setPaint(Gray._40.withAlpha(180));
+      ((Graphics2D)g).setPaint(Gray._100.withAlpha(180));
       g.drawRoundRect(x + offset, y + yOff, width - 2 * offset, height - 2*yOff, 5, 5);
 
       config.restore();
