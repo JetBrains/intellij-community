@@ -42,13 +42,20 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
   public PyClassStub createStub(@NotNull final PyClass psi, final StubElement parentStub) {
     final PyExpression[] exprs = psi.getSuperClassExpressions();
     List<PyQualifiedName> superClasses = new ArrayList<PyQualifiedName>();
-    for (final PyExpression expression : exprs) {
+    for (PyExpression expression : exprs) {
+      if (expression instanceof PyCallExpression) {
+        PyCallExpression call = (PyCallExpression)expression;
+        //noinspection ConstantConditions
+        if (call.getCallee() != null && "with_metaclass".equals(call.getCallee().getName()) && call.getArguments().length > 1) {
+          expression = call.getArguments()[1];
+        }
+      }
       superClasses.add(PyQualifiedName.fromExpression(expression));
     }
     final PyStringLiteralExpression docStringExpression = psi.getDocStringExpression();
     return new PyClassStubImpl(psi.getName(), parentStub,
                                superClasses.toArray(new PyQualifiedName[superClasses.size()]),
-                               ((PyClassImpl) psi).getOwnSlots(),
+                               ((PyClassImpl)psi).getOwnSlots(),
                                PyPsiUtils.strValue(docStringExpression),
                                getStubElementType());
   }
@@ -57,7 +64,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     dataStream.writeName(pyClassStub.getName());
     final PyQualifiedName[] classes = pyClassStub.getSuperClasses();
     dataStream.writeByte(classes.length);
-    for(PyQualifiedName s: classes) {
+    for (PyQualifiedName s : classes) {
       PyQualifiedName.serialize(s, dataStream);
     }
     PyFileElementType.writeNullableList(dataStream, pyClassStub.getSlots());
@@ -69,7 +76,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     String name = StringRef.toString(dataStream.readName());
     int superClassCount = dataStream.readByte();
     PyQualifiedName[] superClasses = new PyQualifiedName[superClassCount];
-    for(int i=0; i<superClassCount; i++) {
+    for (int i = 0; i < superClassCount; i++) {
       superClasses[i] = PyQualifiedName.deserialize(dataStream);
     }
     List<String> slots = PyFileElementType.readNullableList(dataStream);
@@ -83,7 +90,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
       sink.occurrence(PyClassNameIndex.KEY, name);
       sink.occurrence(PyClassNameIndexInsensitive.KEY, name.toLowerCase());
     }
-    for(PyQualifiedName s: stub.getSuperClasses()) {
+    for (PyQualifiedName s : stub.getSuperClasses()) {
       if (s != null) {
         String className = s.getLastComponent();
         if (className != null) {
