@@ -36,7 +36,7 @@ public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
                            int rootIndex, String outputPath,
                            CompileContext context, BuildOutputConsumer outputConsumer,
                            ArtifactOutputToSourceMapping outSrcMapping) throws IOException, ProjectBuildException {
-    final File file = new File(FileUtil.toSystemDependentName(filePath));
+    final File file = new File(filePath);
     if (!file.exists()) return;
     String targetPath;
     if (!FileUtil.filesEqual(file, getRootFile())) {
@@ -50,12 +50,17 @@ public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
       targetPath = outputPath;
     }
 
+    final File targetFile = new File(targetPath);
+    if (FileUtil.filesEqual(file, targetFile)) {
+      //do not process file if should be copied to itself. Otherwise the file will be included to source-to-output mapping and will be deleted by rebuild
+      return;
+    }
+
     if (outSrcMapping.getState(targetPath) == null) {
       ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
       if (logger.isEnabled()) {
         logger.logCompiledFiles(Collections.singletonList(file), IncArtifactBuilder.BUILDER_NAME, "Copying file:");
       }
-      final File targetFile = new File(FileUtil.toSystemDependentName(targetPath));
       FileUtil.copyContent(file, targetFile);
       outputConsumer.registerOutputFile(targetFile, Collections.singletonList(filePath));
     }
