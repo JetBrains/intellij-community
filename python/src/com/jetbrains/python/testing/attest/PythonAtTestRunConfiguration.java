@@ -5,6 +5,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.jetbrains.python.PyBundle;
@@ -69,7 +70,8 @@ public class PythonAtTestRunConfiguration extends AbstractPythonTestRunConfigura
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
-    if (!VFSTestFrameworkListener.getInstance().isAtTestInstalled(PythonSdkType.findSdkByPath(getInterpreterPath())))
+    Sdk sdkPath = PythonSdkType.findSdkByPath(getInterpreterPath());
+    if (sdkPath != null && !VFSTestFrameworkListener.getInstance().isAtTestInstalled(sdkPath))
       throw new RuntimeConfigurationWarning(PyBundle.message("runcfg.testing.no.test.framework", "attest"));
   }
 }
