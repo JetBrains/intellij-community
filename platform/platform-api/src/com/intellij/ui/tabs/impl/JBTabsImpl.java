@@ -2347,7 +2347,11 @@ public class JBTabsImpl extends JComponent
 
 
     if (toSelect != null) {
+      boolean clearSelection = info.equals(mySelectedInfo);
       processRemove(info, false);
+      if (clearSelection) {
+        mySelectedInfo = info;
+      }
       _setSelected(toSelect, transferFocus).doWhenProcessed(new Runnable() {
         public void run() {
           removeDeferred().notifyWhenDone(result);
