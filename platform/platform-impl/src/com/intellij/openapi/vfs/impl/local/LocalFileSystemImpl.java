@@ -20,8 +20,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.Consumer;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +45,8 @@ import java.io.IOException;
 import java.util.*;
 
 public final class LocalFileSystemImpl extends LocalFileSystemBase implements ApplicationComponent {
+  private static final String FS_ROOT = "/";
+
   private final Object myLock = new Object();
   private final List<WatchRequestImpl> myRootsToWatch = new ArrayList<WatchRequestImpl>();
   private TreeNode myNormalizedTree = null;
@@ -112,7 +115,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
 
   private static class TreeNode {
     private WatchRequestImpl watchRequest = null;
-    private Map<String, TreeNode> nodes = new HashMap<String, TreeNode>();
+    private Map<String, TreeNode> nodes = ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
   }
 
   public LocalFileSystemImpl(@NotNull ManagingFS managingFS) {
@@ -169,13 +172,12 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     synchronized (myLock) {
       TreeNode rootNode = new TreeNode();
       for (WatchRequestImpl request : myRootsToWatch) {
+        request.myDominated = false;
         String rootPath = request.getRootPath();
+
         TreeNode currentNode = rootNode;
         MainLoop:
-        for (String subPath : rootPath.split("/")) {
-          if (!SystemInfo.isFileSystemCaseSensitive) {
-            subPath = subPath.toLowerCase();
-          }
+        for (String subPath : splitPath(rootPath)) {
           TreeNode nextNode = currentNode.nodes.get(subPath);
           if (nextNode != null) {
             currentNode = nextNode;
@@ -233,6 +235,23 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     return result.toArray(new WatchRequestImpl[result.size()]);
   }
 
+  @NotNull
+  private static List<String> splitPath(@NotNull String path) {
+    if (path.isEmpty()) {
+      return ContainerUtil.emptyList();
+    }
+
+    if (FS_ROOT.equals(path)) {
+      return Collections.singletonList(FS_ROOT);
+    }
+
+    List<String> parts = StringUtil.split(path, FS_ROOT);
+    if (StringUtil.startsWithChar(path, '/')) {
+      parts.add(0, FS_ROOT);
+    }
+    return parts;
+  }
+
   private static void visitTree(TreeNode rootNode, Consumer<TreeNode> consumer) {
     for (TreeNode node : rootNode.nodes.values()) {
       consumer.consume(node);
@@ -247,10 +266,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
 
     String rootPath = request.getRootPath();
     TreeNode currentNode = myNormalizedTree;
-    for (String subPath : rootPath.split("/")) {
-      if (!SystemInfo.isFileSystemCaseSensitive) {
-        subPath = subPath.toLowerCase();
-      }
+    for (String subPath : splitPath(rootPath)) {
       TreeNode nextNode = currentNode.nodes.get(subPath);
       if (nextNode == null) {
         return false;
@@ -337,27 +353,24 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   private void setUpFileWatcher() {
     final Application application = ApplicationManager.getApplication();
     if (application.isDisposeInProgress() || !myWatcher.isOperational()) return;
+    application.assertReadAccessAllowed();
 
-    application.runReadAction(new Runnable() {
-      public void run() {
-        synchronized (myLock) {
-          final WatchRequestImpl[] watchRequests = normalizeRootsForRefresh();
-          final List<String> myRecursiveRoots = new ArrayList<String>();
-          final List<String> myFlatRoots = new ArrayList<String>();
+    synchronized (myLock) {
+      final WatchRequestImpl[] watchRequests = normalizeRootsForRefresh();
+      final List<String> myRecursiveRoots = new ArrayList<String>();
+      final List<String> myFlatRoots = new ArrayList<String>();
 
-          for (WatchRequestImpl watchRequest : watchRequests) {
-            if (watchRequest.isToWatchRecursively()) {
-              myRecursiveRoots.add(watchRequest.myFSRootPath);
-            }
-            else {
-              myFlatRoots.add(watchRequest.myFSRootPath);
-            }
-          }
-
-          myWatcher.setWatchRoots(myRecursiveRoots, myFlatRoots);
+      for (WatchRequestImpl watchRequest : watchRequests) {
+        if (watchRequest.isToWatchRecursively()) {
+          myRecursiveRoots.add(watchRequest.myFSRootPath);
+        }
+        else {
+          myFlatRoots.add(watchRequest.myFSRootPath);
         }
       }
-    });
+
+      myWatcher.setWatchRoots(myRecursiveRoots, myFlatRoots);
+    }
   }
 
   private class StoreRefreshStatusThread extends Thread {

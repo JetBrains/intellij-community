@@ -87,6 +87,11 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
+  public static <K, V> THashMap<K, V> newTroveMap(@NotNull TObjectHashingStrategy<K> strategy) {
+    return new THashMap<K, V>(strategy);
+  }
+
+  @NotNull
   public static <K, V> IdentityHashMap<K, V> newIdentityHashMap() {
     return new IdentityHashMap<K, V>();
   }
