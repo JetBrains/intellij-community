@@ -187,6 +187,23 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   private static class JavaBreakpointPanelProvider extends BreakpointPanelProvider<Breakpoint> {
     private List<MyBreakpointManagerListener> myListeners = ContainerUtil.createEmptyCOWList();
 
+<<<<<<< HEAD
+    @NotNull
+    public Collection<AbstractBreakpointPanel<Breakpoint>> getBreakpointPanels(@NotNull final Project project, @NotNull final DialogWrapper parentDialog) {
+      List<AbstractBreakpointPanel<Breakpoint>> panels = new ArrayList<AbstractBreakpointPanel<Breakpoint>>();
+      final BreakpointFactory[] allFactories = BreakpointFactory.getBreakpointFactories();
+      for (BreakpointFactory factory : allFactories) {
+        BreakpointPanel panel = factory.createBreakpointPanel(project, parentDialog);
+        if (panel != null) {
+          panel.setupPanelUI();
+          panels.add(panel);
+        }
+      }
+      return panels;
+    }
+
+=======
+>>>>>>> 14b9a42... IDEA-91515 XBreakpointType.createCustomConditionsPanel is not called anymore
     @Override
     public AnAction[] getAddBreakpointActions(@NotNull Project project) {
       List<AnAction> result = new ArrayList<AnAction>();

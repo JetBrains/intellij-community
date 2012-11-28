@@ -102,7 +102,22 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
     return null;
   }
 
+<<<<<<< HEAD
+  @NotNull
+  public Collection<AbstractBreakpointPanel<XBreakpoint>> getBreakpointPanels(@NotNull final Project project, @NotNull final DialogWrapper parentDialog) {
+    XBreakpointType<?,?>[] types = XBreakpointUtil.getBreakpointTypes();
+    ArrayList<AbstractBreakpointPanel<XBreakpoint>> panels = new ArrayList<AbstractBreakpointPanel<XBreakpoint>>();
+    for (XBreakpointType<? extends XBreakpoint<?>, ?> type : types) {
+      if (type.shouldShowInBreakpointsDialog(project)) {
+        XBreakpointsPanel<?> panel = createBreakpointsPanel(project, parentDialog, type);
+        panels.add(panel);
+      }
+    }
+    return panels;
+  }
 
+=======
+>>>>>>> 14b9a42... IDEA-91515 XBreakpointType.createCustomConditionsPanel is not called anymore
   @Override
   public AnAction[] getAddBreakpointActions(@NotNull Project project) {
     List<AnAction> result = new ArrayList<AnAction>();
@@ -114,6 +129,13 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
     return result.toArray(new AnAction[result.size()]);
   }
 
+<<<<<<< HEAD
+  private static <B extends XBreakpoint<?>> XBreakpointsPanel<B> createBreakpointsPanel(final Project project, DialogWrapper parentDialog, final XBreakpointType<B, ?> type) {
+    return new XBreakpointsPanel<B>(project, parentDialog, type);
+  }
+
+=======
+>>>>>>> 14b9a42... IDEA-91515 XBreakpointType.createCustomConditionsPanel is not called anymore
   public void onDialogClosed(final Project project) {
   }
 
