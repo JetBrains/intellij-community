@@ -272,7 +272,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       }
 
       builder.append(info.getName());
-      if (info.getOldIndex() != -1) {
+      if (info.getOldIndex() != -1 && info.getOldIndex() < oldParameters.length) {
         final PyParameter parameter = oldParameters[info.getOldIndex()];
         if (parameter instanceof PyNamedParameter) {
           final PyAnnotation annotation = ((PyNamedParameter)parameter).getAnnotation();
