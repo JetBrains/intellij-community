@@ -33,6 +33,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.JBTableRow;
 import com.intellij.util.ui.table.JBTableRowEditor;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -287,8 +288,11 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
         final JPanel defaultValueCheckBox = createDefaultValueCheckBox();
         add(defaultValueCheckBox);
 
-        myDefaultValueEditor.setEnabled(!myNameEditor.getText().startsWith("*"));
-        myDefaultInSignature.setEnabled(!myNameEditor.getText().startsWith("*"));
+        final String nameText = myNameEditor.getText();
+        myDefaultValueEditor.setEnabled(!nameText.startsWith("*")
+                                        && !PyNames.CANONICAL_SELF.equals(nameText));
+        myDefaultInSignature.setEnabled(!nameText.startsWith("*")
+                                        && !PyNames.CANONICAL_SELF.equals(nameText));
       }
 
       private JPanel createDefaultValueCheckBox() {
