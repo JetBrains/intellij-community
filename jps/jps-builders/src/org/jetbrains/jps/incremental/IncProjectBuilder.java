@@ -372,17 +372,21 @@ public class IncProjectBuilder {
   }
 
   private static void registerTargetsWithClearedOutput(CompileContext context, Collection<? extends BuildTarget<?>> targets) {
-    Set<BuildTarget<?>> data = context.getUserData(TARGET_WITH_CLEARED_OUTPUT);
-    if (data == null) {
-      data = new THashSet<BuildTarget<?>>();
-      context.putUserData(TARGET_WITH_CLEARED_OUTPUT, data);
+    synchronized (TARGET_WITH_CLEARED_OUTPUT) {
+      Set<BuildTarget<?>> data = context.getUserData(TARGET_WITH_CLEARED_OUTPUT);
+      if (data == null) {
+        data = new THashSet<BuildTarget<?>>();
+        context.putUserData(TARGET_WITH_CLEARED_OUTPUT, data);
+      }
+      data.addAll(targets);
     }
-    data.addAll(targets);
   }
 
   private static boolean isTargetOutputCleared(CompileContext context, BuildTarget<?> target) {
-    Set<BuildTarget<?>> data = context.getUserData(TARGET_WITH_CLEARED_OUTPUT);
-    return data != null && data.contains(target);
+    synchronized (TARGET_WITH_CLEARED_OUTPUT) {
+      Set<BuildTarget<?>> data = context.getUserData(TARGET_WITH_CLEARED_OUTPUT);
+      return data != null && data.contains(target);
+    }
   }
 
   private void clearOutputs(CompileContext context) throws ProjectBuildException, IOException {
