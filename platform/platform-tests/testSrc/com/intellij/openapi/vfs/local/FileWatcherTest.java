@@ -510,7 +510,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
     File file2 = IoTestUtil.createTestFile(rootDir, "2.txt");
     refresh(topDir);
 
-    File fsRoot = new File(SystemInfo.isUnix ? "/" : topDir.getPath().substring(0, topDir.getPath().indexOf(File.separatorChar)));
+    File fsRoot = new File(SystemInfo.isUnix ? "/" : topDir.getPath().substring(0, topDir.getPath().indexOf(File.separatorChar)) + "\\");
     assertTrue("can't guess root of " + topDir, fsRoot.exists());
 
     LocalFileSystem.WatchRequest request = watch(rootDir);
