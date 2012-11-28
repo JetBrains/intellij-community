@@ -26,6 +26,7 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,6 +98,7 @@ public abstract class ProjectImportProvider {
   }
 
   @Nullable
+  @Language("HTML")
   public String getFileSample() {
     return null;
   }

@@ -21,6 +21,7 @@ import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSources
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectImportProvider;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
@@ -42,5 +43,11 @@ public class ImportFromSourcesProvider extends ProjectImportProvider {
     };
     mode.addSteps(context, DefaultModulesProvider.createForProject(context.getProject()), sequence, getName());
     myBuilder = (ProjectImportBuilder)mode.getModuleBuilder();
+  }
+
+  @Nullable
+  @Override
+  public String getFileSample() {
+    return "directory with <b>existing sources</b>";
   }
 }
