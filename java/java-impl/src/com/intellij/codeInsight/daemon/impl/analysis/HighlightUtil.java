@@ -52,6 +52,7 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
 import org.intellij.lang.annotations.Language;
@@ -2246,7 +2247,8 @@ public class HighlightUtil extends HighlightUtilBase {
   @NonNls
   private static String redIfNotMatch(PsiType type, boolean matches) {
     if (matches) return getFQName(type, false);
-    return "<font color=red><b>" + getFQName(type, true) + "</b></font>";
+    String color = UIUtil.isUnderDarcula() ? "FF6B68" : "red";
+    return "<font color='" + color +"'><b>" + getFQName(type, true) + "</b></font>";
   }
 
   private static String getFQName(@Nullable PsiType type, boolean longName) {
