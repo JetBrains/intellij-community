@@ -15,10 +15,6 @@
  */
 package com.intellij.util;
 
-import com.intellij.concurrency.AsyncFuture;
-import com.intellij.concurrency.AsyncFutureFactory;
-import com.intellij.concurrency.AsyncFutureResult;
-import com.intellij.concurrency.FinallyFuture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,27 +76,5 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
     }
   }
 
-  @Override
-  public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<Result> consumer) {
-    assertNotProcessing();
-    myIsProcessing = true;
-    return new FinallyFuture<Boolean>(processResultsAsync(consumer), new Runnable() {
-      @Override
-      public void run() {
-        myIsProcessing = false;
-      }
-    });
-  }
-
   protected abstract boolean processResults(@NotNull Processor<Result> consumer);
-
-  protected AsyncFuture<Boolean> processResultsAsync(@NotNull Processor<Result> consumer) {
-    final AsyncFutureResult<Boolean> result = AsyncFutureFactory.getInstance().createAsyncFutureResult();
-    try {
-      result.set(processResults(consumer));
-    } catch (Throwable t) {
-      result.setException(t);
-    }
-    return result;
-  }
 }

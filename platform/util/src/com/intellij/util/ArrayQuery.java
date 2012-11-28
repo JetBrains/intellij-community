@@ -16,9 +16,6 @@
 
 package com.intellij.util;
 
-import com.intellij.concurrency.AsyncFuture;
-import com.intellij.concurrency.AsyncFutureFactory;
-import com.intellij.concurrency.AsyncFutureResult;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,17 +45,6 @@ public class ArrayQuery<T> implements Query<T> {
   public boolean forEach(@NotNull final Processor<T> consumer) {
     return ContainerUtil.process(myArray, consumer);
   }
-
-  public AsyncFuture<Boolean> forEachAsync(@NotNull final Processor<T> consumer) {
-    final AsyncFutureResult<Boolean> result = AsyncFutureFactory.getInstance().createAsyncFutureResult();
-    try {
-      result.set(forEach(consumer));
-    } catch (Throwable t){
-      result.setException(t);
-    }
-    return result;
-  }
-
 
   public T[] toArray(final T[] a) {
     return myArray;

@@ -16,7 +16,6 @@
 
 package com.intellij.util;
 
-import com.intellij.concurrency.AsyncFuture;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -55,19 +54,13 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
     return process(consumer, Collections.synchronizedSet(new THashSet<M>(myHashingStrategy)));
   }
 
-  @Override
-  public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<T> consumer) {
-    return processAsync(consumer, Collections.synchronizedSet(new THashSet<M>(myHashingStrategy)));
-  }
-
   private boolean process(final Processor<T> consumer, final Set<M> processedElements) {
-    return myOriginal.forEach(new MyProcessor(processedElements, consumer));
+    return myOriginal.forEach(new Processor<T>() {
+      public boolean process(final T t) {
+        return !processedElements.add(myMapper.fun(t)) || consumer.process(t);
+      }
+    });
   }
-
-  private AsyncFuture<Boolean> processAsync(final Processor<T> consumer, final Set<M> processedElements) {
-    return myOriginal.forEachAsync(new MyProcessor(processedElements, consumer));
-  }
-
 
   @NotNull
   public Collection<T> findAll() {
@@ -90,19 +83,5 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
 
   public Iterator<T> iterator() {
     return findAll().iterator();
-  }
-
-  private class MyProcessor implements Processor<T> {
-    private final Set<M> myProcessedElements;
-    private final Processor<T> myConsumer;
-
-    public MyProcessor(Set<M> processedElements, Processor<T> consumer) {
-      myProcessedElements = processedElements;
-      myConsumer = consumer;
-    }
-
-    public boolean process(final T t) {
-      return !myProcessedElements.add(myMapper.fun(t)) || myConsumer.process(t);
-    }
   }
 }

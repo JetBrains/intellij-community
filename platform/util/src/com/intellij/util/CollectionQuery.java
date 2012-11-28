@@ -16,9 +16,6 @@
 
 package com.intellij.util;
 
-import com.intellij.concurrency.AsyncFuture;
-import com.intellij.concurrency.AsyncFutureFactory;
-import com.intellij.concurrency.AsyncFutureResult;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,17 +47,6 @@ public class CollectionQuery<T> implements Query<T> {
   @Override
   public boolean forEach(@NotNull final Processor<T> consumer) {
     return ContainerUtil.process(myCollection, consumer);
-  }
-
-  @Override
-  public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<T> consumer) {
-    AsyncFutureResult<Boolean>  result = AsyncFutureFactory.getInstance().createAsyncFutureResult();
-    try {
-      result.set(forEach(consumer));
-    } catch (Throwable t) {
-      result.setException(t);
-    }
-    return result;
   }
 
   @Override

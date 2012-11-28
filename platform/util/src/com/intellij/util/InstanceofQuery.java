@@ -15,7 +15,6 @@
  */
 package com.intellij.util;
 
-import com.intellij.concurrency.AsyncFuture;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -52,12 +51,16 @@ public class InstanceofQuery<T> implements Query<T> {
   }
 
   public boolean forEach(@NotNull final Processor<T> consumer) {
-    return myDelegate.forEach(new MyProcessor(consumer));
-  }
-
-  @Override
-  public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<T> consumer) {
-    return myDelegate.forEachAsync(new MyProcessor(consumer));
+    return myDelegate.forEach(new Processor() {
+      public boolean process(Object o) {
+        for (Class aClass : myClasses) {
+          if (aClass.isInstance(o)) {
+            return consumer.process(((T)o));
+          }
+        }
+        return true;
+      }
+    });
   }
 
   public T[] toArray(T[] a) {
@@ -67,22 +70,5 @@ public class InstanceofQuery<T> implements Query<T> {
 
   public Iterator<T> iterator() {
     return new UnmodifiableIterator<T>(findAll().iterator());
-  }
-
-  private class MyProcessor<T> implements Processor<T> {
-    private final Processor<T> myConsumer;
-
-    public MyProcessor(Processor<T> consumer) {
-      myConsumer = consumer;
-    }
-
-    public boolean process(T o) {
-      for (Class aClass : myClasses) {
-        if (aClass.isInstance(o)) {
-          return myConsumer.process(((T)o));
-        }
-      }
-      return true;
-    }
   }
 }
