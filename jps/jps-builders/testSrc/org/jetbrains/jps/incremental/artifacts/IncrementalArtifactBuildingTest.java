@@ -18,6 +18,7 @@ package org.jetbrains.jps.incremental.artifacts;
 import com.intellij.util.PathUtil;
 import org.jetbrains.jps.builders.CompileScopeTestBuilder;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.jetbrains.jps.model.artifact.elements.JpsPackagingElementFactory;
 
 import static com.intellij.util.io.TestFileSystemItem.fs;
 import static org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.archive;
@@ -116,6 +117,29 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
     buildArtifacts(a2); assertUpToDate();
     buildArtifacts(a1); assertUpToDate();
     buildAllAndAssertUpToDate();
+  }
+
+  public void testArtifactWithOutputPathEqualToSourcePath() {
+    String root = PathUtil.getParentPath(createFile("d/1.txt"));
+    JpsArtifact a = addArtifact(root().dirCopy(root));
+    a.setOutputPath(root);
+
+    buildArtifacts(a);
+    assertOutput(a, fs().file("1.txt"));
+    String file2 = createFile("d/2.txt");
+    buildArtifacts(a);
+    assertOutput(a, fs().file("1.txt").file("2.txt"));
+
+    a.getRootElement().addChild(JpsPackagingElementFactory.getInstance().createFileCopy(createFile("d2/3.txt"), null));
+    buildArtifacts(a);
+    assertOutput(a, fs().file("1.txt").file("2.txt").file("3.txt"));
+
+    buildAllAndAssertUpToDate();
+    assertOutput(a, fs().file("1.txt").file("2.txt").file("3.txt"));
+
+    delete(file2);
+    buildAllAndAssertUpToDate();
+    assertOutput(a, fs().file("1.txt").file("3.txt"));
   }
 
   public void testDeleteFileAndRebuildIncludedArtifact() {
