@@ -21,6 +21,7 @@ import java.util.Set;
 /**
  * @author Eugene.Kudelevsky
  */
+// todo: make target based
 public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
   @NonNls private static final String BUILDER_NAME = "Android Library Packaging";
 
@@ -34,6 +35,10 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
                         DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                         OutputConsumer outputConsumer) throws ProjectBuildException {
     if (chunk.containsTests() || !AndroidJpsUtil.containsAndroidFacet(chunk) || AndroidJpsUtil.isLightBuild(context)) {
+      return ExitCode.NOTHING_DONE;
+    }
+
+    if (outputConsumer.getCompiledClasses().size() == 0) {
       return ExitCode.NOTHING_DONE;
     }
 
@@ -66,14 +71,6 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
       final File classesDir = projectPaths.getModuleOutputDir(module, false);
       if (classesDir == null || !classesDir.isDirectory()) {
         continue;
-      }
-
-      if (context.isMake()) {
-        final Set<String> dirtyOutputDirs = AndroidDexBuilder.DIRTY_OUTPUT_DIRS.get(context);
-        assert dirtyOutputDirs != null;
-        if (!dirtyOutputDirs.contains(classesDir.getPath())) {
-          continue;
-        }
       }
       final Set<String> subdirs = new HashSet<String>();
       AndroidJpsUtil.addSubdirectories(classesDir, subdirs);

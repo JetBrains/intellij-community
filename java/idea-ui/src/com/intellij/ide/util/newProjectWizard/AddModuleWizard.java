@@ -109,7 +109,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep>
     StringBuilder builder = new StringBuilder("Import ");
     builder.append(project == null ? "Project" : "Module");
     if (providers.length == 1) {
-      builder.append(" From ").append(providers[0].getName());
+      builder.append(" from ").append(providers[0].getName());
     }
     return builder.toString();
   }
@@ -159,7 +159,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep>
   @Override
   protected String addStepComponent(Component component) {
     if (component instanceof JComponent) {
-      ((JComponent)component).setBorder(IdeBorderFactory.createEmptyBorder(8, 8, 0, 0));
+      ((JComponent)component).setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 0));
     }
     return super.addStepComponent(component);
   }
@@ -169,6 +169,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep>
       getCurrentStepObject().updateStep();
     }
     super.updateStep();
+    myIcon.setIcon(null);
   }
 
   protected void dispose() {
@@ -315,6 +316,10 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep>
     if (context.getProjectJdk() != null) {
       return context.getProjectJdk();
     }
+    return getProjectSdkByDefault(context);
+  }
+
+  public static Sdk getProjectSdkByDefault(WizardContext context) {
     final Project project = context.getProject() == null ? ProjectManager.getInstance().getDefaultProject() : context.getProject();
     final Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
     if (projectJdk != null) {

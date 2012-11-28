@@ -96,7 +96,7 @@ abstract class RenameChooser {
       .setRequestFocus(true)
       .setItemChoosenCallback(new Runnable() {
         public void run() {
-          runRenameTemplate(list.getSelectedValue().equals(ALL_OCCURRENCES) ? stringUsages : new ArrayList<Pair<PsiElement, TextRange>>());
+          runRenameTemplate(ALL_OCCURRENCES.equals(list.getSelectedValue()) ? stringUsages : new ArrayList<Pair<PsiElement, TextRange>>());
         }
       })
       .addListener(new JBPopupAdapter() {

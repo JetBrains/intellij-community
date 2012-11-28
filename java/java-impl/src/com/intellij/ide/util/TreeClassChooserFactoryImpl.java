@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
   private final Project myProject;
 
-  public TreeClassChooserFactoryImpl(final Project project) {
+  public TreeClassChooserFactoryImpl(@NotNull Project project) {
     myProject = project;
   }
 

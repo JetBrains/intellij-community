@@ -213,6 +213,9 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
       if (annotations != null && ! annotations.isEmpty()) {
         annotations.remove(annotation);
       }
+      if (annotations != null && annotations.isEmpty()) {
+        myFileAnnotationMap.remove(file);
+      }
     }
   }
 

@@ -49,6 +49,10 @@ public class VcsAppendableHistoryPartnerAdapter implements VcsAppendableHistoryS
   public void forceRefresh() {
   }
 
+  @Override
+  public void beforeRefresh() {
+  }
+
   public void check() throws VcsException {
     if (myException != null) throw myException;
   }

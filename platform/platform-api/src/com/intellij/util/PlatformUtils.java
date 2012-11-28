@@ -21,7 +21,7 @@ package com.intellij.util;
 public class PlatformUtils {
   public static final String IDEA_PREFIX = "idea";
   public static final String COMMUNITY_PREFIX = "Idea";
-  public static final String CIDR_PREFIX = "CIDR";
+  public static final String APPCODE_PREFIX = "AppCode";
   public static final String PYCHARM_PREFIX = "Python";
   public static final String RUBY_PREFIX = "Ruby";
   public static final String PHP_PREFIX = "PhpStorm";
@@ -51,8 +51,8 @@ public class PlatformUtils {
     return RUBY_PREFIX.equals(getPlatformPrefix());
   }
 
-  public static boolean isCidr() {
-    return CIDR_PREFIX.equals(getPlatformPrefix());
+  public static boolean isAppCode() {
+    return APPCODE_PREFIX.equals(getPlatformPrefix());
   }
 
   public static boolean isPyCharm() {

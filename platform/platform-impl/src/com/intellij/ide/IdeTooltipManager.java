@@ -32,10 +32,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
-import com.intellij.ui.BalloonImpl;
-import com.intellij.ui.Gray;
-import com.intellij.ui.HintHint;
-import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
@@ -364,7 +361,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
   @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
   public Color getBorderColor(boolean awtTooltip) {
-    return UIUtil.isUnderDarcula() ? Gray._160 : Color.darkGray;
+    return new JBColor(Color.darkGray, new Color(154, 154, 102));
   }
 
   @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})

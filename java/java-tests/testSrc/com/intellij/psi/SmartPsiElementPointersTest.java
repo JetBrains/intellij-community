@@ -159,6 +159,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
 
     Document aClassDocument = PsiDocumentManager.getInstance(myProject).getDocument(aClass.getContainingFile());
     Document testDocument = PsiDocumentManager.getInstance(myProject).getDocument(typeElement.getContainingFile());
+    assertNotSame(aClassDocument, testDocument);
 
     aClassDocument.insertString(aClass.getTextOffset(), "/**/");
     testDocument.insertString(typeElement.getTextOffset(), "/**/");

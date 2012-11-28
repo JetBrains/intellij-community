@@ -37,6 +37,7 @@ import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -60,7 +61,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
   private final ProjectFileIndex myFileIndex;
   private final Project myProject;
 
-  public DirectoryChooserModuleTreeView(Project project) {
+  public DirectoryChooserModuleTreeView(@NotNull Project project) {
     myRootNode = new DefaultMutableTreeNode();
     myTree = new Tree(myRootNode);
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);

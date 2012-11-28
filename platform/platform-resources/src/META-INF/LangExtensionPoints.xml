@@ -294,6 +294,7 @@
                   area="IDEA_PROJECT"/>
 
   <extensionPoint name="consoleFilterProvider" interface="com.intellij.execution.filters.ConsoleFilterProvider"/>
+  <extensionPoint name="consoleInputFilterProvider" interface="com.intellij.execution.filters.ConsoleInputFilterProvider"/>
   <extensionPoint name="consoleActionsPostProcessor" interface="com.intellij.execution.actions.ConsoleActionsPostProcessor"/>
 
   <extensionPoint name="console.folding" interface="com.intellij.execution.ConsoleFolding"/>

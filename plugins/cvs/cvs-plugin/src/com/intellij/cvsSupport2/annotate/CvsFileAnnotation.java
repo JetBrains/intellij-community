@@ -21,6 +21,7 @@ import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.cvsoperations.cvsAnnotate.Annotation;
 import com.intellij.cvsSupport2.cvsstatuses.CvsEntriesListener;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.annotate.AnnotationSourceSwitcher;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
@@ -77,7 +78,8 @@ public class CvsFileAnnotation extends FileAnnotation{
 
 
   public CvsFileAnnotation(final String content, final Annotation[] annotations,
-                           @Nullable final List<VcsFileRevision> revisions, VirtualFile file, String currentRevision) {
+                           @Nullable final List<VcsFileRevision> revisions, VirtualFile file, String currentRevision, Project project) {
+    super(project);
     myContent = content;
     myAnnotations = annotations;
     myRevisions = revisions;
@@ -199,5 +201,10 @@ public class CvsFileAnnotation extends FileAnnotation{
   @Override
   public VcsKey getVcsKey() {
     return CvsVcs2.getKey();
+  }
+
+  @Override
+  public VirtualFile getFile() {
+    return myFile;
   }
 }

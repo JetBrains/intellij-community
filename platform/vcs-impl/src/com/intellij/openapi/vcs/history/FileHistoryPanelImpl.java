@@ -168,7 +168,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
 
     public int compare(VcsFileRevision o1, VcsFileRevision o2) {
-      return o1.getRevisionDate().compareTo(o2.getRevisionDate());
+      return Comparing.compare(o1.getRevisionDate(), o2.getRevisionDate());
     }
 
     @Override
@@ -177,6 +177,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
 
   };
+  private boolean myColumnSizesSet;
 
   public void scheduleRefresh(final boolean canUseLastRevision) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -553,9 +554,16 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         wrapWithTreeElements(myHistorySession.getRevisionList())), myTargetSelection);
     }
 
-    myDualView.getFlatView().updateColumnSizes();
+    columnSizesOnce();
     myDualView.expandAll();
     myDualView.repaint();
+  }
+
+  private void columnSizesOnce() {
+    if (! myColumnSizesSet) {
+      myDualView.getFlatView().updateColumnSizes();
+      myColumnSizesSet = true;
+    }
   }
 
   private void adjustEmptyText() {
@@ -811,7 +819,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         mySplitter.repaint();
 
         myRefresherI.run(true, useLastRevision);
-        myDualView.getFlatView().updateColumnSizes();
+        columnSizesOnce();
       }
     }.callMe();
   }

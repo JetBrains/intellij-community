@@ -23,4 +23,5 @@ public interface VcsAppendableHistorySessionPartner {
   void reportException(final VcsException exception);
   void finished();
   void forceRefresh();
+  void beforeRefresh();
 }

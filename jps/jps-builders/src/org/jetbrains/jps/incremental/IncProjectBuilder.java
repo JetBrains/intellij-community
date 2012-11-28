@@ -22,7 +22,6 @@ import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
-import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
@@ -33,6 +32,7 @@ import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.java.ExternalJavacDescriptor;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.OneToManyPathsMapping;
+import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.service.SharedThreadPool;
@@ -390,7 +390,8 @@ public class IncProjectBuilder {
     final Set<File> allSourceRoots = new HashSet<File>();
 
     ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
-    for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets()) {
+    List<? extends BuildTarget<?>> allTargets = projectDescriptor.getBuildTargetIndex().getAllTargets();
+    for (BuildTarget<?> target : allTargets) {
       if (context.getScope().isAffected(target)) {
         final Collection<File> outputs = target.getOutputRoots(context);
         for (File file : outputs) {
@@ -399,12 +400,16 @@ public class IncProjectBuilder {
       }
     }
 
-    for (BuildTargetType<?> type : JavaModuleBuildTargetType.ALL_TYPES) {
-      for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets(type)) {
-        for (BuildRootDescriptor descriptor : projectDescriptor.getBuildRootIndex().getTargetRoots(target, context)) {
-          if (!descriptor.isGenerated()) {
-            // excluding from checks source roots with generated sources; because it is safe to delete generated stuff
-            allSourceRoots.add(descriptor.getRootFile());
+    ModuleExcludeIndex moduleIndex = projectDescriptor.getModuleExcludeIndex();
+    for (BuildTarget<?> target : allTargets) {
+      for (BuildRootDescriptor descriptor : projectDescriptor.getBuildRootIndex().getTargetRoots(target, context)) {
+        // excluding from checks roots with generated sources; because it is safe to delete generated stuff
+        if (!descriptor.isGenerated()) {
+          File rootFile = descriptor.getRootFile();
+          //some roots aren't marked by as generated but in fact they are produced by some builder and it's safe to remove them.
+          //However if a root isn't excluded it means that its content will be shown in 'Project View' and an user can create new files under it so it would be dangerous to clean such roots
+          if (moduleIndex.isInContent(rootFile) && !moduleIndex.isExcluded(rootFile)) {
+            allSourceRoots.add(rootFile);
           }
         }
       }

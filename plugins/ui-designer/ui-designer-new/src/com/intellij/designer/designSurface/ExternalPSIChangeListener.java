@@ -93,6 +93,10 @@ public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
     addRequest(myRunnable);
   }
 
+  public boolean isActive() {
+    return myRunState;
+  }
+
   public boolean isUpdateRenderer() {
     return myUpdateRenderer;
   }

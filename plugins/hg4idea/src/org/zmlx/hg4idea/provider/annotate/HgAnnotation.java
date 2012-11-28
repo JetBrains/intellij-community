@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,6 +57,7 @@ public class HgAnnotation extends FileAnnotation {
 
   public HgAnnotation(@NotNull Project project, @NotNull HgFile hgFile, @NotNull List<HgAnnotationLine> lines,
                       @NotNull List<HgFileRevision> vcsFileRevisions, VcsRevisionNumber revision) {
+    super(project);
     myProject = project;
     myLines = lines;
     myFileRevisions = vcsFileRevisions;
@@ -213,5 +215,10 @@ public class HgAnnotation extends FileAnnotation {
   @Override
   public VcsKey getVcsKey() {
     return HgVcs.getKey();
+  }
+
+  @Override
+  public VirtualFile getFile() {
+    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myFile.getFile());
   }
 }

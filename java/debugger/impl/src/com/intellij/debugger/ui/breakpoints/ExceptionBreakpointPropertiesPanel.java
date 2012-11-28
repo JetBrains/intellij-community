@@ -24,6 +24,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.DialogUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -48,6 +49,9 @@ public class ExceptionBreakpointPropertiesPanel extends BreakpointPropertiesPane
 
     myNotifyCaughtCheckBox = new JCheckBox(DebuggerBundle.message("label.exception.breakpoint.properties.panel.caught.exception"));
     myNotifyUncaughtCheckBox = new JCheckBox(DebuggerBundle.message("label.exception.breakpoint.properties.panel.uncaught.exception"));
+    DialogUtil.registerMnemonic(myNotifyCaughtCheckBox);
+    DialogUtil.registerMnemonic(myNotifyUncaughtCheckBox);
+
 
     Box notificationsBox = Box.createVerticalBox();
     JPanel _panel = new JPanel(new BorderLayout());
