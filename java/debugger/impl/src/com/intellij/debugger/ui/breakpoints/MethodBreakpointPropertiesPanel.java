@@ -23,6 +23,7 @@ package com.intellij.debugger.ui.breakpoints;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.DialogUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -43,6 +44,9 @@ public class MethodBreakpointPropertiesPanel extends BreakpointPropertiesPanel {
 
     myWatchEntryCheckBox = new JCheckBox(DebuggerBundle.message("label.method.breakpoint.properties.panel.method.entry"));
     myWatchExitCheckBox = new JCheckBox(DebuggerBundle.message("label.method.breakpoint.properties.panel.method.exit"));
+    DialogUtil.registerMnemonic(myWatchEntryCheckBox);
+    DialogUtil.registerMnemonic(myWatchExitCheckBox);
+
 
     Box watchBox = Box.createVerticalBox();
     _panel = new JPanel(new BorderLayout());
