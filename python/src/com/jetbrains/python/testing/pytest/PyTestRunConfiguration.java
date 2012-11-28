@@ -5,6 +5,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
@@ -120,7 +121,8 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration i
     if (StringUtil.isEmptyOrSpaces(myTestToRun)) {
       throw new RuntimeConfigurationError("Please specify target folder or script");
     }
-    if (!VFSTestFrameworkListener.getInstance().isPyTestInstalled(PythonSdkType.findSdkByPath(getInterpreterPath())))
+    Sdk sdkPath = PythonSdkType.findSdkByPath(getInterpreterPath());
+    if (sdkPath != null && !VFSTestFrameworkListener.getInstance().isPyTestInstalled(sdkPath))
       throw new RuntimeConfigurationWarning(PyBundle.message("runcfg.testing.no.test.framework", "py.test"));
   }
 

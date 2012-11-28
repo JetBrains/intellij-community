@@ -5,6 +5,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
@@ -86,7 +87,8 @@ public class PythonNoseTestRunConfiguration extends AbstractPythonTestRunConfigu
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
-    if (!VFSTestFrameworkListener.getInstance().isNoseTestInstalled(PythonSdkType.findSdkByPath(getInterpreterPath())))
+    Sdk sdkPath = PythonSdkType.findSdkByPath(getInterpreterPath());
+    if (sdkPath != null && !VFSTestFrameworkListener.getInstance().isNoseTestInstalled(sdkPath))
       throw new RuntimeConfigurationWarning(PyBundle.message("runcfg.testing.no.test.framework", "nosetest"));
   }
 
