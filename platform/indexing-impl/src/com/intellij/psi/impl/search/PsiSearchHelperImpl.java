@@ -275,7 +275,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       });
 
       final AsyncFutureResult<Boolean> ourResult = AsyncFutureFactory.getInstance().createAsyncFutureResult();
-      completed.addConsumer(SameThreadExecutor.INSTANCE, new ResultConsumer<Boolean>() {
+      completed.addConsumer(SameThreadExecutor.INSTANCE, new DefaultResultConsumer<Boolean>(ourResult) {
         @Override
         public void onSuccess(Boolean value) {
           if (pceThrown.get())
@@ -510,42 +510,72 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   @Override
-  public AsyncFuture<Boolean> processRequestsAsync(@NotNull SearchRequestCollector request, @NotNull Processor<PsiReference> processor) {
-    throw new UnsupportedOperationException("Not implemented");
+  public boolean processRequests(@NotNull SearchRequestCollector request, @NotNull Processor<PsiReference> processor) {
+    return AsyncUtil.get(processRequestsAsync(request, processor));
   }
 
   @Override
-  public boolean processRequests(@NotNull SearchRequestCollector collector, @NotNull Processor<PsiReference> processor) {
-    Map<SearchRequestCollector, Processor<PsiReference>> collectors = ContainerUtil.newHashMap();
+  public AsyncFuture<Boolean> processRequestsAsync(@NotNull SearchRequestCollector collector, @NotNull Processor<PsiReference> processor) {
+    final Map<SearchRequestCollector, Processor<PsiReference>> collectors = ContainerUtil.newHashMap();
     collectors.put(collector, processor);
 
     appendCollectorsFromQueryRequests(collectors);
 
-    ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
-    do {
-      MultiMap<Set<IdIndexEntry>, RequestWithProcessor> globals = new MultiMap<Set<IdIndexEntry>, RequestWithProcessor>();
-      List<Computable<Boolean>> customs = ContainerUtil.newArrayList();
-      Set<RequestWithProcessor> locals = ContainerUtil.newLinkedHashSet();
-      distributePrimitives(collectors, locals, globals, customs);
+    final ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    final DoWhile doWhile = new DoWhile() {
 
-      if (!processGlobalRequestsOptimized(globals, progress)) {
-        return false;
+      @Override
+      protected AsyncFuture<Boolean> body() {
+        final AsyncFutureResult<Boolean> result = AsyncFutureFactory.getInstance().createAsyncFutureResult();
+        MultiMap<Set<IdIndexEntry>, RequestWithProcessor> globals = new MultiMap<Set<IdIndexEntry>, RequestWithProcessor>();
+        final List<Computable<Boolean>> customs = ContainerUtil.newArrayList();
+        final Set<RequestWithProcessor> locals = ContainerUtil.newLinkedHashSet();
+        distributePrimitives(collectors, locals, globals, customs);
+        processGlobalRequestsOptimizedAsync(globals, progress)
+          .addConsumer(SameThreadExecutor.INSTANCE, new DefaultResultConsumer<Boolean>(result) {
+            @Override
+            public void onSuccess(Boolean value) {
+              if (!value.booleanValue()) {
+                result.set(value);
+              }
+              else {
+                final Iterate<RequestWithProcessor> iterate = new Iterate<RequestWithProcessor>(locals) {
+                  @Override
+                  protected AsyncFuture<Boolean> process(RequestWithProcessor local) {
+                    return processSingleRequestAsync(local.request, local.refProcessor);
+                  }
+                };
+
+                iterate.getResult()
+                  .addConsumer(SameThreadExecutor.INSTANCE, new DefaultResultConsumer<Boolean>(result) {
+                    @Override
+                    public void onSuccess(Boolean value) {
+                      if (!value.booleanValue()) {
+                        result.set(false);
+                        return;
+                      }
+                      for (Computable<Boolean> custom : customs) {
+                        if (!custom.compute()) {
+                          result.set(false);
+                          return;
+                        }
+                      }
+                      result.set(true);
+                    }
+                  });
+              }
+            }
+          });
+        return result;
       }
 
-      for (RequestWithProcessor local : locals) {
-        if (!processSingleRequest(local.request, local.refProcessor)) {
-          return false;
-        }
+      @Override
+      protected boolean condition() {
+        return appendCollectorsFromQueryRequests(collectors);
       }
+    };
 
-      for (Computable<Boolean> custom : customs) {
-        if (!custom.compute()) {
-          return false;
-        }
-      }
-    } while (appendCollectorsFromQueryRequests(collectors));
-
-    return true;
+    return doWhile.getResult();
   }
 
   private static boolean appendCollectorsFromQueryRequests(Map<SearchRequestCollector, Processor<PsiReference>> collectors) {
@@ -561,11 +591,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       }
     }
     return changed;
-  }
-
-  private boolean processGlobalRequestsOptimized(MultiMap<Set<IdIndexEntry>, RequestWithProcessor> singles,
-                                                 final ProgressIndicator progress) {
-    return AsyncUtil.get(processGlobalRequestsOptimizedAsync(singles, progress));
   }
 
   private AsyncFuture<Boolean> processGlobalRequestsOptimizedAsync(MultiMap<Set<IdIndexEntry>, RequestWithProcessor> singles,
