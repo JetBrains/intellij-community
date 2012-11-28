@@ -30,7 +30,6 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ConcurrentSoftHashMap;
 import com.intellij.util.containers.ConcurrentSoftValueHashMap;
@@ -72,33 +71,28 @@ public class BaseExternalAnnotationsManager extends ExternalAnnotationsManager {
   @Nullable
   protected static String getNormalizedExternalName(@NotNull PsiModifierListOwner owner) {
     String externalName = getExternalName(owner, true);
-    if (externalName != null) {
-      if (owner instanceof PsiParameter && owner.getParent() instanceof PsiParameterList) {
-        final PsiMethod method = PsiTreeUtil.getParentOfType(owner, PsiMethod.class);
-        if (method != null) {
-          externalName =
-            externalName.substring(0, externalName.lastIndexOf(' ') + 1) + method.getParameterList().getParameterIndex((PsiParameter)owner);
-        }
-      }
-      final int idx = externalName.indexOf('(');
-      if (idx == -1) return externalName;
-      final StringBuilder buf = StringBuilderSpinAllocator.alloc();
-      try {
-        final int rightIdx = externalName.indexOf(')');
-        final String[] params = externalName.substring(idx + 1, rightIdx).split(",");
-        buf.append(externalName.substring(0, idx + 1));
-        for (String param : params) {
-          param = param.trim();
-          final int spaceIdx = param.indexOf(' ');
-          buf.append(spaceIdx > -1 ? param.substring(0, spaceIdx) : param).append(", ");
-        }
-        return StringUtil.trimEnd(buf.toString(), ", ") + externalName.substring(rightIdx);
-      }
-      finally {
-        StringBuilderSpinAllocator.dispose(buf);
+    if (externalName == null) {
+      return null;
+    }
+    if (owner instanceof PsiParameter && owner.getParent() instanceof PsiParameterList) {
+      final PsiMethod method = PsiTreeUtil.getParentOfType(owner, PsiMethod.class);
+      if (method != null) {
+        externalName =
+          externalName.substring(0, externalName.lastIndexOf(' ') + 1) + method.getParameterList().getParameterIndex((PsiParameter)owner);
       }
     }
-    return externalName;
+    final int idx = externalName.indexOf('(');
+    if (idx == -1) return externalName;
+    StringBuilder buf = new StringBuilder();
+    int rightIdx = externalName.indexOf(')');
+    String[] params = externalName.substring(idx + 1, rightIdx).split(",");
+    buf.append(externalName.substring(0, idx + 1));
+    for (String param : params) {
+      param = param.trim();
+      final int spaceIdx = param.indexOf(' ');
+      buf.append(spaceIdx > -1 ? param.substring(0, spaceIdx) : param).append(", ");
+    }
+    return StringUtil.trimEnd(buf.toString(), ", ") + externalName.substring(rightIdx);
   }
 
   protected boolean hasAnyAnnotationsRoots() {
@@ -151,56 +145,54 @@ public class BaseExternalAnnotationsManager extends ExternalAnnotationsManager {
     return map;
   }
 
-  private static final MultiMap<String, AnnotationData> EMPTY = new MultiMap<String, AnnotationData>();
-  private ConcurrentMap<PsiFile, Pair<MultiMap<String, AnnotationData>, Long>> annotationsFileToDataAndModificationStamp = new ConcurrentSoftHashMap<PsiFile, Pair<MultiMap<String, AnnotationData>, Long>>();
+  private final ConcurrentMap<PsiFile, Pair<MultiMap<String, AnnotationData>, Long>> annotationsFileToDataAndModificationStamp = new ConcurrentSoftHashMap<PsiFile, Pair<MultiMap<String, AnnotationData>, Long>>();
   @NotNull
   private MultiMap<String, AnnotationData> getDataFromFile(@NotNull PsiFile file) {
     Pair<MultiMap<String, AnnotationData>, Long> cached = annotationsFileToDataAndModificationStamp.get(file);
     if (cached != null && cached.getSecond() == file.getModificationStamp()) {
       return cached.getFirst();
     }
-    Document document;
+    MultiMap<String, AnnotationData> data = new MultiMap<String, AnnotationData>();
     try {
       VirtualFile virtualFile = file.getVirtualFile();
-      if (virtualFile == null) return EMPTY;
-      document = JDOMUtil.loadDocument(escapeAttributes(StreamUtil.readText(virtualFile.getInputStream())));
+      if (virtualFile != null) {
+        Document document = JDOMUtil.loadDocument(escapeAttributes(StreamUtil.readText(virtualFile.getInputStream())));
+        Element rootElement = document.getRootElement();
+        if (rootElement != null) {
+          //noinspection unchecked
+          for (Element element : (List<Element>) rootElement.getChildren()) {
+            String ownerName = element.getAttributeValue("name");
+            if (ownerName == null) continue;
+            //noinspection unchecked
+            for (Element annotationElement : (List<Element>) element.getChildren()) {
+              String annotationFQN = annotationElement.getAttributeValue("name");
+              if (StringUtil.isEmpty(annotationFQN)) continue;
+              StringBuilder buf = new StringBuilder();
+              //noinspection unchecked
+              for (Element annotationParameter : (List<Element>) annotationElement.getChildren()) {
+                buf.append(",");
+                String nameValue = annotationParameter.getAttributeValue("name");
+                if (nameValue != null) {
+                  buf.append(nameValue).append("=");
+                }
+                buf.append(annotationParameter.getAttributeValue("val"));
+              }
+              String annotationText = "@" + annotationFQN + (buf.length() > 0 ? "(" + StringUtil.trimStart(buf.toString(), ",") + ")" : "");
+              data.putValue(ownerName, new AnnotationData(annotationFQN, annotationText));
+            }
+          }
+        }
+      }
     }
     catch (IOException e) {
       LOG.error(e);
-      return EMPTY;
     }
     catch (JDOMException e) {
       LOG.error(e);
-      return EMPTY;
     }
-    Element rootElement = document.getRootElement();
-    if (rootElement == null) return EMPTY;
-
-    MultiMap<String, AnnotationData> data = new MultiMap<String, AnnotationData>();
-
-    //noinspection unchecked
-    for (Element element : (List<Element>) rootElement.getChildren()) {
-      String ownerName = element.getAttributeValue("name");
-      if (ownerName == null) continue;
-      //noinspection unchecked
-      for (Element annotationElement : (List<Element>) element.getChildren()) {
-        String annotationFQN = annotationElement.getAttributeValue("name");
-        if (StringUtil.isEmpty(annotationFQN)) continue;
-        StringBuilder buf = new StringBuilder();
-        //noinspection unchecked
-        for (Element annotationParameter : (List<Element>) annotationElement.getChildren()) {
-          buf.append(",");
-          String nameValue = annotationParameter.getAttributeValue("name");
-          if (nameValue != null) {
-            buf.append(nameValue).append("=");
-          }
-          buf.append(annotationParameter.getAttributeValue("val"));
-        }
-        String annotationText = "@" + annotationFQN + (buf.length() > 0 ? "(" + StringUtil.trimStart(buf.toString(), ",") + ")" : "");
-        data.putValue(ownerName, new AnnotationData(annotationFQN, annotationText));
-      }
+    if (data.isEmpty()) {
+      data = MultiMap.emptyInstance();
     }
-
     Pair<MultiMap<String, AnnotationData>, Long> pair = Pair.create(data, file.getModificationStamp());
     pair = ConcurrencyUtil.cacheOrGet(annotationsFileToDataAndModificationStamp, file, pair);
     data = pair.first;
