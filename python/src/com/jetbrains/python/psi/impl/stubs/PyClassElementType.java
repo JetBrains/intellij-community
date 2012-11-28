@@ -43,13 +43,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     final PyExpression[] exprs = psi.getSuperClassExpressions();
     List<PyQualifiedName> superClasses = new ArrayList<PyQualifiedName>();
     for (PyExpression expression : exprs) {
-      if (expression instanceof PyCallExpression) {
-        PyCallExpression call = (PyCallExpression)expression;
-        //noinspection ConstantConditions
-        if (call.getCallee() != null && "with_metaclass".equals(call.getCallee().getName()) && call.getArguments().length > 1) {
-          expression = call.getArguments()[1];
-        }
-      }
+      expression = PyClassImpl.unfoldClass(expression);
       superClasses.add(PyQualifiedName.fromExpression(expression));
     }
     final PyStringLiteralExpression docStringExpression = psi.getDocStringExpression();
