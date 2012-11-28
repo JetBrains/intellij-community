@@ -1038,11 +1038,16 @@ public abstract class DeviceConfiguratorPanel extends JPanel {
 
   private abstract class MySizeEditorBase<T extends ResourceQualifier> extends MyQualifierEditor<T> {
     private final JTextField myTextField = new JTextField(3);
+    private String myLabelText;
+
+    protected MySizeEditorBase(String labelText) {
+      myLabelText = labelText;
+    }
 
     @Override
     JComponent getComponent() {
       final JPanel panel = new JPanel(new VerticalFlowLayout());
-      final JBLabel label = new JBLabel("Smallest screen width:");
+      final JBLabel label = new JBLabel(myLabelText);
       panel.add(label);
       label.setLabelFor(myTextField);
       myTextField.getDocument().addDocumentListener(myUpdatingDocumentListener);
@@ -1079,6 +1084,10 @@ public abstract class DeviceConfiguratorPanel extends JPanel {
   }
   
   private class MySmallestScreenWidthEditor extends MySizeEditorBase<SmallestScreenWidthQualifier> {
+    private MySmallestScreenWidthEditor() {
+      super("Smallest screen width:");
+    }
+
     @Override
     protected int getValue(@NotNull SmallestScreenWidthQualifier qualifier) {
       return qualifier.getValue();
@@ -1097,6 +1106,10 @@ public abstract class DeviceConfiguratorPanel extends JPanel {
   }
   
   private class MyScreenWidthEditor extends MySizeEditorBase<ScreenWidthQualifier> {
+    private MyScreenWidthEditor() {
+      super("Screen width:");
+    }
+
     @Override
     protected int getValue(@NotNull ScreenWidthQualifier qualifier) {
       return qualifier.getValue();
@@ -1115,6 +1128,10 @@ public abstract class DeviceConfiguratorPanel extends JPanel {
   }
   
   private class MyScreenHeightEditor extends MySizeEditorBase<ScreenHeightQualifier> {
+    private MyScreenHeightEditor() {
+      super("Screen height:");
+    }
+
     @Override
     protected int getValue(@NotNull ScreenHeightQualifier qualifier) {
       return qualifier.getValue();
@@ -1123,7 +1140,7 @@ public abstract class DeviceConfiguratorPanel extends JPanel {
     @NotNull
     @Override
     protected ScreenHeightQualifier createQualifier(int value) {
-      return new ScreenHeightQualifier();
+      return new ScreenHeightQualifier(value);
     }
 
     @Override
