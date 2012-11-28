@@ -99,9 +99,15 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
           lineNumber = -1;
         }
         else {
-          offset = -1;
           int startOffset = myUsageInfo.getNavigationOffset();
-          lineNumber = getLineNumber(document, startOffset);
+          if (startOffset == -1) {
+            offset = element == null ? 0 : element.getTextOffset();
+            lineNumber = -1;
+          }
+          else {
+            offset = -1;
+            lineNumber = getLineNumber(document, startOffset);
+          }
         }
         return Pair.create(offset, lineNumber);
       }
