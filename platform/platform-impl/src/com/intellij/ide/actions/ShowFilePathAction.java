@@ -226,12 +226,15 @@ public class ShowFilePathAction extends AnAction {
 
   private static void doOpen(@NotNull final File dir, @Nullable final File toSelect) throws IOException, ExecutionException {
     if (SystemInfo.isWindows) {
+      final GeneralCommandLine cmd;
       if (toSelect != null) {
-        new GeneralCommandLine("explorer", "/select,", toSelect.getCanonicalPath()).createProcess();
+        cmd = new GeneralCommandLine("explorer", "/select,\"" + toSelect.getAbsolutePath() + '"');
       }
       else {
-        new GeneralCommandLine("explorer", "/root,", dir.getCanonicalPath()).createProcess();
+        cmd = new GeneralCommandLine("explorer", "/root,\"" + dir.getAbsolutePath() + '"');
       }
+      cmd.putUserData(GeneralCommandLine.DO_NOT_ESCAPE_QUOTES, true);
+      cmd.createProcess();
       return;
     }
 
@@ -241,26 +244,26 @@ public class ShowFilePathAction extends AnAction {
           "tell application \"Finder\"\n" +
           "\treveal {\"%s\"} as POSIX file\n" +
           "\tactivate\n" +
-          "end tell", toSelect.getCanonicalPath());
+          "end tell", toSelect.getAbsolutePath());
         new GeneralCommandLine(ExecUtil.getOsascriptPath(), "-e", script).createProcess();
       }
       else {
-        new GeneralCommandLine("open", dir.getCanonicalPath()).createProcess();
+        new GeneralCommandLine("open", dir.getAbsolutePath()).createProcess();
       }
       return;
     }
 
     if (Registry.is("ide.use.nautilus3") && SystemInfo.hasNautilus() && hasNautilusV3.getValue()) {
       if (toSelect != null) {
-        new GeneralCommandLine("nautilus", toSelect.getCanonicalPath()).createProcess();
+        new GeneralCommandLine("nautilus", toSelect.getAbsolutePath()).createProcess();
       }
       else {
-        new GeneralCommandLine("nautilus", dir.getCanonicalPath()).createProcess();
+        new GeneralCommandLine("nautilus", dir.getAbsolutePath()).createProcess();
       }
       return;
     }
 
-    final String path = dir.getCanonicalPath();
+    final String path = dir.getAbsolutePath();
     if (SystemInfo.hasXdgOpen()) {
       new GeneralCommandLine("/usr/bin/xdg-open", path).createProcess();
     }
