@@ -20,6 +20,11 @@ public abstract class BuildTargetType<T extends BuildTarget<?>> {
   }
 
   @Override
+  public boolean equals(Object obj) {
+    return obj instanceof BuildTargetType && ((BuildTargetType)obj).myTypeId.equals(myTypeId);
+  }
+
+  @Override
   public int hashCode() {
     return myTypeId.hashCode();
   }
