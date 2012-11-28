@@ -641,8 +641,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
         if (!processed) {
           final List<String> urls = provider.getUrlFor(element, originalElement);
-          assert urls != null;
-          assert !urls.isEmpty();
+          assert urls != null : provider;
+          assert !urls.isEmpty() : provider;
           ExternalJavaDocAction.showExternalJavadoc(urls);
         }
       }
