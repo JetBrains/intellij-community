@@ -68,6 +68,7 @@ public class VfsTestUtil {
           parent = child;
         }
         final VirtualFile file;
+        parent.getChildren();//need this to ensure that fileCreated event is fired
         if (dir) {
           file = parent.createChildDirectory(VfsTestUtil.class, PathUtil.getFileName(relativePath));
         }
