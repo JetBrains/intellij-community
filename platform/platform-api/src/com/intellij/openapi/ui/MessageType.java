@@ -16,6 +16,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.notification.NotificationType;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -24,11 +25,11 @@ import java.awt.*;
 public class MessageType {
 
   public static final MessageType ERROR = new MessageType(UIUtil.getBalloonErrorIcon(),
-                                                          UIUtil.isUnderDarcula() ? new Color(0x92483F) : new Color(255, 204, 204, 230));
+                                                          new JBColor(new Color(255, 204, 204, 230), new Color(0x70202c)));
   public static final MessageType INFO = new MessageType(UIUtil.getBalloonInformationIcon(),
-                                                         UIUtil.isUnderDarcula() ? new Color(0x587A42) : new Color(186, 238, 186, 230));
+                                                         new JBColor(new Color(186, 238, 186, 230), new Color(0x19451a)));
   public static final MessageType WARNING = new MessageType(UIUtil.getBalloonWarningIcon(),
-                                                            UIUtil.isUnderDarcula() ? new Color(0x746606) : new Color(249, 247, 142, 230));
+                                                            new JBColor(new Color(249, 247, 142, 230), new Color(0x5C5C42)));
 
   private final Icon myDefaultIcon;
   private final Color myPopupBackground;

@@ -28,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
@@ -104,7 +105,9 @@ public class SvnChangeProvider implements ChangeProvider {
       processCopiedAndDeleted(context, dirtyScope);
       processUnsaved(dirtyScope, addGate, context);
 
-      mySvnFileUrlMapping.acceptNestedData(nestedCopiesBuilder.getSet());
+      final Set<NestedCopiesBuilder.MyPointInfo> pointInfos = nestedCopiesBuilder.getSet();
+      mySvnFileUrlMapping.acceptNestedData(pointInfos);
+      putAdministrative17UnderVfsListener(pointInfos);
     } catch (SvnExceptionWrapper e) {
       LOG.info(e);
       throw new VcsException(e.getCause());
@@ -113,6 +116,16 @@ public class SvnChangeProvider implements ChangeProvider {
         throw new VcsException(e.getMessage() + e.getCause().getMessage(), e);
       }
       throw new VcsException(e);
+    }
+  }
+
+  private static void putAdministrative17UnderVfsListener(Set<NestedCopiesBuilder.MyPointInfo> pointInfos) {
+    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+    for (NestedCopiesBuilder.MyPointInfo info : pointInfos) {
+      if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(info.getFormat()) && ! NestedCopyType.switched.equals(info.getType())) {
+        final VirtualFile root = info.getFile();
+        final VirtualFile wcDb = lfs.refreshAndFindFileByIoFile(SvnUtil.getWcDb(new File(root.getPath())));
+      }
     }
   }
 

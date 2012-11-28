@@ -353,6 +353,10 @@ public class XPath2Parser extends XPathParser {
       builder.advanceLexer();
     }
     mark.done(XPath2ElementTypes.SINGLE_TYPE);
+
+    if (builder.getTokenType() == XPathTokenTypes.STAR) {
+      builder.remapCurrentToken(XPathTokenTypes.MULT);
+    }
   }
 
   private boolean parseSequenceType(PsiBuilder builder) {
@@ -369,6 +373,9 @@ public class XPath2Parser extends XPathParser {
       mark.done(XPath2ElementTypes.SEQUENCE_TYPE);
       return true;
     } else if (parseNodeType(builder) || parseQName(builder)) {
+      if (builder.getTokenType() == XPathTokenTypes.MULT) {
+        builder.remapCurrentToken(XPathTokenTypes.STAR);
+      }
       if (XPath2TokenTypes.OCCURRENCE_OPS.contains(builder.getTokenType())) {
         makeToken(builder);
       }

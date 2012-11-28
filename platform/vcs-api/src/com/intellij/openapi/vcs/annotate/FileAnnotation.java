@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.annotate;
 
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.Nullable;
@@ -25,28 +26,14 @@ import java.util.List;
 /**
  * A provider of file annotations related to VCS
  */
-public interface FileAnnotation {
-  /**
-   * Add the listener that is notified when annotations might
-   * have been changed.
-   *
-   * @param listener the listener to add
-   * @see #removeListener(AnnotationListener)
-   */
-  void addListener(AnnotationListener listener);
-
-  /**
-   * Remove the listener
-   * @param listener the listener to remove
-   * @see #addListener(AnnotationListener)
-   */
-  void removeListener(AnnotationListener listener);
+public abstract class FileAnnotation {
+  private Runnable myCloser;
 
   /**
    * This method is invoked when the annotation provider is no
    * more used by UI.
    */
-  void dispose();
+  public abstract void dispose();
 
   /**
    * Get annotation aspects. The typical aspects are revision
@@ -55,7 +42,7 @@ public interface FileAnnotation {
    *
    * @return annotation aspects
    */
-  LineAnnotationAspect[] getAspects();
+  public abstract LineAnnotationAspect[] getAspects();
 
   /**
    * <p>The tooltip that is shown over annotation.
@@ -67,12 +54,12 @@ public interface FileAnnotation {
    * @return the tooltip text
    */
   @Nullable
-  String getToolTip(int lineNumber);
+  public abstract String getToolTip(int lineNumber);
 
   /**
    * @return the text of the annotated file
    */
-  String getAnnotatedContent();
+  public abstract String getAnnotatedContent();
 
   /**
    * Get revision number for the line.
@@ -82,16 +69,25 @@ public interface FileAnnotation {
    * @return the revision number or null for lines that contain uncommitted changes.
    */
   @Nullable
-  VcsRevisionNumber getLineRevisionNumber(int lineNumber);
+  public abstract VcsRevisionNumber getLineRevisionNumber(int lineNumber);
 
   @Nullable
-  Date getLineDate(int lineNumber);
+  public abstract Date getLineDate(int lineNumber);
 
   /**
    * Get revision number for the line.
    */
   @Nullable
-  VcsRevisionNumber originalRevision(int lineNumber);
+  public abstract VcsRevisionNumber originalRevision(int lineNumber);
+
+  /**
+   * @return current revision of file for the moment when annotation was computed;
+   * null if provider does not provide this information
+   *
+   * ! needed for automatic annotation close when file current revision changes
+   */
+  @Nullable
+  public abstract VcsRevisionNumber getCurrentRevision();
 
   /**
    * Get all revisions that are mentioned in the annotations
@@ -100,12 +96,29 @@ public interface FileAnnotation {
    *   if before/after popups cannot be suported by the VCS system.
    */
   @Nullable
-  List<VcsFileRevision> getRevisions();
+  public abstract List<VcsFileRevision> getRevisions();
 
-  boolean revisionsNotEmpty();
+  public abstract boolean revisionsNotEmpty();
 
   @Nullable
-  AnnotationSourceSwitcher getAnnotationSourceSwitcher();
+  public abstract AnnotationSourceSwitcher getAnnotationSourceSwitcher();
   
-  int getLineCount();
+  public abstract int getLineCount();
+
+  public final void close() {
+    myCloser.run();
+  }
+
+  public void setCloser(Runnable closer) {
+    myCloser = closer;
+  }
+
+  public VcsKey getVcsKey() {
+    return null;
+  }
+
+  public boolean isBaseRevisionChanged(final VcsRevisionNumber number) {
+    final VcsRevisionNumber currentRevision = getCurrentRevision();
+    return currentRevision != null && ! currentRevision.equals(number);
+  }
 }

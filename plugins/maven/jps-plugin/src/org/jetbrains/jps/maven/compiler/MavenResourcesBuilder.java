@@ -172,7 +172,7 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
       }
     }
 
-    context.processMessage(new ProgressMessage("Finished copying resources [" + target.getModule().getName() + "]"));
+    context.processMessage(new ProgressMessage(""));
   }
 
 

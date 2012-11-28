@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn;
+package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vfs.VirtualFile;
 
-public interface SvnEntriesListener {
-  void onEntriesChanged(VirtualFile directory);
-  void fileVersionProbablyChanged(final VirtualFile file);
+/**
+ * Created with IntelliJ IDEA.
+ * User: Irina.Chernushina
+ * Date: 11/20/12
+ * Time: 3:09 PM
+ */
+public interface VcsAnnotationLocalChangesListener {
+  // annotations for already committed revisions should not register with this method - they are not subject to refresh
+  void registerAnnotation(VirtualFile file, FileAnnotation annotation);
+
+  void unregisterAnnotation(VirtualFile file, FileAnnotation annotation);
 }

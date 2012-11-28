@@ -380,7 +380,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       return;
     }
 
-    AnnotateToggleAction.doAnnotate(editor, myProject, file, annotation, vcs);
+    AnnotateToggleAction.doAnnotate(editor, myProject, file, annotation, vcs, false);
   }
 
   public void showDifferences(final VcsFileRevision version1, final VcsFileRevision version2, final File file) {

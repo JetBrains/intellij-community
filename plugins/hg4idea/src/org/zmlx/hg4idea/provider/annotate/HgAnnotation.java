@@ -19,6 +19,7 @@ package org.zmlx.hg4idea.provider.annotate;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
@@ -35,7 +36,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
-public class HgAnnotation implements FileAnnotation {
+public class HgAnnotation extends FileAnnotation {
 
   private static final Logger LOG = Logger.getInstance(HgAnnotation.class.getName());
 
@@ -51,13 +52,15 @@ public class HgAnnotation implements FileAnnotation {
   @NotNull private final List<HgAnnotationLine> myLines;
   @NotNull private final List<HgFileRevision> myFileRevisions;
   @NotNull private final HgFile myFile;
+  private final VcsRevisionNumber myCurrentRevision;
 
   public HgAnnotation(@NotNull Project project, @NotNull HgFile hgFile, @NotNull List<HgAnnotationLine> lines,
-                      @NotNull List<HgFileRevision> vcsFileRevisions) {
+                      @NotNull List<HgFileRevision> vcsFileRevisions, VcsRevisionNumber revision) {
     myProject = project;
     myLines = lines;
     myFileRevisions = vcsFileRevisions;
     myFile = hgFile;
+    myCurrentRevision = revision;
   }
 
   @Override
@@ -75,14 +78,6 @@ public class HgAnnotation implements FileAnnotation {
   @Nullable
   public VcsRevisionNumber originalRevision(int lineNumber) {
     return getLineRevisionNumber(lineNumber);
-  }
-
-  @Override
-  public void addListener(AnnotationListener listener) {
-  }
-
-  @Override
-  public void removeListener(AnnotationListener listener) {
   }
 
   @Override
@@ -209,4 +204,14 @@ public class HgAnnotation implements FileAnnotation {
     }
   }
 
+  @Nullable
+  @Override
+  public VcsRevisionNumber getCurrentRevision() {
+    return myCurrentRevision;
+  }
+
+  @Override
+  public VcsKey getVcsKey() {
+    return HgVcs.getKey();
+  }
 }

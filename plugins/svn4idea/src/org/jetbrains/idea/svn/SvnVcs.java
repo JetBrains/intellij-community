@@ -802,22 +802,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return myAnnotationProvider;
   }
 
-  public void addEntriesListener(final SvnEntriesListener listener) {
-    if (myEntriesFileListener != null) {
-      myEntriesFileListener.addListener(listener);
-    }
-  }
-
-  public void removeEntriesListener(final SvnEntriesListener listener) {
-    if (myEntriesFileListener != null) {
-      myEntriesFileListener.removeListener(listener);
-    }
-  }
-
-  public SvnEntriesFileListener getEntriesFileListener() {
-    return myEntriesFileListener;
-  }
-
   @Override
   public DiffProvider getDiffProvider() {
     if (mySvnDiffProvider == null) {

@@ -227,8 +227,16 @@ public class DirDiffElementImpl implements DirDiffElement {
     myOperation = operation;
   }
 
-  public Icon getIcon() {
-    return mySource != null ? mySource.getIcon() : myTarget.getIcon();
+  public Icon getSourceIcon() {
+    return getIcon(mySource);
+  }
+
+  public Icon getTargetIcon() {
+    return getIcon(myTarget);
+  }
+
+  private static Icon getIcon(DiffElement element) {
+    return element != null ? element.getIcon() : null;
   }
 
   public DTree getParentNode() {

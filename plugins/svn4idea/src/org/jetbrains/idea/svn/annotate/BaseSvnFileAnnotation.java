@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.annotate;
 
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -37,13 +38,12 @@ import java.util.*;
  * Date: 6/20/12
  * Time: 11:33 AM
  */
-public abstract class BaseSvnFileAnnotation implements FileAnnotation {
+public abstract class BaseSvnFileAnnotation extends FileAnnotation {
   protected final String myContents;
   protected final VcsRevisionNumber myBaseRevision;
   private final MyPartiallyCreatedInfos myInfos;
 
   protected final SvnVcs myVcs;
-  protected final List<AnnotationListener> myListeners = new ArrayList<AnnotationListener>();
   private final Map<Long, SvnFileRevision> myRevisionMap = new HashMap<Long, SvnFileRevision>();
 
   private final LineAnnotationAspect DATE_ASPECT = new SvnAnnotationAspect(SvnAnnotationAspect.DATE, true) {
@@ -168,16 +168,6 @@ public abstract class BaseSvnFileAnnotation implements FileAnnotation {
     myInfos = new MyPartiallyCreatedInfos();
   }
 
-  public void addListener(AnnotationListener listener) {
-    myListeners.add(listener);
-    myConfiguration.addAnnotationListener(listener);
-  }
-
-  public void removeListener(AnnotationListener listener) {
-    myListeners.remove(listener);
-    myConfiguration.removeAnnotationListener(listener);
-  }
-
   public LineAnnotationAspect[] getAspects() {
     return new LineAnnotationAspect[]{REVISION_ASPECT, DATE_ASPECT, AUTHOR_ASPECT};
   }
@@ -297,6 +287,11 @@ public abstract class BaseSvnFileAnnotation implements FileAnnotation {
     return getNumLines();
   }
 
+  @Override
+  public VcsKey getVcsKey() {
+    return SvnVcs.getKey();
+  }
+
   private abstract class SvnAnnotationAspect extends LineAnnotationAspectAdapter {
     public SvnAnnotationAspect(String id, boolean showByDefault) {
       super(id, showByDefault);
@@ -383,5 +378,11 @@ public abstract class BaseSvnFileAnnotation implements FileAnnotation {
     public boolean mergeSourceAvailable(int lineNumber) {
       return myMergeSourceInfos.containsKey(lineNumber);
     }
+  }
+
+  @Nullable
+  @Override
+  public VcsRevisionNumber getCurrentRevision() {
+    return myBaseRevision;
   }
 }

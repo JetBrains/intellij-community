@@ -21,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CustomHighlighterTokenType;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -42,8 +41,15 @@ public final class CustomFileTypeLexer extends AbstractCustomLexer {
             MultilineCommentParser.create(table.getStartComment(), table.getEndComment());
     final NumberParser numberParser = new NumberParser(table.getNumPostfixChars(), table.isIgnoreCase());
     final HexNumberParser hexNumberParser = HexNumberParser.create(table.getHexPrefix());
-    final KeywordParser keywordParser = new KeywordParser(Arrays.asList(table.getKeywords1(), table.getKeywords2(), table.getKeywords3(), table.getKeywords4()),
-                    table.isIgnoreCase());
+    
+    final KeywordParser parser = table.getKeywordParser();
+    final TokenParser keywordParser = new TokenParser() {
+      @Override
+      public boolean hasToken(int position) {
+        return parser.hasToken(position, myBuffer, myTokenInfo);
+      }
+    };
+    
     final IdentifierParser identifierParser = new IdentifierParser();
 
     final QuotedStringParser quotedStringParser = new QuotedStringParser("\"", CustomHighlighterTokenType.STRING, table.isHasStringEscapes());
