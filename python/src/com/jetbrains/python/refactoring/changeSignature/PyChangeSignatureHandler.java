@@ -68,6 +68,15 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
 
   private static void invokeOnElement(Project project, PsiElement element, Editor editor) {
     if (!(element instanceof PyFunction)) return;
+    final PyBuiltinCache cache = PyBuiltinCache.getInstance(element);
+    if (cache.hasInBuiltins(element)) {
+      String message =
+        RefactoringBundle.getCannotRefactorMessage("Function is inside builtins file");
+      CommonRefactoringUtil.showErrorHint(project, editor, message,
+                                          REFACTORING_NAME, REFACTORING_NAME);
+      return;
+    }
+
     final PyFunction newFunction = getSuperMethod((PyFunction)element);
     if (newFunction == null) return;
     if (!newFunction.equals(element)) {
