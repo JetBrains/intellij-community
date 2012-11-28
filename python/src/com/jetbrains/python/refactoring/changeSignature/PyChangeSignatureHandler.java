@@ -67,6 +67,13 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
   }
 
   private static void invokeOnElement(Project project, PsiElement element, Editor editor) {
+    if (element instanceof PyLambdaExpression) {
+      String message =
+        RefactoringBundle.getCannotRefactorMessage("Caret is positioned on lambda call.");
+      CommonRefactoringUtil.showErrorHint(project, editor, message,
+                                          REFACTORING_NAME, REFACTORING_NAME);
+      return;
+    }
     if (!(element instanceof PyFunction)) return;
     final PyBuiltinCache cache = PyBuiltinCache.getInstance(element);
     if (cache.hasInBuiltins(element)) {
