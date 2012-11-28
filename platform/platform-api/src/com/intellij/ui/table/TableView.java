@@ -16,7 +16,11 @@
 package com.intellij.ui.table;
 
 import com.intellij.ui.TableUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.ListTableModel;
+import com.intellij.util.ui.SortableColumnModel;
+import com.intellij.util.ui.TableViewModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +28,9 @@ import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class TableView<Item> extends BaseTableView implements ItemsProvider, SelectionProvider {
@@ -90,7 +96,7 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     final TableCellRenderer defaultRenderer = header == null? null : header.getDefaultRenderer();
 
     final RowSorter<? extends TableModel> sorter = getRowSorter();
-    final List<? extends RowSorter.SortKey> current = sorter == null ? null : sorter.getSortKeys();
+    final RowSorter.SortKey sortKey = sorter == null ? null : ContainerUtil.getFirstItem(sorter.getSortKeys());
     ColumnInfo[] columns = getListTableModel().getColumnInfos();
     int[] sizeMode = new int[columns.length];
     int[] headers = new int[columns.length];
@@ -99,23 +105,23 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     int allColumnCurrent = 0;
     int varCount = 0;
 
+    Icon sortIcon = UIManager.getIcon("Table.ascendingSortIcon");
+
     // calculate
     for (int i = 0; i < columns.length; i++) {
       final ColumnInfo columnInfo = columns[i];
       final TableColumn column = getColumnModel().getColumn(i);
-      // hack to get sort arrow included into the renderer component
-      if (sorter != null && columnInfo.isSortable()) {
-        sorter.setSortKeys(Collections.singletonList(new RowSorter.SortKey(i, SortOrder.ASCENDING)));
-      }
 
       final Component headerComponent = defaultRenderer == null? null :
         defaultRenderer.getTableCellRendererComponent(this, column.getHeaderValue(), false, false, 0, 0);
-      
-      if (sorter != null && columnInfo.isSortable()) {
-        sorter.setSortKeys(current);
-      }
+
       if (headerComponent != null) {
         headers[i] = headerComponent.getPreferredSize().width;
+        // add sort icon width
+        if (sorter != null && columnInfo.isSortable() && sortIcon != null &&
+            (sortKey == null || sortKey.getColumn() != i)) {
+          headers[i] += sortIcon.getIconWidth() + (headerComponent instanceof JLabel? ((JLabel)headerComponent).getIconTextGap() : 0);
+        }
       }
       final String maxStringValue;
       final String preferredValue;
