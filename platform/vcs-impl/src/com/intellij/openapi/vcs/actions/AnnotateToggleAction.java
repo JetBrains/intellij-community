@@ -44,7 +44,9 @@ import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ColorUtil;
 import com.intellij.util.containers.SortedList;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -310,13 +312,18 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
     final Map<String, Color> revNumbers = new HashMap<String, Color>();
     final int length = BG_COLORS.length;
     final List<VcsFileRevision> fileRevisionList = fileAnnotation.getRevisions();
+    final boolean darcula = UIUtil.isUnderDarcula();
     if (fileRevisionList != null) {
       for (VcsFileRevision revision : fileRevisionList) {
         final String author = revision.getAuthor();
         final String revNumber = revision.getRevisionNumber().asString();
         if (author != null && !bgColors.containsKey(author)) {
           final int size = bgColors.size();
-          bgColors.put(author, BG_COLORS[size < length ? size : size % length]);
+          Color color = BG_COLORS[size < length ? size : size % length];
+          if (darcula) {
+            color = ColorUtil.shift(color, 0.2);
+          }
+          bgColors.put(author, color);
         }
         if (revNumber != null && !revNumbers.containsKey(revNumber)) {
           revNumbers.put(revNumber, bgColors.get(author));          
