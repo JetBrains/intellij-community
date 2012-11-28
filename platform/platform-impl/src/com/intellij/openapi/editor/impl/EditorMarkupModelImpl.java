@@ -348,10 +348,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
       final Rectangle bounds = getBounds();
 
-      g.setColor(ButtonlessScrollBarUI.getTrackBackground());
+      g.setColor(ButtonlessScrollBarUI.TRACK_BACKGROUND);
       g.fillRect(0, 0, bounds.width, bounds.height);
 
-      g.setColor(ButtonlessScrollBarUI.getTrackBorderColor());
+      g.setColor(ButtonlessScrollBarUI.TRACK_BORDER);
       g.drawLine(0, 0, 0, bounds.height);
 
       try {
@@ -452,10 +452,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     private void paintTrackBasement(Graphics g, Rectangle bounds) {
-      g.setColor(ButtonlessScrollBarUI.getTrackBackground());
+      g.setColor(TRACK_BACKGROUND);
       g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height + 1);
 
-      g.setColor(ButtonlessScrollBarUI.getTrackBorderColor());
+      g.setColor(TRACK_BORDER);
       int border = isMirrored() ? bounds.x + bounds.width - 1 : bounds.x;
       g.drawLine(border, bounds.y, border, bounds.y + bounds.height + 1);
     }

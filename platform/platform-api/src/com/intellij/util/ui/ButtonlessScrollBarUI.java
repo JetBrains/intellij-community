@@ -17,6 +17,7 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
 
 import javax.swing.*;
@@ -29,49 +30,31 @@ import java.awt.event.*;
  * @author Konstantin Bulenkov
  */
 public class ButtonlessScrollBarUI extends BasicScrollBarUI {
-  private static final Color GRADIENT_LIGHT = Gray._251;
-  private static final Color GRADIENT_DARK = Gray._215;
-  private static final Color GRADIENT_THUMB_BORDER = Gray._201;
-  private static final Color TRACK_BACKGROUND = LightColors.SLIGHTLY_GRAY;
-  private static final Color TRACK_BORDER = Gray._230;
-  private static final Color GRADIENT_LIGHT_DARK_VARIANT = GRADIENT_LIGHT.darker().darker();
-  private static final Color GRADIENT_DARK_DARK_VARIANT = GRADIENT_DARK.darker().darker();
-  private static final Color GRADIENT_THUMB_BORDER_DARK_VARIANT = GRADIENT_THUMB_BORDER.darker().darker();
-  private static final Color TRACK_BACKGROUND_DARK_VARIANT = TRACK_BACKGROUND.darker().darker();
-  private static final Color TRACK_BORDER_DARK_VARIANT = TRACK_BORDER.darker().darker();
+  public static final Color GRADIENT_LIGHT = new JBColor(Gray._251, Gray._122);
+  public static final Color GRADIENT_DARK = new JBColor(Gray._215, Gray._105);
+  public static final Color GRADIENT_THUMB_BORDER = new JBColor(Gray._201, Gray._98);
+  public static final Color TRACK_BACKGROUND = new JBColor(LightColors.SLIGHTLY_GRAY, UIUtil.getControlColor());
+  public static final Color TRACK_BORDER = new JBColor(Gray._230, UIUtil.getControlColor());
 
   private static final BasicStroke BORDER_STROKE = new BasicStroke();
+  public static final int ANIMATION_COLOR_SHIFT = 40;
 
   private final AdjustmentListener myAdjustmentListener;
   private final MouseMotionAdapter myMouseMotionListener;
   private final MouseAdapter myMouseListener;
 
-  private final Animator myAnimator;
+  private Animator myAnimator;
 
   private int myAnimationColorShift = 0;
   private boolean myMouseIsOverThumb = false;
+  public static final int DELAY_FRAMES = 4;
+  public static final int FRAMES_COUNT = 10 + DELAY_FRAMES;
 
   protected ButtonlessScrollBarUI() {
     myAdjustmentListener = new AdjustmentListener() {
       @Override
       public void adjustmentValueChanged(AdjustmentEvent e) {
         resetAnimator();
-      }
-    };
-
-    final int delayFrames = 4;
-    final int framesCount = 10 + delayFrames;
-    myAnimator = new Animator("Adjustment fadeout", framesCount, framesCount * 50, false) {
-      @Override
-      public void paintNow(int frame, int totalFrames, int cycle) {
-        myAnimationColorShift = 40;
-        if (frame > delayFrames) {
-          myAnimationColorShift *= 1 - ((double)(frame - delayFrames)) / ((double)(totalFrames - delayFrames));
-        }
-
-        if (scrollbar != null) {
-          scrollbar.repaint(((ButtonlessScrollBarUI)scrollbar.getUI()).getThumbBounds());
-        }
       }
     };
 
@@ -106,30 +89,10 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     }
   }
 
-  public static Color getGradientLightColor() {
-    return UIUtil.isUnderDarcula() ? GRADIENT_LIGHT_DARK_VARIANT : GRADIENT_LIGHT;
-  }
-
-  public static Color getGradientDarkColor() {
-    return UIUtil.isUnderDarcula() ? GRADIENT_DARK_DARK_VARIANT : GRADIENT_DARK;
-  }
-
-  public static Color getGradientThumbBorderColor() {
-    return UIUtil.isUnderDarcula() ? GRADIENT_THUMB_BORDER_DARK_VARIANT : GRADIENT_THUMB_BORDER;
-  }
-
-  public static Color getTrackBackground() {
-    return UIUtil.isUnderDarcula() ? UIUtil.getControlColor() : TRACK_BACKGROUND;
-  }
-
-  public static Color getTrackBorderColor() {
-    return UIUtil.isUnderDarcula() ? UIUtil.getControlColor() : TRACK_BORDER;
-  }
-
-  public int getDecrButtonHeight() {
+  public int getDecrementButtonHeight() {
     return decrButton.getHeight();
   }
-  public int getIncrButtonHeight() {
+  public int getIncrementButtonHeight() {
     return incrButton.getHeight();
   }
 
@@ -137,7 +100,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     myAnimator.reset();
     if (scrollbar != null && scrollbar.getValueIsAdjusting() || myMouseIsOverThumb) {
       myAnimator.suspend();
-      myAnimationColorShift = 40;
+      myAnimationColorShift = ANIMATION_COLOR_SHIFT;
     }
     else {
       myAnimator.resume();
@@ -171,10 +134,30 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
   @Override
   protected void installListeners() {
+    if (myAnimator == null || myAnimator.isDisposed()) {
+      myAnimator = createAnimator();
+    }
+
     super.installListeners();
     scrollbar.addAdjustmentListener(myAdjustmentListener);
     scrollbar.addMouseListener(myMouseListener);
     scrollbar.addMouseMotionListener(myMouseMotionListener);
+  }
+
+  private Animator createAnimator() {
+    return new Animator("Adjustment fadeout", FRAMES_COUNT, FRAMES_COUNT * 50, false) {
+      @Override
+      public void paintNow(int frame, int totalFrames, int cycle) {
+        myAnimationColorShift = ANIMATION_COLOR_SHIFT;
+        if (frame > DELAY_FRAMES) {
+          myAnimationColorShift *= 1 - ((double)(frame - DELAY_FRAMES)) / ((double)(totalFrames - DELAY_FRAMES));
+        }
+
+        if (scrollbar != null) {
+          scrollbar.repaint(((ButtonlessScrollBarUI)scrollbar.getUI()).getThumbBounds());
+        }
+      }
+    };
   }
 
   private boolean isOverThumb(Point p) {
@@ -199,10 +182,10 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
   @Override
   protected void paintTrack(Graphics g, JComponent c, Rectangle bounds) {
-    g.setColor(getTrackBackground());
+    g.setColor(TRACK_BACKGROUND);
     g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
 
-    g.setColor(getTrackBorderColor());
+    g.setColor(TRACK_BORDER);
     if (isVertical()) {
       g.drawLine(bounds.x, bounds.y, bounds.x, bounds.y + bounds.height);
     }
@@ -265,8 +248,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     }
 
     final GradientPaint paint;
-    final Color start = adjustColor(getGradientLightColor());
-    final Color end = adjustColor(getGradientDarkColor());
+    final Color start = adjustColor(GRADIENT_LIGHT);
+    final Color end = adjustColor(GRADIENT_DARK);
 
     if (vertical) {
       paint = new GradientPaint(1, 0, start, w + 1, 0, end);
@@ -280,7 +263,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
     final Stroke stroke = g.getStroke();
     g.setStroke(BORDER_STROKE);
-    g.setColor(getGradientThumbBorderColor());
+    g.setColor(GRADIENT_THUMB_BORDER);
     g.drawRoundRect(hGap, vGap, w, h, 3, 3);
     g.setStroke(stroke);
   }
