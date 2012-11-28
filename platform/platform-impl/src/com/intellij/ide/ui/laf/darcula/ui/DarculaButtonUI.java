@@ -32,21 +32,18 @@ public class DarculaButtonUI extends BasicButtonUI {
 
   @Override
   public void paint(Graphics g, JComponent c) {
-    if (c.isEnabled()) {
-      final Border border = c.getBorder();
-      if (border != null) {
-        final Insets ins = border.getBorderInsets(c);
-        final int yOff = (ins.top + ins.bottom) / 4;
-        if (((JButton)c).isDefaultButton()) {
-          ((Graphics2D)g).setPaint(new GradientPaint(0, 0, new Color(0x384F6B), 0, c.getHeight(), new Color(0x233143)));
-        } else {
-          ((Graphics2D)g).setPaint(new GradientPaint(0, 0, new Color(85, 90, 92), 0, c.getHeight(), new Color(65, 70, 72)));
-        }
-        g.fillRoundRect(5, yOff + 1, c.getWidth() - 2 * 4, c.getHeight() - 2 * yOff, 5, 5);
+    final Border border = c.getBorder();
+    if (c.isEnabled() && border != null) {
+      final Insets ins = border.getBorderInsets(c);
+      final int yOff = (ins.top + ins.bottom) / 4;
+      if (((JButton)c).isDefaultButton()) {
+        ((Graphics2D)g).setPaint(new GradientPaint(0, 0, new Color(0x384F6B), 0, c.getHeight(), new Color(0x233143)));
       }
+      else {
+        ((Graphics2D)g).setPaint(new GradientPaint(0, 0, new Color(85, 90, 92), 0, c.getHeight(), new Color(65, 70, 72)));
+      }
+      g.fillRoundRect(4, yOff, c.getWidth() - 2 * 4, c.getHeight() - 2 * yOff, 5, 5);
     }
-    super.paint(g,c);
+    super.paint(g, c);
   }
-
-
 }
