@@ -16,6 +16,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.impl.NewProjectUtil;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -29,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,6 +46,8 @@ import java.util.List;
  *         Date: 10/31/12
  */
 public class ImportModuleAction extends AnAction {
+
+  private static final String LAST_IMPORTED_LOCATION = "last.imported.location";
 
   @Override
   public void actionPerformed(AnActionEvent e) {
@@ -91,12 +95,18 @@ public class ImportModuleAction extends AnAction {
     descriptor.setDescription(description);
 
     FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, project, dialogParent);
-    VirtualFile[] files = chooser.choose(null, project);
+    VirtualFile toSelect = null;
+    String lastLocation = PropertiesComponent.getInstance().getValue(LAST_IMPORTED_LOCATION);
+    if (lastLocation != null) {
+      toSelect = LocalFileSystem.getInstance().refreshAndFindFileByPath(lastLocation);
+    }
+    VirtualFile[] files = chooser.choose(toSelect, project);
     if (files.length == 0) {
       return null;
     }
 
     final VirtualFile file = files[0];
+    PropertiesComponent.getInstance().setValue(LAST_IMPORTED_LOCATION, file.getPath());
     return createImportWizard(project, dialogParent, file, providers);
   }
 
