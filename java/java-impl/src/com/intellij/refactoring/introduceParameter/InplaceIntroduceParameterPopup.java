@@ -29,15 +29,14 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.ArrayUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
@@ -169,6 +168,11 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
   @Override
   protected PsiVariable getVariable() {
     return getParameter();
+  }
+
+  @Override
+  protected boolean startsOnTheSameElement(RefactoringActionHandler handler, PsiElement element) {
+    return super.startsOnTheSameElement(handler, element) && handler instanceof IntroduceParameterHandler;
   }
 
 

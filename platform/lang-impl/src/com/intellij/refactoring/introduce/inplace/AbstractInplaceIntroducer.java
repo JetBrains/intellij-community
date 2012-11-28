@@ -42,9 +42,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.DottedBorder;
 import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.NotNull;
@@ -615,12 +613,6 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
       return true;
     }
     return isRestart();
-  }
-
-  public static void unableToStartWarning(Project project, Editor editor, AbstractInplaceIntroducer introducer) {
-    String message = RefactoringBundle
-      .getCannotRefactorMessage(introducer.getCommandName() + " is not finished yet. Unable to start a refactoring");
-    CommonRefactoringUtil.showErrorHint(project, editor, message, null, null);
   }
 
   @Nullable

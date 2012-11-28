@@ -65,6 +65,10 @@ public class StartMarkAction extends BasicUndoableAction {
     myCommandName = commandName;
   }
 
+  public Document getDocument() {
+    return myDocument;
+  }
+
   @TestOnly
   public static void checkCleared() {
     try {
