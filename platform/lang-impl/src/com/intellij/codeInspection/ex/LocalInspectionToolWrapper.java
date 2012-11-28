@@ -119,12 +119,14 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
 
   @Override
   protected void addProblemElement(RefEntity refElement, boolean filterSuppressed, CommonProblemDescriptor... descriptions) {
+    final GlobalInspectionContextImpl context = getContext();
+    if (context == null) return;
     super.addProblemElement(refElement, filterSuppressed, descriptions);
-    final InspectionResultsView view = getContext().getView();
+    final InspectionResultsView view = context.getView();
     if (view != null && refElement instanceof RefElement) {
       if (myToolNode == null) {
         final HighlightSeverity currentSeverity = getCurrentSeverity((RefElement)refElement);
-        view.addTool(this, HighlightDisplayLevel.find(currentSeverity), getContext().getUIOptions().GROUP_BY_SEVERITY);
+        view.addTool(this, HighlightDisplayLevel.find(currentSeverity), context.getUIOptions().GROUP_BY_SEVERITY);
       }  else if (myToolNode.getProblemCount() > 1000) {
         return;
       }
