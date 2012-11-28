@@ -15,8 +15,6 @@
  */
 package com.intellij.psi.search;
 
-import com.intellij.concurrency.AsyncFuture;
-import com.intellij.concurrency.AsyncFutureResult;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -159,21 +157,11 @@ public interface PsiSearchHelper {
 
   boolean processRequests(@NotNull SearchRequestCollector request, @NotNull Processor<PsiReference> processor);
 
-  AsyncFuture<Boolean> processRequestsAsync(@NotNull SearchRequestCollector request, @NotNull Processor<PsiReference> processor);
-
   boolean processElementsWithWord(@NotNull TextOccurenceProcessor processor,
                                   @NotNull SearchScope searchScope,
                                   @NotNull String text,
                                   short searchContext,
                                   boolean caseSensitive);
-
-  AsyncFuture<Boolean> processElementsWithWordAsync(
-                                       @NotNull TextOccurenceProcessor processor,
-                                       @NotNull SearchScope searchScope,
-                                       @NotNull String text,
-                                       short searchContext,
-                                       boolean caseSensitive);
-
 
   SearchCostResult isCheapEnoughToSearch(@NotNull String name,
                                          @NotNull GlobalSearchScope scope,

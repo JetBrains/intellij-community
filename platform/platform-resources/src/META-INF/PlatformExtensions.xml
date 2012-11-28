@@ -108,9 +108,6 @@
   <applicationService serviceInterface="com.intellij.util.graph.GraphAlgorithms"
                       serviceImplementation="com.intellij.util.graph.impl.GraphAlgorithmsImpl"/>
 
-  <applicationService serviceInterface="com.intellij.concurrency.AsyncFutureFactory"
-                      serviceImplementation="com.intellij.concurrency.AsyncFutureFactoryImpl"/>
-
   <applicationService serviceInterface="com.intellij.openapi.keymap.impl.DefaultKeymap"
                       serviceImplementation="com.intellij.openapi.keymap.impl.DefaultKeymap"/>
 
