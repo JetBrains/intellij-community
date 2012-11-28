@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.module.Module;
@@ -80,7 +79,12 @@ public class ImportModuleAction extends AnAction {
 
   @Nullable
   public static AddModuleWizard selectFileAndCreateWizard(final Project project, Component dialogParent) {
-    FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor();
+    FileChooserDescriptor descriptor = new OpenProjectFileChooserDescriptor(true) {
+      @Override
+      public boolean isFileSelectable(VirtualFile file) {
+        return file.isDirectory() || isProjectFile(file);
+      }
+    };
     descriptor.setTitle("Select File or Directory to Import");
     ProjectImportProvider[] providers = ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions();
     String description = getFileChooserDescription(project);
@@ -104,29 +108,23 @@ public class ImportModuleAction extends AnAction {
         return project != null || provider.canCreateNewProject();
       }
     });
-    StringBuilder builder = new StringBuilder("<html>Select");
+    StringBuilder builder = new StringBuilder("<html>Select ");
     boolean first = true;
     if (list.size() > 1) {
       for (ProjectImportProvider provider : list) {
         String sample = provider.getFileSample();
         if (sample != null) {
           if (!first) {
-            builder.append(',');
+            builder.append(", <br>");
           }
           else {
             first = false;
           }
-          builder.append(" <b>").append(sample).append("</b>");
-          if (sample.contains("*")) {
-            builder.append(" file");
-          }
+          builder.append(sample);
         }
       }
     }
-    if (!first) {
-      builder.append(" or");
-    }
-    builder.append(" directory with <b>existing sources</b> to be imported.</html>");
+    builder.append(".</html>");
     return builder.toString();
   }
 

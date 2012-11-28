@@ -24,6 +24,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportProvider;
@@ -49,7 +50,7 @@ public class MavenProjectImportProvider extends ProjectImportProvider {
           VirtualFile root = ((MavenProjectBuilder)getBuilder()).getRootDirectory();
           if (root != null) {
             final String relPath = VfsUtilCore.getRelativePath(project.getDirectoryFile(), root, File.separatorChar);
-            if (relPath.length() != 0) {
+            if (StringUtil.isNotEmpty(relPath)) {
               stringBuilder.append(" [").append(relPath).append("]");
             }
           }
@@ -88,6 +89,6 @@ public class MavenProjectImportProvider extends ProjectImportProvider {
   @Nullable
   @Override
   public String getFileSample() {
-    return "pom.xml";
+    return "<b>Maven</b> project file (pom.xml)";
   }
 }

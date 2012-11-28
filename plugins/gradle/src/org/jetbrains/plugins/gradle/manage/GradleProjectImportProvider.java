@@ -38,6 +38,6 @@ public class GradleProjectImportProvider extends ProjectImportProvider {
   @Nullable
   @Override
   public String getFileSample() {
-    return "*.gradle";
+    return "<b>Gradle</b> build script (*.gradle)";
   }
 }

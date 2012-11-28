@@ -17,16 +17,46 @@ package org.jetbrains.idea.eclipse;
 
 import com.intellij.ide.projectWizard.ProjectWizardTestCase;
 import com.intellij.ide.util.projectWizard.ImportFromSourcesProvider;
+import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.idea.eclipse.importWizard.EclipseImportBuilder;
 import org.jetbrains.idea.eclipse.importWizard.EclipseProjectImportProvider;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * @author Dmitry Avdeev
  *         Date: 11/7/12
  */
 public class EclipseImportWizardTest extends ProjectWizardTestCase {
+
+  public void testImportProject() throws Exception {
+    Module module = doTest(".project");
+    assertEquals("root", module.getName());
+  }
+
+  public void testImportClasspath() throws Exception {
+    Module module = doTest(".classpath");
+    assertEquals("root", module.getName());
+  }
+
+  public void testImportFromDirectory() throws Exception {
+    Module module = doTest("");
+    assertEquals("root", module.getName());
+  }
+
+  private Module doTest(final String fileName) throws IOException {
+    copyTestData();
+    return importProjectFrom(getProject().getBaseDir().getPath() + "/" + fileName, null,
+                                      new EclipseProjectImportProvider(new EclipseImportBuilder()));
+  }
+
+  private void copyTestData() throws IOException {
+    final File testRoot = new File(PluginPathManager.getPluginHomePath("eclipse") + "/testData", "import");
+    FileUtil.copyDir(testRoot, new File(getProject().getBaseDir().getPath()));
+  }
 
   public void testNothingToImport() throws Exception {
     try {
