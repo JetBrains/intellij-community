@@ -30,23 +30,26 @@ public interface Filter {
 
   Filter[] EMPTY_ARRAY = new Filter[0];
 
-  class Result extends ResultItem{
-    protected boolean continueFilterChainExecution = false;
+  class Result extends ResultItem {
+    protected NextAction myNextAction = NextAction.EXIT;
     protected List<ResultItem> myResultItems;
 
     public Result(final int highlightStartOffset, final int highlightEndOffset, final HyperlinkInfo hyperlinkInfo) {
       this(highlightStartOffset, highlightEndOffset, hyperlinkInfo, null);
     }
 
-    public Result(final int highlightStartOffset, final int highlightEndOffset, final HyperlinkInfo hyperlinkInfo, final TextAttributes highlightAttributes) {
+    public Result(final int highlightStartOffset,
+                  final int highlightEndOffset,
+                  final HyperlinkInfo hyperlinkInfo,
+                  final TextAttributes highlightAttributes) {
       super(highlightStartOffset, highlightEndOffset, hyperlinkInfo, highlightAttributes);
     }
-    
+
     public Result(@NotNull List<ResultItem> resultItems) {
       super(-1, -1, null, null);
       myResultItems = resultItems;
     }
-    
+
     public List<ResultItem> getResultItems() {
       List<ResultItem> resultItems = myResultItems;
       if (resultItems == null) {
@@ -55,15 +58,20 @@ public interface Filter {
       return resultItems;
     }
 
-    public void setContinueFilterChainExecution(boolean continueFilterChainExecution) {
-      this.continueFilterChainExecution = continueFilterChainExecution;
+    public NextAction getNextAction() {
+      return myNextAction;
     }
 
-    public boolean isContinueFilterChainExecution() {
-      return continueFilterChainExecution;
+    public void setNextAction(NextAction nextAction) {
+      myNextAction = nextAction;
     }
   }
-  class ResultItem{
+
+  enum NextAction {
+    EXIT, CONTINUE_FILTERING,
+  }
+
+  class ResultItem {
     public final int highlightStartOffset;
     public final int highlightEndOffset;
     public final TextAttributes highlightAttributes;
@@ -73,7 +81,10 @@ public interface Filter {
       this(highlightStartOffset, highlightEndOffset, hyperlinkInfo, null);
     }
 
-    public ResultItem(final int highlightStartOffset, final int highlightEndOffset, final HyperlinkInfo hyperlinkInfo, final TextAttributes highlightAttributes) {
+    public ResultItem(final int highlightStartOffset,
+                      final int highlightEndOffset,
+                      final HyperlinkInfo hyperlinkInfo,
+                      final TextAttributes highlightAttributes) {
       this.highlightStartOffset = highlightStartOffset;
       this.highlightEndOffset = highlightEndOffset;
       this.hyperlinkInfo = hyperlinkInfo;
@@ -84,17 +95,11 @@ public interface Filter {
   /**
    * Filters line by creating an instance of {@link Result}.
    *
-   *
-   * @param line
-   *     The line to be filtered. Note that the line must contain a line
-   *     separator at the end.
-   *
-   * @param entireLength
-   *     The length of the entire text including the line passed
-   *     for filteration.
-   *
-   * @return
-   *    <tt>null</tt>, if there was no match, otherwise, an instance of {@link Result}
+   * @param line         The line to be filtered. Note that the line must contain a line
+   *                     separator at the end.
+   * @param entireLength The length of the entire text including the line passed
+   *                     for filteration.
+   * @return <tt>null</tt>, if there was no match, otherwise, an instance of {@link Result}
    */
   @Nullable
   Result applyFilter(String line, int entireLength);

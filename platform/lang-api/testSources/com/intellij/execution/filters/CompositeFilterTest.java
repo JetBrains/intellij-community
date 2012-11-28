@@ -69,26 +69,26 @@ public class CompositeFilterTest {
   @Test
   public void testApplyNextFilter() throws Exception {
     Assert.assertNull(applyFilter());
-    
+
     myCompositeFilter.addFilter(returnNullFilter());
     Assert.assertNull(applyFilter());
-    
+
     myCompositeFilter.addFilter(returnContinuingResultFilter());
     notNullResultOfSize(applyFilter(), 1);
-    
+
     myCompositeFilter.addFilter(returnNullFilter());
     myCompositeFilter.addFilter(returnContinuingResultFilter());
     notNullResultOfSize(applyFilter(), 2);
-    
+
     myCompositeFilter.addFilter(returnNullFilter());
     notNullResultOfSize(applyFilter(), 2);
-    
+
     myCompositeFilter.addFilter(returnResultFilter());
     notNullResultOfSize(applyFilter(), 3);
-    
+
     myCompositeFilter.addFilter(returnResultFilter());
     notNullResultOfSize(applyFilter(), 3);
-    
+
   }
 
   private Filter.Result applyFilter() {
@@ -99,7 +99,7 @@ public class CompositeFilterTest {
     Assert.assertNotNull(object);
     List<Filter.ResultItem> resultItems = object.getResultItems();
     Assert.assertEquals(expected, resultItems.size());
-    
+
     for (Filter.ResultItem resultItem : resultItems) {
       Assert.assertNotNull(resultItem);
     }
@@ -124,13 +124,14 @@ public class CompositeFilterTest {
       }
     };
   }
+
   private Filter returnContinuingResultFilter() {
     return new Filter() {
       @Nullable
       @Override
       public Result applyFilter(String line, int entireLength) {
         Result result = createResult();
-        result.setContinueFilterChainExecution(true);
+        result.setNextAction(NextAction.CONTINUE_FILTERING);
         return result;
       }
     };

@@ -59,7 +59,7 @@ public class CompositeFilter implements Filter, FilterMixin {
         if (t0 > 100) {
           LOG.warn(filter.getClass().getSimpleName() + ".applyFilter() took " + t0 + " ms on '''" + line + "'''");
         }
-        if (finalResult != null && !finalResult.continueFilterChainExecution) {
+        if (finalResult != null && finalResult.getNextAction() == NextAction.EXIT) {
           return finalResult;
         }
       }
@@ -74,7 +74,7 @@ public class CompositeFilter implements Filter, FilterMixin {
       }
       else {
         finalResult = new Result(mergeResultItems(finalResult, result));
-        finalResult.continueFilterChainExecution = result.continueFilterChainExecution;
+        finalResult.setNextAction(result.getNextAction());
       }
     }
     return finalResult;
@@ -83,7 +83,7 @@ public class CompositeFilter implements Filter, FilterMixin {
   private List<ResultItem> mergeResultItems(Result finalResult, Result result) {
     List<ResultItem> finalResultResultItems = finalResult.getResultItems();
     List<ResultItem> resultItems = result.getResultItems();
-    
+
     List<ResultItem> mergedList = new ArrayList<ResultItem>(finalResultResultItems.size() + resultItems.size());
     mergedList.addAll(finalResultResultItems);
     mergedList.addAll(resultItems);
