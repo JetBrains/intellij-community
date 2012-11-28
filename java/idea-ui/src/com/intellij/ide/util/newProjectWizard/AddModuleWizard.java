@@ -159,7 +159,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep>
   @Override
   protected String addStepComponent(Component component) {
     if (component instanceof JComponent) {
-      ((JComponent)component).setBorder(IdeBorderFactory.createEmptyBorder(8, 8, 0, 0));
+      ((JComponent)component).setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 0));
     }
     return super.addStepComponent(component);
   }
