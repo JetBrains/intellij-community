@@ -315,7 +315,7 @@ public class XsltSupport {
     }
 
     public static boolean mayBeAVT(@NotNull XmlAttribute attribute) {
-        if (XsltSupport.isXsltAttribute(attribute)) {
+        if (isXsltAttribute(attribute)) {
             final String tagName = attribute.getParent().getLocalName();
 
             final Set<String> allowedAttrs = XPATH_AVT_MAP.get(tagName);

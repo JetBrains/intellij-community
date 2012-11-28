@@ -30,8 +30,9 @@ import java.util.Set;
 
 /**
  * @author dsl
+ * @author peter
  */
-public class KeywordParser extends TokenParser {
+public class KeywordParser {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.highlighter.custom.tokens.KeywordParser");
   private final List<Set<String>> myKeywordSets = new ArrayList<Set<String>>();
   private final CharTrie myTrie = new CharTrie();
@@ -62,7 +63,7 @@ public class KeywordParser extends TokenParser {
     return result;
   }
 
-  public boolean hasToken(int position) {
+  public boolean hasToken(int position, CharSequence myBuffer, TokenInfo myTokenInfo) {
     int index = 0;
     int offset = position;
     boolean found = false;
@@ -73,7 +74,7 @@ public class KeywordParser extends TokenParser {
         break;
       }
       index = nextIndex;
-      if (myHashCodes.contains(index) && isWordEnd(offset)) {
+      if (myHashCodes.contains(index) && isWordEnd(offset, myBuffer)) {
         String keyword = myBuffer.subSequence(position, offset).toString();
         String testKeyword = myIgnoreCase ? StringUtil.toUpperCase(keyword) : keyword;
         for (int i = 0; i < CustomHighlighterTokenType.KEYWORD_TYPE_COUNT; i++) {
@@ -89,7 +90,7 @@ public class KeywordParser extends TokenParser {
     return found;
   }
 
-  private boolean isWordEnd(int offset) {
+  private static boolean isWordEnd(int offset, CharSequence myBuffer) {
     if (offset == myBuffer.length()) {
       return true;
     }

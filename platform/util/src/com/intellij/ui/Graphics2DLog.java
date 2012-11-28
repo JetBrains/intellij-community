@@ -61,26 +61,31 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public void draw(Shape s) {
+    log("draw(" + s + ")");
     myPeer.draw(s);
   }
 
   @Override
   public boolean drawImage(Image img, AffineTransform xform, ImageObserver obs) {
+    log("drawImage(Image, AffineTransform, ImageObserver)");
     return myPeer.drawImage(img, xform, obs);
   }
 
   @Override
   public void drawImage(BufferedImage img, BufferedImageOp op, int x, int y) {
+    log(String.format("drawImage(BufferedImage, BufferedImageOp, %d, %d)", x, y));
     myPeer.drawImage(img, op, x, y);
   }
 
   @Override
   public void drawRenderedImage(RenderedImage img, AffineTransform xform) {
+    log("drawRenderedImage(RenderedImage, AffineTransform)");
     myPeer.drawRenderedImage(img, xform);
   }
 
   @Override
   public void drawRenderableImage(RenderableImage img, AffineTransform xform) {
+    log("drawRenderableImage(RenderableImage, AffineTransform)");
     myPeer.drawRenderableImage(img, xform);
   }
 
@@ -151,7 +156,6 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public void setRenderingHint(RenderingHints.Key hintKey, Object hintValue) {
-    if (hintKey.toString().startsWith("y.")) return;
     log(String.format("setRenderingHint(%s, %s)", hintKey, hintValue));
     myPeer.setRenderingHint(hintKey, hintValue);
   }
@@ -182,11 +186,13 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public void translate(int x, int y) {
+    log(String.format("translate(%d, %d)", x, y));
     myPeer.translate(x, y);
   }
 
   @Override
   public void translate(double tx, double ty) {
+    log(String.format("translate(%f, %f)", tx, ty));
     myPeer.translate(tx, ty);
   }
 
@@ -204,11 +210,13 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public void scale(double sx, double sy) {
+    log(String.format("scale(%f, %f)", sx, sy));
     myPeer.scale(sx, sy);
   }
 
   @Override
   public void shear(double shx, double shy) {
+    log(String.format("shear(%f, %f)", shx, shy));
     myPeer.shear(shx, shy);
   }
 
@@ -414,26 +422,31 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public void drawPolyline(int[] xPoints, int[] yPoints, int nPoints) {
+    log("drawPolyline(int[], int[], int)");
     myPeer.drawPolyline(xPoints, yPoints, nPoints);
   }
 
   @Override
   public void drawPolygon(int[] xPoints, int[] yPoints, int nPoints) {
+    log("drawPolygon(int[], int[], int)");
     myPeer.drawPolygon(xPoints, yPoints, nPoints);
   }
 
   @Override
   public void drawPolygon(Polygon p) {
+    log("drawPolygon()");
     myPeer.drawPolygon(p);
   }
 
   @Override
   public void fillPolygon(int[] xPoints, int[] yPoints, int nPoints) {
+    log("fillPolygon(int[], int[], int)");
     myPeer.fillPolygon(xPoints, yPoints, nPoints);
   }
 
   @Override
   public void fillPolygon(Polygon p) {
+    log("fillPolygon(" + p + ")");
     myPeer.fillPolygon(p);
   }
 
@@ -451,7 +464,7 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public boolean drawImage(Image img, int x, int y, ImageObserver observer) {
-    log("drawImage(Image,int,int)");
+    log(String.format("drawImage(Image, %d, %d, ImageObserver)", x, y));
     return myPeer.drawImage(img, x, y, observer);
   }
 
