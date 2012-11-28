@@ -26,6 +26,7 @@ import org.jetbrains.annotations.TestOnly;
 
 public abstract class DirectoryIndex {
   public static DirectoryIndex getInstance(Project project) {
+    assert !project.isDefault() : "Must not call DirectoryIndex for default project";
     return ServiceManager.getService(project, DirectoryIndex.class);
   }
 
