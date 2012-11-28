@@ -89,7 +89,7 @@ public class PyChangeSignatureTest extends PyTestCase {
 
   public void testEmptyParameterName() {
     doValidationTest(null, Arrays.asList(new PyParameterInfo(-1, "", "2", true)),
-                     PyBundle.message("refactoring.change.signature.dialog.validation.parameter.missing"));
+                     PyBundle.message("refactoring.change.signature.dialog.validation.parameter.name"));
   }
 
   public void testNonDefaultAfterDefault() {
