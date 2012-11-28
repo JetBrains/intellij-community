@@ -199,9 +199,6 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
             editor.getGutter().closeAllAnnotations();
           }
         });
-        if (onCurrentRevision) {
-          listener.unregisterAnnotation(file, fileAnnotation);
-        }
       }
     });
     if (onCurrentRevision) {

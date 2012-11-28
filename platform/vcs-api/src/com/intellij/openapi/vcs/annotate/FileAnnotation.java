@@ -15,9 +15,12 @@
  */
 package com.intellij.openapi.vcs.annotate;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
@@ -27,7 +30,12 @@ import java.util.List;
  * A provider of file annotations related to VCS
  */
 public abstract class FileAnnotation {
+  private final Project myProject;
   private Runnable myCloser;
+
+  protected FileAnnotation(Project project) {
+    myProject = project;
+  }
 
   /**
    * This method is invoked when the annotation provider is no
@@ -120,5 +128,11 @@ public abstract class FileAnnotation {
   public boolean isBaseRevisionChanged(final VcsRevisionNumber number) {
     final VcsRevisionNumber currentRevision = getCurrentRevision();
     return currentRevision != null && ! currentRevision.equals(number);
+  }
+
+  public abstract VirtualFile getFile();
+
+  public void unregister() {
+    ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener().unregisterAnnotation(getFile(), this);
   }
 }

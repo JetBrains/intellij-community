@@ -132,6 +132,7 @@ public class AnnotationFieldGutter implements ActiveAnnotationGutter {
   }
 
   public void gutterClosed() {
+    myAnnotation.unregister();
     myAnnotation.dispose();
     final Collection<ActiveAnnotationGutter> gutters = myEditor.getUserData(AnnotateToggleAction.KEY_IN_EDITOR);
     if (gutters != null) {

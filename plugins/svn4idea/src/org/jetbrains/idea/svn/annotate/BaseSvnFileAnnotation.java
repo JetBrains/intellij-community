@@ -159,6 +159,7 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
   }
 
   public BaseSvnFileAnnotation(final SvnVcs vcs, final String contents, final VcsRevisionNumber baseRevision) {
+    super(vcs.getProject());
     myVcs = vcs;
     myContents = contents;
     myBaseRevision = baseRevision;

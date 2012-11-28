@@ -96,6 +96,7 @@ public class GitFileAnnotation extends FileAnnotation {
    * @param revision
    */
   public GitFileAnnotation(@NotNull final Project project, @NotNull VirtualFile file, final boolean monitorFlag, final VcsRevisionNumber revision) {
+    super(project);
     myProject = project;
     myVcs = GitVcs.getInstance(myProject);
     myFile = file;
