@@ -54,9 +54,9 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   private String myAdText;
 
   protected ChooseByNamePopup(@Nullable final Project project,
-                              final ChooseByNameModel model,
-                              ChooseByNameItemProvider provider,
-                              final ChooseByNamePopup oldPopup,
+                              @NotNull ChooseByNameModel model,
+                              @NotNull ChooseByNameItemProvider provider,
+                              @Nullable ChooseByNamePopup oldPopup,
                               @Nullable final String predefinedText,
                               boolean mayRequestOpenInCurrentWindow,
                               int initialIndex) {
@@ -302,20 +302,25 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   }
 
   public static ChooseByNamePopup createPopup(final Project project,
-                                              final ChooseByNameModel model,
-                                              final ChooseByNameItemProvider provider) {
+                                              @NotNull ChooseByNameModel model,
+                                              @NotNull ChooseByNameItemProvider provider) {
     return createPopup(project, model, provider, null);
   }
 
-  public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final ChooseByNameItemProvider provider,
+  public static ChooseByNamePopup createPopup(final Project project,
+                                              @NotNull ChooseByNameModel model,
+                                              @NotNull ChooseByNameItemProvider provider,
                                               @Nullable final String predefinedText) {
     return createPopup(project, model, provider, predefinedText, false, 0);
   }
 
-  public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final ChooseByNameItemProvider provider,
+  public static ChooseByNamePopup createPopup(final Project project,
+                                              @NotNull ChooseByNameModel model,
+                                              @NotNull ChooseByNameItemProvider provider,
                                               @Nullable final String predefinedText,
-                                              boolean mayRequestOpenInCurrentWindow, final int initialIndex) {
-    final ChooseByNamePopup oldPopup = project != null ? project.getUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY) : null;
+                                              boolean mayRequestOpenInCurrentWindow,
+                                              final int initialIndex) {
+    final ChooseByNamePopup oldPopup = project == null ? null : project.getUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY);
     if (oldPopup != null) {
       oldPopup.close(false);
     }

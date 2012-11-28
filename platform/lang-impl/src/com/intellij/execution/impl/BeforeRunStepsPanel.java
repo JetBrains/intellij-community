@@ -21,7 +21,6 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.UnknownRunConfiguration;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -36,12 +35,9 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.hash.HashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import java.awt.*;
@@ -53,8 +49,7 @@ import java.util.List;
 /**
  * @author Vassiliy Kudryashov
  */
-class BeforeRunStepsPanel extends DropDownPanel {
-  @NonNls private static final String EXPAND_PROPERTY_KEY = "ExpandBeforeRunStepsPanel";
+class BeforeRunStepsPanel extends JPanel {
 
   private final JCheckBox myShowSettingsBeforeRunCheckBox;
   private final JBList myList;
@@ -145,17 +140,9 @@ class BeforeRunStepsPanel extends DropDownPanel {
 
     myPanel = myDecorator.createPanel();
 
-    JPanel wrapper = new JPanel(new BorderLayout());
-    wrapper.add(myPanel, BorderLayout.CENTER);
-    wrapper.add(myShowSettingsBeforeRunCheckBox, BorderLayout.SOUTH);
-    setContent(wrapper);
-    setExpanded(PropertiesComponent.getInstance().getBoolean(EXPAND_PROPERTY_KEY, false));
-    addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        PropertiesComponent.getInstance().setValue(EXPAND_PROPERTY_KEY, String.valueOf(isExpanded()));
-      }
-    });
+    setLayout(new BorderLayout());
+    add(myPanel, BorderLayout.CENTER);
+    add(myShowSettingsBeforeRunCheckBox, BorderLayout.SOUTH);
   }
 
   @Nullable
@@ -224,7 +211,7 @@ class BeforeRunStepsPanel extends DropDownPanel {
       sb.insert(0, ": ");
     }
     sb.insert(0, ExecutionBundle.message("before.launch.panel.title"));
-    setTitle(sb.toString());
+    myListener.titleChanged(sb.toString());
   }
 
   public List<BeforeRunTask> getTasks(boolean applyCurrentState) {
@@ -345,6 +332,7 @@ class BeforeRunStepsPanel extends DropDownPanel {
 
   interface StepsBeforeRunListener {
     void fireStepsBeforeRunChanged();
+    void titleChanged(String title);
   }
 
   private class MyListCellRenderer extends JBList.StripedListCellRenderer {

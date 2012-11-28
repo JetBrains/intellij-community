@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.history;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNException;
@@ -36,14 +37,19 @@ public class SvnPathThroughHistoryCorrection implements ISVNLogEntryHandler {
   private String myBefore;
   private String myPath;
   private SVNLogEntryPath myDirectlyMentioned;
+  private boolean myRoot;
 
   public SvnPathThroughHistoryCorrection(String path) {
     myPath = path;
     myBefore = path;
+    myRoot = StringUtil.isEmpty(path);
   }
 
   @Override
   public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
+    if (myRoot) {
+      return;
+    }
     myBefore = myPath;
     myDirectlyMentioned = null;
     final Map<String,SVNLogEntryPath> paths = logEntry.getChangedPaths();
@@ -87,5 +93,9 @@ public class SvnPathThroughHistoryCorrection implements ISVNLogEntryHandler {
 
   public String getCurrentPath() {
     return myPath;
+  }
+
+  public boolean isRoot() {
+    return myRoot;
   }
 }

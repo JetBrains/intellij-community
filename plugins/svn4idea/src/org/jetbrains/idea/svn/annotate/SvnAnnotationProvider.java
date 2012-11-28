@@ -28,10 +28,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.*;
-import com.intellij.openapi.vcs.history.VcsAbstractHistorySession;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.history.VcsHistoryUtil;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -57,11 +54,11 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
   }
 
   public FileAnnotation annotate(final VirtualFile file) throws VcsException {
-    final SvnRevisionNumber currentRevision = (SvnRevisionNumber)myVcs.getDiffProvider().getCurrentRevision(file);
+    final VcsRevisionDescription currentRevision = ((SvnDiffProvider) myVcs.getDiffProvider()).getCurrentRevisionDescription(file);
     if (currentRevision == null) {
       throw new VcsException("Can not get current revision for file " + file.getPath());
     }
-    final SVNRevision svnRevision = currentRevision.getRevision();
+    final SVNRevision svnRevision = ((SvnRevisionNumber)currentRevision.getRevisionNumber()).getRevision();
     return annotate(file, new SvnFileRevision(myVcs, svnRevision, svnRevision, null, null, null, null, null, file.getCharset()), true);
   }
 

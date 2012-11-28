@@ -38,6 +38,7 @@ import com.intellij.openapi.vcs.actions.AbstractVcsAction;
 import com.intellij.openapi.vcs.actions.DescindingFilesFilter;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.changes.RemoteRevisionsCache;
+import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesAdapter;
@@ -428,6 +429,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       try {
         LOG.info("Calling refresh files after update for roots: " + Arrays.toString(myRoots));
         RefreshVFsSynchronously.updateAllChanged(myUpdatedFiles);
+        notifyAnnotations();
       }
       finally {
         action.finish();
@@ -435,6 +437,16 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           LocalHistory.getInstance().putSystemLabel(myProject, actionName);
         }
       }
+    }
+
+    private void notifyAnnotations() {
+      final VcsAnnotationRefresher refresher = myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED);
+      UpdateFilesHelper.iterateFileGroupFilesDeletedOnServerFirst(myUpdatedFiles, new UpdateFilesHelper.Callback() {
+        @Override
+        public void onFile(String filePath, String groupId) {
+          refresher.dirty(filePath);
+        }
+      });
     }
 
     private String prepareNotificationWithUpdateInfo() {

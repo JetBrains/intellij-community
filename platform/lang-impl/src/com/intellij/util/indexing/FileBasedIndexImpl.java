@@ -2134,10 +2134,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   private class UnindexedFilesFinder implements CollectingContentIterator {
     private final List<VirtualFile> myFiles = new ArrayList<VirtualFile>();
+    @Nullable
     private final ProgressIndicator myProgressIndicator;
 
-    private UnindexedFilesFinder() {
-      myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
+    private UnindexedFilesFinder(@Nullable ProgressIndicator indicator) {
+      myProgressIndicator = indicator;
     }
 
     @NotNull
@@ -2211,6 +2212,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
       else {
         if (myProgressIndicator != null) {
+          myProgressIndicator.checkCanceled();
           myProgressIndicator.setText("Scanning files to index");
           myProgressIndicator.setText2(file.getPresentableUrl());
         }
@@ -2256,9 +2258,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   @NotNull
-  public CollectingContentIterator createContentIterator() {
+  public CollectingContentIterator createContentIterator(@Nullable ProgressIndicator indicator) {
     myUpdatingFiles.incrementAndGet();
-    return new UnindexedFilesFinder();
+    return new UnindexedFilesFinder(indicator);
   }
 
   @Override

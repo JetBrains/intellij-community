@@ -522,15 +522,19 @@ public class SvnHistoryProvider
             }
             myIndicator.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
           }
-          myLastPathCorrector.handleLogEntry(logEntry);
-          SVNLogEntryPath entryPath = myLastPathCorrector.getDirectlyMentioned();
+          SVNLogEntryPath entryPath = null;
           String copyPath = null;
-          if (entryPath != null) {
-            copyPath = entryPath.getCopyPath();
-          } else {
-            // if there are no path with exact match, check whether parent or child paths had changed
-            // "entry path" is allowed to be null now; if it is null, last path would be taken for revision construction
-            if (! checkForChildChanges(logEntry) && ! checkForParentChanges(logEntry)) return;
+          if (! myLastPathCorrector.isRoot()) {
+            myLastPathCorrector.handleLogEntry(logEntry);
+            entryPath = myLastPathCorrector.getDirectlyMentioned();
+            copyPath = null;
+            if (entryPath != null) {
+              copyPath = entryPath.getCopyPath();
+            } else {
+              // if there are no path with exact match, check whether parent or child paths had changed
+              // "entry path" is allowed to be null now; if it is null, last path would be taken for revision construction
+              if (! checkForChildChanges(logEntry) && ! checkForParentChanges(logEntry)) return;
+            }
           }
 
           final int mergeLevel = svnLogEntryIntegerPair.getSecond();

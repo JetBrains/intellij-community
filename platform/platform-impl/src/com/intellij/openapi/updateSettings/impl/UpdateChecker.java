@@ -39,7 +39,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.PlatformUtils;
@@ -58,10 +58,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLEncoder;
+import java.net.*;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -330,7 +327,7 @@ public final class UpdateChecker {
       if (pluginFile == null) continue;
 
       if (collectToUpdate) {
-        final String finalPluginUrl = pluginFile.getUrl();
+        final String finalPluginUrl = getPluginUrl(pluginFile);
         final Runnable updatePluginRunnable = new Runnable() {
           public void run() {
             try {
@@ -338,9 +335,9 @@ public final class UpdateChecker {
               if (progressIndicator != null) {
                 progressIndicator.setText(finalPluginUrl);
               }
-              final PluginDownloader uploader = new PluginDownloader(pluginId, finalPluginUrl, pluginVersion);
-              if (uploader.prepareToInstall()) {
-                downloaded.add(uploader);
+              final PluginDownloader downloader = new PluginDownloader(pluginId, finalPluginUrl, pluginVersion);
+              if (downloader.prepareToInstall()) {
+                downloaded.add(downloader);
               }
             }
             catch (IOException e) {
@@ -362,6 +359,19 @@ public final class UpdateChecker {
       }
     }
     return success;
+  }
+
+  @NotNull
+  private static String getPluginUrl(@NotNull VirtualFile pluginFile) {
+    String protocol = pluginFile.getFileSystem().getProtocol();
+    if (StandardFileSystems.FILE_PROTOCOL.equals(protocol) && SystemInfo.isWindows) {
+      String path = pluginFile.getPath();
+      if (path.length() != 0 && path.charAt(0) != '/') {
+        return protocol + ":///" + path;  // fix file URI on Windows
+      }
+    }
+
+    return pluginFile.getUrl();
   }
 
   @NotNull
@@ -514,8 +524,11 @@ public final class UpdateChecker {
     Future<?> downloadThreadFuture = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         try {
-          HttpConfigurable.getInstance().prepareURL(url);
-          final URL requestUrl = new URL(url + "?build=" + ApplicationInfo.getInstance().getBuild().asString());
+          URL requestUrl = new URL(url);
+          if (!StandardFileSystems.FILE_PROTOCOL.equals(requestUrl.getProtocol())) {
+            HttpConfigurable.getInstance().prepareURL(url);
+            requestUrl = new URL(url + "?build=" + ApplicationInfo.getInstance().getBuild().asString());
+          }
           inputStreams[0] = requestUrl.openStream();
         }
         catch (IOException e) {

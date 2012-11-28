@@ -453,9 +453,22 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
   private static boolean parseClass(Class<?> rClass,
                                     TIntObjectHashMap<Pair<ResourceType, String>> id2res,
                                     Map<IntArrayWrapper, String> styleableId2Res,
-                                    Map<ResourceType, TObjectIntHashMap<String>> res2id) {
+                                    Map<ResourceType, TObjectIntHashMap<String>> res2id) throws ClassNotFoundException {
     try {
-      for (Class<?> resClass : rClass.getDeclaredClasses()) {
+      final Class<?>[] nestedClasses;
+      try {
+        nestedClasses = rClass.getDeclaredClasses();
+      }
+      catch (LinkageError e) {
+        final Throwable cause = e.getCause();
+
+        if (cause instanceof ClassNotFoundException) {
+          LOG.debug(e);
+          throw (ClassNotFoundException)cause;
+        }
+        throw e;
+      }
+      for (Class<?> resClass : nestedClasses) {
         final ResourceType resType = ResourceType.getEnum(resClass.getSimpleName());
 
         if (resType != null) {

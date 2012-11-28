@@ -51,7 +51,7 @@ public class UnindexedFilesUpdater implements CacheUpdater {
 
   @Override
   public VirtualFile[] queryNeededFiles(ProgressIndicator indicator) {
-    CollectingContentIterator finder = myIndex.createContentIterator();
+    CollectingContentIterator finder = myIndex.createContentIterator(indicator);
     long l = System.currentTimeMillis();
     myIndex.iterateIndexableFiles(finder, myProject, indicator);
     LOG.info("Indexable files iterated in " + (System.currentTimeMillis() - l) + " ms");

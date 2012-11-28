@@ -88,7 +88,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     showNavigationPopup(callback, null,
                         ChooseByNamePopup.createPopup(project, model, new DefaultChooseByNameItemProvider(null) {
                               @Override
-                              protected void sortNamesList(@NotNull String namePattern, List<String> namesList) {
+                              protected void sortNamesList(@NotNull String namePattern, @NotNull List<String> namesList) {
                                 Collections.sort(namesList, new Comparator<String>() {
                                   @Override
                                   public int compare(String o1, String o2) {

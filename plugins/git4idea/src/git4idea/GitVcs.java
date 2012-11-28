@@ -54,6 +54,7 @@ import com.intellij.util.containers.ComparatorDelegate;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import git4idea.annotate.GitAnnotationProvider;
+import git4idea.annotate.GitRepositoryForAnnotationsListener;
 import git4idea.changes.GitCommittedChangeListProvider;
 import git4idea.changes.GitOutgoingChangesProvider;
 import git4idea.checkin.GitCheckinEnvironment;
@@ -142,6 +143,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   private GitVersion myVersion = GitVersion.NULL; // version of Git which this plugin uses.
   private static final int MAX_CONSOLE_OUTPUT_SIZE = 10000;
+  private GitRepositoryForAnnotationsListener myRepositoryForAnnotationsListener;
 
   @Nullable
   public static GitVcs getInstance(Project project) {
@@ -341,6 +343,9 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
         myBranchWidget = new GitBranchWidget(myProject);
         statusBar.addWidget(myBranchWidget, "after " + (SystemInfo.isMac ? "Encoding" : "InsertOverwrite"), myProject);
       }
+    }
+    if (myRepositoryForAnnotationsListener == null) {
+      myRepositoryForAnnotationsListener = new GitRepositoryForAnnotationsListener(myProject);
     }
     ((GitCommitsSequentialIndex) ServiceManager.getService(GitCommitsSequentially.class)).activate();
   }

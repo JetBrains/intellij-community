@@ -61,6 +61,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.TransferToEDTQueue;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -644,8 +645,11 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     HighlightInfoType type = new HighlightInfoType.HighlightInfoTypeImpl(level.getSeverity(element), level.getAttributesKey());
     final String plainMessage = message.startsWith("<html>") ? StringUtil.unescapeXml(message.replaceAll("<[^>]*>", "")) : message;
-    @NonNls final String link = " <a href=\"#inspection/" + tool.getShortName() + "\">" + DaemonBundle.message("inspection.extended.description") +
-                                "</a> " + myShortcutText;
+    @NonNls final String link = " <a "
+                                +"href=\"#inspection/" + tool.getShortName() + "\""
+                                + (UIUtil.isUnderDarcula() ? " color=\"7AB4C9\" " : "")
+                                +">" + DaemonBundle.message("inspection.extended.description")
+                                +"</a> " + myShortcutText;
 
     @NonNls String tooltip = null;
     if (descriptor.showTooltip()) {

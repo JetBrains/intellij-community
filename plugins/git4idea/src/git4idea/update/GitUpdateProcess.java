@@ -17,6 +17,7 @@ package git4idea.update;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Clock;
@@ -82,13 +83,13 @@ public class GitUpdateProcess {
     READ_FROM_SETTINGS
   }
 
-  public GitUpdateProcess(@NotNull Project project, @NotNull GitPlatformFacade platformFacade, @NotNull ProgressIndicator progressIndicator,
+  public GitUpdateProcess(@NotNull Project project, @NotNull GitPlatformFacade platformFacade, @Nullable ProgressIndicator progressIndicator,
                           @NotNull Collection<GitRepository> repositories, @NotNull UpdatedFiles updatedFiles) {
     myProject = project;
     myRepositories = repositories;
     myGit = ServiceManager.getService(Git.class);
     myUpdatedFiles = updatedFiles;
-    myProgressIndicator = progressIndicator;
+    myProgressIndicator = progressIndicator == null ? new EmptyProgressIndicator() : progressIndicator;
     myMerger = new GitMerger(myProject);
     mySaver = GitChangesSaver.getSaver(myProject, platformFacade, myGit,
                                        myProgressIndicator,

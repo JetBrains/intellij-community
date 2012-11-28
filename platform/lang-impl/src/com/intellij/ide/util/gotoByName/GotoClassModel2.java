@@ -35,7 +35,7 @@ import java.util.Set;
 public class GotoClassModel2 extends FilteringGotoByModel<Language> {
   private String[] mySeparators;
   
-  public GotoClassModel2(Project project) {
+  public GotoClassModel2(@NotNull Project project) {
     super(project, ChooseByNameRegistry.getInstance().getClassModelContributors());
   }
 

@@ -22,12 +22,15 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.UnknownRunConfiguration;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.HideableDecorator;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -42,6 +45,7 @@ import java.util.List;
 public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAndConfigurationSettings>
   implements BeforeRunStepsPanel.StepsBeforeRunListener {
   public static DataKey<ConfigurationSettingsEditorWrapper> CONFIGURATION_EDITOR_KEY = DataKey.create("ConfigurationSettingsEditor");
+  @NonNls private static final String EXPAND_PROPERTY_KEY = "ExpandBeforeRunStepsPanel";
   private JPanel myComponentPlace;
   private JPanel myWholePanel;
 
@@ -49,12 +53,30 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   private BeforeRunStepsPanel myBeforeRunStepsPanel;
 
   private final ConfigurationSettingsEditor myEditor;
+  private final HideableDecorator myDecorator;
 
   public ConfigurationSettingsEditorWrapper(final RunnerAndConfigurationSettings settings) {
     myEditor = new ConfigurationSettingsEditor(settings);
     Disposer.register(this, myEditor);
     myBeforeRunStepsPanel = new BeforeRunStepsPanel(this);
-    myBeforeLaunchContainer.add(myBeforeRunStepsPanel);
+    myDecorator = new HideableDecorator(myBeforeLaunchContainer, "", true) {
+      @Override
+      protected void on() {
+        super.on();
+        storeState();
+      }
+
+      @Override
+      protected void off() {
+        super.off();
+        storeState();
+      }
+      private void storeState() {
+        PropertiesComponent.getInstance().setValue(EXPAND_PROPERTY_KEY, String.valueOf(isExpanded()));
+      }
+    };
+    myDecorator.setOn(PropertiesComponent.getInstance().getBoolean(EXPAND_PROPERTY_KEY, true));
+    myDecorator.setContentComponent(myBeforeRunStepsPanel);
     doReset(settings);
   }
 
@@ -114,6 +136,11 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   @Override
   public void fireStepsBeforeRunChanged() {
     fireEditorStateChanged();
+  }
+
+  @Override
+  public void titleChanged(String title) {
+    myDecorator.setTitle(title);
   }
 
   private class MyDataProvider implements TypeSafeDataProvider {

@@ -38,6 +38,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
+import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
@@ -45,6 +46,7 @@ import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.SortedList;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -170,7 +172,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
         }
 
         if (!fileAnnotationRef.isNull()) {
-          doAnnotate(editor, project, file, fileAnnotationRef.get(), vcs);
+          doAnnotate(editor, project, file, fileAnnotationRef.get(), vcs, true);
         }
       }
     };
@@ -181,9 +183,27 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
                                 final Project project,
                                 final VirtualFile file,
                                 final FileAnnotation fileAnnotation,
-                                final AbstractVcs vcs) {
+                                final AbstractVcs vcs, final boolean onCurrentRevision) {
     final UpToDateLineNumberProvider getUpToDateLineNumber = new UpToDateLineNumberProviderImpl(editor.getDocument(), project);
     editor.getGutter().closeAllAnnotations();
+    final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener();
+
+    fileAnnotation.setCloser(new Runnable() {
+      @Override
+      public void run() {
+        if (project.isDisposed()) return;
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            if (project.isDisposed()) return;
+            editor.getGutter().closeAllAnnotations();
+          }
+        });
+      }
+    });
+    if (onCurrentRevision) {
+      listener.registerAnnotation(file, fileAnnotation);
+    }
 
     // be careful, not proxies but original items are put there (since only their presence not behaviour is important)
     Collection<ActiveAnnotationGutter> annotations = editor.getUserData(KEY_IN_EDITOR);

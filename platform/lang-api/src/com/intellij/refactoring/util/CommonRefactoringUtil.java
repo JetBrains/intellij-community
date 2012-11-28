@@ -59,15 +59,20 @@ public class CommonRefactoringUtil {
     }
   }
 
-  public static void showErrorHint(Project project, @Nullable Editor editor, String message, String title, @Nullable @NonNls String helpId) {
+  public static void showErrorHint(final Project project, @Nullable final Editor editor, final String message, final String title, @Nullable @NonNls final String helpId) {
     if (ApplicationManager.getApplication().isUnitTestMode()) throw new RefactoringErrorHintException(message);
 
-    if (editor == null) {
-      showErrorMessage(title, message, helpId, project);
-    }
-    else {
-      HintManager.getInstance().showErrorHint(editor, message);
-    }
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        if (editor == null) {
+          showErrorMessage(title, message, helpId, project);
+        }
+        else {
+          HintManager.getInstance().showErrorHint(editor, message);
+        }
+      }
+    });
   }
 
   @NonNls

@@ -1036,13 +1036,18 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       return;
     }
 
+    final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
-      @Override
-      public boolean visitFile(@NotNull VirtualFile file) {
+      @NotNull @Override
+      public Result visitFileEx(@NotNull VirtualFile file) {
+        if (fileTypeManager.isFileIgnored(file)) {
+          return SKIP_CHILDREN;
+        }
+
         if (!file.isDirectory()) {
           processor.execute(file);
         }
-        return true;
+        return CONTINUE;
       }
 
       @Nullable
@@ -1595,12 +1600,13 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       if (fromMove) {
         notifyFilesDeleted(pathsToMark);
       }
-      else {
+      else if (!isIgnoredOrUnderIgnoredDirectory(file)) {
         notifyFilesChanged(pathsToMark);
       }
     }
 
     private void processNewFile(final VirtualFile file, final boolean notifyServer) {
+      final Ref<Boolean> isInContent = Ref.create(false);
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         // need read action to ensure that the project was not disposed during the iteration over the project list
         public void run() {
@@ -1611,7 +1617,12 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
             final int projectId = getProjectId(project);
             final boolean projectSuspended = isSuspended(projectId);
             final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
-            if (rootManager.getFileIndex().isInSourceContent(file)) {
+            ProjectFileIndex fileIndex = rootManager.getFileIndex();
+            if (fileIndex.isInContent(file)) {
+              isInContent.set(true);
+            }
+
+            if (fileIndex.isInSourceContent(file)) {
               final TranslatingCompiler[] translators = CompilerManager.getInstance(project).getCompilers(TranslatingCompiler.class);
               processRecursively(file, false, new FileProcessor() {
                 public void execute(final VirtualFile file) {
@@ -1642,9 +1653,10 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           }
         }
       });
-      if (notifyServer) {
+      if (notifyServer && !isIgnoredOrUnderIgnoredDirectory(file)) {
         final Set<File> pathsToMark = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-        processRecursively(file, false, new FileProcessor() {
+        boolean dbOnly = !isInContent.get();
+        processRecursively(file, dbOnly, new FileProcessor() {
           @Override
           public void execute(VirtualFile file) {
             pathsToMark.add(new File(file.getPath()));
@@ -1653,6 +1665,38 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         notifyFilesChanged(pathsToMark);
       }
     }
+  }
+
+  private boolean isIgnoredOrUnderIgnoredDirectory(final VirtualFile file) {
+    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+    if (fileTypeManager.isFileIgnored(file)) {
+      return true;
+    }
+
+    //optimization: if file is in content of some project it's definitely not ignored
+    boolean isInContent = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        for (Project project : myProjectManager.getOpenProjects()) {
+          if (project.isInitialized() && ProjectRootManager.getInstance(project).getFileIndex().isInContent(file)) {
+            return true;
+          }
+        }
+        return false;
+      }
+    });
+    if (isInContent) {
+      return false;
+    }
+
+    VirtualFile current = file.getParent();
+    while (current != null) {
+      if (fileTypeManager.isFileIgnored(current)) {
+        return true;
+      }
+      current = current.getParent();
+    }
+    return false;
   }
 
   private static void notifyFilesChanged(Collection<File> paths) {

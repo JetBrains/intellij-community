@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -54,16 +55,18 @@ public class SwitchTaskAction extends BaseTaskAction {
     DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     assert project != null;
-    final ListPopupImpl popup = createPopup(dataContext, null, true);
+    ListPopupImpl popup = createPopup(dataContext, null, true);
     popup.showCenteredInCurrentWindow(project);
   }
 
-  public static ListPopupImpl createPopup(final DataContext dataContext, @Nullable final Runnable onDispose, boolean withTitle) {
+  public static ListPopupImpl createPopup(final DataContext dataContext,
+                                          @Nullable final Runnable onDispose,
+                                          boolean withTitle) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final Ref<Boolean> shiftPressed = Ref.create(false);
     final Ref<JComponent> componentRef = Ref.create();
     List<TaskListItem> items = project == null ? Collections.<TaskListItem>emptyList() :
-                               createPopupActionGroup(project, shiftPressed, dataContext);
+                               createPopupActionGroup(project, shiftPressed, PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext));
     final String title = withTitle ? "Switch to Task" : null;
     ListPopupStep<TaskListItem> step = new MultiSelectionListPopupStep<TaskListItem>(title, items) {
       @Override
@@ -73,7 +76,8 @@ public class SwitchTaskAction extends BaseTaskAction {
           return FINAL_CHOICE;
         }
         ActionGroup group = createActionsStep(selectedValues, project, shiftPressed);
-        return JBPopupFactory.getInstance().createActionsStep(group, DataManager.getInstance().getDataContext(componentRef.get()), false, false, null, null, true);
+        return JBPopupFactory.getInstance()
+          .createActionsStep(group, DataManager.getInstance().getDataContext(componentRef.get()), false, false, null, null, true);
       }
 
       @Override
@@ -165,7 +169,7 @@ public class SwitchTaskAction extends BaseTaskAction {
   @NotNull
   private static List<TaskListItem> createPopupActionGroup(@NotNull final Project project,
                                                            final Ref<Boolean> shiftPressed,
-                                                           final DataContext dataContext) {
+                                                           final Component contextComponent) {
     List<TaskListItem> group = new ArrayList<TaskListItem>();
 
     final AnAction action = ActionManager.getInstance().getAction(GotoTaskAction.ID);
@@ -176,8 +180,7 @@ public class SwitchTaskAction extends BaseTaskAction {
       @Override
       void select() {
         ActionManager.getInstance().tryToExecute(gotoTaskAction, ActionCommand.getInputEvent(GotoTaskAction.ID),
-                                                 PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext), ActionPlaces.UNKNOWN, true);
-        gotoTaskAction.perform(project);
+                                                 contextComponent, ActionPlaces.UNKNOWN, false);
       }
     });
 
@@ -232,12 +235,13 @@ public class SwitchTaskAction extends BaseTaskAction {
       });
 
       boolean removeIt = true;
-      l: for (LocalChangeList list : lists) {
+      l:
+      for (LocalChangeList list : lists) {
         if (!list.getChanges().isEmpty()) {
           int result = Messages.showYesNoCancelDialog(project,
-                                   "Changelist associated with '" + task.getSummary() + "' is not empty.\n" +
-                                   "Do you want to remove it and move the changes to the active changelist?",
-                                   "Changelist Not Empty", Messages.getWarningIcon());
+                                                      "Changelist associated with '" + task.getSummary() + "' is not empty.\n" +
+                                                      "Do you want to remove it and move the changes to the active changelist?",
+                                                      "Changelist Not Empty", Messages.getWarningIcon());
           switch (result) {
             case 0:
               break l;
@@ -257,5 +261,4 @@ public class SwitchTaskAction extends BaseTaskAction {
       manager.removeTask(task);
     }
   }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.annotate;
-
-import java.util.EventListener;
+package com.intellij.util;
 
 /**
- * Annotation listener. This interface is used to notify that file annotation
- * has changed so the current {@link com.intellij.openapi.vcs.annotate.FileAnnotation}
- * object is no more valid.
- *
- * @author lesya
+ * Created with IntelliJ IDEA.
+ * User: Irina.Chernushina
+ * Date: 11/19/12
+ * Time: 6:50 PM
  */
-public interface AnnotationListener extends EventListener {
-  /**
-   * This method is invoked when
-   * {@link com.intellij.openapi.vcs.annotate.FileAnnotation}
-   * is no more valid.
-   */
-  void onAnnotationChanged();
+public interface PlusMinusModify<T> extends PlusMinus<T> {
+  void modify(T was, T become);
 }

@@ -71,7 +71,7 @@ import java.util.List;
 public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> extends DialogWrapper implements TreeChooser<T> {
   private Tree myTree;
   private T mySelectedClass = null;
-  private final Project myProject;
+  @NotNull private final Project myProject;
   private BaseProjectTreeBuilder myBuilder;
   private TabbedPaneWrapper myTabbedPane;
   private ChooseByNamePanel myGotoByNamePanel;
@@ -91,7 +91,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
   }
 
   public AbstractTreeClassChooserDialog(String title,
-                                        Project project,
+                                        @NotNull Project project,
                                         GlobalSearchScope scope,
                                         @NotNull Class<T> elementClass,
                                         @Nullable Filter<T> classFilter,
@@ -100,7 +100,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
   }
 
   public AbstractTreeClassChooserDialog(String title,
-                                        Project project,
+                                        @NotNull Project project,
                                         GlobalSearchScope scope,
                                         @NotNull Class<T> elementClass,
                                         @Nullable Filter<T> classFilter,
@@ -429,6 +429,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
     return myGotoByNamePanel.getPreferredFocusedComponent();
   }
 
+  @NotNull
   protected Project getProject() {
     return myProject;
   }
@@ -469,7 +470,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
       return myTreeClassChooserDialog;
     }
 
-    public MyGotoClassModel(Project project,
+    public MyGotoClassModel(@NotNull Project project,
                             AbstractTreeClassChooserDialog<T> treeClassChooserDialog) {
       super(project);
       myTreeClassChooserDialog = treeClassChooserDialog;

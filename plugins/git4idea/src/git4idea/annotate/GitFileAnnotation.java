@@ -17,24 +17,18 @@ package git4idea.annotate;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusListener;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.text.DateFormatUtil;
 import git4idea.GitRevisionNumber;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -43,7 +37,7 @@ import java.util.*;
  * <p/>
  * Based on the JetBrains SVNAnnotationProvider.
  */
-public class GitFileAnnotation implements FileAnnotation {
+public class GitFileAnnotation extends FileAnnotation {
   private final static Logger LOG = Logger.getInstance("#git4idea.annotate.GitFileAnnotation");
 
   /**
@@ -60,28 +54,14 @@ public class GitFileAnnotation implements FileAnnotation {
   private final Project myProject;
   private final VcsRevisionNumber myBaseRevision;
   /**
-   * Annotation change listeners
-   */
-  private final EventDispatcher<AnnotationListener> myListeners = EventDispatcher.create(AnnotationListener.class);
-  /**
    * Map from revision numbers to revisions
    */
   private final Map<VcsRevisionNumber, VcsFileRevision> myRevisionMap = new HashMap<VcsRevisionNumber, VcsFileRevision>();
-  /**
-   * listener for file system events
-   */
-  private final VirtualFileAdapter myFileListener;
-
-  private final MyFileStatusListener myFileStatusListener;
 
   /**
    * the virtual file for which annotations are generated
    */
   private final VirtualFile myFile;
-  /**
-   * If true, file system is monitored for changes
-   */
-  private final boolean myMonitorFlag;
 
   private final LineAnnotationAspect DATE_ASPECT = new GitAnnotationAspect(GitAnnotationAspect.DATE, true) {
     public String doGetValue(LineInfo info) {
@@ -116,30 +96,11 @@ public class GitFileAnnotation implements FileAnnotation {
    * @param revision
    */
   public GitFileAnnotation(@NotNull final Project project, @NotNull VirtualFile file, final boolean monitorFlag, final VcsRevisionNumber revision) {
+    super(project);
     myProject = project;
     myVcs = GitVcs.getInstance(myProject);
     myFile = file;
     myBaseRevision = revision == null ? (myVcs.getDiffProvider().getCurrentRevision(file)) : revision;
-    myMonitorFlag = monitorFlag;
-    if (myMonitorFlag) {
-      myFileListener = new VirtualFileAdapter() {
-        @Override
-        public void contentsChanged(final VirtualFileEvent event) {
-          if (!Comparing.equal(myFile, event.getFile())) return;
-          if (!event.isFromRefresh()) return;
-          final VcsRevisionNumber currentRevision = myVcs.getDiffProvider().getCurrentRevision(myFile);
-          if (currentRevision != null && currentRevision.equals(revision)) return;
-          fireAnnotationChanged();
-        }
-      };
-      VirtualFileManager.getInstance().addVirtualFileListener(myFileListener);
-      myFileStatusListener = new MyFileStatusListener();
-      FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener);
-    }
-    else {
-      myFileListener = null;
-      myFileStatusListener = null;
-    }
   }
 
   /**
@@ -154,36 +115,9 @@ public class GitFileAnnotation implements FileAnnotation {
   }
 
   /**
-   * Fire annotation changed event
-   */
-  private void fireAnnotationChanged() {
-    if (!myProject.isDisposed()) {
-      myListeners.getMulticaster().onAnnotationChanged();
-    }
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public void addListener(AnnotationListener listener) {
-    myListeners.addListener(listener);
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public void removeListener(AnnotationListener listener) {
-    myListeners.removeListener(listener);
-  }
-
-  /**
    * {@inheritDoc}
    */
   public void dispose() {
-    if (myMonitorFlag) {
-      VirtualFileManager.getInstance().removeVirtualFileListener(myFileListener);
-      FileStatusManager.getInstance(myProject).removeFileStatusListener(myFileStatusListener);
-    }
   }
 
   /**
@@ -388,31 +322,24 @@ public class GitFileAnnotation implements FileAnnotation {
     }
   }
 
-  private class MyFileStatusListener implements FileStatusListener {
-    public void fileStatusesChanged() {
-      checkAndFire();
-    }
-
-    public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
-      if (myFile.equals(virtualFile)) {
-        checkAndFire();
-      }
-    }
-
-    private void checkAndFire() {
-      // for the case of commit changes... remove annotation gutter
-      if (FileStatus.NOT_CHANGED.equals(FileStatusManager.getInstance(myProject).getStatus(myFile))) {
-        if (myBaseRevision != null) {
-          final VcsRevisionNumber currentRevision = myVcs.getDiffProvider().getCurrentRevision(myFile);
-          // revision is not when monitorFlag is true
-          if (currentRevision != null && currentRevision.equals(myBaseRevision)) return;
-        }
-        fireAnnotationChanged();
-      }
-    }
-  }
-
   public VirtualFile getFile() {
     return myFile;
+  }
+
+  @Nullable
+  @Override
+  public VcsRevisionNumber getCurrentRevision() {
+    return myBaseRevision;
+  }
+
+  @Override
+  public VcsKey getVcsKey() {
+    return GitVcs.getKey();
+  }
+
+  @Override
+  public boolean isBaseRevisionChanged(VcsRevisionNumber number) {
+    final VcsRevisionNumber currentCurrentRevision = myVcs.getDiffProvider().getCurrentRevision(myFile);
+    return myBaseRevision != null && ! myBaseRevision.equals(currentCurrentRevision);
   }
 }

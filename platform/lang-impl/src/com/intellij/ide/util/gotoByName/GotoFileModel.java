@@ -39,7 +39,7 @@ import java.util.Collection;
 public class GotoFileModel extends FilteringGotoByModel<FileType> {
   private final int myMaxSize;
 
-  public GotoFileModel(Project project) {
+  public GotoFileModel(@NotNull Project project) {
     super(project, Extensions.getExtensions(ChooseByNameContributor.FILE_EP_NAME));
     myMaxSize = WindowManagerEx.getInstanceEx().getFrame(project).getSize().width;
   }

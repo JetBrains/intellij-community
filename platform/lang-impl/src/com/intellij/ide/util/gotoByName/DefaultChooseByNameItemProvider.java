@@ -62,7 +62,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     Set<String> names = new THashSet<String>(Arrays.asList(base.getNames(everywhere)));
 
     if (base.isSearchInAnyPlace() && !namePattern.trim().isEmpty()) {
-      String middleMatchPattern = "*" + namePattern + (namePattern.endsWith(" ") ? "" : "*");
+      String middleMatchPattern = "*" + namePattern + (namePattern.charAt(namePattern.length() - 1) == ' ' ? "" : "*");
 
       // consume elements matching by prefix case-sensitively
       Integer elementsConsumed = consumeElements(base, everywhere, indicator, consumer, namePattern, qualifierPattern, names,
@@ -92,14 +92,15 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   /**
    * @return null if consumer returned false, number of consumed elements otherwise.
    */
-  private Integer consumeElements(ChooseByNameBase base,
+  @Nullable
+  private Integer consumeElements(@NotNull ChooseByNameBase base,
                                   boolean everywhere,
-                                  ProgressIndicator indicator,
-                                  Processor<Object> consumer,
-                                  String namePattern,
-                                  String qualifierPattern,
-                                  Set<String> allNames,
-                                  NameUtil.MatchingCaseSensitivity sensitivity,
+                                  @NotNull ProgressIndicator indicator,
+                                  @NotNull Processor<Object> consumer,
+                                  @NotNull String namePattern,
+                                  @NotNull String qualifierPattern,
+                                  @NotNull Set<String> allNames,
+                                  @NotNull NameUtil.MatchingCaseSensitivity sensitivity,
                                   boolean needSeparator) {
     ChooseByNameModel model = base.getModel();
     List<String> namesList = new ArrayList<String>();
@@ -146,21 +147,23 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     return elementsConsumed;
   }
 
-  protected void sortNamesList(@NotNull String namePattern, List<String> namesList) {
+  protected void sortNamesList(@NotNull String namePattern, @NotNull List<String> namesList) {
     // Here we sort using namePattern to have similar logic with empty qualified patten case
     Collections.sort(namesList, new MatchesComparator(namePattern));
   }
 
-  private void sortByProximity(@NotNull ChooseByNameBase base, final List<Object> sameNameElements) {
+  private void sortByProximity(@NotNull ChooseByNameBase base, @NotNull List<Object> sameNameElements) {
     final ChooseByNameModel model = base.getModel();
     if (model instanceof Comparator) {
       //noinspection unchecked
       Collections.sort(sameNameElements, (Comparator)model);
-    } else {
+    }
+    else {
       Collections.sort(sameNameElements, new PathProximityComparator(model, myContext.get()));
     }
   }
 
+  @NotNull
   private static String getQualifierPattern(@NotNull ChooseByNameBase base, @NotNull String pattern) {
     final String[] separators = base.getModel().getSeparators();
     int lastSeparatorOccurrence = 0;
@@ -170,6 +173,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     return pattern.substring(0, lastSeparatorOccurrence);
   }
 
+  @NotNull
   public static String getNamePattern(@NotNull ChooseByNameBase base, String pattern) {
     pattern = base.transformPattern(pattern);
 
@@ -196,7 +200,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     return answer.isEmpty() ? Collections.singletonList(s) : answer;
   }
 
-  private static boolean matchesQualifier(final Object element,
+  private static boolean matchesQualifier(@NotNull Object element,
                                           @NotNull final ChooseByNameBase base,
                                           @NotNull List<Pair<String, MinusculeMatcher>> patternsAndMatchers) {
     final String name = base.getModel().getFullName(element);
@@ -232,7 +236,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   @NotNull
-  private static List<Pair<String, MinusculeMatcher>> getPatternsAndMatchers(String qualifierPattern, final ChooseByNameBase base) {
+  private static List<Pair<String, MinusculeMatcher>> getPatternsAndMatchers(@NotNull String qualifierPattern, @NotNull final ChooseByNameBase base) {
     return ContainerUtil.map2List(split(qualifierPattern, base), new Function<String, Pair<String, MinusculeMatcher>>() {
       @NotNull
       @Override
@@ -253,7 +257,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   private static void getNamesByPattern(@NotNull final ChooseByNameBase base,
                                         @NotNull List<String> names,
                                         @Nullable ProgressIndicator indicator,
-                                        @NotNull final List<String> list,
+                                        @NotNull final List<String> outListFiltered, // matched items
                                         @NotNull String pattern,
                                         @NotNull NameUtil.MatchingCaseSensitivity caseSensitivity) throws ProcessCanceledException {
     if (!base.canShowListForEmptyPattern()) {
@@ -271,8 +275,8 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       @Override
       public boolean process(String name) {
         if (matches(base, finalPattern, matcher, name)) {
-          synchronized (list) {
-            list.add(name);
+          synchronized (outListFiltered) {
+            outListFiltered.add(name);
           }
         }
         return true;
@@ -299,6 +303,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     return matches;
   }
 
+  @NotNull
   private static MinusculeMatcher buildPatternMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity caseSensitivity) {
     return NameUtil.buildMatcher(pattern, caseSensitivity);
   }
@@ -315,8 +320,8 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       boolean aStarts = a.startsWith(myOriginalPattern);
       boolean bStarts = b.startsWith(myOriginalPattern);
       if (aStarts && bStarts) return a.compareToIgnoreCase(b);
-      if (aStarts && !bStarts) return -1;
-      if (bStarts && !aStarts) return 1;
+      if (aStarts) return -1;
+      if (bStarts) return 1;
       return a.compareToIgnoreCase(b);
     }
   }
@@ -325,7 +330,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     private final ChooseByNameModel myModel;
     @NotNull private final PsiProximityComparator myProximityComparator;
 
-    private PathProximityComparator(final ChooseByNameModel model, @Nullable final PsiElement context) {
+    private PathProximityComparator(@NotNull ChooseByNameModel model, @Nullable final PsiElement context) {
       myModel = model;
       myProximityComparator = new PsiProximityComparator(context);
     }

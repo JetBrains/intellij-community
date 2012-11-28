@@ -124,8 +124,8 @@ public abstract class ChooseByNameBase {
   private final String[][] myNames = new String[2][];
   private volatile CalcElementsThread myCalcElementsThread;
   private static int VISIBLE_LIST_SIZE_LIMIT = 10;
-  public static final int MAXIMUM_LIST_SIZE_LIMIT = 30;
-  private int myMaximumListSizeLimit = MAXIMUM_LIST_SIZE_LIMIT;
+  private int myListSizeIncreasing = 30;
+  private int myMaximumListSizeLimit = 30;
   @NonNls private static final String NOT_FOUND_IN_PROJECT_CARD = "syslib";
   @NonNls private static final String NOT_FOUND_CARD = "nfound";
   @NonNls private static final String CHECK_BOX_CARD = "chkbox";
@@ -161,12 +161,12 @@ public abstract class ChooseByNameBase {
    * @param initialText initial text which will be in the lookup text field
    * @param context
    */
-  protected ChooseByNameBase(Project project, ChooseByNameModel model, String initialText, PsiElement context) {
+  protected ChooseByNameBase(Project project, @NotNull ChooseByNameModel model, String initialText, PsiElement context) {
     this(project, model, new DefaultChooseByNameItemProvider(context), initialText, 0);
   }
 
   @SuppressWarnings("UnusedDeclaration") // Used in MPS
-  protected ChooseByNameBase(Project project, ChooseByNameModel model, ChooseByNameItemProvider provider, String initialText) {
+  protected ChooseByNameBase(Project project, @NotNull ChooseByNameModel model, @NotNull ChooseByNameItemProvider provider, String initialText) {
     this(project, model, provider, initialText, 0);
   }
 
@@ -175,8 +175,8 @@ public abstract class ChooseByNameBase {
    * @param initialIndex
    */
   protected ChooseByNameBase(Project project,
-                             ChooseByNameModel model,
-                             ChooseByNameItemProvider provider,
+                             @NotNull ChooseByNameModel model,
+                             @NotNull ChooseByNameItemProvider provider,
                              String initialText,
                              final int initialIndex) {
     myProject = project;
@@ -229,6 +229,7 @@ public abstract class ChooseByNameBase {
     initUI(callback, modalityState, allowMultipleSelection);
   }
 
+  @NotNull
   public ChooseByNameModel getModel() {
     return myModel;
   }
@@ -582,7 +583,7 @@ public abstract class ChooseByNameBase {
             break;
           case KeyEvent.VK_ENTER:
             if (myList.getSelectedValue() == EXTRA_ELEM) {
-              myMaximumListSizeLimit += MAXIMUM_LIST_SIZE_LIMIT;
+              myMaximumListSizeLimit += myListSizeIncreasing;
               rebuildList(myList.getSelectedIndex(), REBUILD_DELAY, null, ModalityState.current());
               e.consume();
             }
@@ -625,7 +626,7 @@ public abstract class ChooseByNameBase {
 
           if (selectedCellBounds != null && selectedCellBounds.contains(e.getPoint())) { // Otherwise it was reselected in the selection listener
             if (myList.getSelectedValue() == EXTRA_ELEM) {
-              myMaximumListSizeLimit += MAXIMUM_LIST_SIZE_LIMIT;
+              myMaximumListSizeLimit += myListSizeIncreasing;
               rebuildList(selectedIndex, REBUILD_DELAY, null, ModalityState.current());
             }
             else {
@@ -1545,6 +1546,10 @@ public abstract class ChooseByNameBase {
 
   public void setMaximumListSizeLimit(final int maximumListSizeLimit) {
     myMaximumListSizeLimit = maximumListSizeLimit;
+  }
+
+  public void setListSizeIncreasing(final int listSizeIncreasing) {
+    myListSizeIncreasing = listSizeIncreasing;
   }
 
   private static final String ACTION_NAME = "Show All in View";

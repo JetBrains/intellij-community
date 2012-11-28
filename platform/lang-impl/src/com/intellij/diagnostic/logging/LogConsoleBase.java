@@ -523,8 +523,10 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   private void resetLogFilter() {
     for (LogFilter filter : myFilters) {
       if (myModel.isFilterSelected(filter)) {
-        myLogFilterCombo.setSelectedItem(filter);
-        break;
+        if (myLogFilterCombo.getSelectedItem() != filter) {
+          myLogFilterCombo.setSelectedItem(filter);
+          break;
+        }
       }
     }
   }

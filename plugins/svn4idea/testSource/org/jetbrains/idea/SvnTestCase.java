@@ -17,6 +17,7 @@ package org.jetbrains.idea;
 
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -31,6 +32,9 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
@@ -40,9 +44,12 @@ import com.intellij.testFramework.vcs.MockChangelistBuilder;
 import com.intellij.testFramework.vcs.TestClientRunner;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
+import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnFileUrlMappingImpl;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.actions.CreateExternalAction;
 import org.junit.After;
 import org.junit.Before;
 
@@ -72,6 +79,20 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     PlatformTestCase.initPlatformLangPrefix();
     myTestDataDir = testDataDir;
     myWcRootName = "wcroot";
+  }
+
+  public static void imitateEvent(VirtualFile dir) {
+    final VirtualFile child = dir.findChild(".svn");
+    org.junit.Assert.assertNotNull(child);
+    final VirtualFile wcdb = child.findChild("wc.db");
+    org.junit.Assert.assertNotNull(wcdb);
+
+    final BulkFileListener listener = ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
+    final VFileContentChangeEvent event =
+      new VFileContentChangeEvent(null, wcdb, wcdb.getModificationStamp() - 1, wcdb.getModificationStamp(), true);
+    final List<VFileContentChangeEvent> events = Collections.singletonList(event);
+    listener.before(events);
+    listener.after(events);
   }
 
   @Before
@@ -123,7 +144,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
           initProject(myWcRoot, SvnTestCase.this.getTestName());
           activateVCS(SvnVcs.VCS_NAME);
 
-          verify(runSvn("co", myRepoUrl, "."));
+          verify(runSvn("co", myRepoUrl, myWorkingCopyDir.getPath()));
 
           myGate = new MockChangeListManagerGate(ChangeListManager.getInstance(myProject));
 
@@ -239,5 +260,48 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
         myTargetFiles.add(createFileInCommand(myTargetDir, "t" + (i+10) +".txt", ourS1Contents));
       }
     }
+  }
+
+  protected static void sleep(final int millis) {
+    try {
+      Thread.sleep(millis);
+    }
+    catch (InterruptedException ignore) { }
+  }
+
+  public void prepareExternal() throws Exception {
+    final ChangeListManagerImpl clManager = (ChangeListManagerImpl)ChangeListManager.getInstance(myProject);
+    final SvnVcs vcs = SvnVcs.getInstance(myProject);
+    final String mainUrl = myRepoUrl + "/root/source";
+    final String externalURL = myRepoUrl + "/root/target";
+
+    final SubTree subTree = new SubTree(myWorkingCopyDir);
+    checkin();
+    clManager.stopEveryThingIfInTestMode();
+    sleep(100);
+    final File rootFile = new File(subTree.myRootDir.getPath());
+    FileUtil.delete(rootFile);
+    FileUtil.delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn"));
+    Assert.assertTrue(!rootFile.exists());
+    sleep(200);
+    myWorkingCopyDir.refresh(false, true);
+
+    final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
+    verify(runSvn("co", mainUrl, sourceDir.getPath()));
+    CreateExternalAction.addToExternalProperty(vcs, sourceDir, "external", externalURL);
+    sleep(100);
+    verify(runSvn("up", sourceDir.getPath()));
+    verify(runSvn("ci", "-m", "test", sourceDir.getPath()));
+    sleep(100);
+    myWorkingCopyDir.refresh(false, true);
+    Assert.assertTrue(new File(sourceDir, "external").exists());
+    // above is preparation
+
+    // start change list manager again
+    clManager.forceGoInTestMode();
+    SvnConfiguration.getInstance(myProject).DETECT_NESTED_COPIES = true;
+    vcs.invokeRefreshSvnRoots(false);
+    clManager.ensureUpToDate(false);
+    clManager.ensureUpToDate(false);
   }
 }

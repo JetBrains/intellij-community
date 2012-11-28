@@ -74,7 +74,7 @@ public class CvsAnnotationProvider implements AnnotationProvider{
     final List<VcsFileRevision> revisions = myCvsHistoryProvider.createRevisions(filePath);
     final Annotation[] lineAnnotations = operation.getLineAnnotations();
     adjustAnnotation(revisions, lineAnnotations);
-    return new CvsFileAnnotation(operation.getContent(), lineAnnotations, revisions, virtualFile);
+    return new CvsFileAnnotation(operation.getContent(), lineAnnotations, revisions, virtualFile, revision, myProject);
   }
 
   public FileAnnotation annotate(VirtualFile file, VcsFileRevision revision) throws VcsException {
@@ -118,7 +118,7 @@ public class CvsAnnotationProvider implements AnnotationProvider{
         }
       }
     }
-    return new CvsFileAnnotation(annotateOperation.getContent(), lineAnnotations, revisions, cvsVirtualFile);
+    return new CvsFileAnnotation(annotateOperation.getContent(), lineAnnotations, revisions, cvsVirtualFile, revision, myProject);
   }
 
   private static boolean annotateBinary(VirtualFile cvsVirtualFile, CvsEnvironment environment) {

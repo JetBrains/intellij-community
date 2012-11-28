@@ -18,6 +18,7 @@ package com.intellij.notification.impl.ui;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,6 +91,18 @@ public class NotificationsUtil {
       case INFORMATION:
       default:
         return MessageType.INFO.getPopupBackground();
+    }
+  }
+
+  public static Color getBorderColor(Notification notification) {
+    switch (notification.getType()) {
+      case ERROR:
+        return new JBColor(Color.gray, new Color(0xc8c8c8));
+      case WARNING:
+        return new JBColor(Color.gray, new Color(0x977124));
+      case INFORMATION:
+      default:
+        return new JBColor(Color.gray, new Color(0x205c00));
     }
   }
 }

@@ -130,6 +130,9 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
           return;
         }
         myPSIChangeListener.setInitialize();
+        if (!myPSIChangeListener.isActive()) {
+          return;
+        }
         myActionPanel.update();
         if (myRootComponent == null || !Comparing.equal(myProfileAction.getProfileManager().getSelectedTarget(), myLastTarget)) {
           myPSIChangeListener.activate();
