@@ -278,6 +278,7 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
     final BuildListener listener = new BuildListener() {
       @Override
       public void filesGenerated(Collection<Pair<String, String>> paths) {
+        // todo: remember dirty files for next sessions, because current one may be stopped before dexing
         for (Pair<String, String> path : paths) {
           dirtyOutputDirs.add(path.first);
         }
