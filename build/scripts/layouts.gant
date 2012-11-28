@@ -259,6 +259,7 @@ public def layoutCommunityPlugins(String home) {
       jar("gradle.jar") {
         module("gradle")
       }
+      fileset(dir: "$home/plugins/gradle/lib") { include(name: "*.jar") }
     }
     
     layoutPlugin("git4idea") {
