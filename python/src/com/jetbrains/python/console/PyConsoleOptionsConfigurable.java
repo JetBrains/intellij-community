@@ -37,7 +37,7 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
   @NotNull
   @Override
   public String getId() {
-    return "coverage";
+    return "pyconsole";
   }
 
   @Override
