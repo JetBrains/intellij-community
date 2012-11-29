@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.ui.JBColor;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.ModuleProvider;
 import com.intellij.uiDesigner.UIFormXmlConstants;
@@ -28,6 +29,7 @@ import com.intellij.uiDesigner.lw.IButtonGroup;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IRootContainer;
 import com.intellij.uiDesigner.lw.LwInspectionSuppression;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +54,7 @@ public final class RadRootContainer extends RadContainer implements IRootContain
 
   public RadRootContainer(final ModuleProvider module, final String id) {
     super(module, JPanel.class, id);
-    getDelegee().setBackground(Color.WHITE);
+    getDelegee().setBackground(new JBColor(Color.WHITE, UIUtil.getListBackground()));
   }
 
   /**

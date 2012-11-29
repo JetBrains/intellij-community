@@ -8,8 +8,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +71,7 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
 
   public AndroidLayoutPreviewPanel() {
     super(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true));
-    setBackground(Color.WHITE);
+    setBackground(new JBColor(Color.WHITE, UIUtil.getListBackground()));
     setOpaque(true);
     myImagePanel.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.GRAY));
 
