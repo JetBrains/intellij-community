@@ -75,6 +75,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
   private final @NotNull Map<String, VcsRootChecker> myCheckers;
   private JCheckBox myShowVcsRootErrorNotification;
   private JCheckBox myShowChangedRecursively;
+  private VcsLimitHistoryConfigurable myLimitHistory;
 
   private class MyDirectoryRenderer extends ColoredTableCellRenderer {
     private final Project myProject;
@@ -256,6 +257,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     myDirectoryMappingTable.setModelAndUpdateColumns(myModel);
 
     myRecentlyChangedConfigurable.reset();
+    myLimitHistory.reset();
     myBaseRevisionTexts.setSelected(myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF);
     myShowChangedRecursively.setSelected(myVcsConfiguration.SHOW_DIRTY_RECURSIVELY);
   }
@@ -333,6 +335,8 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
       .setDefaultFill(GridBagConstraints.BOTH);
 
     panel.add(createMappingsTable(), gb.nextLine().next().fillCell().weighty(1));
+    myLimitHistory = new VcsLimitHistoryConfigurable(myProject);
+    panel.add(myLimitHistory.createComponent(), gb.nextLine().next().fillCellHorizontally());
     panel.add(createProjectMappingDescription(), gb.nextLine().next().fillCellHorizontally());
     panel.add(createErrorList(), gb.nextLine().next().fillCellHorizontally());
     panel.add(createShowRecursivelyDirtyOption(), gb.nextLine().next().fillCellHorizontally());
@@ -452,6 +456,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
   public void apply() throws ConfigurationException {
     myVcsManager.setDirectoryMappings(myModel.getItems());
     myRecentlyChangedConfigurable.apply();
+    myLimitHistory.apply();
     myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF = myBaseRevisionTexts.isSelected();
     myVcsConfiguration.SHOW_VCS_ERROR_NOTIFICATIONS = myShowVcsRootErrorNotification.isSelected();
     myVcsConfiguration.SHOW_DIRTY_RECURSIVELY = myShowChangedRecursively.isSelected();
@@ -460,6 +465,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
 
   public boolean isModified() {
     if (myRecentlyChangedConfigurable.isModified()) return true;
+    if (myLimitHistory.isModified()) return true;
     if (myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF != myBaseRevisionTexts.isSelected()) return true;
     if (myVcsConfiguration.SHOW_VCS_ERROR_NOTIFICATIONS != myShowVcsRootErrorNotification.isSelected()) {
       return true;

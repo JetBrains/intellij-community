@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -50,10 +52,12 @@ public class VcsHistoryProviderBackgroundableProxy {
   private boolean myCachesHistory;
   private final HistoryComputerFactory myHistoryComputerFactory;
   private final VcsType myType;
+  private VcsConfiguration myConfiguration;
 
   public VcsHistoryProviderBackgroundableProxy(final AbstractVcs vcs, final VcsHistoryProvider delegate, DiffProvider diffProvider) {
     myDelegate = delegate;
     myProject = vcs.getProject();
+    myConfiguration = VcsConfiguration.getInstance(myProject);
     myCachesHistory = myDelegate instanceof VcsCacheableHistorySessionFactory;
     myDiffProvider = diffProvider;
     myVcsHistoryCache = ProjectLevelVcsManager.getInstance(myProject).getVcsHistoryCache();
@@ -93,8 +97,7 @@ public class VcsHistoryProviderBackgroundableProxy {
   public void executeAppendableSession(final VcsKey vcsKey, final FilePath filePath, final VcsAppendableHistorySessionPartner partner,
                                        @Nullable VcsBackgroundableActions actionKey, boolean canUseCache, boolean canUseLastRevisionCheck) {
     if (myCachesHistory && canUseCache) {
-      final VcsAbstractHistorySession session =
-        myVcsHistoryCache.getFull(filePath, vcsKey, (VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>)myDelegate);
+      final VcsAbstractHistorySession session = getFullHistoryFromCache(vcsKey, filePath);
       if (session != null) {
         partner.reportCreatedEmptySession(session);
         partner.finished();
@@ -129,6 +132,25 @@ public class VcsHistoryProviderBackgroundableProxy {
       cachedPartner = partner;
     }
     reportHistory(filePath, vcsKey, resultingActionKey, handler, cachedPartner, canUseLastRevisionCheck);
+  }
+
+  private VcsAbstractHistorySession getFullHistoryFromCache(VcsKey vcsKey, FilePath filePath) {
+    VcsAbstractHistorySession full =
+      myVcsHistoryCache.getFull(filePath, vcsKey, (VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>)myDelegate);
+    if (full != null) {
+      if (myConfiguration.LIMIT_HISTORY) {
+        if (myConfiguration.MAXIMUM_HISTORY_ROWS < full.getRevisionList().size()) {
+          if (myConfiguration.MAXIMUM_HISTORY_ROWS < 2000) {
+            full = (VcsAbstractHistorySession) full.copy();
+          }
+          final List<VcsFileRevision> list = full.getRevisionList();
+          final List<VcsFileRevision> part = new ArrayList<VcsFileRevision>(list.subList(0, myConfiguration.MAXIMUM_HISTORY_ROWS));
+          list.clear();
+          list.addAll(part);
+        }
+      }
+    }
+    return full;
   }
 
   private void reportHistory(final FilePath filePath, final VcsKey vcsKey,
@@ -198,6 +220,11 @@ public class VcsHistoryProviderBackgroundableProxy {
     }
 
     @Override
+    public void beforeRefresh() {
+      myPartner.beforeRefresh();
+    }
+
+    @Override
     public void forceRefresh() {
       myPartner.forceRefresh();
     }
@@ -218,12 +245,29 @@ public class VcsHistoryProviderBackgroundableProxy {
 
     @Override
     public VcsHistorySession compute() throws VcsException {
-      VcsHistorySession session = myDelegate.createSessionFor(myFilePath);
+      VcsHistorySession session = createSessionWithLimitCheck(myFilePath);
       if (myConsumer != null) {
         myConsumer.consume(session);
       }
       return session;
     }
+  }
+
+  private VcsHistorySession createSessionWithLimitCheck(final FilePath filePath) throws VcsException {
+    final LimitHistoryCheck check = new LimitHistoryCheck(myProject, filePath.getPath());
+    final VcsAppendableHistoryPartnerAdapter partner = new VcsAppendableHistoryPartnerAdapter() {
+      @Override
+      public void acceptRevision(VcsFileRevision revision) {
+        check.checkNumber();
+        super.acceptRevision(revision);
+      }
+    };
+    try {
+      myDelegate.reportAppendableHistory(filePath, partner);
+    } catch (ProcessCanceledException e) {
+      if (! check.isOver()) throw e;
+    }
+    return partner.getSession();
   }
 
   private class CachingHistoryComputer implements ThrowableComputable<VcsHistorySession, VcsException> {
@@ -243,7 +287,7 @@ public class VcsHistoryProviderBackgroundableProxy {
       // we check for the last revision, since requests to this exact method at the moment only request history once, and no refresh is possible later
       session = getSessionFromCacheWithLastRevisionCheck(myFilePath, myVcsKey);
       if (session == null) {
-        session = myDelegate.createSessionFor(myFilePath);
+        session = createSessionWithLimitCheck(myFilePath);
         final FilePath correctedPath =
           ((VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>)myDelegate).getUsedFilePath(
             (VcsAbstractHistorySession)session);
@@ -263,8 +307,7 @@ public class VcsHistoryProviderBackgroundableProxy {
     if (pi != null) {
       pi.setText2("Checking last revision");
     }
-    final VcsAbstractHistorySession cached = myVcsHistoryCache
-      .getFull(filePath, vcsKey, (VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>)myDelegate);
+    final VcsAbstractHistorySession cached = getFullHistoryFromCache(vcsKey, filePath);
     if (cached == null) return null;
     final FilePath correctedFilePath =
       ((VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>)myDelegate).getUsedFilePath(cached);
