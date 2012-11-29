@@ -168,7 +168,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
 
     public int compare(VcsFileRevision o1, VcsFileRevision o2) {
-      return o1.getRevisionDate().compareTo(o2.getRevisionDate());
+      return Comparing.compare(o1.getRevisionDate(), o2.getRevisionDate());
     }
 
     @Override
