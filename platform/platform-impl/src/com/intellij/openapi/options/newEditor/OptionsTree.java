@@ -370,10 +370,10 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
 
         if (base.isError()) {
-          fg = UIUtil.isUnderDarcula() ? DarculaColors.RED : Color.red;
+          fg = JBColor.red;
         }
         else if (base.isModified()) {
-          fg = UIUtil.isUnderDarcula() ? DarculaColors.BLUE : Color.blue;
+          fg = JBColor.blue;
         }
 
       }

@@ -510,7 +510,12 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     myAlarm.cancelAllRequests();
     boolean restart = toRestartAlarm && !myDisposed && myInitialized;
     if (restart) {
-      myAlarm.addRequest(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY);
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          myAlarm.addRequest(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY);
+        }
+      });
     }
   }
 

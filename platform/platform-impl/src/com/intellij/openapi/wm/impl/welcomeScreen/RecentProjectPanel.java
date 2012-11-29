@@ -113,7 +113,8 @@ public class RecentProjectPanel extends JPanel {
           int index = myList.locationToIndex(point);
           myList.setSelectedIndex(index);
 
-          if (myList.getCellBounds(index, index).contains(point)) {
+          final Rectangle bounds = myList.getCellBounds(index, index);
+          if (bounds != null && bounds.contains(point)) {
             myList.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
           }
           else {

@@ -136,6 +136,7 @@ public class DaemonListeners implements Disposable {
                          @NotNull ProjectLevelVcsManager projectLevelVcsManager,
                          @NotNull VcsDirtyScopeManager vcsDirtyScopeManager,
                          @NotNull FileStatusManager fileStatusManager) {
+    Disposer.register(project, this);
     myProject = project;
     myDaemonCodeAnalyzer = daemonCodeAnalyzer;
     myPsiDocumentManager = psiDocumentManager;

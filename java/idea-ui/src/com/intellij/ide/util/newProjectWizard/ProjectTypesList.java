@@ -15,9 +15,14 @@
  */
 package com.intellij.ide.util.newProjectWizard;
 
+import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
@@ -34,6 +39,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -49,7 +55,7 @@ import java.util.List;
  * @author Dmitry Avdeev
  *         Date: 11/21/12
  */
-public class ProjectTypesList  {
+public class ProjectTypesList implements Disposable {
 
   private final JBList myList;
   private final SearchTextField mySearchField;
@@ -57,16 +63,54 @@ public class ProjectTypesList  {
   private MinusculeMatcher myMatcher;
   private Pair<TemplateItem, Integer> myBestMatch;
 
-  public ProjectTypesList(JBList list, SearchTextField searchField, MultiMap<TemplatesGroup, ProjectTemplate> map) {
+  private final TemplateItem myLoadingItem;
+
+  public ProjectTypesList(JBList list, SearchTextField searchField, MultiMap<TemplatesGroup, ProjectTemplate> map, final WizardContext context) {
     myList = list;
     mySearchField = searchField;
 
-    CollectionListModel<TemplateItem> model = new CollectionListModel<TemplateItem>(buildItems(map));
+    List<TemplateItem> items = buildItems(map);
+    final RemoteTemplatesFactory factory = new RemoteTemplatesFactory();
+    final String groupName = factory.getGroups()[0];
+    final TemplatesGroup samplesGroup = new TemplatesGroup(groupName, "", null);
+    myLoadingItem = new TemplateItem(new LoadingProjectTemplate(), samplesGroup) {
+      @Override
+      Icon getIcon() {
+        return null;
+      }
 
-    RemoteTemplatesFactory factory = new RemoteTemplatesFactory();
-//    factory.createTemplates()
-
+      @Override
+      String getDescription() {
+        return "";
+      }
+    };
+    items.add(myLoadingItem);
+    final CollectionListModel<TemplateItem> model = new CollectionListModel<TemplateItem>(items);
     myFilteringListModel = new FilteringListModel<TemplateItem>(model);
+
+    ProgressManager.getInstance().run(new Task.Backgroundable(context.getProject(), "Loading Samples") {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          myList.setPaintBusy(true);
+          final ProjectTemplate[] templates = factory.createTemplates(groupName, context);
+          Runnable runnable = new Runnable() {
+            public void run() {
+              int index = myList.getSelectedIndex();
+              model.remove(myLoadingItem);
+              for (ProjectTemplate template : templates) {
+                model.add(new TemplateItem(template, samplesGroup));
+              }
+              myList.setSelectedIndex(index);
+            }
+          };
+          SwingUtilities.invokeLater(runnable);
+        }
+        finally {
+          myList.setPaintBusy(false);
+        }
+      }
+    });
 
     myList.setCellRenderer(new GroupedItemsListRenderer(new ListItemDescriptor() {
       @Nullable
@@ -202,6 +246,10 @@ public class ProjectTypesList  {
     return false;
   }
 
+  @Override
+  public void dispose() {
+  }
+
   class TemplateItem {
 
     private final ProjectTemplate myTemplate;
@@ -226,11 +274,21 @@ public class ProjectTypesList  {
 
     protected int getMatchingDegree() {
       if (myMatcher == null) return Integer.MAX_VALUE;
-      int i = myMatcher.matchingDegree(getName() + " " + getGroupName() + " " + StringUtil.stripHtml(myTemplate.getDescription(), false));
+      String text = getName() + " " + getGroupName();
+      String description = getDescription();
+      if (description != null) {
+        text += " " + StringUtil.stripHtml(description, false);
+      }
+      int i = myMatcher.matchingDegree(text);
       if (myBestMatch == null || i > myBestMatch.second) {
         myBestMatch = Pair.create(this, i);
       }
       return i;
+    }
+
+    @Nullable
+    String getDescription() {
+      return myTemplate.getDescription();
     }
   }
 }
