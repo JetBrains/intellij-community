@@ -81,6 +81,7 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
           return parent.replace(JavaPsiFacade.getElementFactory(myProject).createStatementFromText(parent.getText() + ";", parent));
         }
       })).getExpression();
+      myEditor.getCaretModel().moveToOffset(myExpr.getTextRange().getStartOffset());
     }
   }
 
