@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,9 +47,6 @@ public abstract class BreakpointPanelProvider<B> {
 
   @Nullable
   public abstract GutterIconRenderer getBreakpointGutterIconRenderer(Object breakpoint);
-
-  @NotNull
-  public abstract Collection<AbstractBreakpointPanel<B>> getBreakpointPanels(@NotNull Project project, @NotNull DialogWrapper parentDialog);
 
   public abstract AnAction[] getAddBreakpointActions(@NotNull Project project);
 

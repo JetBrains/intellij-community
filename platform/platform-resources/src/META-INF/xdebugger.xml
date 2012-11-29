@@ -23,9 +23,6 @@
 
     <projectService serviceImplementation="com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager"/>
 
-    <projectService serviceInterface="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsConfigurationDialogFactory"
-                    serviceImplementation="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsConfigurationDialogFactory"/>
-
     <projectService serviceInterface="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsMasterDetailPopupFactory"
                     serviceImplementation="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsMasterDetailPopupFactory"/>
 

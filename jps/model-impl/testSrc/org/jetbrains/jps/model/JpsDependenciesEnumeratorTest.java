@@ -95,7 +95,7 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
 
   public void testLibraryScope() throws Exception {
     JpsLibraryDependency dependency = myModule.getDependenciesList().addLibraryDependency(createJDomLibrary());
-    JpsJavaExtensionService.getInstance().getOrCreateDependencyExtension(dependency).setScope(JpsJavaDependencyScope.RUNTIME);
+    getJavaService().getOrCreateDependencyExtension(dependency).setScope(JpsJavaDependencyScope.RUNTIME);
     JpsModuleRootModificationUtil.addDependency(myModule, createJDomLibrary(), JpsJavaDependencyScope.RUNTIME, false);
 
     assertClassRoots(orderEntries(myModule).withoutSdk(), getJDomJar());
@@ -190,16 +190,16 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     final String output = setModuleOutput(myModule, false);
     final String testOutput = setModuleOutput(myModule, true);
 
-    assertClassRoots(JpsJavaExtensionService.getInstance().enumerateDependencies(Arrays.asList(myModule)).withoutSdk(),
+    assertClassRoots(getJavaService().enumerateDependencies(Arrays.asList(myModule)).withoutSdk(),
                      testOutput, output, getJDomJar());
-    assertSourceRoots(JpsJavaExtensionService.getInstance().enumerateDependencies(Arrays.asList(myModule)).withoutSdk(),
+    assertSourceRoots(getJavaService().enumerateDependencies(Arrays.asList(myModule)).withoutSdk(),
                       srcRoot, testRoot, getJDomSources());
   }
 
   private String setModuleOutput(JpsModule module, boolean tests) {
     try {
       File file = FileUtil.createTempDirectory(module.getName(), tests ? "testSrc" : "src");
-      JpsJavaModuleExtension extension = JpsJavaExtensionService.getInstance().getOrCreateModuleExtension(module);
+      JpsJavaModuleExtension extension = getJavaService().getOrCreateModuleExtension(module);
       String url = JpsPathUtil.getLibraryRootUrl(file);
       if (tests) {
         extension.setTestOutputUrl(url);
