@@ -16,6 +16,7 @@
 package com.intellij.uiDesigner;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.ui.JBColor;
 import com.intellij.uiDesigner.compiler.RecursiveFormNestingException;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.*;
@@ -24,6 +25,7 @@ import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.uiDesigner.shared.XYLayoutManager;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -238,7 +240,7 @@ public final class XmlReader {
       radRootContainer.setMainComponentBinding(lwRootContainer.getMainComponentBinding());
       radRootContainer.setButtonGroups(lwRootContainer.getButtonGroups());
       radRootContainer.setInspectionSuppressions(lwRootContainer.getInspectionSuppressions());
-      radRootContainer.getDelegee().setBackground(Color.WHITE);
+      radRootContainer.getDelegee().setBackground(new JBColor(Color.WHITE, UIUtil.getListBackground()));
     }
 
     component.doneLoadingFromLw();
