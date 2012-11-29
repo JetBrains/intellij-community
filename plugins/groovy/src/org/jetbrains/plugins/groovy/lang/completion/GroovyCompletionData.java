@@ -130,6 +130,9 @@ public class GroovyCompletionData {
       if (suggestPrimitiveTypes(position)) {
         boolean inCast = psiElement()
           .afterLeaf(psiElement().withText("(").withParent(psiElement(GrParenthesizedExpression.class, GrTypeCastExpression.class)))
+          .accepts(position) ||
+                         psiElement()
+          .afterLeaf(psiElement().withElementType(GroovyTokenTypes.kAS).withParent(GrSafeCastExpression.class))
           .accepts(position);
 
         addKeywords(result, !inCast, BUILT_IN_TYPES);
