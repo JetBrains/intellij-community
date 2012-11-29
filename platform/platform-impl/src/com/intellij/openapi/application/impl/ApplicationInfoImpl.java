@@ -47,19 +47,22 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myMajorVersion = null;
   private String myMinorVersion = null;
   private String myBuildNumber = null;
-  private String myLogoUrl = null;
   private String myCompanyName = "JetBrains s.r.o.";
   private String myCompanyUrl = "http://www.jetbrains.com/";
-  private Color myLogoTextColor = new Color(0, 35, 135);  // idea blue
   private Color myProgressColor = null;
   private Icon myProgressTailIcon = null;
 
   private int myProgressY = 350;
-  private String myAboutLogoUrl = null;
+  private String mySplashImageUrl = null;
+  private String myAboutImageUrl = null;
+  private Color mySplashTextColor = new Color(0, 35, 135);  // idea blue
   @NonNls private String myIconUrl = "/icon.png";
   @NonNls private String mySmallIconUrl = "/icon_small.png";
   @NonNls private String myOpaqueIconUrl = "/icon.png";
   @NonNls private String myToolWindowIconUrl = "/toolwindows/toolWindowProject.png";
+  private String myWelcomeScreenLogoUrl = null;
+  private String myEditorBackgroundImageUrl = null;
+  
   private Calendar myBuildDate = null;
   private Calendar myMajorReleaseBuildDate = null;
   private String myPackageCode = null;
@@ -114,7 +117,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ATTRIBUTE_SHOW = "show";
   @NonNls private static final String WELCOME_SCREEN_ELEMENT_NAME = "welcome-screen";
   @NonNls private static final String CAPTION_URL_ATTR = "caption-url";
+  @NonNls private static final String LOGO_URL_ATTR = "logo-url";
   @NonNls private static final String SLOGAN_URL_ATTR = "slogan-url";
+  @NonNls private static final String ELEMENT_EDITOR = "editor";
+  @NonNls private static final String BACKGROUND_URL_ATTR = "background-url";
   @NonNls private static final String UPDATE_URLS_ELEMENT_NAME = "update-urls";
   @NonNls private static final String XML_EXTENSION = ".xml";
   @NonNls private static final String ATTRIBUTE_EAP = "eap";
@@ -199,12 +205,16 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     return PathManager.getHomePath() + File.separator + "help" + File.separator + myHelpFileName;
   }
 
-  public String getLogoUrl() {
-    return myLogoUrl;
+  public String getSplashImageUrl() {
+    return mySplashImageUrl;
   }
 
-  public Color getLogoTextColor() {
-    return myLogoTextColor;
+  public Color getSplashTextColor() {
+    return mySplashTextColor;
+  }
+
+  public String getAboutImageUrl() {
+    return myAboutImageUrl;
   }
 
   public Color getProgressColor() {
@@ -218,10 +228,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @Nullable
   public Icon getProgressTailIcon() {
     return myProgressTailIcon;
-  }
-
-  public String getAboutLogoUrl() {
-    return myAboutLogoUrl;
   }
 
   public String getIconUrl() {
@@ -240,16 +246,26 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     return myToolWindowIconUrl;
   }
 
-  public String getPackageCode() {
-    return myPackageCode;
-  }
-
   public String getWelcomeScreenCaptionUrl() {
     return myWelcomeScreenCaptionUrl;
   }
 
   public String getWelcomeScreenDeveloperSloganUrl() {
     return myWelcomeScreenDeveloperSloganUrl;
+  }
+
+  @Override
+  public String getWelcomeScreenLogoUrl() {
+    return myWelcomeScreenLogoUrl;
+  }
+
+  @Override
+  public String getEditorBackgroundImageUrl() {
+    return myEditorBackgroundImageUrl;
+  }
+
+  public String getPackageCode() {
+    return myPackageCode;
   }
 
   public boolean isEAP() {
@@ -407,8 +423,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
     Element logoElement = parentNode.getChild(ELEMENT_LOGO);
     if (logoElement != null) {
-      myLogoUrl = logoElement.getAttributeValue(ATTRIBUTE_URL);
-      myLogoTextColor = parseColor(logoElement.getAttributeValue(ATTRIBUTE_TEXT_COLOR));
+      mySplashImageUrl = logoElement.getAttributeValue(ATTRIBUTE_URL);
+      mySplashTextColor = parseColor(logoElement.getAttributeValue(ATTRIBUTE_TEXT_COLOR));
       String v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_COLOR);
       if (v != null) {
         myProgressColor = parseColor(v);
@@ -427,7 +443,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
     Element aboutLogoElement = parentNode.getChild(ELEMENT_ABOUT);
     if (aboutLogoElement != null) {
-      myAboutLogoUrl = aboutLogoElement.getAttributeValue(ATTRIBUTE_URL);
+      myAboutImageUrl = aboutLogoElement.getAttributeValue(ATTRIBUTE_URL);
     }
 
     Element iconElement = parentNode.getChild(ELEMENT_ICON);
@@ -453,8 +469,14 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
     Element welcomeScreen = parentNode.getChild(WELCOME_SCREEN_ELEMENT_NAME);
     if (welcomeScreen != null) {
+      myWelcomeScreenLogoUrl = welcomeScreen.getAttributeValue(LOGO_URL_ATTR);
       myWelcomeScreenCaptionUrl = welcomeScreen.getAttributeValue(CAPTION_URL_ATTR);
       myWelcomeScreenDeveloperSloganUrl = welcomeScreen.getAttributeValue(SLOGAN_URL_ATTR);
+    }
+
+    Element editor = parentNode.getChild(ELEMENT_EDITOR);
+    if (editor != null) {
+      myEditorBackgroundImageUrl = editor.getAttributeValue(BACKGROUND_URL_ATTR);
     }
 
     Element helpElement = parentNode.getChild(HELP_ELEMENT_NAME);

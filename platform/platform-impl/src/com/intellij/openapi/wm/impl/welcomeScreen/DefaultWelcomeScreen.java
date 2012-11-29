@@ -135,9 +135,8 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
     };
 
     myWelcomePanel.setBackgroundImage(IconLoader.getIcon("/frame_background.png"));
-    if (PlatformUtils.isIntelliJ()) {
-      myWelcomePanel.setCenterImage(IconLoader.getIcon("idea_logo_background.png"));
-    }
+    String icon = ApplicationInfoEx.getInstanceEx().getEditorBackgroundImageUrl();
+    if (icon != null) myWelcomePanel.setCenterImage(IconLoader.getIcon(icon));
 
     // Create caption pane
     JPanel topPanel = createCaptionPane();

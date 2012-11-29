@@ -56,7 +56,7 @@ public class AboutDialog extends JDialog {
     ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
     JPanel mainPanel = new JPanel(new BorderLayout());
     final JComponent closeListenerOwner;
-    Icon image = IconLoader.getIcon(appInfo.getAboutLogoUrl());
+    Icon image = IconLoader.getIcon(appInfo.getAboutImageUrl());
     final InfoSurface infoSurface;
     if (appInfo.showLicenseeInfo()) {
       infoSurface = new InfoSurface(image);
@@ -153,7 +153,7 @@ public class AboutDialog extends JDialog {
       setOpaque(false);
       col = Color.white;
       final ApplicationInfoEx info = ApplicationInfoEx.getInstanceEx();
-      linkCol = info.getLogoTextColor();
+      linkCol = info.getSplashTextColor();
       setBackground(col);
       ApplicationInfoEx ideInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
       Calendar cal = ideInfo.getBuildDate();
