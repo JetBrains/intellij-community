@@ -42,7 +42,7 @@ public class RngHtml5CompletionTest extends HighlightingTestBase {
   }
 
   public void testHtml5_1() throws Throwable {
-    doTestCompletion("html5_1");
+    myTestFixture.testCompletionTyping("html5_1.xml", "\n", "html5_1_after.xml");
   }
 
   public void testHtml5_2() throws Throwable {
@@ -102,7 +102,7 @@ public class RngHtml5CompletionTest extends HighlightingTestBase {
   }
 
   public void testHtml5_16() throws Throwable {
-    doTestCompletion("html5_16");
+    myTestFixture.testCompletionTyping("html5_16.xml", "\n", "html5_16_after.xml");
   }
 
   public void testHtml5_17() throws Throwable {
