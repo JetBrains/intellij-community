@@ -10,7 +10,8 @@
 
   <welcome-screen caption-url="/welcomeCaption.png" slogan-url="/developSlogan.png"/>
 
-  <update-urls check="http://www.jetbrains.com/updates/updates.xml"
+  <update-urls logo-url="/Logo_welcomeScreen.png"
+               check="http://www.jetbrains.com/updates/updates.xml"
                patches="http://download.jetbrains.com/python/"/>
 
   <feedback eap-url="http://www.jetbrains.com/feedback/feedback.jsp?product=PyCharm&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"
