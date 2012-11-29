@@ -5,6 +5,9 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.JpsJavaModuleExtension;
+import org.jetbrains.jps.model.java.JpsJavaProjectExtension;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.util.JpsPathUtil;
 
@@ -24,11 +27,29 @@ public class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
     final Collection<JpsModule> allModules = model.getProject().getModules();
     for (final JpsModule module : allModules) {
       final List<File> moduleExcludes = new ArrayList<File>();
-      myModuleToExcludesMap.put(module, moduleExcludes);
       for (String url : module.getExcludeRootsList().getUrls()) {
-        final File root = JpsPathUtil.urlToFile(url);
-        myExcludedRoots.add(root);
-        moduleExcludes.add(root);
+        moduleExcludes.add(JpsPathUtil.urlToFile(url));
+      }
+      JpsJavaModuleExtension moduleExtension = JpsJavaExtensionService.getInstance().getModuleExtension(module);
+      if (moduleExtension != null && !moduleExtension.isInheritOutput() && moduleExtension.isExcludeOutput()) {
+        String outputUrl = moduleExtension.getOutputUrl();
+        if (outputUrl != null) {
+          moduleExcludes.add(JpsPathUtil.urlToFile(outputUrl));
+        }
+        String testOutputUrl = moduleExtension.getTestOutputUrl();
+        if (testOutputUrl != null) {
+          moduleExcludes.add(JpsPathUtil.urlToFile(testOutputUrl));
+        }
+      }
+      myModuleToExcludesMap.put(module, moduleExcludes);
+      myExcludedRoots.addAll(moduleExcludes);
+    }
+
+    JpsJavaProjectExtension projectExtension = JpsJavaExtensionService.getInstance().getProjectExtension(model.getProject());
+    if (projectExtension != null) {
+      String url = projectExtension.getOutputUrl();
+      if (url != null) {
+        myExcludedRoots.add(JpsPathUtil.urlToFile(url));
       }
     }
 
