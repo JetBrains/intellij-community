@@ -8,6 +8,7 @@ import org.jetbrains.jps.android.builder.AndroidBuildTarget;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.android.model.impl.JpsAndroidFinalPackageElement;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.TargetOutputIndex;
 import org.jetbrains.jps.incremental.artifacts.builders.LayoutElementBuilderService;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactCompilerInstructionCreator;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactInstructionsBuilderContext;
@@ -39,7 +40,7 @@ public class AndroidFinalPackageElementBuilder extends LayoutElementBuilderServi
   }
 
   @Override
-  public Collection<? extends BuildTarget<?>> getDependencies(@NotNull JpsAndroidFinalPackageElement element) {
+  public Collection<? extends BuildTarget<?>> getDependencies(@NotNull JpsAndroidFinalPackageElement element, TargetOutputIndex outputIndex) {
     final JpsModule module = element.getModuleReference().resolve();
     return module != null
            ? Collections.singletonList(new AndroidBuildTarget(AndroidBuildTarget.TargetType.PACKAGING, module))

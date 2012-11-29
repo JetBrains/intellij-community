@@ -9,11 +9,9 @@ import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.builders.BuildTarget;
-import org.jetbrains.jps.builders.BuildTargetIndex;
-import org.jetbrains.jps.builders.BuildTargetType;
-import org.jetbrains.jps.builders.ModuleBasedTarget;
+import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.incremental.BuilderRegistry;
+import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -88,20 +86,21 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
   }
 
   @Override
-  public List<BuildTargetChunk> getSortedTargetChunks() {
-    initializeChunks();
+  public List<BuildTargetChunk> getSortedTargetChunks(@NotNull CompileContext context) {
+    initializeChunks(context);
     return myTargetChunks;
   }
 
 
-  private synchronized void initializeChunks() {
+  private synchronized void initializeChunks(@NotNull CompileContext context) {
     if (myTargetChunks != null) {
       return;
     }
 
     final List<? extends BuildTarget<?>> allTargets = getAllTargets();
+    TargetOutputIndex outputIndex = new TargetOutputIndexImpl(allTargets, context);
     for (BuildTarget<?> target : allTargets) {
-      myDependencies.put(target, target.computeDependencies(this));
+      myDependencies.put(target, target.computeDependencies(this, outputIndex));
     }
 
     GraphGenerator<BuildTarget<?>>
@@ -143,8 +142,8 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
   }
 
   @Override
-  public Set<BuildTarget<?>> getDependenciesRecursively(BuildTarget<?> target) {
-    initializeChunks();
+  public Set<BuildTarget<?>> getDependenciesRecursively(@NotNull BuildTarget<?> target, @NotNull CompileContext context) {
+    initializeChunks(context);
     LinkedHashSet<BuildTarget<?>> result = new LinkedHashSet<BuildTarget<?>>();
     for (BuildTarget<?> dep : myDependencies.get(target)) {
       collectDependenciesRecursively(dep, result);
@@ -158,12 +157,5 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
         collectDependenciesRecursively(dep, result);
       }
     }
-  }
-
-  @NotNull
-  @Override
-  public Collection<BuildTarget<?>> getDependencies(@NotNull BuildTarget<?> target) {
-    initializeChunks();
-    return myDependencies.get(target);
   }
 }

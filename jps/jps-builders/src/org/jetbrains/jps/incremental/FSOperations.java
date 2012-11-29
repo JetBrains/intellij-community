@@ -70,7 +70,7 @@ public class FSOperations {
     // now mark all modules that depend on dirty modules
     final JpsJavaClasspathKind classpathKind = JpsJavaClasspathKind.compile(chunk.containsTests());
     boolean found = false;
-    for (BuildTargetChunk targetChunk : context.getProjectDescriptor().getBuildTargetIndex().getSortedTargetChunks()) {
+    for (BuildTargetChunk targetChunk : context.getProjectDescriptor().getBuildTargetIndex().getSortedTargetChunks(context)) {
       if (!found) {
         if (targetChunk.getTargets().equals(chunk.getTargets())) {
           found = true;
