@@ -5,7 +5,7 @@
   <xsl:template match="/*">
     <taglib>
       <xsl:if test="@version">
-        <tlib-version><xsl:apply-<caret></tlib-version>
+        <tlib-version><xsl:apply-imports/><caret></tlib-version>
       </xsl:if>
     </taglib>
   </xsl:template>
