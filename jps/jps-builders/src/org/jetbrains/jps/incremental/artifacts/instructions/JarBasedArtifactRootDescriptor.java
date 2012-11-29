@@ -68,6 +68,7 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
                            final int rootIndex, final String outputPath,
                            CompileContext context, final BuildOutputConsumer outputConsumer,
                            final ArtifactOutputToSourceMapping outSrcMapping) throws IOException {
+    if (!myRoot.isFile()) return;
     ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
     if (logger.isEnabled()) {
       logger.logCompiledPaths(Collections.singletonList(filePath), IncArtifactBuilder.BUILDER_NAME, "Extracting archive:");

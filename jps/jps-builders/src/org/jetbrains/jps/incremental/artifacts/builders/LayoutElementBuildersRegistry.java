@@ -7,6 +7,7 @@ import com.intellij.util.containers.ClassMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.TargetOutputIndex;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.model.module.JpsModule;
@@ -61,11 +62,11 @@ public class LayoutElementBuildersRegistry {
     generateInstructions(artifact.getRootElement(), creator, context);
   }
 
-  public Collection<BuildTarget<?>> getDependencies(JpsPackagingElement element) {
+  public Collection<BuildTarget<?>> getDependencies(JpsPackagingElement element, TargetOutputIndex outputIndex) {
     LayoutElementBuilderService builder = getElementBuilder(element);
     if (builder != null) {
       //noinspection unchecked
-      return builder.getDependencies(element);
+      return builder.getDependencies(element, outputIndex);
     }
     return Collections.emptyList();
   }
@@ -160,11 +161,19 @@ public class LayoutElementBuildersRegistry {
                                      ArtifactInstructionsBuilderContext builderContext) {
       final String dirPath = element.getDirectoryPath();
       if (dirPath != null) {
-        final File directory = new File(FileUtil.toSystemDependentName(dirPath));
-        if (directory.isDirectory()) {
-          instructionCreator.addDirectoryCopyInstructions(directory);
-        }
+        final File directory = new File(dirPath);
+        instructionCreator.addDirectoryCopyInstructions(directory);
       }
+    }
+
+    @Override
+    public Collection<? extends BuildTarget<?>> getDependencies(@NotNull JpsDirectoryCopyPackagingElement element,
+                                                                TargetOutputIndex outputIndex) {
+      String dirPath = element.getDirectoryPath();
+      if (dirPath != null) {
+        return outputIndex.getTargetsByOutputFile(new File(dirPath));
+      }
+      return Collections.emptyList();
     }
   }
 
@@ -178,12 +187,20 @@ public class LayoutElementBuildersRegistry {
                                      ArtifactInstructionsBuilderContext builderContext) {
       final String filePath = element.getFilePath();
       if (filePath != null) {
-        final File file = new File(FileUtil.toSystemDependentName(filePath));
-        if (file.isFile()) {
-          final String fileName = element.getRenamedOutputFileName();
-          instructionCreator.addFileCopyInstruction(file, fileName != null ? fileName : file.getName());
-        }
+        final File file = new File(filePath);
+        final String fileName = element.getRenamedOutputFileName();
+        instructionCreator.addFileCopyInstruction(file, fileName != null ? fileName : file.getName());
       }
+    }
+
+    @Override
+    public Collection<? extends BuildTarget<?>> getDependencies(@NotNull JpsFileCopyPackagingElement element,
+                                                                TargetOutputIndex outputIndex) {
+      String filePath = element.getFilePath();
+      if (filePath != null) {
+        return outputIndex.getTargetsByOutputFile(new File(filePath));
+      }
+      return Collections.emptyList();
     }
   }
 
@@ -198,10 +215,7 @@ public class LayoutElementBuildersRegistry {
                                      ArtifactInstructionsBuilderContext builderContext) {
       final String jarPath = element.getFilePath();
       final String pathInJar = element.getPathInJar();
-      File jarFile = new File(FileUtil.toSystemDependentName(jarPath));
-      if (jarFile.isFile()) {
-        instructionCreator.addExtractDirectoryInstruction(jarFile, pathInJar);
-      }
+      instructionCreator.addExtractDirectoryInstruction(new File(jarPath), pathInJar);
     }
   }
 
@@ -218,7 +232,8 @@ public class LayoutElementBuildersRegistry {
     }
 
     @Override
-    public Collection<? extends BuildTarget<?>> getDependencies(@NotNull JpsProductionModuleOutputPackagingElement element) {
+    public Collection<? extends BuildTarget<?>> getDependencies(@NotNull JpsProductionModuleOutputPackagingElement element,
+                                                                TargetOutputIndex outputIndex) {
       JpsModule module = element.getModuleReference().resolve();
       if (module != null) {
         return Collections.singletonList(new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION));
@@ -240,7 +255,8 @@ public class LayoutElementBuildersRegistry {
     }
 
     @Override
-    public Collection<? extends BuildTarget<?>> getDependencies(@NotNull JpsTestModuleOutputPackagingElement element) {
+    public Collection<? extends BuildTarget<?>> getDependencies(@NotNull JpsTestModuleOutputPackagingElement element,
+                                                                TargetOutputIndex outputIndex) {
       JpsModule module = element.getModuleReference().resolve();
       if (module != null) {
         return Collections.singletonList(new ModuleBuildTarget(module, JavaModuleBuildTargetType.TEST));
@@ -288,7 +304,7 @@ public class LayoutElementBuildersRegistry {
       }
 
       final JpsPackagingElement rootElement = artifact.getRootElement();
-      final File outputDir = new File(FileUtil.toSystemDependentName(outputPath));
+      final File outputDir = new File(outputPath);
       if (rootElement instanceof JpsArchivePackagingElement) {
         final String fileName = ((JpsArchivePackagingElement)rootElement).getArchiveName();
         instructionCreator.addFileCopyInstruction(new File(outputDir, fileName), fileName);
