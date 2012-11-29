@@ -17,14 +17,11 @@
 package org.jetbrains.android.sdk;
 
 import com.android.SdkConstants;
-import com.android.annotations.NonNull;
 import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.Client;
 import com.android.ddmlib.ClientData;
 import com.android.ddmlib.IDevice;
 import com.android.sdklib.IAndroidTarget;
-import com.android.utils.ILogger;
-import com.intellij.CommonBundle;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.OSProcessManager;
 import com.intellij.facet.ProjectFacetManager;
@@ -64,9 +61,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 /**
  * @author Eugene.Kudelevsky
@@ -425,48 +420,6 @@ public class AndroidSdkUtils {
 
   public static void openModuleDependenciesConfigurable(final Module module) {
     ProjectSettingsService.getInstance(module.getProject()).openModuleDependenciesSettings(module, null);
-  }
-
-  @NotNull
-  public static ILogger getSdkLog(@NotNull final Object o) {
-    if (!(o instanceof Component || o instanceof Project)) {
-      throw new IllegalArgumentException();
-    }
-
-    return new ILogger() {
-      public void warning(String warningFormat, Object... args) {
-        if (warningFormat != null) {
-          LOG.warn(String.format(warningFormat, args));
-        }
-      }
-
-      @Override
-      public void info(@NonNull String msgFormat, Object... args) {
-        if (msgFormat != null) {
-          LOG.debug(String.format(msgFormat, args));
-        }
-      }
-
-      @Override
-      public void verbose(@NonNull String msgFormat, Object... args) {
-      }
-
-      public void error(Throwable t, String errorFormat, Object... args) {
-        if (t != null) {
-          LOG.info(t);
-        }
-        if (errorFormat != null) {
-          String message = String.format(errorFormat, args);
-          LOG.info(message);
-          if (o instanceof Project) {
-            Messages.showErrorDialog((Project)o, message, CommonBundle.getErrorTitle());
-          }
-          else {
-            Messages.showErrorDialog((Component)o, message, CommonBundle.getErrorTitle());
-          }
-        }
-      }
-    };
   }
 
   @Nullable
