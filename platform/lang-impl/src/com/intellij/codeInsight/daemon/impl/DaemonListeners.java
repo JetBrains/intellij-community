@@ -585,10 +585,8 @@ public class DaemonListeners implements Disposable {
   }
 
   private void stopDaemon(boolean toRestartAlarm) {
-    if (!myProject.isDisposed()) {
-      myDaemonEventPublisher.daemonCancelEventOccurred();
-    }
-    myDaemonCodeAnalyzer.stopProcess(toRestartAlarm && !myProject.isDisposed());
+    myDaemonEventPublisher.daemonCancelEventOccurred();
+    myDaemonCodeAnalyzer.stopProcess(toRestartAlarm);
   }
 
   private void stopDaemonAndRestartAllFiles() {
