@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.profile.codeInspection.ui.InspectionsConfigTreeComparator;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
@@ -53,9 +54,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.ExpandVetoException;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 public class InspectionTree extends Tree {
   private final HashSet<Object> myExpandedUserObjects;
@@ -280,7 +279,7 @@ public class InspectionTree extends Tree {
         if (refElement instanceof RefElement) {
           refElement = ((RefElement)refElement).getContainingEntry();
           if (((RefElement)refElement).isEntry() && ((RefElement)refElement).isPermanentEntry()) {
-            foreground = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, Color.blue);
+            foreground = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.blue);
           }
         }
 
