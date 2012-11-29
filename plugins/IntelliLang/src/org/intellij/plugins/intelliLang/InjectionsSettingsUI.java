@@ -26,6 +26,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.NonDefaultProjectConfigurable;
@@ -308,7 +309,7 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, NonD
         }
         catch (IOException ex) {
           final String msg = ex.getLocalizedMessage();
-          Messages.showErrorDialog(myProject, msg != null && msg.length() > 0 ? msg : ex.toString(), "Export failed");
+          Messages.showErrorDialog(myProject, msg != null && msg.length() > 0 ? msg : ex.toString(), "Export Failed");
         }
       }
 
@@ -567,7 +568,7 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, NonD
           return true;
         }
       });
-      Icon icon = StdFileTypes.PLAIN_TEXT.getIcon();
+      Icon icon = FileTypes.PLAIN_TEXT.getIcon();
       int preferred = (int)(new JLabel(maxName[0], icon, SwingConstants.LEFT).getPreferredSize().width * 1.1);
       getColumnModel().getColumn(2).setMinWidth(preferred);
       getColumnModel().getColumn(2).setPreferredWidth(preferred);
@@ -779,7 +780,7 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, NonD
       @Override
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
         return super.isFileVisible(file, showHiddenFiles) &&
-               (file.isDirectory() || "xml".equals(file.getExtension()) || file.getFileType() == StdFileTypes.ARCHIVE);
+               (file.isDirectory() || "xml".equals(file.getExtension()) || file.getFileType() == FileTypes.ARCHIVE);
       }
 
       @Override
@@ -824,7 +825,8 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, NonD
       //myInjections.addAll(newInjections);
 
       for (String supportId : InjectorUtils.getActiveInjectionSupportIds()) {
-        final List<BaseInjection> currentInjections = getInjectionList(new ArrayList<InjInfo>(currentMap.get(supportId)));
+        ArrayList<InjInfo> list = new ArrayList<InjInfo>(ObjectUtils.notNull(currentMap.get(supportId), Collections.<InjInfo>emptyList()));
+        final List<BaseInjection> currentInjections = getInjectionList(list);
         final List<BaseInjection> importingInjections = cfg.getInjections(supportId);
         if (currentInjections == null) {
           newInjections.addAll(importingInjections);
@@ -850,7 +852,7 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, NonD
       Configuration.LOG.error(ex);
 
       final String msg = ex.getLocalizedMessage();
-      Messages.showErrorDialog(myProject, msg != null && msg.length() > 0 ? msg : ex.toString(), "Import failed");
+      Messages.showErrorDialog(myProject, msg != null && msg.length() > 0 ? msg : ex.toString(), "Import Failed");
     }
   }
 
