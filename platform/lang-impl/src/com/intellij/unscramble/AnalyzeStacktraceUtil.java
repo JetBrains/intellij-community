@@ -19,8 +19,9 @@ package com.intellij.unscramble;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.filters.*;
-import com.intellij.execution.impl.ConsoleViewImpl;
+import com.intellij.execution.filters.Filter;
+import com.intellij.execution.filters.TextConsoleBuilder;
+import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
@@ -111,7 +112,8 @@ public class AnalyzeStacktraceUtil {
     for (AnAction action: consoleView.createConsoleActions()) {
       toolbarActions.add(action);
     }
-    toolbarActions.add(new AnnotateStackTraceAction((ConsoleViewImpl)consoleView));
+    // does not work
+    //toolbarActions.add(new AnnotateStackTraceAction((ConsoleViewImpl)consoleView));
     toolbarActions.add(new CloseAction(executor, descriptor, project));
     ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, descriptor);
     consoleView.allowHeavyFilters();
