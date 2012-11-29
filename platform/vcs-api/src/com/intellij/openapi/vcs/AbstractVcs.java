@@ -629,5 +629,12 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   public boolean fileListenerIsSynchronous() {
     return true;
   }
+
+  /**
+   * compares different presentations of revision number (ex. in Perforce)
+   */
+  public boolean revisionsSame(@NotNull final VcsRevisionNumber number1, @NotNull final VcsRevisionNumber number2) {
+    return number1.equals(number2);
+  }
 }
 

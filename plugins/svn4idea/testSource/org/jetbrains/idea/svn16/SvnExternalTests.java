@@ -26,7 +26,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import junit.framework.Assert;
 import org.jetbrains.idea.svn.*;
-import org.jetbrains.idea.svn.actions.CreateExternalAction;
 import org.junit.Test;
 
 import java.io.File;
@@ -59,13 +58,6 @@ public class SvnExternalTests extends Svn17TestCase {
     myExternalURL = myRepoUrl + "/root/target";
   }
 
-  private static void sleep(final int millis) {
-    try {
-      Thread.sleep(millis);
-    }
-    catch (InterruptedException ignore) { }
-  }
-
   @Test
   public void testExternalCopyIsDetected() throws Exception {
     prepareExternal();
@@ -81,36 +73,6 @@ public class SvnExternalTests extends Svn17TestCase {
       expectedUrls.remove(StringUtil.toLowerCase(info.getAbsoluteUrl()));
     }
     Assert.assertTrue(expectedUrls.isEmpty());
-  }
-
-  private void prepareExternal() throws Exception {
-    final SubTree subTree = new SubTree(myWorkingCopyDir);
-    checkin();
-    clManager.stopEveryThingIfInTestMode();
-    sleep(100);
-    final File rootFile = new File(subTree.myRootDir.getPath());
-    FileUtil.delete(rootFile);
-    FileUtil.delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn"));
-    Assert.assertTrue(!rootFile.exists());
-    sleep(200);
-    myWorkingCopyDir.refresh(false, true);
-
-    verify(runSvn("co", myMainUrl));
-    final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
-    CreateExternalAction.addToExternalProperty(myVcs, sourceDir, "external", myExternalURL);
-    sleep(100);
-    verify(runSvn("up", sourceDir.getPath()));
-    sleep(100);
-    myWorkingCopyDir.refresh(false, true);
-    Assert.assertTrue(new File(sourceDir, "external").exists());
-    // above is preparation
-
-    // start change list manager again
-    clManager.forceGoInTestMode();
-    SvnConfiguration.getInstance(myProject).DETECT_NESTED_COPIES = true;
-    myVcs.invokeRefreshSvnRoots(false);
-    clManager.ensureUpToDate(false);
-    clManager.ensureUpToDate(false);
   }
 
   private void prepareInnerCopy() throws Exception {
