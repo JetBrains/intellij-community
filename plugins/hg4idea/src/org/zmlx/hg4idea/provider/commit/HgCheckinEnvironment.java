@@ -14,6 +14,8 @@ package org.zmlx.hg4idea.provider.commit;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
@@ -36,6 +38,8 @@ import org.zmlx.hg4idea.command.*;
 import org.zmlx.hg4idea.execution.HgCommandException;
 
 import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
 
 public class HgCheckinEnvironment implements CheckinEnvironment {
 
@@ -177,14 +181,21 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
-    HgRemoveCommand command = new HgRemoveCommand(myProject);
+    final List<HgFile> filesWithRoots = new ArrayList<HgFile>();
     for (FilePath filePath : files) {
       VirtualFile vcsRoot = VcsUtil.getVcsRootFor(myProject, filePath);
       if (vcsRoot == null) {
         continue;
       }
-      command.execute(new HgFile(vcsRoot, filePath));
+      filesWithRoots.add(new HgFile(vcsRoot, filePath));
     }
+    new Task.Backgroundable(myProject, "Removing files...") {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        HgRemoveCommand command = new HgRemoveCommand(myProject);
+        command.execute(filesWithRoots);
+      }
+    }.queue();
     return null;
   }
 
