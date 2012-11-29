@@ -251,7 +251,7 @@ public final class IconLoader {
       }
       final int scale = UIUtil.isRetina() ? 2 : 1;
       @SuppressWarnings("UndesirableClassUsage")
-      final BufferedImage image = new BufferedImage(scale*icon.getIconWidth(), scale*icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+      BufferedImage image = new BufferedImage(scale*icon.getIconWidth(), scale*icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
       final Graphics2D graphics = image.createGraphics();
 
       graphics.setColor(UIUtil.TRANSPARENT_COLOR);
@@ -260,7 +260,10 @@ public final class IconLoader {
       icon.paintIcon(LabelHolder.ourFakeComponent, graphics, 0, 0);
 
       graphics.dispose();
-      final Image img = UIUtil.isRetina() ? RetinaImage.createFrom(createDisabled(image), 2, ImageLoader.ourComponent) : image;
+      
+      Image img = createDisabled(image);
+      if (UIUtil.isRetina()) img = RetinaImage.createFrom(image, 2, ImageLoader.ourComponent);
+      
       disabledIcon = new MyImageIcon(img);
       ourIcon2DisabledIcon.put(icon, disabledIcon);
     }
