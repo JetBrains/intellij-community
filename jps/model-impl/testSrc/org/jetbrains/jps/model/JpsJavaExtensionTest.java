@@ -14,9 +14,9 @@ import java.util.List;
 public class JpsJavaExtensionTest extends JpsJavaModelTestCase {
   public void testModule() {
     final JpsModule module = addModule();
-    final JpsJavaModuleExtension extension = JpsJavaExtensionService.getInstance().getOrCreateModuleExtension(module);
+    final JpsJavaModuleExtension extension = getJavaService().getOrCreateModuleExtension(module);
     extension.setOutputUrl("file://path");
-    JpsJavaModuleExtension moduleExtension = JpsJavaExtensionService.getInstance().getModuleExtension(module);
+    JpsJavaModuleExtension moduleExtension = getJavaService().getModuleExtension(module);
     assertNotNull(moduleExtension);
     assertEquals("file://path", moduleExtension.getOutputUrl());
   }
@@ -26,14 +26,14 @@ public class JpsJavaExtensionTest extends JpsJavaModelTestCase {
     final JpsModule module = model.getProject().addModule("m", JpsJavaModuleType.INSTANCE);
     final JpsLibrary library = model.getProject().addLibrary("l", JpsJavaLibraryType.INSTANCE);
     final JpsLibraryDependency dependency = module.getDependenciesList().addLibraryDependency(library);
-    JpsJavaExtensionService.getInstance().getOrCreateDependencyExtension(dependency).setScope(JpsJavaDependencyScope.TEST);
-    JpsJavaExtensionService.getInstance().getOrCreateDependencyExtension(dependency).setExported(true);
+    getJavaService().getOrCreateDependencyExtension(dependency).setScope(JpsJavaDependencyScope.TEST);
+    getJavaService().getOrCreateDependencyExtension(dependency).setExported(true);
     model.commit();
 
     List<JpsDependencyElement> dependencies = assertOneElement(myProject.getModules()).getDependenciesList().getDependencies();
     assertEquals(2, dependencies.size());
     final JpsDependencyElement dep = dependencies.get(1);
-    final JpsJavaDependencyExtension extension = JpsJavaExtensionService.getInstance().getDependencyExtension(dep);
+    final JpsJavaDependencyExtension extension = getJavaService().getDependencyExtension(dep);
     assertNotNull(extension);
     assertTrue(extension.isExported());
     assertSame(JpsJavaDependencyScope.TEST, extension.getScope());
