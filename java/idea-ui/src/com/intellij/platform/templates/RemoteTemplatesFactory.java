@@ -61,7 +61,7 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
     HttpURLConnection connection = null;
     String code = ApplicationInfo.getInstance().getBuild().getProductCode();
     try {
-      connection = getConnection("IC" + "_templates.xml");
+      connection = getConnection(code + "_templates.xml");
       stream = connection.getInputStream();
       String text = StreamUtil.readText(stream);
       return createFromText(text);
