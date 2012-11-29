@@ -522,7 +522,7 @@ public class GenericsHighlightUtil {
     }
     else if (superMethod.isConstructor()) return null;
 
-    final boolean atLeast17 = JavaVersionService.getInstance().isAtLeast(checkMethod, JavaSdkVersion.JDK_1_7);
+    final boolean atLeast17 = JavaVersionService.getInstance().isAtLeast(aClass, JavaSdkVersion.JDK_1_7);
     if (checkMethod.hasModifierProperty(PsiModifier.STATIC) && !checkEqualsSuper && !atLeast17) {
       return null;
     }
