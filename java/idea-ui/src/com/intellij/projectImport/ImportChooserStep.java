@@ -34,11 +34,11 @@ import com.intellij.ui.components.JBRadioButton;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -89,17 +89,17 @@ public class ImportChooserStep extends ProjectImportWizardStep {
       }
     });
 
-    ChangeListener changeListener = new ChangeListener() {
+    ActionListener actionListener = new ActionListener() {
       @Override
-      public void stateChanged(ChangeEvent e) {
+      public void actionPerformed(ActionEvent e) {
         if (myImportFrom.isSelected()) {
           IdeFocusManager.getInstance(context.getProject()).requestFocus(myList, false);
         }
         updateSteps();
       }
     };
-    myImportFrom.addChangeListener(changeListener);
-    myCreateFromSources.addChangeListener(changeListener);
+    myImportFrom.addActionListener(actionListener);
+    myCreateFromSources.addActionListener(actionListener);
 
     myList.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
@@ -120,7 +120,6 @@ public class ImportChooserStep extends ProjectImportWizardStep {
   public void updateStep() {
     if (myList.getSelectedValue() != null) return;
 
-    myList.setSelectedIndex(0);
     final String id = PropertiesComponent.getInstance().getValue(PREFERRED);
     if (id == null || id.equals(myFromSourcesProvider.getId())) {
       myCreateFromSources.setSelected(true);
@@ -133,6 +132,9 @@ public class ImportChooserStep extends ProjectImportWizardStep {
           break;
         }
       }
+    }
+    if (myList.getSelectedValue() == null) {
+      myList.setSelectedIndex(0);
     }
   }
 
