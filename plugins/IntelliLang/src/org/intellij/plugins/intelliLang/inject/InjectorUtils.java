@@ -25,8 +25,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.MultiHostRegistrarImpl;
 import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.util.ArrayUtil;
@@ -218,5 +217,22 @@ public class InjectorUtils {
     injection.setPrefix(prefix);
     injection.setSuffix(suffix);
     return injection;
+  }
+
+  @Nullable
+  public static PsiComment findNearestComment(PsiElement element) {
+    if (element instanceof PsiComment) return null;
+    PsiElement start = element;
+    for (int i=0; i<2 && start != null; i++) {
+      if (start instanceof PsiFile) return null;
+      for (PsiElement e = start.getPrevSibling(); e != null; e = e.getPrevSibling()) {
+        if (e instanceof PsiComment) return (PsiComment)e;
+        if (e instanceof PsiWhiteSpace) continue;
+        if (e instanceof PsiLanguageInjectionHost && StringUtil.isEmptyOrSpaces(e.getText())) continue;
+        break;
+      }
+      start = element.getParent();
+    }
+    return null;
   }
 }

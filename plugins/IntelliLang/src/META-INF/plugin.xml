@@ -34,6 +34,7 @@
 
     <projectConfigurable instance="org.intellij.plugins.intelliLang.InjectionsSettingsUI"/>
 
+    <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.CommentLanguageInjector"/>
     <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.TemporaryPlacesInjector"/>
     <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.DefaultLanguageInjector" order="last"/>
 
