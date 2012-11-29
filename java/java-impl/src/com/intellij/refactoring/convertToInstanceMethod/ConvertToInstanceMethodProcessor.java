@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
-import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -138,8 +137,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     final Set<PsiMember> methods = Collections.singleton((PsiMember)myMethod);
     if (!myTargetClass.isInterface()) {
-      final String original = VisibilityUtil.getVisibilityModifier(myMethod.getModifierList());
-      RefactoringConflictsUtil.analyzeAccessibilityConflicts(methods, myTargetClass, conflicts, original);
+      RefactoringConflictsUtil.analyzeAccessibilityConflicts(methods, myTargetClass, conflicts, myNewVisibility);
     }
     else {
       for (final UsageInfo usage : usagesIn) {
@@ -168,48 +166,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    try {
-      addInaccessibilityConflicts(usagesIn, conflicts);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
-
     return showConflicts(conflicts, usagesIn);
-  }
-
-  private void addInaccessibilityConflicts(final UsageInfo[] usages, final MultiMap<PsiElement, String> conflicts) throws IncorrectOperationException {
-    final PsiModifierList copy = (PsiModifierList)myMethod.getModifierList().copy();
-    if (myNewVisibility != null) {
-      if (myNewVisibility.equals(VisibilityUtil.ESCALATE_VISIBILITY)) {
-        VisibilityUtil.setVisibility(copy, PsiModifier.PUBLIC);
-      }
-      else {
-        VisibilityUtil.setVisibility(copy, myNewVisibility);
-      }
-    }
-
-    for (UsageInfo usage : usages) {
-      if (usage instanceof MethodCallUsageInfo) {
-        final PsiMethodCallExpression call = ((MethodCallUsageInfo)usage).getMethodCall();
-        final PsiExpression[] arguments = call.getArgumentList().getExpressions();
-        final int index = myMethod.getParameterList().getParameterIndex(myTargetParameter);
-        LOG.assertTrue(index >= 0);
-        PsiClass accessObjectClass = null;
-        if (index < arguments.length) {
-          final PsiExpression argument = arguments[index];
-          final PsiType argumentType = argument.getType();
-          if (argumentType instanceof PsiClassType) accessObjectClass = ((PsiClassType)argumentType).resolve();
-        }
-        if (!JavaResolveUtil.isAccessible(myMethod, myTargetClass, copy, call, accessObjectClass, null)) {
-          final String newVisibility = myNewVisibility == null ? VisibilityUtil.getVisibilityStringToDisplay(myMethod) : myNewVisibility;
-          String message = RefactoringBundle.message("0.with.1.visibility.is.not.accessible.from.2",
-                                                     RefactoringUIUtil.getDescription(myMethod, true), newVisibility,
-                                                     RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(call), true));
-          conflicts.putValue(myMethod, message);
-        }
-      }
-    }
   }
 
   protected void performRefactoring(UsageInfo[] usages) {
