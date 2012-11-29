@@ -118,7 +118,6 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     String path = "/java/";
     configureByFile(path + getTestName(false) + ".java");
     complete();
-    checkResultByFile(path + getTestName(false) + "_after.java");
     assertEquals(2, myItems.length);
   }
 

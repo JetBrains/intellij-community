@@ -839,7 +839,6 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testAnnotation() throws Exception {
     configureByTestName();
-    checkResultByTestName();
     assertStringItems("ElementType.ANNOTATION_TYPE", "ElementType.CONSTRUCTOR",
                       "ElementType.FIELD", "ElementType.LOCAL_VARIABLE",
                       "ElementType.METHOD", "ElementType.PACKAGE", "ElementType.PARAMETER",
@@ -848,12 +847,10 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testAnnotation2() throws Exception {
     configureByTestName();
-    checkResultByTestName();
     assertStringItems("RetentionPolicy.CLASS", "RetentionPolicy.RUNTIME", "RetentionPolicy.SOURCE");
   }
   public void testAnnotation2_2() throws Exception {
     configureByTestName();
-    checkResultByTestName();
     assertSameElements(myFixture.getLookupElementStrings(), "RetentionPolicy.CLASS", "RetentionPolicy.SOURCE", "RetentionPolicy.RUNTIME");
   }
 
@@ -881,8 +878,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testAnnotation6() throws Exception {
     configureByTestName();
-    checkResultByTestName();
-
+  
     assertStringItems("ElementType.ANNOTATION_TYPE", "ElementType.CONSTRUCTOR",
                       "ElementType.FIELD", "ElementType.LOCAL_VARIABLE",
                       "ElementType.METHOD", "ElementType.PACKAGE", "ElementType.PARAMETER",

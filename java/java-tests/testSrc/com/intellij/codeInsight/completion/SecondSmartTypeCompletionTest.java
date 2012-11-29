@@ -122,7 +122,6 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.complete(CompletionType.SMART);
     assertStringItems("MyEnum.Bar", "MyEnum.Foo");
-    checkResult();
     myFixture.complete(CompletionType.SMART);
     assertStringItems("my.getEnum", "MyEnum.Bar", "MyEnum.Foo");
   }
