@@ -249,8 +249,15 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
         SVNStatus srcStatus = getFileStatus(src);
         final File toDir = dst.getParentFile();
         SVNStatus dstStatus = getFileStatus(toDir);
-        if ((srcStatus == null || SvnVcs.svnStatusIsUnversioned(srcStatus)) && (dstStatus == null || SvnVcs.svnStatusIsUnversioned(dstStatus))) {
+        final boolean srcUnversioned = srcStatus == null || SvnVcs.svnStatusIsUnversioned(srcStatus);
+        if (srcUnversioned && (dstStatus == null || SvnVcs.svnStatusIsUnversioned(dstStatus))) {
           return false;
+        }
+        if (srcUnversioned) {
+          SVNStatus dstWasStatus = getFileStatus(dst);
+          if (dstWasStatus == null || SvnVcs.svnStatusIsUnversioned(dstWasStatus)) {
+            return false;
+          }
         }
         if (for17move(vcs, src, dst, isUndo, srcStatus)) return false;
       } else {
