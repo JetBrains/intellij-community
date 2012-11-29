@@ -21,6 +21,9 @@ import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * User : ktisha
  */
@@ -67,6 +70,13 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
   }
 
   private static void invokeOnElement(Project project, PsiElement element, Editor editor) {
+    if (element instanceof PyLambdaExpression) {
+      String message =
+        RefactoringBundle.getCannotRefactorMessage("Caret is positioned on lambda call.");
+      CommonRefactoringUtil.showErrorHint(project, editor, message,
+                                          REFACTORING_NAME, REFACTORING_NAME);
+      return;
+    }
     if (!(element instanceof PyFunction)) return;
     final PyBuiltinCache cache = PyBuiltinCache.getInstance(element);
     if (cache.hasInBuiltins(element)) {
@@ -108,9 +118,10 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
     if (clazz == null) {
       return function;
     }
-    final PsiElement result = PySuperMethodsSearch.search(function).findFirst();
-    if (result != null) {
-      final PyClass baseClass = ((PyFunction)result).getContainingClass();
+    final List<PsiElement> superMethods = new ArrayList<PsiElement>(PySuperMethodsSearch.search(function, true).findAll());
+    if (superMethods.size() > 0) {
+      final PyFunction result = (PyFunction) superMethods.get(superMethods.size()-1);
+      final PyClass baseClass = result.getContainingClass();
       final PyBuiltinCache cache = PyBuiltinCache.getInstance(baseClass);
       String baseClassName = baseClass == null? "" : baseClass.getName();
       if (cache.hasInBuiltins(baseClass))

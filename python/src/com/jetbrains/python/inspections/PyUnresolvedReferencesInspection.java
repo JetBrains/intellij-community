@@ -428,6 +428,10 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           if (callExpression != null) {
             actions.add(new UnresolvedRefCreateFunctionQuickFix(callExpression, refex));
           }
+          PyFunction parentFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class);
+          if (parentFunction != null) {
+            actions.add(new UnresolvedReferenceAddParameterQuickFix());
+          }
         }
         // unqualified:
         // may be module's

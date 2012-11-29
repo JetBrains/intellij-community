@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
@@ -281,7 +282,8 @@ public class PyUtil {
    * @param isFirst    true if we don't need a comma before the element we're adding.
    * @param isLast     true if we don't need a comma after the element we're adding.
    */
-  public static void addListNode(PsiElement parent, PsiElement newItem, ASTNode beforeThis, boolean isFirst, boolean isLast) {
+  public static void addListNode(PsiElement parent, PsiElement newItem, ASTNode beforeThis,
+                                 boolean isFirst, boolean isLast, boolean addWhitespace) {
     if (!CodeInsightUtilBase.preparePsiElementForWrite(parent)) {
       return;
     }
@@ -294,6 +296,7 @@ public class PyUtil {
     if (!isFirst) node.addChild(gen.createComma(), beforeThis);
     node.addChild(itemNode, beforeThis);
     if (!isLast) node.addChild(gen.createComma(), beforeThis);
+    if (addWhitespace) node.addChild(ASTFactory.whitespace(" "), beforeThis);
   }
 
   /**

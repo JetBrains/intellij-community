@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyParameterListStub;
@@ -42,7 +43,25 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
     if (paren != null && ")".equals(paren.getText())) {
       ASTNode beforeWhat = paren.getNode(); // the closing paren will be this
       PyParameter[] params = getParameters();
-      PyUtil.addListNode(this, param, beforeWhat, params.length == 0, true);
+      final boolean hasDefaultValue = param.hasDefaultValue();
+      boolean isLast = true;
+      for (PyParameter p : params) {
+        if (!hasDefaultValue && p.hasDefaultValue()) {
+          beforeWhat = p.getNode();
+          isLast = false;
+          break;
+        }
+        if (p instanceof PyNamedParameter) {
+          PyNamedParameter named = (PyNamedParameter)p;
+          if (named.isKeywordContainer() || named.isPositionalContainer()) {
+            beforeWhat = p.getNode();
+            isLast = false;
+            break;
+          }
+        }
+      }
+      PyUtil.addListNode(this, param, beforeWhat, !isLast || params.length == 0, isLast,
+                         beforeWhat.getElementType() != PyTokenTypes.RPAR);
     }
   }
 
