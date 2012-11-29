@@ -156,6 +156,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
 
   public void updateFromUI() {
     getSettings().setFilter(myPanel.getFilter());
+    myPanel.update(false);
   }
 
   public boolean isOperationsEnabled() {

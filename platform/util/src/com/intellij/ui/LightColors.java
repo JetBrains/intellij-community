@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,6 @@ public interface LightColors {
   Color RED = UIUtil.isUnderDarcula() ? new Color(70, 0, 0) : new Color(0xffcccc);
   Color CYAN = new Color(0xccffff);
 
-  Color SLIGHTLY_GREEN = new Color(0xeeffee);
+  Color SLIGHTLY_GREEN = new JBColor(0xeeffee, 0x515B51);
   Color SLIGHTLY_GRAY = new Color(0xf5f5f5);
 }
