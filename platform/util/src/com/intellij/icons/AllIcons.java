@@ -303,6 +303,7 @@ public class AllIcons {
   public static class FileTypes {
     public static final Icon Any_type = IconLoader.getIcon("/fileTypes/any_type.png"); // 16x16
     public static final Icon Archive = IconLoader.getIcon("/fileTypes/archive.png"); // 16x16
+    public static final Icon AS = IconLoader.getIcon("/fileTypes/as.png"); // 16x16
     public static final Icon Aspectj = IconLoader.getIcon("/fileTypes/aspectj.png"); // 16x16
     public static final Icon Css = IconLoader.getIcon("/fileTypes/css.png"); // 16x16
     public static final Icon Custom = IconLoader.getIcon("/fileTypes/custom.png"); // 16x16
@@ -321,6 +322,7 @@ public class AllIcons {
     public static final Icon Jspx = IconLoader.getIcon("/fileTypes/jspx.png"); // 16x16
     public static final Icon Properties = IconLoader.getIcon("/fileTypes/properties.png"); // 16x16
     public static final Icon Text = IconLoader.getIcon("/fileTypes/text.png"); // 16x16
+    public static final Icon TypeScript = IconLoader.getIcon("/fileTypes/typeScript.png"); // 16x16
     public static final Icon UiForm = IconLoader.getIcon("/fileTypes/uiForm.png"); // 16x16
     public static final Icon Unknown = IconLoader.getIcon("/fileTypes/unknown.png"); // 16x16
     public static final Icon WsdlFile = IconLoader.getIcon("/fileTypes/wsdlFile.png"); // 16x16
