@@ -486,16 +486,16 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
         appNameResElement = resElement;
       }
     }
-
-    final String normalizedAppName = AndroidResourceUtil.normalizeXmlResourceValue(myApplicationName.replace("\\", "\\\\"));
+    final String appName = myApplicationName.replace("\\", "\\\\");
 
     if (appNameResElement == null) {
       final String fileName = AndroidResourceUtil.getDefaultResourceFileName(ResourceType.STRING);
       assert fileName != null;
       AndroidResourceUtil.createValueResource(facet.getModule(), appNameResource, ResourceType.STRING, fileName, Collections
-              .singletonList(SdkConstants.FD_RES_VALUES), normalizedAppName);
+              .singletonList(SdkConstants.FD_RES_VALUES), appName);
     }
     else {
+      final String normalizedAppName = AndroidResourceUtil.normalizeXmlResourceValue(appName);
       appNameResElement.setStringValue(normalizedAppName);
     }
 
