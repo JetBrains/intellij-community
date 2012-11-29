@@ -136,6 +136,7 @@ public class DaemonListeners implements Disposable {
                          @NotNull ProjectLevelVcsManager projectLevelVcsManager,
                          @NotNull VcsDirtyScopeManager vcsDirtyScopeManager,
                          @NotNull FileStatusManager fileStatusManager) {
+    Disposer.register(project, this);
     myProject = project;
     myDaemonCodeAnalyzer = daemonCodeAnalyzer;
     myPsiDocumentManager = psiDocumentManager;
@@ -584,8 +585,10 @@ public class DaemonListeners implements Disposable {
   }
 
   private void stopDaemon(boolean toRestartAlarm) {
-    myDaemonEventPublisher.daemonCancelEventOccurred();
-    myDaemonCodeAnalyzer.stopProcess(toRestartAlarm);
+    if (!myProject.isDisposed()) {
+      myDaemonEventPublisher.daemonCancelEventOccurred();
+    }
+    myDaemonCodeAnalyzer.stopProcess(toRestartAlarm && !myProject.isDisposed());
   }
 
   private void stopDaemonAndRestartAllFiles() {
