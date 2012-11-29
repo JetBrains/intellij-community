@@ -43,5 +43,7 @@
                     serviceImplementation="org.intellij.plugins.intelliLang.Configuration$App"/>
     <projectService serviceInterface="org.intellij.plugins.intelliLang.Configuration"
                     serviceImplementation="org.intellij.plugins.intelliLang.Configuration$Prj"/>
+    <compileServer.plugin classpath="intellilang-jps-plugin.jar"/>
+
   </extensions>
 </idea-plugin>
