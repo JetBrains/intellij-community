@@ -1583,4 +1583,39 @@ this.<caret>
   void testPrimitiveTypeTailTextInSafeCast() {
     doBasicTest('print(a as boolea<caret>)', 'print(a as boolean<caret>)')
   }
+
+  void testCompleteInaccessibleConstructors() {
+    doBasicTest('''\
+class Foooo {
+  private Foooo(int x) {}
+}
+
+new Fooo<caret>
+''', '''\
+class Foooo {
+  private Foooo(int x) {}
+}
+
+new Foooo(<caret>)
+''')
+  }
+
+  void testCompleteInaccessibleVsAccessibleConstructors() {
+    doBasicTest('''\
+class Foooo {
+  private Foooo(int x) {}
+  public Foooo() {}
+}
+
+new Fooo<caret>
+''', '''\
+class Foooo {
+  private Foooo(int x) {}
+  public Foooo() {}
+}
+
+new Foooo()<caret>
+''')
+  }
+
 }
