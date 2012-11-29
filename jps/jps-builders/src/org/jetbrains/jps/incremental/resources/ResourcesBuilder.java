@@ -27,7 +27,7 @@ import java.util.*;
 public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, ResourcesTarget> {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.resourses.ResourcesBuilder");
   public static final String BUILDER_NAME = "Resource Compiler";
-  private static final List<StandardResourceBuilderEnabler> ourEnablers = new ArrayList<StandardResourceBuilderEnabler>();
+  private static final List<StandardResourceBuilderEnabler> ourEnablers = Collections.synchronizedList(new ArrayList<StandardResourceBuilderEnabler>());
 
   public ResourcesBuilder() {
     super(ResourcesTargetType.ALL_TYPES);
@@ -120,9 +120,11 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
   }
 
   private static boolean isResourceProcessingEnabled(JpsModule module) {
-    for (StandardResourceBuilderEnabler enabler : ourEnablers) {
-      if (!enabler.isResourceProcessingEnabled(module)) {
-        return false;
+    synchronized (ourEnablers) {
+      for (StandardResourceBuilderEnabler enabler : ourEnablers) {
+        if (!enabler.isResourceProcessingEnabled(module)) {
+          return false;
+        }
       }
     }
     return true;
