@@ -24,10 +24,12 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.LightColors;
 import com.intellij.util.ui.CenteredIcon;
+import com.intellij.util.ui.GraphicsUtil;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -185,11 +187,13 @@ public class CardActionsPanel extends JPanel {
         int x = bounds.width - icon.getIconWidth() - 15;
 
         if (getPopState() == POPPED) {
+          final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
           g.setColor(WelcomeScreenColors.CAPTION_BACKGROUND);
           g.fillOval(x - 3, y - 3, icon.getIconWidth() + 6, icon.getIconHeight() + 6);
 
           g.setColor(WelcomeScreenColors.GROUP_ICON_BORDER_COLOR);
           g.drawOval(x - 3, y - 3, icon.getIconWidth() + 6, icon.getIconHeight() + 6);
+          config.restore();
         }
         else {
           icon = IconLoader.getDisabledIcon(icon);
