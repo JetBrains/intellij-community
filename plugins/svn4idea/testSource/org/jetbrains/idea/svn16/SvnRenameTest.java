@@ -321,13 +321,58 @@ public class SvnRenameTest extends Svn16TestCase {
     verifySorted(runSvn("status"), "A child", "A + child" + File.separatorChar + "a.txt", "D a.txt");
   }
 
-  private void moveToNewPackage(final VirtualFile file, final String packageName) throws Throwable {
+  @Test
+  public void testMoveToUnversioned() throws Exception {
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
+    final VirtualFile child = moveToNewPackage(file, "child");
+    verifySorted(runSvn("status"), "A child", "A child" + File.separatorChar + "a.txt");
+    checkin();
+    disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    final VirtualFile unversioned = createDirInCommand(myWorkingCopyDir, "unversioned");
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    verifySorted(runSvn("status"), "? unversioned");
+
+    moveFileInCommand(child, unversioned);
+    verifySorted(runSvn("status"), "? unversioned", "D child", "D child" + File.separator + "a.txt");
+  }
+
+  @Test
+  public void testUndoMoveUnversionedToUnversioned() throws Exception {
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+
+    disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
+    verifySorted(runSvn("status"), "? a.txt");
+    final VirtualFile unversioned = createDirInCommand(myWorkingCopyDir, "unversioned");
+    moveFileInCommand(file, unversioned);
+    verifySorted(runSvn("status"), "? unversioned");
+    undo();
+    verifySorted(runSvn("status"), "? a.txt", "? unversioned");
+  }
+
+  @Test
+  public void testUndoMoveAddedToUnversioned() throws Exception {
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+
+    final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
+    verifySorted(runSvn("status"), "A a.txt");
+    disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    final VirtualFile unversioned = createDirInCommand(myWorkingCopyDir, "unversioned");
+    moveFileInCommand(file, unversioned);
+    verifySorted(runSvn("status"), "? unversioned");
+    undo();
+    verifySorted(runSvn("status"), "? a.txt", "? unversioned");
+  }
+
+  private VirtualFile moveToNewPackage(final VirtualFile file, final String packageName) throws Exception {
+    final VirtualFile[] dir = new VirtualFile[1];
     new WriteCommandAction.Simple(myProject) {
       @Override
       public void run() {
         try {
-          final VirtualFile dir = myWorkingCopyDir.createChildDirectory(this, packageName);
-          file.move(this, dir);
+          dir[0] = myWorkingCopyDir.createChildDirectory(this, packageName);
+          file.move(this, dir[0]);
         }
         catch (IOException e) {
           throw new RuntimeException(e);
@@ -335,5 +380,6 @@ public class SvnRenameTest extends Svn16TestCase {
 
       }
     }.execute().throwException();
+    return dir[0];
   }
 }
