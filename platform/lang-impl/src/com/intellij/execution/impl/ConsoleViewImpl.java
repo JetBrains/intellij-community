@@ -401,7 +401,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private void addFlushRequest(MyFlushRunnable flushRunnable, final int millis) {
     synchronized (myCurrentRequests) {
-      if (myCurrentRequests.add(flushRunnable) && !myFlushAlarm.isDisposed()) {
+      if (!myFlushAlarm.isDisposed() && myCurrentRequests.add(flushRunnable)) {
         myFlushAlarm.addRequest(flushRunnable, millis, getStateForUpdate());
       }
     }
