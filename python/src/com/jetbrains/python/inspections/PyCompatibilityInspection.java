@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -27,7 +28,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -37,7 +38,7 @@ import java.util.List;
  */
 public class PyCompatibilityInspection extends PyInspection {
 
-  public List<String> ourVersions = new ArrayList<String>();
+  public JDOMExternalizableStringList ourVersions = new JDOMExternalizableStringList();
 
   public PyCompatibilityInspection () {
     super();
@@ -117,6 +118,8 @@ public class PyCompatibilityInspection extends PyInspection {
 
   private static class Visitor extends CompatibilityVisitor {
     private final ProblemsHolder myHolder;
+    private Set<String> myUsedImports = Collections.synchronizedSet(new HashSet<String>());
+
     public Visitor(ProblemsHolder holder, List<LanguageLevel> versionsToProcess) {
       super(versionsToProcess);
       myHolder = holder;
@@ -154,7 +157,7 @@ public class PyCompatibilityInspection extends PyInspection {
             PsiFile file = resolved.getContainingFile();
             VirtualFile virtualFile = file.getVirtualFile();
             if (virtualFile != null && ind.isInLibraryClasses(virtualFile)) {
-              if (!"print".equals(name) && UnsupportedFeaturesUtil.BUILTINS.get(languageLevel).contains(name)) {
+              if (!"print".equals(name) && !myUsedImports.contains(name) && UnsupportedFeaturesUtil.BUILTINS.get(languageLevel).contains(name)) {
                 len = appendLanguageLevel(message, len, languageLevel);
               }
             }
@@ -172,6 +175,7 @@ public class PyCompatibilityInspection extends PyInspection {
 
     @Override
     public void visitPyImportElement(PyImportElement importElement) {
+      myUsedImports.add(importElement.getVisibleName());
       PyIfStatement ifParent = PsiTreeUtil.getParentOfType(importElement, PyIfStatement.class);
       if (ifParent != null)
         return;
