@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -191,6 +191,15 @@ public class SearchTextField extends JPanel {
           addMenuItem(item);
         }
       }
+    }
+  }
+
+  @Override
+  protected void paintComponent(Graphics g) {
+    super.paintComponent(g);
+    if (UIUtil.isUnderDarcula()) {//todo[kb] fix DarculaTextBorder
+      g.setColor(myTextField.getBackground());
+      g.fillRect(2,3,getWidth(), getHeight()-5);
     }
   }
 

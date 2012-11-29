@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,9 @@ public abstract class SearchFieldAction extends AnAction implements CustomCompon
     Border border = myField.getBorder();
     Border emptyBorder = IdeBorderFactory.createEmptyBorder(3, 0, 2, 0);
     if (border instanceof CompoundBorder) {
-      myField.setBorder(new CompoundBorder(emptyBorder, ((CompoundBorder)border).getInsideBorder()));
+      if (!UIUtil.isUnderDarcula()) {
+        myField.setBorder(new CompoundBorder(emptyBorder, ((CompoundBorder)border).getInsideBorder()));
+      }
     }
     else {
       myField.setBorder(emptyBorder);
