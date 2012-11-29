@@ -2,6 +2,7 @@ package org.jetbrains.yaml;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.source.tree.LeafElement;
@@ -80,7 +81,8 @@ public class YAMLUtil {
         if (child instanceof YAMLKeyValue){
           final YAMLKeyValue yamlKeyValue = (YAMLKeyValue)child;
           // We use null as wildcard
-          if (name == null || name.equals(yamlKeyValue.getKeyText())){
+          final String text = yamlKeyValue.getKeyText();
+          if (name == null || name.equals(text) || name.equals(StringUtil.unquoteString(text))){
             return yamlKeyValue;
           }
         }
