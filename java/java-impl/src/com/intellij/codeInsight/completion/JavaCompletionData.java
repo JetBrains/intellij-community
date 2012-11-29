@@ -38,7 +38,6 @@ import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 
@@ -484,7 +483,9 @@ public class JavaCompletionData extends JavaAwareCompletionData {
       }
     }
 
-    if (isInsideParameterList(position) && !psiElement().afterLeaf(PsiKeyword.FINAL).accepts(position) && !AFTER_DOT.accepts(position)) {
+    if ((isInsideParameterList(position) || isAtResourceVariableStart(position)) && 
+        !psiElement().afterLeaf(PsiKeyword.FINAL).accepts(position) && 
+        !AFTER_DOT.accepts(position)) {
       result.addElement(TailTypeDecorator.withTail(createKeyword(position, PsiKeyword.FINAL), TailType.HUMBLE_SPACE_BEFORE_WORD));
     }
 
@@ -630,6 +631,10 @@ public class JavaCompletionData extends JavaAwareCompletionData {
     else if (typeFragment && ((PsiTypeCodeFragment)position.getContainingFile()).isVoidValid()) {
       result.addElement(createKeyword(position, PsiKeyword.VOID));
     }
+  }
+
+  private static boolean isAtResourceVariableStart(PsiElement position) {
+    return psiElement().insideStarting(psiElement(PsiTypeElement.class).withParent(PsiResourceList.class)).accepts(position);
   }
 
   private static void addBreakContinue(CompletionResultSet result, PsiElement position) {
