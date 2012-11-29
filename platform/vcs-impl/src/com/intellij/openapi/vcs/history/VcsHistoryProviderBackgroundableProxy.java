@@ -140,13 +140,10 @@ public class VcsHistoryProviderBackgroundableProxy {
     if (full != null) {
       if (myConfiguration.LIMIT_HISTORY) {
         if (myConfiguration.MAXIMUM_HISTORY_ROWS < full.getRevisionList().size()) {
-          if (myConfiguration.MAXIMUM_HISTORY_ROWS < 2000) {
-            full = (VcsAbstractHistorySession) full.copy();
-          }
           final List<VcsFileRevision> list = full.getRevisionList();
-          final List<VcsFileRevision> part = new ArrayList<VcsFileRevision>(list.subList(0, myConfiguration.MAXIMUM_HISTORY_ROWS));
+          final List<VcsFileRevision> was = new ArrayList<VcsFileRevision>(list.subList(0, myConfiguration.MAXIMUM_HISTORY_ROWS));
           list.clear();
-          list.addAll(part);
+          list.addAll(was);
         }
       }
     }
