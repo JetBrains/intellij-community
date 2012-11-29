@@ -182,15 +182,10 @@ public class QueueProcessor<T> {
   }
 
   public void waitFor() {
-    waitFor(0);
-  }
-
-  public void waitFor(long timeout) {
     synchronized (myQueue) {
-      //noinspection WhileLoopSpinsOnField
       while (isProcessing) {
         try {
-          myQueue.wait(timeout);
+          myQueue.wait();
         }
         catch (InterruptedException e) {
           //ok
