@@ -196,7 +196,7 @@ interface GitHttpRemoteCommand {
     }
 
     @Override
-    public void run() throws InvalidRemoteException, URISyntaxException {
+    public void run() throws InvalidRemoteException, URISyntaxException, org.eclipse.jgit.api.errors.TransportException {
       PushCommand pushCommand = myGit.push();
       pushCommand.setRemote(myRemoteName);
       pushCommand.setRefSpecs(myPushSpecs);
@@ -304,7 +304,9 @@ interface GitHttpRemoteCommand {
          Original code constructs the remoteConfig based on .git/config.
      */
     @NotNull
-    private Iterable<PushResult> call(PushCommand pushCommand, RemoteConfig remoteConfig) throws JGitInternalException, InvalidRemoteException {
+    private Iterable<PushResult> call(PushCommand pushCommand, RemoteConfig remoteConfig)
+      throws JGitInternalException, InvalidRemoteException, org.eclipse.jgit.api.errors.TransportException
+    {
       ArrayList<PushResult> pushResults = new ArrayList<PushResult>(3);
 
       List<RefSpec> refSpecs = pushCommand.getRefSpecs();
@@ -359,9 +361,7 @@ interface GitHttpRemoteCommand {
             pushResults.add(result);
           }
           catch (TransportException e) {
-            throw new JGitInternalException(
-              JGitText.get().exceptionCaughtDuringExecutionOfPushCommand,
-              e);
+            throw new org.eclipse.jgit.api.errors.TransportException(e.getMessage(), e);
           }
           finally {
             transport.close();
@@ -371,6 +371,9 @@ interface GitHttpRemoteCommand {
       catch (URISyntaxException e) {
         throw new InvalidRemoteException(MessageFormat.format(
           JGitText.get().invalidRemote, remote));
+      } catch (TransportException e) {
+      			throw new org.eclipse.jgit.api.errors.TransportException(
+      					e.getMessage(), e);
       }
       catch (NotSupportedException e) {
         throw new JGitInternalException(
