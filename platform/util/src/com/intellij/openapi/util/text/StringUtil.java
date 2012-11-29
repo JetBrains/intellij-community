@@ -242,7 +242,7 @@ public class StringUtil extends StringUtilRt {
     return stringLength >= prefixLength && str.regionMatches(true, 0, prefix, 0, prefixLength);
   }
 
-  public static String stripHtml(String html, boolean convertBreaks) {
+  public static String stripHtml(@NotNull String html, boolean convertBreaks) {
     if (convertBreaks) {
       html = html.replaceAll("<br/?>", "\n\n");
     }
