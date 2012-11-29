@@ -12,6 +12,8 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
@@ -22,9 +24,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,12 +36,14 @@ import java.util.List;
  * Inspection to detect code incompatibility with python versions
  */
 public class PyCompatibilityInspection extends PyInspection {
-  public String fromVersion = LanguageLevel.PYTHON24.toString();
-  public String toVersion = LanguageLevel.PYTHON27.toString();
+
+  public List<String> ourVersions = new ArrayList<String>();
 
   public PyCompatibilityInspection () {
     super();
-    if (ApplicationManager.getApplication().isUnitTestMode()) toVersion = LanguageLevel.PYTHON31.toString();
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      ourVersions.addAll(UnsupportedFeaturesUtil.ALL_LANGUAGE_LEVELS);
+    }
   }
 
   @Override
@@ -50,17 +54,9 @@ public class PyCompatibilityInspection extends PyInspection {
   private List<LanguageLevel> updateVersionsToProcess() {
     List<LanguageLevel> result = new ArrayList<LanguageLevel>();
 
-    boolean add = false;
-    for (String version : UnsupportedFeaturesUtil.ALL_LANGUAGE_LEVELS) {
+    for (String version : ourVersions) {
       LanguageLevel level = LanguageLevel.fromPythonVersion(version);
-      if (version.equals(fromVersion))
-        add = true;
-      if (version.equals(toVersion)) {
-        result.add(level);
-        add = false;
-      }
-      if (add)
-        result.add(level);
+      result.add(level);
     }
     return result;
   }
@@ -74,33 +70,42 @@ public class PyCompatibilityInspection extends PyInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final JPanel versionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+    final JPanel versionPanel = new JPanel(new BorderLayout());
+    final JBList list = new JBList(UnsupportedFeaturesUtil.ALL_LANGUAGE_LEVELS);
 
-    final JComboBox fromComboBox = new JComboBox(UnsupportedFeaturesUtil.ALL_LANGUAGE_LEVELS);
-    fromComboBox.setSelectedItem(fromVersion);
-    final JComboBox toComboBox = new JComboBox(UnsupportedFeaturesUtil.ALL_LANGUAGE_LEVELS);
-    toComboBox.setSelectedItem(toVersion);
+    JLabel label = new JLabel("Check for compatibility with python versions:");
+    label.setLabelFor(list);
+    versionPanel.add(label, BorderLayout.PAGE_START);
+    list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+    JBScrollPane scrollPane = new JBScrollPane(list, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                         ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
-    fromComboBox.addActionListener(new ActionListener() {
+    versionPanel.add(scrollPane);
+
+    int[] indices = new int[ourVersions.size()];
+    for (int i = 0; i != ourVersions.size(); ++i) {
+      String s = ourVersions.get(i);
+      indices[i] = UnsupportedFeaturesUtil.ALL_LANGUAGE_LEVELS.indexOf(s);
+    }
+
+    list.setSelectedIndices(indices);
+    list.setCellRenderer(new DefaultListCellRenderer() {
       @Override
-      public void actionPerformed(ActionEvent e) {
-        JComboBox cb = (JComboBox)e.getSource();
-        fromVersion = (String)cb.getSelectedItem();
+      public Component getListCellRendererComponent(JList list, Object o, int i, boolean b, boolean b2) {
+        return super
+          .getListCellRendererComponent(list, "Python " + o, i, b, b2);
+      }
+    });
+    list.addListSelectionListener(new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent event) {
+        ourVersions.clear();
+        for (Object value : list.getSelectedValues()) {
+          ourVersions.add((String)value);
+        }
       }
     });
 
-    toComboBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        JComboBox cb = (JComboBox)e.getSource();
-        toVersion = (String)cb.getSelectedItem();
-      }
-    });
-
-    versionPanel.add(new JLabel("Check for compatibility with python from"));
-    versionPanel.add(fromComboBox);
-    versionPanel.add(new JLabel("to"));
-    versionPanel.add(toComboBox);
     return versionPanel;
   }
 
