@@ -397,16 +397,7 @@
     </group>
 
     <group id="WelcomeScreen.Configure.IDEA">
-      <!-- TODO: Icons -->
-      <action id="WelcomeScreen.Configure.Template_Project_Settings"
-              class="com.intellij.ide.actions.TemplateProjectPropertiesAction"
-              icon="AllIcons.General.TemplateProjectSettings"
-          />
-      <action id="WelcomeScreen.Configure.Template_Project_Structure"
-              class="com.intellij.ide.actions.TemplateProjectStructureAction"
-              icon="AllIcons.General.TemplateProjectStructure"
-          />
-
+      <action class="com.intellij.ide.actions.TemplateProjectSettingsGroup"/>
       <add-to-group group-id="WelcomeScreen.Configure" anchor="last"/>
     </group>
 
