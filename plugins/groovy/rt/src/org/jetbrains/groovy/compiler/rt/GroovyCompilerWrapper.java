@@ -198,9 +198,21 @@ public class GroovyCompilerWrapper {
     if (module == null) {
       module = findModule(astNode);
     }
-    collector.add(new CompilerMessage(GroovyCompilerMessageCategories.ERROR, exception.getMessageWithoutLocationText(),
-        module == null ? "<no module>" : module.getDescription(),
-        astNode.getLineNumber(), astNode.getColumnNumber()));
+    String moduleName = module == null ? "<no module>" : module.getDescription();
+
+    int lineNumber = astNode == null ? -1 : astNode.getLineNumber();
+    int columnNumber = astNode == null ? -1 : astNode.getColumnNumber();
+
+    String message = exception.getMessageWithoutLocationText();
+    if (message == null) {
+      StringWriter stringWriter = new StringWriter();
+      //noinspection IOResourceOpenedButNotSafelyClosed
+      PrintWriter writer = new PrintWriter(stringWriter);
+      exception.printStackTrace(writer);
+      message = stringWriter.getBuffer().toString();
+    }
+
+    collector.add(new CompilerMessage(GroovyCompilerMessageCategories.ERROR, message, moduleName, lineNumber, columnNumber));
   }
 
   private static ModuleNode findModule(ASTNode node) {
