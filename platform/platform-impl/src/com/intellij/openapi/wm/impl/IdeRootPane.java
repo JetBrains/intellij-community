@@ -27,6 +27,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -159,8 +160,9 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
       @Override
       protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        if (UIUtil.isUnderDarcula() && PlatformUtils.isIntelliJ()) {
-          IconUtil.paintInCenterOf(this, g, IconLoader.getIcon("/idea_logo_background.png"));
+        if (UIUtil.isUnderDarcula()) {
+          String icon = ApplicationInfoEx.getInstanceEx().getEditorBackgroundImageUrl();
+          if (icon != null) IconUtil.paintInCenterOf(this, g, IconLoader.getIcon(icon));
         }
       }
     };

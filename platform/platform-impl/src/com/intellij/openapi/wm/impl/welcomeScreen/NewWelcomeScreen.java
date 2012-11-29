@@ -23,8 +23,10 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.updateSettings.impl.CheckForUpdateAction;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
@@ -103,7 +105,9 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
 
   private JPanel createHeaderPanel() {
     JPanel header = new JPanel(new BorderLayout());
-    JLabel welcome = new JLabel("Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName(), AllIcons.General.Logo_welcomeScreen, SwingConstants.LEFT);
+    JLabel welcome = new JLabel("Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName(),
+                                IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getWelcomeScreenLogoUrl()), 
+                                SwingConstants.LEFT);
     welcome.setBorder(new EmptyBorder(10, 15, 10, 15));
     welcome.setFont(welcome.getFont().deriveFont((float) 32));
     welcome.setIconTextGap(20);
