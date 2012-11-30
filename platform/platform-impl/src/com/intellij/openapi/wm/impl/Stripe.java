@@ -489,7 +489,7 @@ final class Stripe extends JPanel{
   }
 
   public void finishDrop() {
-    if (myLastLayoutData == null) return;
+    if (myLastLayoutData == null || !isDroppingButton()) return;
 
     final WindowInfoImpl info = myDragButton.getDecorator().getWindowInfo();
     myFinishingDrop = true;
