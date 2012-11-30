@@ -79,6 +79,10 @@ public class RefactoringConflictsUtil {
     PsiModifierList modifierListCopy = member.getModifierList();
     if (modifierListCopy != null) {
       modifierListCopy = (PsiModifierList)modifierListCopy.copy();
+      final PsiClass containingClass = member.getContainingClass();
+      if (containingClass != null && containingClass.isInterface()) {
+        VisibilityUtil.setVisibility(modifierListCopy, PsiModifier.PUBLIC);
+      }
     }
     if (newVisibility != null && modifierListCopy != null) {
       try {
