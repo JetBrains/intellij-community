@@ -226,6 +226,25 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     result.addAll(resources.keySet());
   }
 
+  @TestOnly
+  public static void addTestResource(final String url, final String location, Disposable parentDisposable) {
+    final ExternalResourceManagerImpl instance = (ExternalResourceManagerImpl)getInstance();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        instance.addResource(url, location);
+      }
+    });
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            instance.removeResource(url);
+          }
+        });
+      }
+    });
+  }
   public void addResource(String url, String location) {
     addResource(url, DEFAULT_VERSION, location);
   }
