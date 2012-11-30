@@ -26,9 +26,7 @@ import com.sun.tools.javac.util.ListBuffer;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 
-import javax.tools.FileObject;
-import javax.tools.JavaFileObject;
-import javax.tools.StandardJavaFileManager;
+import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -76,7 +74,7 @@ class MyFileManager implements StandardJavaFileManager {
   }
 
   private static URI toURI(String outputDir, String name, JavaFileObject.Kind kind) {
-    return createUri("file:///" + outputDir.replace('\\','/') + "/" + name.replace('.', '/') + kind.extension);
+    return createUri("file:///" + outputDir.replace('\\','/') + "/" + (kind == JavaFileObject.Kind.CLASS? name.replace('.', '/') : name) + kind.extension);
   }
 
 

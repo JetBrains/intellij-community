@@ -912,30 +912,32 @@ public class BackendCompilerWrapper {
       final String path = file.getPath();
       try {
         if (CompilerConfiguration.MAKE_ENABLED) {
-          byte[] fileContent = fileObject.getContent();
-          // the file is assumed to exist!
-          final DependencyCache dependencyCache = myCompileContext.getDependencyCache();
-          final int newClassQName = dependencyCache.reparseClassFile(file, fileContent);
-          final Cache newClassesCache = dependencyCache.getNewClassesCache();
-          final String sourceFileName = newClassesCache.getSourceFileName(newClassQName);
-          final String qName = dependencyCache.resolve(newClassQName);
-          String relativePathToSource = "/" + MakeUtil.createRelativePathToSource(qName, sourceFileName);
-          putName(sourceFileName, newClassQName, relativePathToSource, path);
-          boolean haveToInstrument = myAddNotNullAssertions && hasNotNullAnnotations(newClassesCache, dependencyCache.getSymbolTable(), newClassQName, project);
+          if (StringUtil.endsWith(path, ".class")) {
+            byte[] fileContent = fileObject.getContent();
+            // the file is assumed to exist!
+            final DependencyCache dependencyCache = myCompileContext.getDependencyCache();
+            final int newClassQName = dependencyCache.reparseClassFile(file, fileContent);
+            final Cache newClassesCache = dependencyCache.getNewClassesCache();
+            final String sourceFileName = newClassesCache.getSourceFileName(newClassQName);
+            final String qName = dependencyCache.resolve(newClassQName);
+            String relativePathToSource = "/" + MakeUtil.createRelativePathToSource(qName, sourceFileName);
+            putName(sourceFileName, newClassQName, relativePathToSource, path);
+            boolean haveToInstrument = myAddNotNullAssertions && hasNotNullAnnotations(newClassesCache, dependencyCache.getSymbolTable(), newClassQName, project);
 
-          if (haveToInstrument) {
-            try {
-              ClassReader reader = new ClassReader(fileContent, 0, fileContent.length);
-              ClassWriter writer = new PsiClassWriter(myProject, myIsJdk16);
+            if (haveToInstrument) {
+              try {
+                ClassReader reader = new ClassReader(fileContent, 0, fileContent.length);
+                ClassWriter writer = new PsiClassWriter(myProject, myIsJdk16);
 
-              final NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer);
-              reader.accept(instrumenter, 0);
-              if (instrumenter.isModification()) {
-                fileObject = new FileObject(file, writer.toByteArray());
+                final NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer);
+                reader.accept(instrumenter, 0);
+                if (instrumenter.isModification()) {
+                  fileObject = new FileObject(file, writer.toByteArray());
+                }
               }
-            }
-            catch (Exception ignored) {
-              LOG.info(ignored);
+              catch (Exception ignored) {
+                LOG.info(ignored);
+              }
             }
           }
 

@@ -43,9 +43,7 @@ class Output extends SimpleJavaFileObject {
         super.close();
         final byte[] bytes = toByteArray();
         myFileBytes = bytes;
-        if (Kind.CLASS.equals(kind)) {
-          myCompAPIDriver.offerClassFile(toUri(), bytes);
-        }
+        myCompAPIDriver.offerClassFile(toUri(), bytes);
       }
     };
   }
@@ -63,7 +61,7 @@ class Output extends SimpleJavaFileObject {
   public CharSequence getCharContent(boolean ignoreEncodingErrors) throws IOException {
     final byte[] bytes = myFileBytes;
     if (bytes == null) {
-      throw null;
+      throw new FileNotFoundException(toUri().getPath());
     }
     return new String(bytes);
   }
