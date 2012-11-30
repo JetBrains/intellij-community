@@ -59,7 +59,7 @@ class PreferredProducerFind {
         producer = prototype.createProducer(location, context);
       }
       catch (AbstractMethodError e) {
-        LOG.error(e);
+        LOG.error(prototype.toString(), e);
         continue;
       }
       if (producer.getConfiguration() != null) {
