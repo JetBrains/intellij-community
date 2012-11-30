@@ -4502,7 +4502,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       ScrollBarUI barUI = getUI();
       Insets insets = getInsets();
       if (barUI instanceof ButtonlessScrollBarUI) {
-        return insets.top + ((ButtonlessScrollBarUI)barUI).getDecrButtonHeight();
+        return insets.top + ((ButtonlessScrollBarUI)barUI).getDecrementButtonHeight();
       }
       else if (barUI instanceof BasicScrollBarUI) {
         try {
@@ -4529,7 +4529,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       ScrollBarUI barUI = getUI();
       Insets insets = getInsets();
       if (barUI instanceof ButtonlessScrollBarUI) {
-        return insets.top + ((ButtonlessScrollBarUI)barUI).getIncrButtonHeight();
+        return insets.top + ((ButtonlessScrollBarUI)barUI).getIncrementButtonHeight();
       }
       else if (barUI instanceof BasicScrollBarUI) {
         try {
@@ -6408,7 +6408,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           int width = bounds.width;
           int height = bounds.height;
 
-          g.setColor(ButtonlessScrollBarUI.getTrackBackground());
+          g.setColor(ButtonlessScrollBarUI.TRACK_BACKGROUND);
           g.fillRect(0, 0, width, height);
 
           int shortner = 0;
@@ -6419,7 +6419,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           g.setColor(myGutterComponent.getBackground());
           g.fillRect(0, 0, width - shortner, height);
 
-          g.setColor(ButtonlessScrollBarUI.getTrackBorderColor());
+          g.setColor(ButtonlessScrollBarUI.TRACK_BORDER);
           g.drawLine(width - 1 - shortner, 0, width - 1 - shortner, height);
           g.drawLine(0, 0, width - 1, 0);
         }

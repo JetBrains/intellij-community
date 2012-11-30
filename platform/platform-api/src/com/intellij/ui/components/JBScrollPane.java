@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,10 +139,10 @@ public class JBScrollPane extends JScrollPane {
 
     @Override
     protected void paintComponent(Graphics g) {
-      g.setColor(ButtonlessScrollBarUI.getTrackBackground());
+      g.setColor(ButtonlessScrollBarUI.TRACK_BACKGROUND);
       g.fillRect(0, 0, getWidth(), getHeight());
 
-      g.setColor(ButtonlessScrollBarUI.getTrackBorderColor());
+      g.setColor(ButtonlessScrollBarUI.TRACK_BORDER);
 
       int x2 = getWidth() - 1;
       int y2 = getHeight() - 1;
