@@ -33,6 +33,7 @@ import com.intellij.psi.impl.light.LightTypeElement;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.parsing.ParseUtilBase;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
@@ -170,6 +171,9 @@ public class JavaTreeGenerator implements TreeGenerator {
       if (type instanceof PsiIntersectionType) {
         LightTypeElement te = new LightTypeElement(original.getManager(), ((PsiIntersectionType)type).getRepresentative());
         return ChangeUtil.generateTreeElement(te, table, manager);
+      }
+      if (type instanceof PsiMethodReferenceType || type instanceof PsiLambdaExpressionType) {
+        type = PsiType.getJavaLangObject(manager, GlobalSearchScope.projectScope(manager.getProject()));
       }
 
       PsiClassType classType = (PsiClassType)type;

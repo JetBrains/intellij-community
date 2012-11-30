@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
@@ -41,6 +42,7 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.Alarm;
+import com.intellij.util.IconUtil;
 import com.intellij.util.PairFunction;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ArrayListSet;
@@ -79,9 +81,8 @@ public class EditorsSplitters extends JBPanel {
     super(new BorderLayout());
     if (UIUtil.isUnderDarcula()) {
       setBackgroundImage(IconLoader.getIcon("/frame_background.png"));
-      if (PlatformUtils.isIntelliJ()) {
-        setCenterImage(IconLoader.getIcon("/idea_logo_background.png"));
-      }
+      String icon = ApplicationInfoEx.getInstanceEx().getEditorBackgroundImageUrl();
+      if (icon != null) setCenterImage(IconLoader.getIcon(icon));
     }
     setOpaque(false);
     myManager = manager;

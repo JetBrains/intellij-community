@@ -405,12 +405,24 @@ public class GroovyCompletionUtil {
   }
 
   public static boolean hasConstructorParameters(@NotNull PsiClass clazz, @NotNull GroovyPsiElement place) {
-    for (GroovyResolveResult result : ResolveUtil.getAllClassConstructors(clazz, place, PsiSubstitutor.EMPTY, null)) {
-      if (result.isAccessible() && ((PsiMethod)result.getElement()).getParameterList().getParametersCount() > 0) {
-        return true;
+    final GroovyResolveResult[] constructors = ResolveUtil.getAllClassConstructors(clazz, place, PsiSubstitutor.EMPTY, null);
+
+    boolean hasParameters = false;
+    boolean hasAccessibleConstructors = false;
+    for (GroovyResolveResult result : constructors) {
+      final PsiElement element = result.getElement();
+      if (element instanceof PsiMethod) {
+        if (((PsiMethod)element).getParameterList().getParametersCount() > 0) {
+          hasParameters = true;
+        }
+        if (result.isAccessible()) {
+          hasAccessibleConstructors = true;
+        }
+        if (hasAccessibleConstructors && hasParameters) return true;
       }
     }
-    return false;
+
+    return !hasAccessibleConstructors && hasParameters;
   }
 
   public static void addImportForItem(PsiFile file, int startOffset, LookupItem item) throws IncorrectOperationException {

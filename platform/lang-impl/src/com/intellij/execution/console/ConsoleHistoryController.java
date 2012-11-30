@@ -170,12 +170,12 @@ public class ConsoleHistoryController {
   }
 
   private static void cleanupOldFiles(final File dir) {
-    final long keep2weeks = 2 * 1000L * 60 * 60 * 24 * 7;
+    final long keep10weeks = 10 * 1000L * 60 * 60 * 24 * 7;
     final long curTime = System.currentTimeMillis();
     File[] files = dir.listFiles();
     if (files != null) {
       for (File file : files) {
-        if (file.isFile() && file.getName().endsWith(".hist.xml") && curTime - file.lastModified() > keep2weeks) {
+        if (file.isFile() && file.getName().endsWith(".hist.xml") && curTime - file.lastModified() > keep10weeks) {
           file.delete();
         }
       }

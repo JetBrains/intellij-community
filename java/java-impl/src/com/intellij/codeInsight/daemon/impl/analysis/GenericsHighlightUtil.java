@@ -492,8 +492,13 @@ public class GenericsHighlightUtil {
     MethodSignatureBackedByPsiMethod sameErasure = sameErasureMethods.get(signatureToErase);
     HighlightInfo info;
     if (sameErasure != null) {
-      info = checkSameErasureNotSubSignatureOrSameClass(sameErasure, signature, aClass, method);
-      if (info != null) return info;
+      if (aClass instanceof PsiTypeParameter || 
+          MethodSignatureUtil.findMethodBySuperMethod(aClass, sameErasure.getMethod(), false) != null ||
+          !(InheritanceUtil.isInheritorOrSelf(sameErasure.getMethod().getContainingClass(), method.getContainingClass(), true) || 
+            InheritanceUtil.isInheritorOrSelf(method.getContainingClass(), sameErasure.getMethod().getContainingClass(), true))) {
+        info = checkSameErasureNotSubSignatureOrSameClass(sameErasure, signature, aClass, method);
+        if (info != null) return info;
+      }
     }
     else {
       sameErasureMethods.put(signatureToErase, signature);
@@ -522,7 +527,7 @@ public class GenericsHighlightUtil {
     }
     else if (superMethod.isConstructor()) return null;
 
-    final boolean atLeast17 = JavaVersionService.getInstance().isAtLeast(checkMethod, JavaSdkVersion.JDK_1_7);
+    final boolean atLeast17 = JavaVersionService.getInstance().isAtLeast(aClass, JavaSdkVersion.JDK_1_7);
     if (checkMethod.hasModifierProperty(PsiModifier.STATIC) && !checkEqualsSuper && !atLeast17) {
       return null;
     }

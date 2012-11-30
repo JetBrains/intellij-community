@@ -81,7 +81,7 @@ public class Splash extends JDialog implements StartupProgress {
   }
 
   public Splash(ApplicationInfoEx info) {
-    this(info.getLogoUrl(), info.getLogoTextColor());
+    this(info.getSplashImageUrl(), info.getSplashTextColor());
     if (info instanceof ApplicationInfoImpl) {
       final ApplicationInfoImpl appInfo = (ApplicationInfoImpl)info;
       myProgressHeight = 2;

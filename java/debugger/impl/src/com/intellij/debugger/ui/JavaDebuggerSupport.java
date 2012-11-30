@@ -31,7 +31,6 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.AbstractDebuggerSession;
@@ -42,7 +41,6 @@ import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler;
 import com.intellij.xdebugger.impl.actions.EditBreakpointActionHandler;
 import com.intellij.xdebugger.impl.actions.MarkObjectActionHandler;
-import com.intellij.xdebugger.impl.breakpoints.ui.AbstractBreakpointPanel;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import com.intellij.xdebugger.impl.settings.DebuggerSettingsPanelProvider;
@@ -188,21 +186,6 @@ public class JavaDebuggerSupport extends DebuggerSupport {
 
   private static class JavaBreakpointPanelProvider extends BreakpointPanelProvider<Breakpoint> {
     private List<MyBreakpointManagerListener> myListeners = ContainerUtil.createEmptyCOWList();
-
-    @NotNull
-    public Collection<AbstractBreakpointPanel<Breakpoint>> getBreakpointPanels(@NotNull final Project project,
-                                                                               @NotNull final DialogWrapper parentDialog) {
-      List<AbstractBreakpointPanel<Breakpoint>> panels = new ArrayList<AbstractBreakpointPanel<Breakpoint>>();
-      final BreakpointFactory[] allFactories = BreakpointFactory.getBreakpointFactories();
-      for (BreakpointFactory factory : allFactories) {
-        BreakpointPanel panel = factory.createBreakpointPanel(project, parentDialog);
-        if (panel != null) {
-          panel.setupPanelUI();
-          panels.add(panel);
-        }
-      }
-      return panels;
-    }
 
     @Override
     public AnAction[] getAddBreakpointActions(@NotNull Project project) {

@@ -33,7 +33,7 @@ public abstract class AbstractGradleTask implements GradleTask {
   @Nullable transient private final Project      myIntellijProject;
   @NotNull  private final            GradleTaskId myId;
 
-  protected AbstractGradleTask(Project project, @NotNull GradleTaskType type) {
+  protected AbstractGradleTask(@Nullable Project project, @NotNull GradleTaskType type) {
     myIntellijProject = project;
     myId = GradleTaskId.create(type);
   }

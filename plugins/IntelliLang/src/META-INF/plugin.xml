@@ -34,6 +34,7 @@
 
     <projectConfigurable instance="org.intellij.plugins.intelliLang.InjectionsSettingsUI"/>
 
+    <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.CommentLanguageInjector"/>
     <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.TemporaryPlacesInjector"/>
     <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.DefaultLanguageInjector" order="last"/>
 
@@ -43,5 +44,7 @@
                     serviceImplementation="org.intellij.plugins.intelliLang.Configuration$App"/>
     <projectService serviceInterface="org.intellij.plugins.intelliLang.Configuration"
                     serviceImplementation="org.intellij.plugins.intelliLang.Configuration$Prj"/>
+    <compileServer.plugin classpath="intellilang-jps-plugin.jar"/>
+
   </extensions>
 </idea-plugin>

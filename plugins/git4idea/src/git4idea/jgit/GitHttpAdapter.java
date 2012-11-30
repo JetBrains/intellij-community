@@ -341,42 +341,44 @@ public final class GitHttpAdapter {
             // don't "eat" one password entering attempt
             //noinspection AssignmentToForLoopParameter
             i--;
-            command.cleanup();
           }
+          command.cleanup();
         }
         catch (JGitInternalException e) {
-          if (authError(e)) {
-            if (provider.wasCancelled()) {  // if user cancels the dialog, just return
-              return GeneralResult.CANCELLED;
+          try {
+            if (authError(e)) {
+              if (provider.wasCancelled()) {  // if user cancels the dialog, just return
+                return GeneralResult.CANCELLED;
+              }
+              // otherwise give more tries to enter password
             }
-            // otherwise give more tries to enter password
+            else if (!httpTransportErrorFixTried && isTransportExceptionForHttp(e, url)) {
+              url = url.replaceFirst("http", "https");
+              command.setUrl(url);
+              provider.setUrl(url);
+              httpTransportErrorFixTried = true;
+              // don't "eat" one password entering attempt
+              //noinspection AssignmentToForLoopParameter
+              i--;
+            }
+            else if (!noRemoteWithoutGitErrorFixTried && isNoRemoteWithoutDotGitError(e, url)) {
+              url = addDotGitToUrl(url);
+              command.setUrl(url);
+              provider.setUrl(url);
+              noRemoteWithoutGitErrorFixTried = true;
+              // don't "eat" one password entering attempt
+              //noinspection AssignmentToForLoopParameter
+              i--;
+            }
+            else if (smartHttpPushNotSupported(e)) {
+              throw new SmartPushNotSupportedException(e.getCause().getMessage());
+            }
+            else {
+              throw e;
+            }
+          }
+          finally {
             command.cleanup();
-          }
-          else if (!httpTransportErrorFixTried && isTransportExceptionForHttp(e, url)) {
-            url = url.replaceFirst("http", "https");
-            command.setUrl(url);
-            provider.setUrl(url);
-            httpTransportErrorFixTried = true;
-            // don't "eat" one password entering attempt
-            //noinspection AssignmentToForLoopParameter
-            i--;
-            command.cleanup();
-          }
-          else if (!noRemoteWithoutGitErrorFixTried && isNoRemoteWithoutDotGitError(e, url)) {
-            url = addDotGitToUrl(url);
-            command.setUrl(url);
-            provider.setUrl(url);
-            noRemoteWithoutGitErrorFixTried = true;
-            // don't "eat" one password entering attempt
-            //noinspection AssignmentToForLoopParameter
-            i--;
-            command.cleanup();
-          }
-          else if (smartHttpPushNotSupported(e)) {
-            throw new SmartPushNotSupportedException(e.getCause().getMessage());
-          }
-          else {
-            throw e;
           }
         }
       }
@@ -415,7 +417,7 @@ public final class GitHttpAdapter {
 
   private static boolean isNoRemoteWithoutDotGitError(Throwable e, String url) {
     Throwable cause = e.getCause();
-    if (!(cause instanceof NoRemoteRepositoryException) && !(cause.getCause() instanceof NoRemoteRepositoryException)) {
+    if (cause == null || (!(cause instanceof NoRemoteRepositoryException) && !(cause.getCause() instanceof NoRemoteRepositoryException))) {
       return false;
     }
     return !url.toLowerCase().endsWith(GitUtil.DOT_GIT);

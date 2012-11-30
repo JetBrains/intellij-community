@@ -19,6 +19,7 @@ import com.android.ddmlib.*;
 import com.intellij.CommonBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
+import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
@@ -33,6 +34,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -171,6 +173,14 @@ public class AndroidRunConfiguration extends AndroidRunConfigurationBase impleme
     else if (MODE.equals(LAUNCH_SPECIFIC_ACTIVITY)) {
       activityToLaunch = ACTIVITY_CLASS;
     }
+    if (activityToLaunch != null) {
+      final GlobalSearchScope scope = facet.getModule().getModuleWithDependenciesAndLibrariesScope(false);
+      final PsiClass activityClass = JavaPsiFacade.getInstance(getProject()).findClass(activityToLaunch, scope);
+
+      if (activityClass != null) {
+        activityToLaunch = JavaExecutionUtil.getRuntimeQualifiedName(activityClass);
+      }
+    }
     return new MyApplicationLauncher(activityToLaunch);
   }
 
@@ -218,8 +228,10 @@ public class AndroidRunConfiguration extends AndroidRunConfigurationBase impleme
 
     public boolean launch(@NotNull AndroidRunningState state, @NotNull IDevice device)
       throws IOException, AdbCommandRejectedException, TimeoutException {
-      if (myActivityName == null) return true;
-      final String activityPath = state.getPackageName() + '/' + myActivityName;
+      String activityName = myActivityName;
+      if (activityName == null) return true;
+      activityName = activityName.replace("$", "\\$");
+      final String activityPath = state.getPackageName() + '/' + activityName;
       ProcessHandler processHandler = state.getProcessHandler();
       if (state.isStopped()) return false;
       processHandler.notifyTextAvailable("Launching application: " + activityPath + ".\n", STDOUT);

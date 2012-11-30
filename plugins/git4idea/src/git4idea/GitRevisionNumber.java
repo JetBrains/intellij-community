@@ -15,6 +15,7 @@
  */
 package git4idea;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
@@ -46,6 +47,8 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
    * the date when revision created
    */
   @NotNull private final Date myTimestamp;
+
+  private static final Logger LOG = Logger.getInstance(GitRevisionNumber.class);
 
   /**
    * A constructor from version. The current date is used.
@@ -217,7 +220,7 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
   @NotNull
   public static GitRevisionNumber parseRevlistOutputAsRevisionNumber(@NotNull GitSimpleHandler h, @NotNull String output) {
     StringTokenizer tokenizer = new StringTokenizer(output, "\n\r \t", false);
-    assert tokenizer.hasMoreTokens() : "No required tokens in the output: \n" + output;
+    LOG.assertTrue(tokenizer.hasMoreTokens(), "No required tokens in the output: \n" + output);
     Date timestamp = GitUtil.parseTimestampWithNFEReport(tokenizer.nextToken(), h, output);
     return new GitRevisionNumber(tokenizer.nextToken(), timestamp);
   }

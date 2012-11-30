@@ -672,7 +672,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }).setAsSecondary(true);
     }
 
-    if (!PlatformUtils.isCidr()) {
+    if (!PlatformUtils.isAppCode()) {
       myActionGroup.addAction(new PaneOptionAction(myShowMembers, IdeBundle.message("action.show.members"),
                                                    IdeBundle.message("action.show.hide.members"),
                                                    AllIcons.ObjectBrowser.ShowMembers, ourShowMembersDefaults))

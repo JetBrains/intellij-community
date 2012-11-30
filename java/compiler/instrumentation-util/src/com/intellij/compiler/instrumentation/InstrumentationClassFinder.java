@@ -100,7 +100,25 @@ public class InstrumentationClassFinder {
     if (aClass != null) {
       return aClass;
     }
-    
+
+    final InputStream is = getClassBytesAsStream(internalName);
+
+    if (is == null) {
+      throw new ClassNotFoundException("Class not found: " + internalName);
+    }
+
+    try {
+      final PseudoClass result = loadPseudoClass(is);
+      myLoaded.put(internalName, result);
+      return result;
+    }
+    finally {
+      is.close();
+    }
+  }
+
+  public InputStream getClassBytesAsStream(String className) throws IOException {
+    final String internalName = className.replace('.', '/'); // normalize
     InputStream is = null;
     // first look into platformCp
     final String resourceName = internalName + CLASS_RESOURCE_EXTENSION;
@@ -123,19 +141,7 @@ public class InstrumentationClassFinder {
     if (is == null) {
       is = lookupClassAfterClasspath(internalName);
     }
-
-    if (is == null) {
-      throw new ClassNotFoundException("Class not found: " + internalName);
-    }
-
-    try {
-      final PseudoClass result = loadPseudoClass(is);
-      myLoaded.put(internalName, result);
-      return result;
-    }
-    finally {
-      is.close();
-    }
+    return is;
   }
 
   public InputStream getResourceAsStream(String resourceName) throws IOException {

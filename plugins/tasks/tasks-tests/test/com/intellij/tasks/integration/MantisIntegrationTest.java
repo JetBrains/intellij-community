@@ -26,8 +26,13 @@ public class MantisIntegrationTest extends TaskManagerTestCase {
     mantisRepository.setProject(mantisProject);
 
     assertTrue(mantisProject.getFilters().size() >= 2);
-    final MantisFilter mantisFilter = mantisProject.getFilters().get(1);
-    assertEquals(mantisFilter.getName(), "Mantis 1.2 Filter 1");
+    MantisFilter mantisFilter = null;
+    for (MantisFilter filter : mantisProject.getFilters()) {
+      if (filter.getName().equals("Mantis 1.2 Filter 1")) {
+        mantisFilter = filter;
+      }
+    }
+    assertNotNull(mantisFilter);
     mantisRepository.setFilter(mantisFilter);
 
     final Task[] issues = mantisRepository.getIssues("", 1, 0);

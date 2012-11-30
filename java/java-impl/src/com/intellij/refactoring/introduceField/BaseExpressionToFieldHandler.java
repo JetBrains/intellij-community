@@ -726,16 +726,23 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         PsiMember anchorMember = finalAnchorElement instanceof PsiMember ? (PsiMember)finalAnchorElement : null;
 
         if (anchorMember instanceof PsiEnumConstant && destClass == anchorMember.getContainingClass()) {
-          String constantsClassName = "Constants";
+          final String initialName = "Constants";
+          String constantsClassName = initialName;
 
-          int i = 1;
-          while (destClass.findInnerClassByName(constantsClassName, true) != null) {
-            constantsClassName += constantsClassName + i++;
+          PsiClass innerClass = destClass.findInnerClassByName(constantsClassName, true);
+          if (innerClass == null || !isConstantsClass(innerClass)) {
+            int i = 1;
+            while (destClass.findInnerClassByName(constantsClassName, true) != null) {
+              constantsClassName = initialName + i++;
+            }
+
+            PsiClass psiClass = JavaPsiFacade.getElementFactory(myProject).createClass(constantsClassName);
+            PsiUtil.setModifierProperty(psiClass, PsiModifier.PRIVATE, true);
+            PsiUtil.setModifierProperty(psiClass, PsiModifier.STATIC, true);
+            destClass = (PsiClass)destClass.add(psiClass);
+          } else {
+            destClass = innerClass;
           }
-
-          PsiClass psiClass = JavaPsiFacade.getElementFactory(myProject).createClass(constantsClassName);
-          PsiUtil.setModifierProperty(psiClass, PsiModifier.PRIVATE, true);
-          destClass = (PsiClass)destClass.add(psiClass);
           anchorMember = null;
         }
         myField = appendField(initializer, initializerPlace, destClass, myParentClass, myField, anchorMember);
@@ -842,6 +849,14 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       }
     }
 
+    static boolean isConstantsClass(PsiClass innerClass) {
+      if (innerClass.getMethods().length != 0) return false;
+      for (PsiField field : innerClass.getFields()) {
+        if (!field.hasModifierProperty(PsiModifier.STATIC) || !field.hasModifierProperty(PsiModifier.FINAL)) return false;
+      }
+      return true;
+    }
+    
     static PsiField appendField(final PsiExpression initializer,
                                 InitializationPlace initializerPlace, final PsiClass destClass,
                                 final PsiClass parentClass,

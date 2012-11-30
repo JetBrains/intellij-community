@@ -40,6 +40,6 @@ public class MacHelpUtil {
   }
 
   static boolean isApplicable() {
-    return SystemInfo.isMac && Registry.is("ide.mac.show.native.help", false) && !PlatformUtils.isCidr() && !PlatformUtils.isCommunity();
+    return SystemInfo.isMac && Registry.is("ide.mac.show.native.help", false) && !PlatformUtils.isAppCode() && !PlatformUtils.isCommunity();
   }
 }

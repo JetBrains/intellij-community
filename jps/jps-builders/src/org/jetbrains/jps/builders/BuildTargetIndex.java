@@ -2,8 +2,8 @@ package org.jetbrains.jps.builders;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
+import org.jetbrains.jps.incremental.CompileContext;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -12,10 +12,7 @@ import java.util.Set;
  */
 public interface BuildTargetIndex extends BuildTargetRegistry {
 
-  @NotNull
-  Collection<BuildTarget<?>> getDependencies(@NotNull BuildTarget<?> target);
+  List<BuildTargetChunk> getSortedTargetChunks(@NotNull CompileContext context);
 
-  List<BuildTargetChunk> getSortedTargetChunks();
-
-  Set<BuildTarget<?>> getDependenciesRecursively(BuildTarget<?> target);
+  Set<BuildTarget<?>> getDependenciesRecursively(@NotNull BuildTarget<?> target, @NotNull CompileContext context);
 }

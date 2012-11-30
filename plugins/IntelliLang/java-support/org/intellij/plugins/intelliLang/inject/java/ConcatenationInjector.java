@@ -138,10 +138,10 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       @Override
       protected void processInjection(Language language,
                                       List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
-                                      boolean xmlInjection,
+                                      boolean settingsAvailable,
                                       boolean unparsable) {
         InjectorUtils.registerInjection(language, list, containingFile, registrar);
-        InjectorUtils.registerSupport(mySupport, xmlInjection, registrar);
+        InjectorUtils.registerSupport(mySupport, settingsAvailable, registrar);
         if (unparsable) InjectorUtils.putInjectedFileUserData(registrar, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, Boolean.TRUE);
       }
 
@@ -157,7 +157,9 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       }
     };
     if (tempLanguage != null) {
-      injectionProcessor.processCommentInjectionInner(null, null, tempLanguage);
+      BaseInjection baseInjection = new BaseInjection(LanguageInjectionSupport.JAVA_SUPPORT_ID);
+      baseInjection.setInjectedLanguageId(tempInjectedLanguage.getID());
+      injectionProcessor.processInjectionInner(baseInjection, false);
       InjectorUtils.putInjectedFileUserData(registrar, LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE, tempInjectedLanguage);
     }
     else {
@@ -298,28 +300,15 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       prev = prev instanceof PsiComment? prev : PsiTreeUtil.skipSiblingsBackward(owner.getParent(), PsiWhiteSpace.class);
       if (prev instanceof PsiComment) {
         String text = ElementManipulators.getValueText(prev).trim();
-        Language language = null;
-        for (int idx = 0, len = text.length(); idx != -1 && language == null; idx = StringUtil.indexOfAny(text, " \t\r\n,", idx + 1, len)) {
-          String id = idx > 0 ? text.substring(0, idx).trim() : text;
-          for (Language l : Language.getRegisteredLanguages()) {
-            if (id.equalsIgnoreCase(l.getID())) {
-              language = l;
-              break;
-            }
-          }
-        }
-        if (language != null) {
-          return processCommentInjectionInner(owner, prev, language);
+        BaseInjection injection = InjectorUtils.detectInjectionFromText(LanguageInjectionSupport.JAVA_SUPPORT_ID, text);
+        if (injection != null) {
+          return processCommentInjectionInner(owner, prev, injection);
         }
       }
       return true;
     }
 
-    protected boolean processCommentInjectionInner(PsiVariable owner, PsiElement comment, Language language) {
-      final BaseInjection injection = new BaseInjection(LanguageInjectionSupport.JAVA_SUPPORT_ID);
-      //if (prefix != null) injection.setPrefix(prefix);
-      //if (suffix != null) injection.setSuffix(suffix);
-      injection.setInjectedLanguageId(language.getID());
+    protected boolean processCommentInjectionInner(PsiVariable owner, PsiElement comment, BaseInjection injection) {
       processInjectionWithContext(injection, false);
       return false;
     }
@@ -377,7 +366,11 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       return true;
     }
 
-    private void processInjectionWithContext(BaseInjection injection, boolean xmlInjection) {
+    protected void processInjectionInner(BaseInjection injection, boolean settingsAvailable) {
+      processInjectionWithContext(injection, settingsAvailable);
+    }
+
+    private void processInjectionWithContext(BaseInjection injection, boolean settingsAvailable) {
       final Language language = InjectedLanguage.findLanguageById(injection.getInjectedLanguageId());
       if (language == null) return;
       final boolean separateFiles = !injection.isSingleFile() && StringUtil.isNotEmpty(injection.getValuePattern());
@@ -432,11 +425,11 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       if (!result.isEmpty()) {
         if (separateFiles) {
           for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : result) {
-            processInjection(language, Collections.singletonList(trinity), xmlInjection, false);
+            processInjection(language, Collections.singletonList(trinity), settingsAvailable, false);
           }
         }
         else {
-          processInjection(language, result, xmlInjection, unparsableRef.get());
+          processInjection(language, result, settingsAvailable, unparsableRef.get());
         }
       }
     }

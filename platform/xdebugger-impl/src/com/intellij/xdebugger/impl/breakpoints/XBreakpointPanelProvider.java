@@ -22,19 +22,16 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.*;
-import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
-import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointGroupingByTypeRule;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
-import com.intellij.xdebugger.impl.breakpoints.ui.AbstractBreakpointPanel;
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
-import com.intellij.xdebugger.impl.breakpoints.ui.XBreakpointsPanel;
 import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule;
+import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointGroupingByTypeRule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,20 +102,6 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
     return null;
   }
 
-  @NotNull
-  public Collection<AbstractBreakpointPanel<XBreakpoint>> getBreakpointPanels(@NotNull final Project project,
-                                                                              @NotNull final DialogWrapper parentDialog) {
-    XBreakpointType<?, ?>[] types = XBreakpointUtil.getBreakpointTypes();
-    ArrayList<AbstractBreakpointPanel<XBreakpoint>> panels = new ArrayList<AbstractBreakpointPanel<XBreakpoint>>();
-    for (XBreakpointType<? extends XBreakpoint<?>, ?> type : types) {
-      if (type.shouldShowInBreakpointsDialog(project)) {
-        XBreakpointsPanel<?> panel = createBreakpointsPanel(project, parentDialog, type);
-        panels.add(panel);
-      }
-    }
-    return panels;
-  }
-
   @Override
   public AnAction[] getAddBreakpointActions(@NotNull Project project) {
     List<AnAction> result = new ArrayList<AnAction>();
@@ -128,12 +111,6 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
       }
     }
     return result.toArray(new AnAction[result.size()]);
-  }
-
-  private static <B extends XBreakpoint<?>> XBreakpointsPanel<B> createBreakpointsPanel(final Project project,
-                                                                                        DialogWrapper parentDialog,
-                                                                                        final XBreakpointType<B, ?> type) {
-    return new XBreakpointsPanel<B>(project, parentDialog, type);
   }
 
   public void onDialogClosed(final Project project) {

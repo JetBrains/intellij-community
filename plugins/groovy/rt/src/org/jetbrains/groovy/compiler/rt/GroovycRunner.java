@@ -408,12 +408,8 @@ public class GroovycRunner {
                 }
 
                 public void visitClass(ClassNode node) {
-                  try {
-                    if (node.isEnum()) {
-                      node.setModifiers(node.getModifiers() & ~Opcodes.ACC_FINAL);
-                    }
-                  }
-                  catch (NoSuchMethodError ignore) {
+                  if (node.isEnum()) {
+                    node.setModifiers(node.getModifiers() & ~Opcodes.ACC_FINAL);
                   }
                   super.visitClass(node);
                 }
@@ -436,7 +432,11 @@ public class GroovycRunner {
                   super.visitAnnotations(node);
                 }
               };
-              annoRemover.visitClass(classNode);
+              try {
+                annoRemover.visitClass(classNode);
+              }
+              catch (LinkageError ignored) {
+              }
             }
           }, phase);
         }

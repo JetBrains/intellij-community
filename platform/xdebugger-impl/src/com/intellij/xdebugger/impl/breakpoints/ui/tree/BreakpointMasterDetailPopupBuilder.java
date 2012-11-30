@@ -17,8 +17,6 @@ package com.intellij.xdebugger.impl.breakpoints.ui.tree;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -125,6 +123,7 @@ public class BreakpointMasterDetailPopupBuilder {
     myPopupBuilder = new MasterDetailPopupBuilder(myProject);
     if (!myPlainView) {
       myPopupBuilder.setDimensionServiceKey(getClass().getName());
+      myPopupBuilder.setUseDimensionServiceForXYLocation(true);
       myPopupBuilder.setCancelOnClickOutside(false);
     }
     myPopupBuilder.setCancelOnWindowDeactivation(false);
@@ -253,9 +252,8 @@ public class BreakpointMasterDetailPopupBuilder {
       }
     });
 
-    final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
-    final Shortcut[] generateShortcuts = keymap.getShortcuts("Generate");
-    myAddAction.registerCustomShortcutSet(new CustomShortcutSet(generateShortcuts), myPopup.getContent());
+    final ShortcutSet newShortcut = CommonShortcuts.getNew();
+    myAddAction.registerCustomShortcutSet(newShortcut, myPopup.getContent());
 
     new GotoSourceAction();
 

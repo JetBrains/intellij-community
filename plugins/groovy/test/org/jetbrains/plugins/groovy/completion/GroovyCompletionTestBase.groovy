@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ abstract public class GroovyCompletionTestBase extends LightCodeInsightFixtureTe
     myFixture.complete(ct)
     type.each { myFixture.type(it) }
 
-    assertNull(myFixture.lookupElements)
+    assertNull(myFixture.lookupElementStrings as String, myFixture.lookupElements)
     if (after == null) {
       myFixture.checkResultByFile(getTestName(false) + "_after.groovy", true)
     }

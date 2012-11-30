@@ -16,6 +16,7 @@
 
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.EmptyIterator;
@@ -85,7 +86,9 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       final Value value = valueIterator.next();
       if (isAssociated(value, inputId)) {
         if (toRemove == null) toRemove = new SmartList<Value>();
-        else LOG.error("Expected only one value per-inputId", String.valueOf(toRemove.get(0)), String.valueOf(value));
+        else if (ApplicationInfoImpl.getShadowInstance().isEAP()) {
+          LOG.error("Expected only one value per-inputId", String.valueOf(toRemove.get(0)), String.valueOf(value));
+        }
         toRemove.add(value);
       }
     }

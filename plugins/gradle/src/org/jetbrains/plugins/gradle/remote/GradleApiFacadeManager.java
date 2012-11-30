@@ -34,6 +34,7 @@ import com.intellij.util.PathsList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
+import org.gradle.tooling.ProjectConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManager;
@@ -46,6 +47,7 @@ import org.jetbrains.plugins.gradle.util.GradleLog;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -54,7 +56,6 @@ import java.nio.charset.Charset;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -110,7 +111,7 @@ public class GradleApiFacadeManager {
 
       @Override
       protected RunProfileState getRunProfileState(Object o, String configuration, Executor executor) throws ExecutionException {
-        return createRunProfileState(findProjectByName(configuration));
+        return createRunProfileState();
       }
     };
 
@@ -132,20 +133,17 @@ public class GradleApiFacadeManager {
     return projectManager.getDefaultProject();
   }
 
-  private RunProfileState createRunProfileState(@Nullable final Project project) {
+  private RunProfileState createRunProfileState() {
     return new CommandLineState(null) {
       private SimpleJavaParameters createJavaParameters() throws ExecutionException {
-        Collection<File> gradleLibraries = myGradleInstallationManager.getAllLibraries(project);
-        GradleLog.LOG.assertTrue(gradleLibraries != null, GradleBundle.message("gradle.generic.text.error.sdk.undefined"));
-        if (gradleLibraries == null) {
-          throw new ExecutionException("Can't find gradle libraries");
-        } 
 
         final SimpleJavaParameters params = new SimpleJavaParameters();
         params.setJdk(new SimpleJavaSdkType().createJdk("tmp", SystemProperties.getJavaHome()));
 
         params.setWorkingDirectory(PathManager.getBinPath());
         final List<String> classPath = new ArrayList<String>();
+        
+        // IDE jars.
         classPath.addAll(PathManager.getUtilClassPath());
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(LanguageLevel.class), classPath);
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(PsiBundle.class), classPath);
@@ -154,13 +152,34 @@ public class GradleApiFacadeManager {
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(JavaSdkVersion.class), classPath);
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(ExtensionPointName.class), classPath);
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(OpenProjectFileChooserDescriptor.class), classPath);
+
+        // Gradle plugin jars
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(getClass()), classPath);
-        for (File library : gradleLibraries) {
-          classPath.add(library.getAbsolutePath());
-        }
-        params.getClassPath().addAll(classPath);
         addBundle(params.getClassPath(), "messages.CommonBundle");
         addBundle(params.getClassPath(), GradleBundle.PATH_TO_BUNDLE);
+        
+        // Gradle tool jars.
+        String toolingApiPath = PathManager.getJarPathForClass(ProjectConnection.class);
+        if (toolingApiPath == null) {
+          GradleLog.LOG.warn(GradleBundle.message("gradle.generic.text.error.jar.not.found"));
+          throw new ExecutionException("Can't find gradle libraries");
+        }
+        File gradleJarsDir = new File(toolingApiPath).getParentFile();
+        String[] gradleJars = gradleJarsDir.list(new FilenameFilter() {
+          @Override
+          public boolean accept(File dir, String name) {
+            return name.endsWith(".jar");
+          }
+        });
+        if (gradleJars == null) {
+          GradleLog.LOG.warn(GradleBundle.message("gradle.generic.text.error.jar.not.found"));
+          throw new ExecutionException("Can't find gradle libraries at " + gradleJarsDir.getAbsolutePath());
+        }
+        for (String jar : gradleJars) {
+          classPath.add(new File(gradleJarsDir, jar).getAbsolutePath());
+        }
+
+        params.getClassPath().addAll(classPath);
 
         params.setMainClass(MAIN_CLASS_NAME);
         

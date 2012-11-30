@@ -26,16 +26,14 @@ import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TIntIntHashMap;
 import org.intellij.plugins.relaxNG.compact.RncTokenTypes;
 import org.jetbrains.annotations.Nullable;
-import org.kohsuke.rngom.parse.compact.CompactSyntaxConstants;
-import org.kohsuke.rngom.parse.compact.CompactSyntaxTokenManager;
-import org.kohsuke.rngom.parse.compact.Token;
-import org.kohsuke.rngom.parse.compact.TokenMgrError;
+import org.kohsuke.rngom.parse.compact.*;
 
 import java.io.CharArrayReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.LinkedList;
 
 /**
@@ -172,6 +170,7 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
     init(startOffset, endOffset, reader, initialState);
   }
 
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
     myBuffer = buffer;
 
@@ -179,18 +178,31 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
     init(startOffset, endOffset, reader, initialState);
   }
 
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private void init(int startOffset, int endOffset, Reader reader, int initialState) {
     myEndOffset = endOffset;
     myLengthMap = new TIntIntHashMap();
 
-    final EscapePreprocessor preprocessor = new EscapePreprocessor(reader, startOffset, myLengthMap);
-    myLexer = new CompactSyntaxTokenManager(new SimpleCharStream(preprocessor, 1, 1), initialState);
+    myLexer = createTokenManager(initialState, new EscapePreprocessor(reader, startOffset, myLengthMap));
 
     myCurrentToken = START;
     myCurrentOffset = startOffset;
     myCurrentEnd = startOffset;
     myTokenQueue.clear();
     advance();
+  }
+
+  private static CompactSyntaxTokenManager createTokenManager(int initialState, EscapePreprocessor preprocessor) {
+    try {
+      return new CompactSyntaxTokenManager(new SimpleCharStream(preprocessor, 1, 1), initialState);
+    } catch (NoSuchMethodError e) {
+      final Class<CompactSyntaxTokenManager> managerClass = CompactSyntaxTokenManager.class;
+      LOG.error("Unsupported version of RNGOM in classpath", e,
+                "Actual parameter types: " + Arrays.toString(managerClass.getConstructors()[0].getParameterTypes()),
+                "Location of " + managerClass.getName() + ": " + managerClass.getProtectionDomain().getCodeSource().getLocation(),
+                "Location of " + CharStream.class.getName() + ": " + CharStream.class.getProtectionDomain().getCodeSource().getLocation());
+      throw e;
+    }
   }
 
   public static void main(String[] args) throws IOException {

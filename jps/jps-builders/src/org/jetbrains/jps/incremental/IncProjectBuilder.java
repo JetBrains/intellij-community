@@ -372,17 +372,21 @@ public class IncProjectBuilder {
   }
 
   private static void registerTargetsWithClearedOutput(CompileContext context, Collection<? extends BuildTarget<?>> targets) {
-    Set<BuildTarget<?>> data = context.getUserData(TARGET_WITH_CLEARED_OUTPUT);
-    if (data == null) {
-      data = new THashSet<BuildTarget<?>>();
-      context.putUserData(TARGET_WITH_CLEARED_OUTPUT, data);
+    synchronized (TARGET_WITH_CLEARED_OUTPUT) {
+      Set<BuildTarget<?>> data = context.getUserData(TARGET_WITH_CLEARED_OUTPUT);
+      if (data == null) {
+        data = new THashSet<BuildTarget<?>>();
+        context.putUserData(TARGET_WITH_CLEARED_OUTPUT, data);
+      }
+      data.addAll(targets);
     }
-    data.addAll(targets);
   }
 
   private static boolean isTargetOutputCleared(CompileContext context, BuildTarget<?> target) {
-    Set<BuildTarget<?>> data = context.getUserData(TARGET_WITH_CLEARED_OUTPUT);
-    return data != null && data.contains(target);
+    synchronized (TARGET_WITH_CLEARED_OUTPUT) {
+      Set<BuildTarget<?>> data = context.getUserData(TARGET_WITH_CLEARED_OUTPUT);
+      return data != null && data.contains(target);
+    }
   }
 
   private void clearOutputs(CompileContext context) throws ProjectBuildException, IOException {
@@ -473,7 +477,7 @@ public class IncProjectBuilder {
     BuildTargetIndex targetIndex = pd.getBuildTargetIndex();
     try {
       if (BuildRunner.PARALLEL_BUILD_ENABLED) {
-        final List<ChunkGroup> chunkGroups = buildChunkGroups(targetIndex);
+        final List<ChunkGroup> chunkGroups = buildChunkGroups(targetIndex, context);
         for (ChunkGroup group : chunkGroups) {
           final List<BuildTargetChunk> groupChunks = group.getChunks();
           final int chunkCount = groupChunks.size();
@@ -546,7 +550,7 @@ public class IncProjectBuilder {
       }
       else {
         // non-parallel build
-        for (BuildTargetChunk chunk : targetIndex.getSortedTargetChunks()) {
+        for (BuildTargetChunk chunk : targetIndex.getSortedTargetChunks(context)) {
           try {
             buildChunkIfAffected(context, scope, chunk);
           }
@@ -919,13 +923,13 @@ public class IncProjectBuilder {
     return doneSomething;
   }
 
-  private static List<ChunkGroup> buildChunkGroups(BuildTargetIndex index) {
-    final List<BuildTargetChunk> allChunks = index.getSortedTargetChunks();
+  private static List<ChunkGroup> buildChunkGroups(BuildTargetIndex index, CompileContext context) {
+    final List<BuildTargetChunk> allChunks = index.getSortedTargetChunks(context);
 
     // building aux dependencies map
     final Map<BuildTarget<?>, Set<BuildTarget<?>>> depsMap = new HashMap<BuildTarget<?>, Set<BuildTarget<?>>>();
     for (BuildTarget target : index.getAllTargets()) {
-      depsMap.put(target, index.getDependenciesRecursively(target));
+      depsMap.put(target, index.getDependenciesRecursively(target, context));
     }
 
     final List<ChunkGroup> groups = new ArrayList<ChunkGroup>();

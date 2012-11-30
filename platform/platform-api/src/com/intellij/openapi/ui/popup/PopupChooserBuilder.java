@@ -19,9 +19,11 @@ package com.intellij.openapi.ui.popup;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.*;
+import com.intellij.ui.ActiveComponent;
+import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBViewport;
@@ -81,6 +83,7 @@ public class PopupChooserBuilder {
   private boolean myModalContext;
   private boolean myCloseOnEnter = true;
   private boolean myCancelOnWindowDeactivation = true;
+  private boolean myUseForXYLocation;
 
   public PopupChooserBuilder setCancelOnClickOutside(boolean cancelOnClickOutside) {
     myCancelOnClickOutside = cancelOnClickOutside;
@@ -160,6 +163,11 @@ public class PopupChooserBuilder {
 
   public PopupChooserBuilder setDimensionServiceKey(@NonNls String key){
     myDimensionServiceKey = key;
+    return this;
+  }
+
+  public PopupChooserBuilder setUseDimensionServiceForXYLocation(boolean use) {
+    myUseForXYLocation = use;
     return this;
   }
 
@@ -283,7 +291,7 @@ public class PopupChooserBuilder {
       builder.addListener(each);
     }
 
-    builder.setDimensionServiceKey(null, myDimensionServiceKey, false)
+    builder.setDimensionServiceKey(null, myDimensionServiceKey, myUseForXYLocation)
       .setRequestFocus(myRequestFocus)
       .setResizable(myForceResizable)
       .setMovable(myForceMovable)

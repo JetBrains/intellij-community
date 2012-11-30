@@ -41,7 +41,7 @@ public class TaskDocumentationProvider extends AbstractDocumentationProvider imp
         return Collections.singletonList(url);
       }
     }
-    return Collections.emptyList();
+    return null;
   }
 
   @Override

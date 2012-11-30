@@ -38,11 +38,11 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract Calendar getMajorReleaseBuildDate();
 
-  public abstract String getLogoUrl();
+  public abstract String getSplashImageUrl();
 
-  public abstract Color getLogoTextColor();
+  public abstract Color getSplashTextColor();
 
-  public abstract String getAboutLogoUrl();
+  public abstract String getAboutImageUrl();
 
   public abstract String getIconUrl();
 
@@ -52,16 +52,20 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getToolWindowIconUrl();
 
+  public abstract String getWelcomeScreenCaptionUrl();
+
+  public abstract String getWelcomeScreenDeveloperSloganUrl();
+
+  public abstract String getWelcomeScreenLogoUrl();
+
+  public abstract String getEditorBackgroundImageUrl();
+
   public abstract String getPackageCode();
 
   public abstract String getFullApplicationName();
 
   public abstract boolean showLicenseeInfo();
 
-
-  public abstract String getWelcomeScreenCaptionUrl();
-
-  public abstract String getWelcomeScreenDeveloperSloganUrl();
 
   public abstract boolean isEAP();
 

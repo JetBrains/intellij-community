@@ -1,5 +1,6 @@
 package org.jetbrains.jps.model;
 
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaLibraryType;
 import org.jetbrains.jps.model.java.JpsJavaModuleType;
 import org.jetbrains.jps.model.library.JpsLibrary;
@@ -23,5 +24,9 @@ public abstract class JpsJavaModelTestCase extends JpsModelTestCase  {
 
   protected JpsLibrary addLibrary(final String name) {
     return myProject.addLibrary(name, JpsJavaLibraryType.INSTANCE);
+  }
+
+  protected JpsJavaExtensionService getJavaService() {
+    return JpsJavaExtensionService.getInstance();
   }
 }

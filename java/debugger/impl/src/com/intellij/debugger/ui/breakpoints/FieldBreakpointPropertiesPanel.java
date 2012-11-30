@@ -23,6 +23,7 @@ package com.intellij.debugger.ui.breakpoints;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.DialogUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -43,6 +44,8 @@ public class FieldBreakpointPropertiesPanel extends BreakpointPropertiesPanel {
     JPanel _panel0;
     myWatchAccessCheckBox = new JCheckBox(DebuggerBundle.message("label.filed.breakpoint.properties.panel.field.access"));
     myWatchModificationCheckBox = new JCheckBox(DebuggerBundle.message("label.filed.breakpoint.properties.panel.field.modification"));
+    DialogUtil.registerMnemonic(myWatchAccessCheckBox);
+    DialogUtil.registerMnemonic(myWatchModificationCheckBox);
 
 
     Box watchBox = Box.createVerticalBox();

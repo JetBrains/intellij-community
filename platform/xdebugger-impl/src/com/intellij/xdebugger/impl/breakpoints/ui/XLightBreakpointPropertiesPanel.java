@@ -93,6 +93,7 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implement
   private XBreakpointActionsPanel<B> myActionsPanel;
   private XMasterBreakpointPanel<B> myMasterBreakpointPanel;
   private JPanel myCustomPropertiesPanelWrapper;
+  private JPanel myCustomConditionsPanelWrapper;
   private final List<XBreakpointCustomPropertiesPanel<B>> myCustomPanels;
 
   private List<XBreakpointPropertiesSubPanel<B>> mySubPanels = new ArrayList<XBreakpointPropertiesSubPanel<B>>();
@@ -141,6 +142,12 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implement
     if (customPropertiesPanel != null) {
       myCustomPropertiesPanelWrapper.add(customPropertiesPanel.getComponent(), BorderLayout.CENTER);
       myCustomPanels.add(customPropertiesPanel);
+    }
+
+    XBreakpointCustomPropertiesPanel<B> customConditionPanel = breakpointType.createCustomConditionsPanel();
+    if (customConditionPanel != null) {
+      myCustomConditionsPanelWrapper.add(customConditionPanel.getComponent(), BorderLayout.CENTER);
+      myCustomPanels.add(customConditionPanel);
     }
 
     myMainPanel.addFocusListener(new FocusAdapter() {

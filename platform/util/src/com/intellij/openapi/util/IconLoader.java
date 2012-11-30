@@ -20,6 +20,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ImageLoader;
+import com.intellij.util.RetinaImage;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.ui.UIUtil;
@@ -248,16 +249,22 @@ public final class IconLoader {
         LOG.error(icon); // # 22481
         return EMPTY_ICON;
       }
-      final BufferedImage image = UIUtil.createImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+      final int scale = UIUtil.isRetina() ? 2 : 1;
+      @SuppressWarnings("UndesirableClassUsage")
+      BufferedImage image = new BufferedImage(scale*icon.getIconWidth(), scale*icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
       final Graphics2D graphics = image.createGraphics();
 
       graphics.setColor(UIUtil.TRANSPARENT_COLOR);
       graphics.fillRect(0, 0, icon.getIconWidth(), icon.getIconHeight());
+      graphics.scale(scale, scale);
       icon.paintIcon(LabelHolder.ourFakeComponent, graphics, 0, 0);
 
       graphics.dispose();
-
-      disabledIcon = new MyImageIcon(createDisabled(image));
+      
+      Image img = createDisabled(image);
+      if (UIUtil.isRetina()) img = RetinaImage.createFrom(image, 2, ImageLoader.ourComponent);
+      
+      disabledIcon = new MyImageIcon(img);
       ourIcon2DisabledIcon.put(icon, disabledIcon);
     }
     return disabledIcon;

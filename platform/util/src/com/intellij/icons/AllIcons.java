@@ -416,7 +416,6 @@ public class AllIcons {
     public static final Icon Keymap = IconLoader.getIcon("/general/keymap.png"); // 32x32
     public static final Icon Locate = IconLoader.getIcon("/general/locate.png"); // 14x16
     public static final Icon LocateHover = IconLoader.getIcon("/general/locateHover.png"); // 14x16
-    public static final Icon Logo_welcomeScreen = IconLoader.getIcon("/general/Logo_welcomeScreen.png"); // 80x80
     public static final Icon MacCorner = IconLoader.getIcon("/general/macCorner.png"); // 16x16
     public static final Icon Mdot_empty = IconLoader.getIcon("/general/mdot-empty.png"); // 8x8
     public static final Icon Mdot_white = IconLoader.getIcon("/general/mdot-white.png"); // 8x8
@@ -622,6 +621,7 @@ public class AllIcons {
   }
   public static final Icon Idea_logo_background = IconLoader.getIcon("/idea_logo_background.png"); // 500x500
   public static final Icon Idea_logo_welcome = IconLoader.getIcon("/idea_logo_welcome.png"); // 100x100
+  public static final Icon Logo_welcomeScreen = IconLoader.getIcon("/Logo_welcomeScreen.png"); // 80x80
   
   public static class Javaee {
     public static final Icon Application_xml = IconLoader.getIcon("/javaee/application_xml.png"); // 16x16

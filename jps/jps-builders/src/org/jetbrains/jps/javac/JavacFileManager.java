@@ -71,7 +71,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
   }
 
   public boolean isSameFile(FileObject a, FileObject b) {
-    if (a instanceof OutputFileObject && b instanceof OutputFileObject) {
+    if (a instanceof OutputFileObject || b instanceof OutputFileObject) {
       return a.equals(b);
     }
     return super.isSameFile(a, b);

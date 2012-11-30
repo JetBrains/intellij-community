@@ -69,7 +69,7 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
     myApplication.registerService(PsiPackageImplementationHelper.class, new CorePsiPackageImplementationHelper());
 
     myApplication.registerService(EmptySubstitutor.class, new EmptySubstitutorImpl());
-    myApplication.registerService(JavaDirectoryService.class, new CoreJavaDirectoryService());
+    myApplication.registerService(JavaDirectoryService.class, createJavaDirectoryService());
     myApplication.registerService(JavaVersionService.class, new JavaVersionService());
 
     addExplicitExtension(ItemPresentationProviders.INSTANCE, PsiPackage.class, new PackagePresentationProvider());
@@ -78,6 +78,10 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
     addExplicitExtension(ItemPresentationProviders.INSTANCE, PsiField.class, new FieldPresentationProvider());
     addExplicitExtension(ItemPresentationProviders.INSTANCE, PsiLocalVariable.class, new VariablePresentationProvider());
     addExplicitExtension(ItemPresentationProviders.INSTANCE, PsiParameter.class, new VariablePresentationProvider());
+  }
+
+  protected CoreJavaDirectoryService createJavaDirectoryService() {
+    return new CoreJavaDirectoryService();
   }
 
   public <T> void addExplicitExtension(final ClassExtension<T> instance, final Class clazz, final T object) {
