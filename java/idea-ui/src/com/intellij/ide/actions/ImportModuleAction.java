@@ -36,6 +36,7 @@ import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Collections;
@@ -83,12 +84,15 @@ public class ImportModuleAction extends AnAction {
 
   @Nullable
   public static AddModuleWizard selectFileAndCreateWizard(final Project project, Component dialogParent) {
-    FileChooserDescriptor descriptor = new OpenProjectFileChooserDescriptor(true) {
+    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, true, false, false) {
+      FileChooserDescriptor myDelegate = new OpenProjectFileChooserDescriptor(true);
       @Override
-      public boolean isFileSelectable(VirtualFile file) {
-        return file.isDirectory() || isProjectFile(file);
+      public Icon getIcon(VirtualFile file) {
+        Icon icon = myDelegate.getIcon(file);
+        return icon == null ? super.getIcon(file) : icon;
       }
     };
+
     descriptor.setTitle("Select File or Directory to Import");
     ProjectImportProvider[] providers = ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions();
     String description = getFileChooserDescription(project);
@@ -171,5 +175,10 @@ public class ImportModuleAction extends AnAction {
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     presentation.setEnabled(getEventProject(e) != null);
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    return true;
   }
 }

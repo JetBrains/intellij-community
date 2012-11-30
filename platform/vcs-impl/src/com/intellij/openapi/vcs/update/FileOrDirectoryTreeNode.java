@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -119,7 +120,7 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
   @NotNull
   private static SimpleTextAttributes getAttributesFor(@NotNull FileStatus status) {
     Color color = status.getColor();
-    if (color == null) color = Color.black;
+    if (color == null) color = UIUtil.getListForeground();
 
     if (!myFileStatusToAttributeMap.containsKey(status)) {
       myFileStatusToAttributeMap.put(status, new SimpleTextAttributes(Font.PLAIN, color));
