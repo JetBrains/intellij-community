@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
@@ -585,7 +586,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     PsiElement prev = PsiUtil.skipWhitespaces(dotPsi.getPrevSibling(), false);
     if (prev != null) {
       if (prev instanceof GrMethodCall) {
-        return ((GrMethodCall)prev).getClosureArguments().length > 0;
+        return PsiImplUtil.hasClosureArguments((GrMethodCall)prev);
       }
     }
 

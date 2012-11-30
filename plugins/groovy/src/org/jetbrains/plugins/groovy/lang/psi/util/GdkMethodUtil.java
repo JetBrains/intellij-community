@@ -35,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -270,11 +269,9 @@ public class GdkMethodUtil {
   }
 
   private static boolean isSingleExpressionArg(GrMethodCall call) {
-    GrExpression[] exprs = call.getExpressionArguments();
-    GrNamedArgument[] named = call.getNamedArguments();
-    GrClosableBlock[] closures = call.getClosureArguments();
-
-    return exprs.length == 1 && named.length == 0 && closures.length == 0;
+    return call.getExpressionArguments().length == 1 &&
+           !PsiImplUtil.hasNamedArguments(call.getArgumentList()) &&
+           !PsiImplUtil.hasClosureArguments(call);
   }
 
   @Nullable

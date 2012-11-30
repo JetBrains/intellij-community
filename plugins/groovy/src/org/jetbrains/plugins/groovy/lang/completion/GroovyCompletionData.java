@@ -270,7 +270,7 @@ public class GroovyCompletionData {
     return context.getParent() instanceof GrReferenceExpression &&
            context.getParent().getParent() instanceof GrApplicationStatement &&
            ((GrApplicationStatement)context.getParent().getParent()).getExpressionArguments().length == 1 &&
-           ((GrApplicationStatement)context.getParent().getParent()).getNamedArguments().length == 0;
+           !PsiImplUtil.hasNamedArguments(((GrApplicationStatement)context.getParent().getParent()).getArgumentList());
   }
 
   private static boolean hasReturnValue(PsiElement context) {

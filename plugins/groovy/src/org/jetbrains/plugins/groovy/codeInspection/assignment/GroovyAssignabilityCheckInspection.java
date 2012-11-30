@@ -409,11 +409,11 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         }
         else {
           final GrExpression[] expressionArguments = constructorCall.getExpressionArguments();
-          final GrClosableBlock[] closureArguments = constructorCall.getClosureArguments();
-          final GrNamedArgument[] namedArgs = constructorCall.getNamedArguments();
-          if (closureArguments.length > 0 ||
-              namedArgs.length > 0 && expressionArguments.length > 0 ||
-              namedArgs.length == 0 && expressionArguments.length > 0 && !isOnlyOneMapParam(expressionArguments)) {
+          final boolean hasClosureArgs = PsiImplUtil.hasClosureArguments(constructorCall);
+          final boolean hasNamedArgs = PsiImplUtil.hasNamedArguments(constructorCall.getArgumentList());
+          if (hasClosureArgs ||
+              hasNamedArgs && expressionArguments.length > 0 ||
+              !hasNamedArgs && expressionArguments.length > 0 && !isOnlyOneMapParam(expressionArguments)) {
             final GroovyResolveResult[] resolveResults = constructorCall.multiResolveClass();
             if (resolveResults.length == 1) {
               final PsiElement element = resolveResults[0].getElement();

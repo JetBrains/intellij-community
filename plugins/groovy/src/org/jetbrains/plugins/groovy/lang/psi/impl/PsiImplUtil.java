@@ -718,16 +718,29 @@ public class PsiImplUtil {
     return astNode != null && set.contains(astNode.getElementType());
   }
 
-  public static boolean hasNamedArguments(GrNamedArgumentsOwner list) {
+  public static boolean hasNamedArguments(@Nullable GrNamedArgumentsOwner list) {
+    if (list == null) return false;
     for (PsiElement child = list.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof GrNamedArgument) return true;
     }
     return false;
   }
 
-  public static boolean hasExpressionArguments(GrNamedArgumentsOwner list) {
+  public static boolean hasExpressionArguments(@Nullable GrArgumentList list) {
+    if (list == null) return false;
+
     for (PsiElement child = list.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof GrExpression) return true;
     }
-    return false;  }
+    return false;
+  }
+
+  public static boolean hasClosureArguments(@Nullable GrCall call) {
+    if (call == null) return false;
+
+    for (PsiElement child = call.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (child instanceof GrClosableBlock) return true;
+    }
+    return false;
+  }
 }

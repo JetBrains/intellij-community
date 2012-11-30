@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrRenameableLightElement;
 
 /**
@@ -63,8 +64,8 @@ public class GroovyTargetElementEvaluator implements TargetElementEvaluator {
       final GrArgumentList argumentList = newExpr.getArgumentList();
       if (constructor != null &&
           argumentList != null &&
-          argumentList.getNamedArguments().length != 0 &&
-          argumentList.getExpressionArguments().length == 0) {
+          PsiImplUtil.hasNamedArguments(argumentList) &&
+          !PsiImplUtil.hasExpressionArguments(argumentList)) {
         if (constructor.getParameterList().getParametersCount() == 0) return constructor.getContainingClass();
       }
 

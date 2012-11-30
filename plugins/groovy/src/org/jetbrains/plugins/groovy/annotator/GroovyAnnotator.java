@@ -86,6 +86,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -379,7 +380,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     super.visitEnumConstant(enumConstant);
     final GrArgumentList argumentList = enumConstant.getArgumentList();
 
-    if (argumentList != null && argumentList.getNamedArguments().length > 0 && argumentList.getExpressionArguments().length == 0) {
+    if (argumentList != null && PsiImplUtil.hasNamedArguments(argumentList) && !PsiImplUtil.hasExpressionArguments(argumentList)) {
       final PsiMethod constructor = enumConstant.resolveConstructor();
       if (constructor != null) {
         if (!PsiUtil.isConstructorHasRequiredParameters(constructor)) {

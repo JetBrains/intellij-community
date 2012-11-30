@@ -52,6 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GroovyIntroduceParameterUtil;
@@ -139,17 +140,12 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
       removeParametersFromCall(actualArgs, data.getParametersToRemove());
     }
 
-    if (argList.getAllArguments().length == 0 && hasClosureArgs(argList)) {
+    if (argList.getAllArguments().length == 0 && PsiImplUtil.hasClosureArguments(callExpression)) {
       final GrArgumentList emptyArgList = ((GrMethodCallExpression)factory.createExpressionFromText("foo{}")).getArgumentList();
       LOG.assertTrue(emptyArgList != null);
       argList.replace(emptyArgList);
     }
     return false;
-  }
-
-  private static boolean hasClosureArgs(GrArgumentList list) {
-    final PsiElement parent = list.getParent();
-    return parent instanceof GrMethodCallExpression && ((GrMethodCallExpression)parent).getClosureArguments().length > 0;
   }
 
   @Nullable
