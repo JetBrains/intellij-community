@@ -342,7 +342,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     new ConcatenationInjector.InjectionProcessor(configuration, host) {
 
       @Override
-      protected boolean processCommentInjectionInner(PsiVariable owner, PsiElement comment, Language language) {
+      protected boolean processCommentInjectionInner(PsiVariable owner, PsiElement comment, BaseInjection injection) {
         ContainerUtil.addAll(annotations, comment);
         return true;
       }

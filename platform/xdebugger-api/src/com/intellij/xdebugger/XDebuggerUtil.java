@@ -88,6 +88,4 @@ public abstract class XDebuggerUtil {
    * @param processor processor
    */
   public abstract void iterateLine(@NotNull Project project, @NotNull Document document, int line, @NotNull Processor<PsiElement> processor);
-
-  public abstract void showBreakpointsDialog(@NotNull Project project, @Nullable XBreakpoint<?> breakpointToSelect);
 }

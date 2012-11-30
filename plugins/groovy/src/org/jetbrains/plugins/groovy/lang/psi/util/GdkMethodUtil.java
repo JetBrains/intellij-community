@@ -46,6 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
+import org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
@@ -218,19 +219,7 @@ public class GdkMethodUtil {
         final GrReferenceExpression qualifier = result.second;
         final PsiClass mixin = result.third;
 
-        final DelegatingScopeProcessor delegate = new DelegatingScopeProcessor(processor) {
-          @Override
-          public boolean execute(@NotNull PsiElement element, ResolveState delegateState) {
-            if (element instanceof PsiMethod && isCategoryMethod((PsiMethod)element, subjectType, qualifier, null)) {
-              PsiMethod method = (PsiMethod)element;
-              return processor.execute(GrGdkMethodImpl.createGdkMethod(method, false, generateOriginInfo(method)), delegateState);
-            }
-            else if (element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.PUBLIC)) {
-              super.execute(element, delegateState);
-            }
-            return true;
-          }
-        };
+        final DelegatingScopeProcessor delegate = new MixinMemberContributor.MixinProcessor(processor, subjectType, qualifier);
         mixin.processDeclarations(delegate, state, null, place);
       }
     }

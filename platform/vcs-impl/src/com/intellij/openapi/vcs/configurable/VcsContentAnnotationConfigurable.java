@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.configurable;
 
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -23,52 +22,24 @@ import com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationSettings;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * @author Irina.Chernushina
  * @since 4.08.2011
  */
-public class VcsContentAnnotationConfigurable implements Configurable {
-  private final Project myProject;
-  private JCheckBox myHighlightRecentlyChanged;
-  private JSpinner myHighlightInterval;
-
+public class VcsContentAnnotationConfigurable extends VcsCheckBoxWithSpinnerConfigurable {
   public VcsContentAnnotationConfigurable(Project project) {
-    myProject = project;
+    super(project, "Show changed in last", "days");
+  }
+
+  protected SpinnerNumberModel createSpinnerModel() {
+    return new SpinnerNumberModel(1, 1, VcsContentAnnotationSettings.ourMaxDays, 1);
   }
 
   @Nls
   @Override
   public String getDisplayName() {
     return "Show recently changed";
-  }
-
-  @Override
-  public String getHelpTopic() {
-    return null;
-  }
-
-  @Override
-  public JComponent createComponent() {
-    JPanel wrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-    myHighlightRecentlyChanged = new JCheckBox("Show changed in last");
-    myHighlightInterval = new JSpinner(new SpinnerNumberModel(1, 1, VcsContentAnnotationSettings.ourMaxDays, 1));
-    wrapper.add(myHighlightRecentlyChanged);
-    wrapper.add(myHighlightInterval);
-    final JLabel days = new JLabel("days");
-    days.setBorder(BorderFactory.createEmptyBorder(0, 1, 0, 1));
-    wrapper.add(days);
-
-    myHighlightRecentlyChanged.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        myHighlightInterval.setEnabled(myHighlightRecentlyChanged.isSelected());
-      }
-    });
-    return wrapper;
   }
 
   @Override
@@ -92,9 +63,5 @@ public class VcsContentAnnotationConfigurable implements Configurable {
     myHighlightRecentlyChanged.setSelected(settings.isShow());
     myHighlightInterval.setValue(settings.getLimitDays());
     myHighlightInterval.setEnabled(myHighlightRecentlyChanged.isSelected());
-  }
-
-  @Override
-  public void disposeUIResources() {
   }
 }

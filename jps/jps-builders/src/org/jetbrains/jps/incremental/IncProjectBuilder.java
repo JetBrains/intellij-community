@@ -22,7 +22,6 @@ import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
-import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
@@ -33,6 +32,7 @@ import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.java.ExternalJavacDescriptor;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.OneToManyPathsMapping;
+import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.service.SharedThreadPool;
@@ -372,17 +372,21 @@ public class IncProjectBuilder {
   }
 
   private static void registerTargetsWithClearedOutput(CompileContext context, Collection<? extends BuildTarget<?>> targets) {
-    Set<BuildTarget<?>> data = context.getUserData(TARGET_WITH_CLEARED_OUTPUT);
-    if (data == null) {
-      data = new THashSet<BuildTarget<?>>();
-      context.putUserData(TARGET_WITH_CLEARED_OUTPUT, data);
+    synchronized (TARGET_WITH_CLEARED_OUTPUT) {
+      Set<BuildTarget<?>> data = context.getUserData(TARGET_WITH_CLEARED_OUTPUT);
+      if (data == null) {
+        data = new THashSet<BuildTarget<?>>();
+        context.putUserData(TARGET_WITH_CLEARED_OUTPUT, data);
+      }
+      data.addAll(targets);
     }
-    data.addAll(targets);
   }
 
   private static boolean isTargetOutputCleared(CompileContext context, BuildTarget<?> target) {
-    Set<BuildTarget<?>> data = context.getUserData(TARGET_WITH_CLEARED_OUTPUT);
-    return data != null && data.contains(target);
+    synchronized (TARGET_WITH_CLEARED_OUTPUT) {
+      Set<BuildTarget<?>> data = context.getUserData(TARGET_WITH_CLEARED_OUTPUT);
+      return data != null && data.contains(target);
+    }
   }
 
   private void clearOutputs(CompileContext context) throws ProjectBuildException, IOException {
@@ -390,7 +394,8 @@ public class IncProjectBuilder {
     final Set<File> allSourceRoots = new HashSet<File>();
 
     ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
-    for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets()) {
+    List<? extends BuildTarget<?>> allTargets = projectDescriptor.getBuildTargetIndex().getAllTargets();
+    for (BuildTarget<?> target : allTargets) {
       if (context.getScope().isAffected(target)) {
         final Collection<File> outputs = target.getOutputRoots(context);
         for (File file : outputs) {
@@ -399,12 +404,16 @@ public class IncProjectBuilder {
       }
     }
 
-    for (BuildTargetType<?> type : JavaModuleBuildTargetType.ALL_TYPES) {
-      for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets(type)) {
-        for (BuildRootDescriptor descriptor : projectDescriptor.getBuildRootIndex().getTargetRoots(target, context)) {
-          if (!descriptor.isGenerated()) {
-            // excluding from checks source roots with generated sources; because it is safe to delete generated stuff
-            allSourceRoots.add(descriptor.getRootFile());
+    ModuleExcludeIndex moduleIndex = projectDescriptor.getModuleExcludeIndex();
+    for (BuildTarget<?> target : allTargets) {
+      for (BuildRootDescriptor descriptor : projectDescriptor.getBuildRootIndex().getTargetRoots(target, context)) {
+        // excluding from checks roots with generated sources; because it is safe to delete generated stuff
+        if (!descriptor.isGenerated()) {
+          File rootFile = descriptor.getRootFile();
+          //some roots aren't marked by as generated but in fact they are produced by some builder and it's safe to remove them.
+          //However if a root isn't excluded it means that its content will be shown in 'Project View' and an user can create new files under it so it would be dangerous to clean such roots
+          if (moduleIndex.isInContent(rootFile) && !moduleIndex.isExcluded(rootFile)) {
+            allSourceRoots.add(rootFile);
           }
         }
       }
@@ -468,7 +477,7 @@ public class IncProjectBuilder {
     BuildTargetIndex targetIndex = pd.getBuildTargetIndex();
     try {
       if (BuildRunner.PARALLEL_BUILD_ENABLED) {
-        final List<ChunkGroup> chunkGroups = buildChunkGroups(targetIndex);
+        final List<ChunkGroup> chunkGroups = buildChunkGroups(targetIndex, context);
         for (ChunkGroup group : chunkGroups) {
           final List<BuildTargetChunk> groupChunks = group.getChunks();
           final int chunkCount = groupChunks.size();
@@ -541,7 +550,7 @@ public class IncProjectBuilder {
       }
       else {
         // non-parallel build
-        for (BuildTargetChunk chunk : targetIndex.getSortedTargetChunks()) {
+        for (BuildTargetChunk chunk : targetIndex.getSortedTargetChunks(context)) {
           try {
             buildChunkIfAffected(context, scope, chunk);
           }
@@ -914,13 +923,13 @@ public class IncProjectBuilder {
     return doneSomething;
   }
 
-  private static List<ChunkGroup> buildChunkGroups(BuildTargetIndex index) {
-    final List<BuildTargetChunk> allChunks = index.getSortedTargetChunks();
+  private static List<ChunkGroup> buildChunkGroups(BuildTargetIndex index, CompileContext context) {
+    final List<BuildTargetChunk> allChunks = index.getSortedTargetChunks(context);
 
     // building aux dependencies map
     final Map<BuildTarget<?>, Set<BuildTarget<?>>> depsMap = new HashMap<BuildTarget<?>, Set<BuildTarget<?>>>();
     for (BuildTarget target : index.getAllTargets()) {
-      depsMap.put(target, index.getDependenciesRecursively(target));
+      depsMap.put(target, index.getDependenciesRecursively(target, context));
     }
 
     final List<ChunkGroup> groups = new ArrayList<ChunkGroup>();

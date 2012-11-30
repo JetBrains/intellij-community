@@ -36,7 +36,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -83,8 +82,8 @@ public class ToggleFieldBreakpointAction extends AnAction {
             }
 
             RequestManagerImpl.createRequests(fieldBreakpoint);
-            DialogWrapper dialog = manager.createConfigurationDialog(fieldBreakpoint, null);
-            dialog.show();
+
+            manager.editBreakpoint(fieldBreakpoint, PlatformDataKeys.EDITOR.getData(e.getDataContext()));
           }
         }
         else {

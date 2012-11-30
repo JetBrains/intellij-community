@@ -40,6 +40,7 @@ import java.util.List;
  * @author irengrig
  */
 public class FileHistorySessionPartner implements VcsAppendableHistorySessionPartner {
+  private final LimitHistoryCheck myLimitHistoryCheck;
   private FileHistoryPanelImpl myFileHistoryPanel;
   private final VcsHistoryProvider myVcsHistoryProvider;
   private final AnnotationProvider myAnnotationProvider;
@@ -58,6 +59,7 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
     myVcsHistoryProvider = vcsHistoryProvider;
     myAnnotationProvider = annotationProvider;
     myPath = path;
+    myLimitHistoryCheck = new LimitHistoryCheck(vcs.getProject(), path.getPath());
     myRepositoryPath = repositoryPath;
     myVcs = vcs;
     myRefresherI = refresherI;
@@ -75,6 +77,7 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
   }
 
   public void acceptRevision(VcsFileRevision revision) {
+    myLimitHistoryCheck.checkNumber();
     myBuffer.consumeOne(revision);
   }
 
@@ -129,6 +132,11 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
     VcsBalloonProblemNotifier.showOverVersionControlView(myVcs.getProject(),
                                                          VcsBundle.message("message.title.could.not.load.file.history") + ": " +
                                                          exception.getMessage(), MessageType.ERROR);
+  }
+
+  @Override
+  public void beforeRefresh() {
+    myLimitHistoryCheck.reset();
   }
 
   public void finished() {

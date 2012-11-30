@@ -162,7 +162,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
             vm.defineProperty("idea.platform.prefix", "WebStorm");
           }
           else if (buildNumber.startsWith("OC")) {
-            vm.defineProperty("idea.platform.prefix", "CIDR");
+            vm.defineProperty("idea.platform.prefix", "AppCode");
           }
         }
 

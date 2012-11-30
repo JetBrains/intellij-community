@@ -84,7 +84,7 @@ public class ReadThread implements Runnable {
   public void run() {
     Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
     try {
-      LOG.info("Starting CvsReadThread " + this);
+      if (LOG.isDebugEnabled()) LOG.info("Starting CvsReadThread " + this);
       while (true) {
         try {
           waitForRead();
@@ -199,7 +199,7 @@ public class ReadThread implements Runnable {
 
   private void executionCompleted() {
     READ_THREADS.remove(this);
-    LOG.info("Stopping CvsReadThread " + this);
+    if (LOG.isDebugEnabled()) LOG.info("Stopping CvsReadThread " + this);
   }
 
   private int size() {

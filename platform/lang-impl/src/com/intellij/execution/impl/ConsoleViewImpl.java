@@ -241,6 +241,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   protected final CompositeFilter myPredefinedMessageFilter;
   protected final CompositeFilter myCustomFilter;
 
+  @Nullable private final InputFilter myInputMessageFilter;
+
   private final Alarm myFoldingAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
   private final List<FoldRegion> myPendingFoldRegions = new ArrayList<FoldRegion>();
 
@@ -264,7 +266,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     this(project, GlobalSearchScope.allScope(project), viewer, fileType);
   }
 
-  public ConsoleViewImpl(@NotNull final Project project, @NotNull GlobalSearchScope searchScope, boolean viewer, @Nullable FileType fileType) {
+  public ConsoleViewImpl(@NotNull final Project project,
+                         @NotNull GlobalSearchScope searchScope,
+                         boolean viewer,
+                         @Nullable FileType fileType)
+  {
     this(project, searchScope, viewer, fileType,
          new ConsoleState.NotStartedStated() {
            @Override
@@ -278,7 +284,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
                             @NotNull GlobalSearchScope searchScope,
                             boolean viewer,
                             @Nullable FileType fileType,
-                            @NotNull final ConsoleState initialState) {
+                            @NotNull final ConsoleState initialState)
+  {
     super(new BorderLayout());
     isViewer = viewer;
     myState = initialState;
@@ -298,6 +305,21 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
     myHeavyUpdateTicket = 0;
     myHeavyAlarm = myPredefinedMessageFilter.isAnyHeavy() ? new Alarm(Alarm.ThreadToUse.SHARED_THREAD, this) : null;
+
+    ConsoleInputFilterProvider[] inputFilters = Extensions.getExtensions(ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS);
+    if (inputFilters.length > 0) {
+      CompositeInputFilter compositeInputFilter = new CompositeInputFilter(project);
+      myInputMessageFilter = compositeInputFilter;
+      for (ConsoleInputFilterProvider eachProvider : inputFilters) {
+        InputFilter[] filters = eachProvider.getDefaultFilters(project);
+        for (InputFilter filter : filters) {
+          compositeInputFilter.addFilter(filter);
+        }
+      }
+    }
+    else {
+      myInputMessageFilter = null;
+    }
 
     Disposer.register(project, this);
     myFinishProgress = new Runnable() {
@@ -338,6 +360,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (myEditor == null || myFlushAlarm.isDisposed()) return;
     class ScrollRunnable extends MyFlushRunnable {
       private final int myOffset = offset;
+
       @Override
       public void doRun() {
         flushDeferredText();
@@ -364,7 +387,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       @Override
       public void doRun() {
         flushDeferredText();
-        if (myEditor == null) return;
+        if (myEditor == null || myFlushAlarm.isDisposed()) return;
         myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getTextLength());
         myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
       }
@@ -378,7 +401,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private void addFlushRequest(MyFlushRunnable flushRunnable, final int millis) {
     synchronized (myCurrentRequests) {
-      if (myCurrentRequests.add(flushRunnable)) {
+      if (!myFlushAlarm.isDisposed() && myCurrentRequests.add(flushRunnable)) {
         myFlushAlarm.addRequest(flushRunnable, millis, getStateForUpdate());
       }
     }
@@ -510,7 +533,20 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   @Override
   public void print(String s, final ConsoleViewContentType contentType) {
-    printHyperlink(s, contentType, null);
+    if (myInputMessageFilter == null) {
+      printHyperlink(s, contentType, null);
+      return;
+    }
+    
+    Pair<String, ConsoleViewContentType> result = myInputMessageFilter.applyFilter(s, contentType);
+    if (result == null) {
+      printHyperlink(s, contentType, null);
+    }
+    else {
+      if (result.first != null) {
+        printHyperlink(result.first, result.second == null ? contentType : result.second, null);
+      }
+    }
   }
 
   private void printHyperlink(String s, ConsoleViewContentType contentType, HyperlinkInfo info) {

@@ -25,11 +25,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.MultiHostRegistrarImpl;
 import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +38,8 @@ import org.jetbrains.annotations.Nullable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Gregory.Shrago
@@ -189,5 +191,48 @@ public class InjectorUtils {
     if (StringUtil.isNotEmpty(injection.getPrefix()) || StringUtil.isNotEmpty(injection.getSuffix())) return false;
     if (StringUtil.isNotEmpty(injection.getValuePattern())) return false;
     return true;
+  }
+
+  private static final Pattern MAP_ENTRY_PATTERN = Pattern.compile("([\\S&&[^=]]+)=(\"(?:[^\"]|\\\\\")*\"|\\S*)");
+  public static Map<String, String> decodeMap(CharSequence charSequence) {
+    if (StringUtil.isEmpty(charSequence)) return Collections.emptyMap();
+    final Matcher matcher = MAP_ENTRY_PATTERN.matcher(charSequence);
+    final LinkedHashMap<String, String> map = new LinkedHashMap<String, String>();
+    while (matcher.find()) {
+      map.put(StringUtil.unescapeStringCharacters(matcher.group(1)),
+              StringUtil.unescapeStringCharacters(StringUtil.unquoteString(matcher.group(2))));
+    }
+    return map;
+  }
+
+  @Nullable
+  public static BaseInjection detectInjectionFromText(String supportId, String text) {
+    if (text == null || !text.startsWith("language=")) return null;
+    Map<String, String> map = decodeMap(text);
+    String languageId = map.get("language");
+    String prefix = ObjectUtils.notNull(map.get("prefix"), "");
+    String suffix = ObjectUtils.notNull(map.get("suffix"), "");
+    BaseInjection injection = new BaseInjection(supportId);
+    injection.setInjectedLanguageId(languageId);
+    injection.setPrefix(prefix);
+    injection.setSuffix(suffix);
+    return injection;
+  }
+
+  @Nullable
+  public static PsiComment findNearestComment(PsiElement element) {
+    if (element instanceof PsiComment) return null;
+    PsiElement start = element;
+    for (int i=0; i<2 && start != null; i++) {
+      if (start instanceof PsiFile) return null;
+      for (PsiElement e = start.getPrevSibling(); e != null; e = e.getPrevSibling()) {
+        if (e instanceof PsiComment) return (PsiComment)e;
+        if (e instanceof PsiWhiteSpace) continue;
+        if (e instanceof PsiLanguageInjectionHost && StringUtil.isEmptyOrSpaces(e.getText())) continue;
+        break;
+      }
+      start = element.getParent();
+    }
+    return null;
   }
 }

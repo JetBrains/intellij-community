@@ -26,6 +26,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import org.jetbrains.annotations.NotNull;
@@ -220,6 +221,11 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
       return false;
     }
     return super.performRefactoring();
+  }
+
+  @Override
+  protected boolean startsOnTheSameElement(RefactoringActionHandler handler, PsiElement element) {
+    return super.startsOnTheSameElement(handler, element) && handler instanceof IntroduceConstantHandler;
   }
 
   @Override

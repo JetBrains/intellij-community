@@ -267,7 +267,7 @@ public class IdeaApplication {
     private void updateSplashScreen(ApplicationInfoEx appInfo, SplashScreen splashScreen) {
       final Graphics2D graphics = splashScreen.createGraphics();
       final Dimension size = splashScreen.getSize();
-      if (Splash.showLicenseeInfo(graphics, 0, 0, size.height, appInfo.getLogoTextColor())) {
+      if (Splash.showLicenseeInfo(graphics, 0, 0, size.height, appInfo.getSplashTextColor())) {
         splashScreen.update();
       }
     }

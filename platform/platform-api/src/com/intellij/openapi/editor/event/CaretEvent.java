@@ -25,7 +25,7 @@ public class CaretEvent extends EventObject {
   private final LogicalPosition myOldPosition;
   private final LogicalPosition myNewPosition;
 
-  public CaretEvent(@NotNull Editor editor, LogicalPosition oldPosition, LogicalPosition newPosition) {
+  public CaretEvent(@NotNull Editor editor, @NotNull LogicalPosition oldPosition, @NotNull LogicalPosition newPosition) {
     super(editor);
     myOldPosition = oldPosition;
     myNewPosition = newPosition;
@@ -36,10 +36,12 @@ public class CaretEvent extends EventObject {
     return (Editor) getSource();
   }
 
+  @NotNull
   public LogicalPosition getOldPosition() {
     return myOldPosition;
   }
 
+  @NotNull
   public LogicalPosition getNewPosition() {
     return myNewPosition;
   }

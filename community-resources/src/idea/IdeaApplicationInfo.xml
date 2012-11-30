@@ -9,7 +9,11 @@
   <package code="__PACKAGE_CODE__"/>
   <names product="IDEA" fullname="IntelliJ IDEA" script="idea"/>
 
-  <welcome-screen caption-url="/welcomeCaption_community.png" slogan-url="/developSlogan_community.png"/>
+  <welcome-screen logo-url="/Logo_welcomeScreen.png"
+                  caption-url="/welcomeCaption_community.png" 
+                  slogan-url="/developSlogan_community.png"/>
+
+  <editor background-url="/idea_logo_background.png"/>
 
   <update-urls check="http://www.jetbrains.com/updates/updates.xml"
                patches="http://download.jetbrains.com/idea/"/>

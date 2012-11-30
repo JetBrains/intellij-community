@@ -15,9 +15,14 @@
  */
 package org.jetbrains.jps.incremental.artifacts;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import org.jetbrains.jps.builders.CompileScopeTestBuilder;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.jetbrains.jps.model.artifact.elements.JpsPackagingElementFactory;
+
+import java.io.File;
+import java.io.IOException;
 
 import static com.intellij.util.io.TestFileSystemItem.fs;
 import static org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.archive;
@@ -99,6 +104,61 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
     buildAllAndAssertUpToDate();
   }
 
+  public void testNonExistentFileRoot() throws IOException {
+    String file = getAbsolutePath("a.txt");
+    JpsArtifact a = addArtifact(root().fileCopy(file));
+    buildArtifacts(a);
+    assertEmptyOutput(a);
+    buildAllAndAssertUpToDate();
+
+    FileUtil.createIfDoesntExist(new File(file));
+    buildArtifacts(a);
+    assertOutput(a, fs().file("a.txt"));
+    buildAllAndAssertUpToDate();
+
+    delete(file);
+    buildArtifacts(a);
+    assertEmptyOutput(a);
+    buildAllAndAssertUpToDate();
+  }
+
+  public void testNonExistentDirectoryRoot() throws IOException {
+    String dir = getAbsolutePath("d");
+    JpsArtifact a = addArtifact(root().dirCopy(dir));
+    buildArtifacts(a);
+    assertEmptyOutput(a);
+    buildAllAndAssertUpToDate();
+
+    FileUtil.createIfDoesntExist(new File(dir, "a.txt"));
+    buildArtifacts(a);
+    assertOutput(a, fs().file("a.txt"));
+    buildAllAndAssertUpToDate();
+
+    delete(dir);
+    buildArtifacts(a);
+    assertEmptyOutput(a);
+    buildAllAndAssertUpToDate();
+  }
+
+  public void testExtractFileFromNonExistentJar() throws IOException {
+    String jar = getAbsolutePath("junit.jar");
+    JpsArtifact a = addArtifact(root().extractedDir(jar, "/junit/textui/"));
+    buildArtifacts(a);
+    assertEmptyOutput(a);
+    buildAllAndAssertUpToDate();
+
+    FileUtil.copy(new File(getJUnitJarPath()), new File(jar));
+    buildArtifacts(a);
+    assertOutput(a, fs().file("ResultPrinter.class")
+                        .file("TestRunner.class"));
+    buildAllAndAssertUpToDate();
+
+    delete(jar);
+    buildArtifacts(a);
+    assertEmptyOutput(a);
+    buildAllAndAssertUpToDate();
+  }
+
   public void testOneFileInTwoArtifacts() {
     final String file = createFile("file.txt");
     final JpsArtifact a1 = addArtifact("a1", root().dir("dir").fileCopy(file));
@@ -116,6 +176,29 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
     buildArtifacts(a2); assertUpToDate();
     buildArtifacts(a1); assertUpToDate();
     buildAllAndAssertUpToDate();
+  }
+
+  public void testArtifactWithOutputPathEqualToSourcePath() {
+    String root = PathUtil.getParentPath(createFile("d/1.txt"));
+    JpsArtifact a = addArtifact(root().dirCopy(root));
+    a.setOutputPath(root);
+
+    buildArtifacts(a);
+    assertOutput(a, fs().file("1.txt"));
+    String file2 = createFile("d/2.txt");
+    buildArtifacts(a);
+    assertOutput(a, fs().file("1.txt").file("2.txt"));
+
+    a.getRootElement().addChild(JpsPackagingElementFactory.getInstance().createFileCopy(createFile("d2/3.txt"), null));
+    buildArtifacts(a);
+    assertOutput(a, fs().file("1.txt").file("2.txt").file("3.txt"));
+
+    buildAllAndAssertUpToDate();
+    assertOutput(a, fs().file("1.txt").file("2.txt").file("3.txt"));
+
+    delete(file2);
+    buildAllAndAssertUpToDate();
+    assertOutput(a, fs().file("1.txt").file("3.txt"));
   }
 
   public void testDeleteFileAndRebuildIncludedArtifact() {

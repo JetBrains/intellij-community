@@ -47,9 +47,11 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
+import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
+import java.util.List;
 
 /**
  * User: anna
@@ -74,6 +76,11 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   @Override
   protected String getComponentStateKey() {
     return SCOPE_CHOOSER_CONFIGURABLE_UI_KEY;
+  }
+
+  @Override
+  protected Dimension getPanelPreferredSize() {
+    return new Dimension(-1, -1);
   }
 
   @Override

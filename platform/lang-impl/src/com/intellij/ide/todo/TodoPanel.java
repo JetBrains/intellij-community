@@ -645,7 +645,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   private final class MyPreviewAction extends ToggleAction {
 
     MyPreviewAction() {
-      super("Preview Usages", null, AllIcons.Actions.PreviewDetails);
+      super("Preview Source", null, AllIcons.Actions.PreviewDetails);
     }
 
     public void update(AnActionEvent e) {

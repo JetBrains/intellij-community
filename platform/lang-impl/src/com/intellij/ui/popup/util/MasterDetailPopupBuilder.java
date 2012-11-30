@@ -60,6 +60,12 @@ public class MasterDetailPopupBuilder implements MasterController {
 
   private final DetailController myDetailController = new DetailController(this);
 
+  private boolean myUseDimensionServiceForXYLocation;
+
+  public void setUseDimensionServiceForXYLocation(boolean useDimensionServiceForXYLocation) {
+    myUseDimensionServiceForXYLocation = useDimensionServiceForXYLocation;
+  }
+
 
   public String getDimensionServiceKey() {
     return myDimensionServiceKey;
@@ -150,7 +156,8 @@ public class MasterDetailPopupBuilder implements MasterController {
       setSettingButton(toolBar).
       setSouthComponent(footerPanel).
       setCancelOnWindowDeactivation(myCancelOnWindowDeactivation).
-      setCancelOnClickOutside(myCancelOnClickOutside);
+      setCancelOnClickOutside(myCancelOnClickOutside).
+      setUseDimensionServiceForXYLocation(myUseDimensionServiceForXYLocation);
 
 
     if (myDoneRunnable != null) {

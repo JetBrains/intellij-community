@@ -4351,7 +4351,7 @@ public class AbstractTreeUi {
       Object eachElement = element;
       DefaultMutableTreeNode firstVisible = null;
       while (true) {
-        if (!isValid(eachElement)) break;
+        if (!isValid(eachElement) || eachElement == null) break;
 
         final int preselected = getRowIfUnderSelection(eachElement);
         if (preselected >= 0) {

@@ -29,6 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -81,6 +82,12 @@ public abstract class BaseRefactoringAction extends AnAction {
         "error.wrong.caret.position.symbol.to.refactor")), RefactoringBundle.getCannotRefactorMessage(null), null);
       return;
     }
+
+    if (!InplaceRefactoring.canStartAnotherRefactoring(editor, project, handler, elements)) {
+      InplaceRefactoring.unableToStartWarning(project, editor);
+      return;
+    }
+    
     IdeEventQueue.getInstance().setEventCount(eventCount);
     if (editor != null) {
       final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());

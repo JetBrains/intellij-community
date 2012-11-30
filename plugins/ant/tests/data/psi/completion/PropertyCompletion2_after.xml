@@ -5,6 +5,6 @@
     </description>
 
 <target name="init">
-    <property file="PropertyCompletion<caret>"/>
+    <property file="PropertyCompletion.properties<caret>"/>
 </target>
 </project>

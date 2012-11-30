@@ -23,7 +23,6 @@ package com.intellij.debugger.ui.breakpoints;
 import com.intellij.codeInsight.folding.impl.actions.ExpandRegionAction;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -34,8 +33,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerContextListener;
 import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.ui.DebuggerExpressionComboBox;
-import com.intellij.debugger.ui.DebuggerExpressionTextField;
+import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,6 +41,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -52,7 +51,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiDocumentManager;
@@ -63,8 +61,8 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.HashMap;
 import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsConfigurationDialogFactory;
 import com.sun.jdi.Field;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.ObjectReference;
@@ -92,8 +90,6 @@ public class BreakpointManager implements JDOMExternalizable {
   private final Map<Document, List<BreakpointWithHighlighter>> myDocumentBreakpoints = new HashMap<Document, List<BreakpointWithHighlighter>>();
   private final Map<String, String> myUIProperties = new java.util.HashMap<String, String>();
   private final Map<Key<? extends Breakpoint>, BreakpointDefaults> myBreakpointDefaults = new HashMap<Key<? extends Breakpoint>, BreakpointDefaults>();
-
-  private BreakpointsConfigurationDialogFactory myBreakpointsConfigurable;
 
   private final EventDispatcher<BreakpointManagerListener> myDispatcher = EventDispatcher.create(BreakpointManagerListener.class);
 
@@ -309,7 +305,8 @@ public class BreakpointManager implements JDOMExternalizable {
               DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
                 @Override
                 public void run() {
-                  Breakpoint breakpoint = toggleBreakpoint(e.getMouseEvent().isAltDown(), line);
+                  final Breakpoint breakpoint = toggleBreakpoint(e.getMouseEvent().isAltDown(), line);
+
 
                   if (e.getMouseEvent().isShiftDown() && breakpoint != null) {
                     breakpoint.LOG_EXPRESSION_ENABLED = true;
@@ -318,14 +315,16 @@ public class BreakpointManager implements JDOMExternalizable {
                                                                                                breakpoint.getDisplayName());
                     breakpoint.setLogMessage(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, text));
                     breakpoint.SUSPEND = false;
+                    editBreakpoint(breakpoint, editor);
 
-                    DialogWrapper dialog = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager()
-                      .createConfigurationDialog(breakpoint, BreakpointPropertiesPanel.CONTROL_LOG_MESSAGE);
-                    dialog.show();
 
-                    if (!dialog.isOK()) {
-                      removeBreakpoint(breakpoint);
-                    }
+                    //DialogWrapper dialog = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager()
+                    //  .createConfigurationDialog(breakpoint, BreakpointPropertiesPanel.CONTROL_LOG_MESSAGE);
+                    //dialog.show();
+                    //
+                    //if (!dialog.isOK()) {
+                    //  removeBreakpoint(breakpoint);
+                    //}
                   }
                 }
               });
@@ -367,26 +366,17 @@ public class BreakpointManager implements JDOMExternalizable {
     eventMulticaster.addDocumentListener(myDocumentListener, myProject);
   }
 
-  public DialogWrapper createConfigurationDialog(@Nullable Breakpoint initialBreakpoint, @Nullable String selectComponent) {
-    if (myBreakpointsConfigurable == null) {
-      myBreakpointsConfigurable = BreakpointsConfigurationDialogFactory.getInstance(myProject);
-    }
-    BreakpointsConfigurationDialogFactory.BreakpointsConfigurationDialog dialog = myBreakpointsConfigurable.createDialog(initialBreakpoint);
-    if (initialBreakpoint != null && selectComponent != null) {
-      final JComponent component = ((BreakpointPanel)dialog.getSelectedPanel()).getControl(selectComponent);
-      dialog.setPreferredFocusedComponent(component, new Runnable() {
-        @Override
-        public void run() {
-          if (component instanceof DebuggerExpressionComboBox) {
-            ((DebuggerExpressionComboBox)component).selectAll();
-          }
-          else if (component instanceof DebuggerExpressionTextField) {
-            ((DebuggerExpressionTextField)component).selectAll();
-          }
+  public void editBreakpoint(final Breakpoint breakpoint, final Editor editor) {
+    DebuggerInvocationUtil.swingInvokeLater(myProject, new Runnable() {
+      @Override
+      public void run() {
+        final GutterIconRenderer renderer = ((BreakpointWithHighlighter)breakpoint).getHighlighter().getGutterIconRenderer();
+        if (renderer != null) {
+          DebuggerSupport.getDebuggerSupport(JavaDebuggerSupport.class).getEditBreakpointAction()
+            .editBreakpoint(myProject, editor, breakpoint, renderer);
         }
-      });
-    }
-    return dialog;
+      }
+    });
   }
 
   @NotNull

@@ -2,6 +2,7 @@ package org.jetbrains.jps.incremental.artifacts.builders;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.TargetOutputIndex;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactCompilerInstructionCreator;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactInstructionsBuilderContext;
 import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
@@ -21,7 +22,7 @@ public abstract class LayoutElementBuilderService<E extends JpsPackagingElement>
 
   public abstract void generateInstructions(E element, ArtifactCompilerInstructionCreator instructionCreator, ArtifactInstructionsBuilderContext builderContext);
 
-  public Collection<? extends BuildTarget<?>> getDependencies(@NotNull E element) {
+  public Collection<? extends BuildTarget<?>> getDependencies(@NotNull E element, TargetOutputIndex outputIndex) {
     return Collections.emptyList();
   }
 

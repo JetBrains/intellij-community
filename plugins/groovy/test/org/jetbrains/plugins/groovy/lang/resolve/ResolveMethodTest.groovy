@@ -783,8 +783,7 @@ print new B().f<caret>oo()
 """)
 
     def resolved = ref.resolve()
-    assertInstanceOf(resolved, GrMethod)
-    assertTrue(resolved.physical)
+    assertInstanceOf(resolved, PsiMethod)
   }
 
   void testTwoMixinsInModifierList() {
@@ -812,8 +811,7 @@ class OtherPersonMixin {
 """)
 
     def resolved = ref.resolve()
-    assertInstanceOf(resolved, GrMethod)
-    assertTrue(resolved.physical)
+    assertInstanceOf(resolved, PsiMethod)
   }
 
 

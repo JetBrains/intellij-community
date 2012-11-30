@@ -94,6 +94,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
     assertTrue(myWatcher.isOperational());
 
     myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, getProject());
+    myTimeout = NATIVE_PROCESS_DELAY;
 
     myConnection = ApplicationManager.getApplication().getMessageBus().connect();
     myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
@@ -225,15 +226,11 @@ public class FileWatcherTest extends PlatformLangTestCase {
       FileUtil.writeToFile(watchedFile, "new content");
       assertEvent(VFileContentChangeEvent.class, watchedFile.getAbsolutePath());
 
+      myTimeout = 10 * INTER_RESPONSE_DELAY;
       myAccept = true;
-      try {
-        myTimeout = 10 * INTER_RESPONSE_DELAY;
-        FileUtil.writeToFile(unwatchedFile, "new content");
-        assertEvent(VFileEvent.class);
-      }
-      finally {
-        myTimeout = NATIVE_PROCESS_DELAY;
-      }
+      FileUtil.writeToFile(unwatchedFile, "new content");
+      assertEvent(VFileEvent.class);
+      myTimeout = NATIVE_PROCESS_DELAY;
     }
     finally {
       unwatch(request);
@@ -504,6 +501,53 @@ public class FileWatcherTest extends PlatformLangTestCase {
       unwatch(request);
       delete(rootDir);
     }
+  }
+
+  public void testSwitchingToFsRoot() throws Exception {
+    File topDir = IoTestUtil.createTestDir("top");
+    File rootDir = IoTestUtil.createTestDir(topDir, "root");
+    File file1 = IoTestUtil.createTestFile(topDir, "1.txt");
+    File file2 = IoTestUtil.createTestFile(rootDir, "2.txt");
+    refresh(topDir);
+
+    File fsRoot = new File(SystemInfo.isUnix ? "/" : topDir.getPath().substring(0, topDir.getPath().indexOf(File.separatorChar)) + "\\");
+    assertTrue("can't guess root of " + topDir, fsRoot.exists());
+
+    LocalFileSystem.WatchRequest request = watch(rootDir);
+    try {
+      myAccept = true;
+      FileUtil.writeToFile(file1, "abc");
+      FileUtil.writeToFile(file2, "abc");
+      assertEvent(VFileContentChangeEvent.class, file2.getPath());
+
+      LocalFileSystem.WatchRequest rootRequest = watch(fsRoot);
+      try {
+        myTimeout = 10 * INTER_RESPONSE_DELAY;
+        myAccept = true;
+        FileUtil.writeToFile(file1, "12345");
+        FileUtil.writeToFile(file2, "12345");
+        assertEvent(VFileContentChangeEvent.class, file1.getPath(), file2.getPath());
+        myTimeout = NATIVE_PROCESS_DELAY;
+      }
+      finally {
+        unwatch(rootRequest);
+      }
+
+      myAccept = true;
+      FileUtil.writeToFile(file1, "");
+      FileUtil.writeToFile(file2, "");
+      assertEvent(VFileContentChangeEvent.class, file2.getPath());
+    }
+    finally {
+      unwatch(request);
+    }
+
+    myTimeout = 10 * INTER_RESPONSE_DELAY;
+    myAccept = true;
+    FileUtil.writeToFile(file1, "xyz");
+    FileUtil.writeToFile(file2, "xyz");
+    assertEvent(VFileEvent.class);
+    myTimeout = NATIVE_PROCESS_DELAY;
   }
 
 

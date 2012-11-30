@@ -134,6 +134,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
 
     configureByFiles("36_3.xml");
     complete();
+    myFixture.type('\n');
     checkResultByFile("36_3_after.xml");
   }
 
@@ -424,8 +425,20 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
 
   public void testDoNotSuggestTagsFromOtherNsInXslt() throws Exception {
     basicDoTest("");
-    basicDoTest("_2");
-    basicDoTest("_3");
+  }
+
+  public void testDoNotSuggestTagsFromOtherNsInXslt_2() throws Exception {
+    final String testName = getTestName(false);
+    configureByFile(testName + ".xml");
+    myFixture.type('\n');
+    checkResultByFile(testName + "_after.xml");
+  }
+  
+  public void testDoNotSuggestTagsFromOtherNsInXslt_3() throws Exception {
+    final String testName = getTestName(false);
+    configureByFile(testName + ".xml");
+    myFixture.type('\n');
+    checkResultByFile(testName + "_after.xml");
   }
 
   public void testDoNotSuggestTagsInXHtml() throws Exception {
@@ -440,6 +453,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testCompleteWithSubstitutionGroup() throws Exception {
     configureByFiles(getTestName(false) + ".xml", "mule.xsd", "mule-management.xsd");
     complete();
+    myFixture.type('\n');
     checkResultByFile(getTestName(false) + "_after.xml");
   }
 

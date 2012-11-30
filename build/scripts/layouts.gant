@@ -192,6 +192,9 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
             module("IntelliLang-xml")
             module("IntelliLang-javaee")
           }
+          jar("intellilang-jps-plugin.jar") {
+            module("intellilang-jps-plugin")
+          }
         }
       }
     }
@@ -259,6 +262,7 @@ public def layoutCommunityPlugins(String home) {
       jar("gradle.jar") {
         module("gradle")
       }
+      fileset(dir: "$home/plugins/gradle/lib") { include(name: "*.jar") }
     }
     
     layoutPlugin("git4idea") {

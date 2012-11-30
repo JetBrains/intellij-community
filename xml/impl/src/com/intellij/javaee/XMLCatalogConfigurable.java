@@ -46,7 +46,7 @@ public class XMLCatalogConfigurable extends BaseConfigurable {
 
   @Override
   public String getHelpTopic() {
-    return null;
+    return "XML.Catalog.Dialog";
   }
 
   @Override

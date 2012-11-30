@@ -279,6 +279,16 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
     }
   }
 
+  public void testBuildModuleBeforeArtifactIfSomeDirectoryInsideModuleOutputIsCopiedToArtifact() {
+    String src = PathUtil.getParentPath(PathUtil.getParentPath(createFile("src/x/A.java", "package x; class A{}")));
+    JpsModule module = addModule("m", src);
+    File output = JpsJavaExtensionService.getInstance().getOutputDirectory(module, false);
+    JpsArtifact artifact = addArtifact(root().dirCopy(new File(output, "x").getAbsolutePath()));
+    rebuildAll();
+    assertOutput(module, fs().dir("x").file("A.class"));
+    assertOutput(artifact, fs().file("A.class"));
+  }
+  
   public void testClearOutputOnRebuild() throws IOException {
     String file = createFile("d/a.txt");
     JpsArtifact a = addArtifact(root().parentDirCopy(file));

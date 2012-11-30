@@ -33,7 +33,8 @@ public class Xslt2CompletionTest extends TestBase {
     }
 
     public void testSchemaTypeCompletion() throws Throwable {
-        doXsltCompletion();
+      final String name = getTestFileName();
+      myFixture.testCompletionTyping(name + ".xsl", "\n", name + "_after.xsl");
     }
 
     private void doXsltCompletion(String... moreFiles) throws Throwable {

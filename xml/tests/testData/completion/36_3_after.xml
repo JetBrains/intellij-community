@@ -10,6 +10,6 @@
                             http://www.springframework.org/schema/util
                             http://www.springframework.org/schema/util/spring-util-2.0.xsd">
    <util:list id="list1">
-     <util:<caret>
+     <util:constant static-field=""<caret>
    </util:list>
 </beans>

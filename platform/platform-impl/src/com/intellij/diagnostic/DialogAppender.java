@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.ErrorLogger;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.Priority;
 import org.apache.log4j.spi.LoggingEvent;
@@ -72,6 +71,8 @@ public class DialogAppender extends AppenderSkeleton {
       // Stop adding requests to the queue or we can get OOME on pending logging requests (IDEA-95327)
       // Note, we MUST avoid SYNCHRONOUS invokeAndWait to prevent deadlocks
       // UIUtil.invokeAndWaitIfNeeded(action);
+
+      myPendingAppendCounts.decrementAndGet(); // number of pending logging events should not increase
     } else {
       SwingUtilities.invokeLater(action);
     }

@@ -73,13 +73,13 @@ public class PsiTypeVisitor<A> {
     final PsiLambdaExpression lambdaExpression = lambdaExpressionType.getExpression();
     final PsiType interfaceType = lambdaExpression.getFunctionalInterfaceType();
     if (interfaceType != null) return interfaceType.accept(this);
-    return visitType(interfaceType);
+    return visitType(lambdaExpressionType);
   }
   
   public A visitMethodReferenceType(PsiMethodReferenceType methodReferenceType) {
     final PsiMethodReferenceExpression expression = methodReferenceType.getExpression();
     final PsiType interfaceType = expression.getFunctionalInterfaceType();
     if (interfaceType != null) return interfaceType.accept(this);
-    return visitType(interfaceType);
+    return visitType(methodReferenceType);
   }
 }

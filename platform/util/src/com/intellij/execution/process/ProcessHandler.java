@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.OutputStream;
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
@@ -156,16 +157,19 @@ public abstract class ProcessHandler extends UserDataHolderBase {
             fireProcessWillTerminate(willBeDestroyed);
           }
           catch (Throwable e) {
-            LOG.error(e);
+            if (! isCanceledException(e)) {
+              LOG.error(e);
+            }
           }
         }
 
         if (myState.compareAndSet(STATE_TERMINATING, STATE_TERMINATED)) {
           try {
             myEventMulticaster.processTerminated(new ProcessEvent(ProcessHandler.this, exitCode));
-          }
-          catch (Throwable e) {
-            LOG.error(e);
+          } catch (Throwable e) {
+            if (! isCanceledException(e)) {
+              LOG.error(e);
+            }
           }
           finally {
             myWaitSemaphore.up();
@@ -203,14 +207,23 @@ public abstract class ProcessHandler extends UserDataHolderBase {
         for (ProcessListener listener : myListeners) {
           try {
             method.invoke(listener, params);
-          }
-          catch (Throwable e) {
-            LOG.error(e);
+          } catch (Throwable e) {
+            if (! isCanceledException(e)) {
+              LOG.error(e);
+            }
           }
         }
         return null;
       }
     });
+  }
+
+  private boolean isCanceledException(Throwable e) {
+    final boolean value = e instanceof InvocationTargetException && e.getCause() instanceof ProcessCanceledException;
+    if (value) {
+      LOG.info(e);
+    }
+    return value;
   }
 
   private final class TasksRunner extends ProcessAdapter {

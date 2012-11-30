@@ -27,7 +27,7 @@ import java.util.*;
 public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, ResourcesTarget> {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.resourses.ResourcesBuilder");
   public static final String BUILDER_NAME = "Resource Compiler";
-  private static final List<StandardResourceBuilderEnabler> ourEnablers = new ArrayList<StandardResourceBuilderEnabler>();
+  private static final List<StandardResourceBuilderEnabler> ourEnablers = Collections.synchronizedList(new ArrayList<StandardResourceBuilderEnabler>());
 
   public ResourcesBuilder() {
     super(ResourcesTargetType.ALL_TYPES);
@@ -70,7 +70,17 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
 
     try {
       holder.processDirtyFiles(new FileProcessor<ResourceRootDescriptor, ResourcesTarget>() {
+        private final Map<ResourceRootDescriptor, Boolean> mySkippedRoots = new HashMap<ResourceRootDescriptor, Boolean>();
         public boolean apply(ResourcesTarget target, final File file, final ResourceRootDescriptor sourceRoot) throws IOException {
+          Boolean isSkipped = mySkippedRoots.get(sourceRoot);
+          if (isSkipped == null) {
+            final File outputDir = target.getOutputDir();
+            isSkipped = Boolean.valueOf(outputDir == null || FileUtil.filesEqual(outputDir, sourceRoot.getRootFile()));
+            mySkippedRoots.put(sourceRoot, isSkipped);
+          }
+          if (isSkipped.booleanValue()) {
+            return true;
+          }
           if (patterns.isResourceFile(file, sourceRoot.getRootFile())) {
             try {
               copyResource(context, sourceRoot, file, outputConsumer);
@@ -120,9 +130,11 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
   }
 
   private static boolean isResourceProcessingEnabled(JpsModule module) {
-    for (StandardResourceBuilderEnabler enabler : ourEnablers) {
-      if (!enabler.isResourceProcessingEnabled(module)) {
-        return false;
+    synchronized (ourEnablers) {
+      for (StandardResourceBuilderEnabler enabler : ourEnablers) {
+        if (!enabler.isResourceProcessingEnabled(module)) {
+          return false;
+        }
       }
     }
     return true;

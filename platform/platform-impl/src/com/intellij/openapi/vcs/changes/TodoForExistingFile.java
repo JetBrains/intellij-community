@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.PsiTodoSearchHelper;
-import com.intellij.psi.search.TodoItem;
 
 import java.util.List;
 
@@ -47,18 +46,18 @@ public class TodoForExistingFile extends TodoForRanges {
     myFile = file;
   }
 
-  protected TodoItem[] getTodoItems() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<TodoItem[]>() {
+  protected TodoItemData[] getTodoItems() {
+    return ApplicationManager.getApplication().runReadAction(new Computable<TodoItemData[]>() {
       @Override
-      public TodoItem[] compute() {
+      public TodoItemData[] compute() {
         final PsiTodoSearchHelper helper = PsiTodoSearchHelper.SERVICE.getInstance(myProject);
 
         PsiFile psiFile = myFile == null ? null : PsiManager.getInstance(myProject).findFile(myFile);
         if (psiFile != null) {
-          return helper.findTodoItems(psiFile);
+          return TodoForBaseRevision.convertTodo(helper.findTodoItems(psiFile));
         }
 
-        return getTodoForText(helper);
+        return TodoForBaseRevision.convertTodo(getTodoForText(helper));
       }
     });
   }

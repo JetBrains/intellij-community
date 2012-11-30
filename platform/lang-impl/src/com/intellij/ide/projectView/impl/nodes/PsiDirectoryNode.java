@@ -59,7 +59,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
   }
   
   protected boolean shouldShowModuleName() {
-    return !PlatformUtils.isCidr();
+    return !PlatformUtils.isAppCode();
   }
 
   @Override
@@ -136,7 +136,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
 
   protected void setupIcon(PresentationData data, PsiDirectory psiDirectory) {
     final VirtualFile virtualFile = psiDirectory.getVirtualFile();
-    if (PlatformUtils.isCidr()) {
+    if (PlatformUtils.isAppCode()) {
       final Icon icon = IconUtil.getIcon(virtualFile, 0, myProject);
       if (icon != null) {
         data.setIcon(patchIcon(icon, virtualFile));

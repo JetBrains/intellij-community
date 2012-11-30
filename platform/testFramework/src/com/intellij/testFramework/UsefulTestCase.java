@@ -31,6 +31,9 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -826,5 +829,16 @@ public abstract class UsefulTestCase extends TestCase {
 
   protected static boolean isInHeadlessEnvironment() {
     return GraphicsEnvironment.isHeadless();
+  }
+
+  protected static void refreshRecursively(@NotNull VirtualFile file) {
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        file.getChildren();
+        return true;
+      }
+    });
+    file.refresh(false, true);
   }
 }

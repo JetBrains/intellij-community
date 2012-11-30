@@ -20,14 +20,16 @@ package com.intellij.concurrency;
  */
 public abstract class DoWhile  {
   private AsyncFutureResult<Boolean> myResult;
+  private SameThreadExecutorWithTrampoline myExecutor;
 
   public DoWhile() {
   }
 
   public AsyncFutureResult<Boolean> getResult() {
     if (myResult == null) {
+      myExecutor = new SameThreadExecutorWithTrampoline();
       myResult = AsyncFutureFactory.getInstance().createAsyncFutureResult();
-      body().addConsumer(SameThreadExecutor.INSTANCE, new MyConsumer());
+      body().addConsumer(myExecutor, new MyConsumer());
     }
     return myResult;
   }
@@ -50,7 +52,7 @@ public abstract class DoWhile  {
           myResult.set(true);
         }
         else {
-          body().addConsumer(SameThreadExecutor.INSTANCE, this);
+          body().addConsumer(myExecutor, this);
         }
       }
     }

@@ -74,6 +74,10 @@ public class SvnHistoryTest extends Svn17TestCase {
       }
 
       @Override
+      public void beforeRefresh() {
+      }
+
+      @Override
       public void forceRefresh() {
       }
     });
@@ -117,6 +121,10 @@ public class SvnHistoryTest extends Svn17TestCase {
       @Override
       public void finished() {
         semaphore.up();
+      }
+
+      @Override
+      public void beforeRefresh() {
       }
 
       @Override

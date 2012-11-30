@@ -71,11 +71,15 @@ public class AndroidTestConfigurationProducer extends JavaRuntimeConfigurationPr
   private RunnerAndConfigurationSettings createAllInPackageConfiguration(PsiElement element, ConfigurationContext context) {
     PsiPackage p = checkPackage(element);
     if (p != null) {
+      final String packageName = p.getQualifiedName();
       RunnerAndConfigurationSettings settings =
-        checkFacetAndCreateConfiguration(p, context, AndroidTestRunConfiguration.TEST_ALL_IN_PACKAGE, p.getQualifiedName());
+        checkFacetAndCreateConfiguration(p, context, packageName.length() > 0
+                                                     ? AndroidTestRunConfiguration.TEST_ALL_IN_PACKAGE
+                                                     : AndroidTestRunConfiguration.TEST_ALL_IN_MODULE);
       if (settings == null) return null;
       AndroidTestRunConfiguration configuration = (AndroidTestRunConfiguration)settings.getConfiguration();
-      configuration.PACKAGE_NAME = p.getQualifiedName();
+      configuration.PACKAGE_NAME = packageName;
+      setGeneratedName(configuration);
       return settings;
     }
     return null;
@@ -87,10 +91,11 @@ public class AndroidTestConfigurationProducer extends JavaRuntimeConfigurationPr
     while (elementClass != null) {
       if (JUnitUtil.isTestClass(elementClass)) {
         RunnerAndConfigurationSettings settings =
-          checkFacetAndCreateConfiguration(elementClass, context, AndroidTestRunConfiguration.TEST_CLASS, elementClass.getQualifiedName());
+          checkFacetAndCreateConfiguration(elementClass, context, AndroidTestRunConfiguration.TEST_CLASS);
         if (settings == null) return null;
         AndroidTestRunConfiguration configuration = (AndroidTestRunConfiguration)settings.getConfiguration();
         configuration.CLASS_NAME = elementClass.getQualifiedName();
+        setGeneratedName(configuration);
         return settings;
       }
       elementClass = PsiTreeUtil.getParentOfType(elementClass, PsiClass.class);
@@ -105,13 +110,13 @@ public class AndroidTestConfigurationProducer extends JavaRuntimeConfigurationPr
       if (isTestMethod(elementMethod)) {
         PsiClass c = elementMethod.getContainingClass();
         assert c != null;
-        String name = c.getQualifiedName() + '.' + elementMethod.getName() + "()";
         RunnerAndConfigurationSettings settings =
-          checkFacetAndCreateConfiguration(elementMethod, context, AndroidTestRunConfiguration.TEST_METHOD, name);
+          checkFacetAndCreateConfiguration(elementMethod, context, AndroidTestRunConfiguration.TEST_METHOD);
         if (settings == null) return null;
         AndroidTestRunConfiguration configuration = (AndroidTestRunConfiguration)settings.getConfiguration();
         configuration.CLASS_NAME = c.getQualifiedName();
         configuration.METHOD_NAME = elementMethod.getName();
+        setGeneratedName(configuration);
         return settings;
       }
       elementMethod = PsiTreeUtil.getParentOfType(elementMethod, PsiMethod.class);
@@ -119,11 +124,14 @@ public class AndroidTestConfigurationProducer extends JavaRuntimeConfigurationPr
     return null;
   }
 
+  private static void setGeneratedName(AndroidTestRunConfiguration configuration) {
+    configuration.setName(configuration.getGeneratedName());
+  }
+
   @Nullable
   private RunnerAndConfigurationSettings checkFacetAndCreateConfiguration(PsiElement element,
                                                                           ConfigurationContext context,
-                                                                          int testingType,
-                                                                          String configurationName) {
+                                                                          int testingType) {
     Module module = context.getModule();
     if (module == null || AndroidFacet.getInstance(module) == null) {
       return null;
@@ -132,7 +140,6 @@ public class AndroidTestConfigurationProducer extends JavaRuntimeConfigurationPr
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(element.getProject(), context);
     AndroidTestRunConfiguration configuration = (AndroidTestRunConfiguration)settings.getConfiguration();
     configuration.TESTING_TYPE = testingType;
-    configuration.setName(JavaExecutionUtil.getPresentableClassName(configurationName, configuration.getConfigurationModule()));
     setupConfigurationModule(context, configuration);
 
     final TargetSelectionMode targetSelectionMode = AndroidUtils

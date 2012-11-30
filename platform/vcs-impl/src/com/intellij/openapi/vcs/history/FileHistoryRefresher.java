@@ -49,6 +49,7 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
    */
   @Override
   public void run(boolean isRefresh, boolean canUseLastRevision) {
+    mySessionPartner.beforeRefresh();
     final VcsHistoryProviderBackgroundableProxy proxy = new VcsHistoryProviderBackgroundableProxy(
       myVcs, myVcsHistoryProvider, myVcs.getDiffProvider());
     proxy.executeAppendableSession(myVcs.getKeyInstanceMethod(), myPath, mySessionPartner, null, myCanUseCache, canUseLastRevision);

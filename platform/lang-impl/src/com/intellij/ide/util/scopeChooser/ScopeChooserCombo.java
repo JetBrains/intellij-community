@@ -237,7 +237,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
       result.add(GlobalSearchScope.allScope(project));
     }
 
-    if (!PlatformUtils.isCidr()) { // TODO: fix these scopes in AppCode
+    if (!PlatformUtils.isAppCode()) { // TODO: fix these scopes in AppCode
       result.add(GlobalSearchScopes.projectProductionScope(project));
       result.add(GlobalSearchScopes.projectTestScope(project));
     }
@@ -250,7 +250,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
         dataContextElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
       }
       if (dataContextElement != null) {
-        if (!PlatformUtils.isCidr()) { // TODO: have an API to disable module scopes.
+        if (!PlatformUtils.isAppCode()) { // TODO: have an API to disable module scopes.
           Module module = ModuleUtilCore.findModuleForPsiElement(dataContextElement);
           if (module == null) {
             module = LangDataKeys.MODULE.getData(dataContext);

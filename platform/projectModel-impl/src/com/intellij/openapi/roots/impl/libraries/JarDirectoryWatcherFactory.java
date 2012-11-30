@@ -22,9 +22,11 @@ import com.intellij.openapi.roots.impl.RootProviderBaseImpl;
  * @author yole
  */
 public class JarDirectoryWatcherFactory {
+  private static final JarDirectoryWatcherFactory Instance = new JarDirectoryWatcherFactory();
+
   public static JarDirectoryWatcherFactory getInstance() {
     final JarDirectoryWatcherFactory factory = ServiceManager.getService(JarDirectoryWatcherFactory.class);
-    return factory != null ? factory : new JarDirectoryWatcherFactory();
+    return factory != null ? factory : Instance;
   }
 
   public JarDirectoryWatcher createWatcher(JarDirectories jarDirectories, RootProviderBaseImpl rootProvider) {

@@ -5,6 +5,9 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.JpsJavaModuleExtension;
+import org.jetbrains.jps.model.java.JpsJavaProjectExtension;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.util.JpsPathUtil;
 
@@ -17,17 +20,36 @@ import java.util.*;
  */
 public class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
   private final Set<File> myExcludedRoots = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+  private final Set<File> myContentRoots = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
   private final Map<JpsModule, List<File>> myModuleToExcludesMap = new THashMap<JpsModule, List<File>>();
 
   public ModuleExcludeIndexImpl(JpsModel model) {
     final Collection<JpsModule> allModules = model.getProject().getModules();
     for (final JpsModule module : allModules) {
       final List<File> moduleExcludes = new ArrayList<File>();
-      myModuleToExcludesMap.put(module, moduleExcludes);
       for (String url : module.getExcludeRootsList().getUrls()) {
-        final File root = JpsPathUtil.urlToFile(url);
-        myExcludedRoots.add(root);
-        moduleExcludes.add(root);
+        moduleExcludes.add(JpsPathUtil.urlToFile(url));
+      }
+      JpsJavaModuleExtension moduleExtension = JpsJavaExtensionService.getInstance().getModuleExtension(module);
+      if (moduleExtension != null && !moduleExtension.isInheritOutput() && moduleExtension.isExcludeOutput()) {
+        String outputUrl = moduleExtension.getOutputUrl();
+        if (outputUrl != null) {
+          moduleExcludes.add(JpsPathUtil.urlToFile(outputUrl));
+        }
+        String testOutputUrl = moduleExtension.getTestOutputUrl();
+        if (testOutputUrl != null) {
+          moduleExcludes.add(JpsPathUtil.urlToFile(testOutputUrl));
+        }
+      }
+      myModuleToExcludesMap.put(module, moduleExcludes);
+      myExcludedRoots.addAll(moduleExcludes);
+    }
+
+    JpsJavaProjectExtension projectExtension = JpsJavaExtensionService.getInstance().getProjectExtension(model.getProject());
+    if (projectExtension != null) {
+      String url = projectExtension.getOutputUrl();
+      if (url != null) {
+        myExcludedRoots.add(JpsPathUtil.urlToFile(url));
       }
     }
 
@@ -56,6 +78,9 @@ public class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
         if (parentModule != null) {
           myModuleToExcludesMap.get(parentModule).add(contentRoot);
         }
+        else {
+          myContentRoots.add(contentRoot);
+        }
         for (File file : parents) {
           contentToModule.put(file, parentModule);
         }
@@ -69,6 +94,11 @@ public class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
   @Override
   public boolean isExcluded(File file) {
     return JpsPathUtil.isUnder(myExcludedRoots, file);
+  }
+
+  @Override
+  public boolean isInContent(File file) {
+    return JpsPathUtil.isUnder(myContentRoots, file);
   }
 
   @Override
