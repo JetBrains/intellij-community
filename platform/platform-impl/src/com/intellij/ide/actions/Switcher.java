@@ -82,7 +82,7 @@ import static java.awt.event.KeyEvent.*;
 public class Switcher extends AnAction implements DumbAware {
   private static volatile SwitcherPanel SWITCHER = null;
   private static final Color BORDER_COLOR = Gray._135;
-  private static final Color SEPARATOR_COLOR = BORDER_COLOR.brighter();
+  private static final Color SEPARATOR_COLOR = new JBColor(BORDER_COLOR.brighter(), Gray._75);
   @NonNls private static final String SWITCHER_FEATURE_ID = "switcher";
   private static final Color ON_MOUSE_OVER_BG_COLOR = new Color(231, 242, 249);
   private static int CTRL_KEY;
