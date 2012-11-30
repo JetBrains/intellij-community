@@ -45,10 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
-import javax.swing.tree.TreeSelectionModel;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
@@ -73,11 +70,11 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   private final boolean myIsInsertOverrideVisible;
   private final JComponent myHeaderPanel;
 
-  private T[] myElements;
-  private final HashMap<MemberNode,ParentNode> myNodeToParentMap = new HashMap<MemberNode, ParentNode>();
-  private final HashMap<ClassMember, MemberNode> myElementToNodeMap = new HashMap<ClassMember, MemberNode>();
-  private final ArrayList<ContainerNode> myContainerNodes = new ArrayList<ContainerNode>();
-  private LinkedHashSet<T> mySelectedElements;
+  protected T[] myElements;
+  protected final HashMap<MemberNode,ParentNode> myNodeToParentMap = new HashMap<MemberNode, ParentNode>();
+  protected final HashMap<ClassMember, MemberNode> myElementToNodeMap = new HashMap<ClassMember, MemberNode>();
+  protected final ArrayList<ContainerNode> myContainerNodes = new ArrayList<ContainerNode>();
+  protected LinkedHashSet<T> mySelectedElements;
 
   @NonNls private static final String PROP_SORTED = "MemberChooser.sorted";
   @NonNls private static final String PROP_SHOWCLASSES = "MemberChooser.showClasses";
@@ -94,8 +91,9 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
                        boolean allowEmptySelection,
                        boolean allowMultiSelection,
                        @NotNull Project project,
+                       @Nullable JComponent headerPanel,
                        JComponent[] optionControls) {
-    this(elements, allowEmptySelection, allowMultiSelection, project, false, null, optionControls);
+    this(elements, allowEmptySelection, allowMultiSelection, project, false, headerPanel, optionControls);
   }
 
   public MemberChooser(T[] elements,
@@ -130,7 +128,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     myProject = project;
     myIsInsertOverrideVisible = isInsertOverrideVisible;
     myHeaderPanel = headerPanel;
-    myTree = new Tree(new DefaultTreeModel(new DefaultMutableTreeNode()));
+    myTree = createTree();
     myOptionControls = optionControls;
     resetElements(elements);
     init();
@@ -203,11 +201,15 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
     for (T object : myElements) {
       final ParentNode parentNode = map.get(object.getParentNodeDelegate());
-      final MemberNode elementNode = new MemberNode(parentNode, object, count);
+      final MemberNode elementNode = createMemberNode(count, object, parentNode);
       myNodeToParentMap.put(elementNode, parentNode);
       myElementToNodeMap.put(object, elementNode);
     }
     return new DefaultTreeModel(rootNode);
+  }
+
+  protected MemberNode createMemberNode(Ref<Integer> count, T object, ParentNode parentNode) {
+    return new MemberNodeImpl(parentNode, object, count);
   }
 
   protected boolean supportsNestedContainers() {
@@ -227,7 +229,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     for (ClassMember element : elements) {
       MemberNode treeNode = myElementToNodeMap.get(element);
       if (treeNode != null) {
-        selectionPaths.add(new TreePath(treeNode.getPath()));
+        selectionPaths.add(new TreePath(((DefaultMutableTreeNode)treeNode).getPath()));
       }
     }
     myTree.setSelectionPaths(selectionPaths.toArray(new TreePath[selectionPaths.size()]));
@@ -317,15 +319,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
     // Tree
 
-    myTree.setCellRenderer(new ColoredTreeCellRenderer() {
-    public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded,
-                                      boolean leaf, int row, boolean hasFocus) {
-      if (value instanceof ElementNode) {
-        ((ElementNode) value).getDelegate().renderTreeNode(this, tree);
-      }
-    }
-  }
-);
+    myTree.setCellRenderer(getTreeCellRenderer());
     UIUtil.setLineStyleAngled(myTree);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
@@ -360,6 +354,21 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     panel.add(scrollPane, BorderLayout.CENTER);
 
     return panel;
+  }
+
+  protected Tree createTree() {
+    return new Tree(new DefaultTreeModel(new DefaultMutableTreeNode()));
+  }
+
+  protected TreeCellRenderer getTreeCellRenderer() {
+    return new ColoredTreeCellRenderer() {
+      public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded,
+                                        boolean leaf, int row, boolean hasFocus) {
+        if (value instanceof ElementNode) {
+          ((ElementNode) value).getDelegate().renderTreeNode(this, tree);
+        }
+      }
+    };
   }
 
   protected void installSpeedSearch() {
@@ -578,8 +587,9 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
     ArrayList<TreePath> toSelect = new ArrayList<TreePath>();
     for (ElementNode node : selectedNodes) {
-      if (root.isNodeDescendant(node)) {
-        toSelect.add(new TreePath(node.getPath()));
+      DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)node;
+      if (root.isNodeDescendant(treeNode)) {
+        toSelect.add(new TreePath(treeNode.getPath()));
       }
     }
 
@@ -589,7 +599,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
     ElementNode leadNode = pair.first;
     if (leadNode != null) {
-      myTree.setLeadSelectionPath(new TreePath(leadNode.getPath()));
+      myTree.setLeadSelectionPath(new TreePath(((DefaultMutableTreeNode)leadNode).getPath()));
     }
   }
 
@@ -647,11 +657,18 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
   }
 
-  protected abstract static class ElementNode extends DefaultMutableTreeNode {
+  protected interface ElementNode extends MutableTreeNode {
+    MemberChooserObject getDelegate();
+    int getOrder();
+  }
+
+  protected interface MemberNode extends ElementNode {}
+
+  protected abstract static class ElementNodeImpl extends DefaultMutableTreeNode implements ElementNode {
     private final int myOrder;
     private final MemberChooserObject myDelegate;
 
-    public ElementNode(@Nullable DefaultMutableTreeNode parent, MemberChooserObject delegate, Ref<Integer> order) {
+    public ElementNodeImpl(@Nullable DefaultMutableTreeNode parent, MemberChooserObject delegate, Ref<Integer> order) {
       myOrder = order.get();
       order.set(myOrder + 1);
       myDelegate = delegate;
@@ -669,13 +686,13 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
   }
 
-  protected static class MemberNode extends ElementNode {
-    public MemberNode(ParentNode parent, ClassMember delegate, Ref<Integer> order) {
+  protected static class MemberNodeImpl extends ElementNodeImpl implements MemberNode {
+    public MemberNodeImpl(ParentNode parent, ClassMember delegate, Ref<Integer> order) {
       super(parent, delegate, order);
     }
   }
 
-  protected static class ParentNode extends ElementNode {
+  protected static class ParentNode extends ElementNodeImpl {
     public ParentNode(@Nullable DefaultMutableTreeNode parent, MemberChooserObject delegate, Ref<Integer> order) {
       super(parent, delegate, order);
     }
@@ -710,7 +727,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       }
       else if (e.getKeyCode() == KeyEvent.VK_INSERT) {
         if (lastComponent instanceof ElementNode) {
-          final ElementNode node = (ElementNode)lastComponent;
+          final DefaultMutableTreeNode node = (DefaultMutableTreeNode)lastComponent;
           if (!mySelectedNodes.contains(node)) {
             if (node.getNextNode() != null) {
               myTree.setSelectionPath(new TreePath(node.getNextNode().getPath()));
@@ -796,7 +813,9 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
   }
 
-  private static class OrderComparator implements Comparator<ElementNode> {
+  protected static class OrderComparator implements Comparator<ElementNode> {
+    public OrderComparator() {} // To make this class instanceable from the subclasses
+
     public int compare(ElementNode n1, ElementNode n2) {
       if (n1.getDelegate() instanceof ClassMemberWithElement
         &&  n2.getDelegate() instanceof ClassMemberWithElement) {
