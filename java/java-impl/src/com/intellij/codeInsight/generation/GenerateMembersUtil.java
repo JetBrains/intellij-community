@@ -427,7 +427,12 @@ public class GenerateMembersUtil {
 
   private static PsiType substituteType(final PsiSubstitutor substitutor, final PsiType type) {
     final PsiType psiType = substitutor.substitute(type);
-    if (psiType != null) return psiType;
+    if (psiType != null) {
+      final PsiType deepComponentType = psiType.getDeepComponentType();
+      if (!(deepComponentType instanceof PsiCapturedWildcardType || deepComponentType instanceof PsiWildcardType)){
+        return psiType;
+      }
+    }
     return TypeConversionUtil.erasure(type);
   }
 
