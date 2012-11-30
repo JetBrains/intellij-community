@@ -399,3 +399,20 @@ class Q implements Iterator<String> {
             throw new UnsupportedOperationException();
 }
 }
+class R {
+  private static final String someStaticStuff;
+  static {
+    try {
+      someStaticStuff = "";
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private String someInjectedStuff;
+
+  public String getSomeInjectedStuff() {
+    return someInjectedStuff;
+  }
+}
