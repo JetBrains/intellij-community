@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.groovy.compiler
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiFile
@@ -117,6 +132,12 @@ public class GeneratorTest extends LightGroovyTestCase {
 
   public void testFinalMethods() {
     doTest();
+  }
+
+  public void testInheritConstructors() {
+    myFixture.addClass('package groovy.transform; public @interface InheritConstructors{}')
+    myFixture.addClass('public class Base {public Base(String s){}}')
+    doTest()
   }
 
   public void doTest() {
