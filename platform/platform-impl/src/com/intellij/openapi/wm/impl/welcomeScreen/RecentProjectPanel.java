@@ -188,7 +188,7 @@ public class RecentProjectPanel extends JPanel {
   private static class MyList extends JBList {
     private MyList(@NotNull Object... listData) {
       super(listData);
-      setEmptyText("No Project Open Yet");
+      setEmptyText("  No Project Open Yet  ");
     }
 
     @Override
