@@ -43,10 +43,12 @@ public class UIUtil {
   private static final String MODIFY_EDITOR_CONTENT = SSRBundle.message("modify.editor.content.command.name");
   @NonNls private static final String SS_GROUP = "structuralsearchgroup";
 
+  @NotNull
   public static Editor createEditor(Document doc, final Project project, boolean editable, @Nullable TemplateContextType contextType) {
     return createEditor(doc, project, editable, false, contextType);
   }
 
+  @NotNull
   public static Editor createEditor(@NotNull Document doc,
                                     final Project project,
                                     boolean editable,
@@ -291,7 +293,7 @@ public class UIUtil {
     }
   }
 
-  static void showTooltip(final Editor editor, final int start, int end, final String text, TooltipGroup group) {
+  static void showTooltip(@NotNull Editor editor, final int start, int end, @NotNull String text, TooltipGroup group) {
     Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
     Point top = editor.logicalPositionToXY(editor.offsetToLogicalPosition(start));
     final int documentLength = editor.getDocument().getTextLength();

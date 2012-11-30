@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -26,7 +27,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
   private final Editor editor;
   public static final Key<Configuration> CURRENT_CONFIGURATION_KEY = Key.create("SS.CurrentConfiguration");
 
-  SubstitutionShortInfoHandler(Editor _editor) {
+  SubstitutionShortInfoHandler(@NotNull Editor _editor) {
     editor = _editor;
   }
 
