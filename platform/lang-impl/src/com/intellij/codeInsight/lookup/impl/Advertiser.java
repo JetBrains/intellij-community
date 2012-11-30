@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.ClickListener;
+import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
@@ -70,7 +71,7 @@ public class Advertiser {
     myNextLabel = new JLabel(">>");
     myNextLabel.setFont(adFont().deriveFont(
       ContainerUtil.<TextAttribute, Object>immutableMapBuilder().put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON).build()));
-    myNextLabel.setForeground(Color.blue);
+    myNextLabel.setForeground(JBColor.blue);
     new ClickListener() {
       @Override
       public boolean onClick(MouseEvent e, int clickCount) {
@@ -93,8 +94,7 @@ public class Advertiser {
     if (!myTexts.isEmpty()) {
       String text = myTexts.get(myCurrentItem % myTexts.size());
       myTextPanel.setText(prepareText(text));
-    }
-    else {
+    } else {
       myTextPanel.setText("");
     }
     myCachedPrefSize = null;

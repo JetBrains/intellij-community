@@ -47,6 +47,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.HintHint;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
@@ -251,7 +252,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     paintBackground(g, clip, getAnnotationsAreaOffset(), w);
 
     Color color = myEditor.getColorsScheme().getColor(EditorColors.ANNOTATIONS_COLOR);
-    g.setColor(color != null ? color : Color.blue);
+    g.setColor(color != null ? color : JBColor.blue);
     g.setFont(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
 
     for (int i = 0; i < myTextAnnotationGutters.size(); i++) {
@@ -362,7 +363,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
 
     Color color = myEditor.getColorsScheme().getColor(EditorColors.LINE_NUMBERS_COLOR);
-    g.setColor(color != null ? color : Color.blue);
+    g.setColor(color != null ? color : JBColor.blue);
     g.setFont(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
 
     Graphics2D g2 = (Graphics2D)g;
