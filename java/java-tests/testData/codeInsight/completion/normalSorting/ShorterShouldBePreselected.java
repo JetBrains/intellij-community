@@ -6,6 +6,6 @@ class Foo {
 class Bar {
     void foo() {
         Foo f;
-        if ("abc".equals(f.fo<caret>))
+        if ("abc".equals(f.foo<caret>))
     }
 }

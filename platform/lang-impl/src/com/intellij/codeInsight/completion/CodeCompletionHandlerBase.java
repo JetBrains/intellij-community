@@ -457,11 +457,7 @@ public class CodeCompletionHandlerBase {
     if (decision == AutoCompletionDecision.SHOW_LOOKUP) {
       CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(indicator));
       indicator.getLookup().setCalculating(false);
-      if (indicator.showLookup() && isAutocompleteCommonPrefixOnInvocation() && items.length > 1) {
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          indicator.fillInCommonPrefix(false);
-        }
-      }
+      indicator.showLookup();
     }
     else if (decision instanceof AutoCompletionDecision.InsertItem) {
       final Runnable restorePrefix = rememberDocumentState(indicator.getEditor());

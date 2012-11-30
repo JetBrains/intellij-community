@@ -125,7 +125,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     myFixture.complete(CompletionType.BASIC, 2);
   }
 
-  public void testDontDispreferImplsAfterNew() throws Throwable {
+  public void _testDontDispreferImplsAfterNew() { //todo[peter]
     myFixture.addClass("package foo; public interface Xxx {}");
     configureSecondCompletion();
     assertPreferredItems(0, "Xxx", "XxxImpl");
