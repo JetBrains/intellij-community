@@ -239,7 +239,7 @@ public class Switcher extends AnAction implements DumbAware {
         @Override
         protected void paintComponent(Graphics g) {
           super.paintComponent(g);
-          g.setColor(UIUtil.isUnderDarcula() ? Gray._68 : BORDER_COLOR);
+          g.setColor(UIUtil.isUnderDarcula() ? SEPARATOR_COLOR : BORDER_COLOR);
           g.drawLine(0, 0, getWidth(), 0);
         }
       };
