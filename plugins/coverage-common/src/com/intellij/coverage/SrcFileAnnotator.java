@@ -61,9 +61,9 @@ public class SrcFileAnnotator implements Disposable {
   private static final Key<DocumentListener> COVERAGE_DOCUMENT_LISTENER = Key.create("COVERAGE_DOCUMENT_LISTENER");
   public static final Key<Map<FileEditor, EditorNotificationPanel>> NOTIFICATION_PANELS = Key.create("NOTIFICATION_PANELS");
 
-  private final PsiFile myFile;
-  private final Editor myEditor;
-  private final Document myDocument;
+  private PsiFile myFile;
+  private Editor myEditor;
+  private Document myDocument;
   private final Project myProject;
 
   private SoftReference<TIntIntHashMap> myNewToOldLines;
@@ -82,6 +82,7 @@ public class SrcFileAnnotator implements Disposable {
 
   
   public void hideCoverageData() {
+    if (myEditor == null) return;
     final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
     final List<RangeHighlighter> highlighters = myEditor.getUserData(COVERAGE_HIGHLIGHTERS);
     if (highlighters != null) {
@@ -221,6 +222,7 @@ public class SrcFileAnnotator implements Disposable {
   }
 
   public void showCoverageInformation(final CoverageSuitesBundle suite) {
+    if (myEditor == null) return;
     final MarkupModel markupModel = DocumentMarkupModel.forDocument(myDocument, myProject, true);
     final List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     final ProjectData data = suite.getCoverageData();
@@ -328,7 +330,7 @@ public class SrcFileAnnotator implements Disposable {
   
                 ApplicationManager.getApplication().invokeLater(new Runnable() {
                   public void run() {
-                    if (lineNumberInCurrent >= myDocument.getLineCount()) return;
+                    if (myDocument == null || lineNumberInCurrent >= myDocument.getLineCount()) return;
                     final RangeHighlighter highlighter =
                       createRangeHighlighter(suite.getLastCoverageTimeStamp(), markupModel, coverageByTestApplicable, executableLines,
                                              qualifiedName, line, lineNumberInCurrent, suite, postProcessedLines);
@@ -363,7 +365,7 @@ public class SrcFileAnnotator implements Disposable {
     }
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        if (highlighters.size() > 0) {
+        if (myEditor != null && highlighters.size() > 0) {
           myEditor.putUserData(COVERAGE_HIGHLIGHTERS, highlighters);
         }
       }
@@ -398,6 +400,7 @@ public class SrcFileAnnotator implements Disposable {
               if (newToOldLineMapping != null) {
                 ApplicationManager.getApplication().invokeLater(new Runnable() {
                   public void run() {
+                    if (myEditor == null) return;
                     for (int line = lineNumber; line <= lastLineNumber; line++) {
                       final int oldLineNumber = newToOldLineMapping.get(line);
                       final LineData lineData = executableLines.get(oldLineNumber);
@@ -475,6 +478,7 @@ public class SrcFileAnnotator implements Disposable {
   private void showEditorWarningMessage(final String message) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
+        if (myEditor == null) return;
         final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
         final VirtualFile vFile = myFile.getVirtualFile();
         assert vFile != null;
@@ -556,6 +560,7 @@ public class SrcFileAnnotator implements Disposable {
     executableLines.put(updatedLineNumber, null);
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
+        if (myEditor == null) return;
         final RangeHighlighter highlighter =
           createRangeHighlighter(outputFile.getTimeStamp(), markupModel, coverageByTestApplicable, executableLines, null, lineNumber,
                                  updatedLineNumber, coverageSuite, null);
@@ -580,5 +585,8 @@ public class SrcFileAnnotator implements Disposable {
 
   public void dispose() {
     hideCoverageData();
+    myEditor = null;
+    myDocument = null;
+    myFile = null;
   }
 }
