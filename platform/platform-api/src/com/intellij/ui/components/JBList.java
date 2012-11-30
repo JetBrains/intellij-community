@@ -156,8 +156,7 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
         s.width += (insets.left + insets.right);
         s.height += (insets.top + insets.bottom);
       }
-      Dimension viewportSize = getPreferredScrollableViewportSize();
-      return new Dimension(Math.max(s.width, viewportSize.width), Math.max(s.height, viewportSize.height));
+      return s;
     } else {
       return super.getPreferredSize();
     }
