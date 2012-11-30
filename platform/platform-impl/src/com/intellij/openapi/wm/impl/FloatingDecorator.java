@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 
@@ -315,24 +317,28 @@ public final class FloatingDecorator extends JDialog{
 
     public final void paint(final Graphics g){
       super.paint(g);
+      final JBColor lightGray = new JBColor(Color.lightGray, Gray._95);
+      final JBColor gray = new JBColor(Color.gray, Gray._95);
       if(ANCHOR_TOP==myAnchor){
-        g.setColor(Color.lightGray);
+        g.setColor(lightGray);
         UIUtil.drawLine(g, 0, 0, getWidth() - 1, 0);
         UIUtil.drawLine(g, 0, 0, 0, getHeight() - 1);
         g.setColor(Color.gray);
         UIUtil.drawLine(g, getWidth() - 1, 0, getWidth() - 1, getHeight() - 1);
       } else if(ANCHOR_LEFT==myAnchor){
-        g.setColor(Color.lightGray);
+        g.setColor(lightGray);
         UIUtil.drawLine(g, 0, 0, 0, getHeight() - 1);
-      } else if(ANCHOR_BOTTOM==myAnchor){
-        g.setColor(Color.lightGray);
-        UIUtil.drawLine(g, 0, 0, 0, getHeight() - 1);
-        g.setColor(Color.gray);
-        UIUtil.drawLine(g, 0, getHeight() - 1, getWidth() - 1, getHeight() - 1);
-        UIUtil.drawLine(g, getWidth() - 1, 0, getWidth() - 1, getHeight() - 1);
-      } else{ // RIGHT
-        g.setColor(Color.gray);
-        UIUtil.drawLine(g, getWidth() - 1, 0, getWidth() - 1, getHeight() - 1);
+      } else {
+        if(ANCHOR_BOTTOM==myAnchor){
+          g.setColor(lightGray);
+          UIUtil.drawLine(g, 0, 0, 0, getHeight() - 1);
+          g.setColor(gray);
+          UIUtil.drawLine(g, 0, getHeight() - 1, getWidth() - 1, getHeight() - 1);
+          UIUtil.drawLine(g, getWidth() - 1, 0, getWidth() - 1, getHeight() - 1);
+        } else{ // RIGHT
+          g.setColor(gray);
+          UIUtil.drawLine(g, getWidth() - 1, 0, getWidth() - 1, getHeight() - 1);
+        }
       }
     }
   }
