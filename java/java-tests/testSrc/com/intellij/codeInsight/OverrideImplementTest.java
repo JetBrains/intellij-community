@@ -61,6 +61,7 @@ public class OverrideImplementTest extends LightCodeInsightTestCase {
   public void testClone() { doTest(false); }
   public void testOnTheLineWithExistingExpression() { doTest(false); }
   public void testSimplifyObjectWildcard() { doTest(false); }
+  public void testErasureWildcard() { doTest(false); }
 
   public void testImplementExtensionMethods() { doTest8(false, true); }
   public void testDoNotImplementExtensionMethods() { doTest8(false, true); }

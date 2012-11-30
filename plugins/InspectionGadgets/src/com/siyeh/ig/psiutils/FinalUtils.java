@@ -630,8 +630,9 @@ public class FinalUtils {
     }
 
     private void satisfyVacuously() {
-      definitelyAssigned = true;
-      definitelyUnassigned = true;
+      if (definitelyAssigned) {
+        definitelyUnassigned = true;
+      }
     }
 
     private static boolean isPrePostFixExpression(

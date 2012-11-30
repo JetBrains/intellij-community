@@ -115,8 +115,8 @@ public class TypeConversionUtil {
           final PsiClass psiClass = classType.resolve();
           if (psiClass == null || psiClass instanceof PsiTypeParameter) return false;
           final PsiClassType boxedType = ((PsiPrimitiveType)toType).getBoxedType(psiClass.getManager(), psiClass.getResolveScope());
-          if (boxedType != null) {
-            return isAssignable(fromType, boxedType);
+          if (boxedType != null && isAssignable(fromType, boxedType)) {
+            return true;
           }
         }
         return fromTypeRank == toTypeRank ||
