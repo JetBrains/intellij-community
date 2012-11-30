@@ -798,8 +798,17 @@ public class FileUtil extends FileUtilRt {
 
     path1 = toCanonicalPath(path1);
     path2 = toCanonicalPath(path2);
-    //noinspection ConstantConditions
     return PATH_HASHING_STRATEGY.equals(path1, path2);
+  }
+
+  /**
+   * optimized version of pathsEqual - it only compares pure names, without file separators
+   */
+  public static boolean namesEqual(@Nullable String name1, @Nullable String name2) {
+    if (name1 == name2) return true;
+    if (name1 == null || name2 == null) return false;
+
+    return PATH_HASHING_STRATEGY.equals(name1, name2);
   }
 
   public static int compareFiles(@Nullable File file1, @Nullable File file2) {

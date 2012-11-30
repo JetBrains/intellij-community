@@ -24,16 +24,16 @@ import com.intellij.openapi.util.io.FileUtil;
 public abstract class SpecificNameItemProcessor implements PsiFileSystemItemProcessor {
   private final String myName;
 
-  public String getName() {
-    return myName;
-  }
-
   protected SpecificNameItemProcessor(String name) {
     myName = name;
   }
 
+  public String getName() {
+    return myName;
+  }
+
   @Override
   public boolean acceptItem(String name, boolean isDirectory) {
-    return FileUtil.pathsEqual(myName, name);
+    return FileUtil.namesEqual(myName, name);
   }
 }
