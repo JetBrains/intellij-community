@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.ast;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
@@ -43,10 +44,13 @@ public class GrInheritConstructorContributor extends AstTransformContributor {
 
     final PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, psiClass, PsiSubstitutor.EMPTY);
     for (PsiMethod constructor : superClass.getConstructors()) {
+      if (constructor.hasModifierProperty(PsiModifier.PRIVATE)) continue;
+
       final GrLightMethodBuilder inheritedConstructor = new GrLightMethodBuilder(psiClass.getManager(), psiClass.getName());
       inheritedConstructor.setContainingClass(psiClass);
       inheritedConstructor.setConstructor(true);
       inheritedConstructor.setNavigationElement(psiClass);
+      inheritedConstructor.addModifier(VisibilityUtil.getVisibilityModifier(constructor.getModifierList()));
       inheritedConstructor.setOriginInfo("created by @InheritConstructors");
 
       for (PsiParameter parameter : constructor.getParameterList().getParameters()) {
