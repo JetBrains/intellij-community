@@ -54,7 +54,7 @@ public class TrafficTooltipRendererImpl extends ComparableObject.Impl implements
   }
 
   @Override
-  public LightweightHint show(Editor editor, Point p, boolean alignToRight, TooltipGroup group, HintHint hintHint) {
+  public LightweightHint show(@NotNull Editor editor, @NotNull Point p, boolean alignToRight, TooltipGroup group, @NotNull HintHint hintHint) {
     myTrafficLightRenderer = (TrafficLightRenderer)((EditorMarkupModelImpl)editor.getMarkupModel()).getErrorStripeRenderer();
     myPanel = new TrafficProgressPanel(myTrafficLightRenderer, editor, hintHint);
     LineTooltipRenderer.correctLocation(editor, myPanel, p, alignToRight, false, -1);

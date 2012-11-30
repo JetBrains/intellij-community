@@ -97,31 +97,31 @@ public class TooltipController {
     }
   }
 
-  public void showTooltip(final Editor editor, Point p, String text, boolean alignToRight, TooltipGroup group) {
+  public void showTooltip(@NotNull Editor editor, @NotNull Point p, @NotNull String text, boolean alignToRight, TooltipGroup group) {
     TooltipRenderer tooltipRenderer = ((EditorMarkupModel)editor.getMarkupModel()).getErrorStripTooltipRendererProvider().calcTooltipRenderer(text);
     showTooltip(editor, p, tooltipRenderer, alignToRight, group);
   }
 
-  public void showTooltip(final Editor editor, Point p, String text, int currentWidth, boolean alignToRight, TooltipGroup group) {
+  public void showTooltip(@NotNull Editor editor, @NotNull Point p, @NotNull String text, int currentWidth, boolean alignToRight, TooltipGroup group) {
     TooltipRenderer tooltipRenderer = ((EditorMarkupModel)editor.getMarkupModel()).getErrorStripTooltipRendererProvider().calcTooltipRenderer(text, currentWidth);
     showTooltip(editor, p, tooltipRenderer, alignToRight, group);
   }
 
-  public void showTooltip(final Editor editor, Point p, String text, int currentWidth, boolean alignToRight, TooltipGroup group, HintHint hintHint) {
+  public void showTooltip(@NotNull Editor editor, @NotNull Point p, @NotNull String text, int currentWidth, boolean alignToRight, TooltipGroup group, @NotNull HintHint hintHint) {
     TooltipRenderer tooltipRenderer = ((EditorMarkupModel)editor.getMarkupModel()).getErrorStripTooltipRendererProvider().calcTooltipRenderer(text, currentWidth);
     showTooltip(editor, p, tooltipRenderer, alignToRight, group, hintHint);
   }
 
-  public void showTooltip(final Editor editor, Point p, TooltipRenderer tooltipRenderer, boolean alignToRight, TooltipGroup group) {
+  public void showTooltip(@NotNull Editor editor, @NotNull Point p, @NotNull TooltipRenderer tooltipRenderer, boolean alignToRight, TooltipGroup group) {
     showTooltip(editor, p, tooltipRenderer, alignToRight, group, new HintHint(editor, p));
   }
 
-  public void showTooltip(final Editor editor,
-                          Point p,
-                          TooltipRenderer tooltipRenderer,
+  public void showTooltip(@NotNull Editor editor,
+                          @NotNull Point p,
+                          @NotNull TooltipRenderer tooltipRenderer,
                           boolean alignToRight,
                           TooltipGroup group,
-                          HintHint hintInfo) {
+                          @NotNull HintHint hintInfo) {
     if (myCurrentTooltip == null || !myCurrentTooltip.isVisible()) {
       myCurrentTooltipObject = null;
     }

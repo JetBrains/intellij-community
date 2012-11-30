@@ -102,11 +102,13 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
     return bigRenderer;
   }
 
+  @NotNull
   @Override
   public TooltipRenderer calcTooltipRenderer(@NotNull final String text) {
     return new MyRenderer(text, new Object[] {text});
   }
 
+  @NotNull
   @Override
   public TooltipRenderer calcTooltipRenderer(@NotNull final String text, final int width) {
     return new MyRenderer(text, width, new Object[] {text});
