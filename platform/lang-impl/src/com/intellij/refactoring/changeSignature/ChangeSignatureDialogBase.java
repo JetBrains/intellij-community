@@ -104,6 +104,7 @@ public abstract class ChangeSignatureDialogBase<
   private DelegationPanel myDelegationPanel;
   protected AnActionButton myPropagateParamChangesButton;
   protected Set<Method> myMethodsToPropagateParameters = null;
+  private boolean myDisposed;
 
   private Tree myParameterPropagationTreeToReuse;
 
@@ -142,6 +143,7 @@ public abstract class ChangeSignatureDialogBase<
     Disposer.register(myDisposable, new Disposable() {
       public void dispose() {
         myUpdateSignatureAlarm.cancelAllRequests();
+        myDisposed = true;
       }
     });
   }
@@ -584,6 +586,7 @@ public abstract class ChangeSignatureDialogBase<
 
     final Runnable updateRunnable = new Runnable() {
       public void run() {
+        if (myDisposed) return;
         myUpdateSignatureAlarm.cancelAllRequests();
         myUpdateSignatureAlarm.addRequest(new Runnable() {
           public void run() {
