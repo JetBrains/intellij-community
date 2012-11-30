@@ -1142,18 +1142,6 @@ public class PyUtil {
   }
 
   @Nullable
-  public static <T extends PyExpression> T findProblemElement(Editor editor, PsiFile file, @NotNull final Class<? extends T>... classes) {
-    for (Class claz : classes) {
-      PsiElement problemElement = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset() - 1), claz);
-      if (problemElement != null) return (T)problemElement;
-
-      problemElement = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), claz);
-      if (problemElement != null) return (T)problemElement;
-    }
-    return null;
-  }
-
-  @Nullable
   public static PsiElement findNonWhitespaceAtOffset(PsiFile psiFile, int caretOffset) {
     PsiElement element = psiFile.findElementAt(caretOffset);
     if (element == null) {
