@@ -956,23 +956,24 @@ class RunConfigurable extends BaseConfigurable {
       RowsDnDSupport.RefinedDropSupport.Position position = allowInto && myTreeModel.isDropInto(myTree, oldIndex, newIndex) ?
                                                             INTO :
                                                             direction > 0 ? BELOW : ABOVE;
-      if (myTreeModel.canDrop(oldIndex, newIndex, position)) {
-        DefaultMutableTreeNode oldNode = getNode(oldIndex);
-        DefaultMutableTreeNode newNode = getNode(newIndex);
-        if (oldNode.getParent() != newNode.getParent() && getKind(newNode) != FOLDER) {
-          RowsDnDSupport.RefinedDropSupport.Position copy = position;
-          if (position == BELOW) {
-            copy = ABOVE;
-          }
-          else if (position == ABOVE) {
-            copy = BELOW;
-          }
-          if (myTreeModel.canDrop(oldIndex, newIndex, copy)) {
-            return Trinity.create(oldIndex, newIndex, copy);
-          }
+      DefaultMutableTreeNode oldNode = getNode(oldIndex);
+      DefaultMutableTreeNode newNode = getNode(newIndex);
+      if (oldNode.getParent() != newNode.getParent() && getKind(newNode) != FOLDER) {
+        RowsDnDSupport.RefinedDropSupport.Position copy = position;
+        if (position == BELOW) {
+          copy = ABOVE;
         }
+        else if (position == ABOVE) {
+          copy = BELOW;
+        }
+        if (myTreeModel.canDrop(oldIndex, newIndex, copy)) {
+          return Trinity.create(oldIndex, newIndex, copy);
+        }
+      }
+      if (myTreeModel.canDrop(oldIndex, newIndex, position)) {
         return Trinity.create(oldIndex, newIndex, position);
       }
+
       if (position == BELOW && newIndex < myTree.getRowCount() - 1 && myTreeModel.canDrop(oldIndex, newIndex + 1, ABOVE)) {
         return Trinity.create(oldIndex, newIndex + 1, ABOVE);
       }
@@ -1756,8 +1757,11 @@ class RunConfigurable extends BaseConfigurable {
         return false;
       if (oldKind == CONFIGURATION && newKind == TEMPORARY_CONFIGURATION && position == BELOW)
         return false;
-      if (oldKind == CONFIGURATION && newKind == TEMPORARY_CONFIGURATION && position == ABOVE)
-        return newNode.getPreviousSibling() == null || getKind(newNode.getPreviousSibling()) == CONFIGURATION;
+      if (oldKind == CONFIGURATION && newKind == TEMPORARY_CONFIGURATION && position == ABOVE) {
+        return newNode.getPreviousSibling() == null ||
+               getKind(newNode.getPreviousSibling()) == CONFIGURATION ||
+               getKind(newNode.getPreviousSibling()) == FOLDER;
+      }
       if (oldKind == TEMPORARY_CONFIGURATION && newKind == CONFIGURATION && position == BELOW)
         return newNode.getNextSibling() == null || getKind(newNode.getNextSibling()) == TEMPORARY_CONFIGURATION;
       if (oldParent == newParent) { //Same parent
