@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.NamedStub;
 import com.intellij.psi.stubs.StubBase;
@@ -32,7 +33,7 @@ public class GrTypeDefinitionStub extends StubBase<GrTypeDefinition> implements 
   private static final int ENUM = 0x04;
   private static final int ANNOTATION = 0x08;
   private static final int IS_IN_QUALIFIED_NEW = 0x10;
-  private static final int DEPRECATED = 0x20;
+  private static final int DEPRECATED_BY_DOC = 0x20;
 
   private final StringRef myName;
   private final String[] mySuperClasses;
@@ -95,8 +96,8 @@ public class GrTypeDefinitionStub extends StubBase<GrTypeDefinition> implements 
     return myFlags;
   }
 
-  public boolean isDeprecated() {
-    return (myFlags & DEPRECATED) != 0;
+  public boolean isDeprecatedByDoc() {
+    return (myFlags & DEPRECATED_BY_DOC) != 0;
   }
 
   public static byte buildFlags(GrTypeDefinition typeDefinition) {
@@ -111,7 +112,7 @@ public class GrTypeDefinitionStub extends StubBase<GrTypeDefinition> implements 
     if (typeDefinition.isAnnotationType()) flags |= ANNOTATION;
     if (typeDefinition.isInterface()) flags |= INTERFACE;
     if (typeDefinition.isEnum()) flags |= ENUM;
-    if (typeDefinition.isDeprecated()) flags |= DEPRECATED;
+    if (PsiImplUtil.isDeprecatedByDocTag(typeDefinition)) flags |= DEPRECATED_BY_DOC;
     return flags;
   }
 

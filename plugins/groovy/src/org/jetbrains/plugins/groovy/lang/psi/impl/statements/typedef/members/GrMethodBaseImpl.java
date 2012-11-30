@@ -461,7 +461,11 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   }
 
   public boolean isDeprecated() {
-    return false;
+    final GrMethodStub stub = getStub();
+    if (stub != null) {
+      return stub.isDeprecatedByDoc() || com.intellij.psi.impl.PsiImplUtil.isDeprecatedByAnnotation(this);
+    }
+    return com.intellij.psi.impl.PsiImplUtil.isDeprecatedByDocTag(this) || com.intellij.psi.impl.PsiImplUtil.isDeprecatedByAnnotation(this);
   }
 
   @NotNull

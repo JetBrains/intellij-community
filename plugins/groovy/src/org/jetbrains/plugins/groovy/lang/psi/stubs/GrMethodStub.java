@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.stubs.NamedStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
@@ -28,22 +29,27 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrMethodElementType;
  * @author ilyas
  */
 public class GrMethodStub extends StubBase<GrMethod> implements NamedStub<GrMethod> {
+  public static final byte IS_DEPRECATED_BY_DOC_TAG = 0x01;
+
   private final StringRef myName;
   private final String[] myAnnotations;
   private final String[] myNamedParameters;
   private final String myTypeText;
+  private final byte myFlags;
 
   public GrMethodStub(StubElement parent,
                       StringRef name,
                       final String[] annotations,
                       final @NotNull String[] namedParameters,
                       final GrMethodElementType elementType,
-                      @Nullable String typeText) {
+                      @Nullable String typeText,
+                      byte flags) {
     super(parent, elementType);
     myName = name;
     myAnnotations = annotations;
     myNamedParameters = namedParameters;
     myTypeText = typeText;
+    myFlags = flags;
   }
 
   @NotNull public String getName() {
@@ -62,5 +68,23 @@ public class GrMethodStub extends StubBase<GrMethod> implements NamedStub<GrMeth
   @Nullable
   public String getTypeText() {
     return myTypeText;
+  }
+
+  public boolean isDeprecatedByDoc() {
+    return (myFlags & IS_DEPRECATED_BY_DOC_TAG) != 0;
+  }
+
+  public static byte buildFlags(GrMethod method) {
+    byte f = 0;
+
+    if (PsiImplUtil.isDeprecatedByDocTag(method)) {
+      f|= IS_DEPRECATED_BY_DOC_TAG;
+    }
+
+    return f;
+  }
+
+  public byte getFlags() {
+    return myFlags;
   }
 }
