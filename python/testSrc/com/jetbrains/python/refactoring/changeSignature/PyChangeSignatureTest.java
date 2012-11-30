@@ -129,15 +129,20 @@ public class PyChangeSignatureTest extends PyTestCase {
 
     final PyMethodDescriptor method = new PyMethodDescriptor(function);
     final TestPyChangeSignatureDialog dialog = new TestPyChangeSignatureDialog(function.getProject(), method);
-    if (newName != null) {
-      dialog.setNewName(newName);
-    }
-    if (parameters != null) {
-      dialog.setParameterInfos(parameters);
-    }
+    try {
+      if (newName != null) {
+        dialog.setNewName(newName);
+      }
+      if (parameters != null) {
+        dialog.setParameterInfos(parameters);
+      }
 
-    final String validationError = dialog.validateAndCommitData();
-    assertEquals(expected, validationError);
+      final String validationError = dialog.validateAndCommitData();
+      assertEquals(expected, validationError);
+    }
+    finally {
+      Disposer.dispose(dialog.getDisposable());
+    }
   }
 
   private void changeSignature(@Nullable String newName, @Nullable List<PyParameterInfo> parameters) {
@@ -147,22 +152,26 @@ public class PyChangeSignatureTest extends PyTestCase {
 
     final PyMethodDescriptor method = new PyMethodDescriptor(function);
     final TestPyChangeSignatureDialog dialog = new TestPyChangeSignatureDialog(function.getProject(), method);
-    if (newName != null) {
-      dialog.setNewName(newName);
+    try {
+      if (newName != null) {
+        dialog.setNewName(newName);
+      }
+      if (parameters != null) {
+        dialog.setParameterInfos(parameters);
+      }
+
+      final String validationError = dialog.validateAndCommitData();
+      assertTrue(validationError, validationError == null);
+
+      final BaseRefactoringProcessor baseRefactoringProcessor = dialog.createRefactoringProcessor();
+      assert baseRefactoringProcessor instanceof PyChangeSignatureProcessor;
+
+      final PyChangeSignatureProcessor processor = (PyChangeSignatureProcessor)baseRefactoringProcessor;
+      processor.run();
     }
-    if (parameters != null) {
-      dialog.setParameterInfos(parameters);
+    finally {
+      Disposer.dispose(dialog.getDisposable());
     }
-
-    final String validationError = dialog.validateAndCommitData();
-    assertTrue(validationError, validationError == null);
-
-    final BaseRefactoringProcessor baseRefactoringProcessor = dialog.createRefactoringProcessor();
-    assert baseRefactoringProcessor instanceof PyChangeSignatureProcessor;
-
-    final PyChangeSignatureProcessor processor = (PyChangeSignatureProcessor)baseRefactoringProcessor;
-    processor.run();
-    Disposer.dispose(dialog.getDisposable());
   }
 
 
