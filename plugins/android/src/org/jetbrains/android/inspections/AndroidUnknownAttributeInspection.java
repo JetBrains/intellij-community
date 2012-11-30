@@ -15,7 +15,7 @@
  */
 package org.jetbrains.android.inspections;
 
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
@@ -27,7 +27,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.xml.DomFileDescription;
-import com.intellij.xml.XmlAttributeDescriptor;
 import org.jetbrains.android.dom.AndroidAnyAttributeDescriptor;
 import org.jetbrains.android.dom.AndroidResourceDomFileDescription;
 import org.jetbrains.android.dom.AndroidXmlTagDescriptor;

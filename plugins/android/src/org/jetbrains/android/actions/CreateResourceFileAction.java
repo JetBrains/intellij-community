@@ -16,7 +16,7 @@
 
 package org.jetbrains.android.actions;
 
-import com.android.AndroidConstants;
+import com.android.SdkConstants;
 import com.intellij.CommonBundle;
 import com.intellij.ide.actions.CreateElementActionBase;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -142,7 +142,7 @@ public class CreateResourceFileAction extends CreateElementActionBase {
 
   private CreateTypedResourceFileAction getActionByDir(PsiDirectory directory) {
     String baseDirName = directory.getName();
-    final int index = baseDirName.indexOf(AndroidConstants.RES_QUALIFIER_SEP);
+    final int index = baseDirName.indexOf(SdkConstants.RES_QUALIFIER_SEP);
     if (index >= 0) {
       baseDirName = baseDirName.substring(0, index);
     }

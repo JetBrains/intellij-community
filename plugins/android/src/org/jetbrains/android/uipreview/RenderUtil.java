@@ -1,5 +1,6 @@
 package org.jetbrains.android.uipreview;
 
+import com.android.SdkConstants;
 import com.android.ide.common.rendering.api.RenderResources;
 import com.android.ide.common.rendering.api.RenderSession;
 import com.android.ide.common.rendering.api.Result;
@@ -14,7 +15,6 @@ import com.android.io.IAbstractFolder;
 import com.android.io.IAbstractResource;
 import com.android.io.StreamException;
 import com.android.sdklib.IAndroidTarget;
-import com.android.sdklib.SdkConstants;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -96,8 +96,16 @@ public class RenderUtil {
     if (factory == null) {
       throw new RenderingException(AndroidBundle.message("android.layout.preview.cannot.load.library.error"));
     }
+    final List<AndroidFacet> allLibraries = AndroidUtils.getAllAndroidDependencies(facet.getModule(), true);
+    final List<ProjectResources> libResources = new ArrayList<ProjectResources>();
+    final List<ProjectResources> emptyResList = Collections.emptyList();
 
-    final ProjectResources projectResources = new ProjectResources();
+    for (AndroidFacet libFacet : allLibraries) {
+      if (!libFacet.equals(facet)) {
+        libResources.add(loadProjectResources(libFacet, null, null, emptyResList));
+      }
+    }
+    final ProjectResources projectResources = loadProjectResources(facet, layoutXmlText, layoutXmlFile, libResources);
 
     final VirtualFile[] resourceDirs = facet.getLocalResourceManager().getAllResourceDirs();
     final IAbstractFolder[] resFolders = toAbstractFolders(resourceDirs);
@@ -164,12 +172,17 @@ public class RenderUtil {
       throw new RenderingException(AndroidBundle.message("android.layout.preview.cannot.load.library.error"));
     }
 
-    final ProjectResources projectResources = new ProjectResources();
+    final List<AndroidFacet> allLibraries = AndroidUtils.getAllAndroidDependencies(module, true);
+    final List<ProjectResources> libResources = new ArrayList<ProjectResources>();
+    final List<ProjectResources> emptyResList = Collections.emptyList();
 
-    final VirtualFile[] resourceDirs = facet.getLocalResourceManager().getAllResourceDirs();
-    final IAbstractFolder[] resFolders = toAbstractFolders(resourceDirs);
+    for (AndroidFacet libFacet : allLibraries) {
+      if (!libFacet.equals(facet)) {
+        libResources.add(loadProjectResources(libFacet, null, null, emptyResList));
+      }
+    }
+    final ProjectResources projectResources = loadProjectResources(facet, layoutXmlText, layoutXmlFile, libResources);
 
-    loadResources(projectResources, layoutXmlText, layoutXmlFile, resFolders);
     final int minSdkVersion = getMinSdkVersion(facet);
     String missingRClassMessage = null;
     boolean missingRClass = false;
@@ -603,6 +616,25 @@ public class RenderUtil {
         return aPackage == null ? null : aPackage + ".R";
       }
     });
+  }
+
+  @NotNull
+  private static ProjectResources loadProjectResources(@NotNull AndroidFacet facet,
+                                                       @Nullable String layoutXmlText,
+                                                       @Nullable VirtualFile layoutXmlFile,
+                                                       @NotNull List<ProjectResources> libResources)
+    throws IOException, RenderingException {
+
+    final VirtualFile resourceDir = facet.getLocalResourceManager().getResourceDir();
+
+    if (resourceDir != null) {
+      final IAbstractFolder resFolder = new BufferingFolderWrapper(new File(
+        FileUtil.toSystemDependentName(resourceDir.getPath())));
+      final ProjectResources projectResources = new ProjectResources(resFolder, libResources);
+      loadResources(projectResources, layoutXmlText, layoutXmlFile, resFolder);
+      return projectResources;
+    }
+    return new ProjectResources(new NullFolderWrapper(), libResources);
   }
 
   private static class MyFileWrapper implements IAbstractFile {

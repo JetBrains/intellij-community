@@ -23,9 +23,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.android.compiler.tools.AndroidApt;
 import org.jetbrains.android.dom.manifest.Application;
@@ -151,54 +153,68 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
     }
 
     final VirtualFile preprocessedManifestFile;
+    File manifestTmpDir = null;
     try {
-      preprocessedManifestFile = releasePackage
-                                 ? item.myManifestFile
-                                 : copyManifestAndSetDebuggableToTrue(item.myModule, item.myManifestFile);
-    }
-    catch (IOException e) {
-      LOG.info(e);
-      context.addMessage(CompilerMessageCategory.ERROR,
-                         '[' + item.myModule.getName() + "] Cannot preprocess AndroidManifest.xml for debug build",
-                         item.myManifestFile.getUrl(), -1, -1);
-      return;
-    }
-
-    final Map<VirtualFile, VirtualFile> presentableFilesMap = Collections.singletonMap(item.myManifestFile, preprocessedManifestFile);
-
-    try {
-      final String outputPath = releasePackage
-                                ? item.myOutputPath + RELEASE_SUFFIX
-                                : item.myOutputPath;
-
-      Map<CompilerMessageCategory, List<String>> messages = AndroidCompileUtil.toCompilerMessageCategoryKeys(
-        AndroidApt.packageResources(item.myAndroidTarget,
-                                    item.myPlatformToolsRevision,
-                                    preprocessedManifestFile.getPath(),
-                                    item.myResourceDirPaths,
-                                    item.myAssetsDirPaths,
-                                    outputPath, null, !releasePackage, 0, new FileFilter() {
-          @Override
-          public boolean accept(File file) {
-            final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
-            return vFile != null && !ProjectRootManager.getInstance(context.getProject()).getFileIndex().isIgnored(vFile);
-          }
-        }));
-
-      AndroidCompileUtil.addMessages(context, messages, presentableFilesMap, item.myModule);
-    }
-    catch (final IOException e) {
-      LOG.info(e);
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          if (context.getProject().isDisposed()) return;
-          context.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
+      try {
+        if (releasePackage) {
+          preprocessedManifestFile = item.myManifestFile;
         }
-      });
+        else {
+          final Pair<VirtualFile, File> pair = copyManifestAndSetDebuggableToTrue(item.myModule, item.myManifestFile);
+          preprocessedManifestFile = pair.getFirst();
+          manifestTmpDir = pair.getSecond();
+        }
+      }
+      catch (IOException e) {
+        LOG.info(e);
+        context.addMessage(CompilerMessageCategory.ERROR,
+                           '[' + item.myModule.getName() + "] Cannot preprocess AndroidManifest.xml for debug build",
+                           item.myManifestFile.getUrl(), -1, -1);
+        return;
+      }
+
+      final Map<VirtualFile, VirtualFile> presentableFilesMap = Collections.singletonMap(item.myManifestFile, preprocessedManifestFile);
+
+      try {
+        final String outputPath = releasePackage
+                                  ? item.myOutputPath + RELEASE_SUFFIX
+                                  : item.myOutputPath;
+
+        Map<CompilerMessageCategory, List<String>> messages = AndroidCompileUtil.toCompilerMessageCategoryKeys(
+          AndroidApt.packageResources(item.myAndroidTarget,
+                                      item.myPlatformToolsRevision,
+                                      preprocessedManifestFile.getPath(),
+                                      item.myResourceDirPaths,
+                                      item.myAssetsDirPaths,
+                                      outputPath, null, !releasePackage, 0, new FileFilter() {
+            @Override
+            public boolean accept(File file) {
+              final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+              return vFile != null && !ProjectRootManager.getInstance(context.getProject()).getFileIndex().isIgnored(vFile);
+            }
+          }));
+
+        AndroidCompileUtil.addMessages(context, messages, presentableFilesMap, item.myModule);
+      }
+      catch (final IOException e) {
+        LOG.info(e);
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            if (context.getProject().isDisposed()) return;
+            context.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
+          }
+        });
+      }
+    }
+    finally {
+      if (manifestTmpDir != null) {
+        FileUtil.delete(manifestTmpDir);
+      }
     }
   }
 
-  private static VirtualFile copyManifestAndSetDebuggableToTrue(@NotNull final Module module, @NotNull final VirtualFile manifestFile)
+  @NotNull
+  private static Pair<VirtualFile, File> copyManifestAndSetDebuggableToTrue(@NotNull final Module module, @NotNull final VirtualFile manifestFile)
     throws IOException {
 
     final File dir = FileUtil.createTempDirectory("android_manifest_copy", "tmp");
@@ -240,14 +256,19 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
             }
           });
 
+          if (manifestFileCopy[0] != null) {
+            EncodingManager.getInstance().setEncoding(manifestFileCopy[0], null);
+          }
+
           ApplicationManager.getApplication().saveAll();
         }
       }, ModalityState.defaultModalityState());
 
     if (manifestFileCopy[0] == null) {
+      FileUtil.delete(dir);
       throw new IOException("Cannot copy manifest file to " + vDir.getPath());
     }
-    return manifestFileCopy[0];
+    return Pair.create(manifestFileCopy[0], dir);
   }
 
   @NotNull

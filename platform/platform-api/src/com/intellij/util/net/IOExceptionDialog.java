@@ -125,9 +125,4 @@ public class IOExceptionDialog extends JDialog {
 
     return ! dlg.cancelPressed;
   }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static void main(String[] args) {
-    showErrorDialog("Test", "Something failed");
-  }
 }

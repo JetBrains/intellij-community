@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,34 @@
 
 package org.jetbrains.android.sdk;
 
-import com.android.sdklib.ISdkLog;
+import com.android.annotations.NonNull;
+import com.android.utils.ILogger;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene.Kudelevsky
  */
-public class MessageBuildingSdkLog implements ISdkLog {
+public class MessageBuildingSdkLog implements ILogger {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.sdk.MessageBuildingSdkLog");
 
   private final StringBuilder builder = new StringBuilder();
 
   public void warning(String warningFormat, Object... args) {
     if (warningFormat != null) {
-      LOG.warn(String.format(warningFormat, args));
+      LOG.info(String.format(warningFormat, args));
     }
+  }
+
+  @Override
+  public void info(@NonNull String msgFormat, Object... args) {
+    if (msgFormat != null) {
+      LOG.debug(String.format(msgFormat, args));
+    }
+  }
+
+  @Override
+  public void verbose(@NonNull String msgFormat, Object... args) {
   }
 
   public void error(Throwable t, String errorFormat, Object... args) {
@@ -42,12 +54,6 @@ public class MessageBuildingSdkLog implements ISdkLog {
       String message = String.format(errorFormat, args);
       LOG.info(message);
       builder.append(message).append('\n');
-    }
-  }
-
-  public void printf(String msgFormat, Object... args) {
-    if (msgFormat != null) {
-      LOG.info(String.format(msgFormat, args));
     }
   }
 

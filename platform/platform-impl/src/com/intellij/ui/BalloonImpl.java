@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.impl.ShadowBorderPainter;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -38,7 +37,6 @@ import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.Range;
@@ -1469,67 +1467,6 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     public Shape getShape() {
       return myPath;
     }
-  }
-
-  public static void main(String[] args) {
-    IconLoader.activate();
-
-    final JFrame frame = new JFrame();
-    frame.getContentPane().setLayout(new BorderLayout());
-    final JPanel content = new JPanel(new BorderLayout());
-    frame.getContentPane().add(content, BorderLayout.CENTER);
-
-
-    final JTree tree = new Tree();
-    content.add(tree);
-
-
-    final Ref<BalloonImpl> balloon = new Ref<BalloonImpl>();
-
-    tree.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mousePressed(final MouseEvent e) {
-        if (balloon.get() != null && balloon.get().isVisible()) {
-          balloon.get().dispose();
-        }
-        else {
-          //JLabel pane1 = new JLabel("Hello, world!");
-          //JLabel pane2 = new JLabel("Hello, again");
-          //JPanel pane = new JPanel(new BorderLayout());
-          //pane.add(pane1, BorderLayout.CENTER);
-          //pane.add(pane2, BorderLayout.SOUTH);
-
-          //pane.setBorder(new LineBorder(Color.blue));
-
-          balloon.set(new BalloonImpl(new JLabel("FUCK"), Color.black, MessageType.ERROR.getPopupBackground(), true, true, true, true, true, 0, true, null, false, 500, 25, 0, 0, false, "This is the title",
-                                      new Insets(2, 2, 2, 2), true, false, Layer.normal));
-          balloon.get().setShowPointer(true);
-
-          if (e.isShiftDown()) {
-            balloon.get().show(new RelativePoint(e), BalloonImpl.ABOVE);
-          }
-          else if (e.isAltDown()) {
-            balloon.get().show(new RelativePoint(e), BalloonImpl.BELOW);
-          }
-          else if (e.isMetaDown()) {
-            balloon.get().show(new RelativePoint(e), BalloonImpl.AT_LEFT);
-          }
-          else {
-            balloon.get().show(new RelativePoint(e), BalloonImpl.AT_RIGHT);
-          }
-        }
-      }
-    });
-
-    tree.addMouseMotionListener(new MouseMotionAdapter() {
-      @Override
-      public void mouseMoved(MouseEvent e) {
-        System.out.println(e.getPoint());
-      }
-    });
-
-    frame.setBounds(300, 300, 300, 300);
-    frame.show();
   }
 
   @Override

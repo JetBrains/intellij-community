@@ -338,10 +338,10 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
   @Override
   public boolean isPluginDescriptorAccepted(IdeaPluginDescriptor descriptor) {
-    if (myEnabledFilter != ENABLED_DISABLED) {
+    if (!myEnabledFilter.equals(ENABLED_DISABLED)) {
       final boolean enabled = isEnabled(descriptor.getPluginId());
-      if (enabled && myEnabledFilter == DISABLED) return false;
-      if (!enabled && myEnabledFilter == ENABLED) return false;
+      if (enabled && myEnabledFilter.equals(DISABLED)) return false;
+      if (!enabled && myEnabledFilter.equals(ENABLED)) return false;
     }
     return true;
   }

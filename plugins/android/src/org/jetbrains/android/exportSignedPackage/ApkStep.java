@@ -16,8 +16,8 @@
 
 package org.jetbrains.android.exportSignedPackage;
 
+import com.android.SdkConstants;
 import com.android.jarutils.SignedJarBuilder;
-import com.android.sdklib.SdkConstants;
 import com.intellij.CommonBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;

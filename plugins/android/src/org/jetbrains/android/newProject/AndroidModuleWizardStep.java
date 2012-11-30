@@ -393,7 +393,7 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
     final AndroidSdkData sdkData = androidPlatform.getSdkData();
     final SdkManager sdkManager = sdkData.getSdkManager();
     try {
-      final AvdManager avdManager = new AvdManager(sdkManager, new MessageBuildingSdkLog());
+      final AvdManager avdManager = AvdManager.getInstance(sdkManager, new MessageBuildingSdkLog());
       final AvdInfo[] validAvds = avdManager.getValidAvds();
 
       final String[] avdNames = new String[validAvds.length];

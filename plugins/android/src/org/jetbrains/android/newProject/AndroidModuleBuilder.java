@@ -16,9 +16,8 @@
 
 package org.jetbrains.android.newProject;
 
-import com.android.AndroidConstants;
+import com.android.SdkConstants;
 import com.android.sdklib.IAndroidTarget;
-import com.android.sdklib.SdkConstants;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.execution.RunManagerEx;
@@ -81,7 +80,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-import static com.android.sdklib.SdkConstants.FN_ANDROID_MANIFEST_XML;
 import static org.jetbrains.android.util.AndroidUtils.createChildDirectoryIfNotExist;
 
 /**
@@ -439,13 +437,13 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     }
 
   private void createManifestFileAndAntFiles(Project project, VirtualFile contentRoot) {
-    VirtualFile existingManifestFile = contentRoot.findChild(FN_ANDROID_MANIFEST_XML);
+    VirtualFile existingManifestFile = contentRoot.findChild(SdkConstants.FN_ANDROID_MANIFEST_XML);
     if (existingManifestFile != null) {
       return;
     }
     try {
-      AndroidFileTemplateProvider
-        .createFromTemplate(project, contentRoot, AndroidFileTemplateProvider.ANDROID_MANIFEST_TEMPLATE, FN_ANDROID_MANIFEST_XML);
+      AndroidFileTemplateProvider.createFromTemplate(project, contentRoot, AndroidFileTemplateProvider.ANDROID_MANIFEST_TEMPLATE,
+                                                     SdkConstants.FN_ANDROID_MANIFEST_XML);
 
       AndroidPlatform platform = AndroidPlatform.parse(mySdk);
 
@@ -569,12 +567,12 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
           createChildDirectoryIfNotExist(project, rootDir, SdkConstants.FD_ASSETS);
           createChildDirectoryIfNotExist(project, rootDir, SdkConstants.FD_NATIVE_LIBS);
           VirtualFile resDir = createChildDirectoryIfNotExist(project, rootDir, SdkConstants.FD_RES);
-          VirtualFile drawableDir = createChildDirectoryIfNotExist(project, resDir, AndroidConstants.FD_RES_DRAWABLE);
+          VirtualFile drawableDir = createChildDirectoryIfNotExist(project, resDir, SdkConstants.FD_RES_DRAWABLE);
           createFileFromResource(project, drawableDir, "icon.png", "/icons/androidLarge.png");
           if (isHelloAndroid()) {
-            VirtualFile valuesDir = createChildDirectoryIfNotExist(project, resDir, AndroidConstants.FD_RES_VALUES);
+            VirtualFile valuesDir = createChildDirectoryIfNotExist(project, resDir, SdkConstants.FD_RES_VALUES);
             createFileFromResource(project, valuesDir, "strings.xml", "res/values/strings.xml");
-            VirtualFile layoutDir = AndroidUtils.createChildDirectoryIfNotExist(project, resDir, AndroidConstants.FD_RES_LAYOUT);
+            VirtualFile layoutDir = AndroidUtils.createChildDirectoryIfNotExist(project, resDir, SdkConstants.FD_RES_LAYOUT);
             createFileFromResource(project, layoutDir, "main.xml", "res/layout/main.xml");
           }
         }

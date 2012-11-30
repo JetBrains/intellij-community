@@ -335,7 +335,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     }
 
     public Object getData(@NonNls String dataId) {
-      if (dataId == myKey) return StructureViewWrapperImpl.this;
+      if (dataId.equals(myKey)) return StructureViewWrapperImpl.this;
       return null;
     }
   }

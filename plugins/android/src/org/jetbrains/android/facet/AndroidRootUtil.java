@@ -16,7 +16,7 @@
 
 package org.jetbrains.android.facet;
 
-import com.android.sdklib.SdkConstants;
+import com.android.SdkConstants;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
@@ -372,8 +372,7 @@ public class AndroidRootUtil {
 
   @Nullable
   public static String getBuildconfigGenSourceRootPath(@NotNull AndroidFacet facet) {
-    // todo: return correct path for mavenized module when it'll be supported
-    return getDefaultGenSourceRoot(facet);
+    return getAptGenSourceRootPath(facet);
   }
 
   @Nullable

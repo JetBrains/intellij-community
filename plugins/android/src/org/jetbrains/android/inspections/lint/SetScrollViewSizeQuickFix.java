@@ -1,7 +1,6 @@
 package org.jetbrains.android.inspections.lint;
 
-import com.android.sdklib.SdkConstants;
-import com.android.tools.lint.detector.api.LintConstants;
+import com.android.SdkConstants;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -26,7 +25,7 @@ class SetScrollViewSizeQuickFix implements AndroidLintQuickFix {
       return;
     }
 
-    final boolean isHorizontal = LintConstants.HORIZONTAL_SCROLL_VIEW.equals(parentTag.getName());
+    final boolean isHorizontal = SdkConstants.HORIZONTAL_SCROLL_VIEW.equals(parentTag.getName());
     final String attributeName = isHorizontal
                                  ? AndroidLintUtil.ATTR_LAYOUT_WIDTH
                                  : AndroidLintUtil.ATTR_LAYOUT_HEIGHT;

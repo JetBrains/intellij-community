@@ -15,7 +15,7 @@
  */
 package com.intellij.android.designer.profile;
 
-import com.android.AndroidConstants;
+import com.android.SdkConstants;
 import com.android.ide.common.resources.configuration.LanguageQualifier;
 import com.android.ide.common.resources.configuration.RegionQualifier;
 import com.android.resources.NightMode;
@@ -26,7 +26,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -347,7 +346,7 @@ public class ProfileManager {
       for (VirtualFile resourceDir : resourceDirs) {
         for (VirtualFile resourceFile : resourceDir.getChildren()) {
           if (resourceFile.isDirectory()) {
-            String[] segments = resourceFile.getName().split(AndroidConstants.RES_QUALIFIER_SEP);
+            String[] segments = resourceFile.getName().split(SdkConstants.RES_QUALIFIER_SEP);
             List<String> languageQualifiers = new ArrayList<String>();
             List<String> regionQualifiers = new ArrayList<String>();
 
