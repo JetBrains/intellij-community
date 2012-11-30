@@ -70,7 +70,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
 
     myConfiguration = SvnConfiguration.getInstance(myProject);
     final String configPath = myProject.getBaseDir().getPath() + File.separator + "Subversion";
-    myConfiguration.setConfigurationDirectory(configPath);
+    myConfiguration.setConfigurationDirParameters(false, configPath);
 
     final File configFile = new File(configPath);
     myFilesToDelete.add(configFile);

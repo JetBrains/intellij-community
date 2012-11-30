@@ -24,10 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.annotate.AnnotationListener;
 import org.jdom.Attribute;
@@ -229,12 +226,31 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     return myIsUseDefaultConfiguration;
   }
 
-  public void setConfigurationDirectory(String path) {
+  public void setConfigurationDirParameters(final boolean newUseDefault, final String newConfigurationDirectory) {
+    final String defaultPath = IdeaSubversionConfigurationDirectory.getPath();
+    final String oldEffectivePath = isUseDefaultConfiguation() ? defaultPath : getConfigurationDirectory();
+    final String newEffectivePath = newUseDefault ? defaultPath : newConfigurationDirectory;
+
+    boolean directoryChanged = !Comparing.equal(getConfigurationDirectory(), newConfigurationDirectory);
+    if (directoryChanged) {
+      setConfigurationDirectory(newConfigurationDirectory);
+    }
+    boolean usageChanged = isUseDefaultConfiguation() != newUseDefault;
+    if (usageChanged) {
+      setUseDefaultConfiguation(newUseDefault);
+    }
+
+    if (directoryChanged || usageChanged) {
+      if (! Comparing.equal(oldEffectivePath, newEffectivePath)) {
+        clear();
+      }
+    }
+  }
+
+  private void setConfigurationDirectory(String path) {
     myConfigurationDirectory = path;
     File dir = path == null ? new File(IdeaSubversionConfigurationDirectory.getPath()) : new File(path);
     SVNConfigFile.createDefaultConfiguration(dir);
-
-    clear();
   }
 
   public void clear() {
@@ -246,9 +262,8 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     RUNTIME_AUTH_CACHE.clear();
   }
 
-  public void setUseDefaultConfiguation(boolean useDefault) {
+  private void setUseDefaultConfiguation(boolean useDefault) {
     myIsUseDefaultConfiguration = useDefault;
-    clear();
   }
 
   public ISVNOptions getOptions(Project project) {
