@@ -17,13 +17,11 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.plaf.beg.IdeaMenuUI;
@@ -205,8 +203,8 @@ public final class ActionMenu extends JMenu {
 
   public static void showDescriptionInStatusBar(boolean isIncluded, Component component, String description) {
     IdeFrame frame = component instanceof IdeFrame
-                         ? (IdeFrame)component
-                         : (IdeFrame)SwingUtilities.getAncestorOfClass(IdeFrame.class, component);
+                     ? (IdeFrame)component
+                     : (IdeFrame)SwingUtilities.getAncestorOfClass(IdeFrame.class, component);
     StatusBar statusBar;
     if (frame != null && (statusBar = frame.getStatusBar()) != null) {
       statusBar.setInfo(isIncluded ? description : null);
@@ -238,7 +236,6 @@ public final class ActionMenu extends JMenu {
             // hideNotify is not called on Macs
             ((ActionMenu)menuComponent).uninstallSynchronizer();
           }
-
         }
         else if (menuComponent instanceof ActionMenuItem) {
           ((ActionMenuItem)menuComponent).setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F24, 0));
@@ -260,6 +257,10 @@ public final class ActionMenu extends JMenu {
     }
     else {
       context = DataManager.getInstance().getDataContext();
+      if (PlatformDataKeys.CONTEXT_COMPONENT.getData(context) == null) {
+        context = DataManager.getInstance()
+          .getDataContext(IdeFocusManager.getGlobalInstance().getLastFocusedFor(UIUtil.getParentOfType(IdeFrame.class, this)));
+      }
       mayContextBeInvalid = true;
     }
     Utils.fillMenu(myGroup.getAction(), this, myMnemonicEnabled, myPresentationFactory, context, myPlace, true, mayContextBeInvalid);
