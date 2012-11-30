@@ -196,6 +196,25 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
       make(a);
       assertOutput(a, fs().file("1.txt").file("2.txt", "b"));
     }
+
+    //IDEA-95420
+    public void testDeleteClassAndRebuildArtifact() {
+      createFile("src/A.java", "class A{}");
+      VirtualFile file = createFile("src/B.java", "class B{}");
+      Module m = addModule("m", file.getParent());
+      Artifact dir = addArtifact(root().module(m));
+      Artifact jar = addArtifact("jar", archive("a.jar").module(m));
+      make(dir, jar);
+      assertOutput(m, fs().file("A.class").file("B.class"));
+      assertOutput(dir, fs().file("A.class").file("B.class"));
+      assertOutput(jar, fs().archive("a.jar").file("A.class").file("B.class"));
+
+      deleteFile(file);
+      recompile(dir, jar);
+      assertOutput(m, fs().file("A.class"));
+      assertOutput(dir, fs().file("A.class"));
+      assertOutput(jar, fs().archive("a.jar").file("A.class"));
+    }
   }
 
   @Override
