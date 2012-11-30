@@ -1,12 +1,14 @@
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.util.Processor;
 import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -32,8 +34,8 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
       helper = PsiSearchHelper.SERVICE.getInstance(project);
 
       if (filesToScan == null) {
-        filesToScan = new THashMap<PsiFile,PsiFile>(TObjectHashingStrategy.CANONICAL);
-        filesToScan2 = new THashMap<PsiFile,PsiFile>(TObjectHashingStrategy.CANONICAL);
+        filesToScan = new THashMap<PsiFile,PsiFile>();
+        filesToScan2 = new THashMap<PsiFile,PsiFile>();
       }
     }
   }
