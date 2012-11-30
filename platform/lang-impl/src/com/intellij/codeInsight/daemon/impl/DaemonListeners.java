@@ -73,6 +73,7 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,7 +90,7 @@ import java.util.Set;
  */
 public class DaemonListeners implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonListeners");
-  public static final Object IGNORE_MOUSE_TRACKING = "ignore_mouse_tracking";
+  @NonNls public static final Object IGNORE_MOUSE_TRACKING = "ignore_mouse_tracking";
 
   private final Project myProject;
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
@@ -168,7 +169,7 @@ public class DaemonListeners implements Disposable {
         if (!worthBothering(document, project)) {
           return; //no need to stop daemon if something happened in the console
         }
-        stopDaemon(true);
+        stopDaemon(true, "Document change");
         UpdateHighlightersUtil.updateHighlightersByTyping(myProject, e);
       }
     }, this);
@@ -182,7 +183,7 @@ public class DaemonListeners implements Disposable {
           return; //no need to stop daemon if something happened in the console
         }
 
-        stopDaemon(true);
+        stopDaemon(true, "Caret move");
         myDaemonCodeAnalyzer.hideLastIntentionHint();
       }
     }, this);
@@ -199,7 +200,7 @@ public class DaemonListeners implements Disposable {
           return;
         }
         myActiveEditors = activeEditors;
-        stopDaemon(true);  // do not stop daemon if idea loses/gains focus
+        stopDaemon(true, "Active editor change");  // do not stop daemon if idea loses/gains focus
         if (LaterInvocator.isInModalContext()) {
           // editor appear in modal context, re-enable the daemon
           myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
@@ -279,7 +280,7 @@ public class DaemonListeners implements Disposable {
     connection.subscribe(PowerSaveMode.TOPIC, new PowerSaveMode.Listener() {
       @Override
       public void powerSaveStateChanged() {
-        stopDaemon(true);
+        stopDaemon(true, "Power save mode change");
       }
     });
 
@@ -318,7 +319,7 @@ public class DaemonListeners implements Disposable {
           }
         }
         if (!propertyName.equals(PsiTreeChangeEvent.PROP_WRITABLE)) {
-          stopDaemon(true);
+          stopDaemon(true, "Virtual file property change");
         }
       }
     }, this);
@@ -345,7 +346,7 @@ public class DaemonListeners implements Disposable {
       public void beforeModalityStateChanged(boolean entering) {
         // before showing dialog we are in non-modal context yet, and before closing dialog we are still in modal context
         boolean inModalContext = LaterInvocator.isInModalContext();
-        stopDaemon(inModalContext);
+        stopDaemon(inModalContext, "Modality change");
         myDaemonCodeAnalyzer.setUpdateByTimerEnabled(inModalContext);
       }
     };
@@ -416,13 +417,13 @@ public class DaemonListeners implements Disposable {
     public void beforeWriteActionStart(Object action) {
       myDaemonWasRunning = myDaemonCodeAnalyzer.isRunning();
       if (!myDaemonWasRunning) return; // we'll restart in writeActionFinished()
-      stopDaemon(true);
+      stopDaemon(true, "Write action start");
     }
 
     @Override
     public void writeActionFinished(Object action) {
       if (myDaemonWasRunning) {
-        stopDaemon(true);
+        stopDaemon(true, "Write action finish");
       }
     }
   }
@@ -441,7 +442,7 @@ public class DaemonListeners implements Disposable {
       if (LOG.isDebugEnabled()) {
         LOG.debug("cancelling code highlighting by command:" + event.getCommand());
       }
-      stopDaemon(false);
+      stopDaemon(false, "Command start");
     }
 
     @Nullable
@@ -470,12 +471,12 @@ public class DaemonListeners implements Disposable {
         if (affectedDocument != null) {
           // prevent Esc key to leave the document in the not-highlighted state
           if (!myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNull(affectedDocument)) {
-            stopDaemon(true);
+            stopDaemon(true, "Command finish");
           }
         }
       }
       else if (!myDaemonCodeAnalyzer.isRunning()) {
-        stopDaemon(true);
+        stopDaemon(true, "Command finish");
       }
     }
   }
@@ -527,7 +528,7 @@ public class DaemonListeners implements Disposable {
       if (editor != null && !worthBothering(editor.getDocument(), editor.getProject())) {
         return;
       }
-      stopDaemon(true);
+      stopDaemon(true, "Editor typing");
     }
   }
 
@@ -584,9 +585,9 @@ public class DaemonListeners implements Disposable {
     }
   }
 
-  private void stopDaemon(boolean toRestartAlarm) {
+  private void stopDaemon(boolean toRestartAlarm, @NonNls String reason) {
     myDaemonEventPublisher.daemonCancelEventOccurred();
-    myDaemonCodeAnalyzer.stopProcess(toRestartAlarm);
+    myDaemonCodeAnalyzer.stopProcess(toRestartAlarm, reason);
   }
 
   private void stopDaemonAndRestartAllFiles() {
