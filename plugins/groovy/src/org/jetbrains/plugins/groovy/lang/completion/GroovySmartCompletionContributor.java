@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,7 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.CompleteReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 
 import java.util.Arrays;
 import java.util.List;
@@ -158,7 +159,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
         final Set<TypeConstraint> typeConstraints = getExpectedTypeInfos(parameters);
         for (TypeConstraint typeConstraint : typeConstraints) {
           final PsiType type = typeConstraint.getType();
-          final LookupItem item = PsiTypeLookupItem.createLookupItem(type, position);
+          final LookupItem item = PsiTypeLookupItem.createLookupItem(type, position, PsiTypeLookupItem.isDiamond(type), ChooseTypeExpression.IMPORT_FIXER);
           JavaCompletionUtil.setShowFQN(item);
           item.setInsertHandler(new InsertHandler<LookupElement>() {
             @Override
@@ -287,7 +288,8 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
     final Set<PsiType> types = GroovyExpectedTypesProvider.getDefaultExpectedTypes(placeToInferType);
     for (PsiType type : types) {
       if (type instanceof PsiArrayType) {
-        final LookupItem item = PsiTypeLookupItem.createLookupItem(GenericsUtil.eliminateWildcards(type), place);
+        final PsiType _type = GenericsUtil.eliminateWildcards(type);
+        final LookupItem item = PsiTypeLookupItem.createLookupItem(_type, place, PsiTypeLookupItem.isDiamond(_type), ChooseTypeExpression.IMPORT_FIXER);
         if (item.getObject() instanceof PsiClass) {
           JavaCompletionUtil.setShowFQN(item);
           item.setInsertHandler(new InsertHandler<LookupItem>() {
@@ -406,7 +408,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
       }
     }
 
-    final LookupItem item = PsiTypeLookupItem.createLookupItem(GenericsUtil.eliminateWildcards(type), place, isDiamond);
+    final LookupItem item = PsiTypeLookupItem.createLookupItem(GenericsUtil.eliminateWildcards(type), place, isDiamond, ChooseTypeExpression.IMPORT_FIXER);
     JavaCompletionUtil.setShowFQN(item);
     item.setInsertHandler(new AfterNewClassInsertHandler((PsiClassType)type, true));
     return item;
