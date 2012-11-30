@@ -86,7 +86,7 @@ public class ImportModuleAction extends AnAction {
     FileChooserDescriptor descriptor = new OpenProjectFileChooserDescriptor(true) {
       @Override
       public boolean isFileSelectable(VirtualFile file) {
-        return file.isDirectory() || isProjectFile(file);
+        return true;
       }
     };
     descriptor.setTitle("Select File or Directory to Import");
@@ -171,5 +171,10 @@ public class ImportModuleAction extends AnAction {
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     presentation.setEnabled(getEventProject(e) != null);
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    return true;
   }
 }
