@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
@@ -799,9 +800,10 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       public final void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
         final ToolWindowAnchor anchor = myInfo.getAnchor();
         final boolean isVertical = anchor == ToolWindowAnchor.TOP || anchor == ToolWindowAnchor.BOTTOM;
+        final JBColor outer = new JBColor(Color.white, Color.darkGray);
         if (isVertical) {
           if (anchor == ToolWindowAnchor.TOP) {
-            g.setColor(Color.white);
+            g.setColor(outer);
             UIUtil.drawLine(g, x, y, x + width - 1, y);
             g.setColor(Color.darkGray);
             UIUtil.drawLine(g, x, y + height - 1, x + width - 1, y + height - 1);
@@ -809,13 +811,13 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
           else {
             g.setColor(Color.darkGray);
             UIUtil.drawLine(g, x, y, x + width - 1, y);
-            g.setColor(Color.white);
+            g.setColor(outer);
             UIUtil.drawLine(g, x, y + height - 1, x + width - 1, y + height - 1);
           }
         }
         else {
           if (anchor == ToolWindowAnchor.LEFT) {
-            g.setColor(Color.white);
+            g.setColor(outer);
             UIUtil.drawLine(g, x, y, x, y + height - 1);
             g.setColor(Color.darkGray);
             UIUtil.drawLine(g, x + width - 1, y, x + width - 1, y + height - 1);
@@ -823,7 +825,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
           else {
             g.setColor(Color.darkGray);
             UIUtil.drawLine(g, x, y, x, y + height - 1);
-            g.setColor(Color.white);
+            g.setColor(outer);
             UIUtil.drawLine(g, x + width - 1, y, x + width - 1, y + height - 1);
           }
         }
