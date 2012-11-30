@@ -188,11 +188,15 @@ public class CommandMerger {
     Set<VirtualFile> affectedFiles = new HashSet<VirtualFile>();
     for (DocumentReference each : myAllAffectedDocuments) {
       VirtualFile file = each.getFile();
-      if (file == null || file instanceof LightVirtualFile) continue;
+      if (isVirtualDocumentChange(file)) continue;
       affectedFiles.add(file);
       if (affectedFiles.size() > 1) return true;
     }
     return false;
+  }
+
+  private static boolean isVirtualDocumentChange(VirtualFile file) {
+    return file == null || file instanceof LightVirtualFile;
   }
 
   public void undoOrRedo(FileEditor editor, boolean isUndo) {
@@ -235,7 +239,7 @@ public class CommandMerger {
   public boolean isPhysical() {
     if (myAllAffectedDocuments.isEmpty()) return false;
     for (DocumentReference each : myAllAffectedDocuments) {
-      if (each.getFile() == null) return false;
+      if (isVirtualDocumentChange(each.getFile())) return false;
     }
     return true;
   }
