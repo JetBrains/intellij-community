@@ -6408,7 +6408,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           int width = bounds.width;
           int height = bounds.height;
 
-          g.setColor(ButtonlessScrollBarUI.TRACK_BACKGROUND);
+          g.setColor(ButtonlessScrollBarUI.getTrackBackground());
           g.fillRect(0, 0, width, height);
 
           int shortner = 0;
@@ -6419,7 +6419,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           g.setColor(myGutterComponent.getBackground());
           g.fillRect(0, 0, width - shortner, height);
 
-          g.setColor(ButtonlessScrollBarUI.TRACK_BORDER);
+          g.setColor(ButtonlessScrollBarUI.getTrackBorderColor());
           g.drawLine(width - 1 - shortner, 0, width - 1 - shortner, height);
           g.drawLine(0, 0, width - 1, 0);
         }

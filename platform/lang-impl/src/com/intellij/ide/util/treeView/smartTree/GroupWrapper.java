@@ -17,6 +17,7 @@
 package com.intellij.ide.util.treeView.smartTree;
 
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.project.Project;
 
 import java.util.Collection;

@@ -139,10 +139,10 @@ public class JBScrollPane extends JScrollPane {
 
     @Override
     protected void paintComponent(Graphics g) {
-      g.setColor(ButtonlessScrollBarUI.TRACK_BACKGROUND);
+      g.setColor(ButtonlessScrollBarUI.getTrackBackground());
       g.fillRect(0, 0, getWidth(), getHeight());
 
-      g.setColor(ButtonlessScrollBarUI.TRACK_BORDER);
+      g.setColor(ButtonlessScrollBarUI.getTrackBorderColor());
 
       int x2 = getWidth() - 1;
       int y2 = getHeight() - 1;

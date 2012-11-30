@@ -30,11 +30,26 @@ import java.awt.event.*;
  * @author Konstantin Bulenkov
  */
 public class ButtonlessScrollBarUI extends BasicScrollBarUI {
-  public static final Color GRADIENT_LIGHT = new JBColor(Gray._251, Gray._122);
-  public static final Color GRADIENT_DARK = new JBColor(Gray._215, Gray._105);
-  public static final Color GRADIENT_THUMB_BORDER = new JBColor(Gray._201, Gray._98);
-  public static final Color TRACK_BACKGROUND = new JBColor(LightColors.SLIGHTLY_GRAY, UIUtil.getControlColor());
-  public static final Color TRACK_BORDER = new JBColor(Gray._230, UIUtil.getControlColor());
+
+  public static JBColor getGradientLightColor() {
+    return new JBColor(Gray._251, Gray._122);
+  }
+
+  public static JBColor getGradientDarkColor() {
+    return new JBColor(Gray._215, Gray._105);
+  }
+
+  private static JBColor getGradientThumbBorderColor() {
+    return new JBColor(Gray._201, Gray._98);
+  }
+
+  public static JBColor getTrackBackground() {
+    return new JBColor(LightColors.SLIGHTLY_GRAY, UIUtil.getControlColor());
+  }
+
+  public static JBColor getTrackBorderColor() {
+    return new JBColor(Gray._230, UIUtil.getControlColor());
+  }
 
   private static final BasicStroke BORDER_STROKE = new BasicStroke();
   public static final int ANIMATION_COLOR_SHIFT = 40;
@@ -182,10 +197,10 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
   @Override
   protected void paintTrack(Graphics g, JComponent c, Rectangle bounds) {
-    g.setColor(TRACK_BACKGROUND);
+    g.setColor(getTrackBackground());
     g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
 
-    g.setColor(TRACK_BORDER);
+    g.setColor(getTrackBorderColor());
     if (isVertical()) {
       g.drawLine(bounds.x, bounds.y, bounds.x, bounds.y + bounds.height);
     }
@@ -248,8 +263,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     }
 
     final GradientPaint paint;
-    final Color start = adjustColor(GRADIENT_LIGHT);
-    final Color end = adjustColor(GRADIENT_DARK);
+    final Color start = adjustColor(getGradientLightColor());
+    final Color end = adjustColor(getGradientDarkColor());
 
     if (vertical) {
       paint = new GradientPaint(1, 0, start, w + 1, 0, end);
@@ -263,7 +278,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
     final Stroke stroke = g.getStroke();
     g.setStroke(BORDER_STROKE);
-    g.setColor(GRADIENT_THUMB_BORDER);
+    g.setColor(getGradientThumbBorderColor());
     g.drawRoundRect(hGap, vGap, w, h, 3, 3);
     g.setStroke(stroke);
   }
