@@ -387,7 +387,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       @Override
       public void doRun() {
         flushDeferredText();
-        if (myEditor == null) return;
+        if (myEditor == null || myFlushAlarm.isDisposed()) return;
         myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getTextLength());
         myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
       }
@@ -401,7 +401,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private void addFlushRequest(MyFlushRunnable flushRunnable, final int millis) {
     synchronized (myCurrentRequests) {
-      if (myCurrentRequests.add(flushRunnable)) {
+      if (!myFlushAlarm.isDisposed() && myCurrentRequests.add(flushRunnable)) {
         myFlushAlarm.addRequest(flushRunnable, millis, getStateForUpdate());
       }
     }

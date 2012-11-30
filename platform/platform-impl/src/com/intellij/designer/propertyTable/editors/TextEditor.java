@@ -34,7 +34,7 @@ import java.awt.event.ActionListener;
  * @author Alexander Lobas
  */
 public class TextEditor extends PropertyEditor {
-  protected final JBTextField myTextField = new JBTextField();
+  public final JBTextField myTextField = new JBTextField(); // public modifier for accessing from descendants from different jars
 
   public TextEditor() {
     myTextField.addActionListener(new ActionListener() {

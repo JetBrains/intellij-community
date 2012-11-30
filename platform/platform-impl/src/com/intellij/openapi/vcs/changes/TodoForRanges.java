@@ -66,12 +66,12 @@ public abstract class TodoForRanges {
   }
 
   public List<Pair<TextRange, TextAttributes>> execute() {
-    final TodoItem[] todoItems = getTodoItems();
+    final TodoItemData[] todoItems = getTodoItems();
     
-    final StepIntersection<TodoItem, TextRange> stepIntersection =
-      new StepIntersection<TodoItem, TextRange>(new Convertor<TodoItem, TextRange>() {
+    final StepIntersection<TodoItemData, TextRange> stepIntersection =
+      new StepIntersection<TodoItemData, TextRange>(new Convertor<TodoItemData, TextRange>() {
         @Override
-        public TextRange convert(TodoItem o) {
+        public TextRange convert(TodoItemData o) {
           return o.getTextRange();
         }
       }, Convertor.SELF, myRanges, new Getter<String>() {
@@ -81,13 +81,13 @@ public abstract class TodoForRanges {
         }
       }
       );
-    final List<TodoItem> filtered = stepIntersection.process(Arrays.asList(todoItems));
+    final List<TodoItemData> filtered = stepIntersection.process(Arrays.asList(todoItems));
     final List<Pair<TextRange, TextAttributes>> result = new ArrayList<Pair<TextRange, TextAttributes>>(filtered.size());
     int offset = 0;
     for (TextRange range : myRanges) {
-      Iterator<TodoItem> iterator = filtered.iterator();
+      Iterator<TodoItemData> iterator = filtered.iterator();
       while (iterator.hasNext()) {
-        TodoItem item = iterator.next();
+        TodoItemData item = iterator.next();
         if (range.contains(item.getTextRange())) {
           TextRange todoRange = new TextRange(offset - range.getStartOffset() + item.getTextRange().getStartOffset(),
                                               offset - range.getStartOffset() + item.getTextRange().getEndOffset());
@@ -102,7 +102,7 @@ public abstract class TodoForRanges {
     return result;
   }
 
-  protected abstract TodoItem[] getTodoItems();
+  protected abstract TodoItemData[] getTodoItems();
 
   protected TodoItem[] getTodoForText(PsiTodoSearchHelper helper) {
     final PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {

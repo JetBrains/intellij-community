@@ -23,6 +23,7 @@ import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.util.Consumer;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -48,13 +49,25 @@ public class TodoForBaseRevision extends TodoForRanges {
   }
 
   @Override
-  protected TodoItem[] getTodoItems() {
-    final TodoItem[] items = (TodoItem[])myGetter.get();
+  protected TodoItemData[] getTodoItems() {
+    final TodoItemData[] items = (TodoItemData[])myGetter.get();
     if (items != null) return items;
     final TodoItem[] todoItems = getTodoForText(PsiTodoSearchHelper.SERVICE.getInstance(myProject));
     if (todoItems != null) {
-      mySaver.consume(todoItems);
+      final TodoItemData[] arr = convertTodo(todoItems);
+      mySaver.consume(arr);
+      return arr;
     }
-    return todoItems;
+    return null;
+  }
+
+  public static TodoItemData[] convertTodo(TodoItem[] todoItems) {
+    final List<TodoItemData> list = new ArrayList<TodoItemData>();
+    for (TodoItem item : todoItems) {
+      final TextRange range = item.getTextRange();
+      final TodoItemData data = new TodoItemData(range.getStartOffset(), range.getEndOffset(), item.getPattern());
+      list.add(data);
+    }
+    return list.toArray(new TodoItemData[list.size()]);
   }
 }

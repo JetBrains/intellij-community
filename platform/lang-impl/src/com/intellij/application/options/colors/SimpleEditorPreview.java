@@ -34,6 +34,7 @@ import com.intellij.openapi.options.colors.EditorHighlightingProvidingColorSetti
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -176,12 +177,18 @@ public class SimpleEditorPreview implements PreviewPanel{
   }
 
   private void updateHighlighters() {
-    myEditor.getMarkupModel().removeAllHighlighters();
-    HighlightData[] datum = myHighlightData;
-    final Map<TextAttributesKey, String> displayText = ColorSettingsUtil.keyToDisplayTextMap(myPage);
-    for (final HighlightData data : datum) {
-      data.addHighlToView(myEditor, myOptions.getSelectedScheme(), displayText);
-    }
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        if (myEditor.isDisposed()) return;
+        myEditor.getMarkupModel().removeAllHighlighters();
+        HighlightData[] datum = myHighlightData;
+        final Map<TextAttributesKey, String> displayText = ColorSettingsUtil.keyToDisplayTextMap(myPage);
+        for (final HighlightData data : datum) {
+          data.addHighlToView(myEditor, myOptions.getSelectedScheme(), displayText);
+        }
+      }
+    });
   }
 
   private static final int BLINK_COUNT = 3 * 2;

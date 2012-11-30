@@ -30,6 +30,8 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -340,7 +342,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
   @NotNull
   public String getTextFor(final IntentionActionWithTextCaching action) {
     final String text = action.getAction().getText();
-    if (text.startsWith("<html>")) {
+    if (LOG.isDebugEnabled() && text.startsWith("<html>")) {
       LOG.info("IntentionAction.getText() returned HTML: action=" + action + " text=" + text);
     }
     return text;

@@ -657,7 +657,10 @@ public class AndroidResourceUtil {
       @Override
       public boolean process(ResourceElement element) {
         if (value.length() > 0) {
-          element.setStringValue(value);
+          final String s = resourceType == ResourceType.STRING
+                           ? normalizeXmlResourceValue(value)
+                           : value;
+          element.setStringValue(s);
         }
         else if (resourceType == ResourceType.STYLEABLE ||
                  resourceType == ResourceType.STYLE) {

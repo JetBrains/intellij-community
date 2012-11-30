@@ -46,11 +46,12 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
   @Override
   protected final Object[] buildChildren(final HierarchyNodeDescriptor descriptor) {
     final PsiMember enclosingElement = ((CallHierarchyNodeDescriptor)descriptor).getEnclosingElement();
-    if (!(enclosingElement instanceof PsiMethod)) {
+    HierarchyNodeDescriptor nodeDescriptor = getBaseDescriptor();
+    if (!(enclosingElement instanceof PsiMethod) || nodeDescriptor == null) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
     final PsiMethod method = (PsiMethod)enclosingElement;
-    final PsiMethod baseMethod = (PsiMethod)((CallHierarchyNodeDescriptor)getBaseDescriptor()).getTargetElement();
+    final PsiMethod baseMethod = (PsiMethod)((CallHierarchyNodeDescriptor)nodeDescriptor).getTargetElement();
     final SearchScope searchScope = getSearchScope(myScopeType, baseMethod.getContainingClass());
 
     final PsiClass originalClass = method.getContainingClass();

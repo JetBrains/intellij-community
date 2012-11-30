@@ -42,6 +42,7 @@ import javax.swing.*;
  * @author max
  */
 public class ClassGroupingRule implements UsageGroupingRule {
+  @Override
   public UsageGroup groupUsage(@NotNull Usage usage) {
     if (!(usage instanceof PsiElementUsage)) {
       return null;
@@ -105,13 +106,14 @@ public class ClassGroupingRule implements UsageGroupingRule {
     private final String myQName;
     private final Icon myIcon;
 
-    public ClassUsageGroup(PsiClass aClass) {
+    public ClassUsageGroup(@NotNull PsiClass aClass) {
       myQName = aClass.getQualifiedName();
       myText = createText(aClass);
       myClassPointer = SmartPointerManager.getInstance(aClass.getProject()).createSmartPsiElementPointer(aClass);
-      myIcon = getPsiClass().getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
+      myIcon = aClass.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
     }
 
+    @Override
     public void update() {
     }
 
@@ -125,15 +127,18 @@ public class ClassGroupingRule implements UsageGroupingRule {
       return text;
     }
 
+    @Override
     public Icon getIcon(boolean isOpen) {
       return myIcon;
     }
 
+    @Override
     @NotNull
     public String getText(UsageView view) {
       return myText;
     }
 
+    @Override
     public FileStatus getFileStatus() {
       return isValid() ? NavigationItemFileStatus.get(getPsiClass()) : null;
     }
@@ -142,6 +147,7 @@ public class ClassGroupingRule implements UsageGroupingRule {
       return (PsiClass)myClassPointer.getElement();
     }
 
+    @Override
     public boolean isValid() {
       PsiClass psiClass = getPsiClass();
       return psiClass != null && psiClass.isValid();
@@ -155,24 +161,29 @@ public class ClassGroupingRule implements UsageGroupingRule {
       return object instanceof ClassUsageGroup && myQName.equals(((ClassUsageGroup)object).myQName);
     }
 
+    @Override
     public void navigate(boolean focus) throws UnsupportedOperationException {
       if (canNavigate()) {
           getPsiClass().navigate(focus);
       }
     }
 
+    @Override
     public boolean canNavigate() {
       return isValid();
     }
 
+    @Override
     public boolean canNavigateToSource() {
       return canNavigate();
     }
 
+    @Override
     public int compareTo(UsageGroup usageGroup) {
       return getText(null).compareToIgnoreCase(usageGroup.getText(null));
     }
 
+    @Override
     public void calcData(final DataKey key, final DataSink sink) {
       if (!isValid()) return;
       if (LangDataKeys.PSI_ELEMENT == key) {

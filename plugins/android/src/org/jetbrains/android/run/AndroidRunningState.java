@@ -66,6 +66,7 @@ import org.jetbrains.android.logcat.AndroidLogcatToolWindowFactory;
 import org.jetbrains.android.logcat.AndroidLogcatView;
 import org.jetbrains.android.logcat.AndroidLogcatUtil;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
+import org.jetbrains.android.sdk.AvdManagerLog;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidOutputReceiver;
 import org.jetbrains.android.util.AndroidUtils;
@@ -389,7 +390,17 @@ public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.
       final Project project = myFacet.getModule().getProject();
       AvdManager manager = null;
       try {
-        manager = myFacet.getAvdManager();
+        manager = myFacet.getAvdManager(new AvdManagerLog() {
+          @Override
+          public void error(Throwable t, String errorFormat, Object... args) {
+            super.error(t, errorFormat, args);
+
+            if (errorFormat != null) {
+              final String msg = String.format(errorFormat, args);
+              message(msg, STDERR);
+            }
+          }
+        });
       }
       catch (AvdsNotSupportedException e) {
         // can't be

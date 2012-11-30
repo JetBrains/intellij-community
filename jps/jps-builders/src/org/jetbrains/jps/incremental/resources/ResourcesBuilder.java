@@ -70,7 +70,17 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
 
     try {
       holder.processDirtyFiles(new FileProcessor<ResourceRootDescriptor, ResourcesTarget>() {
+        private final Map<ResourceRootDescriptor, Boolean> mySkippedRoots = new HashMap<ResourceRootDescriptor, Boolean>();
         public boolean apply(ResourcesTarget target, final File file, final ResourceRootDescriptor sourceRoot) throws IOException {
+          Boolean isSkipped = mySkippedRoots.get(sourceRoot);
+          if (isSkipped == null) {
+            final File outputDir = target.getOutputDir();
+            isSkipped = Boolean.valueOf(outputDir == null || FileUtil.filesEqual(outputDir, sourceRoot.getRootFile()));
+            mySkippedRoots.put(sourceRoot, isSkipped);
+          }
+          if (isSkipped.booleanValue()) {
+            return true;
+          }
           if (patterns.isResourceFile(file, sourceRoot.getRootFile())) {
             try {
               copyResource(context, sourceRoot, file, outputConsumer);

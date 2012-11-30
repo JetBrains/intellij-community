@@ -51,7 +51,7 @@ public class AddToIgnoreListAction extends BasicAction {
     presentation.setVisible(true);
     presentation.setEnabled(true);
 
-    presentation.setText(myActionName);
+    presentation.setText(myActionName, false);
     presentation.setDescription(SvnBundle.message((myUseCommonExtension) ? "action.Subversion.Ignore.MatchExtension.description" :
                                                   "action.Subversion.Ignore.ExactMatch.description", myActionName));
   }

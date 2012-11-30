@@ -15,10 +15,14 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve.noncode;
 
+import com.intellij.codeInsight.completion.originInfo.OriginInfoAwareElement;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
@@ -66,31 +70,24 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
       }
     }
 
+    final MixinProcessor delegate = new MixinProcessor(processor, qualifierType, place);
     for (PsiClass mixin : mixins) {
-      if (!mixin.processDeclarations(new DelegatingScopeProcessor(processor) {
-        @Override
-        public boolean execute(@NotNull PsiElement element, ResolveState state) {
-          if (element instanceof PsiMethod && GdkMethodUtil.isCategoryMethod((PsiMethod)element, qualifierType, place, state.get(PsiSubstitutor.KEY))) {
-            PsiMethod method = (PsiMethod)element;
-            String originInfo = getOriginInfo(method);
-            return super.execute(GrGdkMethodImpl.createGdkMethod(method, false, originInfo), state);
-          }
-          else {
-            return super.execute(element, state);
-          }
-        }
-      }, state, null, place)) {
+      if (!mixin.processDeclarations(delegate, state, null, place)) {
         return;
       }
     }
   }
 
-  private static String getOriginInfo(PsiMethod element) {
+  public static String getOriginInfoForCategory(PsiMethod element) {
     PsiClass aClass = element.getContainingClass();
     if (aClass != null && aClass.getName() != null) {
       return "mixed in from " + aClass.getName();
     }
     return "mixed in";
+  }
+
+  public static String getOriginInfoForMixin(@NotNull PsiType subjectType) {
+    return "mixed in " + subjectType.getPresentableText();
   }
 
   private static List<PsiAnnotation> getAllMixins(PsiModifierList modifierList) {
@@ -112,6 +109,55 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
       final PsiElement resolved = ((GrReferenceExpression)value).resolve();
       if (resolved instanceof PsiClass) {
         mixins.add((PsiClass)resolved);
+      }
+    }
+  }
+
+  private static class MixinedMethod extends LightMethod implements OriginInfoAwareElement, PsiMirrorElement {
+    private final String myOriginInfo;
+    private final PsiMethod myPrototype;
+
+    public MixinedMethod(@NotNull PsiMethod method, String originInfo) {
+      super(method.getManager(), method, ObjectUtils.assertNotNull(method.getContainingClass()));
+      myOriginInfo = originInfo;
+      myPrototype = method;
+    }
+
+    @Nullable
+    @Override
+    public String getOriginInfo() {
+      return myOriginInfo;
+    }
+
+    @NotNull
+    @Override
+    public PsiElement getPrototype() {
+      return myPrototype;
+    }
+  }
+
+  public static class MixinProcessor extends DelegatingScopeProcessor {
+    private final PsiType myType;
+    private final PsiElement myPlace;
+
+    public MixinProcessor(PsiScopeProcessor delegate, @NotNull PsiType qualifierType, @Nullable PsiElement place) {
+      super(delegate);
+      myType = qualifierType;
+      myPlace = place;
+    }
+
+    @Override
+    public boolean execute(@NotNull PsiElement element, ResolveState state) {
+      if (element instanceof PsiMethod && GdkMethodUtil.isCategoryMethod((PsiMethod)element, myType, myPlace, state.get(PsiSubstitutor.KEY))) {
+        PsiMethod method = (PsiMethod)element;
+        String originInfo = getOriginInfoForCategory(method);
+        return super.execute(GrGdkMethodImpl.createGdkMethod(method, false, originInfo), state);
+      }
+      else if (element instanceof PsiMethod) {
+        return super.execute(new MixinedMethod((PsiMethod)element, getOriginInfoForMixin(myType)), state);
+      }
+      else {
+        return super.execute(element, state);
       }
     }
   }

@@ -15,15 +15,16 @@
  */
 package org.jetbrains.android.facet;
 
+import com.android.SdkConstants;
 import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.IDevice;
 import com.android.prefs.AndroidLocation;
 import com.android.sdklib.AndroidVersion;
 import com.android.sdklib.IAndroidTarget;
-import com.android.SdkConstants;
 import com.android.sdklib.SdkManager;
 import com.android.sdklib.internal.avd.AvdInfo;
 import com.android.sdklib.internal.avd.AvdManager;
+import com.android.utils.ILogger;
 import com.intellij.CommonBundle;
 import com.intellij.ProjectTopics;
 import com.intellij.execution.ExecutionException;
@@ -373,7 +374,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
   @Nullable
   public AvdManager getAvdManagerSilently() {
     try {
-      return getAvdManager();
+      return getAvdManager(new AvdManagerLog());
     }
     catch (AvdsNotSupportedException ignored) {
     }
@@ -383,14 +384,14 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
   }
 
   @NotNull
-  public AvdManager getAvdManager() throws AvdsNotSupportedException, AndroidLocation.AndroidLocationException {
+  public AvdManager getAvdManager(ILogger log) throws AvdsNotSupportedException, AndroidLocation.AndroidLocationException {
     if (myAvdManager == null) {
       AndroidPlatform platform = getConfiguration().getAndroidPlatform();
       AndroidSdkData sdkData = platform != null ? platform.getSdkData() : null;
-      Project project = getModule().getProject();
+
       if (sdkData != null) {
         SdkManager sdkManager = sdkData.getSdkManager();
-        myAvdManager = AvdManager.getInstance(sdkManager, AndroidSdkUtils.getSdkLog(project));
+        myAvdManager = AvdManager.getInstance(sdkManager, log);
       }
       else {
         throw new AvdsNotSupportedException();

@@ -267,7 +267,12 @@ public class AndroidValueResourcesTest extends AndroidDomTest {
 
   public void testJavaCompletion1() throws Throwable {
     copyFileToProject("value_resources.xml", "res/values/value_resources.xml");
-    doTestJavaCompletion("p1.p2");
+    final String fileName = getTestName(false) + ".java";
+    final VirtualFile file = copyFileToProject(fileName, "src/" + "p1.p2".replace('/', '.') + '/' + fileName);
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.complete(CompletionType.BASIC);
+    myFixture.type('\n');
+    myFixture.checkResultByFile(testFolder + '/' + getTestName(false) + "_after.java");
   }
 
   public void testJavaCompletion2() throws Throwable {

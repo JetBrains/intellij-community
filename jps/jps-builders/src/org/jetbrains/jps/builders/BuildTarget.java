@@ -29,7 +29,7 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
     return myTargetType;
   }
 
-  public abstract Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry);
+  public abstract Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry, TargetOutputIndex outputIndex);
 
   public void writeConfiguration(PrintWriter out, BuildDataPaths dataPaths, BuildRootIndex buildRootIndex) {
   }
