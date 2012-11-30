@@ -284,7 +284,7 @@ public class AboutDialog extends JDialog {
       public void render(int indentX, int indentY, List<AboutBoxLine> lines) throws OverflowException {
         x = indentX;
         y = indentY;
-        g2.setColor(Color.black);
+        g2.setColor(Color.white); //todo[kb] move to ApplicationInfo.xml
         for (int i = 0; i < lines.size(); i++) {
           AboutBoxLine line = lines.get(i);
           final String s = line.getText();
