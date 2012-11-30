@@ -120,7 +120,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   @NotNull
   public PyStatementList getStatementList() {
     final PyStatementList statementList = childToPsi(PyElementTypes.STATEMENT_LIST);
-    assert statementList != null: "Statement list missing for class " + getText();
+    assert statementList != null : "Statement list missing for class " + getText();
     return statementList;
   }
 
@@ -146,7 +146,8 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   public PsiElement[] getSuperClassElements() {
     final PyExpression[] superExpressions = getSuperClassExpressions();
     List<PsiElement> superClasses = new ArrayList<PsiElement>();
-    for(PyExpression expr : superExpressions) {
+    for (PyExpression expr : superExpressions) {
+      expr = unfoldClass(expr);
       if (expr instanceof PyReferenceExpression) {
         final PsiPolyVariantReference ref = ((PyReferenceExpression)expr).getReference(PyResolveContext.noProperties());
         if (ref != null) {
@@ -158,6 +159,17 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       }
     }
     return PsiUtilCore.toPsiElementArray(superClasses);
+  }
+
+  public static PyExpression unfoldClass(PyExpression expression) {
+    if (expression instanceof PyCallExpression) {
+      PyCallExpression call = (PyCallExpression)expression;
+      //noinspection ConstantConditions
+      if (call.getCallee() != null && "with_metaclass".equals(call.getCallee().getName()) && call.getArguments().length > 1) {
+        expression = call.getArguments()[1];
+      }
+    }
+    return expression;
   }
 
   public Iterable<PyClassRef> iterateAncestors() {
@@ -201,15 +213,15 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     String name = getName();
     final PyClassStub stub = getStub();
     PsiElement ancestor = stub != null ? stub.getParentStub().getPsi() : getParent();
-    while(!(ancestor instanceof PsiFile)) {
+    while (!(ancestor instanceof PsiFile)) {
       if (ancestor == null) return name;    // can this happen?
       if (ancestor instanceof PyClass) {
         name = ((PyClass)ancestor).getName() + "." + name;
       }
-      ancestor = stub != null ? ((StubBasedPsiElement) ancestor).getStub().getParentStub().getPsi() : ancestor.getParent();
+      ancestor = stub != null ? ((StubBasedPsiElement)ancestor).getStub().getParentStub().getPsi() : ancestor.getParent();
     }
 
-    PsiFile psiFile = ((PsiFile) ancestor).getOriginalFile();
+    PsiFile psiFile = ((PsiFile)ancestor).getOriginalFile();
     final PyFile builtins = PyBuiltinCache.getInstance(this).getBuiltinsFile();
     if (!psiFile.equals(builtins)) {
       VirtualFile vFile = psiFile.getVirtualFile();
@@ -227,8 +239,8 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     if (slots != null) {
       return slots;
     }
-    for(PyClass cls: iterateAncestorClasses()) {
-      slots = ((PyClassImpl) cls).getOwnSlots();
+    for (PyClass cls : iterateAncestorClasses()) {
+      slots = ((PyClassImpl)cls).getOwnSlots();
       if (slots != null) {
         return slots;
       }
@@ -292,7 +304,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   private static PyClassRef classRefFromQName(NameDefiner parent, PyQualifiedName qualifiedName) {
     if (qualifiedName == null) {
-      return new PyClassRef((String) null);
+      return new PyClassRef((String)null);
     }
     NameDefiner currentParent = parent;
     for (String component : qualifiedName.getComponents()) {
@@ -341,9 +353,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     PsiElement[] superClassElements = getSuperClassElements();
     if (superClassElements.length > 0) {
       List<PyClass> result = new ArrayList<PyClass>();
-      for(PsiElement element: superClassElements) {
+      for (PsiElement element : superClassElements) {
         if (element instanceof PyClass) {
-          result.add((PyClass) element);
+          result.add((PyClass)element);
         }
       }
       return result.toArray(new PyClass[result.size()]);
@@ -352,10 +364,12 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
 
-  public @NotNull List<PyClass> getMRO() {
+  public
+  @NotNull
+  List<PyClass> getMRO() {
     // see http://www.python.org/download/releases/2.3/mro/ for a muddy explanation.
     // see http://hackage.haskell.org/packages/archive/MetaObject/latest/doc/html/src/MO-Util-C3.html#linearize for code to port from.
-    return  mroLinearize(this, Collections.<PyClass>emptyList());
+    return mroLinearize(this, Collections.<PyClass>emptyList());
   }
 
   private static List<PyClass> mroMerge(List<List<PyClass>> sequences) {
@@ -378,8 +392,12 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
             break;
           }
         }
-        if (! head_in_tails) break;
-        else head = null; // as a signal
+        if (!head_in_tails) {
+          break;
+        }
+        else {
+          head = null; // as a signal
+        }
       }
       assert head != null : "Inconsistent hierarchy!"; // TODO: better diagnostics?
       // our head is clean;
@@ -392,14 +410,14 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   private static List<PyClass> mroLinearize(PyClass cls, List<PyClass> seen) {
-    assert (seen.indexOf(cls) < 0 ) : "Circular import structure on " + PyUtil.nvl(cls);
+    assert (seen.indexOf(cls) < 0) : "Circular import structure on " + PyUtil.nvl(cls);
     PyClass[] bases = cls.getSuperClasses();
     List<List<PyClass>> lins = new ArrayList<List<PyClass>>(bases.length * 2);
     ArrayList<PyClass> new_seen = new ArrayList<PyClass>(seen.size() + 1);
     new_seen.add(cls);
     for (PyClass base : bases) {
       List<PyClass> lin = mroLinearize(base, new_seen);
-      if (! lin.isEmpty()) lins.add(lin);
+      if (!lin.isEmpty()) lins.add(lin);
     }
     for (PyClass base : bases) {
       lins.add(new SmartList<PyClass>(base));
@@ -430,7 +448,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     for (PsiElement element : statementList.getChildren()) {
       if (elementTypes.contains(element.getNode().getElementType())) {
         //noinspection unchecked
-        result.add((T) element);
+        result.add((T)element);
       }
     }
     return result.toArray(factory.create(result.size()));
@@ -480,8 +498,12 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   @Nullable
   public PyFunction findInitOrNew(boolean inherited) {
     NameFinder<PyFunction> proc;
-    if (isNewStyleClass()) proc = new NameFinder<PyFunction>(PyNames.INIT, PyNames.NEW);
-    else proc = new NameFinder<PyFunction>(PyNames.INIT);
+    if (isNewStyleClass()) {
+      proc = new NameFinder<PyFunction>(PyNames.INIT, PyNames.NEW);
+    }
+    else {
+      proc = new NameFinder<PyFunction>(PyNames.INIT);
+    }
     visitMethods(proc, inherited, true);
     return proc.getResult();
   }
@@ -490,9 +512,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   private final static Maybe<Callable> NONE = new Maybe<Callable>(null); // denotes an explicit None
 
   /**
-   * @param name name of the property
+   * @param name            name of the property
    * @param property_filter returns true if the property is acceptable
-   * @param advanced is @foo.setter syntax allowed
+   * @param advanced        is @foo.setter syntax allowed
    * @return the first property that both filters accepted.
    */
   @Nullable
@@ -534,7 +556,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
         bucket.add(method);
       }
     }
-    for (Map.Entry<String, List<PyFunction>> entry: grouped.entrySet()) {
+    for (Map.Entry<String, List<PyFunction>> entry : grouped.entrySet()) {
       Maybe<Callable> getter = NONE;
       Maybe<Callable> setter = NONE;
       Maybe<Callable> deleter = NONE;
@@ -699,7 +721,12 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   private static class PropertyImpl extends PropertyBunch<Callable> implements Property {
     private final String myName;
 
-    private PropertyImpl(String name, Maybe<Callable> getter, Maybe<Callable> setter, Maybe<Callable> deleter, String doc, PyTargetExpression site) {
+    private PropertyImpl(String name,
+                         Maybe<Callable> getter,
+                         Maybe<Callable> setter,
+                         Maybe<Callable> deleter,
+                         String doc,
+                         PyTargetExpression site) {
       myName = name;
       myDeleter = deleter;
       myGetter = getter;
@@ -720,9 +747,12 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     @Override
     public Maybe<Callable> getByDirection(@NotNull AccessDirection direction) {
       switch (direction) {
-        case READ:    return myGetter;
-        case WRITE:   return mySetter;
-        case DELETE:  return myDeleter;
+        case READ:
+          return myGetter;
+        case WRITE:
+          return mySetter;
+        case DELETE:
+          return myDeleter;
       }
       throw new IllegalArgumentException("Unknown direction " + PyUtil.nvl(direction));
     }
@@ -756,7 +786,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       PyExpression expr = target.findAssignedValue();
       final PropertyImpl prop = new PropertyImpl(target.getName(), null, null, null, null, target);
       final boolean success = fillFromCall(expr, prop);
-      return success? prop : null;
+      return success ? prop : null;
     }
   }
 
@@ -787,7 +817,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     if (!ContainerUtil.process(nestedClasses, processor)) return false;
     if (inherited) {
       for (PyClass ancestor : iterateAncestorClasses()) {
-        if (!((PyClassImpl) ancestor).visitNestedClasses(processor, false)) {
+        if (!((PyClassImpl)ancestor).visitNestedClasses(processor, false)) {
           return false;
         }
       }
@@ -822,7 +852,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
         final PyExpression[] targets = assignmentStatement.getTargets();
         for (PyExpression target : targets) {
           if (target instanceof PyTargetExpression) {
-            result.add((PyTargetExpression) target);
+            result.add((PyTargetExpression)target);
           }
         }
       }
@@ -854,7 +884,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       }
     }
     if (inherited) {
-      for(PyClass ancestor: iterateAncestorClasses()) {
+      for (PyClass ancestor : iterateAncestorClasses()) {
         final PyTargetExpression attribute = ancestor.findInstanceAttribute(name, false);
         if (attribute != null) {
           return attribute;
@@ -992,7 +1022,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
         }
       }
     }
-    for(PyTargetExpression expr: getInstanceAttributes()) {
+    for (PyTargetExpression expr : getInstanceAttributes()) {
       if (declarationsInMethod.containsKey(expr.getName())) {
         continue;
       }
@@ -1029,7 +1059,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   public PyElement getElementNamed(final String the_name) {
-    return the_name.equals(getName())? this: null;
+    return the_name.equals(getName()) ? this : null;
   }
 
   public boolean mustResolveOutside() {
@@ -1191,6 +1221,4 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       throw new UnsupportedOperationException();
     }
   }
-
-
 }

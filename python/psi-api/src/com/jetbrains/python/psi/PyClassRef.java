@@ -14,12 +14,12 @@ public class PyClassRef {
   @Nullable
   private final String myQName;
 
-  public PyClassRef(PsiElement element) {
+  public PyClassRef(@Nullable PsiElement element) {
     myElement = element;
     myQName = null;
   }
 
-  public PyClassRef(String qName) {
+  public PyClassRef(@Nullable String qName) {
     myElement = null;
     myQName = qName;
   }
