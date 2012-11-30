@@ -1377,11 +1377,11 @@ public class HighlightUtil extends HighlightUtilBase {
     String symbolName = HighlightMessageUtil.getSymbolName(refElement, result.getSubstitutor());
 
     if (refElement.hasModifierProperty(PsiModifier.PRIVATE)) {
-      String containerName = HighlightMessageUtil.getSymbolName(refElement.getParent(), result.getSubstitutor());
+      String containerName = getContainerName(refElement, result.getSubstitutor());
       return JavaErrorMessages.message("private.symbol", symbolName, containerName);
     }
     else if (refElement.hasModifierProperty(PsiModifier.PROTECTED)) {
-      String containerName = HighlightMessageUtil.getSymbolName(refElement.getParent(), result.getSubstitutor());
+      String containerName = getContainerName(refElement, result.getSubstitutor());
       return JavaErrorMessages.message("protected.symbol", symbolName, containerName);
     }
     else {
@@ -1391,15 +1391,30 @@ public class HighlightUtil extends HighlightUtilBase {
         symbolName = HighlightMessageUtil.getSymbolName(refElement, result.getSubstitutor());
       }
       if (refElement.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) || packageLocalClass != null) {
-        String containerName = HighlightMessageUtil.getSymbolName(refElement.getParent(), result.getSubstitutor());
+        String containerName = getContainerName(refElement, result.getSubstitutor());
         return JavaErrorMessages.message("package.local.symbol", symbolName, containerName);
       }
       else {
-        PsiElement symbol = refElement instanceof PsiTypeParameter ? refElement.getParent().getParent() : refElement.getParent();
-        String containerName = symbol == null ? "?" : HighlightMessageUtil.getSymbolName(symbol, result.getSubstitutor());
+        String containerName = getContainerName(refElement, result.getSubstitutor());
         return JavaErrorMessages.message("visibility.access.problem", symbolName, containerName);
       }
     }
+  }
+
+  private static PsiElement getContainer(PsiModifierListOwner refElement) {
+    if (refElement instanceof PsiTypeParameter) return refElement.getParent().getParent();
+    if (refElement instanceof PsiClass) {
+      final PsiClass containingClass = ((PsiClass)refElement).getContainingClass();
+      if (containingClass != null) return containingClass;
+      return refElement.getContainingFile();
+    }
+    if (refElement instanceof PsiMember) return ((PsiMember)refElement).getContainingClass();
+    return refElement.getParent();
+  }
+
+  private static String getContainerName(PsiModifierListOwner refElement, final PsiSubstitutor substitutor) {
+    final PsiElement container = getContainer(refElement);
+    return container == null ? "?" : HighlightMessageUtil.getSymbolName(container, substitutor);
   }
 
   @Nullable
