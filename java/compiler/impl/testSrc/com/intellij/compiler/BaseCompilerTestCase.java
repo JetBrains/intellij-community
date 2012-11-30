@@ -149,6 +149,11 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     return make(scope, CompilerFilter.ALL);
   }
 
+  protected CompilationLog recompile(final Artifact... artifacts) {
+    final CompileScope scope = ArtifactCompileScope.createArtifactsScope(myProject, Arrays.asList(artifacts));
+    return compile(scope, CompilerFilter.ALL, true);
+  }
+
   protected CompilationLog make(Module... modules) {
     return make(getCompilerManager().createModulesCompileScope(modules, false), CompilerFilter.ALL);
   }
