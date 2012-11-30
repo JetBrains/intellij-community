@@ -37,7 +37,7 @@ public abstract class RestInspection extends LocalInspectionTool implements Cust
   }
 
   @Override
-  public boolean isSuppressedFor(PsiElement element) {
+  public boolean isSuppressedFor(@NotNull PsiElement element) {
     return false;
   }
 }

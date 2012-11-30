@@ -64,7 +64,7 @@ public abstract class PyInspection extends LocalInspectionTool implements Custom
   }
 
   @Override
-  public boolean isSuppressedFor(PsiElement element) {
+  public boolean isSuppressedFor(@NotNull PsiElement element) {
     final PsiFile file = element.getContainingFile();
     boolean isAccepted = true;
     if (file instanceof PyFileImpl) {
