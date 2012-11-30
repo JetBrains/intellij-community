@@ -21,11 +21,12 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.xpath.psi.impl.ResolveUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 public abstract class ElementProcessor<T extends PsiElement> implements ResolveUtil.XmlProcessor {
     private int myInclude;
@@ -33,8 +34,7 @@ public abstract class ElementProcessor<T extends PsiElement> implements ResolveU
 
     protected final T myRoot;
 
-    @SuppressWarnings({"unchecked"})
-    private final THashSet<PsiElement> myHistory = new THashSet<PsiElement>(TObjectHashingStrategy.IDENTITY);
+  private final Set<PsiElement> myHistory = ContainerUtil.<PsiElement>newIdentityTroveSet();
 
     public ElementProcessor(T root) {
         myRoot = root;

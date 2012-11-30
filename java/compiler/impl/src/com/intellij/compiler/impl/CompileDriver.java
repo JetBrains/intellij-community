@@ -89,7 +89,6 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.OrderedSet;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.TIntHashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1698,7 +1697,7 @@ public class CompileDriver {
   }
 
   private Set<File> getAllOutputDirectories(CompileContext context) {
-    final Set<File> outputDirs = new OrderedSet<File>((TObjectHashingStrategy<File>)TObjectHashingStrategy.CANONICAL);
+    final Set<File> outputDirs = new OrderedSet<File>();
     final Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (final String path : CompilerPathsEx.getOutputPaths(modules)) {
       outputDirs.add(new File(path));

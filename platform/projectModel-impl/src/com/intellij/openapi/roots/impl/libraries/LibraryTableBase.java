@@ -28,8 +28,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -160,9 +158,9 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
   private void commit(LibraryModel model) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     //todo[nik] remove LibraryImpl#equals method instead of using identity sets
-    Set<Library> addedLibraries = new THashSet<Library>(model.myLibraries, TObjectHashingStrategy.IDENTITY);
+    Set<Library> addedLibraries = ContainerUtil.newIdentityTroveSet(model.myLibraries);
     addedLibraries.removeAll(myModel.myLibraries);
-    Set<Library> removedLibraries = new THashSet<Library>(myModel.myLibraries, TObjectHashingStrategy.IDENTITY);
+    Set<Library> removedLibraries = ContainerUtil.newIdentityTroveSet(myModel.myLibraries);
     removedLibraries.removeAll(model.myLibraries);
 
     for (Library library : removedLibraries) {

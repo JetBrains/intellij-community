@@ -30,6 +30,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -40,18 +41,18 @@ public class DefaultXmlSuppressionProvider extends XmlSuppressionProvider {
   public static final String SUPPRESS_MARK = "suppress";
 
   @Override
-  public boolean isProviderAvailable(PsiFile file) {
+  public boolean isProviderAvailable(@NotNull PsiFile file) {
     return true;
   }
 
   @Override
-  public boolean isSuppressedFor(PsiElement element, String inspectionId) {
+  public boolean isSuppressedFor(@NotNull PsiElement element, @NotNull String inspectionId) {
     final XmlTag tag = element instanceof XmlFile ? ((XmlFile)element).getRootTag() : PsiTreeUtil.getContextOfType(element, XmlTag.class, false);
     return tag != null && findSuppression(tag, inspectionId, element) != null;
   }
 
   @Override
-  public void suppressForFile(PsiElement element, String inspectionId) {
+  public void suppressForFile(@NotNull PsiElement element, @NotNull String inspectionId) {
     final PsiFile file = element.getContainingFile();
     final XmlDocument document = ((XmlFile)file).getDocument();
     final PsiElement anchor = document != null ? document.getRootTag() : file.findElementAt(0);
@@ -60,7 +61,7 @@ public class DefaultXmlSuppressionProvider extends XmlSuppressionProvider {
   }
 
   @Override
-  public void suppressForTag(PsiElement element, String inspectionId) {
+  public void suppressForTag(@NotNull PsiElement element, @NotNull String inspectionId) {
     final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
     assert tag != null;
     suppress(element.getContainingFile(), findSuppressionLeaf(tag, null, 0), inspectionId, tag.getTextRange().getStartOffset());

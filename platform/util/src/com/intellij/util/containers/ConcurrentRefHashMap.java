@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentMap;
  * Fully copied from java.util.WeakHashMap except "get" method optimization.
  */
 abstract class ConcurrentRefHashMap<K,V> extends AbstractMap<K,V> implements ConcurrentMap<K,V> {
-  protected interface Key<K, V>{
+  public interface Key<K, V>{
     K get();
     V getValue();
     // MUST work even with gced references for the code in processQueue to work
@@ -123,7 +123,7 @@ abstract class ConcurrentRefHashMap<K,V> extends AbstractMap<K,V> implements Con
     putAll(t);
   }
 
-  public ConcurrentRefHashMap(final TObjectHashingStrategy<K> hashingStrategy) {
+  public ConcurrentRefHashMap(@NotNull final TObjectHashingStrategy<K> hashingStrategy) {
     myMap = new ConcurrentHashMap<Key<K, V>, V>(new TObjectHashingStrategy<Key<K, V>>() {
       @Override
       public int computeHashCode(final Key<K, V> object) {

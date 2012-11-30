@@ -17,6 +17,7 @@
 package org.intellij.plugins.relaxNG.model.descriptors;
 
 import com.intellij.util.SpinAllocator;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.kohsuke.rngom.digested.*;
@@ -82,16 +83,7 @@ public class RecursionSaveWalker extends DPatternWalker {
           new SpinAllocator.ICreator<THashSet<DPattern>>() {
             @SuppressWarnings({ "unchecked" })
             public THashSet<DPattern> createInstance() {
-              return new THashSet<DPattern>(256, TObjectHashingStrategy.IDENTITY) {
-                public void clear() {
-                  if (size() == 0) return;
-                  super.clear();
-                  final int c = capacity();
-                  if (c > 256) {
-                    super.compact();
-                  }
-                }
-              };
+              return ContainerUtil.<DPattern>newIdentityTroveSet(256);
             }
           },
           new SpinAllocator.IDisposer<THashSet<DPattern>>() {

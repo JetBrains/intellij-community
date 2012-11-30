@@ -87,7 +87,7 @@ public final class ConcurrentSoftHashMap<K,V> extends ConcurrentRefHashMap<K,V> 
     super(t);
   }
 
-  public ConcurrentSoftHashMap(TObjectHashingStrategy<K> hashingStrategy) {
+  public ConcurrentSoftHashMap(@NotNull TObjectHashingStrategy<K> hashingStrategy) {
     super(hashingStrategy);
   }
 }

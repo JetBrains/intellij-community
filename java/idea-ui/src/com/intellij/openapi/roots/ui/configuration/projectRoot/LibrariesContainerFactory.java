@@ -184,10 +184,10 @@ public class LibrariesContainerFactory {
     @Override
     public String suggestUniqueLibraryName(@NotNull String baseName) {
       if (myNameGenerator == null) {
-        myNameGenerator = new UniqueNameGenerator(Arrays.asList(getAllLibraries()), new Function<Object, String>() {
+        myNameGenerator = new UniqueNameGenerator(Arrays.asList(getAllLibraries()), new Function<Library, String>() {
           @Override
-          public String fun(Object o) {
-            return ((Library)o).getName();
+          public String fun(Library o) {
+            return o.getName();
           }
         });
       }

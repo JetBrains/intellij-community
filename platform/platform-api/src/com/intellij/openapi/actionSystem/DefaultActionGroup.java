@@ -17,7 +17,7 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.Function;
+import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -267,8 +267,7 @@ public class DefaultActionGroup extends ActionGroup {
     }
     
     if (hasNulls) {
-      //noinspection unchecked
-      return (AnAction[])ContainerUtil.mapNotNull(children, Function.ID, AnAction.EMPTY_ARRAY);
+      return ContainerUtil.mapNotNull(children, FunctionUtil.<AnAction>id(), AnAction.EMPTY_ARRAY);
     }
     return children;
   }

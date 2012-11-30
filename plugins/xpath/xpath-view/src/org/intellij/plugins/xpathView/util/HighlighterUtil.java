@@ -15,9 +15,6 @@
  */
 package org.intellij.plugins.xpathView.util;
 
-import com.intellij.psi.util.PsiTreeUtil;
-import org.intellij.plugins.xpathView.Config;
-
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -28,10 +25,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
-
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.ContainerUtil;
+import org.intellij.plugins.xpathView.Config;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -97,7 +94,7 @@ public class HighlighterUtil {
 
     @SuppressWarnings({"unchecked", "RawUseOfParameterizedType"})
     private static boolean purgeInvalidHighlighters(Editor editor, List<RangeHighlighter> hl) {
-        final THashSet set = new THashSet(Arrays.asList(editor.getMarkupModel().getAllHighlighters()), TObjectHashingStrategy.IDENTITY);
+        final Set set = ContainerUtil.newIdentityTroveSet(Arrays.asList(editor.getMarkupModel().getAllHighlighters()));
         boolean hasHighlighter = false;
         for (Iterator<RangeHighlighter> iterator = hl.iterator(); iterator.hasNext();) {
             final RangeHighlighter h = iterator.next();

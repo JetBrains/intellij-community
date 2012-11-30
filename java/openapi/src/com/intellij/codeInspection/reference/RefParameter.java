@@ -63,5 +63,6 @@ public interface RefParameter extends RefJavaElement {
    */
   void parameterReferenced(final boolean forWriting);
 
+  @Override
   PsiParameter getElement();
 }

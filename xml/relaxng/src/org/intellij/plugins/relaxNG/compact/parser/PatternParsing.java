@@ -18,8 +18,7 @@ package org.intellij.plugins.relaxNG.compact.parser;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.relaxNG.compact.RncElementTypes;
 
 import java.util.Map;
@@ -33,9 +32,9 @@ import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.*;
 */
 public class PatternParsing extends DeclarationParsing {
 
-  @SuppressWarnings({ "unchecked" })
+  @SuppressWarnings({"unchecked"})
   protected static final Map<IElementType, IElementType> TOKEN_MAP =
-          new THashMap<IElementType, IElementType>(TObjectHashingStrategy.IDENTITY);
+    ContainerUtil.newIdentityTroveMap();
 
   static {
     TOKEN_MAP.put(COMMA, RncElementTypes.SEQUENCE);

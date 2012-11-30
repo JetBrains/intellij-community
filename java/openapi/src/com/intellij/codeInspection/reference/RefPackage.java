@@ -28,5 +28,6 @@ public interface RefPackage extends RefEntity {
    *
    * @return the full-qualified name for the package.
    */
+  @Override
   String getQualifiedName();
 }

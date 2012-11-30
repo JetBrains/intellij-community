@@ -70,10 +70,12 @@ public abstract class RefJavaManager implements RefManagerExtension<RefJavaManag
 
   public abstract EntryPointsManager getEntryPointsManager();
 
+  @Override
   public Language getLanguage() {
     return StdLanguages.JAVA;
   }
 
+  @Override
   public Key<RefJavaManager> getID() {
     return MANAGER;
   }

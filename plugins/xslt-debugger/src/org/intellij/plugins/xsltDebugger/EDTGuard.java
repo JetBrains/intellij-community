@@ -23,8 +23,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Alarm;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.xsltDebugger.rt.engine.Watchable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,8 +50,8 @@ class EDTGuard implements InvocationHandler {
   // maximum time to wait for a result on the EDT
   private static final long MAX_TIMEOUT = 10 * 1000;
 
-  @SuppressWarnings({ "unchecked" })
-  private final Map<Object, Object> myInstanceCache = new THashMap<Object, Object>(TObjectHashingStrategy.IDENTITY);
+  @SuppressWarnings({"unchecked"})
+  private final Map<Object, Object> myInstanceCache = ContainerUtil.newIdentityTroveMap();
 
   private final Object myTarget;
 

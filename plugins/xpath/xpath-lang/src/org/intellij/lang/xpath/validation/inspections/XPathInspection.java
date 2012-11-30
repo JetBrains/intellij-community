@@ -43,7 +43,7 @@ public abstract class XPathInspection extends LocalInspectionTool implements Cus
         return ContextProvider.getContextProvider(e != null ? e : element).getQuickFixFactory().getSuppressActions(this);
     }
 
-    public boolean isSuppressedFor(PsiElement element) {
+    public boolean isSuppressedFor(@NotNull PsiElement element) {
         return ContextProvider.getContextProvider(element.getContainingFile()).getQuickFixFactory().isSuppressedFor(element, this);
     }
 

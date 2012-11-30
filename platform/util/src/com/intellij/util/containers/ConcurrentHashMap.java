@@ -523,8 +523,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
                              float loadFactor, int concurrencyLevel) {
     this(initialCapacity,loadFactor, concurrencyLevel,null);
   }
-    public ConcurrentHashMap(int initialCapacity,
-                             float loadFactor, int concurrencyLevel, TObjectHashingStrategy<K> hashingStrategy) {
+    public ConcurrentHashMap(int initialCapacity, float loadFactor, int concurrencyLevel, TObjectHashingStrategy<K> hashingStrategy) {
         if (!(loadFactor > 0) || initialCapacity < 0 || concurrencyLevel <= 0)
             throw new IllegalArgumentException();
 
@@ -540,7 +539,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
         }
         segmentShift = 12; // the middle of the hash is much more random that its HSB. Especially when we use TObjectHashingStrategy.CANONICAl as a hash provider
         segmentMask = ssize - 1;
-        this.segments = new Segment[ssize];
+      segments = new Segment[ssize];
 
         if (initialCapacity > MAXIMUM_CAPACITY)
             initialCapacity = MAXIMUM_CAPACITY;
@@ -552,8 +551,8 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
             cap <<= 1;
 
       hashingStrategy = hashingStrategy == null ? this : hashingStrategy;
-        for (int i = 0; i < this.segments.length; ++i)
-            this.segments[i] = new Segment<K,V>(cap, loadFactor,hashingStrategy);
+        for (int i = 0; i < segments.length; ++i)
+          segments[i] = new Segment<K,V>(cap, loadFactor,hashingStrategy);
     myHashingStrategy = hashingStrategy;
     }
 
@@ -1125,14 +1124,14 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
         public V getValue() {
             if (lastReturned == null)
                 throw new IllegalStateException("Entry was removed");
-            return ConcurrentHashMap.this.get(lastReturned.key);
+            return get(lastReturned.key);
         }
 
         @Override
         public V setValue(V value) {
             if (lastReturned == null)
                 throw new IllegalStateException("Entry was removed");
-            return ConcurrentHashMap.this.put(lastReturned.key, value);
+            return put(lastReturned.key, value);
         }
 
         public boolean equals(Object o) {
@@ -1183,7 +1182,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
         }
         @Override
         public boolean contains(Object o) {
-            return ConcurrentHashMap.this.containsKey(o);
+            return containsKey(o);
         }
         @Override
         public boolean remove(Object o) {
@@ -1220,7 +1219,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
         }
         @Override
         public boolean contains(Object o) {
-            return ConcurrentHashMap.this.containsValue(o);
+            return containsValue(o);
         }
         @Override
         public void clear() {
@@ -1252,7 +1251,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
             if (!(o instanceof Entry))
                 return false;
             Entry<K,V> e = (Entry<K,V>)o;
-            V v = ConcurrentHashMap.this.get(e.getKey());
+            V v = get(e.getKey());
             return v != null && v.equals(e.getValue());
         }
         @Override
@@ -1303,8 +1302,8 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
         }
 
         public SimpleEntry(Entry<K,V> e) {
-            this.key   = e.getKey();
-            this.value = e.getValue();
+          key = e.getKey();
+          value = e.getValue();
         }
 
         @Override
