@@ -73,7 +73,6 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,7 +89,7 @@ import java.util.Set;
  */
 public class DaemonListeners implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonListeners");
-  @NonNls public static final Object IGNORE_MOUSE_TRACKING = "ignore_mouse_tracking";
+  public static final Object IGNORE_MOUSE_TRACKING = "ignore_mouse_tracking";
 
   private final Project myProject;
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
@@ -137,6 +136,7 @@ public class DaemonListeners implements Disposable {
                          @NotNull ProjectLevelVcsManager projectLevelVcsManager,
                          @NotNull VcsDirtyScopeManager vcsDirtyScopeManager,
                          @NotNull FileStatusManager fileStatusManager) {
+    Disposer.register(project, this);
     myProject = project;
     myDaemonCodeAnalyzer = daemonCodeAnalyzer;
     myPsiDocumentManager = psiDocumentManager;
@@ -168,7 +168,7 @@ public class DaemonListeners implements Disposable {
         if (!worthBothering(document, project)) {
           return; //no need to stop daemon if something happened in the console
         }
-        stopDaemon(true, "Document change");
+        stopDaemon(true);
         UpdateHighlightersUtil.updateHighlightersByTyping(myProject, e);
       }
     }, this);
@@ -182,7 +182,7 @@ public class DaemonListeners implements Disposable {
           return; //no need to stop daemon if something happened in the console
         }
 
-        stopDaemon(true, "Caret move");
+        stopDaemon(true);
         myDaemonCodeAnalyzer.hideLastIntentionHint();
       }
     }, this);
@@ -199,7 +199,7 @@ public class DaemonListeners implements Disposable {
           return;
         }
         myActiveEditors = activeEditors;
-        stopDaemon(true, "Active editor change");  // do not stop daemon if idea loses/gains focus
+        stopDaemon(true);  // do not stop daemon if idea loses/gains focus
         if (LaterInvocator.isInModalContext()) {
           // editor appear in modal context, re-enable the daemon
           myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
@@ -279,7 +279,7 @@ public class DaemonListeners implements Disposable {
     connection.subscribe(PowerSaveMode.TOPIC, new PowerSaveMode.Listener() {
       @Override
       public void powerSaveStateChanged() {
-        stopDaemon(true, "Power save mode change");
+        stopDaemon(true);
       }
     });
 
@@ -318,7 +318,7 @@ public class DaemonListeners implements Disposable {
           }
         }
         if (!propertyName.equals(PsiTreeChangeEvent.PROP_WRITABLE)) {
-          stopDaemon(true, "Virtual file property change");
+          stopDaemon(true);
         }
       }
     }, this);
@@ -345,7 +345,7 @@ public class DaemonListeners implements Disposable {
       public void beforeModalityStateChanged(boolean entering) {
         // before showing dialog we are in non-modal context yet, and before closing dialog we are still in modal context
         boolean inModalContext = LaterInvocator.isInModalContext();
-        stopDaemon(inModalContext, "Modality change");
+        stopDaemon(inModalContext);
         myDaemonCodeAnalyzer.setUpdateByTimerEnabled(inModalContext);
       }
     };
@@ -416,13 +416,13 @@ public class DaemonListeners implements Disposable {
     public void beforeWriteActionStart(Object action) {
       myDaemonWasRunning = myDaemonCodeAnalyzer.isRunning();
       if (!myDaemonWasRunning) return; // we'll restart in writeActionFinished()
-      stopDaemon(true, "Write action start");
+      stopDaemon(true);
     }
 
     @Override
     public void writeActionFinished(Object action) {
       if (myDaemonWasRunning) {
-        stopDaemon(true, "Write action finish");
+        stopDaemon(true);
       }
     }
   }
@@ -441,7 +441,7 @@ public class DaemonListeners implements Disposable {
       if (LOG.isDebugEnabled()) {
         LOG.debug("cancelling code highlighting by command:" + event.getCommand());
       }
-      stopDaemon(false, "Command start");
+      stopDaemon(false);
     }
 
     @Nullable
@@ -470,12 +470,12 @@ public class DaemonListeners implements Disposable {
         if (affectedDocument != null) {
           // prevent Esc key to leave the document in the not-highlighted state
           if (!myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNull(affectedDocument)) {
-            stopDaemon(true, "Command finish");
+            stopDaemon(true);
           }
         }
       }
       else if (!myDaemonCodeAnalyzer.isRunning()) {
-        stopDaemon(true, "Command finish");
+        stopDaemon(true);
       }
     }
   }
@@ -527,7 +527,7 @@ public class DaemonListeners implements Disposable {
       if (editor != null && !worthBothering(editor.getDocument(), editor.getProject())) {
         return;
       }
-      stopDaemon(true, "Editor typing");
+      stopDaemon(true);
     }
   }
 
@@ -584,9 +584,11 @@ public class DaemonListeners implements Disposable {
     }
   }
 
-  private void stopDaemon(boolean toRestartAlarm, @NonNls String reason) {
-    myDaemonEventPublisher.daemonCancelEventOccurred();
-    myDaemonCodeAnalyzer.stopProcess(toRestartAlarm, reason);
+  private void stopDaemon(boolean toRestartAlarm) {
+    if (!myProject.isDisposed()) {
+      myDaemonEventPublisher.daemonCancelEventOccurred();
+    }
+    myDaemonCodeAnalyzer.stopProcess(toRestartAlarm && !myProject.isDisposed());
   }
 
   private void stopDaemonAndRestartAllFiles() {
