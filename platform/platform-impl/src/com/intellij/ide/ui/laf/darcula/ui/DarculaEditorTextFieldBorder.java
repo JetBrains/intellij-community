@@ -18,19 +18,16 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Gray;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.border.Border;
+import javax.swing.plaf.InsetsUIResource;
 import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class DarculaEditorTextFieldBorder implements Border {
-
-  private JBInsets myInsets = new JBInsets(6, 7, 6, 7);
-
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     final EditorTextField textField = UIUtil.getParentOfType(EditorTextField.class, c);
@@ -63,7 +60,7 @@ public class DarculaEditorTextFieldBorder implements Border {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return myInsets;
+    return new InsetsUIResource(6, 7, 6, 7);
   }
 
   @Override

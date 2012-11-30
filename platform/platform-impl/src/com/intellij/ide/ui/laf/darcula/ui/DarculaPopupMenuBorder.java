@@ -17,6 +17,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import javax.swing.*;
 import javax.swing.border.AbstractBorder;
+import javax.swing.plaf.InsetsUIResource;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
 
@@ -32,6 +33,6 @@ public class DarculaPopupMenuBorder extends AbstractBorder implements UIResource
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return new Insets(1,1,1,1);
+    return new InsetsUIResource(1,1,1,1);
   }
 }

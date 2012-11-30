@@ -18,12 +18,12 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.Gray;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
+import javax.swing.plaf.InsetsUIResource;
 import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import java.awt.*;
@@ -34,7 +34,6 @@ import java.awt.geom.Path2D;
  */
 public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
   private final JComboBox myComboBox;
-  private JBInsets myComboBoxInsets = new JBInsets(4, 7, 4, 5);
 
   public DarculaComboBoxUI(JComboBox comboBox) {
     myComboBox = comboBox;
@@ -87,7 +86,7 @@ protected JButton createArrowButton() {
 
   @Override
   protected Insets getInsets() {
-    return myComboBoxInsets;
+    return new InsetsUIResource(4, 7, 4, 5);
   }
 
   @Override
@@ -139,7 +138,7 @@ protected JButton createArrowButton() {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return myComboBoxInsets;
+    return new InsetsUIResource(4, 7, 4, 5);
   }
 
   @Override
