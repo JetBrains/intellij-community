@@ -27,6 +27,7 @@ import com.intellij.psi.impl.source.JavaStubPsiElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -80,7 +81,8 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
 
   @Override
   public <T extends PsiAnnotationMemberValue>  T setDeclaredAttributeValue(@NonNls String attributeName, @Nullable T value) {
-    return (T)PsiImplUtil.setDeclaredAttributeValue(this, attributeName, value, ANNOTATION_CREATOR);
+    @SuppressWarnings("unchecked") T t = (T)PsiImplUtil.setDeclaredAttributeValue(this, attributeName, value, ANNOTATION_CREATOR);
+    return t;
   }
 
   public String toString() {
@@ -94,7 +96,8 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
   }
 
   @Override
-  @Nullable public String getQualifiedName() {
+  @Nullable
+  public String getQualifiedName() {
     final PsiJavaCodeReferenceElement nameRef = getNameReferenceElement();
     if (nameRef == null) return null;
     return nameRef.getCanonicalText();
@@ -119,6 +122,10 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
   @Override
   public PsiAnnotationOwner getOwner() {
     PsiElement parent = getParent();
+    if (!PsiUtil.isLanguageLevel8OrHigher(this)) {
+      return parent instanceof PsiModifierList ? (PsiAnnotationOwner)parent : null;
+    }
+
     if (parent instanceof PsiTypeElement) {
       return ((PsiTypeElement)parent).getOwner(this);
     }
