@@ -20,6 +20,7 @@ import com.intellij.util.PathUtil;
 import org.jetbrains.jps.builders.CompileScopeTestBuilder;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.elements.JpsPackagingElementFactory;
+import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.io.IOException;
@@ -219,6 +220,22 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
 
     makeAll();
     assertOutput(a, fs().file("2.txt"));
+  }
+
+  public void testMoveClassFromOneModuleToAnother() {
+    String file = createFile("src1/A.java", "class A{}");
+    JpsModule m1 = addModule("m1", PathUtil.getParentPath(file));
+    JpsModule m2 = addModule("m2", PathUtil.getParentPath(createFile("src2/B.java", "class B{}")));
+    JpsArtifact a = addArtifact(root().module(m1).module(m2));
+    buildAll();
+    assertOutput(a, fs().file("A.class").file("B.class"));
+
+    delete(file);
+    createFile("src2/A.java", "class A{}");
+    buildAll();
+    assertOutput(a, fs().file("A.class").file("B.class"));
+    assertDeletedAndCopied(new String[] {"out/artifacts/a/A.class", "out/production/m1/A.class"}, "out/production/m2/A.class");
+    buildAllAndAssertUpToDate();
   }
 
   //IDEADEV-40714
