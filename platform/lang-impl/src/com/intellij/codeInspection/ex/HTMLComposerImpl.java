@@ -126,17 +126,18 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     final HTMLComposerExtension extension = getLanguageExtension(refElement);
     if (extension != null) {
       extension.appendShortName(refElement, buf);
-    }
-    refElement.accept(new RefVisitor() {
-      @Override public void visitFile(RefFile file) {
-        final PsiFile psiFile = file.getElement();
-        if (psiFile != null) {
-          buf.append(B_OPENING);
-          buf.append(psiFile.getName());
-          buf.append(B_CLOSING);
+    } else {
+      refElement.accept(new RefVisitor() {
+        @Override public void visitFile(RefFile file) {
+          final PsiFile psiFile = file.getElement();
+          if (psiFile != null) {
+            buf.append(B_OPENING);
+            buf.append(psiFile.getName());
+            buf.append(B_CLOSING);
+          }
         }
-      }
-    });
+      });
+    }
   }
 
   protected void appendQualifiedName(StringBuffer buf, RefEntity refEntity) {
