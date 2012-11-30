@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
@@ -37,6 +36,7 @@ import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Collections;
@@ -84,17 +84,15 @@ public class ImportModuleAction extends AnAction {
 
   @Nullable
   public static AddModuleWizard selectFileAndCreateWizard(final Project project, Component dialogParent) {
-    FileChooserDescriptor descriptor = new OpenProjectFileChooserDescriptor(true) {
+    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, true, false, false) {
+      FileChooserDescriptor myDelegate = new OpenProjectFileChooserDescriptor(true);
       @Override
-      public boolean isFileSelectable(VirtualFile file) {
-        return true;
-      }
-
-      @Override
-      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-        return super.isFileVisible(file, showHiddenFiles) || ModuleFileType.DEFAULT_EXTENSION.equals(file.getExtension());
+      public Icon getIcon(VirtualFile file) {
+        Icon icon = myDelegate.getIcon(file);
+        return icon == null ? super.getIcon(file) : icon;
       }
     };
+
     descriptor.setTitle("Select File or Directory to Import");
     ProjectImportProvider[] providers = ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions();
     String description = getFileChooserDescription(project);
