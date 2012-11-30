@@ -328,9 +328,9 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
 
         if (myShowCheckboxes) {
           if (myIncludedChanges.size() > 0) {
-            for (int i = 0; i < myList.getItemsCount(); i++) {
-              Object elementAt = myList.getModel().getElementAt(i);
-              if (myIncludedChanges.contains(elementAt)) {
+            for (int i = 0; i < sortedChanges.size(); i++) {
+              T t = sortedChanges.get(i);
+              if (myIncludedChanges.contains(t)) {
                 listSelection = i;
                 break;
               }
