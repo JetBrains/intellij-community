@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
@@ -87,6 +88,11 @@ public class ImportModuleAction extends AnAction {
       @Override
       public boolean isFileSelectable(VirtualFile file) {
         return true;
+      }
+
+      @Override
+      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+        return super.isFileVisible(file, showHiddenFiles) || ModuleFileType.DEFAULT_EXTENSION.equals(file.getExtension());
       }
     };
     descriptor.setTitle("Select File or Directory to Import");
