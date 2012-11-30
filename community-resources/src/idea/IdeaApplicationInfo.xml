@@ -2,7 +2,7 @@
   <version codename="Community Edition" major="12" minor="0" eap="false"/>
   <company name="JetBrains s.r.o." url="http://www.jetbrains.com/"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
-  <install-over minbuild="0" maxbuild="0" version="10.5"/>
+  <install-over minbuild="123.1" maxbuild="123.9999" version="12"/>
   <logo url="/idea_community_logo.png" textcolor="ffffff" progressColor="ffaa16" progressY="230" progressTailIcon="/community_progress_tail.png"/>
   <about url="/idea_community_about.png"/>
   <icon size32="/icon_CE.png" size16="/icon_CEsmall.png" size32opaque="/icon_CEwhite.png" size12="/toolwindows/toolWindowProject.png"/>
