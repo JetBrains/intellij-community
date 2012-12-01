@@ -1144,7 +1144,7 @@ public class ExpressionGenerator extends Generator {
     final PsiElement resolved = resolveResult.getElement();
 
     if (resolved instanceof PsiMethod) {
-      final GrExpression typeParam = factory.createExpressionFromText(typeElement == null ? "null" : typeElement.getText());
+      final GrExpression typeParam = factory.createExpressionFromText(typeElement.getText(), typeCastExpression);
       invokeMethodOn(
         ((PsiMethod)resolved),
         operand,
