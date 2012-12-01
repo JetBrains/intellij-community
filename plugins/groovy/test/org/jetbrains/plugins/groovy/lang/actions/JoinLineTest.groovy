@@ -41,6 +41,33 @@ def a = 4, b;\
 
   }
 
+  void testIf() {
+    doTest('''\
+if (cond)<caret> {
+  doSmth()
+}
+''', '''\
+if (cond) doSmth()
+''')
+  }
+
+  void testElse() {
+    doTest('''\
+if (cond) {
+  doSmth()
+}
+els<caret>e {
+  doSmthElse()
+}
+''', '''\
+if (cond) {
+  doSmth()
+}
+else doSmthElse()
+''')
+  }
+
+
   private void doTest(String before, String after) {
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, before);
     performAction(IdeActions.ACTION_EDITOR_JOIN_LINES);
