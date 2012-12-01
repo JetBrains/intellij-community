@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInsight.ContainerProvider;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -1403,13 +1404,10 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   private static PsiElement getContainer(PsiModifierListOwner refElement) {
-    if (refElement instanceof PsiTypeParameter) return refElement.getParent().getParent();
-    if (refElement instanceof PsiClass) {
-      final PsiClass containingClass = ((PsiClass)refElement).getContainingClass();
-      if (containingClass != null) return containingClass;
-      return refElement.getContainingFile();
+    for (ContainerProvider provider : ContainerProvider.EP_NAME.getExtensions()) {
+      final PsiElement container = provider.getContainer(refElement);
+      if (container != null) return container;
     }
-    if (refElement instanceof PsiMember) return ((PsiMember)refElement).getContainingClass();
     return refElement.getParent();
   }
 

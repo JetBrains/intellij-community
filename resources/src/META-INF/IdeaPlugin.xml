@@ -87,6 +87,9 @@
     <extensionPoint name="methodImplementor"
                     interface="com.intellij.codeInsight.MethodImplementor"/>
 
+    <extensionPoint name="codeInsight.containerProvider"
+                    interface="com.intellij.codeInsight.ContainerProvider"/>
+
     <extensionPoint name="debugger.codeFragmentFactory"
                     interface="com.intellij.debugger.engine.evaluation.CodeFragmentFactory"/>
 
@@ -181,6 +184,8 @@
     <expressionConverter implementationClass="com.intellij.refactoring.introduceParameter.JavaExpressionConverter" language="JAVA"/>
 
     <codeInsight.createFieldFromUsageHelper language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.quickfix.JavaCreateFieldFromUsageHelper"/>
+
+    <codeInsight.containerProvider implementation="com.intellij.codeInsight.JavaContainerProvider" id="JAVA"/>
 
     <codeInsight.lineMarkerProvider language="" implementationClass="com.intellij.ui.ColorLineMarkerProvider"/>
     <!--<expectedTypesProvider implementation="com.intellij.codeInsight.JavaExpectedTypesProvider"/>-->
