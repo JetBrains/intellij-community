@@ -18,7 +18,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="common" />
-    <orderEntry type="library" name="junit-4.10" level="application" />
+    <orderEntry type="library" scope="TEST" name="junit-4.10" level="application" />
   </component>
 </module>
 
