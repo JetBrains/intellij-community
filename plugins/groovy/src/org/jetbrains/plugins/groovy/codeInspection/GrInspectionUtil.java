@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.codeInspection;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -24,16 +25,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
  * @author Max Medvedev
  */
 public class GrInspectionUtil {
-  public static boolean isNull(GrExpression expression) {
+  public static boolean isNull(@NotNull GrExpression expression) {
     return "null".equals(expression.getText());
   }
 
-  public static boolean isEquality(GrBinaryExpression binaryCondition) {
+  public static boolean isEquality(@NotNull GrBinaryExpression binaryCondition) {
     final IElementType tokenType = binaryCondition.getOperationTokenType();
     return GroovyTokenTypes.mEQUAL == tokenType;
   }
 
-  public static boolean isInequality(GrBinaryExpression binaryCondition) {
+  public static boolean isInequality(@NotNull GrBinaryExpression binaryCondition) {
     final IElementType tokenType = binaryCondition.getOperationTokenType();
     return GroovyTokenTypes.mNOT_EQUAL == tokenType;
   }
