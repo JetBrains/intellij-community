@@ -27,7 +27,7 @@ class JoinLineTest extends GroovyEditorActionTestBase {
 d<caret>ef a;
 a = 4
 ''', '''\
-def a = 4;\
+def a = 4;
 ''')
   }
 
@@ -36,9 +36,26 @@ def a = 4;\
 d<caret>ef a, b;
 a = 4
 ''', '''\
-def a = 4, b;\
+def a = 4, b;
 ''')
+  }
 
+  void testVar3() {
+    doTest('''\
+d<caret>ef a
+a = 4
+''', '''\
+def a = 4
+''')
+  }
+
+  void testVar4()  {
+    doTest('''\
+d<caret>ef a, b
+a = 4
+''', '''\
+def a = 4, b
+''')
   }
 
   void testIf() {
