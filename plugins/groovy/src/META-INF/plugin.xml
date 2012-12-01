@@ -246,6 +246,7 @@
 
     <joinLinesHandler implementation="org.jetbrains.plugins.groovy.editor.actions.joinLines.GrVariableJoinLinesHandler"/>
     <joinLinesHandler implementation="org.jetbrains.plugins.groovy.editor.actions.joinLines.GrJoinIfHandler"/>
+    <joinLinesHandler implementation="org.jetbrains.plugins.groovy.editor.actions.joinLines.GrJoinStatementsHandler"/>
 
     <applicationService serviceInterface="org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings"
                         serviceImplementation="org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings"/>

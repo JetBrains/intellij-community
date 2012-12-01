@@ -84,6 +84,24 @@ else doSmthElse()
 ''')
   }
 
+  void testJoinStatements1() {
+    doTest('''\
+prin<caret>t 2
+print 2
+''', '''\
+print 2; <caret>print 2
+''')
+  }
+
+  void testJoinStatements2() {
+    doTest('''\
+print 2;
+print 2
+''', '''\
+print 2; <caret>print 2
+''')
+  }
+
 
   private void doTest(String before, String after) {
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, before);

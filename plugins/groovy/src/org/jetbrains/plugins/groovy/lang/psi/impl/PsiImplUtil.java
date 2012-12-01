@@ -743,4 +743,13 @@ public class PsiImplUtil {
     }
     return false;
   }
+
+  public static PsiElement findTailingSemicolon(@NotNull GrStatement statement) {
+    final PsiElement nextNonSpace = PsiUtil.skipWhitespaces(statement.getNextSibling(), true);
+    if (nextNonSpace != null && nextNonSpace.getNode().getElementType() == mSEMI) {
+      return nextNonSpace;
+    }
+
+    return null;
+  }
 }
