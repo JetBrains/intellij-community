@@ -1,7 +1,6 @@
 package org.hanuna.gitalk.printmodel.cells.builder;
 
 import org.hanuna.gitalk.common.generatemodel.generator.AbstractGenerator;
-import org.hanuna.gitalk.common.generatemodel.generator.NoNext;
 import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 import org.hanuna.gitalk.graph.Edge;
 import org.hanuna.gitalk.graph.GraphModel;
@@ -15,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.ListIterator;
+import java.util.NoSuchElementException;
 
 /**
  * @author erokhins
@@ -22,22 +22,22 @@ import java.util.ListIterator;
 public class CellRowGenerator extends AbstractGenerator<MutableCellRow, CellRow> {
     private final GraphModel graph;
 
-    public CellRowGenerator(GraphModel graph) {
+    public CellRowGenerator(@NotNull GraphModel graph) {
         this.graph = graph;
     }
 
     @NotNull
     @Override
-    protected MutableCellRow createMutable(CellRow cellRow) {
+    protected MutableCellRow createMutable(@NotNull CellRow cellRow) {
         return new MutableCellRow(cellRow);
     }
 
     @NotNull
     @Override
-    protected MutableCellRow oneStep(MutableCellRow row) {
+    protected MutableCellRow oneStep(@NotNull MutableCellRow row) {
         int newRowIndex = row.getGraphRow().getRowIndex() + 1;
         if (newRowIndex == graph.getNodeRows().size()) {
-            throw new NoNext();
+            throw new NoSuchElementException();
         }
         List<Cell> cells = row.getEditableCells();
         for (ListIterator<Cell> iterator = cells.listIterator(); iterator.hasNext(); ) {

@@ -10,7 +10,10 @@ public abstract class AbstractGenerator<M extends T, T> implements Generator<T> 
 
     @NotNull
     @Override
-    public T generate(T prev, int steps) {
+    public T generate(@NotNull T prev, int steps) {
+        if (steps < 0) {
+            throw new IllegalStateException("bad steps: " +steps);
+        }
         if (steps == 0) {
             return prev;
         }
@@ -22,11 +25,11 @@ public abstract class AbstractGenerator<M extends T, T> implements Generator<T> 
     }
 
     @NotNull
-    protected abstract M createMutable(T t);
+    protected abstract M createMutable(@NotNull T t);
 
     /**
-     * @throws NoNext
+     * @throws java.util.NoSuchElementException
      */
     @NotNull
-    protected abstract M oneStep(M row);
+    protected abstract M oneStep(@NotNull M row);
 }

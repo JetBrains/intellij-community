@@ -7,8 +7,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface Generator<T> {
     /**
-     * @exception NoNext
+     * @exception java.util.NoSuchElementException
+     * @exception IllegalArgumentException
      */
     @NotNull
-    public T generate(T prev, int steps);
+    public T generate(@NotNull T prev, int steps);
 }
