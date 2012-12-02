@@ -38,6 +38,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -126,20 +127,22 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
     });
     myRendererChooser.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
-        if (e.getValueIsAdjusting()) {
-          return;
-        }
-        final java.util.List<NodeRenderer> selectedElements = myRendererChooser.getSelectedElements();
-        if (selectedElements.size() != 1) {
-          // multiselection
-          setCurrentRenderer(null);
-        }
-        else {
-          setCurrentRenderer(selectedElements.get(0));
+        if (!e.getValueIsAdjusting()) {
+          updateCurrentRenderer(myRendererChooser.getSelectedElements());
         }
       }
     });
     return myRendererChooser;
+  }
+
+  private void updateCurrentRenderer(List<NodeRenderer> selectedElements) {
+    if (selectedElements.size() != 1) {
+      // multiselection
+      setCurrentRenderer(null);
+    }
+    else {
+      setCurrentRenderer(selectedElements.get(0));
+    }
   }
 
   private void setCurrentRenderer(NodeRenderer renderer) {
@@ -218,9 +221,8 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
         return true;
       }
     });
-    if (elementsToSelect.size() > 0) {
-      myRendererChooser.selectElements(elementsToSelect);
-    }
+    myRendererChooser.selectElements(elementsToSelect);
+    updateCurrentRenderer(elementsToSelect);
     myRendererDataConfigurable.reset();
   }
 
