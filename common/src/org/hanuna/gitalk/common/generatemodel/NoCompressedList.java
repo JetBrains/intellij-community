@@ -1,6 +1,5 @@
 package org.hanuna.gitalk.common.generatemodel;
 
-import org.hanuna.gitalk.common.Interval;
 import org.hanuna.gitalk.common.generatemodel.generator.Generator;
 import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 import org.jetbrains.annotations.NotNull;
@@ -11,23 +10,15 @@ import java.util.List;
 /**
  * @author erokhins
  */
-public class FullSaveGenerateModel<T> implements GenerateModel<T> {
+public class NoCompressedList<T> implements CompressedList<T> {
     private final List<T> calcList;
-    private int size = -1;
-    private T first;
-    private Generator<T> generator;
+    private final T first;
+    private final Generator<T> generator;
+    private int size;
 
-    public FullSaveGenerateModel() {
-        this.calcList = new ArrayList<T>();
-    }
-
-    public FullSaveGenerateModel(int size) {
-        this.calcList = new ArrayList<T>(size);
-    }
-
-    @Override
-    public void prepare(Generator<T> generator, T first, int size) {
+    public NoCompressedList(Generator<T> generator, T first, int size) {
         assert size >= 0 : "bad size";
+        calcList = new ArrayList<T>(size);
         this.first = first;
         this.generator = generator;
         this.size = size;
@@ -52,8 +43,8 @@ public class FullSaveGenerateModel<T> implements GenerateModel<T> {
 
 
     @Override
-    public void update(Interval oldInterval, Interval newInterval) {
-        size = newInterval.to() - oldInterval.to() + size;
+    public void recalculate(@NotNull Replace replace) {
+        size = replace.addElementsCount() - replace.removeElementsCount() + size;
         generate();
     }
 }

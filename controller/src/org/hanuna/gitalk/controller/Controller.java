@@ -3,6 +3,7 @@ package org.hanuna.gitalk.controller;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitData;
 import org.hanuna.gitalk.common.Interval;
+import org.hanuna.gitalk.common.generatemodel.Replace;
 import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 import org.hanuna.gitalk.controller.branchvisibility.HideShowBranch;
 import org.hanuna.gitalk.controller.branchvisibility.NodeInterval;
@@ -91,7 +92,7 @@ public class Controller {
             Interval old = new Interval(up.getRowIndex(), down.getRowIndex());
             graphModel.showBranch(edge);
             Interval upd = new Interval(up.getRowIndex(), down.getRowIndex());
-            cellModel.update(old, upd);
+            cellModel.update(Replace.buildFromChangeInterval(old.from(), old.to(), upd.from(), upd.to()));
             return upd.from();
         }
         NodeInterval nodeInterval = hideShowBranch.branchInterval(cell);
@@ -100,7 +101,7 @@ public class Controller {
             Interval old = new Interval(nodeInterval.getUp().getRowIndex(), nodeInterval.getDown().getRowIndex());
             graphModel.hideBranch(nodeInterval.getUp(), nodeInterval.getDown());
             Interval upd = new Interval(nodeInterval.getUp().getRowIndex(), nodeInterval.getDown().getRowIndex());
-            cellModel.update(old, upd);
+            cellModel.update(Replace.buildFromChangeInterval(old.from(), old.to(), upd.from(), upd.to()));
             return upd.from();
         }
         return -1;

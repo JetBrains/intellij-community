@@ -1,8 +1,8 @@
 package org.hanuna.gitalk.printmodel.cells.builder;
 
-import org.hanuna.gitalk.common.Interval;
-import org.hanuna.gitalk.common.generatemodel.GenerateModel;
-import org.hanuna.gitalk.common.generatemodel.PartSaveGenerateModel;
+import org.hanuna.gitalk.common.generatemodel.CompressedList;
+import org.hanuna.gitalk.common.generatemodel.Replace;
+import org.hanuna.gitalk.common.generatemodel.RuntimeGenerateCompressedList;
 import org.hanuna.gitalk.common.generatemodel.generator.Generator;
 import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 import org.hanuna.gitalk.graph.GraphModel;
@@ -21,7 +21,7 @@ import java.util.List;
  */
 public class CellModelBuilder {
     private final GraphModel graphModel;
-    private final GenerateModel<CellRow> generateModel = new PartSaveGenerateModel<CellRow>();
+    private CompressedList<CellRow> generateModel;
     private final Generator<CellRow> generator;
 
 
@@ -42,7 +42,7 @@ public class CellModelBuilder {
             cells.add(new NodeCell(node));
         }
 
-        generateModel.prepare(generator, firstCellRow, rows.size());
+        generateModel = new RuntimeGenerateCompressedList<CellRow>(generator, firstCellRow, rows.size());
         return new CellModelImpl();
     }
 
@@ -55,8 +55,8 @@ public class CellModelBuilder {
         }
 
         @Override
-        public void update(@NotNull Interval old, @NotNull Interval upd) {
-            generateModel.update(old, upd);
+        public void update(@NotNull Replace replace) {
+            generateModel.recalculate(replace);
         }
     }
 

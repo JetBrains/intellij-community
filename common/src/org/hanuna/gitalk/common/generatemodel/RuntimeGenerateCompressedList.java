@@ -2,7 +2,6 @@ package org.hanuna.gitalk.common.generatemodel;
 
 import org.hanuna.gitalk.common.CacheGet;
 import org.hanuna.gitalk.common.Get;
-import org.hanuna.gitalk.common.Interval;
 import org.hanuna.gitalk.common.RemoveIntervalArrayList;
 import org.hanuna.gitalk.common.generatemodel.generator.Generator;
 import org.hanuna.gitalk.common.readonly.ReadOnlyList;
@@ -14,11 +13,11 @@ import java.util.List;
 /**
  * @author erokhins
  */
-public class PartSaveGenerateModel<T> implements GenerateModel<T> {
+public class RuntimeGenerateCompressedList<T> implements CompressedList<T> {
     private final CacheGet<Integer, T> cache = new CacheGet<Integer, T>(new Get<Integer, T>() {
         @Override
         public T get(Integer key) {
-            return PartSaveGenerateModel.this.get(key);
+            return RuntimeGenerateCompressedList.this.get(key);
         }
     }, 100);
 
@@ -26,6 +25,19 @@ public class PartSaveGenerateModel<T> implements GenerateModel<T> {
     private final RemoveIntervalArrayList<SaveT> listSaveT = new RemoveIntervalArrayList<SaveT>();
     private int size;
     private Generator<T> generator;
+
+    public RuntimeGenerateCompressedList(Generator<T> generator, T firstT, int size) {
+        this.size = size;
+        this.generator = generator;
+        listSaveT.add(new SaveT(0, firstT));
+        int curIndex = intervalSave;
+        T prevT = firstT;
+        while (curIndex < size) {
+            prevT = generator.generate(prevT, intervalSave);
+            listSaveT.add(new SaveT(curIndex, prevT));
+            curIndex = curIndex + intervalSave;
+        }
+    }
 
     private int dfs(int tIndex) {
         assert listSaveT.size() > 0;
@@ -62,29 +74,14 @@ public class PartSaveGenerateModel<T> implements GenerateModel<T> {
     }
 
     @Override
-    public void prepare(Generator<T> generator, T firstT, int size) {
-        this.size = size;
-        this.generator = generator;
-        listSaveT.add(new SaveT(0, firstT));
-        int curIndex = intervalSave;
-        T prevT = firstT;
-        while (curIndex < size) {
-            prevT = generator.generate(prevT, intervalSave);
-            listSaveT.add(new SaveT(curIndex, prevT));
-            curIndex = curIndex + intervalSave;
-        }
-    }
-
-    @Override
-    public void update(Interval oldInterval, Interval newInterval) {
-        assert oldInterval.from() == newInterval.from();
+    public void recalculate(@NotNull Replace replace) {
         cache.clear();
-        int dIndex = newInterval.to() - oldInterval.to();
-        int upSave = dfs(oldInterval.from());
+        int dIndex = replace.addElementsCount() - replace.removeElementsCount();
+        int upSave = dfs(replace.from());
         SaveT upSaveT= listSaveT.get(upSave);
 
         int downSave = upSave;
-        while (downSave < listSaveT.size() && listSaveT.get(downSave).getIndex() < oldInterval.to()) {
+        while (downSave < listSaveT.size() && listSaveT.get(downSave).getIndex() < replace.to()) {
             downSave++;
         }
         // fix next t index
