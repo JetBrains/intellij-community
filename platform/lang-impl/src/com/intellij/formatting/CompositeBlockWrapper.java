@@ -53,7 +53,10 @@ public class CompositeBlockWrapper extends AbstractBlockWrapper{
     super.reset();
 
     if (myChildren != null) {
-      for(AbstractBlockWrapper wrapper:myChildren) wrapper.reset();
+      for(AbstractBlockWrapper wrapper : myChildren) {
+        assert wrapper != this;
+        wrapper.reset();
+      }
     }
   }
 
