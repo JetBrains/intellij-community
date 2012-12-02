@@ -2,7 +2,6 @@ package org.hanuna.gitalk.common.generatemodel;
 
 import org.hanuna.gitalk.common.CacheGet;
 import org.hanuna.gitalk.common.Get;
-import org.hanuna.gitalk.common.RemoveIntervalArrayList;
 import org.hanuna.gitalk.common.generatemodel.generator.Generator;
 import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +21,7 @@ public class RuntimeGenerateCompressedList<T> implements CompressedList<T> {
     }, 100);
 
     private final int intervalSave = 20;
-    private final RemoveIntervalArrayList<SaveT> listSaveT = new RemoveIntervalArrayList<SaveT>();
+    private final List<SaveT> listSaveT = new ArrayList<SaveT>();
     private int size;
     private Generator<T> generator;
 
@@ -105,7 +104,7 @@ public class RuntimeGenerateCompressedList<T> implements CompressedList<T> {
             curTIndex = curTIndex + intervalSave;
         }
 
-        listSaveT.removeInterval(upSave, downSave);
+        listSaveT.subList(upSave + 1, downSave).clear();
         listSaveT.addAll(upSave + 1, mediateSave);
     }
 

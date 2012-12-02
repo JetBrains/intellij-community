@@ -6,14 +6,16 @@ import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 import org.hanuna.gitalk.graph.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author erokhins
  */
 public class GraphModelImpl implements GraphModel {
-    private final RemoveIntervalArrayList<MutableNodeRow> rows;
+    private final List<MutableNodeRow> rows;
     private final int lastLogIndex;
 
-    public GraphModelImpl(RemoveIntervalArrayList<MutableNodeRow> rows, int lastLogIndex) {
+    public GraphModelImpl(List<MutableNodeRow> rows, int lastLogIndex) {
         this.rows = rows;
         this.lastLogIndex = lastLogIndex;
     }

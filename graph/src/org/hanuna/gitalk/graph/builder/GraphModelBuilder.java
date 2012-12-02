@@ -10,9 +10,7 @@ import org.hanuna.gitalk.graph.GraphModel;
 import org.hanuna.gitalk.graph.Node;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static org.hanuna.gitalk.graph.builder.MutableNode.createEdge;
 
@@ -23,7 +21,7 @@ public class GraphModelBuilder {
     private int lastLogIndex;
     private Map<Hash, MutableNode> hashMutableNode = new HashMap<Hash, MutableNode>();
     private MutableNodeRow nextRow;
-    private final RemoveIntervalArrayList<MutableNodeRow> rows = new RemoveIntervalArrayList<MutableNodeRow>();
+    private final List<MutableNodeRow> rows = new ArrayList<MutableNodeRow>();
 
 
 
