@@ -56,8 +56,8 @@ import java.util.*;
 import java.util.List;
 
 /**
- * @author: lesya
  * @author Konstantin Bulenkov
+ * @author: lesya
  */
 public class AnnotateToggleAction extends ToggleAction implements DumbAware, AnnotationColors {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.actions.AnnotateToggleAction");
@@ -157,6 +157,9 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
         catch (VcsException e) {
           exceptionRef.set(e);
         }
+        catch (Throwable t) {
+          handler.completed(file.getPath());
+        }
       }
 
       @Override
@@ -246,7 +249,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
       gutters.add(currentRevisionGutter);
       gutters.add(mergeSourceGutter);
     }
-    
+
     final LineAnnotationAspect[] aspects = fileAnnotation.getAspects();
     for (LineAnnotationAspect aspect : aspects) {
       final AnnotationFieldGutter gutter = new AnnotationFieldGutter(fileAnnotation, editor, aspect, presentation, bgColorMap);
@@ -268,7 +271,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
 
     for (AnAction action : presentation.getActions()) {
       if (action instanceof LineNumberListener) {
-         presentation.addLineNumberListener((LineNumberListener)action);
+        presentation.addLineNumberListener((LineNumberListener)action);
       }
     }
 
@@ -345,9 +348,9 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
           bgColors.put(author, color);
         }
         if (revNumber != null && !revNumbers.containsKey(revNumber)) {
-          revNumbers.put(revNumber, bgColors.get(author));          
+          revNumbers.put(revNumber, bgColors.get(author));
         }
-    }
+      }
     }
     return bgColors.size() < 2 ? null : revNumbers;
   }
