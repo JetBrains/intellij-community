@@ -62,8 +62,9 @@ class EditBookmarkDescriptionAction extends DumbAwareAction {
           return true;
         }
       });
-
-    BookmarkManager.getInstance(myProject).setDescription(b, description);
+    if (description != null) {
+      BookmarkManager.getInstance(myProject).setDescription(b, description);
+    }
 
     myPopup.setUiVisible(true);
     final JComponent content = myPopup.getContent();

@@ -81,7 +81,12 @@ public class DetailController implements TreeSelectionListener, ListSelectionLis
   }
 
   public void selectionChanged() {
-    doUpdateDetailView();
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        doUpdateDetailView();
+      }
+    });
   }
 
   public void setTree(final JTree tree) {
