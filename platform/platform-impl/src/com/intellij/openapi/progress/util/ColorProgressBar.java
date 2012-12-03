@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,11 @@
  */
 package com.intellij.openapi.progress.util;
 
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -32,13 +36,13 @@ import java.awt.geom.Rectangle2D;
 public class ColorProgressBar extends JComponent {
   private static final Dimension PREFERRED_SIZE = new Dimension(146, 17);
 
-  public static final Color GREEN = new Color(47, 212, 50);
-  public static final Color RED = new Color(210, 69, 30);
-  public static final Color BLUE = new Color(1, 68, 208);
-  public static final Color YELLOW = new Color(212, 183, 33);
+  public static final Color GREEN = new JBColor(new Color(0x2fd432), new Color(0x287528));
+  public static final Color RED = new Color(0xd2451e);
+  public static final Color BLUE = new JBColor(new Color(1, 68, 208), JBColor.blue);
+  public static final Color YELLOW = new Color(0xd4b721);
 
-  private static final Color SHADOW1 = new Color(190, 190, 188);
-  private static final Color SHADOW2 = new Color(105, 103, 106);
+  private static final Color SHADOW1 = new JBColor(Gray._190, UIUtil.getBorderColor()) ;
+  private static final Color SHADOW2 = Gray._105;
 
   private static final int BRICK_WIDTH = 6;
   private static final int BRICK_SPACE = 1;
@@ -110,38 +114,23 @@ public class ColorProgressBar extends JComponent {
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
 
+    final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
     Graphics2D g2 = (Graphics2D)g;
-    Object oldAntialiasing = g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
     if (myFraction > 1) {
       myFraction = 1;
     }
 
     Dimension size = getSize();
 
-    g2.setPaint(Color.WHITE);
+    g2.setPaint(UIUtil.getListBackground());
     Rectangle2D rect = new Rectangle2D.Double(2, 2, size.width - 4, size.height - 4);
     g2.fill(rect);
 
-    g2.setPaint(SHADOW1);
-    rect.setRect(1, 1, size.width - 3, size.height - 3);
-    g2.draw(rect);
-    UIUtil.drawLine(g2, 2, 2, 2, 2);
-    UIUtil.drawLine(g2, 2, size.height - 2, 2, size.height - 2);
-    UIUtil.drawLine(g2, size.width - 2, 2, size.width - 2, 2);
-    UIUtil.drawLine(g2, 0, 2, 0, 2);
-    UIUtil.drawLine(g2, 2, 0, 2, 0);
-
+    g2.setPaint(new JBColor(SHADOW1, UIUtil.getBorderColor()));
+    rect.setRect(1, 1, size.width - 2, size.height - 2);
+    g2.drawRoundRect(1, 1, size.width - 2, size.height - 2, 5, 5);
     g2.setPaint(SHADOW2);
-    UIUtil.drawLine(g2, 0, 2, 0, size.height - 4);
-    UIUtil.drawLine(g2, 1, 1, 1, 1);
-    UIUtil.drawLine(g2, 2, 0, size.width - 3, 0);
-    UIUtil.drawLine(g2, 1, size.height - 3, 1, size.height - 3);
-    UIUtil.drawLine(g2, 2, size.height - 2, size.width - 3, size.height - 2);
-    UIUtil.drawLine(g2, size.width - 2, 1, size.width - 2, 1);
-    UIUtil.drawLine(g2, size.width - 1, 2, size.width - 1, size.height - 4);
-    UIUtil.drawLine(g2, size.width - 2, size.height - 3, size.width - 2, size.height - 3);
+    g2.drawRoundRect(0, 0, size.width - 2, size.height - 2, 5, 5);
 
     int y_center = size.height / 2;
     int y_steps = size.height / 2 - 3;
@@ -196,7 +185,7 @@ public class ColorProgressBar extends JComponent {
       }
     }
 
-    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldAntialiasing);
+    config.restore();
   }
 
   public Dimension getPreferredSize() {
