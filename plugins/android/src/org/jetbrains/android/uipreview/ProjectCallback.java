@@ -126,6 +126,10 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
         return viewObject;
       }
     }
+    catch (LinkageError e) {
+      LOG.debug(e);
+      myBrokenClasses.put(className, e.getCause());
+    }
     catch (ClassNotFoundException e) {
       LOG.debug(e);
       myBrokenClasses.put(className, e.getCause());
@@ -247,7 +251,7 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
                 }
               }
             }
-            catch (Exception e) {
+            catch (Throwable e) {
               LOG.debug(e);
             }
           }
