@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.application;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -195,6 +197,15 @@ public class ConfigImportHelper {
     // Delete plugins just imported. They're most probably incompatible with newer idea version.
     File plugins = new File(dest, PLUGINS_PATH);
     if (plugins.exists()) {
+      final ArrayList<IdeaPluginDescriptorImpl> descriptors = new ArrayList<IdeaPluginDescriptorImpl>();
+      PluginManager.loadDescriptors(plugins.getPath(), descriptors, null, 0);
+      final ArrayList<String> oldPlugins = new ArrayList<String>();
+      for (IdeaPluginDescriptorImpl descriptor : descriptors) {
+        oldPlugins.add(descriptor.getPluginId().getIdString());
+      }
+      if (!oldPlugins.isEmpty()) {
+        PluginManager.savePluginsList(oldPlugins, false, new File(dest, PluginManager.INSTALLED_TXT));
+      }
       FileUtil.delete(plugins);
     }
     

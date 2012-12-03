@@ -76,6 +76,7 @@ public class PluginManager {
 
   @NonNls private static final String PROPERTY_PLUGIN_PATH = "plugin.path";
   private static final Object PLUGIN_CLASSES_LOCK = new Object();
+  @NonNls public static final String INSTALLED_TXT = "installed.txt";
   private static String myPluginError = null;
   private static List<String> myPlugins2Disable = null;
   private static LinkedHashSet<String> myPlugins2Enable = null;
@@ -837,10 +838,10 @@ public class PluginManager {
     return ourBuildNumber;
   }
 
-  private static void loadDescriptors(String pluginsPath,
-                                      List<IdeaPluginDescriptorImpl> result,
-                                      @Nullable StartupProgress progress,
-                                      int pluginsCount) {
+  public static void loadDescriptors(String pluginsPath,
+                                     List<IdeaPluginDescriptorImpl> result,
+                                     @Nullable StartupProgress progress,
+                                     int pluginsCount) {
     final File pluginsHome = new File(pluginsPath);
     final File[] files = pluginsHome.listFiles();
     if (files != null) {
@@ -1134,6 +1135,11 @@ public class PluginManager {
 
   public static void saveDisabledPlugins(Collection<String> ids, boolean append) throws IOException {
     File plugins = new File(PathManager.getConfigPath(), DISABLED_PLUGINS_FILENAME);
+    savePluginsList(ids, append, plugins);
+    ourDisabledPlugins = null;
+  }
+
+  public static void savePluginsList(Collection<String> ids, boolean append, File plugins) throws IOException {
     if (!plugins.isFile()) {
       FileUtil.ensureCanCreateFile(plugins);
     }
@@ -1150,7 +1156,6 @@ public class PluginManager {
         printWriter.close();
       }
     }
-    ourDisabledPlugins = null;
   }
 
   @NotNull
