@@ -2,6 +2,7 @@ package org.jetbrains.jps.incremental.instrumentation;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.compiler.instrumentation.InstrumenterClassWriter;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassReader;
@@ -10,6 +11,8 @@ import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.BuilderCategory;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.CompiledClass;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.javac.BinaryContent;
 
 /**
@@ -17,6 +20,7 @@ import org.jetbrains.jps.javac.BinaryContent;
  *         Date: 11/25/12
  */
 public abstract class BaseInstrumentingBuilder extends ClassProcessingBuilder {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.instrumentation.BaseInstrumentingBuilder");
   // every instance of builder must have its own marker!
   private final Key<Boolean> IS_INSTRUMENTED_KEY = Key.create("_instrumentation_marker_" + getPresentableName());
 
@@ -36,11 +40,23 @@ public abstract class BaseInstrumentingBuilder extends ClassProcessingBuilder {
         continue;
       }
       final ClassWriter writer = new InstrumenterClassWriter(getAsmClassWriterFlags(version), finder);
-      final BinaryContent instrumented = instrument(context, compiledClass, reader, writer, finder);
-      if (instrumented != null) {
-        compiledClass.setContent(instrumented);
-        IS_INSTRUMENTED_KEY.set(compiledClass, Boolean.TRUE);
-        exitCode = ExitCode.OK;
+      try {
+        final BinaryContent instrumented = instrument(context, compiledClass, reader, writer, finder);
+        if (instrumented != null) {
+          compiledClass.setContent(instrumented);
+          IS_INSTRUMENTED_KEY.set(compiledClass, Boolean.TRUE);
+          exitCode = ExitCode.OK;
+        }
+      }
+      catch (Throwable e) {
+        LOG.info(e);
+        final String message = e.getMessage();
+        if (message != null) {
+          context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, message, compiledClass.getSourceFile().getPath()));
+        }
+        else {
+          context.processMessage(new CompilerMessage(getPresentableName(), e));
+        }
       }
     }
     return exitCode;
