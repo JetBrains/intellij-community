@@ -2,6 +2,7 @@ package org.jetbrains.jps.incremental.instrumentation;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.compiler.instrumentation.InstrumenterClassWriter;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.asm4.ClassWriter;
@@ -16,6 +17,8 @@ import org.jetbrains.jps.javac.BinaryContent;
  *         Date: 11/25/12
  */
 public abstract class BaseInstrumentingBuilder extends ClassProcessingBuilder {
+  // every instance of builder must have its own marker!
+  private final Key<Boolean> IS_INSTRUMENTED_KEY = Key.create("_instrumentation_marker_" + getPresentableName());
 
   public BaseInstrumentingBuilder() {
     super(BuilderCategory.CLASS_INSTRUMENTER);
@@ -28,13 +31,15 @@ public abstract class BaseInstrumentingBuilder extends ClassProcessingBuilder {
       final BinaryContent originalContent = compiledClass.getContent();
       final ClassReader reader = new ClassReader(originalContent.getBuffer(), originalContent.getOffset(), originalContent.getLength());
       final int version = getClassFileVersion(reader);
-      if (!canInstrument(compiledClass, version)) {
+      if (IS_INSTRUMENTED_KEY.get(compiledClass, Boolean.FALSE) || !canInstrument(compiledClass, version)) {
+        // do not instrument the same content twice
         continue;
       }
       final ClassWriter writer = new InstrumenterClassWriter(getAsmClassWriterFlags(version), finder);
       final BinaryContent instrumented = instrument(context, compiledClass, reader, writer, finder);
       if (instrumented != null) {
         compiledClass.setContent(instrumented);
+        IS_INSTRUMENTED_KEY.set(compiledClass, Boolean.TRUE);
         exitCode = ExitCode.OK;
       }
     }
