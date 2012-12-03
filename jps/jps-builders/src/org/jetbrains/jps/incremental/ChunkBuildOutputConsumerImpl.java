@@ -9,6 +9,7 @@ import org.jetbrains.jps.javac.BinaryContent;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -21,9 +22,19 @@ class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputConsumer 
   private final CompileContext myContext;
   private Map<BuildTarget<?>, BuildOutputConsumerImpl> myTarget2Consumer = new THashMap<BuildTarget<?>, BuildOutputConsumerImpl>();
   private Map<String, CompiledClass> myClasses = new THashMap<String, CompiledClass>();
+  private Map<BuildTarget<?>, Collection<CompiledClass>> myTargetToClassesMap = new THashMap<BuildTarget<?>, Collection<CompiledClass>>();
 
   public ChunkBuildOutputConsumerImpl(CompileContext context) {
     myContext = context;
+  }
+
+  @Override
+  public Collection<CompiledClass> getTargetCompiledClasses(BuildTarget<?> target) {
+    final Collection<CompiledClass> classes = myTargetToClassesMap.get(target);
+    if (classes != null) {
+      return Collections.unmodifiableCollection(classes);
+    }
+    return Collections.emptyList();
   }
 
   @NotNull
@@ -43,6 +54,12 @@ class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputConsumer 
   public void registerCompiledClass(BuildTarget<?> target, CompiledClass compiled) throws IOException {
     if (compiled.getClassName() != null) {
       myClasses.put(compiled.getClassName(), compiled);
+      Collection<CompiledClass> classes = myTargetToClassesMap.get(target);
+      if (classes == null) {
+        classes = new ArrayList<CompiledClass>();
+        myTargetToClassesMap.put(target, classes);
+      }
+      classes.add(compiled);
     }
     registerOutputFile(target, compiled.getOutputFile(), Collections.<String>singleton(compiled.getSourceFile().getPath()));
   }
@@ -66,5 +83,6 @@ class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputConsumer 
   public void clear() {
     myTarget2Consumer.clear();
     myClasses.clear();
+    myTargetToClassesMap.clear();
   }
 }
