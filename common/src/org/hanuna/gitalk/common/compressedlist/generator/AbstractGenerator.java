@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.common.generatemodel.generator;
+package org.hanuna.gitalk.common.compressedlist.generator;
 
 import org.jetbrains.annotations.NotNull;
 

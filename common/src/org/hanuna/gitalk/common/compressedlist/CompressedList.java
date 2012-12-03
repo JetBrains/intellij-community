@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.common.generatemodel;
+package org.hanuna.gitalk.common.compressedlist;
 
 import org.hanuna.gitalk.common.ReadOnlyList;
 import org.jetbrains.annotations.NotNull;

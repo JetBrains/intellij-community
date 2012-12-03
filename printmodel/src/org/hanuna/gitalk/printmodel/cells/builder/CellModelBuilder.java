@@ -1,9 +1,9 @@
 package org.hanuna.gitalk.printmodel.cells.builder;
 
-import org.hanuna.gitalk.common.generatemodel.CompressedList;
-import org.hanuna.gitalk.common.generatemodel.Replace;
-import org.hanuna.gitalk.common.generatemodel.RuntimeGenerateCompressedList;
-import org.hanuna.gitalk.common.generatemodel.generator.Generator;
+import org.hanuna.gitalk.common.compressedlist.CompressedList;
+import org.hanuna.gitalk.common.compressedlist.Replace;
+import org.hanuna.gitalk.common.compressedlist.RuntimeGenerateCompressedList;
+import org.hanuna.gitalk.common.compressedlist.generator.Generator;
 import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.graph.GraphModel;
 import org.hanuna.gitalk.graph.Node;

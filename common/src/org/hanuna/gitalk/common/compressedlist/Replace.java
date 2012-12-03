@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.common.generatemodel;
+package org.hanuna.gitalk.common.compressedlist;
 
 /**
  * @author erokhins

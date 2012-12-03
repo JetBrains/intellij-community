@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.printmodel.cells;
 
-import org.hanuna.gitalk.common.generatemodel.Replace;
+import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.common.ReadOnlyList;
 import org.jetbrains.annotations.NotNull;
 

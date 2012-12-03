@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.printmodel.cells.builder;
 
-import org.hanuna.gitalk.common.generatemodel.generator.AbstractGenerator;
+import org.hanuna.gitalk.common.compressedlist.generator.AbstractGenerator;
 import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.graph.Edge;
 import org.hanuna.gitalk.graph.GraphModel;
