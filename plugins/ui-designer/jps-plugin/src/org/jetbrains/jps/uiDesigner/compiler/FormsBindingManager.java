@@ -16,6 +16,7 @@
 package org.jetbrains.jps.uiDesigner.compiler;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashMap;
@@ -205,8 +206,17 @@ public class FormsBindingManager extends FormsBuilder {
     if (boundClassName == null) {
       return null;
     }
-    final String prefix = rd.getPackagePrefix();
-    final String clsName = !StringUtil.isEmpty(prefix)? StringUtil.trimStart(boundClassName, prefix) : boundClassName;
+
+    String clsName = boundClassName;
+    String prefix = rd.getPackagePrefix();
+    if (!StringUtil.isEmpty(prefix)) {
+      if (!StringUtil.endsWith(prefix, ".")) {
+        prefix += ".";
+      }
+      if (SystemInfo.isFileSystemCaseSensitive? StringUtil.startsWith(clsName, prefix) : StringUtil.startsWithIgnoreCase(clsName, prefix)) {
+        clsName = clsName.substring(prefix.length());
+      }
+    }
 
     String relPath = clsName.replace('.', '/') + JAVA_EXTENSION;
     while (true) {
