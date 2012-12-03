@@ -59,6 +59,10 @@ public class GitLogParser {
         }
     }
 
+    /**
+     * Sometimes, we read not full git log and may be existed not read commit, that are refreshed read commit
+     * If they existed - returned false, another - true.
+     */
     public boolean allCommitsFound() {
         return builder.allCommitsFound();
     }

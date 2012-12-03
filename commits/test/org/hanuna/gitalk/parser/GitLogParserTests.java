@@ -1,7 +1,6 @@
 package org.hanuna.gitalk.parser;
 
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.commitmodel.builder.CommitLogData;
 import org.hanuna.gitalk.common.ReadOnlyList;
 import org.junit.Test;
 
@@ -10,38 +9,34 @@ import java.io.StringReader;
 
 import static junit.framework.Assert.assertEquals;
 import static org.hanuna.gitalk.CommitTestUtils.toShortStr;
-import static org.hanuna.gitalk.CommitTestUtils.toStr;
 
 /**
  * @author erokhins
  */
-public class GitLogParserTest {
-    private void runTestParseCommitData(String in, String out) {
-        CommitLogData cd = GitLogParser.parseCommitData(in);
-        assertEquals(out, toStr(cd));
-    }
+public class GitLogParserTests {
 
-    @Test
-    public void testParseCommitData() throws Exception {
-        runTestParseCommitData("a12f|-|-author s|-132352112|- message", "a12f|-|-author s|-132352112|- message");
-        runTestParseCommitData("a|-b c|-|-13|-message", "a|-b c|-|-13|-message");
-        runTestParseCommitData("adf23|-adf2|-a|-1|-mes|-age", "adf23|-adf2|-a|-1|-mes|-age");
-        runTestParseCommitData("adf23|-a1 a2 a3|-a|-|-mes|-age", "adf23|-a1 a2 a3|-a|-0|-mes|-age");
-    }
-
-
-    private void runLogParserTest(String in, String out) throws IOException {
+    private void runLogParserTest(String in, String out, boolean full) throws IOException {
         String input = in.replace("\n", "|-aut|-132352112|-mes\n") + "|-aut|-132352112|-mes";
-        //String output = out.replace(" ", "|-") + "\n";
         GitLogParser parser = new GitLogParser(new StringReader(input));
         ReadOnlyList<Commit> commits = parser.readAllCommits();
         assertEquals(out, toShortStr(commits));
+        assertEquals(full, parser.allCommitsFound());
+    }
+
+    private void runLogParserTest(String in, String out) throws IOException {
+        runLogParserTest(in, out, true);
     }
 
     @Test
-    public void testLogParser() throws IOException {
-        runLogParserTest("12|-", "0|-|-12");
+    public void simple() throws IOException {
+        runLogParserTest(
+                "12|-",
+                "0|-|-12"
+        );
+    }
 
+    @Test
+    public void twoLine() throws IOException {
         runLogParserTest(
                 "12|-af\n" +
                 "af|-",
@@ -49,7 +44,10 @@ public class GitLogParserTest {
                 "0|-1|-12\n" +
                 "1|-|-af"
         );
+    }
 
+    @Test
+    public void testLogParser() throws IOException {
         runLogParserTest(
                 "a0|-a3 a1\n" +
                 "a1|-a2 a4\n" +
@@ -70,6 +68,29 @@ public class GitLogParserTest {
                 "6|-7|-a6\n" +
                 "7|-|-a7\n" +
                 "8|-|-a8"
+        );
+    }
+
+    @Test
+    public void notFullLogTest() throws IOException {
+        runLogParserTest(
+                "a0|-a3 a1\n" +
+                "a1|-a2 a4\n" +
+                "a2|-a3 a5 a8\n" +
+                "a3|-a6\n" +
+                "a4|-a7\n" +
+                "a5|-a7\n" +
+                "a6|-a7",
+
+                "0|-3 1|-a0\n" +
+                "1|-2 4|-a1\n" +
+                "2|-3 5 _|-a2\n" +
+                "3|-6|-a3\n" +
+                "4|-_|-a4\n" +
+                "5|-_|-a5\n" +
+                "6|-_|-a6",
+
+                false
         );
     }
 

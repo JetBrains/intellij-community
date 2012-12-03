@@ -38,10 +38,20 @@ public class CommitTestUtils {
         s.append(data.getLogIndex()).append("|-");
         final ReadOnlyList<Commit> parents = data.getParents();
         if (parents.size() > 0) {
-            s.append(parents.get(0).getData().getLogIndex());
+            CommitData data1 = parents.get(0).getData();
+            if (data1 != null) {
+                s.append(data1.getLogIndex());
+            } else {
+                s.append("_");
+            }
         }
         for (int i = 1; i < parents.size(); i++) {
-            s.append(" ").append(parents.get(i).getData().getLogIndex());
+            CommitData data1 = parents.get(i).getData();
+            if (data1 != null) {
+                s.append(" ").append(data1.getLogIndex());
+            } else {
+                s.append(" ").append("_");
+            }
         }
         s.append("|-");
 
