@@ -181,7 +181,9 @@ private layoutPlugins(layouts) {
     layouts.layoutPlugin("python-javascript-debugger")
     layouts.layoutPlugin("remote-run")
     layouts.layoutPlugin("python-remote-interpreter")
-    layouts.layoutPlugin("vagrant")
+    layouts.layoutPlugin("vagrant") {
+      fileset(file: "jrubyparser-0.2.jar")
+    }
     layouts.layoutPlugin("python-uml")
     layouts.layoutPlugin("localization")
     layouts.layoutPlugin("python-localization")
