@@ -94,8 +94,9 @@ public class HgDiffFromHistoryHandler implements DiffFromHistoryHandler {
   private void showDiffForDirectory(@NotNull final FilePath path,
                                     @Nullable final HgFileRevision rev1,
                                     @Nullable final HgFileRevision rev2) {
-    HgRepositoryLocation repository = getLocationFor(path);
-    calculateDiffInBackground(repository, path, rev1, rev2, new Consumer<List<Change>>() {
+    VirtualFile root = VcsUtil.getVcsRootFor(myProject, path);
+    LOG.assertTrue(root != null, "Repository is null for " + path);
+    calculateDiffInBackground(root, path, rev1, rev2, new Consumer<List<Change>>() {
       @Override
       public void consume(List<Change> changes) {
         showDirDiffDialog(path, rev1 != null ? rev1.getRevisionNumber().getChangeset() : null,
@@ -106,7 +107,7 @@ public class HgDiffFromHistoryHandler implements DiffFromHistoryHandler {
 
   // rev1 == null => rev2 is the initial commit
   // rev2 == null => comparing rev1 with local
-  private void calculateDiffInBackground(@NotNull final HgRepositoryLocation repository, @NotNull final FilePath path,
+  private void calculateDiffInBackground(@NotNull final VirtualFile root, @NotNull final FilePath path,
                                          @Nullable final HgFileRevision rev1, @Nullable final HgFileRevision rev2,
                                          final Consumer<List<Change>> successHandler) {
     new Task.Backgroundable(myProject, "Comparing revisions...") {
@@ -114,7 +115,7 @@ public class HgDiffFromHistoryHandler implements DiffFromHistoryHandler {
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        myChanges = HgUtil.getDiff(HgDiffFromHistoryHandler.this.myProject, repository, path, rev1, rev2);
+        myChanges = HgUtil.getDiff(HgDiffFromHistoryHandler.this.myProject, root, path, rev1, rev2);
       }
 
       @Override
@@ -146,13 +147,6 @@ public class HgDiffFromHistoryHandler implements DiffFromHistoryHandler {
     changesBrowser.setChangesToDisplay(diff);
     dialogBuilder.setCenterPanel(changesBrowser);
     dialogBuilder.showNotModal();
-  }
-
-  @NotNull
-  private HgRepositoryLocation getLocationFor(FilePath filePath) {
-    VirtualFile repo = VcsUtil.getVcsRootFor(myProject, filePath);
-    LOG.assertTrue(repo != null, "Repository is null for " + filePath);
-    return new HgRepositoryLocation(repo.getUrl(), repo);
   }
 }
 
