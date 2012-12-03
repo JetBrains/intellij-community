@@ -37,6 +37,10 @@ public class CompositeFilter implements Filter, FilterMixin {
     myDumbService = DumbService.getInstance(project);
   }
 
+  protected CompositeFilter(DumbService dumbService) {
+    myDumbService = dumbService;
+  }
+
   @Override
   @Nullable
   public Result applyFilter(final String line, final int entireLength) {
@@ -44,21 +48,46 @@ public class CompositeFilter implements Filter, FilterMixin {
     List<Filter> filters = myFilters;
     int count = filters.size();
     //noinspection ForLoopReplaceableByForEach
+    Result finalResult = null;
     for (int i = 0; i < count; i++) {
       Filter filter = filters.get(i);
       if (!dumb || DumbService.isDumbAware(filter)) {
         long t0 = System.currentTimeMillis();
-        final Result info = filter.applyFilter(line, entireLength);
+        Result result = filter.applyFilter(line, entireLength);
+        finalResult = merge(finalResult, result);
         t0 = System.currentTimeMillis() - t0;
         if (t0 > 100) {
           LOG.warn(filter.getClass().getSimpleName() + ".applyFilter() took " + t0 + " ms on '''" + line + "'''");
         }
-        if (info != null) {
-          return info;
+        if (finalResult != null && finalResult.getNextAction() == NextAction.EXIT) {
+          return finalResult;
         }
       }
     }
-    return null;
+    return finalResult;
+  }
+
+  protected Result merge(@Nullable Result finalResult, @Nullable Result result) {
+    if (result != null) {
+      if (finalResult == null) {
+        finalResult = result;
+      }
+      else {
+        finalResult = new Result(mergeResultItems(finalResult, result));
+        finalResult.setNextAction(result.getNextAction());
+      }
+    }
+    return finalResult;
+  }
+
+  private List<ResultItem> mergeResultItems(Result finalResult, Result result) {
+    List<ResultItem> finalResultResultItems = finalResult.getResultItems();
+    List<ResultItem> resultItems = result.getResultItems();
+
+    List<ResultItem> mergedList = new ArrayList<ResultItem>(finalResultResultItems.size() + resultItems.size());
+    mergedList.addAll(finalResultResultItems);
+    mergedList.addAll(resultItems);
+    return mergedList;
   }
 
   @Override
@@ -70,10 +99,7 @@ public class CompositeFilter implements Filter, FilterMixin {
   }
 
   @Override
-  public void applyHeavyFilter(Document copiedFragment,
-                               int startOffset,
-                               int startLineNumber,
-                               Consumer<AdditionalHighlight> consumer) {
+  public void applyHeavyFilter(Document copiedFragment, int startOffset, int startLineNumber, Consumer<AdditionalHighlight> consumer) {
     final boolean dumb = myDumbService.isDumb();
     List<Filter> filters = myFilters;
     int count = filters.size();
