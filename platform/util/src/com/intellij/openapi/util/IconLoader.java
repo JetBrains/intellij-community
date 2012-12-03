@@ -98,7 +98,7 @@ public final class IconLoader {
   //}
 
   @NotNull
-  public static Icon getIcon(@NonNls final String path) {
+  public static Icon getIcon(@NonNls @NotNull final String path) {
     int stackFrameCount = 2;
     Class callerClass = Reflection.getCallerClass(stackFrameCount);
     while (callerClass != null && callerClass.getClassLoader() == null) { // looks like a system class
