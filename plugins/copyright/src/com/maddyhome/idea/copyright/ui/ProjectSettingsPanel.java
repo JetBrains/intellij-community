@@ -67,7 +67,7 @@ public class ProjectSettingsPanel {
     myProfilesModel.addItemsChangeListener(new Runnable() {
       public void run() {
         final Object selectedItem = myProfilesComboBox.getSelectedItem();
-        fillCopyrightProfiles();
+        reloadCopyrightProfiles();
         myProfilesComboBox.setSelectedItem(selectedItem);
         final ArrayList<ScopeSetting> toRemove = new ArrayList<ScopeSetting>();
         for (ScopeSetting setting : myScopeMappingModel.getItems()) {
@@ -86,7 +86,7 @@ public class ProjectSettingsPanel {
     myScopeMappingModel = new ListTableModel<ScopeSetting>(columns, new ArrayList<ScopeSetting>(), 0);
     myScopeMappingTable = new TableView<ScopeSetting>(myScopeMappingModel);
 
-    fillCopyrightProfiles();
+    reloadCopyrightProfiles();
     myProfilesComboBox.setRenderer(new ListCellRendererWrapper<CopyrightProfile>() {
       @Override
       public void customize(JList list, CopyrightProfile value, int index, boolean selected, boolean hasFocus) {
@@ -117,7 +117,7 @@ public class ProjectSettingsPanel {
     });
   }
 
-  private void fillCopyrightProfiles() {
+  public void reloadCopyrightProfiles() {
     final DefaultComboBoxModel boxModel = (DefaultComboBoxModel)myProfilesComboBox.getModel();
     boxModel.removeAllElements();
     boxModel.addElement(null);

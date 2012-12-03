@@ -16,7 +16,6 @@
 
 package com.maddyhome.idea.copyright.ui;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -27,11 +26,8 @@ import javax.swing.*;
 
 public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.Abstract implements Configurable.NoScroll{
   private final Project project;
-  private ProjectSettingsPanel optionsPanel = null;
-
-  private static final Logger logger = Logger.getInstance(CopyrightProjectConfigurable.class.getName());
+  private ProjectSettingsPanel myOptionsPanel = null;
   private final CopyrightProfilesPanel myProfilesPanel;
-
 
   public CopyrightProjectConfigurable(Project project) {
     this.project = project;
@@ -47,39 +43,38 @@ public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.
   }
 
   public JComponent createComponent() {
-    logger.info("createComponent()");
-    optionsPanel = new ProjectSettingsPanel(project, myProfilesPanel);
-    return optionsPanel.getMainComponent();
+    myOptionsPanel = new ProjectSettingsPanel(project, myProfilesPanel);
+    myProfilesPanel.setUpdate(new Runnable() {
+      @Override
+      public void run() {
+        reloadProfiles();
+      }
+    });
+    return myOptionsPanel.getMainComponent();
   }
 
   public boolean isModified() {
-    logger.info("isModified()");
-    boolean res = false;
-    if (optionsPanel != null) {
-      res = optionsPanel.isModified();
+    if (myOptionsPanel != null) {
+      return myOptionsPanel.isModified();
     }
 
-    logger.info("isModified() = " + res);
-
-    return res;
+    return false;
   }
 
   public void apply() throws ConfigurationException {
-    logger.info("apply()");
-    if (optionsPanel != null) {
-      optionsPanel.apply();
+    if (myOptionsPanel != null) {
+      myOptionsPanel.apply();
     }
   }
 
   public void reset() {
-    logger.info("reset()");
-    if (optionsPanel != null) {
-      optionsPanel.reset();
+    if (myOptionsPanel != null) {
+      myOptionsPanel.reset();
     }
   }
 
   public void disposeUIResources() {
-    optionsPanel = null;
+    myOptionsPanel = null;
   }
 
   public boolean hasOwnContent() {
@@ -103,4 +98,10 @@ public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.
     return new Configurable[]{myProfilesPanel, new CopyrightFormattingConfigurable(project)};
   }
 
+  private void reloadProfiles() {
+    if (myOptionsPanel != null) {
+      myOptionsPanel.reloadCopyrightProfiles();
+    }
+  }
+  
 }

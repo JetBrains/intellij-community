@@ -48,6 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.TreePath;
 import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -58,10 +59,16 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
   private final CopyrightManager myManager;
   private final AtomicBoolean myInitialized = new AtomicBoolean(false);
 
+  private Runnable myUpdate;
+
   public CopyrightProfilesPanel(Project project) {
     myProject = project;
     myManager = CopyrightManager.getInstance(project);
     initTree();
+  }
+
+  public void setUpdate(Runnable update) {
+    myUpdate = update;
   }
 
   @Override
@@ -100,6 +107,12 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
   @NonNls
   public String getHelpTopic() {
     return "copyright.profiles";
+  }
+
+  protected void reloadAvailableProfiles() {
+    if (myUpdate != null) {
+      myUpdate.run();
+    }
   }
 
   public void apply() throws ConfigurationException {
@@ -257,6 +270,13 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
     final MyNode node = new MyNode(copyrightConfigurable);
     addNode(node, myRoot);
     selectNodeInTree(node);
+    reloadAvailableProfiles();
+  }
+
+  @Override
+  protected void removePaths(TreePath... paths) {
+    super.removePaths(paths);
+    reloadAvailableProfiles();
   }
 
   private void reloadTree() {
