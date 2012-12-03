@@ -16,7 +16,6 @@
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -44,14 +43,6 @@ public class EditBreakpointAction extends XDebuggerActionBase {
       final Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
       if (editor == null) return;
       myDebuggerSupport.getEditBreakpointAction().editBreakpoint(getEventProject(e), editor, myBreakpoint, myRenderer);
-    }
-  }
-
-  @Override
-  public void update(AnActionEvent event) {
-    super.update(event);
-    if (event.getPlace().equals(ActionPlaces.MAIN_MENU)) {
-      event.getPresentation().setVisible(false);
     }
   }
 
