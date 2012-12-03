@@ -104,6 +104,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
     final FileAttributes attributes = FileSystemUtil.getAttributes(ioFile);
     if (attributes != null && !attributes.isFile()) {
+      LOG.warn("not a file: " + ioFile + ", " + attributes);
       throw new FileNotFoundException("Not a file: " + ioFile);
     }
 
