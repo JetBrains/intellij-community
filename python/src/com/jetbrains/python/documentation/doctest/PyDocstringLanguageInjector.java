@@ -28,12 +28,22 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
 
       int currentPosition = 0;
       int maxPosition = text.length();
+      boolean endsWithSlash = false;
       for (String string : strings) {
         final String trimmedString = string.trim();
         if (!trimmedString.startsWith(">>>") && !trimmedString.startsWith("...") && gotExample && start < end) {
           gotExample = false;
-          injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(), TextRange.create(start, end),  null, null);
+          if (!endsWithSlash)
+            injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(), TextRange.create(start, end),  null, null);
         }
+        if (endsWithSlash) {
+          endsWithSlash = false;
+          injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(),
+                                            TextRange.create(start, getEndOffset(currentPosition, string, maxPosition)),  null, null);
+        }
+        if (trimmedString.endsWith("\\"))
+          endsWithSlash = true;
+
         if (trimmedString.startsWith(">>>")) {
           if (!gotExample)
             start = currentPosition;
