@@ -26,10 +26,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.BrowserHyperlinkListener;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.InsertPathAction;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.mac.MacMessages;
 import com.intellij.util.PairFunction;
@@ -856,26 +853,29 @@ public class Messages {
       final JTextArea textArea = new JTextArea(10, 50);
       textArea.setWrapStyleWord(true);
       textArea.setLineWrap(true);
-      textArea.getDocument().addDocumentListener(new DocumentAdapter() {
-        protected void textChanged(final DocumentEvent e) {
-          textField.setText(textArea.getText());
-        }
-      });
       String s = textField.getText().replaceAll("[ ]*=[ ]*", "=").replaceAll("=\\-", "=\\ \\-");
       List<String> lines = StringUtil.splitHonorQuotes(s, ' ');
       textArea.setText(StringUtil.join(lines, "\n"));
       InsertPathAction.copyFromTo(textField, textArea);
-      DialogBuilder builder = new DialogBuilder(textField);
-      JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(textArea);
+      final DialogBuilder builder = new DialogBuilder(textField);
       builder.setDimensionServiceKey(dimensionServiceKey);
-      builder.setCenterPanel(scrollPane);
+      builder.setCenterPanel(ScrollPaneFactory.createScrollPane(textArea));
       builder.setPreferedFocusComponent(textArea);
       String rawText = title;
       if (StringUtil.endsWithChar(rawText, ':')) {
         rawText = rawText.substring(0, rawText.length() - 1);
       }
       builder.setTitle(rawText);
-      builder.addCloseButton();
+      builder.addOkAction();
+      builder.addCancelAction();
+      builder.setOkOperation(new Runnable() {
+        @Override
+        public void run() {
+          textField.setText(textArea.getText());
+          builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
+        }
+      });
+      builder.addDisposable(new TextComponentUndoProvider(textArea));
       builder.show();
     }
   }
