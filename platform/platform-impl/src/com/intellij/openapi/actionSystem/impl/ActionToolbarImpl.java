@@ -41,6 +41,8 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.switcher.SwitchTarget;
@@ -762,13 +764,15 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
     @Override
     protected void paintComponent(final Graphics g) {
-      final Insets insets = getInsets();
-      if (UIUtil.isUnderAquaBasedLookAndFeel()) {
+      final Insets i = getInsets();
+      if (UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderDarcula()) {
         if (getParent() != null) {
+          final JBColor col = new JBColor(Color.GRAY, Gray._111);
+          final Graphics2D g2 = (Graphics2D)g;
           if (myOrientation == SwingConstants.HORIZONTAL) {
-            UIUtil.drawDoubleSpaceDottedLine((Graphics2D)g, insets.top + 2, getParent().getSize().height - 2 - insets.top - insets.bottom, 3, Color.GRAY, false);
+            UIUtil.drawDoubleSpaceDottedLine(g2, i.top + 2, getParent().getSize().height - 2 - i.top - i.bottom, 3, col, false);
           } else {
-            UIUtil.drawDoubleSpaceDottedLine((Graphics2D)g, insets.left + 2, getParent().getSize().width - 2 - insets.left - insets.right, 3, Color.GRAY, true);
+            UIUtil.drawDoubleSpaceDottedLine(g2, i.left + 2, getParent().getSize().width - 2 - i.left - i.right, 3, col, true);
           }
         }
       }
