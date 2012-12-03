@@ -611,6 +611,7 @@
     <action id="TypeHierarchy.Subtypes" class="com.intellij.ide.hierarchy.ViewSubtypesHierarchyAction"/>
     <action id="TypeHierarchy.Supertypes" class="com.intellij.ide.hierarchy.ViewSupertypesHierarchyAction"/>
 
+    <action id="EditBreakpoint" class="com.intellij.xdebugger.impl.actions.EditBreakpointAction"/>
     <group id="DebugMainMenu">
       <separator/>
       <action id="StepOver" class="com.intellij.xdebugger.impl.actions.StepOverAction" icon="AllIcons.Actions.TraceOver"/>
@@ -630,7 +631,6 @@
               icon="AllIcons.Debugger.ShowCurrentFrame"/>
       <separator/>
       <action id="ToggleLineBreakpoint" class="com.intellij.xdebugger.impl.actions.ToggleLineBreakpointAction"/>
-      <action id="EditBreakpoint" class="com.intellij.xdebugger.impl.actions.EditBreakpointAction"/>
       <action id="ViewBreakpoints" class="com.intellij.xdebugger.impl.actions.ViewBreakpointsAction" icon="AllIcons.Debugger.ViewBreakpoints"/>
       <separator/>
 
