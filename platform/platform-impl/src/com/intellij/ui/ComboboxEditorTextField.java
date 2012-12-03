@@ -63,11 +63,14 @@ public class ComboboxEditorTextField extends EditorTextField {
   public ComboboxEditorTextField(Document document, Project project, FileType fileType, boolean isViewer) {
     super(document, project, fileType, isViewer);
     setOneLineMode(true);
+    if (UIUtil.isUnderDarcula()) { //todo[kb] make for all LaFs and color schemes ?
+      setBackground(UIUtil.getTextFieldBackground());
+    }
   }
 
   @Override
   protected boolean shouldHaveBorder() {
-    return UIManager.getBorder("ComboBox.border") == null;
+    return UIManager.getBorder("ComboBox.border") == null && !UIUtil.isUnderDarcula();
   }
 
   @Override
