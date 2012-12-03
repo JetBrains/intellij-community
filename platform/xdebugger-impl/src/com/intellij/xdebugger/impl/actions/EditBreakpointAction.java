@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -32,10 +33,10 @@ public class EditBreakpointAction extends XDebuggerActionBase {
     private DebuggerSupport myDebuggerSupport;
 
     public ContextAction(GutterIconRenderer breakpointRenderer, Object breakpoint, DebuggerSupport debuggerSupport) {
+      super(ActionsBundle.actionText("EditBreakpoint"));
       myRenderer = breakpointRenderer;
       myBreakpoint = breakpoint;
       myDebuggerSupport = debuggerSupport;
-      initPresentation(this);
     }
 
     @Override
@@ -46,12 +47,12 @@ public class EditBreakpointAction extends XDebuggerActionBase {
     }
   }
 
-  public EditBreakpointAction() {
-    initPresentation(this);
-  }
-
-  private static void initPresentation(AnAction action) {
-    action.getTemplatePresentation().setText(ActionsBundle.actionText("EditBreakpoint"));
+  @Override
+  public void update(AnActionEvent event) {
+    super.update(event);
+    if (event.getPlace().equals(ActionPlaces.MAIN_MENU)) {
+      event.getPresentation().setVisible(false);
+    }
   }
 
   @NotNull
