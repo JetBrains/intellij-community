@@ -14,8 +14,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remotesdk.RemoteInterpreterException;
 import com.intellij.remotesdk.RemoteSdkData;
 import com.intellij.remotesdk.RemoteSshProcess;
-import com.jetbrains.python.PythonHelpersLocator;
+import com.intellij.util.NullableConsumer;
 import com.intellij.util.PathMappingSettings;
+import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.remote.ui.RemoteProjectSettings;
 import com.jetbrains.python.sdk.skeletons.PySkeletonGenerator;
 import org.jetbrains.annotations.NotNull;
@@ -48,8 +49,8 @@ public abstract class PythonRemoteInterpreterManager {
                                                            PathMappingSettings mappingSettings)
     throws RemoteInterpreterException;
 
-  @Nullable
-  public abstract Sdk addRemoteSdk(Project project, Component parentComponent, Collection<Sdk> existingSdks);
+  public abstract void addRemoteSdk(Project project, Component parentComponent, Collection<Sdk> existingSdks,
+                                    NullableConsumer<Sdk> sdkCallback);
 
 
   public abstract ProcessOutput runRemoteProcess(@Nullable Project project,
