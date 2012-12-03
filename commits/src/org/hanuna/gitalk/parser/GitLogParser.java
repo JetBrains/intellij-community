@@ -27,7 +27,7 @@ public class GitLogParser {
     public static CommitLogData parseCommitData(String inputStr) {
         Matcher matcher = pattern.matcher(inputStr);
         if (matcher.matches()) {
-            Hash hash = Hash.buildHash(matcher.group(1));
+            Hash hash = Hash.build(matcher.group(1));
             String parents = matcher.group(2);
             String author = matcher.group(3);
             long timeStamp = 0;
@@ -40,7 +40,7 @@ public class GitLogParser {
             List<Hash> hashs = new ArrayList<Hash>(parentsStr.length);
             for (String aParentsStr : parentsStr) {
                 if (aParentsStr.length() > 0) {
-                    hashs.add(Hash.buildHash(aParentsStr));
+                    hashs.add(Hash.build(aParentsStr));
                 }
             }
             return new CommitLogData(hash, ReadOnlyList.newReadOnlyList(hashs), message, author, timeStamp);

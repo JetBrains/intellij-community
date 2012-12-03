@@ -8,12 +8,24 @@ import java.util.Map;
 
 /**
  * @author erokhins
+ * <code>
+ *     if (inputStr_1 == inputStr_2) {
+ *        Hash.build(inputStr_1) == Hash.build(inputStr_2)
+ *     }
+ * </code>
  */
 public final class Hash {
     private static final Map<Hash, Hash> ourCache = new HashMap<Hash, Hash>();
 
+    private static void clearMap() {
+        if (ourCache.size() > 1000) {
+            ourCache.clear();
+        }
+    }
+
     @NotNull
-    public static Hash buildHash(@NotNull String inputStr) {
+    public static Hash build(@NotNull String inputStr) {
+        clearMap();
         byte[] data = buildData(inputStr);
         Hash newHash = new Hash(data);
         if (ourCache.containsKey(newHash)) {
@@ -76,7 +88,7 @@ public final class Hash {
     public boolean equals(Object obj) {
         if (obj != null && obj.getClass() == Hash.class) {
             Hash hash = (Hash) obj;
-            return Arrays.equals(this.data, hash.data);
+            return hash.hashCode() == this.hashCode() && Arrays.equals(this.data, hash.data);
         }
         return false;
     }
