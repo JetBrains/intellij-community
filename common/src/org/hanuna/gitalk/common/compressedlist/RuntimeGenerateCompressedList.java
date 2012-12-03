@@ -82,10 +82,10 @@ public class RuntimeGenerateCompressedList<T> implements CompressedList<T> {
     }
 
 
-    private void fixPositionsTail(int startIndex, int deltaPosition) {
+    private void fixPositionsTail(int startIndex, int deltaSize) {
         for (int i = startIndex; i < positionItems.size(); i++) {
             PositionItem positionItem = positionItems.get(i);
-            positionItem.setPosition(positionItem.getPosition() + deltaPosition);
+            positionItem.setPosition(positionItem.getPosition() + deltaSize);
         }
     }
 
@@ -102,10 +102,18 @@ public class RuntimeGenerateCompressedList<T> implements CompressedList<T> {
         return mediateSave;
     }
 
+    private void checkReplace(Replace replace) {
+        if (replace.to() >= size) {
+            throw new IllegalArgumentException("Bad replace: " + replace.from() + ", " +
+                    + replace.to() + ", " + replace.addElementsCount());
+        }
+    }
+
     @Override
     public void recalculate(@NotNull Replace replace) {
+        checkReplace(replace);
         cache.clear();
-        int deltaPosition = replace.addElementsCount() - replace.removeElementsCount();
+        int deltaSize = replace.addElementsCount() - replace.removeElementsCount();
         int upSaveIndex = binarySearch(replace.from());
         PositionItem upSavePositionItem = positionItems.get(upSaveIndex);
 
@@ -114,8 +122,8 @@ public class RuntimeGenerateCompressedList<T> implements CompressedList<T> {
             downSaveIndex++;
         }
 
-        size = size + deltaPosition;
-        fixPositionsTail(downSaveIndex, deltaPosition);
+        size = size + deltaSize;
+        fixPositionsTail(downSaveIndex, deltaSize);
 
         int downSavePosition = size;
         if (downSaveIndex < positionItems.size()) {
