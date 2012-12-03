@@ -201,7 +201,7 @@ public abstract class AndroidTestCase extends UsefulTestCase {
 
     AndroidSdkAdditionalData data = new AndroidSdkAdditionalData(sdk);
     AndroidSdkData sdkData = AndroidSdkData.parse(sdkPath, new EmptySdkLog());
-    data.setBuildTarget(sdkData.findTargetByName("Android 1.5"));
+    data.setBuildTarget(sdkData.findTargetByName("Android 4.2"));
     sdkModificator.setSdkAdditionalData(data);
     sdkModificator.commitChanges();
     return sdk;
