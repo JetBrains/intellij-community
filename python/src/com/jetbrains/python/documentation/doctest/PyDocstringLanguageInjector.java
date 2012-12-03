@@ -41,10 +41,11 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
           injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(),
                                             TextRange.create(start, getEndOffset(currentPosition, string, maxPosition)),  null, null);
         }
-        if (trimmedString.endsWith("\\"))
-          endsWithSlash = true;
 
         if (trimmedString.startsWith(">>>")) {
+          if (trimmedString.endsWith("\\"))
+            endsWithSlash = true;
+
           if (!gotExample)
             start = currentPosition;
 
@@ -52,9 +53,12 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
           end = getEndOffset(currentPosition, string, maxPosition);
         }
         else if (trimmedString.startsWith("...") && gotExample) {
+          if (trimmedString.endsWith("\\"))
+            endsWithSlash = true;
+
           end = getEndOffset(currentPosition, string, maxPosition);
         }
-        currentPosition = currentPosition + string.length();
+        currentPosition += string.length();
       }
       if (gotExample && start < end)
         injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(), TextRange.create(start, end),  null, null);
@@ -65,12 +69,13 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
     int end;
     int length = s.length();
     if (s.trim().endsWith("\"\"\"") || s.trim().endsWith("'''"))
-      length = length - 3;
+      length -= 3;
     else if (start + length == maxPosition && (s.trim().endsWith("\"") || s.trim().endsWith("'")))
-      length = length - 1;
+      length -= 1;
 
     end = start + length;
-    if (s.endsWith("\n")) end = end - 1;
+    if (s.endsWith("\n"))
+      end -= 1;
     return end;
   }
 }
