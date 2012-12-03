@@ -6,11 +6,14 @@ import org.hanuna.gitalk.common.generatemodel.generator.Generator;
 import org.hanuna.gitalk.common.readonly.ReadOnlyList;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author erokhins
+ * postion is position in CompressedList
+ * index is index positionElement in positionItems
  */
 public class RuntimeGenerateCompressedList<T> implements CompressedList<T> {
     private final CacheGet<Integer, T> cache = new CacheGet<Integer, T>(new Get<Integer, T>() {
@@ -20,37 +23,42 @@ public class RuntimeGenerateCompressedList<T> implements CompressedList<T> {
         }
     }, 100);
 
-    private final int intervalSave = 20;
-    private final List<SaveT> listSaveT = new ArrayList<SaveT>();
+    private final Generator<T> generator;
+    private final int intervalSave;
+    private final List<PositionItem> positionItems = new ArrayList<PositionItem>();
     private int size;
-    private Generator<T> generator;
 
-    public RuntimeGenerateCompressedList(Generator<T> generator, T firstT, int size) {
-        this.size = size;
+    public RuntimeGenerateCompressedList(Generator<T> generator, T firstT, int size, int intervalSave) {
         this.generator = generator;
-        listSaveT.add(new SaveT(0, firstT));
-        int curIndex = intervalSave;
+        this.intervalSave = intervalSave;
+        this.size = size;
+        positionItems.add(new PositionItem(0, firstT));
+        int curPosition = intervalSave;
         T prevT = firstT;
-        while (curIndex < size) {
+        while (curPosition < size) {
             prevT = generator.generate(prevT, intervalSave);
-            listSaveT.add(new SaveT(curIndex, prevT));
-            curIndex = curIndex + intervalSave;
+            positionItems.add(new PositionItem(curPosition, prevT));
+            curPosition = curPosition + intervalSave;
         }
     }
 
-    private int dfs(int tIndex) {
-        assert listSaveT.size() > 0;
+    public RuntimeGenerateCompressedList(Generator<T> generator, T firstT, int size) {
+        this(generator, firstT, size, 20);
+    }
+
+    private int binarySearch(int position) {
+        assert positionItems.size() > 0;
         int x = 0;
-        int y = listSaveT.size() - 1;
+        int y = positionItems.size() - 1;
         while (y - x > 1) {
             int z = (x + y) / 2;
-            if (listSaveT.get(z).getIndex() <= tIndex) {
+            if (positionItems.get(z).getPosition() <= position) {
                 x = z;
             } else {
                 y = z;
             }
         }
-        if (listSaveT.get(y).getIndex() <= tIndex) {
+        if (positionItems.get(y).getPosition() <= position) {
             return y;
         }
         return x;
@@ -59,7 +67,7 @@ public class RuntimeGenerateCompressedList<T> implements CompressedList<T> {
     @NotNull
     @Override
     public ReadOnlyList<T> getList() {
-        return ReadOnlyList.newReadOnlyList(new ReadOnlyList.SimpleAbstractList<T>() {
+        return ReadOnlyList.newReadOnlyList(new AbstractList<T>() {
             @Override
             public T get(int index) {
                 return cache.get(index);
@@ -72,71 +80,81 @@ public class RuntimeGenerateCompressedList<T> implements CompressedList<T> {
         });
     }
 
+
+    private void fixPositionsTail(int startIndex, int deltaPosition) {
+        for (int i = startIndex; i < positionItems.size(); i++) {
+            PositionItem positionItem = positionItems.get(i);
+            positionItem.setPosition(positionItem.getPosition() + deltaPosition);
+        }
+    }
+
+    private List<PositionItem> regenerateMediate(PositionItem prevSavePositionItem, int downSavePosition) {
+        List<PositionItem> mediateSave = new ArrayList<PositionItem>();
+        T prevT = prevSavePositionItem.getT();
+        int curTPosition = prevSavePositionItem.getPosition() + intervalSave;
+
+        while (curTPosition < downSavePosition - intervalSave) {
+            prevT = generator.generate(prevT, intervalSave);
+            mediateSave.add(new PositionItem(curTPosition, prevT));
+            curTPosition = curTPosition + intervalSave;
+        }
+        return mediateSave;
+    }
+
     @Override
     public void recalculate(@NotNull Replace replace) {
         cache.clear();
-        int dIndex = replace.addElementsCount() - replace.removeElementsCount();
-        int upSave = dfs(replace.from());
-        SaveT upSaveT= listSaveT.get(upSave);
+        int deltaPosition = replace.addElementsCount() - replace.removeElementsCount();
+        int upSaveIndex = binarySearch(replace.from());
+        PositionItem upSavePositionItem = positionItems.get(upSaveIndex);
 
-        int downSave = upSave;
-        while (downSave < listSaveT.size() && listSaveT.get(downSave).getIndex() < replace.to()) {
-            downSave++;
-        }
-        // fix next t index
-        size = size + dIndex;
-        for (int i = downSave; i < listSaveT.size(); i++) {
-            SaveT saveT = listSaveT.get(i);
-            saveT.setIndex(saveT.getIndex() + dIndex);
-        }
-        int downTIndex = size;
-        if (downSave < listSaveT.size()) {
-            downTIndex = listSaveT.get(downSave).getIndex();
+        int downSaveIndex = upSaveIndex;
+        while (downSaveIndex < positionItems.size() && positionItems.get(downSaveIndex).getPosition() < replace.to()) {
+            downSaveIndex++;
         }
 
-        // regenerate mediate
-        List<SaveT> mediateSave = new ArrayList<SaveT>();
-        T prevT = upSaveT.getT();
-        int curTIndex = upSaveT.getIndex() + intervalSave;
-        while (curTIndex < downTIndex - intervalSave) {
-            prevT = generator.generate(prevT, intervalSave);
-            mediateSave.add(new SaveT(curTIndex, prevT));
-            curTIndex = curTIndex + intervalSave;
-        }
+        size = size + deltaPosition;
+        fixPositionsTail(downSaveIndex, deltaPosition);
 
-        listSaveT.subList(upSave + 1, downSave).clear();
-        listSaveT.addAll(upSave + 1, mediateSave);
+        int downSavePosition = size;
+        if (downSaveIndex < positionItems.size()) {
+            downSavePosition = positionItems.get(downSaveIndex).getPosition();
+        }
+        List<PositionItem> mediate = regenerateMediate(upSavePositionItem, downSavePosition);
+
+        positionItems.subList(upSaveIndex + 1, downSaveIndex).clear();
+        positionItems.addAll(upSaveIndex + 1, mediate);
     }
 
-    private T get(int index) {
-        if (index < 0 || index >= size) {
+    private T get(int position) {
+        if (position < 0 || position >= size) {
             throw new IllegalArgumentException();
         }
-        int saveIndex = dfs(index);
-        final SaveT saveT = listSaveT.get(saveIndex);
-        assert index >= saveT.getIndex();
-        return generator.generate(saveT.getT(), index - saveT.getIndex());
+        int saveIndex = binarySearch(position);
+        final PositionItem positionItem = positionItems.get(saveIndex);
+        assert position >= positionItem.getPosition();
+        return generator.generate(positionItem.getT(), position - positionItem.getPosition());
     }
 
-    private class SaveT {
-        private int index;
+    private class PositionItem {
+        private int position;
         private final T t;
 
-        private SaveT(int index, T t) {
-            this.index = index;
+        private PositionItem(int position, T t) {
+            this.position = position;
             this.t = t;
         }
 
-        public int getIndex() {
-            return index;
+        public int getPosition() {
+            return position;
         }
 
         public T getT() {
             return t;
         }
 
-        public void setIndex(int index) {
-            this.index = index;
+        public void setPosition(int position) {
+            this.position = position;
         }
     }
 
