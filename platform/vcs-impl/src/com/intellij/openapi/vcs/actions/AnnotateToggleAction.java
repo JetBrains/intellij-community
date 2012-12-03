@@ -343,7 +343,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
           final int size = bgColors.size();
           Color color = BG_COLORS[size < length ? size : size % length];
           if (darcula) {
-            color = ColorUtil.shift(color, 0.2);
+            color = ColorUtil.shift(color, 0.3);
           }
           bgColors.put(author, color);
         }

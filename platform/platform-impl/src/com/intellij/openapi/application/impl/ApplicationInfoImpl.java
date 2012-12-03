@@ -50,6 +50,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myCompanyName = "JetBrains s.r.o.";
   private String myCompanyUrl = "http://www.jetbrains.com/";
   private Color myProgressColor = null;
+  private Color myAboutForeground = Color.black;
   private Icon myProgressTailIcon = null;
 
   private int myProgressY = 350;
@@ -103,6 +104,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ATTRIBUTE_URL = "url";
   @NonNls private static final String ATTRIBUTE_TEXT_COLOR = "textcolor";
   @NonNls private static final String ATTRIBUTE_PROGRESS_COLOR = "progressColor";
+  @NonNls private static final String ATTRIBUTE_ABOUT_FOREGROUND_COLOR = "foreground";
   @NonNls private static final String ATTRIBUTE_PROGRESS_Y = "progressY";
   @NonNls private static final String ATTRIBUTE_PROGRESS_TAIL_ICON = "progressTailIcon";
   @NonNls private static final String ELEMENT_ABOUT = "about";
@@ -326,6 +328,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     return myMacKeymapUrl;
   }
 
+  @Override
+  public Color getAboutForeground() {
+    return myAboutForeground;
+  }
+
   public String getFullApplicationName() {
     @NonNls StringBuilder buffer = new StringBuilder();
     buffer.append(getVersionName());
@@ -444,6 +451,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     Element aboutLogoElement = parentNode.getChild(ELEMENT_ABOUT);
     if (aboutLogoElement != null) {
       myAboutImageUrl = aboutLogoElement.getAttributeValue(ATTRIBUTE_URL);
+      
+      String v = aboutLogoElement.getAttributeValue(ATTRIBUTE_ABOUT_FOREGROUND_COLOR);
+        if (v != null) {
+          myAboutForeground = parseColor(v);
+        }
     }
 
     Element iconElement = parentNode.getChild(ELEMENT_ICON);

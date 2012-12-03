@@ -153,7 +153,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
   private JTextField createColorField(boolean hex) {
     final NumberDocument doc = new NumberDocument(hex);
-    final int lafFix = UIUtil.isUnderWindowsClassicLookAndFeel() || UIUtil.isUnderWindowsLookAndFeel() ? 1 : 0;
+    final int lafFix = UIUtil.isUnderWindowsClassicLookAndFeel() || UIUtil.isUnderWindowsLookAndFeel() || UIUtil.isUnderDarcula() ? 1 : 0;
     final JTextField field = new JTextField(doc, "", (hex ? 5:2) + lafFix);
     field.setSize(50, -1);
     doc.setSource(field);
