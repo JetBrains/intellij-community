@@ -17,11 +17,12 @@ import java.util.List;
  */
 public class RuntimeGenerateCompressedList<T> implements CompressedList<T> {
     private final CacheGet<Integer, T> cache = new CacheGet<Integer, T>(new Get<Integer, T>() {
+        @NotNull
         @Override
-        public T get(Integer key) {
+        public T get(@NotNull Integer key) {
             return RuntimeGenerateCompressedList.this.get(key);
         }
-    }, 100);
+    });
 
     private final Generator<T> generator;
     private final int intervalSave;

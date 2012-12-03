@@ -1,8 +1,11 @@
 package org.hanuna.gitalk.common;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
 * @author erokhins
 */
 public interface Get<K, V> {
-    public V get(K key);
+    @NotNull
+    public V get(@NotNull K key);
 }
