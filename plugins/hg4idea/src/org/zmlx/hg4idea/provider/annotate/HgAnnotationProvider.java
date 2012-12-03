@@ -49,7 +49,7 @@ public class HgAnnotationProvider implements AnnotationProvider {
     final HgFile hgFile = new HgFile(vcsRoot, VfsUtil.virtualToIoFile(file));
     final List<HgAnnotationLine> annotationResult = (new HgAnnotateCommand(myProject)).execute(hgFile, revision);
     final List<HgFileRevision> logResult = (new HgLogCommand(myProject)).execute(hgFile, DEFAULT_LIMIT, false);
-    return new HgAnnotation(myProject, hgFile, annotationResult, logResult, revision.getRevisionNumber());
+    return new HgAnnotation(myProject, hgFile, annotationResult, logResult, revision == null ? null : revision.getRevisionNumber());
   }
 
   public boolean isAnnotationValid(VcsFileRevision rev) {
