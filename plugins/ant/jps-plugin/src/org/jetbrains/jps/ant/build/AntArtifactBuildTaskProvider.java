@@ -26,12 +26,14 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.rt.ant.execution.AntMain2;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.ant.model.JpsAntBuildFileOptions;
 import org.jetbrains.jps.ant.model.JpsAntExtensionService;
 import org.jetbrains.jps.ant.model.JpsAntInstallation;
 import org.jetbrains.jps.ant.model.artifacts.JpsAntArtifactExtension;
+import org.jetbrains.jps.ant.model.impl.JpsAntInstallationImpl;
 import org.jetbrains.jps.builders.artifacts.ArtifactBuildTaskProvider;
 import org.jetbrains.jps.incremental.BuildTask;
 import org.jetbrains.jps.incremental.CompileContext;
@@ -114,7 +116,8 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
       }
       JpsSdk<?> jdk = jdkLibrary.getProperties();
 
-      JpsAntInstallation antInstallation = JpsAntExtensionService.getBundledAntHome(context.getProjectDescriptor().getModel().getGlobal());
+      JpsAntInstallation antInstallation = JpsAntExtensionService.getAntInstallationForBuildFile(context.getProjectDescriptor().getModel(),
+                                                                                                 myExtension.getFileUrl());
       if (antInstallation == null) {
         reportError(context, "Ant installation is not configured");
         throw new ProjectBuildException();
@@ -127,7 +130,9 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
           classpath.add(file.getAbsolutePath());
         }
       }
+      classpath.addAll(options.getAdditionalClasspath());
       classpath.addAll(antInstallation.getClasspath());
+      JpsAntInstallationImpl.addAllJarsFromDirectory(classpath, new File(SystemProperties.getUserHome(), ".ant/lib"));
       classpath.add(PathManager.getJarPathForClass(AntMain2.class));
 
       List<String> vmParams = new ArrayList<String>();

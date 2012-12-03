@@ -16,21 +16,29 @@
 package org.jetbrains.jps.ant;
 
 import com.intellij.lang.ant.config.impl.BuildFileProperty;
+import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.SystemProperties;
+import gnu.trove.THashSet;
 import org.jetbrains.jps.ant.model.JpsAntBuildFileOptions;
 import org.jetbrains.jps.ant.model.JpsAntExtensionService;
+import org.jetbrains.jps.ant.model.JpsAntInstallation;
 import org.jetbrains.jps.ant.model.artifacts.JpsAntArtifactExtension;
 import org.jetbrains.jps.ant.model.impl.artifacts.JpsAntArtifactExtensionImpl;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.JpsArtifactService;
 import org.jetbrains.jps.model.serialization.JpsSerializationTestCase;
 
+import java.io.File;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author nik
  */
 public class JpsAntSerializationTest extends JpsSerializationTestCase {
   public static final String PROJECT_PATH = "plugins/ant/jps-plugin/testData/ant-project";
+  public static final String OPTIONS_PATH = "plugins/ant/jps-plugin/testData/config/options";
 
   public void testLoadArtifactProperties() {
     loadProject(PROJECT_PATH);
@@ -65,14 +73,53 @@ public class JpsAntSerializationTest extends JpsSerializationTestCase {
     assertNull(JpsAntExtensionService.getPreprocessingExtension(jar));
   }
 
+  public void testLoadAntInstallations() {
+    loadGlobalSettings(OPTIONS_PATH);
+    JpsAntInstallation installation = JpsAntExtensionService.findAntInstallation(myModel, "Apache Ant version 1.8.2");
+    assertNotNull(installation);
+    assertEquals(FileUtil.toSystemIndependentName(installation.getAntHome().getAbsolutePath()),
+                 FileUtil.toSystemIndependentName(new File(SystemProperties.getUserHome(), "applications/apache-ant-1.8.2").getAbsolutePath()));
+
+    JpsAntInstallation installation2 = JpsAntExtensionService.findAntInstallation(myModel, "Patched Ant");
+    assertNotNull(installation2);
+    assertContainsElements(toFiles(installation2.getClasspath()),
+                           PathManagerEx.findFileUnderCommunityHome("lib/ant/lib/ant.jar"),
+                           PathManagerEx.findFileUnderCommunityHome("lib/asm.jar"),
+                           PathManagerEx.findFileUnderCommunityHome("lib/dev/easymock.jar"));
+  }
+
   public void testLoadAntConfiguration() {
     loadProject(PROJECT_PATH);
-    JpsAntBuildFileOptions options = JpsAntExtensionService.getOptions(myProject, getUrl("build.xml"));
+    loadGlobalSettings(OPTIONS_PATH);
+    String buildXmlUrl = getUrl("build.xml");
+    JpsAntBuildFileOptions options = JpsAntExtensionService.getOptions(myProject, buildXmlUrl);
     assertEquals(128, options.getMaxHeapSize());
+    assertEquals("-J-Dmy.ant.prop=123", options.getAntCommandLineParameters());
+    assertContainsElements(toFiles(options.getAdditionalClasspath()),
+                           new File(getAbsolutePath("lib/jdom.jar")),
+                           new File(getAbsolutePath("ant-lib/a.jar")));
 
-    JpsAntBuildFileOptions options2 = JpsAntExtensionService.getOptions(myProject, getUrl("empty.xml"));
+    String emptyFileUrl = getUrl("empty.xml");
+    JpsAntBuildFileOptions options2 = JpsAntExtensionService.getOptions(myProject, emptyFileUrl);
     assertEquals(256, options2.getMaxHeapSize());
     assertEquals(10, options2.getMaxStackSize());
     assertEquals("1.6", options2.getCustomJdkName());
+
+    JpsAntInstallation bundled = JpsAntExtensionService.getAntInstallationForBuildFile(myModel, buildXmlUrl);
+    assertNotNull(bundled);
+    assertEquals("Bundled Ant", bundled.getName());
+
+    JpsAntInstallation installation = JpsAntExtensionService.getAntInstallationForBuildFile(myModel, emptyFileUrl);
+    assertNotNull(installation);
+    assertEquals("Apache Ant version 1.8.2", installation.getName());
+
+  }
+
+  private static Set<File> toFiles(List<String> classpath) {
+    Set<File> result = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+    for (String path : classpath) {
+      result.add(new File(path));
+    }
+    return result;
   }
 }

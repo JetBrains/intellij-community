@@ -1,6 +1,5 @@
 package org.jetbrains.jps.model.serialization;
 
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -34,7 +33,8 @@ public class JpsGlobalSerializationTest extends JpsSerializationTestCase {
     Element actual = new Element("component").setAttribute("name", "ProjectJdkTable");
     JpsSdkTableSerializer.saveSdks(myModel.getGlobal().getLibraryCollection(), actual);
     File jdkTableFile = new File(getTestDataFileAbsolutePath(OPTIONS_DIR), "jdk.table.xml");
-    Element expected = JDomSerializationUtil.findComponent(JDOMUtil.loadDocument(jdkTableFile).getRootElement(), "ProjectJdkTable");
+    JpsMacroExpander expander = new JpsMacroExpander(getPathVariables());
+    Element expected = JDomSerializationUtil.findComponent(JpsLoaderBase.loadRootElement(jdkTableFile, expander), "ProjectJdkTable");
     PlatformTestUtil.assertElementsEqual(expected, actual);
   }
 

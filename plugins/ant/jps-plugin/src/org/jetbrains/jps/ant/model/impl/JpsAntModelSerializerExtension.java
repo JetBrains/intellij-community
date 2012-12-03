@@ -24,6 +24,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ant.model.JpsAntBuildFileOptions;
+import org.jetbrains.jps.ant.model.JpsAntConfiguration;
+import org.jetbrains.jps.ant.model.JpsAntExtensionService;
 import org.jetbrains.jps.ant.model.artifacts.JpsAntArtifactExtension;
 import org.jetbrains.jps.ant.model.impl.artifacts.AntArtifactExtensionProperties;
 import org.jetbrains.jps.ant.model.impl.artifacts.JpsAntArtifactExtensionImpl;
@@ -34,11 +36,10 @@ import org.jetbrains.jps.model.serialization.JpsGlobalExtensionSerializer;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 import org.jetbrains.jps.model.serialization.JpsProjectExtensionSerializer;
 import org.jetbrains.jps.model.serialization.artifact.JpsArtifactExtensionSerializer;
+import org.jetbrains.jps.util.JpsPathUtil;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.io.File;
+import java.util.*;
 
 /**
  * @author nik
@@ -53,7 +54,7 @@ public class JpsAntModelSerializerExtension extends JpsModelSerializerExtension 
   @NotNull
   @Override
   public List<? extends JpsProjectExtensionSerializer> getProjectExtensionSerializers() {
-    return Collections.singletonList(new JpsProjectAntConfigurationSerializer());
+    return Arrays.asList(new JpsProjectAntConfigurationSerializer(), new JpsWorkspaceAntConfigurationSerializer());
   }
 
   @Override
@@ -80,6 +81,12 @@ public class JpsAntModelSerializerExtension extends JpsModelSerializerExtension 
     }
   }
 
+  @Nullable
+  private static String getValueAttribute(Element buildFileTag, final String childName) {
+    Element child = buildFileTag.getChild(childName);
+    return child != null ? child.getAttributeValue("value") : null;
+  }
+
   private static class JpsGlobalAntConfigurationSerializer extends JpsGlobalExtensionSerializer {
     protected JpsGlobalAntConfigurationSerializer() {
       super("other.xml", "GlobalAntConfiguration");
@@ -87,13 +94,32 @@ public class JpsAntModelSerializerExtension extends JpsModelSerializerExtension 
 
     @Override
     public void loadExtension(@NotNull JpsGlobal global, @NotNull Element componentTag) {
-    }
+      for (Element antTag : JDOMUtil.getChildren(componentTag.getChild("registeredAnts"), "ant")) {
+        String name = getValueAttribute(antTag, "name");
+        String homeDir = getValueAttribute(antTag, "homeDir");
+        List<String> classpath = new ArrayList<String>();
+        List<String> jarDirectories = new ArrayList<String>();
+        for (Element classpathItemTag : JDOMUtil.getChildren(antTag.getChild("classpath"), "classpathItem")) {
+          String fileUrl = classpathItemTag.getAttributeValue("path");
+          String dirUrl = classpathItemTag.getAttributeValue("dir");
+          if (fileUrl != null) {
+            classpath.add(JpsPathUtil.urlToPath(fileUrl));
+          }
+          else if (dirUrl != null) {
+            jarDirectories.add(JpsPathUtil.urlToPath(dirUrl));
+          }
+        }
 
+        if (name != null && homeDir != null) {
+          JpsAntExtensionService.addAntInstallation(global, new JpsAntInstallationImpl(new File(homeDir), name, classpath, jarDirectories));
+        }
+      }
+    }
     @Override
     public void saveExtension(@NotNull JpsGlobal global, @NotNull Element componentTag) {
     }
-  }
 
+  }
   private static class JpsProjectAntConfigurationSerializer extends JpsProjectExtensionSerializer {
     private JpsProjectAntConfigurationSerializer() {
       super("ant.xml", "AntConfiguration");
@@ -108,14 +134,56 @@ public class JpsAntModelSerializerExtension extends JpsModelSerializerExtension 
         options.setMaxHeapSize(StringUtil.parseInt(getValueAttribute(buildFileTag, "maximumHeapSize"), 128));
         options.setMaxStackSize(StringUtil.parseInt(getValueAttribute(buildFileTag, "maximumStackSize"), 2));
         options.setCustomJdkName(getValueAttribute(buildFileTag, "customJdkName"));
+        Element antReference = buildFileTag.getChild("antReference");
+        if (antReference != null) {
+          options.setUseProjectDefaultAnt(Boolean.parseBoolean(antReference.getAttributeValue("projectDefault")));
+          options.setAntInstallationName(antReference.getAttributeValue("name"));
+        }
+        for (Element classpathEntry : JDOMUtil.getChildren(buildFileTag.getChild("additionalClassPath"), "entry")) {
+          String fileUrl = classpathEntry.getAttributeValue("path");
+          String dirUrl = classpathEntry.getAttributeValue("dir");
+          if (fileUrl != null) {
+            options.addJarPath(JpsPathUtil.urlToPath(fileUrl));
+          }
+          else if (dirUrl != null) {
+            options.addJarDirectory(JpsPathUtil.urlToPath(dirUrl));
+          }
+        }
         optionsMap.put(url, options);
       }
-      project.getContainer().setChild(JpsAntConfigurationImpl.ROLE, new JpsAntConfigurationImpl(optionsMap));
+      Element defaultAnt = componentTag.getChild("defaultAnt");
+      String projectDefaultAntName;
+      if (defaultAnt != null) {
+        projectDefaultAntName = defaultAnt.getAttributeValue("name");
+      }
+      else {
+        projectDefaultAntName = null;
+      }
+      project.getContainer().setChild(JpsAntConfigurationImpl.ROLE, new JpsAntConfigurationImpl(optionsMap, projectDefaultAntName));
     }
 
-    private static String getValueAttribute(Element buildFileTag, final String childName) {
-      Element child = buildFileTag.getChild(childName);
-      return child != null ? child.getAttributeValue("value") : "";
+    @Override
+    public void saveExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
+    }
+  }
+
+  private static class JpsWorkspaceAntConfigurationSerializer extends JpsProjectExtensionSerializer {
+    private JpsWorkspaceAntConfigurationSerializer() {
+      super(WORKSPACE_FILE, "antWorkspaceConfiguration");
+    }
+
+    @Override
+    public void loadExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
+      for (Element buildFileTag : JDOMUtil.getChildren(componentTag, "buildFile")) {
+        String commandLine = getValueAttribute(buildFileTag, "antCommandLine");
+        String url = buildFileTag.getAttributeValue("url");
+        if (!StringUtil.isEmpty(commandLine)) {
+          JpsAntConfiguration configuration = project.getContainer().getChild(JpsAntConfigurationImpl.ROLE);
+          if (configuration != null) {
+            configuration.getOptions(url).setAntCommandLineParameters(commandLine);
+          }
+        }
+      }
     }
 
     @Override

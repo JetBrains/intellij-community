@@ -15,6 +15,10 @@
  */
 package org.jetbrains.jps.ant.model;
 
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+
 /**
  * @author nik
  */
@@ -24,4 +28,13 @@ public interface JpsAntBuildFileOptions {
   String getCustomJdkName();
 
   String getAntCommandLineParameters();
+
+  void setAntCommandLineParameters(String antCommandLineParameters);
+
+  @Nullable
+  String getAntInstallationName();
+
+  boolean isUseProjectDefaultAnt();
+
+  List<String> getAdditionalClasspath();
 }

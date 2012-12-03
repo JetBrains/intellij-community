@@ -19,6 +19,16 @@
         <name value="Apache Ant version 1.8.2" />
         <version value="1.8.2" />
       </ant>
+      <ant>
+        <classpath>
+          <classpathItem dir="file://$APPLICATION_HOME_DIR$/lib/ant/lib" />
+          <classpathItem path="file://$APPLICATION_HOME_DIR$/lib/asm.jar" />
+          <classpathItem dir="file://$APPLICATION_HOME_DIR$/lib/dev" />
+        </classpath>
+        <homeDir value="$APPLICATION_HOME_DIR$/lib/ant" />
+        <name value="Patched Ant" />
+        <version value="1.8.2" />
+      </ant>
     </registeredAnts>
   </component>
 </application>

@@ -16,6 +16,7 @@
 package org.jetbrains.jps.ant.model;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 
 /**
@@ -24,4 +25,7 @@ import org.jetbrains.jps.model.JpsElement;
 public interface JpsAntConfiguration extends JpsElement {
   @NotNull
   JpsAntBuildFileOptions getOptions(@NotNull String buildFileUrl);
+
+  @Nullable
+  String getProjectDefaultAntName();
 }
