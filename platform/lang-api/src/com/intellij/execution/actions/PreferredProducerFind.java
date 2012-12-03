@@ -24,6 +24,7 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +50,9 @@ class PreferredProducerFind {
     if (location == null) {
       return null;
     }
-    
+
+    //todo load configuration types if not already loaded
+    Extensions.getExtensions(ConfigurationType.CONFIGURATION_TYPE_EP);
     final RuntimeConfigurationProducer[] configurationProducers =
       ApplicationManager.getApplication().getExtensions(RuntimeConfigurationProducer.RUNTIME_CONFIGURATION_PRODUCER);
     final ArrayList<RuntimeConfigurationProducer> producers = new ArrayList<RuntimeConfigurationProducer>();
