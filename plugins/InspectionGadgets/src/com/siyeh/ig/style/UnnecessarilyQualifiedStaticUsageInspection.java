@@ -16,7 +16,6 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -119,7 +118,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspection 
       if (!isUnnecessarilyQualifiedAccess(reference)) {
         return;
       }
-      registerError(reference, ProblemHighlightType.LIKE_UNUSED_SYMBOL, reference);
+      registerError(reference, reference);
     }
 
     @Override
