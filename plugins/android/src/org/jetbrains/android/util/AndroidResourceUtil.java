@@ -28,6 +28,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModulePackageIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -51,6 +52,7 @@ import org.jetbrains.android.dom.resources.Item;
 import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.Resources;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,6 +80,8 @@ public class AndroidResourceUtil {
                                                                              ResourceType.MENU, ResourceType.XML, ResourceType.COLOR,
                                                                              ResourceType.DRAWABLE);
   static final String ROOT_TAG_PROPERTY = "ROOT_TAG";
+  static final String LAYOUT_WIDTH_PROPERTY = "LAYOUT_WIDTH";
+  static final String LAYOUT_HEIGHT_PROPERTY = "LAYOUT_HEIGHT";
 
   private AndroidResourceUtil() {
   }
@@ -797,6 +801,17 @@ public class AndroidResourceUtil {
     Properties properties = new Properties();
     if (!valuesResourceFile) {
       properties.setProperty(ROOT_TAG_PROPERTY, rootTagName);
+    }
+
+    if (ResourceType.LAYOUT.getName().equals(resourceType)) {
+      final Module module = ModuleUtilCore.findModuleForPsiElement(resSubdir);
+      final AndroidPlatform platform = module != null ? AndroidPlatform.getInstance(module) : null;
+      final int apiLevel = platform != null ? platform.getApiLevel() : -1;
+
+      final String value = apiLevel == -1 || apiLevel >= 8
+                           ? "match_parent" : "fill_parent";
+      properties.setProperty(LAYOUT_WIDTH_PROPERTY, value);
+      properties.setProperty(LAYOUT_HEIGHT_PROPERTY, value);
     }
     PsiElement createdElement = FileTemplateUtil.createFromTemplate(template, fileName, properties, resSubdir);
     assert createdElement instanceof XmlFile;
