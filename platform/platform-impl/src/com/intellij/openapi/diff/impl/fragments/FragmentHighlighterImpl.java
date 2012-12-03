@@ -81,7 +81,7 @@ public class FragmentHighlighterImpl implements FragmentHighlighter {
     if (endLine <= 0) return;
     TextDiffTypeEnum type = fragment.getType();
     appender.addLineMarker(endLine - 1, type == null ? null : DiffUtil.makeTextDiffType(fragment), SeparatorPlacement.BOTTOM);
-    if (fragment.getRange(appender.getSide()).getLength() > 0) {
+    if (fragment.getRange(appender.getSide()).getLength() > 0 && startLine > 0) {
       appender.addLineMarker(startLine, type == null ? null : DiffUtil.makeTextDiffType(fragment), SeparatorPlacement.TOP);
     }
   }
