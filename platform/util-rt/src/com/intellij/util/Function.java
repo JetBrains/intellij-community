@@ -26,6 +26,7 @@ public interface Function<Param, Result> {
   Result fun(Param param);
 
   Function ID = new Function() {
+    @Override
     public Object fun(final Object o) {
       return o;
     }
@@ -58,6 +59,15 @@ public interface Function<Param, Result> {
     @Override
     public R fun(Collection<P> ps) {
       return (R)ps.iterator().next();
+    }
+  }
+
+  class Predefined {
+    public static <I,O> Function<I, O> NULL() {
+      return NULL;
+    }
+    public static <I,O> Function<I, O> TO_STRING() {
+      return TO_STRING;
     }
   }
 }

@@ -57,7 +57,7 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
 
   @SuppressWarnings({ "SSBasedInspection" })
   @Override
-  public boolean isSuppressedFor(PsiElement element) {
+  public boolean isSuppressedFor(@NotNull PsiElement element) {
     if (element.getContainingFile() instanceof RncFile) {
       final RncDefine define = PsiTreeUtil.getParentOfType(element, RncDefine.class, false);
       if (define != null) {

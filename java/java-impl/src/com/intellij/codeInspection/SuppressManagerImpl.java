@@ -26,7 +26,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.actions.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -51,6 +51,7 @@ import java.util.regex.Matcher;
 
 public class SuppressManagerImpl extends SuppressManager {
 
+  @Override
   @NotNull
   public SuppressIntentionAction[] createSuppressActions(@NotNull final HighlightDisplayKey displayKey) {
     return new SuppressIntentionAction[]{
@@ -63,10 +64,12 @@ public class SuppressManagerImpl extends SuppressManager {
       };
   }
 
+  @Override
   public boolean isSuppressedFor(@NotNull final PsiElement element, final String toolId) {
     return getElementToolSuppressedIn(element, toolId) != null;
   }
 
+  @Override
   @Nullable
   public PsiElement getElementMemberSuppressedIn(@NotNull final PsiDocCommentOwner owner, final String inspectionToolID) {
     PsiElement element = getDocCommentToolSuppressedIn(owner, inspectionToolID);
@@ -86,6 +89,7 @@ public class SuppressManagerImpl extends SuppressManager {
     return null;
   }
 
+  @Override
   @Nullable
   public PsiElement getAnnotationMemberSuppressedIn(@NotNull final PsiModifierListOwner owner, final String inspectionToolID) {
     final PsiAnnotation generatedAnnotation = AnnotationUtil.findAnnotation(owner, Generated.class.getName());
@@ -100,6 +104,7 @@ public class SuppressManagerImpl extends SuppressManager {
     return null;
   }
 
+  @Override
   @Nullable
   public PsiElement getDocCommentToolSuppressedIn(@NotNull final PsiDocCommentOwner owner, final String inspectionToolID) {
     PsiDocComment docComment = owner.getDocComment();
@@ -124,6 +129,7 @@ public class SuppressManagerImpl extends SuppressManager {
     return null;
   }
 
+  @Override
   @NotNull
   public Collection<String> getInspectionIdsSuppressedInAnnotation(@NotNull final PsiModifierListOwner owner) {
     if (!PsiUtil.isLanguageLevel5OrHigher(owner)) return Collections.emptyList();
@@ -131,6 +137,7 @@ public class SuppressManagerImpl extends SuppressManager {
     return getInspectionIdsSuppressedInAnnotation(modifierList);
   }
 
+  @Override
   @Nullable
   public String getSuppressedInspectionIdsIn(@NotNull PsiElement element) {
     if (element instanceof PsiComment) {
@@ -160,10 +167,12 @@ public class SuppressManagerImpl extends SuppressManager {
     return null;
   }
 
+  @Override
   @Nullable
   public PsiElement getElementToolSuppressedIn(@NotNull final PsiElement place, final String toolId) {
     if (place instanceof PsiFile) return null;
     return ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
+      @Override
       @Nullable
       public PsiElement compute() {
         final PsiElement statement = SuppressionUtil.getStatementToolSuppressedIn(place, toolId, PsiStatement.class);
@@ -252,8 +261,9 @@ public class SuppressManagerImpl extends SuppressManager {
     return null;
   }
 
+  @Override
   public boolean canHave15Suppressions(@NotNull final PsiElement file) {
-    final Module module = ModuleUtil.findModuleForPsiElement(file);
+    final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     if (module == null) return false;
     final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
     if (jdk == null) return false;
@@ -261,6 +271,7 @@ public class SuppressManagerImpl extends SuppressManager {
     return DaemonCodeAnalyzerSettings.getInstance().SUPPRESS_WARNINGS && is_1_5 && PsiUtil.isLanguageLevel5OrHigher(file);
   }
 
+  @Override
   public boolean alreadyHas14Suppressions(@NotNull final PsiDocCommentOwner commentOwner) {
     final PsiDocComment docComment = commentOwner.getDocComment();
     return docComment != null && docComment.findTagByName(SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME) != null;

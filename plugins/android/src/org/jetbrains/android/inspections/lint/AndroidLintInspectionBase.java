@@ -190,14 +190,11 @@ public abstract class AndroidLintInspectionBase extends GlobalInspectionTool imp
   }
 
   @Override
-  public boolean isSuppressedFor(PsiElement element) {
-    if (element == null) {
-      return false;
-    }
-    else if (element.getLanguage() == JavaLanguage.INSTANCE) {
+  public boolean isSuppressedFor(@NotNull PsiElement element) {
+    if (element.getLanguage() == JavaLanguage.INSTANCE) {
       return SuppressManager.getInstance().isSuppressedFor(element, getShortName());
     }
-    else if (element.getLanguage() == XMLLanguage.INSTANCE) {
+    if (element.getLanguage() == XMLLanguage.INSTANCE) {
       return XmlSuppressionProvider.isSuppressed(element, getShortName());
     }
     return false;

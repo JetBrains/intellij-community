@@ -15,6 +15,7 @@
  */
 package git4idea.ui;
 
+import com.intellij.CommonBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -130,6 +131,7 @@ public class GitUnstashDialog extends DialogWrapper {
     myVcs = GitVcs.getInstance(project);
     setTitle(GitBundle.getString("unstash.title"));
     setOKButtonText(GitBundle.getString("unstash.button.apply"));
+    setCancelButtonText(CommonBundle.getCloseButtonText());
     GitUIUtil.setupRootChooser(project, roots, defaultRoot, myGitRootComboBox, myCurrentBranch);
     myStashList.setModel(new DefaultListModel());
     refreshStashList();

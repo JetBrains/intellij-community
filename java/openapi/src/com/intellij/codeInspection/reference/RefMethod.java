@@ -152,6 +152,7 @@ public interface RefMethod extends RefJavaElement {
    */
   RefClass getOwnerClass();
 
+  @Override
   PsiModifierListOwner getElement();
 
   boolean isCalledOnSubClass();

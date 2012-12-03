@@ -20,7 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.*;
 import com.intellij.util.*;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,9 +110,8 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
     return uniqueResults(new MergeQuery<PsiReference>(result, new SearchRequestQuery(element.getProject(), requests)));
   }
 
-  private static UniqueResultsQuery<PsiReference, PsiReference> uniqueResults(Query<PsiReference> composite) {
-    //noinspection unchecked
-    return new UniqueResultsQuery(composite, TObjectHashingStrategy.CANONICAL, ReferenceDescriptor.MAPPER);
+  private static UniqueResultsQuery<PsiReference, ReferenceDescriptor> uniqueResults(Query<PsiReference> composite) {
+    return new UniqueResultsQuery<PsiReference, ReferenceDescriptor>(composite, ContainerUtil.<ReferenceDescriptor>canonicalStrategy(), ReferenceDescriptor.MAPPER);
   }
 
   public static void searchOptimized(@NotNull PsiElement element, @NotNull SearchScope searchScope, boolean ignoreAccessScope,

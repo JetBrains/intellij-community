@@ -16,7 +16,6 @@
 
 package com.intellij.util.containers;
 
-import gnu.trove.TObjectHashingStrategy;
 import junit.framework.TestCase;
 
 import java.util.Arrays;
@@ -26,7 +25,7 @@ import java.util.Arrays;
  */
 public class EnumeratorTest extends TestCase {
   public void test() {
-    Enumerator enumerator = new Enumerator(10, TObjectHashingStrategy.CANONICAL);
+    Enumerator enumerator = new Enumerator(10, ContainerUtil.canonicalStrategy());
     int[] indecies = enumerator.enumerate(new Object[]{"a", "b", "a"});
     assertTrue(Arrays.equals(new int[]{1, 2, 1}, indecies));
     indecies = enumerator.enumerate(new Object[]{"a", "c", "b"});
@@ -34,7 +33,7 @@ public class EnumeratorTest extends TestCase {
   }
 
   public void testWithShift() {
-    Enumerator enumerator = new Enumerator(10, TObjectHashingStrategy.CANONICAL);
+    Enumerator enumerator = new Enumerator(10, ContainerUtil.canonicalStrategy());
     int[] indecies = enumerator.enumerate(new Object[]{"1","a", "b", "a", "2"}, 1, 1);
     assertTrue(Arrays.equals(new int[]{1, 2, 1}, indecies));
   }

@@ -23,9 +23,11 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class GlobalJavaInspectionTool extends GlobalInspectionTool implements CustomSuppressableInspectionTool {
+  @Override
   public boolean queryExternalUsagesRequests(final InspectionManager manager,
                                              final GlobalInspectionContext globalContext,
                                              final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
@@ -36,12 +38,14 @@ public abstract class GlobalJavaInspectionTool extends GlobalInspectionTool impl
     return false;
   }
 
+  @Override
   @Nullable
   public SuppressIntentionAction[] getSuppressActions(final PsiElement element) {
     return SuppressManager.getInstance().createSuppressActions(HighlightDisplayKey.find(getShortName()));
   }
 
-  public boolean isSuppressedFor(final PsiElement element) {
+  @Override
+  public boolean isSuppressedFor(@NotNull final PsiElement element) {
     return SuppressManager.getInstance().isSuppressedFor(element, getShortName());
   }
 }

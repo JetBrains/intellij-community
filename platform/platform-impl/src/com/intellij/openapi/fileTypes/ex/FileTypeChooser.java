@@ -30,7 +30,6 @@ import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,7 +79,7 @@ public class FileTypeChooser extends DialogWrapper {
       }
     }
     myList.setModel(model);
-    myPattern.setModel(new CollectionComboBoxModel(ContainerUtil.map(patterns, Function.ID), patterns[0]));
+    myPattern.setModel(new CollectionComboBoxModel(ContainerUtil.map(patterns, com.intellij.util.FunctionUtil.<String>id()), patterns[0]));
 
     setTitle(FileTypesBundle.message("filetype.chooser.title"));
     init();

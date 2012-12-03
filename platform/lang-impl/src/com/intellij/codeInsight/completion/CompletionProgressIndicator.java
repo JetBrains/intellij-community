@@ -118,7 +118,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   };
   private volatile int myCount;
-  private final ConcurrentHashMap<LookupElement, CompletionSorterImpl> myItemSorters = new ConcurrentHashMap<LookupElement, CompletionSorterImpl>(TObjectHashingStrategy.IDENTITY);
+  private final ConcurrentHashMap<LookupElement, CompletionSorterImpl> myItemSorters = new ConcurrentHashMap<LookupElement, CompletionSorterImpl>(
+    ContainerUtil.<LookupElement>identityStrategy());
   private final PropertyChangeListener myLookupManagerListener;
   private final int myStartCaret;
 

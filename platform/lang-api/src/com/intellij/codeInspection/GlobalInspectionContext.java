@@ -70,7 +70,7 @@ public interface GlobalInspectionContext extends UserDataHolder {
    * @param inspectionToolId the ID of the inspection to check.
    * @return true if the inspection is suppressed, false otherwise.
    */
-  boolean isSuppressed(PsiElement element, String inspectionToolId);
+  boolean isSuppressed(@NotNull PsiElement element, String inspectionToolId);
 
   Project getProject();
 

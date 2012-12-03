@@ -17,7 +17,9 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -26,10 +28,8 @@ public class FilePathHashingStrategy {
   private FilePathHashingStrategy() {
   }
 
+  @NotNull
   public static TObjectHashingStrategy<String> create() {
-    //noinspection unchecked
-    return SystemInfo.isFileSystemCaseSensitive
-           ? TObjectHashingStrategy.CANONICAL
-           : new CaseInsensitiveStringHashingStrategy();
+    return SystemInfo.isFileSystemCaseSensitive ? ContainerUtil.<String>canonicalStrategy() : new CaseInsensitiveStringHashingStrategy();
   }
 }

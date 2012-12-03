@@ -16,6 +16,7 @@
 package com.intellij.util.containers;
 
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -23,9 +24,12 @@ public class OrderedSet<T> extends AbstractList<T> implements Set<T>, RandomAcce
   private final OpenTHashSet<T> myHashSet;
   private final ArrayList<T> myElements;
 
+  public OrderedSet() {
+    this(ContainerUtil.<T>canonicalStrategy());
+  }
+
   public OrderedSet(TObjectHashingStrategy<T> hashingStrategy) {
-    myHashSet = new OpenTHashSet<T>(hashingStrategy);
-    myElements = new ArrayList<T>();
+    this(hashingStrategy, 4);
   }
 
   public OrderedSet(TObjectHashingStrategy<T> hashingStrategy, int capacity) {
@@ -33,19 +37,17 @@ public class OrderedSet<T> extends AbstractList<T> implements Set<T>, RandomAcce
     myElements = new ArrayList<T>(capacity);
   }
 
-  public OrderedSet() {
-    myHashSet = new OpenTHashSet<T>();
-    myElements = new ArrayList<T>();
-  }
-
+  @Override
   public int size() {
     return myElements.size();
   }
 
+  @Override
   public boolean contains(Object o) {
     return myHashSet.contains(o);
   }
 
+  @Override
   public boolean add(T o) {
     if (myHashSet.add(o)){
       myElements.add(o);
@@ -54,6 +56,7 @@ public class OrderedSet<T> extends AbstractList<T> implements Set<T>, RandomAcce
     return false;
   }
 
+  @Override
   public boolean remove(Object o) {
     if (myHashSet.remove(o)){
       myElements.remove(o);
@@ -62,59 +65,75 @@ public class OrderedSet<T> extends AbstractList<T> implements Set<T>, RandomAcce
     return false;
   }
 
+  @Override
   public void clear() {
     myHashSet.clear();
     myElements.clear();
   }
 
+  @NotNull
+  @Override
   public Object[] toArray() {
     return myElements.toArray();
   }
 
+  @NotNull
+  @Override
   public <T> T[] toArray(T[] a) {
     return myElements.toArray(a);
   }
 
+  @Override
   public boolean addAll(final int index, final Collection<? extends T> c) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public T get(final int index) {
     return myElements.get(index);
   }
 
+  @Override
   public T set(final int index, final T element) {
     final T removed = remove(index);
     add(index, element);
     return removed;
   }
 
+  @Override
   public void add(final int index, final T element) {
     if (myHashSet.add(element)){
       myElements.add(index, element);
     }
   }
 
+  @Override
   public T remove(final int index) {
     final T t = myElements.remove(index);
     myHashSet.remove(t);
     return t;
   }
 
+  @Override
   public int indexOf(final Object o) {
     final int index = myHashSet.index((T)o);
     return index >= 0? myElements.indexOf(myHashSet.get(index)) : -1;
   }
 
+  @Override
   public int lastIndexOf(final Object o) {
     final int index = myHashSet.index((T)o);
     return index >= 0 ? myElements.lastIndexOf(myHashSet.get(index)) : -1;
   }
 
+  @NotNull
+  @Override
   public ListIterator<T> listIterator() {
     return myElements.listIterator();
   }
 
+  @NotNull
+  @Override
   public ListIterator<T> listIterator(final int index) {
     return myElements.listIterator(index);
   }

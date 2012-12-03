@@ -55,10 +55,7 @@ public class FragmentHighlighterImpl implements FragmentHighlighter {
 
     addModifyActions(fragment, myAppender1, myAppender2);
     final Iterator<Fragment> iterator = fragment.getChildrenIterator();
-    if (iterator == null) {
-      highlightFragmentImpl(fragment);
-    }
-    else {
+    if (iterator != null) {
       while (iterator.hasNext()) {
         Fragment childFragment = iterator.next();
         childFragment.highlight(this);

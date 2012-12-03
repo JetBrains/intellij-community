@@ -806,11 +806,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       return bigRenderer;
     }
 
+    @NotNull
     @Override
     public TooltipRenderer calcTooltipRenderer(@NotNull final String text) {
       return new LineTooltipRenderer(text, new Object[] {text});
     }
 
+    @NotNull
     @Override
     public TooltipRenderer calcTooltipRenderer(@NotNull final String text, final int width) {
       return new LineTooltipRenderer(text, width, new Object[] {text});
@@ -825,7 +827,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         }
 
         @Override
-        public LightweightHint show(Editor editor, Point p, boolean alignToRight, TooltipGroup group, HintHint hintHint) {
+        public LightweightHint show(@NotNull Editor editor, @NotNull Point p, boolean alignToRight, TooltipGroup group, @NotNull HintHint hintHint) {
           JLabel label = new JLabel("WTF");
           return new LightweightHint(label){
             @Override

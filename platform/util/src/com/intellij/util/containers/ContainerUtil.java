@@ -92,6 +92,16 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
+  public static <T> TObjectHashingStrategy<T> canonicalStrategy() {
+    return TObjectHashingStrategy.CANONICAL;
+  }
+
+  @NotNull
+  public static <T> TObjectHashingStrategy<T> identityStrategy() {
+    return TObjectHashingStrategy.IDENTITY;
+  }
+
+  @NotNull
   public static <K, V> IdentityHashMap<K, V> newIdentityHashMap() {
     return new IdentityHashMap<K, V>();
   }
@@ -220,14 +230,21 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   public static <K> THashSet<K> newIdentityTroveSet() {
-    @SuppressWarnings("unchecked") final TObjectHashingStrategy<K> identity = TObjectHashingStrategy.IDENTITY;
-    return new THashSet<K>(identity);
+    return new THashSet<K>(ContainerUtil.<K>identityStrategy());
   }
 
   @NotNull
   public static <K> THashSet<K> newIdentityTroveSet(int initialCapacity) {
-    @SuppressWarnings("unchecked") final TObjectHashingStrategy<K> identity = TObjectHashingStrategy.IDENTITY;
-    return new THashSet<K>(initialCapacity, identity);
+    return new THashSet<K>(initialCapacity, ContainerUtil.<K>identityStrategy());
+  }
+  @NotNull
+  public static <K> THashSet<K> newIdentityTroveSet(@NotNull Collection<K> collection) {
+    return new THashSet<K>(collection, ContainerUtil.<K>identityStrategy());
+  }
+
+  @NotNull
+  public static <K,V> THashMap<K,V> newIdentityTroveMap() {
+    return new THashMap<K,V>(ContainerUtil.<K>identityStrategy());
   }
 
   @NotNull

@@ -30,11 +30,12 @@ public class JavaChangeLocalityDetector implements ChangeLocalityDetector {
   public PsiElement getChangeHighlightingDirtyScopeFor(@NotNull final PsiElement element) {
     // optimization
     PsiElement parent = element.getParent();
+    PsiElement grand;
     if (element instanceof PsiCodeBlock
         && parent instanceof PsiMethod
         && !((PsiMethod)parent).isConstructor()
-        && parent.getParent() instanceof PsiClass
-        && !(parent.getParent() instanceof PsiAnonymousClass)) {
+        && (grand = parent.getParent()) instanceof PsiClass
+        && !(grand instanceof PsiAnonymousClass)) {
       // for changes inside method, rehighlight codeblock only
       // do not use this optimization for constructors and class initializers - to update non-initialized fields
       return parent;

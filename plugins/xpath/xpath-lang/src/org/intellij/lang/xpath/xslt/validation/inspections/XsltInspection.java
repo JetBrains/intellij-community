@@ -36,7 +36,7 @@ public abstract class XsltInspection extends LocalInspectionTool implements Cust
         return actions.toArray(new SuppressInspectionAction[actions.size()]);
     }
 
-    public boolean isSuppressedFor(PsiElement element) {
+    public boolean isSuppressedFor(@NotNull PsiElement element) {
         return InspectionUtil.isSuppressed(this, element);
     }
 

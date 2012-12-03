@@ -52,5 +52,6 @@ public interface RefField extends RefJavaElement {
    */
   RefClass getOwnerClass();
 
+  @Override
   PsiField getElement();
 }

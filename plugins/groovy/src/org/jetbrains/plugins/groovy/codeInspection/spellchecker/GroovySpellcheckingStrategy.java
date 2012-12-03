@@ -68,12 +68,12 @@ public class GroovySpellcheckingStrategy extends SuppressibleSpellcheckingStrate
   }
 
   @Override
-  public boolean isSuppressedFor(PsiElement element, String name) {
+  public boolean isSuppressedFor(@NotNull PsiElement element, @NotNull String name) {
     return GroovySuppressableInspectionTool.getElementToolSuppressedIn(element, name) != null;
   }
 
   @Override
-  public SuppressIntentionAction[] getSuppressActions(PsiElement element, String name) {
+  public SuppressIntentionAction[] getSuppressActions(@NotNull PsiElement element, @NotNull String name) {
     return GroovySuppressableInspectionTool.getSuppressActions(name);
   }
 }
