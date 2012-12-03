@@ -133,7 +133,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   }
 
   protected boolean appendAdditionalElement(Collection<PsiReference> refs, Collection<Pair<PsiElement, TextRange>> stringUsages) {
-    return stringUsages.isEmpty();
+    return stringUsages.isEmpty() || StartMarkAction.canStart(myProject) != null;
   }
 
   protected boolean shouldCreateSnapshot() {
