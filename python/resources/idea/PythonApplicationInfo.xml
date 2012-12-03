@@ -8,7 +8,7 @@
   <names product="PyCharm" fullname="PyCharm" script="charm"/>
   <install-over minbuild="0" maxbuild="0" version="1.x"/>
 
-  <welcome-screen caption-url="/welcomeCaption.png" slogan-url="/developSlogan.png"/>
+  <welcome-screen logo-url="/pycharm_welcomeScreen.png" caption-url="/welcomeCaption.png" slogan-url="/developSlogan.png"/>
 
   <update-urls logo-url="/Logo_welcomeScreen.png"
                check="http://www.jetbrains.com/updates/updates.xml"
