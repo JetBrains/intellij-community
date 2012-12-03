@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author erokhins
  */
-public class TestUtils {
+public class GraphTestUtils {
 
 
     public static String toShortStr(Edge edge) {

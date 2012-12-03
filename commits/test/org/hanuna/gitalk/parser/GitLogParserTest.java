@@ -9,8 +9,8 @@ import java.io.IOException;
 import java.io.StringReader;
 
 import static junit.framework.Assert.assertEquals;
-import static org.hanuna.gitalk.TestUtils.toShortStr;
-import static org.hanuna.gitalk.TestUtils.toStr;
+import static org.hanuna.gitalk.CommitTestUtils.toShortStr;
+import static org.hanuna.gitalk.CommitTestUtils.toStr;
 
 /**
  * @author erokhins
@@ -34,7 +34,7 @@ public class GitLogParserTest {
         String input = in.replace("\n", "|-aut|-132352112|-mes\n") + "|-aut|-132352112|-mes";
         //String output = out.replace(" ", "|-") + "\n";
         GitLogParser parser = new GitLogParser(new StringReader(input));
-        ReadOnlyList<Commit> commits = parser.getFullModel();
+        ReadOnlyList<Commit> commits = parser.readAllCommits();
         assertEquals(out, toShortStr(commits));
     }
 

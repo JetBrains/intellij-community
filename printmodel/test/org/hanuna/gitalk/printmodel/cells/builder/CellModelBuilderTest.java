@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.io.StringReader;
 
 import static junit.framework.Assert.assertEquals;
-import static org.hanuna.gitalk.printmodel.TestUtils.toStr;
+import static org.hanuna.gitalk.printmodel.LayoutTestUtils.toStr;
 
 /**
  * @author erokhins
@@ -22,11 +22,10 @@ public class CellModelBuilderTest {
         Branch.clearCountBranch();
         String input = inputTree.replace("\n", "|-aut|-132352112|-mes\n") + "|-aut|-132352112|-mes";
         GitLogParser parser = new GitLogParser(new StringReader(input));
-        ReadOnlyList<Commit> commits = parser.getFirstPart();
+        ReadOnlyList<Commit> commits = parser.readAllCommits();
         GraphModelBuilder builder = new GraphModelBuilder();
         CellModelBuilder builder1 = new CellModelBuilder(builder.build(commits));
         CellModel cellModel = builder1.build();
-        System.out.println(toStr(cellModel));
         assertEquals(out, toStr(cellModel));
     }
 

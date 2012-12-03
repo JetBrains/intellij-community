@@ -8,7 +8,7 @@ import org.hanuna.gitalk.printmodel.cells.*;
 /**
  * @author erokhins
  */
-public class TestUtils {
+public class LayoutTestUtils {
     public static String toShortStr(Node node) {
         return node.getCommit().hash().toStrHash();
     }

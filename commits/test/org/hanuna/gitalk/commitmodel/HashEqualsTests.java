@@ -6,7 +6,7 @@ import org.junit.Test;
 /**
  * @author erokhins
  */
-public class HashTestEquals {
+public class HashEqualsTests {
 
     @Test
     public void testEqualsSelf() throws Exception {

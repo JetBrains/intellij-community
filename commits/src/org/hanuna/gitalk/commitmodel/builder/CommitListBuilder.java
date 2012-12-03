@@ -48,18 +48,13 @@ public class CommitListBuilder {
         commits.add(commit);
     }
 
-    private void checkEmptyCache() {
-        if (cache.size() > 0) {
-            throw new IllegalStateException("several commits not found in log");
-        }
+    public boolean allCommitsFound() {
+        return cache.size() == 0;
     }
 
     @NotNull
-    public ReadOnlyList<Commit> build(boolean allLogReadied) {
+    public ReadOnlyList<Commit> build() {
         wasBuild = true;
-        if (allLogReadied) {
-            checkEmptyCache();
-        }
         return ReadOnlyList.newReadOnlyList(commits);
     }
 

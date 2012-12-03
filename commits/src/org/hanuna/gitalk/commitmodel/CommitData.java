@@ -26,14 +26,17 @@ public class CommitData {
         return logIndex;
     }
 
+    @NotNull
     public ReadOnlyList<Commit> getParents() {
         return parents;
     }
 
+    @NotNull
     public String getMessage() {
         return message;
     }
 
+    @NotNull
     public String getAuthor() {
         return author;
     }

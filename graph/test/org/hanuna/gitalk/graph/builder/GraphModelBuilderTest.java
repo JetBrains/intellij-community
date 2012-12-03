@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.io.StringReader;
 
 import static junit.framework.Assert.assertEquals;
-import static org.hanuna.gitalk.TestUtils.toStr;
+import static org.hanuna.gitalk.GraphTestUtils.toStr;
 
 /**
  * @author erokhins
@@ -22,7 +22,7 @@ public class GraphModelBuilderTest {
         Branch.clearCountBranch();
         String input = inputTree.replace("\n", "|-aut|-132352112|-mes\n") + "|-aut|-132352112|-mes";
         GitLogParser parser = new GitLogParser(new StringReader(input));
-        ReadOnlyList<Commit> commits = parser.getFirstPart();
+        ReadOnlyList<Commit> commits = parser.readAllCommits();
         GraphModelBuilder builder = new GraphModelBuilder();
         GraphModel model = builder.build(commits);
        // System.out.println(toStr(model));

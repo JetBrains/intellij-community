@@ -9,7 +9,7 @@ import org.hanuna.gitalk.common.ReadOnlyList;
 /**
  * @author erokhins
  */
-public class TestUtils {
+public class CommitTestUtils {
     public static String toStr(CommitLogData data) {
         StringBuilder s = new StringBuilder();
         s.append(data.getHash().toStrHash()).append("|-");

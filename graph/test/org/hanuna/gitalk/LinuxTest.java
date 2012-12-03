@@ -22,7 +22,7 @@ public class LinuxTest {
 
         Timer t = new Timer("git run + commits model");
         GitLogParser parser = new GitLogParser(r);
-        ReadOnlyList<Commit> commits = parser.getFullModel();
+        ReadOnlyList<Commit> commits = parser.readAllCommits();
         t.print();
 
         t = new Timer("build graph model");

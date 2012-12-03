@@ -6,7 +6,7 @@ import org.junit.Test;
 /**
  * @author erokhins
  */
-public class HashTestBuild {
+public class HashBuildTests {
     public void runStringTest(String strHash) {
         Hash hash = Hash.build(strHash);
         Assert.assertEquals(strHash, hash.toStrHash());

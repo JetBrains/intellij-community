@@ -22,7 +22,6 @@ public class GitLogParser {
     private static final String regExp =
             String.format("([a-f0-9]+)%1$s((?:[a-f0-9]+)?(?:\\s[a-f0-9]+)*)%1$s(.*?)%1$s([0-9]*)%1$s(.*)", SEPARATOR);
     private static final Pattern pattern = Pattern.compile(regExp);
-    private static final int DEFAULT_FIRST_PART_SIZE = 5000;
 
     public static CommitLogData parseCommitData(String inputStr) {
         Matcher matcher = pattern.matcher(inputStr);
@@ -51,15 +50,8 @@ public class GitLogParser {
 
     private final BufferedReader input;
     private final CommitListBuilder builder = new CommitListBuilder();
-    private final int firstPartSize;
-    private int countLines = 0;
-
 
     public GitLogParser(Reader input) {
-        this(input, DEFAULT_FIRST_PART_SIZE);
-    }
-    public GitLogParser(Reader input, int firstPartSize) {
-        this.firstPartSize = firstPartSize;
         if (input instanceof BufferedReader) {
             this.input = (BufferedReader) input;
         } else  {
@@ -67,24 +59,17 @@ public class GitLogParser {
         }
     }
 
-    public ReadOnlyList<Commit> getFirstPart() throws IOException {
-        String line = null;
-        while (countLines < firstPartSize && (line = input.readLine()) != null) {
-            CommitLogData logData = parseCommitData(line);
-            builder.append(logData);
-            countLines++;
-        }
-        return builder.build(false);
+    public boolean allCommitsFound() {
+        return builder.allCommitsFound();
     }
 
-    public ReadOnlyList<Commit> getFullModel() throws IOException  {
-        String line = null;
+    public ReadOnlyList<Commit> readAllCommits() throws IOException  {
+        String line;
         while ((line = input.readLine()) != null) {
             CommitLogData logData = parseCommitData(line);
             builder.append(logData);
-            countLines++;
         }
-        return builder.build(true);
+        return builder.build();
     }
 
 }
