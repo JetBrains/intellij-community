@@ -626,7 +626,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
 
   public final void disposeRootFrame() {
     if (myProject2Frame.size() == 1) {
-      final IdeFrameImpl rootFrame = myProject2Frame.get(null);
+      final IdeFrameImpl rootFrame = myProject2Frame.remove(null);
       if (rootFrame != null) {
         // disposing last frame if quitting
         rootFrame.dispose();
