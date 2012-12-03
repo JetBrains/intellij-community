@@ -75,6 +75,15 @@ public class PyUtil {
     return node;
   }
 
+  public static ASTNode getPreviousNonWhitespace(ASTNode after) {
+    ASTNode node = after;
+    do {
+      node = node.getTreePrev();
+    }
+    while (isWhitespace(node));
+    return node;
+  }
+
   private static boolean isWhitespace(ASTNode node) {
     return node != null && node.getElementType().equals(TokenType.WHITE_SPACE);
   }

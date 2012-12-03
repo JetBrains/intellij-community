@@ -60,8 +60,10 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
           }
         }
       }
-      PyUtil.addListNode(this, param, beforeWhat, !isLast || params.length == 0, isLast,
-                         beforeWhat.getElementType() != PyTokenTypes.RPAR);
+      final ASTNode previous = PyUtil.getPreviousNonWhitespace(beforeWhat);
+      PyUtil.addListNode(this, param, beforeWhat, !isLast || params.length == 0 ||
+                                          previous.getElementType() == PyTokenTypes.COMMA, isLast,
+                                          beforeWhat.getElementType() != PyTokenTypes.RPAR);
     }
   }
 
