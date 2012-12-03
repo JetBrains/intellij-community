@@ -25,7 +25,6 @@ import com.siyeh.ipp.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.Transferable;
 
 public class CopyConcatenatedStringToClipboardIntention extends Intention {
 
@@ -49,13 +48,11 @@ public class CopyConcatenatedStringToClipboardIntention extends Intention {
     if (type == null || !type.equalsToText("java.lang.String")) {
       return;
     }
-    final StringBuilder text = new StringBuilder();
-    buildConcatenationText(concatenationExpression, text);
-    final Transferable contents = new StringSelection(text.toString());
-    CopyPasteManager.getInstance().setContents(contents);
+    final StringBuilder text = buildConcatenationText(concatenationExpression, new StringBuilder());
+    CopyPasteManager.getInstance().setContents(new StringSelection(text.toString()));
   }
 
-  private static void buildConcatenationText(PsiPolyadicExpression polyadicExpression, StringBuilder out) {
+  private static StringBuilder buildConcatenationText(PsiPolyadicExpression polyadicExpression, StringBuilder out) {
     for (PsiElement element : polyadicExpression.getChildren()) {
       if (element instanceof PsiExpression) {
         final PsiExpression expression = (PsiExpression)element;
@@ -67,9 +64,11 @@ public class CopyConcatenatedStringToClipboardIntention extends Intention {
           out.append(value.toString());
         }
       }
-      else if (element instanceof PsiWhiteSpace && element.getText().contains("\n") && out.charAt(out.length() - 1) != '\n') {
+      else if (element instanceof PsiWhiteSpace && element.getText().contains("\n") &&
+               (out.length() == 0 || out.charAt(out.length() - 1) != '\n')) {
         out.append('\n');
       }
     }
+    return out;
   }
 }
