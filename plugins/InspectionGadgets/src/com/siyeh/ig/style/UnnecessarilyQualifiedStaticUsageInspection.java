@@ -95,14 +95,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspection 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
-      if (element instanceof PsiJavaCodeReferenceElement) {
-        final PsiJavaCodeReferenceElement reference = (PsiJavaCodeReferenceElement)element;
-        final PsiElement qualifier = reference.getQualifier();
-        if (qualifier == null) {
-          return;
-        }
-        qualifier.delete();
-      }
+      element.delete();
     }
   }
 
@@ -116,10 +109,14 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspection 
     @Override
     public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
+      final PsiElement qualifier = reference.getQualifier();
+      if (qualifier == null) {
+        return;
+      }
       if (!isUnnecessarilyQualifiedAccess(reference)) {
         return;
       }
-      registerError(reference, ProblemHighlightType.LIKE_UNUSED_SYMBOL, reference);
+      registerError(qualifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL, reference);
     }
 
     @Override
@@ -140,7 +137,9 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspection 
         return false;
       }
       final PsiJavaCodeReferenceElement qualifier = (PsiJavaCodeReferenceElement)qualifierElement;
-      if (isGenericReference(referenceElement, qualifier)) return false;
+      if (isGenericReference(referenceElement, qualifier)) {
+        return false;
+      }
       final PsiElement target = referenceElement.resolve();
       if ((!(target instanceof PsiField) || m_ignoreStaticFieldAccesses) && (!(target instanceof PsiMethod) || m_ignoreStaticMethodCalls)) {
         return false;
@@ -174,8 +173,6 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspection 
         if (variable == null || !variable.equals(member)) {
           return false;
         }
-
-
         final TextRange referenceElementTextRange = referenceElement.getTextRange();
         if (referenceElementTextRange == null) {
           return false;
@@ -232,7 +229,6 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspection 
         return true;
       }
     }
-
     final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
     if (parameterList != null) {
       final PsiTypeElement[] typeParameterElements = parameterList.getTypeParameterElements();
