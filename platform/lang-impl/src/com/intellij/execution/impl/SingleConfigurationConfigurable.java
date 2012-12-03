@@ -194,7 +194,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
   public final void setNameText(final String name) {
     try {
-      myNameDocument.replace(0, myNameDocument.getLength(), name, null);
+      if (!myNameDocument.getText(0, myNameDocument.getLength()).equals(name)) {
+        myNameDocument.replace(0, myNameDocument.getLength(), name, null);
+      }
     }
     catch (BadLocationException e) {
       LOG.error(e);
