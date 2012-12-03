@@ -2,7 +2,7 @@
 class A {
   private String s;
 
-    public void setS(String s) {
+    void setS(String s) {
         this.s = s;
     }
 }

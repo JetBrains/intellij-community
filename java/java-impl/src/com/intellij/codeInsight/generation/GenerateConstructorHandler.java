@@ -219,7 +219,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
 
     PsiMethod constructor = factory.createConstructor(aClass.getName(), aClass);
-    String modifier = getConstructorModifier(aClass);
+    String modifier = PsiUtil.getMaximumModifierForMember(aClass);
     if (modifier != null) {
       PsiUtil.setModifierProperty(constructor, modifier, true);
     }
@@ -295,26 +295,6 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
 
     constructor = (PsiMethod)codeStyleManager.reformat(constructor);
     return constructor;
-  }
-
-  @PsiModifier.ModifierConstant
-  public static String getConstructorModifier(final PsiClass aClass) {
-    String modifier = PsiModifier.PUBLIC;
-
-    if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !aClass.isEnum()) {
-      modifier =  PsiModifier.PROTECTED;
-    }
-    else if (aClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
-      modifier = PsiModifier.PACKAGE_LOCAL;
-    }
-    else if (aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
-      modifier = PsiModifier.PRIVATE;
-    }
-    else if (aClass.isEnum()) {
-      modifier = PsiModifier.PRIVATE;
-    }
-
-    return modifier;
   }
 
   @Override

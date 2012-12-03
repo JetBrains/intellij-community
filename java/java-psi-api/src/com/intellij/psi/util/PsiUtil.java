@@ -702,6 +702,26 @@ public final class PsiUtil extends PsiUtilCore {
     return psiClass != null && psiClass.isAnnotationType();
   }
 
+  @PsiModifier.ModifierConstant
+  public static String getMaximumModifierForMember(final PsiClass aClass) {
+    String modifier = PsiModifier.PUBLIC;
+
+    if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !aClass.isEnum()) {
+      modifier =  PsiModifier.PROTECTED;
+    }
+    else if (aClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
+      modifier = PsiModifier.PACKAGE_LOCAL;
+    }
+    else if (aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
+      modifier = PsiModifier.PRIVATE;
+    }
+    else if (aClass.isEnum()) {
+      modifier = PsiModifier.PRIVATE;
+    }
+
+    return modifier;
+  }
+
   private static class TypeParameterIterator implements Iterator<PsiTypeParameter> {
     private int myIndex;
     private PsiTypeParameterListOwner myCurrentOwner;

@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -45,8 +46,20 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements E
 
   @Nullable
   private static PsiMethod createMethodIfNotExists(final PsiField field, final PsiMethod template) {
-    PsiMethod existing = field.getContainingClass().findMethodBySignature(template, false);
-    return existing == null ? template : null;
+    final PsiClass aClass = field.getContainingClass();
+    PsiMethod existing = aClass.findMethodBySignature(template, false);
+    if (existing == null) {
+      if (template != null) {
+        String modifier = PsiUtil.getMaximumModifierForMember(aClass);
+        if (modifier != null) {
+          PsiUtil.setModifierProperty(template, modifier, true);
+        }
+      }
+      return template;
+    }
+    else {
+      return null;
+    }
   }
 
   @Override
