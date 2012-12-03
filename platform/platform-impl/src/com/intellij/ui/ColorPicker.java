@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -77,14 +76,13 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   private final JComboBox myFormat = new JComboBox(new String[]{"RGB", "HSB"});
 
   public ColorPicker(@NotNull Disposable parent, @Nullable Color color, boolean enableOpacity) {
-    this(parent, color, true, enableOpacity, null);
+    this(parent, color, true, enableOpacity, new ColorPickerListener[0]);
   }
 
   private ColorPicker(Disposable parent,
                       @Nullable Color color,
                       boolean restoreColors,
-                      boolean enableOpacity,
-                      @Nullable PsiElement element) {
+                      boolean enableOpacity, ColorPickerListener[] listeners) {
     myUpdateQueue = new Alarm(Alarm.ThreadToUse.SWING_THREAD, parent);
     myRed = createColorField(false);
     myGreen = createColorField(false);
@@ -95,7 +93,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
     myColorWheelPanel = new ColorWheelPanel(this, enableOpacity);
 
-    myExternalListeners = ColorPickerListenerFactory.createListenersFor(element);
+    myExternalListeners = listeners;
     myFormat.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -316,8 +314,8 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
                                  String caption,
                                  Color preselectedColor,
                                  boolean enableOpacity,
-                                 @Nullable PsiElement element) {
-    final ColorPickerDialog dialog = new ColorPickerDialog(parent, caption, preselectedColor, enableOpacity, element);
+                                 ColorPickerListener[] listeners) {
+    final ColorPickerDialog dialog = new ColorPickerDialog(parent, caption, preselectedColor, enableOpacity, listeners);
     dialog.show();
     if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
       return dialog.getColor();
@@ -866,7 +864,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   static class ColorPickerDialog extends DialogWrapper {
 
     private final Color myPreselectedColor;
-    @Nullable private final PsiElement myElement;
+    private final ColorPickerListener[] myListeners;
     private ColorPicker myColorPicker;
     private final boolean myEnableOpacity;
     private ColorPipette myPicker;
@@ -875,12 +873,12 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
                              String caption,
                              @Nullable Color preselectedColor,
                              boolean enableOpacity,
-                             @Nullable PsiElement element) {
+                             ColorPickerListener[] listeners) {
       super(parent, true);
+      myListeners = listeners;
       setTitle(caption);
       myPreselectedColor = preselectedColor;
       myEnableOpacity = enableOpacity;
-      myElement = element;
       setResizable(false);
       setOKButtonText("Choose");
       init();
@@ -901,7 +899,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     @Override
     protected JComponent createCenterPanel() {
       if (myColorPicker == null) {
-        myColorPicker = new ColorPicker(myDisposable, myPreselectedColor, true, myEnableOpacity, myElement);
+        myColorPicker = new ColorPicker(myDisposable, myPreselectedColor, true, myEnableOpacity, myListeners);
       }
 
       return myColorPicker;

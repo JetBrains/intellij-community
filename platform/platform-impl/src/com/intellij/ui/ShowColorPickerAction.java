@@ -33,8 +33,9 @@ public class ShowColorPickerAction extends AnAction {
     final Project project = e.getProject();
     JComponent root = rootComponent(project);
     if (root != null) {
+      ColorPickerListener[] listeners = ColorPickerListenerFactory.createListenersFor(e.getData(LangDataKeys.PSI_ELEMENT));
       final ColorPicker.ColorPickerDialog picker =
-        new ColorPicker.ColorPickerDialog(root, "Color Picker", null, true, e.getData(LangDataKeys.PSI_ELEMENT));
+        new ColorPicker.ColorPickerDialog(root, "Color Picker", null, true, listeners);
       picker.setModal(false);
       picker.show();
     }

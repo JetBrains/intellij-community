@@ -22,11 +22,14 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.LookupValueWithPriority;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.ui.ColorChooser;
+import com.intellij.ui.ColorPickerListener;
+import com.intellij.ui.ColorPickerListenerFactory;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,14 +63,14 @@ public class UserColorLookup extends LookupElementDecorator<LookupElement> {
 
     context.getDocument().deleteString(context.getStartOffset(), context.getTailOffset());
 
-    Color color = ColorChooser
-      .chooseColor(WindowManager.getInstance().suggestParentWindow(context.getProject()), XmlBundle.message("choose.color.dialog.title"),
-                   myColorAtCaret, true, element);
+    ColorPickerListener[] listeners = ColorPickerListenerFactory.createListenersFor(element);
+    Color color = ColorChooser.chooseColor(WindowManager.getInstance().suggestParentWindow(context.getProject()),
+                                           XmlBundle.message("choose.color.dialog.title"), myColorAtCaret, true, listeners);
 
     if (color != null) {
       String s = Integer.toHexString(color.getRGB() & 0xFFFFFF);
       if (s.length() != 6) {
-        StringBuffer buf = new StringBuffer(s);
+        StringBuilder buf = new StringBuilder(s);
         for (int i = 6 - buf.length(); i > 0; --i) {
           buf.insert(0, '0');
         }
