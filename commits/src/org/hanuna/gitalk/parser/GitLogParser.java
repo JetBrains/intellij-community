@@ -4,7 +4,7 @@ import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.Hash;
 import org.hanuna.gitalk.commitmodel.builder.CommitListBuilder;
 import org.hanuna.gitalk.commitmodel.builder.CommitLogData;
-import org.hanuna.gitalk.common.readonly.ReadOnlyList;
+import org.hanuna.gitalk.common.ReadOnlyList;
 
 import java.io.BufferedReader;
 import java.io.IOException;

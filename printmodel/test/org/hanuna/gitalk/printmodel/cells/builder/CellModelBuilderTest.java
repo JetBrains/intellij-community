@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.printmodel.cells.builder;
 
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.common.readonly.ReadOnlyList;
+import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.graph.Branch;
 import org.hanuna.gitalk.graph.builder.GraphModelBuilder;
 import org.hanuna.gitalk.parser.GitLogParser;

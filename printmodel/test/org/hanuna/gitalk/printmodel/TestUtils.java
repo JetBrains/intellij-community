@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.printmodel;
 
-import org.hanuna.gitalk.common.readonly.ReadOnlyList;
+import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.graph.Edge;
 import org.hanuna.gitalk.graph.Node;
 import org.hanuna.gitalk.printmodel.cells.*;

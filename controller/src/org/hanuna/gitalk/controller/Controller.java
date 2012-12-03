@@ -4,7 +4,7 @@ import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitData;
 import org.hanuna.gitalk.common.Interval;
 import org.hanuna.gitalk.common.generatemodel.Replace;
-import org.hanuna.gitalk.common.readonly.ReadOnlyList;
+import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.controller.branchvisibility.HideShowBranch;
 import org.hanuna.gitalk.controller.branchvisibility.NodeInterval;
 import org.hanuna.gitalk.graph.Edge;

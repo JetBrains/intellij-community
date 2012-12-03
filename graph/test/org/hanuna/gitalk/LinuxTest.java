@@ -2,7 +2,7 @@ package org.hanuna.gitalk;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.Timer;
-import org.hanuna.gitalk.common.readonly.ReadOnlyList;
+import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.graph.GraphModel;
 import org.hanuna.gitalk.graph.builder.GraphModelBuilder;
 import org.hanuna.gitalk.parser.GitLogParser;

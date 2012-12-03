@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.graph.builder;
 
 import org.hanuna.gitalk.graph.Node;
-import org.hanuna.gitalk.common.readonly.ReadOnlyList;
+import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.graph.NodeRow;
 import org.jetbrains.annotations.NotNull;
 

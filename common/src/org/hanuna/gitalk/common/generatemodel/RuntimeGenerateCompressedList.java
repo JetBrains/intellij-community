@@ -3,7 +3,7 @@ package org.hanuna.gitalk.common.generatemodel;
 import org.hanuna.gitalk.common.CacheGet;
 import org.hanuna.gitalk.common.Get;
 import org.hanuna.gitalk.common.generatemodel.generator.Generator;
-import org.hanuna.gitalk.common.readonly.ReadOnlyList;
+import org.hanuna.gitalk.common.ReadOnlyList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.AbstractList;

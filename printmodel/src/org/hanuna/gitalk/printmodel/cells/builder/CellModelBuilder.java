@@ -4,7 +4,7 @@ import org.hanuna.gitalk.common.generatemodel.CompressedList;
 import org.hanuna.gitalk.common.generatemodel.Replace;
 import org.hanuna.gitalk.common.generatemodel.RuntimeGenerateCompressedList;
 import org.hanuna.gitalk.common.generatemodel.generator.Generator;
-import org.hanuna.gitalk.common.readonly.ReadOnlyList;
+import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.graph.GraphModel;
 import org.hanuna.gitalk.graph.Node;
 import org.hanuna.gitalk.graph.NodeRow;

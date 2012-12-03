@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.common.generatemodel;
 
-import org.hanuna.gitalk.common.readonly.ReadOnlyList;
+import org.hanuna.gitalk.common.ReadOnlyList;
 import org.jetbrains.annotations.NotNull;
 
 /**
