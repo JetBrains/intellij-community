@@ -119,7 +119,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
           }
         }
       }
-      appendTypeString(buffer, type, PsiSubstitutor.EMPTY);
+      appendTypeString(buffer, type, originalElement);
       buffer.append(" ");
       buffer.append(refExpr.getReferenceName());
       return buffer.toString();
@@ -142,7 +142,8 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
 
       PsiSubstitutor substitutor = calcSubstitutor(originalElement);
       if (!method.isConstructor()) {
-        appendTypeString(buffer, PsiUtil.getSmartReturnType(method), substitutor);
+        final PsiType substituted = substitutor.substitute(PsiUtil.getSmartReturnType(method));
+        appendTypeString(buffer, substituted, originalElement);
         buffer.append(" ");
       }
       buffer.append(method.getName()).append(" ");
@@ -156,7 +157,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
         }
         else {
           PsiType type = parameter.getType();
-          appendTypeString(buffer, type, substitutor);
+          appendTypeString(buffer, substitutor.substitute(type), originalElement);
           buffer.append(" ");
           buffer.append(parameter.getName());
         }
@@ -166,7 +167,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       if (referencedTypes.length > 0) {
         buffer.append("\nthrows ");
         for (PsiClassType referencedType : referencedTypes) {
-          appendTypeString(buffer, referencedType, PsiSubstitutor.EMPTY);
+          appendTypeString(buffer, referencedType, originalElement);
           buffer.append(", ");
         }
         buffer.delete(buffer.length() - 2, buffer.length());
@@ -190,7 +191,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       generateModifiers(buffer, variable);
     }
     final PsiType type = variable instanceof GrVariable ? ((GrVariable)variable).getDeclaredType() : variable.getType();
-    appendTypeString(buffer, type, calcSubstitutor(originalElement));
+    appendTypeString(buffer, calcSubstitutor(originalElement).substitute(type), originalElement);
     buffer.append(" ");
     buffer.append(variable.getName());
 
@@ -221,7 +222,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
 
     if (inferredType != null) {
       buffer.append("[inferred type] ");
-      appendTypeString(buffer, inferredType, PsiSubstitutor.EMPTY);
+      appendTypeString(buffer, inferredType, originalElement);
     }
     else {
       buffer.append("[cannot infer type]");
@@ -274,7 +275,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
 
           for (int j = 0; j < refs.length; j++) {
             if (j > 0) buffer.append(" & ");
-            appendTypeString(buffer, refs[j], PsiSubstitutor.EMPTY);
+            appendTypeString(buffer, refs[j], aClass);
           }
         }
       }
@@ -291,7 +292,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       else {
         for (int i = 0; i < refs.length; i++) {
           if (i > 0) buffer.append(", ");
-          appendTypeString(buffer, refs[i], PsiSubstitutor.EMPTY);
+          appendTypeString(buffer, refs[i], aClass);
         }
       }
     }
@@ -301,7 +302,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       buffer.append("\nimplements ");
       for (int i = 0; i < refs.length; i++) {
         if (i > 0) buffer.append(", ");
-        appendTypeString(buffer, refs[i], PsiSubstitutor.EMPTY);
+        appendTypeString(buffer, refs[i], aClass);
 
       }
     }
@@ -310,9 +311,9 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   }
 
 
-  private static void appendTypeString(StringBuilder buffer, PsiType type, PsiSubstitutor substitutor) {
+  private static void appendTypeString(StringBuilder buffer, final PsiType type, PsiElement context) {
     if (type != null) {
-      buffer.append(StringUtil.escapeXml(substitutor.substitute(type).getCanonicalText()));
+      JavaDocInfoGenerator.generateType(buffer, type, context);
     }
     else {
       buffer.append(GrModifier.DEF);
@@ -360,13 +361,17 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
 
     if (element instanceof GrVariable &&
         ((GrVariable)element).getTypeElementGroovy() == null &&
-        ((GrVariable)element).getTypeGroovy() != null &&
         standard != null) {
       final String truncated = StringUtil.trimEnd(standard, BODY_HTML);
 
       StringBuilder buffer = new StringBuilder(truncated);
-      buffer.append("<p> [inferred type] ");
-      JavaDocInfoGenerator.generateType(buffer, ((GrVariable)element).getTypeGroovy(), element);
+      buffer.append("<p>");
+      if (originalElement != null) {
+        appendInferredType(originalElement, (GrVariable)element, buffer);
+      }
+      else if (element.getParent() instanceof GrVariableDeclaration) {
+        appendInferredType(element.getParent(), (GrVariable)element, buffer);
+      }
 
       if (!truncated.equals(standard)) {
         buffer.append(BODY_HTML);
