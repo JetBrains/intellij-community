@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
@@ -5,7 +20,6 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.testFramework.InspectionTestCase;
 
 /**
@@ -25,108 +39,92 @@ public class UnusedDeclarationTest extends InspectionTestCase {
     myTool = new UnusedDeclarationInspection();
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest("deadCode/" + getTestName(true), myTool);
   }
 
-  public void testSCR6067() throws Exception {
-    boolean old = myTool.ADD_NONJAVA_TO_ENTRIES;
+  public void testSCR6067() {
     myTool.ADD_NONJAVA_TO_ENTRIES = false;
     doTest();
-    myTool.ADD_NONJAVA_TO_ENTRIES = old;
   }
 
-  public void testsingleton() throws Exception {
-    boolean old = myTool.ADD_NONJAVA_TO_ENTRIES;
+  public void testSingleton() {
     myTool.ADD_NONJAVA_TO_ENTRIES = false;
     doTest();
-    myTool.ADD_NONJAVA_TO_ENTRIES = old;
   }
 
-  public void testSCR9690() throws Exception {
-    boolean old = myTool.ADD_NONJAVA_TO_ENTRIES;
+  public void testSCR9690() {
     myTool.ADD_NONJAVA_TO_ENTRIES = false;
     doTest();
-    myTool.ADD_NONJAVA_TO_ENTRIES = old;
   }
 
-  public void testFormUsage() throws Exception {
-    boolean old = myTool.ADD_NONJAVA_TO_ENTRIES;
+  public void testFormUsage() {
     myTool.ADD_NONJAVA_TO_ENTRIES = false;
     doTest();
-    myTool.ADD_NONJAVA_TO_ENTRIES = old;
   }
 
-  public void testSserializable() throws Exception {
+  public void testSerializable() {
     doTest();
   }
 
-  public void testpackageLocal() throws Exception {
+  public void testPackageLocal() {
     doTest();
   }
 
-  public void testreachableFromMain() throws Exception{
-    boolean old = myTool.ADD_MAINS_TO_ENTRIES;
+  public void testReachableFromMain() {
     myTool.ADD_MAINS_TO_ENTRIES = true;
     doTest();
-    myTool.ADD_MAINS_TO_ENTRIES = old;
   }
 
-  public void testmutableCalls() throws Exception{
+  public void testMutableCalls() {
     doTest();
   }
 
-  public void teststaticMethods() throws Exception{
+  public void testStaticMethods() {
     doTest();
   }
 
-  //-------------- suppressed ----------------
-
-  private void doTest15() throws Exception {
-    final JavaPsiFacade facade = getJavaFacade();
-    final LanguageLevel effectiveLanguageLevel = LanguageLevelProjectExtension.getInstance(facade.getProject()).getLanguageLevel();
-    LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
-    doTest();
-    LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(effectiveLanguageLevel);
-  }
-
-  public void testsuppress() throws Exception{
-    doTest15();
-  }
-
-  public void testsuppress1() throws Exception {
-    doTest15();
-  }
-
-  public void testsuppress2() throws Exception {
-    doTest15();
-  }
-
-  public void testchainOfSuppressions() throws Exception{
-    doTest15();
-  }
-
-  public void testreachableFromXml() throws Exception {
+  public void testSuppress() {
+    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     doTest();
   }
 
-  public void testchainOfCalls() throws Exception {
+  public void testSuppress1() {
+    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     doTest();
   }
 
-  public void testreachableFromFieldInitializer() throws Exception {
+  public void testSuppress2() {
+    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     doTest();
   }
 
-  public void testreachableFromFieldArrayInitializer() throws Exception {
+  public void testChainOfSuppressions() {
+    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     doTest();
   }
 
-  public void testconstructorReachableFromFieldInitializer() throws Exception {
+  public void testReachableFromXml() {
     doTest();
   }
 
-  public void testadditionalAnnotations() throws Exception {
+  public void testChainOfCalls() {
+    doTest();
+  }
+
+  public void testReachableFromFieldInitializer() {
+    doTest();
+  }
+
+  public void testReachableFromFieldArrayInitializer() {
+    doTest();
+  }
+
+  public void testConstructorReachableFromFieldInitializer() {
+    doTest();
+  }
+
+  public void testAdditionalAnnotations() {
     final String testAnnotation = "Annotated";
     EntryPointsManagerImpl.getInstance(getProject()).ADDITIONAL_ANNOTATIONS.add(testAnnotation);
     try {
@@ -137,55 +135,56 @@ public class UnusedDeclarationTest extends InspectionTestCase {
     }
   }
 
-  public void testannotationInterface() throws Exception {
-    doTest15();
-  }
-
-  public void testjunitEntryPoint() throws Exception {
+  public void testAnnotationInterface() {
+    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     doTest();
   }
 
-  public void testjunitAbstractClassWithInheritor() throws Exception {
+  public void testJunitEntryPoint() {
     doTest();
   }
 
-  public void testjunitAbstractClassWithoutInheritor() throws Exception {
+  public void testJunitAbstractClassWithInheritor() {
+    doTest();
+  }
+
+  public void testJunitAbstractClassWithoutInheritor() {
     doTest();
   }
   
-  public void testjunitEntryPointCustomRunWith() throws Exception {
+  public void testJunitEntryPointCustomRunWith() {
     doTest();
   }
 
-  public void testconstructorCalls() throws Exception {
+  public void testConstructorCalls() {
     doTest();
   }
 
-  public void testconstructorCalls1() throws Exception {
+  public void testConstructorCalls1() {
     doTest();
   }
 
-  public void testnonJavaReferences() throws Exception {
+  public void testNonJavaReferences() {
     doTest();
   }
 
-  public void testenumInstantiation() throws Exception {
+  public void testEnumInstantiation() {
     doTest();
   }
 
-  public void testenumValues() throws Exception {
+  public void testEnumValues() {
     doTest();
   }
 
-  public void testUsagesInAnonymous() throws Exception {
+  public void testUsagesInAnonymous() {
     doTest();
   }
 
-  public void testAbstractClassWithSerializableSubclasses() throws Exception {
+  public void testAbstractClassWithSerializableSubclasses() {
     doTest();
   }
 
-  public void testclassLiteralRef() throws Exception {
+  public void testClassLiteralRef() {
     doTest();
   }
 }
