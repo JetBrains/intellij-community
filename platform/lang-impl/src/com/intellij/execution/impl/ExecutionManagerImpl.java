@@ -73,16 +73,20 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
     myProject = project;
   }
 
+  @Override
   public void projectOpened() {
     ((RunContentManagerImpl)getContentManager()).init();
   }
 
+  @Override
   public void projectClosed() {
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
     for (Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity : myRunningConfigurations) {
       Disposer.dispose(trinity.first);
@@ -90,6 +94,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
     myRunningConfigurations.clear();
   }
 
+  @Override
   public RunContentManager getContentManager() {
     if (myContentManager == null) {
       myContentManager = new RunContentManagerImpl(myProject, DockManager.getInstance(myProject));
@@ -98,6 +103,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
     return myContentManager;
   }
 
+  @Override
   public ProcessHandler[] getRunningProcesses() {
     final List<ProcessHandler> handlers = new ArrayList<ProcessHandler>();
     for (RunContentDescriptor descriptor : getContentManager().getAllDescriptors()) {
@@ -109,9 +115,10 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
     return handlers.toArray(new ProcessHandler[handlers.size()]);
   }
 
+  @Override
   public void compileAndRun(@NotNull final Runnable startRunnable,
                             @NotNull final ExecutionEnvironment env,
-                            final @Nullable RunProfileState state,
+                            @Nullable final RunProfileState state,
                             @Nullable final Runnable onCancelRunnable) {
     RunProfile profile = env.getRunProfile();
 
@@ -130,6 +137,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
       if (!activeTasks.isEmpty()) {
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           /** @noinspection SSBasedInspection*/
+          @Override
           public void run() {
             for (BeforeRunTask task : activeTasks) {
               BeforeRunTaskProvider<BeforeRunTask> provider = BeforeRunTaskProvider.getProvider(myProject, task.getProviderId());
@@ -185,6 +193,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
     project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStartScheduled(executor.getId(), env);
 
     Runnable startRunnable = new Runnable() {
+      @Override
       public void run() {
         if (project.isDisposed()) return;
         boolean started = false;
@@ -230,6 +239,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
     }
     else {
       compileAndRun(startRunnable, env, state, new Runnable() {
+        @Override
         public void run() {
           if (!project.isDisposed()) {
             project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processNotStarted(executor.getId(), env);
@@ -336,13 +346,13 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
         return CommonBundle.message("dialog.options.do.not.show");
       }
     };
-    return (Messages.OK == Messages.showOkCancelDialog(
+    return Messages.showOkCancelDialog(
       project,
       ExecutionBundle.message("rerun.singleton.confirmation.message", configName, instancesCount),
-      ExecutionBundle.message("rerun.confirmation.title", configName),
-      CommonBundle.message("button.ok"),
+      ExecutionBundle.message("process.is.running.dialog.title", configName),
+      ExecutionBundle.message("rerun.confirmation.button.text"),
       CommonBundle.message("button.cancel"),
-      Messages.getQuestionIcon(), option));
+      Messages.getQuestionIcon(), option) == Messages.OK;
   }
 
   private void forgetRunContentDescriptor(RunContentDescriptor runContentDescriptor) {
@@ -393,6 +403,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
     }
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "ExecutionManager";
