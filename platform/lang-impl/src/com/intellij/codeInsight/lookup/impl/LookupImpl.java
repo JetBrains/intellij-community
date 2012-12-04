@@ -17,10 +17,7 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.completion.CodeCompletionFeatures;
-import com.intellij.codeInsight.completion.CompletionLookupArranger;
-import com.intellij.codeInsight.completion.PrefixMatcher;
-import com.intellij.codeInsight.completion.ShowHideIntentionIconLookupAction;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
@@ -150,6 +147,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private int myMaximumHeight = Integer.MAX_VALUE;
   private boolean myFinishing;
   private boolean myUpdating;
+  private CompletionPreview myPreview;
   private final ModalityState myModalityState;
 
   public LookupImpl(Project project, Editor editor, @NotNull LookupArranger arranger) {
@@ -728,6 +726,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   public boolean performGuardedChange(Runnable change, @Nullable final String debug) {
     checkValid();
     assert !myChangeGuard : "already in change";
+    if (myPreview != null) {
+      myPreview.uninstallPreview();
+      assert myPreview == null;
+    }
 
     myChangeGuard = true;
     boolean result;
@@ -1466,5 +1468,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     synchronized (myList) {
       return myPresentableArranger.getRelevanceStrings();
     }
+  }
+
+  public CompletionPreview getPreview() {
+    return myPreview;
+  }
+
+  public void setPreview(CompletionPreview preview) {
+    myPreview = preview;
   }
 }

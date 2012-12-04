@@ -67,7 +67,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -118,6 +117,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   };
   private volatile int myCount;
+  private volatile boolean myShowPreview;
   private final ConcurrentHashMap<LookupElement, CompletionSorterImpl> myItemSorters = new ConcurrentHashMap<LookupElement, CompletionSorterImpl>(
     ContainerUtil.<LookupElement>identityStrategy());
   private final PropertyChangeListener myLookupManagerListener;
@@ -170,7 +170,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   void duringCompletion(CompletionInitializationContext initContext) {
     if (isAutopopupCompletion()) {
       if (shouldFocusLookup(myParameters)) {
-        myLookup.setFocused(true);
+        if (Registry.is("ide.completion.show.preview")) {
+          myShowPreview = true;
+          myLookup.setFocused(false);
+        } else {
+          myLookup.setFocused(true);
+        }
       } else if (FeatureUsageTracker.getInstance().isToBeAdvertisedInLookup(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ENTER, getProject())) {
         myLookup.addAdvertisement("Press " +
                                       CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_ALWAYS) +
@@ -327,6 +332,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
       if (!myLookup.showLookup()) {
         return false;
+      }
+      if (myShowPreview) {
+        new CompletionPreview(myLookup).installPreview();
       }
       justShown = true;
     }
