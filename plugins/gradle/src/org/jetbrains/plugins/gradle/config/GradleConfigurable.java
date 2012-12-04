@@ -15,15 +15,20 @@
  */
 package org.jetbrains.plugins.gradle.config;
 
-import com.intellij.ide.util.projectWizard.NamePathComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -34,12 +39,28 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * Allows to configure gradle settings.
+ * <p/>
+ * Basically, it has two modes:
+ * <pre>
+ * <ul>
+ *   <li>no information about linked gradle project is available (e.g. gradle settings are opened from welcome screen);</li>
+ *   <li>information about linked gradle project is available;</li>
+ * </ul>
+ * </pre>
+ * The difference is in how we handle
+ * <a href="http://www.gradle.org/docs/current/userguide/userguide_single.html#gradle_wrapper">gradle wrapper</a> settings - we
+ * represent settings like 'use gradle wrapper whenever possible' at the former case and ask to explicitly define whether gradle
+ * wrapper or particular local distribution should be used at the latest one.
+ * 
  * @author peter
  */
 public class GradleConfigurable implements SearchableConfigurable, Configurable.NoScroll {
@@ -50,24 +71,35 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
 
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  private final GradleInstallationManager myLibraryManager;
-  private final Project                   myProject;
+  @NotNull private final GradleInstallationManager myInstallationManager;
 
-  private GradleHomeSettingType myGradleHomeSettingType = GradleHomeSettingType.UNKNOWN;
+  @Nullable private final Project myProject;
 
-  private JComponent        myComponent;
-  private NamePathComponent myGradleHomeComponent;
-  private boolean           myPathManuallyModified;
-  private boolean           myShowBalloonIfNecessary;
+  @NotNull private GradleHomeSettingType myGradleHomeSettingType = GradleHomeSettingType.UNKNOWN;
+
+  @NotNull private final JLabel myLinkedProjectLabel = new JBLabel(GradleBundle.message("gradle.import.label.select.project"));
+  @NotNull private final JLabel myGradleHomeLabel    = new JBLabel(GradleBundle.message("gradle.import.text.home.path"));
+
+  @NotNull private TextFieldWithBrowseButton myLinkedGradleProjectPathField;
+  @NotNull private TextFieldWithBrowseButton myGradleHomePathField;
+  @NotNull private JBCheckBox                myPreferWrapperWheneverPossibleCheckBox;
+  @NotNull private JBRadioButton             myUseWrapperButton;
+  @NotNull private JBRadioButton             myUseLocalDistributionButton;
+
+  @Nullable private JComponent myComponent;
+
+  private boolean myAlwaysShowLinkedProjectControls;
+  private boolean myShowBalloonIfNecessary;
+  private boolean myGradleHomeModifiedByUser;
 
   public GradleConfigurable(@Nullable Project project) {
     this(project, ServiceManager.getService(GradleInstallationManager.class));
   }
 
   public GradleConfigurable(@Nullable Project project, @NotNull GradleInstallationManager gradleInstallationManager) {
-    myLibraryManager = gradleInstallationManager;
+    myInstallationManager = gradleInstallationManager;
     myProject = project;
-    doCreateComponent();
+    buildContent();
   }
 
   @NotNull
@@ -87,15 +119,75 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     return GradleBundle.message("gradle.name");
   }
 
+  @NotNull
+  public TextFieldWithBrowseButton getGradleHomePathField() {
+    return myGradleHomePathField;
+  }
+
+  @SuppressWarnings("ConstantConditions")
   @Override
   public JComponent createComponent() {
     if (myComponent == null) {
-      doCreateComponent();
+      buildContent();
     }
     return myComponent;
   }
 
-  private void doCreateComponent() {
+  @Nullable
+  public String getLinkedProjectPath() {
+    return myLinkedGradleProjectPathField.getText();
+  }
+
+  @Nullable
+  public String getGradleHomePath() {
+    return myGradleHomePathField.getText();
+  }
+
+  public boolean isPreferLocalInstallationToWrapper() {
+    if (myPreferWrapperWheneverPossibleCheckBox.isVisible()) {
+      return !myPreferWrapperWheneverPossibleCheckBox.isSelected();
+    }
+    else {
+      return myUseLocalDistributionButton.isSelected();
+    }
+  }
+
+  public void setLinkedGradleProjectPath(@NotNull String path) {
+    myLinkedGradleProjectPathField.setText(path);
+  }
+
+  public void setAlwaysShowLinkedProjectControls(boolean alwaysShowLinkedProjectControls) {
+    myAlwaysShowLinkedProjectControls = alwaysShowLinkedProjectControls;
+  }
+
+  private void buildContent() {
+    initContentPanel();
+    initLinkedGradleProjectPathControl();
+    initWrapperVsLocalControls();
+    initGradleHome();
+    assert myComponent != null;
+
+    GridBag pathLabelConstraints = new GridBag().anchor(GridBagConstraints.WEST).weightx(0);
+    GridBag pathConstraints = new GridBag().weightx(1).coverLine().fillCellHorizontally().anchor(GridBagConstraints.WEST)
+      .insets(myPreferWrapperWheneverPossibleCheckBox.getInsets());
+    myComponent.add(myLinkedProjectLabel, pathLabelConstraints);
+    myComponent.add(myLinkedGradleProjectPathField, pathConstraints);
+
+    // Define 'prefer to use gradle wrapper' as a general recommendation. Use a checkbox for that.
+    GridBag constraints = new GridBag().coverLine().anchor(GridBagConstraints.WEST);
+    myComponent.add(myPreferWrapperWheneverPossibleCheckBox, constraints);
+    
+    // Provide radio buttons if gradle wrapper can be used for particular project.
+    myComponent.add(myUseWrapperButton, constraints);
+    myComponent.add(myUseLocalDistributionButton, constraints);
+
+    myComponent.add(myGradleHomeLabel, pathLabelConstraints);
+    myComponent.add(myGradleHomePathField, pathConstraints);
+
+    myComponent.add(Box.createVerticalGlue(), new GridBag().weightx(1).weighty(1).fillCell().coverLine());
+  }
+
+  private void initContentPanel() {
     myComponent = new JPanel(new GridBagLayout()) {
       @Override
       public void paint(Graphics g) {
@@ -106,9 +198,13 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
         myShowBalloonIfNecessary = false;
         MessageType messageType = null;
         switch (myGradleHomeSettingType) {
-          case DEDUCED: messageType = MessageType.INFO; break;
+          case DEDUCED:
+            messageType = MessageType.INFO;
+            break;
           case EXPLICIT_INCORRECT:
-          case UNKNOWN: messageType = MessageType.ERROR; break;
+          case UNKNOWN:
+            messageType = MessageType.ERROR;
+            break;
           default:
         }
         if (messageType != null) {
@@ -122,7 +218,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
         if (!"ancestor".equals(evt.getPropertyName())) {
           return;
         }
-        
+
         // Configure the balloon to show on initial configurable drawing.
         myShowBalloonIfNecessary = evt.getNewValue() != null && evt.getOldValue() == null;
 
@@ -132,50 +228,118 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
         }
       }
     });
-    GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridwidth = GridBagConstraints.REMAINDER;
-    constraints.weightx = 1;
-    constraints.weighty = 1;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    constraints.anchor = GridBagConstraints.NORTH;
+  }
 
-    myGradleHomeComponent = new NamePathComponent(
-      "", GradleBundle.message("gradle.import.text.home.path"), GradleBundle.message("gradle.import.text.home.path"), "",
-      false,
-      false
+  private void initLinkedGradleProjectPathControl() {
+    myLinkedGradleProjectPathField = new TextFieldWithBrowseButton();
+    myLinkedGradleProjectPathField.addBrowseFolderListener(
+      "",
+      GradleBundle.message("gradle.import.label.select.project"),
+      myProject, GradleUtil.getGradleProjectFileChooserDescriptor()
     );
-    myGradleHomeComponent.getPathComponent().getDocument().addDocumentListener(new DocumentListener() {
+    myLinkedGradleProjectPathField.getTextField().getDocument().addDocumentListener(new DocumentListener() {
+      @Override
+      public void insertUpdate(DocumentEvent e) {
+        onLinkedProjectPathChange();
+      }
+
+      @Override
+      public void removeUpdate(DocumentEvent e) {
+        onLinkedProjectPathChange();
+      }
+
+      @Override
+      public void changedUpdate(DocumentEvent e) {
+        onLinkedProjectPathChange();
+      }
+    });
+  }
+
+  private void onLinkedProjectPathChange() {
+    String linkedProjectPath = myLinkedGradleProjectPathField.getText();
+    if (StringUtil.isEmpty(linkedProjectPath) || !GradleUtil.isGradleWrapperDefined(linkedProjectPath)) {
+      myUseWrapperButton.setEnabled(false);
+      myUseWrapperButton.setText(GradleBundle.message("gradle.config.text.use.wrapper.disabled"));
+    }
+    else {
+      myUseWrapperButton.setEnabled(true);
+      myUseWrapperButton.setText(GradleBundle.message("gradle.config.text.use.wrapper"));
+    }
+  }
+
+  private void initWrapperVsLocalControls() {
+    myPreferWrapperWheneverPossibleCheckBox = new JBCheckBox(GradleBundle.message("gradle.config.text.prefer.wrapper.when.possible"), true);
+
+    ActionListener listener = new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myGradleHomePathField.setEnabled(e.getSource() == myUseLocalDistributionButton);
+      }
+    };
+    myUseWrapperButton = new JBRadioButton(GradleBundle.message("gradle.config.text.use.wrapper"), true);
+    myUseWrapperButton.addActionListener(listener);
+    myUseLocalDistributionButton = new JBRadioButton(GradleBundle.message("gradle.config.text.use.local.distribution"));
+    myUseLocalDistributionButton.addActionListener(listener);
+    ButtonGroup group = new ButtonGroup();
+    group.add(myUseWrapperButton);
+    group.add(myUseLocalDistributionButton);
+  }
+
+  private void initGradleHome() {
+    myGradleHomePathField = new TextFieldWithBrowseButton();
+    myGradleHomePathField.addBrowseFolderListener(
+      "",
+      GradleBundle.message("gradle.import.title.select.project"),
+      null,
+      GradleUtil.getGradleHomeFileChooserDescriptor()
+    );
+    myGradleHomePathField.getTextField().getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void insertUpdate(DocumentEvent e) {
         useNormalColorForPath();
-        myPathManuallyModified = true;
       }
+
       @Override
       public void removeUpdate(DocumentEvent e) {
         useNormalColorForPath();
-        myPathManuallyModified = true;
       }
+
       @Override
       public void changedUpdate(DocumentEvent e) {
       }
     });
-    myGradleHomeComponent.setNameComponentVisible(false);
-    myComponent.add(myGradleHomeComponent, constraints);
-    myComponent.add(Box.createVerticalGlue());
   }
 
   @Override
   public boolean isModified() {
-    if (myProject == null || !myPathManuallyModified) {
+    if (myProject == null) {
       return false;
     }
-    String newPath = myGradleHomeComponent.getPath();
-    String oldPath = GradleSettings.getInstance(myProject).getGradleHome();
-    boolean modified = newPath == null ? oldPath == null : !newPath.equals(oldPath);
-    if (modified) {
-      useNormalColorForPath();
+
+    GradleSettings settings = GradleSettings.getInstance(myProject);
+
+    if (!Comparing.equal(myLinkedGradleProjectPathField.getText(), settings.getLinkedProjectPath())) {
+      return true;
     }
-    return modified;
+    
+    boolean preferLocalToWrapper = settings.isPreferLocalInstallationToWrapper();
+    if (myPreferWrapperWheneverPossibleCheckBox.isVisible()) {
+      if (myPreferWrapperWheneverPossibleCheckBox.isSelected() == preferLocalToWrapper) {
+        return true;
+      }
+    }
+    else if (myUseWrapperButton.isSelected() == preferLocalToWrapper) {
+      return true;
+    }
+
+    if (!Comparing.equal(myGradleHomePathField.getText(), settings.getGradleHome())) {
+      if (myGradleHomeModifiedByUser) {
+        useNormalColorForPath();
+      }
+      return true;
+    }
+    
+    return false;
   }
 
   @Override
@@ -183,22 +347,40 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     if (myProject == null) {
       return;
     }
-    useNormalColorForPath();
-    String path = myGradleHomeComponent.getPath();
-    GradleSettings.applyGradleHome(path, myProject);
 
-    if (isValidGradleHome(path)) {
+    Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+    
+    if (!myProject.isDefault()) {
+      GradleSettings.applyLinkedProjectPath(myLinkedGradleProjectPathField.getText(), myProject);
+    }
+    
+    boolean preferLocalToWrapper;
+    if (myPreferWrapperWheneverPossibleCheckBox.isVisible()) {
+      preferLocalToWrapper = !myPreferWrapperWheneverPossibleCheckBox.isSelected();
+    }
+    else {
+      preferLocalToWrapper = myUseLocalDistributionButton.isSelected();
+    }
+    GradleSettings.applyPreferLocalInstallationToWrapper(preferLocalToWrapper, myProject);
+    if (!myProject.isDefault()) {
+      GradleSettings.applyPreferLocalInstallationToWrapper(preferLocalToWrapper, defaultProject);
+    }
+    
+    String gradleHomePath = myGradleHomePathField.getText();
+    GradleSettings.applyGradleHome(gradleHomePath, myProject);
+
+    if (isValidGradleHome(gradleHomePath)) {
       myGradleHomeSettingType = GradleHomeSettingType.EXPLICIT_CORRECT;
       // There is a possible case that user defines gradle home for particular open project. We want to apply that value
       // to the default project as well if it's still non-defined.
-      Project defaultProject = ProjectManager.getInstance().getDefaultProject();
       if (defaultProject != myProject && !isValidGradleHome(GradleSettings.getInstance(defaultProject).getGradleHome())) {
-        GradleSettings.applyGradleHome(path, defaultProject);
+        GradleSettings.applyGradleHome(gradleHomePath, defaultProject);
       }
       return;
     }
 
-    if (StringUtil.isEmpty(path)) {
+    useNormalColorForPath();
+    if (StringUtil.isEmpty(gradleHomePath)) {
       myGradleHomeSettingType = GradleHomeSettingType.UNKNOWN;
     }
     else {
@@ -212,7 +394,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
       return false;
     }
     assert path != null;
-    return myLibraryManager.isGradleSdkHome(new File(path));
+    return myInstallationManager.isGradleSdkHome(new File(path));
   }
   
   @Override
@@ -220,23 +402,66 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     if (myProject == null) {
       return;
     }
+    
+    // Process gradle wrapper/local distribution settings.
+    // There are the following possible cases:
+    //   1. Default project or non-default project with no linked gradle project - 'use gradle wrapper whenever possible' check box
+    //      should be shown;
+    //   2. Non-default project with linked gradle project:
+    //      2.1. Gradle wrapper is configured for the target project - radio buttons on whether to use wrapper or particular local gradle
+    //           distribution should be show;
+    //      2.2. Gradle wrapper is not configured for the target project - radio buttons should be shown and 
+    //           'use gradle wrapper' option should be disabled;
     useNormalColorForPath();
-    myPathManuallyModified = false;
-    String valueToUse = GradleSettings.getInstance(myProject).getGradleHome();
-    if (StringUtil.isEmpty(valueToUse)) {
-      valueToUse = GradleSettings.getInstance(ProjectManager.getInstance().getDefaultProject()).getGradleHome();
+    GradleSettings settings = GradleSettings.getInstance(myProject);
+    String linkedProjectPath = myLinkedGradleProjectPathField.getText();
+    if (StringUtil.isEmpty(linkedProjectPath)) {
+      linkedProjectPath = settings.getLinkedProjectPath();
     }
-    if (!StringUtil.isEmpty(valueToUse)) {
-      myGradleHomeSettingType = myLibraryManager.isGradleSdkHome(new File(valueToUse)) ?
-                                GradleHomeSettingType.EXPLICIT_CORRECT :
-                                GradleHomeSettingType.EXPLICIT_INCORRECT;
-      if (myGradleHomeSettingType == GradleHomeSettingType.EXPLICIT_INCORRECT) {
-        new DelayedBalloonInfo(MessageType.ERROR, myGradleHomeSettingType, 0).run();
+    myLinkedProjectLabel.setVisible(myAlwaysShowLinkedProjectControls || !myProject.isDefault());
+    myLinkedGradleProjectPathField.setVisible(myAlwaysShowLinkedProjectControls || !myProject.isDefault());
+    if (linkedProjectPath != null) {
+      myLinkedGradleProjectPathField.setText(linkedProjectPath);
+    }
+    
+    myPreferWrapperWheneverPossibleCheckBox.setVisible(!myAlwaysShowLinkedProjectControls && myProject.isDefault());
+    myPreferWrapperWheneverPossibleCheckBox.setSelected(!settings.isPreferLocalInstallationToWrapper());
+    myUseWrapperButton.setVisible(myAlwaysShowLinkedProjectControls || linkedProjectPath != null);
+    myUseLocalDistributionButton.setVisible(myAlwaysShowLinkedProjectControls || linkedProjectPath != null);
+    if (myAlwaysShowLinkedProjectControls && linkedProjectPath == null) {
+      myUseWrapperButton.setEnabled(false);
+      myUseLocalDistributionButton.setSelected(true);
+    }
+    else if (linkedProjectPath != null) {
+      if (GradleUtil.isGradleWrapperDefined(linkedProjectPath)) {
+        myUseWrapperButton.setEnabled(true);
+        myUseWrapperButton.setText(GradleBundle.message("gradle.config.text.use.wrapper"));
+        if (settings.isPreferLocalInstallationToWrapper()) {
+          myUseLocalDistributionButton.setSelected(true);
+          myGradleHomePathField.setEnabled(true);
+        }
+        else {
+          myUseWrapperButton.setSelected(true);
+          myGradleHomePathField.setEnabled(false);
+        }
       }
       else {
-        myAlarm.cancelAllRequests();
+        myUseWrapperButton.setText(GradleBundle.message("gradle.config.text.use.wrapper.disabled"));
+        myUseWrapperButton.setEnabled(false);
+        myUseLocalDistributionButton.setSelected(true);
       }
-      myGradleHomeComponent.setPath(valueToUse);
+    }
+    
+    String localDistributionPath = settings.getGradleHome();
+    if (!StringUtil.isEmpty(localDistributionPath)) {
+      myGradleHomeSettingType = myInstallationManager.isGradleSdkHome(new File(localDistributionPath)) ?
+                                GradleHomeSettingType.EXPLICIT_CORRECT :
+                                GradleHomeSettingType.EXPLICIT_INCORRECT;
+      myAlarm.cancelAllRequests();
+      if (myGradleHomeSettingType == GradleHomeSettingType.EXPLICIT_INCORRECT && settings.isPreferLocalInstallationToWrapper()) {
+        new DelayedBalloonInfo(MessageType.ERROR, myGradleHomeSettingType, 0).run();
+      }
+      myGradleHomePathField.setText(localDistributionPath);
       return;
     }
     myGradleHomeSettingType = GradleHomeSettingType.UNKNOWN;
@@ -244,32 +469,34 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
   }
 
   private void useNormalColorForPath() {
-    myGradleHomeComponent.getPathComponent().setForeground(UIManager.getColor("TextField.foreground"));
+    myGradleHomePathField.getTextField().setForeground(UIManager.getColor("TextField.foreground"));
+    myGradleHomeModifiedByUser = true;
   }
 
   /**
    * Updates GUI of the gradle configurable in order to show deduced path to gradle (if possible).
    */
   private void deduceGradleHomeIfPossible() {
-    File gradleHome = myLibraryManager.getGradleHome(myProject);
+    File gradleHome = myInstallationManager.getGradleHome(myProject);
     if (gradleHome == null) {
       new DelayedBalloonInfo(MessageType.WARNING, GradleHomeSettingType.UNKNOWN).run();
       return;
     }
     myGradleHomeSettingType = GradleHomeSettingType.DEDUCED;
     new DelayedBalloonInfo(MessageType.INFO, GradleHomeSettingType.DEDUCED).run();
-    if (myGradleHomeComponent != null) {
-      myGradleHomeComponent.setPath(gradleHome.getPath());
-      myGradleHomeComponent.getPathComponent().setForeground(UIManager.getColor("TextField.inactiveForeground"));
-      myPathManuallyModified = false;
-    }
+    myGradleHomePathField.setText(gradleHome.getPath());
+    myGradleHomePathField.getTextField().setForeground(UIManager.getColor("TextField.inactiveForeground"));
+    myGradleHomeModifiedByUser = false;
   }
 
+  @SuppressWarnings("ConstantConditions")
   @Override
   public void disposeUIResources() {
     myComponent = null;
-    myGradleHomeComponent = null;
-    myPathManuallyModified = false;
+    myGradleHomePathField = null;
+    myPreferWrapperWheneverPossibleCheckBox = null;
+    myUseWrapperButton = null;
+    myUseLocalDistributionButton = null;
   }
 
   @NotNull
@@ -277,21 +504,10 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     return HELP_TOPIC;
   }
 
-  /**
-   * @return UI component that manages path to the local gradle distribution to use
-   */
-  @NotNull
-  public NamePathComponent getGradleHomeComponent() {
-    if (myGradleHomeComponent == null) {
-      createComponent();
-    }
-    return myGradleHomeComponent;
-  }
-
   @SuppressWarnings("UseOfArchaicSystemPropertyAccessors")
   @NotNull
   public GradleHomeSettingType getCurrentGradleHomeSettingType() {
-    String path = myGradleHomeComponent.getPath();
+    String path = myGradleHomePathField.getText();
     if (GradleEnvironment.DEBUG_GRADLE_HOME_PROCESSING) {
       GradleLog.LOG.info(String.format("Checking 'gradle home' status. Manually entered value is '%s'", path));
     }
@@ -299,8 +515,8 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
       return GradleHomeSettingType.UNKNOWN;
     }
     if (isModified()) {
-      return myLibraryManager.isGradleSdkHome(new File(path)) ? GradleHomeSettingType.EXPLICIT_CORRECT
-                                                              : GradleHomeSettingType.EXPLICIT_INCORRECT;
+      return myInstallationManager.isGradleSdkHome(new File(path)) ? GradleHomeSettingType.EXPLICIT_CORRECT
+                                                                   : GradleHomeSettingType.EXPLICIT_INCORRECT;
     }
     return myGradleHomeSettingType;
   }
@@ -328,16 +544,11 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
         myAlarm.addRequest(this, diff);
         return;
       }
-      if (myGradleHomeComponent == null) {
-        myAlarm.cancelAllRequests();
-        myAlarm.addRequest(this, 200);
-        return;
-      }
-      if (!myGradleHomeComponent.getPathComponent().isShowing()) {
+      if (!myGradleHomePathField.isShowing()) {
         // Don't schedule the balloon if the configurable is hidden.
         return;
       }
-      GradleUtil.showBalloon(myGradleHomeComponent.getPathComponent(), myMessageType, myText);
+      GradleUtil.showBalloon(myGradleHomePathField, myMessageType, myText);
     }
   }
 }

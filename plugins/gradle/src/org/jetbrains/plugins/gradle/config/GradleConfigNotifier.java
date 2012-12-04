@@ -34,4 +34,14 @@ public interface GradleConfigNotifier {
    * @param newPath  new path (if any)
    */
   void onLinkedProjectPathChange(@Nullable String oldPath, @Nullable String newPath);
+
+  /**
+   * Is expected to be invoked when 'prefer local gradle distribution to wrapper' setting is changed (generally this
+   * switches tooling api to different gradle version).
+   * <p/>
+   * <b>Note:</b> this callback is executed <b>after</b> the actual config change.
+   * 
+   * @param preferLocalToWrapper    current value
+   */
+  void onPreferLocalGradleDistributionToWrapperChange(boolean preferLocalToWrapper);
 }

@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.ui.RichTextControlBuilder;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -57,8 +58,12 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
 
     MessageBusConnection connection = project.getMessageBus().connect(project);
     connection.subscribe(GradleConfigNotifier.TOPIC, new GradleConfigNotifierAdapter() {
-      @Override
-      public void onLinkedProjectPathChange(@Nullable String oldPath, @Nullable String newPath) {
+      @Override public void onLinkedProjectPathChange(@Nullable String oldPath, @Nullable String newPath) { refreshAll(); }
+      @Override public void onPreferLocalGradleDistributionToWrapperChange(boolean preferLocalToWrapper) { refreshAll(); }
+      @Override public void onGradleHomeChange(@Nullable String oldPath, @Nullable String newPath) { refreshAll(); }
+
+      private void refreshAll() {
+        GradleUtil.refreshProject(myProject);
         update();
       }
     });
