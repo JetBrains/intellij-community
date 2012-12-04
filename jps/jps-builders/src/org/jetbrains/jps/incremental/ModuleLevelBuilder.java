@@ -36,6 +36,7 @@ public abstract class ModuleLevelBuilder extends Builder {
 
     void registerCompiledClass(BuildTarget<?> target, CompiledClass compiled) throws IOException;
 
+    Collection<CompiledClass> getTargetCompiledClasses(BuildTarget<?> target);
     @NotNull
     Map<String, CompiledClass> getCompiledClasses();
 

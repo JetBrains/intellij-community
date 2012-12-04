@@ -28,12 +28,18 @@ import java.awt.event.MouseEvent;
  * @author max
  */
 public class CaptionPanel extends JPanel {
-  private static final Color CNT_COLOR = Gray._240;
-  private static final Color BND_COLOR = Gray._240;
+  private static final Color CNT_COLOR = new JBColor(Gray._240, Gray._90);
+  private static final Color BND_COLOR = new JBColor(Gray._240, Gray._90);
 
-  public static final Color CNT_ACTIVE_COLOR = Gray._202;
+  public static final Color CNT_ACTIVE_COLOR = new JBColor(Gray._202, Gray._55);
   public static final Color CNT_ACTIVE_BORDER_COLOR = UIUtil.isUnderDarcula() ? UIUtil.getBorderColor() : CNT_ACTIVE_COLOR;
-  public static final Color BND_ACTIVE_COLOR = Gray._239;
+  public static final Color BND_ACTIVE_COLOR = new JBColor(Gray._239, Gray._90);
+
+  private static final JBColor TOP_FLICK_ACTIVE = new JBColor(Color.white, Gray._110);
+  private static final JBColor TOP_FLICK_PASSIVE = new JBColor(Color.white, BND_COLOR);
+
+  private static final JBColor BOTTOM_FLICK_ACTIVE = new JBColor(Color.gray, Gray._35);
+  private static final JBColor BOTTOM_FLICK_PASSIVE = new JBColor(Color.lightGray, Gray._75);
 
   private boolean myActive = false;
   private ActiveComponent myButtonComponent;
@@ -49,21 +55,24 @@ public class CaptionPanel extends JPanel {
     super.paintComponent(g);
     final Graphics2D g2d = (Graphics2D) g;
 
-    if (UIUtil.isUnderDarcula() && !UIUtil.findComponentsOfType(this, JCheckBox.class).isEmpty()) {
+    /*
+    if (UIUtil.isUnderDarcula() && UIUtil.findComponentsOfType(this, JCheckBox.class).isEmpty()) {
       paintUnderDarcula(g2d);
       return;
     }
+    */
+
     if (myActive) {
-      g.setColor(Color.white);
+      g.setColor(TOP_FLICK_ACTIVE);
       g.drawLine(0, 0, getWidth(), 0);
-      g.setColor(Color.gray);
+      g.setColor(BOTTOM_FLICK_ACTIVE);
       g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
       g2d.setPaint(new GradientPaint(0, 0, BND_ACTIVE_COLOR, 0, getHeight(), CNT_ACTIVE_COLOR));
     }
     else {
-      g.setColor(Color.white);
+      g.setColor(TOP_FLICK_PASSIVE);
       g.drawLine(0, 0, getWidth(), 0);
-      g.setColor(Color.lightGray);
+      g.setColor(BOTTOM_FLICK_PASSIVE);
       g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
       g2d.setPaint(new GradientPaint(0, 0, BND_COLOR, 0, getHeight(), CNT_COLOR));
     }

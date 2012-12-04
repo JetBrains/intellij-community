@@ -18,8 +18,10 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.GraphicsUtil;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -84,16 +86,16 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
     g.translate(x, y);
 
     //setup AA for lines
-    final GraphicsConfig config = new GraphicsConfig(g);
-    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+    final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+    g.setPaint(new GradientPaint(0, 0, ColorUtil.shift(c.getBackground(), 1.5), 0, c.getHeight(), ColorUtil.shift(c.getBackground(), 1.2)));
+    g.fillOval(0, 2, w - 2, h - 2);
 
     if (b.hasFocus()) {
       int sysOffX = SystemInfo.isMac ? 0 : 1;
       int sysOffY = SystemInfo.isMac ? 0 : -1;
       DarculaUIUtil.paintFocusOval(g, x-6  + sysOffX, y-3 + sysOffY, w-3, h-3);
     } else {
-      g.setPaint(new GradientPaint(w / 2, 1, Gray._180.withAlpha(90), w / 2, h, Gray._125.withAlpha(90)));
+      g.setPaint(new GradientPaint(w / 2, 1, Gray._160.withAlpha(90), w / 2, h, Gray._100.withAlpha(90)));
       g.drawOval(0, 2, w - 2, h - 2);
 
       g.setPaint(Gray._40.withAlpha(200));

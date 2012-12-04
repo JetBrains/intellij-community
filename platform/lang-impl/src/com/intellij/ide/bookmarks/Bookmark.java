@@ -103,8 +103,10 @@ public class Bookmark {
     final Document document = getDocument();
     if (document == null) return;
     MarkupModelEx markup = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, true);
-    int startOffset = markup.getDocument().getLineStartOffset(line);
-    int endOffset = markup.getDocument().getLineEndOffset(line);
+    final Document markupDocument = markup.getDocument();
+    if (markupDocument.getLineCount() <= line) return;
+    final int startOffset = markupDocument.getLineStartOffset(line);
+    final int endOffset = markupDocument.getLineEndOffset(line);
     final RangeHighlighterEx[] found = new RangeHighlighterEx[1];
     markup.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
       @Override

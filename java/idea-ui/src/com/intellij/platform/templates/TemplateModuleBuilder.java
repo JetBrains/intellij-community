@@ -15,6 +15,9 @@
  */
 package com.intellij.platform.templates;
 
+import com.intellij.execution.RunManager;
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.ide.util.newProjectWizard.modes.ImportImlMode;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
@@ -84,15 +87,16 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     if (myProjectMode) {
       final Module[] modules = ModuleManager.getInstance(project).getModules();
       if (modules.length > 0) {
+        final Module module = modules[0];
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
             try {
-              Module module = modules[0];
               setupModule(module);
               ModifiableModuleModel modifiableModuleModel = ModuleManager.getInstance(project).getModifiableModel();
               modifiableModuleModel.renameModule(module, module.getProject().getName());
               modifiableModuleModel.commit();
+              fixModuleName(module);
             }
             catch (ConfigurationException e) {
               LOG.error(e);
@@ -102,6 +106,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
             }
           }
         });
+        return module;
       }
       return null;
     }
@@ -125,7 +130,17 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     if (myProjectMode) {
       moduleModel.renameModule(module, module.getProject().getName());
     }
+    fixModuleName(module);
     return module;
+  }
+
+  private static void fixModuleName(Module module) {
+    RunConfiguration[] configurations = RunManager.getInstance(module.getProject()).getAllConfigurations();
+    for (RunConfiguration configuration : configurations) {
+      if (configuration instanceof ModuleBasedConfiguration) {
+        ((ModuleBasedConfiguration)configuration).getConfigurationModule().setModule(module);
+      }
+    }
   }
 
   private void unzip(String path, boolean moduleMode) {

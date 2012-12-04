@@ -260,7 +260,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
               else {
                 frame = WindowManager.getInstance().findVisibleFrame();
               }
-              frame.requestFocus();
+              if (frame != null) frame.requestFocus();
             }
           });
         }

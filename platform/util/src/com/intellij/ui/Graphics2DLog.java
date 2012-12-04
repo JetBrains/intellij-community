@@ -292,7 +292,7 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public void setColor(Color c) {
-    log(String.format("setColor(%s)", toHex(c)));
+    log(String.format("setColor(%s) alpha=%d", toHex(c), c.getAlpha()));
     myPeer.setColor(c);
   }
 
@@ -390,11 +390,13 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public void drawRoundRect(int x, int y, int width, int height, int arcWidth, int arcHeight) {
+    log(String.format("drawRoundRect(%d, %d, %d, %d, %d, %d)", x, y, width, height, arcWidth, arcHeight));
     myPeer.drawRoundRect(x, y, width, height, arcWidth, arcHeight);
   }
 
   @Override
   public void fillRoundRect(int x, int y, int width, int height, int arcWidth, int arcHeight) {
+    log(String.format("fillRoundRect(%d, %d, %d, %d, %d, %d)", x, y, width, height, arcWidth, arcHeight));
     myPeer.fillRoundRect(x, y, width, height, arcWidth, arcHeight);
   }
 
