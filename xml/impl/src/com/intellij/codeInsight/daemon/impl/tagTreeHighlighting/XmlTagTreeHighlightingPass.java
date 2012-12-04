@@ -180,11 +180,11 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
         continue;
       }
 
-      if (pair.first != null) {
+      if (pair.first != null && !pair.first.isEmpty()) {
         highlightInfos.add(createHighlightInfo(color, pair.first));
       }
 
-      if (pair.second != null) {
+      if (pair.second != null && !pair.second.isEmpty()) {
         highlightInfos.add(createHighlightInfo(color, pair.second));
       }
 
@@ -192,7 +192,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
       final int end = pair.second != null ? pair.second.getEndOffset() : pair.first.getEndOffset();
 
       final Color lineMarkerColor = colorsForLineMarkers[i];
-      if (lineMarkerColor != null) {
+      if (lineMarkerColor != null && start != end) {
         final RangeHighlighter highlighter = createHighlighter(markupModel, new TextRange(start, end), lineMarkerColor);
         newHighlighters.add(highlighter);
       }
