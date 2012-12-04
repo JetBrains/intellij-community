@@ -89,6 +89,8 @@ public final class DarculaLaf extends BasicLookAndFeel {
       initIdeaDefaults(defaults);
       patchStyledEditorKit();
       patchComboBox(metalDefaults, defaults);
+      defaults.remove("Spinner.arrowButtonBorder");
+      defaults.put("Spinner.arrowButtonSize", new Dimension(16, 5));
       return defaults;
     }
     catch (Exception ignore) {

@@ -36,7 +36,6 @@ import java.awt.event.FocusEvent;
  * @author Konstantin Bulenkov
  */
 public class DarculaSpinnerUI extends BasicSpinnerUI {
-
   private FocusAdapter myFocusListener = new FocusAdapter() {
     @Override
     public void focusGained(FocusEvent e) {
@@ -74,15 +73,19 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
 
   @Override
   public void paint(Graphics g, JComponent c) {
+    super.paint(g, c);
+    final Border border = spinner.getBorder();
+    if (border != null) {
+      border.paintBorder(c, g, 0, 0, spinner.getWidth(), spinner.getHeight());
+    }
   }
 
   @Override
   protected Component createPreviousButton() {
     JButton button = createArrow(SwingConstants.SOUTH);
-    button.setName("Spinner.nextButton");
+    button.setName("Spinner.previousButton");
     button.setBorder(new EmptyBorder(1, 1, 1, 1));
-
-    installNextButtonListeners(button);
+    installPreviousButtonListeners(button);
     return button;
   }
 
@@ -91,26 +94,48 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
     JButton button = createArrow(SwingConstants.NORTH);
     button.setName("Spinner.nextButton");
     button.setBorder(new EmptyBorder(1, 1, 1, 1));
-
     installNextButtonListeners(button);
     return button;
   }
 
-  private static JButton createArrow(@MagicConstant(intValues = {SwingConstants.NORTH, SwingConstants.SOUTH}) int direction) {
+
+  @Override
+  protected LayoutManager createLayout() {
+    return new LayoutManagerDelegate(super.createLayout()) {
+      @Override
+      public void layoutContainer(Container parent) {
+        super.layoutContainer(parent);
+        final JComponent editor = spinner.getEditor();
+        if (editor != null) {
+          final Rectangle bounds = editor.getBounds();
+          editor.setBounds(bounds.x, bounds.y, bounds.width - 6, bounds.height);
+        }
+      }
+    };
+  }
+
+  private JButton createArrow(@MagicConstant(intValues = {SwingConstants.NORTH, SwingConstants.SOUTH}) int direction) {
     final Color shadow = UIUtil.getPanelBackground();
     final Color darkShadow = UIUtil.getLabelForeground();
     JButton b = new BasicArrowButton(direction, shadow, shadow, darkShadow, shadow) {
       @Override
+      public void paint(Graphics g) {
+        int y = direction == NORTH ? getHeight() - 6 : 2;
+        paintTriangle(g, 0, y, 0, direction, DarculaSpinnerUI.this.spinner.isEnabled());
+      }
+
+      @Override
+      public boolean isOpaque() {
+        return false;
+      }
+
+      @Override
       public void paintTriangle(Graphics g, int x, int y, int size, int direction, boolean isEnabled) {
         final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
         int mid;
-        x = 5;
-        y = 2;
-        final int w = getWidth() - 1 - x - 2;
-        final int h = getHeight() - 1 - 1;
-        mid = (w + 1) / 2;
-        g.setColor(UIUtil.getPanelBackground());
-        g.fillRect(1, 1, getWidth() - 1, getHeight() - 1);
+        final int w = 8;
+        final int h = 6;
+        mid = w  / 2;
 
         g.setColor(isEnabled ? darkShadow : darkShadow.darker());
 
@@ -140,5 +165,38 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
     }
     b.setInheritsPopupMenu(true);
     return b;
+  }
+
+  static class LayoutManagerDelegate implements LayoutManager {
+    protected final LayoutManager myDelegate;
+
+    LayoutManagerDelegate(LayoutManager delegate) {
+      myDelegate = delegate;
+    }
+
+    @Override
+    public void addLayoutComponent(String name, Component comp) {
+      myDelegate.addLayoutComponent(name, comp);
+    }
+
+    @Override
+    public void removeLayoutComponent(Component comp) {
+      myDelegate.removeLayoutComponent(comp);
+    }
+
+    @Override
+    public Dimension preferredLayoutSize(Container parent) {
+      return myDelegate.preferredLayoutSize(parent);
+    }
+
+    @Override
+    public Dimension minimumLayoutSize(Container parent) {
+      return myDelegate.minimumLayoutSize(parent);
+    }
+
+    @Override
+    public void layoutContainer(Container parent) {
+      myDelegate.layoutContainer(parent);
+    }
   }
 }

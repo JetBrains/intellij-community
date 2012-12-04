@@ -51,7 +51,12 @@ public class DarculaSpinnerBorder implements Border, UIResource {
     g.setColor(UIUtil.getTextFieldBackground());
     g.fillRoundRect(x1, y1, width1, height1, 5, 5);
     g.setColor(UIUtil.getPanelBackground());
-    g.fillRect(x1 + width1 - 17, y1, 17, height1);
+    if (editor != null) {
+      final int off = editor.getBounds().x + editor.getWidth() + ((JSpinner)c).getInsets().left;
+      g.fillRect(off, y1, 17, height1);
+      g.setColor(Gray._100);
+      g.drawLine(off, y1, off, height1+2);
+    }
 
     if (!c.isEnabled()) {
       ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));

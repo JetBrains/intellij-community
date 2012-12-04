@@ -17,7 +17,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
-import com.intellij.ui.ColorUtil;
+import com.intellij.ui.Gray;
 
 import javax.swing.border.Border;
 import javax.swing.plaf.InsetsUIResource;
@@ -42,7 +42,6 @@ public class DarculaTextBorder implements Border, UIResource {
   @Override
   public void paintBorder(Component c, Graphics g2, int x, int y, int width, int height) {
     Graphics2D g = ((Graphics2D)g2);
-    g.setColor(ColorUtil.fromHex("737373"));
     final GraphicsConfig config = new GraphicsConfig(g);
     g.translate(x, y);
 
@@ -50,7 +49,7 @@ public class DarculaTextBorder implements Border, UIResource {
       DarculaUIUtil.paintFocusRing(g, 2, 2, width-4, height-4);
     } else {
       boolean editable = !(c instanceof JTextComponent) || (((JTextComponent)c).isEditable());
-      g.setColor(c.isEnabled() && editable ? new Color(0x939393) : new Color(0x535353));
+      g.setColor(c.isEnabled() && editable ? Gray._100 : new Color(0x535353));
       g.drawRect(1, 1, width - 2, height - 2);
     }
     g.translate(-x, -y);
