@@ -9,7 +9,10 @@
 #import <JavaVM/jni.h>
 
 
-@interface Launcher : NSObject
+@interface Launcher : NSObject {
+    int argc;
+    char **argv;
+}
 - (id)initWithArgc:(int)anArgc argv:(char **)anArgv;
 
 

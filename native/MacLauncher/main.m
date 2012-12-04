@@ -25,16 +25,17 @@ static void makeSameStackSize(NSThread *thread) {
 }
 
 static void launchInNewThread(Launcher *launcher) {
-    NSThread *thread = [[NSThread alloc] initWithTarget:launcher selector:@selector(launch) object:nil];
+    NSThread *thread = [[[NSThread alloc] initWithTarget:launcher selector:@selector(launch) object:nil] autorelease];
     makeSameStackSize(thread);
     [thread start];
 }
 
 int main(int argc, char *argv[]) {
-    @autoreleasepool {
-        launchInNewThread([[Launcher alloc] initWithArgc:argc argv:argv]);
-        parkRunLoop();
-    }
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
+    launchInNewThread([[[Launcher alloc] initWithArgc:argc argv:argv] autorelease]);
+    parkRunLoop();
+
+    [pool release];
     return 0;
 }
