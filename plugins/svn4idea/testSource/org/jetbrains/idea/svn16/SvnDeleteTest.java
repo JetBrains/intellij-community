@@ -64,4 +64,20 @@ public class SvnDeleteTest extends Svn16TestCase {
     final Collection<Change> changes = lists.get(0).getChanges();
     Assert.assertEquals(2, changes.size());
   }
+
+  @Test
+  public void testDeletePackageWhenVcsRemoveDisabled() throws Exception {
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    disableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
+    VirtualFile dir = createDirInCommand(myWorkingCopyDir, "child");
+    createFileInCommand(dir, "a.txt", "content");
+
+    verify(runSvn("status"), "A child", "A child" + File.separatorChar + "a.txt");
+    checkin();
+
+    final File wasFile = new File(dir.getPath());
+    deleteFileInCommand(dir);
+    verify(runSvn("status"), "! child");
+    Assert.assertTrue(! wasFile.exists());
+  }
 }
