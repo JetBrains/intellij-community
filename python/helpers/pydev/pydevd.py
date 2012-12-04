@@ -297,7 +297,7 @@ class PyDB:
 
     def haveAliveThreads(self):
         for t in threadingEnumerate():
-            if not isinstance(t, PyDBDaemonThread) and t.isAlive():
+            if not isinstance(t, PyDBDaemonThread) and t.isAlive() and not t.isDaemon():
                 return True
 
         return False
