@@ -72,7 +72,7 @@ public abstract class AbstractExternalFilter {
   @NonNls private static final String BR = "<BR>";
   @NonNls private static final String DT = "<DT>";
   private static final Pattern CHARSET_META_PATTERN =
-    Pattern.compile("<meta.*content\\s*=\".*[;|\\s]*charset=\\s*(.*)\\s*[;|\\s]*\">", Pattern.CASE_INSENSITIVE);
+    Pattern.compile("<meta[^>]+\\s*charset=\"?([\\w\\-]*)\\s*\">", Pattern.CASE_INSENSITIVE);
   private static final String FIELD_SUMMARY = "<!-- =========== FIELD SUMMARY =========== -->";
   private static final String CLASS_SUMMARY = "<div class=\"summary\">";
   private final HttpConfigurable myHttpConfigurable = HttpConfigurable.getInstance();
@@ -173,11 +173,38 @@ public abstract class AbstractExternalFilter {
     }
     httpConfigurable.prepareURL(url.toString());
     final URLConnection urlConnection = url.openConnection();
-    final String contentEncoding = urlConnection.getContentEncoding();
+    final String contentEncoding = guessEncoding(url);
     final InputStream inputStream =
       pi != null ? UrlConnectionUtil.getConnectionInputStreamWithException(urlConnection, pi) : urlConnection.getInputStream();
     //noinspection IOResourceOpenedButNotSafelyClosed
     return contentEncoding != null ? new MyReader(inputStream, contentEncoding) : new MyReader(inputStream);
+  }
+
+  private static String guessEncoding(URL url) {
+    String result = null;
+    BufferedReader reader = null;
+    try {
+      URLConnection connection = url.openConnection();
+      result = connection.getContentEncoding();
+      if (result != null) return result;
+      //noinspection IOResourceOpenedButNotSafelyClosed
+      reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+      for(String htmlLine = reader.readLine();htmlLine != null; htmlLine = reader.readLine()) {
+        result = parseContentEncoding(htmlLine);
+        if (result != null) {
+          break;
+        }
+      }
+    }
+    catch (IOException ignored) {
+    } finally {
+      if (reader != null)
+        try {
+          reader.close();
+        }
+        catch (IOException ignored) {}
+    }
+    return result;
   }
 
   @Nullable
@@ -261,7 +288,8 @@ public abstract class AbstractExternalFilter {
     while (read != null && !startSection.matcher(StringUtil.toUpperCase(read)).find());
 
     if (input instanceof MyReader && contentEncoding != null) {
-      if (contentEncoding != null && !contentEncoding.equals("UTF-8") && !contentEncoding.equals(((MyReader)input).getEncoding())) { //restart page parsing with correct encoding
+      if (!contentEncoding.equalsIgnoreCase("UTF-8") &&
+          !contentEncoding.equals(((MyReader)input).getEncoding())) { //restart page parsing with correct encoding
         Reader stream;
         try {
           stream = getReaderByUrl(surl, myHttpConfigurable, new ProgressIndicatorBase());
@@ -367,9 +395,11 @@ public abstract class AbstractExternalFilter {
   }
 
   @Nullable
-  private static String parseContentEncoding(String charset) {
-    final Matcher matcher = CHARSET_META_PATTERN.matcher(charset);
-    if (matcher.matches()) {
+  static String parseContentEncoding(@NotNull String htmlLine) {
+    if (!htmlLine.contains("charset"))
+      return null;
+    final Matcher matcher = CHARSET_META_PATTERN.matcher(htmlLine);
+    if (matcher.find()) {
       return matcher.group(1);
     }
     return null;
