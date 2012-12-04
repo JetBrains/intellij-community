@@ -215,10 +215,7 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> impl
     final GrVariable[] variables = getVariables();
     if (variables.length == 0) return null;
 
-    String canonicalText = getTypeText(variables[0]);
-    if (canonicalText == null) return null;
-
-    final PsiElement resolved = variables.length > 1 ? this : variables[0];
+    final PsiElement resolved = variables[0];
     return new PsiReferenceBase<GrVariableDeclaration>(this, range, true) {
       @Nullable
       @Override

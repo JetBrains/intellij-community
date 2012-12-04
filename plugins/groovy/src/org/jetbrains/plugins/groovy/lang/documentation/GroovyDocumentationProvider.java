@@ -94,15 +94,15 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     if (element instanceof GrVariable || element instanceof GrImplicitVariable) {
       StringBuilder buffer = new StringBuilder();
       PsiVariable variable = (PsiVariable)element;
-      generateVariableInfo(originalElement, buffer, variable);
-      return buffer.toString();
-    }
-    else if (element instanceof GrVariableDeclaration) {
-      StringBuilder buffer = new StringBuilder();
 
-      for (GrVariable var :((GrVariableDeclaration)element).getVariables()) {
-        generateVariableInfo(originalElement, buffer, var);
-        buffer.append('\n');
+      if (originalElement instanceof GrVariableDeclaration && ((GrVariableDeclaration)originalElement).getVariables().length > 1) {
+        for (GrVariable var :((GrVariableDeclaration)originalElement).getVariables()) {
+          generateVariableInfo(originalElement, buffer, var);
+          buffer.append("\n\n");
+        }
+      }
+      else {
+        generateVariableInfo(originalElement, buffer, variable);
       }
       return buffer.toString();
     }
@@ -197,25 +197,28 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     if (variable instanceof GrVariable) {
       newLine(buffer);
 
-      PsiReference ref;
-      while (originalElement != null && ((ref = originalElement.getReference()) == null || ref.resolve() == null)) {
+      while (originalElement != null) {
+        PsiReference ref = originalElement.getReference();
+        if (ref != null && ref.resolve() != null) break;
+
         originalElement = originalElement.getParent();
       }
 
-      appendInferredType(originalElement, (GrVariable)variable, buffer);
+      if (originalElement != null) {
+        appendInferredType(originalElement, (GrVariable)variable, buffer);
+      }
     }
   }
 
-  private static void appendInferredType(PsiElement originalElement, GrVariable variable, StringBuilder buffer) {
+  private static void appendInferredType(@NotNull PsiElement originalElement, GrVariable variable, StringBuilder buffer) {
     PsiType inferredType = null;
-    if (originalElement != null) {
-      if (originalElement instanceof GrReferenceExpression) {
-        inferredType = ((GrReferenceExpression)originalElement).getType();
-      }
-      else if (originalElement instanceof GrVariableDeclaration) {
-        inferredType = variable.getTypeGroovy();
-      }
+    if (originalElement instanceof GrReferenceExpression) {
+      inferredType = ((GrReferenceExpression)originalElement).getType();
     }
+    else if (originalElement instanceof GrVariableDeclaration) {
+      inferredType = variable.getTypeGroovy();
+    }
+
     if (inferredType != null) {
       buffer.append("[inferred type] ");
       appendTypeString(buffer, inferredType, PsiSubstitutor.EMPTY);
