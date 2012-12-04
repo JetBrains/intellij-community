@@ -52,6 +52,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     private volatile int myStart;
     private volatile int myEnd;
     private volatile boolean isValid = true;
+    private volatile boolean isAttachedToTree; // true if the node is inserted to the tree
     protected final List<Getter<E>> intervals;
     protected int maxEnd; // max of all intervalEnd()s among all children.
     protected int delta;  // delta of startOffset. getStartOffset() = myStartOffset + Sum of deltas up to root
@@ -143,15 +144,19 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
 
     public void removeIntervalInternal(int i) {
       intervals.remove(i);
-      assert myIntervalTree.keySize > 0 : myIntervalTree.keySize;
-      myIntervalTree.keySize--;
+      if (isAttachedToTree) {   // for detached node, do not update tree node count
+        assert myIntervalTree.keySize > 0 : myIntervalTree.keySize;
+        myIntervalTree.keySize--;
+      }
     }
 
     public void addInterval(@NotNull E interval) {
       myIntervalTree.assertUnderWriteLock();
       intervals.add(createGetter(interval));
-      myIntervalTree.keySize++;
-      myIntervalTree.setNode(interval, this);
+      if (isAttachedToTree) { // for detached node, do not update tree node count
+        myIntervalTree.keySize++;
+        myIntervalTree.setNode(interval, this);
+      }
     }
 
     protected Getter<E> createGetter(@NotNull E interval) {
@@ -719,6 +724,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     onInsertNode();
     keySize += node.intervals.size();
     insertCase1(node);
+    node.isAttachedToTree = true;
     verifyProperties();
 
     deleteNodes(gced);
@@ -942,6 +948,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
 
     keySize -= node.intervals.size();
     assert keySize >= 0 : keySize;
+    node.isAttachedToTree = false;
   }
 
   @Override
