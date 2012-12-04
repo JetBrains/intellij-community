@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
@@ -33,8 +32,9 @@ import com.intellij.util.Alarm;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ConcurrentWeakHashMap;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashMap;
 import org.gradle.tooling.ProjectConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,9 +60,12 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Entry point to work with remote {@link GradleApiFacade}.
@@ -74,17 +77,17 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class GradleApiFacadeManager {
 
-  private static final Pair<GradleApiFacade, RemoteGradleProcessSettings> NULL_VALUE = Pair.empty();
-
   private static final String REMOTE_PROCESS_TTL_IN_MS_KEY = "gradle.remote.process.ttl.ms";
 
   private static final String MAIN_CLASS_NAME                      = GradleApiFacadeImpl.class.getName();
   private static final int    REMOTE_FAIL_RECOVERY_ATTEMPTS_NUMBER = 3;
 
-  private final ConcurrentMap<String /*project name*/, GradleApiFacade>                                    myFacadeWrappers
-    = new ConcurrentWeakHashMap<String, GradleApiFacade>();
-  private final ConcurrentMap<String /*project name*/, Pair<GradleApiFacade, RemoteGradleProcessSettings>> myRemoteFacades
-    = new ConcurrentWeakHashMap<String, Pair<GradleApiFacade, RemoteGradleProcessSettings>>();
+  private final ConcurrentMap<String /*project name*/, GradleApiFacade>                          myFacadeWrappers
+    = new ConcurrentHashMap<String, GradleApiFacade>();
+  private final Map<String /*project name*/, Pair<GradleApiFacade, RemoteGradleProcessSettings>> myRemoteFacades
+    = new HashMap<String, Pair<GradleApiFacade, RemoteGradleProcessSettings>>();
+
+  @NotNull private final Lock myLock = new ReentrantLock();
 
   @NotNull private final GradleInstallationManager myGradleInstallationManager;
 
@@ -145,7 +148,7 @@ public class GradleApiFacadeManager {
 
         params.setWorkingDirectory(PathManager.getBinPath());
         final List<String> classPath = new ArrayList<String>();
-        
+
         // IDE jars.
         classPath.addAll(PathManager.getUtilClassPath());
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(LanguageLevel.class), classPath);
@@ -287,19 +290,30 @@ public class GradleApiFacadeManager {
       return GradleApiFacade.NULL_OBJECT;
     }
     Pair<GradleApiFacade, RemoteGradleProcessSettings> pair = myRemoteFacades.get(project.getName());
-    if (pair != null) {
-      if (isValid(pair, project)) {
+    if (pair != null && isValid(pair)) {
+      return pair.first;
+    }
+    
+    myLock.lock();
+    try {
+      pair = myRemoteFacades.get(project.getName());
+      if (pair != null && isValid(pair)) {
         return pair.first;
       }
-      mySupport.stopAll(true);
-      myFacadeWrappers.clear();
-      myRemoteFacades.clear();
-      final Pair<GradleApiFacade, RemoteGradleProcessSettings> p = myRemoteFacades.putIfAbsent(project.getName(), NULL_VALUE);
-      if (p != null && p != NULL_VALUE) {
-        return p.first;
+      if (pair != null) {
+        mySupport.stopAll(true);
+        myFacadeWrappers.clear();
+        myRemoteFacades.clear();
       }
+      return doCreateFacade(project);
     }
+    finally {
+      myLock.unlock();
+    }
+  }
 
+  @NotNull
+  private GradleApiFacade doCreateFacade(@NotNull Project project) throws Exception {
     final GradleApiFacade facade = mySupport.acquire(this, project.getName());
     if (facade == null) {
       throw new IllegalStateException("Can't obtain facade to working with gradle api at the remote process. Project: " + project);
@@ -315,12 +329,7 @@ public class GradleApiFacadeManager {
     final GradleApiFacade result = new GradleApiFacadeWrapper(facade, myProgressManager);
     Pair<GradleApiFacade, RemoteGradleProcessSettings> newPair
       = new Pair<GradleApiFacade, RemoteGradleProcessSettings>(result, getRemoteSettings(project));
-    if (myRemoteFacades.putIfAbsent(project.getName(), newPair) != null
-        && !myRemoteFacades.replace(project.getName(), NULL_VALUE, newPair))
-    {
-      GradleLog.LOG.warn("Detected unexpected duplicate tooling api facade instance creation. Project: " + project);
-      return myRemoteFacades.get(project.getName()).first;
-    }
+    myRemoteFacades.put(project.getName(), newPair);
     if (!StringUtil.isEmpty(newPair.second.getJavaHome())) {
       GradleLog.LOG.info("Instructing gradle to use java from " + newPair.second.getJavaHome());
     }
@@ -344,32 +353,15 @@ public class GradleApiFacadeManager {
     return result;
   }
 
-  private boolean isValid(@NotNull Pair<GradleApiFacade, RemoteGradleProcessSettings> pair, @Nullable Project project) {
-    if (pair == NULL_VALUE) {
-      return false;
-    }
-    
+  private static boolean isValid(@NotNull Pair<GradleApiFacade, RemoteGradleProcessSettings> pair) {
     // Check remote process is alive.
     try {
       pair.first.getResolver();
+      return true;
     }
     catch (RemoteException e) {
       return false;
     }
-
-    // Check that significant settings are not changed
-    RemoteGradleProcessSettings oldSettings = pair.second;
-    RemoteGradleProcessSettings currentSettings = getRemoteSettings(project);
-
-    // We restart the slave process because there is a possible case that it was started with the incorrect classpath.
-    // For example, it could be started with gradle milestone-3 and that means that its classpath doesn't contain BasicIdeaProject.class.
-    // So, even if the user defines gradle milestone-7 to use, the slave process still is unable to operate because its classpath
-    // is still not changed.
-    //
-    // Please note that that should be changed when we support gradle wrapper. I.e. minimum set of gradle binaries will be bundled
-    // to the gradle plugin and they will contain all necessary binaries all the time.
-    return Comparing.equal(oldSettings.getGradleHome(), currentSettings.getGradleHome())
-           && oldSettings.isUseWrapper() == currentSettings.isUseWrapper();
   }
 
   @NotNull

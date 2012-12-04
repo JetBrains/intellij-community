@@ -71,6 +71,6 @@ public class RemoteGradleProcessSettings implements Serializable {
 
   @Override
   public String toString() {
-    return "home: " + myGradleHome;
+    return "home: " + myGradleHome + ", use wrapper: " + myUseWrapper;
   }
 }

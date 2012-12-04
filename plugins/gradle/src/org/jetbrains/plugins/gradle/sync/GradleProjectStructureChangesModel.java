@@ -100,4 +100,8 @@ public class GradleProjectStructureChangesModel extends AbstractProjectComponent
   public Set<GradleProjectStructureChange> getChanges() {
     return myChanges.get();
   }
+
+  public void clearChanges() {
+    myChanges.get().clear();
+  }
 }

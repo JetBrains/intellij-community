@@ -19,4 +19,12 @@ public abstract class GradleConfigNotifierAdapter implements GradleConfigNotifie
   @Override
   public void onPreferLocalGradleDistributionToWrapperChange(boolean preferLocalToWrapper) {
   }
+
+  @Override
+  public void onBulkChangeStart() {
+  }
+
+  @Override
+  public void onBulkChangeEnd() {
+  }
 }

@@ -34,6 +34,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -197,13 +198,28 @@ public class GradleUtil {
    * @param project  target intellij project to use
    */
   public static void refreshProject(@NotNull Project project) {
+    refreshProject(project, new Ref<String>());
+  }
+
+  public static void refreshProject(@NotNull Project project, @NotNull final Consumer<String> errorCallback) {
+    final Ref<String> errorMessageHolder = new Ref<String>() {
+      @Override
+      public void set(@Nullable String value) {
+        if (value != null) {
+          errorCallback.consume(value);
+        }
+      }
+    };
+    refreshProject(project, errorMessageHolder);
+  }
+  
+  public static void refreshProject(@NotNull Project project, @NotNull final Ref<String> errorMessageHolder) {
     final GradleSettings settings = GradleSettings.getInstance(project);
     final String linkedProjectPath = settings.getLinkedProjectPath();
     if (StringUtil.isEmpty(linkedProjectPath)) {
       return;
     }
     assert linkedProjectPath != null;
-    Ref<String> errorMessageHolder = new Ref<String>();
     Ref<String> errorDetailsHolder = new Ref<String>();
     refreshProject(project, linkedProjectPath, errorMessageHolder, errorDetailsHolder, true, false);
     final String error = errorDetailsHolder.get();

@@ -114,6 +114,23 @@ public class GradleSettings implements PersistentStateComponent<GradleSettings> 
     myPreferLocalInstallationToWrapper = preferLocalInstallationToWrapper;
   }
 
+  public static void applySettings(@Nullable String linkedProjectPath,
+                                   @Nullable String gradleHomePath,
+                                   boolean preferLocalInstallationToWrapper,
+                                   @NotNull Project project)
+  {
+    GradleConfigNotifier notifier = project.getMessageBus().syncPublisher(GradleConfigNotifier.TOPIC);
+    notifier.onBulkChangeStart();
+    try {
+      applyLinkedProjectPath(linkedProjectPath, project);
+      applyGradleHome(gradleHomePath, project);
+      applyPreferLocalInstallationToWrapper(preferLocalInstallationToWrapper, project);
+    }
+    finally {
+      notifier.onBulkChangeEnd();
+    }
+  }
+
   @Override
   public String toString() {
     return "home: " + myGradleHome + ", path: " + myLinkedProjectPath;

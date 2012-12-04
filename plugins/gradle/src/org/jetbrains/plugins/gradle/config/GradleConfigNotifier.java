@@ -44,4 +44,24 @@ public interface GradleConfigNotifier {
    * @param preferLocalToWrapper    current value
    */
   void onPreferLocalGradleDistributionToWrapperChange(boolean preferLocalToWrapper);
+
+  /**
+   * Gradle settings changes might affect project structure, e.g. switching from one gradle version to another one or from
+   * gradle wrapper to local installation of different version and vice versa can trigger new binaries usage (different gradle
+   * versions use different file system directories for holding dependencies).
+   * <p/>
+   * So, we might want to refresh project structure on gradle setting change. However, there is a possible case that more
+   * than one significant setting is changed during single editing session (e.g. a user opens gradle settings, changes linked
+   * project path and 'use gradle wrapper' and then presses 'Ok'.). We don't want to trigger two refreshes then. That's why
+   * it's possible to indicate that settings are changed in bulk now.
+   * <p/>
+   * {@link #onBulkChangeEnd()} is expected to be called at the 'finally' section which starts just after the call to
+   * current method.
+   */
+  void onBulkChangeStart();
+
+  /**
+   * @see #onBulkChangeStart()
+   */
+  void onBulkChangeEnd();
 }

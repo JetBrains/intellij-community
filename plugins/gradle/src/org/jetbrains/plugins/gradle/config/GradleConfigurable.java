@@ -260,6 +260,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     if (StringUtil.isEmpty(linkedProjectPath) || !GradleUtil.isGradleWrapperDefined(linkedProjectPath)) {
       myUseWrapperButton.setEnabled(false);
       myUseWrapperButton.setText(GradleBundle.message("gradle.config.text.use.wrapper.disabled"));
+      myUseLocalDistributionButton.setSelected(true);
     }
     else {
       myUseWrapperButton.setEnabled(true);
@@ -347,13 +348,9 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     if (myProject == null) {
       return;
     }
-
-    Project defaultProject = ProjectManager.getInstance().getDefaultProject();
     
-    if (!myProject.isDefault()) {
-      GradleSettings.applyLinkedProjectPath(myLinkedGradleProjectPathField.getText(), myProject);
-    }
-    
+    String linkedProjectPath = myLinkedGradleProjectPathField.getText();
+    String gradleHomePath = myGradleHomePathField.getText();
     boolean preferLocalToWrapper;
     if (myPreferWrapperWheneverPossibleCheckBox.isVisible()) {
       preferLocalToWrapper = !myPreferWrapperWheneverPossibleCheckBox.isSelected();
@@ -361,13 +358,12 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     else {
       preferLocalToWrapper = myUseLocalDistributionButton.isSelected();
     }
-    GradleSettings.applyPreferLocalInstallationToWrapper(preferLocalToWrapper, myProject);
-    if (!myProject.isDefault()) {
+    GradleSettings.applySettings(linkedProjectPath, gradleHomePath, preferLocalToWrapper, myProject);
+
+    Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+    if (myProject != defaultProject) {
       GradleSettings.applyPreferLocalInstallationToWrapper(preferLocalToWrapper, defaultProject);
     }
-    
-    String gradleHomePath = myGradleHomePathField.getText();
-    GradleSettings.applyGradleHome(gradleHomePath, myProject);
 
     if (isValidGradleHome(gradleHomePath)) {
       myGradleHomeSettingType = GradleHomeSettingType.EXPLICIT_CORRECT;

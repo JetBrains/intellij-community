@@ -69,10 +69,10 @@ public class GradleConfigNotificationManager extends AbstractProjectComponent {
     }
   }
 
-  public void processUnknownGradleHome() {
+  public void processRefreshError(@NotNull String message) {
     final Notification notification = NOTIFICATION_GROUP.createNotification(
-      GradleBundle.message("gradle.notification.gradle.home.undefined.description"),
-      GradleBundle.message("gradle.notification.gradle.home.undefined.action.configure"),
+      GradleBundle.message("gradle.notification.refresh.fail.description", message),
+      GradleBundle.message("gradle.notification.action.configure"),
       NotificationType.WARNING,
       new NotificationListener() {
         @Override
@@ -85,6 +85,29 @@ public class GradleConfigNotificationManager extends AbstractProjectComponent {
       }
     );
 
+    applyNotification(notification);
+  }
+  
+  public void processUnknownGradleHome() {
+    final Notification notification = NOTIFICATION_GROUP.createNotification(
+      GradleBundle.message("gradle.notification.gradle.home.undefined.description"),
+      GradleBundle.message("gradle.notification.action.configure"),
+      NotificationType.WARNING,
+      new NotificationListener() {
+        @Override
+        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+          if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) {
+            return;
+          }
+          ShowSettingsUtil.getInstance().editConfigurable(myProject, new GradleConfigurable(myProject, myLibraryManager));
+        }
+      }
+    );
+
+    applyNotification(notification);
+  }
+
+  private void applyNotification(@NotNull Notification notification) {
     final Notification oldNotification = myNotification.get();
     if (oldNotification != null && myNotification.compareAndSet(oldNotification, null)) {
       oldNotification.expire();
