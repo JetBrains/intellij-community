@@ -5,7 +5,7 @@ import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.graph.Branch;
 import org.hanuna.gitalk.graph.builder.GraphBuilder;
 import org.hanuna.gitalk.parser.GitLogParser;
-import org.hanuna.gitalk.printmodel.cells.CellModel;
+import org.hanuna.gitalk.printmodel.cells.LayoutModel;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -17,16 +17,16 @@ import static org.hanuna.gitalk.printmodel.LayoutTestUtils.toStr;
 /**
  * @author erokhins
  */
-public class CellModelBuilderTest {
+public class LayoutModelBuilderTest {
     private void runTest(String inputTree, String out) throws IOException {
         Branch.clearCountBranch();
         String input = inputTree.replace("\n", "|-aut|-132352112|-mes\n") + "|-aut|-132352112|-mes";
         GitLogParser parser = new GitLogParser(new StringReader(input));
         ReadOnlyList<Commit> commits = parser.readAllCommits();
         GraphBuilder builder = new GraphBuilder();
-        CellModelBuilder builder1 = new CellModelBuilder(builder.build(commits));
-        CellModel cellModel = builder1.build();
-        assertEquals(out, toStr(cellModel));
+        LayoutModelBuilder builder1 = new LayoutModelBuilder(builder.build(commits));
+        LayoutModel layoutModel = builder1.build();
+        assertEquals(out, toStr(layoutModel));
     }
 
     @Test

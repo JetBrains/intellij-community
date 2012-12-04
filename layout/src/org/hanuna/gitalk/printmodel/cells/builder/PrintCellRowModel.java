@@ -4,19 +4,19 @@ import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.printmodel.PrintCellRow;
 import org.hanuna.gitalk.printmodel.ShortEdge;
 import org.hanuna.gitalk.printmodel.SpecialCell;
-import org.hanuna.gitalk.printmodel.cells.CellModel;
+import org.hanuna.gitalk.printmodel.cells.LayoutModel;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author erokhins
  */
 public class PrintCellRowModel {
-    private final CellModel cellModel;
+    private final LayoutModel layoutModel;
     private final PreModelPrintCellRow prePrintCellRow;
 
-    public PrintCellRowModel(CellModel cellModel) {
-        this.cellModel = cellModel;
-        this.prePrintCellRow = new PreModelPrintCellRow(cellModel);
+    public PrintCellRowModel(LayoutModel layoutModel) {
+        this.layoutModel = layoutModel;
+        this.prePrintCellRow = new PreModelPrintCellRow(layoutModel);
     }
 
     private ShortEdge inverseEdge(ShortEdge edge) {
@@ -24,7 +24,7 @@ public class PrintCellRowModel {
     }
 
     private ReadOnlyList<ShortEdge> getUpEdges(int rowIndex) {
-        PreModelPrintCellRow prevPreModel = new PreModelPrintCellRow(cellModel);
+        PreModelPrintCellRow prevPreModel = new PreModelPrintCellRow(layoutModel);
         prevPreModel.prepare(rowIndex - 1);
         return prevPreModel.downShortEdges();
     }

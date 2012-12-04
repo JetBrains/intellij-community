@@ -9,7 +9,7 @@ import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.Node;
 import org.hanuna.gitalk.graph.NodeRow;
 import org.hanuna.gitalk.printmodel.cells.Cell;
-import org.hanuna.gitalk.printmodel.cells.CellModel;
+import org.hanuna.gitalk.printmodel.cells.LayoutModel;
 import org.hanuna.gitalk.printmodel.cells.CellRow;
 import org.hanuna.gitalk.printmodel.cells.NodeCell;
 import org.jetbrains.annotations.NotNull;
@@ -19,18 +19,18 @@ import java.util.List;
 /**
  * @author erokhins
  */
-public class CellModelBuilder {
+public class LayoutModelBuilder {
     private final Graph graph;
     private CompressedList<CellRow> generateModel;
     private final Generator<CellRow> generator;
 
 
-    public CellModelBuilder(Graph graph) {
+    public LayoutModelBuilder(Graph graph) {
         this.graph = graph;
         this.generator = new CellRowGenerator(graph);
     }
 
-    public CellModel build() {
+    public LayoutModel build() {
         ReadOnlyList<NodeRow> rows = graph.getNodeRows();
         assert ! rows.isEmpty();
 
@@ -43,10 +43,10 @@ public class CellModelBuilder {
         }
 
         generateModel = new RuntimeGenerateCompressedList<CellRow>(generator, firstCellRow, rows.size());
-        return new CellModelImpl();
+        return new LayoutModelImpl();
     }
 
-    private class CellModelImpl implements CellModel {
+    private class LayoutModelImpl implements LayoutModel {
 
         @NotNull
         @Override

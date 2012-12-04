@@ -9,7 +9,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="controller" />
-    <orderEntry type="module" module-name="printmodel" />
+    <orderEntry type="module" module-name="layout" />
     <orderEntry type="module" module-name="graph" />
     <orderEntry type="module-library">
       <library>

@@ -39,8 +39,8 @@ public class LayoutTestUtils {
         return s.toString();
     }
 
-    public static String toStr(CellModel cellModel) {
-        ReadOnlyList<CellRow> cells = cellModel.getCellRows();
+    public static String toStr(LayoutModel layoutModel) {
+        ReadOnlyList<CellRow> cells = layoutModel.getCellRows();
         if (cells.isEmpty()) {
             return "";
         }

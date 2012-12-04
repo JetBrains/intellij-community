@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author erokhins
  */
-public interface CellModel {
+public interface LayoutModel {
 
     @NotNull
     public ReadOnlyList<CellRow> getCellRows();

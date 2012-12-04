@@ -21,17 +21,17 @@ public class PreModelPrintCellRow {
     private static final int EDGE_PART_SHOW = 3;
 
     private final boolean hideEdge;
-    private final CellModel cellModel;
+    private final LayoutModel layoutModel;
     public ReadOnlyList<Cell> visibleCells;
     public int rowIndex;
 
-    public PreModelPrintCellRow(boolean hideEdge, CellModel cellModel) {
+    public PreModelPrintCellRow(boolean hideEdge, LayoutModel layoutModel) {
         this.hideEdge = hideEdge;
-        this.cellModel = cellModel;
+        this.layoutModel = layoutModel;
     }
 
-    public PreModelPrintCellRow(CellModel cellModel) {
-        this(true, cellModel);
+    public PreModelPrintCellRow(LayoutModel layoutModel) {
+        this(true, layoutModel);
     }
 
 
@@ -73,10 +73,10 @@ public class PreModelPrintCellRow {
     }
 
     private ReadOnlyList<Cell> visibleCells(int rowIndex) {
-        if (rowIndex < 0 || rowIndex >= cellModel.getCellRows().size()) {
+        if (rowIndex < 0 || rowIndex >= layoutModel.getCellRows().size()) {
             return ReadOnlyList.emptyList();
         }
-        CellRow cellRow = cellModel.getCellRows().get(rowIndex);
+        CellRow cellRow = layoutModel.getCellRows().get(rowIndex);
         ReadOnlyList<Cell> cells = cellRow.getCells();
         if (!hideEdge) {
             return cells;
