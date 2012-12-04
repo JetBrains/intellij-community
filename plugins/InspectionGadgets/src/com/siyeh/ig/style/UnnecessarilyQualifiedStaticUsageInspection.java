@@ -61,10 +61,10 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspection 
     final PsiJavaCodeReferenceElement element = (PsiJavaCodeReferenceElement)infos[0];
     final PsiElement parent = element.getParent();
     if (parent instanceof PsiMethodCallExpression) {
-      return InspectionGadgetsBundle.message("unnecessarily.qualified.static.usage.problem.descriptor");
+      return InspectionGadgetsBundle.message("unnecessarily.qualified.static.usage.problem.descriptor", element.getText());
     }
     else {
-      return InspectionGadgetsBundle.message("unnecessarily.qualified.static.usage.problem.descriptor1");
+      return InspectionGadgetsBundle.message("unnecessarily.qualified.static.usage.problem.descriptor1", element.getText());
     }
   }
 
