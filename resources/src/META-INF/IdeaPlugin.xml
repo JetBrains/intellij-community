@@ -1112,6 +1112,7 @@
     <refactoring.moveDirectoryWithClassesHelper implementation="com.intellij.refactoring.move.moveClassesOrPackages.JavaMoveDirectoryWithClassesHelper"/>
 
     <moveFileHandler implementation="com.intellij.refactoring.move.moveClassesOrPackages.MoveJavaFileHandler" id="java"/>
+    <refactoring.moveAllClassesInFileHandler implementation="com.intellij.refactoring.move.moveClassesOrPackages.MoveJavaClassesInFileHandler" id="java"/>
 
     <refactoring.moveClassHandler implementation="com.intellij.refactoring.move.moveClassesOrPackages.MoveJavaClassHandler" id="java"/>
     <refactoring.moveClassToInnerHandler implementation="com.intellij.refactoring.move.moveClassesOrPackages.JavaMoveClassToInnerHandler" id="java"/>
