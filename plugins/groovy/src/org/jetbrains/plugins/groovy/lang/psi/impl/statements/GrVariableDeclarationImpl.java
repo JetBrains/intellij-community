@@ -1,14 +1,30 @@
 
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.ResolveState;
-import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.EmptyStub;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -176,5 +193,77 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> impl
     }
 
     return true;
+  }
+
+  @Override
+  public PsiReference getReference() {
+    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<PsiReference>() {
+      @Nullable
+      @Override
+      public Result<PsiReference> compute() {
+        return Result.create(getReferenceInner(), PsiModificationTracker.MODIFICATION_COUNT);
+      }
+    });
+  }
+
+  private PsiReference getReferenceInner() {
+    if (getTypeElementGroovy() != null) return null;
+    final TextRange range = getRangeForReference();
+
+    if (range == null) return null;
+
+    final GrVariable[] variables = getVariables();
+    if (variables.length == 0) return null;
+
+    String canonicalText = getTypeText(variables[0]);
+    if (canonicalText == null) return null;
+
+    final PsiElement resolved = variables.length > 1 ? this : variables[0];
+    return new PsiReferenceBase<GrVariableDeclaration>(this, range, true) {
+      @Nullable
+      @Override
+      public PsiElement resolve() {
+        return resolved;
+      }
+
+      @NotNull
+      @Override
+      public Object[] getVariants() {
+        return EMPTY_ARRAY;
+      }
+    };
+  }
+
+  private TextRange getRangeForReference() {
+    PsiElement modifier = findSuitableModifier();
+    if (modifier == null) return null;
+
+    return modifier.getTextRange().shiftRight(-getTextRange().getStartOffset());
+  }
+
+  private PsiElement findSuitableModifier() {
+    final GrModifierList list = getModifierList();
+
+    PsiElement modifier = PsiUtil.findModifierInList(list, GrModifier.DEF);
+    if (modifier != null) return modifier;
+
+    modifier = PsiUtil.findModifierInList(list, PsiModifier.FINAL);
+    if (modifier != null) return modifier;
+
+    for (PsiElement element : list.getModifiers()) {
+      if (!(element instanceof GrAnnotation)) {
+        return element;
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static String getTypeText(GrVariable var) {
+    final PsiType type = var.getTypeGroovy();
+    if (type == null) return null;
+
+    return type.getCanonicalText();
   }
 }
