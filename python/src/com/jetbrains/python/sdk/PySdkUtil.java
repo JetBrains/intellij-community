@@ -34,6 +34,9 @@ import java.util.regex.Pattern;
 public class PySdkUtil {
   protected static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.SdkVersionUtil");
 
+  // Windows EOF marker, Ctrl+Z
+  public static final int SUBSTITUTE = 26;
+
   private PySdkUtil() {
     // explicitly none
   }
@@ -151,8 +154,13 @@ public class PySdkUtil {
         final OutputStream processInput = processHandler.getProcessInput();
         assert processInput != null;
         processInput.write(stdin);
-        processInput.write(26);    // EOF marker
-        processInput.flush();
+        if (SystemInfo.isWindows) {
+          processInput.write(SUBSTITUTE);
+          processInput.flush();
+        }
+        else {
+          processInput.close();
+        }
       }
       return processHandler.runProcess(timeout);
     }
