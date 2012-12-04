@@ -244,11 +244,6 @@ static bool read_input() {
     return update_roots(new_roots);
   }
 
-  if (strcmp(line, "VERSION") == 0) {
-    output(VERSION "\n");
-    return true;
-  }
-
   userlog(LOG_INFO, "unrecognised command: %s", line);
   return true;
 }
