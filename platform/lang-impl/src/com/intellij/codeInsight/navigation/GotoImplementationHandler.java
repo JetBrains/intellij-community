@@ -84,6 +84,11 @@ public class GotoImplementationHandler extends GotoTargetHandler {
   }
 
   @Override
+  protected String getFindUsagesTitle(PsiElement sourceElement, String name, int length) {
+    return CodeInsightBundle.message("goto.implementation.findUsages.title", name, length);
+  }
+
+  @Override
   protected String getNotFoundMessage(Project project, Editor editor, PsiFile file) {
     return CodeInsightBundle.message("goto.implementation.notFound");
   }

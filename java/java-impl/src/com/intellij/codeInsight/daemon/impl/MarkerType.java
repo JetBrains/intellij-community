@@ -96,6 +96,7 @@ public class MarkerType {
     boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature(superMethods);
     PsiElementListNavigator.openTargets(e, superMethods,
                                         DaemonBundle.message("navigation.title.super.method", method.getName()),
+                                        DaemonBundle.message("navigation.findUsages.title.super.method", method.getName()),
                                         new MethodCellRenderer(showMethodNames));
   }
 
@@ -164,7 +165,7 @@ public class MarkerType {
     MethodCellRenderer renderer = new MethodCellRenderer(showMethodNames);
     Arrays.sort(overridings, renderer.getComparator());
     final OverridingMethodsUpdater methodsUpdater = new OverridingMethodsUpdater(method, renderer);
-    PsiElementListNavigator.openTargets(e, overridings, methodsUpdater.getCaption(overridings.length), renderer, methodsUpdater);
+    PsiElementListNavigator.openTargets(e, overridings, methodsUpdater.getCaption(overridings.length), "Overriding methods of " + method.getName(), renderer, methodsUpdater);
   }
 
   public static final String SEARCHING_FOR_OVERRIDDEN_METHODS = "Searching for overridden methods";
@@ -231,7 +232,7 @@ public class MarkerType {
     final PsiClassListCellRenderer renderer = new PsiClassListCellRenderer();
     final SubclassUpdater subclassUpdater = new SubclassUpdater(aClass, renderer);
     Arrays.sort(inheritors, renderer.getComparator());
-    PsiElementListNavigator.openTargets(e, inheritors, subclassUpdater.getCaption(inheritors.length), renderer, subclassUpdater);
+    PsiElementListNavigator.openTargets(e, inheritors, subclassUpdater.getCaption(inheritors.length), CodeInsightBundle.message("goto.implementation.findUsages.title", aClass.getName()), renderer, subclassUpdater);
   }
 
   private final GutterIconNavigationHandler<PsiElement> handler;

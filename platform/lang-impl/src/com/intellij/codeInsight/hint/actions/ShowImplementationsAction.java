@@ -46,6 +46,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -238,6 +239,13 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
         .setMovable(true)
         .setRequestFocus(invokedFromEditor && LookupManager.getActiveLookup(editor) == null)
         .setTitle(title)
+        .setCouldPin(new Processor<JBPopup>() {
+          @Override
+          public boolean process(JBPopup popup) {
+            component.showInUsageView();
+            return false;
+          }
+        })
         .createPopup();
 
       updateInBackground(editor, element, component, title, (AbstractPopup)popup);

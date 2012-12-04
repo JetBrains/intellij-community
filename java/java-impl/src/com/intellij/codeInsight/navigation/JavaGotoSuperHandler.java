@@ -54,6 +54,7 @@ public class JavaGotoSuperHandler implements CodeInsightActionHandler {
         boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature((PsiMethod[])superElements);
         PsiElementListNavigator.openTargets(editor, (PsiMethod[])superElements,
                                             CodeInsightBundle.message("goto.super.method.chooser.title"),
+                                            CodeInsightBundle.message("goto.super.method.findUsages.title", ((PsiMethod)superElements[0]).getName()),
                                             new MethodCellRenderer(showMethodNames));
       }
       else {

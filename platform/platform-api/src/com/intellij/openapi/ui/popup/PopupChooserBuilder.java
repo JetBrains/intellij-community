@@ -30,6 +30,7 @@ import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.util.Function;
+import com.intellij.util.Processor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
@@ -84,6 +85,7 @@ public class PopupChooserBuilder {
   private boolean myCloseOnEnter = true;
   private boolean myCancelOnWindowDeactivation = true;
   private boolean myUseForXYLocation;
+  @Nullable private Processor<JBPopup> myCouldPin;
 
   public PopupChooserBuilder setCancelOnClickOutside(boolean cancelOnClickOutside) {
     myCancelOnClickOutside = cancelOnClickOutside;
@@ -138,6 +140,12 @@ public class PopupChooserBuilder {
     return this;
   }
 
+  @NotNull
+  public PopupChooserBuilder setCouldPin(@Nullable Processor<JBPopup> callback){
+    myCouldPin = callback;
+    return this;
+  }
+  
   @NotNull
   public PopupChooserBuilder setEastComponent(@NotNull JComponent cmp) {
     myEastComponent = cmp;
@@ -307,7 +315,8 @@ public class PopupChooserBuilder {
       .setCancelOnOtherWindowOpen(true)
       .setModalContext(myModalContext)
       .setCancelOnWindowDeactivation(myCancelOnWindowDeactivation)
-      .setCancelOnClickOutside(myCancelOnClickOutside);
+      .setCancelOnClickOutside(myCancelOnClickOutside)
+      .setCouldPin(myCouldPin);
 
     if (myCommandButton != null) {
       builder.setCommandButton(myCommandButton);

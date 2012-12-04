@@ -108,7 +108,9 @@ public class GroovyMarkerTypes {
       if (superMethods.isEmpty()) return;
       final PsiMethod[] supers = ContainerUtil.toArray(superMethods, new PsiMethod[superMethods.size()]);
       boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature(supers);
-      PsiElementListNavigator.openTargets(e, supers, DaemonBundle.message("navigation.title.super.method", field.getName()),
+      PsiElementListNavigator.openTargets(e, supers, 
+                                          DaemonBundle.message("navigation.title.super.method", field.getName()),
+                                          DaemonBundle.message("navigation.findUsages.title.super.method", field.getName()),
                                           new MethodCellRenderer(showMethodNames));
     }
   });
@@ -170,7 +172,7 @@ public class GroovyMarkerTypes {
       boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature(overridings);
       MethodCellRenderer renderer = new MethodCellRenderer(showMethodNames);
       Arrays.sort(overridings, renderer.getComparator());
-      PsiElementListNavigator.openTargets(e, overridings, title, renderer);
+      PsiElementListNavigator.openTargets(e, overridings, title, "Overriding Methods of " + field.getName(), renderer);
     }
   }
   );
@@ -209,6 +211,7 @@ public class GroovyMarkerTypes {
         if (superMethods.isEmpty()) return;
         PsiElementListNavigator.openTargets(e, superMethods.toArray(new NavigatablePsiElement[superMethods.size()]),
                     DaemonBundle.message("navigation.title.super.method", method.getName()),
+                    DaemonBundle.message("navigation.findUsages.title.super.method", method.getName()),
                     new MethodCellRenderer(true));
 
       }
@@ -282,7 +285,9 @@ public class GroovyMarkerTypes {
         PsiElementListCellRenderer<PsiMethod> renderer = new MethodCellRenderer(!PsiUtil.allMethodsHaveSameSignature(overridings));
         Arrays.sort(overridings, renderer.getComparator());
         final OverridingMethodsUpdater methodsUpdater = new OverridingMethodsUpdater(method, renderer);
-        PsiElementListNavigator.openTargets(e, overridings, methodsUpdater.getCaption(overridings.length), renderer, methodsUpdater);
+        PsiElementListNavigator.openTargets(e, overridings, methodsUpdater.getCaption(overridings.length),
+                                            "Overriding Methods of " + method.getName(),
+                                            renderer, methodsUpdater);
         
       }
     });
