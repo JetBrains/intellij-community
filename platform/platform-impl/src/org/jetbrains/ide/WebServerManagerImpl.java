@@ -12,6 +12,7 @@ import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.WebServer;
 
 class WebServerManagerImpl extends WebServerManager {
@@ -24,14 +25,17 @@ class WebServerManagerImpl extends WebServerManager {
 
   private int detectedPortNumber = -1;
 
-  private final WebServer server = new WebServer();
+  @Nullable
+  private WebServer server;
 
   public int getPort() {
     return detectedPortNumber == -1 ? getDefaultPort() : detectedPortNumber;
   }
 
   public void addClosingListener(ChannelFutureListener listener) {
-    server.addClosingListener(listener);
+    if (server != null) {
+      server.addClosingListener(listener);
+    }
   }
 
   private static int getDefaultPort() {
@@ -45,6 +49,8 @@ class WebServerManagerImpl extends WebServerManager {
       return;
     }
 
+    LOG.assertTrue(server == null);
+    server = new WebServer();
     application.executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
@@ -73,8 +79,10 @@ class WebServerManagerImpl extends WebServerManager {
 
   @Override
   public void disposeComponent() {
-    server.stop();
-    LOG.info("web server stopped");
+    if (server != null) {
+      server.stop();
+      LOG.info("web server stopped");
+    }
   }
 
   @NotNull
