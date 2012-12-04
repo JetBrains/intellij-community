@@ -74,21 +74,11 @@ public class ProjectResources extends ResourceRepository {
   @Nullable
   public Integer getResourceId(ResourceType type, String name) {
     final TObjectIntHashMap<String> map = myResourceValueMap != null ? myResourceValueMap.get(type) : null;
-    if (map != null) {
-      if (!map.contains(name)) {
-        if (ResourceType.ID == type || ResourceType.LAYOUT == type) {
-          return getDynamicId(type, name);
-        }
-        return null;
-      }
 
-      return map.get(name);
-    }
-    else if (ResourceType.ID == type || ResourceType.LAYOUT == type) {
+    if (map == null || !map.containsKey(name)) {
       return getDynamicId(type, name);
     }
-
-    return null;
+    return map.get(name);
   }
 
   @Override
