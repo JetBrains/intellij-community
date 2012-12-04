@@ -463,6 +463,9 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
       return true;
     }
     if (vcs == null) return false;
+    final VcsShowConfirmationOption.Value value = vcs.getDeleteConfirmation().getValue();
+    if (VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY.equals(value)) return false;
+
     final File ioFile = getIOFile(file);
     if (! SvnUtil.isSvnVersioned(vcs.getProject(), ioFile.getParentFile())) {
       return false;
@@ -563,6 +566,9 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     if (vcs == null) {
       return false;
     }
+    final VcsShowConfirmationOption.Value value = vcs.getAddConfirmation().getValue();
+    if (VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY.equals(value)) return false;
+
     if (isUndo(vcs) && SvnUtil.isAdminDirectory(dir, name)) {
       return false;      
     }
