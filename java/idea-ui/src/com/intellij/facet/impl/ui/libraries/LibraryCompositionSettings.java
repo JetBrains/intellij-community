@@ -27,8 +27,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContaine
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +48,8 @@ public class LibraryCompositionSettings implements Disposable {
   private Library mySelectedLibrary;
   private boolean myDownloadLibraries;
   private LibraryDownloadSettings myDownloadSettings;
-  private Map<Library, ExistingLibraryEditor> myExistingLibraryEditors = new THashMap<Library, ExistingLibraryEditor>(TObjectHashingStrategy.IDENTITY);
+  private Map<Library, ExistingLibraryEditor> myExistingLibraryEditors =
+    ContainerUtil.newIdentityTroveMap();
 
   public LibraryCompositionSettings(final @NotNull CustomLibraryDescription libraryDescription,
                                     final @NotNull String baseDirectoryPath,

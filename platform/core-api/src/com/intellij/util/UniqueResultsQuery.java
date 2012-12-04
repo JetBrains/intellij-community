@@ -17,6 +17,7 @@
 package com.intellij.util;
 
 import com.intellij.concurrency.AsyncFuture;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -31,30 +32,31 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
   private final TObjectHashingStrategy<M> myHashingStrategy;
   private final Function<T, M> myMapper;
 
-  public UniqueResultsQuery(final Query<T> original) {
-    //noinspection unchecked
-    this(original, TObjectHashingStrategy.CANONICAL, Function.ID);
+  public UniqueResultsQuery(@NotNull Query<T> original) {
+    this(original, ContainerUtil.<M>canonicalStrategy(), (Function<T, M>)FunctionUtil.<M>id());
   }
 
-  public UniqueResultsQuery(final Query<T> original, TObjectHashingStrategy<M> hashingStrategy) {
-    //noinspection unchecked
-    this(original, hashingStrategy, Function.ID);
+  public UniqueResultsQuery(@NotNull Query<T> original, @NotNull TObjectHashingStrategy<M> hashingStrategy) {
+    this(original, hashingStrategy, (Function<T, M>)FunctionUtil.<M>id());
   }
 
-  public UniqueResultsQuery(final Query<T> original, TObjectHashingStrategy<M> hashingStrategy, Function<T, M> mapper) {
+  public UniqueResultsQuery(@NotNull Query<T> original, @NotNull TObjectHashingStrategy<M> hashingStrategy, @NotNull Function<T, M> mapper) {
     myOriginal = original;
     myHashingStrategy = hashingStrategy;
     myMapper = mapper;
   }
 
+  @Override
   public T findFirst() {
     return myOriginal.findFirst();
   }
 
+  @Override
   public boolean forEach(@NotNull final Processor<T> consumer) {
     return process(consumer, Collections.synchronizedSet(new THashSet<M>(myHashingStrategy)));
   }
 
+  @NotNull
   @Override
   public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<T> consumer) {
     return processAsync(consumer, Collections.synchronizedSet(new THashSet<M>(myHashingStrategy)));
@@ -69,6 +71,7 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
   }
 
 
+  @Override
   @NotNull
   public Collection<T> findAll() {
     if (myMapper == Function.ID) {
@@ -84,10 +87,13 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
     }
   }
 
-  public T[] toArray(final T[] a) {
+  @NotNull
+  @Override
+  public T[] toArray(@NotNull final T[] a) {
     return findAll().toArray(a);
   }
 
+  @Override
   public Iterator<T> iterator() {
     return findAll().iterator();
   }
@@ -101,6 +107,7 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
       myConsumer = consumer;
     }
 
+    @Override
     public boolean process(final T t) {
       return !myProcessedElements.add(myMapper.fun(t)) || myConsumer.process(t);
     }

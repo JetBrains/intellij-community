@@ -19,9 +19,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.Equality;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,8 +36,8 @@ public final class ObjectTree<T> {
   private final CopyOnWriteArraySet<ObjectTreeListener> myListeners = new CopyOnWriteArraySet<ObjectTreeListener>();
 
   // identity used here to prevent problems with hashCode/equals overridden by not very bright minds
-  private final Set<T> myRootObjects = new THashSet<T>(TObjectHashingStrategy.IDENTITY);
-  private final Map<T, ObjectNode<T>> myObject2NodeMap = new THashMap<T, ObjectNode<T>>(TObjectHashingStrategy.IDENTITY);
+  private final Set<T> myRootObjects = ContainerUtil.<T>newIdentityTroveSet();
+  private final Map<T, ObjectNode<T>> myObject2NodeMap = ContainerUtil.<T, ObjectNode<T>>newIdentityTroveMap();
 
   private final List<ObjectNode<T>> myExecutedNodes = new ArrayList<ObjectNode<T>>();
   private final List<T> myExecutedUnregisteredNodes = new ArrayList<T>();

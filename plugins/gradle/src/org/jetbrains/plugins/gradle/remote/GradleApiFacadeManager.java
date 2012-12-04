@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
@@ -37,6 +38,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.ProjectConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.config.GradleSettings;
 import org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManager;
 import org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManagerImpl;
 import org.jetbrains.plugins.gradle.remote.impl.GradleApiFacadeImpl;
@@ -48,6 +50,7 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -312,7 +315,9 @@ public class GradleApiFacadeManager {
     final GradleApiFacade result = new GradleApiFacadeWrapper(facade, myProgressManager);
     Pair<GradleApiFacade, RemoteGradleProcessSettings> newPair
       = new Pair<GradleApiFacade, RemoteGradleProcessSettings>(result, getRemoteSettings(project));
-    if (myRemoteFacades.putIfAbsent(project.getName(), newPair) != null && !myRemoteFacades.replace(project.getName(), NULL_VALUE, newPair)) {
+    if (myRemoteFacades.putIfAbsent(project.getName(), newPair) != null
+        && !myRemoteFacades.replace(project.getName(), NULL_VALUE, newPair))
+    {
       GradleLog.LOG.warn("Detected unexpected duplicate tooling api facade instance creation. Project: " + project);
       return myRemoteFacades.get(project.getName()).first;
     }
@@ -363,14 +368,29 @@ public class GradleApiFacadeManager {
     //
     // Please note that that should be changed when we support gradle wrapper. I.e. minimum set of gradle binaries will be bundled
     // to the gradle plugin and they will contain all necessary binaries all the time.
-    return StringUtil.equals(oldSettings.getGradleHome(), currentSettings.getGradleHome());
+    return Comparing.equal(oldSettings.getGradleHome(), currentSettings.getGradleHome())
+           && oldSettings.isUseWrapper() == currentSettings.isUseWrapper();
   }
 
   @NotNull
   private RemoteGradleProcessSettings getRemoteSettings(@Nullable Project project) {
     File gradleHome = myGradleInstallationManager.getGradleHome(project);
-    assert gradleHome != null;
-    RemoteGradleProcessSettings result = new RemoteGradleProcessSettings(gradleHome.getAbsolutePath());
+    boolean useWrapper = true;
+    if (project != null) {
+      useWrapper = !GradleSettings.getInstance(project).isPreferLocalInstallationToWrapper();
+    }
+    
+    String localGradlePath = null;
+    if (gradleHome != null) {
+      try {
+        // Try to resolve symbolic links as there were problems with them at the gradle side.
+        localGradlePath = gradleHome.getCanonicalPath();
+      }
+      catch (IOException e) {
+        localGradlePath = gradleHome.getAbsolutePath();
+      }
+    }
+    RemoteGradleProcessSettings result = new RemoteGradleProcessSettings(localGradlePath, useWrapper);
     String ttlAsString = System.getProperty(REMOTE_PROCESS_TTL_IN_MS_KEY);
     if (ttlAsString != null) {
       try {

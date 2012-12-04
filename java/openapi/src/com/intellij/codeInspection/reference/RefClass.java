@@ -65,5 +65,6 @@ public interface RefClass extends RefJavaElement {
 
   boolean isSelfInheritor(PsiClass psiClass);
 
+  @Override
   PsiClass getElement();
 }

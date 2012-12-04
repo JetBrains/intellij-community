@@ -51,6 +51,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -91,32 +92,18 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   @Nullable
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (element instanceof GrVariable || element instanceof GrImplicitVariable) {
-      PsiVariable variable = (PsiVariable)element;
       StringBuilder buffer = new StringBuilder();
-      if (element instanceof PsiField) {
-        final PsiClass parentClass = ((PsiField)element).getContainingClass();
-        if (parentClass != null) {
-          buffer.append(JavaDocUtil.getShortestClassName(parentClass, element));
-          newLine(buffer);
+      PsiVariable variable = (PsiVariable)element;
+
+      if (originalElement instanceof GrVariableDeclaration && ((GrVariableDeclaration)originalElement).getVariables().length > 1) {
+        for (GrVariable var :((GrVariableDeclaration)originalElement).getVariables()) {
+          generateVariableInfo(originalElement, buffer, var);
+          buffer.append("\n\n");
         }
-        generateModifiers(buffer, element);
       }
-      final PsiType type = variable instanceof GrVariable ? ((GrVariable)variable).getDeclaredType() : variable.getType();
-      appendTypeString(buffer, type, calcSubstitutor(originalElement));
-      buffer.append(" ");
-      buffer.append(variable.getName());
-
-      if (element instanceof GrVariable) {
-        newLine(buffer);
-
-        PsiReference ref;
-        while (originalElement != null && ((ref = originalElement.getReference()) == null || ref.resolve() == null)) {
-          originalElement = originalElement.getParent();
-        }
-
-        appendInferredType(originalElement, buffer);
+      else {
+        generateVariableInfo(originalElement, buffer, variable);
       }
-
       return buffer.toString();
     }
     else if (element instanceof GrReferenceExpression) {
@@ -193,18 +180,52 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     return null;
   }
 
-  private static void appendInferredType(PsiElement originalElement, StringBuilder buffer) {
-    if (originalElement != null) {
-      if (originalElement instanceof GrReferenceExpression) {
-        final PsiType inferredType = ((GrReferenceExpression)originalElement).getType();
-        if (inferredType != null) {
-          buffer.append("[inferred type] ");
-          appendTypeString(buffer, inferredType, PsiSubstitutor.EMPTY);
-          return;
-        }
+  private static void generateVariableInfo(PsiElement originalElement, StringBuilder buffer, PsiVariable variable) {
+    if (variable instanceof PsiField) {
+      final PsiClass parentClass = ((PsiField)variable).getContainingClass();
+      if (parentClass != null) {
+        buffer.append(JavaDocUtil.getShortestClassName(parentClass, variable));
+        newLine(buffer);
+      }
+      generateModifiers(buffer, variable);
+    }
+    final PsiType type = variable instanceof GrVariable ? ((GrVariable)variable).getDeclaredType() : variable.getType();
+    appendTypeString(buffer, type, calcSubstitutor(originalElement));
+    buffer.append(" ");
+    buffer.append(variable.getName());
+
+    if (variable instanceof GrVariable) {
+      newLine(buffer);
+
+      while (originalElement != null) {
+        PsiReference ref = originalElement.getReference();
+        if (ref != null && ref.resolve() != null) break;
+
+        originalElement = originalElement.getParent();
+      }
+
+      if (originalElement != null) {
+        appendInferredType(originalElement, (GrVariable)variable, buffer);
       }
     }
-    buffer.append("[cannot infer type]");
+  }
+
+  private static void appendInferredType(@NotNull PsiElement originalElement, GrVariable variable, StringBuilder buffer) {
+    PsiType inferredType = null;
+    if (originalElement instanceof GrReferenceExpression) {
+      inferredType = ((GrReferenceExpression)originalElement).getType();
+    }
+    else if (originalElement instanceof GrVariableDeclaration) {
+      inferredType = variable.getTypeGroovy();
+    }
+
+    if (inferredType != null) {
+      buffer.append("[inferred type] ");
+      appendTypeString(buffer, inferredType, PsiSubstitutor.EMPTY);
+    }
+    else {
+      buffer.append("[cannot infer type]");
+    }
   }
 
   private static void generateModifiers(StringBuilder buffer, PsiElement element) {

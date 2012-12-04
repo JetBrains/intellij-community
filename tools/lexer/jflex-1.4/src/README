@@ -8,7 +8,7 @@ ant.jar      >= 1.4
 
 To compile, run first
 
-ant gettoolds
+ant gettools
 (this will download JFlex, java_cup, and junit jars for bootstrapping)
 
 then, run

@@ -27,7 +27,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OrderedSet;
-import gnu.trove.TObjectHashingStrategy;
 
 import java.io.File;
 import java.util.HashSet;
@@ -56,7 +55,7 @@ public class ModuleChunkClasspath extends Path {
     super(generateClasspathName(chunk, generateRuntimeClasspath, generateTestClasspath));
 
     final OrderedSet<ClasspathItem> pathItems =
-      new OrderedSet<ClasspathItem>((TObjectHashingStrategy<ClasspathItem>)TObjectHashingStrategy.CANONICAL);
+      new OrderedSet<ClasspathItem>();
     final String moduleChunkBasedirProperty = BuildProperties.getModuleChunkBasedirProperty(chunk);
     final Module[] modules = chunk.getModules();
     // processed chunks (used only in runtime classpath), every chunk is referenced exactly once

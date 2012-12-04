@@ -15,18 +15,20 @@
  */
 package com.intellij.util.containers;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.*;
 
 public final class WeakKeyWeakValueHashMap<K,V> implements Map<K,V>{
-  private final WeakHashMap<K, MyReference<K,V>> myWeakKeyMap = new WeakHashMap<K, MyReference<K, V>>();
+  private final WeakHashMap<K, MyValueReference<K,V>> myWeakKeyMap = new WeakHashMap<K, MyValueReference<K, V>>();
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
 
-  private static class MyReference<K,V> extends WeakReference<V> {
+  private static class MyValueReference<K,V> extends WeakReference<V> {
     private final WeakHashMap.Key<K> key;
 
-    private MyReference(WeakHashMap.Key<K> key, V referent, ReferenceQueue<? super V> q) {
+    private MyValueReference(WeakHashMap.Key<K> key, V referent, ReferenceQueue<? super V> q) {
       super(referent, q);
       this.key = key;
     }
@@ -35,7 +37,7 @@ public final class WeakKeyWeakValueHashMap<K,V> implements Map<K,V>{
   private void processQueue() {
     myWeakKeyMap.processQueue();
     while(true) {
-      MyReference<K,V> ref = (MyReference<K, V>)myQueue.poll();
+      MyValueReference<K,V> ref = (MyValueReference<K, V>)myQueue.poll();
       if (ref == null) break;
       WeakHashMap.Key<K> weakKey = ref.key;
       myWeakKeyMap.removeKey(weakKey);
@@ -44,7 +46,7 @@ public final class WeakKeyWeakValueHashMap<K,V> implements Map<K,V>{
 
   @Override
   public V get(Object key) {
-    MyReference<K,V> ref = myWeakKeyMap.get(key);
+    MyValueReference<K,V> ref = myWeakKeyMap.get(key);
     if (ref == null) return null;
     return ref.get();
   }
@@ -53,15 +55,15 @@ public final class WeakKeyWeakValueHashMap<K,V> implements Map<K,V>{
   public V put(K key, V value) {
     processQueue();
     WeakHashMap.Key<K> weakKey = myWeakKeyMap.createKey(key);
-    MyReference<K, V> reference = new MyReference<K, V>(weakKey, value, myQueue);
-    MyReference<K,V> oldRef = myWeakKeyMap.putKey(weakKey, reference);
+    MyValueReference<K, V> reference = new MyValueReference<K, V>(weakKey, value, myQueue);
+    MyValueReference<K,V> oldRef = myWeakKeyMap.putKey(weakKey, reference);
     return oldRef == null ? null : oldRef.get();
   }
 
   @Override
   public V remove(Object key) {
     processQueue();
-    MyReference<K,V> ref = myWeakKeyMap.remove(key);
+    MyValueReference<K,V> ref = myWeakKeyMap.remove(key);
     return ref != null ? ref.get() : null;
   }
 
@@ -96,16 +98,18 @@ public final class WeakKeyWeakValueHashMap<K,V> implements Map<K,V>{
     throw new RuntimeException("method not implemented");
   }
 
+  @NotNull
   @Override
   public Set<K> keySet() {
     return myWeakKeyMap.keySet();
   }
 
+  @NotNull
   @Override
   public Collection<V> values() {
     List<V> result = new ArrayList<V>();
-    final Collection<MyReference<K, V>> refs = myWeakKeyMap.values();
-    for (MyReference<K, V> ref : refs) {
+    final Collection<MyValueReference<K, V>> refs = myWeakKeyMap.values();
+    for (MyValueReference<K, V> ref : refs) {
       final V value = ref.get();
       if (value != null) {
         result.add(value);
@@ -114,6 +118,7 @@ public final class WeakKeyWeakValueHashMap<K,V> implements Map<K,V>{
     return result;
   }
 
+  @NotNull
   @Override
   public Set<Entry<K, V>> entrySet() {
     throw new RuntimeException("method not implemented");

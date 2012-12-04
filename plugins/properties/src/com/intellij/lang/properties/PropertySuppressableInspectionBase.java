@@ -46,7 +46,7 @@ public abstract class PropertySuppressableInspectionBase extends LocalInspection
     return new SuppressIntentionAction[] {new SuppressSinglePropertyFix(getShortName()), new SuppressForFile(getShortName())};
   }
 
-  public boolean isSuppressedFor(PsiElement element) {
+  public boolean isSuppressedFor(@NotNull PsiElement element) {
     Property property = PsiTreeUtil.getParentOfType(element, Property.class, false);
     PropertiesFile file;
     if (property == null) {

@@ -17,6 +17,7 @@ package com.intellij.util.containers;
 
 import com.intellij.util.PairProcessor;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -30,11 +31,10 @@ public class SoftArrayHashMap<T,V> implements Cloneable {
   private final TObjectHashingStrategy<T> myStrategy;
 
   public SoftArrayHashMap() {
-    this(TObjectHashingStrategy.CANONICAL);
+    this(ContainerUtil.<T>canonicalStrategy());
   }
 
-
-  public SoftArrayHashMap(TObjectHashingStrategy<T> strategy) {
+  public SoftArrayHashMap(@NotNull TObjectHashingStrategy<T> strategy) {
     myStrategy = strategy;
   }
 
@@ -111,6 +111,7 @@ public class SoftArrayHashMap<T,V> implements Cloneable {
     return get(path) != null;
   }
 
+  @Override
   public final SoftArrayHashMap<T,V> clone() {
     final SoftArrayHashMap<T, V> copy = new SoftArrayHashMap<T, V>(myStrategy);
     copy.myContinuationMap = copyMap(myContinuationMap);

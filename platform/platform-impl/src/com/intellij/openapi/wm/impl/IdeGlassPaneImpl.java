@@ -21,6 +21,7 @@ import com.intellij.ide.dnd.DnDAware;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Painter;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeGlassPane;
@@ -332,6 +333,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   private boolean canProcessCursorFor(Component target) {
     if (target instanceof JMenu ||
         target instanceof JMenuItem ||
+        target instanceof Splitter.Divider ||
         target instanceof JSeparator ||
         (target instanceof JEditorPane && ((JEditorPane)target).getEditorKit() instanceof HTMLEditorKit)) {
       return false;

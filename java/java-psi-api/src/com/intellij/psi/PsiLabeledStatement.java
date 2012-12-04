@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents a Java statement with an attached label.
  */
-public interface PsiLabeledStatement extends PsiStatement, PsiNamedElement {
+public interface PsiLabeledStatement extends PsiStatement, PsiNameIdentifierOwner {
   /**
    * Returns the identifier representing the label attached to the statement.
    *

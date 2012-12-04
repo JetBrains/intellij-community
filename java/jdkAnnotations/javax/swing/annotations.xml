@@ -464,4 +464,10 @@
   <item name='javax.swing.JViewport java.awt.Rectangle getViewRect()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='javax.swing.SwingUtilities java.awt.Point convertPoint(java.awt.Component, java.awt.Point, java.awt.Component)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='javax.swing.SwingUtilities java.awt.Point convertPoint(java.awt.Component, java.awt.Point, java.awt.Component) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
 </root>

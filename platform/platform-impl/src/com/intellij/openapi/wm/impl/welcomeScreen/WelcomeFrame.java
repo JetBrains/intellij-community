@@ -171,7 +171,9 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
     ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
       @Override
       public void run() {
-        IdeFrameImpl[] frames = ((WindowManagerImpl)WindowManager.getInstance()).getAllProjectFrames();
+        WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
+        windowManager.disposeRootFrame();
+        IdeFrameImpl[] frames = windowManager.getAllProjectFrames();
         if (frames.length == 0) {
           showNow();
         }

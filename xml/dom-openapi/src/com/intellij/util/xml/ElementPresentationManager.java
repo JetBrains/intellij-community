@@ -113,6 +113,14 @@ public abstract class ElementPresentationManager {
   public static void registerDocumentationProvider(Function<Object, String> function) { ourDocumentationProviders.add(function); }
 
 
+  public static final <T>NullableFunction<T, String> NAMER() {
+    return new NullableFunction<T, String>() {
+      public String fun(final T o) {
+        return getElementName(o);
+      }
+    };
+  }
+
   public static final NullableFunction<Object, String> NAMER = new NullableFunction<Object, String>() {
     public String fun(final Object o) {
       return getElementName(o);

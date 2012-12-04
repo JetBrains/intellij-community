@@ -16,6 +16,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
@@ -36,7 +37,6 @@ import org.zmlx.hg4idea.command.HgRemoveCommand;
 import org.zmlx.hg4idea.command.HgStatusCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 import org.zmlx.hg4idea.provider.HgChangeProvider;
-import org.zmlx.hg4idea.provider.HgRepositoryLocation;
 
 import java.awt.*;
 import java.io.*;
@@ -50,6 +50,7 @@ import java.util.List;
 public abstract class HgUtil {
 
   public static final int MANY_FILES = 100;
+  private static final Logger LOG = Logger.getInstance(HgUtil.class);
 
   public static File copyResourceToTempFile(String basename, String extension) throws IOException {
     final InputStream in = HgUtil.class.getClassLoader().getResourceAsStream("python/" + basename + extension);
@@ -407,7 +408,7 @@ public abstract class HgUtil {
 
   @NotNull
   public static List<Change> getDiff(@NotNull final Project project,
-                                     @NotNull final HgRepositoryLocation repository,
+                                     @NotNull final VirtualFile root,
                                      @NotNull final FilePath path,
                                      @Nullable final HgFileRevision rev1,
                                      @Nullable final HgFileRevision rev2) {
@@ -420,17 +421,17 @@ public abstract class HgUtil {
       statusCommand.setTargetRevision(rev2 != null ? rev2.getRevisionNumber() : null);   //rev2==null means "compare with local version"
     }
     else {
-      assert (rev2 != null); //rev1 and rev2 can't be null both//
+      LOG.assertTrue(rev2 != null, "revision1 and revision2 can't both be null. Path: " + path); //rev1 and rev2 can't be null both//
       statusCommand.setBaseRevision(rev2.getRevisionNumber());     //get initial changes//
     }
 
-    Collection<HgChange> hgChanges = statusCommand.execute(repository.getRoot(), Collections.singleton(path));
+    Collection<HgChange> hgChanges = statusCommand.execute(root, Collections.singleton(path));
     List<Change> changes = new ArrayList<Change>();
     //convert output changes to standart Change class
     for (HgChange hgChange : hgChanges) {
       FileStatus status = convertHgDiffStatus(hgChange.getStatus());
-      if (status != null) {
-        changes.add(createChange(project, repository.getRoot(), hgChange.beforeFile().getRelativePath(), revNumber1,
+      if (status != FileStatus.UNKNOWN && status!= FileStatus.IGNORED) {
+        changes.add(createChange(project, root, hgChange.beforeFile().getRelativePath(), revNumber1,
                                  hgChange.afterFile().getRelativePath(),
                                  rev2 != null ? rev2.getRevisionNumber() : null, status));
       }
@@ -460,7 +461,7 @@ public abstract class HgUtil {
     return new Change(beforeRevision, afterRevision, aStatus);
   }
 
-  @Nullable
+  @NotNull
   public static FileStatus convertHgDiffStatus(@NotNull HgFileStatusEnum hgstatus) {
     if (hgstatus.equals(HgFileStatusEnum.ADDED)) {
       return FileStatus.ADDED;
@@ -471,6 +472,17 @@ public abstract class HgUtil {
     else if (hgstatus.equals(HgFileStatusEnum.MODIFIED)) {
       return FileStatus.MODIFIED;
     }
-    return null;
+    else if (hgstatus.equals(HgFileStatusEnum.COPY)) {
+      return HgChangeProvider.COPIED;
+    }
+    else if (hgstatus.equals(HgFileStatusEnum.UNVERSIONED)) {
+      return FileStatus.UNKNOWN;
+    }
+    else if (hgstatus.equals(HgFileStatusEnum.IGNORED)) {
+      return FileStatus.IGNORED;
+    }
+    else {
+      return FileStatus.UNKNOWN;
+    }
   }
 }

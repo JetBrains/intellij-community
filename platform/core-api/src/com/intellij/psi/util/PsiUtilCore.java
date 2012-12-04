@@ -49,47 +49,47 @@ public class PsiUtilCore {
     @Override
     @NotNull
     public Language getLanguage() {
-      throw new IllegalAccessError(this.toString());
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public PsiManager getManager() {
-      return null;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     @NotNull
     public PsiElement[] getChildren() {
-      return new PsiElement[0];
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public PsiElement getParent() {
-      return null;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     @Nullable
     public PsiElement getFirstChild() {
-      return null;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     @Nullable
     public PsiElement getLastChild() {
-      return null;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     @Nullable
     public PsiElement getNextSibling() {
-      return null;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     @Nullable
     public PsiElement getPrevSibling() {
-      return null;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
@@ -99,171 +99,171 @@ public class PsiUtilCore {
 
     @Override
     public TextRange getTextRange() {
-      return null;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public int getStartOffsetInParent() {
-      return 0;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public int getTextLength() {
-      return 0;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public PsiElement findElementAt(int offset) {
-      return null;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     @Nullable
     public PsiReference findReferenceAt(int offset) {
-      return null;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public int getTextOffset() {
-      return 0;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public String getText() {
-      return null;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     @NotNull
     public char[] textToCharArray() {
-      return new char[0];
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public PsiElement getNavigationElement() {
-      return null;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public PsiElement getOriginalElement() {
-      return null;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public boolean textMatches(@NotNull CharSequence text) {
-      return false;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public boolean textMatches(@NotNull PsiElement element) {
-      return false;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public boolean textContains(char c) {
-      return false;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public void accept(@NotNull PsiElementVisitor visitor) {
-
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public void acceptChildren(@NotNull PsiElementVisitor visitor) {
-
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public PsiElement copy() {
-      return null;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public PsiElement add(@NotNull PsiElement element) {
-      return null;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) {
-      return null;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) {
-      return null;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public void checkAdd(@NotNull PsiElement element) {
-
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public PsiElement addRange(PsiElement first, PsiElement last) {
-      return null;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public PsiElement addRangeBefore(@NotNull PsiElement first, @NotNull PsiElement last, PsiElement anchor) {
-      return null;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public PsiElement addRangeAfter(PsiElement first, PsiElement last, PsiElement anchor) {
-      return null;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public void delete() {
-
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public void checkDelete() {
-
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public void deleteChildRange(PsiElement first, PsiElement last) {
-
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public PsiElement replace(@NotNull PsiElement newElement) {
-      return null;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public boolean isValid() {
-      return false;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public boolean isWritable() {
-      return false;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     @Nullable
     public PsiReference getReference() {
-      return null;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     @NotNull
     public PsiReference[] getReferences() {
-      return new PsiReference[0];
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public <T> T getCopyableUserData(Key<T> key) {
-      return null;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public <T> void putCopyableUserData(Key<T> key, T value) {
-
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
@@ -271,49 +271,49 @@ public class PsiUtilCore {
                                        @NotNull ResolveState state,
                                        PsiElement lastParent,
                                        @NotNull PsiElement place) {
-      return false;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public PsiElement getContext() {
-      return null;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public boolean isPhysical() {
-      return false;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     @NotNull
     public GlobalSearchScope getResolveScope() {
-      return GlobalSearchScope.EMPTY_SCOPE;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     @NotNull
     public SearchScope getUseScope() {
-      return GlobalSearchScope.EMPTY_SCOPE;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public ASTNode getNode() {
-      return null;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public <T> T getUserData(@NotNull Key<T> key) {
-      return null;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public <T> void putUserData(@NotNull Key<T> key, T value) {
-
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
     public Icon getIcon(int flags) {
-      return null;
+      throw new PsiInvalidElementAccessException(this);
     }
 
     @Override
@@ -410,6 +410,7 @@ public class PsiUtilCore {
   @NotNull
   public static PsiFile[] toPsiFileArray(@NotNull Collection<? extends PsiFile> collection) {
     if (collection.isEmpty()) return PsiFile.EMPTY_ARRAY;
+    //noinspection SSBasedInspection
     return collection.toArray(new PsiFile[collection.size()]);
   }
 

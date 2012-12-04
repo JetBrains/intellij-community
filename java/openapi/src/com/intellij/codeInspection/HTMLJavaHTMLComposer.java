@@ -56,10 +56,12 @@ public abstract class HTMLJavaHTMLComposer implements HTMLComposerExtension<HTML
 
   public abstract void appendTypeReferences(StringBuffer buf, RefClass refClass);
 
+  @Override
   public Key<HTMLJavaHTMLComposer> getID() {
     return COMPOSER;
   }
 
+  @Override
   public Language getLanguage() {
     return StdLanguages.JAVA;
   }

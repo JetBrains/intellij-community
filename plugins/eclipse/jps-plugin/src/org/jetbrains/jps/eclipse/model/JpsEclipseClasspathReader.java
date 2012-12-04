@@ -250,7 +250,9 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
 
   public void setupOutput(JpsModule rootModel, final String path) {
     final JpsJavaModuleExtension extension = getService().getOrCreateModuleExtension(rootModel);
-    extension.setOutputUrl(pathToUrl(path));
+    String outputUrl = pathToUrl(path);
+    extension.setOutputUrl(outputUrl);
+    extension.setTestOutputUrl(outputUrl);
     extension.setInheritOutput(false);
 
     rootModel.getDependenciesList().addModuleSourceDependency();

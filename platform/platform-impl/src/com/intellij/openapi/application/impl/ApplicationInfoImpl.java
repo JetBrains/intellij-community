@@ -50,6 +50,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myCompanyName = "JetBrains s.r.o.";
   private String myCompanyUrl = "http://www.jetbrains.com/";
   private Color myProgressColor = null;
+  private Color myAboutForeground = Color.black;
   private Icon myProgressTailIcon = null;
 
   private int myProgressY = 350;
@@ -81,6 +82,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myWinKeymapUrl;
   private String myMacKeymapUrl;
   private boolean myEAP;
+  private boolean myHasHelp = true;
   private boolean myHasContextHelp = true;
   @NonNls private String myHelpFileName = "ideahelp.jar";
   @NonNls private String myHelpRootName = "idea";
@@ -103,6 +105,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ATTRIBUTE_URL = "url";
   @NonNls private static final String ATTRIBUTE_TEXT_COLOR = "textcolor";
   @NonNls private static final String ATTRIBUTE_PROGRESS_COLOR = "progressColor";
+  @NonNls private static final String ATTRIBUTE_ABOUT_FOREGROUND_COLOR = "foreground";
   @NonNls private static final String ATTRIBUTE_PROGRESS_Y = "progressY";
   @NonNls private static final String ATTRIBUTE_PROGRESS_TAIL_ICON = "progressTailIcon";
   @NonNls private static final String ELEMENT_ABOUT = "about";
@@ -137,6 +140,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ATTRIBUTE_LIST_URL = "list-url";
   @NonNls private static final String ATTRIBUTE_DOWNLOAD_URL = "download-url";
   @NonNls private static final String ATTRIBUTE_WEBHELP_URL = "webhelp-url";
+  @NonNls private static final String ATTRIBUTE_HAS_HELP = "has-help";
   @NonNls private static final String ATTRIBUTE_HAS_CONTEXT_HELP = "has-context-help";
   @NonNls private static final String ELEMENT_WHATSNEW = "whatsnew";
   @NonNls private static final String ELEMENT_KEYMAP = "keymap";
@@ -310,6 +314,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   }
 
   @Override
+  public boolean hasHelp() {
+    return myHasHelp;
+  }
+
+  @Override
   public boolean hasContextHelp() {
     return myHasContextHelp;
   }
@@ -324,6 +333,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   public String getMacKeymapUrl() {
     return myMacKeymapUrl;
+  }
+
+  @Override
+  public Color getAboutForeground() {
+    return myAboutForeground;
   }
 
   public String getFullApplicationName() {
@@ -444,6 +458,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     Element aboutLogoElement = parentNode.getChild(ELEMENT_ABOUT);
     if (aboutLogoElement != null) {
       myAboutImageUrl = aboutLogoElement.getAttributeValue(ATTRIBUTE_URL);
+      
+      String v = aboutLogoElement.getAttributeValue(ATTRIBUTE_ABOUT_FOREGROUND_COLOR);
+        if (v != null) {
+          myAboutForeground = parseColor(v);
+        }
     }
 
     Element iconElement = parentNode.getChild(ELEMENT_ICON);
@@ -487,7 +506,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       if (webHelpUrl != null) {
         myWebHelpUrl = webHelpUrl;
       }
-      final String attValue = helpElement.getAttributeValue(ATTRIBUTE_HAS_CONTEXT_HELP);
+      
+      String attValue = helpElement.getAttributeValue(ATTRIBUTE_HAS_HELP);
+      myHasHelp = attValue == null || Boolean.parseBoolean(attValue); // Default is true
+      
+      attValue = helpElement.getAttributeValue(ATTRIBUTE_HAS_CONTEXT_HELP);
       myHasContextHelp = attValue == null || Boolean.parseBoolean(attValue); // Default is true
     }
 

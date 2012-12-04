@@ -29,6 +29,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiLabeledStatement, Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiLabeledStatementImpl");
@@ -126,5 +127,11 @@ public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiL
   @NotNull
   public SearchScope getUseScope() {
     return new LocalSearchScope(this);
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getNameIdentifier() {
+    return getLabelIdentifier();
   }
 }

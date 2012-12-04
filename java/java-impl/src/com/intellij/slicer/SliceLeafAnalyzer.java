@@ -185,7 +185,7 @@ public class SliceLeafAnalyzer {
     return new FactoryMap<SliceNode, Collection<PsiElement>>() {
       @Override
       protected Map<SliceNode, Collection<PsiElement>> createMap() {
-        return new ConcurrentHashMap<SliceNode, Collection<PsiElement>>(TObjectHashingStrategy.IDENTITY);
+        return new ConcurrentHashMap<SliceNode, Collection<PsiElement>>(ContainerUtil.<SliceNode>identityStrategy());
       }
 
       @Override

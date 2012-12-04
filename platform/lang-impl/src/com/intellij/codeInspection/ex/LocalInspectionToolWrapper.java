@@ -169,8 +169,13 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
       final PsiElement elt = descriptor.getPsiElement();
       if (elt == null) continue;
       if (filterSuppressed) {
-        if (refManager.isDeclarationsFound()
-            && (context.isSuppressed(elt, tool.getID()) || tool.getAlternativeID() != null && context.isSuppressed(elt, tool.getAlternativeID()))) {
+        String alternativeId;
+        String id;
+        if (refManager.isDeclarationsFound() &&
+            (context.isSuppressed(elt, id = tool.getID()) ||
+             (alternativeId = tool.getAlternativeID()) != null &&
+             !alternativeId.equals(id) &&
+             context.isSuppressed(elt, alternativeId))) {
           continue;
         }
         if (InspectionManagerEx.inspectionResultSuppressed(elt, tool)) continue;

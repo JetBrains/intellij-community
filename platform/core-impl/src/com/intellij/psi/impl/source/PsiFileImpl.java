@@ -218,13 +218,13 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       StubTree stub = derefStub();
 
       if (stub != null) {
+        ApplicationManager.getApplication().assertReadAccessAllowed();
         final Iterator<StubElement<?>> stubs = stub.getPlainList().iterator();
         stubs.next(); // Skip file stub;
         synchronized (PsiLock.LOCK) {
           switchFromStubToAST(treeElement, stubs);
         }
-
-        clearStub();
+        myStub = null;
       }
 
       setTreeElement(treeElement);
@@ -353,6 +353,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   private void clearStub() {
     StubTree stubHolder = myStub == null ? null : myStub.get();
     if (stubHolder != null) {
+      ApplicationManager.getApplication().assertWriteAccessAllowed();
       ((StubBase<?>)stubHolder.getRoot()).setPsi(null);
     }
     myStub = null;

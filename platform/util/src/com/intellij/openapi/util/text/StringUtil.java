@@ -2297,6 +2297,11 @@ public class StringUtil extends StringUtilRt {
     return buffer.toString();
   }
 
+  @NotNull
+  public static String shortenPathWithEllipsis(@NotNull final String path, final int max_length) {
+    return shortenTextWithEllipsis(path, max_length, (int)(max_length * 0.7));
+  }
+
   public static boolean charsEqual(char a, char b, boolean ignoreCase) {
     return ignoreCase ? charsEqualIgnoreCase(a, b) : a == b;
   }

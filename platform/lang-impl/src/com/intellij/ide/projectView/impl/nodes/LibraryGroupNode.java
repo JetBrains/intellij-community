@@ -30,7 +30,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -140,20 +140,22 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
     ProjectSettingsService.getInstance(myProject).openModuleLibrarySettings(module);
   }
 
-  static VirtualFile[] getLibraryRoots(LibraryOrderEntry orderEntry) {
-    final ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
-    final Library library = orderEntry.getLibrary();
+  @NotNull
+  static VirtualFile[] getLibraryRoots(@NotNull LibraryOrderEntry orderEntry) {
+    Library library = orderEntry.getLibrary();
     if (library == null) return VirtualFile.EMPTY_ARRAY;
     OrderRootType[] rootTypes = LibraryType.DEFAULT_EXTERNAL_ROOT_TYPES;
     if (library instanceof LibraryEx) {
+      if (((LibraryEx)library).isDisposed()) return VirtualFile.EMPTY_ARRAY;
       PersistentLibraryKind<?> libKind = ((LibraryEx)library).getKind();
       if (libKind != null) {
         rootTypes = LibraryType.findByKind(libKind).getExternalRootTypes();
       }
     }
+    final ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
     for (OrderRootType rootType : rootTypes) {
       files.addAll(Arrays.asList(library.getFiles(rootType)));
     }
-    return VfsUtil.toVirtualFileArray(files);
+    return VfsUtilCore.toVirtualFileArray(files);
   }
 }

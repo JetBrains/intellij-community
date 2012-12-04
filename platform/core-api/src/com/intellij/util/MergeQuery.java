@@ -36,6 +36,7 @@ public class MergeQuery<T> implements Query<T>{
     myQuery2 = query2;
   }
 
+  @Override
   @NotNull
   public Collection<T> findAll() {
     List<T> results = new ArrayList<T>();
@@ -43,16 +44,20 @@ public class MergeQuery<T> implements Query<T>{
     return results;
   }
 
+  @Override
   public T findFirst() {
     final CommonProcessors.FindFirstProcessor<T> processor = new CommonProcessors.FindFirstProcessor<T>();
     forEach(processor);
     return processor.getFoundValue();
   }
 
+  @Override
   public boolean forEach(@NotNull final Processor<T> consumer) {
     return processSubQuery(consumer, myQuery1) && processSubQuery(consumer, myQuery2);
   }
 
+  @NotNull
+  @Override
   public AsyncFuture<Boolean> forEachAsync(@NotNull final Processor<T> consumer) {
     final AsyncFutureResult<Boolean> result = AsyncFutureFactory.getInstance().createAsyncFutureResult();
 
@@ -76,6 +81,7 @@ public class MergeQuery<T> implements Query<T>{
 
   private <V extends T> boolean processSubQuery(final Processor<T> consumer, Query<V> query1) {
     return query1.forEach(new Processor<V>() {
+      @Override
       public boolean process(final V t) {
         return consumer.process(t);
       }
@@ -84,17 +90,21 @@ public class MergeQuery<T> implements Query<T>{
 
   private <V extends T> AsyncFuture<Boolean> processSubQueryAsync(final Processor<T> consumer, Query<V> query1) {
     return query1.forEachAsync(new Processor<V>() {
+      @Override
       public boolean process(final V t) {
         return consumer.process(t);
       }
     });
   }
 
-  public T[] toArray(final T[] a) {
+  @NotNull
+  @Override
+  public T[] toArray(@NotNull final T[] a) {
     final Collection<T> results = findAll();
     return results.toArray(a);
   }
 
+  @Override
   public Iterator<T> iterator() {
     return findAll().iterator();
   }

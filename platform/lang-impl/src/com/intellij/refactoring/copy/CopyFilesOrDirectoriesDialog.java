@@ -30,6 +30,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -52,6 +54,8 @@ import java.io.File;
 import java.util.List;
 
 public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
+  public static final int MAX_PATH_LENGTH = 70;
+  
   private JLabel myInformationLabel;
   private TextFieldWithHistoryWithBrowseButton myTargetDirectoryField;
   private JTextField myNewNameField;
@@ -81,9 +85,10 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
       String text;
       if (elements[0] instanceof PsiFile) {
         PsiFile file = (PsiFile)elements[0];
+        String url = shortenPath(file.getVirtualFile());
         text = doClone ?
-               RefactoringBundle.message("copy.files.clone.file.0", file.getVirtualFile().getPresentableUrl()) :
-               RefactoringBundle.message("copy.files.copy.file.0", file.getVirtualFile().getPresentableUrl());
+               RefactoringBundle.message("copy.files.clone.file.0", url) :
+               RefactoringBundle.message("copy.files.copy.file.0", url);
         final String fileName = file.getName();
         myNewNameField.setText(fileName);
         final int dotIdx = fileName.lastIndexOf(".");
@@ -94,9 +99,10 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
       }
       else {
         PsiDirectory directory = (PsiDirectory)elements[0];
+        String url = shortenPath(directory.getVirtualFile());
         text = doClone ?
-               RefactoringBundle.message("copy.files.clone.directory.0", directory.getVirtualFile().getPresentableUrl()) :
-               RefactoringBundle.message("copy.files.copy.directory.0", directory.getVirtualFile().getPresentableUrl());
+               RefactoringBundle.message("copy.files.clone.directory.0", url) :
+               RefactoringBundle.message("copy.files.copy.directory.0", url);
         myNewNameField.setText(directory.getName());
       }
       myInformationLabel.setText(text);
@@ -110,6 +116,10 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
         .setText(defaultTargetDirectory == null ? "" : defaultTargetDirectory.getVirtualFile().getPresentableUrl());
     }
     validateOKButton();
+  }
+
+  public static String shortenPath(VirtualFile file) {
+    return StringUtil.shortenPathWithEllipsis(file.getPresentableUrl(), MAX_PATH_LENGTH);
   }
 
   private void setMultipleElementCopyLabel(PsiElement[] elements) {
@@ -157,13 +167,14 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
     };
 
     if (myShowNewNameField) {
-      myNewNameField = new JTextField(60);
+      myNewNameField = new JTextField();
       myNewNameField.getDocument().addDocumentListener(documentListener);
       formBuilder.addLabeledComponent(RefactoringBundle.message("copy.files.new.name.label"), myNewNameField);
     }
 
     if (myShowDirectoryField) {
       myTargetDirectoryField = new TextFieldWithHistoryWithBrowseButton();
+      myTargetDirectoryField.setTextFieldPreferredWidth(MAX_PATH_LENGTH);
       final List<String> recentEntries = RecentsManager.getInstance(myProject).getRecentEntries(RECENT_KEYS);
       if (recentEntries != null) {
         myTargetDirectoryField.getChildComponent().setHistory(recentEntries);
@@ -173,7 +184,6 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
                                                      RefactoringBundle.message("the.file.will.be.copied.to.this.directory"),
                                                      myProject, descriptor,
                                                      TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
-      myTargetDirectoryField.setTextFieldPreferredWidth(60);
       myTargetDirectoryField.getChildComponent().addDocumentListener(new DocumentAdapter() {
         @Override
         protected void textChanged(DocumentEvent e) {

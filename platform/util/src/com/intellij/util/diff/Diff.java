@@ -17,8 +17,8 @@ package com.intellij.util.diff;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Enumerator;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +49,7 @@ public class Diff {
     final int startShift = getStartShift(objects1, objects2);
     final int endCut = getEndCut(objects1, objects2, startShift);
 
-    Enumerator<T> enumerator = new Enumerator<T>(objects1.length + objects2.length, TObjectHashingStrategy.CANONICAL);
+    Enumerator<T> enumerator = new Enumerator<T>(objects1.length + objects2.length, ContainerUtil.<T>canonicalStrategy());
     int[] ints1 = enumerator.enumerate(objects1, startShift, endCut);
     int[] ints2 = enumerator.enumerate(objects2, startShift, endCut);
     Reindexer reindexer = new Reindexer();

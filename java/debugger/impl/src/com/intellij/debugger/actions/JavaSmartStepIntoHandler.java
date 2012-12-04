@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.containers.OrderedSet;
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.TObjectHashingStrategy;
 
 import java.util.Collections;
 import java.util.List;
@@ -74,7 +73,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       while(true);
 
       //noinspection unchecked
-      final List<PsiMethod> methods = new OrderedSet<PsiMethod>(TObjectHashingStrategy.CANONICAL);
+      final List<PsiMethod> methods = new OrderedSet<PsiMethod>();
       final PsiElementVisitor methodCollector = new JavaRecursiveElementWalkingVisitor() {
         @Override public void visitAnonymousClass(PsiAnonymousClass aClass) { /*skip annonymous classes*/ }
 

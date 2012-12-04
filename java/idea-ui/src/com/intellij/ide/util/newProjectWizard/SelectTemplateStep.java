@@ -152,6 +152,11 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     Disposer.dispose(myList);
   }
 
+  @Override
+  public String getHelpId() {
+    return myWizardContext.isCreatingNewProject() ? "New_Project_Main_Settings" : "Add_Module_Main_Settings";
+  }
+
   private static NamePathComponent initNamePathComponent(WizardContext context) {
     NamePathComponent component = new NamePathComponent(
       IdeBundle.message("label.project.name"),

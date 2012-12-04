@@ -44,12 +44,14 @@ public class SpellCheckingInspection extends LocalInspectionTool implements Cust
 
   public static final String SPELL_CHECKING_INSPECTION_TOOL_NAME = "SpellCheckingInspection";
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return SpellCheckerBundle.message("spelling");
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
@@ -64,30 +66,29 @@ public class SpellCheckingInspection extends LocalInspectionTool implements Cust
         return ((SuppressibleSpellcheckingStrategy)strategy).getSuppressActions(element, getShortName());
       }
     }
-    return new SuppressIntentionAction[0];
+    return SuppressIntentionAction.EMPTY_ARRAY;
   }
 
   @Override
-  public boolean isSuppressedFor(PsiElement element) {
-    if (element!=null) {
-      SpellcheckingStrategy strategy = LanguageSpellchecking.INSTANCE.forLanguage(element.getLanguage());
-      if(strategy instanceof SuppressibleSpellcheckingStrategy) {
-        return ((SuppressibleSpellcheckingStrategy)strategy).isSuppressedFor(element, getShortName());
-      }
-    }
-    return false;
+  public boolean isSuppressedFor(@NotNull PsiElement element) {
+    SpellcheckingStrategy strategy = LanguageSpellchecking.INSTANCE.forLanguage(element.getLanguage());
+    return strategy instanceof SuppressibleSpellcheckingStrategy &&
+           ((SuppressibleSpellcheckingStrategy)strategy).isSuppressedFor(element, getShortName());
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getShortName() {
     return SPELL_CHECKING_INSPECTION_TOOL_NAME;
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return SpellCheckerManager.getHighlightDisplayLevel();
@@ -98,6 +99,7 @@ public class SpellCheckingInspection extends LocalInspectionTool implements Cust
     return LanguageSpellchecking.INSTANCE.forLanguage(lang);
   }
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     final SpellCheckerManager manager = SpellCheckerManager.getInstance(holder.getProject());

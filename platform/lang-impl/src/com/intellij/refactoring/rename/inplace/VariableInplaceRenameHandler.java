@@ -139,6 +139,6 @@ public class VariableInplaceRenameHandler implements RenameHandler {
 
   @Nullable
   protected VariableInplaceRenamer createRenamer(@NotNull PsiElement elementToRename, Editor editor) {
-    return new VariableInplaceRenamer((PsiNameIdentifierOwner)elementToRename, editor);
+    return new VariableInplaceRenamer((PsiNamedElement)elementToRename, editor);
   }
 }

@@ -52,7 +52,6 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.OrderedSet;
 import com.intellij.util.indexing.FileBasedIndex;
 import gnu.trove.TIntHashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -114,7 +113,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   public void recalculateOutputDirs() {
     final Module[] allModules = ModuleManager.getInstance(myProject).getModules();
 
-    final Set<VirtualFile> allDirs = new OrderedSet<VirtualFile>((TObjectHashingStrategy<VirtualFile>)TObjectHashingStrategy.CANONICAL);
+    final Set<VirtualFile> allDirs = new OrderedSet<VirtualFile>();
     final Set<VirtualFile> testOutputDirs = new java.util.HashSet<VirtualFile>();
     final Set<VirtualFile> productionOutputDirs = new java.util.HashSet<VirtualFile>();
 

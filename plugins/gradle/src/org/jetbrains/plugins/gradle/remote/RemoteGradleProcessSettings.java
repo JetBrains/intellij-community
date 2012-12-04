@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.gradle.remote;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
@@ -17,26 +16,33 @@ import java.io.Serializable;
 public class RemoteGradleProcessSettings implements Serializable {
 
   private static final boolean USE_VERBOSE_GRADLE_API_BY_DEFAULT = Boolean.parseBoolean(System.getProperty("gradle.api.verbose"));
-  
+
   private static final long serialVersionUID = 1L;
 
-  private final String  myGradleHome;
-  private       long    myTtlInMs;
-  private       String  myJavaHome;
-  private       boolean myVerboseApi;
+  @Nullable private final String  myGradleHome;
+  private final          boolean myUseWrapper;
 
-  public RemoteGradleProcessSettings(@NotNull String gradleHome) {
+  private long    myTtlInMs;
+  private String  myJavaHome;
+  private boolean myVerboseApi;
+
+  public RemoteGradleProcessSettings(@Nullable String gradleHome, boolean wrapper) {
     myGradleHome = gradleHome;
+    myUseWrapper = wrapper;
     setVerboseApi(USE_VERBOSE_GRADLE_API_BY_DEFAULT);
   }
 
-  @NotNull
+  @Nullable
   public String getGradleHome() {
     return myGradleHome;
   }
 
+  public boolean isUseWrapper() {
+    return myUseWrapper;
+  }
+
   /**
-   * @return    ttl in milliseconds for the remote process (positive value); non-positive value if undefined
+   * @return ttl in milliseconds for the remote process (positive value); non-positive value if undefined
    */
   public long getTtlInMs() {
     return myTtlInMs;

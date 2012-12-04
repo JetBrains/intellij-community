@@ -72,7 +72,6 @@ import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -138,7 +137,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private boolean myChangeGuard;
   private volatile LookupArranger myArranger;
   private LookupArranger myPresentableArranger;
-  @SuppressWarnings("unchecked") private final Map<LookupElement, PrefixMatcher> myMatchers = new ConcurrentHashMap<LookupElement, PrefixMatcher>(TObjectHashingStrategy.IDENTITY);
+  private final Map<LookupElement, PrefixMatcher> myMatchers = new ConcurrentHashMap<LookupElement, PrefixMatcher>(
+    ContainerUtil.<LookupElement>identityStrategy());
   private LookupHint myElementHint = null;
   private final Alarm myHintAlarm = new Alarm();
   private final JLabel mySortingLabel = new JLabel();

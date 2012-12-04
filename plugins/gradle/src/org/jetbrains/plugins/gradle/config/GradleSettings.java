@@ -17,6 +17,7 @@ package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,9 +39,10 @@ public class GradleSettings implements PersistentStateComponent<GradleSettings> 
   /** Holds information about 'expand/collapse' status of the 'sync project structure tree' nodes. */
   //private final AtomicReference<Set<GradleProjectStructureChange>>             myAcceptedChanges
   //  = new AtomicReference<Set<GradleProjectStructureChange>>();
-  
-  private String myLinkedProjectPath;
-  private String myGradleHome;
+
+  private String  myLinkedProjectPath;
+  private String  myGradleHome;
+  private boolean myPreferLocalInstallationToWrapper;
 
   @Override
   public GradleSettings getState() {
@@ -70,8 +72,10 @@ public class GradleSettings implements PersistentStateComponent<GradleSettings> 
   public static void applyGradleHome(@Nullable String newPath, @NotNull Project project) {
     final GradleSettings settings = getInstance(project);
     final String oldPath = settings.myGradleHome;
-    settings.myGradleHome = newPath;
-    project.getMessageBus().syncPublisher(GradleConfigNotifier.TOPIC).onGradleHomeChange(oldPath, newPath);
+    if (!Comparing.equal(oldPath, newPath)) {
+      settings.myGradleHome = newPath;
+      project.getMessageBus().syncPublisher(GradleConfigNotifier.TOPIC).onGradleHomeChange(oldPath, newPath);
+    }
   }
 
   @Nullable
@@ -87,8 +91,27 @@ public class GradleSettings implements PersistentStateComponent<GradleSettings> 
   public static void applyLinkedProjectPath(@Nullable String path, @NotNull Project project) {
     final GradleSettings settings = getInstance(project);
     final String oldPath = settings.myLinkedProjectPath;
-    settings.myLinkedProjectPath = path;
-    project.getMessageBus().syncPublisher(GradleConfigNotifier.TOPIC).onLinkedProjectPathChange(oldPath, path);
+    if (!Comparing.equal(oldPath, path)) {
+      settings.myLinkedProjectPath = path;
+      project.getMessageBus().syncPublisher(GradleConfigNotifier.TOPIC).onLinkedProjectPathChange(oldPath, path);
+    }
+  }
+
+  public boolean isPreferLocalInstallationToWrapper() {
+    return myPreferLocalInstallationToWrapper;
+  }
+
+  public static void applyPreferLocalInstallationToWrapper(boolean preferLocal, @NotNull Project project) {
+    final GradleSettings settings = getInstance(project);
+    boolean oldValue = settings.isPreferLocalInstallationToWrapper();
+    if (oldValue != preferLocal) {
+      settings.setPreferLocalInstallationToWrapper(preferLocal);
+      project.getMessageBus().syncPublisher(GradleConfigNotifier.TOPIC).onPreferLocalGradleDistributionToWrapperChange(preferLocal);
+    }
+  }
+  
+  public void setPreferLocalInstallationToWrapper(boolean preferLocalInstallationToWrapper) {
+    myPreferLocalInstallationToWrapper = preferLocalInstallationToWrapper;
   }
 
   @Override

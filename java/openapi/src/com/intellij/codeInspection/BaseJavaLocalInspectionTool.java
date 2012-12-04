@@ -78,11 +78,13 @@ public abstract class BaseJavaLocalInspectionTool extends LocalInspectionTool  i
      * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
      * @return <code>null</code> if no problems found or not applicable at file level.
      */
+  @Override
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     return null;
   }
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
@@ -111,16 +113,28 @@ public abstract class BaseJavaLocalInspectionTool extends LocalInspectionTool  i
     };
   }
 
+  @Override
   public PsiNamedElement getProblemElement(final PsiElement psiElement) {
     return PsiTreeUtil.getNonStrictParentOfType(psiElement, PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class);
   }
 
+  @Override
   public SuppressIntentionAction[] getSuppressActions(final PsiElement element) {
     return SuppressManager.getInstance().createSuppressActions(HighlightDisplayKey.find(getShortName()));
   }
 
-  public boolean isSuppressedFor(final PsiElement element) {
+  @Override
+  public boolean isSuppressedFor(@NotNull PsiElement element) {
+    return isSuppressedFor(element, this);
+  }
+
+  public static boolean isSuppressedFor(@NotNull PsiElement element, @NotNull LocalInspectionTool tool) {
     final SuppressManager manager = SuppressManager.getInstance();
-    return manager.isSuppressedFor(element, getID()) || manager.isSuppressedFor(element, getAlternativeID());
+    String alternativeId;
+    String id;
+    return manager.isSuppressedFor(element, id = tool.getID()) ||
+           (alternativeId = tool.getAlternativeID()) != null &&
+             !alternativeId.equals(id) &&
+             manager.isSuppressedFor(element, alternativeId);
   }
 }

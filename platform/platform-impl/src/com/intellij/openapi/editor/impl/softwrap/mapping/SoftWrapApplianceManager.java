@@ -1242,6 +1242,9 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     public SoftWrap       delayedSoftWrap;
     public JComponent     contentComponent;
     public int            reservedWidthInPixels;
+    /**
+     * Min offset to use when new soft wrap should be introduced. I.e. every time we detect that text exceeds visual width,
+     */
     public int            softWrapStartOffset;
     public int            rangeEndOffset;
     public int            tokenStartOffset;

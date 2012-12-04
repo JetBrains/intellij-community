@@ -399,16 +399,15 @@ public class UpdateHighlightersUtil {
     return severityRegistrar.compare(HighlightSeverity.ERROR, severity) <= 0 || severity == HighlightInfoType.SYMBOL_TYPE_SEVERITY;
   }
 
-  // return true if changed
-  private static RangeHighlighter createOrReuseHighlighterFor(@NotNull final HighlightInfo info,
-                                                              @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
-                                                              @NotNull final Document document,
-                                                              final int group,
-                                                              @NotNull final PsiFile psiFile,
-                                                              @NotNull MarkupModelEx markup,
-                                                              @Nullable HighlightersRecycler infosToRemove,
-                                                              @NotNull final Map<TextRange, RangeMarker> ranges2markersCache,
-                                                              SeverityRegistrar severityRegistrar) {
+  private static void createOrReuseHighlighterFor(@NotNull final HighlightInfo info,
+                                                  @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
+                                                  @NotNull final Document document,
+                                                  final int group,
+                                                  @NotNull final PsiFile psiFile,
+                                                  @NotNull MarkupModelEx markup,
+                                                  @Nullable HighlightersRecycler infosToRemove,
+                                                  @NotNull final Map<TextRange, RangeMarker> ranges2markersCache,
+                                                  @NotNull SeverityRegistrar severityRegistrar) {
     int infoStartOffset = info.startOffset;
     int infoEndOffset = info.endOffset;
 
@@ -418,6 +417,7 @@ public class UpdateHighlightersUtil {
       infoStartOffset = Math.min(infoStartOffset, infoEndOffset);
     }
     if (infoEndOffset == infoStartOffset && !info.isAfterEndOfLine) {
+      if (infoEndOffset == docLength) return;  // empty highlighter beyond file boundaries
       infoEndOffset++; //show something in case of empty highlightinfo
     }
 
@@ -478,7 +478,6 @@ public class UpdateHighlightersUtil {
     assert attributesSet : "Info: " + infoAttributes +
                            "; colorsScheme: " + (colorsScheme == null ? "[global]" : colorsScheme.getName()) +
                            "; highlighter:" + highlighter.getTextAttributes();
-    return highlighter;
   }
 
   private static int getLayer(@NotNull HighlightInfo info, @NotNull SeverityRegistrar severityRegistrar) {

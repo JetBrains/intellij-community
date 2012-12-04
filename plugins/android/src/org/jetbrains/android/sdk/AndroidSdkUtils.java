@@ -453,7 +453,8 @@ public class AndroidSdkUtils {
       final OSProcessHandler ddmsProcessHandler = AndroidRunDdmsAction.getDdmsProcessHandler();
       if (ddmsProcessHandler != null) {
         final int r = Messages
-          .showYesNoDialog(project, "Monitor will be closed to activate ADB service. Continue?", "ADB activation", Messages.getQuestionIcon());
+          .showYesNoDialog(project, "Monitor will be closed to enable ADB integration. Continue?", "ADB Integration",
+                           Messages.getQuestionIcon());
 
         if (r != Messages.YES) {
           return false;

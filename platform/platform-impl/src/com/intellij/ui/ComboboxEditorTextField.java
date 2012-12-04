@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,11 +63,14 @@ public class ComboboxEditorTextField extends EditorTextField {
   public ComboboxEditorTextField(Document document, Project project, FileType fileType, boolean isViewer) {
     super(document, project, fileType, isViewer);
     setOneLineMode(true);
+    if (UIUtil.isUnderDarcula()) { //todo[kb] make for all LaFs and color schemes ?
+      setBackground(UIUtil.getTextFieldBackground());
+    }
   }
 
   @Override
   protected boolean shouldHaveBorder() {
-    return UIManager.getBorder("ComboBox.border") == null;
+    return UIManager.getBorder("ComboBox.border") == null && !UIUtil.isUnderDarcula();
   }
 
   @Override
@@ -125,7 +128,7 @@ public class ComboboxEditorTextField extends EditorTextField {
 
   private void repaintComboBox() {
     // TODO:
-    if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) {
+    if (UIUtil.isUnderDarcula() || (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel())) {
       IdeFocusManager.getInstance(getProject()).doWhenFocusSettlesDown(new Runnable() {
         @Override
         public void run() {

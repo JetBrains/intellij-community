@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -99,7 +100,7 @@ public class CommonProcessors {
     private final Processor<T> myDelegate;
 
     public UniqueProcessor(Processor<T> delegate) {
-      this(delegate, TObjectHashingStrategy.CANONICAL);
+      this(delegate, ContainerUtil.<T>canonicalStrategy());
     }
     public UniqueProcessor(Processor<T> delegate, TObjectHashingStrategy<T> strategy) {
       myDelegate = delegate;

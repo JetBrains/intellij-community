@@ -193,7 +193,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
   }
 
   @Override
-  public boolean isSuppressed(PsiElement element, String id) {
+  public boolean isSuppressed(@NotNull PsiElement element, String id) {
     final RefManagerImpl refManager = (RefManagerImpl)getRefManager();
     if (refManager.isDeclarationsFound()) {
       final RefElement refElement = refManager.getReference(element);

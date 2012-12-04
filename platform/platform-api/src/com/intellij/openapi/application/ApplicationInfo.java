@@ -38,6 +38,7 @@ public abstract class ApplicationInfo {
   public abstract String getHelpURL();
   public abstract String getCompanyName();
   public abstract String getCompanyURL();
+  public abstract boolean hasHelp();
   public abstract boolean hasContextHelp();
 
   public String getFullVersion() {
@@ -60,6 +61,10 @@ public abstract class ApplicationInfo {
     return ApplicationManager.getApplication().getComponent(ApplicationInfo.class);
   }
 
+
+  public static boolean helpAvailable() {
+    return ApplicationManager.getApplication() != null && getInstance() != null && getInstance().hasHelp();
+  }
 
   public static boolean contextHelpAvailable() {
     return ApplicationManager.getApplication() != null && getInstance() != null && getInstance().hasContextHelp();

@@ -68,7 +68,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.*;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Function;
-import com.intellij.util.NullableFunction;
+import com.intellij.util.FunctionUtil;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.MessageBusConnection;
@@ -112,7 +112,8 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     @Nullable
     @Override
     public Color getFileColorFor(DefaultMutableTreeNode node) {
-      return ProjectViewTree.getColorForObject(((PackageDependenciesNode)node).getPsiElement(), myProject, Function.ID);
+      return ProjectViewTree.getColorForObject(((PackageDependenciesNode)node).getPsiElement(), myProject,
+                                               FunctionUtil.<PsiElement>id());
     }
   };
   private final Project myProject;

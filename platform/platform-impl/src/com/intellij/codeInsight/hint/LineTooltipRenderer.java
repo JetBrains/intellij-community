@@ -63,11 +63,11 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   }
 
   @Override
-  public LightweightHint show(final Editor editor,
-                              final Point p,
+  public LightweightHint show(@NotNull final Editor editor,
+                              @NotNull final Point p,
                               final boolean alignToRight,
                               final TooltipGroup group,
-                              final HintHint hintHint) {
+                              @NotNull final HintHint hintHint) {
     if (myText == null) return null;
 
     //setup text
@@ -193,13 +193,13 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     return TooltipLinkHandlerEP.handleLink(ref, editor);
   }
 
-  private void expand(LightweightHint hint,
-                      Editor editor,
-                      Point p,
-                      JEditorPane pane,
+  private void expand(@NotNull LightweightHint hint,
+                      @NotNull Editor editor,
+                      @NotNull Point p,
+                      @NotNull JEditorPane pane,
                       boolean alignToRight,
                       TooltipGroup group,
-                      HintHint hintHint) {
+                      @NotNull HintHint hintHint) {
     hint.hide();
     if (myCurrentWidth > 0) {
       stripDescription();

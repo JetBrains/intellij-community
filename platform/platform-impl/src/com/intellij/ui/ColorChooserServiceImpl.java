@@ -26,7 +26,11 @@ import java.awt.*;
 public class ColorChooserServiceImpl extends ColorChooserService {
   @Nullable
   @Override
-  public Color showDialog(Component parent, String caption, Color preselectedColor, boolean enableOpacity, @Nullable PsiElement element) {
-    return ColorPicker.showDialog(parent, caption, preselectedColor, enableOpacity, element);
+  public Color showDialog(Component parent,
+                          String caption,
+                          Color preselectedColor,
+                          boolean enableOpacity,
+                          ColorPickerListener[] listeners) {
+    return ColorPicker.showDialog(parent, caption, preselectedColor, enableOpacity, listeners);
   }
 }

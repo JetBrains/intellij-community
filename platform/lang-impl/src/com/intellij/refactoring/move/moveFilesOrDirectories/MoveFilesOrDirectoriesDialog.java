@@ -36,6 +36,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.copy.CopyFilesOrDirectoriesDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.NonFocusableCheckBox;
@@ -109,7 +110,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
         validateOKButton();
       }
     });
-    myTargetDirectoryField.setTextFieldPreferredWidth(60);
+    myTargetDirectoryField.setTextFieldPreferredWidth(CopyFilesOrDirectoriesDialog.MAX_PATH_LENGTH);
     Disposer.register(getDisposable(), myTargetDirectoryField);
 
     String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
@@ -127,12 +128,12 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
     if (psiElements.length == 1) {
       String text;
       if (psiElements[0] instanceof PsiFile) {
-        text = RefactoringBundle.message("move.file.0",
-                                         ((PsiFile)psiElements[0]).getVirtualFile().getPresentableUrl());
+        text = RefactoringBundle.message("move.file.0", 
+                                         CopyFilesOrDirectoriesDialog.shortenPath(((PsiFile)psiElements[0]).getVirtualFile()));
       }
       else {
         text = RefactoringBundle.message("move.directory.0",
-                                         ((PsiDirectory)psiElements[0]).getVirtualFile().getPresentableUrl());
+                                         CopyFilesOrDirectoriesDialog.shortenPath(((PsiDirectory)psiElements[0]).getVirtualFile()));
       }
       myNameLabel.setText(text);
     }

@@ -29,8 +29,8 @@ import java.util.Set;
 public class UniqueNameGenerator implements Condition<String> {
   private final Set<String> myExistingNames = new HashSet<String>();
 
-  public UniqueNameGenerator(final Collection elements, @Nullable Function<Object, String> namer) {
-    for (final Object t : elements) {
+  public <T> UniqueNameGenerator(final Collection<T> elements, @Nullable Function<T, String> namer) {
+    for (final T t : elements) {
       addExistingName(namer != null ? namer.fun(t) : t.toString());
     }
   }

@@ -20,6 +20,8 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -86,6 +88,9 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
             ZipUtil.addFileOrDirRecursively(output, saveFile, file, relativePath, null, writtenItemRelativePaths);
           }
         }
+
+        exportInstalledPlugins(saveFile, output, writtenItemRelativePaths);
+
         final File magicFile = new File(FileUtil.getTempDirectory(), ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER);
         FileUtil.createIfDoesntExist(magicFile);
         magicFile.deleteOnExit();
@@ -99,6 +104,21 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
     }
     catch (IOException e1) {
       Messages.showErrorDialog(IdeBundle.message("error.writing.settings", e1.toString()),IdeBundle.message("title.error.writing.file"));
+    }
+  }
+
+  private static void exportInstalledPlugins(File saveFile, JarOutputStream output, HashSet<String> writtenItemRelativePaths) throws IOException {
+    final List<String> oldPlugins = new ArrayList<String>();
+    for (IdeaPluginDescriptor descriptor : PluginManager.getPlugins()) {
+      if (!descriptor.isBundled() && descriptor.isEnabled()) {
+        oldPlugins.add(descriptor.getPluginId().getIdString());
+      }
+    }
+    if (!oldPlugins.isEmpty()) {
+      final File tempFile = File.createTempFile("installed", "plugins");
+      tempFile.deleteOnExit();
+      PluginManager.savePluginsList(oldPlugins, false, tempFile);
+      ZipUtil.addDirToZipRecursively(output, saveFile, tempFile, "/" + PluginManager.INSTALLED_TXT, null, writtenItemRelativePaths);
     }
   }
 

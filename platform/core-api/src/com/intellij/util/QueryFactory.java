@@ -38,6 +38,7 @@ public class QueryFactory<Result, Parameters> {
   /**
    * @return query to perform the search. @param parameters of the search
    */
+  @NotNull
   public final Query<Result> createQuery(@NotNull Parameters parameters) {
     return new ExecutorsQuery<Result, Parameters>(parameters, getExecutors());
   }
@@ -65,7 +66,7 @@ public class QueryFactory<Result, Parameters> {
    * @param parameters of the search
    * @param hashingStrategy strategy to factor results
    */
-  public final Query<Result> createUniqueResultsQuery(@NotNull Parameters parameters, TObjectHashingStrategy<Result> hashingStrategy) {
+  public final Query<Result> createUniqueResultsQuery(@NotNull Parameters parameters, @NotNull TObjectHashingStrategy<Result> hashingStrategy) {
     return new UniqueResultsQuery<Result, Result>(createQuery(parameters), hashingStrategy);
   }
 
@@ -76,8 +77,8 @@ public class QueryFactory<Result, Parameters> {
    * @param mapper function that maps results to their mapping counterparts.
    */
   public final <T> Query<Result> createUniqueResultsQuery(@NotNull Parameters parameters,
-                                                      TObjectHashingStrategy<T> hashingStrategy,
-                                                      Function<Result, T> mapper) {
+                                                          @NotNull TObjectHashingStrategy<T> hashingStrategy,
+                                                          @NotNull Function<Result, T> mapper) {
     return new UniqueResultsQuery<Result, T>(createQuery(parameters), hashingStrategy, mapper);
   }
 }

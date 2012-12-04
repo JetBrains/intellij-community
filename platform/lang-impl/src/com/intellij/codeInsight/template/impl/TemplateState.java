@@ -23,7 +23,6 @@ import com.intellij.codeInsight.lookup.LookupEvent;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.*;
-import com.intellij.lang.LanguageLiteralEscapers;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -50,7 +49,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairProcessor;
@@ -661,13 +659,7 @@ public class TemplateState implements Disposable {
     assert element == null || element.isValid();
     if (result == null || result.equalsToText(oldValue, element)) return;
 
-    String newValue = StringUtil.notNullize(result.toString());
-
-    if (element != null && !(expressionNode instanceof SelectionNode)) {
-      newValue = LanguageLiteralEscapers.INSTANCE.forLanguage(PsiUtilBase.getLanguageAtOffset(psiFile, start)).getEscapedText(element, newValue);
-    }
-
-    replaceString(newValue, start, end, segmentNumber);
+    replaceString(StringUtil.notNullize(result.toString()), start, end, segmentNumber);
 
     if (result instanceof RecalculatableResult) {
       IntArrayList indices = initEmptyVariables();

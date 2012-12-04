@@ -16,15 +16,15 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.generation.GenerateConstructorHandler;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class AddDefaultConstructorFix extends AddMethodFix {
   public AddDefaultConstructorFix(PsiClass aClass) {
-    this(aClass, GenerateConstructorHandler.getConstructorModifier(aClass));
+    this(aClass, PsiUtil.getMaximumModifierForMember(aClass));
   }
 
   public AddDefaultConstructorFix(PsiClass aClass, @NotNull @PsiModifier.ModifierConstant final String modifier) {

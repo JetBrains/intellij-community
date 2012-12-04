@@ -35,9 +35,7 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
 
 /**
@@ -267,6 +265,17 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
     setEditor();
 
     super.addNotify();
+    myEditorField.getFocusTarget().addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        EditorComboBox.this.repaint();
+      }
+
+      @Override
+      public void focusLost(FocusEvent e) {
+        EditorComboBox.this.repaint();
+      }
+    });
   }
 
   private void setEditor() {

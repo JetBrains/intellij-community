@@ -186,7 +186,7 @@ public interface JBPopup extends Disposable, LightweightWindow {
 
   Point getLocationOnScreen();
 
-  void pack(boolean with, boolean height);
+  void pack(boolean width, boolean height);
 
   void setAdText(String s, @JdkConstants.HorizontalAlignment int alignment);
 
