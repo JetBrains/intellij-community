@@ -87,7 +87,11 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
       myConfigurable.setAlwaysShowLinkedProjectControls(true);
     }
     myConfigurable.reset();
-    myConfigurable.setLinkedGradleProjectPath(new File(context.getProjectFileDirectory(), GradleConstants.DEFAULT_SCRIPT_NAME).getAbsolutePath());
+    String pathToUse = context.getProjectFileDirectory();
+    if (!pathToUse.endsWith(GradleConstants.DEFAULT_SCRIPT_NAME)) {
+      pathToUse = new File(pathToUse, GradleConstants.DEFAULT_SCRIPT_NAME).getAbsolutePath();
+    }
+    myConfigurable.setLinkedGradleProjectPath(pathToUse);
   }
   
   @Override
