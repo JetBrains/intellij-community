@@ -745,13 +745,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   @Override
   public void addErrorMarkerListener(@NotNull final ErrorStripeListener listener, @NotNull Disposable parent) {
-    myErrorMarkerListeners.add(listener);
-    Disposer.register(parent, new Disposable() {
-      @Override
-      public void dispose() {
-        myErrorMarkerListeners.remove(listener);
-      }
-    });
+    ContainerUtil.add(listener, myErrorMarkerListeners, parent);
   }
 
   public void markDirtied(@NotNull ProperTextRange yPositions) {
