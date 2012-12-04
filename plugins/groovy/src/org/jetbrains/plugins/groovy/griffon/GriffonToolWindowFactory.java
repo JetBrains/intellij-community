@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.griffon;
 
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -29,6 +30,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import icons.JetgroovyIcons;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.mvc.projectView.*;
 
 import javax.swing.*;
@@ -124,6 +126,12 @@ public class GriffonToolWindowFactory extends MvcToolWindowDescriptor {
   @Override
   public Icon getModuleNodeIcon() {
     return JetgroovyIcons.Griffon.Griffon;
+  }
+
+  @NotNull
+  @Override
+  public MvcProjectViewState getProjectViewState(Project project) {
+    return ServiceManager.getService(project, GriffonProjectViewState.class);
   }
 
   private static final Map<String, GriffonDirectoryMetadata> DIRECTORY_METADATA = new LinkedHashMap<String, GriffonDirectoryMetadata>();

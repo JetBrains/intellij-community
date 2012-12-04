@@ -1324,6 +1324,9 @@
     <projectService serviceInterface="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"
                     serviceImplementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"/>
 
+    <projectService serviceInterface="org.jetbrains.plugins.groovy.griffon.GriffonProjectViewState"
+                    serviceImplementation="org.jetbrains.plugins.groovy.griffon.GriffonProjectViewState"/>
+
     <java.programPatcher implementation="org.jetbrains.plugins.groovy.debugger.GroovyHotSwapper"/>
     <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.gpp.GppReferenceContributor"/>
 

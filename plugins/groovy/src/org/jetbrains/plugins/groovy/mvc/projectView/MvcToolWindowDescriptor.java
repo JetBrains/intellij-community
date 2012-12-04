@@ -75,6 +75,9 @@ public abstract class MvcToolWindowDescriptor implements ToolWindowFactory, Cond
 
   public abstract Icon getModuleNodeIcon();
 
+  @NotNull
+  public abstract MvcProjectViewState getProjectViewState(Project project);
+
   @Nullable
   protected static PsiDirectory findDirectory(Project project, VirtualFile root, @NotNull String relativePath) {
     final VirtualFile file = root.findFileByRelativePath(relativePath);
