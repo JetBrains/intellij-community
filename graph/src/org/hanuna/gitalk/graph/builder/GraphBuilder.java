@@ -6,7 +6,7 @@ import org.hanuna.gitalk.commitmodel.Hash;
 import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.graph.Branch;
 import org.hanuna.gitalk.graph.Edge;
-import org.hanuna.gitalk.graph.GraphModel;
+import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.Node;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,9 +17,9 @@ import static org.hanuna.gitalk.graph.builder.MutableNode.createEdge;
 /**
  * @author erokhins
  */
-public class GraphModelBuilder {
+public class GraphBuilder {
     private int lastLogIndex;
-    private Map<Hash, MutableNode> hashMutableNode = new HashMap<Hash, MutableNode>();
+    private Map<Hash, MutableNode> notAddedNodes = new HashMap<Hash, MutableNode>();
     private MutableNodeRow nextRow;
     private final List<MutableNodeRow> rows = new ArrayList<MutableNodeRow>();
 
@@ -36,14 +36,14 @@ public class GraphModelBuilder {
 
 
 
-    // return add's node
-    private MutableNode addCurrentCommit(Commit commit) {
-        MutableNode node = hashMutableNode.remove(commit.hash());
+    // return added node
+    private MutableNode addCurrentCommitAndFinishRow(Commit commit) {
+        MutableNode node = notAddedNodes.remove(commit.hash());
         if (node == null) {
             node = new MutableNode(commit, new Branch());
         }
         node.setRow(nextRow);
-        node.setType(Node.Type.commitNode);
+        node.setType(Node.Type.COMMIT_NODE);
         nextRow.add(node);
         rows.add(nextRow);
 
@@ -52,33 +52,37 @@ public class GraphModelBuilder {
     }
 
     private void addParent(MutableNode node, Commit parent, Branch branch) {
-        MutableNode parentNode = hashMutableNode.get(parent.hash());
+        MutableNode parentNode = notAddedNodes.get(parent.hash());
         if (parentNode == null) {
             parentNode = new MutableNode(parent, branch);
-            createEdge(node, parentNode, Edge.Type.usual, branch);
-            hashMutableNode.put(parent.hash(), parentNode);
+            createEdge(node, parentNode, Edge.Type.USUAL, branch);
+            notAddedNodes.put(parent.hash(), parentNode);
         } else {
             int index = getLogIndexOfCommit(parent);
-            createEdge(node, parentNode, Edge.Type.usual, branch);
+            createEdge(node, parentNode, Edge.Type.USUAL, branch);
             // i.e. we need create new Node
             if (index != rows.size()) {
                 // remove old node
-                hashMutableNode.remove(parent.hash());
+                notAddedNodes.remove(parent.hash());
 
                 MutableNode newParentNode = new MutableNode(parentNode.getCommit(), parentNode.getBranch());
-                createEdge(parentNode, newParentNode, Edge.Type.usual, parentNode.getBranch());
-                hashMutableNode.put(parent.hash(), newParentNode);
+                createEdge(parentNode, newParentNode, Edge.Type.USUAL, parentNode.getBranch());
+                notAddedNodes.put(parent.hash(), newParentNode);
 
-                parentNode.setType(Node.Type.edgeNode);
+                parentNode.setType(Node.Type.EDGE_NODE);
                 parentNode.setRow(nextRow);
                 nextRow.add(parentNode);
-
+            } else {
+                // i.e. it was real node. Fix branch if necessary.
+                if (branch.younger(parentNode.getBranch())) {
+                    parentNode.setBranch(branch);
+                }
             }
         }
     }
 
     private void append(@NotNull Commit commit) {
-        MutableNode node = addCurrentCommit(commit);
+        MutableNode node = addCurrentCommitAndFinishRow(commit);
 
         CommitData data = commit.getData();
         if (data == null) {
@@ -101,10 +105,10 @@ public class GraphModelBuilder {
     }
 
     private void lastActions() {
-        final Collection<MutableNode> lastNodes = hashMutableNode.values();
+        final Collection<MutableNode> lastNodes = notAddedNodes.values();
         for (MutableNode node : lastNodes) {
             node.setRow(nextRow);
-            node.setType(Node.Type.endCommitNode);
+            node.setType(Node.Type.END_COMMIT_NODE);
             nextRow.add(node);
         }
         if (nextRow.getNodes().size() > 0) {
@@ -113,13 +117,13 @@ public class GraphModelBuilder {
     }
 
     @NotNull
-    public GraphModel build(ReadOnlyList<Commit> listOfCommits) {
-        prepare(listOfCommits.size() - 1);
-        for (Commit listOfCommit : listOfCommits) {
-            append(listOfCommit);
+    public Graph build(ReadOnlyList<Commit> commits) {
+        prepare(commits.size() - 1);
+        for (Commit commit : commits) {
+            append(commit);
         }
         lastActions();
-        return new GraphModelImpl(rows, lastLogIndex);
+        return new GraphImpl(rows, lastLogIndex);
     }
 
 

@@ -3,7 +3,7 @@ package org.hanuna.gitalk.printmodel.cells.builder;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.graph.Branch;
-import org.hanuna.gitalk.graph.builder.GraphModelBuilder;
+import org.hanuna.gitalk.graph.builder.GraphBuilder;
 import org.hanuna.gitalk.parser.GitLogParser;
 import org.hanuna.gitalk.printmodel.cells.CellModel;
 import org.junit.Test;
@@ -23,7 +23,7 @@ public class CellModelBuilderTest {
         String input = inputTree.replace("\n", "|-aut|-132352112|-mes\n") + "|-aut|-132352112|-mes";
         GitLogParser parser = new GitLogParser(new StringReader(input));
         ReadOnlyList<Commit> commits = parser.readAllCommits();
-        GraphModelBuilder builder = new GraphModelBuilder();
+        GraphBuilder builder = new GraphBuilder();
         CellModelBuilder builder1 = new CellModelBuilder(builder.build(commits));
         CellModel cellModel = builder1.build();
         assertEquals(out, toStr(cellModel));

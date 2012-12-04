@@ -20,4 +20,8 @@ public class Branch {
     public int getNumberOfBranch() {
         return numberOfBranch;
     }
+
+    public boolean younger(Branch another) {
+        return this.getNumberOfBranch() < another.getNumberOfBranch();
+    }
 }

@@ -22,7 +22,7 @@ public class MutableNode extends AbstractSelect implements Node {
     }
 
     private final Commit commit;
-    private final Branch branch;
+    private Branch branch;
     private Type type = null;
     private MutableNodeRow row = null;
 
@@ -42,6 +42,10 @@ public class MutableNode extends AbstractSelect implements Node {
 
     public void setRow(@NotNull MutableNodeRow row) {
         this.row = row;
+    }
+
+    public void setBranch(@NotNull Branch branch) {
+        this.branch = branch;
     }
 
     public void addUpEdge(@NotNull Edge edge) {

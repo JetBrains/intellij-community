@@ -8,7 +8,7 @@ import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.controller.branchvisibility.HideShowBranch;
 import org.hanuna.gitalk.controller.branchvisibility.NodeInterval;
 import org.hanuna.gitalk.graph.Edge;
-import org.hanuna.gitalk.graph.GraphModel;
+import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.Node;
 import org.hanuna.gitalk.printmodel.PrintCellRow;
 import org.hanuna.gitalk.printmodel.SpecialCell;
@@ -26,7 +26,7 @@ import javax.swing.table.TableModel;
  * @author erokhins
  */
 public class Controller {
-    private final GraphModel graphModel;
+    private final Graph graph;
     private final SelectController selectController;
     private final HideShowBranch hideShowBranch;
 
@@ -37,14 +37,14 @@ public class Controller {
     private CellModel cellModel;
     private PrintCellRowModel printCellRowModel;
 
-    public Controller(GraphModel graphModel) {
-        this.graphModel = graphModel;
+    public Controller(Graph graph) {
+        this.graph = graph;
         this.selectController = new SelectController();
         this.hideShowBranch = new HideShowBranch();
     }
 
     public void prepare() {
-        CellModelBuilder cellModelBuilder = new CellModelBuilder(graphModel);
+        CellModelBuilder cellModelBuilder = new CellModelBuilder(graph);
         cellModel = cellModelBuilder.build();
         printCellRowModel = new PrintCellRowModel(cellModel);
     }
@@ -90,7 +90,7 @@ public class Controller {
             Node up = edge.getUpNode();
             Node down = edge.getDownNode();
             Interval old = new Interval(up.getRowIndex(), down.getRowIndex());
-            graphModel.showBranch(edge);
+            graph.showBranch(edge);
             Interval upd = new Interval(up.getRowIndex(), down.getRowIndex());
             cellModel.update(Replace.buildFromChangeInterval(old.from(), old.to(), upd.from(), upd.to()));
             return upd.from();
@@ -99,7 +99,7 @@ public class Controller {
         if (nodeInterval != null) {
             selectController.clearSelect();
             Interval old = new Interval(nodeInterval.getUp().getRowIndex(), nodeInterval.getDown().getRowIndex());
-            graphModel.hideBranch(nodeInterval.getUp(), nodeInterval.getDown());
+            graph.hideBranch(nodeInterval.getUp(), nodeInterval.getDown());
             Interval upd = new Interval(nodeInterval.getUp().getRowIndex(), nodeInterval.getDown().getRowIndex());
             cellModel.update(Replace.buildFromChangeInterval(old.from(), old.to(), upd.from(), upd.to()));
             return upd.from();
@@ -112,7 +112,7 @@ public class Controller {
 
         @Override
         public int getRowCount() {
-            return graphModel.getNodeRows().size();
+            return graph.getNodeRows().size();
         }
 
         @Override

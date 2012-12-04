@@ -11,11 +11,11 @@ import java.util.List;
 /**
  * @author erokhins
  */
-public class GraphModelImpl implements GraphModel {
+public class GraphImpl implements Graph {
     private final List<MutableNodeRow> rows;
     private final int lastLogIndex;
 
-    public GraphModelImpl(List<MutableNodeRow> rows, int lastLogIndex) {
+    public GraphImpl(List<MutableNodeRow> rows, int lastLogIndex) {
         this.rows = rows;
         this.lastLogIndex = lastLogIndex;
     }
@@ -61,7 +61,7 @@ public class GraphModelImpl implements GraphModel {
         Edge down = downNode.getUpEdges().get(0);
         downNode.removeUpEdge(down);
 
-        MutableNode.createEdge(upNode, downNode, Edge.Type.hideBranch, branch);
+        MutableNode.createEdge(upNode, downNode, Edge.Type.HIDE_BRANCH, branch);
     }
 
     private void fixRowIndexs() {
@@ -100,7 +100,7 @@ public class GraphModelImpl implements GraphModel {
 
     @Override
     public void showBranch(@NotNull Edge edge) {
-        assert edge.getType() == Edge.Type.hideBranch : "not hide branch";
+        assert edge.getType() == Edge.Type.HIDE_BRANCH : "not hide branch";
         MutableNode upNode = (MutableNode) edge.getUpNode();
         MutableNode downNode = (MutableNode) edge.getDownNode();
         upNode.removeDownEdge(edge);
@@ -112,11 +112,11 @@ public class GraphModelImpl implements GraphModel {
         Commit t = getParent(upNode.getCommit());
         while (t != downNode.getCommit()) {
             MutableNode newNode = added.addNewNode(t, branch);
-            MutableNode.createEdge(prevNode, newNode, Edge.Type.usual, branch);
+            MutableNode.createEdge(prevNode, newNode, Edge.Type.USUAL, branch);
             prevNode = newNode;
             t = getParent(t);
         }
-        MutableNode.createEdge(prevNode, downNode, Edge.Type.usual, branch);
+        MutableNode.createEdge(prevNode, downNode, Edge.Type.USUAL, branch);
         fixRowIndexs();
     }
 
@@ -142,7 +142,7 @@ public class GraphModelImpl implements GraphModel {
             assert commit.getData() != null;
             int searchLogIndex = commit.getData().getLogIndex();
             MutableNode node = new MutableNode(commit, branch);
-            node.setType(Node.Type.commitNode);
+            node.setType(Node.Type.COMMIT_NODE);
             int currentLogIndex = rows.get(currentRowIndex).getRowLogIndex();
             while (currentLogIndex < searchLogIndex) {
                 currentRowIndex++;

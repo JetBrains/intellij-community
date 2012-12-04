@@ -5,7 +5,7 @@ import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.common.compressedlist.RuntimeGenerateCompressedList;
 import org.hanuna.gitalk.common.compressedlist.generator.Generator;
 import org.hanuna.gitalk.common.ReadOnlyList;
-import org.hanuna.gitalk.graph.GraphModel;
+import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.Node;
 import org.hanuna.gitalk.graph.NodeRow;
 import org.hanuna.gitalk.printmodel.cells.Cell;
@@ -20,18 +20,18 @@ import java.util.List;
  * @author erokhins
  */
 public class CellModelBuilder {
-    private final GraphModel graphModel;
+    private final Graph graph;
     private CompressedList<CellRow> generateModel;
     private final Generator<CellRow> generator;
 
 
-    public CellModelBuilder(GraphModel graphModel) {
-        this.graphModel = graphModel;
-        this.generator = new CellRowGenerator(graphModel);
+    public CellModelBuilder(Graph graph) {
+        this.graph = graph;
+        this.generator = new CellRowGenerator(graph);
     }
 
     public CellModel build() {
-        ReadOnlyList<NodeRow> rows = graphModel.getNodeRows();
+        ReadOnlyList<NodeRow> rows = graph.getNodeRows();
         assert ! rows.isEmpty();
 
         NodeRow firstRow = rows.get(0);

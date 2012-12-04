@@ -21,7 +21,7 @@ public class ShortEdge {
     }
 
     public boolean isUsual() {
-        return edge.getType() == Edge.Type.usual;
+        return edge.getType() == Edge.Type.USUAL;
     }
 
     public boolean isSelect() {

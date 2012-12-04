@@ -45,7 +45,7 @@ public class PreModelPrintCellRow {
     }
 
     /**
-     * @return -1 - edge hide in this row, 0 - edge is usual, 1 - edge hide in next row, 2 - edge hide in prev row
+     * @return -1 - edge hide in this row, 0 - edge is USUAL, 1 - edge hide in next row, 2 - edge hide in prev row
      */
     private int visibleEdge(Edge edge, int rowIndex) {
         if (! hideEdge) {
@@ -107,7 +107,7 @@ public class PreModelPrintCellRow {
         for (int i = 0; i < visibleCells.size(); i++) {
             Cell cell = visibleCells.get(i);
             if (cell.getClass() == NodeCell.class) {
-                if (((NodeCell) cell).getNode().getType() == Node.Type.commitNode) {
+                if (((NodeCell) cell).getNode().getType() == Node.Type.COMMIT_NODE) {
                     specialCells.add(new SpecialCell(cell, i, SpecialCell.Type.commitNode));
                 }
             } else {

@@ -12,7 +12,7 @@ public class Edge extends AbstractSelect {
     private final Type type;
     private final Branch branch;
 
-    public Edge(@NotNull Node upNode, @NotNull Node downNode, @NotNull Type type, Branch branch) {
+    public Edge(@NotNull Node upNode, @NotNull Node downNode, @NotNull Type type, @NotNull Branch branch) {
         this.upNode = upNode;
         this.downNode = downNode;
         this.type = type;
@@ -36,7 +36,7 @@ public class Edge extends AbstractSelect {
     }
 
     public static enum Type{
-        usual,
-        hideBranch
+        USUAL,
+        HIDE_BRANCH
     }
 }

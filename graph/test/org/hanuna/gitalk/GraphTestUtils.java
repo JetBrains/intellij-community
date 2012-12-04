@@ -2,7 +2,7 @@ package org.hanuna.gitalk;
 
 import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.graph.Edge;
-import org.hanuna.gitalk.graph.GraphModel;
+import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.Node;
 import org.hanuna.gitalk.graph.NodeRow;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +54,7 @@ public class GraphTestUtils {
         return s.toString();
     }
 
-    public static String toStr(GraphModel graph) {
+    public static String toStr(Graph graph) {
         StringBuilder s = new StringBuilder();
         final ReadOnlyList<NodeRow> rows = graph.getNodeRows();
         if (rows.size() > 0)  {
@@ -67,10 +67,10 @@ public class GraphTestUtils {
     }
 
     @NotNull
-    public static Node getNode(GraphModel graph, int rowIndex) {
+    public static Node getNode(Graph graph, int rowIndex) {
         NodeRow row = graph.getNodeRows().get(rowIndex);
         for (Node node : row.getNodes()) {
-            if (node.getType() == Node.Type.commitNode) {
+            if (node.getType() == Node.Type.COMMIT_NODE) {
                 return node;
             }
         }

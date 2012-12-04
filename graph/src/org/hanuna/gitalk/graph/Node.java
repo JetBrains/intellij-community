@@ -23,9 +23,9 @@ public interface Node extends Select {
 
     /**
      *
-     * @return if type == commitNode - this commit.
-     * if type == edgeNode - common Parent
-     * if type == endCommitNode - parent of This Commit
+     * @return if type == COMMIT_NODE - this commit.
+     * if type == EDGE_NODE - common Parent
+     * if type == END_COMMIT_NODE - parent of This Commit
      */
     @NotNull
     public Commit getCommit();
@@ -34,9 +34,9 @@ public interface Node extends Select {
     public Branch getBranch();
 
     public static enum Type{
-        commitNode,
-        edgeNode,
-        endCommitNode
+        COMMIT_NODE,
+        EDGE_NODE,
+        END_COMMIT_NODE
     }
 
 }

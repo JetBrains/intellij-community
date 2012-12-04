@@ -114,12 +114,12 @@ public class SimpleDrawGraphTableCell implements DrawGraphTableCell {
                     break;
                 case showEdge:
                     edge = ((EdgeCell) cell.getCell()).getEdge();
-                    setStroke(edge.getType() == Edge.Type.usual, edge.isSelect());
+                    setStroke(edge.getType() == Edge.Type.USUAL, edge.isSelect());
                     paintShow(cell.getPosition(), ColorGenerator.getColor(edge.getBranch()));
                     break;
                 case hideEdge:
                     edge = ((EdgeCell) cell.getCell()).getEdge();
-                    setStroke(edge.getType() == Edge.Type.usual, edge.isSelect());
+                    setStroke(edge.getType() == Edge.Type.USUAL, edge.isSelect());
                     paintHide(cell.getPosition(), ColorGenerator.getColor(edge.getBranch()));
                     break;
                 default:

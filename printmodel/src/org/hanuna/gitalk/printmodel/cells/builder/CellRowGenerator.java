@@ -1,9 +1,9 @@
 package org.hanuna.gitalk.printmodel.cells.builder;
 
-import org.hanuna.gitalk.common.compressedlist.generator.AbstractGenerator;
 import org.hanuna.gitalk.common.ReadOnlyList;
+import org.hanuna.gitalk.common.compressedlist.generator.AbstractGenerator;
 import org.hanuna.gitalk.graph.Edge;
-import org.hanuna.gitalk.graph.GraphModel;
+import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.Node;
 import org.hanuna.gitalk.graph.NodeRow;
 import org.hanuna.gitalk.printmodel.cells.Cell;
@@ -20,9 +20,9 @@ import java.util.NoSuchElementException;
  * @author erokhins
  */
 public class CellRowGenerator extends AbstractGenerator<MutableCellRow, CellRow> {
-    private final GraphModel graph;
+    private final Graph graph;
 
-    public CellRowGenerator(@NotNull GraphModel graph) {
+    public CellRowGenerator(@NotNull Graph graph) {
         this.graph = graph;
     }
 
@@ -66,7 +66,11 @@ public class CellRowGenerator extends AbstractGenerator<MutableCellRow, CellRow>
                 }
                 Edge edge = ((EdgeCell) cell).getEdge();
                 if (edge.getDownNode().getRowIndex() == newRowIndex) {
-                    iterator.set(new NodeCell(edge.getDownNode()));
+                    if (edge.getBranch() == edge.getDownNode().getBranch()) {
+                        iterator.set(new NodeCell(edge.getDownNode()));
+                    } else {
+                        iterator.remove();
+                    }
                 }
             }
         }

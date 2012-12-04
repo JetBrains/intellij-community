@@ -115,7 +115,7 @@ public class HideShowBranch {
         }
         if (cell.getClass() == EdgeCell.class) {
             Edge edge = ((EdgeCell) cell).getEdge();
-            if (edge.getType() == Edge.Type.hideBranch) {
+            if (edge.getType() == Edge.Type.HIDE_BRANCH) {
                 return edge;
             }
         }
