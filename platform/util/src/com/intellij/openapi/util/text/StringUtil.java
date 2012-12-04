@@ -2388,6 +2388,22 @@ public class StringUtil extends StringUtilRt {
     };
   }
 
+  public static boolean trimEnd(StringBuilder buffer, final CharSequence end) {
+    if (endsWith(buffer, end)) {
+      buffer.delete(buffer.length() - end.length(), buffer.length());
+      return true;
+    }
+    return false;
+  }
+
+  private static boolean trimStart(StringBuilder buffer, final CharSequence start) {
+    if (startsWith(buffer, start)) {
+      buffer.delete(0, start.length());
+      return true;
+    }
+    return false;
+  }
+
   /**
    * Expirable CharSequence. Very useful to control external libary execution time,
    * i.e. when java.util.regex.Pattern match goes out of control.
