@@ -58,7 +58,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -74,8 +75,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
   private final PsiFile myNewFile;
   private final LightVirtualFile myNewVirtualFile;
   private final Document myNewDocument;
-  private final Map<SmartPsiElementPointer, Pair<RangeMarker, RangeMarker>> myMarkers =
-    new LinkedHashMap<SmartPsiElementPointer, Pair<RangeMarker, RangeMarker>>();
+  private final List<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer>> myMarkers = new LinkedList<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer>>();
   private EditorWindow mySplittedWindow;
   private boolean myReleased;
 
@@ -220,22 +220,23 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
   public void initMarkers(final Place shreds) {
     final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
     for (PsiLanguageInjectionHost.Shred shred : shreds) {
-      final RangeMarker rangeMarker = myNewDocument
-        .createRangeMarker(
-          shred.getRange().getStartOffset() + shred.getPrefix().length(), shred.getRange().getEndOffset() - shred.getSuffix().length());
+      final RangeMarker rangeMarker = myNewDocument.createRangeMarker(
+        shred.getRange().getStartOffset() + shred.getPrefix().length(),
+        shred.getRange().getEndOffset() - shred.getSuffix().length());
       final TextRange rangeInsideHost = shred.getRangeInsideHost();
       final RangeMarker origMarker =
         myOrigDocument.createRangeMarker(rangeInsideHost.shiftRight(shred.getHost().getTextRange().getStartOffset()));
-      myMarkers.put(smartPointerManager.createSmartPsiElementPointer(shred.getHost()), Pair.create(origMarker, rangeMarker));
+      SmartPsiElementPointer<PsiLanguageInjectionHost> elementPointer = smartPointerManager.createSmartPsiElementPointer(shred.getHost());
+      myMarkers.add(Trinity.<RangeMarker, RangeMarker, SmartPsiElementPointer>create(origMarker, rangeMarker, elementPointer));
     }
-    for (Pair<RangeMarker, RangeMarker> markers : myMarkers.values()) {
+    for (Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer> markers : myMarkers) {
       markers.first.setGreedyToLeft(true);
       markers.second.setGreedyToLeft(true);
       markers.first.setGreedyToRight(true);
       markers.second.setGreedyToRight(true);
     }
     int curOffset = 0;
-    for (Pair<RangeMarker, RangeMarker> markerPair : myMarkers.values()) {
+    for (Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer> markerPair : myMarkers) {
       final RangeMarker marker = markerPair.second;
       final int start = marker.getStartOffset();
       final int end = marker.getEndOffset();
@@ -275,27 +276,28 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
 
   private void commitToOriginalInner() {
     final String text = myNewDocument.getText();
-    final Map<PsiLanguageInjectionHost, Set<Map.Entry<SmartPsiElementPointer, Pair<RangeMarker, RangeMarker>>>> map = ContainerUtil
-      .classify(myMarkers.entrySet().iterator(),
-                new Convertor<Map.Entry<SmartPsiElementPointer, Pair<RangeMarker, RangeMarker>>, PsiLanguageInjectionHost>() {
+    final Map<PsiLanguageInjectionHost, Set<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer>>> map = ContainerUtil
+      .classify(myMarkers.iterator(),
+                new Convertor<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer>, PsiLanguageInjectionHost>() {
                   @Override
-                  public PsiLanguageInjectionHost convert(final Map.Entry<SmartPsiElementPointer, Pair<RangeMarker, RangeMarker>> o) {
-                    final PsiElement element = o.getKey().getElement();
+                  public PsiLanguageInjectionHost convert(final Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer> o) {
+                    final PsiElement element = o.third.getElement();
                     return (PsiLanguageInjectionHost)element;
                   }
                 });
-    PsiDocumentManager.getInstance(myProject).commitDocument(myOrigDocument);
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+    documentManager.commitDocument(myOrigDocument); // commit here and after each manipulator update
     int localInsideFileCursor = 0;
     for (PsiLanguageInjectionHost host : map.keySet()) {
       if (host == null) continue;
-      final String hostText = host.getText();
+      String hostText = host.getText();
       ProperTextRange insideHost = null;
-      final StringBuilder sb = new StringBuilder();
-      for (Map.Entry<SmartPsiElementPointer, Pair<RangeMarker, RangeMarker>> entry : map.get(host)) {
-        final RangeMarker origMarker = entry.getValue().first;
-        final int hostOffset = host.getTextRange().getStartOffset();
+      StringBuilder sb = new StringBuilder();
+      for (Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer> entry : map.get(host)) {
+        RangeMarker origMarker = entry.first;
+        int hostOffset = host.getTextRange().getStartOffset();
         ProperTextRange localInsideHost = new ProperTextRange(origMarker.getStartOffset() - hostOffset, origMarker.getEndOffset() - hostOffset);
-        RangeMarker rangeMarker = entry.getValue().second;
+        RangeMarker rangeMarker = entry.second;
         ProperTextRange localInsideFile = new ProperTextRange(Math.max(localInsideFileCursor, rangeMarker.getStartOffset()), rangeMarker.getEndOffset());
         if (insideHost != null) {
           //append unchanged inter-markers fragment
@@ -307,6 +309,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
       }
       assert insideHost != null;
       ElementManipulators.getManipulator(host).handleContentChange(host, insideHost, sb.toString());
+      documentManager.commitDocument(myOrigDocument);
     }
   }
 
