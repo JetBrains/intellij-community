@@ -308,7 +308,8 @@ public class AndroidSdkUtils {
   }
 
   private static void setupPlatform(@NotNull Module module) {
-    if (tryToImportSdkFromPropertyFiles(module)) {
+    final String targetHashString = getTargetHashStringFromProperyFile(module);
+    if (targetHashString != null && findAndSetSdkWithHashString(module, targetHashString)) {
       return;
     }
 
@@ -347,13 +348,12 @@ public class AndroidSdkUtils {
     return null;
   }
 
-  private static boolean tryToImportSdkFromPropertyFiles(@NotNull Module module) {
+  private static String getTargetHashStringFromProperyFile(Module module) {
     final Pair<String, VirtualFile> targetProp = AndroidRootUtil.getProjectPropertyValue(module, AndroidUtils.ANDROID_TARGET_PROPERTY);
-    final String targetHashString = targetProp != null ? targetProp.getFirst() : null;
-    if (targetHashString == null) {
-      return false;
-    }
+    return targetProp != null ? targetProp.getFirst() : null;
+  }
 
+  private static boolean findAndSetSdkWithHashString(Module module, String targetHashString) {
     final Pair<String, VirtualFile> sdkDirProperty = AndroidRootUtil.getPropertyValue(module, SdkConstants.FN_LOCAL_PROPERTIES, "sdk.dir");
     String sdkDir = sdkDirProperty != null ? sdkDirProperty.getFirst() : null;
     if (sdkDir != null) {
@@ -399,10 +399,27 @@ public class AndroidSdkUtils {
     return false;
   }
 
-  public static void setupAndroidPlatformInNeccessary(@NotNull Module module) {
+  public static void setupAndroidPlatformInNecessary(@NotNull Module module, boolean forceImportFromProperties) {
     Sdk currentSdk = ModuleRootManager.getInstance(module).getSdk();
+
     if (currentSdk == null || !(currentSdk.getSdkType().equals(AndroidSdkType.getInstance()))) {
       setupPlatform(module);
+    }
+    else if (forceImportFromProperties) {
+      final SdkAdditionalData data = currentSdk.getSdkAdditionalData();
+
+      if (data instanceof AndroidSdkAdditionalData) {
+        final AndroidPlatform platform = ((AndroidSdkAdditionalData)data).getAndroidPlatform();
+
+        if (platform != null) {
+          final String targetHashString = getTargetHashStringFromProperyFile(module);
+          final String currentTargetHashString = platform.getTarget().hashString();
+
+          if (targetHashString != null && !targetHashString.equals(currentTargetHashString)) {
+            findAndSetSdkWithHashString(module, targetHashString);
+          }
+        }
+      }
     }
   }
 

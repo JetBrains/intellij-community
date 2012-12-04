@@ -60,7 +60,7 @@ public class AndroidFrameworkDetector extends FacetBasedFrameworkDetector<Androi
     StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
       public void run() {
         final Module module = facet.getModule();
-        AndroidSdkUtils.setupAndroidPlatformInNeccessary(module);
+        AndroidSdkUtils.setupAndroidPlatformInNecessary(module, true);
 
         if (model != null && !model.isDisposed() && model.isWritable()) {
           model.setSdk(ModuleRootManager.getInstance(module).getSdk());
