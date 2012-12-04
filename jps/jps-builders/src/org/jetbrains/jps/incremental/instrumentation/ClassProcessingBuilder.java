@@ -41,14 +41,10 @@ public abstract class ClassProcessingBuilder extends ModuleLevelBuilder {
   protected abstract String getProgressMessage();
 
   @Override
-  public void chunkBuildStarted(CompileContext context, ModuleChunk chunk) {
-  }
-
-  @Override
   public void chunkBuildFinished(CompileContext context, ModuleChunk chunk) {
     final InstrumentationClassFinder finder = CLASS_FINDER.get(context);
-    CLASS_FINDER.set(context, null);
     if (finder != null) {
+      CLASS_FINDER.set(context, null);
       finder.releaseResources();
     }
   }

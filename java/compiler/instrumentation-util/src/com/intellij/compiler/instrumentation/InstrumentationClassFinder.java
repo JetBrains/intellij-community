@@ -117,6 +117,10 @@ public class InstrumentationClassFinder {
     }
   }
 
+  public void cleanCachedData(String className) {
+    myLoaded.remove(className.replace('.', '/'));
+  }
+
   public InputStream getClassBytesAsStream(String className) throws IOException {
     final String internalName = className.replace('.', '/'); // normalize
     InputStream is = null;

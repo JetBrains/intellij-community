@@ -44,6 +44,7 @@ public abstract class BaseInstrumentingBuilder extends ClassProcessingBuilder {
         final BinaryContent instrumented = instrument(context, compiledClass, reader, writer, finder);
         if (instrumented != null) {
           compiledClass.setContent(instrumented);
+          finder.cleanCachedData(compiledClass.getClassName());
           IS_INSTRUMENTED_KEY.set(compiledClass, Boolean.TRUE);
           exitCode = ExitCode.OK;
         }
