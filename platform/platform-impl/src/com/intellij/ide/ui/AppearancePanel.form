@@ -312,7 +312,7 @@
                 </constraints>
                 <properties>
                   <selected value="true"/>
-                  <text value="Allow to merge buttons on dialogs"/>
+                  <text value="Allow merging buttons on dialogs"/>
                 </properties>
               </component>
             </children>
