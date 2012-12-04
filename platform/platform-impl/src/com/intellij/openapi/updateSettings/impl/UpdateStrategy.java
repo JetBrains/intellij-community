@@ -88,7 +88,8 @@ public class UpdateStrategy {
     List<UpdateChannel> channels = product.getChannels();
     List<UpdateChannel> result = new ArrayList<UpdateChannel>();
     for (UpdateChannel channel : channels) {
-      if (channel.getMajorVersion() == myMajorVersion && channel.getStatus().compareTo(myChannelStatus) >= 0) {
+      if ((channel.getMajorVersion() == myMajorVersion && channel.getStatus().compareTo(myChannelStatus) >= 0) ||
+          (channel.getMajorVersion() > myMajorVersion && channel.getStatus() == ChannelStatus.EAP && myChannelStatus == ChannelStatus.EAP)) {
         result.add(channel);
       }
     }
