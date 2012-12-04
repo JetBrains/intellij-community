@@ -52,6 +52,7 @@ public class CollectionQuery<T> implements Query<T> {
     return ContainerUtil.process(myCollection, consumer);
   }
 
+  @NotNull
   @Override
   public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<T> consumer) {
     AsyncFutureResult<Boolean>  result = AsyncFutureFactory.getInstance().createAsyncFutureResult();
@@ -63,8 +64,9 @@ public class CollectionQuery<T> implements Query<T> {
     return result;
   }
 
+  @NotNull
   @Override
-  public T[] toArray(final T[] a) {
+  public T[] toArray(@NotNull final T[] a) {
     return findAll().toArray(a);
   }
 

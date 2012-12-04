@@ -26,6 +26,7 @@ import java.util.Iterator;
  */
 public abstract class LazyQuery<T> implements Query<T> {
   private final NotNullLazyValue<Query<T>> myQuery = new NotNullLazyValue<Query<T>>() {
+    @Override
     @NotNull
     protected Query<T> compute() {
       return computeQuery();
@@ -34,23 +35,29 @@ public abstract class LazyQuery<T> implements Query<T> {
 
   @NotNull protected abstract Query<T> computeQuery();
 
+  @Override
   @NotNull
   public Collection<T> findAll() {
     return myQuery.getValue().findAll();
   }
 
+  @Override
   public T findFirst() {
     return myQuery.getValue().findFirst();
   }
 
+  @Override
   public boolean forEach(@NotNull final Processor<T> consumer) {
     return myQuery.getValue().forEach(consumer);
   }
 
-  public T[] toArray(final T[] a) {
+  @NotNull
+  @Override
+  public T[] toArray(@NotNull final T[] a) {
     return myQuery.getValue().toArray(a);
   }
 
+  @Override
   public Iterator<T> iterator() {
     return myQuery.getValue().iterator();
   }

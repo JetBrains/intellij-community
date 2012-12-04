@@ -32,23 +32,28 @@ import java.util.Iterator;
 public class ArrayQuery<T> implements Query<T> {
   private final T[] myArray;
 
-  public ArrayQuery(final T... array) {
+  public ArrayQuery(@NotNull T... array) {
     myArray = array;
   }
 
+  @Override
   @NotNull
   public Collection<T> findAll() {
     return Arrays.asList(myArray);
   }
 
+  @Override
   public T findFirst() {
     return myArray.length > 0 ? myArray[0] : null;
   }
 
+  @Override
   public boolean forEach(@NotNull final Processor<T> consumer) {
     return ContainerUtil.process(myArray, consumer);
   }
 
+  @NotNull
+  @Override
   public AsyncFuture<Boolean> forEachAsync(@NotNull final Processor<T> consumer) {
     final AsyncFutureResult<Boolean> result = AsyncFutureFactory.getInstance().createAsyncFutureResult();
     try {
@@ -60,10 +65,13 @@ public class ArrayQuery<T> implements Query<T> {
   }
 
 
-  public T[] toArray(final T[] a) {
+  @NotNull
+  @Override
+  public T[] toArray(@NotNull final T[] a) {
     return myArray;
   }
 
+  @Override
   public Iterator<T> iterator() {
     return Arrays.asList(myArray).iterator();
   }

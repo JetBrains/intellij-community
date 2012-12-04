@@ -32,15 +32,15 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
   private final TObjectHashingStrategy<M> myHashingStrategy;
   private final Function<T, M> myMapper;
 
-  public UniqueResultsQuery(final Query<T> original) {
+  public UniqueResultsQuery(@NotNull Query<T> original) {
     this(original, ContainerUtil.<M>canonicalStrategy(), (Function<T, M>)FunctionUtil.<M>id());
   }
 
-  public UniqueResultsQuery(final Query<T> original, TObjectHashingStrategy<M> hashingStrategy) {
+  public UniqueResultsQuery(@NotNull Query<T> original, @NotNull TObjectHashingStrategy<M> hashingStrategy) {
     this(original, hashingStrategy, (Function<T, M>)FunctionUtil.<M>id());
   }
 
-  public UniqueResultsQuery(final Query<T> original, TObjectHashingStrategy<M> hashingStrategy, Function<T, M> mapper) {
+  public UniqueResultsQuery(@NotNull Query<T> original, @NotNull TObjectHashingStrategy<M> hashingStrategy, @NotNull Function<T, M> mapper) {
     myOriginal = original;
     myHashingStrategy = hashingStrategy;
     myMapper = mapper;
@@ -56,6 +56,7 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
     return process(consumer, Collections.synchronizedSet(new THashSet<M>(myHashingStrategy)));
   }
 
+  @NotNull
   @Override
   public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<T> consumer) {
     return processAsync(consumer, Collections.synchronizedSet(new THashSet<M>(myHashingStrategy)));
@@ -86,8 +87,9 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
     }
   }
 
+  @NotNull
   @Override
-  public T[] toArray(final T[] a) {
+  public T[] toArray(@NotNull final T[] a) {
     return findAll().toArray(a);
   }
 

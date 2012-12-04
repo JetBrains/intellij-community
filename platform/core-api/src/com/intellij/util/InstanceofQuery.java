@@ -31,6 +31,7 @@ public class InstanceofQuery<T> implements Query<T> {
     myDelegate = delegate;
   }
 
+  @Override
   @NotNull
   public Collection<T> findAll() {
     ArrayList<T> result = new ArrayList<T>();
@@ -45,26 +46,32 @@ public class InstanceofQuery<T> implements Query<T> {
     return result;
   }
 
+  @Override
   public T findFirst() {
     final CommonProcessors.FindFirstProcessor<T> processor = new CommonProcessors.FindFirstProcessor<T>();
     forEach(processor);
     return processor.getFoundValue();
   }
 
+  @Override
   public boolean forEach(@NotNull final Processor<T> consumer) {
     return myDelegate.forEach(new MyProcessor(consumer));
   }
 
+  @NotNull
   @Override
   public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<T> consumer) {
     return myDelegate.forEachAsync(new MyProcessor(consumer));
   }
 
-  public T[] toArray(T[] a) {
+  @NotNull
+  @Override
+  public T[] toArray(@NotNull T[] a) {
     final Collection<T> all = findAll();
     return all.toArray(a);
   }
 
+  @Override
   public Iterator<T> iterator() {
     return new UnmodifiableIterator<T>(findAll().iterator());
   }
@@ -76,6 +83,7 @@ public class InstanceofQuery<T> implements Query<T> {
       myConsumer = consumer;
     }
 
+    @Override
     public boolean process(T o) {
       for (Class aClass : myClasses) {
         if (aClass.isInstance(o)) {

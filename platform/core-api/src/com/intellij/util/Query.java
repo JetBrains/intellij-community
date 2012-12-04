@@ -47,7 +47,9 @@ public interface Query<Result> extends Iterable<Result> {
    */
   boolean forEach(@NotNull Processor<Result> consumer);
 
+  @NotNull
   AsyncFuture<Boolean> forEachAsync(@NotNull Processor<Result> consumer);
 
-  Result[] toArray(Result[] a);
+  @NotNull
+  Result[] toArray(@NotNull Result[] a);
 }
