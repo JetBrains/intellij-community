@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,10 +109,6 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
   @NotNull
   public PsiMethod[] findCodeMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
     return GrClassImplUtil.findCodeMethodsBySignature(this, patternMethod, checkBases);
-  }
-
-  public <T extends GrMembersDeclaration> T addMemberDeclaration(T decl, PsiElement anchorBefore) throws IncorrectOperationException {
-    throw new UnsupportedOperationException("Cannot add member declaration to GrTypeParameter");
   }
 
   public String toString() {
@@ -372,6 +368,10 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
   }
 
   public String getName() {
+    final GrTypeParameterStub stub = getStub();
+    if (stub != null) {
+      return stub.getName();
+    }
     return getNameIdentifierGroovy().getText();
   }
 
@@ -394,7 +394,7 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
   }
   @NotNull
   public PsiAnnotation[] getApplicableAnnotations() {
-    return getAnnotations();
+    return PsiAnnotation.EMPTY_ARRAY;
   }
 
   @Override
