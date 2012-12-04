@@ -71,6 +71,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightLocalVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -1364,7 +1365,7 @@ public class ExpressionGenerator extends Generator {
 
   private static PsiType getTypeToUseByList(GrListOrMap listOrMap, PsiType type) {
     if (isImplicitlyCastedToArray(listOrMap)) {
-      PsiType iterable = com.intellij.psi.util.PsiUtil.extractIterableTypeParameter(type, false);
+      PsiType iterable = ClosureParameterEnhancer.findTypeForIteration(listOrMap, listOrMap);
       if (iterable != null) {
         return new PsiArrayType(iterable);
       }

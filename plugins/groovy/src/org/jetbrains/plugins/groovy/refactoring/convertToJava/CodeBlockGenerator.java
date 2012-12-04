@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -201,18 +202,19 @@ public class CodeBlockGenerator extends Generator {
   }
 
   @Override
-  public void visitReturnStatement(GrReturnStatement returnStatement) {
+  public void visitReturnStatement(final GrReturnStatement returnStatement) {
     final GrExpression returnValue = returnStatement.getReturnValue();
     if (returnValue == null) {
       builder.append("return;\n");
       return;
     }
 
-    final ExpressionGenerator expressionGenerator = new ExpressionGenerator(context);
-    returnValue.accept(expressionGenerator);
-    StringBuilder builder = new StringBuilder();
-    builder.append("return ").append(expressionGenerator.getBuilder()).append(';'); //todo add casts to return type
-    writeStatement(builder, returnStatement, expressionGenerator.getContext());
+    GenerationUtil.writeStatement(builder, context, returnStatement, new StatementWriter() {
+      @Override
+      public void writeStatement(StringBuilder builder, ExpressionContext context) {
+        writeReturn(builder, context, returnValue);
+      }
+    });
   }
 
   private void writeStatement(StringBuilder statementBuilder,
@@ -293,12 +295,29 @@ public class CodeBlockGenerator extends Generator {
       @Override
       public void writeStatement(StringBuilder builder, ExpressionContext context) {
         if (myExitPoints.contains(expression) && expression.getType() != PsiType.VOID) {
-          builder.append("return ");
+          writeReturn(builder, context, expression);
         }
-        expression.accept(new ExpressionGenerator(builder, context));
-        builder.append(';');
+        else {
+          expression.accept(new ExpressionGenerator(builder, context));
+          builder.append(';');
+        }
       }
     });
+  }
+
+  private static void writeReturn(StringBuilder builder, ExpressionContext context, final GrExpression expression) {
+    builder.append("return ");
+
+    final PsiType expectedReturnType = PsiImplUtil.inferReturnType(expression);
+    final PsiType nnReturnType =
+      expectedReturnType == null || expectedReturnType == PsiType.VOID ? TypesUtil.getJavaLangObject(expression) : expectedReturnType;
+    wrapInCastIfNeeded(builder, nnReturnType, expression.getNominalType(), expression, context, new StatementWriter() {
+      @Override
+      public void writeStatement(StringBuilder builder, ExpressionContext context) {
+        expression.accept(new ExpressionGenerator(builder, context));
+      }
+    });
+    builder.append(';');
   }
 
   @Override

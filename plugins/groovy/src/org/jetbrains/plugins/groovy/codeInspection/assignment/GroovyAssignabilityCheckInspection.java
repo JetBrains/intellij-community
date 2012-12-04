@@ -59,7 +59,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
@@ -174,32 +173,17 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       final GrExpression value = returnStatement.getReturnValue();
       if (value == null || isNewInstanceInitialingByTuple(value)) return;
 
-      final PsiType returnType = inferReturnType(returnStatement);
+      final PsiType returnType = PsiImplUtil.inferReturnType(returnStatement);
       if (returnType != null) {
         checkAssignability(returnType, value);
       }
-    }
-
-    @Nullable
-    private static PsiType inferReturnType(PsiElement position) {
-      final GrControlFlowOwner flowOwner = ControlFlowUtils.findControlFlowOwner(position);
-      if (flowOwner == null) return null;
-
-      final PsiElement parent = flowOwner.getParent();
-      if (flowOwner instanceof GrOpenBlock && parent instanceof GrMethod) {
-        final GrMethod method = (GrMethod)parent;
-        if (method.isConstructor()) return null;
-        return method.getReturnType();
-      }
-
-      return null;
     }
 
     @Override
     public void visitExpression(GrExpression expression) {
       super.visitExpression(expression);
       if (PsiUtil.isExpressionStatement(expression)) {
-        final PsiType returnType = inferReturnType(expression);
+        final PsiType returnType = PsiImplUtil.inferReturnType(expression);
         final GrControlFlowOwner flowOwner = ControlFlowUtils.findControlFlowOwner(expression);
         if (flowOwner != null && returnType != null && returnType != PsiType.VOID) {
           if (ControlFlowUtils.isReturnValue(expression, flowOwner) && !isNewInstanceInitialingByTuple(expression)) {
