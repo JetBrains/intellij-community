@@ -1,4 +1,4 @@
-package com.intellij.openapi.fileEditor.impl;
+package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;

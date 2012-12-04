@@ -1,6 +1,6 @@
 package com.intellij.openapi.fileEditor;
 
-import com.intellij.openapi.fileEditor.impl.UniqueNameBuilder;
+import com.intellij.openapi.util.io.UniqueNameBuilder;
 import junit.framework.TestCase;
 
 /**
