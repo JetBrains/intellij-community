@@ -30,8 +30,8 @@
             </constraints>
             <properties>
               <actionCommand value="Save call signatures"/>
-              <label value="Save call signatures"/>
-              <text value="Save call signatures"/>
+              <label value="Collect run-time types information for code insight "/>
+              <text value="Collect run-time types information for code insight "/>
             </properties>
           </component>
         </children>
