@@ -65,7 +65,7 @@ public abstract class ChooseItemAction extends EditorAction {
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
       if (lookup == null) return false;
       if (!lookup.isAvailableToUser()) return false;
-      if (focusedOnly && !lookup.isFocused()) return false;
+      if (focusedOnly && lookup.getPreview() == null && !lookup.isFocused()) return false;
       if (ChooseItemReplaceAction.hasTemplatePrefix(lookup, TemplateSettings.ENTER_CHAR)) return false;
       return true;
     }

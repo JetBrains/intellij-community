@@ -726,10 +726,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   public boolean performGuardedChange(Runnable change, @Nullable final String debug) {
     checkValid();
     assert !myChangeGuard : "already in change";
-    if (myPreview != null) {
-      myPreview.uninstallPreview();
-      assert myPreview == null;
-    }
+    uninstallPreview();
 
     myChangeGuard = true;
     boolean result;
@@ -1474,7 +1471,17 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return myPreview;
   }
 
-  public void setPreview(CompletionPreview preview) {
+  @Nullable 
+  public CompletionPreview uninstallPreview() {
+    CompletionPreview preview = myPreview;
+    if (preview != null) {
+      preview.uninstallPreview();
+      assert myPreview == null;
+    }
+    return preview;
+  }
+
+  void setPreview(CompletionPreview preview) {
     myPreview = preview;
   }
 }

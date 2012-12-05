@@ -24,6 +24,7 @@ import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.impl.CompletionPreview;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -334,7 +335,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         return false;
       }
       if (myShowPreview) {
-        new CompletionPreview(myLookup).installPreview();
+        CompletionPreview.installPreview(myLookup);
       }
       justShown = true;
     }
