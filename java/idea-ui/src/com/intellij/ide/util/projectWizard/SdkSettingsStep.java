@@ -37,8 +37,10 @@ public class SdkSettingsStep extends ModuleWizardStep {
   protected final JdkComboBox myJdkComboBox;
   protected final WizardContext myWizardContext;
   protected final ProjectSdksModel myModel;
+  private final ModuleBuilder myModuleBuilder;
 
   public SdkSettingsStep(SettingsStep settingsStep, ModuleBuilder moduleBuilder, @NotNull Condition<SdkTypeId> sdkFilter) {
+    myModuleBuilder = moduleBuilder;
 
     myWizardContext = settingsStep.getContext();
     myModel = new ProjectSdksModel();
@@ -82,9 +84,16 @@ public class SdkSettingsStep extends ModuleWizardStep {
 
   @Override
   public void updateDataModel() {
-    if (myWizardContext.isCreatingNewProject()) { // else, inherit project jdk
+    Project project = myWizardContext.getProject();
+    if (project == null) {
       Sdk jdk = myJdkComboBox.getSelectedJdk();
       myWizardContext.setProjectJdk(jdk);
+    }
+    else {
+      Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
+      if (sdk == null || !myModuleBuilder.isSuitableSdkType(sdk.getSdkType())) {
+        myModuleBuilder.setModuleJdk(myJdkComboBox.getSelectedJdk());
+      } // else, inherit project jdk
     }
   }
 

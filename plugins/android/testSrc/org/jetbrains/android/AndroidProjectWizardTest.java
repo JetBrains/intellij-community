@@ -19,10 +19,14 @@ import com.intellij.ide.projectWizard.ProjectWizardTestCase;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
@@ -39,6 +43,8 @@ import java.util.Arrays;
  */
 public class AndroidProjectWizardTest extends ProjectWizardTestCase {
 
+  private static final String ANDROID = "Android";
+
   public void testCreateProject() throws Exception {
     createProjectFromTemplate(AndroidProjectTemplatesFactory.ANDROID, "Application Module", new Consumer<ModuleWizardStep>() {
       @Override
@@ -54,21 +60,34 @@ public class AndroidProjectWizardTest extends ProjectWizardTestCase {
   }
 
   public void testCreateLibrary() throws Exception {
-    createProjectFromTemplate(AndroidProjectTemplatesFactory.ANDROID, AndroidProjectTemplatesFactory.LIBRARY_MODULE, new Consumer<ModuleWizardStep>() {
-      @Override
-      public void consume(ModuleWizardStep step) {
-        if (step instanceof AndroidModuleWizardStep) {
-          ProjectBuilder builder = myWizard.getProjectBuilder();
-          assertTrue(builder instanceof AndroidModuleBuilder);
-          String name = ((AndroidModuleBuilder)builder).getName();
-          assertTrue(name, StringUtil.isNotEmpty(name));
-        }
-      }
-    });
+    createProjectFromTemplate(AndroidProjectTemplatesFactory.ANDROID, AndroidProjectTemplatesFactory.LIBRARY_MODULE,
+                              new Consumer<ModuleWizardStep>() {
+                                @Override
+                                public void consume(ModuleWizardStep step) {
+                                  if (step instanceof AndroidModuleWizardStep) {
+                                    ProjectBuilder builder = myWizard.getProjectBuilder();
+                                    assertTrue(builder instanceof AndroidModuleBuilder);
+                                    String name = ((AndroidModuleBuilder)builder).getName();
+                                    assertTrue(name, StringUtil.isNotEmpty(name));
+                                  }
+                                }
+                              });
   }
 
   public void testCreateEmptyProject() throws Exception {
-    createProjectFromTemplate(AndroidProjectTemplatesFactory.ANDROID, AndroidProjectTemplatesFactory.EMPTY_MODULE, null);
+    Project project = createProjectFromTemplate(AndroidProjectTemplatesFactory.ANDROID, AndroidProjectTemplatesFactory.EMPTY_MODULE, null);
+    assertEquals(ANDROID, ProjectRootManager.getInstance(project).getProjectSdkName());
+    Module module = ModuleManager.getInstance(project).getModules()[0];
+    assertTrue(ModuleRootManager.getInstance(module).isSdkInherited());
+  }
+
+  public void testAddAndroidModuleToJavaProject() throws Exception {
+    ProjectRootManager.getInstance(getProject()).setProjectSdk(JavaSdkImpl.getMockJdk17());
+    Module module = createModuleFromTemplate(AndroidProjectTemplatesFactory.ANDROID, AndroidProjectTemplatesFactory.EMPTY_MODULE, null);
+    assertNotNull(module);
+    Sdk moduleSdk = ModuleRootManager.getInstance(module).getSdk();
+    assertNotNull(moduleSdk);
+    assertEquals(ANDROID, moduleSdk.getName());
   }
 
   @Override
@@ -77,7 +96,7 @@ public class AndroidProjectWizardTest extends ProjectWizardTestCase {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
-        Sdk defaultJdk = jdkTable.createSdk("Android", AndroidSdkType.getInstance());
+        Sdk defaultJdk = jdkTable.createSdk(ANDROID, AndroidSdkType.getInstance());
         jdkTable.addJdk(defaultJdk);
         mySdks.add(defaultJdk);
 
