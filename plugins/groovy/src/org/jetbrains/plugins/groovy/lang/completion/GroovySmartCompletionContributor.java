@@ -76,7 +76,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
     psiElement().withSuperParent(3, psiElement(GrTypeCastExpression.class).withParent(
       or(psiElement(GrAssignmentExpression.class), psiElement(GrVariable.class))));
 
-  static final ElementPattern<PsiElement> AFTER_NEW = psiElement().afterLeaf(psiElement().withText(PsiKeyword.NEW));
+  static final ElementPattern<PsiElement> AFTER_NEW = psiElement().afterLeaf(psiElement(GroovyTokenTypes.kNEW));
 
   private static final ElementPattern<PsiElement> IN_ANNOTATION = psiElement().withParent(psiElement(GrReferenceExpression.class).withParent(GrAnnotationNameValuePair.class));
 
