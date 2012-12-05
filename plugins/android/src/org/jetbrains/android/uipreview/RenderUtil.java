@@ -255,13 +255,15 @@ public class RenderUtil {
       }
       removeLastNewLineChar(builder);
       builder.append('\n');
-      warnMessages.add(new FixableIssueMessage(builder.toString(), Collections.singletonList(
+      final FixableIssueMessage issue = new FixableIssueMessage(builder.toString(), Collections.singletonList(
         Pair.<String, Runnable>create("Details", new Runnable() {
           @Override
           public void run() {
             AndroidUtils.showStackStace(project, throwableArray);
           }
-        }))));
+        })));
+      issue.addTip("Tip: Use View.isInEditMode() in your custom views to skip code when shown in the IDE");
+      warnMessages.add(issue);
     }
   }
 
