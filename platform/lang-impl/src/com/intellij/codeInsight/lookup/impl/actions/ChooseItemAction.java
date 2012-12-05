@@ -57,12 +57,16 @@ public abstract class ChooseItemAction extends EditorAction {
         throw new AssertionError("The last lookup disposed at: " + LookupImpl.getLastLookupDisposeTrace() + "\n-----------------------\n");
       }
       
-      if (!lookup.isFocused() && finishingChar == Lookup.NORMAL_SELECT_CHAR) {
-        FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ENTER);
+      if (finishingChar == Lookup.NORMAL_SELECT_CHAR) {
+        if (!lookup.isFocused()) {
+          FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ENTER);
+        }
       } else if (finishingChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_SMART_ENTER);
       } else if (finishingChar == Lookup.REPLACE_SELECT_CHAR) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_REPLACE);
+      } else {
+        //FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC);
       }
 
       lookup.finishLookup(finishingChar);
@@ -144,6 +148,11 @@ public abstract class ChooseItemAction extends EditorAction {
   public static class CompletingStatement extends ChooseItemAction {
     public CompletingStatement() {
       super(new Handler(true, Lookup.COMPLETE_STATEMENT_SELECT_CHAR));
+    }
+  }
+  public static class ChooseWithDot extends ChooseItemAction {
+    public ChooseWithDot() {
+      super(new Handler(false, '.'));
     }
   }
 

@@ -73,6 +73,7 @@
   <action id="EditorChooseLookupItemCompleteStatement">
     <keyboard-shortcut first-keystroke="control shift ENTER"/>
   </action>
+  <action id="EditorChooseLookupItemDot"><keyboard-shortcut first-keystroke="control PERIOD"/></action>
   <action id="EditorCompleteStatement">
     <keyboard-shortcut first-keystroke="control shift ENTER"/>
   </action>

@@ -6,6 +6,7 @@
       <action id="EditorChooseLookupItemAlways" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$Always"/>
       <action id="EditorChooseLookupItemReplace" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$Replacing"/>
       <action id="EditorChooseLookupItemCompleteStatement" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$CompletingStatement"/>
+      <action id="EditorChooseLookupItemDot" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$ChooseWithDot"/>
 
       <action id="ExpandLiveTemplateByTab" class="com.intellij.codeInsight.template.impl.editorActions.ExpandLiveTemplateByTabAction" use-shortcut-of="EditorTab"/>
 
