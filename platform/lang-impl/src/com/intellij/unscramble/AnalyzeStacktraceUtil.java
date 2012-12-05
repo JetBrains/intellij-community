@@ -113,7 +113,6 @@ public class AnalyzeStacktraceUtil {
     for (AnAction action: consoleView.createConsoleActions()) {
       toolbarActions.add(action);
     }
-    // does not work
     toolbarActions.add(new AnnotateStackTraceAction((ConsoleViewImpl)consoleView));
     toolbarActions.add(new CloseAction(executor, descriptor, project));
     ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, descriptor);
