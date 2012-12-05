@@ -6,6 +6,7 @@ import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -18,6 +19,7 @@ public class FixableIssueMessage {
   public final String myAfterLinkText;
   public final Runnable myQuickFix;
   public final List<Pair<String, Runnable>> myAdditionalFixes;
+  public final List<String> myTips = new ArrayList<String>();
 
   public FixableIssueMessage(@NotNull String beforeLinkText,
                              @NotNull String linkText,
@@ -40,6 +42,10 @@ public class FixableIssueMessage {
     myAfterLinkText = "";
     myQuickFix = null;
     myAdditionalFixes = quickFixes;
+  }
+
+  public void addTip(@NotNull String tipText) {
+    myTips.add(tipText);
   }
 
   public static FixableIssueMessage createExceptionIssue(@NotNull final Project project,
