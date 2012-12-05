@@ -153,7 +153,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
         PsiParameter parameter = parameters[i];
         if (i > 0) buffer.append(", ");
         if (parameter instanceof GrParameter) {
-          GroovyPresentationUtil.appendParameterPresentation((GrParameter)parameter, substitutor, false, buffer);
+          GroovyPresentationUtil.appendParameterPresentation((GrParameter)parameter, substitutor, TypePresentation.LINK, buffer);
         }
         else {
           PsiType type = parameter.getType();
@@ -311,7 +311,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   }
 
 
-  private static void appendTypeString(StringBuilder buffer, final PsiType type, PsiElement context) {
+  public static void appendTypeString(StringBuilder buffer, final PsiType type, PsiElement context) {
     if (type != null) {
       JavaDocInfoGenerator.generateType(buffer, type, context);
     }

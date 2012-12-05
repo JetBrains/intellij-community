@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
+import org.jetbrains.plugins.groovy.lang.documentation.TypePresentation;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -447,7 +448,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   private static void appendParameterText(PsiParameter param, PsiSubstitutor substitutor, StringBuilder buffer) {
     if (param instanceof GrParameter) {
       GrParameter grParam = (GrParameter)param;
-      GroovyPresentationUtil.appendParameterPresentation(grParam, substitutor, true, buffer);
+      GroovyPresentationUtil.appendParameterPresentation(grParam, substitutor, TypePresentation.PRESENTABLE, buffer);
 
       final GrExpression initializer = grParam.getInitializerGroovy();
       if (initializer != null) {
