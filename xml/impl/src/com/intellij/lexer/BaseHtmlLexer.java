@@ -16,13 +16,19 @@
 package com.intellij.lexer;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.lang.HtmlScriptContentProvider;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageHtmlScriptContentProvider;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.HashMap;
 
 /**
@@ -36,11 +42,17 @@ abstract class BaseHtmlLexer extends DelegateLexer {
   private static final int SEEN_ATTRIBUTE = 0x200;
   private static final int SEEN_CONTENT_TYPE = 0x400;
   protected static final int BASE_STATE_SHIFT = 11;
+  @Nullable
+  protected static Language ourDefaultLanguage = Language.findLanguageByID("JavaScript");
 
   private boolean seenTag;
   private boolean seenAttribute;
   private boolean seenStyle;
   private boolean seenScript;
+
+  @Nullable
+  protected String scriptType = null;
+
   private final boolean caseInsensitive;
   private boolean seenContentType;
   private CharSequence cachedBufferSequence;
@@ -96,7 +108,7 @@ abstract class BaseHtmlLexer extends DelegateLexer {
 
       final boolean style = name.equals(TOKEN_STYLE);
       final int state = getState() & BASE_STATE_MASK;
-      final boolean script = name.equals(TOKEN_SCRIPT) || 
+      final boolean script = name.equals(TOKEN_SCRIPT) ||
                        ((name.startsWith(TOKEN_ON) && name.indexOf(':') == -1 && !isHtmlTagState(state)));
 
       if (style || script) {
@@ -136,14 +148,42 @@ abstract class BaseHtmlLexer extends DelegateLexer {
           return; // something invalid
         }
 
-        @NonNls String name = TreeUtil.getTokenText(lexer);
-        if (caseInsensitive) name = name.toLowerCase();
-        if (name.indexOf("javascript") == -1 && name.indexOf("jscript") == -1) {
+        @NonNls String mimeType = TreeUtil.getTokenText(lexer);
+        if (caseInsensitive) mimeType = mimeType.toLowerCase();
+        if (supportMimeType(mimeType)) {
+          scriptType = mimeType;
+        }
+        else {
           seenScript = false;
           seenTag = true;    // will be switched of on tag name in end
         }
       }
     }
+  }
+
+  private boolean supportMimeType(String mimeType) {
+    return findScriptContentProvider(mimeType) != null;
+  }
+
+  @Nullable
+  protected IElementType getCurrentScriptElementType() {
+    HtmlScriptContentProvider scriptContentProvider = findScriptContentProvider(scriptType);
+    return scriptContentProvider == null ? null : scriptContentProvider.getScriptElementType();
+  }
+
+  @Nullable
+  protected static HtmlScriptContentProvider findScriptContentProvider(@Nullable String mimeType) {
+    if (StringUtil.isEmpty(mimeType)) {
+      return ourDefaultLanguage != null ? LanguageHtmlScriptContentProvider.getScriptContentProvider(ourDefaultLanguage) : null;
+    }
+    Collection<Language> instancesByMimeType = Language.findInstancesByMimeType(mimeType);
+    for (Language language : instancesByMimeType) {
+      HtmlScriptContentProvider scriptContentProvider = LanguageHtmlScriptContentProvider.getScriptContentProvider(language);
+      if (scriptContentProvider != null) {
+        return scriptContentProvider;
+      }
+    }
+    return null;
   }
 
   class XmlTagClosedHandler implements TokenHandler {
@@ -167,6 +207,7 @@ abstract class BaseHtmlLexer extends DelegateLexer {
       seenScript=false;
       seenAttribute=false;
       seenContentType=false;
+      scriptType = null;
     }
   }
 

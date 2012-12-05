@@ -15,9 +15,14 @@
  */
 package com.intellij.lexer;
 
+import com.intellij.lang.HtmlInlineScriptTokenTypesProvider;
+import com.intellij.lang.HtmlScriptContentProvider;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageHtmlInlineScriptTokenTypesProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
@@ -35,7 +40,14 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
   protected Lexer elLexer;
   private boolean hasNoEmbeddments;
   private final static FileType ourStyleFileType = FileTypeManager.getInstance().getStdFileType("CSS");
-  private static FileType ourScriptFileType;
+  private static FileType ourInlineScriptFileType = null;
+
+  static {
+    // At the moment only JS.
+    HtmlInlineScriptTokenTypesProvider provider =
+      LanguageHtmlInlineScriptTokenTypesProvider.getInlineScriptProvider(Language.findLanguageByID("JavaScript"));
+    ourInlineScriptFileType = provider != null ? provider.getFileType() : null;
+  }
 
   public class XmlEmbeddmentHandler implements TokenHandler {
     public void handleElement(Lexer lexer) {
@@ -109,11 +121,22 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
 
       newLexer = styleLexer;
     } else if (hasSeenScript()) {
-      if (scriptLexer==null) {
-        scriptLexer = (ourScriptFileType!=null)? SyntaxHighlighterFactory.getSyntaxHighlighter(ourScriptFileType, null, null).getHighlightingLexer():null;
+      if (scriptLexer == null) {
+        if (hasSeenTag()) {
+          HtmlScriptContentProvider provider = findScriptContentProvider(scriptType);
+          scriptLexer = provider != null ? provider.getHighlightingLexer() : null;
+        }
+        else if (hasSeenAttribute()) {
+          SyntaxHighlighter syntaxHighlighter =
+            (ourInlineScriptFileType != null) ? SyntaxHighlighterFactory.getSyntaxHighlighter(ourInlineScriptFileType, null, null) : null;
+          scriptLexer = syntaxHighlighter != null ? syntaxHighlighter.getHighlightingLexer() : null;
+        }
       }
       newLexer = scriptLexer;
-    } else newLexer = createELLexer(newLexer);
+    }
+    else {
+      newLexer = createELLexer(newLexer);
+    }
 
     if (newLexer!=null) {
       embeddedLexer = newLexer;
@@ -189,10 +212,6 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     }
   }
 
-  public static void registerScriptFileType(FileType _scriptFileType) {
-    ourScriptFileType = _scriptFileType;
-  }
-
   public int getState() {
     int state = super.getState();
 
@@ -203,7 +222,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
   }
 
   protected boolean isHtmlTagState(int state) {
-    return state == _HtmlLexer.START_TAG_NAME || state == _HtmlLexer.END_TAG_NAME || 
+    return state == _HtmlLexer.START_TAG_NAME || state == _HtmlLexer.END_TAG_NAME ||
            state  == _HtmlLexer.START_TAG_NAME2 || state == _HtmlLexer.END_TAG_NAME2;
   }
 

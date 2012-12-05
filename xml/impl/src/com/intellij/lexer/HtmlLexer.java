@@ -15,6 +15,9 @@
  */
 package com.intellij.lexer;
 
+import com.intellij.lang.HtmlInlineScriptTokenTypesProvider;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageHtmlInlineScriptTokenTypesProvider;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
@@ -26,7 +29,6 @@ import com.intellij.psi.xml.XmlTokenType;
 public class HtmlLexer extends BaseHtmlLexer {
   private static IElementType ourStyleElementType;
   private static IElementType ourInlineStyleElementType;
-  private static IElementType ourScriptElementType;
   private static IElementType ourInlineScriptElementType;
 
   static {
@@ -37,6 +39,10 @@ public class HtmlLexer extends BaseHtmlLexer {
         ourInlineStyleElementType = extension.getInlineElementType();
       }
     }
+    // At the moment only JS.
+    HtmlInlineScriptTokenTypesProvider provider =
+      LanguageHtmlInlineScriptTokenTypesProvider.getInlineScriptProvider(ourDefaultLanguage);
+    ourInlineScriptElementType = provider != null ? provider.getElementType() : null;
   }
 
   private IElementType myTokenType;
@@ -69,9 +75,10 @@ public class HtmlLexer extends BaseHtmlLexer {
         tokenType = ourInlineStyleElementType;
       }
     } else if (hasSeenScript()) {
-      if (hasSeenTag() && ourScriptElementType!=null && isStartOfEmbeddmentTagContent(tokenType)) {
+      IElementType currentScriptElementType = getCurrentScriptElementType();
+      if (hasSeenTag() && currentScriptElementType != null && isStartOfEmbeddmentTagContent(tokenType)) {
         myTokenEnd = skipToTheEndOfTheEmbeddment();
-        tokenType = ourScriptElementType;
+        tokenType = currentScriptElementType;
       } else if (hasSeenAttribute() && isStartOfEmbeddmentAttributeValue(tokenType) && ourInlineScriptElementType!=null) {
         myTokenEnd = skipToTheEndOfTheEmbeddment();
         tokenType = ourInlineScriptElementType;
@@ -117,10 +124,5 @@ public class HtmlLexer extends BaseHtmlLexer {
       return myTokenEnd;
     }
     return super.getTokenEnd();
-  }
-
-  public static void setScriptElementTypes(final IElementType scriptElementType, final IElementType inlineScriptElementType) {
-    ourScriptElementType = scriptElementType;
-    ourInlineScriptElementType = inlineScriptElementType;
   }
 }

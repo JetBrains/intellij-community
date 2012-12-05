@@ -34,7 +34,7 @@
 
   <extensionPoint name="intentionAction"
                   beanClass="com.intellij.codeInsight.intention.IntentionActionBean"/>
-  
+
   <extensionPoint name="codeInsight.unresolvedReferenceQuickFixProvider"
                   interface="com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider"/>
 
@@ -237,7 +237,7 @@
   <extensionPoint name="favoritesListProvider"
                   interface="com.intellij.ide.favoritesTreeView.FavoritesListProvider"
                   area="IDEA_PROJECT"/>
-  
+
   <extensionPoint name="lang.emacs" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
   <!-- File-Based Index-->
@@ -311,7 +311,7 @@
 
   <extensionPoint name="psi.referenceContributor" beanClass="com.intellij.psi.impl.source.resolve.reference.PsiReferenceContributorEP"/>
   <extensionPoint name="psi.referenceProvider" beanClass="com.intellij.psi.PsiReferenceProviderBean"/>
-  <extensionPoint name="patterns.patternClass" beanClass="com.intellij.patterns.compiler.PatternClassBean"/>  
+  <extensionPoint name="patterns.patternClass" beanClass="com.intellij.patterns.compiler.PatternClassBean"/>
 
   <extensionPoint name="pom.declarationSearcher" interface="com.intellij.pom.PomDeclarationSearcher"/>
 
@@ -548,7 +548,7 @@
 
   <extensionPoint name="project.converterProvider"
                   interface="com.intellij.conversion.ConverterProvider"/>
-  
+
   <extensionPoint name="treeCopyHandler"
                   interface="com.intellij.psi.impl.source.tree.TreeCopyHandler"/>
   <extensionPoint name="treeGenerator"
@@ -567,4 +567,9 @@
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
   <extensionPoint name="moduleRendererFactory" interface="com.intellij.ide.util.ModuleRendererFactory"/>
+
+  <extensionPoint name="html.scriptContentProvider"
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="html.inlineScriptTokenTypesProvider"
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 </extensionPoints>
