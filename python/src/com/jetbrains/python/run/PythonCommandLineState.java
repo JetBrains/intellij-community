@@ -29,6 +29,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
+import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyDebuggerSettings;
@@ -37,6 +38,7 @@ import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.*;
+import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -260,6 +262,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     buildPythonPath(commandLine, myConfig.isPassParentEnvs());
   }
 
+
   protected static void addCommonEnvironmentVariables(Map<String, String> envs) {
     PythonEnvUtil.setPythonUnbuffered(envs);
     envs.put("PYCHARM_HOSTED", "1");
@@ -328,7 +331,16 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   protected Collection<String> collectPythonPath() {
     final Module module = myConfig.getModule();
-    return collectPythonPath(module);
+    Set<String> pythonPath = Sets.newHashSet(collectPythonPath(module));
+
+    if (isDebug() && getSdkFlavor() instanceof JythonSdkFlavor) { //that fixes Jython problem changing sys.argv on execfile, see PY-8164
+      pythonPath.add(PythonHelpersLocator.getHelperPath("pycharm"));
+      pythonPath.add(PythonHelpersLocator.getHelperPath("pydev"));
+    }
+
+    return pythonPath;
+
+
   }
 
   @NotNull
