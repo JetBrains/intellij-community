@@ -468,7 +468,7 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.deprecation.DeprecationInspection"/>
     <localInspection language="JAVA" suppressId="extensionSyntax" bundle="messages.InspectionsBundle" key="deprecated.defender.syntax.description"
-                     groupName="" enabledByDefault="true" level="WARNING"
+                     groupName="" enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.codeInspection.deprecation.DeprecatedDefenderSyntaxInspection"/>
     <localInspection language="XML" shortName="DeprecatedClassUsageInspection" displayName="Deprecated API usage in XML" groupName="XML"
                      enabledByDefault="true" level="WARNING" implementationClass="com.intellij.util.xml.DeprecatedClassUsageInspection"/>
