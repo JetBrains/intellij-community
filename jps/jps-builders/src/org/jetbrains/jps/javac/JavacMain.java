@@ -4,6 +4,7 @@ import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
+import org.jetbrains.jps.incremental.LineOutputWriter;
 
 import javax.tools.*;
 import java.io.File;

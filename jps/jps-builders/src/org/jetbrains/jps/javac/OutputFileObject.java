@@ -2,6 +2,7 @@ package org.jetbrains.jps.javac;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.incremental.Utils;
 
 import javax.tools.*;

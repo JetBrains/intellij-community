@@ -14,7 +14,6 @@ import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
-import org.jetbrains.jps.javac.BinaryContent;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
