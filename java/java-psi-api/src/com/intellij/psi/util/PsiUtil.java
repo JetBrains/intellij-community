@@ -738,13 +738,11 @@ public final class PsiUtil extends PsiUtilCore {
 
     PsiTypeParameterListOwner currentOwner = owner;
     while (currentOwner != null) {
-      if (currentOwner.hasTypeParameters()) {
-        PsiTypeParameter[] typeParameters = currentOwner.getTypeParameters();
-        if (typeParameters.length > 0) {
-          if (result == null) result = new ArrayList<PsiTypeParameter>(typeParameters.length);
-          for (int i = typeParameters.length - 1; i >= 0; i--) {
-            result.add(typeParameters[i]);
-          }
+      PsiTypeParameter[] typeParameters = currentOwner.getTypeParameters();
+      if (typeParameters.length > 0) {
+        if (result == null) result = new ArrayList<PsiTypeParameter>(typeParameters.length);
+        for (int i = typeParameters.length - 1; i >= 0; i--) {
+          result.add(typeParameters[i]);
         }
       }
 
