@@ -9,8 +9,7 @@ print a+b+c
 -----
 def a = 5
 
-int b, c
-(b, c) = testMethod(a)
+def (int b, int c) = testMethod(a)
 
 private List testMethod(int a) {
     print a
