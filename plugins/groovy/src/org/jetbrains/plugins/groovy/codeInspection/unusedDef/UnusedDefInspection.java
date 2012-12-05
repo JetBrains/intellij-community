@@ -27,18 +27,21 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
 import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyLocalInspectionBase;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
@@ -53,6 +56,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefin
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsSemilattice;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  & @author ven
@@ -121,19 +125,36 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
       }
     }
 
+    final Set<PsiElement> checked = ContainerUtil.newHashSet();
+
     unusedDefs.forEach(new TIntProcedure() {
       public boolean execute(int num) {
         final ReadWriteVariableInstruction instruction = (ReadWriteVariableInstruction)flow[num];
         final PsiElement element = instruction.getElement();
-        if (element == null) return true;
-        if (isLocalAssignment(element) && isUsedInTopLevelFlowOnly(element) && !isIncOrDec(element)) {
-          PsiElement toHighlight = getHighlightElement(element);
-          problemsHolder.registerProblem(toHighlight, GroovyInspectionBundle.message("unused.assignment.tooltip"),
-                                         ProblemHighlightType.LIKE_UNUSED_SYMBOL);
-        }
+        process(element, checked, problemsHolder, GroovyInspectionBundle.message("unused.assignment.tooltip"));
         return true;
       }
     });
+
+    owner.accept(new GroovyRecursiveElementVisitor() {
+      @Override
+      public void visitVariable(GrVariable variable) {
+        if (checked.contains(variable) || variable.getInitializerGroovy() != null) return;
+
+        if (ReferencesSearch.search(variable).findFirst() == null) {
+          process(variable, checked, problemsHolder, GroovyInspectionBundle.message("unused.variable"));
+        }
+      }
+    });
+  }
+
+  private static void process(@Nullable PsiElement element, Set<PsiElement> checked, ProblemsHolder problemsHolder, final String message) {
+    if (element == null) return;
+    if (!checked.add(element)) return;
+    if (isLocalAssignment(element) && isUsedInTopLevelFlowOnly(element) && !isIncOrDec(element)) {
+      PsiElement toHighlight = getHighlightElement(element);
+      problemsHolder.registerProblem(toHighlight, message, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+    }
   }
 
   private static PsiElement getHighlightElement(PsiElement element) {
