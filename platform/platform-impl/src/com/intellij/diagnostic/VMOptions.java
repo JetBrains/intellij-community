@@ -134,6 +134,7 @@ public class VMOptions {
       String optionValue = option + value + "m";
       String content = read();
 
+      if (content == null) content = "";
       content = replace(pattern, content, optionValue, "", "", content + " " + optionValue);
 
       if (file.exists()) {
