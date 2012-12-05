@@ -8,12 +8,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.asm4.ClassWriter;
 import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.incremental.BuilderCategory;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.CompiledClass;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
-import org.jetbrains.jps.javac.BinaryContent;
 
 /**
  * @author Eugene Zhuravlev

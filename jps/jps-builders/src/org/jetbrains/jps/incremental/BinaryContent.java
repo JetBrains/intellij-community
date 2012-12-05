@@ -1,4 +1,4 @@
-package org.jetbrains.jps.javac;
+package org.jetbrains.jps.incremental;
 
 import java.io.File;
 import java.io.FileOutputStream;

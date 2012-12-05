@@ -3,6 +3,7 @@ package org.jetbrains.jps.javac;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.MessageLite;
 import org.jetbrains.jps.client.ProtobufResponseHandler;
+import org.jetbrains.jps.incremental.BinaryContent;
 
 import javax.tools.*;
 import java.io.File;
