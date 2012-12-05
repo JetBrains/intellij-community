@@ -25,7 +25,6 @@ import java.awt.*;
  * @author Evgeny Zakrevsky
  */
 public class TaskCellRenderer extends DefaultListCellRenderer implements MatcherHolder {
-  private static final Color ISSUE_BG_COLOR = new Color(240, 240, 255);
   private Matcher myMatcher;
   private final Project myProject;
 
@@ -47,7 +46,7 @@ public class TaskCellRenderer extends DefaultListCellRenderer implements Matcher
       final boolean isLocalTask = taskManager.findTask(task.getId()) != null;
       final boolean isClosed = task.isClosed() || (task instanceof LocalTask && taskManager.isLocallyClosed((LocalTask)task));
 
-      final Color bg = sel ? UIUtil.getListSelectionBackground() : isLocalTask ? UIUtil.getListBackground() : ISSUE_BG_COLOR;
+      final Color bg = sel ? UIUtil.getListSelectionBackground() : isLocalTask ? UIUtil.getListBackground() : UIUtil.getDecoratedRowColor();
       panel.setBackground(bg);
       SimpleTextAttributes attr = getAttributes(sel, isClosed);
 
