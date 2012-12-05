@@ -198,6 +198,7 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
   }
 
   public void loadState(final Element element) {
+    myInjections.clear();
     final THashMap<String, LanguageInjectionSupport> supports = new THashMap<String, LanguageInjectionSupport>();
     for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
       supports.put(support.getId(), support);
