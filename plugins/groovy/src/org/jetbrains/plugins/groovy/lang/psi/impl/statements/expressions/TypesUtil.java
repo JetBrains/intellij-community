@@ -407,7 +407,6 @@ public class TypesUtil {
     return TypeConversionUtil.erasure(unboxPrimitiveTypeWrapper(result));
   }
 
-  @Nullable
   public static PsiType unboxPrimitiveTypeWrapper(@Nullable PsiType type) {
     if (type instanceof PsiClassType) {
       final PsiClass psiClass = ((PsiClassType)type).resolve();
