@@ -216,6 +216,10 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
     }
     else {
       final JBLabel warnLabel = new JBLabel();
+
+      if (message.myAdditionalFixes.size() == 0) {
+        warnLabel.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 5, 0));
+      }
       warnLabel.setOpaque(false);
       warnLabel.setText("<html><body>" + message.myBeforeLinkText.replace("\n", "<br>") + "</body></html>");
       warnLabel.setIcon(icon);
