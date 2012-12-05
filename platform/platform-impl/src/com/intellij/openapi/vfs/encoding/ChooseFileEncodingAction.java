@@ -85,11 +85,10 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
     }
     FileType fileType = virtualFile.getFileType();
     if (fileType.isBinary()) return "binary file";
-    if (fileType == StdFileTypes.GUI_DESIGNER_FORM
-        || fileType == StdFileTypes.IDEA_MODULE
-        || fileType == StdFileTypes.IDEA_PROJECT
-        || fileType == StdFileTypes.IDEA_WORKSPACE
-        || fileType == StdFileTypes.PATCH) return "IDEA internal file";
+    if (fileType == StdFileTypes.GUI_DESIGNER_FORM) return "IDEA GUI Designer form";
+    if (fileType == StdFileTypes.IDEA_MODULE) return "IDEA module file";
+    if (fileType == StdFileTypes.IDEA_PROJECT) return "IDEA project file";
+    if (fileType == StdFileTypes.IDEA_WORKSPACE) return "IDEA workspace file";
 
     if (fileType == StdFileTypes.PROPERTIES) return ".properties file";
 
