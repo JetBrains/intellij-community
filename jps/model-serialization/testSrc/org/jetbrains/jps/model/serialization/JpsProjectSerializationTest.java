@@ -92,7 +92,9 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     JpsEncodingProjectConfiguration configuration = service.getEncodingConfiguration(myProject);
     assertNotNull(configuration);
     assertEquals("UTF-8", configuration.getProjectEncoding());
-    assertEquals("windows-1251", configuration.getEncoding(getUrl("util")));
+    assertEquals("windows-1251", configuration.getEncoding(new File(getAbsolutePath("util"))));
+    assertEquals("windows-1251", configuration.getEncoding(new File(getAbsolutePath("util/foo/bar/file.txt"))));
+    assertEquals("UTF-8", configuration.getEncoding(new File(getAbsolutePath("other"))));
   }
 
   public void testSaveProject() {
