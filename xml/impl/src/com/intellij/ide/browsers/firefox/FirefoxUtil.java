@@ -170,8 +170,12 @@ public class FirefoxUtil {
     if (SystemInfo.isUnix) {
       return new File[] {new File(userHome, ".mozilla" + File.separator + "firefox")};
     }
+
+    String localPath = "Mozilla" + File.separator + "Firefox";
     return new File[] {
-      new File(userHome, "Application Data" + File.separator + "Mozilla" + File.separator + "Firefox")
+      new File(System.getenv("APPDATA"), localPath),
+      new File(userHome, "AppData" + File.separator + "Roaming" + File.separator + localPath),
+      new File(userHome, "Application Data" + File.separator + localPath)
     };
   }
 }
