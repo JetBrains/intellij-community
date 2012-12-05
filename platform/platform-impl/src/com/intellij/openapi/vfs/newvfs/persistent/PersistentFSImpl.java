@@ -728,14 +728,14 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   public void processEvents(@NotNull List<? extends VFileEvent> events) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-    events = validateEvents(events);
+    List<? extends VFileEvent> validated = validateEvents(events);
 
     BulkFileListener publisher = myEventsBus.syncPublisher(VirtualFileManager.VFS_CHANGES);
-    publisher.before(events);
-    for (VFileEvent event : events) {
+    publisher.before(validated);
+    for (VFileEvent event : validated) {
       applyEvent(event);
     }
-    publisher.after(events);
+    publisher.after(validated);
   }
 
   @Override
@@ -879,32 +879,27 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         visited.add(id);
       }
       else {
-        StringBuilder sb = new StringBuilder("Dead loop detected in persistent FS:");
+        @NonNls StringBuilder sb = new StringBuilder("Dead loop detected in persistent FS:");
         for (int i = 0; i < visited.size(); i++) {
           int _id = visited.get(i);
-          sb.append("\n  ").append(_id).append(" '").append(getName(_id)).append("' ").append(String.format("%02x", getFileAttributes(_id)));
+          sb.append("\n  ");
+          sb.append(_id);
+          sb.append(" '");
+          sb.append(getName(_id));
+          sb.append("' ");
+          sb.append(String.format("%02x", getFileAttributes(_id)));
         }
         LOG.error(sb.toString());
         return null;
       }
     }
 
-    NewVirtualFile result = doFindFile(id, cachedOnly, visited);
-
-    if (result != null && result.isDirectory()) {
-      NewVirtualFile old = myIdToDirCache.put(id, result);
-      if (old != null) result = old;
-    }
-    return result;
-  }
-
-  @Nullable
-  private NewVirtualFile doFindFile(final int id, boolean cachedOnly, @Nullable TIntArrayList visited) {
     final int parentId = getParent(id);
+    NewVirtualFile result;
     if (parentId == 0) {
       myRootsLock.readLock().lock();
       try {
-        return myRootsById.get(id);
+        result = myRootsById.get(id);
       }
       finally {
         myRootsLock.readLock().unlock();
@@ -913,10 +908,18 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     else {
       NewVirtualFile parentFile = _findFileById(parentId, cachedOnly, visited);
       if (parentFile == null) {
-        return null;
+        result = null;
       }
-      return cachedOnly ? parentFile.findChildByIdIfCached(id) : parentFile.findChildById(id);
+      else {
+        result = cachedOnly ? parentFile.findChildByIdIfCached(id) : parentFile.findChildById(id);
+      }
     }
+
+    if (result != null && result.isDirectory()) {
+      NewVirtualFile old = myIdToDirCache.put(id, result);
+      if (old != null) result = old;
+    }
+    return result;
   }
 
   @Override

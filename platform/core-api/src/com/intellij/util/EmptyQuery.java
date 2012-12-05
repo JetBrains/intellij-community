@@ -29,33 +29,41 @@ import java.util.Iterator;
 public class EmptyQuery<R> implements Query<R> {
   private static final EmptyQuery EMPTY_QUERY_INSTANCE = new EmptyQuery();
 
+  @Override
   @NotNull
   public Collection<R> findAll() {
     return Collections.emptyList();
   }
 
+  @Override
   public R findFirst() {
     return null;
   }
 
+  @Override
   public boolean forEach(@NotNull final Processor<R> consumer) {
     return true;
   }
 
+  @NotNull
   @Override
   public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<R> consumer) {
     return AsyncFutureFactory.wrap(true);
   }
 
-  public R[] toArray(final R[] a) {
+  @NotNull
+  @Override
+  public R[] toArray(@NotNull final R[] a) {
     return findAll().toArray(a);
   }
 
+  @Override
   public Iterator<R> iterator() {
     return findAll().iterator();
   }
 
   public static <T> Query<T> getEmptyQuery() {
+    //noinspection unchecked
     return (Query<T>) EMPTY_QUERY_INSTANCE;
   }
 }
