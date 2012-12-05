@@ -47,18 +47,12 @@ public class VMOptions {
   @NonNls private static final Pattern XMX_PATTERN = Pattern.compile(XMX_OPTION + MEM_SIZE_EXPR);
   @NonNls private static final Pattern PERM_GEN_PATTERN = Pattern.compile(PERM_GEN_OPTION + MEM_SIZE_EXPR);
   @NonNls private static final Pattern CODE_CACHE_PATTERN = Pattern.compile(CODE_CACHE_OPTION + MEM_SIZE_EXPR);
-  @NonNls private static final Pattern MAC_OS_VM_OPTIONS_PATTERN =
-    Pattern.compile("(<key>" + MAC_ARCH_VM_OPTIONS + "</key>(?:(?:\\s*)(?:<!--(?:.*)-->(?:\\s*))*)<string>)(.*)(</string>)");
-
-  @NonNls private static final String INFO_PLIST = "/Contents/Info.plist";
 
   private static String ourTestPath;
-  private static boolean ourTestMacOs;
 
   @TestOnly
-  static void setTestFile(String path, boolean isMacOs) {
+  static void setTestFile(String path) {
     ourTestPath = path;
-    ourTestMacOs = isMacOs;
   }
 
   @TestOnly
@@ -92,15 +86,11 @@ public class VMOptions {
 
   @Nullable
   public static String read() {
-    File file = getFile();
+    File file = getReadFile();
     if (file == null) return null;
 
     try {
-      String content = FileUtil.loadFile(file);
-      if (isMacOs()) {
-        content = extractMacOsVMOptions(content);
-      }
-      return content;
+      return FileUtil.loadFile(file);
     }
     catch (IOException e) {
       LOG.info(e);
@@ -137,44 +127,24 @@ public class VMOptions {
   }
 
   private static void writeOption(String option, int value, Pattern pattern) {
-    File file = getFile();
+    File file = getWriteFile();
     if (file == null) return;
 
     try {
       String optionValue = option + value + "m";
-      String content = FileUtil.loadFile(file);
-      String vmOptions;
+      String content = read();
 
-      if (isMacOs()) {
-        vmOptions = extractMacOsVMOptions(content);
-        if (vmOptions == null) return;
-      }
-      else {
-        vmOptions = content;
+      content = replace(pattern, content, optionValue, "", "", content + " " + optionValue);
+
+      if (file.exists()) {
+        FileUtil.setReadOnlyAttribute(file.getPath(), false);
       }
 
-      vmOptions = replace(pattern, vmOptions, optionValue, "", "", vmOptions + " " + optionValue);
-
-      if (isMacOs()) {
-        content = replace(MAC_OS_VM_OPTIONS_PATTERN, content, vmOptions, "$1", "$3", content);
-      }
-      else {
-        content = vmOptions;
-      }
-
-      FileUtil.setReadOnlyAttribute(file.getPath(), false);
       FileUtil.writeToFile(file, content.getBytes());
     }
     catch (IOException e) {
       LOG.info(e);
     }
-  }
-
-  @Nullable
-  private static String extractMacOsVMOptions(String text) {
-    Matcher m = MAC_OS_VM_OPTIONS_PATTERN.matcher(text);
-    if (!m.find()) return null;
-    return m.group(2);
   }
 
   private static String replace(Pattern pattern,
@@ -194,44 +164,81 @@ public class VMOptions {
   }
 
   @Nullable
-  private static File getFile() {
-    final String path = ourTestPath != null ? ourTestPath : getSettingsFilePath();
-    return path != null ? new File(path) : null;
+  private static File getReadFile() {
+    if (ourTestPath != null) {
+      return new File(ourTestPath);
+    }
+
+    File custom = getCustomFile(true);
+    if (custom != null) return custom;
+
+    return getDefaultFile();
   }
 
-  @NonNls
   @Nullable
-  public static String getSettingsFilePath() {
-    final File f = new File(doGetSettingsFilePath()).getAbsoluteFile();
+  public static File getWriteFile() {
+    if (ourTestPath != null) {
+      return new File(ourTestPath);
+    }
+
+    File custom = getCustomFile(false);
+    if (custom != null) return custom;
+
+    return getDefaultFile();
+  }
+
+  @Nullable
+  public static File getDefaultFile() {
+    final File f = new File(doGetSettingsFilePath(false)).getAbsoluteFile();
     if (!f.exists()) return null;
 
     try {
-      return f.getCanonicalPath();
+      return f.getCanonicalFile();
     }
     catch (IOException e) {
       LOG.debug(e);
-      return f.getPath();
+      return f;
+    }
+  }
+
+  @Nullable
+  public static File getCustomFile(boolean ifExists) {
+    if (!SystemInfo.isMac) return null;
+
+    final File f = new File(doGetSettingsFilePath(true)).getAbsoluteFile();
+    if (!f.exists()) {
+      if (ifExists) return null;
+      return f;
+    }
+
+    try {
+      return f.getCanonicalFile();
+    }
+    catch (IOException e) {
+      LOG.debug(e);
+      return f;
     }
   }
 
   @NotNull
-  private static String doGetSettingsFilePath() {
+  private static String doGetSettingsFilePath(boolean customLocation) {
     final String vmOptionsFile = System.getProperty("jb.vmOptionsFile");
     if (!StringUtil.isEmptyOrSpaces(vmOptionsFile)) {
       return vmOptionsFile;
     }
 
     if (SystemInfo.isMac) {
-      return PathManager.getHomePath() + INFO_PLIST;
+      if (customLocation) {
+        return PathManager.getConfigPath() + "/idea.vmoptions";
+      }
+      else {
+        return PathManager.getBinPath() + "/idea.vmoptions";
+      }
     }
 
     final String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase();
     final String platformSuffix = SystemInfo.is64Bit ? "64" : "";
     final String osSuffix = SystemInfo.isWindows ? ".exe" : "";
     return PathManager.getBinPath() + File.separatorChar + productName + platformSuffix + osSuffix + ".vmoptions";
-  }
-
-  private static boolean isMacOs() {
-    return ourTestPath != null ? ourTestMacOs : SystemInfo.isMac;
   }
 }
