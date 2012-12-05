@@ -17,7 +17,9 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CodeCompletionFeatures;
+import com.intellij.codeInsight.completion.CompletionProgressIndicator;
+import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.editorActions.AutoHardWrapHandler;
 import com.intellij.codeInsight.editorActions.TypedHandler;
@@ -29,31 +31,19 @@ import com.intellij.codeInsight.lookup.impl.actions.ChooseItemReplaceAction;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.CommandProcessorEx;
-import com.intellij.openapi.command.impl.EditorChangeAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.LinkedList;
 
 public class LookupTypedHandler extends TypedHandlerDelegate {
-  private static boolean inside = false;
 
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   @Override
@@ -62,91 +52,78 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
                                 final Editor editor,
                                 PsiFile file,
                                 FileType fileType) {
-    assert !inside;
-    inside = true;
-    try {
-      final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-      if (lookup == null){
-        return Result.CONTINUE;
-      }
+    final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
+    if (lookup == null){
+      return Result.CONTINUE;
+    }
 
-      if (charTyped == ' ' && ChooseItemReplaceAction.hasTemplatePrefix(lookup, TemplateSettings.SPACE_CHAR)) {
-        return Result.CONTINUE;
-      }
+    if (charTyped == ' ' && ChooseItemReplaceAction.hasTemplatePrefix(lookup, TemplateSettings.SPACE_CHAR)) {
+      return Result.CONTINUE;
+    }
 
-      final CharFilter.Result result = getLookupAction(charTyped, lookup);
-      if (lookup.isLookupDisposed()) {
-        return Result.CONTINUE;
-      }
+    final CharFilter.Result result = getLookupAction(charTyped, lookup);
+    if (lookup.isLookupDisposed()) {
+      return Result.CONTINUE;
+    }
 
-      CompletionPreview preview = lookup.uninstallPreview();
+    CompletionPreview preview = lookup.uninstallPreview();
+
+    if (!lookup.performGuardedChange(new Runnable() {
+      @Override
+      public void run() {
+        EditorModificationUtil.deleteSelectedText(editor);
+      }
+    })) {
+      return Result.STOP;
+    }
+    if (result == CharFilter.Result.ADD_TO_PREFIX) {
+      Document document = editor.getDocument();
+      long modificationStamp = document.getModificationStamp();
 
       if (!lookup.performGuardedChange(new Runnable() {
         @Override
         public void run() {
-          EditorModificationUtil.deleteSelectedText(editor);
+          EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, String.valueOf(charTyped), true);
         }
       })) {
         return Result.STOP;
       }
-      if (result == CharFilter.Result.ADD_TO_PREFIX) {
-        Document document = editor.getDocument();
-        long modificationStamp = document.getModificationStamp();
-
-        if (!lookup.performGuardedChange(new Runnable() {
-          @Override
-          public void run() {
-            EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, String.valueOf(charTyped), true);
-          }
-        })) {
-          return Result.STOP;
-        }
-        lookup.appendPrefix(charTyped);
-        if (lookup.isStartCompletionWhenNothingMatches() && lookup.getItems().isEmpty()) {
-          final CompletionProgressIndicator completion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
-          if (completion != null) {
-            completion.scheduleRestart();
-          } else {
-            AutoPopupController.getInstance(editor.getProject()).scheduleAutoPopup(editor, null);
-          }
-        }
-
-        AutoHardWrapHandler.getInstance().wrapLineIfNecessary(editor, DataManager.getInstance().getDataContext(editor.getContentComponent()), modificationStamp);
-
+      lookup.appendPrefix(charTyped);
+      if (lookup.isStartCompletionWhenNothingMatches() && lookup.getItems().isEmpty()) {
         final CompletionProgressIndicator completion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
         if (completion != null) {
-          completion.prefixUpdated();
+          completion.scheduleRestart();
+        } else {
+          AutoPopupController.getInstance(editor.getProject()).scheduleAutoPopup(editor, null);
         }
-        CompletionPreview.reinstallPreview(preview);
-        return Result.STOP;
       }
 
-      if (result == CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP && lookup.isFocused()) {
-        LookupElement item = lookup.getCurrentItem();
-        if (item != null) {
-          if (completeTillTypedCharOccurrence(charTyped, lookup, item)) {
-            return Result.STOP;
-          }
+      AutoHardWrapHandler.getInstance().wrapLineIfNecessary(editor, DataManager.getInstance().getDataContext(editor.getContentComponent()), modificationStamp);
 
-          inside = false;
-          ((CommandProcessorEx)CommandProcessor.getInstance()).enterModal();
-          try {
-            finishLookup(charTyped, lookup);
-          }
-          finally {
-            ((CommandProcessorEx)CommandProcessor.getInstance()).leaveModal();
-          }
+      final CompletionProgressIndicator completion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+      if (completion != null) {
+        completion.prefixUpdated();
+      }
+      CompletionPreview.reinstallPreview(preview);
+      return Result.STOP;
+    }
+
+    if (result == CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP && lookup.isFocused()) {
+      LookupElement item = lookup.getCurrentItem();
+      if (item != null) {
+        if (completeTillTypedCharOccurrence(charTyped, lookup, item)) {
           return Result.STOP;
         }
-      }
 
-      lookup.hide();
-      TypedHandler.autoPopupCompletion(editor, charTyped, project);
-      return Result.CONTINUE;
+        FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC);
+        lookup.finishLookup(charTyped);
+        return Result.STOP;
+      }
     }
-    finally {
-      inside = false;
-    }
+
+    lookup.hide();
+    TypedHandler.autoPopupCompletion(editor, charTyped, project);
+    return Result.CONTINUE;
   }
 
   private static boolean completeTillTypedCharOccurrence(char charTyped, LookupImpl lookup, LookupElement item) {
@@ -170,76 +147,6 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
       }
     }
     return false;
-  }
-
-  private static void finishLookup(final char charTyped, @NotNull final LookupImpl lookup) {
-    final Editor editor = lookup.getEditor();
-    FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC);
-    CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
-    SelectionModel sm = editor.getSelectionModel();
-    final boolean smartUndo = false;//!sm.hasSelection() && !sm.hasBlockSelection() && process != null && process.isAutopopupCompletion();
-    final ScrollingModelEx scrollingModel = (ScrollingModelEx)editor.getScrollingModel();
-    scrollingModel.accumulateViewportChanges();
-    try {
-      final LinkedList<EditorChangeAction> events = smartUndo ? justTypeChar(charTyped, lookup, editor) : null;
-      if (lookup.isLookupDisposed()) { // if justTypeChar corrupted the start offset
-        return;
-      }
-
-      CommandProcessor.getInstance().executeCommand(editor.getProject(), new Runnable() {
-        @Override
-        public void run() {
-          if (smartUndo && !undoEvents(lookup, events)) {
-            return;
-          }
-          lookup.finishLookup(charTyped);
-        }
-      }, null, "Undo inserting the completion char and select the item");
-    }
-    finally {
-      scrollingModel.flushViewportChanges();
-    }
-  }
-
-  private static boolean undoEvents(LookupImpl lookup, @NotNull final LinkedList<EditorChangeAction> events) {
-    AccessToken token = WriteAction.start();
-    try {
-      return lookup.performGuardedChange(new Runnable() {
-        @Override
-        public void run() {
-          for (EditorChangeAction event : events) {
-            event.performUndo();
-          }
-        }
-      }, events.toString());
-    }
-    finally {
-      token.finish();
-    }
-  }
-
-  private static LinkedList<EditorChangeAction> justTypeChar(final char charTyped, final LookupImpl lookup, final Editor editor) {
-    final LinkedList<EditorChangeAction> events = new LinkedList<EditorChangeAction>();
-    final DocumentAdapter listener = new DocumentAdapter() {
-      @Override
-      public void documentChanged(DocumentEvent e) {
-        events.addFirst(new EditorChangeAction(e));
-      }
-    };
-    editor.getDocument().addDocumentListener(listener);
-    CommandProcessor.getInstance().executeCommand(editor.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        lookup.performGuardedChange(new Runnable() {
-          @Override
-          public void run() {
-            EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, String.valueOf(charTyped), true);
-          }
-        });
-      }
-    }, null, "Just insert the completion char");
-    editor.getDocument().removeDocumentListener(listener);
-    return events;
   }
 
   static CharFilter.Result getLookupAction(final char charTyped, final LookupImpl lookup) {
