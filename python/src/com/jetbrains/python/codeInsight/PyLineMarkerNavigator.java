@@ -30,7 +30,7 @@ public abstract class PyLineMarkerNavigator<T extends PsiElement> implements Gut
       }
     });
     final NavigatablePsiElement[] methods = navElements.toArray(new NavigatablePsiElement[navElements.size()]);
-    PsiElementListNavigator.openTargets(e, methods, getTitle(elt), new DefaultPsiElementCellRenderer());
+    PsiElementListNavigator.openTargets(e, methods, getTitle(elt), null, new DefaultPsiElementCellRenderer());
   }
 
   protected abstract String getTitle(T elt);
