@@ -504,4 +504,8 @@ import java.lang.annotation.Target;
     checkPreferredItems(0, 'PsiElement', 'psiElement')
   }
 
+  public void testNoExpectedTypeInStringConcatenation() {
+    checkPreferredItems(0, 'vx')
+  }
+
 }
