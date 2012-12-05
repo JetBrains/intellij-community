@@ -135,7 +135,8 @@ public class GroovyCompletionData {
           .afterLeaf(psiElement().withElementType(GroovyTokenTypes.kAS).withParent(GrSafeCastExpression.class))
           .accepts(position);
 
-        addKeywords(result, !inCast, BUILT_IN_TYPES);
+        boolean inNew = psiElement().afterLeaf(psiElement(GroovyTokenTypes.kNEW)).accepts(position);
+        addKeywords(result, !inCast && !inNew, BUILT_IN_TYPES);
       }
 
       if (psiElement(GrReferenceExpression.class).inside(or(psiElement(GrWhileStatement.class), psiElement(GrForStatement.class))).accepts(parent)) {
