@@ -4,8 +4,8 @@
       <!-- these must be declared before standard EnterAction and TabAction -->
       <action id="EditorChooseLookupItem" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$FocusedOnly"/>
       <action id="EditorChooseLookupItemAlways" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$Always"/>
-      <action id="EditorChooseLookupItemReplace" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemReplaceAction"/>
-      <action id="EditorChooseLookupItemCompleteStatement" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemCompleteStatementAction"/>
+      <action id="EditorChooseLookupItemReplace" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$Replacing"/>
+      <action id="EditorChooseLookupItemCompleteStatement" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$CompletingStatement"/>
 
       <action id="ExpandLiveTemplateByTab" class="com.intellij.codeInsight.template.impl.editorActions.ExpandLiveTemplateByTabAction" use-shortcut-of="EditorTab"/>
 
