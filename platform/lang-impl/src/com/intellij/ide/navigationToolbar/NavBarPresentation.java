@@ -41,8 +41,10 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +55,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class NavBarPresentation {
-  private static final SimpleTextAttributes WOLFED = new SimpleTextAttributes(null, null, Color.red, SimpleTextAttributes.STYLE_WAVED);
+  private static final SimpleTextAttributes WOLFED = new SimpleTextAttributes(null, null, JBColor.red, SimpleTextAttributes.STYLE_WAVED);
 
   private final Project myProject;
 
@@ -63,7 +65,7 @@ public class NavBarPresentation {
 
   @SuppressWarnings("MethodMayBeStatic")
   @Nullable
-  public Icon getIcon(final Object object, final boolean open) {
+  public Icon getIcon(final Object object) {
     if (!NavBarModel.isValid(object)) return null;
     if (object instanceof Project) return AllIcons.Nodes.Project;
     if (object instanceof Module) return ModuleType.get(((Module)object)).getIcon();
@@ -120,7 +122,7 @@ public class NavBarPresentation {
       if (psiFile != null) {
         final VirtualFile virtualFile = psiFile.getVirtualFile();
         return new SimpleTextAttributes(null, selected ? null : FileStatusManager.getInstance(myProject).getStatus(virtualFile).getColor(),
-                                        Color.red, WolfTheProblemSolver.getInstance(myProject).isProblemFile(virtualFile)
+                                        JBColor.red, WolfTheProblemSolver.getInstance(myProject).isProblemFile(virtualFile)
                                                    ? SimpleTextAttributes.STYLE_WAVED
                                                    : SimpleTextAttributes.STYLE_PLAIN);
       }

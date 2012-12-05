@@ -92,7 +92,7 @@ public class NavBarListCellRenderer extends ColoredListCellRenderer {
     append(name, nameAttributes);
     // manually set icon opaque to prevent background artifacts
     setIconOpaque(false);
-    setIcon(myPanel.getPresentation().getIcon(value, false));
+    setIcon(myPanel.getPresentation().getIcon(value));
     setPaintFocusBorder(false);
     setBackground(selected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
   }
