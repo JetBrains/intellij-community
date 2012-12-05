@@ -515,14 +515,12 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
 
   @Override
   public ItemPresentation getPresentation() {
-    PsiClass aClass = getSourceMirrorClass();
-    return aClass != null ? aClass.getPresentation() : ItemPresentationProviders.getItemPresentation(this);
+    return ItemPresentationProviders.getItemPresentation(this);
   }
 
   @Override
   public Icon getElementIcon(final int flags) {
-    PsiClass aClass = getSourceMirrorClass();
-    return aClass != null ? aClass.getIcon(flags) : PsiClassImplUtil.getClassIcon(flags, this);
+    return PsiClassImplUtil.getClassIcon(flags, this);
   }
 
   @Override
