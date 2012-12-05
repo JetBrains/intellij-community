@@ -64,21 +64,23 @@ public class GradleSelectProjectStep extends AbstractImportFromGradleWizardStep 
   @Override
   public boolean validate() throws ConfigurationException {
     final GradleHomeSettingType settingType = myConfigurable.getCurrentGradleHomeSettingType();
-    if (settingType == GradleHomeSettingType.EXPLICIT_INCORRECT) {
-      GradleUtil.showBalloon(
-        myConfigurable.getGradleHomePathField(),
-        MessageType.ERROR,
-        GradleBundle.message("gradle.home.setting.type.explicit.incorrect")
-      );
-      return false;
-    }
-    if (settingType == GradleHomeSettingType.UNKNOWN) {
-      GradleUtil.showBalloon(
-        myConfigurable.getGradleHomePathField(),
-        MessageType.ERROR,
-        GradleBundle.message("gradle.home.setting.type.unknown")
-      );
-      return false;
+    if (myConfigurable.isPreferLocalInstallationToWrapper()) {
+      if (settingType == GradleHomeSettingType.EXPLICIT_INCORRECT) {
+        GradleUtil.showBalloon(
+          myConfigurable.getGradleHomePathField(),
+          MessageType.ERROR,
+          GradleBundle.message("gradle.home.setting.type.explicit.incorrect")
+        );
+        return false;
+      }
+      if (settingType == GradleHomeSettingType.UNKNOWN) {
+        GradleUtil.showBalloon(
+          myConfigurable.getGradleHomePathField(),
+          MessageType.ERROR,
+          GradleBundle.message("gradle.home.setting.type.unknown")
+        );
+        return false;
+      }
     }
     storeCurrentSettings();
     GradleProjectImportBuilder builder = getBuilder();

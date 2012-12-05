@@ -71,7 +71,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
 
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  @NotNull private final GradleInstallationManager myInstallationManager;
+  @NotNull private final Helper myHelper;
 
   @Nullable private final Project myProject;
 
@@ -97,7 +97,13 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
   }
 
   public GradleConfigurable(@Nullable Project project, @NotNull GradleInstallationManager gradleInstallationManager) {
-    myInstallationManager = gradleInstallationManager;
+    myProject = project;
+    myHelper = new DefaultHelper(gradleInstallationManager);
+    buildContent();
+  }
+
+  public GradleConfigurable(@Nullable Project project, @NotNull Helper helper) {
+    myHelper = helper;
     myProject = project;
     buildContent();
   }
@@ -160,6 +166,11 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     myAlwaysShowLinkedProjectControls = alwaysShowLinkedProjectControls;
   }
 
+  @NotNull
+  JBRadioButton getUseWrapperButton() {
+    return myUseWrapperButton;
+  }
+
   private void buildContent() {
     initContentPanel();
     initLinkedGradleProjectPathControl();
@@ -192,24 +203,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
       @Override
       public void paint(Graphics g) {
         super.paint(g);
-        if (!myShowBalloonIfNecessary) {
-          return;
-        }
-        myShowBalloonIfNecessary = false;
-        MessageType messageType = null;
-        switch (myGradleHomeSettingType) {
-          case DEDUCED:
-            messageType = MessageType.INFO;
-            break;
-          case EXPLICIT_INCORRECT:
-          case UNKNOWN:
-            messageType = MessageType.ERROR;
-            break;
-          default:
-        }
-        if (messageType != null) {
-          new DelayedBalloonInfo(messageType, myGradleHomeSettingType).run();
-        }
+        showBalloonIfNecessary();
       }
     };
     myComponent.addPropertyChangeListener(new PropertyChangeListener() {
@@ -228,6 +222,27 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
         }
       }
     });
+  }
+
+  void showBalloonIfNecessary() {
+    if (!myShowBalloonIfNecessary || !myGradleHomePathField.isEnabled()) {
+      return;
+    }
+    myShowBalloonIfNecessary = false;
+    MessageType messageType = null;
+    switch (myGradleHomeSettingType) {
+      case DEDUCED:
+        messageType = MessageType.INFO;
+        break;
+      case EXPLICIT_INCORRECT:
+      case UNKNOWN:
+        messageType = MessageType.ERROR;
+        break;
+      default:
+    }
+    if (messageType != null) {
+      myHelper.showBalloon(messageType, myGradleHomeSettingType, BALLOON_DELAY_MILLIS);
+    }
   }
 
   private void initLinkedGradleProjectPathControl() {
@@ -257,7 +272,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
 
   private void onLinkedProjectPathChange() {
     String linkedProjectPath = myLinkedGradleProjectPathField.getText();
-    if (StringUtil.isEmpty(linkedProjectPath) || !GradleUtil.isGradleWrapperDefined(linkedProjectPath)) {
+    if (StringUtil.isEmpty(linkedProjectPath) || !myHelper.isGradleWrapperDefined(linkedProjectPath)) {
       myUseWrapperButton.setEnabled(false);
       myUseWrapperButton.setText(GradleBundle.message("gradle.config.text.use.wrapper.disabled"));
       myUseLocalDistributionButton.setSelected(true);
@@ -265,6 +280,13 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     else {
       myUseWrapperButton.setEnabled(true);
       myUseWrapperButton.setText(GradleBundle.message("gradle.config.text.use.wrapper"));
+      if (myProject == null || myHelper.getSettings(myProject).isPreferLocalInstallationToWrapper()) {
+        myUseLocalDistributionButton.setSelected(true);
+      }
+      else {
+        myUseWrapperButton.setSelected(true);
+        myGradleHomePathField.setEnabled(false);
+      }
     }
   }
 
@@ -274,7 +296,14 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     ActionListener listener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        myGradleHomePathField.setEnabled(e.getSource() == myUseLocalDistributionButton);
+        boolean enabled = e.getSource() == myUseLocalDistributionButton;
+        myGradleHomePathField.setEnabled(enabled);
+        if (enabled) {
+          showBalloonIfNecessary();
+        }
+        else {
+          myAlarm.cancelAllRequests();
+        }
       }
     };
     myUseWrapperButton = new JBRadioButton(GradleBundle.message("gradle.config.text.use.wrapper"), true);
@@ -317,7 +346,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
       return false;
     }
 
-    GradleSettings settings = GradleSettings.getInstance(myProject);
+    GradleSettings settings = myHelper.getSettings(myProject);
 
     if (!Comparing.equal(myLinkedGradleProjectPathField.getText(), settings.getLinkedProjectPath())) {
       return true;
@@ -381,7 +410,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     }
     else {
       myGradleHomeSettingType = GradleHomeSettingType.EXPLICIT_INCORRECT;
-      new DelayedBalloonInfo(MessageType.ERROR, myGradleHomeSettingType, 0).run();
+      myHelper.showBalloon(MessageType.ERROR, myGradleHomeSettingType, 0);
     }
   }
 
@@ -390,7 +419,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
       return false;
     }
     assert path != null;
-    return myInstallationManager.isGradleSdkHome(new File(path));
+    return myHelper.isGradleSdkHome(new File(path));
   }
   
   @Override
@@ -409,7 +438,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     //      2.2. Gradle wrapper is not configured for the target project - radio buttons should be shown and 
     //           'use gradle wrapper' option should be disabled;
     useNormalColorForPath();
-    GradleSettings settings = GradleSettings.getInstance(myProject);
+    GradleSettings settings = myHelper.getSettings(myProject);
     String linkedProjectPath = myLinkedGradleProjectPathField.getText();
     if (StringUtil.isEmpty(linkedProjectPath)) {
       linkedProjectPath = settings.getLinkedProjectPath();
@@ -422,14 +451,14 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     
     myPreferWrapperWheneverPossibleCheckBox.setVisible(!myAlwaysShowLinkedProjectControls && myProject.isDefault());
     myPreferWrapperWheneverPossibleCheckBox.setSelected(!settings.isPreferLocalInstallationToWrapper());
-    myUseWrapperButton.setVisible(myAlwaysShowLinkedProjectControls || linkedProjectPath != null);
-    myUseLocalDistributionButton.setVisible(myAlwaysShowLinkedProjectControls || linkedProjectPath != null);
+    myUseWrapperButton.setVisible(myAlwaysShowLinkedProjectControls || (!myProject.isDefault() && linkedProjectPath != null));
+    myUseLocalDistributionButton.setVisible(myAlwaysShowLinkedProjectControls || (!myProject.isDefault() && linkedProjectPath != null));
     if (myAlwaysShowLinkedProjectControls && linkedProjectPath == null) {
       myUseWrapperButton.setEnabled(false);
       myUseLocalDistributionButton.setSelected(true);
     }
     else if (linkedProjectPath != null) {
-      if (GradleUtil.isGradleWrapperDefined(linkedProjectPath)) {
+      if (myHelper.isGradleWrapperDefined(linkedProjectPath)) {
         myUseWrapperButton.setEnabled(true);
         myUseWrapperButton.setText(GradleBundle.message("gradle.config.text.use.wrapper"));
         if (settings.isPreferLocalInstallationToWrapper()) {
@@ -438,7 +467,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
         }
         else {
           myUseWrapperButton.setSelected(true);
-          myGradleHomePathField.setEnabled(false);
+          myGradleHomePathField.setEnabled(myProject.isDefault());
         }
       }
       else {
@@ -450,12 +479,12 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     
     String localDistributionPath = settings.getGradleHome();
     if (!StringUtil.isEmpty(localDistributionPath)) {
-      myGradleHomeSettingType = myInstallationManager.isGradleSdkHome(new File(localDistributionPath)) ?
+      myGradleHomeSettingType = myHelper.isGradleSdkHome(new File(localDistributionPath)) ?
                                 GradleHomeSettingType.EXPLICIT_CORRECT :
                                 GradleHomeSettingType.EXPLICIT_INCORRECT;
       myAlarm.cancelAllRequests();
       if (myGradleHomeSettingType == GradleHomeSettingType.EXPLICIT_INCORRECT && settings.isPreferLocalInstallationToWrapper()) {
-        new DelayedBalloonInfo(MessageType.ERROR, myGradleHomeSettingType, 0).run();
+        myHelper.showBalloon(MessageType.ERROR, myGradleHomeSettingType, 0);
       }
       myGradleHomePathField.setText(localDistributionPath);
       return;
@@ -473,13 +502,13 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
    * Updates GUI of the gradle configurable in order to show deduced path to gradle (if possible).
    */
   private void deduceGradleHomeIfPossible() {
-    File gradleHome = myInstallationManager.getGradleHome(myProject);
+    File gradleHome = myHelper.getGradleHome(myProject);
     if (gradleHome == null) {
-      new DelayedBalloonInfo(MessageType.WARNING, GradleHomeSettingType.UNKNOWN).run();
+      myHelper.showBalloon(MessageType.WARNING, GradleHomeSettingType.UNKNOWN, BALLOON_DELAY_MILLIS);
       return;
     }
     myGradleHomeSettingType = GradleHomeSettingType.DEDUCED;
-    new DelayedBalloonInfo(MessageType.INFO, GradleHomeSettingType.DEDUCED).run();
+    myHelper.showBalloon(MessageType.INFO, GradleHomeSettingType.DEDUCED, BALLOON_DELAY_MILLIS);
     myGradleHomePathField.setText(gradleHome.getPath());
     myGradleHomePathField.getTextField().setForeground(UIManager.getColor("TextField.inactiveForeground"));
     myGradleHomeModifiedByUser = false;
@@ -511,7 +540,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
       return GradleHomeSettingType.UNKNOWN;
     }
     if (isModified()) {
-      return myInstallationManager.isGradleSdkHome(new File(path)) ? GradleHomeSettingType.EXPLICIT_CORRECT
+      return myHelper.isGradleSdkHome(new File(path)) ? GradleHomeSettingType.EXPLICIT_CORRECT
                                                                    : GradleHomeSettingType.EXPLICIT_INCORRECT;
     }
     return myGradleHomeSettingType;
@@ -522,10 +551,6 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     private final String      myText;
     private final long        myTriggerTime;
 
-    DelayedBalloonInfo(@NotNull MessageType messageType, @NotNull GradleHomeSettingType settingType) {
-      this(messageType, settingType, BALLOON_DELAY_MILLIS);
-    }
-    
     DelayedBalloonInfo(@NotNull MessageType messageType, @NotNull GradleHomeSettingType settingType, long delayMillis) {
       myMessageType = messageType;
       myText = settingType.getDescription();
@@ -545,6 +570,61 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
         return;
       }
       GradleUtil.showBalloon(myGradleHomePathField, myMessageType, myText);
+    }
+  }
+
+  /**
+   * Encapsulates functionality which default implementation is backed by static API usage (IJ infrastructure limitation).
+   * <p/>
+   * The main idea is to allow to provide a mock implementation for {@link GradleConfigurable} logic testing.
+   */
+  interface Helper {
+    boolean isGradleSdkHome(@NotNull File file);
+
+    @Nullable
+    File getGradleHome(@Nullable Project project);
+
+    @NotNull
+    GradleSettings getSettings(@NotNull Project project);
+
+    boolean isGradleWrapperDefined(@Nullable String linkedProjectPath);
+    
+    void showBalloon(@NotNull MessageType messageType, @NotNull GradleHomeSettingType settingType, long delayMillis);
+  }
+  
+  private class DefaultHelper implements Helper {
+    
+    @NotNull private final GradleInstallationManager myInstallationManager;
+
+    DefaultHelper(@NotNull GradleInstallationManager installationManager) {
+      myInstallationManager = installationManager;
+    }
+
+    @Override
+    public boolean isGradleSdkHome(@NotNull File file) {
+      return myInstallationManager.isGradleSdkHome(file);
+    }
+
+    @Nullable
+    @Override
+    public File getGradleHome(@Nullable Project project) {
+      return myInstallationManager.getGradleHome(project);
+    }
+
+    @NotNull
+    @Override
+    public GradleSettings getSettings(@NotNull Project project) {
+      return GradleSettings.getInstance(project);
+    }
+
+    @Override
+    public boolean isGradleWrapperDefined(@Nullable String linkedProjectPath) {
+      return GradleUtil.isGradleWrapperDefined(linkedProjectPath);
+    }
+
+    @Override
+    public void showBalloon(@NotNull MessageType messageType, @NotNull GradleHomeSettingType settingType, long delayMillis) {
+      new DelayedBalloonInfo(messageType, settingType, delayMillis).run();
     }
   }
 }
