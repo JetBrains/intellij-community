@@ -241,27 +241,33 @@ public class GitCherryPicker {
     myPlatformFacade.invokeAndWait(new Runnable() {
       @Override
       public void run() {
-        cancelCherryPick(repository);
-        List<Change> changes = commit.getCommit().getChanges();
-        boolean commitNotCancelled = myPlatformFacade.getVcsHelper(myProject).commitChanges(changes, changeList, commitMessage,
-                                                                                            new CommitResultHandler() {
-          @Override
-          public void onSuccess(@NotNull String commitMessage) {
-            commit.setActualSubject(commitMessage);
-            commitSucceeded.set(true);
-            sem.release();
-          }
+        try {
+          cancelCherryPick(repository);
+          List<Change> changes = commit.getCommit().getChanges();
+          boolean commitNotCancelled = myPlatformFacade.getVcsHelper(myProject).commitChanges(changes, changeList, commitMessage,
+                                                                                              new CommitResultHandler() {
+            @Override
+            public void onSuccess(@NotNull String commitMessage) {
+              commit.setActualSubject(commitMessage);
+              commitSucceeded.set(true);
+              sem.release();
+            }
 
-          @Override
-          public void onFailure() {
+            @Override
+            public void onFailure() {
+              commitSucceeded.set(false);
+              sem.release();
+            }
+          });
+
+          if (!commitNotCancelled) {
             commitSucceeded.set(false);
             sem.release();
           }
-        });
-
-        if (!commitNotCancelled) {
-          sem.release();
+        } catch (Throwable t) {
+          LOG.error(t);
           commitSucceeded.set(false);
+          sem.release();
         }
       }
     }, ModalityState.NON_MODAL);
