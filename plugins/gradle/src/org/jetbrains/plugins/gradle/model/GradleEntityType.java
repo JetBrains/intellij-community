@@ -12,7 +12,7 @@ import javax.swing.*;
  */
 public enum GradleEntityType {
   PROJECT(GradleIcons.PROJECT_ICON), MODULE(AllIcons.Nodes.Module), MODULE_DEPENDENCY(AllIcons.Nodes.Module),
-  LIBRARY(AllIcons.Nodes.PpLib), LIBRARY_DEPENDENCY(AllIcons.Nodes.PpLib), CONTENT_ROOT(AllIcons.Modules.AddContentEntry), SYNTHETIC(null);
+  LIBRARY(AllIcons.Nodes.PpLib), LIBRARY_DEPENDENCY(AllIcons.Nodes.PpLib), CONTENT_ROOT(null), SYNTHETIC(null);
 
   @Nullable private final Icon myIcon;
 
