@@ -33,6 +33,7 @@ import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.actionSystem.Constraints;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -109,7 +110,7 @@ public class DefaultDebugUIEnvironment implements DebugUIEnvironment {
     RestartAction restartAction = new RestartAction(myExecutor,
                                                     myRunner,
                                                     processHandler,
-                                                    AllIcons.Actions.StartDebugger,
+                                                    RestartAction.RERUN_DEBUGGER_ICON,
                                                     content,
                                                     myExecutionEnvironment);
     actionGroup.add(restartAction, Constraints.FIRST);

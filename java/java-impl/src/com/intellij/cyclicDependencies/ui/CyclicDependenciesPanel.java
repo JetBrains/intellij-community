@@ -504,7 +504,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
 
   private class RerunAction extends AnAction {
     public RerunAction(JComponent comp) {
-      super(CommonBundle.message("action.rerun"), AnalysisScopeBundle.message("action.rerun.dependency"), AllIcons.Actions.RefreshUsages);
+      super(CommonBundle.message("action.rerun"), AnalysisScopeBundle.message("action.rerun.dependency"), AllIcons.Actions.Rerun);
       registerCustomShortcutSet(CommonShortcuts.getRerun(), comp);
     }
 

@@ -31,7 +31,7 @@ public final class RunAction extends AnAction {
   private final AntBuildMessageView myAntBuildMessageView;
 
   public RunAction(AntBuildMessageView antBuildMessageView) {
-    super(AntBundle.message("rerun.ant.action.name"), null, AllIcons.Actions.RefreshUsages);
+    super(AntBundle.message("rerun.ant.action.name"), null, AllIcons.Actions.Rerun);
     myAntBuildMessageView = antBuildMessageView;
   }
 
