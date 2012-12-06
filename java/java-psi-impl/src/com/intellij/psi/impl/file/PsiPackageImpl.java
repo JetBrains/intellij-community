@@ -44,7 +44,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   private volatile CachedValue<PsiModifierList> myAnnotationList;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectories;
   private volatile Set<String> myPublicClassNamesCache;
-  @NonNls private final Object myPublicClassNamesCacheLock = new Object();
+  private final Object myPublicClassNamesCacheLock = new Object();
 
   public PsiPackageImpl(PsiManager manager, String qualifiedName) {
     super(manager, qualifiedName);
