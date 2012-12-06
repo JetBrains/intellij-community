@@ -774,11 +774,16 @@ public class BuildManager implements ApplicationComponent{
     }
     cmdLine.addParameter("-D"+ GlobalOptions.COMPILE_PARALLEL_OPTION +"=" + Boolean.toString(config.PARALLEL_COMPILATION));
 
+    boolean isProfilingMode = false;
     final String additionalOptions = config.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS;
     if (!StringUtil.isEmpty(additionalOptions)) {
       final StringTokenizer tokenizer = new StringTokenizer(additionalOptions, " ", false);
       while (tokenizer.hasMoreTokens()) {
-        cmdLine.addParameter(tokenizer.nextToken());
+        final String option = tokenizer.nextToken();
+        if ("-Dprofiling.mode=true".equals(option)) {
+          isProfilingMode = true;
+        }
+        cmdLine.addParameter(option);
       }
     }
 
@@ -808,9 +813,17 @@ public class BuildManager implements ApplicationComponent{
       }
     }
 
+    final File workDirectory = getBuildSystemDirectory();
+    workDirectory.mkdirs();
+    ensureLogConfigExists(workDirectory);
+
     final List<String> cp = ClasspathBootstrap.getBuildProcessApplicationClasspath();
     cp.add(compilerPath);
     cp.addAll(myClasspathManager.getCompileServerPluginsClasspath(project));
+    if (isProfilingMode) {
+      cp.add(new File(workDirectory, "yjp-controller-api-redist.jar").getPath());
+      cmdLine.addParameter("-agentlib:yjpagent=disablej2ee,disablealloc,sessionname=ExternalBuild");
+    }
 
     cmdLine.addParameter("-classpath");
     cmdLine.addParameter(classpathToString(cp));
@@ -819,10 +832,6 @@ public class BuildManager implements ApplicationComponent{
     cmdLine.addParameter("127.0.0.1");
     cmdLine.addParameter(Integer.toString(port));
     cmdLine.addParameter(sessionId.toString());
-
-    final File workDirectory = getBuildSystemDirectory();
-    workDirectory.mkdirs();
-    ensureLogConfigExists(workDirectory);
 
     cmdLine.addParameter(FileUtil.toSystemIndependentName(workDirectory.getPath()));
 

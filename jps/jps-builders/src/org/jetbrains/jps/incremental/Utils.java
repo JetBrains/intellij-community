@@ -24,6 +24,7 @@ public class Utils {
   public static final Key<Boolean> ERRORS_DETECTED_KEY = Key.create("_errors_detected_");
   private static volatile File ourSystemRoot = new File(System.getProperty("user.home"), ".idea-build");
   public static final boolean IS_TEST_MODE = Boolean.parseBoolean(System.getProperty("test.mode", "false"));
+  public static final boolean IS_PROFILING_MODE = Boolean.parseBoolean(System.getProperty("profiling.mode", "false"));
 
   private Utils() {
   }
