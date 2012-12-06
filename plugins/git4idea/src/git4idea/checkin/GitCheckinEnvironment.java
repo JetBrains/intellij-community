@@ -60,6 +60,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
@@ -72,13 +73,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   @NonNls private static final String GIT_COMMIT_MSG_FILE_EXT = ".txt"; // the file extension for commit message file
 
   private final Project myProject;
+  public static final SimpleDateFormat COMMIT_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
   private final VcsDirtyScopeManager myDirtyScopeManager;
   private final GitVcsSettings mySettings;
 
   private String myNextCommitAuthor = null; // The author for the next commit
   private boolean myNextCommitAmend; // If true, the next commit is amended
   private Boolean myNextCommitIsPushed = null; // The push option of the next commit
-
+  private Date myNextCommitAuthorDate;
 
   public GitCheckinEnvironment(@NotNull Project project, @NotNull final VcsDirtyScopeManager dirtyScopeManager, final GitVcsSettings settings) {
     myProject = project;
@@ -177,7 +179,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
               Set<FilePath> files = new HashSet<FilePath>();
               files.addAll(added);
               files.addAll(removed);
-              commit(myProject, root, files, messageFile, myNextCommitAuthor, myNextCommitAmend);
+              commit(myProject, root, files, messageFile, myNextCommitAuthor, myNextCommitAmend, myNextCommitAuthorDate);
             }
             catch (VcsException ex) {
               if (!isMergeCommit(ex)) {
@@ -439,12 +441,15 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   /**
    * Prepare delete files handler.
    *
-   * @param project          the project
-   * @param root             a vcs root
-   * @param files            a files to commit
-   * @param message          a message file to use
-   * @param nextCommitAuthor a author for the next commit
-   * @param nextCommitAmend  true, if the commit should be amended
+   *
+   *
+   * @param project              the project
+   * @param root                 a vcs root
+   * @param files                a files to commit
+   * @param message              a message file to use
+   * @param nextCommitAuthor     a author for the next commit
+   * @param nextCommitAmend      true, if the commit should be amended
+   * @param nextCommitAuthorDate Author date timestamp to override the date of the commit or null if this overriding is not needed.
    * @return a simple handler that does the task
    * @throws VcsException in case of git problem
    */
@@ -453,7 +458,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                              Collection<FilePath> files,
                              File message,
                              final String nextCommitAuthor,
-                             boolean nextCommitAmend)
+                             boolean nextCommitAmend, Date nextCommitAuthorDate)
     throws VcsException {
     boolean amend = nextCommitAmend;
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
@@ -468,6 +473,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       handler.addParameters("--only", "-F", message.getAbsolutePath());
       if (nextCommitAuthor != null) {
         handler.addParameters("--author=" + nextCommitAuthor);
+      }
+      if (nextCommitAuthorDate != null) {
+        handler.addParameters("--date", COMMIT_DATE_FORMAT.format(nextCommitAuthorDate));
       }
       handler.endOptions();
       handler.addParameters(paths);
@@ -558,6 +566,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     myNextCommitAmend = false;
     myNextCommitAuthor = null;
     myNextCommitIsPushed = null;
+    myNextCommitAuthorDate = null;
   }
 
   /**
@@ -576,6 +585,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
      * The amend checkbox
      */
     private final JCheckBox myAmend;
+    private Date myAuthorDate;
 
     /**
      * A constructor
@@ -670,6 +680,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         mySettings.saveCommitAuthor(author);
       }
       myNextCommitAmend = myAmend.isSelected();
+      myNextCommitAuthorDate = myAuthorDate;
     }
 
     /**
@@ -686,6 +697,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         GitCommit commit = (GitCommit)data;
         String author = String.format("%s <%s>", commit.getAuthor(), commit.getAuthorEmail());
         myAuthor.getEditor().setItem(author);
+        myAuthorDate = new Date(commit.getAuthorTime());
       }
     }
   }
