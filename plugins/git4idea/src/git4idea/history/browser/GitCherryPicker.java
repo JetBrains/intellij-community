@@ -197,12 +197,12 @@ public class GitCherryPicker {
     refreshChangedFiles(paths);
     final String commitMessage = createCommitMessage(commit, paths);
     LocalChangeList previouslyDefaultChangeList = myChangeListManager.getDefaultChangeList();
-    LocalChangeList changeList = createChangeListAfterUpdate(commit.getChanges(), paths, commitMessage);
+    LocalChangeList changeList = createChangeListAfterUpdate(commit, paths, commitMessage);
     return new CherryPickData(changeList, commitMessage, previouslyDefaultChangeList);
   }
 
   @NotNull
-  private LocalChangeList createChangeListAfterUpdate(@NotNull final List<Change> changes, @NotNull final Collection<FilePath> paths,
+  private LocalChangeList createChangeListAfterUpdate(@NotNull final GitCommit commit, @NotNull final Collection<FilePath> paths,
                                                       @NotNull final String commitMessage) {
     final AtomicReference<LocalChangeList> changeList = new AtomicReference<LocalChangeList>();
     myPlatformFacade.invokeAndWait(new Runnable() {
@@ -210,7 +210,7 @@ public class GitCherryPicker {
       public void run() {
         myChangeListManager.invokeAfterUpdate(new Runnable() {
                                                 public void run() {
-                                                  changeList.set(createChangeList(changes, commitMessage));
+                                                  changeList.set(createChangeList(commit, commitMessage));
                                                 }
                                               }, InvokeAfterUpdateMode.SYNCHRONOUS_NOT_CANCELLABLE, "Cherry-pick",
                                               new Consumer<VcsDirtyScopeManager>() {
@@ -362,9 +362,10 @@ public class GitCherryPicker {
   }
 
   @NotNull
-  private LocalChangeList createChangeList(@NotNull List<Change> changes, @NotNull String commitMessage) {
+  private LocalChangeList createChangeList(@NotNull GitCommit commit, @NotNull String commitMessage) {
+    List<Change> changes = commit.getChanges();
     if (!changes.isEmpty()) {
-      final LocalChangeList changeList = myChangeListManager.addChangeList(commitMessage, commitMessage);
+      final LocalChangeList changeList = ((ChangeListManagerEx)myChangeListManager).addChangeList(commitMessage, commitMessage, commit);
       myChangeListManager.moveChangesTo(changeList, changes.toArray(new Change[changes.size()]));
       myChangeListManager.setDefaultChangeList(changeList);
       return changeList;

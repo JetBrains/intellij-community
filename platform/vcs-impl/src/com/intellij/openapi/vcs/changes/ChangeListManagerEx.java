@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -31,4 +32,6 @@ public abstract class ChangeListManagerEx extends ChangeListManager {
 
 
   public abstract void freezeImmediately(@Nullable String reason);
+
+  public abstract LocalChangeList addChangeList(@NotNull String name, @Nullable final String comment, @Nullable Object data);
 }

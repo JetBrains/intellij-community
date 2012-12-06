@@ -25,10 +25,8 @@ import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,6 +47,7 @@ import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.history.NewGitUsersComponent;
+import git4idea.history.browser.GitCommit;
 import git4idea.i18n.GitBundle;
 import git4idea.push.GitPusher;
 import git4idea.repo.GitRepositoryFiles;
@@ -564,7 +563,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   /**
    * Checkin options for git
    */
-  private class GitCheckinOptions implements RefreshableOnComponent {
+  private class GitCheckinOptions implements CheckinChangeListSpecificComponent {
     /**
      * A container panel
      */
@@ -661,7 +660,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
      * {@inheritDoc}
      */
     public void saveState() {
-      String author = (String)myAuthor.getSelectedItem();
+      String author = (String)myAuthor.getEditor().getItem();
       myNextCommitAuthor = author.length() == 0 ? null : author;
       if (author.length() == 0) {
         myNextCommitAuthor = null;
@@ -678,6 +677,16 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
      */
     public void restoreState() {
       refresh();
+    }
+
+    @Override
+    public void onChangeListSelected(LocalChangeList list) {
+      Object data = list.getData();
+      if (data instanceof GitCommit) {
+        GitCommit commit = (GitCommit)data;
+        String author = String.format("%s <%s>", commit.getAuthor(), commit.getAuthorEmail());
+        myAuthor.getEditor().setItem(author);
+      }
     }
   }
 

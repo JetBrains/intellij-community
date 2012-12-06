@@ -39,8 +39,8 @@ public class Modifier implements ChangeListsWriteOperations {
     myCommandQueue = new LinkedList<ChangeListCommand>();
   }
 
-  public LocalChangeList addChangeList(@NotNull final String name, @Nullable final String comment) {
-    final AddList command = new AddList(name, comment);
+  public LocalChangeList addChangeList(@NotNull final String name, @Nullable final String comment, @Nullable Object data) {
+    final AddList command = new AddList(name, comment, data);
     impl(command);
     return command.getNewListCopy();
   }
