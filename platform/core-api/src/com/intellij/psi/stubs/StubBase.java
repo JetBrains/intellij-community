@@ -26,15 +26,14 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<StubElement> implements StubElement<T> {
-  private Object myChildren = null; // null for none, StubElement for single child, ArrayList for multiple children
+  private SmartList<StubElement> myChildren = null;
   private final IStubElementType myElementType;
   private volatile T myPsi;
 
@@ -43,18 +42,9 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
     super(parent);
     myElementType = elementType;
     if (parent != null) {
-      if (((StubBase)parent).myChildren == null) {
-        ((StubBase)parent).myChildren = this;
-      }
-      else if (((StubBase)parent).myChildren instanceof StubElement) {
-        ArrayList<StubElement> list = new ArrayList<StubElement>(2);
-        list.add((StubElement)((StubBase)parent).myChildren);
-        list.add(this);
-        ((StubBase)parent).myChildren = list;
-      }
-      else {
-        ((ArrayList<StubElement>)((StubBase)parent).myChildren).add(this);
-      }
+      if (((StubBase)parent).myChildren == null)
+        ((StubBase)parent).myChildren = new SmartList<StubElement>();
+      ((StubBase)parent).myChildren.add(this);
     }
   }
 
@@ -69,10 +59,7 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
     if (myChildren == null)
       return Collections.emptyList();
 
-    if (myChildren instanceof StubElement)
-      return Arrays.asList((StubElement)myChildren);
-
-    return (ArrayList<StubElement>) myChildren;
+    return myChildren;
   }
 
   @Override
