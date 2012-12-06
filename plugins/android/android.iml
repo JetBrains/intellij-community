@@ -71,6 +71,7 @@
     <orderEntry type="module" module-name="android-rt" />
     <orderEntry type="module" module-name="java-indexing-api" />
     <orderEntry type="module" module-name="jps-builders" />
+    <orderEntry type="module" module-name="lang-impl" scope="TEST" />
   </component>
 </module>
 

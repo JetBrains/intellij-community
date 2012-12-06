@@ -268,6 +268,12 @@ public class SdkConfigurationUtil {
 
   public static void selectSdkHome(final SdkType sdkType, @NotNull final Consumer<String> consumer) {
     final FileChooserDescriptor descriptor = sdkType.getHomeChooserDescriptor();
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      Sdk sdk = ProjectJdkTable.getInstance().findMostRecentSdkOfType(sdkType);
+      if (sdk == null) throw new RuntimeException("No SDK of type " + sdkType + " found");
+      consumer.consume(sdk.getHomePath());
+      return;
+    }
     FileChooser.chooseFiles(descriptor, null, getSuggestedSdkRoot(sdkType), new Consumer<List<VirtualFile>>() {
       @Override
       public void consume(final List<VirtualFile> chosen) {

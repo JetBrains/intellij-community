@@ -19,6 +19,7 @@ import com.android.sdklib.AndroidVersion;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.impl.JavaDependentSdkType;
 import com.intellij.openapi.ui.Messages;
 import icons.AndroidIcons;
 import org.jdom.Element;
@@ -35,7 +36,7 @@ import java.util.List;
 /**
  * @author Eugene.Kudelevsky
  */
-public class AndroidSdkType extends SdkType implements JavaSdkType {
+public class AndroidSdkType extends JavaDependentSdkType implements JavaSdkType {
 
   @NonNls public static final String SDK_NAME = "Android SDK";
 
