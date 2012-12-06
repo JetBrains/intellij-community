@@ -65,7 +65,7 @@ public class CompletionPreview {
     }, "preview");
     final RangeHighlighter highlighter = myLookup.getEditor().getMarkupModel()
       .addRangeHighlighter(caret, previewEnd, HighlighterLayer.LAST,
-                           new TextAttributes(Color.LIGHT_GRAY, null, null, null, Font.PLAIN),
+                           new TextAttributes(Color.GRAY, null, null, null, Font.PLAIN),
                            HighlighterTargetArea.EXACT_RANGE);
     
     myUninstaller = new Disposable() {
@@ -121,7 +121,12 @@ public class CompletionPreview {
     } else {
       String tailText = presentation.getTailText();
       if (tailText != null && tailText.startsWith("(") && tailText.contains(")")) {
-        text += "()";
+        Editor editor = lookup.getEditor();
+        CharSequence seq = editor.getDocument().getCharsSequence();
+        int caret = editor.getCaretModel().getOffset();
+        if (caret < seq.length() && seq.charAt(caret) != '(') {
+          text += "()";
+        }
       }
     }
 
