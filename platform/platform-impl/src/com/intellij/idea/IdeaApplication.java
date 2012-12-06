@@ -133,17 +133,8 @@ public class IdeaApplication {
       LOG.info("WM detected: " + wmName);
       if (wmName == null) return;
 
-      if ("Mutter".equals(wmName)) {
+      if (wmName.startsWith("Mutter") || "Muffin".equals(wmName) || "GNOME Shell".equals(wmName)) {
         try {
-          xwmClass.getDeclaredField("MUTTER_WM");
-        }
-        catch (NoSuchFieldException e) {
-          setWM(xwm, "METACITY_WM");  // Mutter support absent - mimic Metacity
-        }
-      }
-      else if ("Muffin".equals(wmName) || "GNOME Shell".equals(wmName)) {
-        try {
-          xwmClass.getDeclaredField("MUTTER_WM");
           setWM(xwm, "MUTTER_WM");
         }
         catch (NoSuchFieldException e) {

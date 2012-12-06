@@ -55,10 +55,7 @@ public class FragmentHighlighterImpl implements FragmentHighlighter {
 
     addModifyActions(fragment, myAppender1, myAppender2);
     final Iterator<Fragment> iterator = fragment.getChildrenIterator();
-    if (iterator == null) {
-      highlightFragmentImpl(fragment);
-    }
-    else {
+    if (iterator != null) {
       while (iterator.hasNext()) {
         Fragment childFragment = iterator.next();
         childFragment.highlight(this);
@@ -84,7 +81,7 @@ public class FragmentHighlighterImpl implements FragmentHighlighter {
     if (endLine <= 0) return;
     TextDiffTypeEnum type = fragment.getType();
     appender.addLineMarker(endLine - 1, type == null ? null : DiffUtil.makeTextDiffType(fragment), SeparatorPlacement.BOTTOM);
-    if (fragment.getRange(appender.getSide()).getLength() > 0) {
+    if (fragment.getRange(appender.getSide()).getLength() > 0 && startLine > 0) {
       appender.addLineMarker(startLine, type == null ? null : DiffUtil.makeTextDiffType(fragment), SeparatorPlacement.TOP);
     }
   }

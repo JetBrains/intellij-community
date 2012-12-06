@@ -254,7 +254,8 @@ class ConfigObject extends LinkedHashMap implements Writable {
 }
 -----
 [Groovy script]
-  [Modifiers]
+  [Package definition]
+    [Modifiers]
   [Class definition : ConfigObject]
     [Modifiers]
     [Extends clause]

@@ -65,6 +65,10 @@ public class BreakpointsMasterDetailPopupFactory {
     return ServiceManager.getService(project, BreakpointsMasterDetailPopupFactory.class);
   }
 
+  public boolean isBreakpointPopupShowing() {
+    return (myBalloonToHide != null && !myBalloonToHide.isDisposed()) || myPopupShowing != null;
+  }
+
   @Nullable
   public JBPopup createPopup(@Nullable Object initialBreakpoint) {
     if (myPopupShowing != null) {
@@ -87,7 +91,9 @@ public class BreakpointsMasterDetailPopupFactory {
       @Override
       public void beforeShown(LightweightWindowEvent event) {
         if (myBalloonToHide != null) {
-          myBalloonToHide.hide();
+          if (!myBalloonToHide.isDisposed()) {
+            myBalloonToHide.hide();
+          }
           myBalloonToHide = null;
         }
         myPopupShowing = popup;

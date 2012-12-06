@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon;
 
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -25,6 +26,7 @@ public class AnnotationsHighlightingTest extends LightDaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/annotations";
 
   private void doTest(boolean checkWarnings) {
+    setLanguageLevel(LanguageLevel.JDK_1_7);
     doTest(BASE_PATH + "/" + getTestName(true) + ".java", checkWarnings, false);
   }
 
@@ -43,7 +45,9 @@ public class AnnotationsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInapplicable() { doTest(false); }
   public void testDuplicateAttribute() { doTest(false); }
   public void testDuplicateTarget() { doTest(false); }
-  //public void testTypeAnnotations() { doTest(false); }
+
   public void testInvalidPackageAnnotationTarget() { doTest(BASE_PATH + "/" + getTestName(true) + "/package-info.java", false, false); }
   public void testPackageAnnotationNotInPackageInfo() { doTest(BASE_PATH + "/" + getTestName(true) + "/notPackageInfo.java", false, false); }
+
+  //public void testTypeAnnotations() { doTest(false); }  // todo[r.sh] make separate test with correct language level
 }

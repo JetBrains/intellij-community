@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>Test.java</file>
-    <line>12</line>
-    <description>Method invocation &lt;code&gt;provider.getResource()&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;</description>
-  </problem>
-</problems>

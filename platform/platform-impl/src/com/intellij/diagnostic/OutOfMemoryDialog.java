@@ -23,6 +23,7 @@ import com.intellij.ui.components.JBLabel;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.io.File;
 
 public class OutOfMemoryDialog extends DialogWrapper {
   public enum MemoryKind {
@@ -60,7 +61,8 @@ public class OutOfMemoryDialog extends DialogWrapper {
         memoryKind == MemoryKind.HEAP ? VMOptions.XMX_OPTION_NAME : memoryKind == MemoryKind.PERM_GEN ? VMOptions.PERM_GEN_OPTION_NAME : VMOptions.CODE_CACHE_OPTION_NAME,
         ApplicationNamesInfo.getInstance().getProductName()));
 
-    final String path = VMOptions.getSettingsFilePath();
+    File file = VMOptions.getWriteFile();
+    final String path = file != null ? file.getPath() : null;
     if (path != null) {
       mySettingsFileHintLabel.setText(DiagnosticBundle.message("diagnostic.out.of.memory.willBeSavedTo", path));
     }

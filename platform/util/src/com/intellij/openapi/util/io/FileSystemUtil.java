@@ -464,7 +464,7 @@ public class FileSystemUtil {
           LOG.debug(e);
           return null;
         }
-        throw e;
+        throw new IOException("Cannot resolve '" + path + "'", e);
       }
     }
 

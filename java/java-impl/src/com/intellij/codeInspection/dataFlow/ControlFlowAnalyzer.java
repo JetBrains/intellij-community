@@ -777,11 +777,6 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   public void visitTryStatement(PsiTryStatement statement) {
     startElement(statement);
 
-    PsiResourceList resourceList = statement.getResourceList();
-    if (resourceList != null) {
-      resourceList.accept(this);
-    }
-
     PsiCodeBlock finallyBlock = statement.getFinallyBlock();
     if (finallyBlock != null) {
       myCatchStack.push(new CatchDescriptor(finallyBlock));
@@ -805,6 +800,11 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     int endOffset = finallyBlock == null ? getEndOffset(statement) : getStartOffset(finallyBlock) - 2;
+
+    PsiResourceList resourceList = statement.getResourceList();
+    if (resourceList != null) {
+      resourceList.accept(this);
+    }
 
     PsiCodeBlock tryBlock = statement.getTryBlock();
     if (tryBlock != null) {

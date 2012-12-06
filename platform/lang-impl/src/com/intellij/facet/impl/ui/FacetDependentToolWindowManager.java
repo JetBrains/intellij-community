@@ -37,7 +37,7 @@ public class FacetDependentToolWindowManager extends AbstractProjectComponent {
       @Override
       public void facetAdded(Facet facet) {
         for (FacetDependentToolWindow extension : getDependentExtensions(facet)) {
-          checkFacets(extension);
+          ensureToolWindowExists(extension);
         }
       }
 
@@ -60,21 +60,20 @@ public class FacetDependentToolWindowManager extends AbstractProjectComponent {
     });
 
     FacetDependentToolWindow[] extensions = Extensions.getExtensions(FacetDependentToolWindow.EXTENSION_POINT_NAME);
-    for (FacetDependentToolWindow extension : extensions) {
-      checkFacets(extension);
+    loop: for (FacetDependentToolWindow extension : extensions) {
+      for (FacetType type : extension.getFacetTypes()) {
+        if (myFacetManager.hasFacets(type.getId())) {
+          ensureToolWindowExists(extension);
+          continue loop;
+        }
+      }
     }
   }
 
-  private void checkFacets(FacetDependentToolWindow extension) {
+  private void ensureToolWindowExists(FacetDependentToolWindow extension) {
     ToolWindow toolWindow = myToolWindowManager.getToolWindow(extension.id);
     if (toolWindow == null) {
-      List<FacetType> facetTypes = extension.getFacetTypes();
-      for (FacetType facetType : facetTypes) {
-        if (myFacetManager.hasFacets(facetType.getId())) {
-          myToolWindowManager.initToolWindow(extension);
-          return;
-        }
-      }
+      myToolWindowManager.initToolWindow(extension);
     }
   }
 
