@@ -35,6 +35,11 @@ public abstract class TypeIntention implements IntentionAction {
     if (PsiTreeUtil.getParentOfType(problemElement, PyLambdaExpression.class) != null) {
       return false;
     }
+    final PsiReference reference = problemElement.getReference();
+    if (reference instanceof PsiPolyVariantReference) {
+      final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
+      if (results.length != 1) return false;
+    }
     return isTypeUndefined(problemElement);
   }
 
