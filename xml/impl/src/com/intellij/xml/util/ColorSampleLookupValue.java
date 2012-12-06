@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.ColorUtil;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -451,22 +452,7 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
     }
     String hexValue = text.charAt(0) == '#' ? text : getHexCodeForColorName(text.toLowerCase());
     if (hexValue != null) {
-      String hexValue2 = hexValue.substring(1);
-      if (hexValue2.length() == 3) {
-        StringBuilder buf = new StringBuilder(6);
-        buf.append(hexValue2.charAt(0)).append(hexValue2.charAt(0));
-        buf.append(hexValue2.charAt(1)).append(hexValue2.charAt(1));
-        buf.append(hexValue2.charAt(2)).append(hexValue2.charAt(2));
-
-        hexValue2 = buf.toString();
-      }
-
-      try {
-        return Color.decode("0x" + hexValue2);
-      }
-      catch (NumberFormatException e) {
-        //ignore
-      }
+      return ColorUtil.fromHex(hexValue, null);
     }
     return null;
   }

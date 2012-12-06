@@ -503,23 +503,34 @@ public class GradleUtil {
     return INSTALLATION_MANAGER.getValue().getGradleHome(project) != null;
   }
 
+  
   public static void executeProjectChangeAction(@NotNull Project project, @NotNull Object entityToChange, @NotNull Runnable task) {
     executeProjectChangeAction(project, Collections.singleton(entityToChange), task);
   }
   
-  public static void executeProjectChangeAction(@NotNull Project project, @NotNull Iterable<?> entitiesToChange, @NotNull Runnable task) {
-    final GradleProjectEntityChangeListener publisher = project.getMessageBus().syncPublisher(GradleProjectEntityChangeListener.TOPIC);
-    for (Object e : entitiesToChange) {
-      publisher.onChangeStart(e);
-    }
-    try {
-      task.run();
-    }
-    finally {
-      for (Object e : entitiesToChange) {
-        publisher.onChangeEnd(e);
+  public static void executeProjectChangeAction(@NotNull final Project project, @NotNull final Iterable<?> entitiesToChange, @NotNull final Runnable task) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            final GradleProjectEntityChangeListener publisher = project.getMessageBus().syncPublisher(GradleProjectEntityChangeListener.TOPIC);
+            for (Object e : entitiesToChange) {
+              publisher.onChangeStart(e);
+            }
+            try {
+              task.run();
+            }
+            finally {
+              for (Object e : entitiesToChange) {
+                publisher.onChangeEnd(e);
+              }
+            } 
+          }
+        });
       }
-    }
+    });
   }
   
   private interface TaskUnderProgress {

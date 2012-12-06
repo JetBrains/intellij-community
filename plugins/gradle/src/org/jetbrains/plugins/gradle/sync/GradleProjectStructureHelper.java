@@ -3,10 +3,7 @@ package org.jetbrains.plugins.gradle.sync;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModuleOrderEntry;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.RootPolicy;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Ref;
@@ -178,6 +175,21 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
   }
 
   @Nullable
+  public LibraryOrderEntry findIntellijLibraryDependency(@NotNull final String libraryName,
+                                                         @NotNull ModifiableRootModel model)
+  {
+    for (OrderEntry entry : model.getOrderEntries()) {
+      if (entry instanceof LibraryOrderEntry) {
+        LibraryOrderEntry candidate = (LibraryOrderEntry)entry;
+        if (libraryName.equals(candidate.getLibraryName())) {
+          return candidate;
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
   public GradleLibrary findGradleLibrary(@NotNull final String libraryName) {
     final GradleProject project = myModel.getGradleProject();
     if (project == null) {
@@ -268,6 +280,18 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
       }
     }
     return null;
+  }
 
+  @Nullable
+  public ModuleOrderEntry findIntellijModuleDependency(@NotNull GradleModuleDependency dependency, @NotNull ModifiableRootModel model) {
+    for (OrderEntry entry : model.getOrderEntries()) {
+      if (entry instanceof ModuleOrderEntry) {
+        ModuleOrderEntry candidate = (ModuleOrderEntry)entry;
+        if (dependency.getName().equals(candidate.getModuleName())) {
+          return candidate;
+        }
+      }
+    }
+    return null;
   }
 }
