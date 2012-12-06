@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,7 +150,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType WRONGWAY = new GroovyElementType("Wrong way!");
   GroovyElementType LITERAL = new GroovyElementType("Literal");
   //Packaging
-  GroovyElementType PACKAGE_DEFINITION = new GroovyElementType("Package definition");
+  GrPackageDefinitionElementType PACKAGE_DEFINITION = new GrPackageDefinitionElementType("Package definition");
 
   GrCodeBlockElementType CLOSABLE_BLOCK = new GrCodeBlockElementType("Closable block") {
     @NotNull
