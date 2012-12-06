@@ -46,13 +46,12 @@ public class FilePathImpl implements FilePath {
   private boolean myIsDirectory;
   private final boolean myLocal;
 
-  //private FilePathImpl(@NotNull VirtualFile virtualParent,
-  private FilePathImpl(@NotNull VirtualFile virtualParent,
+  private FilePathImpl(VirtualFile virtualParent,
                        @NotNull String name,
                        final boolean isDirectory,
                        VirtualFile child,
                        final boolean forDeleted) {
-    this(new File(virtualParent.getPath(), name), isDirectory, true);
+    this(virtualParent == null ? new File(name) : new File(new File(virtualParent.getPath()), name), isDirectory, true);
     myVirtualParent = virtualParent;
 
     if (!forDeleted) {
@@ -89,7 +88,6 @@ public class FilePathImpl implements FilePath {
   }
   private FilePathImpl(@NotNull File file, final boolean isDirectory, boolean local) {
     myFile = file;
-    //assert myFile.isAbsolute() || ! local;
     myName = file.getName();
     myIsDirectory = isDirectory;
     myLocal = local;
