@@ -125,10 +125,7 @@ public class InterpreterPathChooser extends BaseListPopupStep<String> {
   private void createRemoteSdk() {
     PythonRemoteInterpreterManager remoteInterpreterManager = PythonRemoteInterpreterManager.getInstance();
     if (remoteInterpreterManager != null) {
-      Sdk sdk = remoteInterpreterManager.addRemoteSdk(myProject, myOwnerComponent, Lists.newArrayList(myExistingSdks));
-      if (sdk != null) {
-        myCallback.consume(sdk);
-      }
+      remoteInterpreterManager.addRemoteSdk(myProject, myOwnerComponent, Lists.newArrayList(myExistingSdks), myCallback);
     }
     else {
       Messages.showErrorDialog("WebDeployment is missing. Please enable WebDeployment plugin.", "Add Remote Interpreter");

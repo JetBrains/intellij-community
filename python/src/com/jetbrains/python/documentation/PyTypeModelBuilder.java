@@ -256,11 +256,20 @@ public class PyTypeModelBuilder {
   }
 
   private abstract static class TypeNameVisitor implements TypeVisitor {
+    private int myDepth = 0;
+    private final static int MAX_DEPTH = 6;
+
     @Override
     public void oneOf(OneOf oneOf) {
+      myDepth++;
+      if (myDepth>MAX_DEPTH) {
+        add("...");
+        return;
+      }
       add("one of (");
       processListCommaSeparated(oneOf.oneOfTypes);
       add(")");
+      myDepth--;
     }
 
     private void processListCommaSeparated(Collection<TypeModel> list) {
@@ -281,9 +290,15 @@ public class PyTypeModelBuilder {
 
     @Override
     public void collectionOf(CollectionOf collectionOf) {
+      myDepth++;
+      if (myDepth>MAX_DEPTH) {
+        add("...");
+        return;
+      }
       addType(collectionOf.collectionName);
       add(" of ");
       collectionOf.elementType.accept(this);
+      myDepth--;
     }
 
     protected abstract void addType(String name);
@@ -295,20 +310,32 @@ public class PyTypeModelBuilder {
 
     @Override
     public void function(FunctionType function) {
+      myDepth++;
+      if (myDepth>MAX_DEPTH) {
+        add("...");
+        return;
+      }
       add("(");
       processListCommaSeparated(function.parameters);
       add(") -> ");
       function.returnType.accept(this);
       add("\n");
+      myDepth--;
     }
 
     @Override
     public void param(ParamType param) {
+      myDepth++;
+      if (myDepth>MAX_DEPTH) {
+        add("...");
+        return;
+      }
       add(param.name);
       if (param.type != null) {
         add(": ");
         param.type.accept(this);
       }
+      myDepth--;
     }
   }
 }

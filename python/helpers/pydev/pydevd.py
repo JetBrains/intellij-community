@@ -297,7 +297,7 @@ class PyDB:
 
     def haveAliveThreads(self):
         for t in threadingEnumerate():
-            if not isinstance(t, PyDBDaemonThread) and t.isAlive():
+            if not isinstance(t, PyDBDaemonThread) and t.isAlive() and not t.isDaemon():
                 return True
 
         return False
@@ -1118,7 +1118,11 @@ class PyDB:
         PyDBCommandThread(debugger).start()
         PyDBCheckAliveThread(debugger).start()
 
-        pydev_imports.execfile(file, globals, locals) #execute the script
+        if pydevd_vm_type.GetVmType() == pydevd_vm_type.PydevdVmType.JYTHON and sys.version_info[1] == 5 and sys.version_info[2] >= 3:
+            from _pydev_jython_execfile import jython_execfile
+            jython_execfile(sys.argv)
+        else:
+            pydev_imports.execfile(file, globals, locals) #execute the script
 
     def exiting(self):
         sys.stdout.flush()

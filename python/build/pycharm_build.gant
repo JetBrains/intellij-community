@@ -17,37 +17,8 @@ setProperty("ch", "$home/community")
 setProperty("dryRun", false)
 setProperty("jdk16", guessJdk())
 
-setProperty("pluginFilter", [   //modules to compile
-            "htmltools",
-            "JavaScriptLanguage",
-            "JavaScriptDebugger", "FirefoxConnector", "ChromeConnector", "python-javascript-debugger",
-            "cvsIntegration", "cvs-core", "cvs-plugin", "javacvs-src", "smartcvs-src",
-            "PerforceIntegration", "Perforce", "perforce_util",
-            "svn4idea",
-            "git4idea",
-            "CSS", "css-api",
-            "JSInspections",
-            "JSIntentionPowerPack",
-            "less", "sass",
-            "haml", "haml-plugin",
-            "hg4idea",
-            "tasks", "tasks-core", "tasks-api", "jira-connector",
-            "github",
-            "webDeployment",
-            "jdbc-console", "django-db-config",
-            "database-impl", "DatabaseSupport",
-            "sql",
-            "coffeescript",
-            "remote-run",
-            "python-remote-interpreter",
-            "vagrant",
-            "diagram-api", "uml",
-            "python-uml", "localization",
-            "python-localization",
-            "rest", "python-rest",
-            "pycharm-flask",
-            "pycharm-numpy"
-])
+//modules to compile
+setProperty("pluginFilter", new File("$home/python/build/plugin-list.txt").readLines())
 
 private List<String> pycharmPlatformApiModules() {
   return [platformUltimateApiModules, "graph-openapi"].flatten()
@@ -181,7 +152,11 @@ private layoutPlugins(layouts) {
     layouts.layoutPlugin("python-javascript-debugger")
     layouts.layoutPlugin("remote-run")
     layouts.layoutPlugin("python-remote-interpreter")
-    layouts.layoutPlugin("vagrant")
+    layouts.layoutPlugin("vagrant") {
+      fileset(dir: "$home/plugins/vagrant/lib") {
+        include(name: "jrubyparser-0.2.jar")
+      }
+    }
     layouts.layoutPlugin("python-uml")
     layouts.layoutPlugin("localization")
     layouts.layoutPlugin("python-localization")
