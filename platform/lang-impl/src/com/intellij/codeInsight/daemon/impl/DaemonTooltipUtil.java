@@ -39,7 +39,7 @@ public class DaemonTooltipUtil {
     TooltipController.getInstance().cancelTooltip(DAEMON_INFO_GROUP, null, true);
   }
 
-  public static void showInfoTooltip(@NotNull final HighlightInfo info, final Editor editor, final int defaultOffset, final int currentWidth) {
+  public static void showInfoTooltip(@NotNull final HighlightInfo info, @NotNull Editor editor, final int defaultOffset, final int currentWidth) {
     if (info.toolTip == null) return;
     Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
 

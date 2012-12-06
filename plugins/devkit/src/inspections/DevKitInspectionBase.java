@@ -25,8 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.*;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -184,7 +183,7 @@ public abstract class DevKitInspectionBase extends BaseJavaLocalInspectionTool {
     private void addType(PsiClass clazz) {
       if (myTypes == null) {
         //noinspection unchecked
-        myTypes = new THashSet<PsiClass>(2, TObjectHashingStrategy.IDENTITY);
+        myTypes = ContainerUtil.<PsiClass>newIdentityTroveSet(2);
       }
       myTypes.add(clazz);
     }

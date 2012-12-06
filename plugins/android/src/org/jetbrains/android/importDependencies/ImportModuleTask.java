@@ -67,7 +67,7 @@ class ImportModuleTask extends ModuleProvidingTask {
     if (AndroidFacet.getInstance(moduleWrapper[0]) == null) {
       AndroidUtils.addAndroidFacetInWriteAction(moduleWrapper[0], myContentRoot, true);
     }
-    AndroidSdkUtils.setupAndroidPlatformInNeccessary(moduleWrapper[0]);
+    AndroidSdkUtils.setupAndroidPlatformInNecessary(moduleWrapper[0], false);
     setDepModule(moduleWrapper[0]);
     return null;
   }

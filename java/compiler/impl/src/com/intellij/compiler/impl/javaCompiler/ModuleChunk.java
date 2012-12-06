@@ -38,7 +38,6 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OrderedSet;
 import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -210,7 +209,7 @@ public class ModuleChunk extends Chunk<Module> {
   public OrderedSet<VirtualFile> getCompilationClasspathFiles(final boolean exportedOnly) {
     final Set<Module> modules = getNodes();
 
-    OrderedSet<VirtualFile> cpFiles = new OrderedSet<VirtualFile>(TObjectHashingStrategy.CANONICAL);
+    OrderedSet<VirtualFile> cpFiles = new OrderedSet<VirtualFile>();
     for (final Module module : modules) {
       Collections.addAll(cpFiles, orderEnumerator(module, exportedOnly, new AfterJdkOrderEntryCondition()).getClassesRoots());
     }
@@ -236,8 +235,8 @@ public class ModuleChunk extends Chunk<Module> {
 
   public OrderedSet<VirtualFile> getCompilationBootClasspathFiles(final boolean exportedOnly) {
     final Set<Module> modules = getNodes();
-    final OrderedSet<VirtualFile> cpFiles = new OrderedSet<VirtualFile>(TObjectHashingStrategy.CANONICAL);
-    final OrderedSet<VirtualFile> jdkFiles = new OrderedSet<VirtualFile>(TObjectHashingStrategy.CANONICAL);
+    final OrderedSet<VirtualFile> cpFiles = new OrderedSet<VirtualFile>();
+    final OrderedSet<VirtualFile> jdkFiles = new OrderedSet<VirtualFile>();
     for (final Module module : modules) {
       Collections.addAll(cpFiles, orderEnumerator(module, exportedOnly, new BeforeJdkOrderEntryCondition(module)).getClassesRoots());
       Collections.addAll(jdkFiles, OrderEnumerator.orderEntries(module).sdkOnly().getClassesRoots());

@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -120,14 +121,15 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     myExpertPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, IdeBorderFactory.TITLED_BORDER_INDENT, 5, 0));
     myExpertDecorator.setContentComponent(myExpertPanel);
 
-    myList = new ProjectTypesList(myTemplatesList, mySearchField, map);
+    myList = new ProjectTypesList(myTemplatesList, mySearchField, map, context);
 
     myTemplatesList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 
       @Override
       public void valueChanged(ListSelectionEvent e) {
         ProjectTemplate template = getSelectedTemplate();
-        myModuleBuilder = template == null ? null : template.createModuleBuilder();
+        boolean loading = template instanceof LoadingProjectTemplate;
+        myModuleBuilder = template == null || loading ? null : template.createModuleBuilder();
         setupPanels(template);
         mySequence.setType(myModuleBuilder == null ? null : myModuleBuilder.getBuilderId());
         myWizardContext.requestWizardButtonsUpdate();
@@ -143,6 +145,16 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     myLeftPanel.setMinimumSize(new Dimension(200, 200));
     mySplitter.setFirstComponent(myLeftPanel);
     mySplitter.setSecondComponent(myRightPanel);
+  }
+
+  @Override
+  public void disposeUIResources() {
+    Disposer.dispose(myList);
+  }
+
+  @Override
+  public String getHelpId() {
+    return myWizardContext.isCreatingNewProject() ? "New_Project_Main_Settings" : "Add_Module_Main_Settings";
   }
 
   private static NamePathComponent initNamePathComponent(WizardContext context) {

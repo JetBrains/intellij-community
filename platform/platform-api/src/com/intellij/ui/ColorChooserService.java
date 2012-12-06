@@ -16,7 +16,6 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -31,5 +30,5 @@ public abstract class ColorChooserService {
 
   @Nullable
   public abstract Color showDialog(Component parent, String caption, Color preselectedColor, boolean enableOpacity,
-                                   @Nullable PsiElement element);
+                                   ColorPickerListener[] listeners);
 }

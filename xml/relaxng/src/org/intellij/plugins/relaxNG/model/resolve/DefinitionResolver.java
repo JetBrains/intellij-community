@@ -31,7 +31,6 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.intellij.plugins.relaxNG.compact.psi.RncFile;
 import org.intellij.plugins.relaxNG.model.*;
 import org.intellij.plugins.relaxNG.xml.dom.RngGrammar;
@@ -72,8 +71,7 @@ public class DefinitionResolver extends CommonElement.Visitor implements
 
     final PsiFile value = include.getInclude();
     if (myVisitedFiles.get() == null) {
-      //noinspection unchecked
-      myVisitedFiles.set(new THashSet<PsiFile>(TObjectHashingStrategy.IDENTITY));
+      myVisitedFiles.set(ContainerUtil.<PsiFile>newIdentityTroveSet());
     }
     if (value != null && myVisitedFiles.get().add(value)) {
       doVisitRncOrRngFile(value, this);

@@ -16,6 +16,7 @@
 package com.intellij.lang.properties.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.properties.PropertyManipulator;
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -25,10 +26,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.TokenType;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
@@ -42,7 +40,7 @@ import javax.swing.*;
 /**
  * @author max
  */
-public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implements Property {
+public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implements Property, PsiLanguageInjectionHost {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.psi.impl.PropertyImpl");
 
   public PropertyImpl(@NotNull ASTNode node) {
@@ -130,16 +128,28 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return unescape(getValue());
   }
 
+
   public static String unescape(String s) {
-    if (s == null) {
-      return null;
-    }
+    if (s == null) return null;
+    StringBuilder sb = new StringBuilder();
+    parseCharacters(s, sb, null);
+    return sb.toString();
+  }
+
+  public static boolean parseCharacters(String s, StringBuilder outChars, @Nullable int[] sourceOffsets) {
+    assert sourceOffsets == null || sourceOffsets.length == s.length() + 1;
     int off = 0;
     int len = s.length();
-    StringBuilder out = new StringBuilder();
 
+    boolean result = true;
+    final int outOffset = outChars.length();
     while (off < len) {
       char aChar = s.charAt(off++);
+      if (sourceOffsets != null) {
+        sourceOffsets[outChars.length() - outOffset] = off - 1;
+        sourceOffsets[outChars.length() + 1 - outOffset] = off;
+      }
+
       if (aChar == '\\') {
         aChar = s.charAt(off++);
         if (aChar == 'u') {
@@ -178,10 +188,10 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
                 value = (value << 4) + 10 + aChar - 'A';
                 break;
               default:
-                out.append("\\u");
+                outChars.append("\\u");
                 int start = off - i - 1;
                 int end = start + 4 < s.length() ? start + 4 : s.length();
-                out.append(s, start, end);
+                outChars.append(s, start, end);
                 i=4;
                 error = true;
                 off = end;
@@ -190,7 +200,10 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
             }
           }
           if (!error) {
-            out.append((char)value);
+            outChars.append((char)value);
+          }
+          else {
+            result = false;
           }
         }
         else if (aChar == '\n') {
@@ -200,26 +213,29 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
           }
         }
         else if (aChar == 't') {
-          out.append('\t');
+          outChars.append('\t');
         }
         else if (aChar == 'r') {
-          out.append('\r');
+          outChars.append('\r');
         }
         else if (aChar == 'n') {
-          out.append('\n');
+          outChars.append('\n');
         }
         else if (aChar == 'f') {
-          out.append('\f');
+          outChars.append('\f');
         }
         else {
-          out.append(aChar);
+          outChars.append(aChar);
         }
       }
       else {
-        out.append(aChar);
+        outChars.append(aChar);
+      }
+      if (sourceOffsets != null) {
+        sourceOffsets[outChars.length() - outOffset] = off;
       }
     }
-    return out.toString();
+    return result;
   }
   public static TextRange trailingSpaces(String s) {
     if (s == null) {
@@ -405,5 +421,21 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
         return null;
       }
     };
+  }
+
+  @Override
+  public boolean isValidHost() {
+    return true;
+  }
+
+  @Override
+  public PsiLanguageInjectionHost updateText(@NotNull String text) {
+    return new PropertyManipulator().handleContentChange(this, text);
+  }
+
+  @NotNull
+  @Override
+  public LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
+    return new PropertyImplEscaper(this);
   }
 }

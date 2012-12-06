@@ -15,12 +15,18 @@
  */
 package com.intellij.openapi.vcs.checkout;
 
-import com.intellij.ide.impl.NewProjectUtil;
+import com.intellij.ide.actions.ImportModuleAction;
+import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.projectImport.ProjectImportProvider;
 
 import java.io.File;
 import java.util.Collections;
@@ -41,7 +47,11 @@ public class NewProjectCheckoutListener implements VcsAwareCheckoutListener {
       final ProjectManager pm = ProjectManager.getInstance();
       final Project[] projects = pm.getOpenProjects();
       final Set<VirtualFile> files = projectsLocationSet(projects);
-      NewProjectUtil.createNewProject(project, directory.getAbsolutePath());
+      VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(directory);
+      AddModuleWizard wizard = ImportModuleAction.createImportWizard(null, null, file, ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions());
+      if (wizard.showAndGet()) {
+        ImportModuleAction.createFromWizard(null, wizard);
+      }
       final Project[] projectsAfter = pm.getOpenProjects();
 
       for (Project project1 : projectsAfter) {

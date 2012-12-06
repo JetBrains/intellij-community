@@ -16,7 +16,8 @@
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
@@ -52,7 +54,7 @@ public class ArgumentInstruction extends InstructionImpl implements MixinTypeIns
 
     GrCall call = findCall(element);
     GrExpression[] arguments = call.getExpressionArguments();
-    boolean hasNamed = call.getNamedArguments().length > 0;
+    boolean hasNamed = PsiImplUtil.hasNamedArguments(call.getArgumentList());
 
     int index = ArrayUtil.indexOf(arguments, element) + (hasNamed ? 1 : 0);
     GroovyResolveResult[] variants = call.getCallVariants((GrReferenceExpression)element);

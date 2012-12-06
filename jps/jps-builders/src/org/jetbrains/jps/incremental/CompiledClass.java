@@ -1,9 +1,9 @@
 package org.jetbrains.jps.incremental;
 
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.javac.BinaryContent;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,7 +12,7 @@ import java.io.IOException;
  * @author Eugene Zhuravlev
  *         Date: 11/18/12
  */
-public class CompiledClass {
+public class CompiledClass extends UserDataHolderBase{
   @NotNull
   private final File myOutputFile;
   @NotNull

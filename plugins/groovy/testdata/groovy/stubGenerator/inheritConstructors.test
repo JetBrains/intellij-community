@@ -1,0 +1,30 @@
+@groovy.transform.InheritConstructors
+class BadBar extends Base {
+}
+-----
+public class BadBar extends Base implements groovy.lang.GroovyObject {
+public BadBar(java.lang.String s) {
+super((java.lang.String)null);
+}
+public java.lang.Object getProperty(java.lang.String property) {
+return null;
+}
+
+public void setProperty(java.lang.String property, java.lang.Object newValue) {
+return ;
+}
+
+public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
+return null;
+}
+
+public groovy.lang.MetaClass getMetaClass() {
+return null;
+}
+
+public void setMetaClass(groovy.lang.MetaClass metaClass) {
+return ;
+}
+
+}
+---

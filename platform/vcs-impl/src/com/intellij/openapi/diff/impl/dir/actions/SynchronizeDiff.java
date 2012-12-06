@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.dir.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.diff.BackgroundOperatingDiffElement;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -37,7 +38,7 @@ public class SynchronizeDiff extends DirDiffAction {
   public SynchronizeDiff(DirDiffTableModel model, boolean selectedOnly) {
     super(model,
           selectedOnly ? "Synchronize Selected" : "Synchronize All",
-          IconLoader.getIcon(selectedOnly ? "/actions/resume.png" : "/actions/refreshUsages.png"));
+          selectedOnly ? AllIcons.Actions.Resume : AllIcons.Actions.Rerun);
     mySelectedOnly = selectedOnly;
   }
 

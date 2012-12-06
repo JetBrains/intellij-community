@@ -32,10 +32,10 @@ public class EditBreakpointAction extends XDebuggerActionBase {
     private DebuggerSupport myDebuggerSupport;
 
     public ContextAction(GutterIconRenderer breakpointRenderer, Object breakpoint, DebuggerSupport debuggerSupport) {
+      super(ActionsBundle.actionText("EditBreakpoint"));
       myRenderer = breakpointRenderer;
       myBreakpoint = breakpoint;
       myDebuggerSupport = debuggerSupport;
-      initPresentation(this);
     }
 
     @Override
@@ -44,14 +44,6 @@ public class EditBreakpointAction extends XDebuggerActionBase {
       if (editor == null) return;
       myDebuggerSupport.getEditBreakpointAction().editBreakpoint(getEventProject(e), editor, myBreakpoint, myRenderer);
     }
-  }
-
-  public EditBreakpointAction() {
-    initPresentation(this);
-  }
-
-  private static void initPresentation(AnAction action) {
-    action.getTemplatePresentation().setText(ActionsBundle.actionText("EditBreakpoint"));
   }
 
   @NotNull

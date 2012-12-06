@@ -116,7 +116,7 @@ public class TypeMigrationLabeler {
         usages.add(new UsageInfo(expr) {
           @Nullable
           public String getTooltipText() {
-            final PsiType type = expr.getType();
+            final PsiType type = expr.isValid() ? expr.getType() : null;
             if (type == null) return null;
             return "Cannot convert type of the expression from " +
                    type.getCanonicalText() + " to " + p.getSecond().getCanonicalText();

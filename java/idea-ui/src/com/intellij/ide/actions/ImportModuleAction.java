@@ -16,12 +16,12 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.impl.NewProjectUtil;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.module.Module;
@@ -30,11 +30,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Collections;
@@ -45,6 +47,8 @@ import java.util.List;
  *         Date: 10/31/12
  */
 public class ImportModuleAction extends AnAction {
+
+  private static final String LAST_IMPORTED_LOCATION = "last.imported.location";
 
   @Override
   public void actionPerformed(AnActionEvent e) {
@@ -80,19 +84,33 @@ public class ImportModuleAction extends AnAction {
 
   @Nullable
   public static AddModuleWizard selectFileAndCreateWizard(final Project project, Component dialogParent) {
-    FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor();
+    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, true, false, false) {
+      FileChooserDescriptor myDelegate = new OpenProjectFileChooserDescriptor(true);
+      @Override
+      public Icon getIcon(VirtualFile file) {
+        Icon icon = myDelegate.getIcon(file);
+        return icon == null ? super.getIcon(file) : icon;
+      }
+    };
+
     descriptor.setTitle("Select File or Directory to Import");
     ProjectImportProvider[] providers = ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions();
     String description = getFileChooserDescription(project);
     descriptor.setDescription(description);
 
     FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, project, dialogParent);
-    VirtualFile[] files = chooser.choose(null, project);
+    VirtualFile toSelect = null;
+    String lastLocation = PropertiesComponent.getInstance().getValue(LAST_IMPORTED_LOCATION);
+    if (lastLocation != null) {
+      toSelect = LocalFileSystem.getInstance().refreshAndFindFileByPath(lastLocation);
+    }
+    VirtualFile[] files = chooser.choose(toSelect, project);
     if (files.length == 0) {
       return null;
     }
 
     final VirtualFile file = files[0];
+    PropertiesComponent.getInstance().setValue(LAST_IMPORTED_LOCATION, file.getPath());
     return createImportWizard(project, dialogParent, file, providers);
   }
 
@@ -104,29 +122,23 @@ public class ImportModuleAction extends AnAction {
         return project != null || provider.canCreateNewProject();
       }
     });
-    StringBuilder builder = new StringBuilder("<html>Select");
+    StringBuilder builder = new StringBuilder("<html>Select ");
     boolean first = true;
     if (list.size() > 1) {
       for (ProjectImportProvider provider : list) {
         String sample = provider.getFileSample();
         if (sample != null) {
           if (!first) {
-            builder.append(',');
+            builder.append(", <br>");
           }
           else {
             first = false;
           }
-          builder.append(" <b>").append(sample).append("</b>");
-          if (sample.contains("*")) {
-            builder.append(" file");
-          }
+          builder.append(sample);
         }
       }
     }
-    if (!first) {
-      builder.append(" or");
-    }
-    builder.append(" directory with <b>existing sources</b> to be imported.</html>");
+    builder.append(".</html>");
     return builder.toString();
   }
 
@@ -163,5 +175,10 @@ public class ImportModuleAction extends AnAction {
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     presentation.setEnabled(getEventProject(e) != null);
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    return true;
   }
 }

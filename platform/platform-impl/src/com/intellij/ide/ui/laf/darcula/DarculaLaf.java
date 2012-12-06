@@ -30,6 +30,7 @@ import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.IconUIResource;
 import javax.swing.plaf.InsetsUIResource;
 import javax.swing.plaf.basic.BasicLookAndFeel;
+import javax.swing.plaf.metal.MetalLookAndFeel;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
@@ -70,8 +71,9 @@ public final class DarculaLaf extends BasicLookAndFeel {
     }
   }
 
+  @SuppressWarnings("UnusedParameters")
   private static void log(Exception e) {
-    //everything's gonna be alright
+    //everything is gonna be alright
     //e.printStackTrace();
   }
 
@@ -80,10 +82,15 @@ public final class DarculaLaf extends BasicLookAndFeel {
     try {
       final Method superMethod = BasicLookAndFeel.class.getDeclaredMethod("getDefaults");
       superMethod.setAccessible(true);
+      final UIDefaults metalDefaults =
+        (UIDefaults)superMethod.invoke(new MetalLookAndFeel());
       final UIDefaults defaults = (UIDefaults)superMethod.invoke(base);
       LafManagerImpl.initInputMapDefaults(defaults);
       initIdeaDefaults(defaults);
       patchStyledEditorKit();
+      patchComboBox(metalDefaults, defaults);
+      defaults.remove("Spinner.arrowButtonBorder");
+      defaults.put("Spinner.arrowButtonSize", new Dimension(16, 5));
       return defaults;
     }
     catch (Exception ignore) {
@@ -92,6 +99,14 @@ public final class DarculaLaf extends BasicLookAndFeel {
     return super.getDefaults();
   }
 
+  private static void patchComboBox(UIDefaults metalDefaults, UIDefaults defaults) {
+    defaults.remove("ComboBox.ancestorInputMap");
+    defaults.remove("ComboBox.actionMap");
+    defaults.put("ComboBox.ancestorInputMap", metalDefaults.get("ComboBox.ancestorInputMap"));
+    defaults.put("ComboBox.actionMap", metalDefaults.get("ComboBox.actionMap"));
+  }
+
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private static void patchStyledEditorKit() {
     try {
       StyleSheet defaultStyles = new StyleSheet();

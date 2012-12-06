@@ -1,5 +1,3 @@
-import java.lang.Exception;
-
 class Test {
   static class MyResource implements AutoCloseable {
     @Override public void close() { }
@@ -22,7 +20,7 @@ class Test {
     }
   }
 
-  /*static class ResourcefulException1 extends Exception { }
+  static class ResourcefulException1 extends Exception { }
   static class ResourcefulException2 extends Exception { }
 
   static class ExceptionalResource implements AutoCloseable {
@@ -45,5 +43,5 @@ class Test {
         System.out.println("2");
       }
     }
-  }*/
+  }
 }

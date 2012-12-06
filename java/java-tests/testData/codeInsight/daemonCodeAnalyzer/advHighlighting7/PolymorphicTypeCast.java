@@ -90,4 +90,8 @@ class C {
   }
 
   void m(int i) { }
+  
+  void asLongs(Integer i) {
+      long l = (long) i;
+  }
 }

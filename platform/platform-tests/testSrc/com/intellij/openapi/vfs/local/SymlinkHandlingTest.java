@@ -19,7 +19,6 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -60,7 +59,7 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
   }
 
   public void testDotLink() throws Exception {
-    final File dotLinkFile = IoTestUtil.createSymLink(".", myTempDir + "/dot_link");
+    final File dotLinkFile = createSymLink(".", myTempDir + "/dot_link");
     final VirtualFile dotLinkVFile = refreshAndFind(dotLinkFile);
     assertNotNull(dotLinkVFile);
     assertTrue(dotLinkVFile.isSymLink());
@@ -71,7 +70,7 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
 
   public void testCircularLink() throws Exception {
     final File upDir = createTempDirectory(myTempDir, "sub.", ".dir");
-    final File upLinkFile = IoTestUtil.createSymLink(upDir.getPath(), upDir.getPath() + "/up_link");
+    final File upLinkFile = createSymLink(upDir.getPath(), upDir.getPath() + "/up_link");
     final VirtualFile upLinkVFile = refreshAndFind(upLinkFile);
     assertNotNull(upLinkVFile);
     assertTrue(upLinkVFile.isSymLink());
@@ -92,8 +91,8 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
   public void testMutualRecursiveLinks() throws Exception {
     final File circularDir1 = createTempDirectory(myTempDir, "dir1.", ".tmp");
     final File circularDir2 = createTempDirectory(myTempDir, "dir2.", ".tmp");
-    final File circularLink1 = IoTestUtil.createSymLink(circularDir2.getPath(), circularDir1 + "/link1");
-    final File circularLink2 = IoTestUtil.createSymLink(circularDir1.getPath(), circularDir2 + "/link2");
+    final File circularLink1 = createSymLink(circularDir2.getPath(), circularDir1 + "/link1");
+    final File circularLink2 = createSymLink(circularDir1.getPath(), circularDir2 + "/link2");
     final VirtualFile circularLink1VFile = refreshAndFind(circularLink1);
     final VirtualFile circularLink2VFile = refreshAndFind(circularLink2);
     assertNotNull(circularLink1VFile);
@@ -104,14 +103,14 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
 
   public void testDuplicateLinks() throws Exception {
     final File targetDir = createTempDirectory(myTempDir, "target.", ".dir");
-    final File link1 = IoTestUtil.createSymLink(targetDir.getPath(), myTempDir + "/link1");
-    final File link2 = IoTestUtil.createSymLink(targetDir.getPath(), myTempDir + "/link2");
+    final File link1 = createSymLink(targetDir.getPath(), myTempDir + "/link1");
+    final File link2 = createSymLink(targetDir.getPath(), myTempDir + "/link2");
     assertVisitedPaths(targetDir.getPath(), link1.getPath(), link2.getPath());
   }
 
   public void testTargetIsWritable() throws Exception {
     final File targetFile = createTempFile(myTempDir, "target.", ".txt");
-    final File linkFile = IoTestUtil.createSymLink(targetFile.getPath(), myTempDir + "/link");
+    final File linkFile = createSymLink(targetFile.getPath(), myTempDir + "/link");
     final VirtualFile linkVFile = refreshAndFind(linkFile);
     assertTrue("link=" + linkFile + ", vLink=" + linkVFile, linkVFile != null && !linkVFile.isDirectory() && linkVFile.isSymLink());
 
@@ -123,7 +122,7 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
     assertFalse(linkVFile.getPath(), linkVFile.isWritable());
 
     final File targetDir = createTempDirectory(myTempDir, "target.", ".dir");
-    final File linkDir = IoTestUtil.createSymLink(targetDir.getPath(), myTempDir + "/linkDir");
+    final File linkDir = createSymLink(targetDir.getPath(), myTempDir + "/linkDir");
     final VirtualFile linkVDir = refreshAndFind(linkDir);
     assertTrue("link=" + linkDir + ", vLink=" + linkVDir, linkVDir != null && linkVDir.isDirectory() && linkVDir.isSymLink());
 
@@ -147,7 +146,7 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
 
   public void testLinkDeleteIsSafe() throws Exception {
     final File targetFile = createTempFile(myTempDir, "target", "");
-    final File linkFile = IoTestUtil.createSymLink(targetFile.getPath(), myTempDir + "/link");
+    final File linkFile = createSymLink(targetFile.getPath(), myTempDir + "/link");
     final VirtualFile linkVFile = refreshAndFind(linkFile);
     assertTrue("link=" + linkFile + ", vLink=" + linkVFile, linkVFile != null && !linkVFile.isDirectory() && linkVFile.isSymLink());
 
@@ -165,7 +164,7 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
     final File targetDir = createTempDirectory(myTempDir, "targetDir", "");
     final File childFile = new File(targetDir, "child.txt");
     assertTrue(childFile.getPath(), childFile.exists() || childFile.createNewFile());
-    final File linkDir = IoTestUtil.createSymLink(targetDir.getPath(), myTempDir + "/linkDir");
+    final File linkDir = createSymLink(targetDir.getPath(), myTempDir + "/linkDir");
     final VirtualFile linkVDir = refreshAndFind(linkDir);
     assertTrue("link=" + linkDir + ", vLink=" + linkVDir,
                linkVDir != null && linkVDir.isDirectory() && linkVDir.isSymLink() && linkVDir.getChildren().length == 1);
@@ -188,7 +187,7 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
     final File targetDir = createTempDirectory(myTempDir, "targetDir", "");
 
     // file link
-    File link = IoTestUtil.createSymLink(targetFile.getPath(), myTempDir + "/link");
+    File link = createSymLink(targetFile.getPath(), myTempDir + "/link");
     VirtualFile vFile1 = refreshAndFind(link);
     assertTrue("link=" + link + ", vLink=" + vFile1,
                vFile1 != null && !vFile1.isDirectory() && vFile1.isSymLink());
@@ -201,7 +200,7 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
 
     // dir => dir link
     assertTrue(link.getPath(), link.delete());
-    link = IoTestUtil.createSymLink(targetDir.getPath(), myTempDir + "/link");
+    link = createSymLink(targetDir.getPath(), myTempDir + "/link");
     vFile1 = refreshAndFind(link);
     assertTrue("link=" + link + ", vLink=" + vFile1,
                !vFile2.isValid() && vFile1 != null && vFile1.isDirectory() && vFile1.isSymLink());
@@ -214,7 +213,7 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
 
     // file => file link
     assertTrue(link.getPath(), link.delete());
-    link = IoTestUtil.createSymLink(targetFile.getPath(), myTempDir + "/link");
+    link = createSymLink(targetFile.getPath(), myTempDir + "/link");
     vFile1 = refreshAndFind(link);
     assertTrue("link=" + link + ", vLink=" + vFile1,
                !vFile2.isValid() && vFile1 != null && !vFile1.isDirectory() && vFile1.isSymLink());
@@ -227,14 +226,14 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
     assertTrue(new File(targetDir2, "child11.txt").createNewFile());
     assertTrue(new File(targetDir2, "child12.txt").createNewFile());
 
-    final File link = IoTestUtil.createSymLink(targetDir1.getPath(), myTempDir + "/link");
+    final File link = createSymLink(targetDir1.getPath(), myTempDir + "/link");
     final VirtualFile vLink1 = refreshAndFind(link);
     assertTrue("link=" + link + ", vLink=" + vLink1,
                vLink1 != null && vLink1.isDirectory() && vLink1.isSymLink());
     assertEquals(1, vLink1.getChildren().length);
 
     assertTrue(link.toString(), link.delete());
-    IoTestUtil.createSymLink(targetDir2.getPath(), myTempDir + "/" + link.getName());
+    createSymLink(targetDir2.getPath(), myTempDir + "/" + link.getName());
 
     refresh();
     assertFalse(vLink1.isValid());
@@ -250,14 +249,14 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
     final File target2 = createTempFile(myTempDir, "target2.", ".txt");
     FileUtil.writeToFile(target2, "some quite another text");
 
-    final File link = IoTestUtil.createSymLink(target1.getPath(), myTempDir + "/link");
+    final File link = createSymLink(target1.getPath(), myTempDir + "/link");
     final VirtualFile vLink1 = refreshAndFind(link);
     assertTrue("link=" + link + ", vLink=" + vLink1,
                vLink1 != null && !vLink1.isDirectory() && vLink1.isSymLink());
     assertEquals(FileUtil.loadFile(target1), VfsUtilCore.loadText(vLink1));
 
     assertTrue(link.toString(), link.delete());
-    IoTestUtil.createSymLink(target2.getPath(), myTempDir + "/" + link.getName());
+    createSymLink(target2.getPath(), myTempDir + "/" + link.getName());
 
     refresh();
     assertFalse(vLink1.isValid());
@@ -314,7 +313,7 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
   public void testTraversePathBehindLink() throws Exception {
     final File topDir = createTempDirectory(myTempDir, "top.", ".dir");
     final File subDir1 = createTempDirectory(topDir, "sub1.", ".dir");
-    final File link = IoTestUtil.createSymLink(subDir1.getPath(), myTempDir + "/link");
+    final File link = createSymLink(subDir1.getPath(), myTempDir + "/link");
     final VirtualFile vLink = refreshAndFind(link);
     assertNotNull(link.getPath(), vLink);
 

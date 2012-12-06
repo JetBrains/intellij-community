@@ -51,6 +51,9 @@ public class ResourceBundleUtil {
         escaped = true;
         continue;
       }
+      if (escaped && c == 'n') {
+        buffer.append(ESCAPE_SYMBOL);
+      }
       buffer.append(c);
       escaped = false;
     }
@@ -70,11 +73,21 @@ public class ResourceBundleUtil {
       char c = text.charAt(i);
       
       if ((i == 0 && (c == ' ' || c == '\t')) // Leading white space
-          || c == '\n'                        // Multi-line value
-          || c == ESCAPE_SYMBOL               // Escaped 'escape' symbol
+          || c == '\n'  // Multi-line value
           || SYMBOLS_TO_ESCAPE.contains(c))   // Special symbol
       {
         buffer.append(ESCAPE_SYMBOL);
+      } 
+      else if (c == ESCAPE_SYMBOL)            // Escaped 'escape' symbol) 
+      {
+        if (text.length() > i + 1) {
+          final char nextChar = text.charAt(i + 1);
+          if (nextChar != 'n') {
+            buffer.append(ESCAPE_SYMBOL);
+          }
+        } else {
+          buffer.append(ESCAPE_SYMBOL);
+        }
       }
       buffer.append(c);
     }

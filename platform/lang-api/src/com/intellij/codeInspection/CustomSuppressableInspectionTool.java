@@ -17,6 +17,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -43,5 +44,5 @@ public interface CustomSuppressableInspectionTool  {
    * @param element the element to check
    * @return true if the inspection is suppressed, false otherwise.
    */
-  boolean isSuppressedFor(final PsiElement element);
+  boolean isSuppressedFor(@NotNull PsiElement element);
 }

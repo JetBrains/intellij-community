@@ -486,8 +486,20 @@ public class ModelParser extends XmlRecursiveElementVisitor {
     for (int i = 0; i < level; i++) {
       builder.append('\t');
     }
-    builder.append(viewInfo.getClassName()).append(" | ").append(viewInfo.getViewObject()).append(" | ")
-      .append(viewInfo.getLayoutParamsObject()).append(" = ").append(viewInfo.getChildren().size()).append("\n");
+    builder.append(viewInfo.getClassName()).append(" | ");
+    try {
+      builder.append(viewInfo.getViewObject()).append(" | ");
+    }
+    catch (Throwable e) {
+      // ignored
+    }
+    try {
+      builder.append(viewInfo.getLayoutParamsObject()).append(" = ");
+    }
+    catch (Throwable e) {
+      // ignored
+    }
+    builder.append(viewInfo.getChildren().size()).append("\n");
     for (ViewInfo childViewInfo : viewInfo.getChildren()) {
       printTree(builder, childViewInfo, level + 1);
     }

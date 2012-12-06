@@ -34,6 +34,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -57,8 +58,10 @@ import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
@@ -72,13 +75,15 @@ public class GradleUtil {
 
   public static final String PATH_SEPARATOR = "/";
 
-  private static final NotNullLazyValue<GradleInstallationManager> LIBRARY_MANAGER = new NotNullLazyValue<GradleInstallationManager>() {
-    @NotNull
-    @Override
-    protected GradleInstallationManager compute() {
-      return ServiceManager.getService(GradleInstallationManager.class);
-    }
-  };
+  private static final NotNullLazyValue<GradleInstallationManager> INSTALLATION_MANAGER =
+    new NotNullLazyValue<GradleInstallationManager>()
+    {
+      @NotNull
+      @Override
+      protected GradleInstallationManager compute() {
+        return ServiceManager.getService(GradleInstallationManager.class);
+      }
+    };
 
   private GradleUtil() {
   }
@@ -91,8 +96,14 @@ public class GradleUtil {
    * custom gradle icon at the file chooser ({@link icons.GradleIcons#Gradle}, is used at the file chooser dialog via
    * the dedicated gradle project open processor).
    */
-  public static FileChooserDescriptor getFileChooserDescriptor() {
+  @NotNull
+  public static FileChooserDescriptor getGradleProjectFileChooserDescriptor() {
     return DescriptorHolder.GRADLE_BUILD_FILE_CHOOSER_DESCRIPTOR;
+  }
+
+  @NotNull
+  public static FileChooserDescriptor getGradleHomeFileChooserDescriptor() {
+    return DescriptorHolder.GRADLE_HOME_FILE_CHOOSER_DESCRIPTOR;
   }
 
   /**
@@ -102,6 +113,49 @@ public class GradleUtil {
   @NotNull
   public static String toCanonicalPath(@NotNull String path) {
     return PathUtil.getCanonicalPath(new File(path).getAbsolutePath());
+  }
+
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  public static boolean isGradleWrapperDefined(@Nullable String gradleProjectPath) {
+    if (gradleProjectPath == null) {
+      return false;
+    }
+    File file = new File(gradleProjectPath);
+    if (!file.isFile()) {
+      return false;
+    }
+
+    File gradleDir = new File(file.getParentFile(), "gradle");
+    if (!gradleDir.isDirectory()) {
+      return false;
+    }
+
+    File wrapperDir = new File(gradleDir, "wrapper");
+    if (!wrapperDir.isDirectory()) {
+      return false;
+    }
+
+    File[] candidates = wrapperDir.listFiles(new FileFilter() {
+      @Override
+      public boolean accept(File candidate) {
+        return candidate.isFile() && candidate.getName().endsWith(".properties");
+      }
+    });
+    if (candidates == null) {
+      GradleLog.LOG.warn("No *.properties file is found at the gradle wrapper directory " + wrapperDir.getAbsolutePath());
+      return false;
+    }
+    else if (candidates.length != 1) {
+      GradleLog.LOG.warn(String.format(
+        "%d *.properties files instead of one have been found at the wrapper directory (%s): %s",
+        candidates.length, wrapperDir.getAbsolutePath(), Arrays.toString(candidates)
+      ));
+      return false;
+    }
+
+    // Consider that single *.properties file existence inside 'wrapper' directory is enough to be sure that gradle wrapper
+    // is configured for the target project.
+    return true;
   }
 
   /**
@@ -144,13 +198,28 @@ public class GradleUtil {
    * @param project  target intellij project to use
    */
   public static void refreshProject(@NotNull Project project) {
+    refreshProject(project, new Ref<String>());
+  }
+
+  public static void refreshProject(@NotNull Project project, @NotNull final Consumer<String> errorCallback) {
+    final Ref<String> errorMessageHolder = new Ref<String>() {
+      @Override
+      public void set(@Nullable String value) {
+        if (value != null) {
+          errorCallback.consume(value);
+        }
+      }
+    };
+    refreshProject(project, errorMessageHolder);
+  }
+  
+  public static void refreshProject(@NotNull Project project, @NotNull final Ref<String> errorMessageHolder) {
     final GradleSettings settings = GradleSettings.getInstance(project);
     final String linkedProjectPath = settings.getLinkedProjectPath();
     if (StringUtil.isEmpty(linkedProjectPath)) {
       return;
     }
     assert linkedProjectPath != null;
-    Ref<String> errorMessageHolder = new Ref<String>();
     Ref<String> errorDetailsHolder = new Ref<String>();
     refreshProject(project, linkedProjectPath, errorMessageHolder, errorDetailsHolder, true, false);
     final String error = errorDetailsHolder.get();
@@ -425,7 +494,13 @@ public class GradleUtil {
   }
   
   public static boolean isGradleAvailable(@Nullable Project project) {
-    return LIBRARY_MANAGER.getValue().getGradleHome(project) != null;
+    if (project != null) {
+      GradleSettings settings = GradleSettings.getInstance(project);
+      if (!settings.isPreferLocalInstallationToWrapper() && isGradleWrapperDefined(settings.getLinkedProjectPath())) {
+        return true;
+      }
+    }
+    return INSTALLATION_MANAGER.getValue().getGradleHome(project) != null;
   }
 
   public static void executeProjectChangeAction(@NotNull Project project, @NotNull Object entityToChange, @NotNull Runnable task) {
@@ -470,5 +545,8 @@ public class GradleUtil {
         return file.isDirectory() || GradleConstants.DEFAULT_SCRIPT_NAME.equals(file.getName());
       }
     };
+
+    public static final FileChooserDescriptor GRADLE_HOME_FILE_CHOOSER_DESCRIPTOR
+      = new FileChooserDescriptor(false, true, false, false, false, false);
   }
 }

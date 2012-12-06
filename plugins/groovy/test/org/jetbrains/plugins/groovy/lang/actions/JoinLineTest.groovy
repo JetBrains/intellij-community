@@ -27,7 +27,7 @@ class JoinLineTest extends GroovyEditorActionTestBase {
 d<caret>ef a;
 a = 4
 ''', '''\
-def a = 4;\
+def a = 4;
 ''')
   }
 
@@ -36,10 +36,72 @@ def a = 4;\
 d<caret>ef a, b;
 a = 4
 ''', '''\
-def a = 4, b;\
+def a = 4, b;
 ''')
-
   }
+
+  void testVar3() {
+    doTest('''\
+d<caret>ef a
+a = 4
+''', '''\
+def a = 4
+''')
+  }
+
+  void testVar4()  {
+    doTest('''\
+d<caret>ef a, b
+a = 4
+''', '''\
+def a = 4, b
+''')
+  }
+
+  void testIf() {
+    doTest('''\
+if (cond)<caret> {
+  doSmth()
+}
+''', '''\
+if (cond) doSmth()
+''')
+  }
+
+  void testElse() {
+    doTest('''\
+if (cond) {
+  doSmth()
+}
+els<caret>e {
+  doSmthElse()
+}
+''', '''\
+if (cond) {
+  doSmth()
+}
+else doSmthElse()
+''')
+  }
+
+  void testJoinStatements1() {
+    doTest('''\
+prin<caret>t 2
+print 2
+''', '''\
+print 2; <caret>print 2
+''')
+  }
+
+  void testJoinStatements2() {
+    doTest('''\
+print 2;
+print 2
+''', '''\
+print 2; <caret>print 2
+''')
+  }
+
 
   private void doTest(String before, String after) {
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, before);

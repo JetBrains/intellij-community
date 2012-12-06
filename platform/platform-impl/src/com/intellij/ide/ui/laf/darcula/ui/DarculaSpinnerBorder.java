@@ -16,12 +16,14 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.Gray;
-import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.plaf.InsetsUIResource;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
 
@@ -29,7 +31,6 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class DarculaSpinnerBorder implements Border, UIResource {
-  private JBInsets myInsets = new JBInsets(6, 7, 6, 7);
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
@@ -39,30 +40,40 @@ public class DarculaSpinnerBorder implements Border, UIResource {
     final int y1 = y + 3;
     final int width1 = width - 8;
     final int height1 = height - 6;
+    final boolean focused = c.isEnabled() && c.isVisible() && editor != null && editor.hasFocus();
+    final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
 
     if (c.isOpaque()) {
       g.setColor(UIUtil.getPanelBackground());
       g.fillRect(x, y, width, height);
     }
 
-    g.setColor(c.getBackground());
-    g.fillRect(x1, y1, width1, height1);
+    g.setColor(UIUtil.getTextFieldBackground());
+    g.fillRoundRect(x1, y1, width1, height1, 5, 5);
+    g.setColor(UIUtil.getPanelBackground());
+    if (editor != null) {
+      final int off = editor.getBounds().x + editor.getWidth() + ((JSpinner)c).getInsets().left;
+      g.fillRect(off, y1, 17, height1);
+      g.setColor(Gray._100);
+      g.drawLine(off, y1, off, height1+2);
+    }
 
     if (!c.isEnabled()) {
       ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
     }
 
-    if (c.isEnabled() && c.isVisible() && editor != null && editor.hasFocus()) {
+    if (focused) {
       DarculaUIUtil.paintFocusRing(g, x1, y1, width1, height1);
     } else {
       g.setColor(Gray._100);
-      g.drawRect(x1, y1, width1, height1);
+      g.drawRoundRect(x1, y1, width1, height1, 5, 5);
     }
+    config.restore();
   }
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return myInsets;
+    return new InsetsUIResource(6, 7, 6, 7);
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -221,6 +221,9 @@ public class TypedHandler extends TypedActionHandlerBase {
     else if ('}' == charTyped) {
       indentClosingBrace(project, editor);
     }
+    else if (')' == charTyped) {
+      indentClosingParenth(project, editor);
+    }
 
     for(TypedHandlerDelegate delegate: delegates) {
       final TypedHandlerDelegate.Result result = delegate.charTyped(charTyped, project, editor, file);
@@ -233,6 +236,9 @@ public class TypedHandler extends TypedActionHandlerBase {
     }
     if ('{' == charTyped) {
       indentOpenedBrace(project, editor);
+    }
+    else if ('(' == charTyped) {
+      indentOpenedParenth(project, editor);
     }
   }
 
@@ -370,7 +376,7 @@ public class TypedHandler extends TypedActionHandlerBase {
     }
 
     IElementType tokenType = iterator.getTokenType();
-    
+
     iterator.retreat();
 
     IElementType lparenTokenType = braceMatcher.getOppositeBraceTokenType(tokenType);
@@ -533,6 +539,14 @@ public class TypedHandler extends TypedActionHandlerBase {
     indentBrace(project, editor, '{');
   }
 
+  private static void indentOpenedParenth(@NotNull Project project, @NotNull Editor editor){
+    indentBrace(project, editor, '(');
+  }
+
+  private static void indentClosingParenth(@NotNull Project project, @NotNull Editor editor){
+    indentBrace(project, editor, ')');
+  }
+
   private static void indentBrace(@NotNull final Project project, @NotNull final Editor editor, final char braceChar) {
     final int offset = editor.getCaretModel().getOffset() - 1;
     final Document document = editor.getDocument();
@@ -552,9 +566,11 @@ public class TypedHandler extends TypedActionHandlerBase {
       EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
       HighlighterIterator iterator = highlighter.createIterator(offset);
 
-      BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(file.getFileType(), iterator);
-      if (element.getNode() != null && braceMatcher.isStructuralBrace(iterator, chars, file.getFileType())) {
-        final Runnable action = new Runnable() {
+      final FileType fileType = file.getFileType();
+      BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType, iterator);
+      final boolean isBrace = braceMatcher.isLBraceToken(iterator, chars, fileType) || braceMatcher.isRBraceToken(iterator, chars, fileType);
+      if (element.getNode() != null && isBrace) {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run(){
             try{
@@ -567,8 +583,7 @@ public class TypedHandler extends TypedActionHandlerBase {
               LOG.error(e);
             }
           }
-        };
-        ApplicationManager.getApplication().runWriteAction(action);
+        });
       }
     }
   }

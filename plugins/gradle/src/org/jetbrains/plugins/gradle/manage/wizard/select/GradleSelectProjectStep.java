@@ -1,12 +1,8 @@
 package org.jetbrains.plugins.gradle.manage.wizard.select;
 
-import com.intellij.ide.util.projectWizard.NamePathComponent;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.GradleConfigurable;
 import org.jetbrains.plugins.gradle.config.GradleHomeSettingType;
@@ -34,35 +30,14 @@ import java.io.File;
  */
 public class GradleSelectProjectStep extends AbstractImportFromGradleWizardStep {
 
-  private final JPanel             myComponent          = new JPanel(new GridBagLayout());
-  private final GridBagConstraints myLabelConstraints   = new GridBagConstraints();
-  private final GridBagConstraints myControlConstraints = new GridBagConstraints();
-
-  private final TextFieldWithBrowseButton myProjectPathComponent;
-
-  private GradleConfigurable myConfigurable;
-  private boolean            myGradleSettingsInitialised;
+  private final JPanel myComponent = new JPanel(new BorderLayout());
+  
+  @NotNull private GradleConfigurable myConfigurable;
+  
+  private boolean myGradleSettingsInitialised;
 
   public GradleSelectProjectStep(@NotNull WizardContext context) {
     super(context);
-
-    myLabelConstraints.anchor = GridBagConstraints.WEST;
-    JLabel label = new JLabel(GradleBundle.message("gradle.import.label.select.project"));
-    myComponent.add(label, myLabelConstraints);
-
-    myControlConstraints.gridwidth = GridBagConstraints.REMAINDER;
-    myControlConstraints.weightx = 1;
-    myControlConstraints.fill = GridBagConstraints.HORIZONTAL;
-
-    myProjectPathComponent = new TextFieldWithBrowseButton();
-    myProjectPathComponent.addBrowseFolderListener(
-      "",
-      GradleBundle.message("gradle.import.title.select.project"),
-      null,
-      GradleUtil.getFileChooserDescriptor()
-    );
-    myProjectPathComponent.setText(context.getProjectFileDirectory());
-    myComponent.add(myProjectPathComponent, myControlConstraints);
   }
 
   @Override
@@ -74,9 +49,6 @@ public class GradleSelectProjectStep extends AbstractImportFromGradleWizardStep 
   public void updateStep() {
     if (!myGradleSettingsInitialised) {
       initGradleSettingsControl();
-    }
-    if (myConfigurable != null) {
-      myConfigurable.reset();
     }
   }
 
@@ -92,21 +64,23 @@ public class GradleSelectProjectStep extends AbstractImportFromGradleWizardStep 
   @Override
   public boolean validate() throws ConfigurationException {
     final GradleHomeSettingType settingType = myConfigurable.getCurrentGradleHomeSettingType();
-    if (settingType == GradleHomeSettingType.EXPLICIT_INCORRECT) {
-      GradleUtil.showBalloon(
-        myConfigurable.getGradleHomeComponent().getPathComponent(),
-        MessageType.ERROR,
-        GradleBundle.message("gradle.home.setting.type.explicit.incorrect")
-      );
-      return false;
-    }
-    if (settingType == GradleHomeSettingType.UNKNOWN) {
-      GradleUtil.showBalloon(
-        myConfigurable.getGradleHomeComponent().getPathComponent(),
-        MessageType.ERROR,
-        GradleBundle.message("gradle.home.setting.type.unknown")
-      );
-      return false;
+    if (myConfigurable.isPreferLocalInstallationToWrapper()) {
+      if (settingType == GradleHomeSettingType.EXPLICIT_INCORRECT) {
+        GradleUtil.showBalloon(
+          myConfigurable.getGradleHomePathField(),
+          MessageType.ERROR,
+          GradleBundle.message("gradle.home.setting.type.explicit.incorrect")
+        );
+        return false;
+      }
+      if (settingType == GradleHomeSettingType.UNKNOWN) {
+        GradleUtil.showBalloon(
+          myConfigurable.getGradleHomePathField(),
+          MessageType.ERROR,
+          GradleBundle.message("gradle.home.setting.type.unknown")
+        );
+        return false;
+      }
     }
     storeCurrentSettings();
     GradleProjectImportBuilder builder = getBuilder();
@@ -123,28 +97,16 @@ public class GradleSelectProjectStep extends AbstractImportFromGradleWizardStep 
   }
 
   private void storeCurrentSettings() {
-    GradleProjectImportBuilder builder = getBuilder();
-    if (builder != null && isPathChanged()) {
-      builder.setCurrentProjectPath(myProjectPathComponent.getText());
-    }
-    if (myConfigurable != null && myConfigurable.isModified()) {
+    if (myConfigurable.isModified()) {
       myConfigurable.apply();
     }
-    if (builder != null) {
-      final String path = builder.getProjectPath(getWizardContext());
-      final File parent = new File(path).getParentFile();
+    final String projectPath = myConfigurable.getLinkedProjectPath();
+    if (projectPath != null) {
+      final File parent = new File(projectPath).getParentFile();
       if (parent != null) {
         getWizardContext().setProjectName(parent.getName());
       }
     }
-  }
-
-  private boolean isPathChanged() {
-    GradleProjectImportBuilder builder = getBuilder();
-    if (builder == null) {
-      return false;
-    }
-    return !StringUtil.equals(myProjectPathComponent.getText(), builder.getProjectPath(getWizardContext()));
   }
 
   private void initGradleSettingsControl() {
@@ -152,12 +114,9 @@ public class GradleSelectProjectStep extends AbstractImportFromGradleWizardStep 
     if (builder == null) {
       return;
     }
-    Project project = builder.getProject(getWizardContext());
-    myConfigurable = new GradleConfigurable(project);
-    NamePathComponent gradleHomeComponent = myConfigurable.getGradleHomeComponent();
-    myLabelConstraints.insets.top = myControlConstraints.insets.top = 15;
-    myComponent.add(gradleHomeComponent.getPathLabel(), myLabelConstraints);
-    myComponent.add(gradleHomeComponent.getPathPanel(), myControlConstraints);
+    builder.prepare(getWizardContext());
+    myConfigurable = builder.getConfigurable();
+    myComponent.add(myConfigurable.createComponent());
     myGradleSettingsInitialised = true;
   }
 }

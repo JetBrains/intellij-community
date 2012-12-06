@@ -366,7 +366,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   private void reTarget(int start, int end, int newBase) {
     l.writeLock().lock();
     try {
-      //updateMarkersOnChange(new DocumentEventImpl(myDocument, ));
+      checkMax(true);
 
       List<IntervalNode<T>> affected = new ArrayList<IntervalNode<T>>();
       collectNodesToRetarget(getRoot(), start, end, affected);
@@ -379,11 +379,13 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
         node.setRight(null);
         node.setParent(null);
         node.changeDelta(shift);
+        node.setValid(true);
         pushDelta(node);
         findOrInsert(node);
       }
     }
     finally {
+      checkMax(true);
       l.writeLock().unlock();
     }
   }

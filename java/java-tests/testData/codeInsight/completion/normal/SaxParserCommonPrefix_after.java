@@ -1,5 +1,0 @@
-class Bar {
-  {
-    SAXParse<caret>
-  }
-}

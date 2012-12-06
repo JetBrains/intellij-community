@@ -117,6 +117,10 @@ public class InstrumentationClassFinder {
     }
   }
 
+  public void cleanCachedData(String className) {
+    myLoaded.remove(className.replace('.', '/'));
+  }
+
   public InputStream getClassBytesAsStream(String className) throws IOException {
     final String internalName = className.replace('.', '/'); // normalize
     InputStream is = null;
@@ -238,7 +242,7 @@ public class InstrumentationClassFinder {
       return superClass != null? loadClass(superClass) : null;
     }
 
-    private PseudoClass[] getInterfaces() throws IOException, ClassNotFoundException {
+    public PseudoClass[] getInterfaces() throws IOException, ClassNotFoundException {
       if (myInterfaces == null) {
         return EMPTY_PSEUDOCLASS_ARRAY;
       }

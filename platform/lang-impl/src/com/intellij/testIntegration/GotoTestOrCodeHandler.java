@@ -30,7 +30,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
@@ -99,6 +98,16 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
     }
     else {
       return CodeInsightBundle.message("goto.test.chooserTitle.test", name, length);
+    }
+  }
+
+  @Override
+  protected String getFindUsagesTitle(PsiElement sourceElement, String name, int length) {
+    if (TestFinderHelper.isTest(sourceElement)) {
+      return CodeInsightBundle.message("goto.test.findUsages.subject.title", name);
+    }
+    else {
+      return CodeInsightBundle.message("goto.test.findUsages.test.title", name);
     }
   }
 

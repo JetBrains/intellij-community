@@ -41,6 +41,8 @@ import java.util.List;
  * @author dyoma
  */
 public class RestartAction extends FakeRerunAction implements DumbAware, AnAction.TransparentUpdate, Disposable {
+  public static final Icon RERUN_ICON = AllIcons.Actions.Rerun;
+  public static final Icon RERUN_DEBUGGER_ICON = AllIcons.Actions.Rerun;
 
   private ProcessHandler myProcessHandler;
   private final ProgramRunner myRunner;

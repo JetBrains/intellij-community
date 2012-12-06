@@ -654,28 +654,11 @@ public class ExpectedTypesProvider {
         }
       }
       else if (i == JavaTokenType.PLUS) {
-        if (anotherType == null) {
+        if (anotherType == null || anotherType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
           myResult = ExpectedTypeInfo.EMPTY_ARRAY;
         }
-        else {
-          if (anotherType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-            PsiType objType = PsiType.getJavaLangObject(myExpr.getManager(), myExpr.getResolveScope());
-            ExpectedTypeInfo info = createInfoImpl(objType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, anotherType,
-                                                   TailType.NONE);
-            ExpectedTypeInfo info1 = createInfoImpl(PsiType.DOUBLE, ExpectedTypeInfo.TYPE_OR_SUBTYPE,
-                                                    PsiType.INT, TailType.NONE);
-            PsiType booleanType = PsiType.BOOLEAN;
-            ExpectedTypeInfo info2 = createInfoImpl(booleanType, ExpectedTypeInfo.TYPE_STRICTLY, booleanType,
-                                                    TailType.NONE);
-            myResult = new ExpectedTypeInfo[]{info, info1, info2};
-          }
-          else {
-            if (PsiType.DOUBLE.isAssignableFrom(anotherType)) {
-              ExpectedTypeInfoImpl info = createInfoImpl(PsiType.DOUBLE, ExpectedTypeInfo.TYPE_OR_SUBTYPE,
-                                                         anotherType, TailType.NONE);
-              myResult = new ExpectedTypeInfo[]{info};
-            }
-          }
+        else if (PsiType.DOUBLE.isAssignableFrom(anotherType)) {
+          myResult = new ExpectedTypeInfo[]{createInfoImpl(PsiType.DOUBLE, ExpectedTypeInfo.TYPE_OR_SUBTYPE, anotherType, TailType.NONE)};
         }
       }
       else if (i == JavaTokenType.EQEQ || i == JavaTokenType.NE) {

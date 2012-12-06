@@ -19,7 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
@@ -53,15 +53,17 @@ public class NewMappings {
   private final DefaultVcsRootPolicy myDefaultVcsRootPolicy;
   private final MessageBus myMessageBus;
   private final FileStatusManager myFileStatusManager;
+  private final FileIndexFacade myExcludedFileIndex;
   private final Project myProject;
 
   private boolean myActivated;
 
   public NewMappings(final Project project, final MessageBus messageBus,
-                     final ProjectLevelVcsManagerImpl vcsManager, FileStatusManager fileStatusManager) {
+                     final ProjectLevelVcsManagerImpl vcsManager, FileStatusManager fileStatusManager, FileIndexFacade excludedFileIndex) {
     myProject = project;
     myMessageBus = messageBus;
     myFileStatusManager = fileStatusManager;
+    myExcludedFileIndex = excludedFileIndex;
     myLock = new Object();
     myVcsToPaths = new HashMap<String, List<VcsDirectoryMapping>>();
     myFileWatchRequestsManager = new FileWatchRequestsManager(myProject, this, LocalFileSystem.getInstance());
@@ -254,7 +256,7 @@ public class NewMappings {
       return myDefaultVcsRootPolicy.matchesDefaultMapping(file, matchContext);
     }
     return FileUtil.startsWith(systemIndependPath, mapping.systemIndependentPath()) &&
-           !ProjectRootManager.getInstance(myProject).getFileIndex().isIgnored(file);
+           ! myExcludedFileIndex.isExcludedFile(file);
   }
 
   public List<VirtualFile> getMappingsAsFilesUnderVcs(final AbstractVcs vcs) {

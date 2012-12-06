@@ -39,8 +39,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -718,16 +720,53 @@ public class PsiImplUtil {
     return astNode != null && set.contains(astNode.getElementType());
   }
 
-  public static boolean hasNamedArguments(GrNamedArgumentsOwner list) {
+  public static boolean hasNamedArguments(@Nullable GrNamedArgumentsOwner list) {
+    if (list == null) return false;
     for (PsiElement child = list.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof GrNamedArgument) return true;
     }
     return false;
   }
 
-  public static boolean hasExpressionArguments(GrNamedArgumentsOwner list) {
+  public static boolean hasExpressionArguments(@Nullable GrArgumentList list) {
+    if (list == null) return false;
+
     for (PsiElement child = list.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof GrExpression) return true;
     }
-    return false;  }
+    return false;
+  }
+
+  public static boolean hasClosureArguments(@Nullable GrCall call) {
+    if (call == null) return false;
+
+    for (PsiElement child = call.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (child instanceof GrClosableBlock) return true;
+    }
+    return false;
+  }
+
+  public static PsiElement findTailingSemicolon(@NotNull GrStatement statement) {
+    final PsiElement nextNonSpace = PsiUtil.skipWhitespaces(statement.getNextSibling(), true);
+    if (nextNonSpace != null && nextNonSpace.getNode().getElementType() == mSEMI) {
+      return nextNonSpace;
+    }
+
+    return null;
+  }
+
+  @Nullable
+  public static PsiType inferReturnType(PsiElement position) {
+    final GrControlFlowOwner flowOwner = ControlFlowUtils.findControlFlowOwner(position);
+    if (flowOwner == null) return null;
+
+    final PsiElement parent = flowOwner.getContext();
+    if (flowOwner instanceof GrOpenBlock && parent instanceof GrMethod) {
+      final GrMethod method = (GrMethod)parent;
+      if (method.isConstructor()) return null;
+      return method.getReturnType();
+    }
+
+    return null;
+  }
 }

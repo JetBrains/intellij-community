@@ -17,11 +17,21 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.DumbAware;
 
 public class HelpTopicsAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     HelpManager.getInstance().invokeHelp("top");
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    super.update(e);
+    
+    boolean enabled = ApplicationInfo.helpAvailable();
+    e.getPresentation().setEnabled(enabled);
+    e.getPresentation().setVisible(enabled);
   }
 }

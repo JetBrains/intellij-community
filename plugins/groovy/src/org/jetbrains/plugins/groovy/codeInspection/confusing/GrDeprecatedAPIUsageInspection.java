@@ -91,8 +91,8 @@ public class GrDeprecatedAPIUsageInspection extends BaseInspection {
 
 
       private boolean isDeprecated(PsiElement resolved) {
-        if (resolved instanceof PsiDocCommentOwner && PsiImplUtil.isDeprecatedByDocTag((PsiDocCommentOwner)resolved)) {
-          return true;
+        if (resolved instanceof PsiDocCommentOwner) {
+          return ((PsiDocCommentOwner)resolved).isDeprecated();
         }
         if (resolved instanceof PsiModifierListOwner && PsiImplUtil.isDeprecatedByAnnotation((PsiModifierListOwner)resolved)) {
           return true;

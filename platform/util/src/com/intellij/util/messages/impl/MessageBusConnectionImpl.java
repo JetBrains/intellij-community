@@ -113,7 +113,7 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
       //Do nothing. This listener just does not implement something newly added yet.
     }
     catch(Throwable e) {
-      LOG.error(e.getCause());
+      LOG.error(e.getCause() == null ? e : e.getCause());
     }
   }
 

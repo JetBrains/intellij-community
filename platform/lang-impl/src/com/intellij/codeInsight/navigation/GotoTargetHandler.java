@@ -19,6 +19,7 @@ package com.intellij.codeInsight.navigation;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.find.FindUtil;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.navigation.ItemPresentation;
@@ -42,6 +43,7 @@ import com.intellij.ui.JBListWithHintProvider;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -82,9 +84,9 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   @Nullable
   protected abstract GotoData getSourceAndTargetElements(Editor editor, PsiFile file);
 
-  private void show(Project project,
+  private void show(final Project project,
                     Editor editor,
-                    PsiFile file,
+                    final PsiFile file,
                     final GotoData gotoData) {
     final PsiElement[] targets = gotoData.targets;
     final List<AdditionalAction> additionalActions = gotoData.additionalActions;
@@ -106,8 +108,8 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       gotoData.renderers.put(eachTarget, createRenderer(gotoData, eachTarget));
     }
 
-    String name = ((PsiNamedElement)gotoData.source).getName();
-    String title = getChooserTitle(gotoData.source, name, targets.length);
+    final String name = ((PsiNamedElement)gotoData.source).getName();
+    final String title = getChooserTitle(gotoData.source, name, targets.length);
 
     if (shouldSortTargets()) {
       Arrays.sort(targets, createComparator(gotoData.renderers, gotoData));
@@ -178,6 +180,15 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
           return true;
         }
       }).
+      setCouldPin(new Processor<JBPopup>() {
+        @Override
+        public boolean process(JBPopup popup) {
+          FindUtil.showInUsageView(gotoData.source, gotoData.targets, 
+                                   getFindUsagesTitle(gotoData.source, name, gotoData.targets.length), project);
+          popup.cancel();
+          return false;
+        }
+      }).
       setAdText(getAdText(gotoData.source, targets.length)).
       createPopup();
     if (gotoData.listUpdaterTask != null) {
@@ -238,6 +249,9 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   }
 
   protected abstract String getChooserTitle(PsiElement sourceElement, String name, int length);
+  protected String getFindUsagesTitle(PsiElement sourceElement, String name, int length) {
+    return getChooserTitle(sourceElement, name, length);
+  }
 
   protected abstract String getNotFoundMessage(Project project, Editor editor, PsiFile file);
   @Nullable

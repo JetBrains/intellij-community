@@ -35,7 +35,7 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
   }
 
   @Override
-  public boolean isSuppressedFor(final PsiElement element) {
+  public boolean isSuppressedFor(@NotNull final PsiElement element) {
     return XmlSuppressionProvider.isSuppressed(element, getID());
   }
 
@@ -49,7 +49,7 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
   public static class SuppressTagStatic extends SuppressIntentionAction {
     private final String id;
 
-    public SuppressTagStatic(String id) {
+    public SuppressTagStatic(@NotNull String id) {
       this.id = id;
     }
 
@@ -79,7 +79,7 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
   public static class SuppressForFile extends SuppressIntentionAction {
     private final String myInspectionId;
 
-    public SuppressForFile(final String inspectionId) {
+    public SuppressForFile(@NotNull String inspectionId) {
       myInspectionId = inspectionId;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@ import java.awt.*;
 public class MessageType {
 
   public static final MessageType ERROR = new MessageType(UIUtil.getBalloonErrorIcon(),
-                                                          new JBColor(new Color(255, 204, 204, 230), new Color(0x70202c)));
+                                                          new JBColor(new Color(255, 204, 204, 230), new Color(0x70383a)));
   public static final MessageType INFO = new MessageType(UIUtil.getBalloonInformationIcon(),
-                                                         new JBColor(new Color(186, 238, 186, 230), new Color(0x19451a)));
+                                                         new JBColor(new Color(186, 238, 186, 230), new Color(0x356936)));
   public static final MessageType WARNING = new MessageType(UIUtil.getBalloonWarningIcon(),
                                                             new JBColor(new Color(249, 247, 142, 230), new Color(0x5C5C42)));
 

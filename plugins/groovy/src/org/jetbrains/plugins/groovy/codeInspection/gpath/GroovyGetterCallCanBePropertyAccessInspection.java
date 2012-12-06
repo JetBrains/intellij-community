@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 public class GroovyGetterCallCanBePropertyAccessInspection extends BaseInspection {
@@ -87,10 +88,10 @@ public class GroovyGetterCallCanBePropertyAccessInspection extends BaseInspectio
       if (args == null) {
         return;
       }
-      if (args.getExpressionArguments().length != 0) {
+      if (PsiImplUtil.hasExpressionArguments(args)) {
         return;
       }
-      if (args.getNamedArguments().length != 0) {
+      if (PsiImplUtil.hasNamedArguments(args)) {
         return;
       }
       final GrExpression methodExpression = grMethodCallExpression.getInvokedExpression();

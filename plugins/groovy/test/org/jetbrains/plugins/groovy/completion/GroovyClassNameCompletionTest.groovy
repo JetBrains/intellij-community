@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -281,6 +281,26 @@ class A {
 '''
   }
 
+  public void testInnerClassCompletion() {
+    myFixture.addClass('''\
+package foo;
 
+public class Upper {
+  public static class Inner {}
+}
+''')
+
+    myFixture.configureByText('_.groovy', '''\
+import foo.Upper
+print new Inner<caret>
+''')
+    myFixture.complete(CompletionType.BASIC)
+    myFixture.type('\n')
+
+    myFixture.checkResult('''\
+import foo.Upper
+print new Upper.Inner()
+''')
+  }
 
 }

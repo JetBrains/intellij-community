@@ -404,14 +404,11 @@ public class FileSystemUtil {
     }
 
     private final LibC myLibC;
-    private final Memory mySharedMem;
     private final int myModeOffset;
     private final int mySizeOffset;
     private final int myTimeOffset;
 
     private JnaUnixMediatorImpl() throws Exception {
-      myLibC = (LibC)Native.loadLibrary("c", LibC.class);
-      mySharedMem = new Memory(256);
       myModeOffset = SystemInfo.isLinux ? (SystemInfo.is32Bit ? 16 : 24) :
                      SystemInfo.isMac | SystemInfo.isFreeBSD ? 8 :
                      SystemInfo.isSolaris ? (SystemInfo.is32Bit ? 20 : 16) :
@@ -425,31 +422,33 @@ public class FileSystemUtil {
                      SystemInfo.isSolaris ? 64 :
                      -1;
       if (myModeOffset < 0) throw new IllegalStateException("Unsupported OS: " + SystemInfo.OS_NAME);
+
+      myLibC = (LibC)Native.loadLibrary("c", LibC.class);
     }
 
     @Override
-    public synchronized FileAttributes getAttributes(@NotNull final String path) throws Exception {
-      mySharedMem.clear();
-      int res = SystemInfo.isLinux ? myLibC.__lxstat64(0, path, mySharedMem) : myLibC.lstat(path, mySharedMem);
+    public FileAttributes getAttributes(@NotNull final String path) throws Exception {
+      Memory buffer = new Memory(256);
+      int res = SystemInfo.isLinux ? myLibC.__lxstat64(0, path, buffer) : myLibC.lstat(path, buffer);
       if (res != 0) return null;
 
-      int mode = (SystemInfo.isLinux ? mySharedMem.getInt(myModeOffset) : mySharedMem.getShort(myModeOffset)) & LibC.S_MASK;
-      final boolean isSymlink = (mode & LibC.S_IFLNK) == LibC.S_IFLNK;
+      int mode = (SystemInfo.isLinux ? buffer.getInt(myModeOffset) : buffer.getShort(myModeOffset)) & LibC.S_MASK;
+      boolean isSymlink = (mode & LibC.S_IFLNK) == LibC.S_IFLNK;
       if (isSymlink) {
-        res = SystemInfo.isLinux ? myLibC.__xstat64(0, path, mySharedMem) : myLibC.stat(path, mySharedMem);
+        res = SystemInfo.isLinux ? myLibC.__xstat64(0, path, buffer) : myLibC.stat(path, buffer);
         if (res != 0) {
           return FileAttributes.BROKEN_SYMLINK;
         }
-        mode = (SystemInfo.isLinux ? mySharedMem.getInt(myModeOffset) : mySharedMem.getShort(myModeOffset)) & LibC.S_MASK;
+        mode = (SystemInfo.isLinux ? buffer.getInt(myModeOffset) : buffer.getShort(myModeOffset)) & LibC.S_MASK;
       }
 
-      final boolean isDirectory = (mode & LibC.S_IFDIR) == LibC.S_IFDIR;
-      final boolean isSpecial = !isDirectory && (mode & LibC.S_IFREG) == 0;
-      final long size = mySharedMem.getLong(mySizeOffset);
-      final long mTime1 = SystemInfo.is32Bit ? mySharedMem.getInt(myTimeOffset) : mySharedMem.getLong(myTimeOffset);
-      final long mTime2 = SystemInfo.is32Bit ? mySharedMem.getInt(myTimeOffset + 4) : mySharedMem.getLong(myTimeOffset + 8);
-      final long mTime = mTime1 * 1000 + mTime2 / 1000000;
-      @FileAttributes.Permissions final int permissions = mode & LibC.PERM_MASK;
+      boolean isDirectory = (mode & LibC.S_IFDIR) == LibC.S_IFDIR;
+      boolean isSpecial = !isDirectory && (mode & LibC.S_IFREG) == 0;
+      long size = buffer.getLong(mySizeOffset);
+      long mTime1 = SystemInfo.is32Bit ? buffer.getInt(myTimeOffset) : buffer.getLong(myTimeOffset);
+      long mTime2 = SystemInfo.is32Bit ? buffer.getInt(myTimeOffset + 4) : buffer.getLong(myTimeOffset + 8);
+      long mTime = mTime1 * 1000 + mTime2 / 1000000;
+      @FileAttributes.Permissions int permissions = mode & LibC.PERM_MASK;
       return new FileAttributes(isDirectory, isSpecial, isSymlink, size, mTime, permissions);
     }
 
@@ -464,7 +463,7 @@ public class FileSystemUtil {
           LOG.debug(e);
           return null;
         }
-        throw e;
+        throw new IOException("Cannot resolve '" + path + "'", e);
       }
     }
 

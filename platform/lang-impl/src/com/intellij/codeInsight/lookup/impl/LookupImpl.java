@@ -17,10 +17,7 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.completion.CodeCompletionFeatures;
-import com.intellij.codeInsight.completion.CompletionLookupArranger;
-import com.intellij.codeInsight.completion.PrefixMatcher;
-import com.intellij.codeInsight.completion.ShowHideIntentionIconLookupAction;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
@@ -72,7 +69,6 @@ import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -138,7 +134,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private boolean myChangeGuard;
   private volatile LookupArranger myArranger;
   private LookupArranger myPresentableArranger;
-  @SuppressWarnings("unchecked") private final Map<LookupElement, PrefixMatcher> myMatchers = new ConcurrentHashMap<LookupElement, PrefixMatcher>(TObjectHashingStrategy.IDENTITY);
+  private final Map<LookupElement, PrefixMatcher> myMatchers = new ConcurrentHashMap<LookupElement, PrefixMatcher>(
+    ContainerUtil.<LookupElement>identityStrategy());
   private LookupHint myElementHint = null;
   private final Alarm myHintAlarm = new Alarm();
   private final JLabel mySortingLabel = new JLabel();
@@ -150,6 +147,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private int myMaximumHeight = Integer.MAX_VALUE;
   private boolean myFinishing;
   private boolean myUpdating;
+  private CompletionPreview myPreview;
   private final ModalityState myModalityState;
 
   public LookupImpl(Project project, Editor editor, @NotNull LookupArranger arranger) {
@@ -728,6 +726,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   public boolean performGuardedChange(Runnable change, @Nullable final String debug) {
     checkValid();
     assert !myChangeGuard : "already in change";
+    uninstallPreview();
 
     myChangeGuard = true;
     boolean result;
@@ -1466,5 +1465,23 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     synchronized (myList) {
       return myPresentableArranger.getRelevanceStrings();
     }
+  }
+
+  public CompletionPreview getPreview() {
+    return myPreview;
+  }
+
+  @Nullable 
+  public CompletionPreview uninstallPreview() {
+    CompletionPreview preview = myPreview;
+    if (preview != null) {
+      preview.uninstallPreview();
+      assert myPreview == null;
+    }
+    return preview;
+  }
+
+  void setPreview(CompletionPreview preview) {
+    myPreview = preview;
   }
 }

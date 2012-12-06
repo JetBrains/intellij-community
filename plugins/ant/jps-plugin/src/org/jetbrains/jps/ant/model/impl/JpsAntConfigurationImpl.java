@@ -17,6 +17,7 @@ package org.jetbrains.jps.ant.model.impl;
 
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ant.model.JpsAntBuildFileOptions;
 import org.jetbrains.jps.ant.model.JpsAntConfiguration;
 import org.jetbrains.jps.model.JpsElementChildRole;
@@ -30,16 +31,24 @@ import java.util.Map;
  */
 public class JpsAntConfigurationImpl extends JpsElementBase<JpsAntConfigurationImpl> implements JpsAntConfiguration {
   public static final JpsElementChildRole<JpsAntConfiguration> ROLE = JpsElementChildRoleBase.create("ant configuration");
+  private final String myProjectDefaultAntName;
   private Map<String, JpsAntBuildFileOptions> myOptionsMap = new HashMap<String, JpsAntBuildFileOptions>();
 
-  public JpsAntConfigurationImpl(Map<String, JpsAntBuildFileOptions> options) {
+  public JpsAntConfigurationImpl(Map<String, JpsAntBuildFileOptions> options, String projectDefaultAntName) {
+    myProjectDefaultAntName = projectDefaultAntName;
     myOptionsMap.putAll(options);
   }
 
   @NotNull
   @Override
   public JpsAntConfigurationImpl createCopy() {
-    return new JpsAntConfigurationImpl(myOptionsMap);
+    return new JpsAntConfigurationImpl(myOptionsMap, myProjectDefaultAntName);
+  }
+
+  @Override
+  @Nullable
+  public String getProjectDefaultAntName() {
+    return myProjectDefaultAntName;
   }
 
   @Override

@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.manage;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.Step;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
@@ -30,7 +29,8 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleP
 
   @Override
   protected boolean doQuickImport(VirtualFile file, WizardContext wizardContext) {
-    AddModuleWizard dialog = new AddModuleWizard(null, null, new GradleProjectImportProvider(new GradleProjectImportBuilder()));
+    AddModuleWizard dialog = new AddModuleWizard(null, file.getPath(), new GradleProjectImportProvider(getBuilder()));
+    getBuilder().prepare(wizardContext);
     getBuilder().setCurrentProjectPath(file.getPath());
     dialog.getWizardContext().setProjectBuilder(getBuilder());
     dialog.navigateToStep(new Function<Step, Boolean>() {

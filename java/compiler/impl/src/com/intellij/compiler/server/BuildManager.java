@@ -62,6 +62,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
 import gnu.trove.THashSet;
@@ -341,7 +342,7 @@ public class BuildManager implements ApplicationComponent{
     addMakeRequest(new Runnable() {
       @Override
       public void run() {
-        if (!myAutoMakeInProgress.getAndSet(true)) {
+        if (!HeavyProcessLatch.INSTANCE.isRunning() && !myAutoMakeInProgress.getAndSet(true)) {
           try {
             ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
               @Override

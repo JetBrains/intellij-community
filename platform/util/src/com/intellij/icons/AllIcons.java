@@ -114,8 +114,8 @@ public class AllIcons {
     public static final Icon Redo = IconLoader.getIcon("/actions/redo.png"); // 16x16
     public static final Icon RefactoringBulb = IconLoader.getIcon("/actions/refactoringBulb.png"); // 16x16
     public static final Icon Refresh = IconLoader.getIcon("/actions/refresh.png"); // 16x16
-    public static final Icon RefreshUsages = IconLoader.getIcon("/actions/refreshUsages.png"); // 16x16
     public static final Icon Replace = IconLoader.getIcon("/actions/replace.png"); // 16x16
+    public static final Icon Rerun = IconLoader.getIcon("/actions/rerun.png"); // 16x16
     public static final Icon Reset_to_default = IconLoader.getIcon("/actions/reset-to-default.png"); // 16x16
     public static final Icon Reset = IconLoader.getIcon("/actions/reset.png"); // 16x16
     public static final Icon Restart = IconLoader.getIcon("/actions/restart.png"); // 16x16
@@ -303,6 +303,7 @@ public class AllIcons {
   public static class FileTypes {
     public static final Icon Any_type = IconLoader.getIcon("/fileTypes/any_type.png"); // 16x16
     public static final Icon Archive = IconLoader.getIcon("/fileTypes/archive.png"); // 16x16
+    public static final Icon AS = IconLoader.getIcon("/fileTypes/as.png"); // 16x16
     public static final Icon Aspectj = IconLoader.getIcon("/fileTypes/aspectj.png"); // 16x16
     public static final Icon Css = IconLoader.getIcon("/fileTypes/css.png"); // 16x16
     public static final Icon Custom = IconLoader.getIcon("/fileTypes/custom.png"); // 16x16
@@ -321,6 +322,7 @@ public class AllIcons {
     public static final Icon Jspx = IconLoader.getIcon("/fileTypes/jspx.png"); // 16x16
     public static final Icon Properties = IconLoader.getIcon("/fileTypes/properties.png"); // 16x16
     public static final Icon Text = IconLoader.getIcon("/fileTypes/text.png"); // 16x16
+    public static final Icon TypeScript = IconLoader.getIcon("/fileTypes/typeScript.png"); // 16x16
     public static final Icon UiForm = IconLoader.getIcon("/fileTypes/uiForm.png"); // 16x16
     public static final Icon Unknown = IconLoader.getIcon("/fileTypes/unknown.png"); // 16x16
     public static final Icon WsdlFile = IconLoader.getIcon("/fileTypes/wsdlFile.png"); // 16x16

@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.find.FindUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.navigation.ItemPresentation;
@@ -32,7 +33,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -45,11 +45,6 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.usageView.UsageInfo;
-import com.intellij.usages.UsageInfoToUsageConverter;
-import com.intellij.usages.UsageTarget;
-import com.intellij.usages.UsageViewManager;
-import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -482,10 +477,6 @@ public class ImplementationViewComponent extends JPanel {
     edit.registerCustomShortcutSet(new CompositeShortcutSet(CommonShortcuts.getViewSource(), CommonShortcuts.CTRL_ENTER), this);
     group.add(edit);
 
-    final ShowFindUsagesAction findUsagesAction = new ShowFindUsagesAction();
-    findUsagesAction.registerCustomShortcutSet(new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_FIND_USAGES)), this);
-    group.add(findUsagesAction);
-
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
   }
 
@@ -505,6 +496,13 @@ public class ImplementationViewComponent extends JPanel {
 
   public PsiElement[] getElements() {
     return myElements;
+  }
+
+  public void showInUsageView() {
+    FindUtil.showInUsageView(null, collectNonBinaryElements(), myTitle, myEditor.getProject());
+    if (myHint.isVisible()) {
+      myHint.cancel();
+    }
   }
 
   private class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {
@@ -586,38 +584,6 @@ public class ImplementationViewComponent extends JPanel {
       FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
       OpenFileDescriptor descriptor = new OpenFileDescriptor(project, virtualFile, navigationElement.getTextOffset());
       fileEditorManager.openTextEditor(descriptor, myFocusEditor);
-    }
-  }
-
-  private class ShowFindUsagesAction extends AnAction {
-    private static final String ACTION_NAME = "Show in usage view";
-
-    public ShowFindUsagesAction() {
-      super(ACTION_NAME, ACTION_NAME, AllIcons.Actions.Find);
-    }
-
-    @Override
-    public void actionPerformed(final AnActionEvent e) {
-      final UsageViewPresentation presentation = new UsageViewPresentation();
-      presentation.setCodeUsagesString(myTitle);
-      presentation.setTabName(myTitle);
-      presentation.setTabText(myTitle);
-      PsiElement[] elements = collectNonBinaryElements();
-      final UsageInfo[] usages = new UsageInfo[elements.length];
-      for (int i = 0; i < elements.length; i++) {
-        usages[i] = new UsageInfo(elements[i]);
-      }
-      UsageViewManager.getInstance(myEditor.getProject()).showUsages(UsageTarget.EMPTY_ARRAY, UsageInfoToUsageConverter.convert(
-        new UsageInfoToUsageConverter.TargetElementsDescriptor(elements), usages), presentation);
-      if (myHint.isVisible()) {
-        myHint.cancel();
-      }
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      if (myElements == null) return;
-      e.getPresentation().setVisible(collectNonBinaryElements().length > 0);
     }
   }
 

@@ -46,7 +46,8 @@ public class XmlImportOptimizer implements ImportOptimizer {
     @Override
     public boolean value(ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
-      return !myInspection.isSuppressedFor(element.getParent());
+      PsiElement parent = element.getParent();
+      return parent != null && !myInspection.isSuppressedFor(parent);
     }
   };
 

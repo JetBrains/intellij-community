@@ -19,6 +19,7 @@ import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
@@ -154,9 +155,38 @@ public class StubGenerator implements ClassItemGenerator {
           text.append(");");
         }
       }
+      else if (constructor instanceof LightElement) {
+        writeStubConstructorInvocation(constructor, text);
+      }
     }
 
     text.append("\n}\n");
+  }
+
+  private void writeStubConstructorInvocation(PsiMethod constructor, StringBuilder text) {
+    final PsiClass containingClass = constructor.getContainingClass();
+    if (containingClass == null) return;
+
+    final PsiClass superClass = containingClass.getSuperClass();
+    if (superClass == null) return;
+
+    final PsiMethod[] constructors = superClass.getConstructors();
+    if (constructors.length == 0) return;
+
+    for (PsiMethod method : constructors) {
+      if (method.getParameterList().getParameters().length == 0 && PsiUtil.isAccessible(method, containingClass, containingClass)) {
+        return; //default constructor exists
+      }
+    }
+
+    for (PsiMethod method : constructors) {
+      if (PsiUtil.isAccessible(method, containingClass, containingClass)) {
+        text.append("super(");
+        writeStubConstructorInvocation(text, method, TypeConversionUtil.getSuperClassSubstitutor(superClass, containingClass, PsiSubstitutor.EMPTY), constructor);
+        text.append(");");
+        return;
+      }
+    }
   }
 
   private Set<String> collectThrowsTypes(PsiMethod constructor, Set<PsiMethod> visited) {

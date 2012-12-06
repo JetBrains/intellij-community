@@ -628,12 +628,12 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       LOG.info("START INDEX SHUTDOWN");
       try {
         myChangedFilesCollector.forceUpdate(null, null, null, true);
+        IndexingStamp.flushCache(null);
 
         for (ID<?, ?> indexId : myIndices.keySet()) {
           final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
           assert index != null;
           checkRebuild(indexId, true); // if the index was scheduled for rebuild, only clean it
-          //LOG.info("DISPOSING " + indexId);
           index.dispose();
         }
 
@@ -2272,6 +2272,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   @Override
   public void removeIndexableSet(@NotNull IndexableFileSet set) {
     myChangedFilesCollector.forceUpdate(null, null, null, true);
+    IndexingStamp.flushCache(null);
     myIndexableSets.remove(set);
     myIndexableSetToProjectMap.remove(set);
   }

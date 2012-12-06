@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.asm4.ClassWriter;
 import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.CompiledClass;
 import org.jetbrains.jps.incremental.instrumentation.BaseInstrumentingBuilder;
@@ -29,7 +30,6 @@ import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.intellilang.model.InstrumentationException;
 import org.jetbrains.jps.intellilang.model.JpsIntelliLangConfiguration;
 import org.jetbrains.jps.intellilang.model.JpsIntelliLangExtensionService;
-import org.jetbrains.jps.javac.BinaryContent;
 
 /**
  * @author Eugene Zhuravlev

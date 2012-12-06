@@ -20,6 +20,7 @@ import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.idea.devkit.module.PluginModuleType;
 
 /**
  * @author Dmitry Avdeev
@@ -28,7 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 public class PluginProjectWizardTest extends ProjectWizardTestCase {
 
   public void testPluginProject() throws Exception {
-    Project project = createProjectFromTemplate(JavaModuleType.JAVA_GROUP, "Intellij IDEA Plugin", null);
+    Project project = createProjectFromTemplate(JavaModuleType.JAVA_GROUP, PluginModuleType.getInstance().getName(), null);
     VirtualFile baseDir = project.getBaseDir();
     VirtualFile virtualFile = VfsUtil.findRelativeFile("META-INF/plugin.xml", baseDir);
     assertNotNull(virtualFile);

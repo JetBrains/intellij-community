@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 public class GroovyListSetCanBeKeyedAccessInspection extends BaseInspection {
@@ -92,7 +93,7 @@ public class GroovyListSetCanBeKeyedAccessInspection extends BaseInspection {
       if (args.getExpressionArguments().length != 2) {
         return;
       }
-      if (args.getNamedArguments().length != 0) {
+      if (PsiImplUtil.hasNamedArguments(args)) {
         return;
       }
       final GrExpression methodExpression = grMethodCallExpression.getInvokedExpression();

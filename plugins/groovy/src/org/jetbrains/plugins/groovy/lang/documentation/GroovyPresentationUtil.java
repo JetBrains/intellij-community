@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,24 +35,30 @@ import java.util.Set;
 public class GroovyPresentationUtil {
   private static final int CONSTRAINTS_NUMBER = 2;
 
-  public static String getParameterPresentation(GrParameter parameter, PsiSubstitutor substitutor, boolean presentable) {
-    StringBuilder builder = new StringBuilder();
-    appendParameterPresentation(parameter, substitutor, presentable, builder);
-    return builder.toString();
-  }
-
   public static void appendParameterPresentation(GrParameter parameter,
                                                  PsiSubstitutor substitutor,
-                                                 boolean presentable,
+                                                 TypePresentation typePresentation,
                                                  StringBuilder builder) {
     for (PsiAnnotation annotation : parameter.getModifierList().getAnnotations()) {
       builder.append(annotation.getText()).append(' ');
     }
 
     PsiType type = parameter.getTypeGroovy();
+    type = substitutor.substitute(type);
+
+    if (typePresentation == TypePresentation.LINK) {
+      GroovyDocumentationProvider.appendTypeString(builder, type, parameter);
+      builder.append(' ').append(parameter.getName());
+      return;
+    }
+
     if (type != null) {
-      type = substitutor.substitute(type);
-      builder.append(presentable ? type.getPresentableText() : type.getCanonicalText()).append(' ').append(parameter.getName());
+      if (typePresentation == TypePresentation.PRESENTABLE) {
+        builder.append(type.getPresentableText()).append(' ').append(parameter.getName());
+      }
+      else if (typePresentation == TypePresentation.CANONICAL) {
+        builder.append(type.getCanonicalText()).append(' ').append(parameter.getName());
+      }
     }
     else {
       builder.append(parameter.getName());

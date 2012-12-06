@@ -17,6 +17,7 @@
 package org.intellij.plugins.relaxNG;
 
 import com.intellij.javaee.ExternalResourceManagerEx;
+import com.intellij.javaee.ExternalResourceManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -40,13 +41,13 @@ public class RngXmlHighlightingTest extends HighlightingTestBase {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         final ExternalResourceManagerEx m = ExternalResourceManagerEx.getInstanceEx();
-        m.addResource("urn:test:simple.rng", toAbsolutePath("highlighting/simple.rng"));
-        m.addResource("urn:test:addressBook", toAbsolutePath("highlighting/rnc/addressbook.rnc"));
+        ExternalResourceManagerImpl.addTestResource("urn:test:simple.rng", toAbsolutePath("highlighting/simple.rng"), myTestRootDisposable);
+        ExternalResourceManagerImpl.addTestResource("urn:test:addressBook", toAbsolutePath("highlighting/rnc/addressbook.rnc"), myTestRootDisposable);
         //m.addResource("http://www.w3.org/1999/XSL/Transform", toAbsolutePath("highlighting/relaxng.rng"));
-        m.addResource("http://www.w3.org/1999/XSL/Format", toAbsolutePath("highlighting/rnc/fo/main.rnc"));
-        m.addResource("http://docbook.org/ns/docbook", toAbsolutePath("highlighting/docbook.rng"));
-        m.addResource("urn:intelliForm:AttachmentFilter", toAbsolutePath("highlighting/attachment-filter.rng"));
-        m.addResource("http://www.w3.org/1999/xhtml/html5", toAbsolutePath("highlighting/html5/xhtml5.rnc"));
+        ExternalResourceManagerImpl.addTestResource("http://www.w3.org/1999/XSL/Format", toAbsolutePath("highlighting/rnc/fo/main.rnc"), myTestRootDisposable);
+        ExternalResourceManagerImpl.addTestResource("http://docbook.org/ns/docbook", toAbsolutePath("highlighting/docbook.rng"), myTestRootDisposable);
+        ExternalResourceManagerImpl.addTestResource("urn:intelliForm:AttachmentFilter", toAbsolutePath("highlighting/attachment-filter.rng"), myTestRootDisposable);
+        ExternalResourceManagerImpl.addTestResource("http://www.w3.org/1999/xhtml/html5", toAbsolutePath("highlighting/html5/xhtml5.rnc"), myTestRootDisposable);
 
         m.addIgnoredResource("urn:intelliForm:Spaces");
         m.addIgnoredResource("http://www.w3.org/1999/xlink");

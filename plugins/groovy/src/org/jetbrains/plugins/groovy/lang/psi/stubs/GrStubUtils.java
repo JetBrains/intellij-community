@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
@@ -31,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 
@@ -83,11 +81,7 @@ public class GrStubUtils {
     final PsiModifierList modifierList = psi.getModifierList();
     if (modifierList instanceof GrModifierList) {
       for (GrAnnotation annotation : ((GrModifierList)modifierList).getAnnotations()) {
-        final GrCodeReferenceElement element = annotation.getClassReference();
-        final String annoShortName = StringUtil.getShortName(element.getText()).trim();
-        if (StringUtil.isNotEmpty(annoShortName)) {
-          annoNames.add(annoShortName);
-        }
+        annoNames.add(annotation.getShortName());
       }
     }
     return ArrayUtil.toStringArray(annoNames);

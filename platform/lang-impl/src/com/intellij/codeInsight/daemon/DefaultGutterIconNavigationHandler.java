@@ -29,7 +29,7 @@ public class DefaultGutterIconNavigationHandler<T extends PsiElement> implements
   public void navigate(MouseEvent e, T elt) {
     PsiElementListNavigator.openTargets(e,
                                         myReferences.toArray(new NavigatablePsiElement[myReferences.size()]),
-                                        myTitle, createListCellRenderer());
+                                        myTitle, null, createListCellRenderer());
   }
 
   protected ListCellRenderer createListCellRenderer() {

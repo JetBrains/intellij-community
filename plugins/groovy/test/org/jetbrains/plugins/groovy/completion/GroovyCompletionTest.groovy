@@ -1618,4 +1618,11 @@ new Foooo()<caret>
 ''')
   }
 
+  void testBooleanInNewExpr() {
+    doBasicTest('''\
+def b = new boolea<caret>
+''', '''\
+def b = new boolean<caret>
+''')
+  }
 }

@@ -61,6 +61,11 @@ public class GroovyGotoSuperHandler extends GotoTargetHandler implements CodeIns
   }
 
   @Override
+  protected String getFindUsagesTitle(PsiElement sourceElement, String name, int length) {
+    return CodeInsightBundle.message("goto.super.method.findUsages.title", name);
+  }
+
+  @Override
   protected String getNotFoundMessage(Project project, Editor editor, PsiFile file) {
     final PsiMember source = findSource(editor, file);
     if (source instanceof PsiClass) {

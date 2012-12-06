@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
@@ -28,7 +29,7 @@ public abstract class XmlSuppressionProvider {
 
   public static ExtensionPointName<XmlSuppressionProvider> EP_NAME = new ExtensionPointName<XmlSuppressionProvider>("com.intellij.xml.xmlSuppressionProvider");
 
-  public static boolean isSuppressed(PsiElement element, String inspectionId) {
+  public static boolean isSuppressed(@NotNull PsiElement element, @NotNull String inspectionId) {
     for (XmlSuppressionProvider provider : Extensions.getExtensions(EP_NAME)) {
       if (provider.isSuppressedFor(element, inspectionId)) {
         return true;
@@ -37,7 +38,7 @@ public abstract class XmlSuppressionProvider {
     return false;
   }
 
-  public static XmlSuppressionProvider getProvider(PsiFile file) {
+  public static XmlSuppressionProvider getProvider(@NotNull PsiFile file) {
     for (XmlSuppressionProvider provider : Extensions.getExtensions(EP_NAME)) {
       if (provider.isProviderAvailable(file)) {
         return provider;
@@ -46,12 +47,12 @@ public abstract class XmlSuppressionProvider {
     throw new RuntimeException("No providers found for " + file);
   }
 
-  public abstract boolean isProviderAvailable(PsiFile file);
+  public abstract boolean isProviderAvailable(@NotNull PsiFile file);
 
-  public abstract boolean isSuppressedFor(PsiElement element, String inspectionId);
+  public abstract boolean isSuppressedFor(@NotNull PsiElement element, @NotNull String inspectionId);
 
-  public abstract void suppressForFile(PsiElement element, String inspectionId);
+  public abstract void suppressForFile(@NotNull PsiElement element, @NotNull String inspectionId);
 
-  public abstract void suppressForTag(PsiElement element, String inspectionId);
+  public abstract void suppressForTag(@NotNull PsiElement element, @NotNull String inspectionId);
 
 }

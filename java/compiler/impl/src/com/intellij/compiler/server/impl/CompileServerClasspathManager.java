@@ -73,8 +73,13 @@ public class CompileServerClasspathManager {
       else if (baseFile.isDirectory()) {
         for (String relativePath : StringUtil.split(serverPlugin.getClasspath(), ";")) {
           final File jarFile = new File(new File(baseFile, "lib"), relativePath);
+          File classesDir = new File(baseFile, "classes");
           if (jarFile.exists()) {
             classpath.add(jarFile.getPath());
+          }
+          else if (classesDir.isDirectory()) {
+            //'plugin run configuration': all module output are copied to 'classes' folder
+            classpath.add(classesDir.getPath());
           }
           else {
             //development mode: add directory out/classes/production/<jar-name> to classpath, assuming that jar-name is equal to module name

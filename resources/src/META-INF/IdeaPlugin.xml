@@ -87,6 +87,9 @@
     <extensionPoint name="methodImplementor"
                     interface="com.intellij.codeInsight.MethodImplementor"/>
 
+    <extensionPoint name="codeInsight.containerProvider"
+                    interface="com.intellij.codeInsight.ContainerProvider"/>
+
     <extensionPoint name="debugger.codeFragmentFactory"
                     interface="com.intellij.debugger.engine.evaluation.CodeFragmentFactory"/>
 
@@ -181,6 +184,8 @@
     <expressionConverter implementationClass="com.intellij.refactoring.introduceParameter.JavaExpressionConverter" language="JAVA"/>
 
     <codeInsight.createFieldFromUsageHelper language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.quickfix.JavaCreateFieldFromUsageHelper"/>
+
+    <codeInsight.containerProvider implementation="com.intellij.codeInsight.JavaContainerProvider" id="JAVA"/>
 
     <codeInsight.lineMarkerProvider language="" implementationClass="com.intellij.ui.ColorLineMarkerProvider"/>
     <!--<expectedTypesProvider implementation="com.intellij.codeInsight.JavaExpectedTypesProvider"/>-->
@@ -463,7 +468,7 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.deprecation.DeprecationInspection"/>
     <localInspection language="JAVA" suppressId="extensionSyntax" bundle="messages.InspectionsBundle" key="deprecated.defender.syntax.description"
-                     groupName="" enabledByDefault="true" level="WARNING"
+                     groupName="" enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.codeInspection.deprecation.DeprecatedDefenderSyntaxInspection"/>
     <localInspection language="XML" shortName="DeprecatedClassUsageInspection" displayName="Deprecated API usage in XML" groupName="XML"
                      enabledByDefault="true" level="WARNING" implementationClass="com.intellij.util.xml.DeprecatedClassUsageInspection"/>
@@ -1107,6 +1112,7 @@
     <refactoring.moveDirectoryWithClassesHelper implementation="com.intellij.refactoring.move.moveClassesOrPackages.JavaMoveDirectoryWithClassesHelper"/>
 
     <moveFileHandler implementation="com.intellij.refactoring.move.moveClassesOrPackages.MoveJavaFileHandler" id="java"/>
+    <refactoring.moveAllClassesInFileHandler implementation="com.intellij.refactoring.move.moveClassesOrPackages.MoveJavaClassesInFileHandler" id="java"/>
 
     <refactoring.moveClassHandler implementation="com.intellij.refactoring.move.moveClassesOrPackages.MoveJavaClassHandler" id="java"/>
     <refactoring.moveClassToInnerHandler implementation="com.intellij.refactoring.move.moveClassesOrPackages.JavaMoveClassToInnerHandler" id="java"/>

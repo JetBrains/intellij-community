@@ -33,7 +33,7 @@ public class GradleLinkToProjectAction extends AnAction implements DumbAware {
     if (project == null) {
       return;
     }
-    final VirtualFile file = FileChooser.chooseFile(GradleUtil.getFileChooserDescriptor(), project, null);
+    final VirtualFile file = FileChooser.chooseFile(GradleUtil.getGradleProjectFileChooserDescriptor(), project, null);
     if (file == null) {
       return;
     }

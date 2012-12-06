@@ -57,10 +57,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.ui.JBColor;
 import com.intellij.util.Alarm;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.android.actions.RunAndroidAvdManagerAction;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.maven.AndroidMavenUtil;
@@ -238,7 +240,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         propertyParser.loadRecursive(newRootComponent);
 
         JPanel rootPanel = new JPanel(null);
-        rootPanel.setBackground(Color.WHITE);
+        rootPanel.setBackground(new JBColor(Color.WHITE, UIUtil.getListBackground()));
         rootPanel.add(rootView);
 
         removeNativeRoot();
@@ -413,9 +415,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
           });
         }
       }
-    }
-
-    );
+    });
   }
 
   private void showWarnings(@Nullable List<FixableIssueMessage> warnMessages) {

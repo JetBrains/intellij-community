@@ -91,6 +91,7 @@ public abstract class GlobalJavaInspectionContext implements GlobalInspectionCon
 
   public abstract EntryPointsManager getEntryPointsManager(RefManager manager);
 
+  @Override
   public Key<GlobalJavaInspectionContext> getID() {
     return CONTEXT;
   }

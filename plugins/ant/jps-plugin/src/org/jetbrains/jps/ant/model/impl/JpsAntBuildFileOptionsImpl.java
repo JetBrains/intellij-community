@@ -17,6 +17,9 @@ package org.jetbrains.jps.ant.model.impl;
 
 import org.jetbrains.jps.ant.model.JpsAntBuildFileOptions;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author nik
  */
@@ -25,13 +28,39 @@ public class JpsAntBuildFileOptionsImpl implements JpsAntBuildFileOptions {
   private String myAntCommandLineParameters = "";
   private int myMaxHeapSize = 128;
   private String myCustomJdkName = "";
+  private boolean myUseProjectDefaultAnt = true;
+  private String myAntInstallationName;
+  private List<String> myClasspath = new ArrayList<String>();
+  private List<String> myJarDirectories = new ArrayList<String>();
 
   public void setMaxStackSize(int maxStackSize) {
     myMaxStackSize = maxStackSize;
   }
 
+  @Override
   public void setAntCommandLineParameters(String antCommandLineParameters) {
     myAntCommandLineParameters = antCommandLineParameters;
+  }
+
+  public void setUseProjectDefaultAnt(boolean useProjectDefaultAnt) {
+    myUseProjectDefaultAnt = useProjectDefaultAnt;
+  }
+
+  @Override
+  public String getAntInstallationName() {
+    return myAntInstallationName;
+  }
+
+  public void setAntInstallationName(String antInstallationName) {
+    myAntInstallationName = antInstallationName;
+  }
+
+  public void addJarPath(String path) {
+    myClasspath.add(path);
+  }
+
+  public void addJarDirectory(String directoryPath) {
+    myJarDirectories.add(directoryPath);
   }
 
   public void setMaxHeapSize(int maxHeapSize) {
@@ -60,5 +89,15 @@ public class JpsAntBuildFileOptionsImpl implements JpsAntBuildFileOptions {
   @Override
   public String getAntCommandLineParameters() {
     return myAntCommandLineParameters;
+  }
+
+  @Override
+  public boolean isUseProjectDefaultAnt() {
+    return myUseProjectDefaultAnt;
+  }
+
+  @Override
+  public List<String> getAdditionalClasspath() {
+    return JpsAntInstallationImpl.getClasspath(myClasspath, myJarDirectories);
   }
 }

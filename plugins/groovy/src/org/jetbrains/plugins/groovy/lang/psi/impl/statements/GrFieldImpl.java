@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,12 +133,11 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
 
   public boolean isDeprecated() {
     final GrFieldStub stub = getStub();
-    boolean byDocTag = stub == null ? PsiImplUtil.isDeprecatedByDocTag(this) : stub.isDeprecatedByDocTag();
-    if (byDocTag) {
-      return true;
+    if (stub != null) {
+      return stub.isDeprecatedByDocTag() || PsiImplUtil.isDeprecatedByAnnotation(this);
     }
 
-    return PsiImplUtil.isDeprecatedByAnnotation(this);
+    return PsiImplUtil.isDeprecatedByDocTag(this) || PsiImplUtil.isDeprecatedByAnnotation(this);
   }
 
   @Override

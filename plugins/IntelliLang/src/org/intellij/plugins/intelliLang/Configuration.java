@@ -198,6 +198,7 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
   }
 
   public void loadState(final Element element) {
+    myInjections.clear();
     final THashMap<String, LanguageInjectionSupport> supports = new THashMap<String, LanguageInjectionSupport>();
     for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
       supports.put(support.getId(), support);
@@ -270,14 +271,16 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
         if (enumeration == null || !enumeration.hasMoreElements()) {
           LOG.warn(descriptor.getPluginId() +": " + configBean.getConfigUrl() + " was not found");
         }
-        while (enumeration.hasMoreElements()) {
-          URL url = enumeration.nextElement();
-          if (!visited.add(url.getFile())) continue; // for DEBUG mode
-          try {
-            cfgList.add(load(url.openStream()));
-          }
-          catch (Exception e) {
-            LOG.warn(e);
+        else {
+          while (enumeration.hasMoreElements()) {
+            URL url = enumeration.nextElement();
+            if (!visited.add(url.getFile())) continue; // for DEBUG mode
+            try {
+              cfgList.add(load(url.openStream()));
+            }
+            catch (Exception e) {
+              LOG.warn(e);
+            }
           }
         }
       }
@@ -301,16 +304,17 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
   }
 
   protected Element getState(final Element element) {
-    final List<String> injectorIds = new ArrayList<String>(myInjections.keySet());
+    Comparator<BaseInjection> comparator = new Comparator<BaseInjection>() {
+      public int compare(final BaseInjection o1, final BaseInjection o2) {
+        return Comparing.compare(o1.getDisplayName(), o2.getDisplayName());
+      }
+    };
+    List<String> injectorIds = new ArrayList<String>(myInjections.keySet());
     Collections.sort(injectorIds);
     for (String key : injectorIds) {
-      final List<BaseInjection> injections = new ArrayList<BaseInjection>(myInjections.get(key));
+      TreeSet<BaseInjection> injections = new TreeSet<BaseInjection>(comparator);
+      injections.addAll(myInjections.get(key));
       injections.removeAll(getDefaultInjections());
-      Collections.sort(injections, new Comparator<BaseInjection>() {
-        public int compare(final BaseInjection o1, final BaseInjection o2) {
-          return Comparing.compare(o1.getDisplayName(), o2.getDisplayName());
-        }
-      });
       for (BaseInjection injection : injections) {
         element.addContent(injection.getState());
       }
@@ -356,6 +360,7 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
       }
       else {
         elements.add(rootElement);
+        //noinspection unchecked
         elements.addAll(rootElement.getChildren("component"));
         state = ContainerUtil.find(elements, new Condition<Element>() {
           public boolean value(final Element element) {

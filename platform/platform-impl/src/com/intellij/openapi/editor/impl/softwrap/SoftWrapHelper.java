@@ -50,6 +50,9 @@ public class SoftWrapHelper {
    */
   public static boolean isCaretAfterSoftWrap(EditorImpl editor) {
     CaretModel caretModel = editor.getCaretModel();
+    if (!caretModel.isUpToDate()) {
+      return false;
+    }
     SoftWrapModel softWrapModel = editor.getSoftWrapModel();
     int offset = caretModel.getOffset();
     SoftWrap softWrap = softWrapModel.getSoftWrap(offset);

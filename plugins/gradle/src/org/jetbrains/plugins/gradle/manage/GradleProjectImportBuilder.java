@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.gradle.manage;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -17,8 +16,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.projectImport.ProjectImportBuilder;
+import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.config.GradleConfigurable;
 import org.jetbrains.plugins.gradle.config.GradleSettings;
 import org.jetbrains.plugins.gradle.model.gradle.GradleEntity;
 import org.jetbrains.plugins.gradle.model.gradle.GradleModule;
@@ -41,13 +42,11 @@ import java.util.*;
 @SuppressWarnings("MethodMayBeStatic")
 public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProject> {
 
-  private static final String GRADLE_IMPORT_ROOT_KEY = "gradle.import.root";
-  
   /** @see #setModuleMappings(Map) */
   private final Map<GradleModule/*origin*/, GradleModule/*adjusted*/> myModuleMappings = new HashMap<GradleModule, GradleModule>();
   
   private GradleProject myGradleProject;
-  private File myProjectFile;
+  private GradleConfigurable myConfigurable;
 
   @NotNull
   @Override
@@ -57,7 +56,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
 
   @Override
   public Icon getIcon() {
-    return icons.GradleIcons.Gradle;
+    return GradleIcons.Gradle;
   }
 
   @Override
@@ -78,6 +77,23 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
   public void setOpenProjectSettingsAfter(boolean on) {
   }
 
+  public GradleConfigurable getConfigurable() {
+    return myConfigurable;
+  }
+
+  public void prepare(@NotNull WizardContext context) {
+    if (myConfigurable == null) {
+      myConfigurable = new GradleConfigurable(getProject(context));
+      myConfigurable.setAlwaysShowLinkedProjectControls(true);
+    }
+    myConfigurable.reset();
+    String pathToUse = context.getProjectFileDirectory();
+    if (!pathToUse.endsWith(GradleConstants.DEFAULT_SCRIPT_NAME)) {
+      pathToUse = new File(pathToUse, GradleConstants.DEFAULT_SCRIPT_NAME).getAbsolutePath();
+    }
+    myConfigurable.setLinkedGradleProjectPath(pathToUse);
+  }
+  
   @Override
   public List<Module> commit(final Project project,
                              ModifiableModuleModel model,
@@ -95,42 +111,24 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
     StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
       @Override
       public void run() {
-        GradleSettings.applyLinkedProjectPath(myProjectFile.getAbsolutePath(), project);
-        if (!StringUtil.isEmpty(GradleSettings.getInstance(project).getGradleHome())) {
-          return;
-        }
-        final String gradleHome = GradleSettings.getInstance(ProjectManager.getInstance().getDefaultProject()).getGradleHome();
-        if (!StringUtil.isEmpty(gradleHome)) {
-          GradleSettings.applyGradleHome(gradleHome, project);
-        }
+        GradleSettings.applyLinkedProjectPath(myConfigurable.getLinkedProjectPath(), project);
+        GradleSettings.applyPreferLocalInstallationToWrapper(myConfigurable.isPreferLocalInstallationToWrapper(), project);
+        GradleSettings.applyGradleHome(myConfigurable.getGradleHomePath(), project);
       }
     });
     GradleModulesImporter importer = new GradleModulesImporter();
+
+    File projectFile = getProjectFile();
+    assert projectFile != null;
     Map<GradleModule, Module> mappings =
-      importer.importModules(myModuleMappings.values(), project, model, myProjectFile.getAbsolutePath());
+      importer.importModules(myModuleMappings.values(), project, model, projectFile.getAbsolutePath());
     return new ArrayList<Module>(mappings.values());
   }
 
-  /**
-   * Allows to retrieve initial path to use during importing gradle projects
-   * 
-   * @param context  current wizard context (if the one is available)
-   * @return         start path to use during importing gradle projects
-   */
-  @NotNull
-  public String getProjectPath(@Nullable WizardContext context) {
-    String result = PropertiesComponent.getInstance().getValue(GRADLE_IMPORT_ROOT_KEY, "");
-    File file = new File(result);
-    if (file.exists()) {
-      if (myProjectFile == null) {
-        myProjectFile = file;
-      }
-      return result;
-    }
-    if (context == null) {
-      return "";
-    }
-    return context.getProjectFileDirectory();
+  @Nullable
+  private File getProjectFile() {
+    String path = myConfigurable.getLinkedProjectPath();
+    return path == null ? null : new File(path);
   }
 
   /**
@@ -139,15 +137,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
    * @param path      new directory path
    */
   public void setCurrentProjectPath(@NotNull String path) {
-    File file = new File(path);
-    myProjectFile = file;
-    while (file != null && !file.exists()) {
-      file = file.getParentFile();
-    }
-    if (file == null) {
-      return;
-    }
-    PropertiesComponent.getInstance().setValue(GRADLE_IMPORT_ROOT_KEY, file.getAbsolutePath());
+    myConfigurable.setLinkedGradleProjectPath(path);
   }
 
   /**
@@ -157,17 +147,18 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
    * @throws ConfigurationException   if gradle project is not defined and can't be constructed
    */
   public void ensureProjectIsDefined(@NotNull WizardContext wizardContext) throws ConfigurationException {
-    if (myProjectFile == null) {
+    File projectFile = getProjectFile();
+    if (projectFile == null) {
       throw new ConfigurationException(GradleBundle.message("gradle.import.text.error.project.undefined"));
     }
-    if (myProjectFile.isDirectory()) {
+    if (projectFile.isDirectory()) {
       throw new ConfigurationException(GradleBundle.message("gradle.import.text.error.directory.instead.file"));
     }
     final Ref<String> errorReason = new Ref<String>();
     final Ref<String> errorDetails = new Ref<String>();
     try {
       final Project project = getProject(wizardContext);
-      myGradleProject = GradleUtil.refreshProject(project, myProjectFile.getAbsolutePath(), errorReason, errorDetails, false, true);
+      myGradleProject = GradleUtil.refreshProject(project, projectFile.getAbsolutePath(), errorReason, errorDetails, false, true);
     }
     catch (IllegalArgumentException e) {
       throw new ConfigurationException(e.getMessage(), GradleBundle.message("gradle.import.text.error.cannot.parse.project"));
@@ -180,7 +171,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
       String errorMessage;
       String reason = errorReason.get();
       if (reason == null) {
-        errorMessage = GradleBundle.message("gradle.import.text.error.resolve.generic.without.reason", myProjectFile.getPath());
+        errorMessage = GradleBundle.message("gradle.import.text.error.resolve.generic.without.reason", projectFile.getPath());
       }
       else {
         errorMessage = GradleBundle.message("gradle.import.text.error.resolve.with.reason", reason);

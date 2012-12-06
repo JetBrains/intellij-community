@@ -70,6 +70,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.searches.DefinitionsSearch;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.HintListener;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.usageView.UsageViewShortNameLocation;
@@ -217,7 +218,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
   private static final TextAttributesKey CTRL_CLICKABLE_ATTRIBUTES_KEY =
     TextAttributesKey
-      .createTextAttributesKey("CTRL_CLICKABLE", new TextAttributes(Color.blue, null, Color.blue, EffectType.LINE_UNDERSCORE, 0));
+      .createTextAttributesKey("CTRL_CLICKABLE", new TextAttributes(JBColor.blue, null, JBColor.blue, EffectType.LINE_UNDERSCORE, 0));
 
   @NotNull private final Alarm myDocAlarm;
 

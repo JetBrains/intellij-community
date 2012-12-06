@@ -168,6 +168,16 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
 
   @Nullable
   public GrTypeElement getTypeElementGroovy() {
+    final GrParameterStub stub = getStub();
+    if (stub != null) {
+      final String typeText = stub.getTypeText();
+      if (typeText == null) {
+        return null;
+      }
+
+      return GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(typeText, this);
+    }
+
     return findChildByClass(GrTypeElement.class);
   }
 
@@ -194,6 +204,16 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
     }
 
     return new LocalSearchScope(scope);
+  }
+
+  @NotNull
+  @Override
+  public String getName() {
+    final GrParameterStub stub = getStub();
+    if (stub != null) {
+      return stub.getName();
+    }
+    return super.getName();
   }
 
   @NotNull

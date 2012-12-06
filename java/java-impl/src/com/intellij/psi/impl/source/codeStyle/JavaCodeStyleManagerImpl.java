@@ -39,7 +39,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -146,8 +145,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     final Collection<PsiImportStatementBase> redundant;
     if (JspPsiUtil.isInJspFile(file)) {
       // remove only duplicate imports
-      @SuppressWarnings("unchecked") final TObjectHashingStrategy<PsiImportStatementBase> strategy = TObjectHashingStrategy.IDENTITY;
-      redundant = new THashSet<PsiImportStatementBase>(strategy);
+      redundant = ContainerUtil.newIdentityTroveSet();
       ContainerUtil.addAll(redundant, imports);
       redundant.removeAll(allImports);
       for (PsiImportStatementBase importStatement : imports) {

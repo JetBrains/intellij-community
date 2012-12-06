@@ -945,4 +945,14 @@ class Sub<W extends Window> extends Super<W> {
 }
 ''')
   }
+
+  void testAnonymousBodyOnNewLine() {
+    testHighlighting('''\
+class Foo{}
+print new Foo()
+<error descr="Ambiguous code block">{
+  String toString() {'abc'}
+}</error>
+''')
+  }
 }

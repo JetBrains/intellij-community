@@ -14,14 +14,24 @@
 typedef jint (JNICALL *fun_ptr_t_CreateJavaVM)(JavaVM **pvm, void **env, void *args);
 
 
+@interface NSString (CustomReplacements)
+- (NSString *)replaceAll:(NSString *)pattern to:(NSString *)replacement;
+
+@end
+
 @implementation NSString (CustomReplacements)
 - (NSString *)replaceAll:(NSString *)pattern to:(NSString *)replacement {
     if ([self rangeOfString:pattern].length == 0) return self;
 
-    NSMutableString *answer = [self mutableCopy];
+    NSMutableString *answer = [[self mutableCopy] autorelease];
     [answer replaceOccurrencesOfString:pattern withString:replacement options:0 range:NSMakeRange(0, [self length])];
     return answer;
 }
+@end
+
+@interface NSDictionary (TypedGetters)
+- (NSDictionary *)dictionaryForKey:(id)key;
+- (id)valueForKey:(NSString *)key inDictionary:(NSString *)dictKey defaultObject:(NSString *)defaultValue;
 @end
 
 @implementation NSDictionary (TypedGetters)
@@ -33,7 +43,7 @@ typedef jint (JNICALL *fun_ptr_t_CreateJavaVM)(JavaVM **pvm, void **env, void *a
     return nil;
 }
 
-- (id)valueForKey:(NSString *)key inDictionary:(NSString *)dictKey default: (NSString*) defaultValue {
+- (id)valueForKey:(NSString *)key inDictionary:(NSString *)dictKey defaultObject: (NSString*) defaultValue {
     NSDictionary *dict = [self dictionaryForKey:dictKey];
     if (dict == nil) return nil;
     id answer = [dict valueForKey:key];
@@ -41,10 +51,7 @@ typedef jint (JNICALL *fun_ptr_t_CreateJavaVM)(JavaVM **pvm, void **env, void *a
 }
 @end
 
-@implementation Launcher {
-    int argc;
-    char **argv;
-}
+@implementation Launcher
 
 - (id)initWithArgc:(int)anArgc argv:(char **)anArgv {
     self = [super init];
@@ -58,10 +65,10 @@ typedef jint (JNICALL *fun_ptr_t_CreateJavaVM)(JavaVM **pvm, void **env, void *a
 
 
 void appendJvmBundlesAt(NSString *path, NSMutableArray *sink) {
-    NSError *error;
+    NSError *error = nil;
     NSArray *names = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:path error:&error];
 
-    if (!error) {
+    if (names != nil) {
         for (NSString *name in names) {
             if ([name hasSuffix:@".jdk"] || [name hasSuffix:@".jre"]) {
                 NSBundle *bundle = [NSBundle bundleWithPath:[path stringByAppendingPathComponent:name]];
@@ -97,11 +104,11 @@ NSArray *allVms() {
 }
 
 NSString *jvmVersion(NSBundle *bundle) {
-    return [bundle.infoDictionary valueForKey:@"JVMVersion" inDictionary:@"JavaVM" default: @"0"];
+    return [bundle.infoDictionary valueForKey:@"JVMVersion" inDictionary:@"JavaVM" defaultObject:@"0"];
 }
 
 NSString *requiredJvmVersion() {
-    return [[NSBundle mainBundle].infoDictionary valueForKey:@"JVMVersion" inDictionary:@"Java" default: @"1.7*"];
+    return [[NSBundle mainBundle].infoDictionary valueForKey:@"JVMVersion" inDictionary:@"Java" defaultObject:@"1.7*"];
 }
 
 BOOL satisfies(NSString *vmVersion, NSString *requiredVersion) {
@@ -117,10 +124,12 @@ BOOL satisfies(NSString *vmVersion, NSString *requiredVersion) {
     return [vmVersion hasPrefix:requiredVersion];
 }
 
+NSComparisonResult compareVMVersions(id vm1, id vm2, void *context) {
+    return [jvmVersion(vm2) compare:jvmVersion(vm1) options:NSNumericSearch];
+}
+
 NSBundle *findMatchingVm() {
-    NSArray *vmBundles = [allVms() sortedArrayUsingComparator:^NSComparisonResult(id b1, id b2) {
-        return [jvmVersion(b2) compare:jvmVersion(b1) options:NSNumericSearch];
-    }];
+    NSArray *vmBundles = [allVms() sortedArrayUsingFunction:compareVMVersions context:NULL];
 
     if (isDebugEnabled()) {
         debugLog(@"Found Java Virtual Machines:");
@@ -146,7 +155,7 @@ NSBundle *findMatchingVm() {
 }
 
 CFBundleRef NSBundle2CFBundle(NSBundle *bundle) {
-    CFURLRef bundleURL = (__bridge CFURLRef) bundle.bundleURL;
+    CFURLRef bundleURL = (CFURLRef) ([NSURL fileURLWithPath:bundle.bundlePath]);
     return CFBundleCreate(kCFAllocatorDefault, bundleURL);
 }
 
@@ -211,6 +220,14 @@ NSDictionary *parseProperties() {
     return [PropertyFileReader readFile:getDefaultPropertiesFilePath()];
 }
 
+- (void)fillArgs:(NSMutableArray *)args_array fromProperties:(NSDictionary *)properties {
+    if (properties != nil) {
+        for (id key in properties) {
+            [args_array addObject:[NSString stringWithFormat:@"-D%@=%@", key, [properties objectForKey:key]]];
+        }
+    }
+}
+
 - (JavaVMInitArgs)buildArgsFor:(NSBundle *)jvm {
     NSMutableString *classpathOption = [self buildClasspath:jvm];
 
@@ -222,26 +239,19 @@ NSDictionary *parseProperties() {
     [args_array addObjectsFromArray:[[jvmInfo objectForKey:@"VMOptions"] componentsSeparatedByString:@" "]];
     [args_array addObjectsFromArray:parseVMOptions()];    
 
-    void (^propertySink)(id,id,BOOL *)=^(id key, id obj, BOOL *stop) {
-        [args_array addObject:[NSString stringWithFormat:@"-D%@=%@", key, obj]];
-    };
-
-    NSDictionary *properties = [jvmInfo dictionaryForKey:@"Properties"];
-    if (properties != nil) {
-        [properties enumerateKeysAndObjectsUsingBlock:propertySink];
-    }
-
-    [parseProperties() enumerateKeysAndObjectsUsingBlock:propertySink];
+    [self fillArgs:args_array fromProperties:[jvmInfo dictionaryForKey:@"Properties"]];
+    [self fillArgs:args_array fromProperties:parseProperties()];
 
     JavaVMInitArgs args;
     args.version = JNI_VERSION_1_6;
     args.ignoreUnrecognized = JNI_TRUE;
 
-    args.nOptions = [args_array count];
+    args.nOptions = (jint)[args_array count];
     args.options = calloc((size_t) args.nOptions, sizeof(JavaVMOption));
-    [args_array enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+    for (NSUInteger idx = 0; idx < args.nOptions; idx++) {
+        id obj = [args_array objectAtIndex:idx];
         args.options[idx].optionString = strdup([[self expandMacros:[obj description]] UTF8String]);
-    }];
+    }
     return args;
 }
 
@@ -272,6 +282,8 @@ NSDictionary *parseProperties() {
 }
 
 - (void)launch {
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+
     NSBundle *vm = findMatchingVm();
     if (vm == nil) {
         NSString *old_launcher = [self expandMacros:@"$APP_PACKAGE/Contents/MacOS/idea_appLauncher"];
@@ -281,9 +293,9 @@ NSDictionary *parseProperties() {
         exit(-1);
     }
 
-    NSError *error;
+    NSError *error = nil;
     BOOL ok = [vm loadAndReturnError:&error];
-    if (!ok || error != nil) {
+    if (!ok) {
         NSLog(@"Cannot load JVM bundle: %@", error);
         exit(-1);
     }
@@ -368,6 +380,8 @@ NSDictionary *parseProperties() {
 
     (*jvm)->DetachCurrentThread(jvm);
     (*jvm)->DestroyJavaVM(jvm);
+
+    [pool release];
 }
 
 

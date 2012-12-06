@@ -197,6 +197,21 @@ public final class UpdateChecker {
         toUpdate.put(installedPlugin.getPluginId().getIdString(), installedPlugin);
       }
     }
+
+    final File installedTxt = new File(PathManager.getConfigPath(), PluginManager.INSTALLED_TXT);
+    if (installedTxt.isFile()) {
+      try {
+        final String oldInstalledPlugins = FileUtil.loadFile(installedTxt);
+        for (String pluginId : oldInstalledPlugins.trim().split("\n")) {
+          if (!toUpdate.containsKey(pluginId)) toUpdate.put(pluginId, null);
+        }
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+      installedTxt.deleteOnExit();
+    }
+
     final PluginManagerUISettings updateSettings = PluginManagerUISettings.getInstance();
     updateSettings.myOutdatedPlugins.clear();
     if (!toUpdate.isEmpty()) {
@@ -204,16 +219,14 @@ public final class UpdateChecker {
         final ArrayList<IdeaPluginDescriptor> process = RepositoryHelper.process(indicator);
         for (IdeaPluginDescriptor loadedPlugin : process) {
           final String idString = loadedPlugin.getPluginId().getIdString();
+          if (!toUpdate.containsKey(idString)) continue;
           final IdeaPluginDescriptor installedPlugin = toUpdate.get(idString);
-          if (installedPlugin != null) {
-            if (StringUtil.compareVersionNumbers(loadedPlugin.getVersion(), installedPlugin.getVersion()) > 0) {
-              updateSettings.myOutdatedPlugins.add(idString);
-              if (installedPlugin.isEnabled()) {
-                final PluginDownloader downloader = PluginDownloader.createDownloader(loadedPlugin);
-                if (downloader.prepareToInstall()) {
-                  downloaded.add(downloader);
-                }
-              }
+          if (installedPlugin == null) {
+            prepareToInstall(downloaded, loadedPlugin);
+          } else if (StringUtil.compareVersionNumbers(loadedPlugin.getVersion(), installedPlugin.getVersion()) > 0) {
+            updateSettings.myOutdatedPlugins.add(idString);
+            if (installedPlugin.isEnabled()) {
+              prepareToInstall(downloaded, loadedPlugin);
             }
           }
         }
@@ -230,6 +243,13 @@ public final class UpdateChecker {
       showErrorMessage(showErrorDialog, IdeBundle.message("connection.failed.message", StringUtil.join(failed, ",")));
     }
     return downloaded.isEmpty() ? null : downloaded;
+  }
+
+  private static void prepareToInstall(List<PluginDownloader> downloaded, IdeaPluginDescriptor loadedPlugin) throws IOException {
+    final PluginDownloader downloader = PluginDownloader.createDownloader(loadedPlugin);
+    if (downloader.prepareToInstall()) {
+      downloaded.add(downloader);
+    }
   }
 
   private static void showErrorMessage(boolean showErrorDialog, final String failedMessage) {
@@ -739,20 +759,9 @@ public final class UpdateChecker {
   }
 
   public static void saveDisabledToUpdatePlugins() {
+    final File plugins = new File(PathManager.getConfigPath(), DISABLED_UPDATE);
     try {
-      File plugins = new File(PathManager.getConfigPath(), DISABLED_UPDATE);
-      FileUtil.ensureCanCreateFile(plugins);
-
-      PrintWriter printWriter = new PrintWriter(new BufferedWriter(new FileWriter(plugins)));
-      try {
-        for (String id : getDisabledToUpdatePlugins()) {
-          printWriter.println(id);
-        }
-        printWriter.flush();
-      }
-      finally {
-        printWriter.close();
-      }
+      PluginManager.savePluginsList(getDisabledToUpdatePlugins(), false, plugins);
     }
     catch (IOException e) {
       LOG.error(e);

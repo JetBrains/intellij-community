@@ -4502,7 +4502,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       ScrollBarUI barUI = getUI();
       Insets insets = getInsets();
       if (barUI instanceof ButtonlessScrollBarUI) {
-        return insets.top + ((ButtonlessScrollBarUI)barUI).getDecrButtonHeight();
+        return insets.top + ((ButtonlessScrollBarUI)barUI).getDecrementButtonHeight();
       }
       else if (barUI instanceof BasicScrollBarUI) {
         try {
@@ -4529,7 +4529,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       ScrollBarUI barUI = getUI();
       Insets insets = getInsets();
       if (barUI instanceof ButtonlessScrollBarUI) {
-        return insets.top + ((ButtonlessScrollBarUI)barUI).getIncrButtonHeight();
+        return insets.top + ((ButtonlessScrollBarUI)barUI).getIncrementButtonHeight();
       }
       else if (barUI instanceof BasicScrollBarUI) {
         try {

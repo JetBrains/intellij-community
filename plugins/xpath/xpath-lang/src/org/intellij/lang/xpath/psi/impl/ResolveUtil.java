@@ -26,20 +26,16 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.xpath.xslt.impl.XsltIncludeIndex;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class ResolveUtil {
 
   @SuppressWarnings({"unchecked"})
-    private final THashSet<PsiElement> myHistory = new THashSet<PsiElement>(TObjectHashingStrategy.IDENTITY);
+  private final Set<PsiElement> myHistory = ContainerUtil.<PsiElement>newIdentityTroveSet();
 
     private ResolveUtil() {
     }

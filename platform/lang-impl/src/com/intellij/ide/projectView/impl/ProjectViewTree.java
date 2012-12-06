@@ -117,7 +117,7 @@ public abstract class ProjectViewTree extends JBTreeWithHintProvider {
   }
 
   @Nullable
-  public static Color getColorForObject(Object object, Project project, @NotNull Function<Object, PsiElement> converter) {
+  public static <T> Color getColorForObject(T object, Project project, @NotNull Function<T, PsiElement> converter) {
     Color color = null;
     final PsiElement psi = converter.fun(object);
     if (psi != null) {

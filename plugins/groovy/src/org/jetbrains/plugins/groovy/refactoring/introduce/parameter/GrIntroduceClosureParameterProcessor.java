@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
@@ -432,19 +433,13 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
       GroovyIntroduceParameterUtil.removeParametersFromCall(actualArgs, settings.parametersToRemove());
     }
 
-    if (argList.getAllArguments().length == 0 && hasClosureArgs(argList)) {
+    if (argList.getAllArguments().length == 0 && PsiImplUtil.hasClosureArguments(callExpression)) {
       final GrArgumentList emptyArgList = ((GrMethodCallExpression)factory.createExpressionFromText("foo{}")).getArgumentList();
       LOG.assertTrue(emptyArgList != null);
       argList.replace(emptyArgList);
     }
 
   }
-
-  private static boolean hasClosureArgs(GrArgumentList list) {
-    final PsiElement parent = list.getParent();
-    return parent instanceof GrMethodCallExpression && ((GrMethodCallExpression)parent).getClosureArguments().length > 0;
-  }
-
 
   @Nullable
   private static GrExpression getAnchorForArgument(GrExpression[] oldArgs, boolean isVarArg, PsiParameterList parameterList) {

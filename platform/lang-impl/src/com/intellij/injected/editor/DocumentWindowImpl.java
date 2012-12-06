@@ -165,6 +165,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   @Override
   public int getLineEndOffset(int line) {
     LOG.assertTrue(line >= 0, line);
+    if (line == getLineCount() - 1) return getTextLength(); // end >= start assertion fix for last line
     int startOffsetOfNextLine = getLineStartOffset(line + 1);
     return startOffsetOfNextLine == 0 || getText().charAt(startOffsetOfNextLine - 1) != '\n' ? startOffsetOfNextLine : startOffsetOfNextLine - 1;
   }

@@ -14,7 +14,7 @@ Groovy script
       <empty list>
     Open block
       PsiElement({)('{')
-      PsiWhiteSpace('\n  ')
+      PsiWhiteSpace('\n    ')
       Variable definitions
         Modifiers
           <empty list>
@@ -24,7 +24,7 @@ Groovy script
         PsiWhiteSpace(' ')
         Variable
           PsiElement(identifier)('home')
-      PsiElement(new line)('\n  ')
+      PsiElement(new line)('\n    ')
       Method call
         Reference expression
           Reference expression
@@ -36,7 +36,7 @@ Groovy script
           <empty list>
         Closable block
           PsiElement({)('{')
-          PsiWhiteSpace('\n    ')
+          PsiWhiteSpace('\n        ')
           Parameter list
             <empty list>
           Call expression
@@ -46,7 +46,7 @@ Groovy script
             Command arguments
               Reference expression
                 PsiElement(identifier)('it')
-          PsiElement(new line)('\n  ')
+          PsiElement(new line)('\n    ')
           PsiElement(})('}')
       PsiElement(new line)('\n\n')
       PsiElement(})('}')
@@ -70,7 +70,7 @@ Groovy script
       <empty list>
     Open block
       PsiElement({)('{')
-      PsiWhiteSpace('\n  ')
+      PsiWhiteSpace('\n    ')
       Reference expression
         Call expression
           Parenthesized expression
@@ -83,7 +83,7 @@ Groovy script
           Command arguments
             Reference expression
               PsiElement(identifier)('home')
-        PsiWhiteSpace('\n  ')
+        PsiWhiteSpace('\n    ')
         PsiElement(identifier)('simplePlugins')
       PsiErrorElement:';', '}' or new line expected
         <empty list>
@@ -96,7 +96,7 @@ Groovy script
           <empty list>
         Closable block
           PsiElement({)('{')
-          PsiWhiteSpace('\n    ')
+          PsiWhiteSpace('\n        ')
           Parameter list
             <empty list>
           Call expression
@@ -106,7 +106,7 @@ Groovy script
             Command arguments
               Reference expression
                 PsiElement(identifier)('it')
-          PsiElement(new line)('\n  ')
+          PsiElement(new line)('\n    ')
           PsiElement(})('}')
       PsiWhiteSpace('\n\n')
       PsiElement(})('}')

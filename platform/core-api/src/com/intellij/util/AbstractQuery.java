@@ -59,8 +59,9 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
     assert !myIsProcessing : "Operation is not allowed while query is being processed";
   }
 
+  @NotNull
   @Override
-  public Result[] toArray(Result[] a) {
+  public Result[] toArray(@NotNull Result[] a) {
     assertNotProcessing();
 
     final Collection<Result> all = findAll();
@@ -80,6 +81,7 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
     }
   }
 
+  @NotNull
   @Override
   public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<Result> consumer) {
     assertNotProcessing();

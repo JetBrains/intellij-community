@@ -525,13 +525,6 @@ public class ListUtils {
 
   public void testLastExpressionInFor() throws Throwable { doTest(); }
 
-  public void testUndoCommonPrefixOnHide() throws Throwable {//actually don't undo
-    configureByFile(getTestName(false) + ".java");
-    checkResult()
-    LookupManager.getInstance(getProject()).hideActiveLookup();
-    checkResult()
-  }
-
   public void testOnlyKeywordsInsideSwitch() throws Throwable {
     configureByFile(getTestName(false) + ".java");
     assertStringItems("case", "default");
@@ -575,7 +568,7 @@ public class ListUtils {
     checkResult()
   }
 
-  public void testDefaultAnnoParam() throws Throwable { doTest(); }
+  public void testDefaultAnnoParam() throws Throwable { doTest('\n'); }
 
   public void testSpaceAfterLookupString() throws Throwable {
     configureByFile(getTestName(false) + ".java");
@@ -597,14 +590,6 @@ public class ListUtils {
   public void testTwoSpacesInParensWithParams() throws Throwable {
     codeStyleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true;
     doTest();
-  }
-
-  public void testFillCommonPrefixOnSecondCompletion() throws Throwable {
-    configureByFile(getTestName(false) + ".java");
-    type('ge');
-    complete();
-    checkResult()
-    assertStringItems("getBar", "getFoo", "getClass");
   }
 
   public void testQualifierAsPackage() throws Throwable {
@@ -754,13 +739,6 @@ public class ListUtils {
     assertStringItems("fofoo", "fofoo");
   }
 
-  public void testDontCancelPrefixOnTyping() throws Throwable {
-    configureByFile(getTestName(false) + ".java");
-    type('~');
-    assertNull(getLookup());
-    checkResult()
-  }
-
   public void testAnnotationQualifiedName() throws Throwable {
     doTest();
   }
@@ -779,7 +757,7 @@ public class ListUtils {
     type '\n'
     checkResult()
   }
-  public void testClassNameWithInner2() throws Throwable { doTest() }
+  public void testClassNameWithInner2() throws Throwable { doTest('\n') }
 
   public void testClassNameWithInstanceInner() throws Throwable { doTest('\n') }
 
@@ -1124,12 +1102,6 @@ public class ListUtils {
   public void testPrimitiveArrayOnlyClass() throws Exception { doAntiTest() }
   public void testPrimitiveArrayInAnno() throws Exception { doTest() }
 
-  public void testSaxParserCommonPrefix() throws Exception {
-    myFixture.addClass("public class SAXParser {}")
-    myFixture.addClass("public class SAXParseException {}")
-    doTest()
-  }
-
   public void testNewClassAngleBracket() throws Exception { doTest('<') }
   public void testNewClassAngleBracketExpected() throws Exception { doTest('<') }
   public void testNewClassSquareBracket() throws Exception { doTest('[') }
@@ -1234,7 +1206,7 @@ public class ListUtils {
     PsiDocumentManager.getInstance(project).commitAllDocuments()
     type '\b'
     PsiDocumentManager.getInstance(project).commitAllDocuments()
-    myFixture.completeBasic()
+    myFixture.complete(CompletionType.BASIC, 2)
     assert lookup
     type '.'
     checkResult()

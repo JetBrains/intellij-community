@@ -57,7 +57,7 @@ public class TitlePanel extends CaptionPanel {
   public void setActive(final boolean active) {
     super.setActive(active);
     myLabel.setIcon(active ? myRegular : myInactive);
-    final Color foreground = UIUtil.isUnderDarcula() ? Gray._0 : UIUtil.getLabelForeground();
+    final Color foreground = UIUtil.getLabelForeground();
     myLabel.setForeground(active ? foreground : Color.gray);
   }
 

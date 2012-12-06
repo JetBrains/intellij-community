@@ -10,8 +10,7 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.javaee.ExternalResourceManagerImpl;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiReference;
@@ -59,22 +58,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
       return;
     }
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        manager.addResource(url, location);
-      }
-    });
-
-    disposeOnTearDown(new Disposable() {
-      @Override
-      public void dispose() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            manager.removeResource(url);
-          }
-        });
-      }
-    });
+    ExternalResourceManagerImpl.addTestResource(url, location, myTestRootDisposable);
   }
 
   @Override
@@ -323,12 +307,15 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     addResource(url,location);
 
     configureByFile("16.xml");
+    assertNullOrEmpty(myFixture.getLookupElementStrings());
     checkResultByFile("16_after.xml");
 
     configureByFile("17.xml");
+    assertNullOrEmpty(myFixture.getLookupElementStrings());
     checkResultByFile("17_after.xml");
 
     configureByFile("31.xml");
+    assertNullOrEmpty(myFixture.getLookupElementStrings());
     checkResultByFile("31_after.xml");
   }
 

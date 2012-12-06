@@ -53,6 +53,6 @@ public class ModuleImportProvider extends ProjectImportProvider {
   @Nullable
   @Override
   public String getFileSample() {
-    return "*.iml";
+    return "Intellij IDEA module file (*.iml)";
   }
 }

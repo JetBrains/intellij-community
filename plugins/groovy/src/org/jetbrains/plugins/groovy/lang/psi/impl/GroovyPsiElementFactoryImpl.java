@@ -87,7 +87,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @NotNull
   public PsiElement createReferenceNameFromText(String refName) {
-    PsiFile file = createGroovyFile("a." + refName);
+    PsiFile file = createGroovyFileChecked("a." + refName);
     GrTopStatement statement = ((GroovyFileBase) file).getTopStatements()[0];
     if (!(statement instanceof GrReferenceExpression)) {
       throw new IncorrectOperationException("Incorrect reference name: " + refName);
@@ -106,7 +106,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   public GrDocMemberReference createDocMemberReferenceFromText(String className, String text) {
-    PsiFile file = createGroovyFile("/** @see " + className + "#" + text + " */");
+    PsiFile file = createGroovyFileChecked("/** @see " + className + "#" + text + " */");
     PsiElement element = file.getFirstChild();
     assert element instanceof GrDocComment;
     GrDocTag tag = PsiTreeUtil.getChildOfType(element, GrDocTag.class);
@@ -115,7 +115,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   public GrDocReferenceElement createDocReferenceElementFromFQN(String qName) {
-    PsiFile file = createGroovyFile("/** @see " + qName + " */");
+    PsiFile file = createGroovyFileChecked("/** @see " + qName + " */");
     PsiElement element = file.getFirstChild();
     assert element instanceof GrDocComment;
     GrDocTag tag = PsiTreeUtil.getChildOfType(element, GrDocTag.class);
@@ -124,20 +124,20 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   public GrCodeReferenceElement createReferenceElementFromText(String refName, final PsiElement context) {
-    PsiFile file = createGroovyFile("(" + refName + " " + ")foo", false, context);
-    GrTypeElement typeElement = ((GrTypeCastExpression) ((GroovyFileBase) file).getTopStatements()[0]).getCastTypeElement();
+    GroovyFile file = createGroovyFileChecked("(" + refName + ")foo", false, context);
+    GrTypeElement typeElement = ((GrTypeCastExpression) file.getTopStatements()[0]).getCastTypeElement();
     return ((GrClassTypeElement) typeElement).getReferenceElement();
   }
 
   public GrReferenceExpression createReferenceExpressionFromText(String idText) {
-    PsiFile file = createGroovyFile(idText);
+    PsiFile file = createGroovyFileChecked(idText);
     final GrTopStatement[] statements = ((GroovyFileBase)file).getTopStatements();
     if (!(statements.length == 1 && statements[0] instanceof GrReferenceExpression)) throw new IncorrectOperationException(idText);
     return (GrReferenceExpression) statements[0];
   }
 
   public GrReferenceExpression createReferenceExpressionFromText(String idText, PsiElement context) {
-    GroovyFile file = createGroovyFile(idText, false, context);
+    GroovyFile file = createGroovyFileChecked(idText, false, context);
     GrTopStatement[] statements = file.getTopStatements();
 
     if (statements.length != 1) throw new IncorrectOperationException("refText: " + idText);
@@ -160,7 +160,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @NotNull
   public GrExpression createExpressionFromText(@NotNull String text, PsiElement context) {
-    GroovyFileImpl file = (GroovyFileImpl)createGroovyFile(text, false, context);
+    GroovyFile file = createGroovyFileChecked(text, false, context);
     GrTopStatement[] topStatements = file.getTopStatements();
     if (topStatements.length == 0 || !(topStatements[0] instanceof GrExpression)) {
       throw new IncorrectOperationException("incorrect expression = '" + text + "'");
@@ -248,9 +248,9 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       text.append(" = ").append(initializer.getText());
     }
 
-    GrTopStatement[] topStatements = createGroovyFile(text).getTopStatements();
+    GrTopStatement[] topStatements = createGroovyFileChecked(text).getTopStatements();
     if (topStatements.length == 0 || !(topStatements[0] instanceof GrVariableDeclaration)) {
-      topStatements = createGroovyFile("def " + text).getTopStatements();
+      topStatements = createGroovyFileChecked("def " + text).getTopStatements();
     }
     if (topStatements.length == 0 || !(topStatements[0] instanceof GrVariableDeclaration)) {
       throw new RuntimeException("Invalid arguments, text = " + text);
@@ -264,7 +264,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @Override
   public GrEnumConstant createEnumConstantFromText(String text) {
-    GroovyFile file = createGroovyFile("enum E{" + text + "}");
+    GroovyFile file = createGroovyFileChecked("enum E{" + text + "}");
     final GrEnumTypeDefinition enumClass = (GrEnumTypeDefinition)file.getClasses()[0];
     return enumClass.getEnumConstants()[0];
   }
@@ -275,7 +275,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
                                                       @Nullable PsiType type) {
     final String varDeclaration = createVariableDeclaration(modifiers, initializer, type, identifier).getText();
 
-    final GroovyFileBase file = createGroovyFile("class A { " + varDeclaration + "}");
+    final GroovyFileBase file = createGroovyFileChecked("class A { " + varDeclaration + "}");
     final GrTypeDefinitionBody body = file.getTypeDefinitions()[0].getBody();
     LOG.assertTrue(body.getMemberDeclarations().length == 1 && body.getMemberDeclarations()[0] instanceof GrVariableDeclaration,
                    "ident = <" + identifier + "> initializer = " + (initializer == null ? "_null_" : ("<" + initializer.getText()) + ">"));
@@ -284,7 +284,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @Override
   public GrVariableDeclaration createFieldDeclarationFromText(String text) {
-    final GroovyFile file = createGroovyFile("class X{\n" + text + "\n}");
+    final GroovyFile file = createGroovyFileChecked("class X{\n" + text + "\n}");
     final PsiClass psiClass = file.getClasses()[0];
     return (GrVariableDeclaration)psiClass.getFields()[0].getParent();
   }
@@ -311,14 +311,14 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @Nullable
   public GrTopStatement createTopElementFromText(String text) {
-    PsiFile dummyFile = createDummyFile(text, false);
-    final GrTopStatement[] topStatements = ((GroovyFileBase)dummyFile).getTopStatements();
+    GroovyFile dummyFile = createGroovyFileChecked(text);
+    final GrTopStatement[] topStatements = dummyFile.getTopStatements();
     LOG.assertTrue(topStatements.length == 1);
     return topStatements[0];
   }
 
   public GrClosableBlock createClosureFromText(String closureText, PsiElement context) throws IncorrectOperationException {
-    GroovyFile psiFile = createGroovyFile("def __hdsjfghk_sdhjfshglk_foo  = " + closureText, false, context);
+    GroovyFile psiFile = createGroovyFileChecked("def __hdsjfghk_sdhjfshglk_foo  = " + closureText, false, context);
     final GrStatement st = psiFile.getStatements()[0];
     LOG.assertTrue(st instanceof GrVariableDeclaration, closureText);
     final GrExpression initializer = ((GrVariableDeclaration)st).getVariables()[0].getInitializerGroovy();
@@ -331,10 +331,6 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     final long stamp = System.currentTimeMillis();
     final PsiFileFactory factory = PsiFileFactory.getInstance(myProject);
     return (GroovyFileImpl) factory.createFileFromText(fileName, GroovyFileType.GROOVY_FILE_TYPE, text, stamp, physical);
-  }
-
-  private GroovyFileImpl createDummyFile(CharSequence s) {
-    return createDummyFile(s, false);
   }
 
   public GrParameter createParameter(String name,
@@ -355,8 +351,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
         fileText.append(" = ").append(initializer);
       }
       fileText.append("){}");
-      GroovyFileImpl groovyFile = createDummyFile(fileText);
-      groovyFile.setContext(context);
+      GroovyFile groovyFile = createGroovyFileChecked(fileText, false, context);
 
       ASTNode node = groovyFile.getFirstChild().getNode();
       return ((GrMethod)node.getPsi()).getParameters()[0];
@@ -368,7 +363,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   public GrCodeReferenceElement createTypeOrPackageReference(String qName) {
     try {
-      final GroovyFileBase file = createDummyFile("def i = new " + qName + "()");
+      final GroovyFileBase file = createGroovyFileChecked("def i = new " + qName + "()");
       final GrStatement[] statements = file.getStatements();
       final GrVariableDeclaration variableDeclaration = (GrVariableDeclaration)statements[0];
       final GrVariable var = variableDeclaration.getVariables()[0];
@@ -381,7 +376,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   public GrTypeDefinition createTypeDefinition(String text) throws IncorrectOperationException {
-    final GroovyFileBase file = createDummyFile(text);
+    final GroovyFileBase file = createGroovyFileChecked(text);
     final GrTypeDefinition[] classes = file.getTypeDefinitions();
     if (classes.length != 1) throw new IncorrectOperationException("Incorrect type definition text");
     return classes[0];
@@ -389,17 +384,17 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @NotNull
   public GrTypeElement createTypeElement(String typeText, final PsiElement context) throws IncorrectOperationException {
-    final GroovyFileBase file = createGroovyFile("def " + typeText + " someVar", false, context);
+    final GroovyFile file = createGroovyFileChecked("def " + typeText + " someVar", false, context);
 
     GrTopStatement[] topStatements = file.getTopStatements();
 
-    if (topStatements == null || topStatements.length == 0) throw new IncorrectOperationException("");
+    if (topStatements == null || topStatements.length == 0) throw new IncorrectOperationException("can't create type element from:" + typeText);
     GrTopStatement statement = topStatements[0];
 
-    if (!(statement instanceof GrVariableDeclaration)) throw new IncorrectOperationException("");
+    if (!(statement instanceof GrVariableDeclaration)) throw new IncorrectOperationException("can't create type element from:" + typeText);
     GrVariableDeclaration decl = (GrVariableDeclaration) statement;
     final GrTypeElement element = decl.getTypeElementGroovy();
-    if (element == null) throw new IncorrectOperationException(typeText);
+    if (element == null) throw new IncorrectOperationException("can't create type element from:" + typeText);
 
     return element;
   }
@@ -422,16 +417,16 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   public PsiElement createStringLiteralForReference(String text) {
-    return ((GrReferenceExpression) createDummyFile("a.'" + text + "'").getTopStatements()[0]).getReferenceNameElement();
+    return ((GrReferenceExpression) createGroovyFileChecked("a.'" + text + "'").getTopStatements()[0]).getReferenceNameElement();
   }
 
   public PsiElement createModifierFromText(String name) {
-    final GroovyFileBase file = createDummyFile(name + "\"foo\"() {}");
+    final GroovyFileBase file = createGroovyFileChecked(name + "\"foo\"() {}");
     return file.getTopLevelDefinitions()[0].getFirstChild().getFirstChild();
   }
 
   public GrCodeBlock createMethodBodyFromText(String text) {
-    final GroovyFileBase file = createDummyFile("def foo () {" + text + "}");
+    final GroovyFileBase file = createGroovyFileChecked("def foo () {" + text + "}");
     final GrMethod method = (GrMethod) file.getTopLevelDefinitions()[0];
     return method.getBlock();
   }
@@ -444,13 +439,13 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       classText = "class A { " + typeText + " " + name + "}";
     }
 
-    GroovyFileBase file = createGroovyFile(classText);
+    GroovyFileBase file = createGroovyFileChecked(classText);
     final GrTypeDefinitionBody body = file.getTypeDefinitions()[0].getBody();
     return (GrVariableDeclaration) body.getMemberDeclarations()[0];
   }
 
   public GrReferenceElement createPackageReferenceElementFromText(String newPackageName) {
-    return ((GrPackageDefinition) createDummyFile("package " + newPackageName).getTopStatements()[0]).getPackageReference();
+    return ((GrPackageDefinition) createGroovyFileChecked("package " + newPackageName).getTopStatements()[0]).getPackageReference();
   }
 
   public PsiElement createDotToken(String newDot) {
@@ -467,8 +462,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   public GrMethod createConstructorFromText(String constructorName, CharSequence constructorText, @Nullable PsiElement context) {
-    GroovyFileImpl file = createDummyFile("class " + constructorName + "{" + constructorText + "}");
-    file.setContext(context);
+    GroovyFile file = createGroovyFileChecked("class " + constructorName + "{" + constructorText + "}", false, context);
     GrTopLevelDefinition definition = file.getTopLevelDefinitions()[0];
 
     if (!( definition != null && definition instanceof GrClassDefinition)) {
@@ -483,7 +477,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @Override
   public GrLabel createLabel(@NotNull String name) {
-    GroovyFileBase file = createDummyFile(name + ": println()");
+    GroovyFileBase file = createGroovyFileChecked(name + ": println()");
     GrTopStatement definition = file.getTopStatements()[0];
     assert definition instanceof GrLabeledStatement;
     return ((GrLabeledStatement)definition).getLabel();
@@ -491,11 +485,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @NotNull
   public GrMethod createMethodFromText(@NotNull String methodText, @Nullable PsiElement context) {
-    GroovyFileImpl file = createDummyFile(methodText);
-    if (context != null) {
-      file.setContext(context);
-    }
-    if (ErrorUtil.containsError(file)) throw new IncorrectOperationException("Can't create method from text: " + file.getText());
+    GroovyFile file = createGroovyFileChecked(methodText, false, context);
 
     GrTopStatement[] definitions = file.getTopStatements();
     if (definitions.length != 1) {
@@ -551,10 +541,22 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return createAnnotationFromText(annoText, null);
   }
 
-  public GroovyFile createGroovyFile(CharSequence idText) {
-    return createGroovyFile(idText, false, null);
+  private GroovyFile createGroovyFileChecked(CharSequence idText) {
+    return createGroovyFileChecked(idText, false, null);
   }
 
+  private GroovyFile createGroovyFileChecked(@NotNull CharSequence idText, boolean isPhysical, @Nullable PsiElement context) {
+    final GroovyFileImpl file = createDummyFile(idText, isPhysical);
+    if (ErrorUtil.containsError(file)) {
+      throw new IncorrectOperationException("cannot create file from text: " + idText);
+    }
+    file.setContext(context);
+    return file;
+  }
+
+  /**
+   * use createGroovyFileChecked() inside GroovyPsiElementFactoryImpl instead of this method
+   */
   public GroovyFile createGroovyFile(CharSequence idText, boolean isPhysical, @Nullable PsiElement context) {
     GroovyFileImpl file = createDummyFile(idText, isPhysical);
     file.setContext(context);
@@ -579,7 +581,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @NotNull
   public PsiElement createLineTerminator(String text) {
-    PsiFile dummyFile = createDummyFile(text, false);
+    PsiFile dummyFile = createGroovyFileChecked(text);
     PsiElement child = dummyFile.getFirstChild();
     assert child != null;
     return child;
@@ -595,13 +597,13 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       text.delete(text.length() - 2, text.length());
     }
     text.append(')');
-    PsiFile file = createGroovyFile(text);
+    PsiFile file = createGroovyFileChecked(text);
     assert file.getChildren()[0] != null && (file.getChildren()[0] instanceof GrMethodCallExpression);
     return (((GrMethodCallExpression) file.getChildren()[0])).getArgumentList();
   }
 
   public GrNamedArgument createNamedArgument(@NotNull final String name, final GrExpression expression) {
-    PsiFile file = createGroovyFile("foo (" + name + ":" + expression.getText() + ")");
+    PsiFile file = createGroovyFileChecked("foo (" + name + ":" + expression.getText() + ")");
     assert file.getChildren()[0] != null;
     GrCall call = (GrCall)file.getChildren()[0];
     return call.getArgumentList().getNamedArguments()[0];
@@ -613,7 +615,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @Override
   public GrStatement createStatementFromText(CharSequence text, @Nullable PsiElement context) {
-    GroovyFile file = createGroovyFile(text, false, context);
+    GroovyFile file = createGroovyFileChecked(text, false, context);
     GrTopStatement[] statements = file.getTopStatements();
     if (statements.length != 1) {
       throw new IncorrectOperationException("count = " + statements.length + ", " + text);
@@ -631,7 +633,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       text.append(statement.getText()).append("\n");
     }
     text.append("}");
-    PsiFile file = createGroovyFile(text);
+    PsiFile file = createGroovyFileChecked(text);
     LOG.assertTrue(file.getChildren()[0] != null && (file.getChildren()[0] instanceof GrWhileStatement), text);
     return (GrBlockStatement) ((GrWhileStatement) file.getChildren()[0]).getBody();
   }
@@ -643,7 +645,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     final GrCommandArgumentList argumentList = callExpr.getArgumentList();
     if (argumentList != null) text.append(argumentList.getText());
     text.append(")");
-    PsiFile file = createGroovyFile(text);
+    PsiFile file = createGroovyFileChecked(text);
     assert file.getChildren()[0] != null && (file.getChildren()[0] instanceof GrMethodCallExpression);
     return ((GrMethodCallExpression)file.getChildren()[0]);
   }
@@ -660,7 +662,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @Override
   public GrCodeReferenceElement createCodeReferenceElementFromText(String text) {
-    GroovyFile file = createGroovyFile("class X extends " + text + "{}");
+    GroovyFile file = createGroovyFileChecked("class X extends " + text + "{}");
     PsiClass[] classes = file.getClasses();
     if (classes.length != 1) throw new IncorrectOperationException("cannot create code reference element for class" + text);
     GrExtendsClause extendsClause = ((GrTypeDefinition)classes[0]).getExtendsClause();
@@ -683,8 +685,8 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   @Override
-  public GrBlockStatement createBlockStatementFromText(String text, PsiElement context) {
-    GroovyFileImpl file = createDummyFile("if()" + text);
+  public GrBlockStatement createBlockStatementFromText(String text, @Nullable PsiElement context) {
+    GroovyFile file = createGroovyFileChecked("if(true)" + text, false, context);
     GrStatement[] statements = file.getStatements();
     LOG.assertTrue(statements.length == 1 && statements[0] instanceof GrIfStatement, text);
 
@@ -725,12 +727,12 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       builder.append(" as ").append(alias);
     }
 
-    PsiFile dummyFile = createDummyFile(builder, false);
+    PsiFile dummyFile = createGroovyFileChecked(builder);
     return ((GrImportStatement)dummyFile.getFirstChild());
   }
 
   public GrImportStatement createImportStatementFromText(@NotNull String text) {
-    PsiFile dummyFile = createDummyFile(text, false);
+    PsiFile dummyFile = createGroovyFileChecked(text);
     return ((GrImportStatement) dummyFile.getFirstChild());
   }
 
@@ -807,7 +809,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   public GrDocComment createDocCommentFromText(String text) {
-    return (GrDocComment)createGroovyFile(text).getFirstChild();
+    return (GrDocComment)createGroovyFileChecked(text).getFirstChild();
   }
 
   @Override
@@ -823,7 +825,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @Override
   public GrConstructorInvocation createConstructorInvocation(String text, @Nullable PsiElement context) {
-    GroovyFile file = createGroovyFile("class Foo{ def Foo(){" + text + "}}", false, context);
+    GroovyFile file = createGroovyFileChecked("class Foo{ def Foo(){" + text + "}}", false, context);
     return PsiImplUtil.getChainingConstructorInvocation((GrMethod)file.getClasses()[0].getConstructors()[0]);
   }
 

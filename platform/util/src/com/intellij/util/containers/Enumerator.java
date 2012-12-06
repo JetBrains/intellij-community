@@ -29,8 +29,8 @@ public class Enumerator<T> {
   private final TObjectIntHashMap<T> myNumbers;
   private int myNextNumber = 1;
 
-  public Enumerator(int expectNumber, TObjectHashingStrategy strategy) {
-    myNumbers = new TObjectIntHashMap<T>(expectNumber, (TObjectHashingStrategy<T>) strategy);
+  public Enumerator(int expectNumber, TObjectHashingStrategy<T> strategy) {
+    myNumbers = new TObjectIntHashMap<T>(expectNumber, strategy);
   }
 
   public void clear() {

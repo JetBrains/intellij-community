@@ -238,29 +238,32 @@ public class RenderUtil {
                                                  @NotNull List<FixableIssueMessage> warnMessages,
                                                  @NotNull Map<String, Throwable> brokenClasses) {
     if (brokenClasses.size() > 0) {
+      final List<Throwable> throwables = new ArrayList<Throwable>();
+      final List<String> brokenClassNames = new ArrayList<String>();
 
-      if (brokenClasses.size() > 1) {
-        final StringBuilder builder = new StringBuilder();
-        builder.append("Unable to initialize:\n");
-
-        for (Map.Entry<String, Throwable> entry : brokenClasses.entrySet()) {
-          builder.append("&nbsp; &nbsp; &nbsp; &nbsp;").append(entry.getKey()).append('\n');
-        }
-        removeLastNewLineChar(builder);
-        // todo: show stack traces
-        warnMessages.add(new FixableIssueMessage(builder.toString()));
+      for (Map.Entry<String, Throwable> entry : brokenClasses.entrySet()) {
+        brokenClassNames.add(entry.getKey());
+        throwables.add(entry.getValue());
       }
-      else {
-        final Map.Entry<String, Throwable> entry = brokenClasses.entrySet().iterator().next();
-        @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-        final Throwable t = entry.getValue();
-        warnMessages.add(new FixableIssueMessage("Unable to initialize " + entry.getKey() + ' ', "Details", "", new Runnable() {
+      final Throwable[] throwableArray = throwables.toArray(new Throwable[throwables.size()]);
+
+      final StringBuilder builder = new StringBuilder();
+      builder.append("Unable to initialize:\n");
+
+      for (String className : brokenClassNames) {
+        builder.append("&nbsp; &nbsp; &nbsp; &nbsp;").append(className).append('\n');
+      }
+      removeLastNewLineChar(builder);
+      builder.append('\n');
+      final FixableIssueMessage issue = new FixableIssueMessage(builder.toString(), Collections.singletonList(
+        Pair.<String, Runnable>create("Details", new Runnable() {
           @Override
           public void run() {
-            AndroidUtils.showStackStace(project, new Throwable[] {t});
+            AndroidUtils.showStackStace(project, throwableArray);
           }
-        }));
-      }
+        })));
+      issue.addTip("Tip: Use View.isInEditMode() in your custom views to skip code when shown in the IDE");
+      warnMessages.add(issue);
     }
   }
 
@@ -268,14 +271,10 @@ public class RenderUtil {
                                                   @NotNull Set<String> missingClasses) {
     if (missingClasses.size() > 0) {
       final StringBuilder builder = new StringBuilder();
-      if (missingClasses.size() > 1) {
-        builder.append("Missing classes:\n");
-        for (String missingClass : missingClasses) {
-          builder.append("&nbsp; &nbsp; &nbsp; &nbsp;").append(missingClass).append('\n');
-        }
-      }
-      else {
-        builder.append("Missing class ").append(missingClasses.iterator().next()).append('\n');
+      builder.append("Missing classes:\n");
+
+      for (String missingClass : missingClasses) {
+        builder.append("&nbsp; &nbsp; &nbsp; &nbsp;").append(missingClass).append('\n');
       }
       builder.append("Try to build project");
       warnMessages.add(new FixableIssueMessage(builder.toString()));

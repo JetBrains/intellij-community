@@ -268,7 +268,7 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
         final Collection<Project> projects = myProjectLocator.getProjectsForFile(file);
         for (Project project : projects) {
           final VcsDirtyScopeManager manager = VcsDirtyScopeManager.getInstance(project);
-          if (manager != null) {
+          if (manager != null && project.isInitialized()) {
             result.add(manager);
           }
         }

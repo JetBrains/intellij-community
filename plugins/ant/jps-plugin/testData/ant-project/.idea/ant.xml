@@ -3,7 +3,10 @@
   <component name="AntConfiguration">
     <defaultAnt bundledAnt="true" />
     <buildFile url="file://$PROJECT_DIR$/build.xml">
-      <additionalClassPath />
+      <additionalClassPath>
+        <entry path="file://$PROJECT_DIR$/lib/jdom.jar" />
+        <entry dir="file://$PROJECT_DIR$/ant-lib" />
+      </additionalClassPath>
       <antReference projectDefault="true" />
       <customJdkName value="" />
       <maximumHeapSize value="128" />

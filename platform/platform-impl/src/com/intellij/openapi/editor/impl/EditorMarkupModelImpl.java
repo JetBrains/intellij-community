@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -745,13 +745,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   @Override
   public void addErrorMarkerListener(@NotNull final ErrorStripeListener listener, @NotNull Disposable parent) {
-    myErrorMarkerListeners.add(listener);
-    Disposer.register(parent, new Disposable() {
-      @Override
-      public void dispose() {
-        myErrorMarkerListeners.remove(listener);
-      }
-    });
+    ContainerUtil.add(listener, myErrorMarkerListeners, parent);
   }
 
   public void markDirtied(@NotNull ProperTextRange yPositions) {
@@ -806,11 +800,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       return bigRenderer;
     }
 
+    @NotNull
     @Override
     public TooltipRenderer calcTooltipRenderer(@NotNull final String text) {
       return new LineTooltipRenderer(text, new Object[] {text});
     }
 
+    @NotNull
     @Override
     public TooltipRenderer calcTooltipRenderer(@NotNull final String text, final int width) {
       return new LineTooltipRenderer(text, width, new Object[] {text});
@@ -825,7 +821,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         }
 
         @Override
-        public LightweightHint show(Editor editor, Point p, boolean alignToRight, TooltipGroup group, HintHint hintHint) {
+        public LightweightHint show(@NotNull Editor editor, @NotNull Point p, boolean alignToRight, TooltipGroup group, @NotNull HintHint hintHint) {
           JLabel label = new JLabel("WTF");
           return new LightweightHint(label){
             @Override

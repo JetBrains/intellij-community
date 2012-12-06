@@ -17,13 +17,16 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.command.HgAnnotateCommand;
 import org.zmlx.hg4idea.command.HgLogCommand;
+import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 
 import java.util.List;
 
@@ -31,10 +34,10 @@ public class HgAnnotationProvider implements AnnotationProvider {
 
   private static final int DEFAULT_LIMIT = 500;
 
-  private final Project myProject;
+  @NotNull private final Project myProject;
 
-  public HgAnnotationProvider(Project project) {
-    this.myProject = project;
+  public HgAnnotationProvider(@NotNull Project project) {
+    myProject = project;
   }
 
   public FileAnnotation annotate(VirtualFile file) throws VcsException {
@@ -44,12 +47,15 @@ public class HgAnnotationProvider implements AnnotationProvider {
   public FileAnnotation annotate(VirtualFile file, VcsFileRevision revision) throws VcsException {
     final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(myProject, VcsUtil.getFilePath(file.getPath()));
     if (vcsRoot == null) {
-      throw new VcsException("vcs root is null");
+      throw new VcsException("vcs root is null for " + file);
     }
-    final HgFile hgFile = new HgFile(vcsRoot, VfsUtil.virtualToIoFile(file));
+    final HgFile hgFile = new HgFile(vcsRoot, VfsUtilCore.virtualToIoFile(file));
     final List<HgAnnotationLine> annotationResult = (new HgAnnotateCommand(myProject)).execute(hgFile, revision);
     final List<HgFileRevision> logResult = (new HgLogCommand(myProject)).execute(hgFile, DEFAULT_LIMIT, false);
-    return new HgAnnotation(myProject, hgFile, annotationResult, logResult, revision.getRevisionNumber());
+    VcsRevisionNumber revisionNumber = revision == null ?
+                                       new HgWorkingCopyRevisionsCommand(myProject).tip(vcsRoot) :
+                                       revision.getRevisionNumber();
+    return new HgAnnotation(myProject, hgFile, annotationResult, logResult, revisionNumber);
   }
 
   public boolean isAnnotationValid(VcsFileRevision rev) {

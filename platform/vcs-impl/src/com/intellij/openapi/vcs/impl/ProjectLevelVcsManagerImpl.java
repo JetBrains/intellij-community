@@ -130,7 +130,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
     myBackgroundableActionHandlerMap = new HashMap<VcsBackgroundableActions, BackgroundableActionEnabledHandler>();
     myInitialization = new VcsInitialization(myProject);
-    myMappings = new NewMappings(myProject, myMessageBus, this, manager);
+    myMappings = new NewMappings(myProject, myMessageBus, this, manager, excludedFileIndex);
     myMappingsToRoots = new MappingsToRoots(myMappings, myProject);
 
     if (! myProject.isDefault()) {

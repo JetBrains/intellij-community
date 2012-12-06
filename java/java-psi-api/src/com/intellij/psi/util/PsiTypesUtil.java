@@ -24,30 +24,30 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 public class PsiTypesUtil {
-  @NonNls private static final Map<String, String> ourUnboxedTypes = new THashMap<String, String>() {{
-    put(CommonClassNames.JAVA_LANG_BOOLEAN, "boolean");
-    put(CommonClassNames.JAVA_LANG_BYTE, "byte");
-    put(CommonClassNames.JAVA_LANG_SHORT, "short");
-    put(CommonClassNames.JAVA_LANG_INTEGER, "int");
-    put(CommonClassNames.JAVA_LANG_LONG, "long");
-    put(CommonClassNames.JAVA_LANG_FLOAT, "float");
-    put(CommonClassNames.JAVA_LANG_DOUBLE, "double");
-    put(CommonClassNames.JAVA_LANG_CHARACTER, "char");
-  }};
+  @NonNls private static final Map<String, String> ourUnboxedTypes = new THashMap<String, String>();
+  @NonNls private static final Map<String, String> ourBoxedTypes = new THashMap<String, String>();
 
-  @NonNls private static final Map<String, String> ourBoxedTypes = new THashMap<String, String>() {{
-    put("boolean", CommonClassNames.JAVA_LANG_BOOLEAN);
-    put("byte", CommonClassNames.JAVA_LANG_BYTE);
-    put("short", CommonClassNames.JAVA_LANG_SHORT);
-    put("int", CommonClassNames.JAVA_LANG_INTEGER);
-    put("long", CommonClassNames.JAVA_LANG_LONG);
-    put("float", CommonClassNames.JAVA_LANG_FLOAT);
-    put("double", CommonClassNames.JAVA_LANG_DOUBLE);
-    put("char", CommonClassNames.JAVA_LANG_CHARACTER);
-  }};
+  static {
+    ourUnboxedTypes.put(CommonClassNames.JAVA_LANG_BOOLEAN, "boolean");
+    ourUnboxedTypes.put(CommonClassNames.JAVA_LANG_BYTE, "byte");
+    ourUnboxedTypes.put(CommonClassNames.JAVA_LANG_SHORT, "short");
+    ourUnboxedTypes.put(CommonClassNames.JAVA_LANG_INTEGER, "int");
+    ourUnboxedTypes.put(CommonClassNames.JAVA_LANG_LONG, "long");
+    ourUnboxedTypes.put(CommonClassNames.JAVA_LANG_FLOAT, "float");
+    ourUnboxedTypes.put(CommonClassNames.JAVA_LANG_DOUBLE, "double");
+    ourUnboxedTypes.put(CommonClassNames.JAVA_LANG_CHARACTER, "char");
 
-  private PsiTypesUtil() {
+    ourBoxedTypes.put("boolean", CommonClassNames.JAVA_LANG_BOOLEAN);
+    ourBoxedTypes.put("byte", CommonClassNames.JAVA_LANG_BYTE);
+    ourBoxedTypes.put("short", CommonClassNames.JAVA_LANG_SHORT);
+    ourBoxedTypes.put("int", CommonClassNames.JAVA_LANG_INTEGER);
+    ourBoxedTypes.put("long", CommonClassNames.JAVA_LANG_LONG);
+    ourBoxedTypes.put("float", CommonClassNames.JAVA_LANG_FLOAT);
+    ourBoxedTypes.put("double", CommonClassNames.JAVA_LANG_DOUBLE);
+    ourBoxedTypes.put("char", CommonClassNames.JAVA_LANG_CHARACTER);
   }
+
+  private PsiTypesUtil() { }
 
   public static String getDefaultValueOfType(PsiType type) {
     if (type instanceof PsiArrayType) {
@@ -86,7 +86,6 @@ public class PsiTypesUtil {
 
   /**
    * Returns the unboxed type name or parameter.
-   *
    * @param type boxed java type name
    * @return unboxed type name if available; same value otherwise
    */
@@ -94,12 +93,11 @@ public class PsiTypesUtil {
   public static String unboxIfPossible(final String type) {
     if (type == null) return null;
     final String s = ourUnboxedTypes.get(type);
-    return s == null ? type : s;
+    return s == null? type : s;
   }
 
   /**
    * Returns the boxed type name or parameter.
-   *
    * @param type primitive java type name
    * @return boxed type name if available; same value otherwise
    */
@@ -112,7 +110,7 @@ public class PsiTypesUtil {
 
   @Nullable
   public static PsiClass getPsiClass(final PsiType psiType) {
-    return psiType instanceof PsiClassType ? ((PsiClassType)psiType).resolve() : null;
+    return psiType instanceof PsiClassType? ((PsiClassType)psiType).resolve() : null;
   }
 
   public static PsiClassType getClassType(@NotNull PsiClass psiClass) {

@@ -16,6 +16,7 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -460,17 +461,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
           if (allClasses.containsKey(psiClass)) {
             continue;
           }
-          final PsiClassOwner containingFile = (PsiClassOwner)element.getContainingFile();
-          final PsiClass[] classes = containingFile.getClasses();
-          boolean all = true;
-          for (PsiClass aClass : classes) {
-            if (ArrayUtil.find(myElementsToMove, aClass) == -1) {
-              all = false;
-              break;
-            }
-          }
-          for (PsiClass aClass : classes) {
-            allClasses.put(aClass, all);
+          for (MoveAllClassesInFileHandler fileHandler : Extensions.getExtensions(MoveAllClassesInFileHandler.EP_NAME)) {
+            fileHandler.processMoveAllClassesInFile(allClasses, psiClass, myElementsToMove);
           }
         }
       }
@@ -523,7 +515,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  protected void performPsiSpoilingRefactoring() {
+    protected void performPsiSpoilingRefactoring() {
     RenameUtil.renameNonCodeUsages(myProject, myNonCodeUsages);
     if (myMoveCallback != null) {
       if (myMoveCallback instanceof MoveClassesOrPackagesCallback) {

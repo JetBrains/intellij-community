@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 public class GrMethodCallFixer implements GrFixer {
   public void apply(Editor editor, GroovySmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
@@ -40,7 +41,7 @@ public class GrMethodCallFixer implements GrFixer {
 
     PsiElement parenth = argList.getLastChild();
 
-    if (parenth != null && ")".equals(parenth.getText()) || call.getClosureArguments().length > 0) return;
+    if (parenth != null && ")".equals(parenth.getText()) || PsiImplUtil.hasClosureArguments(call)) return;
 
     int endOffset = -1;
 

@@ -292,7 +292,7 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     final String prefix = item instanceof EmptyLookupItem ? "" : myLookup.itemPattern(item);
     if (prefix.length() > 0) {
-      Iterable<TextRange> ranges = new MinusculeMatcher("*" + prefix, NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(name);
+      Iterable<TextRange> ranges = getMatchingFragments(prefix, name);
       if (ranges != null) {
         SimpleTextAttributes highlighted =
           new SimpleTextAttributes(style, selected ? SELECTED_PREFIX_FOREGROUND_COLOR : PREFIX_FOREGROUND_COLOR);
@@ -301,6 +301,10 @@ public class LookupCellRenderer implements ListCellRenderer {
       }
     }
     nameComponent.append(name, base);
+  }
+
+  public static Iterable<TextRange> getMatchingFragments(String prefix, String name) {
+    return new MinusculeMatcher("*" + prefix, NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(name);
   }
 
   private int setTypeTextLabel(LookupElement item,

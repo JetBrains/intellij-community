@@ -51,7 +51,6 @@ import org.jetbrains.plugins.groovy.annotator.intentions.*;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
-import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
@@ -86,6 +85,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -317,6 +317,17 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   @Override
+  public void visitTypeDefinitionBody(GrTypeDefinitionBody typeDefinitionBody) {
+    final PsiElement parent = typeDefinitionBody.getParent();
+    if (parent instanceof GrAnonymousClassDefinition) {
+      final PsiElement prev = typeDefinitionBody.getPrevSibling();
+      if (prev != null && TokenSets.WHITE_SPACES_SET.contains(prev.getNode().getElementType()) && prev.getText().contains("\n")) {
+        myHolder.createErrorAnnotation(typeDefinitionBody, GroovyBundle.message("ambiguous.code.block"));
+      }
+    }
+  }
+
+  @Override
   public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
     final PsiElement parent = typeDefinition.getParent();
     if (!(typeDefinition.isAnonymous() ||
@@ -379,7 +390,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     super.visitEnumConstant(enumConstant);
     final GrArgumentList argumentList = enumConstant.getArgumentList();
 
-    if (argumentList != null && argumentList.getNamedArguments().length > 0 && argumentList.getExpressionArguments().length == 0) {
+    if (argumentList != null && PsiImplUtil.hasNamedArguments(argumentList) && !PsiImplUtil.hasExpressionArguments(argumentList)) {
       final PsiMethod constructor = enumConstant.resolveConstructor();
       if (constructor != null) {
         if (!PsiUtil.isConstructorHasRequiredParameters(constructor)) {
@@ -1033,14 +1044,13 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   private static boolean isClosureAmbiguous(GrClosableBlock closure) {
-    if (closure.getContainingFile() instanceof GroovyCodeFragment) return false; //for code fragments
     PsiElement place = closure;
     while (true) {
-      if (place instanceof GrUnAmbiguousClosureContainer) return false;
-      if (PsiUtil.isExpressionStatement(place)) return true;
-
       PsiElement parent = place.getParent();
-      if (parent == null || parent.getFirstChild() != place) return false;
+      if (parent == null || parent instanceof GrUnAmbiguousClosureContainer) return false;
+
+      if (PsiUtil.isExpressionStatement(place)) return true;
+      if (parent.getFirstChild() != place) return false;
       place = parent;
     }
   }

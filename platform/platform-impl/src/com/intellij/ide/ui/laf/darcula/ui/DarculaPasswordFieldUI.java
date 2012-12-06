@@ -16,7 +16,6 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.openapi.ui.GraphicsConfig;
-import com.intellij.util.ui.JBInsets;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -50,7 +49,8 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
   }
 
   @Override
-  protected void paintBackground(Graphics g) {
+  protected void paintBackground(Graphics graphics) {
+    Graphics2D g = (Graphics2D)graphics;
     final JTextComponent c = getComponent();
     final Container parent = c.getParent();
     if (parent != null) {
@@ -62,17 +62,17 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
       g.setColor(c.getBackground());
       final int width = c.getWidth();
       final int height = c.getHeight();
-      final JBInsets insets = ((DarculaTextBorder)border).getBorderInsets(c);
+      final Insets i = border.getBorderInsets(c);
       if (c.hasFocus()) {
         final GraphicsConfig config = new GraphicsConfig(g);
-        ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 
-        g.fillRoundRect(insets.left - 5, insets.top - 2, width - insets.width() + 10, height - insets.height() + 6, 5, 5);
+        g.fillRoundRect(i.left - 5, i.top - 2, width - i.left - i.right + 10, height - i.top - i.bottom + 6, 5, 5);
         config.restore();
       }
       else {
-        g.fillRect(insets.left - 5, insets.top - 2, width - insets.width() + 12, height - insets.height() + 6);
+        g.fillRect(i.left - 5, i.top - 2, width - i.left - i.right + 12, height - i.top - i.bottom + 6);
       }
     } else {
       super.paintBackground(g);

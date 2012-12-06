@@ -24,6 +24,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
@@ -53,7 +54,7 @@ public class SuppressionUtil {
   private SuppressionUtil() {
   }
 
-  public static boolean isInspectionToolIdMentioned(String inspectionsList, String inspectionToolID) {
+  public static boolean isInspectionToolIdMentioned(@NotNull String inspectionsList, String inspectionToolID) {
     Iterable<String> ids = StringUtil.tokenize(inspectionsList, "[, ]");
 
     for (@NonNls String id : ids) {

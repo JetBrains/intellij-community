@@ -8,8 +8,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +71,7 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
 
   public AndroidLayoutPreviewPanel() {
     super(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true));
-    setBackground(Color.WHITE);
+    setBackground(new JBColor(Color.WHITE, UIUtil.getListBackground()));
     setOpaque(true);
     myImagePanel.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.GRAY));
 
@@ -214,16 +216,27 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
     }
     else {
       final JBLabel warnLabel = new JBLabel();
+
+      if (message.myAdditionalFixes.size() == 0 && message.myTips.size() == 0) {
+        warnLabel.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 10, 0));
+      }
       warnLabel.setOpaque(false);
       warnLabel.setText("<html><body>" + message.myBeforeLinkText.replace("\n", "<br>") + "</body></html>");
       warnLabel.setIcon(icon);
       panel.add(warnLabel);
     }
-    if (message.myAdditionalFixes.size() > 0) {
+    if (message.myAdditionalFixes.size() > 0 || message.myTips.size() > 0) {
+      final JPanel fixesAndTipsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+      fixesAndTipsPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 10, 0));
+      fixesAndTipsPanel.setOpaque(false);
+      fixesAndTipsPanel.add(Box.createHorizontalStrut(icon.getIconWidth()));
+
+      final JPanel fixesAndTipsRight = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
+      fixesAndTipsRight.setOpaque(false);
+
       final JPanel fixesPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-      fixesPanel.setBorder(IdeBorderFactory.createEmptyBorder(3, 0, 10, 0));
+      fixesPanel.setBorder(IdeBorderFactory.createEmptyBorder(3, 0, 0, 0));
       fixesPanel.setOpaque(false);
-      fixesPanel.add(Box.createHorizontalStrut(icon.getIconWidth()));
 
       for (Pair<String, Runnable> pair : message.myAdditionalFixes) {
         final HyperlinkLabel fixLabel = new HyperlinkLabel();
@@ -241,7 +254,19 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
         });
         fixesPanel.add(fixLabel);
       }
-      panel.add(fixesPanel);
+      fixesAndTipsRight.add(fixesPanel);
+
+      final JPanel tipsPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 5, 0, true, false));
+      tipsPanel.setOpaque(false);
+      tipsPanel.setBorder(IdeBorderFactory.createEmptyBorder(3, 0, 0, 0));
+
+      for (String tip : message.myTips) {
+        tipsPanel.add(new JBLabel(tip));
+      }
+      fixesAndTipsRight.add(tipsPanel);
+
+      fixesAndTipsPanel.add(fixesAndTipsRight);
+      panel.add(fixesAndTipsPanel);
     }
   }
 

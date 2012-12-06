@@ -30,15 +30,10 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   private boolean processingQueue;
 
   public RefHashMap(int initialCapacity, float loadFactor, @NotNull TObjectHashingStrategy<Key<K>> strategy) {
-    myMap = new MyMap(initialCapacity, loadFactor, strategy) {
-      @Override
-      public void compact() {
-        super.compact();
-      }
-    };
+    myMap = new MyMap(initialCapacity, loadFactor, strategy);
   }
   public RefHashMap(int initialCapacity, float loadFactor) {
-    this(initialCapacity, loadFactor, TObjectHashingStrategy.CANONICAL);
+    this(initialCapacity, loadFactor, ContainerUtil.<Key<K>>canonicalStrategy());
   }
 
   public RefHashMap(int initialCapacity) {
@@ -75,9 +70,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
 
     @Override
     public void compact() {
-      // do not compact the map during many gced references removal
-      // first, the way the MyReference is implemented, it would be equal to any other gced MyReference which will break rehashing
-      // second, it's bad for performance
+      // do not compact the map during many gced references removal because it's bad for performance
       if (!processingQueue) {
         super.compact();
       }
@@ -89,6 +82,34 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
             compact();
         }
     }
+
+    @Override
+    protected void rehash(int newCapacity) {
+      // rehash should discard gced keys
+      // because otherwise there is a remote probability of
+      // having two (Weak|Soft)Keys with accidentally equal hashCodes and different but gced key values
+      int oldCapacity = _set.length;
+      Object[] oldKeys = _set;
+      V[] oldVals = _values;
+
+      _set = new Object[newCapacity];
+      _values = (V[]) new Object[newCapacity];
+
+      for (int i = oldCapacity; i-- > 0;) {
+        Object o = oldKeys[i];
+        if (o == null || o == REMOVED) continue;
+        Key<K> k = (Key<K>)o;
+        K key = k.get();
+        if (key == null) continue;
+        int index = insertionIndex(k);
+        if (index < 0) {
+          // make 'key' alive till this point to not allow 'o.referent' to be gced
+          throwObjectContractViolation(_set[-index -1], o + "; key: "+key);
+        }
+        _set[index] = o;
+        _values[index] = oldVals[i];
+      }
+    }
   }
 
   protected interface Key<T> {
@@ -96,34 +117,6 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   }
 
   protected abstract <T> Key<T> createKey(T k, ReferenceQueue<? super T> q);
-
-  //static class WeakKey<T> extends WeakReference<T> implements Key<T> {
-  //  private final int myHash;	/* Hashcode of key, stored here since the key may be tossed by the GC */
-  //
-  //  private WeakKey(T k, ReferenceQueue<? super T> q) {
-  //    super(k, q);
-  //    myHash = k.hashCode();
-  //  }
-  //
-  //  public boolean equals(Object o) {
-  //    if (this == o) return true;
-  //    if (!(o instanceof Key)) return false;
-  //    Object t = get();
-  //    Object u = ((Key)o).get();
-  //    return myHash == o.hashCode() && (t == u || Comparing.equal(t, u));
-  //  }
-  //
-  //  public int hashCode() {
-  //    return myHash;
-  //  }
-  //
-  //  @NonNls
-  //  @Override
-  //  public String toString() {
-  //    Object t = get();
-  //    return "WeakKey(" + t + ", " + myHash + ")";
-  //  }
-  //}
 
   private static class HardKey<T> implements Key<T> {
     private T myObject;
@@ -278,6 +271,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   private class EntrySet extends AbstractSet<Entry<K, V>> {
     private final Set<Entry<Key<K>, V>> hashEntrySet = myMap.entrySet();
 
+    @NotNull
     @Override
     public Iterator<Entry<K, V>> iterator() {
       return new Iterator<Entry<K, V>>() {
@@ -362,6 +356,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   }
 
 
+  @NotNull
   @Override
   public Set<Entry<K, V>> entrySet() {
     if (entrySet == null) entrySet = new EntrySet();

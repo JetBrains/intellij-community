@@ -16,6 +16,7 @@
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.editor.markup.TextAttributes;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -29,7 +30,8 @@ public interface Filter {
 
   Filter[] EMPTY_ARRAY = new Filter[0];
 
-  class Result extends ResultItem{
+  class Result extends ResultItem {
+    protected NextAction myNextAction = NextAction.EXIT;
     protected List<ResultItem> myResultItems;
 
     public Result(final int highlightStartOffset, final int highlightEndOffset, final HyperlinkInfo hyperlinkInfo) {
@@ -40,7 +42,7 @@ public interface Filter {
       super(highlightStartOffset, highlightEndOffset, hyperlinkInfo, highlightAttributes);
     }
     
-    public Result(List<ResultItem> resultItems) {
+    public Result(@NotNull List<ResultItem> resultItems) {
       super(-1, -1, null, null);
       myResultItems = resultItems;
     }
@@ -52,9 +54,21 @@ public interface Filter {
       }
       return resultItems;
     }
-    
+
+    public NextAction getNextAction() {
+      return myNextAction;
+    }
+
+    public void setNextAction(NextAction nextAction) {
+      myNextAction = nextAction;
+    }
   }
-  class ResultItem{
+
+  enum NextAction {
+    EXIT, CONTINUE_FILTERING,
+  }
+
+  class ResultItem {
     public final int highlightStartOffset;
     public final int highlightEndOffset;
     public final TextAttributes highlightAttributes;

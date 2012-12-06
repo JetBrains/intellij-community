@@ -20,7 +20,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.*;
 import com.intellij.util.*;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,9 +107,7 @@ public static void searchOptimized(final PsiMethod method, SearchScope scope, fi
     return search(method, true);
   }
 
-  private static UniqueResultsQuery<PsiReference, PsiReference> uniqueResults(Query<PsiReference> composite) {
-    //noinspection unchecked
-    return new UniqueResultsQuery(composite, TObjectHashingStrategy.CANONICAL, ReferenceDescriptor.MAPPER);
+  private static UniqueResultsQuery<PsiReference, ReferenceDescriptor> uniqueResults(@NotNull Query<PsiReference> composite) {
+    return new UniqueResultsQuery<PsiReference, ReferenceDescriptor>(composite, ContainerUtil.<ReferenceDescriptor>canonicalStrategy(), ReferenceDescriptor.MAPPER);
   }
-
 }

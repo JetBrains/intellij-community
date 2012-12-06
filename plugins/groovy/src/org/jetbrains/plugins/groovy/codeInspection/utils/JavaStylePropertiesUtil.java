@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 
@@ -104,7 +105,7 @@ public class JavaStylePropertiesUtil {
     }
 
     GrArgumentList args = call.getArgumentList();
-    if (args == null || args.getExpressionArguments().length != 1 || args.getNamedArguments().length > 0) {
+    if (args == null || args.getExpressionArguments().length != 1 || PsiImplUtil.hasNamedArguments(args)) {
       return false;
     }
 

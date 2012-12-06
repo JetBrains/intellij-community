@@ -2,14 +2,12 @@ package org.jetbrains.plugins.gradle.util;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleSettings;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
@@ -74,24 +72,6 @@ public class GradleInstallationManager {
     return result;
   }
 
-  /**
-   * Performs the same job as {@link #getGradleHome(Project)} but tries to deduce project to use.
-   * 
-   * @return    file handle that points to the gradle installation home (if any)
-   */
-  @Nullable
-  public File getGradleHome() {
-    ProjectManager projectManager = ProjectManager.getInstance();
-    Project[] openProjects = projectManager.getOpenProjects();
-    if (openProjects.length == 1) {
-      File result = getGradleHome(openProjects[0]);
-      if (result != null) {
-        return result;
-      } 
-    } 
-    return getGradleHome(projectManager.getDefaultProject());
-  }
-  
   /**
    * Tries to return file handle that points to the gradle installation home.
    * 
@@ -167,33 +147,18 @@ public class GradleInstallationManager {
    */
   @Nullable
   public File getManuallyDefinedGradleHome(@Nullable Project project) {
-    
-    // Try to search settings of the given project.
-    if (project != null) {
-      File result = doGetManuallyDefinedGradleHome(project);
-      if (result != null) {
-        return result;
-      }
+    if (project == null) {
+      return null;
     }
-    
-    // Fallback to the default project settings.
-    return doGetManuallyDefinedGradleHome(ProjectManager.getInstance().getDefaultProject());
-  }
-
-  @Nullable
-  private File doGetManuallyDefinedGradleHome(@NotNull Project project) {
     GradleSettings settings = GradleSettings.getInstance(project);
     String path = settings.getGradleHome();
     if (path == null) {
       return null;
     }
     File candidate = new File(path);
-    if (isGradleSdkHome(candidate)) {
-      return candidate;
-    }
     return isGradleSdkHome(candidate) ? candidate : null;
   }
-  
+
   /**
    * Tries to discover gradle installation path from the configured system path
    * 

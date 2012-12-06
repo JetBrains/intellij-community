@@ -35,17 +35,29 @@ public class GradleResolveProjectTask extends AbstractGradleTask {
     final GradleApiFacadeManager manager = ServiceManager.getService(GradleApiFacadeManager.class);
     GradleProjectResolver resolver = manager.getFacade(getIntellijProject()).getResolver();
     setState(GradleTaskState.IN_PROGRESS);
-    final GradleProject project = resolver.resolveProjectInfo(getId(), myProjectPath, myResolveLibraries);
+
+    GradleProjectStructureChangesModel model = null;
+    final Project intellijProject = getIntellijProject();
+    if (intellijProject != null && !intellijProject.isDisposed()) {
+      model = intellijProject.getComponent(GradleProjectStructureChangesModel.class);
+    }
+    final GradleProject project;
+    try {
+      project = resolver.resolveProjectInfo(getId(), myProjectPath, myResolveLibraries);
+    }
+    catch (Exception e) {
+      if (model != null) {
+        model.clearChanges();
+      }
+      throw e;
+    }
+    
     if (project == null) {
       return;
     }
     myGradleProject.set(project);
     setState(GradleTaskState.FINISHED);
-    final Project intellijProject = getIntellijProject();
-    if (intellijProject == null || intellijProject.isDisposed()) {
-      return;
-    }
-    final GradleProjectStructureChangesModel model = intellijProject.getComponent(GradleProjectStructureChangesModel.class);
+    
     if (model != null) {
       // This task may be called during the 'import from gradle' processing, hence, no project-level IoC is up.
       // Model update is necessary for the correct tool window project structure diff showing but we don't have

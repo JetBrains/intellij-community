@@ -38,18 +38,21 @@ public class PathsList  {
   private final Set<String> myPathSet = new HashSet<String>();
 
   private static final Function<String, VirtualFile> PATH_TO_LOCAL_VFILE = new NullableFunction<String, VirtualFile>() {
+    @Override
     public VirtualFile fun(String path) {
       return StandardFileSystems.local().findFileByPath(path.replace(File.separatorChar, '/'));
     }
   };
 
   private static final Function<VirtualFile, String> LOCAL_PATH = new Function<VirtualFile, String>() {
+    @Override
     public String fun(VirtualFile file) {
       return PathUtil.getLocalPath(file);
     }
   };
 
   private static final Function<String, VirtualFile> PATH_TO_DIR = new NullableFunction<String, VirtualFile>() {
+    @Override
     public VirtualFile fun(String s) {
       final FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(s);
       final VirtualFile localFile = PATH_TO_LOCAL_VFILE.fun(s);
@@ -98,18 +101,21 @@ public class PathsList  {
     final StringTokenizer tokenizer = new StringTokenizer(path, File.pathSeparator);
     // in JDK 1.5 StringTokenizer implements Enumeration<Object> rather then Enumeration<String>, need to convert
     final Enumeration<String> en = new Enumeration<String>() {
+      @Override
       public boolean hasMoreElements() {
         return tokenizer.hasMoreElements();
       }
 
+      @Override
       public String nextElement() {
         return (String)tokenizer.nextElement();
       }
     };
     return FilteringIterator.create(iterate(en), new Condition<String>() {
+      @Override
       public boolean value(String element) {
         element = element.trim();
-        return element.length() != 0 && !myPathSet.contains(element);
+        return !element.isEmpty() && !myPathSet.contains(element);
       }
     });
   }

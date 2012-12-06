@@ -85,16 +85,19 @@ public class InspectionManagerEx extends InspectionManager {
     }
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     return myProject;
   }
 
+  @Override
   @NotNull
   public CommonProblemDescriptor createProblemDescriptor(@NotNull String descriptionTemplate, QuickFix... fixes) {
     return new CommonProblemDescriptorImpl(fixes, descriptionTemplate);
   }
 
+  @Override
   @NotNull
   public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                    @NotNull String descriptionTemplate,
@@ -104,6 +107,7 @@ public class InspectionManagerEx extends InspectionManager {
     return createProblemDescriptor(psiElement, descriptionTemplate, onTheFly, quickFixes, highlightType);
   }
 
+  @Override
   @NotNull
   public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                    @NotNull String descriptionTemplate,
@@ -113,6 +117,7 @@ public class InspectionManagerEx extends InspectionManager {
     return createProblemDescriptor(psiElement, descriptionTemplate, fixes, highlightType, onTheFly, false);
   }
 
+  @Override
   @NotNull
   public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                    @NotNull String descriptionTemplate,
@@ -121,6 +126,7 @@ public class InspectionManagerEx extends InspectionManager {
     return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, isAfterEndOfLine, null, onTheFly);
   }
 
+  @Override
   @NotNull
   public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement startElement,
                                                    @NotNull PsiElement endElement,
@@ -129,6 +135,7 @@ public class InspectionManagerEx extends InspectionManager {
     return new ProblemDescriptorImpl(startElement, endElement, descriptionTemplate, fixes, highlightType, false, null, onTheFly);
   }
 
+  @Override
   public ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
                                                    final TextRange rangeInElement,
                                                    @NotNull final String descriptionTemplate,
@@ -136,6 +143,7 @@ public class InspectionManagerEx extends InspectionManager {
     return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, rangeInElement, onTheFly);
   }
 
+  @Override
   public ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement, @NotNull final String descriptionTemplate, final ProblemHighlightType highlightType,
                                                    @Nullable final HintAction hintAction,
                                                    boolean onTheFly,
@@ -189,11 +197,17 @@ public class InspectionManagerEx extends InspectionManager {
     return myRunningContexts;
   }
 
-  public static boolean inspectionResultSuppressed(PsiElement place, LocalInspectionTool tool) {
+  public static boolean inspectionResultSuppressed(@NotNull PsiElement place, LocalInspectionTool tool) {
     if (tool instanceof CustomSuppressableInspectionTool) {
       return ((CustomSuppressableInspectionTool)tool).isSuppressedFor(place);
     }
-    return isSuppressed(place, tool.getID()) || isSuppressed(place, tool.getAlternativeID());
+    String alternativeId;
+    String id;
+
+    return isSuppressed(place, id = tool.getID()) ||
+           (alternativeId = tool.getAlternativeID()) != null &&
+           !alternativeId.equals(id) &&
+           isSuppressed(place, alternativeId);
   }
 
   public static boolean canRunInspections(final Project project, final boolean online) {
@@ -205,7 +219,7 @@ public class InspectionManagerEx extends InspectionManager {
     return true;
   }
 
-  public static boolean isSuppressed(PsiElement psiElement, String id) {
+  public static boolean isSuppressed(@NotNull PsiElement psiElement, String id) {
     if (id == null) return false;
     for (InspectionExtensionsFactory factory : Extensions.getExtensions(InspectionExtensionsFactory.EP_NAME)) {
       if (!factory.isToCheckMember(psiElement, id)) {
@@ -215,6 +229,7 @@ public class InspectionManagerEx extends InspectionManager {
     return false;
   }
 
+  @Override
   @Deprecated
   @NotNull
   public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
@@ -225,6 +240,7 @@ public class InspectionManagerEx extends InspectionManager {
     return createProblemDescriptor(psiElement, descriptionTemplate, quickFixes, highlightType);
   }
 
+  @Override
   @Deprecated
   @NotNull
   public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
@@ -234,6 +250,7 @@ public class InspectionManagerEx extends InspectionManager {
     return createProblemDescriptor(psiElement, descriptionTemplate, fixes, highlightType, false);
   }
 
+  @Override
   @Deprecated
   @NotNull
   public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
@@ -244,6 +261,7 @@ public class InspectionManagerEx extends InspectionManager {
     return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, isAfterEndOfLine, null, true);
   }
 
+  @Override
   @Deprecated
   @NotNull
   public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement startElement,
@@ -254,6 +272,7 @@ public class InspectionManagerEx extends InspectionManager {
     return new ProblemDescriptorImpl(startElement, endElement, descriptionTemplate, fixes, highlightType, false, null, true);
   }
 
+  @Override
   @Deprecated
   public ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
                                                    final TextRange rangeInElement,
@@ -263,6 +282,7 @@ public class InspectionManagerEx extends InspectionManager {
     return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, rangeInElement, true);
   }
 
+  @Override
   @Deprecated
   public ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
                                                    @NotNull final String descriptionTemplate,

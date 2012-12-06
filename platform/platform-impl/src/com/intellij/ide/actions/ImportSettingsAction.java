@@ -20,6 +20,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -89,6 +90,8 @@ public class ImportSettingsAction extends AnAction implements DumbAware {
           relativeNamesToExtract.add(relativePath);
         }
       }
+
+      relativeNamesToExtract.add(PathManager.getConfigPath() + "/" + PluginManager.INSTALLED_TXT);
 
       final File tempFile = new File(PathManager.getPluginTempPath() + "/" + saveFile.getName());
       FileUtil.copy(saveFile, tempFile);

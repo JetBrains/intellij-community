@@ -1,15 +1,15 @@
 package com.intellij.codeInsight;
 
-import com.intellij.lang.ASTFactory;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.LanguageASTFactory;
-import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.*;
 import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.lang.dtd.DTDParserDefinition;
+import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.lang.html.HTMLParserDefinition;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.lang.xml.XMLParserDefinition;
 import com.intellij.lang.xml.XmlASTFactory;
 import com.intellij.lexer.FilterLexer;
+import com.intellij.lexer.HtmlEmbeddedTokenTypesProvider;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.XmlLexer;
 import com.intellij.openapi.application.Result;
@@ -29,6 +29,7 @@ import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -167,24 +168,28 @@ public class XmlParsingTest extends ParsingTestCase {
     doTestXml(loadFile("manyErrors.xml"));
   }
 
-  public void _testLexerPerformance1() throws Exception{
+  public void _testLexerPerformance1() throws Exception {
     final String text = loadFile("pallada.xml");
     XmlLexer lexer = new XmlLexer();
     doLex(lexer, text);
     final FilterLexer filterLexer = new FilterLexer(new XmlLexer(),
-                          new FilterLexer.SetFilter(LanguageParserDefinitions.INSTANCE.forLanguage(XMLLanguage.INSTANCE).getWhitespaceTokens()));
+                                                    new FilterLexer.SetFilter(
+                                                      LanguageParserDefinitions.INSTANCE.forLanguage(XMLLanguage.INSTANCE)
+                                                        .getWhitespaceTokens()));
     doLex(filterLexer, text);
     doLex(lexer, text);
     doLex(filterLexer, text);
     doLex(filterLexer, text);
   }
-  
-  public void _testLexerPerformance2() throws Exception{
+
+  public void _testLexerPerformance2() throws Exception {
     final String text = loadFile("performance2.xml");
     XmlLexer lexer = new XmlLexer();
     doLex(lexer, text);
     final FilterLexer filterLexer = new FilterLexer(new XmlLexer(),
-                          new FilterLexer.SetFilter(LanguageParserDefinitions.INSTANCE.forLanguage(XMLLanguage.INSTANCE).getWhitespaceTokens()));
+                                                    new FilterLexer.SetFilter(
+                                                      LanguageParserDefinitions.INSTANCE.forLanguage(XMLLanguage.INSTANCE)
+                                                        .getWhitespaceTokens()));
     doLex(filterLexer, text);
     doLex(lexer, text);
     for (int i = 0; i < 20; i++) {
@@ -196,7 +201,7 @@ public class XmlParsingTest extends ParsingTestCase {
     lexer.start(text);
     long time = System.currentTimeMillis();
     int count = 0;
-    while(lexer.getTokenType() != null){
+    while (lexer.getTokenType() != null) {
       lexer.advance();
       count++;
     }
@@ -210,22 +215,22 @@ public class XmlParsingTest extends ParsingTestCase {
   }
 
 
-  public void _testPerformance1() throws Exception{
+  public void _testPerformance1() throws Exception {
     final String text = loadFile("pallada.xml");
     long time = System.currentTimeMillis();
     final PsiFile file = createFile("test.xml", text);
     transformAllChildren(file.getNode());
     System.out.println("Old parsing took " + (System.currentTimeMillis() - time) + "ms");
     int index = 0;
-    while(index++ < 10){
+    while (index++ < 10) {
       newParsing(text);
     }
     LeafElement firstLeaf = TreeUtil.findFirstLeaf(file.getNode());
     index = 0;
-    do{
+    do {
       index++;
     }
-    while((firstLeaf = TreeUtil.nextLeaf(firstLeaf, null)) != null);
+    while ((firstLeaf = TreeUtil.nextLeaf(firstLeaf, null)) != null);
     System.out.println("For " + index + " lexems");
   }
 
@@ -237,7 +242,7 @@ public class XmlParsingTest extends ParsingTestCase {
 
     System.gc();
     System.gc();
-    
+
     new WriteCommandAction(getProject(), file) {
       @Override
       protected void run(final Result result) throws Throwable {
@@ -256,22 +261,22 @@ public class XmlParsingTest extends ParsingTestCase {
     }.execute();
   }
 
-  public void _testPerformance2() throws Exception{
+  public void _testPerformance2() throws Exception {
     final String text = loadFile("performance2.xml");
     long time = System.currentTimeMillis();
     final PsiFile file = createFile("test.xml", text);
     transformAllChildren(file.getNode());
     System.out.println("Old parsing took " + (System.currentTimeMillis() - time) + "ms");
     int index = 0;
-    while(index++ < 10){
+    while (index++ < 10) {
       newParsing(text);
     }
     LeafElement firstLeaf = TreeUtil.findFirstLeaf(file.getNode());
     index = 0;
-    do{
+    do {
       index++;
     }
-    while((firstLeaf = TreeUtil.nextLeaf(firstLeaf, null)) != null);
+    while ((firstLeaf = TreeUtil.nextLeaf(firstLeaf, null)) != null);
     System.out.println("For " + index + " lexems");
   }
 
@@ -644,5 +649,31 @@ public class XmlParsingTest extends ParsingTestCase {
     doTestXml("<!DOCTYPE x3 [<!NOTATION data-sources SYSTEM \"x3\">]>");
   }
 
+  public void testCustomMimeType() throws Exception {
+    final Language language = new MyLanguage();
+    addExplicitExtension(LanguageHtmlScriptContentProvider.INSTANCE, language, new HtmlScriptContentProvider() {
+      @Override
+      public IElementType getScriptElementType() {
+        return new IElementType("MyElementType", language);
+      }
 
+      @Nullable
+      @Override
+      public Lexer getHighlightingLexer() {
+        return null;
+      }
+    });
+    addExplicitExtension(LanguageParserDefinitions.INSTANCE, HTMLLanguage.INSTANCE, new HTMLParserDefinition());
+    addExplicitExtension(LanguageASTFactory.INSTANCE, HTMLLanguage.INSTANCE, new XmlASTFactory());
+    registerExtensionPoint(new ExtensionPointName<HtmlEmbeddedTokenTypesProvider>("com.intellij.html.embeddedTokenTypesProvider"),
+                           HtmlEmbeddedTokenTypesProvider.class);
+    myLanguage = HTMLLanguage.INSTANCE;
+    doTest("<script type=\"application/custom\">Custom Script</script>", "test.html");
+  }
+
+  static class MyLanguage extends Language {
+    protected MyLanguage() {
+      super("MyLanguage", "application/custom");
+    }
+  }
 }

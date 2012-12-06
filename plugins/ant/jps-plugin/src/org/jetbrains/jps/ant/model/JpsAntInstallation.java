@@ -15,37 +15,18 @@
  */
 package org.jetbrains.jps.ant.model;
 
-import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.jps.model.JpsElement;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author nik
  */
-public class JpsAntInstallation {
-  private File myAntHome;
+public interface JpsAntInstallation extends JpsElement {
+  File getAntHome();
 
-  public JpsAntInstallation(File antHome) {
-    myAntHome = antHome;
-  }
+  List<String> getClasspath();
 
-  public File getAntHome() {
-    return myAntHome;
-  }
-
-  public List<String> getClasspath() {
-    File lib = new File(myAntHome, "lib");
-    List<String> result = new ArrayList<String>();
-    File[] files = lib.listFiles();
-    if (files != null) {
-      for (File file : files) {
-        if (StringUtil.endsWithIgnoreCase(file.getName(), ".jar")) {
-          result.add(file.getAbsolutePath());
-        }
-      }
-    }
-    return result;
-  }
+  String getName();
 }

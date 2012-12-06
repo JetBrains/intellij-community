@@ -90,7 +90,7 @@ public final class ConcurrentWeakHashMap<K,V> extends ConcurrentRefHashMap<K,V> 
     super(t);
   }
 
-  public ConcurrentWeakHashMap(TObjectHashingStrategy<K> hashingStrategy) {
+  public ConcurrentWeakHashMap(@NotNull TObjectHashingStrategy<K> hashingStrategy) {
     super(hashingStrategy);
   }
 

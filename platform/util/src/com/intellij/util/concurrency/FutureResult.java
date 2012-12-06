@@ -29,7 +29,7 @@ public class FutureResult<T> implements Future<T> {
   }
 
   public void set(@Nullable T result) {
-    assert myValue == null;
+    if (myValue != null) throw new IllegalStateException("Result is already set");
 
     myValue = Ref.create(Pair.create((Object)result, true));
     mySema.release();

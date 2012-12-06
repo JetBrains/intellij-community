@@ -20,6 +20,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -40,7 +41,10 @@ import java.util.*;
 public abstract class Language extends UserDataHolderBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.Language");
 
-  private static final Map<Class<? extends Language>, Language> ourRegisteredLanguages = Collections.synchronizedMap(new THashMap<Class<? extends Language>, Language>());
+  private static final Map<Class<? extends Language>, Language> ourRegisteredLanguages =
+    Collections.synchronizedMap(new THashMap<Class<? extends Language>, Language>());
+  private static final Map<String, List<Language>> ourRegisteredMimeTypes =
+    Collections.synchronizedMap(new THashMap<String, List<Language>>());
   private static final Map<String, Language> ourRegisteredIDs = new THashMap<String, Language>();
   private final Language myBaseLanguage;
   private final String myID;
@@ -69,12 +73,28 @@ public abstract class Language extends UserDataHolderBase {
     Class<? extends Language> langClass = getClass();
     Language prev = ourRegisteredLanguages.put(langClass, this);
     if (prev != null) {
-      LOG.error("Language of '" + langClass + "' is already registered: "+prev);
+      LOG.error("Language of '" + langClass + "' is already registered: " + prev);
       return;
     }
     prev = ourRegisteredIDs.put(ID, this);
     if (prev != null) {
-      LOG.error("Language with ID '" + ID + "' is already registered: "+prev.getClass());
+      LOG.error("Language with ID '" + ID + "' is already registered: " + prev.getClass());
+    }
+    for (String mimeType : mimeTypes) {
+      if (StringUtil.isEmpty(mimeType)) {
+        continue;
+      }
+      List<Language> languagesByMimeType = ourRegisteredMimeTypes.get(mimeType);
+      if (languagesByMimeType == null) {
+        synchronized (ourRegisteredMimeTypes) {
+          languagesByMimeType = ourRegisteredMimeTypes.get(mimeType);
+          if (languagesByMimeType == null) {
+            languagesByMimeType = Collections.synchronizedList(new ArrayList<Language>());
+            ourRegisteredMimeTypes.put(mimeType, languagesByMimeType);
+          }
+        }
+      }
+      languagesByMimeType.add(this);
     }
     if (baseLanguage != null) {
       baseLanguage.myDialects.add(this);
@@ -96,6 +116,16 @@ public abstract class Language extends UserDataHolderBase {
   public static <T extends Language> T findInstance(Class<T> klass) {
     //noinspection unchecked
     return (T)ourRegisteredLanguages.get(klass);
+  }
+
+  /**
+   * @param mimeType of the particular language.
+   * @return collection of all languages for the given <code>mimeType</code>.
+   */
+  @NotNull
+  public static Collection<Language> findInstancesByMimeType(@Nullable String mimeType) {
+    List<Language> result = mimeType != null ? ourRegisteredMimeTypes.get(mimeType) : null;
+    return result != null ? Collections.unmodifiableCollection(result) : Collections.<Language>emptyList();
   }
 
 

@@ -242,7 +242,7 @@ public class StringUtil extends StringUtilRt {
     return stringLength >= prefixLength && str.regionMatches(true, 0, prefix, 0, prefixLength);
   }
 
-  public static String stripHtml(String html, boolean convertBreaks) {
+  public static String stripHtml(@NotNull String html, boolean convertBreaks) {
     if (convertBreaks) {
       html = html.replaceAll("<br/?>", "\n\n");
     }
@@ -2297,6 +2297,11 @@ public class StringUtil extends StringUtilRt {
     return buffer.toString();
   }
 
+  @NotNull
+  public static String shortenPathWithEllipsis(@NotNull final String path, final int max_length) {
+    return shortenTextWithEllipsis(path, max_length, (int)(max_length * 0.7));
+  }
+
   public static boolean charsEqual(char a, char b, boolean ignoreCase) {
     return ignoreCase ? charsEqualIgnoreCase(a, b) : a == b;
   }
@@ -2381,6 +2386,22 @@ public class StringUtil extends StringUtilRt {
         }
       }
     };
+  }
+
+  public static boolean trimEnd(StringBuilder buffer, final CharSequence end) {
+    if (endsWith(buffer, end)) {
+      buffer.delete(buffer.length() - end.length(), buffer.length());
+      return true;
+    }
+    return false;
+  }
+
+  private static boolean trimStart(StringBuilder buffer, final CharSequence start) {
+    if (startsWith(buffer, start)) {
+      buffer.delete(0, start.length());
+      return true;
+    }
+    return false;
   }
 
   /**

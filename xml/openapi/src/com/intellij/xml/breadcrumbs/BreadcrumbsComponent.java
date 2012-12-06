@@ -1,9 +1,26 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -565,7 +582,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
   }
 
   abstract static class PainterSettings {
-    private static final Color DEFAULT_FOREGROUND_COLOR = Gray._50;
+    private static final Color DEFAULT_FOREGROUND_COLOR = new JBColor(Gray._50, UIUtil.getListForeground());
 
     @Nullable
     Color getBackgroundColor(@NotNull final Crumb c) {
@@ -589,15 +606,15 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
   }
 
   static class ButtonSettings extends PainterSettings {
-    protected static final Color DEFAULT_BG_COLOR = Gray._245;
-    private static final Color LIGHT_BG_COLOR = Gray._253;
-    private static final Color CURRENT_BG_COLOR = new Color(250, 250, 220);
-    protected static final Color HOVERED_BG_COLOR = Gray._220;
+    protected static final Color DEFAULT_BG_COLOR = new JBColor(Gray._245, new Color(101, 104, 106));
+    private static final Color LIGHT_BG_COLOR = new JBColor(Gray._253, Gray._130);
+    private static final Color CURRENT_BG_COLOR = new JBColor(new Color(250, 250, 220), new Color(97, 97, 75));
+    protected static final Color HOVERED_BG_COLOR = new JBColor(Gray._220, ColorUtil.shift(DEFAULT_BG_COLOR, 1.2));
 
-    private static final Color LIGHT_TEXT_COLOR = Gray._170;
+    private static final Color LIGHT_TEXT_COLOR = new JBColor(Gray._170, UIUtil.getListForeground());
 
-    protected static final Color DEFAULT_BORDER_COLOR = Gray._90;
-    private static final Color LIGHT_BORDER_COLOR = Gray._170;
+    protected static final Color DEFAULT_BORDER_COLOR = new JBColor(Gray._90, Gray._50);
+    private static final Color LIGHT_BORDER_COLOR = new JBColor(Gray._170, Gray._70);
 
     static Color getBackgroundColor(boolean selected, boolean hovered, boolean light, boolean navigationCrumb) {
       if (hovered) {

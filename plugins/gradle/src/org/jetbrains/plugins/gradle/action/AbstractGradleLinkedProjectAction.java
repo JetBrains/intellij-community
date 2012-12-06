@@ -1,14 +1,14 @@
 package org.jetbrains.plugins.gradle.action;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleSettings;
-
-import java.io.File;
 
 /**
  * Common super class for gradle actions that require {@link GradleSettings#getLinkedProjectPath()}  linked project}.
@@ -28,7 +28,7 @@ public abstract class AbstractGradleLinkedProjectAction extends AnAction {
     if (!visible) {
       return;
     }
-    doUpdate(e.getPresentation(), pair.first, pair.second);
+    doUpdate(e, pair.first, pair.second);
   }
 
   @Override
@@ -57,12 +57,9 @@ public abstract class AbstractGradleLinkedProjectAction extends AnAction {
     }
     
     final String path = GradleSettings.getInstance(project).getLinkedProjectPath();
-    if (StringUtil.isEmpty(path) || !new File(path).isFile()) {
-      return null;
-    }
     return new Pair<Project, String>(project, path);
   }
 
-  protected abstract void doUpdate(@NotNull Presentation presentation, @NotNull Project project, @NotNull String linkedProjectPath);
+  protected abstract void doUpdate(@NotNull AnActionEvent event, @NotNull Project project, @NotNull String linkedProjectPath);
   protected abstract void doActionPerformed(@NotNull Project project, @NotNull String linkedProjectPath);
 }

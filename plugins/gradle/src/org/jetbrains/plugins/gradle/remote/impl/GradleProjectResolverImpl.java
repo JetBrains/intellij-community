@@ -27,6 +27,7 @@ import org.jetbrains.plugins.gradle.util.GradleLog;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
+import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
@@ -397,7 +398,18 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     GradleConnector connector = GradleConnector.newConnector();
     RemoteGradleProcessSettings settings = mySettings.get();
     if (settings != null) {
-      connector.useInstallation(new File(settings.getGradleHome()));
+      if (!settings.isUseWrapper()) {
+        String gradleHome = settings.getGradleHome();
+        if (gradleHome != null) {
+          try {
+            // There were problems with symbolic links processing at the gradle side.
+            connector.useInstallation(new File(gradleHome).getCanonicalFile());
+          }
+          catch (IOException e) {
+            connector.useInstallation(new File(settings.getGradleHome()));
+          }
+        }
+      }
       if (settings.isVerboseApi() && connector instanceof DefaultGradleConnector) {
         ((DefaultGradleConnector)connector).setVerboseLogging(true);
       }

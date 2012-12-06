@@ -36,8 +36,6 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +54,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
   // compare by identity because VirtualFilePointerContainer has too smart equals
   // guarded by myContainers
-  private final Set<VirtualFilePointerContainerImpl> myContainers = new THashSet<VirtualFilePointerContainerImpl>(TObjectHashingStrategy.IDENTITY);
+  private final Set<VirtualFilePointerContainerImpl> myContainers = ContainerUtil.<VirtualFilePointerContainerImpl>newIdentityTroveSet();
   @NotNull private final VirtualFileManagerEx myVirtualFileManager;
   @NotNull private final MessageBus myBus;
   private static final Comparator<String> URL_COMPARATOR = SystemInfo.isFileSystemCaseSensitive ? new Comparator<String>() {
@@ -339,7 +337,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
   }
 
-  private final Set<VirtualFilePointerImpl> myStoredPointers = new THashSet<VirtualFilePointerImpl>(TObjectHashingStrategy.IDENTITY);
+  private final Set<VirtualFilePointerImpl> myStoredPointers = ContainerUtil.<VirtualFilePointerImpl>newIdentityTroveSet();
   @TestOnly
   public void storePointers() {
     //assert myStoredPointers.isEmpty() : myStoredPointers;

@@ -125,7 +125,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     myFixture.complete(CompletionType.BASIC, 2);
   }
 
-  public void testDontDispreferImplsAfterNew() throws Throwable {
+  public void _testDontDispreferImplsAfterNew() { //todo[peter]
     myFixture.addClass("package foo; public interface Xxx {}");
     configureSecondCompletion();
     assertPreferredItems(0, "Xxx", "XxxImpl");
@@ -502,6 +502,10 @@ import java.lang.annotation.Target;
   public void testCommonPrefixMoreImportantThanKind() {
     CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE;
     checkPreferredItems(0, 'PsiElement', 'psiElement')
+  }
+
+  public void testNoExpectedTypeInStringConcatenation() {
+    checkPreferredItems(0, 'vx')
   }
 
 }

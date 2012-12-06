@@ -18,6 +18,7 @@ package com.intellij.codeInsight.hint;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -25,5 +26,5 @@ import java.awt.*;
  * @author cdr
  */
 public interface TooltipRenderer {
-  LightweightHint show(final Editor editor, Point p, boolean alignToRight, TooltipGroup group, HintHint intInfo);
+  LightweightHint show(@NotNull Editor editor, @NotNull Point p, boolean alignToRight, TooltipGroup group, @NotNull HintHint intInfo);
 }

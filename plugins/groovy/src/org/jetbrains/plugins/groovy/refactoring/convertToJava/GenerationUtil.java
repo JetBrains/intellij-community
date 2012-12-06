@@ -620,20 +620,28 @@ public class GenerationUtil {
   public static void wrapInCastIfNeeded(StringBuilder builder,
                                         @NotNull PsiType expected,
                                         @Nullable PsiType actual,
-                                        PsiElement context,
+                                        GroovyPsiElement context,
                                         ExpressionContext expressionContext,
                                         StatementWriter writer) {
-    if (actual != null && expected.isAssignableFrom(actual) || expected.equalsToText(CommonClassNames.JAVA_LANG_OBJECT))  {
+    if (actual != null && TypesUtil.isAssignable(expected, actual, context) || expected.equalsToText(CommonClassNames.JAVA_LANG_OBJECT))  {
       writer.writeStatement(builder, expressionContext);
     }
     else {
-      builder.append("((");
-
-      //todo check operator priority IDEA-93790
-      writeType(builder, expected, context);
-      builder.append(")(") ;
-      writer.writeStatement(builder, expressionContext);
-      builder.append("))");
+      wrapInCast(builder, expected, context, expressionContext, writer);
     }
+  }
+
+  private static void wrapInCast(StringBuilder builder,
+                                 @NotNull PsiType expected,
+                                 PsiElement context,
+                                 ExpressionContext expressionContext,
+                                 StatementWriter writer) {
+    builder.append("((");
+
+    //todo check operator priority IDEA-93790
+    writeType(builder, expected, context);
+    builder.append(")(") ;
+    writer.writeStatement(builder, expressionContext);
+    builder.append("))");
   }
 }

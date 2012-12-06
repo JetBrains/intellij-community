@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.OrderedSet;
-import gnu.trove.TObjectHashingStrategy;
 
 import java.io.File;
 import java.util.Collection;
@@ -90,7 +89,7 @@ public class CompilerPathsEx extends CompilerPaths {
   }
 
   public static String[] getOutputPaths(Module[] modules) {
-    final Set<String> outputPaths = new OrderedSet<String>((TObjectHashingStrategy<String>)TObjectHashingStrategy.CANONICAL);
+    final Set<String> outputPaths = new OrderedSet<String>();
     for (Module module : modules) {
       final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
       if (compilerModuleExtension == null) {
@@ -110,7 +109,7 @@ public class CompilerPathsEx extends CompilerPaths {
   }
 
   public static VirtualFile[] getOutputDirectories(final Module[] modules) {
-    final Set<VirtualFile> dirs = new OrderedSet<VirtualFile>((TObjectHashingStrategy<VirtualFile>)TObjectHashingStrategy.CANONICAL);
+    final Set<VirtualFile> dirs = new OrderedSet<VirtualFile>();
     for (Module module : modules) {
       final VirtualFile outputDir = getModuleOutputDirectory(module, false);
       if (outputDir != null) {

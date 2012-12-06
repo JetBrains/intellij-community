@@ -47,14 +47,18 @@ public class PushDownMultifileTest extends MultiFileTestCase {
   }
 
   private void doTest(final boolean fail) throws Exception {
+    doTest(fail, "a.A", "b.B");
+  }
+
+  private void doTest(final boolean fail, final String sourceClassName, final String targetClassName) throws Exception {
     try {
       doTest(new PerformAction() {
         @Override
         public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
-          final PsiClass srcClass = myJavaFacade.findClass("a.A", GlobalSearchScope.allScope(myProject));
+          final PsiClass srcClass = myJavaFacade.findClass(sourceClassName, GlobalSearchScope.allScope(myProject));
           assertTrue("Source class not found", srcClass != null);
 
-          final PsiClass targetClass = myJavaFacade.findClass("b.B", GlobalSearchScope.allScope(myProject));
+          final PsiClass targetClass = myJavaFacade.findClass(targetClassName, GlobalSearchScope.allScope(myProject));
           assertTrue("Target class not found", targetClass != null);
 
           final PsiMethod[] methods = srcClass.getMethods();
@@ -96,6 +100,10 @@ public class PushDownMultifileTest extends MultiFileTestCase {
 
   public void testReuseOverrideMethod() throws Exception {
     doTest();
+  }
+
+  public void testFromInterface() throws Exception {
+    doTest(false, "a.I", "a.I1");
   }
 
   public void testUsagesInXml() throws Exception {

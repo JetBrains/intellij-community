@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 /**
  * @author Maxim.Medvedev
@@ -125,15 +126,12 @@ public class EachToForIntention extends Intention {
           if ("each".equals(referenceExpression.getName())) {
             final GrArgumentList argumentList = expression.getArgumentList();
             if (argumentList != null) {
-              if (argumentList.getExpressionArguments().length > 0) return false;
-              if (argumentList.getNamedArguments().length > 0) return false;
+              if (PsiImplUtil.hasExpressionArguments(argumentList)) return false;
+              if (PsiImplUtil.hasNamedArguments(argumentList)) return false;
             }
             final GrClosableBlock[] closureArguments = expression.getClosureArguments();
             if (closureArguments.length != 1) return false;
-            final GrParameterList parameterList = closureArguments[0].getParameterList();
-            if (parameterList == null) return false;
-
-            final GrParameter[] parameters = parameterList.getParameters();
+            final GrParameter[] parameters = closureArguments[0].getParameterList().getParameters();
             if (parameters.length > 1) return false;
             return true;
           }

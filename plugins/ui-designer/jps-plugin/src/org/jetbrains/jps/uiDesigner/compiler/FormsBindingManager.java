@@ -16,7 +16,9 @@
 package org.jetbrains.jps.uiDesigner.compiler;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -191,7 +193,7 @@ public class FormsBindingManager extends FormsBuilder {
       return null;
     }
     for (JavaSourceRootDescriptor rd : targetRoots) {
-      final File boundSource = findSourceForClass(rd.root, className);
+      final File boundSource = findSourceForClass(rd, className);
       if (boundSource != null) {
         return boundSource;
       }
@@ -200,13 +202,25 @@ public class FormsBindingManager extends FormsBuilder {
   }
 
   @Nullable
-  private static File findSourceForClass(File srcRoot, final @Nullable String boundClassName) throws IOException {
+  private static File findSourceForClass(JavaSourceRootDescriptor rd, final @Nullable String boundClassName) throws IOException {
     if (boundClassName == null) {
       return null;
     }
-    String relPath = boundClassName.replace('.', '/') + JAVA_EXTENSION;
+
+    String clsName = boundClassName;
+    String prefix = rd.getPackagePrefix();
+    if (!StringUtil.isEmpty(prefix)) {
+      if (!StringUtil.endsWith(prefix, ".")) {
+        prefix += ".";
+      }
+      if (SystemInfo.isFileSystemCaseSensitive? StringUtil.startsWith(clsName, prefix) : StringUtil.startsWithIgnoreCase(clsName, prefix)) {
+        clsName = clsName.substring(prefix.length());
+      }
+    }
+
+    String relPath = clsName.replace('.', '/') + JAVA_EXTENSION;
     while (true) {
-      final File candidate = new File(srcRoot, relPath);
+      final File candidate = new File(rd.getRootFile(), relPath);
       if (candidate.exists()) {
         return candidate.isFile() ? candidate : null;
       }

@@ -24,6 +24,7 @@ import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.impl.CompletionPreview;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -67,7 +68,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -118,7 +118,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   };
   private volatile int myCount;
-  private final ConcurrentHashMap<LookupElement, CompletionSorterImpl> myItemSorters = new ConcurrentHashMap<LookupElement, CompletionSorterImpl>(TObjectHashingStrategy.IDENTITY);
+  private volatile boolean myShowPreview;
+  private final ConcurrentHashMap<LookupElement, CompletionSorterImpl> myItemSorters = new ConcurrentHashMap<LookupElement, CompletionSorterImpl>(
+    ContainerUtil.<LookupElement>identityStrategy());
   private final PropertyChangeListener myLookupManagerListener;
   private final int myStartCaret;
 
@@ -169,7 +171,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   void duringCompletion(CompletionInitializationContext initContext) {
     if (isAutopopupCompletion()) {
       if (shouldFocusLookup(myParameters)) {
-        myLookup.setFocused(true);
+        if (Registry.is("ide.completion.show.preview")) {
+          myShowPreview = true;
+          myLookup.setFocused(false);
+        } else {
+          myLookup.setFocused(true);
+        }
       } else if (FeatureUsageTracker.getInstance().isToBeAdvertisedInLookup(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ENTER, getProject())) {
         myLookup.addAdvertisement("Press " +
                                       CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_ALWAYS) +
@@ -326,6 +333,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
       if (!myLookup.showLookup()) {
         return false;
+      }
+      if (myShowPreview) {
+        CompletionPreview.installPreview(myLookup);
       }
       justShown = true;
     }

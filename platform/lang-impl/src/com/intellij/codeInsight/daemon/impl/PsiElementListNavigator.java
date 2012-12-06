@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
+import com.intellij.find.FindUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -30,10 +31,12 @@ import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.JBListWithHintProvider;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
+import java.util.List;
 
 public class PsiElementListNavigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PsiElementListNavigator");
@@ -41,27 +44,29 @@ public class PsiElementListNavigator {
   private PsiElementListNavigator() {
   }
 
-  public static void openTargets(MouseEvent e, NavigatablePsiElement[] targets, String title, ListCellRenderer listRenderer) {
-    openTargets(e, targets, title, listRenderer, null);
+  public static void openTargets(MouseEvent e, NavigatablePsiElement[] targets, String title, final String findUsagesTitle, ListCellRenderer listRenderer) {
+    openTargets(e, targets, title, findUsagesTitle, listRenderer, null);
   }
 
   public static void openTargets(MouseEvent e,
                                  NavigatablePsiElement[] targets,
                                  String title,
+                                 final String findUsagesTitle,
                                  ListCellRenderer listRenderer,
                                  @Nullable ListBackgroundUpdaterTask listUpdaterTask) {
-    JBPopup popup = navigateOrCreatePopup(targets, title, listRenderer, listUpdaterTask);
+    JBPopup popup = navigateOrCreatePopup(targets, title, findUsagesTitle, listRenderer, listUpdaterTask);
     if (popup != null) popup.show(new RelativePoint(e));
   }
 
-  public static void openTargets(Editor e, NavigatablePsiElement[] targets, String title, ListCellRenderer listRenderer) {
-    JBPopup popup = navigateOrCreatePopup(targets, title, listRenderer, null);
+  public static void openTargets(Editor e, NavigatablePsiElement[] targets, String title, final String findUsagesTitle, ListCellRenderer listRenderer) {
+    JBPopup popup = navigateOrCreatePopup(targets, title, findUsagesTitle, listRenderer, null);
     if (popup != null) popup.showInBestPositionFor(e);
   }
 
   @Nullable
   private static JBPopup navigateOrCreatePopup(final NavigatablePsiElement[] targets,
                                                final String title,
+                                               final String findUsagesTitle,
                                                final ListCellRenderer listRenderer,
                                                final @Nullable ListBackgroundUpdaterTask listUpdaterTask) {
     if (targets.length == 0) return null;
@@ -69,7 +74,8 @@ public class PsiElementListNavigator {
       targets[0].navigate(true);
       return null;
     }
-    final JBListWithHintProvider list = new JBListWithHintProvider(new CollectionListModel(targets)) {
+    final CollectionListModel<NavigatablePsiElement> model = new CollectionListModel<NavigatablePsiElement>(targets);
+    final JBListWithHintProvider list = new JBListWithHintProvider(model) {
       @Override
       protected PsiElement getPsiElementForHint(final Object selectedValue) {
         return (PsiElement) selectedValue;
@@ -83,7 +89,7 @@ public class PsiElementListNavigator {
       ((PsiElementListCellRenderer)listRenderer).installSpeedSearch(builder);
     }
 
-    final JBPopup popup = builder.
+    PopupChooserBuilder popupChooserBuilder = builder.
       setTitle(title).
       setMovable(true).
       setItemChoosenCallback(new Runnable() {
@@ -106,9 +112,20 @@ public class PsiElementListNavigator {
 
           return true;
         }
-      })
-      .createPopup();
+      });
+    if (findUsagesTitle != null) {
+      popupChooserBuilder = popupChooserBuilder.setCouldPin(new Processor<JBPopup>() {
+        @Override
+        public boolean process(JBPopup popup) {
+          final List<NavigatablePsiElement> items = model.getItems();
+          FindUtil.showInUsageView(null, items.toArray(new PsiElement[items.size()]), findUsagesTitle, targets[0].getProject());
+          popup.cancel();
+          return false;
+        }
+      });
+    }
 
+    final JBPopup popup = popupChooserBuilder.createPopup();
     if (listUpdaterTask != null) {
       listUpdaterTask.init((AbstractPopup)popup, list);
 

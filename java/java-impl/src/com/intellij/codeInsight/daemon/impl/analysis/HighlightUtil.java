@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInsight.ContainerProvider;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -52,6 +53,7 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
 import org.intellij.lang.annotations.Language;
@@ -1377,11 +1379,11 @@ public class HighlightUtil extends HighlightUtilBase {
     String symbolName = HighlightMessageUtil.getSymbolName(refElement, result.getSubstitutor());
 
     if (refElement.hasModifierProperty(PsiModifier.PRIVATE)) {
-      String containerName = HighlightMessageUtil.getSymbolName(refElement.getParent(), result.getSubstitutor());
+      String containerName = getContainerName(refElement, result.getSubstitutor());
       return JavaErrorMessages.message("private.symbol", symbolName, containerName);
     }
     else if (refElement.hasModifierProperty(PsiModifier.PROTECTED)) {
-      String containerName = HighlightMessageUtil.getSymbolName(refElement.getParent(), result.getSubstitutor());
+      String containerName = getContainerName(refElement, result.getSubstitutor());
       return JavaErrorMessages.message("protected.symbol", symbolName, containerName);
     }
     else {
@@ -1391,15 +1393,27 @@ public class HighlightUtil extends HighlightUtilBase {
         symbolName = HighlightMessageUtil.getSymbolName(refElement, result.getSubstitutor());
       }
       if (refElement.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) || packageLocalClass != null) {
-        String containerName = HighlightMessageUtil.getSymbolName(refElement.getParent(), result.getSubstitutor());
+        String containerName = getContainerName(refElement, result.getSubstitutor());
         return JavaErrorMessages.message("package.local.symbol", symbolName, containerName);
       }
       else {
-        PsiElement symbol = refElement instanceof PsiTypeParameter ? refElement.getParent().getParent() : refElement.getParent();
-        String containerName = symbol == null ? "?" : HighlightMessageUtil.getSymbolName(symbol, result.getSubstitutor());
+        String containerName = getContainerName(refElement, result.getSubstitutor());
         return JavaErrorMessages.message("visibility.access.problem", symbolName, containerName);
       }
     }
+  }
+
+  private static PsiElement getContainer(PsiModifierListOwner refElement) {
+    for (ContainerProvider provider : ContainerProvider.EP_NAME.getExtensions()) {
+      final PsiElement container = provider.getContainer(refElement);
+      if (container != null) return container;
+    }
+    return refElement.getParent();
+  }
+
+  private static String getContainerName(PsiModifierListOwner refElement, final PsiSubstitutor substitutor) {
+    final PsiElement container = getContainer(refElement);
+    return container == null ? "?" : HighlightMessageUtil.getSymbolName(container, substitutor);
   }
 
   @Nullable
@@ -2246,7 +2260,8 @@ public class HighlightUtil extends HighlightUtilBase {
   @NonNls
   private static String redIfNotMatch(PsiType type, boolean matches) {
     if (matches) return getFQName(type, false);
-    return "<font color=red><b>" + getFQName(type, true) + "</b></font>";
+    String color = UIUtil.isUnderDarcula() ? "FF6B68" : "red";
+    return "<font color='" + color +"'><b>" + getFQName(type, true) + "</b></font>";
   }
 
   private static String getFQName(@Nullable PsiType type, boolean longName) {

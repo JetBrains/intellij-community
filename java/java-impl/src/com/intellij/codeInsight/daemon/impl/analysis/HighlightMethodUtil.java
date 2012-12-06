@@ -32,6 +32,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
+import com.intellij.ui.ColorUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
@@ -656,9 +658,11 @@ public class HighlightMethodUtil {
       PsiParameter parameter = i < parameters.length ? parameters[i] : null;
       PsiExpression expression = i < expressions.length ? expressions[i] : null;
       boolean showShort = showShortType(i, parameters, expressions, substitutor);
-      @NonNls String mismatchColor = showShort ? null : "red";
+      @NonNls String mismatchColor = showShort ? null : UIUtil.isUnderDarcula() ? "FF6B68" : "red";
 
-      s += "<tr" + (i % 2 == 0 ? " style='background-color: #eeeeee'" : "") + ">";
+      s += "<tr" + (i % 2 == 0 ? " style='background-color: #"
+                                 + (UIUtil.isUnderDarcula() ? ColorUtil.toHex(ColorUtil.shift(UIUtil.getToolTipBackground(), 1.1)) : "eeeeee")
+                                 + "'" : "") + ">";
       s += "<td><b><nobr>";
       if (parameter != null) {
         String name = parameter.getName();
@@ -681,7 +685,7 @@ public class HighlightMethodUtil {
       s += "<td><b><nobr>";
       if (expression != null) {
         PsiType type = expression.getType();
-        s += "<font " + (mismatchColor == null ? "" : "color=" + mismatchColor) + ">" +
+        s += "<font " + (mismatchColor == null ? "" : "color='" + mismatchColor + "'") + ">" +
                esctrim(expression.getText()) + "&nbsp;&nbsp;"+
               (mismatchColor == null || type == null || type == PsiType.NULL ? "" : "("+esctrim(HighlightUtil.formatType(type))+")")
               + "</font>"

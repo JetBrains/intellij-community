@@ -15,10 +15,7 @@ import org.jetbrains.jps.model.module.JpsModuleReference;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 import org.jetbrains.jps.model.serialization.JpsProjectExtensionSerializer;
 import org.jetbrains.jps.model.serialization.artifact.JpsPackagingElementSerializer;
-import org.jetbrains.jps.model.serialization.java.compiler.JpsEclipseCompilerOptionsSerializer;
-import org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurationSerializer;
-import org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerOptionsSerializer;
-import org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerWorkspaceConfigurationSerializer;
+import org.jetbrains.jps.model.serialization.java.compiler.*;
 import org.jetbrains.jps.model.serialization.library.JpsLibraryRootTypeSerializer;
 
 import java.util.Arrays;
@@ -62,7 +59,8 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
                          new JpsJavaCompilerConfigurationSerializer(),
                          new JpsJavaCompilerWorkspaceConfigurationSerializer(),
                          new JpsJavaCompilerOptionsSerializer("JavacSettings", "Javac"),
-                         new JpsEclipseCompilerOptionsSerializer("EclipseCompilerSettings", "Eclipse"));
+                         new JpsEclipseCompilerOptionsSerializer("EclipseCompilerSettings", "Eclipse"),
+                         new RmicCompilerOptionsSerializer("RmicSettings", "Rmic"));
   }
 
   @Override

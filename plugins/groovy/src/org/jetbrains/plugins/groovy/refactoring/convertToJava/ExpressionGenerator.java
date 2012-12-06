@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.intentions.conversions.strings.ConvertGStringToStringIntention;
@@ -70,6 +71,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightLocalVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -629,6 +631,11 @@ public class ExpressionGenerator extends Generator {
       builder.append(')');
       return;
     }
+    if ((op == mEQUAL || op == mNOT_EQUAL) && (GrInspectionUtil.isNull(left) || right != null && GrInspectionUtil.isNull(right))) {
+      writeSimpleBinaryExpression(token, left, right);
+      return;
+    }
+
     if (shouldNotReplaceOperatorWithMethod(ltype, right, op)) {
       writeSimpleBinaryExpression(token, left, right);
       return;
@@ -1138,7 +1145,7 @@ public class ExpressionGenerator extends Generator {
     final PsiElement resolved = resolveResult.getElement();
 
     if (resolved instanceof PsiMethod) {
-      final GrExpression typeParam = factory.createExpressionFromText(typeElement == null ? "null" : typeElement.getText());
+      final GrExpression typeParam = factory.createExpressionFromText(typeElement.getText(), typeCastExpression);
       invokeMethodOn(
         ((PsiMethod)resolved),
         operand,
@@ -1358,7 +1365,7 @@ public class ExpressionGenerator extends Generator {
 
   private static PsiType getTypeToUseByList(GrListOrMap listOrMap, PsiType type) {
     if (isImplicitlyCastedToArray(listOrMap)) {
-      PsiType iterable = com.intellij.psi.util.PsiUtil.extractIterableTypeParameter(type, false);
+      PsiType iterable = ClosureParameterEnhancer.findTypeForIteration(listOrMap, listOrMap);
       if (iterable != null) {
         return new PsiArrayType(iterable);
       }

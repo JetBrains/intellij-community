@@ -48,11 +48,13 @@ public class FilteredQuery<T> implements Query<T> {
     return true;
   }
 
+  @NotNull
   @Override
   public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<T> consumer) {
     return myOriginal.forEachAsync(new MyProcessor(consumer));
   }
 
+  @Override
   @NotNull
   public Collection<T> findAll() {
     CommonProcessors.CollectProcessor<T> processor = new CommonProcessors.CollectProcessor<T>();
@@ -60,8 +62,9 @@ public class FilteredQuery<T> implements Query<T> {
     return processor.getResults();
   }
 
+  @NotNull
   @Override
-  public T[] toArray(final T[] a) {
+  public T[] toArray(@NotNull final T[] a) {
     return findAll().toArray(a);
   }
 
@@ -77,6 +80,7 @@ public class FilteredQuery<T> implements Query<T> {
       myConsumer = consumer;
     }
 
+    @Override
     public boolean process(final T t) {
       if (!myFilter.value(t)) return true;
       if (!myConsumer.process(t)) return false;

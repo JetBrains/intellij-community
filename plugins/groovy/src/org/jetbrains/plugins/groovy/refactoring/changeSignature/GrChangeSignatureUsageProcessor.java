@@ -69,6 +69,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -585,7 +586,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       }
 
       GrCall call = GroovyRefactoringUtil.getCallExpressionByMethodReference(element);
-      if (argumentList.getText().trim().length() == 0 && (call == null || call.getClosureArguments().length == 0)) {
+      if (argumentList.getText().trim().length() == 0 && (call == null || !PsiImplUtil.hasClosureArguments(call))) {
         argumentList = argumentList.replaceWithArgumentList(factory.createArgumentList());
       }
       CodeStyleManager.getInstance(argumentList.getProject()).reformat(argumentList);

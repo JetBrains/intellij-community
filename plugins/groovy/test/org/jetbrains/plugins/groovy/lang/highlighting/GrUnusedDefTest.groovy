@@ -129,4 +129,10 @@ def <warning descr="Method f2 is unused">f2</warning>(String foo, int mode) {
 ''')
   }
 
+  void testUnusedUnassignedVar() {
+    testHighlighting('''\
+def <warning descr="Variable is not used">abc</warning>
+''')
+  }
+
 }

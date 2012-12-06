@@ -93,7 +93,7 @@ public class AndroidAddStringResourceAction extends AbstractIntentionAction impl
   }
 
   @Nullable
-  private static String getStringLiteralValue(@NotNull PsiElement element, @NotNull PsiFile file) {
+  protected static String getStringLiteralValue(@NotNull PsiElement element, @NotNull PsiFile file) {
     if (file instanceof PsiJavaFile && element instanceof PsiLiteralExpression) {
       PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
       Object value = literalExpression.getValue();

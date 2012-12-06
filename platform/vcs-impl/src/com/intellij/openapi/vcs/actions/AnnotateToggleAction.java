@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ColorUtil;
 import com.intellij.util.containers.SortedList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -55,8 +56,8 @@ import java.util.*;
 import java.util.List;
 
 /**
- * @author: lesya
  * @author Konstantin Bulenkov
+ * @author: lesya
  */
 public class AnnotateToggleAction extends ToggleAction implements DumbAware, AnnotationColors {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.actions.AnnotateToggleAction");
@@ -156,6 +157,9 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
         catch (VcsException e) {
           exceptionRef.set(e);
         }
+        catch (Throwable t) {
+          handler.completed(file.getPath());
+        }
       }
 
       @Override
@@ -245,7 +249,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
       gutters.add(currentRevisionGutter);
       gutters.add(mergeSourceGutter);
     }
-    
+
     final LineAnnotationAspect[] aspects = fileAnnotation.getAspects();
     for (LineAnnotationAspect aspect : aspects) {
       final AnnotationFieldGutter gutter = new AnnotationFieldGutter(fileAnnotation, editor, aspect, presentation, bgColorMap);
@@ -267,7 +271,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
 
     for (AnAction action : presentation.getActions()) {
       if (action instanceof LineNumberListener) {
-         presentation.addLineNumberListener((LineNumberListener)action);
+        presentation.addLineNumberListener((LineNumberListener)action);
       }
     }
 
@@ -330,18 +334,23 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
     final Map<String, Color> revNumbers = new HashMap<String, Color>();
     final int length = BG_COLORS.length;
     final List<VcsFileRevision> fileRevisionList = fileAnnotation.getRevisions();
+    final boolean darcula = UIUtil.isUnderDarcula();
     if (fileRevisionList != null) {
       for (VcsFileRevision revision : fileRevisionList) {
         final String author = revision.getAuthor();
         final String revNumber = revision.getRevisionNumber().asString();
         if (author != null && !bgColors.containsKey(author)) {
           final int size = bgColors.size();
-          bgColors.put(author, BG_COLORS[size < length ? size : size % length]);
+          Color color = BG_COLORS[size < length ? size : size % length];
+          if (darcula) {
+            color = ColorUtil.shift(color, 0.3);
+          }
+          bgColors.put(author, color);
         }
         if (revNumber != null && !revNumbers.containsKey(revNumber)) {
-          revNumbers.put(revNumber, bgColors.get(author));          
+          revNumbers.put(revNumber, bgColors.get(author));
         }
-    }
+      }
     }
     return bgColors.size() < 2 ? null : revNumbers;
   }

@@ -19,6 +19,7 @@ package com.intellij.find;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -54,6 +55,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
 import com.intellij.usageView.UsageInfo;
@@ -906,5 +908,21 @@ public class FindUtil {
 
   public interface ReplaceDelegate {
     boolean shouldReplace(TextRange range, String replace);
+  }
+
+  public static void showInUsageView(PsiElement sourceElement, PsiElement[] targets, String title, Project project) {
+    final UsageViewPresentation presentation = new UsageViewPresentation();
+    presentation.setCodeUsagesString(title);
+    presentation.setTabName(title);
+    presentation.setTabText(title);
+    final UsageInfo[] usages = new UsageInfo[targets.length];
+    for (int i = 0; i < targets.length; i++) {
+      usages[i] = new UsageInfo(targets[i]);
+    }
+    final UsageTarget[] usageTargets =
+      sourceElement == null ? UsageTarget.EMPTY_ARRAY : new UsageTarget[]{new PsiElement2UsageTargetAdapter(sourceElement)};
+    final Usage[] foundUsages = UsageInfoToUsageConverter.convert(
+      new UsageInfoToUsageConverter.TargetElementsDescriptor(targets), usages);
+    UsageViewManager.getInstance(project).showUsages(usageTargets, foundUsages, presentation);
   }
 }

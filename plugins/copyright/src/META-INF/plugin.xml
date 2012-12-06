@@ -11,12 +11,7 @@
     <depends optional="true" config-file="java.xml">com.intellij.modules.java</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-      <projectConfigurable instance="com.maddyhome.idea.copyright.ui.CopyrightProjectConfigurable" id="copyright" displayName="Copyright">
-        <configurable instance="com.maddyhome.idea.copyright.ui.CopyrightProfilesPanel" id="copyright.profiles"
-                      displayName="Copyright Profiles"/>
-        <configurable instance="com.maddyhome.idea.copyright.ui.CopyrightFormattingConfigurable" id="template.copyright.formatting"
-                      displayName="Formatting" dynamic="true"/>
-      </projectConfigurable>
+      <projectConfigurable instance="com.maddyhome.idea.copyright.ui.CopyrightProjectConfigurable"/>
       <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
       <checkinHandlerFactory implementation="com.maddyhome.idea.copyright.actions.UpdateCopyrightCheckinHandlerFactory"/>
       <applicationService serviceInterface="com.maddyhome.idea.copyright.util.FileTypeUtil"

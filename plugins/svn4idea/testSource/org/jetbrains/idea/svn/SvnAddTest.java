@@ -68,7 +68,9 @@ public class SvnAddTest extends Svn17TestCase {
     disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile dir = createDirInCommand(myWorkingCopyDir, "dir");
     final VirtualFile file = createFileInCommand(dir, "a.txt", "content");
-    
+
+    verify(runSvn("status"), "? dir");
+
     final List<VirtualFile> files = new ArrayList<VirtualFile>();
     files.add(file);
     files.add(dir);

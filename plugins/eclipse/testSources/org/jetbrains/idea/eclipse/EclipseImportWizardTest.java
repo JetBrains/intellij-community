@@ -17,10 +17,17 @@ package org.jetbrains.idea.eclipse;
 
 import com.intellij.ide.projectWizard.ProjectWizardTestCase;
 import com.intellij.ide.util.projectWizard.ImportFromSourcesProvider;
+import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.eclipse.importWizard.EclipseImportBuilder;
 import org.jetbrains.idea.eclipse.importWizard.EclipseProjectImportProvider;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * @author Dmitry Avdeev
@@ -28,14 +35,38 @@ import java.io.File;
  */
 public class EclipseImportWizardTest extends ProjectWizardTestCase {
 
-  public void testNothingToImport() throws Exception {
-    try {
-      File file = createTempFile("Foo.java", "class Foo {}");
-      importProjectFrom(file.getParent(), null, new ImportFromSourcesProvider(), new EclipseProjectImportProvider(new EclipseImportBuilder()));
-      fail("Exception should be frown");
-    }
-    catch (RuntimeException e) {
-      assertEquals("Nothing found to import", e.getMessage());
-    }
+  public void testImportProject() throws Exception {
+    Module module = doTest(".project");
+    assertEquals("root", module.getName());
+  }
+
+  public void testImportClasspath() throws Exception {
+    Module module = doTest(".classpath");
+    assertEquals("root", module.getName());
+  }
+
+  public void testImportFromDirectory() throws Exception {
+    Module module = doTest("");
+    assertEquals("root", module.getName());
+  }
+
+  private Module doTest(final String fileName) throws IOException {
+    copyTestData();
+    return importProjectFrom(getProject().getBaseDir().getPath() + "/" + fileName, null,
+                                      new EclipseProjectImportProvider(new EclipseImportBuilder()));
+  }
+
+  private void copyTestData() throws IOException {
+    final File testRoot = new File(PluginPathManager.getPluginHomePath("eclipse") + "/testData", "import");
+    FileUtil.copyDir(testRoot, new File(getProject().getBaseDir().getPath()));
+  }
+
+  public void testImportingFromTwoProviders() throws Exception {
+    File file = createTempFile("Foo.java", "class Foo {}");
+    Module module = importProjectFrom(file.getParent(), null, new ImportFromSourcesProvider(),
+                                      new EclipseProjectImportProvider(new EclipseImportBuilder()));
+    VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
+    assertEquals(1, sourceRoots.length);
+    assertEquals(LocalFileSystem.getInstance().findFileByIoFile(file.getParentFile()), sourceRoots[0]);
   }
 }

@@ -29,6 +29,7 @@ import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.lang.ASTNode;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -75,6 +76,10 @@ import static org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil.
 public class GroovyCompletionData {
   public static final String[] BUILT_IN_TYPES = {"boolean", "byte", "char", "short", "int", "float", "long", "double", "void"};
   public static final String[] MODIFIERS = new String[]{"private", "public", "protected", "transient", "abstract", "native", "volatile", "strictfp", "static"};
+  public static final ElementPattern<PsiElement> IN_CAST_TYPE_ELEMENT = StandardPatterns.or(
+    psiElement().afterLeaf(psiElement().withText("(").withParent(psiElement(GrParenthesizedExpression.class, GrTypeCastExpression.class))),
+    psiElement().afterLeaf(psiElement().withElementType(GroovyTokenTypes.kAS).withParent(GrSafeCastExpression.class))
+  );
   static final String[] INLINED_DOC_TAGS = {"code", "docRoot", "inheritDoc", "link", "linkplain", "literal"};
   static final String[] DOC_TAGS = {"author", "deprecated", "exception", "param", "return", "see", "serial", "serialData",
       "serialField", "since", "throws", "version"};
@@ -128,14 +133,8 @@ public class GroovyCompletionData {
         result.addElement(keyword(PsiKeyword.THROWS, TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
       if (suggestPrimitiveTypes(position)) {
-        boolean inCast = psiElement()
-          .afterLeaf(psiElement().withText("(").withParent(psiElement(GrParenthesizedExpression.class, GrTypeCastExpression.class)))
-          .accepts(position) ||
-                         psiElement()
-          .afterLeaf(psiElement().withElementType(GroovyTokenTypes.kAS).withParent(GrSafeCastExpression.class))
-          .accepts(position);
-
-        addKeywords(result, !inCast, BUILT_IN_TYPES);
+        final boolean addSpace = !IN_CAST_TYPE_ELEMENT.accepts(position) && !GroovySmartCompletionContributor.AFTER_NEW.accepts(position) && !isInExpression(position);
+        addKeywords(result, addSpace, BUILT_IN_TYPES);
       }
 
       if (psiElement(GrReferenceExpression.class).inside(or(psiElement(GrWhileStatement.class), psiElement(GrForStatement.class))).accepts(parent)) {
@@ -162,6 +161,15 @@ public class GroovyCompletionData {
         }
       }
     }
+  }
+
+  /**
+   * checks whether promitive type used in expression
+   */
+  private static boolean isInExpression(PsiElement position) {
+    final PsiElement actual = position.getParent();
+    final PsiElement parent = actual.getParent();
+    return parent instanceof GrArgumentList || parent instanceof GrBinaryExpression;
   }
 
   private static void addExtendsForTypeParams(PsiElement position, CompletionResultSet result) {
@@ -270,7 +278,7 @@ public class GroovyCompletionData {
     return context.getParent() instanceof GrReferenceExpression &&
            context.getParent().getParent() instanceof GrApplicationStatement &&
            ((GrApplicationStatement)context.getParent().getParent()).getExpressionArguments().length == 1 &&
-           ((GrApplicationStatement)context.getParent().getParent()).getNamedArguments().length == 0;
+           !PsiImplUtil.hasNamedArguments(((GrApplicationStatement)context.getParent().getParent()).getArgumentList());
   }
 
   private static boolean hasReturnValue(PsiElement context) {

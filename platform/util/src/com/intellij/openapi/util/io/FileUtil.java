@@ -24,6 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
+import com.intellij.util.text.FilePathHashingStrategy;
 import gnu.trove.TObjectHashingStrategy;
 import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NonNls;
@@ -44,13 +45,10 @@ public class FileUtil extends FileUtilRt {
 
   public static final int REGEX_PATTERN_FLAGS = SystemInfo.isFileSystemCaseSensitive ? 0 : Pattern.CASE_INSENSITIVE;
 
-  @SuppressWarnings({"unchecked"})
-  public static final TObjectHashingStrategy<String> PATH_HASHING_STRATEGY =
-    SystemInfo.isFileSystemCaseSensitive ? TObjectHashingStrategy.CANONICAL : CaseInsensitiveStringHashingStrategy.INSTANCE;
+  public static final TObjectHashingStrategy<String> PATH_HASHING_STRATEGY = FilePathHashingStrategy.create();
 
-  @SuppressWarnings({"unchecked"})
   public static final TObjectHashingStrategy<File> FILE_HASHING_STRATEGY =
-    SystemInfo.isFileSystemCaseSensitive ? TObjectHashingStrategy.CANONICAL : new TObjectHashingStrategy<File>() {
+    SystemInfo.isFileSystemCaseSensitive ? ContainerUtil.<File>canonicalStrategy() : new TObjectHashingStrategy<File>() {
       @Override
       public int computeHashCode(File object) {
         return fileHashCode(object);
@@ -798,8 +796,17 @@ public class FileUtil extends FileUtilRt {
 
     path1 = toCanonicalPath(path1);
     path2 = toCanonicalPath(path2);
-    //noinspection ConstantConditions
     return PATH_HASHING_STRATEGY.equals(path1, path2);
+  }
+
+  /**
+   * optimized version of pathsEqual - it only compares pure names, without file separators
+   */
+  public static boolean namesEqual(@Nullable String name1, @Nullable String name2) {
+    if (name1 == name2) return true;
+    if (name1 == null || name2 == null) return false;
+
+    return PATH_HASHING_STRATEGY.equals(name1, name2);
   }
 
   public static int compareFiles(@Nullable File file1, @Nullable File file2) {

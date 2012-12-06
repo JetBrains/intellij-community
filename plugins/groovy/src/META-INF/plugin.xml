@@ -245,6 +245,8 @@
     <statementUpDownMover implementation="org.jetbrains.plugins.groovy.editor.actions.GroovyStatementMover"/>
 
     <joinLinesHandler implementation="org.jetbrains.plugins.groovy.editor.actions.joinLines.GrVariableJoinLinesHandler"/>
+    <joinLinesHandler implementation="org.jetbrains.plugins.groovy.editor.actions.joinLines.GrJoinIfHandler"/>
+    <joinLinesHandler implementation="org.jetbrains.plugins.groovy.editor.actions.joinLines.GrJoinStatementsHandler"/>
 
     <applicationService serviceInterface="org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings"
                         serviceImplementation="org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings"/>
@@ -1321,6 +1323,9 @@
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"
                     serviceImplementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"/>
+
+    <projectService serviceInterface="org.jetbrains.plugins.groovy.griffon.GriffonProjectViewState"
+                    serviceImplementation="org.jetbrains.plugins.groovy.griffon.GriffonProjectViewState"/>
 
     <java.programPatcher implementation="org.jetbrains.plugins.groovy.debugger.GroovyHotSwapper"/>
     <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.gpp.GppReferenceContributor"/>

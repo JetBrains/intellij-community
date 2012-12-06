@@ -213,7 +213,7 @@ public class BuildMain {
 
           @Override
           public void error(@NonNls String message, @Nullable Throwable t, @NonNls String... details) {
-            logger.debug(message, t);
+            logger.error(message, t);
           }
 
           @Override

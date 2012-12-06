@@ -130,7 +130,6 @@ public class LookupElementPresentation {
   }
 
   @Nullable
-  @Deprecated
   public String getTailText() {
     if (myTail == null) return null;
     return StringUtil.join(myTail, new Function<TextFragment, String>() {

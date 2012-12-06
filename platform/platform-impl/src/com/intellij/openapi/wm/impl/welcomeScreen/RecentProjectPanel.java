@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.UniqueNameBuilder;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
@@ -45,11 +46,19 @@ import java.io.File;
 
 public class RecentProjectPanel extends JPanel {
   private final JBList myList;
+  private final UniqueNameBuilder<ReopenProjectAction> myPathShortener;
 
   public RecentProjectPanel() {
     super(new BorderLayout());
 
     final AnAction[] recentProjectActions = RecentProjectsManagerBase.getInstance().getRecentProjectsActions(false);
+
+    myPathShortener = new UniqueNameBuilder<ReopenProjectAction>(SystemProperties.getUserHome(), File.separator, 40);
+    for (AnAction action : recentProjectActions) {
+      ReopenProjectAction item = (ReopenProjectAction)action;
+      myPathShortener.addPath(item, item.getProjectPath());
+    }
+
     myList = new MyList(recentProjectActions);
     myList.setCellRenderer(new RecentProjectItemRenderer());
 
@@ -113,7 +122,8 @@ public class RecentProjectPanel extends JPanel {
           int index = myList.locationToIndex(point);
           myList.setSelectedIndex(index);
 
-          if (myList.getCellBounds(index, index).contains(point)) {
+          final Rectangle bounds = myList.getCellBounds(index, index);
+          if (bounds != null && bounds.contains(point)) {
             myList.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
           }
           else {
@@ -166,7 +176,8 @@ public class RecentProjectPanel extends JPanel {
     setBorder(new LineBorder(WelcomeScreenColors.BORDER_COLOR));
   }
 
-  private static String getTitle2Text(String fullText, JComponent pathLabel) {
+  private String getTitle2Text(ReopenProjectAction action, JComponent pathLabel) {
+    String fullText = action.getProjectPath();
     int labelWidth = pathLabel.getWidth();
     if (fullText == null || fullText.length() == 0) return " ";
 
@@ -175,10 +186,8 @@ public class RecentProjectPanel extends JPanel {
       fullText = "~" + fullText.substring(home.length());
     }
 
-    while (pathLabel.getFontMetrics(pathLabel.getFont()).stringWidth(fullText) > labelWidth) {
-      int sep = fullText.indexOf(File.separatorChar, 4);
-      if (sep < 0) return fullText;
-      fullText = "..." + fullText.substring(sep);
+    if (pathLabel.getFontMetrics(pathLabel.getFont()).stringWidth(fullText) > labelWidth) {
+      return myPathShortener.getShortPath(action);
     }
 
     return fullText;
@@ -187,16 +196,16 @@ public class RecentProjectPanel extends JPanel {
   private static class MyList extends JBList {
     private MyList(@NotNull Object... listData) {
       super(listData);
-      setEmptyText("No Project Open Yet");
+      setEmptyText("  No Project Open Yet  ");
     }
 
     @Override
-    public Dimension getPreferredSize() {
+    public Dimension getPreferredScrollableViewportSize() {
       return new Dimension(250, 400);
     }
   }
 
-  private static class RecentProjectItemRenderer extends JPanel implements ListCellRenderer {
+  private class RecentProjectItemRenderer extends JPanel implements ListCellRenderer {
     private final JLabel myName = new JLabel();
     private final JLabel myPath = new JLabel();
 
@@ -221,9 +230,16 @@ public class RecentProjectPanel extends JPanel {
       setBackground(back);
 
       myName.setText(item.getProjectName());
-      myPath.setText(getTitle2Text(item.getProjectPath(), myPath));
+      myPath.setText(getTitle2Text(item, myPath));
 
       return this;
+    }
+
+
+    @Override
+    public Dimension getPreferredSize() {
+      Dimension size = super.getPreferredSize();
+      return new Dimension(Math.min(size.width, 245), size.height);
     }
   }
 }

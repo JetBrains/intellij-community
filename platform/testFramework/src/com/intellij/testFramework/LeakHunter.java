@@ -23,12 +23,12 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.PersistentEnumerator;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -71,7 +71,7 @@ public class LeakHunter {
     return cached;
   }
 
-  private static final Set<Object> visited = new THashSet<Object>(TObjectHashingStrategy.IDENTITY);
+  private static final Set<Object> visited = ContainerUtil.<Object>newIdentityTroveSet();
   private static class BackLink {
     private final Class aClass;
     private final Object value;

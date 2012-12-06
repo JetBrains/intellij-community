@@ -4,7 +4,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
@@ -16,14 +15,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.LinkedMultiMap;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -283,14 +281,11 @@ public class TestDataGuessByExistingFilesUtil {
       testNamesLowerCase.add(testName.toLowerCase());
     }
     Set<TestLocationDescriptor> descriptors = new HashSet<TestLocationDescriptor>();
-    for (String name : getAllFileNames(psiClass.getProject())) {
+    MultiMap<String, Trinity<Matcher, String, String>> map = getAllFileNames(input, gotoModel);
+    for (String name : map.keySet()) {
       ProgressManager.checkCanceled();
       boolean currentNameProcessed = false;
-      for (Trinity<Matcher, String, String> trinity : input) {
-        if (!trinity.first.matches(name)) {
-          continue;
-        }
-
+      for (Trinity<Matcher, String, String> trinity : map.get(name)) {
         final Object[] elements = gotoModel.getElementsByName(name, false, trinity.third);
         if (elements == null) {
           continue;
@@ -370,14 +365,18 @@ public class TestDataGuessByExistingFilesUtil {
     return new TestDataDescriptor(descriptors);
   }
 
-  private static synchronized String[] getAllFileNames(final Project project) {
-    return CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<String[]>() {
-      @Nullable
-      @Override
-      public Result<String[]> compute() {
-        return Result.create(new GotoFileModel(project).getNames(false), PsiModificationTracker.MODIFICATION_COUNT);
+  private static synchronized MultiMap<String, Trinity<Matcher, String, String>> getAllFileNames(List<Trinity<Matcher, String, String>> input,
+                                                                                                 final GotoFileModel model) {
+    LinkedMultiMap<String, Trinity<Matcher, String, String>> map = new LinkedMultiMap<String, Trinity<Matcher, String, String>>();
+    for (String name : model.getNames(false)) {
+      ProgressManager.checkCanceled();
+      for (Trinity<Matcher, String, String> trinity : input) {
+        if (trinity.first.matches(name)) {
+          map.putValue(name, trinity);
+        }
       }
-    });
+    }
+    return map;
   }
 
   @Nullable

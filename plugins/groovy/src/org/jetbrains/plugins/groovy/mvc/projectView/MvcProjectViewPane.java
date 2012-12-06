@@ -77,17 +77,18 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
 
   private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
   private final MyAutoScrollFromSourceHandler myAutoScrollFromSourceHandler;
-  private boolean myAutoScrollFromSource;
-  private boolean myAutoScrollToSource;
-  private boolean myHideEmptyMiddlePackages = true;
 
   @NonNls private final String myId;
   private final MvcToolWindowDescriptor myDescriptor;
+
+  private MvcProjectViewState myViewState;
 
   public MvcProjectViewPane(final Project project, MvcToolWindowDescriptor descriptor) {
     super(project);
     myDescriptor = descriptor;
     myId = descriptor.getToolWindowId();
+
+    myViewState = descriptor.getProjectViewState(project);
 
     class TreeUpdater implements Runnable, PsiModificationTracker.Listener {
       private volatile boolean myInQueue;
@@ -118,12 +119,12 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
       @Override
       protected boolean isAutoScrollMode() {
-        return myAutoScrollToSource;
+        return myViewState.autoScrollToSource;
       }
 
       @Override
       protected void setAutoScrollMode(boolean state) {
-        myAutoScrollToSource = state;
+        myViewState.autoScrollToSource = state;
       }
     };
 
@@ -213,7 +214,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
 
       @Override
       public boolean isHideEmptyMiddlePackages() {
-        return myHideEmptyMiddlePackages;
+        return myViewState.hideEmptyMiddlePackages;
       }
 
       protected AbstractTreeNode createRoot(final Project project, ViewSettings settings) {
@@ -462,12 +463,12 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
 
     @Override
     protected boolean isAutoScrollEnabled() {
-      return myAutoScrollFromSource;
+      return myViewState.autoScrollFromSource;
     }
 
     @Override
     protected void setAutoScrollEnabled(boolean state) {
-      myAutoScrollFromSource = state;
+      myViewState.autoScrollFromSource = state;
       if (state) {
         selectElementAtCaretNotLosingFocus();
       }
@@ -487,11 +488,11 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return myHideEmptyMiddlePackages;
+      return myViewState.hideEmptyMiddlePackages;
     }
 
     public void setSelected(AnActionEvent event, boolean flag) {
-      myHideEmptyMiddlePackages = flag;
+      myViewState.hideEmptyMiddlePackages = flag;
       TreeUtil.collapseAll(myTree, 1);
     }
   }

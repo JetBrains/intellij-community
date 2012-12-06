@@ -59,7 +59,7 @@ public class CheckboxTreeBase extends Tree {
         Rectangle checkBounds = cellRenderer.myCheckbox.getBounds();
         checkBounds.setLocation(rowBounds.getLocation());
 
-        if (checkBounds.height == 0) checkBounds.height = rowBounds.height;
+        if (checkBounds.height == 0) checkBounds.height = checkBounds.width = rowBounds.height;
 
         final CheckedTreeNode node = (CheckedTreeNode)o;
         if (checkBounds.contains(e.getPoint())) {

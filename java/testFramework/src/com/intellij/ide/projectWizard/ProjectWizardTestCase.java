@@ -10,6 +10,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction;
 import com.intellij.openapi.util.Condition;
@@ -106,6 +107,22 @@ public abstract class ProjectWizardTestCase extends PlatformTestCase {
       }
     }
     myWizard.doOk();
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectSdk();
+    Sdk[] jdks = ProjectJdkTable.getInstance().getAllJdks();
+    for (final Sdk jdk : jdks) {
+      if (projectSdk != jdk) {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            ProjectJdkTable.getInstance().removeJdk(jdk);
+          }
+        });
+      }
+    }
   }
 
   @Override
