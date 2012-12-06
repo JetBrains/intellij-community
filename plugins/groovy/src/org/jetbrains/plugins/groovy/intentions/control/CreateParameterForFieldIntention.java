@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -35,6 +35,7 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.ui.components.JBList;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -197,28 +198,37 @@ public class CreateParameterForFieldIntention extends Intention {
       new JavaThrownExceptionInfo(i, exceptionTypes[i]);
     }
 
-    final GrChangeInfoImpl grChangeInfo =
-      new GrChangeInfoImpl(constructor, null, null, constructor.getName(), parameters, thrownExceptionInfos, false);
-    final GrChangeSignatureProcessor processor = new GrChangeSignatureProcessor(project, grChangeInfo);
-    final Ref<Boolean> success = Ref.create(Boolean.FALSE);
-    processor.setPrepareSuccessfulSwingThreadCallback(new Runnable() {
+    final GrChangeInfoImpl grChangeInfo = new GrChangeInfoImpl(constructor, null, null, constructor.getName(), parameters, thrownExceptionInfos, false);
+
+    final String finalParameterName = parameterName;
+    final GrChangeSignatureProcessor processor = new GrChangeSignatureProcessor(project, grChangeInfo) {
       @Override
-      public void run() {
-        success.set(Boolean.TRUE);
+      protected void performRefactoring(UsageInfo[] usages) {
+        super.performRefactoring(usages);
+
+        final GrOpenBlock block = constructor.getBlock();
+        LOG.assertTrue(block != null);
+        final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
+
+        final String text;
+        if (StringUtil.equals(selectedValue.getName(), finalParameterName)) {
+          text = "this." + selectedValue.getName() + " = " + finalParameterName;
+        }
+        else {
+          text = selectedValue.getName() + " = " + finalParameterName;
+        }
+
+        final GrStatement assignment = factory.createStatementFromText(text);
+        final GrStatement statement = block.addStatementBefore(assignment, null);
+        final GrReferenceExpression ref = (GrReferenceExpression)((GrAssignmentExpression)statement).getLValue();
+        if (!PsiManager.getInstance(project).areElementsEquivalent(ref.resolve(), selectedValue)) {
+          PsiUtil.qualifyMemberReference(ref, selectedValue, selectedValue.getName());
+        }
+
       }
-    });
+    };
     processor.run();
 
-    if (success.get()) {
-      final GrOpenBlock block = constructor.getBlock();
-      LOG.assertTrue(block != null);
-      final GrStatement statement = block.addStatementBefore(
-        GroovyPsiElementFactory.getInstance(project).createStatementFromText(selectedValue.getName() + " = " + parameterName), null);
-      final GrReferenceExpression ref = (GrReferenceExpression)((GrAssignmentExpression)statement).getLValue();
-      if (!PsiManager.getInstance(project).areElementsEquivalent(ref.resolve(), selectedValue)) {
-        PsiUtil.qualifyMemberReference(ref, selectedValue, selectedValue.getName());
-      }
-    }
   }
 
   @NotNull
