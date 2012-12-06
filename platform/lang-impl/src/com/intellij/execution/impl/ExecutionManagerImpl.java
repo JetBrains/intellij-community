@@ -291,7 +291,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
         return;
       }
       for (RunContentDescriptor descriptor : descriptorsToStop) {
-        stop(descriptor, descriptor == currentDescriptor);
+        stop(descriptor);
       }
     }
     else {
@@ -355,15 +355,6 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
       Messages.getQuestionIcon(), option) == Messages.OK;
   }
 
-  private void forgetRunContentDescriptor(RunContentDescriptor runContentDescriptor) {
-    for (Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity : myRunningConfigurations) {
-      if (trinity.getFirst() == runContentDescriptor) {
-        Disposer.dispose(runContentDescriptor);
-        return;
-      }
-    }
-  }
-
   private List<RunContentDescriptor> getRunningDescriptors(RunnerAndConfigurationSettings configuration) {
     List<RunContentDescriptor> result = new ArrayList<RunContentDescriptor>();
     for (Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity : myRunningConfigurations) {
@@ -378,28 +369,21 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   }
 
 
-  private void stop(RunContentDescriptor runContentDescriptor, boolean forgetDescriptor) {
+  private void stop(RunContentDescriptor runContentDescriptor) {
     ProcessHandler processHandler = runContentDescriptor != null ? runContentDescriptor.getProcessHandler() : null;
     if (processHandler == null) {
       return;
     }
-    try {
-      if (processHandler instanceof KillableProcess && processHandler.isProcessTerminating()) {
-        ((KillableProcess)processHandler).killProcess();
-        return;
-      }
-
-      if (processHandler.detachIsDefault()) {
-        processHandler.detachProcess();
-      }
-      else {
-        processHandler.destroyProcess();
-      }
+    if (processHandler instanceof KillableProcess && processHandler.isProcessTerminating()) {
+      ((KillableProcess)processHandler).killProcess();
+      return;
     }
-    finally {
-      if (forgetDescriptor) {
-        forgetRunContentDescriptor(runContentDescriptor);
-      }
+
+    if (processHandler.detachIsDefault()) {
+      processHandler.detachProcess();
+    }
+    else {
+      processHandler.destroyProcess();
     }
   }
 
