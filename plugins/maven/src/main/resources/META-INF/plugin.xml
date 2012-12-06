@@ -45,6 +45,8 @@
     <configurationProducer implementation="org.jetbrains.idea.maven.execution.MavenConfigurationProducer"/>
     <orderEnumerationHandlerFactory implementation="org.jetbrains.idea.maven.execution.MavenOrderEnumeratorHandler$FactoryImpl"/>
 
+    <junitPatcher implementation="org.jetbrains.idea.maven.execution.MavenJUnitPatcher" />
+
     <compiler implementation="org.jetbrains.idea.maven.compiler.MavenResourceCompiler" order="last"/>
     <compileServer.plugin classpath="jps/maven-jps-plugin.jar"/>
 
