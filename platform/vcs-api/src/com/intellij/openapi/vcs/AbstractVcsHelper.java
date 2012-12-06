@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.CommitExecutor;
+import com.intellij.openapi.vcs.changes.CommitResultHandler;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
@@ -167,11 +167,11 @@ public abstract class AbstractVcsHelper {
   
   
   /**
-   * Shows commit dialog, fills it with the given changes and given commit message, initially selects the given changelist.
-   * @return true if user commits the changes, and commit succeeds; false if user presses Cancel or commit fails with errors.
+   * <p>Shows commit dialog, fills it with the given changes and given commit message, initially selects the given changelist.</p>
+   * <p>Note that the method is asynchronous: it returns right after user presses "Commit" or "Cancel" and after all pre-commit handlers
+   *    have been called. It doesn't wait for commit itself to succeed or fail - for this use the {@code customResultHandler}.</p>
+   * @return true if user decides to commit the changes, false if user presses Cancel.
    */
-  public abstract boolean commitChanges(@NotNull List<Change> changes, @NotNull LocalChangeList initialChangeList,
-                                        @NotNull String commitMessage, @Nullable CommitExecutor executor);
-
-  
+  public abstract boolean commitChanges(@NotNull Collection<Change> changes, @NotNull LocalChangeList initialChangeList,
+                               @NotNull String commitMessage, @Nullable CommitResultHandler customResultHandler);
 }

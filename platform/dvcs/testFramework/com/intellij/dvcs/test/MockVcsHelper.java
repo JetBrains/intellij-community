@@ -20,7 +20,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.CommitExecutor;
+import com.intellij.openapi.vcs.changes.CommitResultHandler;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
@@ -185,10 +185,22 @@ public class MockVcsHelper extends AbstractVcsHelper {
   }
 
   @Override
-  public boolean commitChanges(@NotNull List<Change> changes, @NotNull LocalChangeList initialChangeList,
-                               @NotNull String commitMessage, @Nullable CommitExecutor executor) {
+  public boolean commitChanges(@NotNull Collection<Change> changes, @NotNull LocalChangeList initialChangeList,
+                               @NotNull String commitMessage, @Nullable CommitResultHandler customResultHandler) {
     if (myCommitHandler != null) {
-      return myCommitHandler.commit(commitMessage);
+      boolean success = myCommitHandler.commit(commitMessage);
+      if (customResultHandler != null) {
+        if (success) {
+          customResultHandler.onSuccess(commitMessage);
+        }
+        else {
+          customResultHandler.onFailure();
+        }
+      }
+      return success;
+    }
+    if (customResultHandler != null) {
+      customResultHandler.onFailure();
     }
     return false;
   }

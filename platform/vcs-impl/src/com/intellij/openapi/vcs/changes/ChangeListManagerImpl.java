@@ -230,7 +230,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       public void run() {
         synchronized (myDataLock) {
           if (myWorker.isEmpty()) {
-            final LocalChangeList list = myWorker.addChangeList(VcsBundle.message("changes.default.changlist.name"), null);
+            final LocalChangeList list = myWorker.addChangeList(VcsBundle.message("changes.default.changlist.name"), null, null);
             setDefaultChangeList(list);
 
             if (myIgnoredIdeaLevel.isEmpty()) {
@@ -829,17 +829,23 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   public LocalChangeList addChangeList(@NotNull final String name, @Nullable final String comment) {
+    return addChangeList(name, comment, null);
+  }
+
+  @Override
+  public LocalChangeList addChangeList(@NotNull final String name, @Nullable final String comment, @Nullable final Object data) {
     return ApplicationManager.getApplication().runReadAction(new Computable<LocalChangeList>() {
       @Override
       public LocalChangeList compute() {
         synchronized (myDataLock) {
-          final LocalChangeList changeList = myModifier.addChangeList(name, comment);
+          final LocalChangeList changeList = myModifier.addChangeList(name, comment, data);
           myChangesViewManager.scheduleRefresh();
           return changeList;
         }
       }
     });
   }
+
 
   public void removeChangeList(final String name) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -1158,7 +1164,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private boolean doCommit(final LocalChangeList changeList, final List<Change> changes, final boolean synchronously) {
     return new CommitHelper(myProject, changeList, changes, changeList.getName(),
-                     changeList.getComment(), new ArrayList<CheckinHandler>(), false, synchronously, NullableFunction.NULL).doCommit();
+                     changeList.getComment(), new ArrayList<CheckinHandler>(), false, synchronously, NullableFunction.NULL, null).doCommit();
   }
 
   public void commitChangesSynchronously(LocalChangeList changeList, List<Change> changes) {

@@ -1,20 +1,16 @@
 package org.jetbrains.plugins.gradle.manage;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.PlatformFacade;
 import org.jetbrains.plugins.gradle.model.gradle.*;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Thread-safe.
@@ -23,17 +19,19 @@ import java.util.List;
  * @since 2/7/12 3:23 PM
  */
 public class GradleDependencyManager {
-  
-  @NotNull private final PlatformFacade myPlatformFacade;
 
-  public GradleDependencyManager(@NotNull PlatformFacade platformFacade) {
+  @NotNull private final PlatformFacade       myPlatformFacade;
+  @NotNull private final GradleLibraryManager myLibraryManager;
+
+  public GradleDependencyManager(@NotNull PlatformFacade platformFacade, @NotNull GradleLibraryManager manager) {
     myPlatformFacade = platformFacade;
+    myLibraryManager = manager;
   }
 
   public void importDependency(@NotNull GradleDependency dependency, @NotNull Module module) {
     importDependencies(Collections.singleton(dependency), module);
   }
-  
+
   public void importDependencies(@NotNull Iterable<GradleDependency> dependencies, @NotNull Module module) {
     final List<GradleModuleDependency> moduleDependencies = new ArrayList<GradleModuleDependency>();
     final List<GradleLibraryDependency> libraryDependencies = new ArrayList<GradleLibraryDependency>();
@@ -56,19 +54,12 @@ public class GradleDependencyManager {
   }
 
   @SuppressWarnings("MethodMayBeStatic")
-  public void importModuleDependencies(@NotNull final Iterable<GradleModuleDependency> dependencies, @NotNull final Module module) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        doImportModuleDependencies(dependencies, module);
-      }
-    });
-  }
-  
-  private static void doImportModuleDependencies(@NotNull final Iterable<GradleModuleDependency> dependencies,
-                                                 @NotNull final Module module)
-  {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+  public void importModuleDependencies(@NotNull final Collection<GradleModuleDependency> dependencies, @NotNull final Module module) {
+    if (dependencies.isEmpty()) {
+      return;
+    }
+    
+    GradleUtil.executeProjectChangeAction(module.getProject(), dependencies, new Runnable() {
       @Override
       public void run() {
         ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
@@ -77,12 +68,20 @@ public class GradleDependencyManager {
           final GradleProjectStructureHelper projectStructureHelper = module.getProject().getComponent(GradleProjectStructureHelper.class);
           for (GradleModuleDependency dependency : dependencies) {
             final String moduleName = dependency.getName();
-            final Module intellijModuleDependency = projectStructureHelper.findIntellijModule(moduleName);
-            if (intellijModuleDependency == null) {
+            final Module intellijModule = projectStructureHelper.findIntellijModule(moduleName);
+            if (intellijModule == null) {
               assert false;
               continue;
             }
-            final ModuleOrderEntry orderEntry = moduleRootModel.addModuleOrderEntry(intellijModuleDependency);
+            else if (intellijModule.equals(module)) {
+              // Gradle api returns recursive module dependencies (a module depends on itself) for 'gradle' project.
+              continue;
+            }
+
+            ModuleOrderEntry orderEntry = projectStructureHelper.findIntellijModuleDependency(dependency, moduleRootModel);
+            if (orderEntry == null) {
+              orderEntry = moduleRootModel.addModuleOrderEntry(intellijModule);
+            }
             orderEntry.setScope(dependency.getScope());
             orderEntry.setExported(dependency.isExported());
           }
@@ -93,97 +92,79 @@ public class GradleDependencyManager {
       }
     });
   }
-
+  
   public void importLibraryDependencies(@NotNull final Iterable<GradleLibraryDependency> dependencies, @NotNull final Module module) {
-    final List<LibraryDependencyInfo> infos = new ArrayList<LibraryDependencyInfo>();
-    final LibraryTable libraryTable = myPlatformFacade.getProjectLibraryTable(module.getProject());
-    for (GradleLibraryDependency dependency : dependencies) {
-      final Library library = libraryTable.getLibraryByName(dependency.getName());
-      if (library != null) {
-        infos.add(new LibraryDependencyInfo(library, dependency.getScope(), dependency.isExported()));
-      }
-    }
-    doImportLibraryDependencies(infos, module);
-  }
-
-  private static void doImportLibraryDependencies(@NotNull final Iterable<LibraryDependencyInfo> infos, @NotNull final Module module) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    GradleUtil.executeProjectChangeAction(module.getProject(), dependencies, new Runnable() {
       @Override
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            GradleUtil.executeProjectChangeAction(module.getProject(), infos, new Runnable() {
-              @Override
-              public void run() {
-                ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-                final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
-                try {
-                  for (LibraryDependencyInfo info : infos) {
-                    LibraryOrderEntry orderEntry = moduleRootModel.addLibraryEntry(info.library);
-                    orderEntry.setExported(info.exported);
-                    orderEntry.setScope(info.scope);
-                  }
-                }
-                finally {
-                  moduleRootModel.commit();
-                } 
-              }
-            });
+        LibraryTable libraryTable = myPlatformFacade.getProjectLibraryTable(module.getProject());
+        Set<GradleLibrary> librariesToImport = new HashSet<GradleLibrary>();
+        for (GradleLibraryDependency dependency : dependencies) {
+          final Library library = libraryTable.getLibraryByName(dependency.getName());
+          if (library == null) {
+            librariesToImport.add(dependency.getTarget());
           }
-        }); 
+        }
+        if (!librariesToImport.isEmpty()) {
+          myLibraryManager.importLibraries(librariesToImport, module.getProject());
+        }
+
+        for (GradleLibraryDependency dependency : dependencies) {
+          GradleProjectStructureHelper helper = module.getProject().getComponent(GradleProjectStructureHelper.class);
+          ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+          final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
+          try {
+            libraryTable = myPlatformFacade.getProjectLibraryTable(module.getProject());
+            final Library library = libraryTable.getLibraryByName(dependency.getName());
+            if (library == null) {
+              assert false;
+              continue;
+            }
+            LibraryOrderEntry orderEntry = helper.findIntellijLibraryDependency(dependency.getName(), moduleRootModel);
+            if (orderEntry == null) {
+              // We need to get the most up-to-date Library object due to our project model restrictions.
+              orderEntry = moduleRootModel.addLibraryEntry(library);
+            }
+            orderEntry.setExported(dependency.isExported());
+            orderEntry.setScope(dependency.getScope());
+          }
+          finally {
+            moduleRootModel.commit();
+          }
+        }
       }
     });
   }
 
   @SuppressWarnings("MethodMayBeStatic")
-  public void removeDependencies(@NotNull final Iterable<ExportableOrderEntry> dependencies) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            for (final ExportableOrderEntry dependency : dependencies) {
-              final Module module = dependency.getOwnerModule();
-              GradleUtil.executeProjectChangeAction(module.getProject(), dependency, new Runnable() {
-                @Override
-                public void run() {
-                  ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-                  final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
-                  try {
-                    // The thing is that intellij created order entry objects every time new modifiable model is created,
-                    // that's why we can't use target dependency object as is but need to get a reference to the current
-                    // entry object from the model instead.
-                    for (OrderEntry entry : moduleRootModel.getOrderEntries()) {
-                      if (entry.getPresentableName().equals(dependency.getPresentableName())) {
-                        moduleRootModel.removeOrderEntry(entry);
-                        break;
-                      }
-                    }
-                  }
-                  finally {
-                    moduleRootModel.commit();
-                  }
-                }
-              });
+  public void removeDependencies(@NotNull final Collection<ExportableOrderEntry> dependencies) {
+    if (dependencies.isEmpty()) {
+      return;
+    }
+
+    for (final ExportableOrderEntry dependency : dependencies) {
+      final Module module = dependency.getOwnerModule();
+      GradleUtil.executeProjectChangeAction(module.getProject(), dependency, new Runnable() {
+        @Override
+        public void run() {
+          ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+          final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
+          try {
+            // The thing is that intellij created order entry objects every time new modifiable model is created,
+            // that's why we can't use target dependency object as is but need to get a reference to the current
+            // entry object from the model instead.
+            for (OrderEntry entry : moduleRootModel.getOrderEntries()) {
+              if (entry.getPresentableName().equals(dependency.getPresentableName())) {
+                moduleRootModel.removeOrderEntry(entry);
+                break;
+              }
             }
           }
-        });
-      }
-    });
-  }
-
-  private static class LibraryDependencyInfo {
-    
-    @NotNull public final Library         library;
-    @NotNull public final DependencyScope scope;
-    public final          boolean         exported;
-
-    LibraryDependencyInfo(@NotNull Library library, @NotNull DependencyScope scope, boolean exported) {
-      this.library = library;
-      this.scope = scope;
-      this.exported = exported;
+          finally {
+            moduleRootModel.commit();
+          } 
+        }
+      });
     }
   }
 }

@@ -74,7 +74,9 @@ public abstract class AbstractGradleTask implements GradleTask {
     catch (Throwable e) {
       setState(GradleTaskState.FAILED);
       myError.set(e);
-      LOG.warn(e);
+      if (myIntellijProject == null || !myIntellijProject.isDisposed()) {
+        LOG.warn(e);
+      }
     }
   }
   

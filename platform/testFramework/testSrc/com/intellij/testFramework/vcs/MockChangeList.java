@@ -18,6 +18,7 @@ package com.intellij.testFramework.vcs;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -76,6 +77,12 @@ public class MockChangeList extends LocalChangeList {
 
   @Override
   public void setReadOnly(boolean isReadOnly) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Nullable
+  @Override
+  public Object getData() {
     throw new UnsupportedOperationException();
   }
 
