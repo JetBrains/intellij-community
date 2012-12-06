@@ -46,6 +46,7 @@ public class FilePathImpl implements FilePath {
   private boolean myIsDirectory;
   private final boolean myLocal;
 
+  //private FilePathImpl(@NotNull VirtualFile virtualParent,
   private FilePathImpl(@NotNull VirtualFile virtualParent,
                        @NotNull String name,
                        final boolean isDirectory,
@@ -88,7 +89,7 @@ public class FilePathImpl implements FilePath {
   }
   private FilePathImpl(@NotNull File file, final boolean isDirectory, boolean local) {
     myFile = file;
-    assert myFile.isAbsolute() || ! local;
+    //assert myFile.isAbsolute() || ! local;
     myName = file.getName();
     myIsDirectory = isDirectory;
     myLocal = local;
