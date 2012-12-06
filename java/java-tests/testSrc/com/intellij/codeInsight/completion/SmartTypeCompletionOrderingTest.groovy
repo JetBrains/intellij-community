@@ -237,10 +237,6 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "Goo", "InnerGoo", "Bar", "AGoo");
   }
 
-  public void _testPrefixOutweighsGenericity() { //todo[peter]
-    checkPreferredItems(0, "getUserData", "getUserDataString");
-  }
-
   public void testLocalVariablesOutweighStats() throws Throwable {
     final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java");
     assertPreferredItems(0, "foo", "param", "this", "bar", "goo");
