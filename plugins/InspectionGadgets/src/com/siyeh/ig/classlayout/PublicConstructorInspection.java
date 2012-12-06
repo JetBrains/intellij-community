@@ -115,7 +115,7 @@ public class PublicConstructorInspection extends BaseInspection {
     @Override
     public void visitClass(PsiClass aClass) {
       super.visitClass(aClass);
-      if (!aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
+      if (aClass.isInterface() || !aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
         return;
       }
       final PsiMethod[] constructors = aClass.getConstructors();
