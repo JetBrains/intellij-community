@@ -60,10 +60,10 @@ public class FileTreeTable extends AbstractFileTreeTable<Charset> {
           String failReason;
           Charset charset = ChooseFileEncodingAction.cachedCharsetFromContent(file);
           if (charset != null) {
-            setText(charset.displayName());
+            setText(charset.displayName()+ " (Hardcoded in the text)");
           }
           else if (LoadTextUtil.wasCharsetDetectedFromBytes(file)) {
-            setText(file.getCharset().displayName());
+            setText(file.getCharset().displayName() + " (Auto-detected)");
           }
           else if ((failReason = ChooseFileEncodingAction.isEnabledAndWhyNot(file)) != null) {
             setText("N/A ("+failReason+")");
