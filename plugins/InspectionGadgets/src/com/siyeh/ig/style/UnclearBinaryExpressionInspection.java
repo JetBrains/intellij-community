@@ -26,6 +26,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -145,7 +146,7 @@ public class UnclearBinaryExpressionInspection extends BaseInspection {
       }
     }
 
-    private static void appendText(PsiInstanceOfExpression instanceofExpression, boolean parentheses, StringBuilder out) {
+    private static void appendText(PsiInstanceOfExpression instanceofExpression, boolean parentheses, @NonNls StringBuilder out) {
       if (parentheses) {
         out.append('(');
       }
@@ -287,16 +288,17 @@ public class UnclearBinaryExpressionInspection extends BaseInspection {
         return;
       }
       final PsiExpression rhs = expression.getRExpression();
-      if (!(mightBeConfusingExpression(rhs))) {
+      if (!mightBeConfusingExpression(rhs)) {
         return;
       }
-      if (rhs instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression nestedAssignment = (PsiAssignmentExpression)rhs;
-        final IElementType nestedTokenType = nestedAssignment.getOperationTokenType();
-        final IElementType tokenType = expression.getOperationTokenType();
-        if (nestedTokenType.equals(tokenType)) {
-          return;
-        }
+      if (!(rhs instanceof PsiAssignmentExpression)) {
+        return;
+      }
+      final PsiAssignmentExpression nestedAssignment = (PsiAssignmentExpression)rhs;
+      final IElementType nestedTokenType = nestedAssignment.getOperationTokenType();
+      final IElementType tokenType = expression.getOperationTokenType();
+      if (nestedTokenType.equals(tokenType)) {
+        return;
       }
       registerError(expression);
     }

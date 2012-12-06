@@ -50,4 +50,9 @@ public class UnclearBinaryExpression {
   void more(int i) {
     i = i += i = 1;
   }
+
+  void noMore() {
+    String s;
+    s = ":asdf" + "5s";
+  }
 }
