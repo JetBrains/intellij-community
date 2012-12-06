@@ -37,7 +37,7 @@ public class ColorChooser {
 
   @Nullable
   public static Color chooseColor(Component parent, String caption, @Nullable Color preselectedColor, boolean enableOpacity) {
-    return chooseColor(parent, caption, preselectedColor, enableOpacity, null);
+    return chooseColor(parent, caption, preselectedColor, enableOpacity, ColorPickerListener.EMPTY_ARRAY);
   }
 
   @Nullable
