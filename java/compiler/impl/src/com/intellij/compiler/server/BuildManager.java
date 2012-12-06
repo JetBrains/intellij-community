@@ -335,7 +335,7 @@ public class BuildManager implements ApplicationComponent{
     return VirtualFileManager.extractPath(url);
   }
 
-  private void scheduleAutoMake() {
+  public void scheduleAutoMake() {
     if (IS_UNIT_TEST_MODE || PowerSaveMode.isEnabled()) {
       return;
     }
