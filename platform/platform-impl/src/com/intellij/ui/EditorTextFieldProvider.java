@@ -44,4 +44,21 @@ public interface EditorTextFieldProvider {
   EditorTextField getEditorField(@NotNull Language language, @NotNull  Project project,
                                  @NotNull Iterable<EditorCustomization.Feature> enabledFeatures,
                                  @NotNull Iterable<EditorCustomization.Feature> disabledFeatures);
+
+  /**
+   * Alternative to {@link #getEditorField(com.intellij.lang.Language, com.intellij.openapi.project.Project, Iterable, Iterable)} which
+   * allows you to define arbitrary customizations by implementing an {@link AdHocEditorCustomizer}.
+   *
+   * @param language          target language used by document that will be displayed by returned editor
+   * @param project           target project
+   * @param customization     implementation of {@link AdHocEditorCustomizer} which will be called at editor creation
+   *
+   */
+  @NotNull
+  EditorTextField getEditorField(@NotNull Language language, @NotNull  Project project,
+                                 @NotNull AdHocEditorCustomizer customization);
+
+  interface AdHocEditorCustomizer {
+    void customize(EditorEx editor);
+  }
 }

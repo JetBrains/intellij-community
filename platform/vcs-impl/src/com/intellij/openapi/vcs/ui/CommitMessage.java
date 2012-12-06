@@ -20,6 +20,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -32,8 +34,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.EnumSet;
-import java.util.Set;
 
 public class CommitMessage extends AbstractDataProviderPanel implements Disposable, CommitMessageI {
 
@@ -50,12 +50,7 @@ public class CommitMessage extends AbstractDataProviderPanel implements Disposab
 
   public CommitMessage(Project project, final boolean withSeparator) {
     super(new BorderLayout());
-    boolean checkSpelling = true;
-    VcsConfiguration configuration = VcsConfiguration.getInstance(project);
-    if (configuration != null) {
-      checkSpelling = configuration.CHECK_COMMIT_MESSAGE_SPELLING;
-    }
-    myEditorField = createEditorField(project, checkSpelling);
+    myEditorField = createEditorField(project);
     myProject = project;
     
     // Note that we assume here that editor used for commit message processing uses font family implied by LAF (in contrast,
@@ -105,24 +100,60 @@ public class CommitMessage extends AbstractDataProviderPanel implements Disposab
     setText(currentDescription);
   }
 
-  private static EditorTextField createEditorField(final Project project, final boolean checkSpelling) {
-    EditorTextField editorField = createCommitTextEditor(project, checkSpelling);
+  private static EditorTextField createEditorField(final Project project) {
+    EditorTextField editorField = createCommitTextEditor(project, false);
     editorField.getDocument().putUserData(DATA_CONTEXT_KEY, DataManager.getInstance().getDataContext(editorField.getComponent()));
     return editorField;
   }
 
-  public static EditorTextField createCommitTextEditor(Project project, boolean checkSpelling) {
-    EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
-    Set<EditorCustomization.Feature> enabledFeatures = EnumSet.of(EditorCustomization.Feature.SOFT_WRAP);
-    Set<EditorCustomization.Feature> disabledFeatures = EnumSet.of(EditorCustomization.Feature.ADDITIONAL_PAGE_AT_BOTTOM);
-    if (checkSpelling) {
-      enabledFeatures.add(EditorCustomization.Feature.SPELL_CHECK);
-    }
-    else {
-      disabledFeatures.add(EditorCustomization.Feature.SPELL_CHECK);
+  /**
+   * Creates a text editor appropriate for creating commit messages.
+   *
+   * @param project project this commit message editor is intended for
+   * @param forceSpellCheckOn if false, {@link com.intellij.openapi.vcs.VcsConfiguration#CHECK_COMMIT_MESSAGE_SPELLING} will control
+   *                          whether or not the editor has spell check enabled
+   * @return a commit message editor
+   */
+  public static EditorTextField createCommitTextEditor(final Project project, boolean forceSpellCheckOn) {
+    final boolean checkSpelling;
+    final boolean useCommitMessageMargin;
+    final int commitMessageMarginSize;
+
+    VcsConfiguration configuration = VcsConfiguration.getInstance(project);
+
+    if (configuration != null) {
+      checkSpelling = forceSpellCheckOn || configuration.CHECK_COMMIT_MESSAGE_SPELLING;
+      useCommitMessageMargin = configuration.USE_COMMIT_MESSAGE_MARGIN;
+      commitMessageMarginSize = configuration.COMMIT_MESSAGE_MARGIN_SIZE;
+    } else {
+      checkSpelling = true;
+      useCommitMessageMargin = false;
+      commitMessageMarginSize = -1;
     }
 
-    return service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, enabledFeatures, disabledFeatures);
+    EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
+    return service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(),
+                                  project,
+                                  new EditorTextFieldProvider.AdHocEditorCustomizer() {
+                                    @Override
+                                    public void customize(EditorEx editor) {
+                                      editor.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+                                      editor.setHorizontalScrollbarVisible(true);
+                                      EditorSettings settings = editor.getSettings();
+                                      settings.setAdditionalColumnsCount(3);
+                                      settings.setVirtualSpace(false);
+                                      settings.setUseSoftWraps(true);
+                                      settings.setAdditionalPageAtBottom(true);
+
+                                      toggleEditorSpellchecking(project, editor, checkSpelling);
+
+                                      if (useCommitMessageMargin) {
+                                        editor.setColorsScheme(EditorColorsManager.getInstance().getGlobalScheme());
+                                        settings.setRightMarginShown(true);
+                                        settings.setRightMargin(commitMessageMarginSize);
+                                      }
+                                    }
+                                  });
   }
 
   @Nullable
@@ -168,20 +199,24 @@ public class CommitMessage extends AbstractDataProviderPanel implements Disposab
       return;
     }
     EditorEx editorEx = (EditorEx)editor;
-    EditorCustomization[] customizations = Extensions.getExtensions(EditorCustomization.EP_NAME, myProject);
-    EditorCustomization.Feature feature = EditorCustomization.Feature.SPELL_CHECK;
+    toggleEditorSpellchecking(myProject, editorEx, check);
+  }
+
+  private static void toggleEditorSpellchecking(Project project, EditorEx editorEx, boolean spellCheckingEnabled) {
+    EditorCustomization[] customizations = Extensions.getExtensions(EditorCustomization.EP_NAME, project);
+    EditorCustomization.Feature spellCheckFeature = EditorCustomization.Feature.SPELL_CHECK;
     for (EditorCustomization customization : customizations) {
-      if (customization.getSupportedFeatures().contains(feature)) {
-        if (check) {
-          customization.addCustomization(editorEx, feature);
+      if (customization.getSupportedFeatures().contains(spellCheckFeature)) {
+        if (spellCheckingEnabled) {
+          customization.addCustomization(editorEx, spellCheckFeature);
         }
         else {
-          customization.removeCustomization(editorEx, feature);
+          customization.removeCustomization(editorEx, spellCheckFeature);
         }
       }
     }
   }
-  
+
   public void dispose() {
   }
 

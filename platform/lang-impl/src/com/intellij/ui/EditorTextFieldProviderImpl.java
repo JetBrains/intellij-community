@@ -99,7 +99,20 @@ public class EditorTextFieldProviderImpl implements EditorTextFieldProvider {
       }
     };
   }
-  
+
+  @NotNull
+  @Override
+  public EditorTextField getEditorField(@NotNull Language language,
+                                        @NotNull Project project,
+                                        @NotNull final AdHocEditorCustomizer customization) {
+    return new MyEditorTextField(language, project) {
+      @Override
+      protected void applyFeatures(@NotNull EditorCustomization[] customizations, @NotNull EditorEx editor) {
+        customization.customize(editor);
+      }
+    };
+  }
+
   private abstract static class MyEditorTextField extends LanguageTextField {
 
     MyEditorTextField(Language language, @NotNull Project project) {
