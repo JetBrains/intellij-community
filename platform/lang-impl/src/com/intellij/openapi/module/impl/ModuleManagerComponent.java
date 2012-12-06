@@ -72,9 +72,10 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
     myConnection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener.Adapter() {
       @Override
       public void projectComponentsInitialized(final Project project) {
-        long start = System.currentTimeMillis();
+        long t = System.currentTimeMillis();
         loadModules(myModuleModel);
-        LOG.info(myModuleModel.getModules().length + " modules loaded in " + (System.currentTimeMillis() - start) + " ms");
+        t = System.currentTimeMillis() - t;
+        LOG.info(myModuleModel.getModules().length + " module(s) loaded in " + t + " ms");
       }
     });
 

@@ -666,18 +666,18 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
     private String resolveShortWindowsName(String filePath) {
       try {
-        filePath = FileUtil.resolveShortWindowsName(filePath);
+        return FileUtil.resolveShortWindowsName(filePath);
       }
       catch (IOException ignored) {
+        return filePath;
       }
-      return filePath;
     }
 
     @Nullable
     private ModuleEx getModuleByFilePath(String filePath) {
       final Collection<Module> modules = myPathToModule.values();
       for (Module module : modules) {
-        if (filePath.equals(module.getModuleFilePath())) {
+        if (FileUtil.pathsEqual(filePath, module.getModuleFilePath())) {
           return (ModuleEx)module;
         }
       }
@@ -686,9 +686,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
     @Override
     @NotNull
-    public Module loadModule(@NotNull String filePath) throws InvalidDataException,
-                                                     IOException,
-                                                     ModuleWithNameAlreadyExists {
+    public Module loadModule(@NotNull String filePath) throws InvalidDataException, IOException, ModuleWithNameAlreadyExists {
       assertWritable();
       try {
         return loadModuleInternal(filePath, null);
@@ -698,15 +696,14 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       }
     }
 
-    private Module loadModuleInternal(String filePath, @Nullable ProgressIndicator progressIndicator) throws ModuleWithNameAlreadyExists,
-                                                              IOException, StateStorageException {
+    private Module loadModuleInternal(String filePath, @Nullable ProgressIndicator progressIndicator)
+      throws ModuleWithNameAlreadyExists, IOException, StateStorageException {
 
-      final VirtualFile moduleFile = StandardFileSystems.local().findFileByPath(filePath);
-      if (moduleFile == null) {
+      final VirtualFile moduleFile = StandardFileSystems.local().findFileByPath(resolveShortWindowsName(filePath));
+      if (moduleFile == null || !moduleFile.exists()) {
         throw new IOException(ProjectBundle.message("module.file.does.not.exist.error", filePath));
       }
 
-      filePath = resolveShortWindowsName(filePath);
       final String name = moduleFile.getName();
       if (progressIndicator != null) {
         progressIndicator.setText2(FileUtil.getNameWithoutExtension(name));
@@ -720,16 +717,11 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
           }
         }
       }
-      if (!moduleFile.exists()) {
-        throw new IOException(ProjectBundle.message("module.file.does.not.exist.error", moduleFile.getPath()));
-      }
-      ModuleEx module = getModuleByFilePath(filePath);
+
+      ModuleEx module = getModuleByFilePath(moduleFile.getPath());
       if (module == null) {
-        final VirtualFile moduleVFile = StandardFileSystems.local().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(filePath));
-        if (moduleVFile != null) {
-          moduleVFile.refresh(false, false);
-        }
-        module = createAndLoadModule(filePath);
+        moduleFile.refresh(false, false);
+        module = createAndLoadModule(moduleFile.getPath());
         module.loadModuleComponents();
         initModule(module);
       }
