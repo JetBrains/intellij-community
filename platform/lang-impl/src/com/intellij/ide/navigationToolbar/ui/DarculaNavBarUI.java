@@ -16,7 +16,9 @@
 package com.intellij.ide.navigationToolbar.ui;
 
 import com.intellij.ide.navigationToolbar.NavBarItem;
+import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -31,5 +33,12 @@ public class DarculaNavBarUI extends CommonNavBarUI {
 
   @Override
   public void doPaintNavBarPanel(Graphics2D g, Rectangle r, boolean mainToolbarVisible, boolean undocked) {
+  }
+
+  @Nullable
+  @Override
+  public Color getForeground(boolean selected, boolean focused, boolean inactive) {
+    if (inactive) return Gray._140;
+    return super.getForeground(selected, focused, inactive);
   }
 }

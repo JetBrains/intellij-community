@@ -811,6 +811,7 @@ public abstract class PropertyTable extends JBTable {
     }
 
     boolean isSetValue = true;
+    final boolean[] needRefresh = new boolean[1];
 
     if (isNewValue) {
       isSetValue = doSetValue(new ThrowableRunnable<Exception>() {
@@ -818,13 +819,14 @@ public abstract class PropertyTable extends JBTable {
         public void run() throws Exception {
           for (PropertiesContainer component : myContainers) {
             property.setValue(component, newValue);
+            needRefresh[0] |= property.needRefreshPropertyList(component, newValue);
           }
         }
       });
     }
 
     if (isSetValue) {
-      if (property.needRefreshPropertyList()) {
+      if (property.needRefreshPropertyList() || needRefresh[0]) {
         update();
       }
       else {

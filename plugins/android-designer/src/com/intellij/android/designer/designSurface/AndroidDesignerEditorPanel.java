@@ -415,9 +415,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
           });
         }
       }
-    }
-
-    );
+    });
   }
 
   private void showWarnings(@Nullable List<FixableIssueMessage> warnMessages) {

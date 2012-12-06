@@ -905,7 +905,23 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       final PsiClass aClass = ((PsiClass)resolved).getContainingClass();
       if (aClass != null) {
         final PsiElement qualifier = ref.getQualifier();
-        final PsiElement place = qualifier instanceof PsiJavaCodeReferenceElement ? ((PsiJavaCodeReferenceElement)qualifier).resolve() : ref;
+        final PsiElement place;
+        if (qualifier instanceof PsiJavaCodeReferenceElement) {
+          place = ((PsiJavaCodeReferenceElement)qualifier).resolve();
+        }
+        else {
+          if (parent instanceof PsiNewExpression) {
+            final PsiExpression newQualifier = ((PsiNewExpression)parent).getQualifier();
+            if (newQualifier != null) {
+              place = PsiUtil.resolveClassInType(newQualifier.getType());
+            } else {
+              place = ref;
+            }
+          }
+          else {
+            place = ref;
+          }
+        }
         if (PsiTreeUtil.isAncestor(aClass, place, false) && aClass.hasTypeParameters()) {
           myHolder.add(HighlightClassUtil.checkCreateInnerClassFromStaticContext(ref, place, (PsiClass)resolved));
         }

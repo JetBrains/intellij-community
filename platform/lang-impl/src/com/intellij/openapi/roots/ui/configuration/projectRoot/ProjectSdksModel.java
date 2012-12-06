@@ -244,13 +244,13 @@ public class ProjectSdksModel implements SdkModel {
     }
   }
 
-  public void doAdd(JComponent parent, final SdkType type, final Consumer<Sdk> updateTree) {
+  public void doAdd(JComponent parent, final SdkType type, final Consumer<Sdk> callback) {
     myModified = true;
     if (type.supportsCustomCreateUI()) {
       type.showCustomCreateUI(this, parent, new Consumer<Sdk>() {
         @Override
         public void consume(Sdk sdk) {
-          setupSdk(type, sdk, sdk.getHomePath(), updateTree);
+          setupSdk(sdk, callback);
         }
       });
     }
@@ -261,22 +261,23 @@ public class ProjectSdksModel implements SdkModel {
           String newSdkName = SdkConfigurationUtil.createUniqueSdkName(type, home, myProjectSdks.values());
           final ProjectJdkImpl newJdk = new ProjectJdkImpl(newSdkName, type);
           newJdk.setHomePath(home);
-
-          setupSdk(type, newJdk, home, updateTree);
+          setupSdk(newJdk, callback);
         }
       });
     }
   }
 
-  private void setupSdk(SdkType type, Sdk newJdk, String home, Consumer<Sdk> updateTree) {
-    if (!type.setupSdkPaths(newJdk, this)) return;
+  private void setupSdk(Sdk newJdk, Consumer<Sdk> callback) {
+    String home = newJdk.getHomePath();
+    SdkType sdkType = (SdkType)newJdk.getSdkType();
+    if (!sdkType.setupSdkPaths(newJdk, this)) return;
 
     if (newJdk.getVersionString() == null) {
        Messages.showMessageDialog(ProjectBundle.message("sdk.java.corrupt.error", home),
                                   ProjectBundle.message("sdk.java.corrupt.title"), Messages.getErrorIcon());
     }
 
-    doAdd(newJdk, updateTree);
+    doAdd(newJdk, callback);
   }
 
   @Override

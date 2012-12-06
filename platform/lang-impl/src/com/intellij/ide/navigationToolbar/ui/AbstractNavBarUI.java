@@ -69,8 +69,8 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   @Nullable
   @Override
   public Color getForeground(boolean selected, boolean focused, boolean inactive) {
-    return (selected && focused) /*|| UIUtil.isUnderDarcula()*/ ? UIUtil.getListSelectionForeground()
-                                                                : inactive ? UIUtil.getInactiveTextColor() : null;
+    return (selected && focused) ? UIUtil.getListSelectionForeground()
+                                 : inactive ? UIUtil.getInactiveTextColor() : null;
   }
 
   @Override

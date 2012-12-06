@@ -32,7 +32,7 @@ public class ExtractMethodTest extends LightGroovyTestCase {
   final String basePath = TestUtils.testDataPath + 'groovy/refactoring/extractMethod/'
 
   private void doAntiTest(String errorMessage) {
-    GroovyExtractMethodHandler handler = configureFromText(readInput().get(0));
+    GroovyExtractMethodHandler handler = configureFromText(readInput()[0]);
     try {
       handler.invoke(project, myFixture.editor, myFixture.file, null);
       assertTrue(false);
@@ -48,9 +48,9 @@ public class ExtractMethodTest extends LightGroovyTestCase {
 
   private void doTest() {
     final List<String> data = readInput();
-    GroovyExtractMethodHandler handler = configureFromText(data.get(0));
+    GroovyExtractMethodHandler handler = configureFromText(data[0]);
 
-    def expected = StringUtil.trimEnd(data.get(1), '\n')
+    def expected = StringUtil.trimEnd(data[1], '\n')
 
     try {
       handler.invoke(project, myFixture.editor, myFixture.file, null);
@@ -58,10 +58,10 @@ public class ExtractMethodTest extends LightGroovyTestCase {
       myFixture.checkResult(expected);
     }
     catch (ConflictsInTestsException e) {
-      ApplicationManager.application.runWriteAction({
-         myFixture.getDocument(myFixture.file).setText(e.message)
+      ApplicationManager.application.runWriteAction {
+         myFixture.getDocument(myFixture.file).text = e.message
          PsiDocumentManager.getInstance(myFixture.project).commitAllDocuments()
-      } as Runnable)
+      }
 
       myFixture.checkResult(expected)
     }
@@ -133,4 +133,6 @@ public class ExtractMethodTest extends LightGroovyTestCase {
 
   public void testContextConflicts() {doTest()}
   public void testNoContextConflicts() {doTest()}
+
+  public void testTupleDeclaration() { doTest() }
 }

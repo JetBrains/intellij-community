@@ -565,6 +565,9 @@ public class BreakpointManager implements JDOMExternalizable {
           final List groups = parentNode.getChildren();
           for (final Object group1 : groups) {
             final Element group = (Element)group1;
+            if (group.getName().equals(RULES_GROUP_NAME)) {
+              continue;
+            }
             final String categoryName = group.getName();
             final Key<Breakpoint> breakpointCategory = BreakpointCategory.lookup(categoryName);
             final String defaultPolicy = group.getAttributeValue(DEFAULT_SUSPEND_POLICY_ATTRIBUTE_NAME);

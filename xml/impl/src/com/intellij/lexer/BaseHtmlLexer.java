@@ -176,7 +176,7 @@ abstract class BaseHtmlLexer extends DelegateLexer {
     if (StringUtil.isEmpty(mimeType)) {
       return ourDefaultLanguage != null ? LanguageHtmlScriptContentProvider.getScriptContentProvider(ourDefaultLanguage) : null;
     }
-    Collection<Language> instancesByMimeType = Language.findInstancesByMimeType(mimeType);
+    Collection<Language> instancesByMimeType = Language.findInstancesByMimeType(mimeType != null ? mimeType.trim() : null);
     for (Language language : instancesByMimeType) {
       HtmlScriptContentProvider scriptContentProvider = LanguageHtmlScriptContentProvider.getScriptContentProvider(language);
       if (scriptContentProvider != null) {

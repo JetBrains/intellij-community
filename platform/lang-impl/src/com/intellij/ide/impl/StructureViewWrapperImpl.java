@@ -134,16 +134,23 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   }
 
   private void checkUpdate() {
-    if (myProject.isDisposed() || !myToolWindow.isVisible()) return;
+    if (myProject.isDisposed()) return;
 
     final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    if (/*SwingUtilities.isDescendingFrom(myToolWindow.getComponent(), owner) || */JBPopupFactory.getInstance().isPopupActive()) return;
+    if (SwingUtilities.isDescendingFrom(myToolWindow.getComponent(), owner) || JBPopupFactory.getInstance().isPopupActive()) return;
 
     final DataContext dataContext = DataManager.getInstance().getDataContext(owner);
     if (dataContext.getData(myKey) == this) return;
     if (PlatformDataKeys.PROJECT.getData(dataContext) != myProject) return;
 
-    final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    final VirtualFile[] files = hasFocus() ? null : PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    if (!myToolWindow.isVisible()) {
+      if (files != null && files.length > 0) {
+        myFile = files[0];
+      }
+      return;
+    }
+
     if (files != null && files.length == 1) {
       setFile(files[0]);
     }
@@ -158,6 +165,16 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     }
 
     myFirstRun = false;
+  }
+
+  private boolean hasFocus() {
+    final JComponent tw = myToolWindow.getComponent();
+    Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    while (owner != null) {
+      if (owner == tw) return true;
+      owner = owner.getParent();
+    }
+    return false;
   }
 
   private void setFile(VirtualFile file) {

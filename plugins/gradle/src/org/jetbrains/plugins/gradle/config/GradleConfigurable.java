@@ -348,7 +348,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
 
     GradleSettings settings = myHelper.getSettings(myProject);
 
-    if (!Comparing.equal(myLinkedGradleProjectPathField.getText(), settings.getLinkedProjectPath())) {
+    if (!Comparing.equal(normalizePath(myLinkedGradleProjectPathField.getText()), normalizePath(settings.getLinkedProjectPath()))) {
       return true;
     }
     
@@ -362,14 +362,19 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
       return true;
     }
 
-    if (!Comparing.equal(myGradleHomePathField.getText(), settings.getGradleHome())) {
-      if (myGradleHomeModifiedByUser) {
-        useNormalColorForPath();
-      }
+    if (myGradleHomeModifiedByUser &&
+        !Comparing.equal(normalizePath(myGradleHomePathField.getText()), normalizePath(settings.getGradleHome())))
+    {
+      useNormalColorForPath();
       return true;
     }
     
     return false;
+  }
+
+  @Nullable
+  private static String normalizePath(@Nullable String s) {
+    return StringUtil.isEmpty(s) ? null : s;
   }
 
   @Override

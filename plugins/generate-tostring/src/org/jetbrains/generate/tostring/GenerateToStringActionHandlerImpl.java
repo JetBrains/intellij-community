@@ -22,6 +22,7 @@ import com.intellij.ide.util.MemberChooserBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
@@ -30,6 +31,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.TabbedConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.*;
@@ -60,7 +62,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
     private static final Logger logger = Logger.getInstance("#org.jetbrains.generate.tostring.GenerateToStringActionHandlerImpl");
 
     public void executeWriteAction(Editor editor, DataContext dataContext) {
-        final Project project = LangDataKeys.PROJECT.getData(dataContext);
+        final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
         assert project != null;
 
         PsiClass clazz = getSubjectClass(editor, dataContext);
@@ -110,7 +112,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
               header.setChooser(dialog);
                 dialog.show();
 
-                if (MemberChooser.OK_EXIT_CODE == dialog.getExitCode()) {
+                if (DialogWrapper.OK_EXIT_CODE == dialog.getExitCode()) {
                     Collection<PsiMember> selectedMembers = GenerateToStringUtils.convertClassMembersToPsiMembers(dialog.getSelectedElements());
 
                     final TemplateResource template = header.getSelectedTemplate();
@@ -233,6 +235,11 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
                         public void apply() throws ConfigurationException {
                             super.apply();
                             updateDialog(clazz, chooser);
+
+                            comboBox.removeAllItems();
+                            for (TemplateResource resource : TemplatesManager.getInstance().getAllTemplates()) {
+                              comboBox.addItem(resource);
+                            }
                             comboBox.setSelectedItem(TemplatesManager.getInstance().getDefaultTemplate());
                         }
                     };

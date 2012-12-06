@@ -1,35 +1,44 @@
 package org.jetbrains.jps.incremental.instrumentation;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
+import com.intellij.execution.process.BaseOSProcessHandler;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.SystemProperties;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
-import org.jetbrains.jps.builders.BuildTarget;
-import org.jetbrains.jps.incremental.BuilderCategory;
-import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.CompiledClass;
-import org.jetbrains.jps.incremental.ModuleBuildTarget;
+import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 import org.jetbrains.jps.model.java.compiler.RmicCompilerOptions;
+import org.jetbrains.jps.model.library.sdk.JpsSdk;
+import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.File;
 import java.io.IOException;
 import java.rmi.Remote;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.Future;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: 11/30/12
  */
 public class RmiStubsGenerator extends ClassProcessingBuilder {
-  private static final String REMOTE_INTERFACE_NAME = Remote.class.getName();
+  private static final String REMOTE_INTERFACE_NAME = Remote.class.getName().replace('.', '/');
+  private static final File[] EMPTY_FILE_ARRAY = new File[0];
   private static Key<Boolean> IS_ENABLED = Key.create("_rmic_compiler_enabled_");
 
   public RmiStubsGenerator() {
@@ -50,13 +59,8 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
   @Override
   public void buildStarted(CompileContext context) {
     super.buildStarted(context);
-    boolean enabled = false;
-    final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getCompilerConfiguration(context.getProjectDescriptor().getProject());
-    if (config != null) {
-      final JpsJavaCompilerOptions options = config.getCompilerOptions("Rmic");
-      enabled = options instanceof RmicCompilerOptions && ((RmicCompilerOptions)options).IS_EANABLED;
-    }
-    IS_ENABLED.set(context, enabled);
+    final RmicCompilerOptions rmicOptions = getOptions(context);
+    IS_ENABLED.set(context, rmicOptions != null && rmicOptions.IS_EANABLED);
   }
 
   @Override
@@ -68,7 +72,7 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
   protected ExitCode performBuild(CompileContext context, ModuleChunk chunk, InstrumentationClassFinder finder, OutputConsumer outputConsumer) {
     ExitCode exitCode = ExitCode.NOTHING_DONE;
     if (!outputConsumer.getCompiledClasses().isEmpty()) {
-      final Map<BuildTarget<?>, Collection<ClassItem>> remoteClasses = new THashMap<BuildTarget<?>, Collection<ClassItem>>();
+      final Map<ModuleBuildTarget, Collection<ClassItem>> remoteClasses = new THashMap<ModuleBuildTarget, Collection<ClassItem>>();
       for (ModuleBuildTarget target : chunk.getTargets()) {
         for (CompiledClass compiledClass : outputConsumer.getTargetCompiledClasses(target)) {
           try {
@@ -87,22 +91,166 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
         }
       }
       if (!remoteClasses.isEmpty()) {
-        exitCode = generateRmiStubs(remoteClasses, chunk, outputConsumer);
+        exitCode = generateRmiStubs(context, remoteClasses, chunk, outputConsumer);
       }
     }
     return exitCode;
   }
 
-  private ExitCode generateRmiStubs(Map<BuildTarget<?>, Collection<ClassItem>> remoteClasses, ModuleChunk chunk, OutputConsumer outputConsumer) {
+  private ExitCode generateRmiStubs(final CompileContext context,
+                                    Map<ModuleBuildTarget, Collection<ClassItem>> remoteClasses,
+                                    ModuleChunk chunk,
+                                    OutputConsumer outputConsumer) {
     ExitCode exitCode = ExitCode.NOTHING_DONE;
-    // todo: start rmic compiler
+
+    final Collection<File> classpath = context.getProjectPaths().getCompilationClasspath(chunk, false);
+    final StringBuilder buf = new StringBuilder();
+    for (File file : classpath) {
+      if (buf.length() > 0) {
+        buf.append(File.pathSeparator);
+      }
+      buf.append(file.getPath());
+    }
+    final String classpathString = buf.toString();
+    final String rmicPath = getPathToRmic(chunk);
+    final RmicCompilerOptions options = getOptions(context);
+    final List<ModuleBuildTarget> targetsProcessed = new ArrayList<ModuleBuildTarget>(remoteClasses.size());
+
+    for (Map.Entry<ModuleBuildTarget, Collection<ClassItem>> entry : remoteClasses.entrySet()) {
+      try {
+        final ModuleBuildTarget target = entry.getKey();
+        final Collection<String> cmdLine = createStartupCommand(
+          target, rmicPath, classpathString, options, entry.getValue()
+        );
+        final Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(cmdLine));
+        final BaseOSProcessHandler handler = new BaseOSProcessHandler(process, null, null) {
+          @Override
+          protected Future<?> executeOnPooledThread(Runnable task) {
+            return SharedThreadPool.getInstance().executeOnPooledThread(task);
+          }
+        };
+
+        final RmicOutputParser stdOutParser = new RmicOutputParser(context, getPresentableName());
+        final RmicOutputParser stdErrParser = new RmicOutputParser(context, getPresentableName());
+        handler.addProcessListener(new ProcessAdapter() {
+          @Override
+          public void onTextAvailable(ProcessEvent event, Key outputType) {
+            if (outputType == ProcessOutputTypes.STDOUT) {
+              stdOutParser.append(event.getText());
+            }
+            else if (outputType == ProcessOutputTypes.STDERR) {
+              stdErrParser.append(event.getText());
+            }
+          }
+
+          @Override
+          public void processTerminated(ProcessEvent event) {
+            super.processTerminated(event);
+          }
+        });
+        handler.startNotify();
+        handler.waitFor();
+        targetsProcessed.add(target);
+        if (stdErrParser.isErrorsReported() || stdOutParser.isErrorsReported()) {
+          break;
+        }
+        else {
+          final int exitValue = handler.getProcess().exitValue();
+          if (exitValue != 0) {
+            context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, "RMI stub generation failed"));
+            break;
+          }
+        }
+      }
+      catch (IOException e) {
+        context.processMessage(new CompilerMessage(getPresentableName(), e));
+        break;
+      }
+    }
+
+    // registering generated files
+    final Map<File, File[]> fsCache = new THashMap<File, File[]>(FileUtil.FILE_HASHING_STRATEGY);
+    for (ModuleBuildTarget target : targetsProcessed) {
+      final Collection<ClassItem> items = remoteClasses.get(target);
+      for (ClassItem item : items) {
+        File[] children = fsCache.get(item.parentDir);
+        if (children == null) {
+          children = item.parentDir.listFiles();
+          if (children == null) {
+            children = EMPTY_FILE_ARRAY;
+          }
+          fsCache.put(item.parentDir, children);
+        }
+        final Collection<File> files = item.selectGeneratedFiles(children);
+        if (!files.isEmpty()) {
+          final Collection<String> sources = Collections.singleton(item.compiledClass.getSourceFile().getPath());
+          for (File generated : files) {
+            try {
+              outputConsumer.registerOutputFile(target, generated, sources);
+            }
+            catch (IOException e) {
+              context.processMessage(new CompilerMessage(getPresentableName(), e));
+            }
+          }
+        }
+      }
+    }
+
     return exitCode;
+  }
+
+  private static Collection<String> createStartupCommand(final ModuleBuildTarget target,
+                                                         final String compilerPath,
+                                                         final String classpath,
+                                                         final RmicCompilerOptions config,
+                                                         final Collection<ClassItem> items) {
+    final List<String> commandLine = new ArrayList<String>();
+    commandLine.add(compilerPath);
+
+    if (config.DEBUGGING_INFO) {
+      commandLine.add("-g");
+    }
+    if(config.GENERATE_IIOP_STUBS) {
+      commandLine.add("-iiop");
+    }
+    final StringTokenizer tokenizer = new StringTokenizer(config.ADDITIONAL_OPTIONS_STRING, " \t\r\n");
+    while(tokenizer.hasMoreTokens()) {
+      final String token = tokenizer.nextToken();
+      commandLine.add(token);
+    }
+
+    commandLine.add("-classpath");
+    commandLine.add(classpath);
+
+    commandLine.add("-d");
+    final File outputDir = target.getOutputDir();
+    assert outputDir != null;
+    commandLine.add(outputDir.getPath());
+
+    for (ClassItem item : items) {
+      commandLine.add(item.compiledClass.getClassName());
+    }
+    return commandLine;
+  }
+
+  private static String getPathToRmic(ModuleChunk chunk) {
+    final JpsSdk<?> sdk = chunk.representativeTarget().getModule().getSdk(JpsJavaSdkType.INSTANCE);
+    if (sdk != null) {
+      final String executable = JpsJavaSdkType.getJavaExecutable(sdk);
+      if (executable != null) {
+        final int idx = FileUtil.toSystemIndependentName(executable).lastIndexOf("/");
+        if (idx >= 0) {
+          return executable.substring(0, idx) + "/rmic";
+        }
+      }
+    }
+    return SystemProperties.getJavaHome() + "/bin/rmic";
   }
 
   private static boolean isRemote(CompiledClass compiled, InstrumentationClassFinder finder) throws IOException{
     try {
       final InstrumentationClassFinder.PseudoClass pseudoClass = finder.loadClass(compiled.getClassName());
-      if (pseudoClass != null) {
+      if (pseudoClass != null && !pseudoClass.isInterface()) {
         for (InstrumentationClassFinder.PseudoClass anInterface : pseudoClass.getInterfaces()) {
           if (isRemoteInterface(anInterface, REMOTE_INTERFACE_NAME)) {
             return true;
@@ -128,21 +276,81 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
     return false;
   }
 
-  private static final class ClassItem {
-    final CompiledClass compiledClass;
-    final File stubFile;
-    final File skelFile;
-    final File tieFile;
+  @Nullable
+  private static RmicCompilerOptions getOptions(CompileContext context) {
+    final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getCompilerConfiguration(context.getProjectDescriptor().getProject());
+    if (config != null) {
+      final JpsJavaCompilerOptions options = config.getCompilerOptions("Rmic");
+      if (options instanceof RmicCompilerOptions) {
+        return (RmicCompilerOptions)options;
+      }
+    }
+    return null;
+  }
 
-    private ClassItem(CompiledClass compiledClass) {
+  private static final class ClassItem {
+    static final String[] GEN_SUFFIXES = {"_Stub.class", "_Skel.class", "_Tie.class"};
+    final CompiledClass compiledClass;
+    final File parentDir;
+    final String baseName;
+
+    ClassItem(CompiledClass compiledClass) {
       this.compiledClass = compiledClass;
       final File outputFile = compiledClass.getOutputFile();
-      final File parent = outputFile.getParentFile();
-      final String baseName = StringUtil.trimEnd(outputFile.getName(), ".class");
-      stubFile = new File(parent, baseName + "_Stub.class");
-      skelFile = new File(parent, baseName + "_Skel.class");
-      tieFile = new File(parent, baseName + "_Tie.class");
+      parentDir = outputFile.getParentFile();
+      baseName = StringUtil.trimEnd(outputFile.getName(), ".class");
+    }
+
+    @NotNull
+    public Collection<File> selectGeneratedFiles(File[] candidates) {
+      if (candidates == null || candidates.length == 0) {
+        return Collections.emptyList();
+      }
+      final Collection<File> result = new SmartList<File>();
+      final String[] suffixes = new String[GEN_SUFFIXES.length];
+      for (int i = 0; i < GEN_SUFFIXES.length; i++) {
+        suffixes[i] = baseName + GEN_SUFFIXES[i];
+      }
+      for (File candidate : candidates) {
+        final String name = candidate.getName();
+        for (String suffix : suffixes) {
+          if (name.endsWith(suffix)) {
+            result.add(candidate);
+            break;
+          }
+        }
+      }
+      return result;
     }
   }
 
+  private static class RmicOutputParser extends LineOutputWriter {
+    private final CompileContext myContext;
+    private final String myCompilerName;
+    private boolean myErrorsReported = false;
+
+    private RmicOutputParser(CompileContext context, String name) {
+      myContext = context;
+      myCompilerName = name;
+    }
+
+    private boolean isErrorsReported() {
+      return myErrorsReported;
+    }
+
+    @Override
+    protected void lineAvailable(String line) {
+      if (!StringUtil.isEmpty(line)) {
+        BuildMessage.Kind kind = BuildMessage.Kind.INFO;
+        if (line.contains("error")) {
+          kind = BuildMessage.Kind.ERROR;
+          myErrorsReported = true;
+        }
+        else if (line.contains("warning")) {
+          kind = BuildMessage.Kind.WARNING;
+        }
+        myContext.processMessage(new CompilerMessage(myCompilerName, kind, line));
+      }
+    }
+  }
 }

@@ -41,6 +41,7 @@ public class NamedArgumentDescriptor {
   public static final StringTypeConditionWithPriority TYPE_STRING = new StringTypeConditionWithPriority(CommonClassNames.JAVA_LANG_STRING);
   public static final StringTypeConditionWithPriority TYPE_CLOSURE = new StringTypeConditionWithPriority(GroovyCommonClassNames.GROOVY_LANG_CLOSURE);
   public static final StringTypeConditionWithPriority TYPE_MAP = new StringTypeConditionWithPriority(CommonClassNames.JAVA_UTIL_MAP);
+  public static final StringTypeConditionWithPriority TYPE_LIST = new StringTypeConditionWithPriority(CommonClassNames.JAVA_UTIL_LIST);
   public static final StringTypeConditionWithPriority TYPE_BOOL = new StringTypeConditionWithPriority(CommonClassNames.JAVA_LANG_BOOLEAN);
   public static final StringTypeConditionWithPriority TYPE_CLASS = new StringTypeConditionWithPriority(CommonClassNames.JAVA_LANG_CLASS);
   public static final StringTypeConditionWithPriority TYPE_INTEGER = new StringTypeConditionWithPriority(CommonClassNames.JAVA_LANG_INTEGER);

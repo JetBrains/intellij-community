@@ -16,6 +16,7 @@
 
 package com.intellij.formatting;
 
+import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
@@ -385,7 +386,7 @@ class InitialInfoBuilder {
       buffer.append('\n');
     }
 
-//    LogMessageEx.error(LOG, messageBuffer.toString(), buffer.toString());
+    LogMessageEx.error(LOG, messageBuffer.toString(), buffer.toString());
   }
 
   /**

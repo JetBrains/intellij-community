@@ -3,6 +3,7 @@ package org.jetbrains.jps.javac;
 import com.google.protobuf.ByteString;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.incremental.BinaryContent;
 
 import javax.tools.*;
 import java.io.ByteArrayOutputStream;
