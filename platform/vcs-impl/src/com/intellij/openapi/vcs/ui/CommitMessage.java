@@ -20,7 +20,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.Extensions;
@@ -137,20 +136,12 @@ public class CommitMessage extends AbstractDataProviderPanel implements Disposab
                                   new EditorTextFieldProvider.AdHocEditorCustomizer() {
                                     @Override
                                     public void customize(EditorEx editor) {
-                                      editor.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-                                      editor.setHorizontalScrollbarVisible(true);
-                                      EditorSettings settings = editor.getSettings();
-                                      settings.setAdditionalColumnsCount(3);
-                                      settings.setVirtualSpace(false);
-                                      settings.setUseSoftWraps(true);
-                                      settings.setAdditionalPageAtBottom(true);
-
                                       toggleEditorSpellchecking(project, editor, checkSpelling);
 
                                       if (useCommitMessageMargin) {
                                         editor.setColorsScheme(EditorColorsManager.getInstance().getGlobalScheme());
-                                        settings.setRightMarginShown(true);
-                                        settings.setRightMargin(commitMessageMarginSize);
+                                        editor.getSettings().setRightMarginShown(true);
+                                        editor.getSettings().setRightMargin(commitMessageMarginSize);
                                       }
                                     }
                                   });
