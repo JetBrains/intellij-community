@@ -1,6 +1,5 @@
-package org.hanuna.gitalk.graph;
+package org.hanuna.gitalk.graph.graph_elements;
 
-import org.hanuna.gitalk.graph.select.Select;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.ReadOnlyList;
 import org.jetbrains.annotations.NotNull;
@@ -8,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author erokhins
  */
-public interface Node extends Select {
+public interface Node extends GraphElement {
 
     public int getRowIndex();
 
@@ -29,9 +28,6 @@ public interface Node extends Select {
      */
     @NotNull
     public Commit getCommit();
-
-    @NotNull
-    public Branch getBranch();
 
     public static enum Type{
         COMMIT_NODE,

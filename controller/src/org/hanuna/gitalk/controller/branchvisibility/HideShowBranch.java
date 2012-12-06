@@ -1,8 +1,8 @@
 package org.hanuna.gitalk.controller.branchvisibility;
 
 import org.hanuna.gitalk.common.ReadOnlyList;
-import org.hanuna.gitalk.graph.Edge;
-import org.hanuna.gitalk.graph.Node;
+import org.hanuna.gitalk.graph.graph_elements.Edge;
+import org.hanuna.gitalk.graph.graph_elements.Node;
 import org.hanuna.gitalk.printmodel.cells.Cell;
 import org.hanuna.gitalk.printmodel.cells.EdgeCell;
 import org.hanuna.gitalk.printmodel.cells.NodeCell;
@@ -115,7 +115,7 @@ public class HideShowBranch {
         }
         if (cell.getClass() == EdgeCell.class) {
             Edge edge = ((EdgeCell) cell).getEdge();
-            if (edge.getType() == Edge.Type.HIDE_BRANCH) {
+            if (edge.getType() == Edge.Type.HIDE_PIECE) {
                 return edge;
             }
         }

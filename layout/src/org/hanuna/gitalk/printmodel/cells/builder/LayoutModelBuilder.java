@@ -6,7 +6,7 @@ import org.hanuna.gitalk.common.compressedlist.RuntimeGenerateCompressedList;
 import org.hanuna.gitalk.common.compressedlist.generator.Generator;
 import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.graph.Graph;
-import org.hanuna.gitalk.graph.Node;
+import org.hanuna.gitalk.graph.graph_elements.Node;
 import org.hanuna.gitalk.graph.NodeRow;
 import org.hanuna.gitalk.printmodel.cells.Cell;
 import org.hanuna.gitalk.printmodel.cells.LayoutModel;

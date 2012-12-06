@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.graph;
+package org.hanuna.gitalk.graph.graph_elements;
 
 /**
  * @author erokhins

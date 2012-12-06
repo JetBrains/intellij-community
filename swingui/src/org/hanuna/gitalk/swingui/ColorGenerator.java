@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.swingui;
 
-import org.hanuna.gitalk.graph.Branch;
+import org.hanuna.gitalk.graph.graph_elements.Branch;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;

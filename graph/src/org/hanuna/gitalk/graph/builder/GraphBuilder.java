@@ -4,10 +4,10 @@ import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitData;
 import org.hanuna.gitalk.commitmodel.Hash;
 import org.hanuna.gitalk.common.ReadOnlyList;
-import org.hanuna.gitalk.graph.Branch;
-import org.hanuna.gitalk.graph.Edge;
+import org.hanuna.gitalk.graph.graph_elements.Branch;
+import org.hanuna.gitalk.graph.graph_elements.Edge;
 import org.hanuna.gitalk.graph.Graph;
-import org.hanuna.gitalk.graph.Node;
+import org.hanuna.gitalk.graph.graph_elements.Node;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;

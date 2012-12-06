@@ -4,6 +4,9 @@ import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitData;
 import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.graph.*;
+import org.hanuna.gitalk.graph.graph_elements.Branch;
+import org.hanuna.gitalk.graph.graph_elements.Edge;
+import org.hanuna.gitalk.graph.graph_elements.Node;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -61,7 +64,7 @@ public class GraphImpl implements Graph {
         Edge down = downNode.getUpEdges().get(0);
         downNode.removeUpEdge(down);
 
-        MutableNode.createEdge(upNode, downNode, Edge.Type.HIDE_BRANCH, branch);
+        MutableNode.createEdge(upNode, downNode, Edge.Type.HIDE_PIECE, branch);
     }
 
     private void fixRowIndexs() {
@@ -100,7 +103,7 @@ public class GraphImpl implements Graph {
 
     @Override
     public void showBranch(@NotNull Edge edge) {
-        assert edge.getType() == Edge.Type.HIDE_BRANCH : "not hide branch";
+        assert edge.getType() == Edge.Type.HIDE_PIECE : "not hide branch";
         MutableNode upNode = (MutableNode) edge.getUpNode();
         MutableNode downNode = (MutableNode) edge.getDownNode();
         upNode.removeDownEdge(edge);

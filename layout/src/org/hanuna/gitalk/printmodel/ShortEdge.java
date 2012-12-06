@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.printmodel;
 
-import org.hanuna.gitalk.graph.Edge;
+import org.hanuna.gitalk.graph.graph_elements.Edge;
 
 /**
  * @author erokhins
@@ -25,7 +25,7 @@ public class ShortEdge {
     }
 
     public boolean isSelect() {
-        return edge.isSelect();
+        return edge.selected();
     }
 
     public int getUpPosition() {

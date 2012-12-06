@@ -2,10 +2,10 @@ package org.hanuna.gitalk.graph.builder;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.ReadOnlyList;
-import org.hanuna.gitalk.graph.Branch;
-import org.hanuna.gitalk.graph.Edge;
-import org.hanuna.gitalk.graph.Node;
-import org.hanuna.gitalk.graph.select.AbstractSelect;
+import org.hanuna.gitalk.graph.graph_elements.Branch;
+import org.hanuna.gitalk.graph.graph_elements.Edge;
+import org.hanuna.gitalk.graph.graph_elements.Node;
+import org.hanuna.gitalk.graph.select.AbstractGraphElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * @author erokhins
  */
-public class MutableNode extends AbstractSelect implements Node {
+public class MutableNode extends AbstractGraphElement implements Node {
     public static void createEdge(MutableNode upNode, MutableNode downNode, Edge.Type type, Branch branch) {
         Edge edge = new Edge(upNode, downNode, type, branch);
         upNode.addDownEdge(edge);

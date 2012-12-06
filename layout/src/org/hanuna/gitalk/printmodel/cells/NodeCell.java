@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.printmodel.cells;
 
-import org.hanuna.gitalk.graph.Node;
+import org.hanuna.gitalk.graph.graph_elements.Node;
 import org.jetbrains.annotations.NotNull;
 
 /**

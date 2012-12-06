@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.swingui;
 
-import org.hanuna.gitalk.graph.Edge;
-import org.hanuna.gitalk.graph.Node;
+import org.hanuna.gitalk.graph.graph_elements.Edge;
+import org.hanuna.gitalk.graph.graph_elements.Node;
 import org.hanuna.gitalk.printmodel.PrintCellRow;
 import org.hanuna.gitalk.printmodel.ShortEdge;
 import org.hanuna.gitalk.printmodel.SpecialCell;
@@ -110,16 +110,16 @@ public class SimpleDrawGraphTableCell implements DrawGraphTableCell {
             switch (cell.getType()) {
                 case commitNode:
                     Node node = ((NodeCell) cell.getCell()).getNode();
-                    paintCircle(cell.getPosition(), ColorGenerator.getColor(node.getBranch()), node.isSelect());
+                    paintCircle(cell.getPosition(), ColorGenerator.getColor(node.getBranch()), node.selected());
                     break;
                 case showEdge:
                     edge = ((EdgeCell) cell.getCell()).getEdge();
-                    setStroke(edge.getType() == Edge.Type.USUAL, edge.isSelect());
+                    setStroke(edge.getType() == Edge.Type.USUAL, edge.selected());
                     paintShow(cell.getPosition(), ColorGenerator.getColor(edge.getBranch()));
                     break;
                 case hideEdge:
                     edge = ((EdgeCell) cell.getCell()).getEdge();
-                    setStroke(edge.getType() == Edge.Type.USUAL, edge.isSelect());
+                    setStroke(edge.getType() == Edge.Type.USUAL, edge.selected());
                     paintHide(cell.getPosition(), ColorGenerator.getColor(edge.getBranch()));
                     break;
                 default:
