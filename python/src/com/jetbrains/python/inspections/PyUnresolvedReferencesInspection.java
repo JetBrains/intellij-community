@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -13,10 +14,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.JDOMExternalizableStringList;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -268,6 +266,31 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         processReference(node, ((PyReferenceOwner)node).getReference(resolveContext));
       }
       else {
+        if (node instanceof PsiLanguageInjectionHost) {
+          final List<Pair<PsiElement,TextRange>> files = InjectedLanguageManager.getInstance(node.getProject()).getInjectedPsiFiles(node);
+          if (files != null) {
+            for (Pair<PsiElement,TextRange> pair : files) {
+              new PyRecursiveElementVisitor() {
+                @Override
+                public void visitPyElement(PyElement element) {
+                  super.visitPyElement(element);
+                  if (element instanceof PyReferenceOwner) {
+                    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
+                    final PsiPolyVariantReference reference = ((PyReferenceOwner)element).getReference(resolveContext);
+                    if (reference != null) {
+                      final ResolveResult[] resolveResults = reference.multiResolve(false);
+                      for (ResolveResult resolveResult : resolveResults) {
+                        if (resolveResult instanceof ImportedResolveResult) {
+                          myUsedImports.addAll(((ImportedResolveResult)resolveResult).getNameDefiners());
+                        }
+                      }
+                    }
+                  }
+                }
+              }.visitElement(pair.getFirst());
+            }
+          }
+        }
         for (final PsiReference reference : node.getReferences()) {
           processReference(node, reference);
         }
