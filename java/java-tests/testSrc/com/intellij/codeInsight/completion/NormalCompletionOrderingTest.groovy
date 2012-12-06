@@ -222,7 +222,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     assertEquals("Baaaaaaar", ((JavaPsiClassReferenceElement)lookup.getItems().get(1)).getQualifiedName());
   }
 
-  public void _testSkipLifted() {
+  public void testSkipLifted() {
     checkPreferredItems(1, "hashCode", "hashCodeMine")
   }
 
