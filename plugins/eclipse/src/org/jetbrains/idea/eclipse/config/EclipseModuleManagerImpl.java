@@ -23,15 +23,13 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.eclipse.EclipseModuleManager;
 import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer;
 
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @State(
   name = "EclipseModuleManager",
@@ -64,7 +62,8 @@ public class EclipseModuleManagerImpl implements EclipseModuleManager, Persisten
   private int myExpectedModuleSourcePlace;
   private Map<String, Integer> mySrcPlace = new LinkedHashMap<String, Integer>();
   private String myInvalidJdk;
-  private boolean myGroovyDslSupport = false;
+
+  private Set<String> myGroovyDslSupport = new LinkedHashSet<String>();
 
   public EclipseModuleManagerImpl(Module module) {
     myModule = module;
@@ -81,13 +80,13 @@ public class EclipseModuleManagerImpl implements EclipseModuleManager, Persisten
   }
 
   @Override
-  public void setGroovyDslSupport() {
-    myGroovyDslSupport = true;
+  public void addGroovySupport(String name) {
+    myGroovyDslSupport.add(name);
   }
 
   @Override
-  public boolean isGroovyDslSupport() {
-    return myGroovyDslSupport;
+  public String[] getGroovySupport() {
+    return ArrayUtil.toStringArray(myGroovyDslSupport);
   }
 
   public static EclipseModuleManagerImpl getInstance(Module module) {
@@ -261,6 +260,7 @@ public class EclipseModuleManagerImpl implements EclipseModuleManager, Persisten
     myEclipseVariablePaths.clear();
     myUnknownCons.clear();
     mySrcPlace.clear();
+    myGroovyDslSupport.clear();
   }
 
   @Override

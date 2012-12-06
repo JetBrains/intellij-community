@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.eclipse;
 
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
@@ -29,9 +30,9 @@ public interface EclipseModuleManager {
   @Nullable
   String getInvalidJdk();
 
-  void setGroovyDslSupport();
+  void addGroovySupport(String name);
 
-  boolean isGroovyDslSupport();
+  String[] getGroovySupport();
 
   void registerEclipseVariablePath(String path, String var);
 
@@ -86,11 +87,11 @@ public interface EclipseModuleManager {
     }
 
     @Override
-    public void setGroovyDslSupport() {}
+    public void addGroovySupport(String name) {}
 
     @Override
-    public boolean isGroovyDslSupport() {
-      return false;
+    public String[] getGroovySupport() {
+      return ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
     @Override

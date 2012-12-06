@@ -198,8 +198,12 @@ public abstract class AbstractEclipseClasspathReader<T> {
         addJUnitDefaultLib(rootModel, junitName, macroMap);
       }
       else if (path.equals(EclipseXml.GROOVY_DSL_CONTAINER)) {
-        eclipseModuleManager.setGroovyDslSupport();
+        eclipseModuleManager.addGroovySupport(EclipseXml.GROOVY_DSL_CONTAINER);
         eclipseModuleManager.registerSrcPlace(EclipseXml.GROOVY_DSL_CONTAINER, idx);
+      }
+      else if (path.equals(EclipseXml.GROOVY_SUPPORT)) {
+        eclipseModuleManager.addGroovySupport(EclipseXml.GROOVY_SUPPORT);
+        eclipseModuleManager.registerSrcPlace(EclipseXml.GROOVY_SUPPORT, idx);
       }
       else {
         eclipseModuleManager.registerUnknownCons(path);

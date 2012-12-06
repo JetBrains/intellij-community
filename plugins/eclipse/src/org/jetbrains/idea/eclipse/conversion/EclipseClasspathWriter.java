@@ -80,9 +80,9 @@ public class EclipseClasspathWriter {
         outputPath = EPathUtil.collapse2EclipsePath(compilerOutputUrl, myModel);
       }
     }
-    if (eclipseModuleManager.isGroovyDslSupport()) {
-      final Integer place = eclipseModuleManager.getSrcPlace(EclipseXml.GROOVY_DSL_CONTAINER);
-      addOrderEntry(EclipseXml.CON_KIND, EclipseXml.GROOVY_DSL_CONTAINER, classpathElement, place != null ? place.intValue() : -1);
+    for (String support : eclipseModuleManager.getGroovySupport()) {
+      final Integer place = eclipseModuleManager.getSrcPlace(support);
+      addOrderEntry(EclipseXml.CON_KIND, support, classpathElement, place != null ? place.intValue() : -1);
     }
     final Element orderEntry = addOrderEntry(EclipseXml.OUTPUT_KIND, outputPath, classpathElement);
     setAttributeIfAbsent(orderEntry, EclipseXml.PATH_ATTR, EclipseXml.BIN_DIR);

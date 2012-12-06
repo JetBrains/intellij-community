@@ -98,10 +98,11 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
       }
     }
     int idx = 0;
+    final EclipseModuleManagerImpl eclipseModuleManager = EclipseModuleManagerImpl.getInstance(model.getModule());
     for (Object o : classpathElement.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
       try {
         readClasspathEntry(model, unknownLibraries, unknownJdks, usedVariables, refsToModules, testPattern, (Element)o, idx++,
-                           EclipseModuleManagerImpl.getInstance(model.getModule()),
+                           eclipseModuleManager,
                            ((BasePathMacroManager)PathMacroManager.getInstance(model.getModule())).getExpandMacroMap());
       }
       catch (ConversionException e) {
@@ -109,7 +110,7 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
       }
     }
     if (!model.isSdkInherited() && model.getSdkName() == null) {
-      EclipseModuleManagerImpl.getInstance(model.getModule()).setForceConfigureJDK();
+      eclipseModuleManager.setForceConfigureJDK();
       model.inheritSdk();
     }
   }
