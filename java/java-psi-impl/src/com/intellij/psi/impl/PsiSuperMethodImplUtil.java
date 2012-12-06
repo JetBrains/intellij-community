@@ -271,7 +271,9 @@ public class PsiSuperMethodImplUtil {
             if (superClass != null) {
               if (superClass.isInterface() ||
                   CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
-                return true;
+                if (!superMethod.hasModifierProperty(PsiModifier.DEFAULT) || !InheritanceUtil.isInheritorOrSelf(superClass, containingClass, true)) {
+                  return true;
+                }
               }
 
               if (containingClass != null) {
