@@ -476,14 +476,20 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return cached;
   }
 
-  public static List<String> getCompilationOptions(CompileContext context, ModuleChunk chunk, @Nullable ProcessorConfigProfile profile) {
+  private static List<String> getCompilationOptions(CompileContext context, ModuleChunk chunk, @Nullable ProcessorConfigProfile profile) {
     List<String> cached = JAVAC_OPTIONS.get(context);
     if (cached == null) {
       loadCommonJavacOptions(context);
       cached = JAVAC_OPTIONS.get(context);
+      assert cached != null : context;
     }
 
-    final List<String> options = new ArrayList<String>(cached);
+    List<String> options = new ArrayList<String>(cached);
+    addCompilationOptions(options, context, chunk, profile);
+    return options;
+  }
+
+  public static void addCompilationOptions(List<String> options, CompileContext context, ModuleChunk chunk, @Nullable ProcessorConfigProfile profile) {
     if (!isEncodingSet(options)) {
       final CompilerEncodingConfiguration config = context.getProjectDescriptor().getEncodingConfiguration();
       final String encoding = config.getPreferredModuleChunkEncoding(chunk);
@@ -574,8 +580,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
     else {
       options.add("-proc:none");
     }
-
-    return options;
   }
 
   private static String getLanguageLevel(JpsModule module) {

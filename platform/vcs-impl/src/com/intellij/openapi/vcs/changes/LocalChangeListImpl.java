@@ -29,6 +29,7 @@ public class LocalChangeListImpl extends LocalChangeList {
   private String myId;
   @NotNull private String myName;
   private String myComment = "";
+  @Nullable private Object myData;
 
   private boolean myIsDefault = false;
   private boolean myIsReadOnly = false;
@@ -114,6 +115,16 @@ public class LocalChangeListImpl extends LocalChangeList {
 
   public void setReadOnly(final boolean isReadOnly) {
     myIsReadOnly = isReadOnly;
+  }
+
+  void setData(@Nullable Object data) {
+    myData = data;
+  }
+
+  @Nullable
+  @Override
+  public Object getData() {
+    return myData;
   }
 
   void addChange(Change change) {
@@ -260,6 +271,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     copy.myComment = myComment;
     copy.myIsDefault = myIsDefault;
     copy.myIsReadOnly = myIsReadOnly;
+    copy.myData = myData;
 
     if (myChanges != null) {
       copy.myChanges = new HashSet<Change>(myChanges);

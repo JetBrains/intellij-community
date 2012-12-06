@@ -198,14 +198,16 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return list != null;
   }
 
-  public LocalChangeList addChangeList(@NotNull final String name, @Nullable final String description) {
-    return addChangeList(null, name, description, false);
+  public LocalChangeList addChangeList(@NotNull final String name, @Nullable final String comment, @Nullable Object data) {
+    return addChangeList(null, name, comment, false, data);
   }
 
-  LocalChangeList addChangeList(String id, @NotNull final String name, @Nullable final String description, final boolean inUpdate) {
+  LocalChangeList addChangeList(String id, @NotNull final String name, @Nullable final String description, final boolean inUpdate,
+                                @Nullable Object data) {
     final boolean contains = myMap.containsKey(name);
     LOG.assertTrue(! contains, "Attempt to create duplicate changelist " + name);
     final LocalChangeListImpl newList = (LocalChangeListImpl) LocalChangeList.createEmptyChangeList(myProject, name);
+    newList.setData(data);
 
     if (description != null) {
       newList.setCommentImpl(description);
@@ -751,7 +753,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     }
 
     public LocalChangeList addChangeList(final String name, final String comment) {
-      return myWorker.addChangeList(null, name, comment, true);
+      return myWorker.addChangeList(null, name, comment, true, null);
     }
 
     public LocalChangeList findOrCreateList(final String name, final String comment) {

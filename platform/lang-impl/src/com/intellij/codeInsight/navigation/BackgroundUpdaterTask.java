@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.navigation;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -22,8 +23,13 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.popup.AbstractPopup;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.usages.UsageView;
+import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +45,7 @@ import java.util.List;
 public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
   protected AbstractPopup myPopup;
   protected T myComponent;
+  private Ref<UsageView> myUsageView;
   private final List<PsiElement> myData = new ArrayList<PsiElement>();
 
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
@@ -61,9 +68,10 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
     super(project, title, canBeCancelled, backgroundOption);
   }
 
-  public void init(@NotNull AbstractPopup popup, T component) {
+  public void init(@NotNull AbstractPopup popup, T component, Ref<UsageView> usageView) {
     myPopup = popup;
     myComponent = component;
+    myUsageView = usageView;
 
     myPopup.addPopupListener(new JBPopupAdapter() {
       @Override
@@ -83,7 +91,17 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
     return canceled;
   }
 
-  public boolean updateComponent(PsiElement element, @Nullable final Comparator comparator) {
+  public boolean updateComponent(final PsiElement element, @Nullable final Comparator comparator) {
+    final UsageView view = myUsageView.get();
+    if (view != null && !((UsageViewImpl)view).isDisposed()) {
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          view.appendUsage(new UsageInfo2UsageAdapter(new UsageInfo(element)));
+        }
+      });
+      return true;
+    }
+
     if (myCanceled) return false;
     if (myPopup.isDisposed()) return false;
 

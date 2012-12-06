@@ -72,7 +72,7 @@ class AnnotateStackTraceAction extends AnAction {
   private HashMap<VirtualFile, List<Integer>> files2lines = new HashMap<VirtualFile, List<Integer>>();
 
   AnnotateStackTraceAction(ConsoleViewImpl consoleView) {
-    super("Annotate", null, AllIcons.Actions.Annotate);
+    super("Show files modification info", null, AllIcons.Actions.Annotate);
     myHyperlinks = consoleView.getHyperlinks();
     myEditor = consoleView.getEditor();
     myEditor.getColorsScheme().setColor(

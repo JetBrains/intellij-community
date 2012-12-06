@@ -26,6 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -67,10 +68,13 @@ public class UsageInfoToUsageConverter {
 
     @NotNull
     private static List<SmartPsiElementPointer<PsiElement>> convertToSmartPointers(@NotNull PsiElement[] primaryElements) {
+      if (primaryElements.length == 0) return Collections.emptyList();
+  
+      final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(primaryElements[0].getProject());
       return ContainerUtil.mapNotNull(primaryElements, new Function<PsiElement, SmartPsiElementPointer<PsiElement>>() {
               @Override
               public SmartPsiElementPointer<PsiElement> fun(final PsiElement s) {
-                return SmartPointerManager.getInstance(s.getProject()).createSmartPsiElementPointer(s);
+                return smartPointerManager.createSmartPsiElementPointer(s);
               }
             });
     }

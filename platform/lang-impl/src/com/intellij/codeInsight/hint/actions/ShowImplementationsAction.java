@@ -36,6 +36,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.*;
@@ -46,6 +47,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
+import com.intellij.usages.UsageView;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -204,6 +206,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
       }
     }
 
+    final Ref<UsageView> usageView = new Ref<UsageView>();
     final String title = CodeInsightBundle.message("implementation.view.title", text);
     if (myPopupRef != null) {
       final JBPopup popup = myPopupRef.get();
@@ -211,7 +214,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
         final ImplementationViewComponent component = (ImplementationViewComponent) ((AbstractPopup)popup).getComponent();
         ((AbstractPopup)popup).setCaption(title);
         component.update(impls, index);
-        updateInBackground(editor, element, component, title, (AbstractPopup)popup);
+        updateInBackground(editor, element, component, title, (AbstractPopup)popup, usageView);
         if (invokedByShortcut) {
           ((AbstractPopup)popup).focusPreferredComponent();
         }
@@ -242,13 +245,14 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
         .setCouldPin(new Processor<JBPopup>() {
           @Override
           public boolean process(JBPopup popup) {
-            component.showInUsageView();
+            usageView.set(component.showInUsageView());
+            popup.cancel();
             return false;
           }
         })
         .createPopup();
 
-      updateInBackground(editor, element, component, title, (AbstractPopup)popup);
+      updateInBackground(editor, element, component, title, (AbstractPopup)popup, usageView);
 
       PopupPositionManager.positionPopupInBestPosition(popup, editor, DataManager.getInstance().getDataContext());
       component.setHint(popup, title);
@@ -261,7 +265,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
                                   @Nullable PsiElement element,
                                   ImplementationViewComponent component,
                                   String title,
-                                  AbstractPopup popup) {
+                                  AbstractPopup popup, Ref<UsageView> usageView) {
     if (myTaskRef != null) {
       final BackgroundUpdaterTask updaterTask = myTaskRef.get();
       if (updaterTask != null) {
@@ -271,7 +275,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
 
     if (element == null) return; //already found
     final ImplementationsUpdaterTask task = new ImplementationsUpdaterTask(element, editor, title);
-    task.init(popup, component);
+    task.init(popup, component, usageView);
 
     myTaskRef = new WeakReference<BackgroundUpdaterTask>(task);
     ProgressManager.getInstance().run(task);

@@ -25,17 +25,19 @@ import org.jetbrains.annotations.Nullable;
 public class AddList implements ChangeListCommand {
   @NotNull private final String myName;
   @Nullable private final String myComment;
+  @Nullable private final Object myData;
 
   private LocalChangeList myNewListCopy;
 
-  public AddList(@NotNull final String name, @Nullable final String comment) {
+  public AddList(@NotNull final String name, @Nullable final String comment, @Nullable Object data) {
     myName = name;
     myComment = comment;
+    myData = data;
   }
 
   public void apply(final ChangeListWorker worker) {
     if (! worker.findListByName(myName)) {
-      myNewListCopy = worker.addChangeList(myName, myComment);
+      myNewListCopy = worker.addChangeList(myName, myComment, myData);
     } else {
       worker.editComment(myName, myComment);
       myNewListCopy = worker.getCopyByName(myName);

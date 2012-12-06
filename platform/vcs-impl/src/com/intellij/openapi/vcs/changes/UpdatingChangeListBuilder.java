@@ -123,6 +123,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
+        checkIfDisposed();
         return myIndex.isExcludedFile(file);
       }
     });

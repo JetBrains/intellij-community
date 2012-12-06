@@ -45,6 +45,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.usages.UsageView;
 import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -337,7 +338,7 @@ public class ImplementationViewComponent extends JPanel {
       if (file == null) continue;
       final PsiElement parent = element.getParent();
       files.add(new FileDescriptor(file, names.size() > 1 || parent == file ? element : parent));
-      candidates.add(element.getNavigationElement());
+      candidates.add(element);
     }
     
     fun.fun(PsiUtilCore.toPsiElementArray(candidates), files);
@@ -367,7 +368,7 @@ public class ImplementationViewComponent extends JPanel {
   private void updateEditorText() {
     disposeNonTextEditor();
 
-    final PsiElement elt = myElements[myIndex];
+    final PsiElement elt = myElements[myIndex].getNavigationElement();
     Project project = elt.getProject();
     PsiFile psiFile = getContainingFile(elt);
     final VirtualFile vFile = psiFile.getVirtualFile();
@@ -498,11 +499,8 @@ public class ImplementationViewComponent extends JPanel {
     return myElements;
   }
 
-  public void showInUsageView() {
-    FindUtil.showInUsageView(null, collectNonBinaryElements(), myTitle, myEditor.getProject());
-    if (myHint.isVisible()) {
-      myHint.cancel();
-    }
+  public UsageView showInUsageView() {
+    return FindUtil.showInUsageView(null, collectNonBinaryElements(), myTitle, myEditor.getProject());
   }
 
   private class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {

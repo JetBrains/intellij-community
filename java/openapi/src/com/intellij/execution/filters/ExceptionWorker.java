@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
@@ -208,7 +209,7 @@ public class ExceptionWorker {
     return null;
   }
 
-  private static class MyHyperlinkInfo implements HyperlinkInfo {
+  private static class MyHyperlinkInfo implements FileHyperlinkInfo {
     private final VirtualFile myVirtualFile;
     private final int myLineNumber;
     private final Project myProject;
@@ -245,6 +246,12 @@ public class ExceptionWorker {
       }
 
       new OpenFileHyperlinkInfo(myProject, currentVirtualFile, myLineNumber - 1).navigate(project);
+    }
+
+    @Nullable
+    @Override
+    public OpenFileDescriptor getDescriptor() {
+      return new OpenFileDescriptor(myProject, myVirtualFile, myLineNumber);
     }
   }
 }

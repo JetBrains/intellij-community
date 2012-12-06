@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,21 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.vcs.AbstractVcsHelper;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
- * @author yole
+ * CommitResultHandler may be passed to {@link AbstractVcsHelper#commitChanges(Collection, LocalChangeList, String, CommitResultHandler)}.
+ * It is called after commit is performed: successful or failed.
+ *
+ * @author Kirill Likhodedov
  */
-public abstract class ChangeListManagerEx extends ChangeListManager {
-  @Nullable
-  public abstract LocalChangeList getIdentityChangeList(Change change);
-  public abstract boolean isInUpdate();
-  public abstract Collection<LocalChangeList> getInvolvedListsFilterChanges(final Collection<Change> changes, final List<Change> validChanges);
+public interface CommitResultHandler {
 
+  void onSuccess(@NotNull String commitMessage);
 
-  public abstract void freezeImmediately(@Nullable String reason);
+  void onFailure();
 
-  public abstract LocalChangeList addChangeList(@NotNull String name, @Nullable final String comment, @Nullable Object data);
 }

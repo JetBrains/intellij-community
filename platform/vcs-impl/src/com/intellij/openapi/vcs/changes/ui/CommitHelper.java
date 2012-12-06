@@ -44,6 +44,7 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.ui.ConfirmationDialog;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -66,6 +67,7 @@ public class CommitHelper {
   private final boolean myAllOfDefaultChangeListChangesIncluded;
   private final boolean myForceSyncCommit;
   private final NullableFunction<Object, Object> myAdditionalData;
+  @Nullable private final CommitResultHandler myCustomResultHandler;
   private final List<Document> myCommittingDocuments = new ArrayList<Document>();
   private final VcsConfiguration myConfiguration;
   private final VcsDirtyScopeManager myDirtyScopeManager;
@@ -78,7 +80,8 @@ public class CommitHelper {
                       final String commitMessage,
                       final List<CheckinHandler> handlers,
                       final boolean allOfDefaultChangeListChangesIncluded,
-                      final boolean synchronously, final NullableFunction<Object, Object> additionalDataHolder) {
+                      final boolean synchronously, final NullableFunction<Object, Object> additionalDataHolder,
+                      @Nullable CommitResultHandler customResultHandler) {
     myProject = project;
     myChangeList = changeList;
     myIncludedChanges = includedChanges;
@@ -88,6 +91,7 @@ public class CommitHelper {
     myAllOfDefaultChangeListChangesIncluded = allOfDefaultChangeListChangesIncluded;
     myForceSyncCommit = synchronously;
     myAdditionalData = additionalDataHolder;
+    myCustomResultHandler = customResultHandler;
     myConfiguration = VcsConfiguration.getInstance(myProject);
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
     myFeedback = new HashSet<String>();
@@ -133,8 +137,11 @@ public class CommitHelper {
 
           @Override
           public NotificationInfo notifyFinished() {
-            String text = reportSuccess(processor);
-            return new NotificationInfo("VCS Commit", "VCS Commit Finished", text, true);
+            if (myCustomResultHandler == null) {
+              String text = reportSuccess(processor);
+              return new NotificationInfo("VCS Commit", "VCS Commit Finished", text, true);
+            }
+            return null;
           }
         };
       ProgressManager.getInstance().run(task);
@@ -202,14 +209,18 @@ public class CommitHelper {
       processor.doBeforeRefresh();
 
       AbstractVcsHelper.getInstance(myProject).showErrors(processor.getVcsExceptions(), myActionName);
-    } catch (Exception e) {
+    }
+    catch (RuntimeException e) {
       LOG.error(e);
-      if (e instanceof RuntimeException) {
-        throw (RuntimeException) e;
-      } else {
-        throw new RuntimeException(e);
-      }
-    } finally {
+      processor.myVcsExceptions.add(new VcsException(e));
+      throw e;
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+      processor.myVcsExceptions.add(new VcsException(e));
+      throw new RuntimeException(e);
+    }
+    finally {
       commitCompleted(processor.getVcsExceptions(), processor);
       processor.customRefresh();
       WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
@@ -511,6 +522,9 @@ public class CommitHelper {
       }
 
       processor.afterSuccessfulCheckIn();
+      if (myCustomResultHandler != null) {
+        myCustomResultHandler.onSuccess(myCommitMessage);
+      }
     }
     else {
       for (CheckinHandler handler : myHandlers) {
@@ -523,28 +537,38 @@ public class CommitHelper {
       if (indicator != null) {
         indicator.setText(VcsBundle.message("commit.dialog.completed.successfully"));
       }
-    } else {
-      WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-          public void run() {
-            final String message;
-            if (errorsSize > 0 && warningsSize > 0) {
-              message = VcsBundle.message("message.text.commit.failed.with.errors.and.warnings");
-            }
-            else if (errorsSize > 0) {
-              message = VcsBundle.message("message.text.commit.failed.with.errors");
-            }
-            else {
-              message = VcsBundle.message("message.text.commit.finished.with.warnings");
-            }
-            //new VcsBalloonProblemNotifier(myProject, message, MessageType.ERROR).run();
-            Messages.showErrorDialog(message, VcsBundle.message("message.title.commit"));
-
-            if (errorsSize > 0) {
-              processor.afterFailedCheckIn();
-            }
-          }
-        }, null, myProject);
     }
+    else {
+      if (myCustomResultHandler == null) {
+        showErrorDialogAndMoveToAnotherList(processor, errorsSize, warningsSize);
+      }
+      else {
+        myCustomResultHandler.onFailure();
+      }
+    }
+  }
+
+  private void showErrorDialogAndMoveToAnotherList(final GeneralCommitProcessor processor, final int errorsSize, final int warningsSize) {
+    WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
+      public void run() {
+        final String message;
+        if (errorsSize > 0 && warningsSize > 0) {
+          message = VcsBundle.message("message.text.commit.failed.with.errors.and.warnings");
+        }
+        else if (errorsSize > 0) {
+          message = VcsBundle.message("message.text.commit.failed.with.errors");
+        }
+        else {
+          message = VcsBundle.message("message.text.commit.finished.with.warnings");
+        }
+        //new VcsBalloonProblemNotifier(myProject, message, MessageType.ERROR).run();
+        Messages.showErrorDialog(message, VcsBundle.message("message.title.commit"));
+
+        if (errorsSize > 0) {
+          processor.afterFailedCheckIn();
+        }
+      }
+    }, null, myProject);
   }
 
   public static void moveToFailedList(final ChangeList changeList,
