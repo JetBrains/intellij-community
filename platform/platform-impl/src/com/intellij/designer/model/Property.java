@@ -112,6 +112,10 @@ public abstract class Property<T extends PropertiesContainer> {
     return true;
   }
 
+  public boolean needRefreshPropertyList(@NotNull T container, @Nullable Object value) throws Exception {
+    return false;
+  }
+
   public boolean needRefreshPropertyList() {
     return false;
   }
