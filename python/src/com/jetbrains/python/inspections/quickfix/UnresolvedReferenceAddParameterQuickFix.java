@@ -47,7 +47,7 @@ public class UnresolvedReferenceAddParameterQuickFix implements LocalQuickFix, H
       parameterList.addParameter(parameter);
       CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(parameterList);
       final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(parameter);
-      builder.replaceRange(TextRange.create(element.getTextLength() + 1, parameter.getTextLength()), "None");
+      builder.replaceRange(TextRange.create(parameter.getTextLength() - 4, parameter.getTextLength()), "None");
       builder.run();
     }
   }
