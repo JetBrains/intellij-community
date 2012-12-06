@@ -89,8 +89,8 @@ public class GrReassignedInClosureLocalVarInspection extends BaseInspection {
                                              PsiType checked,
                                              GrControlFlowOwner varFlowOwner,
                                              GrControlFlowOwner refFlorOwner) {
-    return varFlowOwner != refFlorOwner && !TypesUtil.isAssignable(referenceExpression.getType(), checked, referenceExpression.getManager(),
-                                                                   referenceExpression.getResolveScope());
+    final PsiType type = referenceExpression.getType();
+    return type != null && varFlowOwner != refFlorOwner && !TypesUtil.isAssignable(type, checked, referenceExpression, true);
   }
 
   private static String getFlowDescription(GrControlFlowOwner refFlorOwner) {

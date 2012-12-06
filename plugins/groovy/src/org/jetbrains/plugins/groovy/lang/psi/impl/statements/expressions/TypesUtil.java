@@ -73,9 +73,17 @@ public class TypesUtil {
   
   @NonNls
   public static final Map<String, PsiType> ourQNameToUnboxed = new HashMap<String, PsiType>();
-  public static final PsiPrimitiveType[] PRIMITIVES =
-    new PsiPrimitiveType[]{PsiType.BYTE, PsiType.CHAR, PsiType.DOUBLE, PsiType.FLOAT, PsiType.INT, PsiType.SHORT, PsiType.LONG,
-      PsiType.BOOLEAN, PsiType.VOID};
+  public static final PsiPrimitiveType[] PRIMITIVES = new PsiPrimitiveType[]{
+    PsiType.BYTE,
+    PsiType.CHAR,
+    PsiType.DOUBLE,
+    PsiType.FLOAT,
+    PsiType.INT,
+    PsiType.SHORT,
+    PsiType.LONG,
+    PsiType.BOOLEAN,
+    PsiType.VOID
+  };
 
   private TypesUtil() {
   }
@@ -178,27 +186,27 @@ public class TypesUtil {
   private static final TObjectIntHashMap<String> TYPE_TO_RANK = new TObjectIntHashMap<String>();
 
   static {
-    TYPE_TO_RANK.put(JAVA_LANG_BYTE, 1);
-    TYPE_TO_RANK.put(JAVA_LANG_SHORT, 2);
-    TYPE_TO_RANK.put(JAVA_LANG_CHARACTER, 2);
-    TYPE_TO_RANK.put(JAVA_LANG_INTEGER, 3);
-    TYPE_TO_RANK.put(JAVA_LANG_LONG, 4);
+    TYPE_TO_RANK.put(JAVA_LANG_BYTE,        1);
+    TYPE_TO_RANK.put(JAVA_LANG_SHORT,       2);
+    TYPE_TO_RANK.put(JAVA_LANG_CHARACTER,   2);
+    TYPE_TO_RANK.put(JAVA_LANG_INTEGER,     3);
+    TYPE_TO_RANK.put(JAVA_LANG_LONG,        4);
     TYPE_TO_RANK.put(JAVA_MATH_BIG_INTEGER, 5);
     TYPE_TO_RANK.put(JAVA_MATH_BIG_DECIMAL, 6);
-    TYPE_TO_RANK.put(JAVA_LANG_FLOAT, 7);
-    TYPE_TO_RANK.put(JAVA_LANG_DOUBLE, 8);
-    TYPE_TO_RANK.put(JAVA_LANG_NUMBER, 9);
+    TYPE_TO_RANK.put(JAVA_LANG_FLOAT,       7);
+    TYPE_TO_RANK.put(JAVA_LANG_DOUBLE,      8);
+    TYPE_TO_RANK.put(JAVA_LANG_NUMBER,      9);
   }
 
   static {
-    ourQNameToUnboxed.put(JAVA_LANG_BOOLEAN, PsiType.BOOLEAN);
-    ourQNameToUnboxed.put(JAVA_LANG_BYTE, PsiType.BYTE);
-    ourQNameToUnboxed.put(JAVA_LANG_CHARACTER, PsiType.CHAR);
-    ourQNameToUnboxed.put(JAVA_LANG_SHORT, PsiType.SHORT);
-    ourQNameToUnboxed.put(JAVA_LANG_INTEGER, PsiType.INT);
-    ourQNameToUnboxed.put(JAVA_LANG_LONG, PsiType.LONG);
-    ourQNameToUnboxed.put(JAVA_LANG_FLOAT, PsiType.FLOAT);
-    ourQNameToUnboxed.put(JAVA_LANG_DOUBLE, PsiType.DOUBLE);
+    ourQNameToUnboxed.put(JAVA_LANG_BOOLEAN,    PsiType.BOOLEAN);
+    ourQNameToUnboxed.put(JAVA_LANG_BYTE,       PsiType.BYTE);
+    ourQNameToUnboxed.put(JAVA_LANG_CHARACTER,  PsiType.CHAR);
+    ourQNameToUnboxed.put(JAVA_LANG_SHORT,      PsiType.SHORT);
+    ourQNameToUnboxed.put(JAVA_LANG_INTEGER,    PsiType.INT);
+    ourQNameToUnboxed.put(JAVA_LANG_LONG,       PsiType.LONG);
+    ourQNameToUnboxed.put(JAVA_LANG_FLOAT,      PsiType.FLOAT);
+    ourQNameToUnboxed.put(JAVA_LANG_DOUBLE,     PsiType.DOUBLE);
   }
 
 
@@ -216,20 +224,12 @@ public class TypesUtil {
     RANK_TO_TYPE.put(9, JAVA_LANG_NUMBER);
   }
 
-  public static boolean isAssignable(PsiType lType, PsiType rType, @NotNull PsiManager manager, @NotNull GlobalSearchScope scope) {
-    return isAssignable(lType, rType, manager, scope, true);
-  }
-
   public static boolean isAssignable(PsiType lType, PsiType rType, @NotNull PsiManager manager, @NotNull GlobalSearchScope scope, boolean allowConversion) {
-    if (allowConversion && isAssignableByMethodCallConversion(lType, rType, manager, scope)) {
+    if (allowConversion && isAssignableByMethodCallConversion(lType, rType, manager, scope, false)) {
       return true;
     }
 
     return _isAssignable(lType, rType, manager, scope, allowConversion);
-  }
-
-  public static boolean isAssignable(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context) {
-    return isAssignable(lType, rType, context, true);
   }
 
   public static boolean isAssignable(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context, boolean allowConversion) {
@@ -258,7 +258,7 @@ public class TypesUtil {
         }
       }
     }
-    return (allowConversion && isAssignableByMethodCallConversion(lType, rType, context)) ||
+    return (allowConversion && isAssignableByMethodCallConversion(lType, rType, context, true)) ||
            _isAssignable(lType, rType, context.getManager(), context.getResolveScope(), true);
   }
 
@@ -280,7 +280,7 @@ public class TypesUtil {
       else if (lType instanceof PsiArrayType) {
         PsiType lComponentType = ((PsiArrayType)lType).getComponentType();
         PsiType rComponentType = ClosureParameterEnhancer.findTypeForIteration(rType, manager, scope);
-        if (rComponentType != null && isAssignable(lComponentType, rComponentType, manager, scope)) {
+        if (rComponentType != null && isAssignable(lComponentType, rComponentType, manager, scope, true)) {
           return true;
         }
       }
@@ -297,28 +297,14 @@ public class TypesUtil {
     return lType.isAssignableFrom(rType);
   }
 
-  public static boolean isAssignableByMethodCallConversion(@Nullable PsiType lType, @Nullable PsiType rType, @NotNull GroovyPsiElement context) {
-    if (lType == null || rType == null) return false;
-
-    if (isAssignableByMethodCallConversion(lType, rType, context.getManager(), context.getResolveScope())) {
-      return true;
-    }
-
-    for (GrTypeConverter converter : GrTypeConverter.EP_NAME.getExtensions()) {
-      final Boolean result = converter.isConvertible(lType, rType, context);
-      if (result != null) {
-        return result;
-      }
-    }
-
-    return false;
-  }
-
   public static boolean isAssignableByMethodCallConversion(@Nullable PsiType lType,
                                                            @Nullable PsiType rType,
-                                                           @NotNull PsiManager manager,
-                                                           @NotNull GlobalSearchScope scope) {
+                                                           @NotNull PsiElement context,
+                                                           final boolean allowConversion) {
     if (lType == null || rType == null) return false;
+
+    PsiManager manager = context.getManager();
+    GlobalSearchScope scope = context.getResolveScope();
 
     if (rType instanceof GrTupleType && ((GrTupleType)rType).getComponentTypes().length == 0) {
       if (lType instanceof PsiArrayType ||
@@ -329,7 +315,8 @@ public class TypesUtil {
     }
 
     if (isClassType(rType, GROOVY_LANG_GSTRING)) {
-      if (isAssignable(lType, GroovyPsiManager.getInstance(manager.getProject()).createTypeByFQClassName(JAVA_LANG_STRING, scope), manager, scope)) {
+      final GroovyPsiManager grManager = GroovyPsiManager.getInstance(manager.getProject());
+      if (isAssignable(lType, grManager.createTypeByFQClassName(JAVA_LANG_STRING, scope), manager, scope, true)) {
         return true;
       }
     }
@@ -352,8 +339,28 @@ public class TypesUtil {
       if (result != null) return result.booleanValue();
     }
 
-    return TypeConversionUtil.isAssignable(lType, rType);
+    if (TypeConversionUtil.isAssignable(lType, rType)) {
+      return true;
+    }
 
+    if (allowConversion && context instanceof GroovyPsiElement) {
+      for (GrTypeConverter converter : GrTypeConverter.EP_NAME.getExtensions()) {
+        final Boolean result = converter.isConvertible(lType, rType, (GroovyPsiElement)context);
+        if (result != null) {
+          return result;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  public static boolean isAssignableByMethodCallConversion(@Nullable PsiType lType,
+                                                           @Nullable PsiType rType,
+                                                           @NotNull PsiManager manager,
+                                                           @NotNull GlobalSearchScope scope,
+                                                           final boolean allowConversion) {
+    //todo
   }
 
   @Nullable
@@ -390,7 +397,7 @@ public class TypesUtil {
       if (typeRight == null) {
         return Boolean.TRUE;
       }
-      if (!isAssignableByMethodCallConversion(typeLeft, typeRight, manager, scope)) return Boolean.FALSE;
+      if (!isAssignableByMethodCallConversion(typeLeft, typeRight, manager, scope, false)) return Boolean.FALSE;
     }
     return Boolean.TRUE;
   }

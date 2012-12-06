@@ -1292,7 +1292,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         rtype = ((GrExpression)value).getType();
       }
 
-      if (rtype != null && !checkAnnoTypeAssignable(ltype, resolveScope, manager, rtype, skipArrays)) {
+      if (rtype != null && !checkAnnoTypeAssignable(ltype, rtype, value, skipArrays)) {
         myHolder
           .createErrorAnnotation(value, GroovyBundle.message("cannot.assign", rtype.getPresentableText(), ltype.getPresentableText()));
       }
@@ -1302,7 +1302,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       final PsiElement resolved = ((GrAnnotation)value).getClassReference().resolve();
       if (resolved instanceof PsiClass) {
         final PsiClassType rtype = JavaPsiFacade.getElementFactory(value.getProject()).createType((PsiClass)resolved, PsiSubstitutor.EMPTY);
-        if (!checkAnnoTypeAssignable(ltype, resolveScope, manager, rtype, skipArrays)) {
+        if (!checkAnnoTypeAssignable(ltype, rtype, value, skipArrays)) {
           myHolder
             .createErrorAnnotation(value, GroovyBundle.message("cannot.assign", rtype.getPresentableText(), ltype.getPresentableText()));
         }
@@ -1320,7 +1320,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       }
       else {
         final PsiType rtype = TypesUtil.getTupleByAnnotationArrayInitializer((GrAnnotationArrayInitializer)value);
-        if (!checkAnnoTypeAssignable(ltype, resolveScope, manager, rtype, skipArrays)) {
+        if (!checkAnnoTypeAssignable(ltype, rtype, value, skipArrays)) {
           myHolder
             .createErrorAnnotation(value, GroovyBundle.message("cannot.assign", rtype.getPresentableText(), ltype.getPresentableText()));
         }
@@ -1329,17 +1329,16 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   private static boolean checkAnnoTypeAssignable(@Nullable PsiType type,
-                                                 @NotNull GlobalSearchScope resolveScope,
-                                                 @NotNull PsiManager manager,
                                                  @Nullable PsiType rtype,
+                                                 @NotNull GroovyPsiElement context,
                                                  boolean skipArrays) {
     rtype = TypesUtil.unboxPrimitiveTypeWrapper(rtype);
-    if (TypesUtil.isAssignableByMethodCallConversion(type, rtype, manager, resolveScope)) return true;
+    if (TypesUtil.isAssignableByMethodCallConversion(type, rtype, context, false)) return true;
 
     if (!(type instanceof PsiArrayType && skipArrays)) return false;
 
     final PsiType componentType = ((PsiArrayType)type).getComponentType();
-    return checkAnnoTypeAssignable(componentType, resolveScope, manager, rtype, skipArrays);
+    return checkAnnoTypeAssignable(componentType, rtype, context, skipArrays);
   }
 
   @Override

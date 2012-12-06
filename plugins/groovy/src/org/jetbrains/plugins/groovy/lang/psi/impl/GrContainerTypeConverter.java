@@ -41,7 +41,7 @@ public class GrContainerTypeConverter extends GrTypeConverter {
     final PsiType rComponentType = extractComponentType(rType);
 
     if (lComponentType == null || rComponentType == null) return Boolean.TRUE;
-    if (TypesUtil.isAssignable(lComponentType, rComponentType, context)) return Boolean.TRUE;
+    if (TypesUtil.isAssignable(lComponentType, rComponentType, context, true)) return Boolean.TRUE;
     return null;
   }
 

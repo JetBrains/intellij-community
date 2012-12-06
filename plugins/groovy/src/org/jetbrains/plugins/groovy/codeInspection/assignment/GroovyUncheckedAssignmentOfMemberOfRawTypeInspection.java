@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,7 +172,7 @@ public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseIn
     private void checkAssignability(PsiType lType, GrExpression rExpr, GroovyPsiElement element) {
       if (PsiUtil.isRawClassMemberAccess(rExpr)) {
         final PsiType rType = rExpr.getType();
-        if (!TypesUtil.isAssignable(lType, rType, element)) {
+        if (!TypesUtil.isAssignable(lType, rType, element, true)) {
           registerError(element, lType, rType);
         }
       }

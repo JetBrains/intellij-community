@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,10 +92,10 @@ public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBack
       public int compare(PsiMethod o1, PsiMethod o2) { //compare by first parameter type
         final PsiType type1 = getRealType(o1);
         final PsiType type2 = getRealType(o2);
-        if (TypesUtil.isAssignable(type1, type2, psiManager, searchScope)) {
+        if (TypesUtil.isAssignable(type1, type2, psiManager, searchScope, true)) {
           return -1;
         }
-        else if (TypesUtil.isAssignable(type2, type1, psiManager, searchScope)) {
+        else if (TypesUtil.isAssignable(type2, type1, psiManager, searchScope, true)) {
           return 1;
         }
         return 0;

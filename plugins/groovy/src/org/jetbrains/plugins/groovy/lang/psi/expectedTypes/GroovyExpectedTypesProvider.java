@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi.expectedTypes;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -480,7 +479,7 @@ public class GroovyExpectedTypesProvider {
     public void visitUnaryExpression(final GrUnaryExpression expression) {
       TypeConstraint constraint = new TypeConstraint(PsiType.INT) {
         @Override
-        public boolean satisfied(PsiType type, PsiManager manager, GlobalSearchScope scope) {
+        public boolean satisfied(PsiType type, @NotNull PsiElement context) {
           final PsiType boxed = TypesUtil.boxPrimitiveType(type, manager, scope);
           final IElementType opToken = expression.getOperationTokenType();
           final GroovyResolveResult[] candidates =

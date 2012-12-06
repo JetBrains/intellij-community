@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.groovy.gpp;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -53,7 +68,8 @@ public class GppTypeConverter extends GrTypeConverter {
       final PsiType expectedComponent = PsiUtil.extractIterableTypeParameter(lType, false);
       if (expectedComponent != null && isMethodCallConversion(context)) {
         PsiType tupleComponent = tupleType.getParameters()[0];
-        if (tupleComponent != null && TypesUtil.isAssignable(expectedComponent, tupleComponent, context) && hasDefaultConstructor(lType)) {
+        if (tupleComponent != null &&
+            TypesUtil.isAssignable(expectedComponent, tupleComponent, context, true) && hasDefaultConstructor(lType)) {
           return true;
         }
       }
@@ -68,7 +84,8 @@ public class GppTypeConverter extends GrTypeConverter {
       final PsiType[] parameters = ((GrMapType)rType).getParameters();
       if (lKeyType != null && lValueType != null &&
           parameters[0] != null && parameters[1] != null &&
-          (!TypesUtil.isAssignable(lKeyType, parameters[0], context) || !TypesUtil.isAssignable(lValueType, parameters[1], context))) {
+          (!TypesUtil.isAssignable(lKeyType, parameters[0], context, true) || !TypesUtil
+            .isAssignable(lValueType, parameters[1], context, true))) {
         return null;
       }
 

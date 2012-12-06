@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -149,7 +149,7 @@ public class GrTypeComboBox extends ComboBox {
 
 
     // if initial type is not assignable to min type we don't take into consideration min type.
-    if (min != null && !TypesUtil.isAssignable(min, type, manager, scope)) {
+    if (min != null && !TypesUtil.isAssignable(min, type, manager, scope, true)) {
       min = null;
     }
 
@@ -161,7 +161,7 @@ public class GrTypeComboBox extends ComboBox {
     while (!set.isEmpty()) {
       PsiType cur = set.iterator().next();
       set.remove(cur);
-      if (!map.containsValue(cur) && (min == null || TypesUtil.isAssignable(min, cur, manager, scope))) {
+      if (!map.containsValue(cur) && (min == null || TypesUtil.isAssignable(min, cur, manager, scope, true))) {
         if (isPartiallySubstituted(cur)) {
           LOG.assertTrue(cur instanceof PsiClassType);
           PsiClassType rawType = ((PsiClassType)cur).rawType();

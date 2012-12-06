@@ -48,7 +48,7 @@ public class ClosureAsAnonymousParameterEnhancer extends AbstractClosureParamete
         PsiManager manager = closure.getManager();
         GlobalSearchScope scope = closure.getResolveScope();
         for (PsiType expected : expectedTypes) {
-          if (!TypesUtil.isAssignable(expected, castType, manager, scope)) {
+          if (!TypesUtil.isAssignable(expected, castType, manager, scope, true)) {
             expectedTypes.remove(expected);
           }
         }

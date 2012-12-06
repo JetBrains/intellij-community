@@ -527,7 +527,7 @@ public class PsiImplUtil {
   public static boolean isSimpleArrayAccess(PsiType exprType, PsiType[] argTypes, PsiManager manager, GlobalSearchScope resolveScope, boolean isLValue) {
     return exprType instanceof PsiArrayType &&
            (isLValue && argTypes.length == 2 || !isLValue && argTypes.length == 1) &&
-           TypesUtil.isAssignable(PsiType.INT, argTypes[0], manager, resolveScope);
+           TypesUtil.isAssignable(PsiType.INT, argTypes[0], manager, resolveScope, true);
   }
 
   public static String getTextSkipWhiteSpaceAndComments(ASTNode node) {

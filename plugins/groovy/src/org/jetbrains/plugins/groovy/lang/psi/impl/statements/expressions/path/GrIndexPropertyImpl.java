@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,7 +113,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
       PsiType componentType = extractMapValueType(thisType, args, manager, resolveScope);
 
       if (overloadedOperatorType != null &&
-          (componentType == null || !TypesUtil.isAssignable(overloadedOperatorType, componentType, manager, resolveScope))) {
+          (componentType == null || !TypesUtil.isAssignable(overloadedOperatorType, componentType, manager, resolveScope, true))) {
         return TypesUtil.boxPrimitiveType(overloadedOperatorType, manager, resolveScope);
       }
       return componentType;

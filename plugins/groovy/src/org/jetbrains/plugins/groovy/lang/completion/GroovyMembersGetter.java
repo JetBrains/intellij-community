@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 /**
-* @author peter
-*/
+ * @author peter
+ */
 class GroovyMembersGetter extends MembersGetter {
   private final PsiClassType myExpectedType;
 
@@ -62,6 +62,6 @@ class GroovyMembersGetter extends MembersGetter {
   }
 
   private boolean isSuitableType(PsiType type) {
-    return type != null && TypesUtil.isAssignableByMethodCallConversion(myExpectedType, type, myPlace.getManager(), myPlace.getResolveScope());
+    return type != null && TypesUtil.isAssignableByMethodCallConversion(myExpectedType, type, myPlace, false);
   }
 }

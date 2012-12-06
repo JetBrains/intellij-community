@@ -365,9 +365,9 @@ public class GdkMethodUtil {
         ((PsiClassType)selfType).rawType().equalsToText(CommonClassNames.JAVA_LANG_CLASS) &&
         place instanceof GrReferenceExpression &&
         ((GrReferenceExpression)place).resolve() instanceof PsiClass) {   // ClassType.categoryMethod()  where categoryMethod(Class<> cl, ...)
-      return TypesUtil.isAssignable(selfType, TypesUtil.createJavaLangClassType(qualifierType, project, scope), manager, scope);
+      return TypesUtil.isAssignable(selfType, TypesUtil.createJavaLangClassType(qualifierType, project, scope), manager, scope, true);
     }
-    return TypesUtil.isAssignable(selfType, qualifierType, manager, scope);
+    return TypesUtil.isAssignable(selfType, qualifierType, manager, scope, true);
   }
 
   @Nullable

@@ -487,7 +487,7 @@ public class ExpressionGenerator extends Generator {
       builder.append(" = ");
 
       final PsiType rType = getDeclaredType(rValue, context);
-      if (lType != null && rType != null && !TypesUtil.isAssignableByMethodCallConversion(lType, rType, expression)) {
+      if (lType != null && rType != null && !TypesUtil.isAssignableByMethodCallConversion(lType, rType, expression, true)) {
         builder.append('(');
         writeType(builder, lType, expression);
         builder.append(')');
@@ -506,7 +506,7 @@ public class ExpressionGenerator extends Generator {
         builder.append(" = ");
 
         final PsiType rType = getDeclaredType((PsiMethod)resolved, resolveResult.getSubstitutor(), context);
-        if (lType != null && rType != null && !TypesUtil.isAssignableByMethodCallConversion(lType, rType, expression)) {
+        if (lType != null && rType != null && !TypesUtil.isAssignableByMethodCallConversion(lType, rType, expression, true)) {
           builder.append('(');
           writeType(builder, lType, expression);
           builder.append(')');
