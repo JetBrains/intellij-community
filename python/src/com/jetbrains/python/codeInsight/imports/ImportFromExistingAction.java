@@ -2,6 +2,7 @@ package com.jetbrains.python.codeInsight.imports;
 
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.ide.DataManager;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -14,6 +15,7 @@ import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
@@ -123,17 +125,21 @@ public class ImportFromExistingAction implements QuestionAction {
     final Project project = myTarget.getProject();
     final PyElementGenerator gen = PyElementGenerator.getInstance(project);
     AddImportHelper.ImportPriority priority = AddImportHelper.getImportPriority(myTarget, item.getFile());
+    PsiFile file = myTarget.getContainingFile();
+    if (InjectedLanguageManager.getInstance(project).isInjectedFragment(file)) {
+      file = InjectedLanguageUtil.getTopLevelFile(myTarget);
+    }
     if (isRoot(item.getFile())) {
-      AddImportHelper.addImportStatement(myTarget.getContainingFile(), myName, null, priority);
+      AddImportHelper.addImportStatement(file, myName, null, priority);
     }
     else {
       String qualifiedName = item.getPath().toString();
       if (myUseQualifiedImport) {
-        AddImportHelper.addImportStatement(myTarget.getContainingFile(), qualifiedName, null, priority);
+        AddImportHelper.addImportStatement(file, qualifiedName, null, priority);
         myTarget.replace(gen.createExpressionFromText(LanguageLevel.forElement(myTarget), qualifiedName + "." + myName));
       }
       else {
-        AddImportHelper.addImportFrom(myTarget.getContainingFile(), myTarget, qualifiedName, myName, null, priority);
+        AddImportHelper.addImportFrom(file, myTarget, qualifiedName, myName, null, priority);
       }
     }
   }
