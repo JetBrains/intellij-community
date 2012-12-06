@@ -113,7 +113,7 @@ public class GradleApiFacadeImpl extends RemoteServer implements GradleApiFacade
     try {
       I stub = (I)UnicastRemoteObject.exportObject(proxy, 0);
       I stored = (I)myRemotes.putIfAbsent(implClass, stub);
-      return stored == null ? result : stored;
+      return stored == null ? stub : stored;
     }
     catch (RemoteException e) {
       Object raceResult = myRemotes.get(implClass);
