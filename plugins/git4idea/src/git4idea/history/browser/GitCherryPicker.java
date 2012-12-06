@@ -154,7 +154,7 @@ public class GitCherryPicker {
                                                                                       @NotNull GitCommitWrapper commit,
                                                                                       @NotNull List<GitCommitWrapper> successfulCommits) {
     CherryPickData data = updateChangeListManager(commit.getCommit());
-    boolean committed = showCommitDialog(repository, commit, data.myChangeList, data.myCommitMessage);
+    boolean committed = showCommitDialogAndWaitForCommit(repository, commit, data.myChangeList, data.myCommitMessage);
     if (committed) {
       removeChangeList(data);
       successfulCommits.add(commit);
@@ -234,8 +234,8 @@ public class GitCherryPicker {
     return message;
   }
 
-  private boolean showCommitDialog(@NotNull final GitRepository repository, @NotNull final GitCommitWrapper commit,
-                                   @NotNull final LocalChangeList changeList, @NotNull final String commitMessage) {
+  private boolean showCommitDialogAndWaitForCommit(@NotNull final GitRepository repository, @NotNull final GitCommitWrapper commit,
+                                                   @NotNull final LocalChangeList changeList, @NotNull final String commitMessage) {
     final AtomicBoolean commitSucceeded = new AtomicBoolean();
     final Semaphore sem = new Semaphore(0);
     myPlatformFacade.invokeAndWait(new Runnable() {
