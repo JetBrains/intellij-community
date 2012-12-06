@@ -209,14 +209,18 @@ public class CommitHelper {
       processor.doBeforeRefresh();
 
       AbstractVcsHelper.getInstance(myProject).showErrors(processor.getVcsExceptions(), myActionName);
-    } catch (Exception e) {
+    }
+    catch (RuntimeException e) {
       LOG.error(e);
-      if (e instanceof RuntimeException) {
-        throw (RuntimeException) e;
-      } else {
-        throw new RuntimeException(e);
-      }
-    } finally {
+      processor.myVcsExceptions.add(new VcsException(e));
+      throw e;
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+      processor.myVcsExceptions.add(new VcsException(e));
+      throw new RuntimeException(e);
+    }
+    finally {
       commitCompleted(processor.getVcsExceptions(), processor);
       processor.customRefresh();
       WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
