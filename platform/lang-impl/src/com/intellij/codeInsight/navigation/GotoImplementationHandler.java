@@ -66,7 +66,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
         protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements, int offset) {
           final List<PsiElement> result = new ArrayList<PsiElement>();
           for (PsiElement targetElement : targetElements) {
-            if (instance.acceptImplementationForReference(reference, element)) {
+            if (instance.acceptImplementationForReference(reference, targetElement)) {
               result.add(targetElement);
             }
           }
