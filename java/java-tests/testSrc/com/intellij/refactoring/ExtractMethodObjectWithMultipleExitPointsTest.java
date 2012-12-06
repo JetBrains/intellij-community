@@ -114,4 +114,8 @@ public class ExtractMethodObjectWithMultipleExitPointsTest extends LightRefactor
   public void testConditionalExitWithoutCodeBlock() throws Exception {
     doTest();
   }
+
+  public void testReturnExitStatement() throws Exception {
+    doTest();
+  }
 }
