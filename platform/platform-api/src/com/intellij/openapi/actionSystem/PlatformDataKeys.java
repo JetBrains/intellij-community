@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,6 +92,8 @@ public class PlatformDataKeys {
   public static final DataKey<ContentManager> NONEMPTY_CONTENT_MANAGER = DataKey.create("nonemptyContentManager");
   public static final DataKey<ModalityState> MODALITY_STATE = DataKey.create("ModalityState");
   public static final DataKey<Boolean> SOURCE_NAVIGATION_LOCKED = DataKey.create("sourceNavigationLocked");
+
+  public static final DataKey<String> PREDEFINED_TEXT = DataKey.create("predefined.text.value");
 
   /**
    * Returns java.awt.Point to guess where to show context menu invoked by key.

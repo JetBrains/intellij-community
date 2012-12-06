@@ -16,9 +16,11 @@
 package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -33,10 +35,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
@@ -57,6 +56,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -908,10 +908,47 @@ public class Switcher extends AnAction implements DumbAware {
       }
 
       @Override
-      protected void processKeyEvent(KeyEvent e) {
+      protected void processKeyEvent(final KeyEvent e) {
         final int keyCode = e.getKeyCode();
         if (keyCode == VK_LEFT || keyCode == VK_RIGHT) {
           return;
+        }
+        if (keyCode == VK_ENTER && files.getModel().getSize() + toolWindows.getModel().getSize() == 0) {
+          AnAction gotoAction = ActionManager.getInstance().getAction("GotoClass");
+          if (gotoAction == null) {
+            gotoAction = ActionManager.getInstance().getAction("GotoFile");
+          }
+          if (gotoAction != null) {
+            final String search = mySpeedSearch.getEnteredPrefix();
+            myPopup.cancel();
+            final AnAction action = gotoAction;
+            SwingUtilities.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+
+                DataManager.getInstance().getDataContextFromFocus().doWhenDone(new AsyncResult.Handler<DataContext>() {
+                  @Override
+                  public void run(final DataContext context) {
+                    final DataContext dataContext = new DataContext() {
+                      @Nullable
+                      @Override
+                      public Object getData(@NonNls String dataId) {
+                        if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
+                          return search;
+                        }
+                        return context.getData(dataId);
+                      }
+                    };
+                    final AnActionEvent event =
+                      new AnActionEvent(e, dataContext, ActionPlaces.EDITOR_POPUP, new PresentationFactory().getPresentation(action),
+                                        ActionManager.getInstance(), 0);
+                    action.actionPerformed(event);
+                  }
+                });
+              }
+            });
+            return;
+          }
         }
         super.processKeyEvent(e);
       }
@@ -983,6 +1020,13 @@ public class Switcher extends AnAction implements DumbAware {
         final Object value = list.getSelectedValue();
         ((NameFilteringListModel)files.getModel()).refilter();
         ((NameFilteringListModel)toolWindows.getModel()).refilter();
+        if (files.getModel().getSize() + toolWindows.getModel().getSize() == 0) {
+          toolWindows.getEmptyText().setText("");
+          files.getEmptyText().setText("Press 'Enter' to search in Project");
+        } else {
+          files.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
+          toolWindows.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
+        }
         files.repaint();
         toolWindows.repaint();
         getSelectedList(list).setSelectedValue(value, true);
