@@ -34,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -41,6 +42,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.JBListWithHintProvider;
 import com.intellij.ui.popup.AbstractPopup;
+import com.intellij.usages.UsageView;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
@@ -169,6 +171,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       }
     });
 
+    final Ref<UsageView> usageView = new Ref<UsageView>();
     final JBPopup popup = builder.
       setTitle(title).
       setItemChoosenCallback(runnable).
@@ -183,8 +186,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       setCouldPin(new Processor<JBPopup>() {
         @Override
         public boolean process(JBPopup popup) {
-          FindUtil.showInUsageView(gotoData.source, gotoData.targets, 
-                                   getFindUsagesTitle(gotoData.source, name, gotoData.targets.length), project);
+          usageView.set(FindUtil.showInUsageView(gotoData.source, gotoData.targets, getFindUsagesTitle(gotoData.source, name, gotoData.targets.length), project));
           popup.cancel();
           return false;
         }
@@ -192,7 +194,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       setAdText(getAdText(gotoData.source, targets.length)).
       createPopup();
     if (gotoData.listUpdaterTask != null) {
-      gotoData.listUpdaterTask.init((AbstractPopup)popup, list);
+      gotoData.listUpdaterTask.init((AbstractPopup)popup, list, usageView);
       ProgressManager.getInstance().run(gotoData.listUpdaterTask);
     }
     popup.showInBestPositionFor(editor);

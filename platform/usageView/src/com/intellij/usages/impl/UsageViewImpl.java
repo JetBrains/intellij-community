@@ -985,6 +985,10 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
   }
 
+  public boolean isDisposed() {
+    return isDisposed;
+  }
+
   private void showNode(@NotNull final UsageNode node) {
     if (!myPresentation.isDetachedMode()) {
       UIUtil.invokeLaterIfNeeded(new Runnable() {
