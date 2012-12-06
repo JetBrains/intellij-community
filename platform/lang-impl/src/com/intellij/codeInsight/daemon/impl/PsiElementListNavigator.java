@@ -25,12 +25,14 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.JBListWithHintProvider;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
+import com.intellij.usages.UsageView;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
 
@@ -113,12 +115,13 @@ public class PsiElementListNavigator {
           return true;
         }
       });
+    final Ref<UsageView> usageView = new Ref<UsageView>();
     if (findUsagesTitle != null) {
       popupChooserBuilder = popupChooserBuilder.setCouldPin(new Processor<JBPopup>() {
         @Override
         public boolean process(JBPopup popup) {
           final List<NavigatablePsiElement> items = model.getItems();
-          FindUtil.showInUsageView(null, items.toArray(new PsiElement[items.size()]), findUsagesTitle, targets[0].getProject());
+          usageView.set(FindUtil.showInUsageView(null, items.toArray(new PsiElement[items.size()]), findUsagesTitle, targets[0].getProject()));
           popup.cancel();
           return false;
         }
@@ -127,7 +130,7 @@ public class PsiElementListNavigator {
 
     final JBPopup popup = popupChooserBuilder.createPopup();
     if (listUpdaterTask != null) {
-      listUpdaterTask.init((AbstractPopup)popup, list);
+      listUpdaterTask.init((AbstractPopup)popup, list, usageView);
 
       ProgressManager.getInstance().run(listUpdaterTask);
     }

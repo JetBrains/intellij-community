@@ -46,6 +46,9 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
@@ -60,6 +63,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
+import com.intellij.usages.impl.UsageViewImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -910,19 +914,36 @@ public class FindUtil {
     boolean shouldReplace(TextRange range, String replace);
   }
 
-  public static void showInUsageView(PsiElement sourceElement, PsiElement[] targets, String title, Project project) {
+  public static UsageView showInUsageView(PsiElement sourceElement, final PsiElement[] targets, String title, Project project) {
     final UsageViewPresentation presentation = new UsageViewPresentation();
     presentation.setCodeUsagesString(title);
     presentation.setTabName(title);
     presentation.setTabText(title);
-    final UsageInfo[] usages = new UsageInfo[targets.length];
-    for (int i = 0; i < targets.length; i++) {
-      usages[i] = new UsageInfo(targets[i]);
-    }
     final UsageTarget[] usageTargets =
       sourceElement == null ? UsageTarget.EMPTY_ARRAY : new UsageTarget[]{new PsiElement2UsageTargetAdapter(sourceElement)};
-    final Usage[] foundUsages = UsageInfoToUsageConverter.convert(
-      new UsageInfoToUsageConverter.TargetElementsDescriptor(targets), usages);
-    UsageViewManager.getInstance(project).showUsages(usageTargets, foundUsages, presentation);
+
+    final UsageInfoToUsageConverter.TargetElementsDescriptor targetElementsDescriptor = 
+      sourceElement != null ? new UsageInfoToUsageConverter.TargetElementsDescriptor(sourceElement)
+                            : new UsageInfoToUsageConverter.TargetElementsDescriptor(PsiElement.EMPTY_ARRAY);
+    final Usage[] usages = {UsageInfoToUsageConverter.convert(targetElementsDescriptor, new UsageInfo(targets[0]))};
+    final UsageView view =
+      UsageViewManager.getInstance(project).showUsages(usageTargets, usages, presentation);
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Updating Usage View ...") {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        
+        for (int i = 1; i < targets.length; i++) {
+          if (((UsageViewImpl)view).isDisposed()) break;
+          final PsiElement target = targets[i];
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            public void run() {
+              final Usage usage = UsageInfoToUsageConverter.convert(targetElementsDescriptor, new UsageInfo(target));
+              view.appendUsage(usage);
+            }
+          });
+        }
+      }
+    });
+    return view;
   }
 }
