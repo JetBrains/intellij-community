@@ -96,6 +96,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       ProfilingHelper profilingHelper = null;
       if (Utils.IS_PROFILING_MODE) {
         profilingHelper = new ProfilingHelper();
+        profilingHelper.startProfiling();
       }
 
       runBuild(new MessageHandler() {
