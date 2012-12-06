@@ -333,7 +333,8 @@ public class ManagePackagesDialog extends DialogWrapper {
     }
 
     public void filter() {
-      myPackagesModel.filter(getFilter());
+      if (myPackagesModel != null)
+        myPackagesModel.filter(getFilter());
     }
   }
 
