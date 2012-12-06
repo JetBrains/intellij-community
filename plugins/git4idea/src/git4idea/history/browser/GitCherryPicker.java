@@ -349,7 +349,7 @@ public class GitCherryPicker {
 
   @NotNull
   private static String commitDetails(@NotNull GitCommitWrapper commit) {
-    return commit.getCommit().getShortHash().toString() + " \"" + commit.getSubject() + "\"";
+    return commit.getCommit().getShortHash().toString() + " \"" + commit.getOriginalSubject() + "\"";
   }
 
   private void refreshChangedFiles(@NotNull Collection<FilePath> filePaths) {
@@ -492,6 +492,10 @@ public class GitCherryPicker {
     @NotNull
     public GitCommit getCommit() {
       return myOriginalCommit;
+    }
+
+    public String getOriginalSubject() {
+      return myOriginalCommit.getSubject();
     }
   }
 
