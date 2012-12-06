@@ -22,7 +22,8 @@ public class PyDocstringVisitorFilter implements PythonVisitorFilter {
     }
     if (visitorClass == PyDocstringInspection.class || visitorClass == PyStatementEffectInspection.class ||
         visitorClass == PyUnboundLocalVariableInspection.class || visitorClass == PyUnnecessaryBackslashInspection.class ||
-        visitorClass == PyByteLiteralInspection.class || visitorClass == PyNonAsciiCharInspection.class) {
+        visitorClass == PyByteLiteralInspection.class || visitorClass == PyNonAsciiCharInspection.class ||
+        visitorClass == PyPackageRequirementsInspection.class) {
       return false;
     }
     //annotators
