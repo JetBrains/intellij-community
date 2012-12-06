@@ -200,7 +200,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testLocalVarsOverMethods() {
-    checkPreferredItems(1, "value", "valueOf");
+    checkPreferredItems(0, "value", "validate", "validateTree", "valueOf");
   }
 
   public void testCurrentClassBest() {
@@ -332,11 +332,13 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
 
   public void testExpectedTypeIsMoreImportantThanCase() {
     CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE;
-    checkPreferredItems(0, "ENABLED", "enable");
+    checkPreferredItems 0, "enable", "ENABLED"
+    incUseCount(lookup, 1)
+    assertPreferredItems 0, "ENABLED", "enable"
   }
 
   public void testPreferKeywordsToVoidMethodsInExpectedTypeContext() {
-    checkPreferredItems 0, 'noo', 'new', 'null', 'noo2', 'notify', 'notifyAll'
+    checkPreferredItems 0, 'null', 'noo', 'new', 'noo2', 'notify', 'notifyAll'
   }
 
   public void testPreferBetterMatchingConstantToMethods() {
@@ -483,8 +485,17 @@ import java.lang.annotation.Target;
     assertPreferredItems 0, 'myClass', 'myExtendsClause'
   }
 
-  public void _testCommonPrefixMoreImportantThanExpectedType() {
+  public void testCommonPrefixMoreImportantThanExpectedType() {
     checkPreferredItems 0, 'myStep', 'myCurrentStep'
+  }
+
+  public void testStatsMoreImportantThanExpectedType() {
+    invokeCompletion(getTestName(false) + ".java")
+    assertPreferredItems 0, 'getNumber', 'getNumProvider'
+    lookup.currentItem = lookup.items[1]
+    myFixture.type '\n, getn'
+    myFixture.completeBasic()
+    assertPreferredItems 0, 'getNumProvider', 'getNumber'
   }
 
   public void testIfConditionStats() {

@@ -55,13 +55,15 @@ public class PreferByKindWeigher extends LookupElementWeigher {
         withParent(or(psiElement(PsiResourceVariable.class), psiElement(PsiResourceList.class)))));
   private final CompletionType myCompletionType;
   private final PsiElement myPosition;
+  private final boolean myLocal;
   private final Set<PsiField> myNonInitializedFields;
   @NotNull private final Condition<PsiClass> myRequiredSuper;
 
-  public PreferByKindWeigher(CompletionType completionType, final PsiElement position) {
-    super("local");
+  public PreferByKindWeigher(CompletionType completionType, final PsiElement position, boolean local) {
+    super("kind" + (local ? "Local" : "Global"));
     myCompletionType = completionType;
     myPosition = position;
+    myLocal = local;
     myNonInitializedFields = JavaCompletionProcessor.getNonInitializedFields(position);
     myRequiredSuper = createSuitabilityCondition(position);
   }
@@ -142,13 +144,19 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       if (PsiKeyword.RETURN.equals(keyword) && isLastStatement(PsiTreeUtil.getParentOfType(myPosition, PsiStatement.class))) {
         return MyResult.probableKeyword;
       }
-      if (PsiKeyword.ELSE.equals(keyword) || PsiKeyword.FINALLY.equals(keyword)) {
+      if (PsiKeyword.ELSE.equals(keyword) || PsiKeyword.FINALLY.equals(keyword) || PsiKeyword.NULL.equals(keyword)) {
         return MyResult.probableKeyword;
       }
     }
 
-    if (object instanceof PsiLocalVariable || object instanceof PsiParameter || object instanceof PsiThisExpression) {
-      return MyResult.localOrParameter;
+    if (myCompletionType == CompletionType.SMART) {
+      if (object instanceof PsiLocalVariable || object instanceof PsiParameter || object instanceof PsiThisExpression) {
+        return MyResult.localOrParameter;
+      }
+    }
+
+    if (myLocal) {
+      return MyResult.normal;
     }
 
     if (object instanceof String && item.getUserData(JavaCompletionUtil.SUPER_METHOD_PARAMETERS) == Boolean.TRUE) {

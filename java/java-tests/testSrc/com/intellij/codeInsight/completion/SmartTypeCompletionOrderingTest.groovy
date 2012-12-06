@@ -254,11 +254,11 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testPreferredByNameDontChangeStatistics() throws Throwable {
-    final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java");
+    invokeCompletion(getTestName(false) + ".java");
     assertPreferredItems(0, "foo", "false");
     myFixture.type(',');
     complete();
-    assertPreferredItems(0, "bar", "foo", "equals", "false", "true");
+    assertPreferredItems(0, "bar", "null", "foo", "equals", "false", "true");
   }
 
   public void testFieldNameOutweighsStats() throws Throwable {
