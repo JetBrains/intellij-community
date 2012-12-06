@@ -58,7 +58,11 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     if (currentRevision == null) {
       throw new VcsException("Can not get current revision for file " + file.getPath());
     }
-    final SVNRevision svnRevision = ((SvnRevisionNumber)currentRevision.getRevisionNumber()).getRevision();
+    final SvnRevisionNumber lastChangedRevision = (SvnRevisionNumber)currentRevision.getRevisionNumber();
+    if (! lastChangedRevision.getRevision().isValid()) {
+      throw new VcsException("Can not get last changed revision for file: " + file.getPath() + "\nPlease run svn info for this file and file an issue.");
+    }
+    final SVNRevision svnRevision = lastChangedRevision.getRevision();
     return annotate(file, new SvnFileRevision(myVcs, svnRevision, svnRevision, null, null, null, null, null, file.getCharset()), true);
   }
 
