@@ -188,7 +188,19 @@ public class MockVcsHelper extends AbstractVcsHelper {
   public boolean commitChanges(@NotNull Collection<Change> changes, @NotNull LocalChangeList initialChangeList,
                                @NotNull String commitMessage, @Nullable CommitResultHandler customResultHandler) {
     if (myCommitHandler != null) {
-      return myCommitHandler.commit(commitMessage);
+      boolean success = myCommitHandler.commit(commitMessage);
+      if (customResultHandler != null) {
+        if (success) {
+          customResultHandler.onSuccess(commitMessage);
+        }
+        else {
+          customResultHandler.onFailure();
+        }
+      }
+      return success;
+    }
+    if (customResultHandler != null) {
+      customResultHandler.onFailure();
     }
     return false;
   }
