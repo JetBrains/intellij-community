@@ -363,8 +363,10 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
   @Override
   protected void paintChildren(Graphics g) {
     super.paintChildren(g);
-    AllIcons.General.ArrowDown.paintIcon(this, g, myMoreRec.x, myMoreRec.y);
-
+    boolean dark = UIUtil.isUnderDarcula();
+    int off = dark ? 6 : 0;
+    AllIcons.General.ArrowDown.paintIcon(this, g, myMoreRec.x - off, myMoreRec.y);
+    if (dark) return;
     int y1 = myMoreRec.y - 2;
     int y2 = myMoreRec.y + myMoreRec.height + 2;
 
