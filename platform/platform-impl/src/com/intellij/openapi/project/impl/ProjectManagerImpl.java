@@ -49,11 +49,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFileManagerListener;
-import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -117,7 +113,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return array;
   }
 
-  public ProjectManagerImpl(VirtualFileManagerEx virtualFileManagerEx, ProgressManager progressManager) {
+  public ProjectManagerImpl(VirtualFileManager virtualFileManager, ProgressManager progressManager) {
     myProgressManager = progressManager;
     Application app = ApplicationManager.getApplication();
     MessageBus messageBus = app.getMessageBus();
@@ -183,7 +179,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       }
     );
 
-    registerExternalProjectFileListener(virtualFileManagerEx);
+    registerExternalProjectFileListener(virtualFileManager);
   }
 
   @Override
@@ -552,7 +548,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     WelcomeFrame.showIfNoProjectOpened();
   }
 
-  private void registerExternalProjectFileListener(VirtualFileManagerEx virtualFileManager) {
+  private void registerExternalProjectFileListener(VirtualFileManager virtualFileManager) {
     virtualFileManager.addVirtualFileManagerListener(new VirtualFileManagerListener() {
       @Override
       public void beforeRefreshStart(boolean asynchronous) {

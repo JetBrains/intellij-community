@@ -818,12 +818,12 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   @Override
-  public void refresh(final boolean asynchronous) {
+  public void refresh(boolean asynchronous) {
     RefreshQueue.getInstance().refresh(asynchronous, true, null, getRoots());
   }
 
   @Override
-  public void refresh(boolean asynchronous, Runnable postAction, @NotNull ModalityState modalityState) {
+  public void refresh(boolean asynchronous, @Nullable Runnable postAction, @NotNull ModalityState modalityState) {
     RefreshQueue.getInstance().refresh(asynchronous, true, postAction, modalityState, getRoots());
   }
 
