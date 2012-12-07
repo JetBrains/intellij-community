@@ -17,6 +17,7 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
@@ -47,13 +48,14 @@ public class PackageReferenceSet extends ReferenceSetBase<PsiPackageReference> {
     return new PsiPackageReference(this, range, index);
   }
 
-  public Collection<PsiPackage> resolvePackageName(@Nullable PsiPackage context, String packageName) {
+  public Collection<PsiPackage> resolvePackageName(@Nullable PsiPackage context, final String packageName) {
     if (context != null) {
-      for (PsiPackage aPackage : context.getSubPackages()) {
-        if (Comparing.equal(aPackage.getName(), packageName)) {
-          return Collections.singleton(aPackage);
+      return ContainerUtil.filter(context.getSubPackages(), new Condition<PsiPackage>() {
+        @Override
+        public boolean value(PsiPackage aPackage) {
+          return Comparing.equal(aPackage.getName(), packageName);
         }
-      }
+      });
     }
     return Collections.emptyList();
   }
