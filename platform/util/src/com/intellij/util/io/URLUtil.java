@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,17 @@
 
 package com.intellij.util.io;
 
-import com.google.common.base.Charsets;
 import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.FilterInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -120,7 +123,7 @@ public class URLUtil {
           for (int j = 0; j < bytes.size(); j++) {
             bytesArray[j] = (byte)bytes.getQuick(j);
           }
-          decoded.append(new String(bytesArray, Charsets.UTF_8));
+          decoded.append(new String(bytesArray, Charset.forName("UTF-8")));
           continue;
         }
       }
