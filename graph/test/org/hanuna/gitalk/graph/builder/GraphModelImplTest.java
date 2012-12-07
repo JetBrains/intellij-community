@@ -4,6 +4,7 @@ import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.graph.graph_elements.Branch;
 import org.hanuna.gitalk.graph.Graph;
+import org.hanuna.gitalk.graph.mutable_graph.GraphBuilder;
 import org.hanuna.gitalk.parser.GitLogParser;
 import org.junit.Test;
 
@@ -57,7 +58,7 @@ public class GraphModelImplTest {
                 toStr(model)
         );
 
-        model.hideBranch(getNode(model, 1), getNode(model, 7));
+       // model.hideBranch(getNode(model, 1), getNode(model, 7));
 
         assertEquals(
                 "a0|-|-a0:a3:USUAL:0 a0:a1:USUAL:1 a0:a5:USUAL:2 a0:a12:USUAL:3|-COMMIT_NODE|-0|-0\n" +
@@ -75,7 +76,7 @@ public class GraphModelImplTest {
         );
 
 
-        model.showBranch(getNode(model, 1).getDownEdges().get(0));
+        //model.showBranch(getNode(model, 1).getDownEdges().get(0));
 
         assertEquals(
                 "a0|-|-a0:a3:USUAL:0 a0:a1:USUAL:1 a0:a5:USUAL:2 a0:a12:USUAL:3|-COMMIT_NODE|-0|-0\n" +

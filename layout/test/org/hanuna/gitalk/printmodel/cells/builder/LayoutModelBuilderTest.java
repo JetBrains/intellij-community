@@ -3,7 +3,7 @@ package org.hanuna.gitalk.printmodel.cells.builder;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.graph.graph_elements.Branch;
-import org.hanuna.gitalk.graph.builder.GraphBuilder;
+import org.hanuna.gitalk.graph.mutable_graph.GraphBuilder;
 import org.hanuna.gitalk.parser.GitLogParser;
 import org.hanuna.gitalk.printmodel.cells.LayoutModel;
 import org.junit.Test;

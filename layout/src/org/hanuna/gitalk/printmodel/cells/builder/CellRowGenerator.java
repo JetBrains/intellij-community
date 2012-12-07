@@ -5,7 +5,7 @@ import org.hanuna.gitalk.common.compressedlist.generator.AbstractGenerator;
 import org.hanuna.gitalk.graph.graph_elements.Edge;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.graph_elements.Node;
-import org.hanuna.gitalk.graph.NodeRow;
+import org.hanuna.gitalk.graph.graph_elements.NodeRow;
 import org.hanuna.gitalk.printmodel.cells.Cell;
 import org.hanuna.gitalk.printmodel.cells.CellRow;
 import org.hanuna.gitalk.printmodel.cells.EdgeCell;

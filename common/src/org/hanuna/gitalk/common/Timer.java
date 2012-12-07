@@ -2,13 +2,11 @@ package org.hanuna.gitalk.common;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Date;
-
 /**
  * @author erokhins
  */
 public class Timer {
-    private Date date = new Date();
+    private long timestamp = System.currentTimeMillis();
     private String message = "timer:";
 
     public Timer() {}
@@ -18,11 +16,11 @@ public class Timer {
     }
 
     public void clear() {
-        date = new Date();
+        timestamp = System.currentTimeMillis();
     }
 
     public long get() {
-        return new Date().getTime() - date.getTime();
+        return System.currentTimeMillis() - timestamp;
     }
 
     public void print() {

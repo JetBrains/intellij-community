@@ -1,18 +1,20 @@
-package org.hanuna.gitalk.graph.builder;
+package org.hanuna.gitalk.graph.mutable_graph;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitData;
 import org.hanuna.gitalk.commitmodel.Hash;
 import org.hanuna.gitalk.common.ReadOnlyList;
+import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.graph_elements.Branch;
 import org.hanuna.gitalk.graph.graph_elements.Edge;
-import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.graph_elements.Node;
+import org.hanuna.gitalk.graph.mutable_graph.graph_elements_impl.MutableNode;
+import org.hanuna.gitalk.graph.mutable_graph.graph_elements_impl.MutableNodeRow;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-import static org.hanuna.gitalk.graph.builder.MutableNode.createEdge;
+import static org.hanuna.gitalk.graph.mutable_graph.MutableGraphUtils.createEdge;
 
 /**
  * @author erokhins
@@ -22,7 +24,6 @@ public class GraphBuilder {
     private Map<Hash, MutableNode> notAddedNodes = new HashMap<Hash, MutableNode>();
     private MutableNodeRow nextRow;
     private final List<MutableNodeRow> rows = new ArrayList<MutableNodeRow>();
-
 
 
     private int getLogIndexOfCommit(Commit commit) {
@@ -47,7 +48,7 @@ public class GraphBuilder {
         nextRow.add(node);
         rows.add(nextRow);
 
-        nextRow = new MutableNodeRow(rows.size(), rows.size());
+        nextRow = new MutableNodeRow(rows.size());
         return node;
     }
 
@@ -101,7 +102,7 @@ public class GraphBuilder {
 
     private void prepare(int lastLogIndex) {
         this.lastLogIndex = lastLogIndex;
-        nextRow = new MutableNodeRow(0, 0);
+        nextRow = new MutableNodeRow(0);
     }
 
     private void lastActions() {
@@ -123,7 +124,7 @@ public class GraphBuilder {
             append(commit);
         }
         lastActions();
-        return new GraphImpl(rows, lastLogIndex);
+        return new MutableGraph(rows);
     }
 
 

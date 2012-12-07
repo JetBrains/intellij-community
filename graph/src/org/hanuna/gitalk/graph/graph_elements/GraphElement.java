@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.graph.graph_elements;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -9,6 +10,7 @@ public interface GraphElement {
 
     public boolean selected();
 
+    @NotNull
     public Branch getBranch();
 
     /**

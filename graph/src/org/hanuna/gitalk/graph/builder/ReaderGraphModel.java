@@ -4,6 +4,7 @@ import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.Timer;
 import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.graph.Graph;
+import org.hanuna.gitalk.graph.mutable_graph.GraphBuilder;
 import org.hanuna.gitalk.parser.GitLogParser;
 
 import java.io.BufferedReader;

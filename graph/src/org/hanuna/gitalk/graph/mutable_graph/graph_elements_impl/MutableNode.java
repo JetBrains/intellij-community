@@ -1,11 +1,10 @@
-package org.hanuna.gitalk.graph.builder;
+package org.hanuna.gitalk.graph.mutable_graph.graph_elements_impl;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.graph.graph_elements.Branch;
 import org.hanuna.gitalk.graph.graph_elements.Edge;
 import org.hanuna.gitalk.graph.graph_elements.Node;
-import org.hanuna.gitalk.graph.select.AbstractGraphElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -14,23 +13,18 @@ import java.util.List;
 /**
  * @author erokhins
  */
-public class MutableNode extends AbstractGraphElement implements Node {
-    public static void createEdge(MutableNode upNode, MutableNode downNode, Edge.Type type, Branch branch) {
-        Edge edge = new Edge(upNode, downNode, type, branch);
-        upNode.addDownEdge(edge);
-        downNode.addUpEdge(edge);
-    }
-
+public final class MutableNode extends AbstractMutableGraphElement implements Node {
     private final Commit commit;
-    private Branch branch;
     private Type type = null;
     private MutableNodeRow row = null;
+    private boolean visible = true;
 
     private final List<Edge> upEdges = new ArrayList<Edge>(2);
     private final List<Edge> downEdges = new ArrayList<Edge>(2);
 
 
     public MutableNode(@NotNull Commit commit, @NotNull Branch branch) {
+        super(branch);
         this.commit = commit;
         this.branch = branch;
     }
@@ -39,6 +33,13 @@ public class MutableNode extends AbstractGraphElement implements Node {
         this.type = type;
     }
 
+    public boolean isVisible() {
+        return visible;
+    }
+
+    public void setVisible(boolean visible) {
+        this.visible = visible;
+    }
 
     public void setRow(@NotNull MutableNodeRow row) {
         this.row = row;
@@ -98,10 +99,14 @@ public class MutableNode extends AbstractGraphElement implements Node {
         return commit;
     }
 
-    @NotNull
     @Override
-    public Branch getBranch() {
-        return branch;
+    public Node getNode() {
+        return this;
+    }
+
+    @Override
+    public Edge getEdge() {
+        return null;
     }
 
 }
