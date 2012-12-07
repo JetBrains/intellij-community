@@ -9,6 +9,8 @@
     <extensionPoint name="importer" interface="org.jetbrains.idea.maven.importing.MavenImporter"/>
     <extensionPoint name="additional.importing.settings" interface="org.jetbrains.idea.maven.project.AdditionalMavenImportingSettings"/>
     <extensionPoint name="archetypesProvider" interface="org.jetbrains.idea.maven.indices.MavenArchetypesProvider"/>
+
+    <extensionPoint name="pluginDescriptor" beanClass="org.jetbrains.idea.maven.plugins.api.MavenPluginDescriptor" />
   </extensionPoints>
 
   <depends>com.intellij.properties</depends>
@@ -98,6 +100,9 @@
                             implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenSmartCompletionContributor"/>
 
     <psi.referenceContributor implementation="org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReferenceContributor"/>
+
+    <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.maven.plugins.api.MavenPluginParamReferenceContributor" />
+
     <usageTargetProvider implementation="org.jetbrains.idea.maven.dom.references.MavenUsageTargetProvider"/>
 
     <renameHandler implementation="org.jetbrains.idea.maven.dom.refactorings.MavenPropertyRenameHandler" order="first"/>
@@ -133,6 +138,12 @@
     <projectService serviceImplementation="org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.execution.MavenRunner"/>
 
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.idea.maven">
+    <pluginDescriptor mavenId="org.apache.maven.plugins:maven-surefire-plugin">
+      <param name="additionalClasspathElements/additionalClasspathElement" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$DirPath"/>
+    </pluginDescriptor>
   </extensions>
 
   <application-components>
