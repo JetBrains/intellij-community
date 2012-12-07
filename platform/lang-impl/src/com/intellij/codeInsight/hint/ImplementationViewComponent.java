@@ -193,31 +193,16 @@ public class ImplementationViewComponent extends JPanel {
 
         gc.fill = GridBagConstraints.HORIZONTAL;
         gc.weightx = 1;
+        myLabel = new JLabel();
         if (myElements.length > 1) {
-          myFileChooser = new ComboBox(fileDescriptors.toArray(new FileDescriptor[fileDescriptors.size()]), 250);
           updateRenderer(project);
-
-          myFileChooser.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-              int index = myFileChooser.getSelectedIndex();
-              if (myIndex != index) {
-                myIndex = index;
-                updateControls();
-              }
-            }
-          });
-
-          myLabel = new JLabel();
           myLabel.setVisible(false);
-          toolbarPanel.add(myFileChooser, gc);
         }
         else {
           myFileChooser = new ComboBox();
           myFileChooser.setVisible(false);
           myCountLabel.setVisible(false);
 
-          myLabel = new JLabel();
           VirtualFile file = psiFile.getVirtualFile();
           if (file != null) {
             myLabel.setIcon(getIconForFile(psiFile));
@@ -227,6 +212,19 @@ public class ImplementationViewComponent extends JPanel {
           }
           toolbarPanel.add(myLabel, gc);
         }
+
+        myFileChooser = new ComboBox(fileDescriptors.toArray(new FileDescriptor[fileDescriptors.size()]), 250);
+        myFileChooser.addActionListener(new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            int index = myFileChooser.getSelectedIndex();
+            if (myIndex != index) {
+              myIndex = index;
+              updateControls();
+            }
+          }
+        });
+        toolbarPanel.add(myFileChooser, gc);
 
         gc.fill = GridBagConstraints.NONE;
         gc.weightx = 0;
