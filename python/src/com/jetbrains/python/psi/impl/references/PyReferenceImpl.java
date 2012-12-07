@@ -34,7 +34,10 @@ import com.jetbrains.python.refactoring.PyDefUseUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -258,6 +261,12 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
               }
             }
             else if (!isCythonLevel(myElement)) {
+              uexpr = null;
+            }
+          }
+          else if (originalOwner != null && ScopeUtil.getResolveScopeOwner(uexpr) != originalOwner && !scope.isGlobal(referencedName)) {
+            final Scope originalScope = ControlFlowCache.getScope(originalOwner);
+            if (originalScope.containsDeclaration(referencedName)) {
               uexpr = null;
             }
           }
