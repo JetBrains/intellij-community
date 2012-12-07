@@ -294,7 +294,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
     return JpsElementFactory.getInstance().createModule(name, loader.getType(), loader.loadProperties(component));
   }
 
-  private static JpsModulePropertiesSerializer<?> getModulePropertiesSerializer(@NotNull String typeId) {
+  private static JpsModulePropertiesSerializer<?> getModulePropertiesSerializer(@Nullable String typeId) {
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       for (JpsModulePropertiesSerializer<?> loader : extension.getModulePropertiesSerializers()) {
         if (loader.getTypeId().equals(typeId)) {
