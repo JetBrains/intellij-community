@@ -162,10 +162,10 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     FileDocumentManager.instance.saveAllDocuments()
 
     invokeCompletion("SameStatsForDifferentQualifiersJLabel.java");
-    assertPreferredItems(1, "getComponent", "getComponents");
+    assertPreferredItems(0, "getComponents", "getComponent");
 
     invokeCompletion("SameStatsForDifferentQualifiersJComponent.java");
-    assertPreferredItems(1, "getComponent", "getComponents");
+    assertPreferredItems(0, "getComponents", "getComponent");
   }
 
   public void testSameStatsForDifferentQualifiers2() throws Throwable {
@@ -175,10 +175,10 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     FileDocumentManager.instance.saveAllDocuments()
 
     invokeCompletion("SameStatsForDifferentQualifiersJComponent.java");
-    assertPreferredItems(1, "getComponent", "getComponents");
+    assertPreferredItems(0, "getComponents", "getComponent");
 
     invokeCompletion("SameStatsForDifferentQualifiersJLabel.java");
-    assertPreferredItems(1, "getComponent", "getComponents");
+    assertPreferredItems(0, "getComponents", "getComponent");
   }
 
   public void testDispreferFinalize() throws Throwable {
@@ -223,7 +223,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testSkipLifted() {
-    checkPreferredItems(1, "hashCode", "hashCodeMine")
+    checkPreferredItems(0, "hashCodeMine", "hashCode")
   }
 
   public void testDispreferInnerClasses() {
@@ -248,7 +248,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testPreferFinallyToFinal() {
-    checkPreferredItems(1, "final", "finally");
+    checkPreferredItems(0, "finally", "final");
   }
 
   public void testPreferReturn() {
@@ -473,8 +473,8 @@ import java.lang.annotation.Target;
     for (i in 0..10) {
       incUseCount(lookup, 1)
     }
-    assertPreferredItems 1, 'add', 'addAll'
-    incUseCount(lookup, 0)
+    assertPreferredItems 0, 'addAll', 'add'
+    incUseCount(lookup, 1)
     assertPreferredItems 0, 'add', 'addAll'
   }
 
@@ -502,8 +502,8 @@ import java.lang.annotation.Target;
     invokeCompletion(getTestName(false) + ".java")
     myFixture.completeBasic()
     myFixture.type('cont')
-    assertPreferredItems 1, 'contains', 'containsAll'
-    myFixture.lookup.currentItem = myFixture.lookupElements[0]
+    assertPreferredItems 0, 'containsAll', 'contains'
+    myFixture.lookup.currentItem = myFixture.lookupElements[1]
     myFixture.type('\nc)) {\nif (set.')
     myFixture.completeBasic()
     myFixture.type('cont')

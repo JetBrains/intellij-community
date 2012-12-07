@@ -256,17 +256,12 @@ public class CompletionServiceImpl extends CompletionService{
           }
         });
       }
-
     }
 
-    if (parameters.getCompletionType() == CompletionType.SMART) {
-      return sorter;
-    }
-    
     return sorter.withClassifier("priority", true, new ClassifierFactory<LookupElement>("liftShorter") {
       @Override
       public Classifier<LookupElement> createClassifier(final Classifier<LookupElement> next) {
-        return new LiftShorterItemsClassifier(next, new LiftShorterItemsClassifier.LiftingCondition());
+        return new LiftShorterItemsClassifier(next, new LiftShorterItemsClassifier.LiftingCondition(), false);
       }
     });
   }

@@ -804,7 +804,7 @@ public class ListUtils {
 
   public void testFinalInForLoop2() throws Throwable {
     configure()
-    assertStringItems 'final', 'finalize'
+    myFixture.assertPreferredCompletionItems 0, 'finalize', 'final'
   }
 
   public void testOnlyClassesInExtends() throws Throwable {
