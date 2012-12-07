@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
@@ -250,12 +251,12 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   @Nullable
-  public List<Integer> collectSrcLinesForUntouchedFile(@NotNull final VirtualFile classFile, @NotNull final CoverageSuitesBundle suite) {
+  public List<Integer> collectSrcLinesForUntouchedFile(@NotNull final File classFile, @NotNull final CoverageSuitesBundle suite) {
     final List<Integer> uncoveredLines = new ArrayList<Integer>();
 
     final byte[] content;
     try {
-      content = classFile.contentsToByteArray();
+      content = FileUtil.loadFileBytes(classFile);
     }
     catch (IOException e) {
       return null;
@@ -271,7 +272,7 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   public boolean includeUntouchedFileInCoverage(@NotNull final String qualifiedName,
-                                                @NotNull final VirtualFile outputFile,
+                                                @NotNull final File outputFile,
                                                 @NotNull final PsiFile sourceFile, @NotNull CoverageSuitesBundle suite) {
     for (CoverageSuite coverageSuite : suite.getSuites()) {
       final JavaCoverageSuite javaSuite = (JavaCoverageSuite)coverageSuite;
@@ -281,9 +282,9 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
 
-  public String getQualifiedName(@NotNull final VirtualFile outputFile, @NotNull final PsiFile sourceFile) {
+  public String getQualifiedName(@NotNull final File outputFile, @NotNull final PsiFile sourceFile) {
     final String packageFQName = getPackageName(sourceFile);
-    return StringUtil.getQualifiedName(packageFQName, outputFile.getNameWithoutExtension());
+    return StringUtil.getQualifiedName(packageFQName, FileUtil.getNameWithoutExtension(outputFile));
   }
 
   @NotNull
@@ -318,13 +319,13 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   @NotNull
-  public Set<VirtualFile> getCorrespondingOutputFiles(@NotNull final PsiFile srcFile,
-                                                      @Nullable final Module module,
-                                                      @NotNull final CoverageSuitesBundle suite) {
+  public Set<File> getCorrespondingOutputFiles(@NotNull final PsiFile srcFile,
+                                               @Nullable final Module module,
+                                               @NotNull final CoverageSuitesBundle suite) {
     if (module == null) {
       return Collections.emptySet();
     }
-    final Set<VirtualFile> classFiles = new HashSet<VirtualFile>();
+    final Set<File> classFiles = new HashSet<File>();
     final VirtualFile outputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
     final VirtualFile testOutputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests();
 
@@ -335,16 +336,22 @@ public class JavaCoverageEngine extends CoverageEngine {
     final String packageFQName = getPackageName(srcFile);
     final String packageVmName = packageFQName.replace('.', '/');
 
-    final List<VirtualFile> children = new ArrayList<VirtualFile>();
-    final VirtualFile vDir = packageVmName.length() > 0 && outputpath != null ? outputpath.findFileByRelativePath(packageVmName) : outputpath;
-    if (vDir != null) {
-      Collections.addAll(children, vDir.getChildren());
+    final List<File> children = new ArrayList<File>();
+    final File vDir =
+      outputpath == null
+      ? null : packageVmName.length() > 0
+               ? new File(outputpath.getPath() + File.separator + packageVmName) : VfsUtilCore.virtualToIoFile(outputpath);
+    if (vDir != null && vDir.exists()) {
+      Collections.addAll(children, vDir.listFiles());
     }
 
     if (suite.isTrackTestFolders()) {
-      final VirtualFile testDir = packageVmName.length() > 0 && testOutputpath != null ? testOutputpath.findFileByRelativePath(packageVmName) : testOutputpath;
-      if (testDir != null) {
-        Collections.addAll(children, testDir.getChildren());
+      final File testDir =
+        testOutputpath == null
+        ? null : packageVmName.length() > 0
+                 ? new File(testOutputpath.getPath() + File.separator + packageVmName) : VfsUtilCore.virtualToIoFile(testOutputpath);
+      if (testDir != null && testDir.exists()) {
+        Collections.addAll(children, testDir.listFiles());
       }
     }
 
@@ -359,9 +366,9 @@ public class JavaCoverageEngine extends CoverageEngine {
           return psiClass.getName();
         }
       });
-      for (VirtualFile child : children) {
-        if (child.getFileType().equals(StdFileTypes.CLASS)) {
-          final String childName = child.getNameWithoutExtension();
+      for (File child : children) {
+        if (FileUtil.getExtension(child.getName()).equals(StdFileTypes.CLASS.getDefaultExtension())) {
+          final String childName = FileUtil.getNameWithoutExtension(child);
           if (childName.equals(className) ||  //class or inner
               childName.startsWith(className) && childName.charAt(className.length()) == '$') {
             classFiles.add(child);
