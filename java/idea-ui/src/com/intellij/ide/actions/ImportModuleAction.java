@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
+import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -67,18 +68,25 @@ public class ImportModuleAction extends AnAction {
   }
 
   public static List<Module> createFromWizard(Project project, AddModuleWizard wizard) {
-    if (wizard.getStepCount() > 0) {
-      if (project != null) {
+    if (project == null && wizard.getStepCount() > 0) {
+      Project newProject = NewProjectUtil.createFromWizard(wizard, project);
+      return newProject == null ? Collections.<Module>emptyList() : Arrays.asList(ModuleManager.getInstance(newProject).getModules());
+    }
+
+    final ProjectBuilder projectBuilder = wizard.getProjectBuilder();
+    try {
+      if (wizard.getStepCount() > 0) {
         Module module = new NewModuleAction().createModuleFromWizard(project, null, wizard);
         return Collections.singletonList(module);
       }
       else {
-        Project newProject = NewProjectUtil.createFromWizard(wizard, project);
-        return  newProject == null ? Collections.<Module>emptyList() : Arrays.asList(ModuleManager.getInstance(newProject).getModules());
+        return projectBuilder.commit(project);
       }
     }
-    else {
-      return wizard.getProjectBuilder().commit(project);
+    finally {
+      if (projectBuilder != null) {
+        projectBuilder.cleanup();
+      }
     }
   }
 
