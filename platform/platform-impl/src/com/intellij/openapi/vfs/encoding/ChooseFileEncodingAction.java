@@ -112,7 +112,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   @Override
   @NotNull
   protected DefaultActionGroup createPopupActionGroup(final JComponent button) {
-    return createGroup(true);
+    return createGroup("<Clear>");
   }
 
   private void fillCharsetActions(DefaultActionGroup group, final VirtualFile virtualFile, List<Charset> charsets) {
@@ -174,8 +174,8 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   private class ClearThisFileEncodingAction extends AnAction {
     private final VirtualFile myFile;
 
-    private ClearThisFileEncodingAction(@Nullable VirtualFile file) {
-      super("<Clear>", "Clear " +
+    private ClearThisFileEncodingAction(@Nullable VirtualFile file, @NotNull String clearItemText) {
+      super(clearItemText, "Clear " +
                        (file == null ? "default" : "file '"+file.getName()+"'") +
                        " encoding.", null);
       myFile = file;
@@ -205,17 +205,18 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   };
   protected abstract void chosen(VirtualFile virtualFile, Charset charset);
 
-  public DefaultActionGroup createGroup(boolean showClear) {
+  @NotNull
+  public DefaultActionGroup createGroup(@Nullable String clearItemText) {
     DefaultActionGroup group = new DefaultActionGroup();
     List<Charset> favorites = new ArrayList<Charset>(EncodingManager.getInstance().getFavorites());
     Collections.sort(favorites);
     Charset current = myVirtualFile == null ? null : myVirtualFile.getCharset();
     favorites.remove(current);
 
-    if (showClear) {
-      group.add(new ClearThisFileEncodingAction(myVirtualFile));
+    if (clearItemText != null) {
+      group.add(new ClearThisFileEncodingAction(myVirtualFile, clearItemText));
     }
-    if (favorites.isEmpty() && !showClear) {
+    if (favorites.isEmpty() && clearItemText == null) {
       fillCharsetActions(group, myVirtualFile, Arrays.asList(CharsetToolkit.getAvailableCharsets()));
     }
     else {
