@@ -1,5 +1,3 @@
-package org.hanuna.gitalk.graph.builder;
-
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.Timer;
 import org.hanuna.gitalk.common.ReadOnlyList;
