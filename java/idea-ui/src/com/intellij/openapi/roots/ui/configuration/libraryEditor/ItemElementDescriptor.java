@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,9 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
+import com.intellij.ui.JBColor;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,7 +44,7 @@ class ItemElementDescriptor extends NodeDescriptor<ItemElement> {
 
     @Override
     public boolean update() {
-      Color color = myElement.isValid()? Color.BLACK : Color.RED;
+      Color color = myElement.isValid()? UIUtil.getListForeground() : JBColor.RED;
       final boolean changes = !color.equals(myColor);
       myColor = color;
       return changes;
