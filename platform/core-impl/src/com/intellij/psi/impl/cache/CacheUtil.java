@@ -62,7 +62,7 @@ public class CacheUtil {
     CharSequence cached = content.getUserData(CONTENT_KEY);
     if (cached != null) return cached;
     try {
-      cached = LoadTextUtil.getTextByBinaryPresentation(content.getBytes(), content.getVirtualFile(), false);
+      cached = LoadTextUtil.getTextByBinaryPresentation(content.getBytes(), content.getVirtualFile(), false, false);
       cached = content.putUserDataIfAbsent(CONTENT_KEY, cached);
       return cached;
     }
