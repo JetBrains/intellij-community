@@ -194,25 +194,6 @@ public class ImplementationViewComponent extends JPanel {
         gc.fill = GridBagConstraints.HORIZONTAL;
         gc.weightx = 1;
         myLabel = new JLabel();
-        if (myElements.length > 1) {
-          updateRenderer(project);
-          myLabel.setVisible(false);
-        }
-        else {
-          myFileChooser = new ComboBox();
-          myFileChooser.setVisible(false);
-          myCountLabel.setVisible(false);
-
-          VirtualFile file = psiFile.getVirtualFile();
-          if (file != null) {
-            myLabel.setIcon(getIconForFile(psiFile));
-            myLabel.setForeground(FileStatusManager.getInstance(project).getStatus(file).getColor());
-            myLabel.setText(file.getPresentableName());
-            myLabel.setBorder(new CompoundBorder(IdeBorderFactory.createRoundedBorder(), IdeBorderFactory.createEmptyBorder(0, 0, 0, 5)));
-          }
-          toolbarPanel.add(myLabel, gc);
-        }
-
         myFileChooser = new ComboBox(fileDescriptors.toArray(new FileDescriptor[fileDescriptors.size()]), 250);
         myFileChooser.addActionListener(new ActionListener() {
           @Override
@@ -225,6 +206,24 @@ public class ImplementationViewComponent extends JPanel {
           }
         });
         toolbarPanel.add(myFileChooser, gc);
+
+        if (myElements.length > 1) {
+          updateRenderer(project);
+          myLabel.setVisible(false);
+        }
+        else {
+          myFileChooser.setVisible(false);
+          myCountLabel.setVisible(false);
+
+          VirtualFile file = psiFile.getVirtualFile();
+          if (file != null) {
+            myLabel.setIcon(getIconForFile(psiFile));
+            myLabel.setForeground(FileStatusManager.getInstance(project).getStatus(file).getColor());
+            myLabel.setText(file.getPresentableName());
+            myLabel.setBorder(new CompoundBorder(IdeBorderFactory.createRoundedBorder(), IdeBorderFactory.createEmptyBorder(0, 0, 0, 5)));
+          }
+          toolbarPanel.add(myLabel, gc);
+        }
 
         gc.fill = GridBagConstraints.NONE;
         gc.weightx = 0;
