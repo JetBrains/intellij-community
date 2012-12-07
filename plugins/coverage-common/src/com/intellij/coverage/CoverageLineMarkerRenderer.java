@@ -97,8 +97,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer {
     if (bgColor != null) {
       g.setColor(bgColor);
     }
-    int height = r.height + editor.getLineHeight();
-    g.fillRect(0, r.y, THICKNESS, height);
+    g.fillRect(0, r.y, THICKNESS, r.height);
     final LineData lineData = getLineData(editor.xyToLogicalPosition(new Point(0, r.y)).line);
     if (lineData != null && lineData.isCoveredByOneTest()) {
       g.drawImage( ImageLoader.loadFromResource("/gutter/unique.png"), 0, r.y, 8, 8, editor.getComponent());
