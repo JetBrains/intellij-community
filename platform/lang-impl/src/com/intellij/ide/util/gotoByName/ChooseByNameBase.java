@@ -130,7 +130,7 @@ public abstract class ChooseByNameBase {
   @NonNls private static final String NOT_FOUND_CARD = "nfound";
   @NonNls private static final String CHECK_BOX_CARD = "chkbox";
   @NonNls private static final String SEARCHING_CARD = "searching";
-  private static final int REBUILD_DELAY = 300;
+  private final int myRebuildDelay;
 
   private final Alarm myHideAlarm = new Alarm();
   private boolean myShowListAfterCompletionKeyStroke = false;
@@ -185,6 +185,7 @@ public abstract class ChooseByNameBase {
     myProvider = provider;
     myInitialIndex = initialIndex;
     mySearchInAnyPlace = Registry.is("ide.goto.middle.matching") && model.useMiddleMatching();
+    myRebuildDelay = Registry.intValue("ide.goto.rebuild.delay");
   }
 
   public void setShowListAfterCompletionKeyStroke(boolean showListAfterCompletionKeyStroke) {
@@ -584,7 +585,7 @@ public abstract class ChooseByNameBase {
           case KeyEvent.VK_ENTER:
             if (myList.getSelectedValue() == EXTRA_ELEM) {
               myMaximumListSizeLimit += myListSizeIncreasing;
-              rebuildList(myList.getSelectedIndex(), REBUILD_DELAY, null, ModalityState.current());
+              rebuildList(myList.getSelectedIndex(), myRebuildDelay, null, ModalityState.current());
               e.consume();
             }
             break;
@@ -627,7 +628,7 @@ public abstract class ChooseByNameBase {
           if (selectedCellBounds != null && selectedCellBounds.contains(e.getPoint())) { // Otherwise it was reselected in the selection listener
             if (myList.getSelectedValue() == EXTRA_ELEM) {
               myMaximumListSizeLimit += myListSizeIncreasing;
-              rebuildList(selectedIndex, REBUILD_DELAY, null, ModalityState.current());
+              rebuildList(selectedIndex, myRebuildDelay, null, ModalityState.current());
             }
             else {
               doClose(true);
@@ -706,11 +707,11 @@ public abstract class ChooseByNameBase {
   }
 
   /**
-   * Default rebuild list. It uses {@link #REBUILD_DELAY} and current modality state.
+   * Default rebuild list. It uses {@link #myRebuildDelay} and current modality state.
    */
   public void rebuildList(boolean initial) {
     // TODO this method is public, because the chooser does not listed for the model.
-    rebuildList(initial ? myInitialIndex : 0, REBUILD_DELAY, null, ModalityState.current());
+    rebuildList(initial ? myInitialIndex : 0, myRebuildDelay, null, ModalityState.current());
   }
 
   private void updateDocPosition() {
