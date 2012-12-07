@@ -6,6 +6,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -18,6 +19,7 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -140,7 +142,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     }
     else {
       // file wasn't mentioned in coverage information
-      info = fillInfoForUncoveredFile(file);
+      info = fillInfoForUncoveredFile(VfsUtilCore.virtualToIoFile(file));
     }
 
     if (info != null) {
@@ -418,7 +420,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
   }
 
   @Nullable
-  protected FileCoverageInfo fillInfoForUncoveredFile(@NotNull VirtualFile file) {
+  protected FileCoverageInfo fillInfoForUncoveredFile(@NotNull File file) {
     return null;
   }
 

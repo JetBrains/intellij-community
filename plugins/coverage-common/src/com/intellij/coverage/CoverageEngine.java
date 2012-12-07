@@ -13,6 +13,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -21,6 +22,8 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
@@ -160,14 +163,18 @@ public abstract class CoverageEngine {
   /**
    * E.g. all *.class files for java source file with several classes
    *
+   *
    * @param srcFile
    * @param module
    * @return files
    */
   @NotNull
-  public abstract Set<VirtualFile> getCorrespondingOutputFiles(@NotNull final PsiFile srcFile,
-                                                               @Nullable final Module module,
-                                                               @NotNull final CoverageSuitesBundle suite);
+  public Set<File> getCorrespondingOutputFiles(@NotNull final PsiFile srcFile,
+                                                        @Nullable final Module module,
+                                                        @NotNull final CoverageSuitesBundle suite) {
+    final VirtualFile virtualFile = srcFile.getVirtualFile();
+    return virtualFile == null ? Collections.<File>emptySet() : Collections.singleton(VfsUtilCore.virtualToIoFile(virtualFile));
+  }
 
   /**
    * When output directory is empty we probably should recompile source and then choose suite again
@@ -182,12 +189,13 @@ public abstract class CoverageEngine {
    * Qualified name same as in coverage raw project data
    * E.g. java class qualified name by *.class file of some Java class in corresponding source file
    *
+   *
    * @param outputFile
    * @param sourceFile
    * @return
    */
   @Nullable
-  public abstract String getQualifiedName(@NotNull final VirtualFile outputFile,
+  public abstract String getQualifiedName(@NotNull final File outputFile,
                                           @NotNull final PsiFile sourceFile);
 
   @NotNull
@@ -197,6 +205,7 @@ public abstract class CoverageEngine {
    * Decide include a file or not in coverage report if coverage data isn't available for the file. E.g file wasn't touched by coverage
    * util
    *
+   *
    * @param qualifiedName
    * @param outputFile
    * @param sourceFile
@@ -204,18 +213,20 @@ public abstract class CoverageEngine {
    * @return
    */
   public abstract boolean includeUntouchedFileInCoverage(@NotNull final String qualifiedName,
-                                                         @NotNull final VirtualFile outputFile,
+                                                         @NotNull final File outputFile,
                                                          @NotNull final PsiFile sourceFile,
                                                          @NotNull final CoverageSuitesBundle suite);
 
   /**
    * Collect code lines if untouched file should be included in coverage information. These lines will be marked as uncovered.
    *
+   *
+   * @param classFile
    * @param suite
    * @return List (probably empty) of code lines or null if all lines should be marked as uncovered
    */
   @Nullable
-  public abstract List<Integer> collectSrcLinesForUntouchedFile(@NotNull final VirtualFile classFile,
+  public abstract List<Integer> collectSrcLinesForUntouchedFile(@NotNull final File classFile,
                                                                 @NotNull final CoverageSuitesBundle suite);
 
   /**

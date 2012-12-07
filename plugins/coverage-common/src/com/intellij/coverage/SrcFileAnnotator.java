@@ -50,6 +50,7 @@ import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.*;
 
 /**
@@ -293,7 +294,7 @@ public class SrcFileAnnotator implements Disposable {
     // now if oldToNewLineMapping is null we should use f(x)=id(x) mapping
 
     // E.g. all *.class files for java source file with several classes
-    final Set<VirtualFile> outputFiles = engine.getCorrespondingOutputFiles(myFile, module, suite);
+    final Set<File> outputFiles = engine.getCorrespondingOutputFiles(myFile, module, suite);
 
     final boolean subCoverageActive = CoverageDataManager.getInstance(myProject).isSubCoverageActive();
     final boolean coverageByTestApplicable = suite.isCoverageByTestApplicable() && !(subCoverageActive && suite.isCoverageByTestEnabled());
@@ -301,7 +302,7 @@ public class SrcFileAnnotator implements Disposable {
     final TreeMap<Integer, Object[]> classLines = new TreeMap<Integer, Object[]>();
     final TreeMap<Integer, String> classNames = new TreeMap<Integer, String>();
     class HighlightersCollector {
-      private void collect(VirtualFile outputFile, final String qualifiedName) {
+      private void collect(File outputFile, final String qualifiedName) {
         final ClassData fileData = data.getClassData(qualifiedName);
         if (fileData != null) {
           final Object[] lines = fileData.getLines();
@@ -351,7 +352,7 @@ public class SrcFileAnnotator implements Disposable {
 
     final HighlightersCollector collector = new HighlightersCollector();
     if (!outputFiles.isEmpty()) {
-      for (VirtualFile outputFile : outputFiles) {
+      for (File outputFile : outputFiles) {
         final String qualifiedName = engine.getQualifiedName(outputFile, myFile);
         if (qualifiedName != null) {
           collector.collect(outputFile, qualifiedName);
@@ -510,15 +511,15 @@ public class SrcFileAnnotator implements Disposable {
     return editor instanceof TextEditor && ((TextEditor)editor).getEditor() == myEditor;
   }
 
-  private void collectNonCoveredFileInfo(final VirtualFile outputFile,
+  private void collectNonCoveredFileInfo(final File outputFile,
                                          final List<RangeHighlighter> highlighters, final MarkupModel markupModel,
                                          final TreeMap<Integer, LineData> executableLines,
                                          final boolean coverageByTestApplicable) {
     final CoverageSuitesBundle coverageSuite = CoverageDataManager.getInstance(myProject).getCurrentSuitesBundle();
     if (coverageSuite == null) return;
     final TIntIntHashMap mapping;
-    if (outputFile.getTimeStamp() < getVirtualFile().getTimeStamp()) {
-      mapping = getOldToNewLineMapping(outputFile.getTimeStamp());
+    if (outputFile.lastModified() < getVirtualFile().getTimeStamp()) {
+      mapping = getOldToNewLineMapping(outputFile.lastModified());
       if (mapping == null) return;
     }
     else {
@@ -549,7 +550,7 @@ public class SrcFileAnnotator implements Disposable {
     }
   }
 
-  private void addHighlighter(final VirtualFile outputFile,
+  private void addHighlighter(final File outputFile,
                               final List<RangeHighlighter> highlighters,
                               final MarkupModel markupModel,
                               final TreeMap<Integer, LineData> executableLines,
@@ -562,7 +563,7 @@ public class SrcFileAnnotator implements Disposable {
       public void run() {
         if (myEditor == null) return;
         final RangeHighlighter highlighter =
-          createRangeHighlighter(outputFile.getTimeStamp(), markupModel, coverageByTestApplicable, executableLines, null, lineNumber,
+          createRangeHighlighter(outputFile.lastModified(), markupModel, coverageByTestApplicable, executableLines, null, lineNumber,
                                  updatedLineNumber, coverageSuite, null);
         highlighters.add(highlighter);
       }
