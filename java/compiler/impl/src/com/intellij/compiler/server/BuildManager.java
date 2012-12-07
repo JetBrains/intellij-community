@@ -91,6 +91,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.Executor;
@@ -790,8 +791,6 @@ public class BuildManager implements ApplicationComponent{
     if (Registry.is("compiler.process.use.external.javac")) {
       cmdLine.addParameter("-D"+ GlobalOptions.USE_EXTERNAL_JAVAC_OPTION);
     }
-    final String host = NetUtils.getLocalHostString();
-    cmdLine.addParameter("-D"+ GlobalOptions.HOSTNAME_OPTION + "=" + host);
 
     // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
     String[] propertyNames = {"user.language", "user.country", "user.region"};
@@ -810,7 +809,7 @@ public class BuildManager implements ApplicationComponent{
     cmdLine.addParameter(classpathToString(cp));
 
     cmdLine.addParameter(BuildMain.class.getName());
-    cmdLine.addParameter(host);
+    cmdLine.addParameter("127.0.0.1");
     cmdLine.addParameter(Integer.toString(port));
     cmdLine.addParameter(sessionId.toString());
 
@@ -922,7 +921,7 @@ public class BuildManager implements ApplicationComponent{
     bootstrap.setOption("child.tcpNoDelay", true);
     bootstrap.setOption("child.keepAlive", true);
     final int listenPort = NetUtils.findAvailableSocketPort();
-    final Channel serverChannel = bootstrap.bind(new InetSocketAddress(listenPort));
+    final Channel serverChannel = bootstrap.bind(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), listenPort));
     myAllOpenChannels.add(serverChannel);
     return listenPort;
   }

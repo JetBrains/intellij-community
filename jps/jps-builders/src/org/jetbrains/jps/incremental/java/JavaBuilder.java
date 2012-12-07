@@ -366,7 +366,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
       return descriptor.client;
     }
     // start server here
-    final String hostString = System.getProperty(GlobalOptions.HOSTNAME_OPTION, "localhost");
     final int port = findFreePort();
     final int heapSize = getJavacServerHeapSize(context);
 
@@ -388,7 +387,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     );
     final JavacServerClient client = new JavacServerClient();
     try {
-      client.connect(hostString, port);
+      client.connect("127.0.0.1", port);
     }
     catch (Throwable ex) {
       processHandler.destroyProcess();
