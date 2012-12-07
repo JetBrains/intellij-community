@@ -122,7 +122,7 @@ public class SrcFileAnnotator implements Disposable {
   private static
   @NotNull
   String[] getCoveredLines(@NotNull byte[] oldContent, VirtualFile vFile) {
-    final String text = LoadTextUtil.getTextByBinaryPresentation(oldContent, vFile, false).toString();
+    final String text = LoadTextUtil.getTextByBinaryPresentation(oldContent, vFile, false, false).toString();
     return LineTokenizer.tokenize(text, false);
   }
 
