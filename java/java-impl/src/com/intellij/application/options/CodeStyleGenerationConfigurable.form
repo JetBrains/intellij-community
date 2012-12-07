@@ -267,7 +267,7 @@
                 <children>
                   <component id="95854" class="javax.swing.JCheckBox" binding="myInsertOverrideAnnotationCheckBox" default-binding="true">
                     <constraints>
-                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="1" use-parent-layout="false"/>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
                       <text resource-bundle="messages/ApplicationBundle" key="insert.override.annotation"/>
@@ -275,7 +275,7 @@
                   </component>
                   <component id="9c14a" class="javax.swing.JCheckBox" binding="myRepeatSynchronizedCheckBox" default-binding="true">
                     <constraints>
-                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="1" use-parent-layout="false"/>
+                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
                       <text value="Repeat &amp;synchronized modifier"/>

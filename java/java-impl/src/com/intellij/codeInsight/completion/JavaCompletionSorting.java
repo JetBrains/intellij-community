@@ -86,9 +86,6 @@ public class JavaCompletionSorting {
           return new LiftShorterItemsClassifier(next, new LiftShorterItemsClassifier.LiftingCondition() {
             @Override
             public boolean shouldLift(LookupElement shorterElement, LookupElement longerElement) {
-              if (super.shouldLift(shorterElement, longerElement)) {
-                return true;
-              }
               Object object = shorterElement.getObject();
               if (object instanceof PsiClass) {
                 PsiClass psiClass = (PsiClass)object;
@@ -107,7 +104,7 @@ public class JavaCompletionSorting {
               }
               return false;
             }
-          });
+          }, true);
         }
       });
     }

@@ -130,7 +130,12 @@ public class CompletionPreview {
       }
     }
 
-    new CompletionPreview(lookup, text, lookup.itemPattern(item));
+    String prefix = lookup.itemPattern(item);
+    if (prefix.length() > text.length()) {
+      return;
+    }
+    
+    new CompletionPreview(lookup, text, prefix);
   }
 
   public void uninstallPreview() {

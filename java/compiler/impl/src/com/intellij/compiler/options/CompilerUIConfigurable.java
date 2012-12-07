@@ -28,6 +28,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -47,7 +48,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   private JTextField myResourcePatternsField;
   private JCheckBox myCbClearOutputDirectory;
   private JCheckBox myCbAssertNotNull;
-  private JLabel myPatternLegendLabel;
+  private JBLabel myPatternLegendLabel;
   private JCheckBox myCbAutoShowFirstError;
   private JCheckBox myCbUseExternalBuild;
   private JCheckBox myCbEnableAutomake;
