@@ -503,4 +503,22 @@ public class PyResolveTest extends PyResolveTestCase {
     assertNotNull(target);
     assertTrue(source == target);
   }
+
+  // PY-7970
+  public void testAugmentedAssignment() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  // PY-7970
+  public void testAugmentedAfterAugmented() {
+    final PsiReference ref = findReferenceByMarker();
+    final PsiElement source = ref.getElement();
+    final PsiElement resolved = ref.resolve();
+    assertInstanceOf(resolved, PyReferenceExpression.class);
+    assertNotSame(resolved, source);
+    final PyReferenceExpression res = (PyReferenceExpression)resolved;
+    assertNotNull(res);
+    assertEquals("foo", res.getName());
+    assertInstanceOf(res.getParent(), PyAugAssignmentStatement.class);
+  }
 }

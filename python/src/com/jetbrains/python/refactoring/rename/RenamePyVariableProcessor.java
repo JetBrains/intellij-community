@@ -3,6 +3,7 @@ package com.jetbrains.python.refactoring.rename;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -12,7 +13,7 @@ public class RenamePyVariableProcessor extends RenamePyElementProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
     // extension ordering in python-plugin-common.xml ensures that classes and functions are handled by their own processors
-    return element instanceof PyElement;
+    return element instanceof PyElement && !(element instanceof PyReferenceExpression);
   }
 
   @Override
