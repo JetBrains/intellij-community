@@ -59,7 +59,7 @@ public class ConfigurationArgumentsHelpArea extends JPanel {
         CopyPasteManager.getInstance().setContents(contents);
       }
     });
-    myToolbarPanel.add(copyButton, BorderLayout.CENTER);
+    myToolbarPanel.add(copyButton, BorderLayout.NORTH);
     myToolbarPanel.setVisible(false);
   }
 
