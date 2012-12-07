@@ -17,6 +17,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
@@ -70,8 +71,21 @@ public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
     PyClass pyClass = PsiTreeUtil.getParentOfType(location.getPsiElement(), PyClass.class, false);
     if (pyFunction != null) {
       String name = pyFunction.getName();
-      if (pyClass != null)
-        name = pyClass.getName() + "."+name;
+      if (pyClass != null) {
+        final PyPackageManagerImpl packageManager = (PyPackageManagerImpl)PyPackageManager.getInstance(sdk);
+        try {
+          final PyPackage pytestPackage = packageManager.findPackage("pytest");
+          if (pytestPackage != null && PyRequirement.VERSION_COMPARATOR.compare(pytestPackage.getVersion(), "2.3.3") >= 0) {
+            name = pyClass.getName() + " and " + name;
+          }
+          else {
+            name = pyClass.getName() + "." + name;
+          }
+        }
+        catch (PyExternalProcessException e) {
+          name = pyClass.getName() + "." + name;
+        }
+      }
       configuration.useKeyword(true);
       configuration.setKeywords(name);
       configuration.setName(name);
