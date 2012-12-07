@@ -16,7 +16,9 @@ import org.jetbrains.jps.model.serialization.JpsMacroExpander;
 import org.jetbrains.jps.model.serialization.module.JpsModuleClasspathSerializer;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author nik
@@ -41,16 +43,19 @@ public class JpsEclipseClasspathSerializer extends JpsModuleClasspathSerializer 
     try {
       final File classpathFile = new File(classpathDir, EclipseXml.DOT_CLASSPATH_EXT);
       if (!classpathFile.exists()) return; //no classpath file - no compilation
-      final Document document = JDOMUtil.loadDocument(classpathFile);
-      final JpsEclipseClasspathReader reader = new JpsEclipseClasspathReader(classpathDir, paths, new HashSet<String>());
-      reader.readClasspath(module, null, document.getRootElement(), expander);//todo
+
       final String eml = module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
       final File emlFile = new File(baseModulePath, eml);
+      final Map<String, String> levels = new HashMap<String, String>();
       if (emlFile.isFile()) {
         final Document emlDocument = JDOMUtil.loadDocument(emlFile);
         final Element root = emlDocument.getRootElement();
-        new JpsIdeaSpecificSettings(expander).readIDEASpecific(root, module, projectSdkType);
+        new JpsIdeaSpecificSettings(expander).readIDEASpecific(root, module, projectSdkType, levels);
       }
+
+      final Document document = JDOMUtil.loadDocument(classpathFile);
+      final JpsEclipseClasspathReader reader = new JpsEclipseClasspathReader(classpathDir, paths, new HashSet<String>(), levels);
+      reader.readClasspath(module, null, document.getRootElement(), expander);//todo
     }
     catch (Exception e) {
       LOG.info(e);

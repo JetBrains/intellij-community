@@ -32,6 +32,7 @@ import org.jetbrains.jps.model.serialization.JpsMacroExpander;
 import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 
 import java.util.List;
+import java.util.Map;
 
 /**
 * User: anna
@@ -42,6 +43,21 @@ class JpsIdeaSpecificSettings extends AbstractIdeaSpecificSettings<JpsModule, St
 
   JpsIdeaSpecificSettings(JpsMacroExpander expander) {
     myExpander = expander;
+  }
+
+  @Override
+  protected void readLibraryLevels(Element root, Map<String, String> levels) {
+    final Element levelsElement = root.getChild("levels");
+    if (levelsElement != null) {
+      for (Object child : levelsElement.getChildren("level")) {
+        final Element element = (Element)child;
+        final String libName = element.getAttributeValue("name");
+        final String libLevel = element.getAttributeValue("value");
+        if (libName != null && libLevel != null) {
+          levels.put(libName, libLevel);
+        }
+      }
+    }
   }
 
   @Override

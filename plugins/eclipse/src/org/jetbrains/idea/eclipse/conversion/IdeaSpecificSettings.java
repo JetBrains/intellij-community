@@ -33,6 +33,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -53,10 +54,7 @@ import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import static org.jetbrains.idea.eclipse.conversion.EPathUtil.areUrlsPointTheSame;
 
@@ -79,7 +77,11 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
   }
 
   public static void readIDEASpecific(ModifiableRootModel model, CachedXmlDocumentSet documentSet, String eml) throws InvalidDataException, IOException, JDOMException {
-    new IdeaSpecificSettings().readIDEASpecific(documentSet.read(eml).getRootElement(), model, null);
+    new IdeaSpecificSettings().readIDEASpecific(documentSet.read(eml).getRootElement(), model, null, new HashMap<String, String>());
+  }
+
+  @Override
+  protected void readLibraryLevels(Element root, Map<String, String> levels) {
   }
 
   @Override
@@ -299,6 +301,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
       }
     }
 
+    final Map<String, String> libLevels = new LinkedHashMap<String, String>();
     for (OrderEntry entry : model.getOrderEntries()) {
       if (entry instanceof ModuleOrderEntry) {
         final DependencyScope scope = ((ModuleOrderEntry)entry).getScope();
@@ -375,11 +378,27 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
           isModified = true;
           continue;
         }
+      } else {
+        final String libraryLevel = libraryEntry.getLibraryLevel();
+        if (!LibraryTablesRegistrar.APPLICATION_LEVEL.equals(libraryLevel)) {
+          libLevels.put(libraryEntry.getLibraryName(), libraryLevel);
+        }
       }
       if (!scope.equals(DependencyScope.COMPILE)) {
         root.addContent(element);
         isModified = true;
       }
+    }
+
+    if (!libLevels.isEmpty()) {
+      final Element libLevelsElement = new Element("levels");
+      for (String libName : libLevels.keySet()) {
+        final Element libElement = new Element("level");
+        libElement.setAttribute("name", libName);
+        libElement.setAttribute("value", libLevels.get(libName));
+        libLevelsElement.addContent(libElement);
+      }
+      root.addContent(libLevelsElement);
     }
 
     PathMacroManager.getInstance(model.getModule()).collapsePaths(root);

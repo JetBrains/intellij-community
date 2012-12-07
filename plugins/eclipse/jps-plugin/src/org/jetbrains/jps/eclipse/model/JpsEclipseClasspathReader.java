@@ -30,15 +30,13 @@ import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.*;
 import org.jetbrains.jps.model.serialization.JpsMacroExpander;
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * User: anna
@@ -46,9 +44,14 @@ import java.util.Set;
  */
 class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule> {
   private static final Logger LOG = Logger.getInstance(JpsEclipseClasspathReader.class);
+  private final Map<String, String> myLibLevels;
 
-  public JpsEclipseClasspathReader(String rootPath, @Nullable List<String> currentRoots, @Nullable Set<String> moduleNames) {
+  public JpsEclipseClasspathReader(String rootPath,
+                                   @Nullable List<String> currentRoots,
+                                   @Nullable Set<String> moduleNames,
+                                   Map<String, String> levels) {
     super(rootPath, currentRoots, moduleNames);
+    myLibLevels = levels;
   }
 
   @Override
@@ -72,8 +75,10 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
       LOG.debug("loading " + rootModel.getName() + ": adding " + (applicationLevel ? "application" : "project") + " library '" + name + "'");
     }
     JpsElementFactory factory = JpsElementFactory.getInstance();
-    JpsLibraryReference libraryReference =
-      factory.createLibraryReference(name, applicationLevel ? factory.createGlobalReference() : factory.createProjectReference());
+    JpsLibraryReference libraryReference;
+    final String level = myLibLevels.get(name);
+    libraryReference = level != null ? factory.createLibraryReference(name, JpsLibraryTableSerializer.createLibraryTableReference(level))
+                                     : factory.createLibraryReference(name, factory.createGlobalReference());
     final JpsLibraryDependency dependency = rootModel.getDependenciesList().addLibraryDependency(libraryReference);
     setLibraryEntryExported(dependency, exported);
   }
@@ -253,7 +258,7 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
     String outputUrl = pathToUrl(path);
     extension.setOutputUrl(outputUrl);
     extension.setTestOutputUrl(outputUrl);
-    extension.setInheritOutput(false);
+    //extension.setInheritOutput(false);
 
     rootModel.getDependenciesList().addModuleSourceDependency();
   }
