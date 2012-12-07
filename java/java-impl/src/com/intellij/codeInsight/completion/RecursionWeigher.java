@@ -197,7 +197,7 @@ class RecursionWeigher extends LookupElementWeigher {
   }
 
   @NotNull
-  private static PsiMethod findDeepestSuper(@NotNull final PsiMethod method) {
+  public static PsiMethod findDeepestSuper(@NotNull final PsiMethod method) {
     final PsiMethod first = DeepestSuperMethodsSearch.search(method).findFirst();
     return first == null ? method : first;
   }

@@ -29,7 +29,7 @@ public class JavaCompletionStatistician extends CompletionStatistician{
 
   @Override
   public StatisticsInfo serialize(final LookupElement element, final CompletionLocation location) {
-    final Object o = element.getObject();
+    Object o = element.getObject();
 
     if (o instanceof PsiLocalVariable || o instanceof PsiParameter || o instanceof PsiThisExpression) {
       return StatisticsInfo.EMPTY;
@@ -47,6 +47,11 @@ public class JavaCompletionStatistician extends CompletionStatistician{
         PsiType expectedType = infos != null && infos.length > 0 ? infos[0].getDefaultType() : null;
         return new StatisticsInfo(JavaStatisticsManager.getAfterNewKey(expectedType), key2);
       }
+
+      if (o instanceof PsiMethod) {
+        o = RecursionWeigher.findDeepestSuper((PsiMethod)o);
+      }
+      
       PsiClass containingClass = ((PsiMember)o).getContainingClass();
       if (containingClass != null) {
         if (CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
