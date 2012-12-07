@@ -8,7 +8,7 @@
     <properties/>
     <border type="none"/>
     <children>
-      <component id="9f69d" class="javax.swing.JFormattedTextField" binding="myHistoryLength">
+      <component id="5bcde" class="javax.swing.JTextField" binding="myHistoryLength">
         <constraints>
           <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false">
             <preferred-size width="50" height="-1"/>
@@ -23,7 +23,7 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <labelFor value="9f69d"/>
+          <labelFor value="5bcde"/>
           <text value="Task history &amp;length:"/>
         </properties>
       </component>
@@ -71,10 +71,11 @@
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
+          <labelFor value="c5184"/>
           <text value="Connection &amp;timeout:"/>
         </properties>
       </component>
-      <component id="f5566" class="javax.swing.JFormattedTextField" binding="myConnectionTimeout">
+      <component id="c5184" class="javax.swing.JTextField" binding="myConnectionTimeout">
         <constraints>
           <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false">
             <preferred-size width="50" height="-1"/>
@@ -125,11 +126,11 @@
                 </constraints>
                 <properties>
                   <horizontalAlignment value="4"/>
-                  <labelFor value="4b4f6"/>
+                  <labelFor value="b5108"/>
                   <text value="&amp;Update"/>
                 </properties>
               </component>
-              <component id="4b4f6" class="javax.swing.JFormattedTextField" binding="myUpdateCount">
+              <component id="b5108" class="javax.swing.JTextField" binding="myUpdateCount">
                 <constraints>
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false">
                     <preferred-size width="50" height="-1"/>
@@ -145,11 +146,11 @@
                 </constraints>
                 <properties>
                   <horizontalAlignment value="4"/>
-                  <labelFor value="fc85e"/>
+                  <labelFor value="7e29b"/>
                   <text value="issues e&amp;very"/>
                 </properties>
               </component>
-              <component id="fc85e" class="javax.swing.JFormattedTextField" binding="myUpdateInterval">
+              <component id="7e29b" class="javax.swing.JTextField" binding="myUpdateInterval">
                 <constraints>
                   <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false">
                     <preferred-size width="50" height="-1"/>

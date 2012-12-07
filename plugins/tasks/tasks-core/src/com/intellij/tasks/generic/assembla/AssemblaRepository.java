@@ -74,4 +74,9 @@ public class AssemblaRepository extends GenericRepository {
   public String getPresentableName() {
     return StringUtil.isEmpty(getUsername()) ? "<undefined>" : getUsername() + "'s tickets";
   }
+
+  @Override
+  public boolean isConfigured() {
+    return super.isConfigured() && StringUtil.isNotEmpty(getUsername()) && StringUtil.isNotEmpty(getPassword());
+  }
 }

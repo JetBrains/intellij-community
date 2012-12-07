@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.ChangeListColumn;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
@@ -159,17 +160,13 @@ public class CommittedChangesBrowser extends JPanel {
       myLeftPanel.add(forwardButton, new GridBagConstraints(1, 1, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(2,2,2,2), 0, 0));
     }
 
-    JSplitPane leftSplitter = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-    leftSplitter.setTopComponent(myLeftPanel);
-    leftSplitter.setBottomComponent(commitPanel);
-    leftSplitter.setDividerLocation(0.8);
-    leftSplitter.setResizeWeight(0.8);
+    Splitter leftSplitter = new Splitter(true, 0.8f);
+    leftSplitter.setFirstComponent(myLeftPanel);
+    leftSplitter.setSecondComponent(commitPanel);
 
-    JSplitPane splitter = new JSplitPane();
-    splitter.setLeftComponent(leftSplitter);
-    splitter.setRightComponent(myChangesView);
-    splitter.setDividerLocation(0.5);
-    splitter.setResizeWeight(0.5);
+    Splitter splitter = new Splitter(false, 0.5f);
+    splitter.setFirstComponent(leftSplitter);
+    splitter.setSecondComponent(myChangesView);
 
     add(splitter, BorderLayout.CENTER);
 
