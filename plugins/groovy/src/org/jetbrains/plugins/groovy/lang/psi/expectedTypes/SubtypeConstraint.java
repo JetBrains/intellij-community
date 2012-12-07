@@ -35,7 +35,7 @@ public  class SubtypeConstraint extends TypeConstraint {
   }
 
   public boolean satisfied(PsiType type, @NotNull PsiElement context){
-    return TypesUtil.isAssignableByMethodCallConversion(getType(), type, context.getManager(), context.getResolveScope(), false);
+    return TypesUtil.isAssignableByMethodCallConversion(getType(), type, context, false);
   }
 
   @NotNull
