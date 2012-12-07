@@ -57,6 +57,11 @@ public class GotoImplementationHandler extends GotoTargetHandler {
         protected boolean accept(PsiElement element) {
           return instance.acceptImplementationForReference(reference, element);
         }
+
+        @Override
+        protected boolean canShowPopupWithOneItem(PsiElement element) {
+          return false;
+        }
       }.searchImplementations(editor, source, offset), Collections.<AdditionalAction>emptyList());
       
       gotoData.listUpdaterTask = new ImplementationsUpdaterTask(gotoData, editor, offset, reference);
