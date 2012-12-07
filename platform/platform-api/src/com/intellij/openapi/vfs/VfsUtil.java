@@ -50,7 +50,7 @@ public class VfsUtil extends VfsUtilCore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtil");
   public static final char VFS_PATH_SEPARATOR = '/';
 
-  private static final String LOCALHOST_URI_PATH_PREFIX = "localhost/";
+  public static final String LOCALHOST_URI_PATH_PREFIX = "localhost/";
 
   public static void saveText(@NotNull VirtualFile file, @NotNull String text) throws IOException {
     Charset charset = file.getCharset();
