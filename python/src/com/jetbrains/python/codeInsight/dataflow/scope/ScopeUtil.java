@@ -5,7 +5,6 @@ import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -19,6 +18,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import static com.intellij.psi.util.PsiTreeUtil.getParentOfType;
+import static com.intellij.psi.util.PsiTreeUtil.isAncestor;
+
 /**
  * @author oleg
  */
@@ -29,7 +31,7 @@ public class ScopeUtil {
   @Nullable
   public static PsiElement getParameterScope(final PsiElement element){
     if (element instanceof PyNamedParameter){
-      final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
+      final PyFunction function = getParentOfType(element, PyFunction.class, false);
       if (function != null){
         return function;
       }
@@ -52,8 +54,13 @@ public class ScopeUtil {
     return null;
   }
 
+  /**
+   * Return the scope owner for the element.
+   *
+   * Scope owner is not always the first ScopeOwner parent of the element. Some elements are resolved in outer scopes.
+   */
   @Nullable
-  public static ScopeOwner getScopeOwner(PsiElement element) {
+  public static ScopeOwner getScopeOwner(@Nullable PsiElement element) {
     if (element instanceof StubBasedPsiElement) {
       final StubElement stub = ((StubBasedPsiElement)element).getStub();
       if (stub != null) {
@@ -65,24 +72,31 @@ public class ScopeUtil {
           }
           parentStub = parentStub.getParentStub();
         }
+        return null;
       }
     }
-    return PsiTreeUtil.getParentOfType(element, ScopeOwner.class);
-  }
-
-  @Nullable
-  public static ScopeOwner getResolveScopeOwner(@NotNull PsiElement element) {
-    final ScopeOwner firstOwner = getScopeOwner(element);
+    final ScopeOwner firstOwner = getParentOfType(element, ScopeOwner.class);
     if (firstOwner == null) {
       return null;
     }
-    final ScopeOwner nextOwner = getScopeOwner(firstOwner);
-    final PyElement decoratorOrParameterAncestor = PsiTreeUtil.getParentOfType(element, PyDecorator.class, PyParameter.class);
-    if (decoratorOrParameterAncestor != null && !PsiTreeUtil.isAncestor(decoratorOrParameterAncestor, firstOwner, true)) {
+    final ScopeOwner nextOwner = getParentOfType(firstOwner, ScopeOwner.class);
+    // References in decorator expressions are resolved outside of the function (if the lambda is not inside the decorator)
+    final PyElement decoratorAncestor = getParentOfType(element, PyDecorator.class);
+    if (decoratorAncestor != null && !isAncestor(decoratorAncestor, firstOwner, true)) {
       return nextOwner;
     }
-    final PyClass containingClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
-    if (containingClass != null && PsiTreeUtil.isAncestor(containingClass.getSuperClassExpressionList(), element, false)) {
+    // References in default values of parameters are resolved outside of the function (if the lambda is not inside the default value)
+    final PyParameter parameterAncestor = getParentOfType(element, PyParameter.class);
+    if (parameterAncestor != null && !isAncestor(parameterAncestor, firstOwner, true)) {
+      final PyExpression defaultValue = parameterAncestor.getDefaultValue();
+      if (element != null && isAncestor(defaultValue, element, false)) {
+        return nextOwner;
+      }
+    }
+    // Superclasses are resolved outside of the class
+    final PyClass containingClass = getParentOfType(element, PyClass.class);
+    if (containingClass != null && element != null &&
+        isAncestor(containingClass.getSuperClassExpressionList(), element, false)) {
       return nextOwner;
     }
     return firstOwner;
@@ -92,10 +106,6 @@ public class ScopeUtil {
   public static ScopeOwner getDeclarationScopeOwner(PsiElement anchor, String name) {
     PsiElement element = anchor;
     if (name != null) {
-      // References in default values of parameters are defined somewhere in outer scopes, as well as references in decorators
-      if (PsiTreeUtil.getParentOfType(anchor, PyParameter.class, PyDecorator.class) != null) {
-        element = getScopeOwner(anchor);
-      }
       final ScopeOwner originalScopeOwner = getScopeOwner(element);
       ScopeOwner scopeOwner = originalScopeOwner;
       while (scopeOwner != null) {

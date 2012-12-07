@@ -240,7 +240,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     PsiElement uexpr = processor.getResult();
     if (uexpr != null) {
       if (processor.getDefiners().isEmpty()) {
-        final ScopeOwner originalOwner = ScopeUtil.getResolveScopeOwner(realContext);
+        final ScopeOwner originalOwner = ScopeUtil.getScopeOwner(realContext);
         final ScopeOwner owner = ScopeUtil.getScopeOwner(uexpr);
         if (owner != null) {
           final Scope scope = ControlFlowCache.getScope(owner);
@@ -264,7 +264,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
               uexpr = null;
             }
           }
-          else if (originalOwner != null && ScopeUtil.getResolveScopeOwner(uexpr) != originalOwner && !scope.isGlobal(referencedName)) {
+          else if (owner != originalOwner && originalOwner != null && !scope.isGlobal(referencedName)) {
             final Scope originalScope = ControlFlowCache.getScope(originalOwner);
             if (originalScope.containsDeclaration(referencedName)) {
               uexpr = null;
