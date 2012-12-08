@@ -232,7 +232,7 @@ public class TypesUtil {
     return _isAssignable(lType, rType, manager, scope, allowConversion);
   }
 
-  public static boolean isAssignable(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context, boolean allowConversion) {
+  public static boolean isAssignable(@Nullable PsiType lType, @Nullable PsiType rType, @NotNull GroovyPsiElement context, boolean allowConversion) {
     if (rType instanceof PsiIntersectionType) {
       for (PsiType child : ((PsiIntersectionType)rType).getConjuncts()) {
         if (isAssignable(lType, child, context, allowConversion)) {
@@ -250,16 +250,9 @@ public class TypesUtil {
       return true;
     }
 
-    if (allowConversion) {
-      for (GrTypeConverter converter : GrTypeConverter.EP_NAME.getExtensions()) {
-        final Boolean result = converter.isConvertible(lType, rType, context);
-        if (result != null) {
-          return result;
-        }
-      }
-    }
-    return (allowConversion && isAssignableByMethodCallConversion(lType, rType, context, true)) ||
-           _isAssignable(lType, rType, context.getManager(), context.getResolveScope(), true);
+    if (allowConversion && isAssignableByMethodCallConversion(lType, rType, context, true)) return true;
+
+    return _isAssignable(lType, rType, context.getManager(), context.getResolveScope(), true);
   }
 
   private static boolean _isAssignable(@Nullable PsiType lType, @Nullable PsiType rType, @NotNull PsiManager manager, @NotNull GlobalSearchScope scope, boolean allowConversion) {
@@ -335,7 +328,7 @@ public class TypesUtil {
     }
 
     if (rType instanceof GrMapType || rType instanceof GrTupleType) {
-      Boolean result = isAssignableForNativeTypes(lType, (PsiClassType)rType, manager, scope);
+      Boolean result = isAssignableForNativeTypes(lType, (PsiClassType)rType, context, allowConversion);
       if (result != null) return result.booleanValue();
     }
 
@@ -364,7 +357,11 @@ public class TypesUtil {
   }
 
   @Nullable
-  private static Boolean isAssignableForNativeTypes(PsiType lType, PsiClassType rType, PsiManager manager, GlobalSearchScope scope) {
+  private static Boolean isAssignableForNativeTypes(PsiType lType,
+                                                    PsiClassType rType,
+                                                    @NotNull PsiElement context,
+                                                    final boolean allowConversion)
+  {
     if (!(lType instanceof PsiClassType)) return null;
     final PsiClassType.ClassResolveResult leftResult = ((PsiClassType)lType).resolveGenerics();
     final PsiClassType.ClassResolveResult rightResult = rType.resolveGenerics();
@@ -397,7 +394,7 @@ public class TypesUtil {
       if (typeRight == null) {
         return Boolean.TRUE;
       }
-      if (!isAssignableByMethodCallConversion(typeLeft, typeRight, manager, scope, false)) return Boolean.FALSE;
+      if (!isAssignableByMethodCallConversion(typeLeft, typeRight, context, allowConversion)) return Boolean.FALSE;
     }
     return Boolean.TRUE;
   }
