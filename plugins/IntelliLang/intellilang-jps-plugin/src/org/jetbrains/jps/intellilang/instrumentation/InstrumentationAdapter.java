@@ -134,30 +134,35 @@ class InstrumentationAdapter extends MethodVisitor implements Opcodes {
   }
 
   public void visitMaxs(int maxStack, int maxLocals) {
-    if (myAssertLabel != null) {
+    try {
+      if (myAssertLabel != null) {
 
-      // next index for synthetic variable that holds return value
-      final int var = maxLocals + 1;
+        // next index for synthetic variable that holds return value
+        final int var = maxLocals + 1;
 
-      mv.visitLabel(myAssertLabel);
+        mv.visitLabel(myAssertLabel);
 
-      mv.visitVarInsn(Opcodes.ASTORE, var);
+        mv.visitVarInsn(Opcodes.ASTORE, var);
 
-      final Label end = new Label();
-      addPatternTest(myMethodPattern.patternIndex, end, var);
+        final Label end = new Label();
+        addPatternTest(myMethodPattern.patternIndex, end, var);
 
-      addPatternAssertion(MessageFormat.format("Return value of method {0}.{1} annotated as @{2} does not match pattern {3}",
-                                               myInstrumenter.myClassName, myMethodName, myMethodPattern.annotation,
-                                               myMethodPattern.pattern), true);
+        addPatternAssertion(MessageFormat.format("Return value of method {0}.{1} annotated as @{2} does not match pattern {3}",
+                                                 myInstrumenter.myClassName, myMethodName, myMethodPattern.annotation,
+                                                 myMethodPattern.pattern), true);
 
-      mv.visitLabel(end);
-      mv.visitLocalVariable(RETURN_VALUE_NAME, PatternInstrumenter.JAVA_LANG_STRING, null, myAssertLabel, end, var);
+        mv.visitLabel(end);
+        mv.visitLocalVariable(RETURN_VALUE_NAME, PatternInstrumenter.JAVA_LANG_STRING, null, myAssertLabel, end, var);
 
-      mv.visitVarInsn(Opcodes.ALOAD, var);
-      mv.visitInsn(Opcodes.ARETURN);
+        mv.visitVarInsn(Opcodes.ALOAD, var);
+        mv.visitInsn(Opcodes.ARETURN);
+      }
+
+      super.visitMaxs(maxStack, maxLocals);
     }
-
-    super.visitMaxs(maxStack, maxLocals);
+    catch (Throwable e) {
+      myInstrumenter.registerError(myMethodName, "visitMaxs", e);
+    }
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -194,7 +199,7 @@ class InstrumentationAdapter extends MethodVisitor implements Opcodes {
         addThrow("java/lang/IllegalArgumentException", "(Ljava/lang/String;)V", message);
       }
     }
-    myInstrumenter.myInstrumented = true;
+    myInstrumenter.markInstrumented();
   }
 
   private void addThrow(@NonNls String throwableClass, @NonNls String ctorSignature, String message) {

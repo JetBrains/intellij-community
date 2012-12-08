@@ -67,7 +67,7 @@ public class InstrumentationClassFinder {
       protected Class findClass(String name) throws ClassNotFoundException {
         final InputStream is = lookupClassBeforeClasspath(name.replace('.', '/'));
         if (is == null) {
-          throw new ClassNotFoundException(name);
+          throw new ClassNotFoundException("Class not found: " + name.replace('/', '.'));  // ensure presentable class name in error message
         }
         try {
           final byte[] bytes = loadBytes(is);
@@ -104,7 +104,7 @@ public class InstrumentationClassFinder {
     final InputStream is = getClassBytesAsStream(internalName);
 
     if (is == null) {
-      throw new ClassNotFoundException("Class not found: " + internalName);
+      throw new ClassNotFoundException("Class not found: " + name.replace('/', '.')); // ensure presentable class name in error message
     }
 
     try {
