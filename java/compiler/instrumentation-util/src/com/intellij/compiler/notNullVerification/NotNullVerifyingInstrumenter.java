@@ -39,6 +39,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
 
   private String myClassName;
   private boolean myIsModification = false;
+  private RuntimeException myPostponedError;
 
   public NotNullVerifyingInstrumenter(final ClassVisitor classVisitor) {
     super(Opcodes.ASM4, classVisitor);
@@ -66,12 +67,8 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
       private boolean myIsNotNull = false;
       private Label myStartGeneratedCodeLabel;
 
-      public AnnotationVisitor visitParameterAnnotation(
-        final int parameter,
-        final String anno,
-        final boolean visible) {
-        AnnotationVisitor av;
-        av = mv.visitParameterAnnotation(parameter, anno, visible);
+      public AnnotationVisitor visitParameterAnnotation(final int parameter, final String anno, final boolean visible) {
+        final AnnotationVisitor av = mv.visitParameterAnnotation(parameter, anno, visible);
         if (isReferenceType(args[parameter]) && anno.equals(NOT_NULL_TYPE)) {
           myNotNullParams.add(new Integer(parameter));
         }
@@ -85,8 +82,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
       @Override
       public AnnotationVisitor visitAnnotation(String anno, boolean isRuntime) {
         final AnnotationVisitor av = mv.visitAnnotation(anno, isRuntime);
-        if (isReferenceType(returnType) &&
-            anno.equals(NOT_NULL_TYPE)) {
+        if (isReferenceType(returnType) && anno.equals(NOT_NULL_TYPE)) {
           myIsNotNull = true;
         }
 
@@ -144,6 +140,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
         mv.visitLabel(end);
 
         myIsModification = true;
+        processPostponedErrors();
       }
 
       @Override
@@ -151,8 +148,8 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
         try {
           super.visitMaxs(maxStack, maxLocals);
         }
-        catch (ArrayIndexOutOfBoundsException e) {
-          throw new ArrayIndexOutOfBoundsException("Maximums processing failed for " + myClassName + "." + name + ": " + e.getMessage());
+        catch (Throwable e) {
+          registerError(name, "visitMaxs", e);
         }
       }
     };
@@ -160,5 +157,26 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
 
   private static boolean isReferenceType(final Type type) {
     return type.getSort() == Type.OBJECT || type.getSort() == Type.ARRAY;
+  }
+
+  private void registerError(String methodName, String operationName, Throwable e) {
+    if (myPostponedError == null) {
+      // throw the first error that occurred
+      Throwable err = e.getCause();
+      if (err == null) {
+        err = e;
+      }
+      myPostponedError = new RuntimeException("Operation '" + operationName + "' failed for " + myClassName + "." + methodName + "(): " + err.getMessage(), err);
+    }
+    if (myIsModification) {
+      processPostponedErrors();
+    }
+  }
+
+  private void processPostponedErrors() {
+    final RuntimeException error = myPostponedError;
+    if (error != null) {
+      throw error;
+    }
   }
 }
