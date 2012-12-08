@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -48,7 +47,7 @@ public class GrTypeComboBox extends ComboBox {
 
 
   public static GrTypeComboBox createTypeComboBoxWithDefType(@Nullable PsiType type) {
-    return new GrTypeComboBox(type, null, true, null, null, false);
+    return new GrTypeComboBox(type, null, true, null, false);
   }
 
   public static GrTypeComboBox createTypeComboBoxFromExpression(@NotNull GrExpression expression) {
@@ -66,18 +65,18 @@ public class GrTypeComboBox extends ComboBox {
     if (GroovyRefactoringUtil.isDiamondNewOperator(expression)) {
       LOG.assertTrue(expression instanceof GrNewExpression);
       PsiType expected = PsiImplUtil.inferExpectedTypeForDiamond(expression);
-      return new GrTypeComboBox(type, expected, expected == null, expression.getManager(), expression.getResolveScope(), selectDef);
+      return new GrTypeComboBox(type, expected, expected == null, expression, selectDef);
     }
     else {
       if (type == PsiType.NULL) {
         type = PsiType.getJavaLangObject(expression.getManager(), expression.getResolveScope());
       }
-      return new GrTypeComboBox(type, null, true, null, null, selectDef);
+      return new GrTypeComboBox(type, null, true, null, selectDef);
     }
   }
 
   public static GrTypeComboBox createEmptyTypeComboBox() {
-    return new GrTypeComboBox(null, null, false, null, null, false);
+    return new GrTypeComboBox(null, null, false, null, false);
   }
 
   /**
@@ -90,18 +89,17 @@ public class GrTypeComboBox extends ComboBox {
   private GrTypeComboBox(@Nullable PsiType type,
                          @Nullable PsiType min,
                          boolean createDef,
-                         @Nullable PsiManager manager,
-                         @Nullable GlobalSearchScope scope,
+                         @Nullable PsiElement context,
                          boolean selectDef) {
-    LOG.assertTrue(min == null || manager != null);
-    LOG.assertTrue(min == null || scope != null);
+    LOG.assertTrue(min == null || context != null);
 
     if (type instanceof PsiDisjunctionType) type = ((PsiDisjunctionType)type).getLeastUpperBound();
 
 
     Map<String, PsiType> types = Collections.emptyMap();
     if (type != null) {
-      types = getCompatibleTypeNames(type, min, manager, scope);
+      assert context != null;
+      types = getCompatibleTypeNames(type, min, context);
     }
 
     if (createDef || types.isEmpty()) {
@@ -143,13 +141,12 @@ public class GrTypeComboBox extends ComboBox {
 
   private static Map<String, PsiType> getCompatibleTypeNames(@NotNull PsiType type,
                                                              @Nullable PsiType min,
-                                                             PsiManager manager,
-                                                             GlobalSearchScope scope) {
+                                                             @NotNull PsiElement context) {
     if (type instanceof PsiDisjunctionType) type = ((PsiDisjunctionType)type).getLeastUpperBound();
 
 
     // if initial type is not assignable to min type we don't take into consideration min type.
-    if (min != null && !TypesUtil.isAssignable(min, type, manager, scope, true)) {
+    if (min != null && !TypesUtil.isAssignable(min, type, context, true)) {
       min = null;
     }
 
@@ -161,7 +158,7 @@ public class GrTypeComboBox extends ComboBox {
     while (!set.isEmpty()) {
       PsiType cur = set.iterator().next();
       set.remove(cur);
-      if (!map.containsValue(cur) && (min == null || TypesUtil.isAssignable(min, cur, manager, scope, true))) {
+      if (!map.containsValue(cur) && (min == null || TypesUtil.isAssignable(min, cur, context, true))) {
         if (isPartiallySubstituted(cur)) {
           LOG.assertTrue(cur instanceof PsiClassType);
           PsiClassType rawType = ((PsiClassType)cur).rawType();

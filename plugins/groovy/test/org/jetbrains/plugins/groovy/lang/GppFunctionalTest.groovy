@@ -412,7 +412,10 @@ class Point {
   }
 
   ResolveResult[] multiResolveReference() {
-    return ((PsiPolyVariantReference) myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)).multiResolve(true)
+    final PsiReference ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
+    assertNotNull(ref)
+    assertInstanceOf(ref, PsiPolyVariantReference)
+    return ((PsiPolyVariantReference)ref).multiResolve(true)
   }
 
   public void testGotoSuperConstructorFromMapLiterals() throws Exception {

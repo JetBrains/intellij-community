@@ -480,7 +480,7 @@ public class GroovyExpectedTypesProvider {
       TypeConstraint constraint = new TypeConstraint(PsiType.INT) {
         @Override
         public boolean satisfied(PsiType type, @NotNull PsiElement context) {
-          final PsiType boxed = TypesUtil.boxPrimitiveType(type, manager, scope);
+          final PsiType boxed = TypesUtil.boxPrimitiveType(type, context.getManager(), context.getResolveScope());
           final IElementType opToken = expression.getOperationTokenType();
           final GroovyResolveResult[] candidates =
             TypesUtil.getOverloadedUnaryOperatorCandidates(boxed, opToken, expression, PsiType.EMPTY_ARRAY);

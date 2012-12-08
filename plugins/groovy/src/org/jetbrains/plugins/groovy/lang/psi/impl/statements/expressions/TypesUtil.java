@@ -224,15 +224,7 @@ public class TypesUtil {
     RANK_TO_TYPE.put(9, JAVA_LANG_NUMBER);
   }
 
-  public static boolean isAssignable(PsiType lType, PsiType rType, @NotNull PsiManager manager, @NotNull GlobalSearchScope scope, boolean allowConversion) {
-    if (allowConversion && isAssignableByMethodCallConversion(lType, rType, manager, scope, false)) {
-      return true;
-    }
-
-    return _isAssignable(lType, rType, manager, scope, allowConversion);
-  }
-
-  public static boolean isAssignable(@Nullable PsiType lType, @Nullable PsiType rType, @NotNull GroovyPsiElement context, boolean allowConversion) {
+  public static boolean isAssignable(@Nullable PsiType lType, @Nullable PsiType rType, @NotNull PsiElement context, boolean allowConversion) {
     if (rType instanceof PsiIntersectionType) {
       for (PsiType child : ((PsiIntersectionType)rType).getConjuncts()) {
         if (isAssignable(lType, child, context, allowConversion)) {
@@ -252,32 +244,27 @@ public class TypesUtil {
 
     if (allowConversion && isAssignableByMethodCallConversion(lType, rType, context, true)) return true;
 
-    return _isAssignable(lType, rType, context.getManager(), context.getResolveScope(), true);
-  }
-
-  private static boolean _isAssignable(@Nullable PsiType lType, @Nullable PsiType rType, @NotNull PsiManager manager, @NotNull GlobalSearchScope scope, boolean allowConversion) {
     if (lType == null || rType == null) {
       return false;
     }
 
     if (rType == PsiType.NULL && lType instanceof PsiPrimitiveType) return false;
 
-    if (allowConversion) {
-      //all numeric types are assignable
-      if (isNumericType(lType)) {
-        if (isNumericType(rType) || rType == PsiType.NULL) return true;
-      }
-      else if (isClassType(lType, JAVA_LANG_STRING)) {
+    final PsiManager manager = context.getManager();
+    final GlobalSearchScope scope = context.getResolveScope();
+
+    if (isNumericType(lType)) {
+      if (isNumericType(rType) || rType == PsiType.NULL) return true;
+    }
+    else if (isClassType(lType, JAVA_LANG_STRING)) {
+      return true;
+    }
+    else if (lType instanceof PsiArrayType) {
+      PsiType lComponentType = ((PsiArrayType)lType).getComponentType();
+      PsiType rComponentType = ClosureParameterEnhancer.findTypeForIteration(rType, manager, scope);
+      if (rComponentType != null && isAssignable(lComponentType, rComponentType, context, true)) {
         return true;
       }
-      else if (lType instanceof PsiArrayType) {
-        PsiType lComponentType = ((PsiArrayType)lType).getComponentType();
-        PsiType rComponentType = ClosureParameterEnhancer.findTypeForIteration(rType, manager, scope);
-        if (rComponentType != null && isAssignable(lComponentType, rComponentType, manager, scope, true)) {
-          return true;
-        }
-      }
-
     }
 
     rType = boxPrimitiveType(rType, manager, scope);
@@ -309,7 +296,7 @@ public class TypesUtil {
 
     if (isClassType(rType, GROOVY_LANG_GSTRING)) {
       final GroovyPsiManager grManager = GroovyPsiManager.getInstance(manager.getProject());
-      if (isAssignable(lType, grManager.createTypeByFQClassName(JAVA_LANG_STRING, scope), manager, scope, true)) {
+      if (isAssignable(lType, grManager.createTypeByFQClassName(JAVA_LANG_STRING, scope), context, true)) {
         return true;
       }
     }
@@ -346,14 +333,6 @@ public class TypesUtil {
     }
 
     return false;
-  }
-
-  public static boolean isAssignableByMethodCallConversion(@Nullable PsiType lType,
-                                                           @Nullable PsiType rType,
-                                                           @NotNull PsiManager manager,
-                                                           @NotNull GlobalSearchScope scope,
-                                                           final boolean allowConversion) {
-    //todo
   }
 
   @Nullable

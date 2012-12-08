@@ -204,7 +204,7 @@ public class SubstitutorComputer {
 
   private PsiType handleConversion(PsiType paramType, PsiType argType) {
     final GroovyPsiElement context = myPlace;
-    if (!TypesUtil.isAssignable(TypeConversionUtil.erasure(paramType), argType, context.getManager(), context.getResolveScope(), false) &&
+    if (!TypesUtil.isAssignable(TypeConversionUtil.erasure(paramType), argType, context, false) &&
         TypesUtil.isAssignableByMethodCallConversion(paramType, argType, context, true)) {
       return paramType;
     }

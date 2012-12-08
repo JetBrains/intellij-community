@@ -91,7 +91,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
         }
       }
 
-      if (PsiImplUtil.isSimpleArrayAccess(thisType, argTypes, manager, resolveScope, PsiUtil.isLValue(index))) {
+      if (PsiImplUtil.isSimpleArrayAccess(thisType, argTypes, index, PsiUtil.isLValue(index))) {
         return TypesUtil.boxPrimitiveType(((PsiArrayType)thisType).getComponentType(), manager, resolveScope);
       }
 
@@ -113,7 +113,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
       PsiType componentType = extractMapValueType(thisType, args, manager, resolveScope);
 
       if (overloadedOperatorType != null &&
-          (componentType == null || !TypesUtil.isAssignable(overloadedOperatorType, componentType, manager, resolveScope, true))) {
+          (componentType == null || !TypesUtil.isAssignable(overloadedOperatorType, componentType, index, true))) {
         return TypesUtil.boxPrimitiveType(overloadedOperatorType, manager, resolveScope);
       }
       return componentType;
@@ -185,7 +185,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
       name = "getAt";
     }
 
-    if (PsiImplUtil.isSimpleArrayAccess(thisType, argTypes, manager, resolveScope, PsiUtil.isLValue(this))) {
+    if (PsiImplUtil.isSimpleArrayAccess(thisType, argTypes, this, PsiUtil.isLValue(this))) {
       return GroovyResolveResult.EMPTY_ARRAY;
     }
 

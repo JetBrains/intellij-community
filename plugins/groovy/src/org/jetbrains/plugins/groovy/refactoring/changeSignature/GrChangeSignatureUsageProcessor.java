@@ -749,7 +749,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       public boolean value(PsiClassType o) {
         if (!InheritanceUtil.isInheritor(o, CommonClassNames.JAVA_LANG_EXCEPTION)) return false;
         for (PsiClassType type : handledExceptions) {
-          if (TypesUtil.isAssignable(type, o, context.getManager(), context.getResolveScope(), false)) return false;
+          if (TypesUtil.isAssignable(type, o, context, false)) return false;
         }
         return true;
       }

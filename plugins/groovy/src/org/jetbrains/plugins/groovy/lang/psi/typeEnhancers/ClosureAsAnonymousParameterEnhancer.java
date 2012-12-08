@@ -15,9 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.gpp.GppClosureParameterTypeProvider;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -45,10 +43,8 @@ public class ClosureAsAnonymousParameterEnhancer extends AbstractClosureParamete
       if (typeElement != null) {
         PsiType castType = typeElement.getType();
         expectedTypes = new HashSet<PsiType>(GroovyExpectedTypesProvider.getDefaultExpectedTypes(safeCastExpression));
-        PsiManager manager = closure.getManager();
-        GlobalSearchScope scope = closure.getResolveScope();
         for (PsiType expected : expectedTypes) {
-          if (!TypesUtil.isAssignable(expected, castType, manager, scope, true)) {
+          if (!TypesUtil.isAssignable(expected, castType, closure, true)) {
             expectedTypes.remove(expected);
           }
         }
