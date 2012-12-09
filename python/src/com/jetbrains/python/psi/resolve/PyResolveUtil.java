@@ -85,7 +85,7 @@ public class PyResolveUtil {
                                   @Nullable PsiElement roof) {
     // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment!!!
     final PsiElement realContext = PyPsiUtils.getRealContext(element);
-    final ScopeOwner originalOwner = ScopeUtil.getResolveScopeOwner(realContext);
+    final ScopeOwner originalOwner = ScopeUtil.getScopeOwner(realContext);
     final PsiElement parent = element.getParent();
     final boolean isGlobalOrNonlocal = parent instanceof PyGlobalStatement || parent instanceof PyNonlocalStatement;
     ScopeOwner owner = originalOwner;

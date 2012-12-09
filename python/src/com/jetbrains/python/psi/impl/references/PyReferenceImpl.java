@@ -34,7 +34,10 @@ import com.jetbrains.python.refactoring.PyDefUseUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -181,7 +184,21 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         ret.poke(definition, getRate(definition));
       }
     }
-    return ret;
+    final ResolveResultList results = new ResolveResultList();
+    for (RatedResolveResult r : ret) {
+      final PsiElement e = r.getElement();
+      if (e == element) {
+        continue;
+      }
+      if (element instanceof PyTargetExpression && PyPsiUtils.isBefore(element, e)) {
+        continue;
+      }
+      else {
+        results.add(r);
+      }
+    }
+
+    return results;
   }
 
   /**
@@ -223,7 +240,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     PsiElement uexpr = processor.getResult();
     if (uexpr != null) {
       if (processor.getDefiners().isEmpty()) {
-        final ScopeOwner originalOwner = ScopeUtil.getResolveScopeOwner(realContext);
+        final ScopeOwner originalOwner = ScopeUtil.getScopeOwner(realContext);
         final ScopeOwner owner = ScopeUtil.getScopeOwner(uexpr);
         if (owner != null) {
           final Scope scope = ControlFlowCache.getScope(owner);
@@ -233,19 +250,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           else if (owner == originalOwner && !scope.isGlobal(referencedName)) {
             final ResolveResultList latest = resolveToLatestDefs(owner, myElement, referencedName);
             if (!latest.isEmpty()) {
-              if (myElement instanceof PyTargetExpression) {
-                final RatedResolveResult result = latest.get(0);
-                final PsiElement element = result.getElement();
-                if (element instanceof PyTargetExpression) {
-                  if (PyPsiUtils.isBefore(element, myElement)) {
-                    return latest;
-                  }
-                  else {
-                    ret.poke(myElement, getRate(myElement));
-                    return ret;
-                  }
-                }
-              }
               return latest;
             }
             if (owner instanceof PyClass) {
@@ -257,6 +261,12 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
               }
             }
             else if (!isCythonLevel(myElement)) {
+              uexpr = null;
+            }
+          }
+          else if (owner != originalOwner && originalOwner != null && !scope.isGlobal(referencedName)) {
+            final Scope originalScope = ControlFlowCache.getScope(originalOwner);
+            if (originalScope.containsDeclaration(referencedName)) {
               uexpr = null;
             }
           }
@@ -360,7 +370,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     if (CythonLanguageDialect.isInsideCythonFile(elt) && elt instanceof CythonIncludeStatement) {
       rate = RatedResolveResult.RATE_LOW;
     }
-    else if (elt instanceof PyImportElement || elt instanceof PyStarImportElement) {
+    else if (elt instanceof PyImportElement || elt instanceof PyStarImportElement || elt instanceof PyReferenceExpression) {
       rate = RatedResolveResult.RATE_LOW;
     }
     else if (elt instanceof PyFile) {

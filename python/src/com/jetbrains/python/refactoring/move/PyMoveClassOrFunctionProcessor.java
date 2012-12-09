@@ -135,7 +135,7 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
     List<PsiElement> topLevelAtDestination = new ArrayList<PsiElement>();
     for (UsageInfo usage : usages) {
       final PsiElement e = usage.getElement();
-      if (e != null && ScopeUtil.getResolveScopeOwner(e) == destination && getImportStatementByElement(e) == null) {
+      if (e != null && ScopeUtil.getScopeOwner(e) == destination && getImportStatementByElement(e) == null) {
         PsiElement topLevel = PsiTreeUtil.findFirstParent(e, new Condition<PsiElement>() {
           @Override
           public boolean value(PsiElement element) {

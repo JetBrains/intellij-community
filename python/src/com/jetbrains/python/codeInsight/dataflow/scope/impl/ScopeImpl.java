@@ -14,6 +14,7 @@ import com.jetbrains.python.codeInsight.dataflow.PyReachingDefsSemilattice;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,7 @@ public class ScopeImpl implements Scope {
   private final ScopeOwner myFlowOwner;
   private volatile Map<String, PsiNamedElement> myNamedElements;
   private volatile List<NameDefiner> myNameDefiners;  // declarations which declare unknown set of names, such as 'from ... import *'
+  private volatile Set<String> myAugAssignments;
 
   public ScopeImpl(final ScopeOwner flowOwner) {
     myFlowOwner = flowOwner;
@@ -87,6 +89,13 @@ public class ScopeImpl implements Scope {
     return myNonlocals.contains(name);
   }
 
+  private boolean isAugAssignment(final String name) {
+    if (myAugAssignments == null || myNestedScopes == null) {
+      collectDeclarations();
+    }
+    return myAugAssignments.contains(name);
+  }
+
   public boolean containsDeclaration(final String name) {
     if (myNamedElements == null || myNameDefiners == null) {
       collectDeclarations();
@@ -95,6 +104,9 @@ public class ScopeImpl implements Scope {
       return false;
     }
     if (getNamedElement(name) != null) {
+      return true;
+    }
+    if (isAugAssignment(name)) {
       return true;
     }
     for (NameDefiner definer : getNameDefiners()) {
@@ -150,6 +162,7 @@ public class ScopeImpl implements Scope {
     final List<Scope> nestedScopes = new ArrayList<Scope>();
     final Set<String> globals = new HashSet<String>();
     final Set<String> nonlocals = new HashSet<String>();
+    final Set<String> augAssignments = new HashSet<String>();
     myFlowOwner.acceptChildren(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyTargetExpression(PyTargetExpression node) {
@@ -157,6 +170,14 @@ public class ScopeImpl implements Scope {
         if (node.getQualifier() == null && !(parent instanceof PyImportElement)) {
           super.visitPyTargetExpression(node);
         }
+      }
+
+      @Override
+      public void visitPyReferenceExpression(PyReferenceExpression node) {
+        if (PyAugAssignmentStatementNavigator.getStatementByTarget(node) != null) {
+          augAssignments.add(node.getName());
+        }
+        super.visitPyReferenceExpression(node);
       }
 
       @Override
@@ -226,5 +247,6 @@ public class ScopeImpl implements Scope {
     myNestedScopes = nestedScopes;
     myGlobals = globals;
     myNonlocals = nonlocals;
+    myAugAssignments = augAssignments;
   }
 }
