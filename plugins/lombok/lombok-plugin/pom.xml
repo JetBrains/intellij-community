@@ -175,17 +175,17 @@
       </plugin>
       <plugin>
         <groupId>com.google.code.maven-replacer-plugin</groupId>
-        <artifactId>maven-replacer-plugin</artifactId>
+        <artifactId>replacer</artifactId>
         <executions>
           <execution>
-            <phase>prepare-package</phase>
+            <phase>package</phase>
             <goals>
               <goal>replace</goal>
             </goals>
           </execution>
         </executions>
         <configuration>
-          <file>target/classes/META-INF/plugin.xml</file>
+          <file>${project.build.outputDirectory}/META-INF/plugin.xml</file>
           <replacements>
             <replacement>
               <token>&lt;version&gt;100&lt;/version&gt;</token>
