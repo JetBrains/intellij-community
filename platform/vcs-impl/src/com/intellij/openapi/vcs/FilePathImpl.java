@@ -184,7 +184,7 @@ public class FilePathImpl implements FilePath {
 
   @Override
   public FilePath getParentPath() {
-    if (myVirtualParent != null && myVirtualParent.isValid()) {
+    if (myVirtualParent != null && myVirtualParent.isValid() && myVirtualParent.getParent() != null) {
       return new FilePathImpl(myVirtualParent);
     }
 
