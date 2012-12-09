@@ -13,10 +13,11 @@ import java.util.List;
 /**
  * @author erokhins
  */
-public final class MutableNode extends AbstractMutableGraphElement implements Node {
+public final class MutableNode implements Node {
     private final Commit commit;
     private Type type = null;
     private MutableNodeRow row = null;
+    private Branch branch;
     private boolean visible = true;
 
     private final List<Edge> upEdges = new ArrayList<Edge>(2);
@@ -24,7 +25,6 @@ public final class MutableNode extends AbstractMutableGraphElement implements No
 
 
     public MutableNode(@NotNull Commit commit, @NotNull Branch branch) {
-        super(branch);
         this.commit = commit;
         this.branch = branch;
     }
@@ -97,6 +97,12 @@ public final class MutableNode extends AbstractMutableGraphElement implements No
     @Override
     public Commit getCommit() {
         return commit;
+    }
+
+    @NotNull
+    @Override
+    public Branch getBranch() {
+        return branch;
     }
 
     @Override

@@ -4,7 +4,7 @@ import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.graph.Graph;
-import org.hanuna.gitalk.graph.GraphPiece;
+import org.hanuna.gitalk.graph.GraphFragment;
 import org.hanuna.gitalk.graph.graph_elements.Branch;
 import org.hanuna.gitalk.graph.mutable_graph.GraphBuilder;
 import org.hanuna.gitalk.parser.GitLogParser;
@@ -62,7 +62,7 @@ public class GraphModelImplTest {
                 toStr(graph)
         );
 
-        GraphPiece piece = graph.relatePiece(getNode(graph, 1));
+        GraphFragment piece = graph.relatePiece(getNode(graph, 1));
         assertTrue(piece != null);
         piece.setSelected(true);
 
@@ -136,9 +136,9 @@ public class GraphModelImplTest {
                 toStr(graph)
         );
 
-        GraphPiece piece = graph.relatePiece(getNode(graph, 1));
-        assertTrue(piece != null);
-        Replace replace = piece.setVisible(false);
+        GraphFragment fragment = graph.relatePiece(getNode(graph, 1));
+        assertTrue(fragment != null);
+        Replace replace = fragment.setVisible(false);
         assertEquals(1, replace.from());
         assertEquals(7, replace.to());
         assertEquals(4, replace.addElementsCount());
@@ -159,7 +159,7 @@ public class GraphModelImplTest {
         );
 
 
-        replace = piece.setVisible(true);
+        replace = fragment.setVisible(true);
         assertEquals(1, replace.from());
         assertEquals(6, replace.to());
         assertEquals(5, replace.addElementsCount());

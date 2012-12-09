@@ -1,40 +1,16 @@
 package org.hanuna.gitalk.graph.mutable_graph;
 
-import org.hanuna.gitalk.graph.GraphPiece;
 import org.hanuna.gitalk.graph.graph_elements.Branch;
 import org.hanuna.gitalk.graph.graph_elements.Edge;
-import org.hanuna.gitalk.graph.graph_elements.GraphElement;
 import org.hanuna.gitalk.graph.graph_elements.Node;
-import org.hanuna.gitalk.graph.mutable_graph.graph_elements_impl.AbstractMutableGraphElement;
 import org.hanuna.gitalk.graph.mutable_graph.graph_elements_impl.MutableNode;
 import org.hanuna.gitalk.graph.mutable_graph.graph_elements_impl.SimpleEdge;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author erokhins
  */
 public class MutableGraphUtils {
-    /**
-     * upVisibleNode -> Piece
-     */
-    private static final Map<Edge, GraphPiece> hidePieses = new HashMap<Edge, GraphPiece>();
-
-    @Nullable
-    public static GraphPiece getHidePiece(@NotNull Edge edge) {
-        return hidePieses.get(edge);
-    }
-
-    public static void addHidePiece(@NotNull Edge edge, @NotNull GraphPiece piece) {
-        hidePieses.put(edge, piece);
-    }
-
-    public static void removeHidePiece(@NotNull Edge edge) {
-        hidePieses.remove(edge);
-    }
 
     @NotNull
     public static MutableNode assertCast(@NotNull Node node) {
@@ -61,14 +37,6 @@ public class MutableGraphUtils {
     public static void setVisible(@NotNull Node node, boolean visible) {
         MutableNode mutableNode = assertCast(node);
         mutableNode.setVisible(visible);
-    }
-
-    public static void setSelected(@NotNull GraphElement graphElement, boolean selected) {
-        if (graphElement instanceof AbstractMutableGraphElement) {
-            ((AbstractMutableGraphElement) graphElement).setSelected(selected);
-        } else {
-            throw new IllegalStateException("unexpected graph elements");
-        }
     }
 
     public static Edge firstDownEdge(@NotNull Node node) {

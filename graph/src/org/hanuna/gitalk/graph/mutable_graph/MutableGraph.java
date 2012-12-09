@@ -3,14 +3,9 @@ package org.hanuna.gitalk.graph.mutable_graph;
 import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.graph.Graph;
-import org.hanuna.gitalk.graph.GraphPiece;
 import org.hanuna.gitalk.graph.graph_elements.NodeRow;
-import org.hanuna.gitalk.graph.graph_elements.GraphElement;
-import org.hanuna.gitalk.graph.mutable_graph.graph_controller.GraphPieceController;
-import org.hanuna.gitalk.graph.mutable_graph.graph_controller.SimpleGraphPieceController;
 import org.hanuna.gitalk.graph.mutable_graph.graph_elements_impl.MutableNodeRow;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,30 +14,29 @@ import java.util.List;
  * @author erokhins
  */
 public class MutableGraph implements Graph {
-    private final GraphPieceController pieceController = new SimpleGraphPieceController(this);
     private final List<MutableNodeRow> allRows;
     private final List<MutableNodeRow> visibleRows;
 
     public MutableGraph(List<MutableNodeRow> allRows) {
         this.allRows = allRows;
         this.visibleRows = new ArrayList<MutableNodeRow>(allRows);
-        updateRowIndex();
+        recalculateRowIndex();
     }
 
-    public Replace fixRowIndex(int from, int to) {
-        if (from < 0 || to >= allRows.size() || from > to) {
-            throw new IllegalArgumentException("from: " + from + "to: " + to);
+    public Replace fixRowIndex(int fromRowIndex, int toRowIndex) {
+        if (fromRowIndex < 0 || toRowIndex >= allRows.size() || fromRowIndex > toRowIndex) {
+            throw new IllegalArgumentException("fromRowIndex: " + fromRowIndex + "toRowIndex: " + toRowIndex);
         }
-        MutableNodeRow upRow = visibleRows.get(from);
-        MutableNodeRow downRow = visibleRows.get(to);
+        MutableNodeRow upRow = visibleRows.get(fromRowIndex);
+        MutableNodeRow downRow = visibleRows.get(toRowIndex);
         for (int i = upRow.getLogIndex(); i <= downRow.getLogIndex(); i++) {
             allRows.get(i).updateVisibleNodes();
         }
-        updateRowIndex();
-        return new Replace(from, to, downRow.getRowIndex() - upRow.getRowIndex() - 1);
+        recalculateRowIndex();
+        return new Replace(fromRowIndex, toRowIndex, downRow.getRowIndex() - upRow.getRowIndex() - 1);
     }
 
-    private void updateRowIndex() {
+    private void recalculateRowIndex() {
         visibleRows.clear();
         int rowIndex = 0;
         for (MutableNodeRow row : allRows) {
@@ -59,12 +53,5 @@ public class MutableGraph implements Graph {
     public ReadOnlyList<NodeRow> getNodeRows() {
         return ReadOnlyList.<NodeRow>newReadOnlyList(visibleRows);
     }
-
-    @Nullable
-    @Override
-    public GraphPiece relatePiece(@NotNull GraphElement graphElement) {
-        return pieceController.relatePiece(graphElement);
-    }
-
 
 }

@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.graph.mutable_graph.graph_controller;
 
-import org.hanuna.gitalk.graph.GraphPiece;
+import org.hanuna.gitalk.graph.GraphFragment;
 import org.hanuna.gitalk.graph.graph_elements.Edge;
 import org.hanuna.gitalk.graph.graph_elements.GraphElement;
 import org.hanuna.gitalk.graph.graph_elements.Node;
@@ -64,11 +64,11 @@ public class SimpleGraphPieceController implements GraphPieceController {
         return node;
     }
 
-    private GraphPiece createGraphPiece(@NotNull Node up, @NotNull Node down) {
-        return new GraphPieceImpl(graph, up, down);
+    private GraphFragment createGraphPiece(@NotNull Node up, @NotNull Node down) {
+        return new GraphFragmentImpl(up, down);
     }
 
-    private GraphPiece relatePiece(@NotNull Node node) {
+    private GraphFragment relatePiece(@NotNull Node node) {
         if (node.getDownEdges().size() == 1) {
             Edge edge = firstDownEdge(node);
             if (edge.getType() == Edge.Type.HIDE_PIECE) {
@@ -95,7 +95,7 @@ public class SimpleGraphPieceController implements GraphPieceController {
         }
     }
 
-    private GraphPiece relatePiece(@NotNull Edge edge) {
+    private GraphFragment relatePiece(@NotNull Edge edge) {
         if (edge.getType() == Edge.Type.HIDE_PIECE) {
             return getHidePiece(edge);
         }
@@ -109,7 +109,7 @@ public class SimpleGraphPieceController implements GraphPieceController {
 
     @Nullable
     @Override
-    public GraphPiece relatePiece(@NotNull GraphElement graphElement) {
+    public GraphFragment relatePiece(@NotNull GraphElement graphElement) {
         Node node = graphElement.getNode();
         if (node != null) {
             return relatePiece(node);

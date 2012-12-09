@@ -8,8 +8,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface GraphElement {
 
-    public boolean selected();
-
     @NotNull
     public Branch getBranch();
 
