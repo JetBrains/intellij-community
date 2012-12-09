@@ -1,8 +1,8 @@
 package org.hanuna.gitalk;
 
 import org.hanuna.gitalk.common.ReadOnlyList;
-import org.hanuna.gitalk.graph.graph_elements.Edge;
 import org.hanuna.gitalk.graph.Graph;
+import org.hanuna.gitalk.graph.graph_elements.Edge;
 import org.hanuna.gitalk.graph.graph_elements.Node;
 import org.hanuna.gitalk.graph.graph_elements.NodeRow;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +39,12 @@ public class GraphTestUtils {
         s.append(toShortStr(node.getDownEdges())).append("|-");
         s.append(node.getType()).append("|-");
         s.append(node.getBranch().getNumberOfBranch()).append("|-");
-        s.append(node.getRowIndex());
+        s.append(node.getRowIndex()).append("|-");
+        if (node.selected()) {
+            s.append("s");
+        } else {
+            s.append("u");
+        }
         return s.toString();
     }
     public static String toStr(NodeRow row) {
@@ -74,7 +79,7 @@ public class GraphTestUtils {
                 return node;
             }
         }
-        return null;
+        throw new IllegalArgumentException();
     }
 
 }

@@ -29,7 +29,7 @@ public class GraphBuilder {
     private int getLogIndexOfCommit(Commit commit) {
         final CommitData data = commit.getData();
         if (data == null) {
-            return lastLogIndex;
+            return lastLogIndex + 1;
         } else {
             return data.getLogIndex();
         }
@@ -112,7 +112,7 @@ public class GraphBuilder {
             node.setType(Node.Type.END_COMMIT_NODE);
             nextRow.add(node);
         }
-        if (nextRow.getNodes().size() > 0) {
+        if (lastNodes.size() > 0) {
             rows.add(nextRow);
         }
     }
