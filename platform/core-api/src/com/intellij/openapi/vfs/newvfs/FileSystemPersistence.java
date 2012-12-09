@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,8 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public interface FileSystemPersistence {
-  void refresh(boolean asynchronous, Runnable postAction, @NotNull ModalityState modalityState);
+  void refresh(boolean asynchronous, @Nullable Runnable postAction, @NotNull ModalityState modalityState);
+
   int getCheapFileSystemModificationCount();
 
   @Nullable

@@ -50,6 +50,8 @@ public class VfsUtil extends VfsUtilCore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtil");
   public static final char VFS_PATH_SEPARATOR = '/';
 
+  public static final String LOCALHOST_URI_PATH_PREFIX = "localhost/";
+
   public static void saveText(@NotNull VirtualFile file, @NotNull String text) throws IOException {
     Charset charset = file.getCharset();
     file.setBinaryContent(text.getBytes(charset.name()));
@@ -464,16 +466,32 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   @NotNull
-  public static String fixURLforIDEA(@NotNull String url ) {
+  public static String fixURLforIDEA(@NotNull String url) {
+    // removeLocalhostPrefix - false due to backward compatibility reasons
+    return toIdeaUrl(url, false);
+  }
+
+  @NotNull
+  public static String toIdeaUrl(@NotNull String url) {
+    return toIdeaUrl(url, true);
+  }
+
+  @NotNull
+  public static String toIdeaUrl(@NotNull String url, boolean removeLocalhostPrefix) {
     int idx = url.indexOf(":/");
-    if( idx >= 0 && idx+2 < url.length() && url.charAt(idx+2) != '/' ) {
+    if (idx >= 0 && idx + 2 < url.length() && url.charAt(idx + 2) != '/') {
       String prefix = url.substring(0, idx);
-      String suffix = url.substring(idx+2);
+      String suffix = url.substring(idx + 2);
 
       if (SystemInfo.isWindows) {
-        url = prefix+"://"+suffix;
-      } else {
-        url = prefix+":///"+suffix;
+        return prefix + "://" + suffix;
+      }
+      else if (removeLocalhostPrefix && prefix.equals(StandardFileSystems.FILE_PROTOCOL) && suffix.startsWith(LOCALHOST_URI_PATH_PREFIX)) {
+        // sometimes (e.g. in Google Chrome for Mac) local file url is prefixed with 'localhost' so we need to remove it
+        return prefix + ":///" + suffix.substring(LOCALHOST_URI_PATH_PREFIX.length());
+      }
+      else {
+        return prefix + ":///" + suffix;
       }
     }
     return url;

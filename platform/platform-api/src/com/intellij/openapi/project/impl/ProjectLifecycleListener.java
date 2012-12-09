@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,33 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.openapi.project.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @author max
+ */
 public interface ProjectLifecycleListener {
   Topic<ProjectLifecycleListener> TOPIC = Topic.create("Various stages of project lifecycle notifications", ProjectLifecycleListener.class);
 
   void projectComponentsInitialized(Project project);
 
   void beforeProjectLoaded(@NotNull Project project);
+
   void afterProjectClosed(@NotNull Project project);
 
   abstract class Adapter implements ProjectLifecycleListener {
-    public void projectComponentsInitialized(final Project project) {}
+    public void projectComponentsInitialized(final Project project) { }
 
-    public void beforeProjectLoaded(@NotNull final Project project) {
+    public void beforeProjectLoaded(@NotNull final Project project) { }
 
-    }
-
-    public void afterProjectClosed(@NotNull Project project) {
-
-    }
+    public void afterProjectClosed(@NotNull Project project) { }
   }
 }

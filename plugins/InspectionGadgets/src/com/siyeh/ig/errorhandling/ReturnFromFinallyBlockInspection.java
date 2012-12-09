@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,14 +31,12 @@ public class ReturnFromFinallyBlockInspection extends BaseInspection {
 
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "return.from.finally.block.display.name");
+    return InspectionGadgetsBundle.message("return.from.finally.block.display.name");
   }
 
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "return.from.finally.block.problem.descriptor");
+    return InspectionGadgetsBundle.message("return.from.finally.block.problem.descriptor");
   }
 
   public boolean isEnabledByDefault() {
@@ -49,8 +47,7 @@ public class ReturnFromFinallyBlockInspection extends BaseInspection {
     return new ReturnFromFinallyBlockVisitor();
   }
 
-  private static class ReturnFromFinallyBlockVisitor
-    extends BaseInspectionVisitor {
+  private static class ReturnFromFinallyBlockVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitReturnStatement(@NotNull PsiReturnStatement statement) {

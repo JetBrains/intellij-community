@@ -49,9 +49,9 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
     myCondition = condition;
   }
 
-  @NotNull
-  @Override
-  public PsiReference[] createReferences(final GenericDomValue genericDomValue, PsiElement element, ConvertContext context) {
+  public static PsiReference[] createReferences(final DomElement genericDomValue,
+                                                PsiElement element,
+                                                @NotNull final Condition<PsiFileSystemItem> fileFilter) {
     ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(element);
     TextRange range = manipulator.getRangeInElement(element);
     String text = range.substring(element.getText());
@@ -62,7 +62,7 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
 
       @Override
       protected Condition<PsiFileSystemItem> getReferenceCompletionFilter() {
-        return myCondition;
+        return fileFilter;
       }
 
       @Override
@@ -118,6 +118,12 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
     };
 
     return set.getAllReferences();
+  }
+
+  @NotNull
+  @Override
+  public PsiReference[] createReferences(final GenericDomValue genericDomValue, PsiElement element, ConvertContext context) {
+    return createReferences(genericDomValue, element, myCondition);
   }
 
   @NotNull

@@ -242,7 +242,9 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
             if (topLevelClass != null) {
               String topName = topLevelClass.getQualifiedName();
               assert topName != null;
-              result.add(topName + qname.substring(topName.length()).replace('.', '$'));
+              if (qname.length() > topName.length()) {
+                result.add(topName + qname.substring(topName.length()).replace('.', '$'));
+              }
             }
           }
         }

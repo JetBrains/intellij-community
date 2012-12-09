@@ -510,6 +510,19 @@ import java.lang.annotation.Target;
     assertPreferredItems 0, 'contains', 'containsAll'
   }
 
+  public void testDeepestSuperMethodStats() {
+    invokeCompletion(getTestName(false) + ".java")
+    assertPreferredItems 0, 'addX', 'addY'
+    myFixture.type('y\n;set1.ad')
+
+    myFixture.completeBasic()
+    assertPreferredItems 0, 'addY', 'addX'
+    myFixture.type('x\n;set2.ad')
+
+    myFixture.completeBasic()
+    assertPreferredItems 0, 'addX', 'addY'
+  }
+
   public void testCommonPrefixMoreImportantThanKind() {
     CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE;
     checkPreferredItems(0, 'PsiElement', 'psiElement')

@@ -153,7 +153,7 @@ public class JavaCompletionUtil {
       return type;
     }
 
-    return (T)type.accept(new PsiTypeVisitor<PsiType>() {
+    T result = (T)type.accept(new PsiTypeVisitor<PsiType>() {
 
       @Override
       public PsiType visitArrayType(final PsiArrayType arrayType) {
@@ -200,6 +200,10 @@ public class JavaCompletionUtil {
         return wildcardType.isExtends() ? PsiWildcardType.createExtends(manager, bound) : PsiWildcardType.createSuper(manager, bound);
       }
     });
+    if (result == null) {
+      throw new AssertionError("Null result for type " + type + " of class " + type.getClass());
+    }
+    return result;
   }
 
   @Nullable

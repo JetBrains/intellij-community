@@ -894,7 +894,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myScrollPane.getVerticalScrollBar().addAdjustmentListener(new AdjustmentListener() {
       @Override
       public void adjustmentValueChanged(AdjustmentEvent e) {
-        if (!myShown || myUpdating) return;
+        if (!myShown || myUpdating || myDisposed) return;
         alarm.addRequest(new Runnable() {
           @Override
           public void run() {

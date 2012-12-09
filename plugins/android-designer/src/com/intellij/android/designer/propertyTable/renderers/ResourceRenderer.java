@@ -41,7 +41,7 @@ import java.util.Set;
 /**
  * @author Alexander Lobas
  */
-public class ResourceRenderer extends AbstractResourceRenderer {
+public class ResourceRenderer extends AbstractResourceRenderer<String> {
   public static final String[] DIMENSIONS = {"dp", "sp", "pt", "px", "mm", "in"};
   private static final String ANDROID_PREFIX = "@android:";
 

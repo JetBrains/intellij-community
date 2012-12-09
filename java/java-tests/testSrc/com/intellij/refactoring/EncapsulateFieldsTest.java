@@ -32,11 +32,11 @@ public class EncapsulateFieldsTest extends MultiFileTestCase{
   }
 
   public void testHideOverriderMethod() throws Exception {
-    doTest("i", "A", "There is already a <b><code>method <b><code>B.getI()</code></b></code></b> which would hide generated getter for a.i");
+    doTest("i", "A", "There is already a method <b><code>B.getI()</code></b> which would hide generated getter for a.i");
   }
 
   public void testHideOuterclassMethod() throws Exception {
-    doTest("i", "A.B", "There is already a <b><code>method <b><code>A.getI()</code></b></code></b> which would be hidden by generated getter");
+    doTest("i", "A.B", "There is already a method <b><code>A.getI()</code></b> which would be hidden by generated getter");
   }
 
   public void testMoveJavadocToGetter() throws Exception {

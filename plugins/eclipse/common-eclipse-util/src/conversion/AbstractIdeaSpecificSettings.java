@@ -21,13 +21,14 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.IdeaXml;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * User: anna
  * Date: 11/8/12
  */
 public abstract class AbstractIdeaSpecificSettings<T, C, SdkType> {
-  public void readIDEASpecific(final Element root, T model, @Nullable SdkType projectSdkType) throws InvalidDataException {
+  public void readIDEASpecific(final Element root, T model, @Nullable SdkType projectSdkType, Map<String, String> levels) throws InvalidDataException {
     expandElement(root, model);
 
     readLanguageLevel(root, model);
@@ -49,7 +50,10 @@ public abstract class AbstractIdeaSpecificSettings<T, C, SdkType> {
     setupJdk(root, model, projectSdkType);
     setupLibraryRoots(root, model);
     overrideModulesScopes(root, model);
+    readLibraryLevels(root, levels);
   }
+
+  protected abstract void readLibraryLevels(Element root, Map<String, String> levels);
 
   protected abstract C[] getEntries(T model);
 

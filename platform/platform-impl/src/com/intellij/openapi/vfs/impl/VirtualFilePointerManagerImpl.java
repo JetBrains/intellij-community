@@ -24,7 +24,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.objectTree.ObjectNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
@@ -55,7 +54,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   // compare by identity because VirtualFilePointerContainer has too smart equals
   // guarded by myContainers
   private final Set<VirtualFilePointerContainerImpl> myContainers = ContainerUtil.<VirtualFilePointerContainerImpl>newIdentityTroveSet();
-  @NotNull private final VirtualFileManagerEx myVirtualFileManager;
+  @NotNull private final VirtualFileManager myVirtualFileManager;
   @NotNull private final MessageBus myBus;
   private static final Comparator<String> URL_COMPARATOR = SystemInfo.isFileSystemCaseSensitive ? new Comparator<String>() {
     @Override
@@ -69,12 +68,12 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
   };
 
-  VirtualFilePointerManagerImpl(@NotNull VirtualFileManagerEx virtualFileManagerEx,
+  VirtualFilePointerManagerImpl(@NotNull VirtualFileManager virtualFileManager,
                                 @NotNull MessageBus bus,
                                 @NotNull TempFileSystem tempFileSystem,
                                 @NotNull LocalFileSystem localFileSystem,
                                 @NotNull JarFileSystem jarFileSystem) {
-    myVirtualFileManager = virtualFileManagerEx;
+    myVirtualFileManager = virtualFileManager;
     myBus = bus;
     bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, this);
     TEMP_FILE_SYSTEM = tempFileSystem;

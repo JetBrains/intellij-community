@@ -116,7 +116,7 @@ public class ImplementationSearcher {
     protected PsiElement[] searchDefinitions(final PsiElement element) {
       final PsiElement[][] result = new PsiElement[1][];
 
-      if (accept(element)) {
+      if (canShowPopupWithOneItem(element)) {
         return new PsiElement[]{element};
       }
 
@@ -144,7 +144,11 @@ public class ImplementationSearcher {
       }
       return result[0];
     }
-    
+
+    protected boolean canShowPopupWithOneItem(PsiElement element) {
+      return accept(element);
+    }
+
     protected boolean accept(PsiElement element) {
       return true;
     }

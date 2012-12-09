@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,16 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.FilterInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.charset.Charset;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -103,7 +106,7 @@ public class URLUtil {
     while (i < len) {
       char c = s.charAt(i);
       if (c == '%') {
-        List<Integer> bytes = new ArrayList<Integer>();
+        TIntArrayList bytes = new TIntArrayList();
         while (i + 2 < len && s.charAt(i) == '%') {
           final int d1 = decode(s.charAt(i + 1));
           final int d2 = decode(s.charAt(i + 2));
@@ -118,14 +121,10 @@ public class URLUtil {
         if (!bytes.isEmpty()) {
           final byte[] bytesArray = new byte[bytes.size()];
           for (int j = 0; j < bytes.size(); j++) {
-            bytesArray[j] = (byte)bytes.get(j).intValue();
+            bytesArray[j] = (byte)bytes.getQuick(j);
           }
-          try {
-            decoded.append(new String(bytesArray, "UTF-8"));
-            continue;
-          }
-          catch (UnsupportedEncodingException ignored) {
-          }
+          decoded.append(new String(bytesArray, Charset.forName("UTF-8")));
+          continue;
         }
       }
 
