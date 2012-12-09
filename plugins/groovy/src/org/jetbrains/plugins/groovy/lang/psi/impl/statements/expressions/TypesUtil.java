@@ -256,10 +256,10 @@ public class TypesUtil {
     if (isNumericType(lType)) {
       if (isNumericType(rType) || rType == PsiType.NULL) return true;
     }
-    else if (isClassType(lType, JAVA_LANG_STRING)) {
+    if (allowConversion && isClassType(lType, JAVA_LANG_STRING)) {
       return true;
     }
-    else if (lType instanceof PsiArrayType) {
+    if (lType instanceof PsiArrayType) {
       PsiType lComponentType = ((PsiArrayType)lType).getComponentType();
       PsiType rComponentType = ClosureParameterEnhancer.findTypeForIteration(rType, manager, scope);
       if (rComponentType != null && isAssignable(lComponentType, rComponentType, context, true)) {
@@ -316,7 +316,7 @@ public class TypesUtil {
 
     if (rType instanceof GrMapType || rType instanceof GrTupleType) {
       Boolean result = isAssignableForNativeTypes(lType, (PsiClassType)rType, context, allowConversion);
-      if (result != null) return result.booleanValue();
+      if (result != null && result.booleanValue()) return true;
     }
 
     if (TypeConversionUtil.isAssignable(lType, rType)) {

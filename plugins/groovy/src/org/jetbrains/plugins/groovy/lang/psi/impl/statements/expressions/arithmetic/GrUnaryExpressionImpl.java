@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,8 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -83,7 +83,7 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
         final PsiType type = operand.getType();
         if (type == null) return GroovyResolveResult.EMPTY_ARRAY;
 
-        return TypesUtil.getOverloadedUnaryOperatorCandidates(type, unary.getOperationTokenType(), unary, PsiType.EMPTY_ARRAY);
+        return TypesUtil.getOverloadedUnaryOperatorCandidates(type, unary.getOperationTokenType(), operand, PsiType.EMPTY_ARRAY);
       }
     };
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,11 +49,12 @@ public abstract class GrBinaryExpressionImpl extends GrExpressionImpl implements
       public GroovyResolveResult[] resolve(@NotNull GrBinaryExpressionImpl binary, boolean incompleteCode) {
         final IElementType opType = binary.getOperationTokenType();
 
-        final PsiType lType = binary.getLeftOperand().getType();
+        final GrExpression left = binary.getLeftOperand();
+        final PsiType lType = left.getType();
         if (lType == null) return GroovyResolveResult.EMPTY_ARRAY;
 
         PsiType rType = getRightType(binary);
-        return TypesUtil.getOverloadedOperatorCandidates(lType, opType, binary, new PsiType[]{rType});
+        return TypesUtil.getOverloadedOperatorCandidates(lType, opType, left, new PsiType[]{rType});
       }
     };
 

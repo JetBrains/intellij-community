@@ -113,7 +113,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
       PsiType componentType = extractMapValueType(thisType, args, manager, resolveScope);
 
       if (overloadedOperatorType != null &&
-          (componentType == null || !TypesUtil.isAssignable(overloadedOperatorType, componentType, index, true))) {
+          (componentType == null || !TypesUtil.isAssignable(overloadedOperatorType, componentType, selected, true))) {
         return TypesUtil.boxPrimitiveType(overloadedOperatorType, manager, resolveScope);
       }
       return componentType;
@@ -126,14 +126,13 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
       return TypesUtil.boxPrimitiveType(substituted, manager, resolveScope);
     }
   };
-  private static final ResolveCache.PolyVariantResolver<MyReference> RESOLVER =
-    new ResolveCache.PolyVariantResolver<MyReference>() {
-      @NotNull
-      @Override
-      public GroovyResolveResult[] resolve(@NotNull MyReference index, boolean incompleteCode) {
-        return index.getElement().resolveImpl(incompleteCode, null);
-      }
-    };
+  private static final ResolveCache.PolyVariantResolver<MyReference> RESOLVER = new ResolveCache.PolyVariantResolver<MyReference>() {
+    @NotNull
+    @Override
+    public GroovyResolveResult[] resolve(@NotNull MyReference index, boolean incompleteCode) {
+      return index.getElement().resolveImpl(incompleteCode, null);
+    }
+  };
 
   private MyReference myReference = new MyReference();
 
@@ -149,7 +148,6 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
       .getArgumentTypes(argList.getNamedArguments(), argList.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY, true, upToArgument, false);
     if (argTypes == null) return GroovyResolveResult.EMPTY_ARRAY;
 
-    final PsiManager manager = getManager();
     final GlobalSearchScope resolveScope = getResolveScope();
 
     if (argTypes.length == 0) {
@@ -189,7 +187,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
       return GroovyResolveResult.EMPTY_ARRAY;
     }
 
-    candidates = ResolveUtil.getMethodCandidates(thisType, name, this, true, incompleteCode, false, argTypes);
+    candidates = ResolveUtil.getMethodCandidates(thisType, name, invoked, true, incompleteCode, false, argTypes);
 
     //hack for remove DefaultGroovyMethods.getAt(Object, ...)
     if (candidates.length == 2) {
@@ -208,7 +206,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
 
     if (candidates.length != 1) {
       final GrTupleType tupleType = new GrTupleType(argTypes, JavaPsiFacade.getInstance(getProject()), resolveScope);
-      final GroovyResolveResult[] tupleCandidates = ResolveUtil.getMethodCandidates(thisType, name, this, tupleType);
+      final GroovyResolveResult[] tupleCandidates = ResolveUtil.getMethodCandidates(thisType, name, invoked, tupleType);
       if (incompleteCode) {
         candidates = ArrayUtil.mergeArrays(candidates, tupleCandidates, new ArrayFactory<GroovyResolveResult>() {
           @Override
