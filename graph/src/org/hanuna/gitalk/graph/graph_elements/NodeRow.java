@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 public interface NodeRow {
 
     @NotNull
-    public ReadOnlyList<Node> getNodes();
+    public ReadOnlyList<Node> getVisibleNodes();
 
     public int getRowIndex();
 }

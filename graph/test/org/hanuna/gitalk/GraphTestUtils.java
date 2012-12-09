@@ -19,6 +19,9 @@ public class GraphTestUtils {
         s.append(edge.getDownNode().getCommit().hash().toStrHash()).append(":");
         s.append(edge.getType()).append(":");
         s.append(edge.getBranch().getNumberOfBranch());
+        if (edge.selected()) {
+            s.append(":s");
+        }
         return s.toString();
     }
     public static String toShortStr(ReadOnlyList<Edge> edges) {
@@ -39,17 +42,15 @@ public class GraphTestUtils {
         s.append(toShortStr(node.getDownEdges())).append("|-");
         s.append(node.getType()).append("|-");
         s.append(node.getBranch().getNumberOfBranch()).append("|-");
-        s.append(node.getRowIndex()).append("|-");
+        s.append(node.getRowIndex());
         if (node.selected()) {
-            s.append("s");
-        } else {
-            s.append("u");
+            s.append("|-s");
         }
         return s.toString();
     }
     public static String toStr(NodeRow row) {
         StringBuilder s = new StringBuilder();
-        ReadOnlyList<Node> nodes = row.getNodes();
+        ReadOnlyList<Node> nodes = row.getVisibleNodes();
         if (nodes.size() > 0) {
             s.append(toStr(nodes.get(0)));
         }
@@ -74,7 +75,7 @@ public class GraphTestUtils {
     @NotNull
     public static Node getNode(Graph graph, int rowIndex) {
         NodeRow row = graph.getNodeRows().get(rowIndex);
-        for (Node node : row.getNodes()) {
+        for (Node node : row.getVisibleNodes()) {
             if (node.getType() == Node.Type.COMMIT_NODE) {
                 return node;
             }

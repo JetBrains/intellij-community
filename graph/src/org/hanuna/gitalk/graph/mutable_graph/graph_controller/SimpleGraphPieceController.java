@@ -54,7 +54,7 @@ public class SimpleGraphPieceController implements GraphPieceController {
             return null;
         }
         while (node.getUpEdges().size() == 1) {
-            Node prevNode = firstUpEdge(node).getDownNode();
+            Node prevNode = firstUpEdge(node).getUpNode();
             if (simpleNode(prevNode)) {
                 node = prevNode;
             } else {

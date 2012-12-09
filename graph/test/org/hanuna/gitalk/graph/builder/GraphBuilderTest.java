@@ -33,7 +33,7 @@ public class GraphBuilderTest {
 
     @Test
     public void simple1() throws IOException {
-        runTest("12|-", "12|-|-|-COMMIT_NODE|-0|-0|-u");
+        runTest("12|-", "12|-|-|-COMMIT_NODE|-0|-0");
     }
 
     @Test
@@ -42,8 +42,8 @@ public class GraphBuilderTest {
                 "12|-af\n" +
                 "af|-",
 
-                "12|-|-12:af:USUAL:0|-COMMIT_NODE|-0|-0|-u\n" +
-                "af|-12:af:USUAL:0|-|-COMMIT_NODE|-0|-1|-u"
+                "12|-|-12:af:USUAL:0|-COMMIT_NODE|-0|-0\n" +
+                "af|-12:af:USUAL:0|-|-COMMIT_NODE|-0|-1"
         );
     }
 
@@ -60,16 +60,16 @@ public class GraphBuilderTest {
                 "a7|-\n" +
                 "a8|-",
 
-                "a0|-|-a0:a3:USUAL:0 a0:a1:USUAL:1|-COMMIT_NODE|-0|-0|-u\n" +
-                "a1|-a0:a1:USUAL:1|-a1:a2:USUAL:1 a1:a4:USUAL:2|-COMMIT_NODE|-1|-1|-u\n" +
-                "a2|-a1:a2:USUAL:1|-a2:a3:USUAL:1 a2:a5:USUAL:3 a2:a8:USUAL:4|-COMMIT_NODE|-1|-2|-u\n" +
-                "a3|-a0:a3:USUAL:0 a2:a3:USUAL:1|-a3:a6:USUAL:0|-COMMIT_NODE|-0|-3|-u\n" +
-                "a4|-a1:a4:USUAL:2|-a4:a7:USUAL:2|-COMMIT_NODE|-2|-4|-u\n" +
-                "a5|-a2:a5:USUAL:3|-a5:a7:USUAL:3|-COMMIT_NODE|-3|-5|-u\n" +
-                "a7|-a4:a7:USUAL:2 a5:a7:USUAL:3|-a7:a7:USUAL:2|-EDGE_NODE|-2|-6|-u\n" +
-                "   a6|-a3:a6:USUAL:0|-a6:a7:USUAL:0|-COMMIT_NODE|-0|-6|-u\n" +
-                "a7|-a7:a7:USUAL:2 a6:a7:USUAL:0|-|-COMMIT_NODE|-0|-7|-u\n" +
-                "a8|-a2:a8:USUAL:4|-|-COMMIT_NODE|-4|-8|-u"
+                "a0|-|-a0:a3:USUAL:0 a0:a1:USUAL:1|-COMMIT_NODE|-0|-0\n" +
+                "a1|-a0:a1:USUAL:1|-a1:a2:USUAL:1 a1:a4:USUAL:2|-COMMIT_NODE|-1|-1\n" +
+                "a2|-a1:a2:USUAL:1|-a2:a3:USUAL:1 a2:a5:USUAL:3 a2:a8:USUAL:4|-COMMIT_NODE|-1|-2\n" +
+                "a3|-a0:a3:USUAL:0 a2:a3:USUAL:1|-a3:a6:USUAL:0|-COMMIT_NODE|-0|-3\n" +
+                "a4|-a1:a4:USUAL:2|-a4:a7:USUAL:2|-COMMIT_NODE|-2|-4\n" +
+                "a5|-a2:a5:USUAL:3|-a5:a7:USUAL:3|-COMMIT_NODE|-3|-5\n" +
+                "a7|-a4:a7:USUAL:2 a5:a7:USUAL:3|-a7:a7:USUAL:2|-EDGE_NODE|-2|-6\n" +
+                "   a6|-a3:a6:USUAL:0|-a6:a7:USUAL:0|-COMMIT_NODE|-0|-6\n" +
+                "a7|-a7:a7:USUAL:2 a6:a7:USUAL:0|-|-COMMIT_NODE|-0|-7\n" +
+                "a8|-a2:a8:USUAL:4|-|-COMMIT_NODE|-4|-8"
         );
     }
 
@@ -86,17 +86,17 @@ public class GraphBuilderTest {
                 "a7|-a8\n" +
                 "a8|-",
 
-                "a0|-|-a0:a5:USUAL:0 a0:a1:USUAL:1 a0:a3:USUAL:2|-COMMIT_NODE|-0|-0|-u\n" +
-                "a1|-a0:a1:USUAL:1|-a1:a4:USUAL:1|-COMMIT_NODE|-1|-1|-u\n" +
-                "a2|-|-a2:a6:USUAL:3|-COMMIT_NODE|-3|-2|-u\n" +
-                "a3|-a0:a3:USUAL:2|-a3:a6:USUAL:2|-COMMIT_NODE|-2|-3|-u\n" +
-                "a6|-a2:a6:USUAL:3 a3:a6:USUAL:2|-a6:a6:USUAL:3|-EDGE_NODE|-3|-4|-u\n" +
-                "   a4|-a1:a4:USUAL:1|-a4:a6:USUAL:1|-COMMIT_NODE|-1|-4|-u\n" +
-                "a6|-a6:a6:USUAL:3 a4:a6:USUAL:1|-a6:a6:USUAL:3|-EDGE_NODE|-3|-5|-u\n" +
-                "   a5|-a0:a5:USUAL:0|-a5:a6:USUAL:0|-COMMIT_NODE|-0|-5|-u\n" +
-                "a6|-a6:a6:USUAL:3 a5:a6:USUAL:0|-a6:a7:USUAL:0|-COMMIT_NODE|-0|-6|-u\n" +
-                "a7|-a6:a7:USUAL:0|-a7:a8:USUAL:0|-COMMIT_NODE|-0|-7|-u\n" +
-                "a8|-a7:a8:USUAL:0|-|-COMMIT_NODE|-0|-8|-u"
+                "a0|-|-a0:a5:USUAL:0 a0:a1:USUAL:1 a0:a3:USUAL:2|-COMMIT_NODE|-0|-0\n" +
+                "a1|-a0:a1:USUAL:1|-a1:a4:USUAL:1|-COMMIT_NODE|-1|-1\n" +
+                "a2|-|-a2:a6:USUAL:3|-COMMIT_NODE|-3|-2\n" +
+                "a3|-a0:a3:USUAL:2|-a3:a6:USUAL:2|-COMMIT_NODE|-2|-3\n" +
+                "a6|-a2:a6:USUAL:3 a3:a6:USUAL:2|-a6:a6:USUAL:3|-EDGE_NODE|-3|-4\n" +
+                "   a4|-a1:a4:USUAL:1|-a4:a6:USUAL:1|-COMMIT_NODE|-1|-4\n" +
+                "a6|-a6:a6:USUAL:3 a4:a6:USUAL:1|-a6:a6:USUAL:3|-EDGE_NODE|-3|-5\n" +
+                "   a5|-a0:a5:USUAL:0|-a5:a6:USUAL:0|-COMMIT_NODE|-0|-5\n" +
+                "a6|-a6:a6:USUAL:3 a5:a6:USUAL:0|-a6:a7:USUAL:0|-COMMIT_NODE|-0|-6\n" +
+                "a7|-a6:a7:USUAL:0|-a7:a8:USUAL:0|-COMMIT_NODE|-0|-7\n" +
+                "a8|-a7:a8:USUAL:0|-|-COMMIT_NODE|-0|-8"
         );
     }
 
@@ -112,17 +112,17 @@ public class GraphBuilderTest {
                 "7|-8\n" +
                 "8|-"
                 ,
-                "1|-|-1:2:USUAL:0 1:3:USUAL:1 1:4:USUAL:2|-COMMIT_NODE|-0|-0|-u\n" +
-                "2|-1:2:USUAL:0|-2:5:USUAL:0|-COMMIT_NODE|-0|-1|-u\n" +
-                "3|-1:3:USUAL:1|-3:8:USUAL:1|-COMMIT_NODE|-1|-2|-u\n" +
-                "4|-1:4:USUAL:2|-4:6:USUAL:2 4:8:USUAL:3|-COMMIT_NODE|-2|-3|-u\n" +
-                "8|-3:8:USUAL:1 4:8:USUAL:3|-8:8:USUAL:1|-EDGE_NODE|-1|-4|-u\n" +
-                "   5|-2:5:USUAL:0|-5:8:USUAL:0|-COMMIT_NODE|-0|-4|-u\n" +
-                "8|-8:8:USUAL:1 5:8:USUAL:0|-8:8:USUAL:1|-EDGE_NODE|-1|-5|-u\n" +
-                "   6|-4:6:USUAL:2|-6:8:USUAL:2 6:7:USUAL:4|-COMMIT_NODE|-2|-5|-u\n" +
-                "8|-8:8:USUAL:1 6:8:USUAL:2|-8:8:USUAL:1|-EDGE_NODE|-1|-6|-u\n" +
-                "   7|-6:7:USUAL:4|-7:8:USUAL:4|-COMMIT_NODE|-4|-6|-u\n" +
-                "8|-8:8:USUAL:1 7:8:USUAL:4|-|-COMMIT_NODE|-1|-7|-u"
+                "1|-|-1:2:USUAL:0 1:3:USUAL:1 1:4:USUAL:2|-COMMIT_NODE|-0|-0\n" +
+                "2|-1:2:USUAL:0|-2:5:USUAL:0|-COMMIT_NODE|-0|-1\n" +
+                "3|-1:3:USUAL:1|-3:8:USUAL:1|-COMMIT_NODE|-1|-2\n" +
+                "4|-1:4:USUAL:2|-4:6:USUAL:2 4:8:USUAL:3|-COMMIT_NODE|-2|-3\n" +
+                "8|-3:8:USUAL:1 4:8:USUAL:3|-8:8:USUAL:1|-EDGE_NODE|-1|-4\n" +
+                "   5|-2:5:USUAL:0|-5:8:USUAL:0|-COMMIT_NODE|-0|-4\n" +
+                "8|-8:8:USUAL:1 5:8:USUAL:0|-8:8:USUAL:1|-EDGE_NODE|-1|-5\n" +
+                "   6|-4:6:USUAL:2|-6:8:USUAL:2 6:7:USUAL:4|-COMMIT_NODE|-2|-5\n" +
+                "8|-8:8:USUAL:1 6:8:USUAL:2|-8:8:USUAL:1|-EDGE_NODE|-1|-6\n" +
+                "   7|-6:7:USUAL:4|-7:8:USUAL:4|-COMMIT_NODE|-4|-6\n" +
+                "8|-8:8:USUAL:1 7:8:USUAL:4|-|-COMMIT_NODE|-1|-7"
                  );
     }
 
@@ -136,16 +136,16 @@ public class GraphBuilderTest {
                 "5|-8\n" +
                 "6|-8 7"
                 ,
-                "1|-|-1:2:USUAL:0 1:3:USUAL:1 1:4:USUAL:2|-COMMIT_NODE|-0|-0|-u\n" +
-                "2|-1:2:USUAL:0|-2:5:USUAL:0|-COMMIT_NODE|-0|-1|-u\n" +
-                "3|-1:3:USUAL:1|-3:8:USUAL:1|-COMMIT_NODE|-1|-2|-u\n" +
-                "4|-1:4:USUAL:2|-4:6:USUAL:2 4:8:USUAL:3|-COMMIT_NODE|-2|-3|-u\n" +
-                "8|-3:8:USUAL:1 4:8:USUAL:3|-8:8:USUAL:1|-EDGE_NODE|-1|-4|-u\n" +
-                "   5|-2:5:USUAL:0|-5:8:USUAL:0|-COMMIT_NODE|-0|-4|-u\n" +
-                "8|-8:8:USUAL:1 5:8:USUAL:0|-8:8:USUAL:1|-EDGE_NODE|-1|-5|-u\n" +
-                "   6|-4:6:USUAL:2|-6:8:USUAL:2 6:7:USUAL:4|-COMMIT_NODE|-2|-5|-u\n" +
-                "7|-6:7:USUAL:4|-|-END_COMMIT_NODE|-4|-6|-u\n" +
-                "   8|-8:8:USUAL:1 6:8:USUAL:2|-|-END_COMMIT_NODE|-1|-6|-u"
+                "1|-|-1:2:USUAL:0 1:3:USUAL:1 1:4:USUAL:2|-COMMIT_NODE|-0|-0\n" +
+                "2|-1:2:USUAL:0|-2:5:USUAL:0|-COMMIT_NODE|-0|-1\n" +
+                "3|-1:3:USUAL:1|-3:8:USUAL:1|-COMMIT_NODE|-1|-2\n" +
+                "4|-1:4:USUAL:2|-4:6:USUAL:2 4:8:USUAL:3|-COMMIT_NODE|-2|-3\n" +
+                "8|-3:8:USUAL:1 4:8:USUAL:3|-8:8:USUAL:1|-EDGE_NODE|-1|-4\n" +
+                "   5|-2:5:USUAL:0|-5:8:USUAL:0|-COMMIT_NODE|-0|-4\n" +
+                "8|-8:8:USUAL:1 5:8:USUAL:0|-8:8:USUAL:1|-EDGE_NODE|-1|-5\n" +
+                "   6|-4:6:USUAL:2|-6:8:USUAL:2 6:7:USUAL:4|-COMMIT_NODE|-2|-5\n" +
+                "7|-6:7:USUAL:4|-|-END_COMMIT_NODE|-4|-6\n" +
+                "   8|-8:8:USUAL:1 6:8:USUAL:2|-|-END_COMMIT_NODE|-1|-6"
         );
     }
 

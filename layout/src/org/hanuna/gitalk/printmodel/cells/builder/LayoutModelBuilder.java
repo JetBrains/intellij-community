@@ -38,7 +38,7 @@ public class LayoutModelBuilder {
         MutableCellRow firstCellRow = new MutableCellRow();
         firstCellRow.setRow(firstRow);
         List<Cell> cells = firstCellRow.getEditableCells();
-        for (Node node : firstRow.getNodes()) {
+        for (Node node : firstRow.getVisibleNodes()) {
             cells.add(new NodeCell(node));
         }
 

@@ -75,7 +75,7 @@ public class CellRowGenerator extends AbstractGenerator<MutableCellRow, CellRow>
             }
         }
         final NodeRow nextGraphRow = graph.getNodeRows().get(newRowIndex);
-        for (Node node : nextGraphRow.getNodes()) {
+        for (Node node : nextGraphRow.getVisibleNodes()) {
             if (node.getUpEdges().isEmpty()) {
                 cells.add(new NodeCell(node));
             }

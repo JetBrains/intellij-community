@@ -21,23 +21,25 @@ import java.util.List;
 public class MutableGraph implements Graph {
     private final GraphPieceController pieceController = new SimpleGraphPieceController(this);
     private final List<MutableNodeRow> allRows;
-    private final List<NodeRow> visibleRows;
+    private final List<MutableNodeRow> visibleRows;
 
     public MutableGraph(List<MutableNodeRow> allRows) {
         this.allRows = allRows;
-        this.visibleRows = new ArrayList<NodeRow>(allRows.size());
-        fixRowIndex(0, allRows.size() - 1);
+        this.visibleRows = new ArrayList<MutableNodeRow>(allRows);
+        updateRowIndex();
     }
 
     public Replace fixRowIndex(int from, int to) {
         if (from < 0 || to >= allRows.size() || from > to) {
             throw new IllegalArgumentException("from: " + from + "to: " + to);
         }
-        for (int i = from; i <= to; i++) {
+        MutableNodeRow upRow = visibleRows.get(from);
+        MutableNodeRow downRow = visibleRows.get(to);
+        for (int i = upRow.getLogIndex(); i <= downRow.getLogIndex(); i++) {
             allRows.get(i).updateVisibleNodes();
         }
         updateRowIndex();
-        return null;
+        return new Replace(from, to, downRow.getRowIndex() - upRow.getRowIndex() - 1);
     }
 
     private void updateRowIndex() {
@@ -55,7 +57,7 @@ public class MutableGraph implements Graph {
     @NotNull
     @Override
     public ReadOnlyList<NodeRow> getNodeRows() {
-        return ReadOnlyList.newReadOnlyList(visibleRows);
+        return ReadOnlyList.<NodeRow>newReadOnlyList(visibleRows);
     }
 
     @Nullable

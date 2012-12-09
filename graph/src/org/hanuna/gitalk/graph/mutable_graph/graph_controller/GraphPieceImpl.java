@@ -35,7 +35,8 @@ public class GraphPieceImpl implements GraphPiece {
         upHide = firstDownEdge(upVisible).getDownNode();
         downHide = downVisible.getUpEdges().get(0).getUpNode();
 
-        assert upHide.getRowIndex() >= downHide.getRowIndex();
+        assert upHide.getRowIndex() <= downHide.getRowIndex() : "up: " + upHide.getRowIndex() +
+                " down: " + downHide.getRowIndex()  ;
         this.graph = graph;
     }
 
@@ -48,6 +49,7 @@ public class GraphPieceImpl implements GraphPiece {
             runner.edgeRun(downEdge);
             currentNode = downEdge.getDownNode();
         }
+        runner.nodeRun(down);
     }
 
     @Override
@@ -60,6 +62,7 @@ public class GraphPieceImpl implements GraphPiece {
         if (this.visible == visible) {
             return null;
         }
+        this.visible = visible;
         walkRunner(upHide, downHide, new Runner() {
             @Override
             public void edgeRun(@NotNull Edge edge) {
@@ -98,6 +101,7 @@ public class GraphPieceImpl implements GraphPiece {
         if (this.selected == selected) {
             return;
         }
+        this.selected = selected;
         walkRunner(upVisible, downVisible, new Runner() {
             @Override
             public void edgeRun(@NotNull Edge edge) {

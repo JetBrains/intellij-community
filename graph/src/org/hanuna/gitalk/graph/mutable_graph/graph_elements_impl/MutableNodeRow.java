@@ -13,12 +13,14 @@ import java.util.List;
  */
 public class MutableNodeRow implements NodeRow {
     private final List<MutableNode> allNodes = new ArrayList<MutableNode>(2);
-    private final List<MutableNode> nodes = new ArrayList<MutableNode>(2);
+    private final List<MutableNode> visibleNodes = new ArrayList<MutableNode>(2);
+    private final int logIndex;
     private int rowIndex;
 
 
-    public MutableNodeRow(int rowIndex) {
-        this.rowIndex = rowIndex;
+    public MutableNodeRow(int logIndex) {
+        this.logIndex = logIndex;
+        this.rowIndex = logIndex;
     }
 
     public void setRowIndex(int rowIndex) {
@@ -27,17 +29,20 @@ public class MutableNodeRow implements NodeRow {
 
     public void add(MutableNode node) {
         allNodes.add(node);
+        if (node.isVisible()) {
+            visibleNodes.add(node);
+        }
     }
 
     public boolean hasVisibleNodes() {
-        return ! nodes.isEmpty();
+        return ! visibleNodes.isEmpty();
     }
 
     public void updateVisibleNodes() {
-        nodes.clear();
+        visibleNodes.clear();
         for (MutableNode node : allNodes) {
             if (node.isVisible()) {
-                nodes.add(node);
+                visibleNodes.add(node);
             }
         }
     }
@@ -47,10 +52,14 @@ public class MutableNodeRow implements NodeRow {
         return rowIndex;
     }
 
+    public int getLogIndex() {
+        return logIndex;
+    }
+
     @NotNull
     @Override
-    public ReadOnlyList<Node> getNodes() {
-        return ReadOnlyList.<Node>newReadOnlyList(nodes);
+    public ReadOnlyList<Node> getVisibleNodes() {
+        return ReadOnlyList.<Node>newReadOnlyList(visibleNodes);
     }
 
 }
