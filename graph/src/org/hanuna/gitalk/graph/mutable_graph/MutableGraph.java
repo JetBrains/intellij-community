@@ -1,6 +1,7 @@
 package org.hanuna.gitalk.graph.mutable_graph;
 
 import org.hanuna.gitalk.common.ReadOnlyList;
+import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.GraphPiece;
 import org.hanuna.gitalk.graph.graph_elements.NodeRow;
@@ -28,7 +29,7 @@ public class MutableGraph implements Graph {
         fixRowIndex(0, allRows.size() - 1);
     }
 
-    public void fixRowIndex(int from, int to) {
+    public Replace fixRowIndex(int from, int to) {
         if (from < 0 || to >= allRows.size() || from > to) {
             throw new IllegalArgumentException("from: " + from + "to: " + to);
         }
@@ -36,6 +37,7 @@ public class MutableGraph implements Graph {
             allRows.get(i).updateVisibleNodes();
         }
         updateRowIndex();
+        return null;
     }
 
     private void updateRowIndex() {

@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.graph.mutable_graph;
 
+import org.hanuna.gitalk.graph.GraphPiece;
 import org.hanuna.gitalk.graph.graph_elements.Branch;
 import org.hanuna.gitalk.graph.graph_elements.Edge;
 import org.hanuna.gitalk.graph.graph_elements.GraphElement;
@@ -8,11 +9,32 @@ import org.hanuna.gitalk.graph.mutable_graph.graph_elements_impl.AbstractMutable
 import org.hanuna.gitalk.graph.mutable_graph.graph_elements_impl.MutableNode;
 import org.hanuna.gitalk.graph.mutable_graph.graph_elements_impl.SimpleEdge;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author erokhins
  */
 public class MutableGraphUtils {
+    /**
+     * upVisibleNode -> Piece
+     */
+    private static final Map<Edge, GraphPiece> hidePieses = new HashMap<Edge, GraphPiece>();
+
+    @Nullable
+    public static GraphPiece getHidePiece(@NotNull Edge edge) {
+        return hidePieses.get(edge);
+    }
+
+    public static void addHidePiece(@NotNull Edge edge, @NotNull GraphPiece piece) {
+        hidePieses.put(edge, piece);
+    }
+
+    public static void removeHidePiece(@NotNull Edge edge) {
+        hidePieses.remove(edge);
+    }
 
     @NotNull
     public static MutableNode assertCast(@NotNull Node node) {
@@ -27,12 +49,13 @@ public class MutableGraphUtils {
         downNode.removeUpEdge(edge);
     }
 
-    public static void createEdge(@NotNull Node up, @NotNull Node down, @NotNull Edge.Type type, @NotNull Branch branch) {
+    public static Edge createEdge(@NotNull Node up, @NotNull Node down, @NotNull Edge.Type type, @NotNull Branch branch) {
         MutableNode upNode = assertCast(up);
         MutableNode downNode =  assertCast(down);
         Edge edge = new SimpleEdge(upNode, downNode, type, branch);
         upNode.addDownEdge(edge);
         downNode.addUpEdge(edge);
+        return edge;
     }
 
     public static void setVisible(@NotNull Node node, boolean visible) {
@@ -48,4 +71,17 @@ public class MutableGraphUtils {
         }
     }
 
+    public static Edge firstDownEdge(@NotNull Node node) {
+        if (node.getDownEdges().size() == 0) {
+            throw new IllegalArgumentException("no down edges");
+        }
+        return node.getDownEdges().get(0);
+    }
+
+    public static Edge firstUpEdge(@NotNull Node node) {
+        if (node.getUpEdges().size() == 0) {
+            throw new IllegalArgumentException("no down edges");
+        }
+        return node.getUpEdges().get(0);
+    }
 }
