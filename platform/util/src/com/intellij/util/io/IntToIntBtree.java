@@ -1102,11 +1102,21 @@ class IntToIntBtree {
     if (node.isIndexLeaf()) {
       return node.processMappings(processor);
     }
-    BtreeIndexNodeView child = null;
-    for(int i = 0; i <= node.getChildrenCount(); ++i) {
-      if (child == null) child = new BtreeIndexNodeView(this);
-      child.setAddress(-node.addressAt(i));
-      if (!processLeafPages(child, processor))  return false;
+
+    // Copy children addresses first to avoid node's ByteBuffer invalidation
+    final int[] childrenAddresses = new int[node.getChildrenCount()];
+
+    for(int i = 0; i < childrenAddresses.length; ++i) {
+      childrenAddresses[i] = -node.addressAt(i);
+    }
+
+    if (childrenAddresses.length > 0) {
+      BtreeIndexNodeView child = new BtreeIndexNodeView(this);
+
+      for(int i = 0; i < childrenAddresses.length; ++i) {
+        child.setAddress(childrenAddresses[i]);
+        if (!processLeafPages(child, processor))  return false;
+      }
     }
     return true;
   }
