@@ -195,6 +195,7 @@ public class ProjectTypesList implements Disposable {
   }
 
   void resetSelection() {
+    if (myList.getSelectedIndex() != -1) return;
     SelectTemplateSettings settings = SelectTemplateSettings.getInstance();
     if (settings.getLastGroup() == null || !setSelectedTemplate(settings.getLastGroup(), settings.getLastTemplate())) {
       myList.setSelectedIndex(0);
