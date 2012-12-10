@@ -326,10 +326,6 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return new StringLiteralTextEscaper(this);
   }
 
-  public interface TextRangeConsumer {
-    boolean process(int startOffset, int endOffset, String value);
-  }
-
   private static class StringLiteralTextEscaper extends LiteralTextEscaper<PyStringLiteralExpression> {
     private final PyStringLiteralExpressionImpl myHost;
 
