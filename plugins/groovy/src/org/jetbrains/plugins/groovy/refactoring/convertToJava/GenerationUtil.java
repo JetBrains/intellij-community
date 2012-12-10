@@ -464,7 +464,7 @@ public class GenerationUtil {
       final PsiType iType = getDeclaredType(initializer, expressionContext);
 
       //generate cast
-      if (original != null && iType != null && !TypesUtil.isAssignable(original, iType, initializer, true)) {
+      if (original != null && iType != null && !TypesUtil.isAssignable(original, iType, initializer)) {
         builder.append('(');
         writeType(builder, original, initializer);
         builder.append(')');
@@ -623,7 +623,7 @@ public class GenerationUtil {
                                         GroovyPsiElement context,
                                         ExpressionContext expressionContext,
                                         StatementWriter writer) {
-    if (actual != null && TypesUtil.isAssignable(expected, actual, context, true) || expected.equalsToText(CommonClassNames.JAVA_LANG_OBJECT))  {
+    if (actual != null && TypesUtil.isAssignable(expected, actual, context) || expected.equalsToText(CommonClassNames.JAVA_LANG_OBJECT))  {
       writer.writeStatement(builder, expressionContext);
     }
     else {

@@ -444,7 +444,7 @@ public class GrClosureSignatureUtil {
     if (argType == null) {
       return true;
     }
-    return TypesUtil.isAssignableByMethodCallConversion(paramType, argType, context, true);
+    return TypesUtil.isAssignableByMethodCallConversion(paramType, argType, context);
   }
 
   public static void checkAndAddSignature(List<GrClosureSignature> list,

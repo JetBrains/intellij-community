@@ -135,7 +135,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
     if (ownType instanceof PsiClassType) {
       ownType = ((PsiClassType)ownType).rawType();
     }
-    if (ownType != null && TypesUtil.isAssignableByMethodCallConversion(conversionType.rawType(), ownType, this, false)) return null;
+    if (ownType != null && TypesUtil.isAssignableWithoutConversions(conversionType.rawType(), ownType, this)) return null;
 
     final PsiClass resolved = conversionType.resolve();
     if (resolved != null) {

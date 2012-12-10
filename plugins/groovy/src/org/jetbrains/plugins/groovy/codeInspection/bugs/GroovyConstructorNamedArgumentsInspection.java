@@ -121,7 +121,7 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
           final PsiElement nameElement = label.getNameElement();
           if (nameElement instanceof GrExpression) {
             final PsiType argType = ((GrExpression)nameElement).getType();
-            if (argType != null && !TypesUtil.isAssignableByMethodCallConversion(TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, arg), argType, arg, true)) {
+            if (argType != null && !TypesUtil.isAssignableByMethodCallConversion(TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, arg), argType, arg)) {
               registerError(nameElement, GroovyBundle.message("property.name.expected"));
             }
           }

@@ -146,7 +146,7 @@ public class GrTypeComboBox extends ComboBox {
 
 
     // if initial type is not assignable to min type we don't take into consideration min type.
-    if (min != null && !TypesUtil.isAssignable(min, type, context, true)) {
+    if (min != null && !TypesUtil.isAssignable(min, type, context)) {
       min = null;
     }
 
@@ -158,7 +158,7 @@ public class GrTypeComboBox extends ComboBox {
     while (!set.isEmpty()) {
       PsiType cur = set.iterator().next();
       set.remove(cur);
-      if (!map.containsValue(cur) && (min == null || TypesUtil.isAssignable(min, cur, context, true))) {
+      if (!map.containsValue(cur) && (min == null || TypesUtil.isAssignable(min, cur, context))) {
         if (isPartiallySubstituted(cur)) {
           LOG.assertTrue(cur instanceof PsiClassType);
           PsiClassType rawType = ((PsiClassType)cur).rawType();

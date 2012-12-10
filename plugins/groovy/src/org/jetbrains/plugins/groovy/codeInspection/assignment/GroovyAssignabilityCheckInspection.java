@@ -127,7 +127,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       final PsiType rType = expression.getType();
       if (rType == null || rType == PsiType.VOID) return;
 
-      if (!TypesUtil.isAssignable(expectedType, rType, expression, true)) {
+      if (!TypesUtil.isAssignable(expectedType, rType, expression)) {
         final LocalQuickFix[] fixes = {new GrCastFix(expectedType)};
         final String message = GroovyBundle.message("cannot.assign", rType.getPresentableText(), expectedType.getPresentableText());
         registerError(expression, message, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
@@ -351,7 +351,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
                                     @NotNull GroovyPsiElement context,
                                     @NotNull final PsiElement elementToHighlight) {
       if (rType == null) return;
-      if (!TypesUtil.isAssignable(lType, rType, context, true)) {
+      if (!TypesUtil.isAssignable(lType, rType, context)) {
         final String message = GroovyBundle.message("cannot.assign", rType.getPresentableText(), lType.getPresentableText());
         registerError(elementToHighlight, message, LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       }
@@ -422,7 +422,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
       final GrExpression e = exprs[0];
       return TypesUtil.isAssignableByMethodCallConversion(TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_UTIL_MAP, e), e.getType(),
-                                                          e, true);
+                                                          e);
     }
 
     private static PsiElement getElementToHighlight(PsiElement refElement, GrArgumentList argList) {

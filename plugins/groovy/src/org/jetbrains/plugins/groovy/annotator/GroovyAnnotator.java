@@ -1333,7 +1333,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
                                                  @NotNull GroovyPsiElement context,
                                                  boolean skipArrays) {
     rtype = TypesUtil.unboxPrimitiveTypeWrapper(rtype);
-    if (TypesUtil.isAssignableByMethodCallConversion(type, rtype, context, true)) return true;
+    if (TypesUtil.isAssignableByMethodCallConversion(type, rtype, context)) return true;
 
     if (!(type instanceof PsiArrayType && skipArrays)) return false;
 

@@ -62,6 +62,6 @@ class GroovyMembersGetter extends MembersGetter {
   }
 
   private boolean isSuitableType(PsiType type) {
-    return type != null && TypesUtil.isAssignableByMethodCallConversion(myExpectedType, type, myPlace, false);
+    return type != null && TypesUtil.isAssignableByMethodCallConversion(myExpectedType, type, myPlace);
   }
 }

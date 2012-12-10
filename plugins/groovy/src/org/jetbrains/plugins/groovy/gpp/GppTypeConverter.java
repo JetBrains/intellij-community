@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.toplevel.AnnotatedContextFilter;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.lang.psi.GrTypeConverter;
@@ -38,7 +39,7 @@ public class GppTypeConverter extends GrTypeConverter {
 
   public static final String GROOVY_LANG_TYPED = "groovy.lang.Typed";
 
-  public static boolean hasTypedContext(PsiElement context) {
+  public static boolean hasTypedContext(@Nullable PsiElement context) {
     if (context == null) {
       return false;
     }
@@ -59,6 +60,11 @@ public class GppTypeConverter extends GrTypeConverter {
   }
 
   @Override
+  public boolean isAllowedInMethodCall() {
+    return true;
+  }
+
+  @Override
   public Boolean isConvertible(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context) {
     if (context instanceof GrListOrMap && context.getReference() instanceof LiteralConstructorReference) return null;
 
@@ -69,7 +75,7 @@ public class GppTypeConverter extends GrTypeConverter {
       if (expectedComponent != null && isMethodCallConversion(context)) {
         PsiType tupleComponent = tupleType.getParameters()[0];
         if (tupleComponent != null &&
-            TypesUtil.isAssignable(expectedComponent, tupleComponent, context, true) && hasDefaultConstructor(lType)) {
+            TypesUtil.isAssignable(expectedComponent, tupleComponent, context) && hasDefaultConstructor(lType)) {
           return true;
         }
       }
@@ -84,8 +90,8 @@ public class GppTypeConverter extends GrTypeConverter {
       final PsiType[] parameters = ((GrMapType)rType).getParameters();
       if (lKeyType != null && lValueType != null &&
           parameters[0] != null && parameters[1] != null &&
-          (!TypesUtil.isAssignable(lKeyType, parameters[0], context, true) || !TypesUtil
-            .isAssignable(lValueType, parameters[1], context, true))) {
+          (!TypesUtil.isAssignable(lKeyType, parameters[0], context) || !TypesUtil
+            .isAssignable(lValueType, parameters[1], context))) {
         return null;
       }
 

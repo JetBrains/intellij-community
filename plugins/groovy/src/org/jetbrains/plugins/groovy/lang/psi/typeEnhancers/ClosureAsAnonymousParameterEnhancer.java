@@ -45,7 +45,7 @@ public class ClosureAsAnonymousParameterEnhancer extends AbstractClosureParamete
         PsiType castType = typeElement.getType();
         expectedTypes = ContainerUtil.newHashSet(GroovyExpectedTypesProvider.getDefaultExpectedTypes(safeCastExpression));
         for (Iterator<PsiType> iterator = expectedTypes.iterator(); iterator.hasNext(); ) {
-          if (!TypesUtil.isAssignable(iterator.next(), castType, closure, true)) {
+          if (!TypesUtil.isAssignable(iterator.next(), castType, closure)) {
             iterator.remove();
           }
         }

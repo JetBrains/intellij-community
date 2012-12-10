@@ -172,7 +172,7 @@ public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseIn
     private void checkAssignability(PsiType lType, GrExpression rExpr, GroovyPsiElement element) {
       if (PsiUtil.isRawClassMemberAccess(rExpr)) {
         final PsiType rType = rExpr.getType();
-        if (!TypesUtil.isAssignable(lType, rType, element, true)) {
+        if (!TypesUtil.isAssignable(lType, rType, element)) {
           registerError(element, lType, rType);
         }
       }

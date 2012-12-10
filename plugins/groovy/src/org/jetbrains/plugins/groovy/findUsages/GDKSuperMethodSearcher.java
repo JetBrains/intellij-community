@@ -89,10 +89,10 @@ public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBack
       public int compare(PsiMethod o1, PsiMethod o2) { //compare by first parameter type
         final PsiType type1 = getRealType(o1);
         final PsiType type2 = getRealType(o2);
-        if (TypesUtil.isAssignableByMethodCallConversion(type1, type2, o1, false)) {
+        if (TypesUtil.isAssignableByMethodCallConversion(type1, type2, o1)) {
           return -1;
         }
-        else if (TypesUtil.isAssignableByMethodCallConversion(type2, type1, o1, false)) {
+        else if (TypesUtil.isAssignableByMethodCallConversion(type2, type1, o1)) {
           return 1;
         }
         return 0;

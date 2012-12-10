@@ -229,7 +229,7 @@ public class NamedArgumentDescriptor {
 
     @Override
     public boolean checkType(@NotNull PsiType type, @NotNull GroovyPsiElement context) {
-      return TypesUtil.isAssignable(myType, type, context, true);
+      return TypesUtil.isAssignable(myType, type, context);
     }
   }
 

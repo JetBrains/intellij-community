@@ -85,7 +85,7 @@ public class GrMethodConflictUtil {
           final PsiType[] types = prototypeSignature.getParameterTypes();
           if (types.length != params.length) continue;
           for (int i = 0; i < types.length; i++) {
-            if (!TypesUtil.isAssignableByMethodCallConversion(types[i], params[i].getType(), refactoredMethod.getParameterList(), true)) {
+            if (!TypesUtil.isAssignableByMethodCallConversion(types[i], params[i].getType(), refactoredMethod.getParameterList())) {
               continue NextSignature;
             }
           }

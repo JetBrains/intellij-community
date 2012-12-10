@@ -32,7 +32,7 @@ public  class SupertypeConstraint extends TypeConstraint {
   }
 
   public boolean satisfied(PsiType type, @NotNull PsiElement context){
-    return TypesUtil.isAssignableByMethodCallConversion(type, getType(), context, false);
+    return TypesUtil.isAssignableByMethodCallConversion(type, getType(), context);
   }
 
   @NotNull

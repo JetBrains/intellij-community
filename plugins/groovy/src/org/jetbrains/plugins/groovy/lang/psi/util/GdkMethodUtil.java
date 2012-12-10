@@ -364,9 +364,9 @@ public class GdkMethodUtil {
       final GlobalSearchScope scope = method.getResolveScope();
       final Project project = method.getProject();
       return TypesUtil.isAssignableByMethodCallConversion(selfType, TypesUtil.createJavaLangClassType(qualifierType, project, scope),
-                                                          method, true);
+                                                          method);
     }
-    return TypesUtil.isAssignableByMethodCallConversion(selfType, qualifierType, method, true);
+    return TypesUtil.isAssignableByMethodCallConversion(selfType, qualifierType, method);
   }
 
   @Nullable
