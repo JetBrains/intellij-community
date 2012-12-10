@@ -54,7 +54,7 @@ class ChangeFileEncodingTo extends AnAction implements DumbAware {
     chosen(myFile, myCharset);
   }
 
-  protected void chosen(final VirtualFile file, final Charset charset) {
+  protected void chosen(@Nullable VirtualFile file, @NotNull Charset charset) {
     EncodingManager.getInstance().setEncoding(file, charset);
   }
 }

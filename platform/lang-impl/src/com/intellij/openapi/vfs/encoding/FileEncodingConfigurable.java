@@ -98,7 +98,7 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
       }
 
       @Override
-      protected void chosen(final VirtualFile virtualFile, final Charset charset) {
+      protected void chosen(final VirtualFile virtualFile, @NotNull final Charset charset) {
         selected.set(charset == NO_ENCODING ? null : charset);
         update((AnActionEvent)null);
       }

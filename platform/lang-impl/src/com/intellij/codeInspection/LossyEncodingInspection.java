@@ -193,7 +193,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
       VirtualFile virtualFile = psiFile.getVirtualFile();
       ChooseFileEncodingAction action = new ChooseFileEncodingAction(virtualFile) {
         @Override
-        protected void chosen(VirtualFile virtualFile, Charset charset) {
+        protected void chosen(VirtualFile virtualFile, @NotNull Charset charset) {
           if (virtualFile != null) {
             EncodingManager.getInstance().setEncoding(virtualFile, charset);
           }

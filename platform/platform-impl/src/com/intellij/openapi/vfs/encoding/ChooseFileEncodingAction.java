@@ -119,7 +119,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
     for (Charset slave : charsets) {
       ChangeFileEncodingTo action = new ChangeFileEncodingTo(virtualFile, slave){
         @Override
-        protected void chosen(final VirtualFile file, final Charset charset) {
+        protected void chosen(final VirtualFile file, @NotNull final Charset charset) {
           ChooseFileEncodingAction.this.chosen(file, charset);
         }
       };
@@ -153,6 +153,9 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
       if (virtualFile != null && LoadTextUtil.wasCharsetDetectedFromBytes(virtualFile)) {
         pattern = "Encoding (auto-detected): {0}";
         enabled = false;
+      }
+      else if (enabled && virtualFile != null && virtualFile.isDirectory()) {
+        pattern = "Reload ''{0}'' files under the directory in";
       }
       else if (enabled) {
         pattern = "Reload ''{0}'' file in another encoding";
@@ -203,7 +206,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
       return null;
     }
   };
-  protected abstract void chosen(VirtualFile virtualFile, Charset charset);
+  protected abstract void chosen(@Nullable VirtualFile virtualFile, @NotNull Charset charset);
 
   @NotNull
   public DefaultActionGroup createGroup(@Nullable String clearItemText) {
