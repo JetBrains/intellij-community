@@ -1099,10 +1099,9 @@ public class GitLogUI implements Disposable {
         final CommitI commitI = myTableModel.getCommitAt(row);
         if (commitI == null) {
           return Collections.emptyList();
-
         }
         if (commitI.holdsDecoration()) {
-          return Collections.emptyList();
+          continue;
         }
         final VirtualFile root = commitI.selectRepository(myRootsUnderVcs);
         final GitCommit gitCommit = myDetailsCache.convert(root, commitI.getHash());
