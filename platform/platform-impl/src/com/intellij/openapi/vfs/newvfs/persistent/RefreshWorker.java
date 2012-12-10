@@ -48,10 +48,15 @@ public class RefreshWorker {
   private final boolean myIsRecursive;
   private final Queue<VirtualFile> myRefreshQueue = new Queue<VirtualFile>(100);
   private final List<VFileEvent> myEvents = new ArrayList<VFileEvent>();
+  private volatile boolean myCancelled = false;
 
   public RefreshWorker(final VirtualFile refreshRoot, final boolean isRecursive) {
     myIsRecursive = isRecursive;
     myRefreshQueue.addLast(refreshRoot);
+  }
+
+  public void cancel() {
+    myCancelled = true;
   }
 
   public void scan() {
@@ -77,7 +82,8 @@ public class RefreshWorker {
 
     final PersistentFS persistence = PersistentFS.getInstance();
 
-    while (!myRefreshQueue.isEmpty()) {
+    main:
+    while (!myRefreshQueue.isEmpty() && !myCancelled) {
       final VirtualFileSystemEntry file = (VirtualFileSystemEntry)myRefreshQueue.pullFirst();
       final boolean fileDirty = file.isDirty();
       debug(LOG, "file=%s dirty=%b", file, fileDirty);
@@ -114,6 +120,7 @@ public class RefreshWorker {
           }
 
           for (String name : newNames) {
+            if (myCancelled) break main;
             final FileAttributes childAttributes = fs.getAttributes(new FakeVirtualFile(file, name));
             if (childAttributes != null) {
               scheduleCreation(file, name, childAttributes.isDirectory());
@@ -124,6 +131,7 @@ public class RefreshWorker {
           }
 
           for (VirtualFile child : file.getChildren()) {
+            if (myCancelled) break main;
             if (!deletedNames.contains(child.getName())) {
               final FileAttributes childAttributes = fs.getAttributes(child);
               if (childAttributes != null) {
@@ -140,6 +148,7 @@ public class RefreshWorker {
           final Collection<VirtualFile> cachedChildren = file.getCachedChildren();
           debug(LOG, "cached=%s", cachedChildren);
           for (VirtualFile child : cachedChildren) {
+            if (myCancelled) break main;
             final FileAttributes childAttributes = fs.getAttributes(child);
             if (childAttributes != null) {
               checkAndScheduleChildRefresh(file, child, childAttributes);
@@ -152,6 +161,7 @@ public class RefreshWorker {
           final List<String> names = dir.getSuspiciousNames();
           debug(LOG, "suspicious=%s", names);
           for (String name : names) {
+            if (myCancelled) break main;
             if (name.isEmpty()) continue;
 
             final VirtualFile fake = new FakeVirtualFile(file, name);

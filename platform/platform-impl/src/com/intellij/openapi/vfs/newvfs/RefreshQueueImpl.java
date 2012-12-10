@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.Application;
@@ -30,17 +26,22 @@ import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import gnu.trove.TLongObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 
+/**
+ * @author max
+ */
 public class RefreshQueueImpl extends RefreshQueue {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.RefreshQueueImpl");
 
   private final ExecutorService myQueue = ConcurrencyUtil.newSingleThreadExecutor("FS Synchronizer");
   private final ProgressIndicator myRefreshIndicator = new RefreshProgress(VfsBundle.message("file.synchronize.progress"));
+  private final TLongObjectHashMap<RefreshSession> mySessions = new TLongObjectHashMap<RefreshSession>();
 
   public void execute(@NotNull RefreshSessionImpl session) {
     if (session.isAsynchronous()) {
@@ -51,8 +52,14 @@ public class RefreshQueueImpl extends RefreshQueue {
       final Application application = ApplicationManager.getApplication();
       boolean isEDT = application.isDispatchThread();
       if (isEDT) {
-        session.scan();
-        final boolean hasWriteAction = application.isWriteAccessAllowed();
+        try {
+          updateSessionMap(session, true);
+          session.scan();
+        }
+        finally {
+          updateSessionMap(session, false);
+        }
+        boolean hasWriteAction = application.isWriteAccessAllowed();
         session.fireEvents(hasWriteAction);
       }
       else {
@@ -75,9 +82,11 @@ public class RefreshQueueImpl extends RefreshQueue {
           myRefreshIndicator.start();
           HeavyProcessLatch.INSTANCE.processStarted();
           try {
+            updateSessionMap(session, true);
             session.scan();
           }
           finally {
+            updateSessionMap(session, false);
             HeavyProcessLatch.INSTANCE.processFinished();
             myRefreshIndicator.stop();
           }
@@ -94,6 +103,31 @@ public class RefreshQueueImpl extends RefreshQueue {
         }
       }
     });
+  }
+
+  private void updateSessionMap(RefreshSession session, boolean add) {
+    long id = session.getId();
+    if (id != 0) {
+      synchronized (mySessions) {
+        if (add) {
+          mySessions.put(id, session);
+        }
+        else {
+          mySessions.remove(id);
+        }
+      }
+    }
+  }
+
+  @Override
+  public void cancelSession(long id) {
+    RefreshSession session;
+    synchronized (mySessions) {
+      session = mySessions.get(id);
+    }
+    if (session instanceof RefreshSessionImpl) {
+      ((RefreshSessionImpl)session).cancel();
+    }
   }
 
   @Override

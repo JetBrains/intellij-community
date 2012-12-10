@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -37,10 +33,17 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * @author max
+ */
 public class RefreshSessionImpl extends RefreshSession {
   private static final Logger LOG = Logger.getInstance(RefreshSession.class);
 
+  private static final AtomicLong ID_COUNTER = new AtomicLong(0);
+
+  private final long myId = ID_COUNTER.incrementAndGet();
   private final boolean myIsAsync;
   private final boolean myIsRecursive;
   private final Runnable myFinishRunnable;
@@ -50,6 +53,8 @@ public class RefreshSessionImpl extends RefreshSession {
   private List<VirtualFile> myWorkQueue = new ArrayList<VirtualFile>();
   private List<VFileEvent> myEvents = new ArrayList<VFileEvent>();
   private volatile boolean iHaveEventsToFire;
+  private volatile RefreshWorker myWorker = null;
+  private volatile boolean myCancelled = false;
 
   public RefreshSessionImpl(final boolean isAsync, final boolean recursively, final Runnable finishRunnable) {
     this(isAsync, recursively, finishRunnable, ModalityState.NON_MODAL);
@@ -68,6 +73,11 @@ public class RefreshSessionImpl extends RefreshSession {
     myFinishRunnable = null;
     myEvents = new ArrayList<VFileEvent>(events);
     myModalityState = ModalityState.NON_MODAL;
+  }
+
+  @Override
+  public long getId() {
+    return myId;
   }
 
   @Override
@@ -101,7 +111,7 @@ public class RefreshSessionImpl extends RefreshSession {
   public void scan() {
     List<VirtualFile> workQueue = myWorkQueue;
     myWorkQueue = new ArrayList<VirtualFile>();
-    boolean hasEventsToFire = myFinishRunnable != null || !myEvents.isEmpty();
+    boolean haveEventsToFire = myFinishRunnable != null || !myEvents.isEmpty();
 
     if (!workQueue.isEmpty()) {
       LocalFileSystemImpl fs = (LocalFileSystemImpl)LocalFileSystem.getInstance();
@@ -109,12 +119,14 @@ public class RefreshSessionImpl extends RefreshSession {
       FileWatcher watcher = fs.getFileWatcher();
 
       for (VirtualFile file : workQueue) {
+        if (myCancelled) break;
+
         NewVirtualFile nvf = (NewVirtualFile)file;
         if (!myIsRecursive && (!myIsAsync || !watcher.isWatched(nvf))) { // We're unable to definitely refresh synchronously by means of file watcher.
           nvf.markDirty();
         }
 
-        RefreshWorker worker = new RefreshWorker(file, myIsRecursive);
+        RefreshWorker worker = myWorker = new RefreshWorker(file, myIsRecursive);
         long t = LOG.isDebugEnabled() ? System.currentTimeMillis() : 0;
         worker.scan();
         List<VFileEvent> events = worker.getEvents();
@@ -123,10 +135,21 @@ public class RefreshSessionImpl extends RefreshSession {
           LOG.debug(file + " scanned in " + t + " ms, events: " + events);
         }
         myEvents.addAll(events);
-        if (!events.isEmpty()) hasEventsToFire = true;
+        if (!events.isEmpty()) haveEventsToFire = true;
       }
     }
-    iHaveEventsToFire = hasEventsToFire;
+
+    myWorker = null;
+    iHaveEventsToFire = haveEventsToFire;
+  }
+
+  public void cancel() {
+    myCancelled = true;
+
+    RefreshWorker worker = myWorker;
+    if (worker != null) {
+      worker.cancel();
+    }
   }
 
   public void fireEvents(boolean hasWriteAction) {

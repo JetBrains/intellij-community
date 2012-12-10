@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ModalityState;
@@ -28,6 +24,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
+/**
+ * @author max
+ */
 public abstract class RefreshQueue {
   public static RefreshQueue getInstance() {
     return ServiceManager.getService(RefreshQueue.class);
@@ -70,6 +69,8 @@ public abstract class RefreshQueue {
   public abstract void refreshLocalRoots(boolean async, @Nullable Runnable postAction, @NotNull ModalityState modalityState);
 
   public abstract void processSingleEvent(@NotNull VFileEvent event);
+
+  public abstract void cancelSession(long id);
 
   @NotNull
   protected ModalityState getDefaultModalityState() {
