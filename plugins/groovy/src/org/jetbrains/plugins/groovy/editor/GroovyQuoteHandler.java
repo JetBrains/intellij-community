@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,8 @@ public class GroovyQuoteHandler implements MultiCharQuoteHandler {
     if (tokenType == mSTRING_LITERAL || tokenType == mGSTRING_LITERAL) {
       int start = iterator.getStart();
       int end = iterator.getEnd();
-      return end - start >= 1 && offset == end - 1;
+      return end - start >= 1 && offset == end - 1 ||
+             end - start >= 5 && offset >= end - 3;
     }
     return false;
   }
@@ -54,7 +55,16 @@ public class GroovyQuoteHandler implements MultiCharQuoteHandler {
   }
 
   public boolean hasNonClosedLiteral(Editor editor, HighlighterIterator iterator, int offset) {
-    return true;
+    final IElementType tokenType = iterator.getTokenType();
+    if (tokenType == mSTRING_LITERAL || tokenType == mGSTRING_BEGIN || tokenType == mGSTRING_LITERAL || tokenType == mGSTRING_CONTENT) {
+      final Document document = iterator.getDocument();
+      final String literal = document.getText().substring(iterator.getStart(), offset + 1);
+      if ("'''".equals(literal) || "\"\"\"".equals(literal) || "'".equals(literal) || "\"".equals(literal)) {
+        return true;
+      }
+    }
+
+    return !(tokenType == mGSTRING_CONTENT || tokenType == mGSTRING_LITERAL || tokenType == mSTRING_LITERAL || tokenType == mGSTRING_END);
   }
 
   public boolean isInsideLiteral(HighlighterIterator iterator) {
