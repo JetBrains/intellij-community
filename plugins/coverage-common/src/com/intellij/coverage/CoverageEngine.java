@@ -13,6 +13,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -189,14 +190,26 @@ public abstract class CoverageEngine {
    * Qualified name same as in coverage raw project data
    * E.g. java class qualified name by *.class file of some Java class in corresponding source file
    *
-   *
    * @param outputFile
    * @param sourceFile
    * @return
    */
   @Nullable
-  public abstract String getQualifiedName(@NotNull final File outputFile,
-                                          @NotNull final PsiFile sourceFile);
+  public String getQualifiedName(@NotNull final File outputFile,
+                                 @NotNull final PsiFile sourceFile) {
+    final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(outputFile);
+    if (virtualFile != null) {
+      return getQualifiedName(virtualFile, sourceFile);
+    }
+    return null;
+  }
+
+  @Deprecated
+  @Nullable
+  public String getQualifiedName(@NotNull final VirtualFile outputFile,
+                                 @NotNull final PsiFile sourceFile) {
+    return null;
+  }
 
   @NotNull
   public abstract Set<String> getQualifiedNames(@NotNull final PsiFile sourceFile);
@@ -205,29 +218,53 @@ public abstract class CoverageEngine {
    * Decide include a file or not in coverage report if coverage data isn't available for the file. E.g file wasn't touched by coverage
    * util
    *
-   *
    * @param qualifiedName
    * @param outputFile
    * @param sourceFile
    * @param suite
    * @return
    */
-  public abstract boolean includeUntouchedFileInCoverage(@NotNull final String qualifiedName,
-                                                         @NotNull final File outputFile,
-                                                         @NotNull final PsiFile sourceFile,
-                                                         @NotNull final CoverageSuitesBundle suite);
+  public boolean includeUntouchedFileInCoverage(@NotNull final String qualifiedName,
+                                                @NotNull final File outputFile,
+                                                @NotNull final PsiFile sourceFile,
+                                                @NotNull final CoverageSuitesBundle suite) {
+    final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(outputFile);
+    if (virtualFile != null) {
+      return includeUntouchedFileInCoverage(qualifiedName, virtualFile, sourceFile, suite);
+    }
+    return false;
+  }
+  
+  @Deprecated
+  public boolean includeUntouchedFileInCoverage(@NotNull final String qualifiedName,
+                                                @NotNull final VirtualFile outputFile,
+                                                @NotNull final PsiFile sourceFile,
+                                                @NotNull final CoverageSuitesBundle suite) {
+    return false;
+  }
 
   /**
    * Collect code lines if untouched file should be included in coverage information. These lines will be marked as uncovered.
    *
-   *
-   * @param classFile
    * @param suite
    * @return List (probably empty) of code lines or null if all lines should be marked as uncovered
    */
   @Nullable
-  public abstract List<Integer> collectSrcLinesForUntouchedFile(@NotNull final File classFile,
-                                                                @NotNull final CoverageSuitesBundle suite);
+  public List<Integer> collectSrcLinesForUntouchedFile(@NotNull final File classFile,
+                                                       @NotNull final CoverageSuitesBundle suite) {
+    final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(classFile);
+    if (virtualFile != null) {
+      return collectSrcLinesForUntouchedFile(virtualFile, suite);
+    }
+    return null;
+  }
+  
+  @Deprecated
+  @Nullable
+  public List<Integer> collectSrcLinesForUntouchedFile(@NotNull final VirtualFile classFile,
+                                                       @NotNull final CoverageSuitesBundle suite) {
+    return null;
+  }
 
   /**
    * Content of brief report which will be shown by click on coverage icon
