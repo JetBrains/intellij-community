@@ -18,6 +18,6 @@ public interface Edge extends GraphElement {
 
     public static enum Type{
         USUAL,
-        HIDE_PIECE
+        HIDE_FRAGMENT
     }
 }

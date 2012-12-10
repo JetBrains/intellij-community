@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.graph.mutable_graph.graph_controller;
+package org.hanuna.gitalk.graph.mutable_graph.graph_fragment_controller;
 
 import org.hanuna.gitalk.graph.GraphFragment;
 import org.hanuna.gitalk.graph.graph_elements.Edge;

@@ -19,9 +19,6 @@ public class GraphTestUtils {
         s.append(edge.getDownNode().getCommit().hash().toStrHash()).append(":");
         s.append(edge.getType()).append(":");
         s.append(edge.getBranch().getNumberOfBranch());
-        if (edge.selected()) {
-            s.append(":s");
-        }
         return s.toString();
     }
     public static String toShortStr(ReadOnlyList<Edge> edges) {
@@ -43,9 +40,6 @@ public class GraphTestUtils {
         s.append(node.getType()).append("|-");
         s.append(node.getBranch().getNumberOfBranch()).append("|-");
         s.append(node.getRowIndex());
-        if (node.selected()) {
-            s.append("|-s");
-        }
         return s.toString();
     }
     public static String toStr(NodeRow row) {

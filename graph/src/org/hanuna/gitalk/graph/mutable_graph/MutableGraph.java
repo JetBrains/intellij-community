@@ -23,7 +23,7 @@ public class MutableGraph implements Graph {
         recalculateRowIndex();
     }
 
-    public Replace fixRowIndex(int fromRowIndex, int toRowIndex) {
+    public Replace fixRowVisibility(int fromRowIndex, int toRowIndex) {
         if (fromRowIndex < 0 || toRowIndex >= allRows.size() || fromRowIndex > toRowIndex) {
             throw new IllegalArgumentException("fromRowIndex: " + fromRowIndex + "toRowIndex: " + toRowIndex);
         }
