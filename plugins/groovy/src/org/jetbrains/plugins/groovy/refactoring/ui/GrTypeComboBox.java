@@ -71,7 +71,7 @@ public class GrTypeComboBox extends ComboBox {
       if (type == PsiType.NULL) {
         type = PsiType.getJavaLangObject(expression.getManager(), expression.getResolveScope());
       }
-      return new GrTypeComboBox(type, null, true, null, selectDef);
+      return new GrTypeComboBox(type, null, true, expression, selectDef);
     }
   }
 
