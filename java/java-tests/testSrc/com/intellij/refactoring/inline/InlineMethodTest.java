@@ -198,6 +198,11 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestConflict("Inlined result would contain parse errors");
   }
 
+
+  public void testInSuperCall() throws Exception {
+    doTestConflict("Inline cannot be applied to multiline method in constructor call");
+  }
+
   private void doTestConflict(final String conflict) throws Exception {
     try {
       doTest();

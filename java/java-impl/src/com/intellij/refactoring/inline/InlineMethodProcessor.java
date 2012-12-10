@@ -16,6 +16,7 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.lang.Language;
@@ -193,6 +194,11 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         }
         if (element instanceof PsiMethodReferenceExpression) {
           conflicts.putValue(element, "Inlined method is used in method reference");
+        }
+
+        final String errorMessage = checkCalledInSuperOrThisExpr(myMethod.getBody(), element);
+        if (errorMessage != null) {
+          conflicts.putValue(element, errorMessage);
         }
       }
     }
@@ -1422,6 +1428,19 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     final PsiElement resolved = ((PsiReferenceExpression)lExpression).resolve();
     if (!myManager.areElementsEquivalent(field, resolved)) return null;
     return ((PsiAssignmentExpression)expression).getRExpression();
+  }
+
+  public static String checkCalledInSuperOrThisExpr(PsiCodeBlock methodBody, final PsiElement element) {
+    if (methodBody.getStatements().length > 1) {
+      PsiExpression expr = PsiTreeUtil.getParentOfType(element, PsiExpression.class);
+      while (expr != null) {
+        if (HighlightUtil.isSuperOrThisMethodCall(expr)) {
+          return "Inline cannot be applied to multiline method in constructor call";
+        }
+        expr = PsiTreeUtil.getParentOfType(expr, PsiExpression.class, true);
+      }
+    }
+    return null;
   }
 
   public static boolean checkBadReturns(PsiMethod method) {

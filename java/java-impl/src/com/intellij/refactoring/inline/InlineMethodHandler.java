@@ -41,7 +41,8 @@ class InlineMethodHandler extends JavaInlineActionHandler {
 
   public void inlineElement(final Project project, Editor editor, PsiElement element) {
     PsiMethod method = (PsiMethod)element.getNavigationElement();
-    if (method.getBody() == null){
+    final PsiCodeBlock methodBody = method.getBody();
+    if (methodBody == null){
       String message;
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
         message = RefactoringBundle.message("refactoring.cannot.be.applied.to.abstract.methods", REFACTORING_NAME);
@@ -85,7 +86,15 @@ class InlineMethodHandler extends JavaInlineActionHandler {
       CommonRefactoringUtil.showErrorHint(project, editor, REFACTORING_NAME + " cannot be applied to method references", REFACTORING_NAME, HelpID.INLINE_METHOD);
       return;
     }
-    
+
+    if (reference != null) {
+      final String errorMessage = InlineMethodProcessor.checkCalledInSuperOrThisExpr(methodBody, reference.getElement());
+      if (errorMessage != null) {
+        CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, REFACTORING_NAME, HelpID.INLINE_METHOD);
+        return;
+      }
+    }
+
     if (method.isConstructor()) {
       if (method.isVarArgs()) {
         String message = RefactoringBundle.message("refactoring.cannot.be.applied.to.vararg.constructors", REFACTORING_NAME);
