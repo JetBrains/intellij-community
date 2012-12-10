@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.psi.PsiType;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.gpp.GppClosureParameterTypeProvider;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -24,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -42,10 +43,10 @@ public class ClosureAsAnonymousParameterEnhancer extends AbstractClosureParamete
       GrTypeElement typeElement = safeCastExpression.getCastTypeElement();
       if (typeElement != null) {
         PsiType castType = typeElement.getType();
-        expectedTypes = new HashSet<PsiType>(GroovyExpectedTypesProvider.getDefaultExpectedTypes(safeCastExpression));
-        for (PsiType expected : expectedTypes) {
-          if (!TypesUtil.isAssignable(expected, castType, closure, true)) {
-            expectedTypes.remove(expected);
+        expectedTypes = ContainerUtil.newHashSet(GroovyExpectedTypesProvider.getDefaultExpectedTypes(safeCastExpression));
+        for (Iterator<PsiType> iterator = expectedTypes.iterator(); iterator.hasNext(); ) {
+          if (!TypesUtil.isAssignable(iterator.next(), castType, closure, true)) {
+            iterator.remove();
           }
         }
 

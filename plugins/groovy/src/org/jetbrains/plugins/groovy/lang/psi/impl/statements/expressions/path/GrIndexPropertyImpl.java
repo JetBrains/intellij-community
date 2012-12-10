@@ -113,7 +113,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
       PsiType componentType = extractMapValueType(thisType, args, manager, resolveScope);
 
       if (overloadedOperatorType != null &&
-          (componentType == null || !TypesUtil.isAssignable(overloadedOperatorType, componentType, selected, true))) {
+          (componentType == null || !TypesUtil.isAssignableByMethodCallConversion(overloadedOperatorType, componentType, selected, true))) {
         return TypesUtil.boxPrimitiveType(overloadedOperatorType, manager, resolveScope);
       }
       return componentType;

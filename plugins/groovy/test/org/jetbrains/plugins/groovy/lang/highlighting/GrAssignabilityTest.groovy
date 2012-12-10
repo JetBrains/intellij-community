@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.lang.highlighting
+
 import com.intellij.codeInspection.InspectionProfileEntry
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyConstructorNamedArgumentsInspection
 import org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyResultOfIncrementOrDecrementUsedInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
+
 /**
  * @author Max Medvedev
  */
@@ -65,7 +67,10 @@ class GrAssignabilityTest extends GrHighlightingTestBase {
 
   public void _testPutIncorrectValueToMap() {doTest();} //incorrect test
 
-  public void testTupleTypeAssignments() {doTest();}
+  public void testTupleTypeAssignments() {
+    addBigDecimal();
+    doTest();
+  }
 
   public void testSignatureIsNotApplicableToList() {
     doTest();
@@ -442,6 +447,28 @@ String[] foox() {
 int[] bar() {
   return <warning descr="Cannot assign 'String' to 'int[]'">'ab'</warning>
 }
+''')
+  }
+
+  void testAssignNullToPrimitiveTypesAndWrappers() {
+    testHighlighting('''\
+int x = <warning descr="Cannot assign 'null' to 'int'">null</warning>
+double y = <warning descr="Cannot assign 'null' to 'double'">null</warning>
+Integer z = null
+boolean a = <warning descr="Cannot assign 'null' to 'boolean'">null</warning>
+Boolean b = null
+''')
+  }
+
+  void testAssignNullToPrimitiveParameters() {
+    testHighlighting('''\
+def _int(int x) {}
+def _boolean(boolean x) {}
+def _Boolean(Boolean x) {}
+
+_int<warning descr="'_int' in '_' cannot be applied to '(null)'">(null)</warning>
+_boolean<warning descr="'_boolean' in '_' cannot be applied to '(null)'">(null)</warning>
+_Boolean(null)
 ''')
   }
 }

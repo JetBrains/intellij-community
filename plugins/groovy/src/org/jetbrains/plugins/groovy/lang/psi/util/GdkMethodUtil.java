@@ -363,9 +363,10 @@ public class GdkMethodUtil {
         ((GrReferenceExpression)place).resolve() instanceof PsiClass) {   // ClassType.categoryMethod()  where categoryMethod(Class<> cl, ...)
       final GlobalSearchScope scope = method.getResolveScope();
       final Project project = method.getProject();
-      return TypesUtil.isAssignable(selfType, TypesUtil.createJavaLangClassType(qualifierType, project, scope), method, true);
+      return TypesUtil.isAssignableByMethodCallConversion(selfType, TypesUtil.createJavaLangClassType(qualifierType, project, scope),
+                                                          method, true);
     }
-    return TypesUtil.isAssignable(selfType, qualifierType, method, true);
+    return TypesUtil.isAssignableByMethodCallConversion(selfType, qualifierType, method, true);
   }
 
   @Nullable

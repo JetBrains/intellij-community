@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
@@ -83,8 +82,6 @@ public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBack
 
     if (goodSupers.size() == 0) return true;
 
-    final GlobalSearchScope searchScope = GlobalSearchScope.allScope(project);
-
     List<PsiMethod> result = new ArrayList<PsiMethod>(goodSupers.size());
     result.add(goodSupers.get(0));
 
@@ -92,10 +89,10 @@ public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBack
       public int compare(PsiMethod o1, PsiMethod o2) { //compare by first parameter type
         final PsiType type1 = getRealType(o1);
         final PsiType type2 = getRealType(o2);
-        if (TypesUtil.isAssignable(type1, type2, o1, true)) {
+        if (TypesUtil.isAssignableByMethodCallConversion(type1, type2, o1, false)) {
           return -1;
         }
-        else if (TypesUtil.isAssignable(type2, type1, o1, true)) {
+        else if (TypesUtil.isAssignableByMethodCallConversion(type2, type1, o1, false)) {
           return 1;
         }
         return 0;

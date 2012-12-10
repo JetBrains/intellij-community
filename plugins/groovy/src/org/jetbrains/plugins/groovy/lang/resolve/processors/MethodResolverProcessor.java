@@ -313,7 +313,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
       type1 = ((PsiArrayType) type1).getComponentType();
     }
     return argumentsSupplied() ? //resolve, otherwise same_name_variants
-        TypesUtil.isAssignable(type1, type2, myPlace, false) :
+        TypesUtil.isAssignableByMethodCallConversion(type1, type2, myPlace, false) :
         type1.equals(type2);
   }
 

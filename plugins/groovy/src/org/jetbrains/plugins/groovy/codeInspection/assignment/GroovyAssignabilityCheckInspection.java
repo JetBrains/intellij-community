@@ -421,7 +421,8 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       if (!(exprs.length == 1)) return false;
 
       final GrExpression e = exprs[0];
-      return TypesUtil.isAssignable(TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_UTIL_MAP, e), e.getType(), e, true);
+      return TypesUtil.isAssignableByMethodCallConversion(TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_UTIL_MAP, e), e.getType(),
+                                                          e, true);
     }
 
     private static PsiElement getElementToHighlight(PsiElement refElement, GrArgumentList argList) {

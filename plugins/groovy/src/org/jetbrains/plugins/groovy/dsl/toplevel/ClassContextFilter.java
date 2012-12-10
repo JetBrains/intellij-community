@@ -95,7 +95,7 @@ public class ClassContextFilter implements ContextFilter {
 
     PsiType myType = getCachedType(typeText, placeFile);
     if (checked == PsiType.NULL) return myType == PsiType.NULL;
-    return TypesUtil.isAssignable(myType, checked, placeFile, false);
+    return TypesUtil.isAssignableByMethodCallConversion(myType, checked, placeFile, false);
   }
 
   private static final Key<Map<String, PsiType>> CACHED_TYPES = Key.create("Cached types");

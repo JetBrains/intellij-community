@@ -271,7 +271,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           for (int j = 0; j < currIndex; j++) {
             PsiType argType = argTypes[j];
             final PsiType paramType = substitutor != null ? substitutor.substitute(parameterTypes[j]) : parameterTypes[j];
-            if (!TypesUtil.isAssignable(paramType, argType, place, true)) {
+            if (!TypesUtil.isAssignableByMethodCallConversion(paramType, argType, place, true)) {
               context.setUIComponentEnabled(i, false);
               break Outer;
             }

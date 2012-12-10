@@ -225,6 +225,12 @@ public class TypesUtil {
   }
 
   public static boolean isAssignable(@Nullable PsiType lType, @Nullable PsiType rType, @NotNull PsiElement context, boolean allowConversion) {
+    if (lType == null || rType == null) {
+      return false;
+    }
+
+    if (rType == PsiType.NULL && lType instanceof PsiPrimitiveType) return false;
+
     if (rType instanceof PsiIntersectionType) {
       for (PsiType child : ((PsiIntersectionType)rType).getConjuncts()) {
         if (isAssignable(lType, child, context, allowConversion)) {
@@ -244,18 +250,13 @@ public class TypesUtil {
 
     if (allowConversion && isAssignableByMethodCallConversion(lType, rType, context, true)) return true;
 
-    if (lType == null || rType == null) {
-      return false;
-    }
-
-    if (rType == PsiType.NULL && lType instanceof PsiPrimitiveType) return false;
-
     final PsiManager manager = context.getManager();
     final GlobalSearchScope scope = context.getResolveScope();
 
-    if (isNumericType(lType)) {
-      if (isNumericType(rType) || rType == PsiType.NULL) return true;
+    if (isNumericType(lType) && isNumericType(rType)) {
+      return true;
     }
+
     if (allowConversion && isClassType(lType, JAVA_LANG_STRING)) {
       return true;
     }
