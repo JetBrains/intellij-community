@@ -20,6 +20,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.nodes.WatchMessageNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,30 +32,47 @@ import javax.swing.tree.TreePath;
  * @author nik
  */
 public abstract class XDebuggerTreeActionBase extends AnAction {
+  @Override
   public void actionPerformed(final AnActionEvent e) {
-    XValueNodeImpl node = getSelectedNode(e.getDataContext());
-    if (node == null) return;
+    XDebuggerTreeNode node = getSelectionPathLastNode(e.getDataContext());
+    if (node instanceof XValueNodeImpl) {
+      XValueNodeImpl valueNode = (XValueNodeImpl)node;
+      String nodeName = valueNode.getName();
+      if (nodeName != null) {
+        perform(valueNode, nodeName, e);
+      }
+    }
+    else if (node instanceof WatchMessageNode) {
+      perform((WatchMessageNode)node, e);
+    }
+  }
 
-    String nodeName = node.getName();
-    if (nodeName == null) return;
-
-    perform(node, nodeName, e);
+  protected void perform(WatchMessageNode node, AnActionEvent e) {
   }
 
   protected abstract void perform(final XValueNodeImpl node, @NotNull String nodeName, final AnActionEvent e);
 
-
+  @Override
   public void update(final AnActionEvent e) {
-    XValueNodeImpl node = getSelectedNode(e.getDataContext());
-    e.getPresentation().setEnabled(node != null && isEnabled(node));
+    XDebuggerTreeNode node = getSelectionPathLastNode(e.getDataContext());
+    if (node instanceof XValueNodeImpl) {
+      e.getPresentation().setEnabled(isEnabled((XValueNodeImpl)node));
+    }
+    else {
+      e.getPresentation().setEnabled(node instanceof WatchMessageNode && isEnabled((WatchMessageNode)node));
+    }
   }
 
   protected boolean isEnabled(final XValueNodeImpl node) {
     return node.getName() != null;
   }
 
+  protected boolean isEnabled(WatchMessageNode node) {
+    return false;
+  }
+
   @Nullable
-  public static XValueNodeImpl getSelectedNode(final DataContext dataContext) {
+  private static XDebuggerTreeNode getSelectionPathLastNode(DataContext dataContext) {
     XDebuggerTree tree = XDebuggerTree.getTree(dataContext);
     if (tree == null) return null;
 
@@ -61,10 +80,13 @@ public abstract class XDebuggerTreeActionBase extends AnAction {
     if (path == null) return null;
 
     Object node = path.getLastPathComponent();
-    if (node instanceof XValueNodeImpl) {
-      return (XValueNodeImpl)node;
-    }
-    return null;
+    return node instanceof XDebuggerTreeNode ? (XDebuggerTreeNode)node : null;
+  }
+
+  @Nullable
+  public static XValueNodeImpl getSelectedNode(final DataContext dataContext) {
+    XDebuggerTreeNode node = getSelectionPathLastNode(dataContext);
+    return node instanceof XValueNodeImpl ? (XValueNodeImpl)node : null;
   }
 
   @Nullable
