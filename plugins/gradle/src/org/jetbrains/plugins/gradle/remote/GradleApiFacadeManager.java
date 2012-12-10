@@ -406,7 +406,7 @@ public class GradleApiFacadeManager {
       }
     }
     GradleJavaHelper javaHelper = new GradleJavaHelper();
-    result.setJavaHome(javaHelper.getJdkHome());
+    result.setJavaHome(javaHelper.getJdkHome(project));
     return result;
   }
   
