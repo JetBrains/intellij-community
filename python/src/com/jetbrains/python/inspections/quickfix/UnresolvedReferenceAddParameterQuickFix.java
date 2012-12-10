@@ -23,13 +23,14 @@ import org.jetbrains.annotations.NotNull;
  * QuickFix to add parameter to unresolved reference
  */
 public class UnresolvedReferenceAddParameterQuickFix implements LocalQuickFix, HighPriorityAction {
-
-  public UnresolvedReferenceAddParameterQuickFix() {
+  private String myName;
+  public UnresolvedReferenceAddParameterQuickFix(String name) {
+    myName = name;
   }
 
   @NotNull
   public String getName() {
-    return PyBundle.message("QFIX.unresolved.reference.add.param");
+    return PyBundle.message("QFIX.unresolved.reference.add.param.$0", myName);
   }
 
   @NotNull

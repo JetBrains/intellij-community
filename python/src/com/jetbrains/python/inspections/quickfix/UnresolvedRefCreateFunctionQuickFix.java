@@ -31,7 +31,7 @@ public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
 
   @NotNull
   public String getName() {
-    return PyBundle.message("QFIX.unresolved.reference.create.function");
+    return PyBundle.message("QFIX.unresolved.reference.create.function.$0", myReference.getText());
   }
 
   @NotNull
