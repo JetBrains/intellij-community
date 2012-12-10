@@ -26,7 +26,6 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.CachingVirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.FileSystemPersistence;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
@@ -52,13 +51,9 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
   private final List<VirtualFileSystem> myPhysicalFileSystems = new ArrayList<VirtualFileSystem>();
   private final EventDispatcher<VirtualFileListener> myVirtualFileListenerMulticaster = EventDispatcher.create(VirtualFileListener.class);
   private final List<VirtualFileManagerListener> myVirtualFileManagerListeners = ContainerUtil.createEmptyCOWList();
-  private final FileSystemPersistence myPersistence;
-
   private int myRefreshCount = 0;
 
-  public VirtualFileManagerImpl(@NotNull VirtualFileSystem[] fileSystems, @NotNull MessageBus bus, @NotNull FileSystemPersistence persistence) {
-    myPersistence = persistence;
-
+  public VirtualFileManagerImpl(@NotNull VirtualFileSystem[] fileSystems, @NotNull MessageBus bus) {
     for (VirtualFileSystem fileSystem : fileSystems) {
       registerFileSystem(fileSystem);
     }
@@ -94,6 +89,23 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
   }
 
   @Override
+  public void refresh(boolean asynchronous, @Nullable final Runnable postAction) {
+    doRefresh(asynchronous, postAction);
+  }
+
+  protected void doRefresh(boolean asynchronous, @Nullable Runnable postAction) {
+    if (!asynchronous) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+    }
+
+    for (VirtualFileSystem fileSystem : getPhysicalFileSystems()) {
+      if (!(fileSystem instanceof CachingVirtualFileSystem)) {
+        fileSystem.refresh(asynchronous);
+      }
+    }
+  }
+
+  @Override
   public void refreshWithoutFileWatcher(final boolean asynchronous) {
     if (!asynchronous) {
       ApplicationManager.getApplication().assertIsDispatchThread();
@@ -104,26 +116,6 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
         ((CachingVirtualFileSystem)fileSystem).refreshWithoutFileWatcher(asynchronous);
       }
       else {
-        fileSystem.refresh(asynchronous);
-      }
-    }
-  }
-
-  @Override
-  public void refresh(boolean asynchronous, @Nullable final Runnable postAction) {
-    refresh(asynchronous, postAction, ModalityState.NON_MODAL);
-  }
-
-  public void refresh(boolean asynchronous, @Nullable Runnable postAction, @NotNull ModalityState modalityState) {
-    if (!asynchronous) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
-    }
-
-    // todo: get an idea how to deliver changes from local FS to jar fs before they go refresh
-    myPersistence.refresh(asynchronous, postAction, modalityState);
-
-    for (VirtualFileSystem fileSystem : getPhysicalFileSystems()) {
-      if (!(fileSystem instanceof CachingVirtualFileSystem)) {
         fileSystem.refresh(asynchronous);
       }
     }
@@ -241,6 +233,11 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
     }
   }
 
+  @Override
+  public long getModificationCount() {
+    return 0;
+  }
+
   private static class LoggingListener implements VirtualFileListener {
     @Override
     public void propertyChanged(VirtualFilePropertyEvent event) {
@@ -297,10 +294,5 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
       LOG.debug("beforeFileMovement: file = " + event.getFile() + ", oldParent = " + event.getOldParent() +
                 ", newParent = " + event.getNewParent() + ", requestor = " + event.getRequestor());
     }
-  }
-
-  @Override
-  public long getModificationCount() {
-    return myPersistence.getCheapFileSystemModificationCount();
   }
 }

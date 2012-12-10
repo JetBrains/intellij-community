@@ -16,7 +16,6 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -29,13 +28,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.FileSystemPersistence;
-import com.intellij.util.*;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
 import gnu.trove.*;
@@ -45,7 +44,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
-public class DirectoryIndexImpl extends DirectoryIndex {
+public abstract class DirectoryIndexImpl extends DirectoryIndex {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.DirectoryIndexImpl");
 
   protected final Project myProject;
@@ -65,10 +64,6 @@ public class DirectoryIndexImpl extends DirectoryIndex {
         myDisposed = true;
       }
     });
-  }
-
-  private static class FileSystemPersistenceHolder {
-    private static final FileSystemPersistence persistence = ApplicationManager.getApplication().getComponents(FileSystemPersistence.class)[0];
   }
 
   @Override
@@ -178,62 +173,6 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     return dir instanceof VirtualFileWithId && myState.myProjectExcludeRoots.contains(getId(dir));
   }
 
-  private final PackageSink mySink = new PackageSink();
-
-  private static final Condition<VirtualFile> IS_VALID = new Condition<VirtualFile>() {
-    @Override
-    public boolean value(final VirtualFile virtualFile) {
-      return virtualFile.isValid();
-    }
-  };
-
-  private class PackageSink extends QueryFactory<VirtualFile, Pair<IndexState, List<VirtualFile>>> {
-    private PackageSink() {
-      registerExecutor(new QueryExecutor<VirtualFile, Pair<IndexState, List<VirtualFile>>>() {
-        @Override
-        public boolean execute(@NotNull final Pair<IndexState, List<VirtualFile>> stateAndDirs,
-                               @NotNull final Processor<VirtualFile> consumer) {
-          for (VirtualFile dir : stateAndDirs.second) {
-            DirectoryInfo info = stateAndDirs.first.myDirToInfoMap.get(getId(dir));
-            assert info != null;
-
-            if (!info.isInLibrarySource() || info.isInModuleSource() || info.hasLibraryClassRoot()) {
-              if (!consumer.process(dir)) return false;
-            }
-          }
-          return true;
-        }
-      });
-    }
-
-    public Query<VirtualFile> search(@NotNull String packageName, boolean includeLibrarySources) {
-      checkAvailability();
-      dispatchPendingEvents();
-
-      IndexState state = myState;
-      int[] allDirs = state.getDirsForPackage(packageName);
-      if (allDirs == null) allDirs = ArrayUtil.EMPTY_INT_ARRAY;
-
-      List<VirtualFile> files = new ArrayList<VirtualFile>(allDirs.length);
-      for (int dir : allDirs) {
-        VirtualFile file = FileSystemPersistenceHolder.persistence.findFileById(dir);
-        if (file != null) {
-          files.add(file);
-        }
-      }
-
-      Query<VirtualFile> query = includeLibrarySources ? new CollectionQuery<VirtualFile>(files)
-                                                       : createQuery(Pair.create(state, files));
-      return new FilteredQuery<VirtualFile>(query, IS_VALID);
-    }
-  }
-
-  @Override
-  @NotNull
-  public Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
-    return mySink.search(packageName, includeLibrarySources);
-  }
-
   @Override
   public String getPackageName(@NotNull VirtualFile dir) {
     checkAvailability();
@@ -244,11 +183,10 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   protected void dispatchPendingEvents() {
   }
 
-  private void checkAvailability() {
+  protected void checkAvailability() {
     if (!myInitialized) {
       LOG.error("Directory index is not initialized yet for " + myProject);
     }
-
     if (myDisposed) {
       LOG.error("Directory index is already disposed for " + myProject);
     }
@@ -268,17 +206,18 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     final List<int[]> multiDirPackages = new ArrayList<int[]>(Arrays.asList(new int[]{-1}));
     final TIntObjectHashMap<String> myDirToPackageName = new TIntObjectHashMap<String>();
 
-    public IndexState() {
-    }
+    public IndexState() { }
 
     @Nullable
-    private int[] getDirsForPackage(String packageName) {
+    public int[] getDirsForPackage(String packageName) {
       int i = myPackageNameToDirsMap.get(packageName);
       return i == 0 ? null : i > 0 ? new int[]{i} : multiDirPackages.get(-i);
     }
+
     private void removeDirFromPackage(@NotNull String packageName, int dirId) {
       int i = myPackageNameToDirsMap.get(packageName);
-      int[] oldPackageDirs = i == 0 ? null : i > 0 ? new int[]{i} : multiDirPackages.get(-i);
+      assert i != 0;
+      int[] oldPackageDirs = i > 0 ? new int[]{i} : multiDirPackages.get(-i);
       int index = ArrayUtil.find(oldPackageDirs, dirId);
       assert index != -1;
       oldPackageDirs = ArrayUtil.remove(oldPackageDirs, index);
@@ -294,6 +233,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
         multiDirPackages.set(-i, oldPackageDirs);
       }
     }
+
     private void addDirToPackage(@NotNull String packageName, int dirId) {
       int i = myPackageNameToDirsMap.get(packageName);
 
@@ -324,6 +264,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       }
       return info;
     }
+
     private DirectoryInfo storeInfo(DirectoryInfo info, int dirId) {
       myDirToInfoMap.put(dirId, info);
       return info;

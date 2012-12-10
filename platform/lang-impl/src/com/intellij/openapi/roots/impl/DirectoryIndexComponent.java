@@ -24,11 +24,15 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.util.*;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,8 +44,10 @@ import java.util.List;
  */
 public class DirectoryIndexComponent extends DirectoryIndexImpl {
   private final MessageBusConnection myConnection;
+  private final ManagingFS myManagingFS;
+  private final PackageSink mySink;
 
-  public DirectoryIndexComponent(Project project, StartupManager startupManager) {
+  public DirectoryIndexComponent(@NotNull Project project, @NotNull StartupManager startupManager, @NotNull ManagingFS managingFS) {
     super(project);
     myConnection = project.getMessageBus().connect(project);
     startupManager.registerPreStartupActivity(new Runnable() {
@@ -50,6 +56,55 @@ public class DirectoryIndexComponent extends DirectoryIndexImpl {
         initialize();
       }
     });
+    myManagingFS = managingFS;
+    mySink = new PackageSink();
+  }
+
+  private class PackageSink extends QueryFactory<VirtualFile, Pair<IndexState, List<VirtualFile>>> {
+    private final Condition<VirtualFile> IS_VALID = new Condition<VirtualFile>() {
+      @Override
+      public boolean value(final VirtualFile virtualFile) {
+        return virtualFile.isValid();
+      }
+    };
+
+    private PackageSink() {
+      registerExecutor(new QueryExecutor<VirtualFile, Pair<IndexState, List<VirtualFile>>>() {
+        @Override
+        public boolean execute(@NotNull final Pair<IndexState, List<VirtualFile>> stateAndDirs,
+                               @NotNull final Processor<VirtualFile> consumer) {
+          for (VirtualFile dir : stateAndDirs.second) {
+            DirectoryInfo info = stateAndDirs.first.myDirToInfoMap.get(getId(dir));
+            assert info != null;
+
+            if (!info.isInLibrarySource() || info.isInModuleSource() || info.hasLibraryClassRoot()) {
+              if (!consumer.process(dir)) return false;
+            }
+          }
+          return true;
+        }
+      });
+    }
+
+    public Query<VirtualFile> search(@NotNull String packageName, boolean includeLibrarySources) {
+      checkAvailability();
+      dispatchPendingEvents();
+
+      IndexState state = myState;
+      int[] allDirs = state.getDirsForPackage(packageName);
+      if (allDirs == null) allDirs = ArrayUtil.EMPTY_INT_ARRAY;
+
+      List<VirtualFile> files = new ArrayList<VirtualFile>(allDirs.length);
+      for (int dir : allDirs) {
+        VirtualFile file = myManagingFS.findFileById(dir);
+        if (file != null) {
+          files.add(file);
+        }
+      }
+
+      Query<VirtualFile> query = includeLibrarySources ? new CollectionQuery<VirtualFile>(files) : createQuery(Pair.create(state, files));
+      return new FilteredQuery<VirtualFile>(query, IS_VALID);
+    }
   }
 
   @Override
@@ -57,6 +112,12 @@ public class DirectoryIndexComponent extends DirectoryIndexImpl {
     subscribeToFileChanges();
     super.initialize();
     markContentRootsForRefresh();
+  }
+
+  @Override
+  @NotNull
+  public Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
+    return mySink.search(packageName, includeLibrarySources);
   }
 
   private void subscribeToFileChanges() {

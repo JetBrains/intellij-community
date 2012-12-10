@@ -16,7 +16,6 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,7 +23,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.*;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
@@ -817,36 +819,6 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     }
   }
 
-  @Override
-  public void refresh(boolean asynchronous) {
-    RefreshQueue.getInstance().refresh(asynchronous, true, null, getRoots());
-  }
-
-  @Override
-  public void refresh(boolean asynchronous, @Nullable Runnable postAction, @NotNull ModalityState modalityState) {
-    RefreshQueue.getInstance().refresh(asynchronous, true, postAction, modalityState, getRoots());
-  }
-
-  @Override
-  @NotNull
-  public VirtualFile[] getLocalRoots() {
-    final List<VirtualFile> roots = new ArrayList<VirtualFile>();
-
-    myRootsLock.readLock().lock();
-    try {
-      for (NewVirtualFile root : myRoots.values()) {
-        if (root.isInLocalFileSystem()) {
-          roots.add(root);
-        }
-      }
-    }
-    finally {
-      myRootsLock.readLock().unlock();
-    }
-
-    return VfsUtilCore.toVirtualFileArray(roots);
-  }
-
   @NotNull private final ConcurrentIntObjectMap<NewVirtualFile> myIdToDirCache = new StripedLockIntObjectConcurrentHashMap<NewVirtualFile>();
 
   @Override
@@ -944,6 +916,26 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     try {
       for (NewVirtualFile root : myRoots.values()) {
         if (root.getFileSystem() == fs) {
+          roots.add(root);
+        }
+      }
+    }
+    finally {
+      myRootsLock.readLock().unlock();
+    }
+
+    return VfsUtilCore.toVirtualFileArray(roots);
+  }
+
+  @Override
+  @NotNull
+  public VirtualFile[] getLocalRoots() {
+    final List<VirtualFile> roots = new ArrayList<VirtualFile>();
+
+    myRootsLock.readLock().lock();
+    try {
+      for (NewVirtualFile root : myRoots.values()) {
+        if (root.isInLocalFileSystem()) {
           roots.add(root);
         }
       }

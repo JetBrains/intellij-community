@@ -23,7 +23,6 @@ import com.intellij.mock.MockFileDocumentManagerImpl;
 import com.intellij.mock.MockReferenceProvidersRegistry;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ExtensionAreas;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -36,7 +35,6 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.StaticGetter;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
@@ -44,7 +42,6 @@ import com.intellij.openapi.vfs.impl.CoreVirtualFilePointerManager;
 import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
 import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem;
 import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
-import com.intellij.openapi.vfs.newvfs.FileSystemPersistence;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.PsiReferenceServiceImpl;
@@ -57,12 +54,14 @@ import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.messages.impl.MessageBusImpl;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 
 import java.lang.reflect.Modifier;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @author yole
@@ -100,30 +99,11 @@ public class CoreApplicationEnvironment {
       }
     }, null));
 
-    FileSystemPersistence fileSystemPersistence = new FileSystemPersistence() {
-      @Override
-      public void refresh(boolean asynchronous, Runnable postAction, @NotNull ModalityState modalityState) {
-      }
+    VirtualFileSystem[] fs = {myLocalFileSystem, myJarFileSystem};
+    VirtualFileManagerImpl virtualFileManager = new VirtualFileManagerImpl(fs, new MessageBusImpl(myApplication, null));
+    registerComponentInstance(appContainer, VirtualFileManager.class, virtualFileManager);
 
-      @Override
-      public int getCheapFileSystemModificationCount() {
-        return 0;
-      }
-
-      @Nullable
-      @Override
-      public VirtualFile findFileById(int id) {
-        return null;
-      }
-    };
-    VirtualFileManagerImpl virtualFileManager = new VirtualFileManagerImpl(new VirtualFileSystem[]{myLocalFileSystem, myJarFileSystem},
-                                                                       new MessageBusImpl(myApplication, null),
-                                                                       fileSystemPersistence
-    );
-    registerComponentInstance(appContainer, VirtualFileManager.class, virtualFileManager
-    );
     myApplication.registerService(VirtualFilePointerManager.class, createVirtualFilePointerManager());
-
     myApplication.registerService(DefaultASTFactory.class, new CoreASTFactory());
     myApplication.registerService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
     myApplication.registerService(ReferenceProvidersRegistry.class, new MockReferenceProvidersRegistry());
@@ -136,7 +116,6 @@ public class CoreApplicationEnvironment {
     ProgressIndicatorProvider.ourInstance = createProgressIndicatorProvider();
 
     myApplication.registerService(JobLauncher.class, createJobLauncher());
-
   }
 
   protected VirtualFilePointerManager createVirtualFilePointerManager() {

@@ -37,6 +37,9 @@ import com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable;
 import com.intellij.openapi.roots.impl.libraries.LibraryTablesRegistrarImpl;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Query;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -45,6 +48,7 @@ public class ProjectModel {
 
   public static class InitApplicationEnvironment {
     protected final CoreApplicationEnvironment myApplicationEnvironment;
+
     public InitApplicationEnvironment(CoreApplicationEnvironment env) {
       myApplicationEnvironment = env;
       Extensions.registerAreaClass(ExtensionAreas.IDEA_MODULE, null);
@@ -109,7 +113,13 @@ public class ProjectModel {
     }
 
     protected DirectoryIndex createDirectoryIndex() {
-      return new DirectoryIndexImpl(myProject);
+      return new DirectoryIndexImpl(myProject) {
+        @NotNull
+        @Override
+        public Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
+          throw new UnsupportedOperationException();
+        }
+      };
     }
 
     private ProjectPathMacroManager createProjectPathMacroManager() {
@@ -119,6 +129,6 @@ public class ProjectModel {
     protected ModuleManager createModuleManager() {
       return new CoreModuleManager(myProject, myProjectEnvironment.getParentDisposable());
     }
-
   }
+
 }
