@@ -398,6 +398,8 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     GradleConnector connector = GradleConnector.newConnector();
     RemoteGradleProcessSettings settings = mySettings.get();
     if (settings != null) {
+      
+      // Setup wrapper/local installation usage.
       if (!settings.isUseWrapper()) {
         String gradleHome = settings.getGradleHome();
         if (gradleHome != null) {
@@ -410,8 +412,22 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
           }
         }
       }
+      
+      // Setup service directory if necessary.
+      String serviceDirectory = settings.getServiceDirectory();
+      if (serviceDirectory != null) {
+        connector.useGradleUserHomeDir(new File(serviceDirectory));
+      }
+      
+      // Setup logging if necessary.
       if (settings.isVerboseApi() && connector instanceof DefaultGradleConnector) {
         ((DefaultGradleConnector)connector).setVerboseLogging(true);
+      }
+      
+      // Setup daemon ttl if necessary.
+      long ttl = settings.getTtlInMs();
+      if (ttl > 0 && connector instanceof DefaultGradleConnector) {
+        ((DefaultGradleConnector)connector).daemonMaxIdleTime((int)ttl, TimeUnit.MILLISECONDS);
       }
     }
     connector.forProjectDirectory(projectDir);

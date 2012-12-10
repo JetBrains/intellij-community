@@ -31,17 +31,19 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
  */
 public class GrContainerTypeConverter extends GrTypeConverter {
   @Override
+  public boolean isAllowedInMethodCall() {
+    return false;
+  }
+
+  @Override
   public Boolean isConvertible(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context) {
-    if (isMethodCallConversion(context)) {
-      return null;
-    }
     if (!isCollectionOrArray(lType) || !isCollectionOrArray(rType)) return null;
 
     final PsiType lComponentType = extractComponentType(lType);
     final PsiType rComponentType = extractComponentType(rType);
 
     if (lComponentType == null || rComponentType == null) return Boolean.TRUE;
-    if (TypesUtil.isAssignable(lComponentType, rComponentType, context)) return Boolean.TRUE;
+    if (TypesUtil.isAssignableByMethodCallConversion(lComponentType, rComponentType, context)) return Boolean.TRUE;
     return null;
   }
 

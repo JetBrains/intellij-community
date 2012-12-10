@@ -42,16 +42,10 @@ import java.util.concurrent.ConcurrentMap;
 
 public class MessageBusImpl implements MessageBus {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.messages.impl.MessageBusImpl");
-  private final ThreadLocal<Queue<DeliveryJob>> myMessageQueue = new ThreadLocal<Queue<DeliveryJob>>() {
-    @Override
-    protected Queue<DeliveryJob> initialValue() {
-      return new ConcurrentLinkedQueue<DeliveryJob>();
-    }
-  };
+  private final ThreadLocal<Queue<DeliveryJob>> myMessageQueue = createThreadLocalQueue();
   private final ConcurrentMap<Topic, Object> mySyncPublishers = new ConcurrentHashMap<Topic, Object>();
   private final ConcurrentMap<Topic, Object> myAsyncPublishers = new ConcurrentHashMap<Topic, Object>();
-  private final ConcurrentMap<Topic, List<MessageBusConnectionImpl>> mySubscribers =
-    new ConcurrentHashMap<Topic, List<MessageBusConnectionImpl>>();
+  private final ConcurrentMap<Topic, List<MessageBusConnectionImpl>> mySubscribers = new ConcurrentHashMap<Topic, List<MessageBusConnectionImpl>>();
   private final List<MessageBusImpl> myChildBuses = ContainerUtil.createEmptyCOWList();
 
   private static final Object NA = new Object();
@@ -188,8 +182,9 @@ public class MessageBusImpl implements MessageBus {
     final Topic topic = message.getTopic();
     final List<MessageBusConnectionImpl> topicSubscribers = mySubscribers.get(topic);
     if (topicSubscribers != null) {
+      Queue<DeliveryJob> queue = myMessageQueue.get();
       for (MessageBusConnectionImpl subscriber : topicSubscribers) {
-        myMessageQueue.get().offer(new DeliveryJob(subscriber, message));
+        queue.offer(new DeliveryJob(subscriber, message));
         subscriber.scheduleMessageDelivery(message);
       }
     }
@@ -225,12 +220,12 @@ public class MessageBusImpl implements MessageBus {
   }
 
   private void doPumpMessages() {
+    Queue<DeliveryJob> queue = myMessageQueue.get();
     do {
-      DeliveryJob job = myMessageQueue.get().poll();
+      DeliveryJob job = queue.poll();
       if (job == null) break;
       job.connection.deliverMessage(job.message);
-    }
-    while (true);
+    } while (true);
 
     for (MessageBusImpl childBus : myChildBuses) {
       LOG.assertTrue(childBus.myParentBus == this);
@@ -238,7 +233,7 @@ public class MessageBusImpl implements MessageBus {
     }
   }
 
-  public void notifyOnSubscription(final MessageBusConnectionImpl connection, final Topic topic) {
+  void notifyOnSubscription(final MessageBusConnectionImpl connection, final Topic topic) {
     checkNotDisposed();
     List<MessageBusConnectionImpl> topicSubscribers = mySubscribers.get(topic);
     if (topicSubscribers == null) {
@@ -249,7 +244,7 @@ public class MessageBusImpl implements MessageBus {
     topicSubscribers.add(connection);
   }
 
-  public void notifyConnectionTerminated(final MessageBusConnectionImpl connection) {
+  void notifyConnectionTerminated(final MessageBusConnectionImpl connection) {
     for (List<MessageBusConnectionImpl> topicSubscribers : mySubscribers.values()) {
       topicSubscribers.remove(connection);
     }
@@ -264,10 +259,20 @@ public class MessageBusImpl implements MessageBus {
     }
   }
 
-  public void deliverSingleMessage() {
+  void deliverSingleMessage() {
     checkNotDisposed();
     final DeliveryJob job = myMessageQueue.get().poll();
     if (job == null) return;
     job.connection.deliverMessage(job.message);
+  }
+
+  @NotNull
+  static <T> ThreadLocal<Queue<T>> createThreadLocalQueue() {
+    return new ThreadLocal<Queue<T>>() {
+      @Override
+      protected Queue<T> initialValue() {
+        return new ConcurrentLinkedQueue<T>();
+      }
+    };
   }
 }

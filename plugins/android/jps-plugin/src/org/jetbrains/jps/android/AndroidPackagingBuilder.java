@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ProjectPaths;
-import org.jetbrains.jps.android.builder.AndroidBuildTarget;
+import org.jetbrains.jps.android.builder.AndroidPackagingBuildTarget;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
@@ -44,13 +44,13 @@ import java.util.*;
 /**
  * @author Eugene.Kudelevsky
  */
-public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, AndroidBuildTarget> {
+public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, AndroidPackagingBuildTarget> {
   @NonNls private static final String BUILDER_NAME = "Android Packager";
   @NonNls private static final String RELEASE_SUFFIX = ".release";
   @NonNls private static final String UNSIGNED_SUFFIX = ".unsigned";
 
   public AndroidPackagingBuilder() {
-    super(Collections.singletonList(AndroidBuildTarget.TargetType.PACKAGING));
+    super(Collections.singletonList(AndroidPackagingBuildTarget.MyTargetType.INSTANCE));
   }
 
   @NotNull
@@ -60,8 +60,8 @@ public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, 
   }
 
   @Override
-  public void build(@NotNull AndroidBuildTarget target,
-                    @NotNull DirtyFilesHolder<BuildRootDescriptor, AndroidBuildTarget> holder,
+  public void build(@NotNull AndroidPackagingBuildTarget target,
+                    @NotNull DirtyFilesHolder<BuildRootDescriptor, AndroidPackagingBuildTarget> holder,
                     @NotNull BuildOutputConsumer outputConsumer,
                     @NotNull CompileContext context) throws ProjectBuildException {
     if (AndroidJpsUtil.isLightBuild(context)) {

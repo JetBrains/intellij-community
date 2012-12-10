@@ -54,7 +54,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -469,13 +468,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
               text = StringUtil.convertLineSeparators(text, lineSeparator);
             }
 
-            final Writer writer = LoadTextUtil.getWriter(getProject(), newVFile, myManager, text, -1);
-            try {
-              writer.write(text);
-            }
-            finally {
-              writer.close();
-            }
+            LoadTextUtil.write(getProject(), newVFile, myManager, text, -1);
           }
         }
         else {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,7 +135,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
     if (ownType instanceof PsiClassType) {
       ownType = ((PsiClassType)ownType).rawType();
     }
-    if (ownType != null && TypesUtil.isAssignable(conversionType.rawType(), ownType, this, false)) return null;
+    if (ownType != null && TypesUtil.isAssignableWithoutConversions(conversionType.rawType(), ownType, this)) return null;
 
     final PsiClass resolved = conversionType.resolve();
     if (resolved != null) {

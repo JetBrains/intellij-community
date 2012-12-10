@@ -45,8 +45,9 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.content.Content;
-import com.intellij.usageView.UsageViewBundle;
+import com.intellij.usageView.*;
 import com.intellij.usages.*;
+import com.intellij.usages.UsageViewManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
@@ -322,9 +323,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
       findUsagesStartedBalloon.addRequest(new Runnable() {
         @Override
         public void run() {
-          ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, MessageType.INFO,
-                                                                   "Find Usages in progress...",
-                                                                   AllIcons.Actions.Find, null);
+          notifyByFindBalloon("Find Usages in progress...", null);
           findStartedBalloonShown.set(true);
         }
       }, 300, ModalityState.NON_MODAL);
@@ -409,9 +408,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                                              myPresentation.getScopeText());
 
               if (notFoundActions == null || notFoundActions.isEmpty()) {
-                ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, MessageType.INFO,
-                                                                         "<html>"+message+".<br>" + createOptionsHtml() + "</html>",
-                                                                         AllIcons.Actions.Find, createGotToOptionsListener(mySearchFor));
+                notifyByFindBalloon("<html>"+message+".<br>" + createOptionsHtml() + "</html>", createGotToOptionsListener(mySearchFor));
                 findStartedBalloonShown.set(false);
               }
               else {
@@ -443,9 +440,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
               usage.navigate(true);
               flashUsageScriptaculously(usage);
             }
-            ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, MessageType.INFO,
-                                                                     "<html>Only one usage found.<br>" + createOptionsHtml() + "</html>",
-                                                                     AllIcons.Actions.Find, createGotToOptionsListener(mySearchFor));
+            notifyByFindBalloon("<html>Only one usage found.<br>" + createOptionsHtml() + "</html>", createGotToOptionsListener(mySearchFor));
           }
         }, ModalityState.NON_MODAL, myProject.getDisposed());
       }
@@ -483,6 +478,11 @@ public class UsageViewManagerImpl extends UsageViewManager {
         SearchForUsagesRunnable.this.setCurrentSearchCancelled(cancelled);
       }
     }
+  }
+
+  private void notifyByFindBalloon(@NotNull String text, HyperlinkListener listener) {
+    com.intellij.usageView.UsageViewManager.getInstance(myProject); // in case tool window not registered
+    ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, MessageType.INFO, text, AllIcons.Actions.Find, listener);
   }
 
   @NotNull

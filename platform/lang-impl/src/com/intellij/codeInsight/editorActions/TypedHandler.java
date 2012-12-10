@@ -204,7 +204,7 @@ public class TypedHandler extends TypedActionHandlerBase {
           if (handleRParen(editor, fileType, charTyped)) return;
         }
       }
-      else if ('"' == charTyped || '\'' == charTyped || '`' == charTyped) {
+      else if ('"' == charTyped || '\'' == charTyped || '`' == charTyped || '/' == charTyped) {
         if (handleQuote(editor, charTyped, dataContext, file)) return;
       }
     }

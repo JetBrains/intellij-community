@@ -13,7 +13,7 @@ public java.lang.Object run() {
 java.lang.Object a = new java.util.Date();
 java.util.Date d = (java.util.Date)a;
 foo((java.util.Date)a);
-d = (java.util.Date)a;
+d = ((java.util.Date)(a));
 java.util.Date b = (java.util.Date)a;
 a = org.codehaus.groovy.runtime.DateGroovyMethods.plus(a, 2);
 X x = new X();

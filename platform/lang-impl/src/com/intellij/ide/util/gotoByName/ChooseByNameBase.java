@@ -1414,9 +1414,10 @@ public abstract class ChooseByNameBase {
         @Override
         public void run() {
           try {
-            ensureNamesLoaded(myCheckboxState);
+            boolean everywhere = myCheckboxState;
+            ensureNamesLoaded(everywhere);
 
-            addElementsByPattern(myPattern, elements, myCancelled);
+            addElementsByPattern(myPattern, elements, myCancelled, everywhere);
 
             for (Object elem : elements) {
               if (myCancelled.isCanceled()) {
@@ -1463,10 +1464,11 @@ public abstract class ChooseByNameBase {
 
     private void addElementsByPattern(@NotNull String pattern,
                                       @NotNull final Set<Object> elements,
-                                      @NotNull final ProgressIndicator cancelled) {
+                                      @NotNull final ProgressIndicator cancelled,
+                                      boolean everywhere) {
       long start = System.currentTimeMillis();
       myProvider.filterElements(
-        ChooseByNameBase.this, pattern, myCheckboxState,
+        ChooseByNameBase.this, pattern, everywhere,
         cancelled,
         new Processor<Object>() {
           @Override
@@ -1614,11 +1616,12 @@ public abstract class ChooseByNameBase {
 
                 boolean anyPlace = isSearchInAnyPlace();
                 setSearchInAnyPlace(false);
-                myCalcElementsThread.addElementsByPattern(text, prefixMatchElementsArray, indicator);
+                boolean everywhere = myCalcElementsThread.myCheckboxState;
+                myCalcElementsThread.addElementsByPattern(text, prefixMatchElementsArray, indicator, everywhere);
                 setSearchInAnyPlace(anyPlace);
 
                 if (anyPlace && !overFlow[0]) {
-                  myCalcElementsThread.addElementsByPattern(text, nonPrefixMatchElementsArray, indicator);
+                  myCalcElementsThread.addElementsByPattern(text, nonPrefixMatchElementsArray, indicator, everywhere);
                   nonPrefixMatchElementsArray.removeAll(prefixMatchElementsArray);
                 }
 

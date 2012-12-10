@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.PsiCatchSection;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -52,8 +53,7 @@ public class BadExceptionCaughtInspection extends BaseInspection {
   public BadExceptionCaughtInspection() {
     if (exceptionsString.length() != 0) {
       exceptions.clear();
-      final List<String> strings =
-        StringUtil.split(exceptionsString, ",");
+      final List<String> strings = StringUtil.split(exceptionsString, ",");
       for (String string : strings) {
         exceptions.add(string);
       }
@@ -69,23 +69,21 @@ public class BadExceptionCaughtInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "bad.exception.caught.display.name");
+    return InspectionGadgetsBundle.message("bad.exception.caught.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "bad.exception.caught.problem.descriptor");
+    return InspectionGadgetsBundle.message("bad.exception.caught.problem.descriptor");
   }
 
   @Override
   public JComponent createOptionsPanel() {
     final ListTable table =
       new ListTable(new ListWrappingTableModel(exceptions, InspectionGadgetsBundle.message("exception.class.column.name")));
-    return UiUtils
-      .createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.exception.class"), "java.lang.Throwable");
+    return UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.exception.class"),
+                                                        "java.lang.Throwable");
   }
 
   @Override
@@ -102,19 +100,26 @@ public class BadExceptionCaughtInspection extends BaseInspection {
       if (parameter == null) {
         return;
       }
-      final PsiType type = parameter.getType();
-      final String text = type.getCanonicalText();
-      if (text == null) {
-        return;
-      }
-      if (!exceptions.contains(text)) {
-        return;
-      }
       final PsiTypeElement typeElement = parameter.getTypeElement();
       if (typeElement == null) {
         return;
       }
-      registerError(typeElement);
+      final PsiTypeElement[] childTypeElements = PsiTreeUtil.getChildrenOfType(typeElement, PsiTypeElement.class);
+      if (childTypeElements != null) {
+        for (PsiTypeElement childTypeElement : childTypeElements) {
+          checkTypeElement(childTypeElement);
+        }
+      }
+      else {
+        checkTypeElement(typeElement);
+      }
+    }
+
+    private void checkTypeElement(PsiTypeElement typeElement) {
+      final PsiType type = typeElement.getType();
+      if (exceptions.contains(type.getCanonicalText())) {
+        registerError(typeElement);
+      }
     }
   }
 }

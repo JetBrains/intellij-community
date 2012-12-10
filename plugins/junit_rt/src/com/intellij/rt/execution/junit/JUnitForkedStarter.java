@@ -86,6 +86,7 @@ public class JUnitForkedStarter {
     IdeaTestRunner testRunner = (IdeaTestRunner)JUnitStarter.getAgentClass(isJUnit4).newInstance();
     testRunner.setStreams(out, err, 0);
     final Object description = testRunner.getTestToStart(args);
+    if (description == null) return -1;
 
     TreeSender.sendTree(testRunner, description);
 

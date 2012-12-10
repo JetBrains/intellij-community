@@ -56,6 +56,7 @@ public class JUnit4TestRunnerUtil {
           BufferedReader reader = new BufferedReader(new FileReader(suiteClassName.substring(1)));
           try {
             final String packageName = reader.readLine();
+            if (packageName == null) return null;
             String line;
 
             while ((line = reader.readLine()) != null) {

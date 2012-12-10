@@ -113,15 +113,15 @@ public final class LoadTextUtil {
 
   @NotNull
   public static Charset detectCharsetAndSetBOM(@NotNull VirtualFile virtualFile, @NotNull byte[] content) {
-    return doDetectCharsetAndSetBOM(virtualFile, content).getFirst();
+    return doDetectCharsetAndSetBOM(virtualFile, content, true).getFirst();
   }
 
   @NotNull
-  private static Pair<Charset, byte[]> doDetectCharsetAndSetBOM(@NotNull VirtualFile virtualFile, @NotNull byte[] content) {
+  private static Pair<Charset, byte[]> doDetectCharsetAndSetBOM(@NotNull VirtualFile virtualFile, @NotNull byte[] content, boolean saveBOM) {
     Charset charset = detectCharset(virtualFile, content);
     Pair<Charset,byte[]> bomAndCharset = getBOMAndCharset(content, charset);
     final byte[] bom = bomAndCharset.second;
-    if (bom.length != 0) {
+    if (saveBOM && bom.length != 0) {
       virtualFile.setBOM(bom);
     }
     return bomAndCharset;
@@ -186,8 +186,7 @@ public final class LoadTextUtil {
   }
 
   /**
-   * Gets the <code>Writer</code> for this file and sets modification stamp and time stamp to the specified values
-   * after closing the Writer.<p>
+   * Overwrites file with text and sets modification stamp and time stamp to the specified values.
    * <p/>
    * Normally you should not use this method.
    *
@@ -202,8 +201,11 @@ public final class LoadTextUtil {
    * @see VirtualFile#getModificationStamp()
    */
   @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
-  public static Writer getWriter(@Nullable Project project, @NotNull VirtualFile virtualFile, Object requestor, @NotNull String text, final long newModificationStamp)
-    throws IOException {
+  public static void write(@Nullable Project project,
+                           @NotNull VirtualFile virtualFile,
+                           @NotNull Object requestor,
+                           @NotNull String text,
+                           long newModificationStamp) throws IOException {
     Charset existing = virtualFile.getCharset();
     Charset specified = extractCharsetFromFileContent(project, virtualFile, text);
     Charset charset = chooseMostlyHarmlessCharset(existing, specified, text);
@@ -223,7 +225,13 @@ public final class LoadTextUtil {
     OutputStream outputStream = virtualFile.getOutputStream(requestor, newModificationStamp, -1);
     OutputStreamWriter writer = charset == null ? new OutputStreamWriter(outputStream) : new OutputStreamWriter(outputStream, charset);
     // no need to buffer ByteArrayOutputStream
-    return outputStream instanceof ByteArrayOutputStream ? writer : new BufferedWriter(writer);
+    Writer w = outputStream instanceof ByteArrayOutputStream ? writer : new BufferedWriter(writer);
+    try {
+      w.write(text);
+    }
+    finally {
+      w.close();
+    }
   }
 
   private static void setDetectedFromBytesFlagBack(@NotNull VirtualFile virtualFile, @NotNull Charset charset, @NotNull String text) {
@@ -271,6 +279,7 @@ public final class LoadTextUtil {
     return null;
   }
 
+  @NotNull
   public static CharSequence loadText(@NotNull VirtualFile file) {
     if (file instanceof LightVirtualFile) {
       CharSequence content = ((LightVirtualFile)file).getContent();
@@ -307,18 +316,21 @@ public final class LoadTextUtil {
 
   @NotNull
   public static CharSequence getTextByBinaryPresentation(@NotNull final byte[] bytes, @NotNull VirtualFile virtualFile) {
-    return getTextByBinaryPresentation(bytes, virtualFile, true);
+    return getTextByBinaryPresentation(bytes, virtualFile, true, true);
   }
 
   @NotNull
-  public static CharSequence getTextByBinaryPresentation(@NotNull byte[] bytes, @NotNull VirtualFile virtualFile, final boolean rememberDetectedSeparators) {
-    Pair<Charset, byte[]> pair = doDetectCharsetAndSetBOM(virtualFile, bytes);
+  public static CharSequence getTextByBinaryPresentation(@NotNull byte[] bytes,
+                                                         @NotNull VirtualFile virtualFile,
+                                                         boolean saveDetectedSeparators,
+                                                         boolean saveBOM) {
+    Pair<Charset, byte[]> pair = doDetectCharsetAndSetBOM(virtualFile, bytes, saveBOM);
     final Charset charset = pair.getFirst();
     byte[] bom = pair.getSecond();
     int offset = bom == null ? 0 : bom.length;
 
     final Pair<CharSequence, String> result = convertBytes(bytes, charset, offset);
-    if (rememberDetectedSeparators) {
+    if (saveDetectedSeparators) {
       virtualFile.putUserData(DETECTED_LINE_SEPARATOR_KEY, result.getSecond());
     }
     return result.getFirst();
@@ -348,42 +360,6 @@ public final class LoadTextUtil {
 
   static String getDetectedLineSeparator(@NotNull VirtualFile file) {
     return file.getUserData(DETECTED_LINE_SEPARATOR_KEY);
-  }
-
-  /**
-   * Change line separator for the file to the specified value (assumes that the documents were saved)
-   *
-   * @param project          the project instance
-   * @param requestor        the requestor for the operation
-   * @param file             the file to convert
-   * @param newLineSeparator the new line separator for the file
-   * @throws IOException in the case of IO problem
-   */
-  public static void changeLineSeparator(@Nullable Project project,
-                                         @Nullable Object requestor,
-                                         @NotNull VirtualFile file,
-                                         @NotNull String newLineSeparator) throws IOException {
-    String lineSeparator = getDetectedLineSeparator(file);
-    if (lineSeparator != null && lineSeparator.equals(newLineSeparator)) {
-      return;
-    }
-    CharSequence cs = getTextByBinaryPresentation(file.contentsToByteArray(), file);
-    lineSeparator = getDetectedLineSeparator(file);
-    if (lineSeparator == null || lineSeparator.equals(newLineSeparator)) {
-      return;
-    }
-    if (!newLineSeparator.equals("\n")) {
-      cs = StringUtil.convertLineSeparators(cs.toString(), newLineSeparator);
-    }
-    String text = cs.toString();
-    file.putUserData(DETECTED_LINE_SEPARATOR_KEY, newLineSeparator);
-    Writer w = getWriter(project, file, requestor, text, System.currentTimeMillis());
-    try {
-      w.write(text);
-    }
-    finally {
-      w.close();
-    }
   }
 
   @NotNull

@@ -42,6 +42,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private volatile float myDone = -1.0f;
   private EventDispatcher<BuildListener> myListeners = EventDispatcher.create(BuildListener.class);
   private Map<JpsModule, ProcessorConfigProfile> myAnnotationProcessingProfileMap;
+  private final FSCache myFSCache;
 
   public CompileContextImpl(CompileScope scope,
                             ProjectDescriptor pd, boolean isMake,
@@ -58,6 +59,9 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     myIsMake = !isProjectRebuild && isMake;
     myDelegateMessageHandler = delegateMessageHandler;
     myProjectPaths = new ProjectPaths(pd.getProject());
+    // in project rebuild mode performance gain is hard to observe, so it is better to save memory
+    // in make mode it is critical to traverse file system as fast as possible, so we choose speed over memory savings
+    myFSCache = isProjectRebuild? FSCache.NO_CACHE : new FSCache();
   }
 
   @Override
@@ -206,5 +210,9 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   @Override
   public ProjectDescriptor getProjectDescriptor() {
     return myProjectDescriptor;
+  }
+
+  public FSCache getFSCache() {
+    return myFSCache;
   }
 }

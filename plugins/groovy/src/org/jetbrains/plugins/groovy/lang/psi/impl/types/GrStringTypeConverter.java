@@ -33,8 +33,12 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.
  */
 public class GrStringTypeConverter extends GrTypeConverter {
   @Override
+  public boolean isAllowedInMethodCall() {
+    return false;
+  }
+
+  @Override
   public Boolean isConvertible(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context) {
-    if (isMethodCallConversion(context)) return null;
     if (!GroovyConfigUtils.getInstance().isVersionAtLeast(context, GroovyConfigUtils.GROOVY1_8)) return null;
     if (!(InheritanceUtil.isInheritor(rType, JAVA_LANG_CHAR_SEQUENCE) || InheritanceUtil.isInheritor(rType, GROOVY_LANG_GSTRING))) {
       return null;

@@ -127,7 +127,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
               }
               if (type == null) return;
               for (TypeConstraint info : infos) {
-                if (info.satisfied(type, position.getManager(), GlobalSearchScope.allScope(position.getProject()))) {
+                if (info.satisfied(type, position)) {
                   result.addElement(variant);
                   break;
                 }

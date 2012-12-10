@@ -101,9 +101,11 @@ public class DetailsCache {
     }
   }
 
+  @NotNull
   public List<String> getBranches(final VirtualFile root, final AbstractHash hash) {
     synchronized (myLock) {
-      return myBranches.get(new Pair<VirtualFile, AbstractHash>(root, hash));
+      List<String> branches = myBranches.get(new Pair<VirtualFile, AbstractHash>(root, hash));
+      return branches == null ? Collections.<String>emptyList() : branches;
     }
   }
 

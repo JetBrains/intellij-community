@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.expectedTypes;
 
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,7 +27,7 @@ public abstract class TypeConstraint {
 
   protected final PsiType myType;
 
-  public abstract boolean satisfied(PsiType type, PsiManager manager, GlobalSearchScope scope);
+  public abstract boolean satisfied(PsiType type, @NotNull PsiElement context);
 
   @NotNull
   public abstract PsiType getDefaultType();

@@ -74,6 +74,9 @@
     <group id="Git.LogContextMenu">
       <separator/>
     </group>
+
+    <action id="Git.CherryPick" class="git4idea.cherrypick.GitCherryPickAction" text="Cherry-Pick" icon="Git4ideaIcons.CherryPick" anchor="First"/>
+
   </actions>
 
   <project-components>

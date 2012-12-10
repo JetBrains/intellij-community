@@ -33,6 +33,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
@@ -67,6 +68,7 @@ import git4idea.history.GitHistoryProvider;
 import git4idea.history.NewGitUsersComponent;
 import git4idea.history.browser.GitCommit;
 import git4idea.history.browser.GitProjectLogManager;
+import git4idea.history.wholeTree.GitCommitDetailsProvider;
 import git4idea.history.wholeTree.GitCommitsSequentialIndex;
 import git4idea.history.wholeTree.GitCommitsSequentially;
 import git4idea.i18n.GitBundle;
@@ -108,10 +110,22 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   public static final String NAME = "Git";
 
   /**
-   * Provide selected Git commit in some commit list. Use this, when {@link com.intellij.openapi.vcs.changes.Change} is not enough.
-   * @see VcsDataKeys.CHANGES
+   * Provide selected Git commit in some commit list. Use this, when {@link Change} is not enough.
+   * @see VcsDataKeys#CHANGES
+   * @see #SELECTED_COMMITS
    */
   public static final DataKey<GitCommit> GIT_COMMIT = DataKey.create("Git.Commit");
+
+  /**
+   * Provides the list of Git commits selected in some list, for example, in the Git log.
+   * @see #GIT_COMMIT
+   */
+  public static final DataKey<List<GitCommit>> SELECTED_COMMITS = DataKey.create("Git.Selected.Commits");
+
+  /**
+   * Provides the possibility to receive on demand those commit details which usually are not accessible from the {@link GitCommit} object.
+   */
+  public static final DataKey<GitCommitDetailsProvider> COMMIT_DETAILS_PROVIDER = DataKey.create("Git.Commits.Details.Provider");
 
   private static final Logger log = Logger.getInstance(GitVcs.class.getName());
   private static final VcsKey ourKey = createKey(NAME);

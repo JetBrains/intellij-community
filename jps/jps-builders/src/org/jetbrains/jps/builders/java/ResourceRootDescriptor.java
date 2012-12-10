@@ -84,4 +84,9 @@ public final class ResourceRootDescriptor extends BuildRootDescriptor {
            ", generated=" + myGenerated +
            '}';
   }
+
+  @Override
+  public boolean canUseFileCache() {
+    return true;
+  }
 }

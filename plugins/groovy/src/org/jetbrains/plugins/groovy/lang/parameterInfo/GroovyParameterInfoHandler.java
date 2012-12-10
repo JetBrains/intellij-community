@@ -144,7 +144,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
         }
         else if (type != null) {
           addMethodAndClosureVariants(elementToShow,
-                                      ResolveUtil.getMethodCandidates(type, "call", place, PsiUtil.getArgumentTypes(place, true)));
+                                      ResolveUtil.getMethodCandidates(type, "call", invoked, PsiUtil.getArgumentTypes(place, true)));
         }
       }
       else {
@@ -271,7 +271,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           for (int j = 0; j < currIndex; j++) {
             PsiType argType = argTypes[j];
             final PsiType paramType = substitutor != null ? substitutor.substitute(parameterTypes[j]) : parameterTypes[j];
-            if (!TypesUtil.isAssignable(paramType, argType, place)) {
+            if (!TypesUtil.isAssignableByMethodCallConversion(paramType, argType, place)) {
               context.setUIComponentEnabled(i, false);
               break Outer;
             }

@@ -199,7 +199,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
           }
         }
       };
-      DefaultActionGroup group = action.createGroup(false);
+      DefaultActionGroup group = action.createGroup(null);
       DataContext dataContext = DataManager.getInstance().getDataContext();
       JBPopupFactory.getInstance().createActionGroupPopup(null, group, dataContext, false, false, false, null, 30, null).showInBestPositionFor(dataContext);
     }

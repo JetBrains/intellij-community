@@ -46,6 +46,17 @@ public interface GradleConfigNotifier {
   void onPreferLocalGradleDistributionToWrapperChange(boolean preferLocalToWrapper);
 
   /**
+   * Is expected to be invoked when service directory path is changed.
+   * <p/>
+   * <b>Note:</b> this callback is executed <b>after</b> the actual config change.
+   *
+   * @param oldPath  old path (if any)
+   * @param newPath  new path (if any)
+   * @see GradleSettings#getServiceDirectoryPath() 
+   */
+  void onServiceDirectoryPathChange(@Nullable String oldPath, @Nullable String newPath);
+  
+  /**
    * Gradle settings changes might affect project structure, e.g. switching from one gradle version to another one or from
    * gradle wrapper to local installation of different version and vice versa can trigger new binaries usage (different gradle
    * versions use different file system directories for holding dependencies).

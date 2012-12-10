@@ -357,17 +357,16 @@ public class GdkMethodUtil {
       selfType = substitutor.substitute(selfType);
     }
 
-    final GlobalSearchScope scope = method.getResolveScope();
-    final Project project = method.getProject();
-    final PsiManager manager = method.getManager();
-
     if (selfType instanceof PsiClassType &&
         ((PsiClassType)selfType).rawType().equalsToText(CommonClassNames.JAVA_LANG_CLASS) &&
         place instanceof GrReferenceExpression &&
         ((GrReferenceExpression)place).resolve() instanceof PsiClass) {   // ClassType.categoryMethod()  where categoryMethod(Class<> cl, ...)
-      return TypesUtil.isAssignable(selfType, TypesUtil.createJavaLangClassType(qualifierType, project, scope), manager, scope);
+      final GlobalSearchScope scope = method.getResolveScope();
+      final Project project = method.getProject();
+      return TypesUtil.isAssignableByMethodCallConversion(selfType, TypesUtil.createJavaLangClassType(qualifierType, project, scope),
+                                                          method);
     }
-    return TypesUtil.isAssignable(selfType, qualifierType, manager, scope);
+    return TypesUtil.isAssignableByMethodCallConversion(selfType, qualifierType, method);
   }
 
   @Nullable

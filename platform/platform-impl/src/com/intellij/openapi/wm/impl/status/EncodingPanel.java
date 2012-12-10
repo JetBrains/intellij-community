@@ -185,7 +185,7 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
           EncodingPanel.this.update();
         }
       }
-    }.createGroup(false);
+    }.createGroup(null);
     return JBPopupFactory.getInstance().createActionGroupPopup(null, group, dataContext, false, false, false, null, 30, null);
   }
 

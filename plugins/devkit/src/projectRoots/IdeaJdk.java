@@ -18,6 +18,7 @@ package org.jetbrains.idea.devkit.projectRoots;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.impl.JavaDependentSdkType;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
@@ -26,10 +27,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.cls.BytePointer;
 import com.intellij.util.cls.ClsFormatException;
@@ -53,20 +51,14 @@ import java.util.List;
  * User: anna
  * Date: Nov 22, 2004
  */
-public class IdeaJdk extends SdkType implements JavaSdkType {
+public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   private static final Icon ADD_SDK = DevkitIcons.Add_sdk;
-  private static final Icon SDK_OPEN = DevkitIcons.Sdk_open;
   private static final Icon SDK_CLOSED = DevkitIcons.Sdk_closed;
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.projectRoots.IdeaJdk");
   @NonNls private static final String LIB_DIR_NAME = "lib";
   @NonNls private static final String SRC_DIR_NAME = "src";
   @NonNls private static final String PLUGINS_DIR = "plugins";
-  @NonNls private static final String JAVAEE_DIR = "JavaEE";
-  @NonNls private static final String JSF_DIR = "JSF";
-  @NonNls private static final String PERSISTENCE_SUPPORT = "PersistenceSupport";
-  @NonNls private static final String DATABASE_DIR = "DatabaseSupport";
-  @NonNls private static final String CSS_DIR = "css";
 
   public IdeaJdk() {
     super("IDEA JDK");
@@ -185,7 +177,7 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
     appendIdeaLibrary(plugins + "DatabaseSupport", result, "database-impl.jar", "jdbc-console.jar");
     appendIdeaLibrary(plugins + "css", result, "css.jar");
     appendIdeaLibrary(plugins + "uml", result, "uml-support.jar");
-    return VfsUtil.toVirtualFileArray(result);
+    return VfsUtilCore.toVirtualFileArray(result);
   }
 
   private static void appendIdeaLibrary(final String libDirPath,
@@ -331,7 +323,7 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
       public boolean accept(File pathname) {
         @NonNls final String path = pathname.getPath();
         //noinspection SimplifiableIfStatement
-        if (path.indexOf("generics") > -1) return false;
+        if (path.contains("generics")) return false;
         return path.endsWith(".jar") || path.endsWith(".zip");
       }
     });

@@ -1,8 +1,13 @@
 package org.jetbrains.plugins.gradle.remote;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JdkUtil;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ProjectRootManager;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,16 +25,36 @@ public class GradleJavaHelper {
   
   @SuppressWarnings("MethodMayBeStatic")
   @Nullable
-  public String getJdkHome() {
+  public String getJdkHome(@Nullable Project project) {
     List<String> candidates = new ArrayList<String>();
     candidates.add(System.getProperty(GRADLE_JAVA_HOME_KEY));
     candidates.add(System.getenv("JAVA_HOME"));
-    candidates.add(System.getProperty("java.home"));
     for (String candidate : candidates) {
-      if (candidate != null && JdkUtil.checkForJre(candidate)) {
+      if (candidate != null && JdkUtil.checkForJdk(new File(candidate))) {
         return candidate;
       }
     }
+
+    if (project != null) {
+      Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
+      if (sdk != null) {
+        String path = sdk.getHomePath();
+        if (JdkUtil.checkForJdk(new File(path))) {
+          return path;
+        }
+      }
+    }
+
+    Sdk[] sdks = ProjectJdkTable.getInstance().getAllJdks();
+    if (sdks != null) {
+      for (Sdk sdk : sdks) {
+        String path = sdk.getHomePath();
+        if (JdkUtil.checkForJdk(new File(path))) {
+          return path;
+        }
+      }
+    }
+    
     return null;
   }
 }

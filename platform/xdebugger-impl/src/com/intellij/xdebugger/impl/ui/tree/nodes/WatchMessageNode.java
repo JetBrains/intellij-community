@@ -58,4 +58,9 @@ public class WatchMessageNode extends MessageTreeNode implements WatchNode {
     node.myText.append(errorMessage, SimpleTextAttributes.ERROR_ATTRIBUTES);
     return node;
   }
+
+  @Override
+  public String toString() {
+    return myExpression;
+  }
 }

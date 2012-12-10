@@ -126,12 +126,12 @@ public class DomServiceImpl extends DomService {
     if (domElement instanceof DomFileElement) {
       return ((DomFileElement)domElement).getFile();
     }
-    return DomManagerImpl.getDomInvocationHandler(domElement).getFile();
+    return DomManagerImpl.getNotNullHandler(domElement).getFile();
   }
 
   @NotNull
   public EvaluatedXmlName getEvaluatedXmlName(@NotNull final DomElement element) {
-    return DomManagerImpl.getDomInvocationHandler(element).getXmlName();
+    return DomManagerImpl.getNotNullHandler(element).getXmlName();
   }
 
   @NotNull

@@ -34,7 +34,6 @@ import com.intellij.util.PathsList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import org.gradle.tooling.ProjectConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,7 +76,8 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class GradleApiFacadeManager {
 
-  private static final String REMOTE_PROCESS_TTL_IN_MS_KEY = "gradle.remote.process.ttl.ms";
+  private static final String REMOTE_PROCESS_TTL_IN_MS_KEY  = "gradle.remote.process.ttl.ms";
+  private static final int    DEFAULT_REMOTE_PROCESS_TTL_MS = 60000;
 
   private static final String MAIN_CLASS_NAME                      = GradleApiFacadeImpl.class.getName();
   private static final int    REMOTE_FAIL_RECOVERY_ATTEMPTS_NUMBER = 3;
@@ -85,7 +85,7 @@ public class GradleApiFacadeManager {
   private final ConcurrentMap<String /*project name*/, GradleApiFacade>                          myFacadeWrappers
     = new ConcurrentHashMap<String, GradleApiFacade>();
   private final Map<String /*project name*/, Pair<GradleApiFacade, RemoteGradleProcessSettings>> myRemoteFacades
-    = new HashMap<String, Pair<GradleApiFacade, RemoteGradleProcessSettings>>();
+    = new ConcurrentHashMap<String, Pair<GradleApiFacade, RemoteGradleProcessSettings>>();
 
   @NotNull private final Lock myLock = new ReentrantLock();
 
@@ -290,14 +290,14 @@ public class GradleApiFacadeManager {
       return GradleApiFacade.NULL_OBJECT;
     }
     Pair<GradleApiFacade, RemoteGradleProcessSettings> pair = myRemoteFacades.get(project.getName());
-    if (pair != null && isValid(pair)) {
+    if (pair != null && prepare(project, pair)) {
       return pair.first;
     }
     
     myLock.lock();
     try {
       pair = myRemoteFacades.get(project.getName());
-      if (pair != null && isValid(pair)) {
+      if (pair != null && prepare(project, pair)) {
         return pair.first;
       }
       if (pair != null) {
@@ -353,10 +353,16 @@ public class GradleApiFacadeManager {
     return result;
   }
 
-  private static boolean isValid(@NotNull Pair<GradleApiFacade, RemoteGradleProcessSettings> pair) {
-    // Check remote process is alive.
+  private boolean prepare(@NotNull Project project, @NotNull Pair<GradleApiFacade, RemoteGradleProcessSettings> pair) {
+    // Check if remote process is alive.
     try {
       pair.first.getResolver();
+
+      RemoteGradleProcessSettings currentSettings = getRemoteSettings(project);
+      if (!currentSettings.equals(pair.second)) {
+        pair.first.applySettings(currentSettings);
+        myRemoteFacades.put(project.getName(), Pair.create(pair.first, currentSettings));
+      }
       return true;
     }
     catch (RemoteException e) {
@@ -382,19 +388,18 @@ public class GradleApiFacadeManager {
         localGradlePath = gradleHome.getAbsolutePath();
       }
     }
-    RemoteGradleProcessSettings result = new RemoteGradleProcessSettings(localGradlePath, useWrapper);
-    String ttlAsString = System.getProperty(REMOTE_PROCESS_TTL_IN_MS_KEY);
-    if (ttlAsString != null) {
-      try {
-        long ttl = Long.parseLong(ttlAsString.trim());
-        result.setTtlInMs(ttl);
-      }
-      catch (NumberFormatException e) {
-        GradleLog.LOG.warn("Incorrect remote process ttl value detected. Expected to find number, found '" + ttlAsString + "'");
-      }
+    final String serviceDirectory;
+    if (project == null) {
+      serviceDirectory = null;
     }
+    else {
+      serviceDirectory = GradleSettings.getInstance(project).getServiceDirectoryPath();
+    }
+    RemoteGradleProcessSettings result = new RemoteGradleProcessSettings(localGradlePath, serviceDirectory, useWrapper);
+    int ttl = SystemProperties.getIntProperty(REMOTE_PROCESS_TTL_IN_MS_KEY, DEFAULT_REMOTE_PROCESS_TTL_MS);
+    result.setTtlInMs(ttl);
     GradleJavaHelper javaHelper = new GradleJavaHelper();
-    result.setJavaHome(javaHelper.getJdkHome());
+    result.setJavaHome(javaHelper.getJdkHome(project));
     return result;
   }
   

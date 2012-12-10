@@ -91,10 +91,10 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
           if (loadExternally) {
             final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
             myVcs.createWCClient().doGetFileContents(ioFile, SVNRevision.UNDEFINED, SVNRevision.BASE, true, buffer);
-            contents = LoadTextUtil.getTextByBinaryPresentation(buffer.toByteArray(), file, false).toString();
+            contents = LoadTextUtil.getTextByBinaryPresentation(buffer.toByteArray(), file, false, false).toString();
           } else {
             final byte[] bytes = VcsHistoryUtil.loadRevisionContent(revision);
-            contents = LoadTextUtil.getTextByBinaryPresentation(bytes, file, false).toString();
+            contents = LoadTextUtil.getTextByBinaryPresentation(bytes, file, false, false).toString();
           }
 
           final SvnFileAnnotation result = new SvnFileAnnotation(myVcs, file, contents, lastChangedRevision);
