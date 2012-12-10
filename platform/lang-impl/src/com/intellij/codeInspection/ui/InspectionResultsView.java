@@ -838,6 +838,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     private void rerun() {
       myRerun = true;
       if (myScope.isValid()) {
+        AnalysisUIOptions.getInstance(myProject).save(myGlobalInspectionContext.getUIOptions());
         myGlobalInspectionContext.doInspections(myScope, InspectionManager.getInstance(myProject));
       }
     }
