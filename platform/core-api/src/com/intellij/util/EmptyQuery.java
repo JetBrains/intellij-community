@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public class EmptyQuery<R> implements Query<R> {
   }
 
   @Override
-  public boolean forEach(@NotNull final Processor<R> consumer) {
+  public boolean forEach(@NotNull Processor<R> consumer) {
     return true;
   }
 
@@ -53,7 +53,7 @@ public class EmptyQuery<R> implements Query<R> {
 
   @NotNull
   @Override
-  public R[] toArray(@NotNull final R[] a) {
+  public R[] toArray(@NotNull R[] a) {
     return findAll().toArray(a);
   }
 
@@ -63,7 +63,7 @@ public class EmptyQuery<R> implements Query<R> {
   }
 
   public static <T> Query<T> getEmptyQuery() {
-    //noinspection unchecked
-    return (Query<T>) EMPTY_QUERY_INSTANCE;
+    @SuppressWarnings("unchecked") Query<T> instance = (Query<T>)EMPTY_QUERY_INSTANCE;
+    return instance;
   }
 }
