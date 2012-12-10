@@ -67,7 +67,7 @@ public class FileReferenceSet {
     }
   };
 
-  private FileReference[] myReferences;
+  protected FileReference[] myReferences;
   private PsiElement myElement;
   private final int myStartInElement;
   private final boolean myCaseSensitive;
