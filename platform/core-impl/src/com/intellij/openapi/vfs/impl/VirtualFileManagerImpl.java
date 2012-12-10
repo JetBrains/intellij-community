@@ -84,8 +84,18 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
   }
 
   @Override
+  public long syncRefresh() {
+    return doRefresh(false, null);
+  }
+
+  @Override
+  public long asyncRefresh(@Nullable Runnable postAction) {
+    return doRefresh(true, postAction);
+  }
+
+  @Override
   public void refresh(boolean asynchronous) {
-    refresh(asynchronous, null);
+    doRefresh(asynchronous, null);
   }
 
   @Override
@@ -93,7 +103,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
     doRefresh(asynchronous, postAction);
   }
 
-  protected void doRefresh(boolean asynchronous, @Nullable Runnable postAction) {
+  protected long doRefresh(boolean asynchronous, @Nullable Runnable postAction) {
     if (!asynchronous) {
       ApplicationManager.getApplication().assertIsDispatchThread();
     }
@@ -103,6 +113,8 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
         fileSystem.refresh(asynchronous);
       }
     }
+
+    return 0;
   }
 
   @Override

@@ -33,7 +33,7 @@ public class PlatformVirtualFileManager extends VirtualFileManagerImpl {
   }
 
   @Override
-  protected void doRefresh(boolean asynchronous, @Nullable Runnable postAction) {
+  protected long doRefresh(boolean asynchronous, @Nullable Runnable postAction) {
     if (!asynchronous) {
       ApplicationManager.getApplication().assertIsDispatchThread();
     }
@@ -44,6 +44,8 @@ public class PlatformVirtualFileManager extends VirtualFileManagerImpl {
     session.launch();
 
     super.doRefresh(asynchronous, postAction);
+
+    return session.getId();
   }
 
   @Override
