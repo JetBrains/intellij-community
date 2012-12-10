@@ -92,7 +92,12 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private final AnalysisScope myScope;
   @NonNls
   private static final String HELP_ID = "reference.toolWindows.inspections";
-  private final Map<HighlightDisplayLevel, InspectionSeverityGroupNode> mySeverityGroupNodes = new HashMap<HighlightDisplayLevel, InspectionSeverityGroupNode>();
+  private final Map<HighlightDisplayLevel, InspectionSeverityGroupNode> mySeverityGroupNodes = new TreeMap<HighlightDisplayLevel, InspectionSeverityGroupNode>(new Comparator<HighlightDisplayLevel>() {
+    @Override
+    public int compare(HighlightDisplayLevel o1, HighlightDisplayLevel o2) {
+      return o1.getSeverity().compareTo(o2.getSeverity());
+    }
+  });
 
   private final Splitter mySplitter;
   private final GlobalInspectionContextImpl myGlobalInspectionContext;
