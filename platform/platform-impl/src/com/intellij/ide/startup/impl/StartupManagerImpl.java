@@ -17,7 +17,8 @@ package com.intellij.ide.startup.impl;
 
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.notification.*;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -184,10 +185,14 @@ public class StartupManagerImpl extends StartupManagerEx {
       }
     });
 
-    if (!app.isUnitTestMode()) {
-      boolean headless = app.isHeadlessEnvironment();
-      if (!headless && !myProject.isDisposed()) checkProjectRoots();
-      VirtualFileManager.getInstance().refresh(!headless);
+    if (!app.isUnitTestMode() && !myProject.isDisposed()) {
+      if (!app.isHeadlessEnvironment()) {
+        checkProjectRoots();
+        VirtualFileManager.getInstance().asyncRefresh(null);
+      }
+      else {
+        VirtualFileManager.getInstance().syncRefresh();
+      }
     }
 
     Registry.get("ide.firstStartup").setValue(false);

@@ -134,7 +134,7 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        VirtualFileManager.getInstance().refresh(false);
+        VirtualFileManager.getInstance().syncRefresh();
         final VirtualFile virtualFile = getVirtualFile(tempDirectory);
         virtualFile.refresh(false, true);
       }
@@ -203,7 +203,7 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        VirtualFileManager.getInstance().refresh(false);
+        VirtualFileManager.getInstance().syncRefresh();
         final VirtualFile virtualFile = getVirtualFile(tempDirectory);
         virtualFile.refresh(false, true);
       }
@@ -350,7 +350,7 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        VirtualFileManager.getInstance().refresh(false);
+        VirtualFileManager.getInstance().syncRefresh();
       }
     });
     UIUtil.dispatchAllInvocationEvents();

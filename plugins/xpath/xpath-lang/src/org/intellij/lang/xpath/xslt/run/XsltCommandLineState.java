@@ -227,7 +227,7 @@ public class XsltCommandLineState extends CommandLineState {
                                             return;
                                         }
                                     }
-                                    VirtualFileManager.getInstance().refresh(true);
+                                  VirtualFileManager.getInstance().asyncRefresh(null);
                                 }
                             }
                         };

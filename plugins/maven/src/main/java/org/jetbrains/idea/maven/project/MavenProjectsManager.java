@@ -968,7 +968,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         if (myProject.isDisposed()) return;
 
         MavenFoldersImporter.updateProjectFolders(myProject, targetFoldersOnly);
-        VirtualFileManager.getInstance().refresh(false);
+        VirtualFileManager.getInstance().syncRefresh();
       }
     });
   }
@@ -1012,7 +1012,14 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     }
 
 
-    VirtualFileManager.getInstance().refresh(isNormalProject());
+    VirtualFileManager fm = VirtualFileManager.getInstance();
+    if (isNormalProject()) {
+      fm.asyncRefresh(null);
+    }
+    else {
+      fm.syncRefresh();
+    }
+
     if (postTasks.get() != null /*may be null if importing is cancelled*/) {
       schedulePostImportTasks(postTasks.get());
     }
