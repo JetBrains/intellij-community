@@ -644,4 +644,8 @@ public class GenerationUtil {
     writer.writeStatement(builder, expressionContext);
     builder.append("))");
   }
+
+  static PsiType getNotNullType(PsiElement context, PsiType type) {
+    return type != null ? type : TypesUtil.getJavaLangObject(context);
+  }
 }

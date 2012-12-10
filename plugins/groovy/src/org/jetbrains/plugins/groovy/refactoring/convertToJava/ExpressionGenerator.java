@@ -425,9 +425,9 @@ public class ExpressionGenerator extends Generator {
    * x.putAt(a, 4) [4]
    */
   @Override
-  public void visitAssignmentExpression(GrAssignmentExpression expression) {
+  public void visitAssignmentExpression(final GrAssignmentExpression expression) {
     final GrExpression lValue = expression.getLValue();
-    GrExpression rValue = expression.getRValue();
+    final GrExpression rValue = expression.getRValue();
     final IElementType token = expression.getOperationToken();
 
     PsiElement realLValue = PsiUtil.skipParentheses(lValue, false);
@@ -486,14 +486,14 @@ public class ExpressionGenerator extends Generator {
       lValue.accept(this);
       builder.append(" = ");
 
-      final PsiType rType = getDeclaredType(rValue, context);
-      if (lType != null && rType != null && !TypesUtil.isAssignableByMethodCallConversion(lType, rType, expression, true)) {
-        builder.append('(');
-        writeType(builder, lType, expression);
-        builder.append(')');
-      }
       if (rValue != null) {
-        rValue.accept(this);
+        final PsiType rType = getDeclaredType(rValue, context);
+        wrapInCastIfNeeded(builder, getNotNullType(expression, lType), rType, expression, context, new StatementWriter() {
+          @Override
+          public void writeStatement(StringBuilder builder, ExpressionContext context) {
+            rValue.accept(ExpressionGenerator.this);
+          }
+        });
       }
     }
     else {
@@ -506,20 +506,20 @@ public class ExpressionGenerator extends Generator {
         builder.append(" = ");
 
         final PsiType rType = getDeclaredType((PsiMethod)resolved, resolveResult.getSubstitutor(), context);
-        if (lType != null && rType != null && !TypesUtil.isAssignableByMethodCallConversion(lType, rType, expression, true)) {
-          builder.append('(');
-          writeType(builder, lType, expression);
-          builder.append(')');
-        }
-        invokeMethodOn(
-          ((PsiMethod)resolved),
-          (GrExpression)lValue.copy(),
-          rValue == null ? GrExpression.EMPTY_ARRAY : new GrExpression[]{rValue},
-          GrNamedArgument.EMPTY_ARRAY,
-          EMPTY_ARRAY,
-          resolveResult.getSubstitutor(),
-          expression
-        );
+        wrapInCastIfNeeded(builder, getNotNullType(expression, lType),  rType, expression, context, new StatementWriter() {
+          @Override
+          public void writeStatement(StringBuilder builder, ExpressionContext context) {
+            invokeMethodOn(
+              ((PsiMethod)resolved),
+              (GrExpression)lValue.copy(),
+              rValue == null ? GrExpression.EMPTY_ARRAY : new GrExpression[]{rValue},
+              GrNamedArgument.EMPTY_ARRAY,
+              EMPTY_ARRAY,
+              resolveResult.getSubstitutor(),
+              expression
+            );
+          }
+        });
       }
       else {
         writeSimpleBinaryExpression(expression.getOpToken(), lValue, rValue);
