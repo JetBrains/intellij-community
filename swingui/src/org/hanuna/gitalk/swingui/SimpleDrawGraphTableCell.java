@@ -2,7 +2,7 @@ package org.hanuna.gitalk.swingui;
 
 import org.hanuna.gitalk.graph.graph_elements.Edge;
 import org.hanuna.gitalk.graph.graph_elements.Node;
-import org.hanuna.gitalk.printmodel.PrintCellRow;
+import org.hanuna.gitalk.printmodel.PrintCell;
 import org.hanuna.gitalk.printmodel.ShortEdge;
 import org.hanuna.gitalk.printmodel.SpecialCell;
 import org.hanuna.gitalk.printmodel.cells.Cell;
@@ -94,7 +94,7 @@ public class SimpleDrawGraphTableCell implements DrawGraphTableCell {
     }
 
     @Override
-    public void draw(Graphics2D g2, PrintCellRow row) {
+    public void draw(Graphics2D g2, PrintCell row) {
         this.g2 = g2;
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         for (ShortEdge edge : row.getUpEdges()) {
@@ -108,16 +108,16 @@ public class SimpleDrawGraphTableCell implements DrawGraphTableCell {
         for (SpecialCell cell : row.getSpecialCell()) {
             Edge edge;
             switch (cell.getType()) {
-                case commitNode:
+                case COMMIT_NODE:
                     Node node = ((NodeCell) cell.getCell()).getNode();
                     paintCircle(cell.getPosition(), ColorGenerator.getColor(node.getBranch()), node.selected());
                     break;
-                case showEdge:
+                case SHOW_EDGE:
                     edge = ((EdgeCell) cell.getCell()).getEdge();
                     setStroke(edge.getType() == Edge.Type.USUAL, edge.selected());
                     paintShow(cell.getPosition(), ColorGenerator.getColor(edge.getBranch()));
                     break;
-                case hideEdge:
+                case HIDE_EDGE:
                     edge = ((EdgeCell) cell.getCell()).getEdge();
                     setStroke(edge.getType() == Edge.Type.USUAL, edge.selected());
                     paintHide(cell.getPosition(), ColorGenerator.getColor(edge.getBranch()));
@@ -160,9 +160,9 @@ public class SimpleDrawGraphTableCell implements DrawGraphTableCell {
 
     @Nullable
     @Override
-    public Cell mouseOver(PrintCellRow row, int x, int y) {
+    public Cell mouseOver(PrintCell row, int x, int y) {
         for (SpecialCell cell : row.getSpecialCell()) {
-            if (cell.getType() == SpecialCell.Type.commitNode) {
+            if (cell.getType() == SpecialCell.Type.COMMIT_NODE) {
                 if (overNode(cell.getPosition(), x, y)) {
                     return cell.getCell();
                 }

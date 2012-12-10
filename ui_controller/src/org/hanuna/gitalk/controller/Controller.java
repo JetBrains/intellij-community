@@ -10,13 +10,13 @@ import org.hanuna.gitalk.controller.branchvisibility.NodeInterval;
 import org.hanuna.gitalk.graph.graph_elements.Edge;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.graph_elements.Node;
-import org.hanuna.gitalk.printmodel.PrintCellRow;
+import org.hanuna.gitalk.printmodel.PrintCell;
+import org.hanuna.gitalk.printmodel.PrintCellModel;
 import org.hanuna.gitalk.printmodel.SpecialCell;
 import org.hanuna.gitalk.printmodel.cells.Cell;
-import org.hanuna.gitalk.printmodel.cells.LayoutModel;
+import org.hanuna.gitalk.printmodel.layout.LayoutModel;
 import org.hanuna.gitalk.printmodel.cells.NodeCell;
 import org.hanuna.gitalk.printmodel.cells.builder.LayoutModelBuilder;
-import org.hanuna.gitalk.printmodel.cells.builder.PrintCellRowModel;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
@@ -35,7 +35,7 @@ public class Controller {
     }
 
     private LayoutModel layoutModel;
-    private PrintCellRowModel printCellRowModel;
+    private PrintCellModel printCellModel;
 
     public Controller(Graph graph) {
         this.graph = graph;
@@ -46,7 +46,7 @@ public class Controller {
     public void prepare() {
         LayoutModelBuilder layoutModelBuilder = new LayoutModelBuilder(graph);
         layoutModel = layoutModelBuilder.build();
-        printCellRowModel = new PrintCellRowModel(layoutModel);
+        printCellModel = new PrintCellModel(layoutModel);
     }
 
     public TableModel getTableModel() {
@@ -55,9 +55,9 @@ public class Controller {
 
     @Nullable
     public Commit getCommitInRow(int rowIndex) {
-        ReadOnlyList<SpecialCell> cells = printCellRowModel.getPrintCellRow(rowIndex).getSpecialCell();
+        ReadOnlyList<SpecialCell> cells = printCellModel.getPrintCellRow(rowIndex).getSpecialCell();
         for (SpecialCell cell : cells) {
-            if (cell.getType() == SpecialCell.Type.commitNode) {
+            if (cell.getType() == SpecialCell.Type.COMMIT_NODE) {
                 assert NodeCell.class == cell.getCell().getClass();
                 Node node =  ((NodeCell) cell.getCell()).getNode();
                 return node.getCommit();
@@ -66,8 +66,8 @@ public class Controller {
         return null;
     }
 
-    public PrintCellRow getPrintRow(int rowIndex) {
-        return printCellRowModel.getPrintCellRow(rowIndex);
+    public PrintCell getPrintRow(int rowIndex) {
+        return printCellModel.getPrintCellRow(rowIndex);
     }
 
     public void over(@Nullable Cell cell) {
@@ -92,7 +92,7 @@ public class Controller {
             Interval old = new Interval(up.getRowIndex(), down.getRowIndex());
             graph.showBranch(edge);
             Interval upd = new Interval(up.getRowIndex(), down.getRowIndex());
-            layoutModel.update(Replace.buildFromChangeInterval(old.from(), old.to(), upd.from(), upd.to()));
+            layoutModel.recalculate(Replace.buildFromChangeInterval(old.from(), old.to(), upd.from(), upd.to()));
             return upd.from();
         }
         NodeInterval nodeInterval = hideShowBranch.branchInterval(cell);
@@ -101,7 +101,7 @@ public class Controller {
             Interval old = new Interval(nodeInterval.getUp().getRowIndex(), nodeInterval.getDown().getRowIndex());
             graph.hideBranch(nodeInterval.getUp(), nodeInterval.getDown());
             Interval upd = new Interval(nodeInterval.getUp().getRowIndex(), nodeInterval.getDown().getRowIndex());
-            layoutModel.update(Replace.buildFromChangeInterval(old.from(), old.to(), upd.from(), upd.to()));
+            layoutModel.recalculate(Replace.buildFromChangeInterval(old.from(), old.to(), upd.from(), upd.to()));
             return upd.from();
         }
         return -1;
@@ -136,7 +136,7 @@ public class Controller {
                     if (data != null) {
                         message = data.getMessage();
                     }
-                    return new GraphTableCell(printCellRowModel.getPrintCellRow(rowIndex), message);
+                    return new GraphTableCell(printCellModel.getPrintCellRow(rowIndex), message);
                 case 1:
                     if (data == null) {
                         return "";

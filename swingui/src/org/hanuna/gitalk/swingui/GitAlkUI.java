@@ -2,7 +2,7 @@ package org.hanuna.gitalk.swingui;
 
 import org.hanuna.gitalk.controller.Controller;
 import org.hanuna.gitalk.controller.GraphTableCell;
-import org.hanuna.gitalk.printmodel.PrintCellRow;
+import org.hanuna.gitalk.printmodel.PrintCell;
 import org.hanuna.gitalk.printmodel.cells.Cell;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +51,7 @@ public class GitAlkUI extends JFrame {
             int rowIndex = e.getY() / GraphTableCell.HEIGHT_CELL;
             int y = e.getY() - rowIndex * GraphTableCell.HEIGHT_CELL;
             int x = e.getX();
-            PrintCellRow row = controller.getPrintRow(rowIndex);
+            PrintCell row = controller.getPrintRow(rowIndex);
             return drawGraph.mouseOver(row, x, y);
         }
 

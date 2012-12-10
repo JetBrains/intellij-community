@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.controller;
 
-import org.hanuna.gitalk.printmodel.PrintCellRow;
+import org.hanuna.gitalk.printmodel.PrintCell;
 
 /**
  * @author erokhins
@@ -13,15 +13,15 @@ public class GraphTableCell {
     public static final float THICK_LINE = 2.5f;
     public static final float SELECT_THICK_LINE = 3.3f;
 
-    private final PrintCellRow row;
+    private final PrintCell row;
     private final String text;
 
-    public GraphTableCell(PrintCellRow row, String text) {
+    public GraphTableCell(PrintCell row, String text) {
         this.row = row;
         this.text = text;
     }
 
-    public PrintCellRow getRow() {
+    public PrintCell getRow() {
         return row;
     }
 

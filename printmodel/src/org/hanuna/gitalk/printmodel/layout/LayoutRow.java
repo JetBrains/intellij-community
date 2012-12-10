@@ -1,15 +1,16 @@
-package org.hanuna.gitalk.printmodel.cells;
+package org.hanuna.gitalk.printmodel.layout;
 
 import org.hanuna.gitalk.common.ReadOnlyList;
+import org.hanuna.gitalk.graph.graph_elements.GraphElement;
 import org.hanuna.gitalk.graph.graph_elements.NodeRow;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author erokhins
  */
-public interface CellRow {
+public interface LayoutRow {
     @NotNull
-    public ReadOnlyList<Cell> getCells();
+    public ReadOnlyList<GraphElement> getOrderedGraphElements();
     public NodeRow getGraphRow();
 
 }

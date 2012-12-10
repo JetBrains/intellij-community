@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author erokhins
  */
-public interface PrintCellRow {
+public interface PrintCell {
     public int countCell();
 
     @NotNull

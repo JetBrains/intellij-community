@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.swingui;
 
-import org.hanuna.gitalk.printmodel.PrintCellRow;
+import org.hanuna.gitalk.printmodel.PrintCell;
 import org.hanuna.gitalk.printmodel.cells.Cell;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,9 +11,9 @@ import java.awt.*;
  */
 public interface DrawGraphTableCell {
 
-    public void draw(Graphics2D g2, PrintCellRow row);
+    public void draw(Graphics2D g2, PrintCell row);
 
     @Nullable
-    public Cell mouseOver(PrintCellRow row, int x, int y);
+    public Cell mouseOver(PrintCell row, int x, int y);
 }
 

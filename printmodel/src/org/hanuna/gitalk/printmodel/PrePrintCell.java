@@ -1,11 +1,11 @@
-package org.hanuna.gitalk.printmodel.cells.builder;
+package org.hanuna.gitalk.printmodel;
 
 import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.graph.graph_elements.Edge;
+import org.hanuna.gitalk.graph.graph_elements.GraphElement;
 import org.hanuna.gitalk.graph.graph_elements.Node;
-import org.hanuna.gitalk.printmodel.ShortEdge;
-import org.hanuna.gitalk.printmodel.SpecialCell;
-import org.hanuna.gitalk.printmodel.cells.*;
+import org.hanuna.gitalk.printmodel.layout.LayoutModel;
+import org.hanuna.gitalk.printmodel.layout.LayoutRow;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -16,39 +16,35 @@ import java.util.Map;
 /**
  * @author erokhins
  */
-public class PreModelPrintCellRow {
+class PrePrintCell {
     private static final int LONG_EDGE = 16;
     private static final int EDGE_PART_SHOW = 3;
 
-    private final boolean hideEdge;
+    private final boolean hideLongEdge;
     private final LayoutModel layoutModel;
-    public ReadOnlyList<Cell> visibleCells;
-    public int rowIndex;
+    public ReadOnlyList<GraphElement> visibleElements;
+    public final int rowIndex;
 
-    public PreModelPrintCellRow(boolean hideEdge, LayoutModel layoutModel) {
-        this.hideEdge = hideEdge;
+    public PrePrintCell(boolean hideLongEdge, LayoutModel layoutModel, int rowIndex) {
+        this.hideLongEdge = hideLongEdge;
         this.layoutModel = layoutModel;
-    }
-
-    public PreModelPrintCellRow(LayoutModel layoutModel) {
-        this(true, layoutModel);
-    }
-
-
-    public void prepare(int rowIndex) {
         this.rowIndex = rowIndex;
-        visibleCells = visibleCells(rowIndex);
+        visibleElements = visibleElements(rowIndex);
+    }
+
+    public PrePrintCell(LayoutModel layoutModel, int rowIndex) {
+        this(true, layoutModel, rowIndex);
     }
 
     public int getCountCells() {
-        return visibleCells.size();
+        return visibleElements.size();
     }
 
     /**
      * @return -1 - edge hide in this row, 0 - edge is USUAL, 1 - edge hide in next row, 2 - edge hide in prev row
      */
     private int visibleEdge(Edge edge, int rowIndex) {
-        if (! hideEdge) {
+        if (!hideLongEdge) {
             return 0;
         }
         int upRowIndex = edge.getUpNode().getRowIndex();
@@ -72,49 +68,50 @@ public class PreModelPrintCellRow {
         return -1;
     }
 
-    private ReadOnlyList<Cell> visibleCells(int rowIndex) {
-        if (rowIndex < 0 || rowIndex >= layoutModel.getCellRows().size()) {
+    private ReadOnlyList<GraphElement> visibleElements(int rowIndex) {
+        if (rowIndex < 0 || rowIndex >= layoutModel.getLayoutRows().size()) {
             return ReadOnlyList.emptyList();
         }
-        CellRow cellRow = layoutModel.getCellRows().get(rowIndex);
-        ReadOnlyList<Cell> cells = cellRow.getCells();
-        if (!hideEdge) {
+        LayoutRow cellRow = layoutModel.getLayoutRows().get(rowIndex);
+        ReadOnlyList<GraphElement> cells = cellRow.getOrderedGraphElements();
+        if (!hideLongEdge) {
             return cells;
         }
 
-        List<Cell> visibleCells = new ArrayList<Cell>();
-        for (Cell cell : cells) {
-            if (cell.getClass() == NodeCell.class) {
-                visibleCells.add(cell);
+        List<GraphElement> visibleElements = new ArrayList<GraphElement>();
+        for (GraphElement cell : cells) {
+            if (cell.getNode() != null) {
+                visibleElements.add(cell);
             } else {
-                if (cell.getClass() != EdgeCell.class) {
+                Edge edge = cell.getEdge();
+                if (edge == null) {
                     throw new IllegalStateException();
                 }
-                Edge edge = ((EdgeCell) cell).getEdge();
                 if (visibleEdge(edge, rowIndex) != -1) {
-                    visibleCells.add(cell);
+                    visibleElements.add(cell);
                 }
             }
         }
 
-        return ReadOnlyList.newReadOnlyList(visibleCells);
+        return ReadOnlyList.newReadOnlyList(visibleElements);
     }
 
     @NotNull
     public ReadOnlyList<SpecialCell> specialCells() {
         List<SpecialCell> specialCells = new ArrayList<SpecialCell>();
 
-        for (int i = 0; i < visibleCells.size(); i++) {
-            Cell cell = visibleCells.get(i);
-            if (cell.getClass() == NodeCell.class) {
-                if (((NodeCell) cell).getNode().getType() == Node.Type.COMMIT_NODE) {
-                    specialCells.add(new SpecialCell(cell, i, SpecialCell.Type.commitNode));
+        for (int i = 0; i < visibleElements.size(); i++) {
+            GraphElement element = visibleElements.get(i);
+            Node node = element.getNode();
+            if (node != null) {
+                if (node.getType() == Node.Type.COMMIT_NODE) {
+                    specialCells.add(new SpecialCell(node, i, SpecialCell.Type.COMMIT_NODE));
                 }
             } else {
-                if (cell.getClass() != EdgeCell.class) {
+                Edge edge = element.getEdge();
+                if (edge == null) {
                     throw new IllegalStateException();
                 }
-                Edge edge = ((EdgeCell) cell).getEdge();
                 switch (visibleEdge(edge, rowIndex)) {
                     case -1:
                         // do nothing
@@ -123,10 +120,10 @@ public class PreModelPrintCellRow {
                         // do nothing
                         break;
                     case 1:
-                        specialCells.add(new SpecialCell(cell, i, SpecialCell.Type.hideEdge));
+                        specialCells.add(new SpecialCell(edge, i, SpecialCell.Type.HIDE_EDGE));
                         break;
                     case 2:
-                        specialCells.add(new SpecialCell(cell, i, SpecialCell.Type.showEdge));
+                        specialCells.add(new SpecialCell(edge, i, SpecialCell.Type.SHOW_EDGE));
                         break;
                     default:
                         throw new IllegalStateException();
@@ -138,15 +135,13 @@ public class PreModelPrintCellRow {
 
     @NotNull
     public ReadOnlyList<ShortEdge> downShortEdges() {
-        GetterPosition getter = new GetterPosition();
-        getter.prepare(visibleCells(rowIndex + 1));
+        GetterPosition getter = new GetterPosition(visibleElements(rowIndex + 1));
 
         List<ShortEdge> shortEdges = new ArrayList<ShortEdge>();
-        // start with add shortEdges from NodeCell
-        for (int p = 0; p < visibleCells.size(); p++) {
-            Cell cell = visibleCells.get(p);
-            if (cell.getClass() == NodeCell.class) {
-                Node node = ((NodeCell) cell).getNode();
+        // start with add shortEdges from Node
+        for (int p = 0; p < visibleElements.size(); p++) {
+            Node node = visibleElements.get(p).getNode();
+            if (node != null) {
                 for (Edge edge : node.getDownEdges()) {
                     int to = getter.getPosition(edge);
                     assert to != -1;
@@ -154,10 +149,9 @@ public class PreModelPrintCellRow {
                 }
             }
         }
-        for (int p = 0; p < visibleCells.size(); p++) {
-            Cell cell = visibleCells.get(p);
-            if (cell.getClass() == EdgeCell.class) {
-                final Edge edge = ((EdgeCell) cell).getEdge();
+        for (int p = 0; p < visibleElements.size(); p++) {
+            Edge edge = visibleElements.get(p).getEdge();
+            if (edge != null) {
                 int to = getter.getPosition(edge);
                 if (to >= 0) {
                     shortEdges.add(new ShortEdge(edge, p, to));
@@ -171,22 +165,23 @@ public class PreModelPrintCellRow {
     private static class GetterPosition {
         private final Map<Node, Integer> mapNodes = new HashMap<Node, Integer>();
 
-        private Node getDownNode(@NotNull Cell cell) {
-            if (cell.getClass() == NodeCell.class) {
-                return ((NodeCell) cell).getNode();
-            } else {
-                if (cell.getClass() != EdgeCell.class) {
-                    throw new IllegalStateException();
-                }
-                Edge edge = ((EdgeCell) cell).getEdge();
-                return edge.getDownNode();
+        public GetterPosition(List<GraphElement> graphElements) {
+            mapNodes.clear();
+            for (int p = 0; p < graphElements.size(); p++) {
+                mapNodes.put(getDownNode(graphElements.get(p)), p);
             }
         }
 
-        public void prepare(List<Cell> cells) {
-            mapNodes.clear();
-            for (int p = 0; p < cells.size(); p++) {
-                mapNodes.put(getDownNode(cells.get(p)), p);
+        private Node getDownNode(@NotNull GraphElement element) {
+            Node node = element.getNode();
+            if (node != null) {
+                return node;
+            } else {
+                Edge edge = element.getEdge();
+                if (edge == null) {
+                    throw new IllegalStateException();
+                }
+                return edge.getDownNode();
             }
         }
 

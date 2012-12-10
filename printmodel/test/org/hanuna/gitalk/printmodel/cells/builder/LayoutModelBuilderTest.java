@@ -5,7 +5,7 @@ import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.graph.graph_elements.Branch;
 import org.hanuna.gitalk.graph.mutable_graph.GraphBuilder;
 import org.hanuna.gitalk.parser.GitLogParser;
-import org.hanuna.gitalk.printmodel.cells.LayoutModel;
+import org.hanuna.gitalk.printmodel.layout.LayoutModel;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -24,8 +24,7 @@ public class LayoutModelBuilderTest {
         GitLogParser parser = new GitLogParser(new StringReader(input));
         ReadOnlyList<Commit> commits = parser.readAllCommits();
         GraphBuilder builder = new GraphBuilder();
-        LayoutModelBuilder builder1 = new LayoutModelBuilder(builder.build(commits));
-        LayoutModel layoutModel = builder1.build();
+        LayoutModel layoutModel = new LayoutModel(builder.build(commits));
         assertEquals(out, toStr(layoutModel));
     }
 
@@ -44,12 +43,12 @@ public class LayoutModelBuilderTest {
 
             "a0\n" +
             "a0:a3 a1\n" +
-            "a0:a3 a2 a1:a4\n" +
-            "a3 a2:a5 a2:a8 a1:a4\n" +
-            "a3:a6 a2:a5 a2:a8 a4\n" +
-            "a3:a6 a5 a2:a8 a4:a7\n" +
-            "a6 a2:a8 a7\n" +
-            "a2:a8 a7\n" +
+            "a0:a3 a1:a4 a2\n" +
+            "a3 a1:a4 a2:a8 a2:a5\n" +
+            "a3:a6 a4 a2:a8 a2:a5\n" +
+            "a3:a6 a4:a7 a2:a8 a5\n" +
+            "a6 a7 a2:a8\n" +
+            "a7 a2:a8\n" +
             "a8"
         );
 
