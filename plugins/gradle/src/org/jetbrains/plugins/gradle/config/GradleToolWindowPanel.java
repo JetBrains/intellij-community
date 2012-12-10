@@ -124,7 +124,10 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
     setToolbar(toolbarControl);
     
     final JComponent payloadControl = buildContent();
-    myContent.add(ScrollPaneFactory.createScrollPane(payloadControl), CONTENT_CARD_NAME);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(payloadControl);
+    JScrollBar scrollBar = scrollPane.getVerticalScrollBar();
+    scrollBar.setUnitIncrement(scrollBar.getUnitIncrement() * 7);
+    myContent.add(scrollPane, CONTENT_CARD_NAME);
     RichTextControlBuilder builder = new RichTextControlBuilder();
     builder.setBackgroundColor(payloadControl.getBackground());
     builder.setForegroundColor(UIUtil.getInactiveTextColor());
