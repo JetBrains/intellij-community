@@ -44,8 +44,14 @@ public class PyPackageRequirementsInspectionTest extends PyTestCase {
         final String perSdkDir = Integer.toHexString(System.identityHashCode(sdk));
         final VirtualFile root = myFixture.copyDirectoryToProject(dir, perSdkDir);
         assertNotNull(root);
-        setupModuleSdk(getSingleModule(myFixture.getProject()), sdk, root);
-        myFixture.testHighlighting(true, true, true, perSdkDir + File.separator + filename);
+        final Module module = getSingleModule(myFixture.getProject());
+        setupModuleSdk(module, sdk, root);
+        try {
+          myFixture.testHighlighting(true, true, true, perSdkDir + File.separator + filename);
+        }
+        finally {
+          PsiTestUtil.removeAllRoots(module, sdk);
+        }
       }
     }, getTestName(false));
   }
