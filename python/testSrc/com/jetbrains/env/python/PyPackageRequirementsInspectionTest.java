@@ -16,8 +16,6 @@ import com.jetbrains.python.inspections.PyPackageRequirementsInspection;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-
 /**
  * @author vlan
  */
@@ -47,7 +45,9 @@ public class PyPackageRequirementsInspectionTest extends PyTestCase {
         final Module module = getSingleModule(myFixture.getProject());
         setupModuleSdk(module, sdk, root);
         try {
-          myFixture.testHighlighting(true, true, true, perSdkDir + File.separator + filename);
+          final VirtualFile file = root.findFileByRelativePath(filename);
+          assertNotNull(file);
+          myFixture.testHighlighting(true, true, true, file);
         }
         finally {
           PsiTestUtil.removeAllRoots(module, sdk);
