@@ -50,7 +50,7 @@ public class ParseRef {
         Hash hash = Hash.build(split[0]);
         String longPathRef = split[1];
         if (longPathRef.equals("HEAD")) {
-            return new Ref(hash, "HEAD", Ref.Type.HEAD);
+            return new Ref(hash, "HEAD", Ref.Type.LOCAL_BRANCH);
         }
 
         if (longPathRef.equals("refs/stash")) {
