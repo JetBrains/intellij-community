@@ -24,7 +24,7 @@ public class ParseRefTest {
 
     @Test
     public void headTest() throws Exception {
-        runTest("c2f2356 HEAD", "c2f2356 HEAD HEAD:HEAD");
+        runTest("c2f2356 HEAD", "c2f2356 LOCAL_BRANCH HEAD:HEAD");
     }
 
     @Test

@@ -41,7 +41,6 @@ public class Ref {
 
 
     public static enum Type {
-        HEAD,
         LOCAL_BRANCH,
         REMOTE_BRANCH,
         TAG,
