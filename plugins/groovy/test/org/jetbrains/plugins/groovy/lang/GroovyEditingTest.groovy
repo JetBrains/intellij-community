@@ -197,7 +197,15 @@ print ''' '''<caret>
 """)
   }
 
+  void testRegex1() {
+    doTest('<caret>', '/', '/<caret>/')
+  }
 
+  void testRegex2() {
+    doTest('/a<caret>/', '/', '/a/<caret>')
+  }
 
-
+  void testDollarRegex1() {
+    doTest('$<caret>', '/', '$/<caret>/$')
+  }
 }

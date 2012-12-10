@@ -40,13 +40,18 @@ public class GroovyQuoteHandler implements MultiCharQuoteHandler {
       return end - start >= 1 && offset == end - 1 ||
              end - start >= 5 && offset >= end - 3;
     }
+    if (tokenType == mREGEX_END) {
+      int start = iterator.getStart();
+      int end = iterator.getEnd();
+      return end - start >= 1 && offset == end - 1;
+    }
     return false;
   }
 
   public boolean isOpeningQuote(HighlighterIterator iterator, int offset) {
     final IElementType tokenType = iterator.getTokenType();
 
-    if (tokenType == mGSTRING_BEGIN) return true;
+    if (tokenType == mGSTRING_BEGIN || tokenType == mREGEX_BEGIN) return true;
     if (tokenType == mGSTRING_LITERAL || tokenType == mSTRING_LITERAL) {
       int start = iterator.getStart();
       return offset == start;
@@ -80,6 +85,12 @@ public class GroovyQuoteHandler implements MultiCharQuoteHandler {
       String quote = document.getText(new TextRange(offset - 3, offset));
       if ("'''".equals(quote)) return quote;
       if ("\"\"\"".equals(quote)) return quote;
+    }
+    if (offset >= 2) {
+      Document document = iterator.getDocument();
+      if (document == null) return null;
+      String quote = document.getText(new TextRange(offset - 2, offset));
+      if ("$/".equals(quote)) return "/$";
     }
     return null;
   }
