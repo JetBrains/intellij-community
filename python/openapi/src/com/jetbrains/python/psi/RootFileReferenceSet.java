@@ -39,11 +39,16 @@ public class RootFileReferenceSet extends FileReferenceSet {
     final PsiFile file = getContainingFile();
     if (file != null) {
 
-      if (isAbsolutePathReference() && !ApplicationManager.getApplication().isUnitTestMode()) {
-        VirtualFile root = LocalFileSystem.getInstance().getRoot();
-        PsiDirectory directory = file.getManager().findDirectory(root);
-        if (directory != null) {
-          return Lists.<PsiFileSystemItem>newArrayList(directory);
+      if (isAbsolutePathReference()) {
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          VirtualFile root = LocalFileSystem.getInstance().getRoot();
+          PsiDirectory directory = file.getManager().findDirectory(root);
+          if (directory != null) {
+            return Lists.<PsiFileSystemItem>newArrayList(directory);
+          }
+        }
+        else {
+          return Lists.newArrayList();
         }
       }
       else {

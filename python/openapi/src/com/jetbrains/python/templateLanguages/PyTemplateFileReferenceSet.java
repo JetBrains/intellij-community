@@ -17,17 +17,16 @@ package com.jetbrains.python.templateLanguages;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyStringLiteralFileReferenceSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -58,6 +57,11 @@ public class PyTemplateFileReferenceSet extends PyStringLiteralFileReferenceSet 
       }
     }
     return contexts;
+  }
+
+  @Override
+  public String getSeparatorString() {
+    return TemplateFileReferenceSet.detectSeparator(getElement()); //we need it not to change slashes during rebind
   }
 
   protected List<VirtualFile> getRoots(Module module) {
