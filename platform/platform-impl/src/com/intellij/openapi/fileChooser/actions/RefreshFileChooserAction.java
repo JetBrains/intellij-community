@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 
 /**
@@ -26,6 +27,6 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 */
 public class RefreshFileChooserAction extends AnAction implements DumbAware {
   public void actionPerformed(final AnActionEvent e) {
-    RefreshQueue.getInstance().refreshLocalRoots(true, null, ModalityState.current());
+    RefreshQueue.getInstance().refresh(true, true, null, ModalityState.current(), ManagingFS.getInstance().getLocalRoots());
   }
 }

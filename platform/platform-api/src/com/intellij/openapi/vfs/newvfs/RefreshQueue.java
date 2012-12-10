@@ -66,6 +66,8 @@ public abstract class RefreshQueue {
     session.launch();
   }
 
+  /** @deprecated use {@linkplain #refresh(boolean, boolean, Runnable, ModalityState, VirtualFile...)} with {@linkplain ManagingFS#getLocalRoots()} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
   public abstract void refreshLocalRoots(boolean async, @Nullable Runnable postAction, @NotNull ModalityState modalityState);
 
   public abstract void processSingleEvent(@NotNull VFileEvent event);
