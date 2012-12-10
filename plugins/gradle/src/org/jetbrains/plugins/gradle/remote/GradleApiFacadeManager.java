@@ -76,7 +76,8 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class GradleApiFacadeManager {
 
-  private static final String REMOTE_PROCESS_TTL_IN_MS_KEY = "gradle.remote.process.ttl.ms";
+  private static final String REMOTE_PROCESS_TTL_IN_MS_KEY  = "gradle.remote.process.ttl.ms";
+  private static final int    DEFAULT_REMOTE_PROCESS_TTL_MS = 60000;
 
   private static final String MAIN_CLASS_NAME                      = GradleApiFacadeImpl.class.getName();
   private static final int    REMOTE_FAIL_RECOVERY_ATTEMPTS_NUMBER = 3;
@@ -395,16 +396,8 @@ public class GradleApiFacadeManager {
       serviceDirectory = GradleSettings.getInstance(project).getServiceDirectoryPath();
     }
     RemoteGradleProcessSettings result = new RemoteGradleProcessSettings(localGradlePath, serviceDirectory, useWrapper);
-    String ttlAsString = System.getProperty(REMOTE_PROCESS_TTL_IN_MS_KEY);
-    if (ttlAsString != null) {
-      try {
-        long ttl = Long.parseLong(ttlAsString.trim());
-        result.setTtlInMs(ttl);
-      }
-      catch (NumberFormatException e) {
-        GradleLog.LOG.warn("Incorrect remote process ttl value detected. Expected to find number, found '" + ttlAsString + "'");
-      }
-    }
+    int ttl = SystemProperties.getIntProperty(REMOTE_PROCESS_TTL_IN_MS_KEY, DEFAULT_REMOTE_PROCESS_TTL_MS);
+    result.setTtlInMs(ttl);
     GradleJavaHelper javaHelper = new GradleJavaHelper();
     result.setJavaHome(javaHelper.getJdkHome(project));
     return result;

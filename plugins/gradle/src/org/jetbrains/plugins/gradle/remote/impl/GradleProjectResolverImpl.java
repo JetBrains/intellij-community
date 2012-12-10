@@ -423,6 +423,12 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
       if (settings.isVerboseApi() && connector instanceof DefaultGradleConnector) {
         ((DefaultGradleConnector)connector).setVerboseLogging(true);
       }
+      
+      // Setup daemon ttl if necessary.
+      long ttl = settings.getTtlInMs();
+      if (ttl > 0 && connector instanceof DefaultGradleConnector) {
+        ((DefaultGradleConnector)connector).daemonMaxIdleTime((int)ttl, TimeUnit.MILLISECONDS);
+      }
     }
     connector.forProjectDirectory(projectDir);
     ProjectConnection connection = connector.connect();
