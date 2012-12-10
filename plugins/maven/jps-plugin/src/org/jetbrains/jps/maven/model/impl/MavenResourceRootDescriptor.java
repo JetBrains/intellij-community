@@ -137,5 +137,8 @@ public class MavenResourceRootDescriptor extends BuildRootDescriptor {
     return Pattern.compile(defaultValue, SystemInfoRt.isFileSystemCaseSensitive ? 0 : Pattern.CASE_INSENSITIVE);
   }
 
-
+  @Override
+  public boolean canUseFileCache() {
+    return true;
+  }
 }

@@ -29,12 +29,6 @@ public class BuildOperations {
   private BuildOperations() {
   }
 
-  public static void ensureFSStateInitialized(CompileContext context, BuildTargetChunk chunk) throws IOException {
-    for (BuildTarget<?> target : chunk.getTargets()) {
-      ensureFSStateInitialized(context, target);
-    }
-  }
-
   public static void ensureFSStateInitialized(CompileContext context, BuildTarget<?> target) throws IOException {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     final Timestamps timestamps = pd.timestamps.getStorage();
