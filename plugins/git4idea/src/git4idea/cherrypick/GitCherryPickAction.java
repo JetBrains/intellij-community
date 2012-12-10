@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -67,6 +68,8 @@ public class GitCherryPickAction extends DumbAwareAction {
     for (GitCommit commit : commits) {
       myIdsInProgress.add(commit.getShortHash());
     }
+
+    FileDocumentManager.getInstance().saveAllDocuments();
 
     new Task.Backgroundable(project, "Cherry-picking", false) {
       public void run(@NotNull ProgressIndicator indicator) {
