@@ -56,7 +56,7 @@ public class RepositoryLibraryType extends LibraryType<RepositoryLibraryProperti
   public NewLibraryConfiguration createNewLibrary(@NotNull JComponent parentComponent,
                                                   @Nullable VirtualFile contextDirectory,
                                                   @NotNull Project project) {
-    return RepositoryAttachHandler.chooseLibraryAndDownload(project, null);
+    return RepositoryAttachHandler.chooseLibraryAndDownload(project, null, parentComponent);
   }
 
   @Override
