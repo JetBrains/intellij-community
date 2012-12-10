@@ -61,8 +61,10 @@ public abstract class EncodingRegistry {
   }
 
 
-  public static <E extends Throwable> VirtualFile doActionAndRestoreEncoding(@NotNull VirtualFile fileBefore, @NotNull ThrowableComputable<VirtualFile, E> action) throws E {
-    Charset charsetBefore = getInstance().getEncoding(fileBefore, true);
+  public static <E extends Throwable> VirtualFile doActionAndRestoreEncoding(@NotNull VirtualFile fileBefore,
+                                                                             @NotNull ThrowableComputable<VirtualFile, E> action) throws E {
+    EncodingRegistry registry = getInstance();
+    Charset charsetBefore = registry.getEncoding(fileBefore, true);
     VirtualFile fileAfter = null;
     try {
       fileAfter = action.compute();
@@ -70,9 +72,9 @@ public abstract class EncodingRegistry {
     }
     finally {
       if (fileAfter != null) {
-        Charset actual = getInstance().getEncoding(fileAfter, true);
+        Charset actual = registry.getEncoding(fileAfter, true);
         if (!Comparing.equal(actual, charsetBefore)) {
-          getInstance().setEncoding(fileAfter, charsetBefore);
+          registry.setEncoding(fileAfter, charsetBefore);
         }
       }
     }

@@ -37,12 +37,12 @@ public class ApplicationManager {
     return ourApplication;
   }
 
-  private static void setApplication(Application instance) {
+  private static void setApplication(@NotNull Application instance) {
     ourApplication = instance;
     CachedSingletonsRegistry.cleanupCachedFields();
   }
 
-  public static void setApplication(Application instance, @NotNull Disposable parent) {
+  public static void setApplication(@NotNull Application instance, @NotNull Disposable parent) {
     final Application old = ourApplication;
     Disposer.register(parent, new Disposable() {
       @Override
@@ -55,9 +55,9 @@ public class ApplicationManager {
     setApplication(instance);
   }
 
-  public static void setApplication(Application instance,
-                                    Getter<FileTypeRegistry> fileTypeRegistryGetter,
-                                    Getter<EncodingRegistry> encodingRegistryGetter,
+  public static void setApplication(@NotNull Application instance,
+                                    @NotNull Getter<FileTypeRegistry> fileTypeRegistryGetter,
+                                    @NotNull Getter<EncodingRegistry> encodingRegistryGetter,
                                     @NotNull Disposable parent) {
     final Application old = ourApplication;
     final Getter<FileTypeRegistry> oldFileTypeRegistry = FileTypeRegistry.ourInstanceGetter;

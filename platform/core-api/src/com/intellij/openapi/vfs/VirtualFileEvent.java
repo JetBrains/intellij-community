@@ -31,15 +31,11 @@ public class VirtualFileEvent extends EventObject {
   private final Object myRequestor;
   private final String myFileName;
 
-  private long myOldModificationStamp;
-  private long myNewModificationStamp;
+  private final long myOldModificationStamp;
+  private final long myNewModificationStamp;
 
   public VirtualFileEvent(@Nullable Object requestor, @NotNull VirtualFile file, @NotNull String fileName, @Nullable VirtualFile parent) {
-    super(file);
-    myRequestor = requestor != null ? requestor : file.getUserData(VirtualFile.REQUESTOR_MARKER);
-    myFile = file;
-    myFileName = fileName;
-    myParent = parent;
+    this(requestor, file, fileName, parent,0,0);
   }
 
   public VirtualFileEvent(@Nullable Object requestor,
@@ -47,11 +43,20 @@ public class VirtualFileEvent extends EventObject {
                           @Nullable VirtualFile parent,
                           long oldModificationStamp,
                           long newModificationStamp) {
+    this(requestor, file, file.getName(), parent, oldModificationStamp, newModificationStamp);
+  }
+
+  private VirtualFileEvent(@Nullable Object requestor,
+                          @NotNull VirtualFile file,
+                          @NotNull String fileName,
+                          @Nullable VirtualFile parent,
+                          long oldModificationStamp,
+                          long newModificationStamp) {
     super(file);
     myFile = file;
-    myFileName = file.getName();
+    myFileName = fileName;
     myParent = parent;
-    myRequestor = requestor != null ? requestor : file.getUserData(VirtualFile.REQUESTOR_MARKER);
+    myRequestor = requestor == null ? file.getUserData(VirtualFile.REQUESTOR_MARKER) : requestor;
     myOldModificationStamp = oldModificationStamp;
     myNewModificationStamp = newModificationStamp;
   }

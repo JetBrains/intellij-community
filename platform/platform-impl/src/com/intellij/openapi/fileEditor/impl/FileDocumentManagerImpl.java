@@ -567,17 +567,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       LOG.info("  documentStamp:" + documentStamp);
       LOG.info("  oldFileStamp:" + oldFileStamp);
 
-      Runnable askReloadRunnable = new Runnable() {
-        @Override
-        public void run() {
-          if (!file.isValid()) return;
-          if (askReloadFromDisk(file, document)) {
-            reloadFromDisk(document);
-          }
-        }
-      };
-
-      askReloadRunnable.run();
+      if (file.isValid() && askReloadFromDisk(file, document)) {
+        reloadFromDisk(document);
+      }
     }
     else {
       reloadFromDisk(document);
