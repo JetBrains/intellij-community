@@ -271,7 +271,8 @@ class BeforeRunStepsPanel extends JPanel {
           public void actionPerformed(AnActionEvent e) {
             BeforeRunTask task = provider.createTask(myRunConfiguration);
             if (task != null) {
-              provider.configureTask(myRunConfiguration, task);
+              if (!provider.skipFirstConfiguration())
+                provider.configureTask(myRunConfiguration, task);
               if (!provider.canExecuteTask(myRunConfiguration, task))
                 return;
             } else {
