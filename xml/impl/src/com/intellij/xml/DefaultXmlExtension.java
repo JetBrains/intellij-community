@@ -15,6 +15,7 @@
  */
 package com.intellij.xml;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -149,6 +150,9 @@ public class DefaultXmlExtension extends XmlExtension {
         }
         final XmlElementDescriptor[] descriptors = nsDescriptor.getRootElementsDescriptors(document);
         for (XmlElementDescriptor descriptor : descriptors) {
+          if (descriptor == null) {
+            LOG.error(nsDescriptor + " returned null element for getRootElementsDescriptors() array");
+          }
           if (descriptor.getName().equals(name)) {
             continue ns;
           }
@@ -278,4 +282,6 @@ public class DefaultXmlExtension extends XmlExtension {
     }
     return possibleUris;
   }
+
+  private final static Logger LOG = Logger.getInstance(DefaultXmlExtension.class);
 }
