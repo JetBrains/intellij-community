@@ -86,7 +86,7 @@ public class FieldAccessNotGuardedInspection extends BaseJavaLocalInspectionTool
             if (isLockGuardStatement(guard, child, "lock")) return;
             final PsiElement childParent = child.getParent();
             if (child instanceof PsiMethodCallExpression && 
-                isGuardCall(guard, "tryLock", (PsiMethodCallExpression)child) &&
+                isCallOnGuard(guard, "tryLock", (PsiMethodCallExpression)child) &&
                 childParent instanceof PsiIfStatement &&
                 ((PsiIfStatement)childParent).getCondition() == child) {
               return;
@@ -134,17 +134,36 @@ public class FieldAccessNotGuardedInspection extends BaseJavaLocalInspectionTool
       if (element instanceof PsiExpressionStatement) {
         final PsiExpression psiExpression = ((PsiExpressionStatement)element).getExpression();
         if (psiExpression instanceof PsiMethodCallExpression) {
-          return isGuardCall(guard, lockMethodStart, (PsiMethodCallExpression)psiExpression);
+          return isCallOnGuard(guard, lockMethodStart, (PsiMethodCallExpression)psiExpression);
         }
       }
       return false;
     }
   }
 
-  private static boolean isGuardCall(String guard, String lockMethodStart, PsiMethodCallExpression psiExpression) {
-    final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)psiExpression).getMethodExpression();
+  private static boolean isCallOnGuard(String guard, String lockMethodStart, PsiMethodCallExpression psiExpression) {
+    final PsiReferenceExpression methodExpression = psiExpression.getMethodExpression();
     final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
-    if (qualifierExpression != null && qualifierExpression.getText().startsWith(guard + ".")) {
+    if (qualifierExpression != null) {
+      if (isCallOnGuard(guard, lockMethodStart, methodExpression, qualifierExpression)) {
+        return true;
+      } else if (qualifierExpression instanceof PsiReferenceExpression) {
+        final PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
+        if (resolve instanceof PsiField && ((PsiField)resolve).hasModifierProperty(PsiModifier.FINAL)) {
+          final PsiExpression initializer = ((PsiField)resolve).getInitializer();
+          return initializer != null && isCallOnGuard(guard, lockMethodStart, methodExpression, initializer);
+        }
+      }
+    }
+    return false;
+  }
+
+  private static boolean isCallOnGuard(String guard,
+                                       String lockMethodStart,
+                                       PsiReferenceExpression methodExpression,
+                                       PsiExpression qualifier) {
+    final String qualifierText = qualifier.getText();
+    if (qualifierText.startsWith(guard + ".") || qualifierText.equals(guard)) {
       final PsiElement resolve = methodExpression.resolve();
       if (resolve instanceof PsiMethod) {
         final String methodName = ((PsiMethod)resolve).getName();
