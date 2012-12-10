@@ -74,6 +74,8 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
 
   public boolean LIBRARY_PROJECT = false;
 
+  public String RENAMED_MANIFEST = "";
+
   public boolean RUN_PROCESS_RESOURCES_MAVEN_TASK = true;
 
   public boolean GENERATE_UNSIGNED_APK = false;

@@ -90,7 +90,8 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
             }
 
             items.add(new MyItem(module, target, platformToolsRevision, manifestFile, resourcesDirPaths, assetDirPaths, outputPath,
-                                 configuration.GENERATE_UNSIGNED_APK, AndroidCompileUtil.isReleaseBuild(context)));
+                                 configuration.RENAMED_MANIFEST, configuration.GENERATE_UNSIGNED_APK,
+                                 AndroidCompileUtil.isReleaseBuild(context)));
             //items.add(new MyItem(module, target, manifestFile, resourcesDirPaths, assetsDirPath, outputPath + RELEASE_SUFFIX, true));
           }
         }
@@ -186,7 +187,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
                                     preprocessedManifestFile.getPath(),
                                     item.myResourceDirPaths,
                                     item.myAssetsDirPaths,
-                                    outputPath, null, !releasePackage, 0, new FileFilter() {
+                                    outputPath, null, item.myRenamedManifest, !releasePackage, 0, new FileFilter() {
           @Override
           public boolean accept(File file) {
             final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
@@ -293,6 +294,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
     final String[] myResourceDirPaths;
     final String[] myAssetsDirPaths;
     final String myOutputPath;
+    final String myRenamedManifest;
 
     private final boolean myFileExists;
     private final boolean myGenerateUnsignedApk;
@@ -306,6 +308,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
                    String[] resourceDirPaths,
                    String[] assetsDirPath,
                    String outputPath,
+                   String renamedManifest,
                    boolean generateUnsignedApk,
                    boolean releaseBuild) {
       myModule = module;
@@ -316,6 +319,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
       myAssetsDirPaths = assetsDirPath;
       myOutputPath = outputPath;
       myFileExists = new File(outputPath).exists();
+      myRenamedManifest = renamedManifest;
       myGenerateUnsignedApk = generateUnsignedApk;
       myReleaseBuild = releaseBuild;
     }

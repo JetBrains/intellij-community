@@ -146,8 +146,7 @@ public final class AndroidApt {
                                                                          @NotNull String[] extraPackages,
                                                                          @Nullable String customPackage,
                                                                          boolean nonConstantIds,
-                                                                         @Nullable String proguardCfgOutputFileOsPath)
-    throws IOException {
+                                                                         @Nullable String proguardCfgOutputFileOsPath) throws IOException {
     final List<String> args = new ArrayList<String>();
 
     args.add(target.getPath(IAndroidTarget.AAPT));
@@ -234,6 +233,7 @@ public final class AndroidApt {
                                                                                @NotNull String[] osAssetDirPaths,
                                                                                @NotNull String outputPath,
                                                                                @Nullable String configFilter,
+                                                                               @NotNull String renamedManifest,
                                                                                boolean debugMode,
                                                                                int versionCode,
                                                                                FileFilter assetsFilter) throws IOException {
@@ -289,6 +289,11 @@ public final class AndroidApt {
     if (configFilter != null) {
       args.add("-c");
       args.add(configFilter);
+    }
+
+    if (renamedManifest.length() > 0) {
+      args.add("--rename-manifest-package");
+      args.add(renamedManifest);
     }
 
     args.add("-M");

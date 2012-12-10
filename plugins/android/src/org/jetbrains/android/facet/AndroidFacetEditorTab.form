@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="myContentPanel" layout-manager="GridLayoutManager" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="512" height="669"/>
+      <xy x="20" y="20" width="512" height="696"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -115,7 +115,7 @@
               </vspacer>
             </children>
           </grid>
-          <grid id="84519" layout-manager="GridLayoutManager" row-count="9" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="84519" layout-manager="GridLayoutManager" row-count="10" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="4" right="0"/>
             <constraints>
               <tabbedpane title="Compiler"/>
@@ -168,7 +168,7 @@
               </grid>
               <vspacer id="e716a">
                 <constraints>
-                  <grid row="8" column="0" row-span="1" col-span="2" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                  <grid row="9" column="0" row-span="1" col-span="2" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                 </constraints>
               </vspacer>
               <grid id="c2a96" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -340,6 +340,16 @@
                   </component>
                 </children>
               </grid>
+              <component id="74842" class="com.intellij.openapi.ui.LabeledComponent" binding="myRenamedManifestComponent">
+                <constraints>
+                  <grid row="8" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <componentClass value="com.intellij.ui.EditorTextField"/>
+                  <labelLocation value="West"/>
+                  <text resource-bundle="messages/AndroidBundle" key="android.facet.settings.rename.package.label"/>
+                </properties>
+              </component>
             </children>
           </grid>
         </children>
