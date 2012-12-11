@@ -24,7 +24,7 @@ public class HtmlStructureViewElementProvider implements XmlStructureViewElement
     return new HtmlTagTreeElement(tag);
   }
 
-  private static class HtmlTagTreeElement extends XmlTagTreeElement {
+  static class HtmlTagTreeElement extends XmlTagTreeElement {
     public HtmlTagTreeElement(final XmlTag tag) {
       super(tag);
     }
