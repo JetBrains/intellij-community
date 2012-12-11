@@ -1,6 +1,7 @@
 package org.hanuna.gitalk.printmodel;
 
 import org.hanuna.gitalk.common.ReadOnlyList;
+import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.printmodel.layout.LayoutModel;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +19,10 @@ public class PrintCellModel {
     private ReadOnlyList<ShortEdge> getUpEdges(int rowIndex) {
         PrePrintCell prevPre = new PrePrintCell(layoutModel, rowIndex);
         return prevPre.downShortEdges();
+    }
+
+    public void recalculate(@NotNull Replace replace) {
+        layoutModel.recalculate(replace);
     }
 
 
