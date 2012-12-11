@@ -123,9 +123,9 @@ def exists(file):
     if ind != -1:
         ind+=4
         zip_path = file[:ind]
-        if r[ind] == "!":
+        if file[ind] == "!":
             ind+=1
-        inner_path = r[ind:]
+        inner_path = file[ind:]
         try:
             zip = ZIP_SEARCH_CACHE[zip_path]
         except KeyError:
@@ -139,10 +139,7 @@ def exists(file):
         try:
             if inner_path.startswith('/'):
                 inner_path = inner_path[1:]
-            print(inner_path)
 
-            for f in zip.filelist:
-                print(f.filename)
             info = zip.getinfo(inner_path)
 
             return zip_path + "/" + inner_path
