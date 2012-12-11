@@ -240,6 +240,7 @@ public class ProjectTypesList implements Disposable {
       Object o = myList.getModel().getElementAt(i);
       if (o instanceof TemplateItem && ((TemplateItem)o).myGroup.getName().equals(group) && ((TemplateItem)o).getName().equals(name)) {
         myList.setSelectedIndex(i);
+        myList.ensureIndexIsVisible(i);
         return true;
       }
     }
