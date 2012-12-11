@@ -106,6 +106,10 @@ public class GrTypeComboBox extends ComboBox {
       addItem(new PsiTypeItem(null));
     }
 
+    if (type != null && type.equalsToText(GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL)) {
+      addItem(new PsiTypeItem(PsiType.DOUBLE));
+    }
+
     for (String typeName : types.keySet()) {
       addItem(new PsiTypeItem(types.get(typeName)));
     }
