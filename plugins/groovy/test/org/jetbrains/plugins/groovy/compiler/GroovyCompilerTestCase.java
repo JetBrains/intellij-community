@@ -404,7 +404,8 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
         for (CompilerMessageCategory category : CompilerMessageCategory.values()) {
           CompilerMessage[] messages = compileContext.getMessages(category);
           for (CompilerMessage message : messages) {
-            if (category != CompilerMessageCategory.INFORMATION || !message.getMessage().startsWith("Compilation completed successfully")) {
+            final String text = message.getMessage();
+            if (category != CompilerMessageCategory.INFORMATION || !(text.startsWith("Compilation completed successfully") || text.startsWith("Using javac"))) {
               myMessages.add(message);
             }
           }

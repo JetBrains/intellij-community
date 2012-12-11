@@ -131,9 +131,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       messageText = "Using eclipse compiler to compile java sources";
     }
     if (messageText != null) {
-      if (!Utils.IS_TEST_MODE) {
-        LOG.info(messageText);
-      }
+      LOG.info(messageText);
       context.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO, messageText));
     }
   }
