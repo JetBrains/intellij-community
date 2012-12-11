@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,7 @@ public class LookupElementPresentation {
   private String myItemText;
   private String myTypeText;
   private boolean myStrikeout;
-  private Color myItemTextForeground = Color.black;
+  private Color myItemTextForeground = JBColor.foreground;
   private boolean myItemTextBold;
   private boolean myItemTextUnderlined;
   private boolean myTypeGrayed;
