@@ -100,7 +100,7 @@ public class ImportModuleAction extends AnAction {
         return icon == null ? super.getIcon(file) : icon;
       }
     };
-
+    descriptor.setHideIgnored(false);
     descriptor.setTitle("Select File or Directory to Import");
     ProjectImportProvider[] providers = ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions();
     String description = getFileChooserDescription(project);
