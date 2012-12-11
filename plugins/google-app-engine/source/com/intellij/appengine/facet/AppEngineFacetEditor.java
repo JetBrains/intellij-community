@@ -152,7 +152,7 @@ public class AppEngineFacetEditor extends FacetEditorTab {
         final String path = (String)value;
         final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
         if (file == null) {
-          setForeground(Color.RED);
+          setForeground(JBColor.RED);
           setIcon(null);
         }
         else {
