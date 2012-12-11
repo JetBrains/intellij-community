@@ -48,7 +48,7 @@ class InternalUsageInfo extends UsageInfo{
 
   public boolean isInsideAnonymous() {
     if(myIsInsideAnonymous == null) {
-      myIsInsideAnonymous = Boolean.valueOf(RefactoringUtil.isInsideAnonymous(getElement(), null));
+      myIsInsideAnonymous = Boolean.valueOf(RefactoringUtil.isInsideAnonymousOrLocal(getElement(), null));
     }
 
     return myIsInsideAnonymous.booleanValue();
