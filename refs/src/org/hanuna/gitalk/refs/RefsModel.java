@@ -55,15 +55,16 @@ public class RefsModel {
     }
 
     @Nullable
-    public Ref refToCommit(@NotNull Hash hash) {
+    public ReadOnlyList<Ref> refsToCommit(@NotNull Hash hash) {
+        List<Ref> refs = new ArrayList<Ref>();
         if (trackedHash.contains(hash)) {
             for (Ref ref : allRefs) {
                 if (ref.getCommitHash().equals(hash)) {
-                    return ref;
+                    refs.add(ref);
                 }
             }
         }
-        return null;
+        return ReadOnlyList.newReadOnlyList(refs);
     }
 
     public ReadOnlyList<Ref> localBranches() {
