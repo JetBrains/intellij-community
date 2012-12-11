@@ -89,6 +89,15 @@ public class InplaceIntroduceFieldTest extends AbstractJavaInplaceIntroduceTest 
     });
   }
 
+  public void testRestoreNewExpression() throws Exception {
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
+        inplaceIntroduceFieldPopup.setReplaceAllOccurrences(true);
+      }
+    });
+  }
+
   public void testEscapePosition() throws Exception {
     doTestEscape();
   }
