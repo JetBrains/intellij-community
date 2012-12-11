@@ -123,8 +123,9 @@ public class SimpleGraphFragmentController implements GraphFragmentController {
         throw new IllegalStateException("unexpected graphElement");
     }
 
+    @NotNull
     @Override
-    public Replace hideFragment(GraphFragment fragment) {
+    public Replace hideFragment(@NotNull GraphFragment fragment) {
         fragment.intermediateWalker(new GraphFragment.Runner() {
             @Override
             public void edgeRun(@NotNull Edge edge) {
@@ -153,8 +154,9 @@ public class SimpleGraphFragmentController implements GraphFragmentController {
         return graph.fixRowVisibility(upNode.getRowIndex(), downNode.getRowIndex());
     }
 
+    @NotNull
     @Override
-    public Replace showFragment(GraphFragment fragment) {
+    public Replace showFragment(@NotNull GraphFragment fragment) {
         Node upNode = fragment.getUpNode();
         Edge longEdge = firstDownEdge(upNode);
         final Node downNode = fragment.getDownNode();
@@ -181,6 +183,12 @@ public class SimpleGraphFragmentController implements GraphFragmentController {
         });
 
         return graph.fixRowVisibility(upNode.getRowIndex(), downNode.getRowIndex());
+    }
+
+    @Override
+    public boolean isHidden(@NotNull GraphFragment fragment) {
+        Edge first = firstDownEdge(fragment.getUpNode());
+        return first.getType() == Edge.Type.HIDE_FRAGMENT;
     }
 
     private static class HiddenFragment {

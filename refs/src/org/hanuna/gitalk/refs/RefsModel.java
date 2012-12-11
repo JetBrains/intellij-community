@@ -1,9 +1,6 @@
 package org.hanuna.gitalk.refs;
 
-<<<<<<< HEAD
 import org.hanuna.gitalk.commitmodel.Commit;
-=======
->>>>>>> 39024864242c12535f1ade0c97ee53f034b98a38
 import org.hanuna.gitalk.commitmodel.Hash;
 import org.hanuna.gitalk.common.ReadOnlyList;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +15,6 @@ import java.util.Set;
  * @author erokhins
  */
 public class RefsModel {
-<<<<<<< HEAD
     public static RefsModel existedCommitRefs(List<Ref> allRefs, List<Commit> commits) {
         Set<Hash> refCommits = new HashSet<Hash>();
         for (Ref ref : allRefs) {
@@ -40,8 +36,6 @@ public class RefsModel {
         return new RefsModel(existedRef);
     }
 
-=======
->>>>>>> 39024864242c12535f1ade0c97ee53f034b98a38
     private final List<Ref> allRefs;
     private final Set<Hash> trackedHash = new HashSet<Hash>();
     private final List<Ref> localBranches = new ArrayList<Ref>();
@@ -61,19 +55,16 @@ public class RefsModel {
     }
 
     @Nullable
-<<<<<<< HEAD
-    public Ref refToCommit(@NotNull Hash hash) {
-=======
-    public Ref refInToCommit(@NotNull Hash hash) {
->>>>>>> 39024864242c12535f1ade0c97ee53f034b98a38
+    public ReadOnlyList<Ref> refsToCommit(@NotNull Hash hash) {
+        List<Ref> refs = new ArrayList<Ref>();
         if (trackedHash.contains(hash)) {
             for (Ref ref : allRefs) {
                 if (ref.getCommitHash().equals(hash)) {
-                    return ref;
+                    refs.add(ref);
                 }
             }
         }
-        return null;
+        return ReadOnlyList.newReadOnlyList(refs);
     }
 
     public ReadOnlyList<Ref> localBranches() {

@@ -2,25 +2,26 @@ package org.hanuna.gitalk.controller;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitData;
-import org.hanuna.gitalk.common.Interval;
-import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.common.ReadOnlyList;
-import org.hanuna.gitalk.controller.branchvisibility.HideShowBranch;
-import org.hanuna.gitalk.controller.branchvisibility.NodeInterval;
-import org.hanuna.gitalk.graph.graph_elements.Edge;
+import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.graph.Graph;
+import org.hanuna.gitalk.graph.GraphFragment;
+import org.hanuna.gitalk.graph.graph_elements.GraphElement;
 import org.hanuna.gitalk.graph.graph_elements.Node;
+import org.hanuna.gitalk.graph.mutable_graph.graph_fragment_controller.GraphFragmentController;
 import org.hanuna.gitalk.printmodel.PrintCell;
 import org.hanuna.gitalk.printmodel.PrintCellModel;
+import org.hanuna.gitalk.printmodel.SelectController;
 import org.hanuna.gitalk.printmodel.SpecialCell;
-import org.hanuna.gitalk.printmodel.cells.Cell;
-import org.hanuna.gitalk.printmodel.layout.LayoutModel;
-import org.hanuna.gitalk.printmodel.cells.NodeCell;
-import org.hanuna.gitalk.printmodel.cells.builder.LayoutModelBuilder;
+import org.hanuna.gitalk.refs.Ref;
+import org.hanuna.gitalk.refs.RefsModel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
+
+import static org.hanuna.gitalk.controller.EventsController.ControllerListener;
 
 /**
  * @author erokhins
@@ -28,25 +29,19 @@ import javax.swing.table.TableModel;
 public class Controller {
     private final Graph graph;
     private final SelectController selectController;
-    private final HideShowBranch hideShowBranch;
+    private final PrintCellModel printCellModel;
+    private final GraphFragmentController fragmentController;
+    private final RefsModel refsModel;
+    private final EventsController events = new EventsController();
 
-    public LayoutModel getLayoutModel() {
-        return layoutModel;
-    }
+    private GraphElement prevGraphElement = null;
 
-    private LayoutModel layoutModel;
-    private PrintCellModel printCellModel;
-
-    public Controller(Graph graph) {
+    public Controller(Graph graph, RefsModel refsModel) {
         this.graph = graph;
+        this.fragmentController = graph.getFragmentController();
+        this.refsModel = refsModel;
         this.selectController = new SelectController();
-        this.hideShowBranch = new HideShowBranch();
-    }
-
-    public void prepare() {
-        LayoutModelBuilder layoutModelBuilder = new LayoutModelBuilder(graph);
-        layoutModel = layoutModelBuilder.build();
-        printCellModel = new PrintCellModel(layoutModel);
+        this.printCellModel = new PrintCellModel(graph);
     }
 
     public TableModel getTableModel() {
@@ -54,57 +49,59 @@ public class Controller {
     }
 
     @Nullable
-    public Commit getCommitInRow(int rowIndex) {
+    private Commit getCommitInRow(int rowIndex) {
         ReadOnlyList<SpecialCell> cells = printCellModel.getPrintCellRow(rowIndex).getSpecialCell();
         for (SpecialCell cell : cells) {
             if (cell.getType() == SpecialCell.Type.COMMIT_NODE) {
-                assert NodeCell.class == cell.getCell().getClass();
-                Node node =  ((NodeCell) cell.getCell()).getNode();
+                GraphElement element = cell.getGraphElement();
+                Node node =  element.getNode();
+                assert node != null;
                 return node.getCommit();
             }
         }
         return null;
     }
 
-    public PrintCell getPrintRow(int rowIndex) {
+    public PrintCell getGraphPrintCell(int rowIndex) {
         return printCellModel.getPrintCellRow(rowIndex);
     }
 
-    public void over(@Nullable Cell cell) {
-        selectController.clearSelect();
-        Edge edge = hideShowBranch.hideBranchOver(cell);
-        if (edge != null) {
-            selectController.selectEdge(edge);
-            return;
-        }
-        NodeInterval nodeInterval = hideShowBranch.branchInterval(cell);
-        if (nodeInterval != null) {
-            selectController.selectNodeInterval(nodeInterval);
-        }
+    public void addControllerListener(@NotNull ControllerListener listener) {
+        events.addListener(listener);
     }
 
-    public int click(@Nullable Cell cell) {
-        Edge edge = hideShowBranch.hideBranchOver(cell);
-        if (edge != null) {
-            selectController.clearSelect();
-            Node up = edge.getUpNode();
-            Node down = edge.getDownNode();
-            Interval old = new Interval(up.getRowIndex(), down.getRowIndex());
-            graph.showBranch(edge);
-            Interval upd = new Interval(up.getRowIndex(), down.getRowIndex());
-            layoutModel.recalculate(Replace.buildFromChangeInterval(old.from(), old.to(), upd.from(), upd.to()));
-            return upd.from();
+    public void over(@Nullable GraphElement graphElement) {
+        if (graphElement == prevGraphElement) {
+            return;
         }
-        NodeInterval nodeInterval = hideShowBranch.branchInterval(cell);
-        if (nodeInterval != null) {
-            selectController.clearSelect();
-            Interval old = new Interval(nodeInterval.getUp().getRowIndex(), nodeInterval.getDown().getRowIndex());
-            graph.hideBranch(nodeInterval.getUp(), nodeInterval.getDown());
-            Interval upd = new Interval(nodeInterval.getUp().getRowIndex(), nodeInterval.getDown().getRowIndex());
-            layoutModel.recalculate(Replace.buildFromChangeInterval(old.from(), old.to(), upd.from(), upd.to()));
-            return upd.from();
+        selectController.deselectAll();
+        if (graphElement == null) {
+            return;
         }
-        return -1;
+        GraphFragment graphFragment = fragmentController.relateFragment(graphElement);
+        selectController.select(graphFragment);
+        events.runUpdateTable();
+        prevGraphElement = graphElement;
+    }
+
+    public void click(@Nullable GraphElement graphElement) {
+        selectController.deselectAll();
+        if (graphElement == null) {
+            return;
+        }
+        GraphFragment fragment = fragmentController.relateFragment(graphElement);
+        if (fragment == null) {
+            return;
+        }
+        Replace replace;
+        if (fragmentController.isHidden(fragment)) {
+            replace = fragmentController.showFragment(fragment);
+        } else {
+            replace = fragmentController.hideFragment(fragment);
+        }
+        printCellModel.recalculate(replace);
+        events.runUpdateTable();
+        events.runJumpToRow(replace.from());
     }
 
     private class GitAlkTableModel extends AbstractTableModel {
@@ -133,10 +130,12 @@ public class Controller {
             switch (columnIndex) {
                 case 0:
                     String message = "";
+                    ReadOnlyList<Ref> refs = ReadOnlyList.emptyList();
                     if (data != null) {
                         message = data.getMessage();
+                        refs = refsModel.refsToCommit(commit.hash());
                     }
-                    return new GraphTableCell(printCellModel.getPrintCellRow(rowIndex), message);
+                    return new GraphTableCell(printCellModel.getPrintCellRow(rowIndex), message, refs);
                 case 1:
                     if (data == null) {
                         return "";

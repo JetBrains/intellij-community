@@ -5,6 +5,8 @@ import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.graph_elements.NodeRow;
 import org.hanuna.gitalk.graph.mutable_graph.graph_elements_impl.MutableNodeRow;
+import org.hanuna.gitalk.graph.mutable_graph.graph_fragment_controller.GraphFragmentController;
+import org.hanuna.gitalk.graph.mutable_graph.graph_fragment_controller.SimpleGraphFragmentController;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -16,13 +18,16 @@ import java.util.List;
 public class MutableGraph implements Graph {
     private final List<MutableNodeRow> allRows;
     private final List<MutableNodeRow> visibleRows;
+    private final GraphFragmentController fragmentController;
 
     public MutableGraph(List<MutableNodeRow> allRows) {
         this.allRows = allRows;
         this.visibleRows = new ArrayList<MutableNodeRow>(allRows);
         recalculateRowIndex();
+        fragmentController = new SimpleGraphFragmentController(this);
     }
 
+    @NotNull
     public Replace fixRowVisibility(int fromRowIndex, int toRowIndex) {
         if (fromRowIndex < 0 || toRowIndex >= allRows.size() || fromRowIndex > toRowIndex) {
             throw new IllegalArgumentException("fromRowIndex: " + fromRowIndex + "toRowIndex: " + toRowIndex);
@@ -52,6 +57,12 @@ public class MutableGraph implements Graph {
     @Override
     public ReadOnlyList<NodeRow> getNodeRows() {
         return ReadOnlyList.<NodeRow>newReadOnlyList(visibleRows);
+    }
+
+    @NotNull
+    @Override
+    public GraphFragmentController getFragmentController() {
+        return fragmentController;
     }
 
 }

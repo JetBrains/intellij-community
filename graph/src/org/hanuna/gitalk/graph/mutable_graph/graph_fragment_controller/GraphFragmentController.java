@@ -14,8 +14,11 @@ public interface GraphFragmentController {
     @Nullable
     public GraphFragment relateFragment(@NotNull GraphElement graphElement);
 
-    public Replace hideFragment(GraphFragment fragment);
+    @NotNull
+    public Replace hideFragment(@NotNull GraphFragment fragment);
 
-    public Replace showFragment(GraphFragment fragment);
+    @NotNull
+    public Replace showFragment(@NotNull GraphFragment fragment);
 
+    public boolean isHidden(@NotNull GraphFragment fragment);
 }
