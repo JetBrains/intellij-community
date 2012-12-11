@@ -1104,7 +1104,7 @@ class IntToIntBtree {
     }
 
     // Copy children addresses first to avoid node's ByteBuffer invalidation
-    final int[] childrenAddresses = new int[node.getChildrenCount()];
+    final int[] childrenAddresses = new int[node.getChildrenCount() + 1];
 
     for(int i = 0; i < childrenAddresses.length; ++i) {
       childrenAddresses[i] = -node.addressAt(i);
