@@ -1,5 +1,6 @@
 package com.jetbrains.env.python;
 
+import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -16,10 +17,14 @@ import com.jetbrains.python.inspections.PyPackageRequirementsInspection;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 /**
  * @author vlan
  */
 public class PyPackageRequirementsInspectionTest extends PyTestCase {
+  public static final ImmutableSet<String> TAGS = ImmutableSet.of("requirements");
+
   public void testPartiallySatisfiedRequirementsTxt() {
     doTest("test1.py");
   }
@@ -52,6 +57,11 @@ public class PyPackageRequirementsInspectionTest extends PyTestCase {
         finally {
           PsiTestUtil.removeAllRoots(module, sdk);
         }
+      }
+
+      @Override
+      public Set<String> getTags() {
+        return TAGS;
       }
     }, getTestName(false));
   }
