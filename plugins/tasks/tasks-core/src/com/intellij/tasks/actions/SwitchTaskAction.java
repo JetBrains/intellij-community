@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -63,7 +64,7 @@ public class SwitchTaskAction extends BaseTaskAction {
     final Ref<Boolean> shiftPressed = Ref.create(false);
     final Ref<JComponent> componentRef = Ref.create();
     List<TaskListItem> items = project == null ? Collections.<TaskListItem>emptyList() :
-                               createPopupActionGroup(project, shiftPressed, dataContext);
+                               createPopupActionGroup(project, shiftPressed, PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext));
     final String title = withTitle ? "Switch to Task" : null;
     ListPopupStep<TaskListItem> step = new MultiSelectionListPopupStep<TaskListItem>(title, items) {
       @Override
@@ -165,7 +166,7 @@ public class SwitchTaskAction extends BaseTaskAction {
   @NotNull
   private static List<TaskListItem> createPopupActionGroup(@NotNull final Project project,
                                                            final Ref<Boolean> shiftPressed,
-                                                           final DataContext dataContext) {
+                                                           final Component contextComponent) {
     List<TaskListItem> group = new ArrayList<TaskListItem>();
 
     final AnAction action = ActionManager.getInstance().getAction(GotoTaskAction.ID);
@@ -176,8 +177,7 @@ public class SwitchTaskAction extends BaseTaskAction {
       @Override
       void select() {
         ActionManager.getInstance().tryToExecute(gotoTaskAction, ActionCommand.getInputEvent(GotoTaskAction.ID),
-                                                 PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext), ActionPlaces.UNKNOWN, true);
-        gotoTaskAction.perform(project);
+                                                 contextComponent, ActionPlaces.UNKNOWN, false);
       }
     });
 

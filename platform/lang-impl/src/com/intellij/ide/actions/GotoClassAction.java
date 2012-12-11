@@ -56,23 +56,24 @@ import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
 public class GotoClassAction extends GotoActionBase implements DumbAware {
   @Override
-  public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
-    assert project != null;
-    if (!DumbService.getInstance(project).isDumb()) {
-      super.actionPerformed(e);
-    }
-    else {
-      DumbService.getInstance(project)
-        .showDumbModeNotification("Goto Class action is not available until indices are built, using Goto File instead");
-      ActionManager.getInstance()
-        .tryToExecute(ActionManager.getInstance().getAction(GotoFileAction.ID), ActionCommand.getInputEvent(GotoFileAction.ID),
-                      e.getData(PlatformDataKeys.CONTEXT_COMPONENT), e.getPlace(), true);
+  public void update(AnActionEvent event) {
+    super.update(event);
+    final Project project = event.getProject();
+    if (project != null && DumbService.getInstance(project).isDumb()) {
+      event.getPresentation().setEnabled(false);
+      if (event.getInputEvent() instanceof KeyEvent) {
+        DumbService.getInstance(project)
+          .showDumbModeNotification("Goto Class action is not available until indices are built, using Goto File instead");
+        ActionManager.getInstance()
+          .tryToExecute(ActionManager.getInstance().getAction(GotoFileAction.ID), ActionCommand.getInputEvent(GotoFileAction.ID),
+                        event.getData(PlatformDataKeys.CONTEXT_COMPONENT), event.getPlace(), true);
+      }
     }
   }
 
