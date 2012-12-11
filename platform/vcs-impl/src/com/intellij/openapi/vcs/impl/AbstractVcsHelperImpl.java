@@ -190,7 +190,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
 
     final SelectFilePathsDialog dlg =
-      new SelectFilePathsDialog(myProject, files, prompt, confirmationOption, okActionName, cancelActionName);
+      new SelectFilePathsDialog(myProject, files, prompt, confirmationOption, okActionName, cancelActionName, true);
     dlg.setTitle(title);
     if (! confirmationOption.isPersistent()) {
       dlg.setDoNotAskOption(null);
