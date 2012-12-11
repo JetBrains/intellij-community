@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
+import com.intellij.ui.JBColor;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -75,7 +76,7 @@ class FramesListRenderer extends ColoredListCellRenderer {
       }
 
       if (needSeparator) {
-        final MatteBorder border = BorderFactory.createMatteBorder(1, 0, 0, 0, Color.GRAY);
+        final MatteBorder border = BorderFactory.createMatteBorder(1, 0, 0, 0, JBColor.GRAY);
         setBorder(border);
       }
       else {

@@ -289,7 +289,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         final Component comp = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         if (resolve(index) == null) {
-          comp.setForeground(Color.red);
+          comp.setForeground(JBColor.RED);
         }
         return comp;
       }
@@ -1126,7 +1126,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   private class GoToListener implements KeyListener, MouseListener, ListSelectionListener {
     private RangeHighlighter myListenerHighlighter;
     private final TextAttributes myAttributes =
-      new TextAttributes(Color.white, SELECTION_BG_COLOR, Color.red, EffectType.BOXED, Font.PLAIN);
+      new TextAttributes(Color.white, SELECTION_BG_COLOR, JBColor.RED, EffectType.BOXED, Font.PLAIN);
 
     private void navigate() {
       final Object value = myRefs.getSelectedValue();

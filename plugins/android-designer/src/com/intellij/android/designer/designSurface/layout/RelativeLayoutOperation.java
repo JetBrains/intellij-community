@@ -29,6 +29,7 @@ import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.JBColor;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -84,7 +85,7 @@ public class RelativeLayoutOperation extends AbstractEditOperation {
       if (myContext.isCreate() || myContext.isPaste()) {
         myBounds = new Rectangle(0, 0, 64, 32);
 
-        myBoundsFeedback = new AlphaFeedback(myComponents.size() == 1 ? Color.green : Color.orange);
+        myBoundsFeedback = new AlphaFeedback(myComponents.size() == 1 ? JBColor.GREEN : JBColor.ORANGE);
         // XXX
       }
       else {
@@ -117,7 +118,7 @@ public class RelativeLayoutOperation extends AbstractEditOperation {
           };
         }
         else {
-          myBoundsFeedback = new AlphaFeedback(Color.orange);
+          myBoundsFeedback = new AlphaFeedback(JBColor.ORANGE);
         }
       }
 

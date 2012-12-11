@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.ui.ArtifactEditorContext;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.ArrayUtil;
@@ -33,9 +34,7 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 /**
  * @author nik
@@ -126,7 +125,7 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
   private static SimpleTextAttributes addErrorHighlighting(boolean error, SimpleTextAttributes attributes) {
     final TextAttributes textAttributes = attributes.toTextAttributes();
     textAttributes.setEffectType(EffectType.WAVE_UNDERSCORE);
-    textAttributes.setEffectColor(error ? Color.RED : Color.GRAY);
+    textAttributes.setEffectColor(error ? JBColor.RED : JBColor.GRAY);
     return SimpleTextAttributes.fromTextAttributes(textAttributes);
   }
 

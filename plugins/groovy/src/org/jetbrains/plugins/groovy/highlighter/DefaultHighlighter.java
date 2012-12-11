@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.PlatformColors;
 import org.jetbrains.annotations.NonNls;
 
@@ -189,7 +190,7 @@ public class DefaultHighlighter {
   public static final TextAttributes UNRESOLVED_ACCESS_ATTRIBUTES = HighlighterColors.TEXT.getDefaultAttributes().clone();
   static {
     UNRESOLVED_ACCESS_ATTRIBUTES.setForegroundColor(Color.BLACK);
-    UNRESOLVED_ACCESS_ATTRIBUTES.setEffectColor(Color.GRAY);
+    UNRESOLVED_ACCESS_ATTRIBUTES.setEffectColor(JBColor.GRAY);
     UNRESOLVED_ACCESS_ATTRIBUTES.setEffectType(EffectType.LINE_UNDERSCORE);
   }
 

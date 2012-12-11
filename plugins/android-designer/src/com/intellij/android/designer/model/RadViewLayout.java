@@ -21,9 +21,9 @@ import com.intellij.designer.designSurface.selection.NonResizeSelectionDecorator
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadLayout;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.ui.JBColor;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.List;
 
 /**
@@ -31,7 +31,7 @@ import java.util.List;
  */
 public class RadViewLayout extends RadLayout {
   public static final RadLayout INSTANCE = new RadViewLayout();
-  public static final ComponentDecorator NON_RESIZE_DECORATOR = new NonResizeSelectionDecorator(Color.RED, 1);
+  public static final ComponentDecorator NON_RESIZE_DECORATOR = new NonResizeSelectionDecorator(JBColor.RED, 1);
 
   @Override
   public ComponentDecorator getChildSelectionDecorator(RadComponent component, List<RadComponent> selection) {

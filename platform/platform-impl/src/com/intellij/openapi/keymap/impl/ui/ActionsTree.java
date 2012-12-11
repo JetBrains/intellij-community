@@ -29,10 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.Gray;
-import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.ui.EmptyIcon;
@@ -512,7 +509,7 @@ public class ActionsTree {
           }
 
           if (bound) {
-            foreground = Color.MAGENTA;
+            foreground = JBColor.MAGENTA;
           }
         }
         SearchUtil.appendFragments(myFilter, text, Font.PLAIN, foreground,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.ExpandableItemsHandler;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.TableCell;
 import com.intellij.ui.components.JBLabel;
@@ -323,7 +324,7 @@ public class RevisionsList {
       Color fg = orig.getForeground();
       Color bg = isSelected && !table.isFocusOwner() ? UIUtil.getListUnfocusedSelectionBackground() : orig.getBackground();
 
-      myDateLabel.setForeground(isSelected ? fg : Color.GRAY);
+      myDateLabel.setForeground(isSelected ? fg : JBColor.GRAY);
       myFilesCountLabel.setForeground(myDateLabel.getForeground());
       myTitleLabel.setForeground(isSelected || labelsAndColor.isNamed ? fg : Color.DARK_GRAY);
 

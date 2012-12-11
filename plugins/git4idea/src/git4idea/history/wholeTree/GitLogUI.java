@@ -1,9 +1,12 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -1775,10 +1778,10 @@ public class GitLogUI implements Disposable {
   }
 
   interface Colors {
-    Color tag = UIUtil.isUnderDarcula() ? new Color(0x7D7B12) : new Color(0xf1ef9e);
-    Color remote = UIUtil.isUnderDarcula() ? new Color(0xbcbcfc).darker().darker() : new Color(0xbcbcfc);
-    Color local = UIUtil.isUnderDarcula() ? new Color(0x0D6D4F) : new Color(0x75eec7);
-    Color highlighted = UIUtil.isUnderDarcula() ? UIUtil.getTableBackground() : new Color(210,255,233);
+    Color tag = new JBColor(new Color(0xf1ef9e), new Color(0x7D7B12));
+    Color remote = new JBColor(new Color(0xbcbcfc), new Color(0xbcbcfc).darker().darker());
+    Color local = new JBColor(new Color(0x75eec7), new Color(0x0D6D4F));
+    Color highlighted = new JBColor(new Color(210,255,233), UIUtil.getTableBackground());
   }
 
   private void updateMoreVisibility() {

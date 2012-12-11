@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -421,7 +421,7 @@ public class SearchUtil {
                                      final SimpleColoredComponent textRenderer) {
     if (text == null) return;
     if (filter == null || filter.length() == 0) {
-      textRenderer.append(text, new SimpleTextAttributes(background, foreground, Color.RED, style));
+      textRenderer.append(text, new SimpleTextAttributes(background, foreground, JBColor.RED, style));
     }
     else { //markup
       final HashSet<String> quoted = new HashSet<String>();

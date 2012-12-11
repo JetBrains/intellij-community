@@ -62,7 +62,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.android.actions.RunAndroidAvdManagerAction;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.maven.AndroidMavenUtil;
@@ -240,7 +239,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         propertyParser.loadRecursive(newRootComponent);
 
         JPanel rootPanel = new JPanel(null);
-        rootPanel.setBackground(new JBColor(Color.WHITE, UIUtil.getListBackground()));
+        rootPanel.setBackground(JBColor.WHITE);
         rootPanel.add(rootView);
 
         removeNativeRoot();

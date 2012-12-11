@@ -188,7 +188,7 @@ public class UIUtil {
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
       Graphics g2 = g.create();
       try {
-        g2.setColor(Color.RED);
+        g2.setColor(JBColor.RED);
         drawDottedRectangle(g2, x, y, x + width - 1, y + height - 1);
       }
       finally {

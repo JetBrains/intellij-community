@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,7 @@ import com.intellij.openapi.editor.SyntaxHighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.RowIcon;
-import com.intellij.ui.SimpleColoredText;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.util.PlatformIcons;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
@@ -40,8 +37,8 @@ import java.awt.*;
 public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
   private static final SimpleTextAttributes DEFAULT_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, null);
-  private static final SimpleTextAttributes SPECIAL_NODE_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, Color.lightGray);
-  private static final SimpleTextAttributes OBJECT_ID_HIGHLIGHT_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, Color.lightGray);
+  private static final SimpleTextAttributes SPECIAL_NODE_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, JBColor.LIGHT_GRAY);
+  private static final SimpleTextAttributes OBJECT_ID_HIGHLIGHT_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, JBColor.LIGHT_GRAY);
 
   public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     final DebuggerTreeNodeImpl node = (DebuggerTreeNodeImpl) value;
@@ -256,7 +253,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
               escapeAttribs = SimpleTextAttributes.fromTextAttributes(fromHighlighter);
             }
             else {
-              escapeAttribs = DEFAULT_ATTRIBUTES.derive(SimpleTextAttributes.STYLE_BOLD, Color.gray, null, null);
+              escapeAttribs = DEFAULT_ATTRIBUTES.derive(SimpleTextAttributes.STYLE_BOLD, JBColor.GRAY, null, null);
             }
           }
 

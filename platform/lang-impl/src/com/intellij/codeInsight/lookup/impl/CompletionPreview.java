@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -65,7 +66,7 @@ public class CompletionPreview {
     }, "preview");
     final RangeHighlighter highlighter = myLookup.getEditor().getMarkupModel()
       .addRangeHighlighter(caret, previewEnd, HighlighterLayer.LAST,
-                           new TextAttributes(Color.GRAY, null, null, null, Font.PLAIN),
+                           new TextAttributes(JBColor.GRAY, null, null, null, Font.PLAIN),
                            HighlighterTargetArea.EXACT_RANGE);
     
     myUninstaller = new Disposable() {

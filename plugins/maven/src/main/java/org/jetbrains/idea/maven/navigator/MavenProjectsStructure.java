@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -442,7 +443,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     private SimpleTextAttributes prepareAttribs(SimpleTextAttributes from) {
       ErrorLevel level = getTotalErrorLevel();
-      Color waveColor = level == ErrorLevel.NONE ? null : Color.RED;
+      Color waveColor = level == ErrorLevel.NONE ? null : JBColor.RED;
       int style = from.getStyle();
       if (waveColor != null) style |= SimpleTextAttributes.STYLE_WAVED;
       return new SimpleTextAttributes(from.getBgColor(), from.getFgColor(), waveColor, style);
@@ -719,7 +720,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     @Override
     protected SimpleTextAttributes getPlainAttributes() {
       if (myProjectsManager.isIgnored(myMavenProject)) {
-        return new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, Color.GRAY);
+        return new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY);
       }
       return super.getPlainAttributes();
     }

@@ -30,11 +30,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.Processor;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -230,7 +232,7 @@ public class GotoRelatedFileAction extends AnAction {
           final SeparatorWithText sep = new SeparatorWithText() {
             @Override
             protected void paintComponent(Graphics g) {
-              g.setColor(Color.WHITE);
+              g.setColor(new JBColor(Color.WHITE, UIUtil.getSeparatorColor()));
               g.fillRect(0,0,getWidth(), getHeight());
               super.paintComponent(g);
             }

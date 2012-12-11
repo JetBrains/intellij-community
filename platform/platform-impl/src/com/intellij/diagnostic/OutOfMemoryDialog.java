@@ -18,10 +18,10 @@ package com.intellij.diagnostic;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 
@@ -128,10 +128,10 @@ public class OutOfMemoryDialog extends DialogWrapper {
     currentValueLabel.setText(DiagnosticBundle.message("diagnostic.out.of.memory.currentValue", formatted));
 
     if (highlight) {
-      sizeLabel.setForeground(Color.RED);
-      sizeField.setForeground(Color.RED);
-      unitsLabel.setForeground(Color.RED);
-      currentValueLabel.setForeground(Color.RED);
+      sizeLabel.setForeground(JBColor.RED);
+      sizeField.setForeground(JBColor.RED);
+      unitsLabel.setForeground(JBColor.RED);
+      currentValueLabel.setForeground(JBColor.RED);
     }
   }
 

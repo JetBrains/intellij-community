@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.HintHint;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.text.StringSearcher;
 import com.intellij.util.ui.UIUtil;
@@ -292,10 +293,10 @@ public class IncrementalSearchHandler {
       data.segmentHighlighter = null;
     }
     if (index < 0) {
-      data.label.setForeground(Color.red);
+      data.label.setForeground(JBColor.RED);
     }
     else {
-      data.label.setForeground(Color.black);
+      data.label.setForeground(JBColor.foreground);
       if (matchLength > 0) {
         TextAttributes attributes = editor.getColorsScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
         data.segmentHighlighter = editor.getMarkupModel()
@@ -326,7 +327,7 @@ public class IncrementalSearchHandler {
     public MyLabel(String text) {
       super(text);
       this.setBackground(HintUtil.INFORMATION_COLOR);
-      this.setForeground(Color.black);
+      this.setForeground(JBColor.foreground);
       this.setOpaque(true);
     }
   }

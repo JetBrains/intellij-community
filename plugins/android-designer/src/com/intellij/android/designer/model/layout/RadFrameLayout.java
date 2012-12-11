@@ -36,10 +36,10 @@ import com.intellij.designer.utils.Position;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
@@ -80,7 +80,7 @@ public class RadFrameLayout extends RadViewLayoutWithData {
   @Override
   public ComponentDecorator getChildSelectionDecorator(RadComponent component, List<RadComponent> selection) {
     if (mySelectionDecorator == null) {
-      mySelectionDecorator = new ResizeSelectionDecorator(Color.red, 1) {
+      mySelectionDecorator = new ResizeSelectionDecorator(JBColor.RED, 1) {
         @Override
         protected boolean visible(RadComponent component, ResizePoint point) {
           if (point.getType() == LayoutMarginOperation.TYPE) {

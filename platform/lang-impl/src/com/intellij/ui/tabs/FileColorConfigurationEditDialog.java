@@ -28,6 +28,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.ColorChooser;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.FileColorManager;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
@@ -252,7 +253,7 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
         }
       });
 
-      setBackground(UIUtil.isUnderDarcula() ? UIUtil.getControlColor() : Color.WHITE);
+      setBackground(new JBColor(Color.WHITE, UIUtil.getControlColor()));
       setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
     }
 
@@ -271,9 +272,9 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
     @Override
     public Color getForeground() {
       if (getModel().isSelected()) {
-        return UIUtil.isUnderDarcula() ? Color.WHITE : Color.BLACK;
+        return JBColor.foreground;
       } else if (getModel().isRollover()) {
-        return Color.GRAY;
+        return JBColor.GRAY;
       } else {
         return getColor();
       }
@@ -303,7 +304,7 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
 
     @Override
     public Color getForeground() {
-      return getModel().isSelected() ? Color.BLACK : Color.GRAY;
+      return getModel().isSelected() ? Color.BLACK : JBColor.GRAY;
     }
 
     @Override
