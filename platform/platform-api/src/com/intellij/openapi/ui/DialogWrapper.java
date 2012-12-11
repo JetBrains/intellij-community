@@ -1282,6 +1282,11 @@ public abstract class DialogWrapper {
     }
   }
 
+  /**
+   * @param text action without mnemonic. If mnemonic is set, presentation would be shifted by one to the left 
+   *             {@link javax.swing.AbstractButton#setText(java.lang.String)}
+   *             {@link javax.swing.AbstractButton#updateDisplayedMnemonicIndex(java.lang.String, int)}
+   */
   protected final void setOKButtonText(String text) {
     myOKAction.putValue(Action.NAME, text);
   }
