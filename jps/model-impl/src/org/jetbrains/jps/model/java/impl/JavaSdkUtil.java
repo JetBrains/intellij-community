@@ -16,12 +16,13 @@
 package org.jetbrains.jps.model.java.impl;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
@@ -73,7 +74,7 @@ public class JavaSdkUtil {
           if (jarFileName.equals("alt-rt.jar") || jarFileName.equals("alt-string.jar")) {
             continue;  // filter out alternative implementations
           }
-          String canonicalPath = FileSystemUtil.resolveSymLink(jarFile);
+          String canonicalPath = getCanonicalPath(jarFile);
           if (canonicalPath == null || !pathFilter.add(canonicalPath)) {
             continue;  // filter out duplicate (symbolically linked) .jar files commonly found in OS X JDK distributions
           }
@@ -93,5 +94,15 @@ public class JavaSdkUtil {
     }
 
     return rootFiles;
+  }
+
+  @Nullable
+  private static String getCanonicalPath(File file) {
+    try {
+      return file.getCanonicalPath();
+    }
+    catch (IOException e) {
+      return null;
+    }
   }
 }
