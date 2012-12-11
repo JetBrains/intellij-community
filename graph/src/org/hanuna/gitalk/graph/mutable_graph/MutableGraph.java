@@ -27,6 +27,7 @@ public class MutableGraph implements Graph {
         fragmentController = new SimpleGraphFragmentController(this);
     }
 
+    @NotNull
     public Replace fixRowVisibility(int fromRowIndex, int toRowIndex) {
         if (fromRowIndex < 0 || toRowIndex >= allRows.size() || fromRowIndex > toRowIndex) {
             throw new IllegalArgumentException("fromRowIndex: " + fromRowIndex + "toRowIndex: " + toRowIndex);
