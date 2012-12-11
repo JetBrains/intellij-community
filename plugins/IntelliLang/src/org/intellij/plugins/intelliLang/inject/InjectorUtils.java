@@ -20,15 +20,13 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.MultiHostRegistrarImpl;
 import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.ObjectUtils;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
@@ -193,6 +191,18 @@ public class InjectorUtils {
     return true;
   }
 
+  public static BaseInjection findCommentInjection(PsiElement context, final String supportId, final Ref<PsiComment> causeRef) {
+    return findNearestComment(context, new NullableFunction<PsiComment, BaseInjection>() {
+      @Nullable
+      @Override
+      public BaseInjection fun(PsiComment comment) {
+        causeRef.set(comment);
+        String text = ElementManipulators.getValueText(comment).trim();
+        return detectInjectionFromText(supportId, text);
+      }
+    });
+  }
+
   private static final Pattern MAP_ENTRY_PATTERN = Pattern.compile("([\\S&&[^=]]+)=(\"(?:[^\"]|\\\\\")*\"|\\S*)");
   public static Map<String, String> decodeMap(CharSequence charSequence) {
     if (StringUtil.isEmpty(charSequence)) return Collections.emptyMap();
@@ -220,15 +230,24 @@ public class InjectorUtils {
   }
 
   @Nullable
-  public static PsiComment findNearestComment(PsiElement element) {
+  public static <T> T findNearestComment(PsiElement element, NullableFunction<PsiComment, T> processor) {
     if (element instanceof PsiComment) return null;
+    PsiComment comment = null;
     PsiElement start = element;
     for (int i=0; i<2 && start != null; i++) {
       if (start instanceof PsiFile) return null;
       for (PsiElement e = start.getPrevSibling(); e != null; e = e.getPrevSibling()) {
-        if (e instanceof PsiComment) return (PsiComment)e;
-        if (e instanceof PsiWhiteSpace) continue;
-        if (e instanceof PsiLanguageInjectionHost && StringUtil.isEmptyOrSpaces(e.getText())) continue;
+        if (e instanceof PsiComment) {
+          comment = (PsiComment)e;
+          T value = processor.fun(comment);
+          if (value != null) return value;
+          else continue;
+        }
+        else if (e instanceof PsiWhiteSpace) continue;
+        else if (comment == null && e instanceof PsiLanguageInjectionHost) {
+          if (StringUtil.isEmptyOrSpaces(e.getText())) continue;
+          else return null;
+        }
         break;
       }
       start = element.getParent();
