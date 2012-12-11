@@ -401,7 +401,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   public void runToPosition(@NotNull final XSourcePosition position) {
     dropFrameCaches();
     if (isConnected() && !mySuspendedThreads.isEmpty()) {
-      final PySourcePosition pyPosition = myPositionConverter.convert(position);
+      final PySourcePosition pyPosition = myPositionConverter.convertToPython(position);
       String type = PyLineBreakpointType.ID;
       final Document document = FileDocumentManager.getInstance().getDocument(position.getFile());
       if (document != null) {

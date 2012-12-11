@@ -3,8 +3,10 @@ package com.jetbrains.python.debugger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +16,7 @@ import java.io.File;
 
 
 public class PyLocalPositionConverter implements PyPositionConverter {
+  private final static String[] EGG_EXTENSIONS = new String[] {".egg", ".zip"};
 
   protected static class PyLocalSourcePosition extends PySourcePosition {
     public PyLocalSourcePosition(final String file, final int line) {
@@ -62,8 +65,13 @@ public class PyLocalPositionConverter implements PyPositionConverter {
   }
 
   @NotNull
-  public PySourcePosition convert(@NotNull final XSourcePosition position) {
-    return new PyLocalSourcePosition(position.getFile().getPath(), convertLocalLineToRemote(position.getFile(), position.getLine()));
+  public final PySourcePosition convertToPython(@NotNull final XSourcePosition position) {
+    return convertToPython(convertFilePath(position.getFile().getPath()), convertLocalLineToRemote(position.getFile(), position.getLine()));
+  }
+
+  @NotNull
+  protected PySourcePosition convertToPython(String filePath, int line) {
+    return new PyLocalSourcePosition(filePath, line);
   }
 
   protected static int convertLocalLineToRemote(VirtualFile file, int line) {
@@ -77,9 +85,55 @@ public class PyLocalPositionConverter implements PyPositionConverter {
   }
 
   @Nullable
-  public XSourcePosition convert(@NotNull final PySourcePosition position) {
-    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(position.getFile());
-    return createXSourcePosition(vFile, position.getLine());
+  public XSourcePosition convertFromPython(@NotNull final PySourcePosition position) {
+    return createXSourcePosition(getVirtualFile(position.getFile()), position.getLine());
+  }
+
+  public VirtualFile getVirtualFile(String path) {
+    VirtualFile vFile = getLocalFileSystem().findFileByPath(path);
+
+    if (vFile == null) {
+      vFile = findEggEntry(path);
+    }
+    return vFile;
+  }
+
+  protected VirtualFileSystem getLocalFileSystem() {
+    return LocalFileSystem.getInstance();
+  }
+
+  private VirtualFile findEggEntry(String file) {
+    int ind = -1;
+    for (String ext: EGG_EXTENSIONS) {
+      ind = file.indexOf(ext);
+      if (ind != -1) break;
+    }
+    if (ind != -1) {
+      String jarPath = file.substring(0, ind + 4);
+      VirtualFile jarFile = getLocalFileSystem().findFileByPath(jarPath);
+      if (jarFile != null) {
+        String innerPath = file.substring(ind + 4);
+        final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(jarFile);
+        if (jarRoot != null) {
+          return jarRoot.findFileByRelativePath(innerPath);
+        }
+      }
+    }
+    return null;
+  }
+
+  private static String convertFilePath(String file) {
+    int ind = -1;
+    for (String ext: EGG_EXTENSIONS) {
+      ind = file.indexOf(ext + "!");
+      if (ind != -1) break;
+    }
+    if (ind != -1) {
+      return file.substring(0, ind + 4) + file.substring(ind + 5);
+    }
+    else {
+      return file;
+    }
   }
 
   @Nullable

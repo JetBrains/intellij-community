@@ -11,9 +11,9 @@ public interface PyPositionConverter {
   PySourcePosition create(@NotNull final String file, final int line);
 
   @NotNull
-  PySourcePosition convert(@NotNull final XSourcePosition position);
+  PySourcePosition convertToPython(@NotNull final XSourcePosition position);
 
   @Nullable
-  XSourcePosition convert(@NotNull final PySourcePosition position);
+  XSourcePosition convertFromPython(@NotNull final PySourcePosition position);
 
 }
