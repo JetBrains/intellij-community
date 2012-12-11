@@ -29,7 +29,7 @@ import java.awt.image.ColorModel;
 @SuppressWarnings("UseJBColor")
 public class JBColor extends Color {
 
-  private static boolean DARK = UIUtil.isUnderDarcula();
+  private static volatile boolean DARK = UIUtil.isUnderDarcula();
 
   private final Color darkColor;
 
