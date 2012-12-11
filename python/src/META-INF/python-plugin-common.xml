@@ -528,8 +528,8 @@
                      key="inspection.relation.display-name" groupKey="django" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.django.lang.template.inspection.DjangoRelationInspection"/>
 
-    <moduleService serviceInterface="com.jetbrains.django.model.TemplateManager"
-                   serviceImplementation="com.jetbrains.django.model.TemplateManager"/>
+    <moduleService serviceInterface="com.jetbrains.django.model.DjangoTemplateManager"
+                   serviceImplementation="com.jetbrains.django.model.DjangoTemplateManager"/>
 
     <projectService serviceInterface="com.jetbrains.django.model.TagLibrary"
                     serviceImplementation="com.jetbrains.django.model.TagLibrary"/>

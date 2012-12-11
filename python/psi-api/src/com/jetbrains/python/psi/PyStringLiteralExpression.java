@@ -12,4 +12,10 @@ public interface PyStringLiteralExpression extends PyLiteralExpression, StringLi
   List<ASTNode> getStringNodes();
 
   int valueOffsetToTextOffset(int valueOffset);
+
+  void iterateCharacterRanges(TextRangeConsumer consumer);
+
+  interface TextRangeConsumer {
+    boolean process(int startOffset, int endOffset, String value);
+  }
 }

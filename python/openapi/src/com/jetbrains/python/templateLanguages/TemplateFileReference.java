@@ -40,11 +40,8 @@ import java.util.Collection;
  * @author yole
  */
 public class TemplateFileReference extends WeakFileReference {
-  @NotNull private final FileReferenceSet myReferenceSet;
-
   public TemplateFileReference(@NotNull FileReferenceSet fileReferenceSet, TextRange range, int index, String text) {
     super(fileReferenceSet, range, index, text);
-    myReferenceSet = fileReferenceSet;
   }
 
   @Nullable
@@ -85,7 +82,7 @@ public class TemplateFileReference extends WeakFileReference {
       dstItem = _dstItem;
     }
 
-    final Collection<PsiFileSystemItem> contexts = myReferenceSet.getDefaultContexts();
+    final Collection<PsiFileSystemItem> contexts = getFileReferenceSet().getDefaultContexts();
     switch (contexts.size()) {
       case 0:
         break;
@@ -96,7 +93,7 @@ public class TemplateFileReference extends WeakFileReference {
           if (VfsUtil.isAncestor(contextFile, dstVFile, true)) {
             final String path = VfsUtilCore.getRelativePath(dstVFile, contextFile, '/');
             if (path != null) {
-              return rename(path.replace("/", myReferenceSet.getSeparatorString()));
+              return rename(path.replace("/", getFileReferenceSet().getSeparatorString()));
             }
           }
         }

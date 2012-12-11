@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.django.lang.template.psi.impl.DjangoTemplateFileImpl;
-import com.jetbrains.django.model.TemplateManager;
+import com.jetbrains.django.model.DjangoTemplateManager;
 import com.jetbrains.django.ref.BaseReference;
 import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.buildout.config.psi.impl.BuildoutCfgFile;
@@ -70,7 +70,7 @@ public class BuildoutPartReference extends BaseReference {
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     Module module = ModuleUtil.findModuleForPsiElement(myElement);
     if (module != null) {
-      String name = TemplateManager.getRelativeName(module, (DjangoTemplateFileImpl)element);
+      String name = DjangoTemplateManager.getRelativeName(module, (DjangoTemplateFileImpl)element);
       if (name != null) {
         return myElement.replace(PyElementGenerator.getInstance(myElement.getProject()).createStringLiteralFromString(name));
       }
