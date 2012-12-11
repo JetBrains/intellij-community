@@ -25,21 +25,20 @@ import com.intellij.openapi.vfs.CharsetToolkit
  *
  * @author Kirill Likhodedov
  */
-@SuppressWarnings("GrMethodMayBeStatic")
 public class Executor {
 
   private static String ourCurrentDir
 
-  public cd(String path) {
+  public static cd(String path) {
     ourCurrentDir = path
     println "cd ${shortenPath(path)}"
   }
 
-  public String pwd() {
+  public static String pwd() {
     ourCurrentDir
   }
 
-  public String touch(String fileName) {
+  public static String touch(String fileName) {
     File file = child(fileName)
     assert !file.exists()
     file.createNewFile()
@@ -47,34 +46,34 @@ public class Executor {
     file.path
   }
 
-  public String touch(String fileName, String content) {
+  public static String touch(String fileName, String content) {
     String filePath = touch(fileName)
     echo(fileName, content)
     filePath
   }
 
-  public void echo(String fileName, String content) {
+  public static void echo(String fileName, String content) {
     child(fileName).withWriterAppend("UTF-8") { it.write(content) }
   }
 
-  public String mkdir(String dirName) {
+  public static String mkdir(String dirName) {
     File file = child(dirName)
     file.mkdir()
     println("mkdir $dirName")
     file.path
   }
 
-  public String cat(String fileName) {
+  public static String cat(String fileName) {
     def content = FileUtil.loadFile(child(fileName))
     println("cat fileName")
     content
   }
 
-  public void cp(String fileName, File destinationDir) {
+  public static void cp(String fileName, File destinationDir) {
     FileUtil.copy(child(fileName), new File(destinationDir, fileName))
   }
 
-  protected String run(List<String> params) {
+  protected static String run(List<String> params) {
     final ProcessBuilder builder = new ProcessBuilder().command(params);
     builder.directory(ourCurrentDir());
     builder.redirectErrorStream(true);
@@ -126,7 +125,7 @@ public class Executor {
     println msg
   }
 
-  private  String shortenPath(String path) {
+  private static String shortenPath(String path) {
     def split = path.split("/")
     if (split.size() > 3) {
       // split[0] is empty, because the path starts from /
@@ -135,12 +134,12 @@ public class Executor {
     return path
   }
 
-  private File child(String fileName) {
+  private static File child(String fileName) {
     assert ourCurrentDir != null : "Current dir hasn't been initialized yet. Call cd at least once before any other command."
     new File(ourCurrentDir, fileName)
   }
 
-  private File ourCurrentDir() {
+  private static File ourCurrentDir() {
     assert ourCurrentDir != null : "Current dir hasn't been initialized yet. Call cd at least once before any other command."
     new File(ourCurrentDir)
   }

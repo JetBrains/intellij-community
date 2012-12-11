@@ -34,7 +34,7 @@ class GitExecutor extends Executor {
     return findExecutable("Git", "git", "git.exe", [ GIT_EXECUTABLE_ENV, TEAMCITY_GIT_EXECUTABLE_ENV ])
   }
 
-  public String git(String command) {
+  public static String git(String command) {
     printVersionTheFirstTime();
     def split = StringUtil.split(command, " ")
     split.add(0, GIT_EXECUTABLE)
@@ -53,16 +53,16 @@ class GitExecutor extends Executor {
     throw new RuntimeException("fatal error during execution of Git command: $command");
   }
 
-  public String git(GitRepository repository, String command) {
+  public static String git(GitRepository repository, String command) {
     cd repository.root.path
     git command
   }
 
-  public void cd(GitRepository repository) {
+  public static void cd(GitRepository repository) {
     cd repository.root.path
   }
 
-  private void printVersionTheFirstTime() {
+  private static void printVersionTheFirstTime() {
     if (!myVersionPrinted) {
       myVersionPrinted = true;
       git("version")
