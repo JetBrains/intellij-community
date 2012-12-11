@@ -85,6 +85,9 @@ public class UIUtil {
     }
   };
 
+  private static final String[] STANDARD_FONT_SIZES =
+    {"8", "9", "10", "11", "12", "14", "16", "18", "20", "22", "24", "26", "28", "36", "48", "72"};
+
   public static void applyStyle(@NotNull ComponentStyle componentStyle, @NotNull Component comp) {
     if (!(comp instanceof JComponent)) return;
 
@@ -1096,24 +1099,45 @@ public class UIUtil {
 
   public static String[] getValidFontNames(final boolean familyName) {
     Set<String> result = new TreeSet<String>();
-    Font[] fonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
-    for (Font font : fonts) {
-      // Adds fonts that can display symbols at [A, Z] + [a, z] + [0, 9]
+
+    // adds fonts that can display symbols at [A, Z] + [a, z] + [0, 9]
+    for (Font font : GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts()) {
       try {
-        if (font.canDisplay('a') && font.canDisplay('z') && font.canDisplay('A') && font.canDisplay('Z') && font.canDisplay('0') &&
-            font.canDisplay('1')) {
+        if (isValidFont(font)) {
           result.add(familyName ? font.getFamily() : font.getName());
         }
       }
-      catch (Exception e) {
+      catch (Exception ignore) {
         // JRE has problems working with the font. Just skip.
       }
     }
+
+    // add label font (if isn't listed among above)
+    Font labelFont = getLabelFont();
+    if (labelFont != null && isValidFont(labelFont)) {
+      result.add(familyName ? labelFont.getFamily() : labelFont.getName());
+    }
+
     return ArrayUtil.toStringArray(result);
   }
 
   public static String[] getStandardFontSizes() {
-    return new String[]{"8", "9", "10", "11", "12", "14", "16", "18", "20", "22", "24", "26", "28", "36", "48", "72"};
+    return STANDARD_FONT_SIZES;
+  }
+
+  public static boolean isValidFont(@NotNull Font font) {
+    try {
+      return font.canDisplay('a') &&
+             font.canDisplay('z') &&
+             font.canDisplay('A') &&
+             font.canDisplay('Z') &&
+             font.canDisplay('0') &&
+             font.canDisplay('1');
+    }
+    catch (Exception e) {
+      // JRE has problems working with the font. Just skip.
+      return false;
+    }
   }
 
   public static void setupEnclosingDialogBounds(final JComponent component) {
@@ -2011,8 +2035,7 @@ public class UIUtil {
         ourSystemFontData = Pair.create(font.getName(), font.getSize());
       }
     }
-    catch (Exception ignored) {
-    }
+    catch (Exception ignored) { }
   }
 
   @Nullable

@@ -41,6 +41,8 @@ import java.awt.*;
 import java.io.File;
 import java.util.Map;
 
+import static com.intellij.util.ui.UIUtil.isValidFont;
+
 @State(
   name = "UISettings",
   storages = {
@@ -166,21 +168,6 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
     myListenerList.remove(UISettingsListener.class,listener);
   }
 
-  private static boolean isValidFont(final Font font) {
-    try {
-      return font.canDisplay('a') &&
-             font.canDisplay('z') &&
-             font.canDisplay('A') &&
-             font.canDisplay('Z') &&
-             font.canDisplay('0') &&
-             font.canDisplay('1');
-    }
-    catch (Exception e) {
-      // JRE has problems working with the font. Just skip.
-      return false;
-    }
-  }
-
   private void setSystemFontFaceAndSize() {
     if (FONT_FACE == null || FONT_SIZE <= 0) {
       final Pair<String, Integer> fontData = getSystemFontFaceAndSize();
@@ -259,12 +246,9 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
       // 2. If all preferred fonts are not valid in current environment
       // we have to find first valid font (if any)
       if (!fontIsValid) {
-        Font[] fonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
-        for (Font font : fonts) {
-          if (isValidFont(font)) {
-            FONT_FACE = font.getName();
-            break;
-          }
+        String[] fontNames = UIUtil.getValidFontNames(false);
+        if (fontNames.length > 0) {
+          FONT_FACE = fontNames[0];
         }
       }
     }
