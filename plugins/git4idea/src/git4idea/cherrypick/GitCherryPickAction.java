@@ -70,20 +70,25 @@ public class GitCherryPickAction extends DumbAwareAction {
     }
 
     FileDocumentManager.getInstance().saveAllDocuments();
+    myPlatformFacade.getChangeListManager(project).blockModalNotifications();
 
     new Task.Backgroundable(project, "Cherry-picking", false) {
       public void run(@NotNull ProgressIndicator indicator) {
-        boolean autoCommit = GitVcsSettings.getInstance(myProject).isAutoCommitOnCherryPick();
-        Map<GitRepository, List<GitCommit>> commitsInRoots = sortCommits(groupCommitsByRoots(project, commits));
-        new GitCherryPicker(myProject, myGit, myPlatformFacade, autoCommit).cherryPick(commitsInRoots);
-
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            for (GitCommit commit : commits) {
-              myIdsInProgress.remove(commit.getShortHash());
+        try {
+          boolean autoCommit = GitVcsSettings.getInstance(myProject).isAutoCommitOnCherryPick();
+          Map<GitRepository, List<GitCommit>> commitsInRoots = sortCommits(groupCommitsByRoots(project, commits));
+          new GitCherryPicker(myProject, myGit, myPlatformFacade, autoCommit).cherryPick(commitsInRoots);
+        }
+        finally {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              myPlatformFacade.getChangeListManager(project).unblockModalNotifications();
+              for (GitCommit commit : commits) {
+                myIdsInProgress.remove(commit.getShortHash());
+              }
             }
-          }
-        });
+          });
+        }
       }
     }.queue();
   }
