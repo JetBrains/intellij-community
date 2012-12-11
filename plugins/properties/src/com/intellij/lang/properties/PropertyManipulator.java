@@ -22,7 +22,7 @@ public class PropertyManipulator extends AbstractElementManipulator<PropertyImpl
   @Override
   public TextRange getRangeInElement(PropertyImpl element) {
     ASTNode valueNode = element.getValueNode();
-    if (valueNode == null) return TextRange.create(element.getTextLength(), 0);
+    if (valueNode == null) return TextRange.from(element.getTextLength(), 0);
     TextRange range = valueNode.getTextRange();
     return TextRange.from(range.getStartOffset() - element.getTextRange().getStartOffset(), range.getLength());
   }
