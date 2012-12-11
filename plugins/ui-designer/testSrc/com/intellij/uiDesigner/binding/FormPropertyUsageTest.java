@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.Query;
@@ -44,7 +45,7 @@ public class FormPropertyUsageTest extends PsiTestCase {
     super.setUp();
 
     String root = PluginPathManager.getPluginHomePath("ui-designer") + "/testData/binding/" + getTestName(true);
-    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
+    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
     myTestProjectRoot = PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
   }
 

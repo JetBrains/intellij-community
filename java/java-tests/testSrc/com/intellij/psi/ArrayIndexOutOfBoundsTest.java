@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
@@ -45,7 +46,7 @@ public class ArrayIndexOutOfBoundsTest extends PsiTestCase {
     super.setUp();
 
     String root = JavaTestUtil.getJavaTestDataPath() + "/psi/arrayIndexOutOfBounds/src";
-    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
+    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
     myProjectRoot = PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
   }
 

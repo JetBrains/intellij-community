@@ -40,7 +40,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -107,7 +106,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
     moduleBuilder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
-    moduleBuilder.addJdk(JavaSdkImpl.getMockJdk17Path().getPath());
+    moduleBuilder.addJdk(IdeaTestUtil.getMockJdk17Path().getPath());
     super.tuneFixture(moduleBuilder);
   }
 

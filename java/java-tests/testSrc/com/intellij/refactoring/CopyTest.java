@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.copy.CopyHandler;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 
@@ -40,7 +41,7 @@ public class CopyTest extends CodeInsightTestCase {
 
   private void doTest() throws Exception {
     String rootBefore = getRoot();
-    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
+    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
     PsiTestUtil.createTestProjectStructure(myProject, myModule, rootBefore, myFilesToDelete);
     PsiPackage pack1 = myJavaFacade.findPackage("pack1");
     PsiPackage pack2 = myJavaFacade.findPackage("pack2");
@@ -49,7 +50,7 @@ public class CopyTest extends CodeInsightTestCase {
 
   public void testMultipleClasses() throws Exception {
     String rootBefore = getRoot();
-    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
+    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
     final VirtualFile root = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootBefore, myFilesToDelete);
     final PsiClass aClass = myJavaFacade.findClass("pack1.Klass");
     assertNotNull(aClass);
@@ -71,7 +72,7 @@ public class CopyTest extends CodeInsightTestCase {
 
   public void testMultipleFiles() throws Exception {
     String rootBefore = getRoot();
-    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
+    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
     final VirtualFile root = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootBefore, myFilesToDelete);
 
     final VirtualFile first = root.findFileByRelativePath("from/1.txt");
@@ -96,7 +97,7 @@ public class CopyTest extends CodeInsightTestCase {
 
   public void testPackageInfo() throws Exception {
     String rootBefore = getRoot();
-    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
+    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
     final VirtualFile root = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootBefore, myFilesToDelete);
 
     final VirtualFile first = root.findFileByRelativePath("from/package-info.java");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.projectRoots.JavaVersionServiceImpl;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -36,7 +36,7 @@ public class AdvHighlightingJdk7Test extends DaemonAnalyzerTestCase {
   @Override
   protected Sdk getTestProjectJdk() {
     LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_7);
-    return JavaSdkImpl.getMockJdk17("java 1.7");
+    return IdeaTestUtil.getMockJdk17();
   }
 
   @Override

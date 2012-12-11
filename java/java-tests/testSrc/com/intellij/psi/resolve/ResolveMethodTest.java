@@ -16,11 +16,11 @@
 package com.intellij.psi.resolve;
 
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.ResolveTestCase;
 
 public class ResolveMethodTest extends ResolveTestCase {
@@ -32,13 +32,14 @@ public class ResolveMethodTest extends ResolveTestCase {
 
   @Override
   protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdk14();
+    return IdeaTestUtil.getMockJdk14();
   }
 
   private PsiElement resolve() throws Exception {
     PsiReference ref = configureByFile("method/" + getTestName(false) + ".java");
     return ref.resolve();
   }
+
   private JavaResolveResult advancedResolve() throws Exception {
     PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)configureByFile("method/" + getTestName(false) + ".java");
     return ref.advancedResolve(true);

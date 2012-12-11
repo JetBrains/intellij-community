@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.testFramework;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
@@ -29,6 +28,7 @@ import com.intellij.psi.impl.JavaPsiFacadeEx;
 public abstract class LightCodeInsightTestCase extends LightPlatformCodeInsightTestCase {
   private LanguageLevel myOldLanguageLevel;
 
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   protected LightCodeInsightTestCase() {
     IdeaTestCase.initPlatformPrefix();
   }
@@ -60,7 +60,7 @@ public abstract class LightCodeInsightTestCase extends LightPlatformCodeInsightT
 
   @Override
   protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17();
+    return IdeaTestUtil.getMockJdk17();
   }
 
   @Override

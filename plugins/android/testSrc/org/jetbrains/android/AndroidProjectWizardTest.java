@@ -29,6 +29,7 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.android.newProject.AndroidModuleBuilder;
 import org.jetbrains.android.newProject.AndroidModuleWizardStep;
@@ -82,7 +83,7 @@ public class AndroidProjectWizardTest extends ProjectWizardTestCase {
   }
 
   public void testAddAndroidModuleToJavaProject() throws Exception {
-    ProjectRootManager.getInstance(getProject()).setProjectSdk(JavaSdkImpl.getMockJdk17());
+    ProjectRootManager.getInstance(getProject()).setProjectSdk(IdeaTestUtil.getMockJdk17());
     Module module = createModuleFromTemplate(AndroidProjectTemplatesFactory.ANDROID, AndroidProjectTemplatesFactory.EMPTY_MODULE, null);
     assertNotNull(module);
     Sdk moduleSdk = ModuleRootManager.getInstance(module).getSdk();

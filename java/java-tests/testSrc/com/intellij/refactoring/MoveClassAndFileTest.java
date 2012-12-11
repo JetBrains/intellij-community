@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ public class MoveClassAndFileTest extends RefactoringTestCase {
     String root = JavaTestUtil.getJavaTestDataPath() + "/refactoring/moveClassAndFile/" + testName;
 
     String rootBefore = root + "/before";
-    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
+    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
     VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootBefore, myFilesToDelete);
 
     performAction(newPackageName, fileNameNearFirstClass, classNames);

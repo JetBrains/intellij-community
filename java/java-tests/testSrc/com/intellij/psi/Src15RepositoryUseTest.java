@@ -26,6 +26,7 @@ import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.psi.search.searches.AnnotatedPackagesSearch;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
@@ -48,7 +49,7 @@ public class Src15RepositoryUseTest extends PsiTestCase {
 
     LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_5);
     String root = PathManagerEx.getTestDataPath() + "/psi/repositoryUse/src15";
-    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17("mock 1.5"));
+    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17("mock 1.5"));
     PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
   }
 

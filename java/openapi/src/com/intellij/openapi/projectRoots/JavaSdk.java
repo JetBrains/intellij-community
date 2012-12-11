@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public abstract class JavaSdk extends SdkType implements JavaSdkType, Applicatio
     return ApplicationManager.getApplication().getComponent(JavaSdk.class);
   }
 
-  public final Sdk createJdk(final String jdkName, String jreHome) {
+  public final Sdk createJdk(@NotNull String jdkName, @NotNull String jreHome) {
     return createJdk(jdkName, jreHome, true);
   }
 
@@ -42,7 +42,7 @@ public abstract class JavaSdk extends SdkType implements JavaSdkType, Applicatio
    */
   public abstract int compareTo(@NotNull String versionString, @NotNull String versionNumber);
 
-  public abstract Sdk createJdk(@NonNls String jdkName, String home, boolean isJre);
+  public abstract Sdk createJdk(@NonNls String jdkName, @NotNull String home, boolean isJre);
 
   @Nullable
   public abstract JavaSdkVersion getVersion(@NotNull Sdk sdk);

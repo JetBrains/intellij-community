@@ -22,7 +22,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderRootType;
@@ -128,7 +127,7 @@ public abstract class PsiTestCase extends ModuleTestCase {
 
     myTestDataBefore = loadData(dataName);
 
-    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
+    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
     VirtualFile vDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, myDataRoot, myFilesToDelete);
 
     final VirtualFile vFile = vDir.findChild(myTestDataBefore.getTextFile());

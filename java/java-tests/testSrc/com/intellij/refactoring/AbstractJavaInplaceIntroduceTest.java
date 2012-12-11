@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,14 @@ package com.intellij.refactoring;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +59,7 @@ public abstract class AbstractJavaInplaceIntroduceTest extends AbstractInplaceIn
 
   @Override
   protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17();
+    return IdeaTestUtil.getMockJdk17();
   }
 
   @Override

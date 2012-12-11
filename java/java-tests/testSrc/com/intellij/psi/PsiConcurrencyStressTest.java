@@ -31,6 +31,7 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.Timings;
@@ -48,7 +49,7 @@ public class PsiConcurrencyStressTest extends PsiTestCase {
 
     LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_5);
     String root = PathManagerEx.getTestDataPath() + "/psi/repositoryUse/src";
-    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
+    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
     PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
   }
 

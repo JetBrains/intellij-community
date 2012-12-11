@@ -21,6 +21,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.InspectionTestCase;
 
 public class RedundantCast18Test extends InspectionTestCase {
@@ -34,7 +35,7 @@ public class RedundantCast18Test extends InspectionTestCase {
   public void testExpectedSupertype() throws Exception { doTest(); }
 
   protected Sdk getTestProjectSdk() {
-    Sdk sdk = JavaSdkImpl.getMockJdk17();
+    Sdk sdk = IdeaTestUtil.getMockJdk17();
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
     return sdk;
   }
