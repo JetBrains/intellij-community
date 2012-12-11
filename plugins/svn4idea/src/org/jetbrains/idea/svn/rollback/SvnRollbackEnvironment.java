@@ -16,25 +16,19 @@
 package org.jetbrains.idea.svn.rollback;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.EmptyChangelistBuilder;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.rollback.DefaultRollbackEnvironment;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
@@ -61,7 +55,12 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     final SvnChangeProvider changeProvider = (SvnChangeProvider) mySvnVcs.getChangeProvider();
     final Collection<List<Change>> collections = SvnUtil.splitChangesIntoWc(mySvnVcs, changes);
     for (List<Change> collection : collections) {
-      rollbackGroupForWc(collection, exceptions, listener, changeProvider);
+      // to be more sure about nested changes, being or being not reverted
+      final List<Change> innerChanges = new ArrayList<Change>(collection);
+      Collections.sort(innerChanges, ChangesAfterPathComparator.getInstance());
+      //for (Change change : innerChanges) {
+        rollbackGroupForWc(innerChanges, exceptions, listener, changeProvider);
+      //}
     }
   }
 
@@ -69,7 +68,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
                                   final List<VcsException> exceptions,
                                   final RollbackProgressListener listener,
                                   SvnChangeProvider changeProvider) {
-    final UnversionedFilesGroupCollector collector = new UnversionedFilesGroupCollector();
+    final UnversionedAndNotTouchedFilesGroupCollector collector = new UnversionedAndNotTouchedFilesGroupCollector();
 
     final ChangesChecker checker = new ChangesChecker(changeProvider, collector);
     checker.gather(changes);
@@ -94,9 +93,9 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
       }
     });
 
-    final List<Trinity<File, File, File>> fromTo = collector.getFromTo();
-    final List<Trinity<File, File, File>> fromToModified = new ArrayList<Trinity<File, File, File>>();
-    moveRenamesToTmp(exceptions, fromTo, fromToModified);
+    final List<CopiedAsideInfo> fromToModified = new ArrayList<CopiedAsideInfo>();
+    final MultiMap<File, SVNPropertyData> properties = new MultiMap<File, SVNPropertyData>();
+    moveRenamesToTmp(exceptions, fromToModified, properties, collector);
     // adds (deletes)
     // deletes (adds)
     // modifications
@@ -106,7 +105,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     final List<File> edits = checker.getForEdits();
     reverter.revert(edits.toArray(new File[edits.size()]), false);
 
-    moveGroup(exceptions, fromToModified);
+    moveGroup(exceptions, fromToModified, properties);
 
     final List<Pair<File, File>> toBeDeleted = collector.getToBeDeleted();
     for (Pair<File, File> pair : toBeDeleted) {
@@ -117,34 +116,142 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
   }
 
   private void moveRenamesToTmp(List<VcsException> exceptions,
-                                List<Trinity<File, File, File>> fromTo,
-                                List<Trinity<File, File, File>> fromToModified) {
+                                List<CopiedAsideInfo> fromToModified,
+                                final MultiMap<File, SVNPropertyData> properties,
+                                final UnversionedAndNotTouchedFilesGroupCollector collector) {
+    final Map<File, ThroughRenameInfo> fromTo = collector.getFromTo();
     try {
       final File tmp = FileUtil.createTempDirectory("forRename", "");
-      for (Trinity<File, File, File> trinity : fromTo) {
-        final File tmpFile = FileUtil.createTempFile(tmp, trinity.getSecond().getName(), "", false);
+      final SVNWCClient client = mySvnVcs.createWCClient();
+      final ISVNPropertyHandler handler = new ISVNPropertyHandler() {
+        @Override
+        public void handleProperty(File path, SVNPropertyData property) throws SVNException {
+          final ThroughRenameInfo info = collector.findToFile(new FilePathImpl(path, path.isDirectory()), null);
+          if (info != null) {
+            properties.putValue(info.getTo(), property);
+          }
+        }
+
+        @Override
+        public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
+        }
+
+        @Override
+        public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
+        }
+      };
+
+      // copy also directories here - for moving with svn
+      // also, maybe still use just patching? -> well-tested thing, only deletion of folders might suffer
+      // todo: special case: addition + move. mark it
+      for (Map.Entry<File, ThroughRenameInfo> entry : fromTo.entrySet()) {
+        final File source = entry.getKey();
+        final ThroughRenameInfo info = entry.getValue();
+        if (info.isVersioned()) {
+          client.doGetProperty(source, null, SVNRevision.UNDEFINED, SVNRevision.WORKING, SVNDepth.EMPTY, handler, null);
+        }
+        if (source.isDirectory()) {
+          if (! FileUtil.filesEqual(info.getTo(), info.getFirstTo())) {
+            fromToModified.add(new CopiedAsideInfo(info.getParentImmediateReverted(), info.getTo(), info.getFirstTo(), null));
+          }
+          continue;
+        }
+        final File tmpFile = FileUtil.createTempFile(tmp, source.getName(), "", false);
         tmpFile.mkdirs();
         FileUtil.delete(tmpFile);
-        FileUtil.rename(trinity.getSecond(), tmpFile);
-        fromToModified.add(new Trinity<File, File, File>(trinity.getFirst(), tmpFile, trinity.getThird()));
+        FileUtil.copy(source, tmpFile);
+        fromToModified.add(new CopiedAsideInfo(info.getParentImmediateReverted(), info.getTo(), info.getFirstTo(), tmpFile));
       }
     }
     catch (IOException e) {
       exceptions.add(new VcsException(e));
     }
+    catch (SVNException e) {
+      exceptions.add(new VcsException(e));
+    }
   }
 
-  private void moveGroup(List<VcsException> exceptions, List<Trinity<File, File, File>> fromTo) {
-    for (Trinity<File, File, File> trinity : fromTo) {
-      if (trinity.getFirst().exists()) {
+  private void moveGroup(final List<VcsException> exceptions,
+                         List<CopiedAsideInfo> fromTo,
+                         MultiMap<File, SVNPropertyData> properties) {
+    Collections.sort(fromTo, new Comparator<CopiedAsideInfo>() {
+      @Override
+      public int compare(CopiedAsideInfo o1, CopiedAsideInfo o2) {
+        return FileUtil.compareFiles(o1.getTo(), o2.getTo());
+      }
+    });
+    for (CopiedAsideInfo info : fromTo) {
+      if (info.getParentImmediateReverted().exists()) {
         // parent successfully renamed/moved
         try {
-          FileUtil.rename(trinity.getSecond(), trinity.getThird());
+          final File from = info.getFrom();
+          final File target = info.getTo();
+          if (from != null && ! FileUtil.filesEqual(from, target) && ! target.exists()) {
+            SvnFileSystemListener.moveFileWithSvn(mySvnVcs, from, target);
+          }
+          final File root = info.getTmpPlace();
+          if (root == null) continue;
+          if (! root.isDirectory()) {
+            if (target.exists()) {
+              FileUtil.copy(root, target);
+            } else {
+              FileUtil.rename(root, target);
+            }
+          } else {
+            FileUtil.processFilesRecursively(root, new Processor<File>() {
+              @Override
+              public boolean process(File file) {
+                if (file.isDirectory()) return true;
+                String relativePath = FileUtil.getRelativePath(root.getPath(), file.getPath(), File.separatorChar);
+                File newFile = new File(target, relativePath);
+                newFile.getParentFile().mkdirs();
+                try {
+                  if (target.exists()) {
+                    FileUtil.copy(file, newFile);
+                  } else {
+                    FileUtil.rename(file, newFile);
+                  }
+                }
+                catch (IOException e) {
+                  exceptions.add(new VcsException(e));
+                }
+                return true;
+              }
+            });
+          }
         }
         catch (IOException e) {
           exceptions.add(new VcsException(e));
         }
+        catch (SVNException e) {
+          exceptions.add(new VcsException(e));
+        }
       }
+    }
+
+    applyProperties(properties, exceptions);
+  }
+
+  private void applyProperties(MultiMap<File, SVNPropertyData> propertiesMap, final List<VcsException> exceptions) {
+    final SVNWCClient client = mySvnVcs.createWCClient();
+    for (Map.Entry<File, Collection<SVNPropertyData>> entry : propertiesMap.entrySet()) {
+      final File file = entry.getKey();
+      final Collection<SVNPropertyData> propertyDatas = entry.getValue();
+        try {
+          client.doSetProperty(file, new ISVNPropertyValueProvider() {
+            @Override
+            public SVNProperties providePropertyValues(File path, SVNProperties properties) throws SVNException {
+              final SVNProperties result = new SVNProperties();
+              for (SVNPropertyData data : propertyDatas) {
+                result.put(data.getName(), data.getValue());
+              }
+              return result;
+            }
+          }, true, SVNDepth.EMPTY, null, null);
+        }
+        catch (SVNException e) {
+          exceptions.add(new VcsException(e));
+        }
     }
   }
 
@@ -173,53 +280,223 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
 
   public void rollbackMissingFileDeletion(List<FilePath> filePaths, final List<VcsException> exceptions,
                                                         final RollbackProgressListener listener) {
-    final SVNWCClient wcClient = mySvnVcs.createWCClient();
-
     List<File> files = ChangesUtil.filePathsToFiles(filePaths);
     for (File file : files) {
       listener.accept(file);
       try {
-        SVNInfo info = wcClient.doInfo(file, SVNRevision.UNDEFINED);
-        if (info != null && info.getKind() == SVNNodeKind.FILE) {
-          wcClient.doRevert(file, false);
-        } else {
-          // do update to restore missing directory.
-          mySvnVcs.createUpdateClient().doUpdate(file, SVNRevision.HEAD, true);
-        }
-      }
-      catch (SVNException e) {
+        revertFileOrDir(file);
+      } catch (VcsException e) {
+        exceptions.add(e);
+      } catch (SVNException e) {
         exceptions.add(new VcsException(e));
       }
     }
   }
 
-  private static class UnversionedFilesGroupCollector extends EmptyChangelistBuilder {
-    private File myCurrentBeforeFile;
-    private final List<Pair<File, File>> myToBeDeleted;
-    private final List<Trinity<File, File, File>> myFromTo;
+  private void revertFileOrDir(File file) throws SVNException, VcsException {
+    final SVNWCClient wcClient = mySvnVcs.createWCClient();
+    SVNInfo info = wcClient.doInfo(file, SVNRevision.UNDEFINED);
+    if (info != null) {
+      if (info.getKind() == SVNNodeKind.FILE) {
+        wcClient.doRevert(file, false);
+      } else {
+        if (SVNProperty.SCHEDULE_ADD.equals(info.getSchedule())) {
+          wcClient.doRevert(file, true);
+        } else {
+          boolean under17Copy = isUnder17Copy(file, info);
+          if (under17Copy) {
+            wcClient.doRevert(file, true);
+          } else {
+            // do update to restore missing directory.
+            mySvnVcs.createUpdateClient().doUpdate(file, SVNRevision.HEAD, true);
+          }
+        }
+      }
+    } else {
+      throw new VcsException("Can not get 'svn info' for " + file.getPath());
+    }
+  }
 
-    private UnversionedFilesGroupCollector() {
-      myFromTo = new ArrayList<Trinity<File, File, File>>();
+  private boolean isUnder17Copy(final File file, final SVNInfo info) throws VcsException {
+    final RootsToWorkingCopies copies = mySvnVcs.getRootsToWorkingCopies();
+    WorkingCopy copy = copies.getMatchingCopy(info.getURL());
+    if (copy == null) {
+      SVNStatus status = null;
+      try {
+        status = mySvnVcs.createStatusClient().doStatus(file, false);
+      }
+      catch (SVNException e) {
+        throw new VcsException(e);
+      }
+      if (status == null) {
+        throw new VcsException("Can not determine working copy or get 'svn status' for " + file.getPath());
+      } else {
+        return WorkingCopyFormat.ONE_DOT_SEVEN.equals(WorkingCopyFormat.getInstance(status.getWorkingCopyFormat()));
+      }
+    } else {
+      return copy.is17Copy();
+    }
+  }
+
+  private static class UnversionedAndNotTouchedFilesGroupCollector extends EmptyChangelistBuilder {
+    private final List<Pair<File, File>> myToBeDeleted;
+    private final Map<File, ThroughRenameInfo> myFromTo;
+    // created by changes
+    private TreeMap<String, File> myRenames;
+    private Set<String> myAlsoReverted;
+
+    private UnversionedAndNotTouchedFilesGroupCollector() {
+      myFromTo = new HashMap<File, ThroughRenameInfo>();
       myToBeDeleted = new ArrayList<Pair<File, File>>();
     }
 
     @Override
     public void processUnversionedFile(final VirtualFile file) {
-      final File to = new File(myCurrentBeforeFile, file.getName());
-      myFromTo.add(new Trinity<File, File, File>(myCurrentBeforeFile, new File(file.getPath()), to));
+      toFromTo(file);
     }
 
-    public void setBefore(@NotNull final File beforeFile, @NotNull final File afterFile) {
-      myCurrentBeforeFile = beforeFile;
-      myToBeDeleted.add(new Pair<File, File>(beforeFile, afterFile));
+    public ThroughRenameInfo findToFile(@NotNull final FilePath file, @Nullable final File firstTo) {
+      final String path = FilePathsHelper.convertPath(file);
+      if (myAlsoReverted.contains(path)) return null;
+      final NavigableMap<String, File> head = myRenames.headMap(path, true);
+      if (head == null || head.isEmpty()) return null;
+      for (Map.Entry<String, File> entry : head.descendingMap().entrySet()) {
+        if (path.equals(entry.getKey())) return null;
+        if (path.startsWith(entry.getKey())) {
+          final String convertedBase = FileUtil.toSystemIndependentName(entry.getKey());
+          final String convertedChild = FileUtil.toSystemIndependentName(file.getPath());
+          final String relativePath = FileUtil.getRelativePath(convertedBase, convertedChild, '/');
+          assert relativePath != null;
+          return new ThroughRenameInfo(entry.getValue(), new File(entry.getValue(), relativePath), firstTo, file.getIOFile(), firstTo != null);
+        }
+      }
+      return null;
+    }
+
+    private void toFromTo(VirtualFile file) {
+      final FilePathImpl path = new FilePathImpl(file);
+      final ThroughRenameInfo info = findToFile(path, null);
+      if (info != null) {
+        myFromTo.put(path.getIOFile(), info);
+      }
+    }
+
+    private void processChangeImpl(final Change change) {
+      if (change.getAfterRevision() != null) {
+        final FilePath after = change.getAfterRevision().getFile();
+        final ThroughRenameInfo info = findToFile(after, change.getBeforeRevision() == null ? null : change.getBeforeRevision().getFile().getIOFile());
+        if (info != null) {
+          myFromTo.put(after.getIOFile(), info);
+        }
+      }
+    }
+
+    @Override
+    public void processChange(Change change, VcsKey vcsKey) {
+      processChangeImpl(change);
+    }
+
+    @Override
+    public void processChangeInList(Change change, @Nullable ChangeList changeList, VcsKey vcsKey) {
+      processChangeImpl(change);
+    }
+
+    @Override
+    public void processChangeInList(Change change, String changeListName, VcsKey vcsKey) {
+      processChangeImpl(change);
+    }
+
+    @Override
+    public void processIgnoredFile(VirtualFile file) {
+      // as with unversioned
+      toFromTo(file);
     }
 
     public List<Pair<File, File>> getToBeDeleted() {
       return myToBeDeleted;
     }
 
-    public List<Trinity<File, File, File>> getFromTo() {
+    public Map<File, ThroughRenameInfo> getFromTo() {
       return myFromTo;
+    }
+
+    public void setRenamesMap(TreeMap<String, File> renames) {
+      myRenames = renames;
+    }
+
+    public void setAlsoReverted(Set<String> alsoReverted) {
+      myAlsoReverted = alsoReverted;
+    }
+  }
+
+  private static class CopiedAsideInfo {
+    private final File myParentImmediateReverted;
+    private final File myTo;
+    private final File myFrom;
+    private final File myTmpPlace;
+
+    private CopiedAsideInfo(File parentImmediateReverted, File to, File from, File tmpPlace) {
+      myParentImmediateReverted = parentImmediateReverted;
+      myTo = to;
+      myFrom = from;
+      myTmpPlace = tmpPlace;
+    }
+
+    public File getParentImmediateReverted() {
+      return myParentImmediateReverted;
+    }
+
+    public File getTo() {
+      return myTo;
+    }
+
+    public File getFrom() {
+      return myFrom;
+    }
+
+    public File getTmpPlace() {
+      return myTmpPlace;
+    }
+
+    @Override
+    public String toString() {
+      return myFrom + " -> " + myTo;
+    }
+  }
+
+  private static class ThroughRenameInfo {
+    private final File myParentImmediateReverted;
+    private final File myTo;
+    private final File myFirstTo;
+    private final File myFrom;
+    private final boolean myVersioned;
+
+    private ThroughRenameInfo(File parentImmediateReverted, File to, File firstTo, File from, boolean versioned) {
+      myParentImmediateReverted = parentImmediateReverted;
+      myTo = to;
+      myFrom = from;
+      myVersioned = versioned;
+      myFirstTo = firstTo;
+    }
+
+    public File getFirstTo() {
+      return myFirstTo;
+    }
+
+    public boolean isVersioned() {
+      return myVersioned;
+    }
+
+    public File getParentImmediateReverted() {
+      return myParentImmediateReverted;
+    }
+
+    public File getTo() {
+      return myTo;
+    }
+
+    public File getFrom() {
+      return myFrom;
     }
   }
 
@@ -265,11 +542,11 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     private final List<File> myForEdits;
 
     private final SvnChangeProvider myChangeProvider;
-    private final UnversionedFilesGroupCollector myCollector;
+    private final UnversionedAndNotTouchedFilesGroupCollector myCollector;
 
     private final List<VcsException> myExceptions;
 
-    private ChangesChecker(SvnChangeProvider changeProvider, UnversionedFilesGroupCollector collector) {
+    private ChangesChecker(SvnChangeProvider changeProvider, UnversionedAndNotTouchedFilesGroupCollector collector) {
       myChangeProvider = changeProvider;
       myCollector = collector;
 
@@ -304,19 +581,39 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     }
 
     public void gather(final List<Change> changes) {
+      final TreeMap<String, File> renames = new TreeMap<String, File>();
+      final Set<String> alsoReverted = new HashSet<String>();
+      final Map<String, FilePath> files = new HashMap<String, FilePath>();
       for (Change change : changes) {
         final ContentRevision beforeRevision = change.getBeforeRevision();
         final ContentRevision afterRevision = change.getAfterRevision();
-
+        final String key = afterRevision == null ? null : FilePathsHelper.convertWithLastSeparator(afterRevision.getFile());
         if (MoveRenameReplaceCheck.check(change)) {
-          myCollector.setBefore(beforeRevision.getFile().getIOFile(), afterRevision.getFile().getIOFile());
+          renames.put(key, beforeRevision.getFile().getIOFile());
+          files.put(key, afterRevision.getFile());
+        } else if (afterRevision != null) {
+          alsoReverted.add(key);
+        }
+      }
+      if (! renames.isEmpty()) {
+        final ArrayList<String> paths = new ArrayList<String>(renames.keySet());
+        if (paths.size() > 1) {
+          FilterFilePathStrings.getInstance().doFilter(paths);
+        }
+        myCollector.setRenamesMap(renames);
+        myCollector.setAlsoReverted(alsoReverted);
+        for (String path : paths) {
           try {
-            myChangeProvider.getChanges(afterRevision.getFile(), false, myCollector);
+            myChangeProvider.getChanges(files.get(path), true, myCollector);
           }
           catch (SVNException e) {
             myExceptions.add(new VcsException(e));
           }
         }
+      }
+
+      for (Change change : changes) {
+        final ContentRevision afterRevision = change.getAfterRevision();
 
         boolean checked = getAddDelete(myForAdds, change);
         checked |= getAddDelete(myForDeletes, change);
