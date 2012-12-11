@@ -58,6 +58,7 @@
   </item>
   <item name='java.lang.String byte[] getBytes(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.lang.RuntimeException RuntimeException(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
@@ -97,5 +98,8 @@
   </item>
   <item name='java.lang.Class java.lang.reflect.Field getField(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='java.lang.String byte[] getBytes(java.nio.charset.Charset) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
 </root>
