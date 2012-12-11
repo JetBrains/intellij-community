@@ -61,7 +61,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     myProjectPaths = new ProjectPaths(pd.getProject());
     // in project rebuild mode performance gain is hard to observe, so it is better to save memory
     // in make mode it is critical to traverse file system as fast as possible, so we choose speed over memory savings
-    myFSCache = FSCache.NO_CACHE/*isProjectRebuild? FSCache.NO_CACHE : new FSCache()*/;
+    myFSCache = isProjectRebuild? FSCache.NO_CACHE : new FSCache();
   }
 
   @Override
