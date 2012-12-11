@@ -1526,6 +1526,7 @@
       <value>
         <option name="FOREGROUND" value="a8c023" />
         <option name="FONT_TYPE" value="2" />
+        <option name="ERROR_STRIPE_COLOR" value="a74c0" />
       </value>
     </option>
     <option name="TYPEDEF">
