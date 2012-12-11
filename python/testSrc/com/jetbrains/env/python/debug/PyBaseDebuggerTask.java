@@ -8,6 +8,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
@@ -146,12 +147,33 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
       }
     });
 
+    addOrRemoveBreakpoint(file, line);
+  }
+
+  private void addOrRemoveBreakpoint(String file, int line) {
     if (myBreakpoints.contains(Pair.create(file, line))) {
       myBreakpoints.remove(Pair.create(file, line));
     }
     else {
       myBreakpoints.add(Pair.create(file, line));
     }
+  }
+
+  protected void toggleBreakpointInEgg(final String file, final String innerPath, final int line) {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        VirtualFile f = VirtualFileUtil.findFile(file);
+        Assert.assertNotNull(f);
+        final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(f);
+        Assert.assertNotNull(jarRoot);
+        VirtualFile innerFile = jarRoot.findFileByRelativePath(innerPath);
+        Assert.assertNotNull(innerFile);
+        XDebuggerTestUtil.toggleBreakpoint(getProject(), innerFile, line);
+      }
+    });
+
+    addOrRemoveBreakpoint(file, line);
   }
 
   public boolean canPutBreakpointAt(Project project, String file, int line) {
@@ -168,6 +190,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   protected Variable eval(String name) throws InterruptedException {
     Assert.assertTrue("Eval works only while suspended", mySession.isSuspended());
     XValue var = XDebuggerTestUtil.evaluate(mySession, name).first;
+    Assert.assertNotNull("There is no variable named " + name, var);
     return new Variable(var);
   }
 

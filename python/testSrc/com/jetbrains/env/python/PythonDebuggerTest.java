@@ -2,14 +2,20 @@ package com.jetbrains.env.python;
 
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerTestUtil;
+import com.jetbrains.django.util.VirtualFileUtil;
 import com.jetbrains.env.python.debug.PyDebuggerTask;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
 import com.jetbrains.env.ut.PyUnitTestTask;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyExceptionBreakpointProperties;
 import com.jetbrains.python.debugger.PyExceptionBreakpointType;
+import org.junit.Assert;
 
 import java.util.List;
 import java.util.Set;
@@ -391,6 +397,26 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       }
     });
   }
+
+  public void testEggDebug() throws Exception {
+    runPythonTest(new PyDebuggerTask("/debug", "test_egg.py") {
+      @Override
+      public void before() throws Exception {
+        String egg = getFilePath("Adder-0.1.egg");
+        toggleBreakpointInEgg(egg, "adder/adder.py", 2);
+        getRunConfiguration().getEnvs().put("PYTHONPATH", egg);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("ret").hasValue("16");
+        resume();
+      }
+    });
+  }
+
+
 
 
   //TODO: fix me as I don't work properly sometimes (something connected with process termination on agent)

@@ -31,6 +31,7 @@ import java.util.concurrent.Semaphore;
 public class PyDebuggerTask extends PyBaseDebuggerTask {
 
   private boolean myMultiprocessDebug = false;
+  private PythonRunConfiguration myRunConfiguration;
 
   public PyDebuggerTask() {
   }
@@ -54,12 +55,12 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
     final RunnerAndConfigurationSettings settings =
       RunManager.getInstance(project).createRunConfiguration("test", factory);
 
-    PythonRunConfiguration config = (PythonRunConfiguration)settings.getConfiguration();
+    myRunConfiguration = (PythonRunConfiguration)settings.getConfiguration();
 
-    config.setSdkHome(sdkHome);
-    config.setScriptName(getScriptPath());
-    config.setWorkingDirectory(getWorkingFolder());
-    config.setScriptParameters(getScriptParameters());
+    myRunConfiguration.setSdkHome(sdkHome);
+    myRunConfiguration.setScriptName(getScriptPath());
+    myRunConfiguration.setWorkingDirectory(getWorkingFolder());
+    myRunConfiguration.setScriptParameters(getScriptParameters());
 
     new WriteAction() {
       @Override
@@ -71,13 +72,13 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
     }.execute();
 
     final PyDebugRunner runner = (PyDebugRunner)ProgramRunnerUtil.getRunner(DefaultDebugExecutor.EXECUTOR_ID, settings);
-    Assert.assertTrue(runner.canRun(DefaultDebugExecutor.EXECUTOR_ID, config));
+    Assert.assertTrue(runner.canRun(DefaultDebugExecutor.EXECUTOR_ID, myRunConfiguration));
 
     final ExecutionEnvironment env = new ExecutionEnvironment(runner, settings, project);
     final Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
 
 
-    final PythonCommandLineState pyState = (PythonCommandLineState)config.getState(executor, env);
+    final PythonCommandLineState pyState = (PythonCommandLineState)myRunConfiguration.getState(executor, env);
 
     assert pyState != null;
     pyState.setMultiprocessDebug(isMultiprocessDebug());
@@ -94,7 +95,6 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
 
     final int serverLocalPort = serverSocket.getLocalPort();
     final RunProfile profile = env.getRunProfile();
-
 
     before();
 
@@ -158,6 +158,10 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
     });
 
     doTest(myOutputPrinter);
+  }
+
+  public PythonRunConfiguration getRunConfiguration() {
+    return myRunConfiguration;
   }
 
   private boolean isMultiprocessDebug() {
