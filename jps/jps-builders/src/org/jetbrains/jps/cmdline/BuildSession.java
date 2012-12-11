@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.io.DataOutputStream;
 import org.jboss.netty.channel.Channel;
@@ -128,7 +129,8 @@ final class BuildSession implements Runnable, CanceledStatus {
           else if (buildMessage instanceof CompilerMessage) {
             doneSomething.set(true);
             final CompilerMessage compilerMessage = (CompilerMessage)buildMessage;
-            final String text = compilerMessage.getCompilerName() + ": " + compilerMessage.getMessageText();
+            final String compilerName = compilerMessage.getCompilerName();
+            final String text = !StringUtil.isEmptyOrSpaces(compilerName)? compilerName + ": " + compilerMessage.getMessageText() : compilerMessage.getMessageText();
             final BuildMessage.Kind kind = compilerMessage.getKind();
             if (kind == BuildMessage.Kind.ERROR) {
               hasErrors.set(true);

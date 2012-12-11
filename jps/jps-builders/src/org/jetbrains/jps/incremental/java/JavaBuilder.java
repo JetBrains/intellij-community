@@ -115,18 +115,25 @@ public class JavaBuilder extends ModuleLevelBuilder {
   @Override
   public void buildStarted(CompileContext context) {
     final JpsProject project = context.getProjectDescriptor().getProject();
-    final String compilerId = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project).getJavaCompilerId();
+    final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project);
+    final String compilerId = config == null? JavaCompilers.JAVAC_ID : config.getJavaCompilerId();
     if (LOG.isDebugEnabled()) {
       LOG.debug("Java compiler ID: " + compilerId);
     }
-    boolean isJavacOrEclipse = false;
-    for (String id : Arrays.asList(JavaCompilers.JAVAC_ID, JavaCompilers.ECLIPSE_ID, JavaCompilers.JAVAC_API_ID, JavaCompilers.ECLIPSE_EMBEDDED_ID)) {
-      if (id.equalsIgnoreCase(compilerId)) {
-        isJavacOrEclipse = true;
-        break;
-      }
+    final boolean isJavac = JavaCompilers.JAVAC_ID.equalsIgnoreCase(compilerId) || JavaCompilers.JAVAC_API_ID.equalsIgnoreCase(compilerId);
+    final boolean isEclipse = JavaCompilers.ECLIPSE_ID.equalsIgnoreCase(compilerId) || JavaCompilers.ECLIPSE_EMBEDDED_ID.equalsIgnoreCase(compilerId);
+    IS_ENABLED.set(context, isJavac || isEclipse);
+    String messageText = null;
+    if (isJavac) {
+      messageText = "Using javac " + System.getProperty("java.version") + " to compile java sources";
     }
-    IS_ENABLED.set(context, isJavacOrEclipse);
+    else if (isEclipse) {
+      messageText = "Using eclipse compiler to compile java sources";
+    }
+    if (messageText != null) {
+      LOG.info(messageText);
+      context.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO, messageText));
+    }
   }
 
   public ExitCode build(final CompileContext context,
@@ -353,7 +360,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
       return false;
     }
     JpsProject project = context.getProjectDescriptor().getProject();
-    final String compilerId = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project).getJavaCompilerId();
+    final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project);
+    final String compilerId = configuration != null? configuration.getJavaCompilerId() : null;
     return JavaCompilers.ECLIPSE_ID.equalsIgnoreCase(compilerId) || JavaCompilers.ECLIPSE_EMBEDDED_ID.equalsIgnoreCase(compilerId);
   }
 
