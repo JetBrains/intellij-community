@@ -49,6 +49,9 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
     myDebuggerSettings.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         ShowSettingsUtil.getInstance().showSettingsDialog(project, DebuggerConfigurable.DISPLAY_NAME);
+        if (myIsLocal) {
+          setTransport(DebuggerSettings.getInstance().DEBUGGER_TRANSPORT);
+        }
         suggestAvailablePortIfNotSpecified();
         updateUI();
       }
@@ -85,6 +88,10 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
   private void updateUI() {
     myPortPanel.setVisible(isSocket());
     myShMemPanel.setVisible(!isSocket());
+    myAddressField.setEditable(!myIsLocal);
+    myPortField.setEditable(!myIsLocal);
+    mySocketTransport.setEnabled(!myIsLocal);
+    myShmemTransport.setEnabled(!myIsLocal);
   }
 
   public void disposeEditor() {
@@ -159,7 +166,7 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
   }
 
   private void setIsLocal(boolean b) {
-    myTransportPanel.setVisible(!b);
+    myTransportPanel.setVisible(true);
     myDebuggerSettings.setVisible(b);
     myIsLocal = b;
   }
@@ -177,7 +184,9 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
     runnerSettings.LOCAL = myIsLocal;
     checkPort();
     runnerSettings.setDebugPort(getPort());
-    runnerSettings.setTransport(getTransport());
+    if (!myIsLocal) {
+      runnerSettings.setTransport(getTransport());
+    }
   }
 
 }
