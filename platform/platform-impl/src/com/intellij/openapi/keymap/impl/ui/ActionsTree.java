@@ -53,7 +53,7 @@ import java.util.Enumeration;
 public class ActionsTree {
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
   private static final Icon OPEN_ICON = new DefaultTreeCellRenderer().getOpenIcon();
-  private static final Icon CLOSE_ICON = new DefaultTreeCellRenderer().getClosedIcon();
+  private static final Icon CLOSE_ICON = AllIcons.Nodes.Folder;
 
   private final JTree myTree;
   private DefaultMutableTreeNode myRoot;
