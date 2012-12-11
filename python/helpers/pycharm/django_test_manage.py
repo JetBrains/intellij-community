@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-from django.core.management import setup_environ, ManagementUtility
-
+from django.core.management import ManagementUtility
+import inspect
 import os
 import sys
 
@@ -60,7 +60,7 @@ class PycharmTestCommand(Command):
     failfast = options.get('failfast', False)
     TestRunner = self.get_runner()
 
-    if hasattr(TestRunner, 'func_name'):
+    if not inspect.ismethod(TestRunner):
       failures = TestRunner(test_labels, verbosity=verbosity, interactive=interactive, failfast=failfast)
     else:
       test_runner = TestRunner(verbosity=verbosity, interactive=interactive, failfast=failfast)
@@ -84,11 +84,9 @@ if __name__ == "__main__":
     splitted_settings = settings_file.split('.')
     if len(splitted_settings) != 1:
       settings_name = '.'.join(splitted_settings[:-1])
-      settings_module = __import__(settings_name, globals(), locals(), [splitted_settings[-1]], -1)
+      settings_module = __import__(settings_name, globals(), locals(), [splitted_settings[-1]])
       custom_settings = getattr(settings_module, splitted_settings[-1])
 
-    if custom_settings:
-      setup_environ(custom_settings)
   except ImportError:
     print ("There is no such settings file " + str(settings_file) + "\n")
 
