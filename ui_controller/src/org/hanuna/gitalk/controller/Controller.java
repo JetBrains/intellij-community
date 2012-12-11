@@ -3,7 +3,9 @@ package org.hanuna.gitalk.controller;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitData;
 import org.hanuna.gitalk.common.ReadOnlyList;
+import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.graph.Graph;
+import org.hanuna.gitalk.graph.GraphFragment;
 import org.hanuna.gitalk.graph.graph_elements.GraphElement;
 import org.hanuna.gitalk.graph.graph_elements.Node;
 import org.hanuna.gitalk.graph.mutable_graph.graph_fragment_controller.GraphFragmentController;
@@ -31,6 +33,8 @@ public class Controller {
     private final GraphFragmentController fragmentController;
     private final RefsModel refsModel;
     private final EventsController events = new EventsController();
+
+    private GraphElement prevGraphElement = null;
 
     public Controller(Graph graph, RefsModel refsModel) {
         this.graph = graph;
@@ -67,11 +71,37 @@ public class Controller {
     }
 
     public void over(@Nullable GraphElement graphElement) {
-
+        if (graphElement == prevGraphElement) {
+            return;
+        }
+        selectController.deselectAll();
+        if (graphElement == null) {
+            return;
+        }
+        GraphFragment graphFragment = fragmentController.relateFragment(graphElement);
+        selectController.select(graphFragment);
+        events.runUpdateTable();
+        prevGraphElement = graphElement;
     }
 
     public void click(@Nullable GraphElement graphElement) {
-
+        selectController.deselectAll();
+        if (graphElement == null) {
+            return;
+        }
+        GraphFragment fragment = fragmentController.relateFragment(graphElement);
+        if (fragment == null) {
+            return;
+        }
+        Replace replace;
+        if (fragmentController.isHidden(fragment)) {
+            replace = fragmentController.showFragment(fragment);
+        } else {
+            replace = fragmentController.hideFragment(fragment);
+        }
+        printCellModel.recalculate(replace);
+        events.runUpdateTable();
+        events.runJumpToRow(replace.from());
     }
 
     private class GitAlkTableModel extends AbstractTableModel {
