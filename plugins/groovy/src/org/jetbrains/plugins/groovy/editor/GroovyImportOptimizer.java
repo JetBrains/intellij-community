@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -88,7 +87,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
 
         final GroovyResolveResult[] resolveResults = refElement.multiResolve(false);
         for (GroovyResolveResult resolveResult : resolveResults) {
-          final GroovyPsiElement context = resolveResult.getCurrentFileResolveContext();
+          final PsiElement context = resolveResult.getCurrentFileResolveContext();
           final PsiElement element = resolveResult.getElement();
           if (element == null) return;
 

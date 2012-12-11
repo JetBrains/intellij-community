@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -43,7 +42,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.Res
  * @author ven
  */
 public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint, ElementClassHint {
-  public static final Key<GroovyPsiElement> RESOLVE_CONTEXT = Key.create("RESOLVE_CONTEXT");
+  public static final Key<PsiElement> RESOLVE_CONTEXT = Key.create("RESOLVE_CONTEXT");
 
   public static final EnumSet<ResolveKind> RESOLVE_KINDS_CLASS_PACKAGE = EnumSet.of(CLASS, PACKAGE);
   public static final EnumSet<ResolveKind> RESOLVE_KINDS_CLASS = EnumSet.of(CLASS);
@@ -99,7 +98,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
       }
 
       boolean isAccessible = isAccessible(namedElement);
-      final GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
+      final PsiElement resolveContext = state.get(RESOLVE_CONTEXT);
       final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
       boolean isStaticsOK = isStaticsOK(namedElement, resolveContext, true);
       addCandidate(new GroovyResolveResultImpl(namedElement, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK));
@@ -145,7 +144,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
            PsiUtil.isAccessible(myPlace, ((PsiMember)namedElement));
   }
 
-  protected boolean isStaticsOK(PsiNamedElement element, GroovyPsiElement resolveContext, boolean filterStaticAfterInstanceQualifier) {
+  protected boolean isStaticsOK(PsiNamedElement element, PsiElement resolveContext, boolean filterStaticAfterInstanceQualifier) {
     if (resolveContext instanceof GrImportStatement) return true;
 
     if (element instanceof PsiModifierListOwner) {

@@ -215,7 +215,7 @@ public class ResolveUtil {
   public static boolean processAllDeclarations(@NotNull PsiType type,
                                                @NotNull PsiScopeProcessor processor,
                                                @NotNull ResolveState state,
-                                               @NotNull GroovyPsiElement place) {
+                                               @NotNull PsiElement place) {
     if (type instanceof PsiClassType) {
       final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
       final PsiClass psiClass = resolveResult.getElement();
@@ -232,7 +232,7 @@ public class ResolveUtil {
 
   public static boolean processNonCodeMembers(@NotNull PsiType type,
                                               @NotNull PsiScopeProcessor processor,
-                                              GroovyPsiElement place,
+                                              PsiElement place,
                                               @NotNull ResolveState state) {
     if (type instanceof PsiEllipsisType) {
       type = ((PsiEllipsisType)type).toArrayType();
@@ -414,7 +414,7 @@ public class ResolveUtil {
     return resolveLabelTargets(labelName, element, isBreak).first;
   }
 
-  public static boolean processCategoryMembers(GroovyPsiElement place, PsiScopeProcessor processor, ResolveState state) {
+  public static boolean processCategoryMembers(PsiElement place, PsiScopeProcessor processor, ResolveState state) {
     boolean gpp = GppTypeConverter.hasTypedContext(place);
     if (gpp) {
       if (!processUseAnnotation(place, processor, state)) return false;
@@ -452,7 +452,7 @@ public class ResolveUtil {
     return true;
   }
 
-  private static boolean processUseAnnotation(GroovyPsiElement place, PsiScopeProcessor processor, ResolveState state) {
+  private static boolean processUseAnnotation(PsiElement place, PsiScopeProcessor processor, ResolveState state) {
     PsiAnnotation use = AnnotatedContextFilter.findContextAnnotation(place, GroovyCommonClassNames.GROOVY_LANG_USE);
     if (use != null) {
       for (PsiElement element : PsiElementCategory.asList(use.findDeclaredAttributeValue("value"))) {
@@ -648,7 +648,7 @@ public class ResolveUtil {
   @NotNull
   public static GroovyResolveResult[] getMethodCandidates(@NotNull PsiType thisType,
                                                           @Nullable String methodName,
-                                                          @NotNull GroovyPsiElement place,
+                                                          @NotNull PsiElement place,
                                                           @Nullable PsiType... argumentTypes) {
     return getMethodCandidates(thisType, methodName, place, true, false, false, argumentTypes);
   }
@@ -656,7 +656,7 @@ public class ResolveUtil {
   @NotNull
   public static GroovyResolveResult[] getMethodCandidates(@NotNull PsiType thisType,
                                                           @Nullable String methodName,
-                                                          @NotNull GroovyPsiElement place,
+                                                          @NotNull PsiElement place,
                                                           boolean resolveClosures,
                                                           boolean allVariants,
                                                           boolean byShape,
@@ -735,7 +735,7 @@ public class ResolveUtil {
     return GroovyResolveResult.EMPTY_ARRAY;
   }
 
-  private static boolean isApplicableClosureType(@Nullable PsiType type, @NotNull PsiType[] argTypes, @NotNull GroovyPsiElement place) {
+  private static boolean isApplicableClosureType(@Nullable PsiType type, @NotNull PsiType[] argTypes, @NotNull PsiElement place) {
     if (!(type instanceof GrClosureType)) return false;
 
     final GrSignature signature = ((GrClosureType)type).getSignature();

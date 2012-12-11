@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.ResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
  * @author ven
@@ -33,7 +32,7 @@ public interface GroovyResolveResult extends ResolveResult {
   boolean isStaticsOK();
 
   @Nullable
-  GroovyPsiElement getCurrentFileResolveContext();
+  PsiElement getCurrentFileResolveContext();
 
   @NotNull
   PsiSubstitutor getSubstitutor();
@@ -48,7 +47,7 @@ public interface GroovyResolveResult extends ResolveResult {
       return false;
     }
 
-    public GroovyPsiElement getCurrentFileResolveContext() {
+    public PsiElement getCurrentFileResolveContext() {
       return null;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -43,7 +42,7 @@ public class GantMemberContributor extends NonCodeMembersContributor {
   public void processDynamicElements(@NotNull PsiType qualifierType,
                                      PsiClass aClass,
                                      PsiScopeProcessor processor,
-                                     GroovyPsiElement place,
+                                     PsiElement place,
                                      ResolveState state) {
     if (aClass != null && TypesUtil.getSuperClassesWithCache(aClass).containsKey("groovy.util.AntBuilder")) {
       processAntTasks(processor, place, state);

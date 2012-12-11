@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.GroovyFrameworkConfigNotification;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import javax.swing.event.HyperlinkEvent;
@@ -220,7 +219,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     return pair.first;
   }
 
-  public static boolean processExecutors(PsiType psiType, GroovyPsiElement place, final PsiScopeProcessor processor, ResolveState state) {
+  public static boolean processExecutors(PsiType psiType, PsiElement place, final PsiScopeProcessor processor, ResolveState state) {
     if (insideAnnotation(place)) {
       // Basic filter, all DSL contexts are applicable for reference expressions only
       return true;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,6 @@ import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 
 import java.util.Collections;
@@ -60,7 +59,7 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
   @Override
   public void processDynamicElements(@NotNull PsiType qualifierType,
                                      PsiScopeProcessor processor,
-                                     GroovyPsiElement place,
+                                     PsiElement place,
                                      ResolveState state) {
     final PsiFile file = place.getContainingFile().getOriginalFile();
     CachedValue<List<PsiElement>> value = file.getUserData(INJECTION_PARSED_CONTEXT);
