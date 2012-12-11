@@ -1,6 +1,9 @@
 package org.hanuna.gitalk.controller;
 
+import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.printmodel.PrintCell;
+import org.hanuna.gitalk.refs.Ref;
+
 
 /**
  * @author erokhins
@@ -15,10 +18,12 @@ public class GraphTableCell {
 
     private final PrintCell row;
     private final String text;
+    private final ReadOnlyList<Ref> refsToThisCommit;
 
-    public GraphTableCell(PrintCell row, String text) {
+    public GraphTableCell(PrintCell row, String text, ReadOnlyList<Ref> refsToThisCommit) {
         this.row = row;
         this.text = text;
+        this.refsToThisCommit = refsToThisCommit;
     }
 
     public PrintCell getRow() {
