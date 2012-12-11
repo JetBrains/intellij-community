@@ -40,7 +40,10 @@ public class CommonShortcuts {
   public static final ShortcutSet ESCAPE = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
 
   public static final ShortcutSet DOUBLE_CLICK_1 = new CustomShortcutSet(new MouseShortcut(MouseEvent.BUTTON1, 0, 2));
-  
+
+  public static final ShortcutSet MOVE_UP = CustomShortcutSet.fromString("alt UP");
+  public static final ShortcutSet MOVE_DOWN = CustomShortcutSet.fromString("alt DOWN");
+
   public static ShortcutSet getNewForDialogs() {
     final ArrayList<Shortcut> shortcuts = new ArrayList<Shortcut>();
     for (Shortcut shortcut : getNew().getShortcuts()) {
