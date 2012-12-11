@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
@@ -46,11 +47,11 @@ public class InspectionListCellRenderer extends DefaultListCellRenderer implemen
   public InspectionListCellRenderer() {
     SELECTED = new SimpleTextAttributes(UIUtil.getListSelectionBackground(),
                                                                    UIUtil.getListSelectionForeground(),
-                                                                   Color.RED,
+                                                                   JBColor.RED,
                                                                    SimpleTextAttributes.STYLE_PLAIN);
     PLAIN = new SimpleTextAttributes(UIUtil.getListBackground(),
                                                                 UIUtil.getListForeground(),
-                                                                Color.RED,
+                                                                JBColor.RED,
                                                                 SimpleTextAttributes.STYLE_PLAIN);
   }
 

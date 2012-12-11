@@ -58,6 +58,13 @@ public abstract class BeforeRunTaskProvider<T extends BeforeRunTask> {
   public abstract boolean isConfigurable();
 
   /**
+   * @return <code>true</code> if just created task must be configured by user.
+   */
+  public boolean skipFirstConfiguration() {
+    return false;
+  }
+
+  /**
    * @return 'before run' task for the configuration or null, if the task from this provider is not applicable to the specified configuration 
    */
   @Nullable

@@ -24,6 +24,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
+import com.intellij.xdebugger.impl.ui.tree.nodes.WatchMessageNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +38,7 @@ public abstract class XFetchValueActionBase extends XDebuggerTreeActionBase {
 
   protected abstract void handle(final Project project, final String value);
 
+  @Override
   protected void perform(final XValueNodeImpl node, @NotNull final String nodeName, final AnActionEvent e) {
     XFullValueEvaluator fullValueEvaluator = node.getFullValueEvaluator();
     if (fullValueEvaluator == null) {
@@ -47,6 +49,11 @@ public abstract class XFetchValueActionBase extends XDebuggerTreeActionBase {
 
     final XDebugSession session = node.getTree().getSession();
     startFetchingValue(fullValueEvaluator, session);
+  }
+
+  @Override
+  protected void perform(WatchMessageNode node, AnActionEvent e) {
+    handle(e.getProject(), node.getExpression());
   }
 
   private void startFetchingValue(@NotNull XFullValueEvaluator fullValueEvaluator,
@@ -61,8 +68,14 @@ public abstract class XFetchValueActionBase extends XDebuggerTreeActionBase {
     }, 500);
   }
 
+  @Override
   protected boolean isEnabled(final XValueNodeImpl node) {
     return super.isEnabled(node) && node.getValue() != null;
+  }
+
+  @Override
+  protected boolean isEnabled(WatchMessageNode node) {
+    return true;
   }
 
   private class CopyValueEvaluationCallback implements XFullValueEvaluator.XFullValueEvaluationCallback {

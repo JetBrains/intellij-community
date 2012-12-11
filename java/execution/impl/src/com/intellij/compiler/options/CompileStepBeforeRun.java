@@ -35,6 +35,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.concurrency.Semaphore;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,6 +71,9 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
 
   @Override
   public String getDescription(MakeBeforeRunTask task) {
+    if (task.myNoErrorCheck) {
+      return ExecutionBundle.message("before.launch.compile.step.no.error.check");
+    }
     return ExecutionBundle.message("before.launch.compile.step");
   }
 
@@ -90,7 +94,15 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
   }
 
   public boolean configureTask(RunConfiguration runConfiguration, MakeBeforeRunTask task) {
-    return false;
+    if (task == null)
+      return false;
+    task.myNoErrorCheck = !task.myNoErrorCheck;
+    return true;
+  }
+
+  @Override
+  public boolean skipFirstConfiguration() {
+    return true;
   }
 
   @Override
@@ -98,7 +110,10 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
     return true;
   }
 
-  public boolean executeTask(DataContext context, final RunConfiguration configuration, final ExecutionEnvironment env, MakeBeforeRunTask task) {
+  public boolean executeTask(DataContext context,
+                             final RunConfiguration configuration,
+                             final ExecutionEnvironment env,
+                             final MakeBeforeRunTask task) {
     if (!(configuration instanceof RunProfileWithCompileBeforeLaunchOption)) {
       return true;
     }
@@ -115,7 +130,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
       done.down();
       final CompileStatusNotification callback = new CompileStatusNotification() {
         public void finished(final boolean aborted, final int errors, final int warnings, CompileContext compileContext) {
-          if (errors == 0 && !aborted) {
+          if ((errors == 0  || task.myNoErrorCheck) && !aborted) {
             result.set(Boolean.TRUE);
           }
           done.up();
@@ -167,7 +182,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
   }
 
   public boolean isConfigurable() {
-    return false;
+    return true;
   }
 
   @Nullable
@@ -181,9 +196,25 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
   }
 
   public static class MakeBeforeRunTask extends BeforeRunTask<MakeBeforeRunTask> {
+    boolean myNoErrorCheck;
+
     private MakeBeforeRunTask() {
       super(ID);
       setEnabled(true);
+    }
+
+    @Override
+    public void writeExternal(Element element) {
+      super.writeExternal(element);
+      if (myNoErrorCheck) {
+        element.setAttribute("no.error.check", String.valueOf(myNoErrorCheck));
+      }
+    }
+
+    @Override
+    public void readExternal(Element element) {
+      super.readExternal(element);
+      myNoErrorCheck = Boolean.parseBoolean(element.getAttributeValue("no.error.check", "false"));
     }
   }
 }

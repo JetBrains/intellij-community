@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.tree.AbstractFileTreeTable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -60,10 +61,10 @@ public class FileTreeTable extends AbstractFileTreeTable<Charset> {
           String failReason;
           Charset charset = ChooseFileEncodingAction.cachedCharsetFromContent(file);
           if (charset != null) {
-            setText(charset.displayName());
+            setText(charset.displayName()+ " (Hardcoded in the text)");
           }
           else if (LoadTextUtil.wasCharsetDetectedFromBytes(file)) {
-            setText(file.getCharset().displayName());
+            setText(file.getCharset().displayName() + " (Auto-detected)");
           }
           else if ((failReason = ChooseFileEncodingAction.isEnabledAndWhyNot(file)) != null) {
             setText("N/A ("+failReason+")");
@@ -97,7 +98,7 @@ public class FileTreeTable extends AbstractFileTreeTable<Charset> {
 
         final ChooseFileEncodingAction changeAction = new ChooseFileEncodingAction(myVirtualFile){
           @Override
-          protected void chosen(VirtualFile virtualFile, Charset charset) {
+          protected void chosen(VirtualFile virtualFile, @NotNull Charset charset) {
             getValueColumn().getCellEditor().stopCellEditing();
             if (clearSubdirectoriesOnDemandOrCancel(
                 virtualFile, "There are encodings specified for the subdirectories. Override them?", "Override Subdirectory Encoding")) {

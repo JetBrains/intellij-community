@@ -53,6 +53,7 @@ class AndroidTestModifiedSettingsStep extends AndroidModifiedSettingsStep {
 
   @Override
   public boolean validate() throws ConfigurationException {
+    if (!super.validate()) return false;
     AndroidTestPropertiesEditor.doValidate(myModulesCombo.getModule());
     return true;
   }

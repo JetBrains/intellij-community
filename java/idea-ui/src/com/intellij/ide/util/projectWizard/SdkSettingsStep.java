@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -23,6 +25,7 @@ import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 
@@ -99,7 +102,19 @@ public class SdkSettingsStep extends ModuleWizardStep {
 
   @Override
   public boolean validate() throws ConfigurationException {
+    if (myJdkComboBox.getSelectedJdk() == null) {
+      int result = Messages.showDialog(getNoSdkMessage(),
+                                       IdeBundle.message("title.no.jdk.specified"),
+                                       new String[]{CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()}, 1, Messages.getWarningIcon());
+      if (result != Messages.YES) {
+        return false;
+      }
+    }
     myModel.apply();
     return true;
+  }
+
+  protected String getNoSdkMessage() {
+    return IdeBundle.message("prompt.confirm.project.no.jdk");
   }
 }

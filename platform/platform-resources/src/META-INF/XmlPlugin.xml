@@ -438,6 +438,8 @@
 
     <breadcrumbsPresentationProvider implementation="com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeBreadcrumbsPresentationProvider"/>
     <daemon.changeLocalityDetector implementation="com.intellij.xml.XmlChangeLocalityDetector"/>
+    <xmlStructureViewBuilderProvider implementation="com.intellij.lang.html.HtmlStructureViewBuilderProvider"/>
+    <xmlStructureViewElementProvider implementation="com.intellij.lang.html.HtmlStructureViewElementProvider"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>

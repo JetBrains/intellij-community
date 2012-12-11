@@ -178,14 +178,14 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
     }
     DefaultActionGroup group = new ChooseFileEncodingAction(getSelectedFile()) {
       @Override
-      protected void chosen(VirtualFile virtualFile, Charset charset) {
+      protected void chosen(VirtualFile virtualFile, @NotNull Charset charset) {
         if (virtualFile != null) {
           EncodingManager.getInstance().setEncoding(virtualFile, charset);
           update(new AnActionEvent(null, dataContext, ActionPlaces.EDITOR_TOOLBAR, getTemplatePresentation(), ActionManager.getInstance(), 0));
           EncodingPanel.this.update();
         }
       }
-    }.createGroup(false);
+    }.createGroup(null);
     return JBPopupFactory.getInstance().createActionGroupPopup(null, group, dataContext, false, false, false, null, 30, null);
   }
 

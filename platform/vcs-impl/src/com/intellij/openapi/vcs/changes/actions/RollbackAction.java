@@ -241,7 +241,7 @@ public class RollbackAction extends AnAction implements DumbAware {
           AbstractVcsHelper.getInstance(project).showErrors(exceptions, VcsBundle.message("rollback.modified.without.checkout.error.tab",
                                                                                           operationName));
         }
-        VirtualFileManager.getInstance().refresh(true, new Runnable() {
+        VirtualFileManager.getInstance().asyncRefresh(new Runnable() {
           public void run() {
             for (VirtualFile virtualFile : modifiedWithoutEditing) {
               VcsDirtyScopeManager.getInstance(project).fileDirty(virtualFile);

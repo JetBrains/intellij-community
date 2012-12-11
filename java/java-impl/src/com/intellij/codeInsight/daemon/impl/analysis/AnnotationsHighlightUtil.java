@@ -256,7 +256,8 @@ public class AnnotationsHighlightUtil {
       }
     }),
     psiElement().withParent(PsiNameValuePair.class),
-    psiElement().withParents(PsiArrayInitializerMemberValue.class, PsiNameValuePair.class)
+    psiElement().withParents(PsiArrayInitializerMemberValue.class, PsiNameValuePair.class),
+    psiElement().withParent(PsiAnnotationMethod.class).afterLeaf(PsiKeyword.DEFAULT)
   );
 
   @Nullable

@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.options.Configurable;
@@ -26,8 +27,8 @@ import com.intellij.openapi.options.OptionalConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
@@ -51,10 +52,12 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
   private JCheckBox myAutodetectUTFEncodedFilesCheckBox;
   private JCheckBox myTransparentNativeToAsciiCheckBox;
   private JPanel myPropertiesFilesEncodingCombo;
-  private Charset mySelectedCharsetForPropertiesFiles;
-  private JComboBox myIdeEncodingsCombo;
+  private final Ref<Charset> mySelectedCharsetForPropertiesFiles = new Ref<Charset>();
+  private final Ref<Charset> mySelectedIdeCharset = new Ref<Charset>();
   private JLabel myTitleLabel;
-  private ChooseFileEncodingAction myAction;
+  private JPanel myIdeEncodingsListCombo;
+  private ChooseFileEncodingAction myPropertiesEncodingAction;
+  private ChooseFileEncodingAction myIdeEncodingAction;
 
   public FileEncodingConfigurable(Project project) {
     myProject = project;
@@ -85,25 +88,38 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
     return null;
   }
 
-  @Override
-  public JComponent createComponent() {
-    myAction = new ChooseFileEncodingAction(null) {
+  private static ChooseFileEncodingAction installChooseEncodingCombo(@NotNull JPanel parentPanel, @NotNull final Ref<Charset> selected) {
+    ChooseFileEncodingAction myAction = new ChooseFileEncodingAction(null) {
       @Override
       public void update(final AnActionEvent e) {
         getTemplatePresentation().setEnabled(true);
-        getTemplatePresentation().setText(mySelectedCharsetForPropertiesFiles == null ? SYSTEM_DEFAULT :
-                                          mySelectedCharsetForPropertiesFiles.displayName());
+        Charset charset = selected.get();
+        getTemplatePresentation().setText(charset == null ? SYSTEM_DEFAULT : charset.displayName());
       }
 
       @Override
-      protected void chosen(final VirtualFile virtualFile, final Charset charset) {
-        mySelectedCharsetForPropertiesFiles = charset == NO_ENCODING ? null : charset;
+      protected void chosen(final VirtualFile virtualFile, @NotNull final Charset charset) {
+        selected.set(charset == NO_ENCODING ? null : charset);
         update((AnActionEvent)null);
       }
+
+      @NotNull
+      @Override
+      protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+        return createGroup("<System Default>");
+      }
     };
-    myPropertiesFilesEncodingCombo.removeAll();
+    parentPanel.removeAll();
     Presentation templatePresentation = myAction.getTemplatePresentation();
-    myPropertiesFilesEncodingCombo.add(myAction.createCustomComponent(templatePresentation), BorderLayout.CENTER);
+    parentPanel.add(myAction.createCustomComponent(templatePresentation), BorderLayout.CENTER);
+    myAction.update((AnActionEvent)null);
+    return myAction;
+  }
+
+  @Override
+  public JComponent createComponent() {
+    myPropertiesEncodingAction = installChooseEncodingCombo(myPropertiesFilesEncodingCombo, mySelectedCharsetForPropertiesFiles);
+    myIdeEncodingAction = installChooseEncodingCombo(myIdeEncodingsListCombo, mySelectedIdeCharset);
     myTreeView = new FileTreeTable(myProject);
     myTreePanel.setViewportView(myTreeView);
     myTreeView.getEmptyText().setText(IdeBundle.message("file.encodings.not.configured"));
@@ -118,7 +134,7 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
     Map<VirtualFile, Charset> editing = myTreeView.getValues();
     Map<VirtualFile, Charset> mapping = EncodingProjectManager.getInstance(myProject).getAllMappings();
     boolean same = editing.equals(mapping)
-       && Comparing.equal(encodingManager.getDefaultCharsetForPropertiesFiles(null), mySelectedCharsetForPropertiesFiles)
+       && Comparing.equal(encodingManager.getDefaultCharsetForPropertiesFiles(null), mySelectedCharsetForPropertiesFiles.get())
        && encodingManager.isUseUTFGuessing(null) == myAutodetectUTFEncodedFilesCheckBox.isSelected()
        && encodingManager.isNative2AsciiForPropertiesFiles() == myTransparentNativeToAsciiCheckBox.isSelected()
       ;
@@ -126,12 +142,12 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
   }
 
   public boolean isEncodingModified() {
-    final Object item = myIdeEncodingsCombo.getSelectedItem();
-    if (SYSTEM_DEFAULT.equals(item)) {
+    Charset charset = mySelectedIdeCharset.get();
+    if (null == charset) {
       return !StringUtil.isEmpty(EncodingManager.getInstance().getDefaultCharsetName());
     }
 
-    return !Comparing.equal(item, EncodingManager.getInstance().getDefaultCharset());
+    return !Comparing.equal(charset, EncodingManager.getInstance().getDefaultCharset());
   }
 
   @Override
@@ -139,17 +155,12 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
     Map<VirtualFile,Charset> result = myTreeView.getValues();
     EncodingProjectManager encodingManager = EncodingProjectManager.getInstance(myProject);
     encodingManager.setMapping(result);
-    encodingManager.setDefaultCharsetForPropertiesFiles(null, mySelectedCharsetForPropertiesFiles);
+    encodingManager.setDefaultCharsetForPropertiesFiles(null, mySelectedCharsetForPropertiesFiles.get());
     encodingManager.setNative2AsciiForPropertiesFiles(null, myTransparentNativeToAsciiCheckBox.isSelected());
     encodingManager.setUseUTFGuessing(null, myAutodetectUTFEncodedFilesCheckBox.isSelected());
 
-    final Object item = myIdeEncodingsCombo.getSelectedItem();
-    if (SYSTEM_DEFAULT.equals(item)) {
-      EncodingManager.getInstance().setDefaultCharsetName("");
-    }
-    else if (item != null) {
-      EncodingManager.getInstance().setDefaultCharsetName(((Charset)item).name());
-    }
+    Charset charset = mySelectedIdeCharset.get();
+    EncodingManager.getInstance().setDefaultCharsetName(charset == null ? "" : charset.name());
   }
 
   @Override
@@ -158,25 +169,15 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
     myTreeView.reset(encodingManager.getAllMappings());
     myAutodetectUTFEncodedFilesCheckBox.setSelected(encodingManager.isUseUTFGuessing(null));
     myTransparentNativeToAsciiCheckBox.setSelected(encodingManager.isNative2AsciiForPropertiesFiles());
-    mySelectedCharsetForPropertiesFiles = encodingManager.getDefaultCharsetForPropertiesFiles(null);
-    myAction.update((AnActionEvent)null);
+    mySelectedCharsetForPropertiesFiles.set(encodingManager.getDefaultCharsetForPropertiesFiles(null));
 
-    final DefaultComboBoxModel encodingsModel = new DefaultComboBoxModel(CharsetToolkit.getAvailableCharsets());
-    encodingsModel.insertElementAt(SYSTEM_DEFAULT, 0);
-    myIdeEncodingsCombo.setModel(encodingsModel);
-
-    final String name = EncodingManager.getInstance().getDefaultCharsetName();
-    if (StringUtil.isEmpty(name)) {
-      myIdeEncodingsCombo.setSelectedItem(SYSTEM_DEFAULT);
-    }
-    else {
-      myIdeEncodingsCombo.setSelectedItem(EncodingManager.getInstance().getDefaultCharset());
-    }
+    mySelectedIdeCharset.set(EncodingManager.getInstance().getDefaultCharset());
+    myPropertiesEncodingAction.update((AnActionEvent)null);
+    myIdeEncodingAction.update((AnActionEvent)null);
  }
 
   @Override
   public void disposeUIResources() {
-    myAction = null;
   }
 
   public void selectFile(@NotNull VirtualFile virtualFile) {

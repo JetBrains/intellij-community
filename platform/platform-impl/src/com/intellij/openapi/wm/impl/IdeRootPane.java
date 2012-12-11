@@ -37,10 +37,10 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.MemoryUsagePanel;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.IconUtil;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -169,7 +169,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     if (UIUtil.isUnderDarcula()) {
       myContentPane.setBackgroundImage(BG);
     }
-    myContentPane.setBackground(Color.GRAY);
+    myContentPane.setBackground(JBColor.GRAY);
 
     return myContentPane;
   }

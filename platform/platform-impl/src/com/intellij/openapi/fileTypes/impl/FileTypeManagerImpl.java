@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
+import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformUtils;
@@ -358,6 +359,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
       final VirtualFileSystem fileSystem = file.getFileSystem();
       if (!(fileSystem instanceof FileSystemInterface)) return UnknownFileType.INSTANCE;
+
+      if (SingleRootFileViewProvider.isTooLargeForContentLoading(file)) {
+        return UnknownFileType.INSTANCE;
+      }
 
       final InputStream inputStream = ((FileSystemInterface)fileSystem).getInputStream(file);
       final Ref<FileType> result;

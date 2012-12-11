@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.Alarm;
@@ -159,7 +160,6 @@ public class SaveAndSyncHandlerImpl implements ApplicationComponent, SaveAndSync
       LOG.debug("enter: synchronize()");
     }
 
-
     myRefreshDelayAlarm.cancelAllRequests();
     myRefreshDelayAlarm.addRequest(new Runnable() {
       @Override
@@ -178,11 +178,11 @@ public class SaveAndSyncHandlerImpl implements ApplicationComponent, SaveAndSync
   }
 
   public void maybeRefresh(@NotNull ModalityState modalityState) {
-    if (myBlockSyncOnFrameActivationCount.get() == 0 && GeneralSettings.getInstance().isSyncOnFrameActivation()) {
+    if (GeneralSettings.getInstance().isSyncOnFrameActivation() && myBlockSyncOnFrameActivationCount.get() == 0) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("refresh VFS");
       }
-      RefreshQueue.getInstance().refreshLocalRoots(true, null, modalityState);
+      RefreshQueue.getInstance().refresh(true, true, null, modalityState, ManagingFS.getInstance().getLocalRoots());
     }
   }
 

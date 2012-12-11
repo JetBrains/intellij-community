@@ -200,7 +200,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
 
     File targetDir = createTargetDir();
     FileUtil.copyDir(targetDir, new File(myRoot.getPath(), "target"));
-    VirtualFileManager.getInstance().refresh(false);
+    VirtualFileManager.getInstance().syncRefresh();
 
     String classesPath = myRoot.getPath() + "/target/classes";
     addExcludedDir(classesPath);
@@ -209,7 +209,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     classesDir.getParent().delete(this);
 
     FileUtil.copyDir(targetDir, new File(myRoot.getPath(), "target"));
-    VirtualFileManager.getInstance().refresh(false); // shouldn't throw
+    VirtualFileManager.getInstance().syncRefresh(); // shouldn't throw
   }
 
   private File createTargetDir() throws IOException {
@@ -228,12 +228,25 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     try {
       final Semaphore s = new Semaphore(1);
       s.acquire();
-      VirtualFileManager.getInstance().refresh(async, new Runnable() {
-        @Override
-        public void run() {
+
+      VirtualFileManager fm = VirtualFileManager.getInstance();
+      if (async) {
+        fm.asyncRefresh(new Runnable() {
+          @Override
+          public void run() {
+            s.release();
+          }
+        });
+      }
+      else {
+        try {
+          fm.syncRefresh();
+        }
+        finally {
           s.release();
         }
-      });
+      }
+
       assertTrue(s.tryAcquire(1, TimeUnit.MINUTES));
     }
     catch (InterruptedException e) {

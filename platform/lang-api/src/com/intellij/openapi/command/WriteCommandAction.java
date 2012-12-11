@@ -25,6 +25,7 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
@@ -37,15 +38,15 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   private final Project myProject;
   private final PsiFile[] myPsiFiles;
 
-  protected WriteCommandAction(Project project, PsiFile... files) {
+  protected WriteCommandAction(@Nullable Project project, PsiFile... files) {
     this(project, "Undefined", files);
   }
 
-  protected WriteCommandAction(Project project, @NonNls String commandName, PsiFile... files) {
+  protected WriteCommandAction(@Nullable Project project, @Nullable @NonNls String commandName, PsiFile... files) {
     this(project, commandName, null, files);
   }
 
-  protected WriteCommandAction(final Project project, final String name, final String groupID, PsiFile... files) {
+  protected WriteCommandAction(@Nullable final Project project, @Nullable final String name, @Nullable final String groupID, PsiFile... files) {
     myName = name;
     myGroupID = groupID;
     myProject = project;

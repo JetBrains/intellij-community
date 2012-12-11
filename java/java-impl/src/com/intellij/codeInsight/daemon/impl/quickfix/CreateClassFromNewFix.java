@@ -26,8 +26,8 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -105,14 +105,19 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
       template.setToReformat(true);
 
       final Editor editor = positionCursor(project, aClass.getContainingFile(), aClass);
-      final TextRange textRange = aClass.getTextRange();
+      final RangeMarker textRange = editor.getDocument().createRangeMarker(aClass.getTextRange());
       final Runnable runnable = new Runnable() {
         @Override
         public void run() {
           new WriteCommandAction(project, getText(), getText()) {
             @Override
             protected void run(Result result) throws Throwable {
-              editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
+              try {
+                editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
+              }
+              finally {
+                textRange.dispose();
+              }
             }
           }.execute();
           startTemplate(editor, template, project, null, getText());

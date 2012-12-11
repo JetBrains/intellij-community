@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
@@ -88,7 +88,8 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
     @NotNull
     @Override
     public ResolveResult[] resolve(@NotNull GrSafeCastExpressionImpl cast, boolean incompleteCode) {
-      PsiType type = cast.getOperand().getType();
+      final GrExpression operand = cast.getOperand();
+      PsiType type = operand.getType();
       if (type == null) {
         return GroovyResolveResult.EMPTY_ARRAY;
       }
@@ -96,7 +97,7 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
       final GrTypeElement typeElement = cast.getCastTypeElement();
       final PsiType toCast = typeElement == null ? null : typeElement.getType();
       final PsiType classType = TypesUtil.createJavaLangClassType(toCast, cast.getProject(), cast.getResolveScope());
-      return TypesUtil.getOverloadedOperatorCandidates(type, kAS, cast, new PsiType[]{classType});
+      return TypesUtil.getOverloadedOperatorCandidates(type, kAS, operand, new PsiType[]{classType});
     }
   }
 

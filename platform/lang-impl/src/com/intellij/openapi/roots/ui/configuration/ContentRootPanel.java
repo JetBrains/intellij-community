@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.DarculaColors;
 import com.intellij.ui.Gray;
 import com.intellij.ui.HoverHyperlinkLabel;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.roots.FilePathClipper;
 import com.intellij.ui.roots.IconActionComponent;
 import com.intellij.ui.roots.ResizingWrapper;
@@ -54,14 +55,14 @@ import java.util.Map;
  *         Date: Jan 19, 2004
  */
 public abstract class ContentRootPanel extends JPanel {
-  protected static final Color SOURCES_COLOR = UIUtil.isUnderDarcula() ? DarculaColors.BLUE : new Color(0x0A50A1);
+  protected static final Color SOURCES_COLOR = new JBColor(new Color(0x0A50A1), DarculaColors.BLUE);
   protected static final Color TESTS_COLOR = new Color(0x008C2E);
-  protected static final Color EXCLUDED_COLOR = UIUtil.isUnderDarcula() ? DarculaColors.RED : new Color(0x992E00);
-  private static final Color SELECTED_HEADER_COLOR = UIUtil.isUnderDarcula() ? UIUtil.getPanelBackground().darker() : new Color(0xDEF2FF);
-  private static final Color HEADER_COLOR = UIUtil.isUnderDarcula() ? Gray._82 : new Color(0xF5F5F5);
+  protected static final Color EXCLUDED_COLOR = new JBColor(new Color(0x992E00), DarculaColors.RED);
+  private static final Color SELECTED_HEADER_COLOR = new JBColor(new Color(0xDEF2FF), UIUtil.getPanelBackground().darker());
+  private static final Color HEADER_COLOR = new JBColor(new Color(0xF5F5F5), Gray._82);
   private static final Color SELECTED_CONTENT_COLOR = new Color(0xF0F9FF);
-  private static final Color CONTENT_COLOR = UIUtil.isUnderDarcula() ? UIUtil.getPanelBackground() : Color.WHITE;
-  private static final Color UNSELECTED_TEXT_COLOR = new Color(0x333333);
+  private static final Color CONTENT_COLOR = new JBColor(Color.WHITE, UIUtil.getPanelBackground());
+  private static final Color UNSELECTED_TEXT_COLOR = Gray._51;
 
   protected final ActionCallback myCallback;
   private JComponent myHeader;
@@ -346,7 +347,7 @@ public abstract class ContentRootPanel extends JPanel {
 
   private static class UnderlinedPathLabel extends ResizingWrapper {
     private static final float[] DASH = {0, 2, 0, 2};
-    private static final Color DASH_LINE_COLOR = UIUtil.isUnderDarcula() ? Gray._100 : new Color(0xC9C9C9);
+    private static final Color DASH_LINE_COLOR = new JBColor(Gray._201, Gray._100);
 
     public UnderlinedPathLabel(JLabel wrappedComponent) {
       super(wrappedComponent);

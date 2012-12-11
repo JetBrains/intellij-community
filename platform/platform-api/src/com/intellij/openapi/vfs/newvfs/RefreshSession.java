@@ -25,13 +25,17 @@ import java.util.Collection;
  * @author max
  */
 public abstract class RefreshSession {
+  public long getId() {
+    return 0;
+  }
+
   public abstract boolean isAsynchronous();
 
   public abstract void addFile(@NotNull VirtualFile file);
 
   public abstract void addAllFiles(@NotNull Collection<VirtualFile> files);
 
-  public void addAllFiles(@NotNull VirtualFile[] files) {
+  public void addAllFiles(@NotNull VirtualFile... files) {
     addAllFiles(Arrays.asList(files));
   }
 

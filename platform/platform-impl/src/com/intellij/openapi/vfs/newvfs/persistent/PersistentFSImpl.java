@@ -16,7 +16,6 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,7 +23,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.*;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
@@ -728,14 +730,14 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   public void processEvents(@NotNull List<? extends VFileEvent> events) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-    events = validateEvents(events);
+    List<? extends VFileEvent> validated = validateEvents(events);
 
     BulkFileListener publisher = myEventsBus.syncPublisher(VirtualFileManager.VFS_CHANGES);
-    publisher.before(events);
-    for (VFileEvent event : events) {
+    publisher.before(validated);
+    for (VFileEvent event : validated) {
       applyEvent(event);
     }
-    publisher.after(events);
+    publisher.after(validated);
   }
 
   @Override
@@ -817,36 +819,6 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     }
   }
 
-  @Override
-  public void refresh(boolean asynchronous) {
-    RefreshQueue.getInstance().refresh(asynchronous, true, null, getRoots());
-  }
-
-  @Override
-  public void refresh(boolean asynchronous, @Nullable Runnable postAction, @NotNull ModalityState modalityState) {
-    RefreshQueue.getInstance().refresh(asynchronous, true, postAction, modalityState, getRoots());
-  }
-
-  @Override
-  @NotNull
-  public VirtualFile[] getLocalRoots() {
-    final List<VirtualFile> roots = new ArrayList<VirtualFile>();
-
-    myRootsLock.readLock().lock();
-    try {
-      for (NewVirtualFile root : myRoots.values()) {
-        if (root.isInLocalFileSystem()) {
-          roots.add(root);
-        }
-      }
-    }
-    finally {
-      myRootsLock.readLock().unlock();
-    }
-
-    return VfsUtilCore.toVirtualFileArray(roots);
-  }
-
   @NotNull private final ConcurrentIntObjectMap<NewVirtualFile> myIdToDirCache = new StripedLockIntObjectConcurrentHashMap<NewVirtualFile>();
 
   @Override
@@ -879,32 +851,27 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         visited.add(id);
       }
       else {
-        StringBuilder sb = new StringBuilder("Dead loop detected in persistent FS:");
+        @NonNls StringBuilder sb = new StringBuilder("Dead loop detected in persistent FS:");
         for (int i = 0; i < visited.size(); i++) {
           int _id = visited.get(i);
-          sb.append("\n  ").append(_id).append(" '").append(getName(_id)).append("' ").append(String.format("%02x", getFileAttributes(_id)));
+          sb.append("\n  ");
+          sb.append(_id);
+          sb.append(" '");
+          sb.append(getName(_id));
+          sb.append("' ");
+          sb.append(String.format("%02x", getFileAttributes(_id)));
         }
         LOG.error(sb.toString());
         return null;
       }
     }
 
-    NewVirtualFile result = doFindFile(id, cachedOnly, visited);
-
-    if (result != null && result.isDirectory()) {
-      NewVirtualFile old = myIdToDirCache.put(id, result);
-      if (old != null) result = old;
-    }
-    return result;
-  }
-
-  @Nullable
-  private NewVirtualFile doFindFile(final int id, boolean cachedOnly, @Nullable TIntArrayList visited) {
     final int parentId = getParent(id);
+    NewVirtualFile result;
     if (parentId == 0) {
       myRootsLock.readLock().lock();
       try {
-        return myRootsById.get(id);
+        result = myRootsById.get(id);
       }
       finally {
         myRootsLock.readLock().unlock();
@@ -913,10 +880,18 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     else {
       NewVirtualFile parentFile = _findFileById(parentId, cachedOnly, visited);
       if (parentFile == null) {
-        return null;
+        result = null;
       }
-      return cachedOnly ? parentFile.findChildByIdIfCached(id) : parentFile.findChildById(id);
+      else {
+        result = cachedOnly ? parentFile.findChildByIdIfCached(id) : parentFile.findChildById(id);
+      }
     }
+
+    if (result != null && result.isDirectory()) {
+      NewVirtualFile old = myIdToDirCache.put(id, result);
+      if (old != null) result = old;
+    }
+    return result;
   }
 
   @Override
@@ -941,6 +916,26 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     try {
       for (NewVirtualFile root : myRoots.values()) {
         if (root.getFileSystem() == fs) {
+          roots.add(root);
+        }
+      }
+    }
+    finally {
+      myRootsLock.readLock().unlock();
+    }
+
+    return VfsUtilCore.toVirtualFileArray(roots);
+  }
+
+  @Override
+  @NotNull
+  public VirtualFile[] getLocalRoots() {
+    final List<VirtualFile> roots = new ArrayList<VirtualFile>();
+
+    myRootsLock.readLock().lock();
+    try {
+      for (NewVirtualFile root : myRoots.values()) {
+        if (root.isInLocalFileSystem()) {
           roots.add(root);
         }
       }

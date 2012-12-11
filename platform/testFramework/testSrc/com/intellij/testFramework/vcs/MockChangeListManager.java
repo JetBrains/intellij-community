@@ -369,4 +369,14 @@ public class MockChangeListManager extends ChangeListManagerEx {
   public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable Object data) {
     return addChangeList(name, comment);
   }
+
+  @Override
+  public void blockModalNotifications() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void unblockModalNotifications() {
+    throw new UnsupportedOperationException();
+  }
 }

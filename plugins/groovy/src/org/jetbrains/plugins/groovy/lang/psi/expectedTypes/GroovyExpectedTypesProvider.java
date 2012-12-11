@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@ package org.jetbrains.plugins.groovy.lang.psi.expectedTypes;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -371,13 +371,10 @@ public class GroovyExpectedTypesProvider {
       List<TypeConstraint> constraints = new ArrayList<TypeConstraint>();
       for (GroovyResolveResult variant : ResolveUtil.getCallVariants(list)) {
         final GrExpression[] arguments = list.getExpressionArguments();
-        addConstraintsFromMap(constraints,
-                              GrClosureSignatureUtil.mapArgumentsToParameters(variant, list, true, true,
-                                                                              list.getNamedArguments(),
-                                                                              list.getExpressionArguments(),
-                                                                              GrClosableBlock.EMPTY_ARRAY
-                              ),
-                              Arrays.asList(arguments).indexOf(myExpression) == arguments.length - 1);
+        final Map<GrExpression, Pair<PsiParameter, PsiType>> map = GrClosureSignatureUtil.mapArgumentsToParameters(
+          variant, list, true, true, list.getNamedArguments(), list.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY
+        );
+        addConstraintsFromMap(constraints, map, ArrayUtilRt.find(arguments, myExpression) == arguments.length - 1);
       }
       if (!constraints.isEmpty()) {
         myResult = constraints.toArray(new TypeConstraint[constraints.size()]);
@@ -480,11 +477,12 @@ public class GroovyExpectedTypesProvider {
     public void visitUnaryExpression(final GrUnaryExpression expression) {
       TypeConstraint constraint = new TypeConstraint(PsiType.INT) {
         @Override
-        public boolean satisfied(PsiType type, PsiManager manager, GlobalSearchScope scope) {
-          final PsiType boxed = TypesUtil.boxPrimitiveType(type, manager, scope);
+        public boolean satisfied(PsiType type, @NotNull PsiElement context) {
+          final PsiType boxed = TypesUtil.boxPrimitiveType(type, context.getManager(), context.getResolveScope());
           final IElementType opToken = expression.getOperationTokenType();
+          final GrExpression operand = expression.getOperand();
           final GroovyResolveResult[] candidates =
-            TypesUtil.getOverloadedUnaryOperatorCandidates(boxed, opToken, expression, PsiType.EMPTY_ARRAY);
+            TypesUtil.getOverloadedUnaryOperatorCandidates(boxed, opToken, operand != null ? operand : expression, PsiType.EMPTY_ARRAY);
           return candidates.length > 0;
         }
 

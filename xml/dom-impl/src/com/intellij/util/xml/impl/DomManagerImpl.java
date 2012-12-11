@@ -4,6 +4,7 @@ import com.intellij.ide.highlighter.DomSupportEnabled;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -276,6 +277,15 @@ public final class DomManagerImpl extends DomManager {
     return null;
   }
 
+  @NotNull
+  public static DomInvocationHandler getNotNullHandler(DomElement proxy) {
+    DomInvocationHandler handler = getDomInvocationHandler(proxy);
+    if (handler == null) {
+      throw new AssertionError("null handler for " + proxy);
+    }
+    return handler;
+  }
+
   public static StableInvocationHandler getStableInvocationHandler(Object proxy) {
     return (StableInvocationHandler)AdvancedProxy.getInvocationHandler(proxy);
   }
@@ -497,4 +507,7 @@ public final class DomManagerImpl extends DomManager {
   public SemService getSemService() {
     return mySemService;
   }
+
+
+  private final static Logger LOG = Logger.getInstance(DomManagerImpl.class);
 }

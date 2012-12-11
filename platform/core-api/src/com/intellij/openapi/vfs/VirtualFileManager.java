@@ -53,23 +53,30 @@ public abstract class VirtualFileManager implements ModificationTracker {
   public abstract VirtualFileSystem getFileSystem(String protocol);
 
   /**
-   * Refreshes the cached file system information from the physical file system.
-   * <p/>
-   * This method should be only called within write-action.
-   * See {@link com.intellij.openapi.application.Application#runWriteAction}.
+   * <p>Refreshes the cached file systems information from the physical file systems synchronously.<p/>
    *
-   * @param asynchronous if <code>true</code> then the operation will be performed in a separate thread,
-   *                     otherwise will be performed immediately
+   * <p><strong>Note</strong>: this method should be only called within a write-action
+   * (see {@linkplain com.intellij.openapi.application.Application#runWriteAction})</p>
+   *
+   * @return refresh session ID.
    */
-  public abstract void refresh(boolean asynchronous);
-
-  public abstract void refreshWithoutFileWatcher(boolean asynchronous);
+  public abstract long syncRefresh();
 
   /**
-   * The same as {@link #refresh(boolean asynchronous)} but also runs <code>postRunnable</code>
-   * after the operation is completed.
+   * Refreshes the cached file systems information from the physical file systems asynchronously.
+   * Launches specified action when refresh is finished.
+   *
+   * @return refresh session ID.
    */
+  public abstract long asyncRefresh(@Nullable Runnable postAction);
+
+  /** @deprecated use {@linkplain #syncRefresh()} or {@linkplain #asyncRefresh(Runnable)} (to remove in IDEA 13) */
+  public abstract void refresh(boolean asynchronous);
+
+  /** @deprecated use {@linkplain #syncRefresh()} or {@linkplain #asyncRefresh(Runnable)} (to remove in IDEA 13) */
   public abstract void refresh(boolean asynchronous, @Nullable Runnable postAction);
+
+  public abstract void refreshWithoutFileWatcher(boolean asynchronous);
 
   /**
    * Searches for the file specified by given URL. URL is a string which uniquely identifies file in all

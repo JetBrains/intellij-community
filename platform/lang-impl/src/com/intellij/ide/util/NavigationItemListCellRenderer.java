@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.FileColorManager;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
@@ -185,7 +186,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
           String containerText = presentation.getLocationString();
 
           if (containerText != null && containerText.length() > 0) {
-            append(" " + containerText, new SimpleTextAttributes(Font.PLAIN, Color.GRAY));
+            append(" " + containerText, new SimpleTextAttributes(Font.PLAIN, JBColor.GRAY));
           }
         }
       }

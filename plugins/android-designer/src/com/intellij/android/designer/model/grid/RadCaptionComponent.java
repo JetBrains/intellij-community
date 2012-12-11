@@ -22,9 +22,9 @@ import com.intellij.designer.designSurface.StaticDecorator;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadComponentVisitor;
 import com.intellij.designer.model.RadVisualComponent;
+import com.intellij.ui.JBColor;
 import com.intellij.util.containers.hash.HashSet;
 
-import java.awt.*;
 import java.util.List;
 import java.util.Set;
 
@@ -47,7 +47,7 @@ public abstract class RadCaptionComponent<T extends RadViewComponent> extends Ra
     myWidth = width;
 
     if (empty) {
-      myDecorator = new CaptionStaticDecorator(this, Color.PINK);
+      myDecorator = new CaptionStaticDecorator(this, JBColor.PINK);
     }
     else {
       myDecorator = new CaptionStaticDecorator(this);

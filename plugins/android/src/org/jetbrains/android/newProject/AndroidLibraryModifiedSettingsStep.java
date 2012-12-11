@@ -52,6 +52,7 @@ class AndroidLibraryModifiedSettingsStep extends AndroidModifiedSettingsStep {
 
   @Override
   public boolean validate() throws ConfigurationException {
+    if (!super.validate()) return false;
     final String message = AndroidAppPropertiesEditor.doValidatePackageName(true, getPackageName(), null);
 
     if (message.length() > 0) {

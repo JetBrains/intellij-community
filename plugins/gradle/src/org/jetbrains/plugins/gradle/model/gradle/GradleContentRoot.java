@@ -57,13 +57,17 @@ public class GradleContentRoot extends AbstractGradleEntity {
    *                                    under the {@link #getRootPath() content root}
    */
   public void storePath(@NotNull SourceType type, @NotNull String path) throws IllegalArgumentException {
-    if (!FileUtil.isAncestor(new File(getRootPath()), new File(path), false)) {
+    if (FileUtil.isAncestor(new File(getRootPath()), new File(path), false)) {
+      myData.get(type).add(GradleUtil.toCanonicalPath(path));
+      return;
+    }
+    if (type != SourceType.EXCLUDED) { // Sometimes gradle marks output directory as 'excluded' path. We don't need to bother
+                                       // if it's outside a module content root then.
       throw new IllegalArgumentException(String.format(
         "Can't register given path of type '%s' because it's out of content root.%nContent root: '%s'%nGiven path: '%s'",
         type, getRootPath(), new File(path).getAbsolutePath()
       ));
     }
-    myData.get(type).add(GradleUtil.toCanonicalPath(path));
   }
   
   @NotNull

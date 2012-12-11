@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ClickListener;
+import com.intellij.ui.JBColor;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.Nullable;
@@ -118,7 +119,7 @@ class StatusPanel extends JPanel {
     JPanel panel = new JPanel();
     panel.setOpaque(isOpaque());
     JLabel label = new JLabel("aaa");
-    label.setBackground(Color.yellow);
+    label.setBackground(JBColor.YELLOW);
     add(panel, BorderLayout.CENTER);
 
   }

@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import com.intellij.psi.*;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.hash.HashSet;
@@ -154,8 +153,6 @@ public class MethodResolverProcessor extends ResolverProcessor {
 
     result.add(itr.next());
 
-    GlobalSearchScope scope = myPlace.getResolveScope();
-
     Outer:
     while (itr.hasNext()) {
       GroovyResolveResult resolveResult = itr.next();
@@ -167,7 +164,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
           PsiElement element = otherResolveResult.getElement();
           if (element instanceof PsiMethod) {
             PsiMethod method = (PsiMethod) element;
-            final int res = compareMethods(currentMethod, resolveResult.getSubstitutor(), method, otherResolveResult.getSubstitutor(), scope);
+            final int res = compareMethods(currentMethod, resolveResult.getSubstitutor(), method, otherResolveResult.getSubstitutor());
             if (res > 0) {
               continue Outer;
             }
@@ -187,8 +184,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
   private int compareMethods(PsiMethod method1,
                              PsiSubstitutor substitutor1,
                              PsiMethod method2,
-                             PsiSubstitutor substitutor2,
-                             GlobalSearchScope scope) {
+                             PsiSubstitutor substitutor2) {
     if (!method1.getName().equals(method2.getName())) return 0;
 
     if (myTypedContext) {
@@ -201,15 +197,15 @@ public class MethodResolverProcessor extends ResolverProcessor {
       }
     }
 
-    if (dominated(method1, substitutor1, method2, substitutor2, scope)) {
-      if (dominated(method2, substitutor2, method1, substitutor1, scope)) {
+    if (dominated(method1, substitutor1, method2, substitutor2)) {
+      if (dominated(method2, substitutor2, method1, substitutor1)) {
         if (method2 instanceof GrGdkMethod && !(method1 instanceof GrGdkMethod)) {
           return -1;
         }
       }
       return 1;
     }
-    if (dominated(method2, substitutor2, method1, substitutor1, scope)) {
+    if (dominated(method2, substitutor2, method1, substitutor1)) {
       return -1;
     }
 
@@ -253,8 +249,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
   private boolean dominated(PsiMethod method1,
                             PsiSubstitutor substitutor1,
                             PsiMethod method2,
-                            PsiSubstitutor substitutor2,
-                            GlobalSearchScope scope) {  //method1 has more general parameter types thn method2
+                            PsiSubstitutor substitutor2) {  //method1 has more general parameter types thn method2
     if (!method1.getName().equals(method2.getName())) return false;
 
     PsiType[] argTypes = myArgumentTypes;
@@ -283,7 +278,6 @@ public class MethodResolverProcessor extends ResolverProcessor {
       return lastType instanceof PsiArrayType;
     }
 
-    PsiManager manager = method1.getManager();
     for (int i = 0; i < params2.length; i++) {
       final PsiType ptype1 = params1[i].getType();
       final PsiType ptype2 = params2[i].getType();
@@ -293,8 +287,8 @@ public class MethodResolverProcessor extends ResolverProcessor {
       if (argTypes != null && argTypes.length > i) {
         PsiType argType = argTypes[i];
         if (argType != null) {
-          final boolean converts1 = TypesUtil.isAssignable(TypeConversionUtil.erasure(type1), argType, manager, scope, false);
-          final boolean converts2 = TypesUtil.isAssignable(TypeConversionUtil.erasure(type2), argType, manager, scope, false);
+          final boolean converts1 = TypesUtil.isAssignableWithoutConversions(TypeConversionUtil.erasure(type1), argType, myPlace);
+          final boolean converts2 = TypesUtil.isAssignableWithoutConversions(TypeConversionUtil.erasure(type2), argType, myPlace);
           if (converts1 != converts2) {
             return converts2;
           }
@@ -308,18 +302,18 @@ public class MethodResolverProcessor extends ResolverProcessor {
         }
       }
 
-      if (!typesAgree(manager, scope, TypeConversionUtil.erasure(ptype1), TypeConversionUtil.erasure(ptype2))) return false;
+      if (!typesAgree(TypeConversionUtil.erasure(ptype1), TypeConversionUtil.erasure(ptype2))) return false;
     }
 
     return true;
   }
 
-  private boolean typesAgree(PsiManager manager, GlobalSearchScope scope, PsiType type1, PsiType type2) {
+  private boolean typesAgree(PsiType type1, PsiType type2) {
     if (argumentsSupplied() && type1 instanceof PsiArrayType && !(type2 instanceof PsiArrayType)) {
       type1 = ((PsiArrayType) type1).getComponentType();
     }
     return argumentsSupplied() ? //resolve, otherwise same_name_variants
-        TypesUtil.isAssignable(type1, type2, manager, scope, false) :
+        TypesUtil.isAssignableWithoutConversions(type1, type2, myPlace) :
         type1.equals(type2);
   }
 

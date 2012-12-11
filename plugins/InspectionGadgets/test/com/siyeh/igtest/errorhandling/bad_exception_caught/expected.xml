@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>BadExceptionCaught.java</file>
+    <line>12</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Prohibited exception caught</problem_class>
+    <description>Prohibited exception &lt;code&gt;NullPointerException&lt;/code&gt; caught #loc</description>
+  </problem>
+</problems>

@@ -665,7 +665,8 @@ public class ResolveUtil {
 
     MethodResolverProcessor processor =
       new MethodResolverProcessor(methodName, place, false, thisType, argumentTypes, PsiType.EMPTY_ARRAY, allVariants, byShape);
-    processAllDeclarations(thisType, processor, ResolveState.initial(), place);
+    final ResolveState state = ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, place);
+    processAllDeclarations(thisType, processor, state, place);
     boolean hasApplicableMethods = processor.hasApplicableCandidates();
     final GroovyResolveResult[] methodCandidates = processor.getCandidates();
     if (hasApplicableMethods && methodCandidates.length == 1) return methodCandidates;
@@ -673,7 +674,7 @@ public class ResolveUtil {
     final GroovyResolveResult[] allPropertyCandidates;
     if (resolveClosures) {
       PropertyResolverProcessor propertyResolver = new PropertyResolverProcessor(methodName, place);
-      processAllDeclarations(thisType, propertyResolver, ResolveState.initial(), place);
+      processAllDeclarations(thisType, propertyResolver, state, place);
       allPropertyCandidates = propertyResolver.getCandidates();
     }
     else {
@@ -710,7 +711,7 @@ public class ResolveUtil {
     for (String getterName : GroovyPropertyUtils.suggestGettersName(methodName)) {
       AccessorResolverProcessor getterResolver =
         new AccessorResolverProcessor(getterName, methodName, place, true, false, thisType, PsiType.EMPTY_ARRAY);
-      processAllDeclarations(thisType, getterResolver, ResolveState.initial(), place);
+      processAllDeclarations(thisType, getterResolver, state, place);
       final GroovyResolveResult[] candidates = getterResolver.getCandidates(); //can be only one candidate
       final List<GroovyResolveResult> applicable = new ArrayList<GroovyResolveResult>();
       for (GroovyResolveResult candidate : candidates) {

@@ -19,9 +19,9 @@ import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.feedbacks.AlphaFeedback;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.ui.JBColor;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * @author Alexander Lobas
@@ -38,7 +38,7 @@ public class DropToOperation extends AbstractEditOperation {
     FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
 
     if (myFeedback == null) {
-      myFeedback = new AlphaFeedback(Color.green);
+      myFeedback = new AlphaFeedback(JBColor.GREEN);
       layer.add(myFeedback);
       myFeedback.setBounds(myContainer.getBounds(layer));
       layer.repaint();

@@ -1150,8 +1150,10 @@ public class Mappings {
 
         for (final Pair<MethodRepr, ClassRepr> p : overridingMethods) {
           final File fName = myClassToSourceFile.get(p.second.name);
-          myAffectedFiles.add(fName);
-          debug("Affecting file by overriding: ", fName);
+          if (fName != null) {
+            myAffectedFiles.add(fName);
+            debug("Affecting file by overriding: ", fName);
+          }
         }
 
         if ((m.access & Opcodes.ACC_ABSTRACT) == 0) {

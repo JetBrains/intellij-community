@@ -1445,4 +1445,47 @@ b<caret>ar {
 
     assertTrue(method.parameterList.parameters[0].type.equalsToText('java.lang.Runnable'))
   }
+
+  void testOneArgVsEllipsis1() {
+    def method = resolveByText('''\
+class X {
+    void foo(Object... args) {
+        print 'many'
+    }
+
+    void foo(Object arg) {
+        print 'one'
+    }
+
+    void foo() {
+        print 'none'
+    }
+}
+
+new X().fo<caret>o('abc')''', PsiMethod)
+
+    assertFalse(method.parameterList.parameters[0].type instanceof PsiEllipsisType)
+  }
+
+  void testOneArgVsEllipsis2() {
+    def method = resolveByText('''\
+class X {
+    void foo(Object arg) {
+        print 'one'
+    }
+
+    void foo(Object... args) {
+        print 'many'
+    }
+
+    void foo() {
+        print 'none'
+    }
+}
+
+new X().fo<caret>o('abc')''', PsiMethod)
+
+    assertFalse(method.parameterList.parameters[0].type instanceof PsiEllipsisType)
+  }
+
 }

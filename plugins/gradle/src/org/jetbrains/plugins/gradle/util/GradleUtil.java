@@ -73,11 +73,11 @@ import java.util.concurrent.TimeUnit;
  */
 public class GradleUtil {
 
-  public static final String PATH_SEPARATOR = "/";
+  public static final String PATH_SEPARATOR            = "/";
+  public static final String SYSTEM_DIRECTORY_PATH_KEY = "GRADLE_USER_HOME";
 
   private static final NotNullLazyValue<GradleInstallationManager> INSTALLATION_MANAGER =
-    new NotNullLazyValue<GradleInstallationManager>()
-    {
+    new NotNullLazyValue<GradleInstallationManager>() {
       @NotNull
       @Override
       protected GradleInstallationManager compute() {

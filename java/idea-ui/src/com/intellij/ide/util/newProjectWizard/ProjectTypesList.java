@@ -195,6 +195,7 @@ public class ProjectTypesList implements Disposable {
   }
 
   void resetSelection() {
+    if (myList.getSelectedIndex() != -1) return;
     SelectTemplateSettings settings = SelectTemplateSettings.getInstance();
     if (settings.getLastGroup() == null || !setSelectedTemplate(settings.getLastGroup(), settings.getLastTemplate())) {
       myList.setSelectedIndex(0);
@@ -239,6 +240,7 @@ public class ProjectTypesList implements Disposable {
       Object o = myList.getModel().getElementAt(i);
       if (o instanceof TemplateItem && ((TemplateItem)o).myGroup.getName().equals(group) && ((TemplateItem)o).getName().equals(name)) {
         myList.setSelectedIndex(i);
+        myList.ensureIndexIsVisible(i);
         return true;
       }
     }

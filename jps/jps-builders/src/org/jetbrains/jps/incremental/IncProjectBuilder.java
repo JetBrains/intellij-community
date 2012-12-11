@@ -627,7 +627,11 @@ public class IncProjectBuilder {
     boolean doneSomething;
     try {
       Utils.ERRORS_DETECTED_KEY.set(context, Boolean.FALSE);
-      BuildOperations.ensureFSStateInitialized(context, chunk);
+
+      for (BuildTarget<?> target : chunk.getTargets()) {
+        BuildOperations.ensureFSStateInitialized(context, target);
+      }
+
       doneSomething = processDeletedPaths(context, chunk.getTargets());
 
       myProjectDescriptor.fsState.beforeChunkBuildStart(context, chunk);

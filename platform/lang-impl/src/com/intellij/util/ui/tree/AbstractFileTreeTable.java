@@ -24,7 +24,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.ui.TableUtil;
@@ -71,7 +71,7 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
         if (userObject == null) {
           return getProjectNodeText();
         }
-        else if (userObject instanceof VirtualFile) {
+        if (userObject instanceof VirtualFile) {
           return ((VirtualFile)userObject).getName();
         }
         return node.toString();
@@ -103,13 +103,7 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
           setText(file.getPresentableUrl());
         }
 
-        Icon icon;
-        if (file.isDirectory()) {
-          icon = PlatformIcons.DIRECTORY_CLOSED_ICON;
-        }
-        else {
-          icon = IconUtil.getIcon(file, 0, null);
-        }
+        Icon icon = file.isDirectory() ? PlatformIcons.DIRECTORY_CLOSED_ICON : IconUtil.getIcon(file, 0, null);
         setIcon(icon);
         return this;
       }
@@ -163,7 +157,7 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
     Map<VirtualFile, T> mappings = myModel.myCurrentMapping;
     Map<VirtualFile, T> subdirectoryMappings = new THashMap<VirtualFile, T>();
     for (VirtualFile file : mappings.keySet()) {
-      if (file != null && (parent == null || VfsUtil.isAncestor(parent, file, true))) {
+      if (file != null && (parent == null || VfsUtilCore.isAncestor(parent, file, true))) {
         subdirectoryMappings.put(file, mappings.get(file));
       }
     }
@@ -204,7 +198,7 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
     getTree().setModel(myModel);
   }
 
-  public void select(final @Nullable VirtualFile toSelect) {
+  public void select(@Nullable final VirtualFile toSelect) {
     if (toSelect != null) {
       select(toSelect, (TreeNode)myModel.getRoot());
     }
@@ -214,7 +208,7 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
     for (int i = 0; i < root.getChildCount(); i++) {
       TreeNode child = root.getChildAt(i);
       VirtualFile file = ((FileNode)child).getObject();
-      if (VfsUtil.isAncestor(file, toSelect, false)) {
+      if (VfsUtilCore.isAncestor(file, toSelect, false)) {
         if (Comparing.equal(file, toSelect)) {
           TreeUtil.selectNode(getTree(), child);
           getSelectionModel().clearSelection();
@@ -361,7 +355,7 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
       NextRoot:
       for (VirtualFile root : roots) {
         for (VirtualFile candidate : roots) {
-          if (VfsUtil.isAncestor(candidate, root, true)) continue NextRoot;
+          if (VfsUtilCore.isAncestor(candidate, root, true)) continue NextRoot;
         }
         if (myFilter.accept(root)) {
           children.add(new FileNode(root, project, myFilter));
@@ -445,11 +439,11 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
     private final Project myProject;
     private VirtualFileFilter myFilter;
 
-    public FileNode(@NotNull VirtualFile file, final @NotNull Project project) {
+    public FileNode(@NotNull VirtualFile file, @NotNull final Project project) {
       this(file, project, VirtualFileFilter.ALL);
     }
 
-    public FileNode(@NotNull VirtualFile file, final @NotNull Project project, @NotNull VirtualFileFilter filter) {
+    public FileNode(@NotNull VirtualFile file, @NotNull final Project project, @NotNull VirtualFileFilter filter) {
       super(file);
       myProject = project;
       myFilter = filter;

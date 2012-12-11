@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.actions;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.actions.actionVisibility.CvsActionVisibility;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContextWrapper;
@@ -30,9 +31,8 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import java.io.File;
 
 /**
- * author: lesya
+ * @author lesya
  */
-
 public class UnmarkAddedAction extends AnAction{
   private final CvsActionVisibility myVisibility = new CvsActionVisibility();
 
@@ -61,7 +61,7 @@ public class UnmarkAddedAction extends AnAction{
           CvsUtil.removeEntryFor(file);
         }
       }
-    }, com.intellij.CvsBundle.message("operation.name.undo.add"), true, context.getProject());
-    VirtualFileManager.getInstance().refresh(true);
+    }, CvsBundle.message("operation.name.undo.add"), true, context.getProject());
+    VirtualFileManager.getInstance().asyncRefresh(null);
   }
 }

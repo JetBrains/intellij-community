@@ -1307,15 +1307,18 @@ public class HighlightUtil extends HighlightUtilBase {
       return HighlightClassUtil.reportIllegalEnclosingUsage(expr, null, aClass, expr);
     }
 
-    if (expr instanceof PsiThisExpression && PsiTreeUtil.getParentOfType(expr, PsiMethod.class) == null) {
-      if (aClass.isInterface()) {
-        return thisNotFoundInInterfaceInfo(expr);
-      }
-
-      if (aClass instanceof PsiAnonymousClass && PsiTreeUtil.isAncestor(((PsiAnonymousClass)aClass).getArgumentList(), expr, true)) {
-        final PsiClass parentClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
-        if (parentClass != null && parentClass.isInterface()) {
+    if (expr instanceof PsiThisExpression) {
+      final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(expr, PsiMethod.class);
+      if (psiMethod == null || psiMethod.getContainingClass() != aClass) {
+        if (aClass.isInterface()) {
           return thisNotFoundInInterfaceInfo(expr);
+        }
+  
+        if (aClass instanceof PsiAnonymousClass && PsiTreeUtil.isAncestor(((PsiAnonymousClass)aClass).getArgumentList(), expr, true)) {
+          final PsiClass parentClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
+          if (parentClass != null && parentClass.isInterface()) {
+            return thisNotFoundInInterfaceInfo(expr);
+          }
         }
       }
     }

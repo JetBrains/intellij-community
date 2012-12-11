@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.UIUtil;
 
@@ -70,7 +71,7 @@ class ProjectStructureElementRenderer extends ColoredTreeCellRenderer {
             final boolean haveErrors = problemsHolder.containsProblems(ProjectStructureProblemType.Severity.ERROR);
             Color foreground = isUnused ? UIUtil.getInactiveTextColor() : null;
             final int style = haveWarnings || haveErrors ? SimpleTextAttributes.STYLE_WAVED : -1;
-            final Color waveColor = haveErrors ? Color.RED : haveWarnings ? Color.GRAY : null;
+            final Color waveColor = haveErrors ? JBColor.RED : haveWarnings ? JBColor.GRAY : null;
             textAttributes = textAttributes.derive(style, foreground, null, waveColor);
             setToolTipText(problemsHolder.composeTooltipMessage());
           }

@@ -555,7 +555,7 @@ public class FSRecords implements Forceable {
     }
   }
 
-  public static void deleteRecordRecursively(int id) {
+  static void deleteRecordRecursively(int id) {
     try {
       w.lock();
       incModCount(id);
@@ -613,7 +613,7 @@ public class FSRecords implements Forceable {
     }
   }
 
-  static void addToFreeRecordsList(int id) {
+  private static void addToFreeRecordsList(int id) {
     DbConnection.addFreeRecord(id);
     setFlags(id, FREE_RECORD_FLAG, false);
   }

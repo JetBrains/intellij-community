@@ -20,14 +20,16 @@ public class RemoteGradleProcessSettings implements Serializable {
   private static final long serialVersionUID = 1L;
 
   @Nullable private final String  myGradleHome;
-  private final          boolean myUseWrapper;
+  @Nullable private final String  myServiceDirectory;
+  private final           boolean myUseWrapper;
 
   private long    myTtlInMs;
   private String  myJavaHome;
   private boolean myVerboseApi;
 
-  public RemoteGradleProcessSettings(@Nullable String gradleHome, boolean wrapper) {
+  public RemoteGradleProcessSettings(@Nullable String gradleHome, @Nullable String directory, boolean wrapper) {
     myGradleHome = gradleHome;
+    myServiceDirectory = directory;
     myUseWrapper = wrapper;
     setVerboseApi(USE_VERBOSE_GRADLE_API_BY_DEFAULT);
   }
@@ -35,6 +37,11 @@ public class RemoteGradleProcessSettings implements Serializable {
   @Nullable
   public String getGradleHome() {
     return myGradleHome;
+  }
+
+  @Nullable
+  public String getServiceDirectory() {
+    return myServiceDirectory;
   }
 
   public boolean isUseWrapper() {
@@ -67,6 +74,36 @@ public class RemoteGradleProcessSettings implements Serializable {
 
   public void setVerboseApi(boolean verboseApi) {
     myVerboseApi = verboseApi;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myGradleHome != null ? myGradleHome.hashCode() : 0;
+    result = 31 * result + (myServiceDirectory != null ? myServiceDirectory.hashCode() : 0);
+    result = 31 * result + (myUseWrapper ? 1 : 0);
+    result = 31 * result + (int)(myTtlInMs ^ (myTtlInMs >>> 32));
+    result = 31 * result + (myJavaHome != null ? myJavaHome.hashCode() : 0);
+    result = 31 * result + (myVerboseApi ? 1 : 0);
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    RemoteGradleProcessSettings settings = (RemoteGradleProcessSettings)o;
+
+    if (myTtlInMs != settings.myTtlInMs) return false;
+    if (myUseWrapper != settings.myUseWrapper) return false;
+    if (myVerboseApi != settings.myVerboseApi) return false;
+    if (myGradleHome != null ? !myGradleHome.equals(settings.myGradleHome) : settings.myGradleHome != null) return false;
+    if (myJavaHome != null ? !myJavaHome.equals(settings.myJavaHome) : settings.myJavaHome != null) return false;
+    if (myServiceDirectory != null ? !myServiceDirectory.equals(settings.myServiceDirectory) : settings.myServiceDirectory != null) {
+      return false;
+    }
+
+    return true;
   }
 
   @Override

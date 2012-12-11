@@ -365,12 +365,27 @@ public class GitCherryPicker {
   private LocalChangeList createChangeList(@NotNull GitCommit commit, @NotNull String commitMessage) {
     List<Change> changes = commit.getChanges();
     if (!changes.isEmpty()) {
-      final LocalChangeList changeList = ((ChangeListManagerEx)myChangeListManager).addChangeList(commitMessage, commitMessage, commit);
+      String changeListName = createNameForChangeList(commitMessage, 0);
+      final LocalChangeList changeList = ((ChangeListManagerEx)myChangeListManager).addChangeList(changeListName, commitMessage, commit);
       myChangeListManager.moveChangesTo(changeList, changes.toArray(new Change[changes.size()]));
       myChangeListManager.setDefaultChangeList(changeList);
       return changeList;
     }
     return myChangeListManager.getDefaultChangeList();
+  }
+
+  @NotNull
+  private String createNameForChangeList(@NotNull String proposedName, int step) {
+    for (LocalChangeList list : myChangeListManager.getChangeLists()) {
+      if (list.getName().equals(nameWithStep(proposedName, step))) {
+        return createNameForChangeList(proposedName, step + 1);
+      }
+    }
+    return nameWithStep(proposedName, step);
+  }
+
+  private static String nameWithStep(String name, int step) {
+    return step == 0 ? name : name + "-" + step;
   }
 
   private static class CherryPickData {

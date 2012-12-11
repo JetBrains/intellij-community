@@ -18,7 +18,6 @@ package com.intellij.compiler.options;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
-import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -144,12 +143,6 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
 
     myTargetLevelComponent.setProjectBytecodeTargetLevel(myCompilerConfiguration.getProjectBytecodeTarget());
     myTargetLevelComponent.setModuleTargetLevels(myCompilerConfiguration.getModulesBytecodeTargetMap());
-
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        BuildManager.getInstance().clearState(myProject);
-      }
-    });
   }
 
   public void reset() {

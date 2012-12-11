@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.ErrorLabel;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.WizardPopup;
@@ -333,7 +334,7 @@ class GitBranchPopup  {
             }
             else {
               myBranchLabel.setBackground(getBackground());
-              myBranchLabel.setForeground(Color.gray);    // different foreground than for other elements
+              myBranchLabel.setForeground(JBColor.GRAY);    // different foreground than for other elements
             }
 
             adjustOpacity(myBranchLabel, isSelected);

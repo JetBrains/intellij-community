@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.intellij.openapi.wm.WindowManager;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 30, 2005
+ * @since Mar 30, 2005
  */
 class ToolProcessAdapter extends ProcessAdapter {
   private final Project myProject;
@@ -44,7 +44,7 @@ class ToolProcessAdapter extends ProcessAdapter {
     if (mySynchronizeAfterExecution) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
-          VirtualFileManager.getInstance().refresh(true, new Runnable() {
+          VirtualFileManager.getInstance().asyncRefresh(new Runnable() {
             public void run() {
               if (ProjectManagerEx.getInstanceEx().isProjectOpened(myProject)) {
                 WindowManager.getInstance().getStatusBar(myProject).setInfo(message);

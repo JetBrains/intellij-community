@@ -495,7 +495,7 @@
     <localInspection language="JAVA" shortName="WrongPackageStatement" bundle="messages.InspectionsBundle" key="wrong.package.statement" groupName=""
                      enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.codeInspection.wrongPackageStatement.WrongPackageStatementInspection" />
-    <localInspection language="JAVA" shortName="SillyAssignment" bundle="messages.JavaErrorMessages" key="assignment.to.itself" groupName=""
+    <localInspection language="JAVA" shortName="SillyAssignment" bundle="messages.InspectionsBundle" key="inspection.variable.assigned.to.itself.display.name" groupName=""
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection" />
     <localInspection language="JAVA" shortName="RedundantThrowsDeclaration" bundle="messages.InspectionsBundle" key="redundant.throws.declaration"

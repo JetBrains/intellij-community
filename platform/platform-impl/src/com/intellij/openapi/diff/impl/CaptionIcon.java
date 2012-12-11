@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff.impl;
 
 import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 
@@ -102,7 +103,7 @@ public class CaptionIcon implements Icon {
       @Override
       public void draw(Component c, Graphics2D g, int width, int height, int x, int y, boolean withPlus, boolean emphasize) {
         g.fillRect(x + 2, y, width, height);
-        g.setColor(UIUtil.isUnderDarcula() ? Color.gray.darker() : Color.gray);
+        g.setColor(new JBColor(Color.gray, Color.gray.darker()));
         g.drawRect(x + 2, y, width, height - 1);
       }
     },
@@ -112,7 +113,7 @@ public class CaptionIcon implements Icon {
         g.fillRoundRect(x + 2, y, width, height, 5, 5);
 
         final BasicStroke stroke = new BasicStroke(1);
-        g.setColor(UIUtil.isUnderDarcula() ? Color.gray.darker() : Color.gray);
+        g.setColor(new JBColor(Color.gray, Color.gray.darker()));
         g.setStroke(stroke);
         g.drawRoundRect(x + 2, y, width, height - 1, 5, 5);
       }

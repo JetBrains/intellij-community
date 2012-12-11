@@ -42,6 +42,7 @@ public class GradleSettings implements PersistentStateComponent<GradleSettings> 
 
   private String  myLinkedProjectPath;
   private String  myGradleHome;
+  private String  myServiceDirectoryPath;
   private boolean myPreferLocalInstallationToWrapper;
 
   @Override
@@ -114,9 +115,34 @@ public class GradleSettings implements PersistentStateComponent<GradleSettings> 
     myPreferLocalInstallationToWrapper = preferLocalInstallationToWrapper;
   }
 
+  /**
+   * @return    service directory path (if defined). 'Service directory' is a directory which is used internally by gradle during
+   *            calls to the tooling api. E.g. it holds downloaded binaries (dependency jars). We allow to define it because there
+   *            is a possible situation when a user wants to configure particular directory to be excluded from anti-virus protection
+   *            in order to increase performance
+   */
+  @Nullable
+  public String getServiceDirectoryPath() {
+    return myServiceDirectoryPath;
+  }
+
+  public void setServiceDirectoryPath(@Nullable String serviceDirectoryPath) {
+    myServiceDirectoryPath = serviceDirectoryPath;
+  }
+
+  public static void applyServiceDirectoryPath(@Nullable String path, @NotNull Project project) {
+    final GradleSettings settings = getInstance(project);
+    final String oldPath = settings.getServiceDirectoryPath();
+    if (!Comparing.equal(oldPath, path)) {
+      settings.setServiceDirectoryPath(path);
+      project.getMessageBus().syncPublisher(GradleConfigNotifier.TOPIC).onServiceDirectoryPathChange(oldPath, path);
+    }
+  }
+
   public static void applySettings(@Nullable String linkedProjectPath,
                                    @Nullable String gradleHomePath,
                                    boolean preferLocalInstallationToWrapper,
+                                   @Nullable String serviceDirectoryPath,
                                    @NotNull Project project)
   {
     GradleConfigNotifier notifier = project.getMessageBus().syncPublisher(GradleConfigNotifier.TOPIC);
@@ -125,6 +151,7 @@ public class GradleSettings implements PersistentStateComponent<GradleSettings> 
       applyLinkedProjectPath(linkedProjectPath, project);
       applyGradleHome(gradleHomePath, project);
       applyPreferLocalInstallationToWrapper(preferLocalInstallationToWrapper, project);
+      applyServiceDirectoryPath(serviceDirectoryPath, project);
     }
     finally {
       notifier.onBulkChangeEnd();

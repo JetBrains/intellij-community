@@ -28,6 +28,12 @@ public class RmicCompilerOptionsSerializer extends JpsProjectExtensionSerializer
   }
 
   @Override
+  public void loadExtensionWithDefaultSettings(@NotNull JpsProject project) {
+    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
+    configuration.setCompilerOptions(myCompilerId, new RmicCompilerOptions());
+  }
+
+  @Override
   public void saveExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
   }
 }

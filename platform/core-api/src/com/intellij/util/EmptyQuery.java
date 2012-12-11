@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,33 +29,41 @@ import java.util.Iterator;
 public class EmptyQuery<R> implements Query<R> {
   private static final EmptyQuery EMPTY_QUERY_INSTANCE = new EmptyQuery();
 
+  @Override
   @NotNull
   public Collection<R> findAll() {
     return Collections.emptyList();
   }
 
+  @Override
   public R findFirst() {
     return null;
   }
 
-  public boolean forEach(@NotNull final Processor<R> consumer) {
+  @Override
+  public boolean forEach(@NotNull Processor<R> consumer) {
     return true;
   }
 
+  @NotNull
   @Override
   public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<R> consumer) {
     return AsyncFutureFactory.wrap(true);
   }
 
-  public R[] toArray(final R[] a) {
+  @NotNull
+  @Override
+  public R[] toArray(@NotNull R[] a) {
     return findAll().toArray(a);
   }
 
+  @Override
   public Iterator<R> iterator() {
     return findAll().iterator();
   }
 
   public static <T> Query<T> getEmptyQuery() {
-    return (Query<T>) EMPTY_QUERY_INSTANCE;
+    @SuppressWarnings("unchecked") Query<T> instance = (Query<T>)EMPTY_QUERY_INSTANCE;
+    return instance;
   }
 }

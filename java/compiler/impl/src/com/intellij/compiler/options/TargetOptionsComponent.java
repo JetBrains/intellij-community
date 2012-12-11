@@ -21,10 +21,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.AnActionButtonRunnable;
-import com.intellij.ui.TableUtil;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ItemRemovable;
 import org.jetbrains.annotations.Nullable;
@@ -350,7 +347,7 @@ public class TargetOptionsComponent extends JPanel {
         final JLabel comp = (JLabel)component;
         comp.setHorizontalAlignment(SwingConstants.CENTER);
         if ("".equals(value)) {
-          comp.setForeground(Color.gray);
+          comp.setForeground(JBColor.GRAY);
           comp.setText(COMPILER_DEFAULT);
         }
         else {
@@ -381,7 +378,7 @@ public class TargetOptionsComponent extends JPanel {
         final Color oldColor = g.getColor();
         final Font oldFont = g.getFont();
         try {
-          g.setColor(Color.gray);
+          g.setColor(JBColor.GRAY);
           //g.setFont(oldFont.deriveFont(Font.ITALIC));
           final FontMetrics metrics = g.getFontMetrics();
           int x = Math.abs(getWidth() - metrics.charsWidth(myHint, 0, myHint.length)) / 2;

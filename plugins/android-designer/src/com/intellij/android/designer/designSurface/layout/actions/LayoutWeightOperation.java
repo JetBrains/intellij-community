@@ -22,6 +22,7 @@ import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.utils.Position;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.ui.JBColor;
 
 import java.awt.*;
 import java.text.DecimalFormat;
@@ -52,7 +53,7 @@ public class LayoutWeightOperation extends LayoutMarginOperation {
 
   @Override
   protected Color getFeedbackColor() {
-    return Color.cyan;
+    return JBColor.CYAN;
   }
 
   @Override
@@ -114,7 +115,7 @@ public class LayoutWeightOperation extends LayoutMarginOperation {
 
   public static void point(ResizeSelectionDecorator decorator) {
     pointFeedback(decorator);
-    pointRight(decorator, Color.cyan, 0.75, TYPE, "Change layout:weight");
-    pointBottom(decorator, Color.cyan, 0.75, TYPE, "Change layout:weight");
+    pointRight(decorator, JBColor.CYAN, 0.75, TYPE, "Change layout:weight");
+    pointBottom(decorator, JBColor.CYAN, 0.75, TYPE, "Change layout:weight");
   }
 }

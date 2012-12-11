@@ -30,6 +30,7 @@ import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.utils.Position;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ArrayUtil;
 
@@ -42,7 +43,7 @@ import java.util.List;
 public class ResizeOperation implements EditOperation {
   public static final String TYPE = "resize_children";
 
-  public final static Color blue = new Color(0, 50, 255);
+  public final static Color blue = new JBColor(new Color(0, 50, 255), new Color(92, 132, 255));
   private static final int SNAP_DELTA = 4;
 
   private final OperationContext myContext;

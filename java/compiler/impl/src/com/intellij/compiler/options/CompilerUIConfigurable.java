@@ -133,12 +133,6 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     final TranslatingCompilerFilesMonitor monitor = TranslatingCompilerFilesMonitor.getInstance();
     if (workspaceConfiguration.USE_COMPILE_SERVER) {
       monitor.suspendProject(myProject);
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          BuildManager.getInstance().clearState(myProject);
-        }
-      });
     }
     else {
       // use old make

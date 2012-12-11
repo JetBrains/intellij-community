@@ -15,12 +15,12 @@
  */
 package org.jetbrains.idea.maven.utils.library;
 
+import com.intellij.CommonBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -57,6 +57,7 @@ import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.RepositoryAttachDialog;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -69,7 +70,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class RepositoryAttachHandler {
 
   @Nullable
-  public static NewLibraryConfiguration chooseLibraryAndDownload(final @NotNull Project project, final @Nullable String initialFilter) {
+  public static NewLibraryConfiguration chooseLibraryAndDownload(final @NotNull Project project,
+                                                                 final @Nullable String initialFilter,
+                                                                 JComponent parentComponent) {
     final RepositoryAttachDialog dialog = new RepositoryAttachDialog(project, false, initialFilter);
     dialog.setTitle("Download Library From Maven Repository");
     dialog.show();
@@ -87,8 +90,7 @@ public class RepositoryAttachHandler {
     final Ref<NewLibraryConfiguration> result = Ref.create(null);
     resolveLibrary(project, coord, extraTypes, dialog.getRepositories(), new Processor<List<MavenArtifact>>() {
       public boolean process(final List<MavenArtifact> artifacts) {
-        final boolean nothingRetrieved = artifacts.isEmpty();
-        if (!nothingRetrieved) {
+        if (!artifacts.isEmpty()) {
           AccessToken accessToken = WriteAction.start();
           try {
             final List<OrderRoot> roots = createRoots(artifacts, copyTo);
@@ -102,15 +104,9 @@ public class RepositoryAttachHandler {
           finally {
             accessToken.finish();
           }
-        }
-        final StringBuilder sb = new StringBuilder();
-        final String title;
-        if (nothingRetrieved) {
-          title = "No files were downloaded";
-          sb.append("for ").append(coord);
-        }
-        else {
-          title = "The following files were downloaded:";
+
+          final StringBuilder sb = new StringBuilder();
+          final String title = "The following files were downloaded:";
           sb.append("<ol>");
           for (MavenArtifact each : artifacts) {
             sb.append("<li>");
@@ -124,18 +120,17 @@ public class RepositoryAttachHandler {
             sb.append("</li>");
           }
           sb.append("</ol>");
-        }
-        if (nothingRetrieved && ModalityState.current().dominates(ModalityState.NON_MODAL)) {
-          Messages.showErrorDialog(project, sb.toString(), title);
-        }
-        else {
-          Notifications.Bus.notify(new Notification("Repository", title, sb.toString(),
-                                                    nothingRetrieved ? NotificationType.WARNING : NotificationType.INFORMATION), project);
+          Notifications.Bus.notify(new Notification("Repository", title, sb.toString(), NotificationType.INFORMATION), project);
         }
         return true;
       }
     });
-    return result.get();
+
+    NewLibraryConfiguration configuration = result.get();
+    if (configuration == null) {
+      Messages.showErrorDialog(parentComponent, "No files were downloaded for " + coord, CommonBundle.getErrorTitle());
+    }
+    return configuration;
   }
 
   private static List<OrderRoot> createRoots(Collection<MavenArtifact> artifacts, String copyTo) {

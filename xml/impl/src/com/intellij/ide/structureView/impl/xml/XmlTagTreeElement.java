@@ -88,7 +88,7 @@ public class XmlTagTreeElement extends AbstractXmlTagTreeElement<XmlTag>{
   }
 
   @Nullable
-  private static String toCanonicalForm(@Nullable String id) {
+  protected static String toCanonicalForm(@Nullable String id) {
     if (id != null) {
       id = id.trim();
       if (id.length() == 0) id = null;

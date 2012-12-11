@@ -85,11 +85,10 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
     }
     FileType fileType = virtualFile.getFileType();
     if (fileType.isBinary()) return "binary file";
-    if (fileType == StdFileTypes.GUI_DESIGNER_FORM
-        || fileType == StdFileTypes.IDEA_MODULE
-        || fileType == StdFileTypes.IDEA_PROJECT
-        || fileType == StdFileTypes.IDEA_WORKSPACE
-        || fileType == StdFileTypes.PATCH) return "IDEA internal file";
+    if (fileType == StdFileTypes.GUI_DESIGNER_FORM) return "IDEA GUI Designer form";
+    if (fileType == StdFileTypes.IDEA_MODULE) return "IDEA module file";
+    if (fileType == StdFileTypes.IDEA_PROJECT) return "IDEA project file";
+    if (fileType == StdFileTypes.IDEA_WORKSPACE) return "IDEA workspace file";
 
     if (fileType == StdFileTypes.PROPERTIES) return ".properties file";
 
@@ -113,14 +112,14 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   @Override
   @NotNull
   protected DefaultActionGroup createPopupActionGroup(final JComponent button) {
-    return createGroup(true);
+    return createGroup("<Clear>");
   }
 
   private void fillCharsetActions(DefaultActionGroup group, final VirtualFile virtualFile, List<Charset> charsets) {
     for (Charset slave : charsets) {
       ChangeFileEncodingTo action = new ChangeFileEncodingTo(virtualFile, slave){
         @Override
-        protected void chosen(final VirtualFile file, final Charset charset) {
+        protected void chosen(final VirtualFile file, @NotNull final Charset charset) {
           ChooseFileEncodingAction.this.chosen(file, charset);
         }
       };
@@ -155,6 +154,9 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
         pattern = "Encoding (auto-detected): {0}";
         enabled = false;
       }
+      else if (enabled && virtualFile != null && virtualFile.isDirectory()) {
+        pattern = "Reload ''{0}'' files under the directory in";
+      }
       else if (enabled) {
         pattern = "Reload ''{0}'' file in another encoding";
       }
@@ -175,8 +177,8 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   private class ClearThisFileEncodingAction extends AnAction {
     private final VirtualFile myFile;
 
-    private ClearThisFileEncodingAction(@Nullable VirtualFile file) {
-      super("<Clear>", "Clear " +
+    private ClearThisFileEncodingAction(@Nullable VirtualFile file, @NotNull String clearItemText) {
+      super(clearItemText, "Clear " +
                        (file == null ? "default" : "file '"+file.getName()+"'") +
                        " encoding.", null);
       myFile = file;
@@ -204,19 +206,20 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
       return null;
     }
   };
-  protected abstract void chosen(VirtualFile virtualFile, Charset charset);
+  protected abstract void chosen(@Nullable VirtualFile virtualFile, @NotNull Charset charset);
 
-  public DefaultActionGroup createGroup(boolean showClear) {
+  @NotNull
+  public DefaultActionGroup createGroup(@Nullable String clearItemText) {
     DefaultActionGroup group = new DefaultActionGroup();
     List<Charset> favorites = new ArrayList<Charset>(EncodingManager.getInstance().getFavorites());
     Collections.sort(favorites);
     Charset current = myVirtualFile == null ? null : myVirtualFile.getCharset();
     favorites.remove(current);
 
-    if (showClear) {
-      group.add(new ClearThisFileEncodingAction(myVirtualFile));
+    if (clearItemText != null) {
+      group.add(new ClearThisFileEncodingAction(myVirtualFile, clearItemText));
     }
-    if (favorites.isEmpty() && !showClear) {
+    if (favorites.isEmpty() && clearItemText == null) {
       fillCharsetActions(group, myVirtualFile, Arrays.asList(CharsetToolkit.getAvailableCharsets()));
     }
     else {

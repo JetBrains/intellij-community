@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,16 @@ package com.intellij.cvsSupport2.cvshandlers;
 import com.intellij.openapi.vfs.VirtualFileManager;
 
 /**
- * author: lesya
+ * @author lesya
  */
-class AllFilesInProject extends FileSetToBeUpdated{
-
-  public AllFilesInProject() {
-  }
+class AllFilesInProject extends FileSetToBeUpdated {
+  public AllFilesInProject() { }
 
   public void refreshFilesAsync(Runnable postRunnable) {
-    VirtualFileManager.getInstance().refresh(true, postRunnable);
+    VirtualFileManager.getInstance().asyncRefresh(postRunnable);
   }
 
   public void refreshFilesSync() {
-    VirtualFileManager.getInstance().refresh(false);
+    VirtualFileManager.getInstance().syncRefresh();
   }
 }

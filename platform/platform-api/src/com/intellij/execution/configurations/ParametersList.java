@@ -48,7 +48,7 @@ public class ParametersList implements Cloneable {
 
   public boolean hasProperty(@NonNls final String name) {
     for (@NonNls String parameter : myParameters) {
-      if (StringUtil.startsWithConcatenationOf(parameter, "-D" + name, "=")) return true;
+      if (parameter.startsWith("-D" + name + '=')) return true;
     }
     return false;
   }

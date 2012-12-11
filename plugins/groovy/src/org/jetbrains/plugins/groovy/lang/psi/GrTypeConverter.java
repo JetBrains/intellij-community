@@ -33,6 +33,8 @@ public abstract class GrTypeConverter {
     return PsiUtil.isInMethodCallContext(context);
   }
 
+  public abstract boolean isAllowedInMethodCall();
+
   @Nullable
   public abstract Boolean isConvertible(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context);
 
@@ -43,5 +45,33 @@ public abstract class GrTypeConverter {
     }
 
     return false;
+  }
+
+  public static Boolean isConvertibleWithMethodCallConversion(@NotNull PsiType lType,
+                                                               @NotNull PsiType rType,
+                                                               @NotNull GroovyPsiElement context) {
+    for (GrTypeConverter converter : EP_NAME.getExtensions()) {
+      if (converter.isAllowedInMethodCall()) {
+        Boolean result = converter.isConvertible(lType, rType, context);
+        if (result != null) {
+          return result;
+        }
+      }
+    }
+    return null;
+  }
+
+  public static Boolean isConvertibleAll(@NotNull PsiType lType,
+                                       @NotNull PsiType rType,
+                                       @NotNull GroovyPsiElement context) {
+    for (GrTypeConverter converter : EP_NAME.getExtensions()) {
+      if (!converter.isAllowedInMethodCall()) {
+        Boolean result = converter.isConvertible(lType, rType, context);
+        if (result != null) {
+          return result;
+        }
+      }
+    }
+    return null;
   }
 }

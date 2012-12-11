@@ -193,13 +193,13 @@ public class LossyEncodingInspection extends LocalInspectionTool {
       VirtualFile virtualFile = psiFile.getVirtualFile();
       ChooseFileEncodingAction action = new ChooseFileEncodingAction(virtualFile) {
         @Override
-        protected void chosen(VirtualFile virtualFile, Charset charset) {
+        protected void chosen(VirtualFile virtualFile, @NotNull Charset charset) {
           if (virtualFile != null) {
             EncodingManager.getInstance().setEncoding(virtualFile, charset);
           }
         }
       };
-      DefaultActionGroup group = action.createGroup(false);
+      DefaultActionGroup group = action.createGroup(null);
       DataContext dataContext = DataManager.getInstance().getDataContext();
       JBPopupFactory.getInstance().createActionGroupPopup(null, group, dataContext, false, false, false, null, 30, null).showInBestPositionFor(dataContext);
     }

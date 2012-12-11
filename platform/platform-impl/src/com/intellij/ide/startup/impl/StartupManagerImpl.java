@@ -17,7 +17,8 @@ package com.intellij.ide.startup.impl;
 
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.notification.*;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,6 +28,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.io.FileUtil;
@@ -36,7 +38,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -184,10 +188,22 @@ public class StartupManagerImpl extends StartupManagerEx {
       }
     });
 
-    if (!app.isUnitTestMode()) {
-      boolean headless = app.isHeadlessEnvironment();
-      if (!headless && !myProject.isDisposed()) checkProjectRoots();
-      VirtualFileManager.getInstance().refresh(!headless);
+    if (!app.isUnitTestMode() && !myProject.isDisposed()) {
+      if (!app.isHeadlessEnvironment()) {
+        checkProjectRoots();
+        final long sessionId = VirtualFileManager.getInstance().asyncRefresh(null);
+        final MessageBusConnection connection = app.getMessageBus().connect();
+        connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener.Adapter() {
+          @Override
+          public void afterProjectClosed(@NotNull Project project) {
+            RefreshQueue.getInstance().cancelSession(sessionId);
+            connection.disconnect();
+          }
+        });
+      }
+      else {
+        VirtualFileManager.getInstance().syncRefresh();
+      }
     }
 
     Registry.get("ide.firstStartup").setValue(false);
