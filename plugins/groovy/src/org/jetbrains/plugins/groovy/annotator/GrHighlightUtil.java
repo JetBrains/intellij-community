@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -94,6 +95,8 @@ public class GrHighlightUtil {
   }
 
   static boolean isReassigned(final GrVariable var) {
+    LOG.assertTrue(!DumbService.getInstance(var.getProject()).isDumb());
+
     PsiMethod method = PsiTreeUtil.getParentOfType(var, PsiMethod.class);
     PsiNamedElement scope = method == null ? var.getContainingFile() : method;
     return scope != null && getReassignedNames(scope).contains(var.getName());
