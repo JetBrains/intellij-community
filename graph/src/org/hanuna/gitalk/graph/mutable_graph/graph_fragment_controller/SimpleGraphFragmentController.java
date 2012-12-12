@@ -68,6 +68,14 @@ public class SimpleGraphFragmentController implements GraphFragmentController {
         return node;
     }
 
+    private boolean isTrivialFragment(@NotNull Node up, @NotNull Node down) {
+        assert up.getRowIndex() > down.getRowIndex();
+        Edge edge = firstDownEdge(up);
+        if (edge.getType() == Edge.Type.USUAL && edge.getDownNode() == down) {
+            return true;
+        }
+        return false;
+    }
 
     private GraphFragment relateFragment(@NotNull Node node) {
         if (node.getDownEdges().size() == 1) {
@@ -90,6 +98,9 @@ public class SimpleGraphFragmentController implements GraphFragmentController {
         assert up != null && down != null;
 
         if (up != down && firstDownEdge(up).getDownNode() != down) {
+            if (isTrivialFragment(up, down)) {
+                return null;
+            }
             return new GraphFragmentImpl(up, down);
         } else {
             return null;
@@ -103,6 +114,9 @@ public class SimpleGraphFragmentController implements GraphFragmentController {
         Node up = upperSimpleNode(edge.getUpNode());
         Node down = lowestSimpleNode(edge.getDownNode());
         if (up == null || down == null) {
+            return null;
+        }
+        if (isTrivialFragment(up, down)) {
             return null;
         }
         return new GraphFragmentImpl(up, down);
