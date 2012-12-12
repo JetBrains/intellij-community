@@ -355,6 +355,10 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
       toFromTo(file);
     }
 
+    private void markRename(@NotNull final File beforeFile, @NotNull final File afterFile) {
+      myToBeDeleted.add(new Pair<File, File>(beforeFile, afterFile));
+    }
+
     public ThroughRenameInfo findToFile(@NotNull final FilePath file, @Nullable final File firstTo) {
       final String path = FilePathsHelper.convertPath(file);
       if (myAlsoReverted.contains(path)) return null;
@@ -589,8 +593,10 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
         final ContentRevision afterRevision = change.getAfterRevision();
         final String key = afterRevision == null ? null : FilePathsHelper.convertWithLastSeparator(afterRevision.getFile());
         if (MoveRenameReplaceCheck.check(change)) {
-          renames.put(key, beforeRevision.getFile().getIOFile());
+          final File beforeFile = beforeRevision.getFile().getIOFile();
+          renames.put(key, beforeFile);
           files.put(key, afterRevision.getFile());
+          myCollector.markRename(beforeFile, afterRevision.getFile().getIOFile());
         } else if (afterRevision != null) {
           alsoReverted.add(key);
         }
