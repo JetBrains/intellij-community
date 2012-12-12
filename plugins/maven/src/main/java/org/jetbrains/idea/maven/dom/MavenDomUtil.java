@@ -359,8 +359,6 @@ public class MavenDomUtil {
     MavenProject mavenProject = manager.findContainingProject(file);
     if (mavenProject == null) return false;
 
-    System.out.println(VirtualFileManager.getInstance().getModificationCount());
-
     Set<VirtualFile> filteredRoots = getFilteredResourcesRoots(mavenProject);
 
     if (!filteredRoots.isEmpty()) {
