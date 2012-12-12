@@ -51,7 +51,7 @@ public class FilePathImpl implements FilePath {
                        final boolean isDirectory,
                        VirtualFile child,
                        final boolean forDeleted) {
-    this(virtualParent == null ? new File(name) : new File(new File(virtualParent.getPath()), name), isDirectory, true);
+    this(fileFromVirtual(virtualParent, child, name), isDirectory, true);
     myVirtualParent = virtualParent;
 
     if (!forDeleted) {
@@ -64,6 +64,14 @@ public class FilePathImpl implements FilePath {
     }
   }
 
+  private static File fileFromVirtual(VirtualFile virtualParent, final VirtualFile child, String name) {
+    assert virtualParent != null || child != null;
+    if (virtualParent != null) {
+      return new File(virtualParent.getPath(), name);
+    }
+    return new File(child.getPath());
+  }
+
   private void detectCharset() {
     VirtualFile file = myVirtualFile;
     if (file == null || !file.isValid() || file.isDirectory()) return;
@@ -74,18 +82,19 @@ public class FilePathImpl implements FilePath {
   }
 
   @Heavy
-  public FilePathImpl(VirtualFile virtualParent, String name, final boolean isDirectory) {
+  public FilePathImpl(@NotNull VirtualFile virtualParent, String name, final boolean isDirectory) {
     this(virtualParent, name, isDirectory, null, false);
   }
 
   @Heavy
-  private FilePathImpl(VirtualFile virtualParent, String name, final boolean isDirectory, final boolean forDeleted) {
+  private FilePathImpl(@NotNull VirtualFile virtualParent, String name, final boolean isDirectory, final boolean forDeleted) {
     this(virtualParent, name, isDirectory, null, forDeleted);
   }
 
   public FilePathImpl(@NotNull File file, final boolean isDirectory) {
     this(file, isDirectory, true);
   }
+
   private FilePathImpl(@NotNull File file, final boolean isDirectory, boolean local) {
     myFile = file;
     myName = file.getName();
