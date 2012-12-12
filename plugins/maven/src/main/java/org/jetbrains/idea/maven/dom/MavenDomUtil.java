@@ -23,12 +23,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -49,14 +50,17 @@ import org.jetbrains.idea.maven.model.MavenResource;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
-import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MavenDomUtil {
+
+  private static final Key<Pair<Long, Set<VirtualFile>>> FILTERED_RESOURCES_ROOTS_KEY = Key.create("MavenDomUtil.FILTERED_RESOURCES_ROOTS");
 
   // see http://maven.apache.org/settings.html
   private static final Set<String> SUBTAGS_IN_SETTINGS_FILE = ContainerUtil.newHashSet("localRepository", "interactiveMode",
@@ -317,21 +321,56 @@ public class MavenDomUtil {
     return prop == null ? null : prop.getPsiElement().getFirstChild().getNextSibling().getNextSibling();
   }
 
-  public static boolean isFilteredResourceFile(PsiElement element) {
-    MavenProject project = findContainingProject(element);
-    if (project == null) return false;
+  private static Set<VirtualFile> getFilteredResourcesRoots(@NotNull MavenProject mavenProject) {
+    Pair<Long, Set<VirtualFile>> cachedValue = mavenProject.getCachedValue(FILTERED_RESOURCES_ROOTS_KEY);
 
-    VirtualFile file = MavenDomUtil.getVirtualFile(element);
+    if (cachedValue == null || cachedValue.first != VirtualFileManager.getInstance().getModificationCount()) {
+      Set<VirtualFile> set = null;
+
+      for (MavenResource resource : mavenProject.getResources()) {
+        if (!resource.isFiltered()) continue;
+
+        VirtualFile resourceDir = LocalFileSystem.getInstance().findFileByPath(resource.getDirectory());
+        if (resourceDir == null) continue;
+
+        if (set == null) {
+          set = new HashSet<VirtualFile>();
+        }
+
+        set.add(resourceDir);
+      }
+
+      if (set == null) {
+        set = Collections.emptySet();
+      }
+
+      cachedValue = Pair.create(VirtualFileManager.getInstance().getModificationCount(), set);
+      mavenProject.putCachedValue(FILTERED_RESOURCES_ROOTS_KEY, cachedValue);
+    }
+
+    return cachedValue.second;
+  }
+
+  public static boolean isFilteredResourceFile(PsiElement element) {
+    VirtualFile file = getVirtualFile(element);
     if (file == null) return false;
 
-    for (MavenResource each : project.getResources()) {
-      if (!each.isFiltered()) continue;
+    MavenProjectsManager manager = MavenProjectsManager.getInstance(element.getProject());
+    MavenProject mavenProject = manager.findContainingProject(file);
+    if (mavenProject == null) return false;
 
-      VirtualFile resourceDir = LocalFileSystem.getInstance().findFileByPath(each.getDirectory());
-      if (resourceDir == null) continue;
-      if (!VfsUtil.isAncestor(resourceDir, file, true)) continue;
-      return true;
+    System.out.println(VirtualFileManager.getInstance().getModificationCount());
+
+    Set<VirtualFile> filteredRoots = getFilteredResourcesRoots(mavenProject);
+
+    if (!filteredRoots.isEmpty()) {
+      for (VirtualFile f = file.getParent(); f != null; f = f.getParent()) {
+        if (filteredRoots.contains(f)) {
+          return true;
+        }
+      }
     }
+
     return false;
   }
 
