@@ -1,6 +1,4 @@
-import org.hanuna.gitalk.controller.Controller;
-import org.hanuna.gitalk.graph.Graph;
-import org.hanuna.gitalk.graph.builder.ReaderGraphModel;
+import org.hanuna.gitalk.controller.UI_Controller;
 import org.hanuna.gitalk.swingui.GitAlkUI;
 
 import java.io.IOException;
@@ -11,10 +9,10 @@ import java.io.IOException;
 public class KotlinTest {
 
     public static void main(String[] args) throws IOException {
-        Graph graph = ReaderGraphModel.read();
-        Controller controller = new Controller(graph);
+        Controller controller = new Controller();
         controller.prepare();
-        GitAlkUI ui = new GitAlkUI(controller);
+        UI_Controller UIController = new UI_Controller(controller.getGraph(), controller.getRefsModel());
+        GitAlkUI ui = new GitAlkUI(UIController);
         ui.showUi();
     }
 }
