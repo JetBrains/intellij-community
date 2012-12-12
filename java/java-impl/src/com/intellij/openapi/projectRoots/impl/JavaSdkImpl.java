@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -144,7 +145,9 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   private static String getConvertedHomePath(Sdk sdk) {
-    String path = sdk.getHomePath().replace('/', File.separatorChar);
+    String homePath = sdk.getHomePath();
+    assert homePath != null : sdk;
+    String path = FileUtil.toSystemDependentName(homePath);
     if (!path.endsWith(File.separator)) {
       path += File.separator;
     }
@@ -252,14 +255,14 @@ public class JavaSdkImpl extends JavaSdk {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void setupSdkPaths(Sdk sdk) {
     final File jdkHome = new File(sdk.getHomePath());
-    VirtualFile[] classes = findClasses(jdkHome, false);
+    List<VirtualFile> classes = findClasses(jdkHome, false);
     VirtualFile sources = findSources(jdkHome);
     VirtualFile docs = findDocs(jdkHome, "docs/api");
 
     final SdkModificator sdkModificator = sdk.getSdkModificator();
     final Set<VirtualFile> previousRoots = new LinkedHashSet<VirtualFile>(Arrays.asList(sdkModificator.getRoots(OrderRootType.CLASSES)));
     sdkModificator.removeRoots(OrderRootType.CLASSES);
-    previousRoots.removeAll(new HashSet<VirtualFile>(Arrays.asList(classes)));
+    previousRoots.removeAll(new HashSet<VirtualFile>(classes));
     for (VirtualFile aClass : classes) {
       sdkModificator.addRoot(aClass, OrderRootType.CLASSES);
     }
@@ -355,23 +358,6 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   @Override
-  public Sdk createJdk(final String jdkName, final String home, final boolean isJre) {
-    ProjectJdkImpl jdk = new ProjectJdkImpl(jdkName, this);
-    SdkModificator sdkModificator = jdk.getSdkModificator();
-
-    String path = home.replace(File.separatorChar, '/');
-    sdkModificator.setHomePath(path);
-    jdk.setVersionString(jdkName); // must be set after home path, otherwise setting home path clears the version string
-
-    File jdkHomeFile = new File(home);
-    addClasses(jdkHomeFile, sdkModificator, isJre);
-    addSources(jdkHomeFile, sdkModificator);
-    addDocs(jdkHomeFile, sdkModificator);
-    sdkModificator.commitChanges();
-    return jdk;
-  }
-
-  @Override
   public JavaSdkVersion getVersion(@NotNull Sdk sdk) {
     String version = sdk.getVersionString();
     if (version == null) return null;
@@ -397,78 +383,34 @@ public class JavaSdkImpl extends JavaSdk {
     return sdkVersion != null && sdkVersion.isAtLeast(version);
   }
 
-  private static File getPathForJdkNamed(@NonNls String name) {
-    File mockJdkCEPath = new File(PathManager.getHomePath(), "java/" + name);
-    if (mockJdkCEPath.exists()) {
-      return mockJdkCEPath;
-    }
-    return new File(PathManager.getHomePath(), "community/java/" + name);
-  }
-  public static Sdk getMockJdk17() {
-    return getMockJdk17("java 1.7");
-  }
-  public static Sdk getMockJdk17(@NonNls String name) {
-    return createMockJdk(getMockJdk17Path().getPath(), name, getInstance());
-  }
-  public static Sdk getMockJdk14() {
-    File mockJdkCEPath = getMockJdk14Path();
-    return createMockJdk(mockJdkCEPath.getPath(), "java 1.4", getInstance());
-  }
-
-  public static File getMockJdk14Path() {
-    return getPathForJdkNamed("mockJDK-1.4");
-  }
-  public static File getMockJdk17Path() {
-    return getPathForJdkNamed("mockJDK-1.7");
-  }
-
-  public static Sdk getWebMockJdk17() {
-    Sdk jdk = getMockJdk17();
-    addWebJarsTo(jdk);
-    return jdk;
-  }
-
-  public static void addWebJarsTo(Sdk jdk) {
+  @Override
+  public Sdk createJdk(@NotNull String jdkName, @NotNull String home, boolean isJre) {
+    ProjectJdkImpl jdk = new ProjectJdkImpl(jdkName, this);
     SdkModificator sdkModificator = jdk.getSdkModificator();
-    File jar = new File(PathManager.getHomePath(), "lib/jsp-api.jar");
-    VirtualFile root = JarFileSystem.getInstance().getJarRootForLocalFile(LocalFileSystem.getInstance().findFileByIoFile(jar));
-    sdkModificator.addRoot(root, OrderRootType.CLASSES);
-    File jar2 = new File(PathManager.getHomePath(), "lib/servlet-api.jar");
-    VirtualFile root2 = JarFileSystem.getInstance().getJarRootForLocalFile(LocalFileSystem.getInstance().findFileByIoFile(jar2));
-    sdkModificator.addRoot(root2, OrderRootType.CLASSES);
-    sdkModificator.commitChanges();
-  }
 
-  private static Sdk createMockJdk(String jdkHome, @NonNls final String versionName, JavaSdk javaSdk) {
-    File jdkHomeFile = new File(jdkHome);
-    if (!jdkHomeFile.exists()) return null;
-
-    final Sdk jdk = new ProjectJdkImpl(versionName, javaSdk);
-    final SdkModificator sdkModificator = jdk.getSdkModificator();
-
-    String path = jdkHome.replace(File.separatorChar, '/');
+    String path = home.replace(File.separatorChar, '/');
     sdkModificator.setHomePath(path);
-    sdkModificator.setVersionString(versionName); // must be set after home path, otherwise setting home path clears the version string
+    sdkModificator.setVersionString(jdkName); // must be set after home path, otherwise setting home path clears the version string
 
+    File jdkHomeFile = new File(home);
+    addClasses(jdkHomeFile, sdkModificator, isJre);
     addSources(jdkHomeFile, sdkModificator);
-    addClasses(jdkHomeFile, sdkModificator, false);
-    addClasses(jdkHomeFile, sdkModificator, true);
+    addDocs(jdkHomeFile, sdkModificator);
     sdkModificator.commitChanges();
 
     return jdk;
   }
 
-  private static void addClasses(File file, SdkModificator sdkModificator, final boolean isJre) {
-    VirtualFile[] classes = findClasses(file, isJre);
-    for (VirtualFile virtualFile : classes) {
+  private static void addClasses(File file, SdkModificator sdkModificator, boolean isJre) {
+    for (VirtualFile virtualFile : findClasses(file, isJre)) {
       sdkModificator.addRoot(virtualFile, OrderRootType.CLASSES);
     }
   }
 
-  private static VirtualFile[] findClasses(File file, boolean isJre) {
-    List<File> rootFiles = JavaSdkUtil.getJdkClassesRoots(file, isJre);
+  private static List<VirtualFile> findClasses(File file, boolean isJre) {
+    List<VirtualFile> result = ContainerUtil.newArrayList();
 
-    ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+    List<File> rootFiles = JavaSdkUtil.getJdkClassesRoots(file, isJre);
     for (File child : rootFiles) {
       String url = VfsUtil.getUrlForLibraryRoot(child);
       VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(url);
@@ -476,7 +418,8 @@ public class JavaSdkImpl extends JavaSdk {
         result.add(vFile);
       }
     }
-    return VfsUtilCore.toVirtualFileArray(result);
+
+    return result;
   }
 
   private static void addSources(File file, SdkModificator sdkModificator) {
@@ -489,22 +432,22 @@ public class JavaSdkImpl extends JavaSdk {
   @Nullable
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static VirtualFile findSources(File file) {
-    File srcfile = new File(file, "src");
-    File jarfile = new File(file, "src.jar");
-    if (!jarfile.exists()) {
-      jarfile = new File(file, "src.zip");
+    File srcDir = new File(file, "src");
+    File jarFile = new File(file, "src.jar");
+    if (!jarFile.exists()) {
+      jarFile = new File(file, "src.zip");
     }
 
-    if (jarfile.exists()) {
-      VirtualFile vFile = findInJar(jarfile, "src");
+    if (jarFile.exists()) {
+      VirtualFile vFile = findInJar(jarFile, "src");
       if (vFile != null) return vFile;
       // try 1.4 format
-      vFile = findInJar(jarfile, "");
+      vFile = findInJar(jarFile, "");
       return vFile;
     }
     else {
-      if (!srcfile.exists() || !srcfile.isDirectory()) return null;
-      String path = srcfile.getAbsolutePath().replace(File.separatorChar, '/');
+      if (!srcDir.exists() || !srcDir.isDirectory()) return null;
+      String path = srcDir.getAbsolutePath().replace(File.separatorChar, '/');
       return LocalFileSystem.getInstance().findFileByPath(path);
     }
   }

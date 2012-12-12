@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.dataflow;
 
+import com.intellij.testFramework.IdeaTestUtil;
 import com.siyeh.ig.IGInspectionTestCase;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
@@ -24,7 +25,7 @@ import com.intellij.pom.java.LanguageLevel;
 public class UnnecessaryLocalVariableInspectionTest extends IGInspectionTestCase {
   @Override
   protected Sdk getTestProjectSdk() {
-    final Sdk sdk = JavaSdkImpl.getMockJdk17();
+    final Sdk sdk = IdeaTestUtil.getMockJdk17();
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
     return sdk;
   }

@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.impl.java.stubs.PsiMethodStub;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
@@ -52,7 +53,7 @@ public class ClsRepositoryUseTest extends PsiTestCase {
         public void run() {
           try {
             VirtualFile vDir = getRootFile();
-            PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
+            PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
             addLibraryToRoots(vDir, OrderRootType.CLASSES);
 //            PsiTestUtil.addSourceContentToRoots(myProject, vDir);
           }

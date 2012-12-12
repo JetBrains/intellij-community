@@ -49,7 +49,6 @@ import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -318,7 +317,7 @@ public class GrAliasImportIntention extends Intention {
 
           GroovyResolveResult result = ((GrReferenceExpression)element).advancedResolve();
 
-          GroovyPsiElement context = result.getCurrentFileResolveContext();
+          PsiElement context = result.getCurrentFileResolveContext();
           if (!(context instanceof GrImportStatement)) return false;
 
           GrImportStatement importStatement = (GrImportStatement)context;

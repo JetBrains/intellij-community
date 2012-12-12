@@ -31,7 +31,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
@@ -41,7 +40,11 @@ import com.intellij.psi.util.*;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,6 +53,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class StaticImportMethodFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix");
@@ -165,16 +169,19 @@ public class StaticImportMethodFix implements IntentionAction {
     final List<PsiMethod> applicableList = new ArrayList<PsiMethod>();
     final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(element.getProject()).getResolveHelper();
     cache.processMethodsWithName(name, scope, new Processor<PsiMethod>() {
+      private final Set<PsiClass> myPossibleClasses = new HashSet<PsiClass>();
       @Override
       public boolean process(PsiMethod method) {
         ProgressManager.checkCanceled();
         if (JavaCompletionUtil.isInExcludedPackage(method, false)
             || !method.hasModifierProperty(PsiModifier.STATIC)) return true;
         PsiFile file = method.getContainingFile();
+        final PsiClass containingClass = method.getContainingClass();
         if (file instanceof PsiJavaFile
             //do not show methods from default package
             && !((PsiJavaFile)file).getPackageName().isEmpty()
-            && PsiUtil.isAccessible(method, element, method.getContainingClass())) {
+            && PsiUtil.isAccessible(method, element, containingClass)) {
+          if (!myPossibleClasses.add(containingClass)) return true;
           list.add(method);
           PsiSubstitutor substitutorForMethod = resolveHelper
             .inferTypeArguments(method.getTypeParameters(), method.getParameterList().getParameters(), argumentList.getExpressions(),
@@ -192,17 +199,6 @@ public class StaticImportMethodFix implements IntentionAction {
     for (int i = result.size() - 1; i >= 0; i--) {
       ProgressManager.checkCanceled();
       PsiMethod method = result.get(i);
-      PsiClass containingClass = method.getContainingClass();
-      for (int j = i+1; j<result.size() ;j++) {
-        PsiMethod exMethod = result.get(j);
-        if (!Comparing.strEqual(exMethod.getName(), method.getName())) continue;
-        PsiClass exContainingClass = exMethod.getContainingClass();
-        if (containingClass != null && exContainingClass != null
-            && !Comparing.equal(containingClass.getQualifiedName(), exContainingClass.getQualifiedName())) continue;
-        // same named methods, drop one
-        result.remove(i);
-        break;
-      }
       // check for manually excluded
       if (isExcluded(method)) {
         result.remove(i);

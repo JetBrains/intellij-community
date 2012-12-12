@@ -137,13 +137,25 @@ public class DebugUtil {
                                   final boolean showRanges,
                                   final boolean showChildrenRanges,
                                   final boolean usePsi) {
+    treeToBuffer(buffer, root, indent, skipWhiteSpaces, showRanges, showChildrenRanges, usePsi, null);
+  }
+
+  public static void treeToBuffer(@NotNull final Appendable buffer,
+                                  @NotNull final ASTNode root,
+                                  final int indent,
+                                  final boolean skipWhiteSpaces,
+                                  final boolean showRanges,
+                                  final boolean showChildrenRanges,
+                                  final boolean usePsi,
+                                  PairConsumer<PsiElement, Consumer<PsiElement>> extra) {
     if (skipWhiteSpaces && root.getElementType() == TokenType.WHITE_SPACE) return;
 
     StringUtil.repeatSymbol(buffer, ' ', indent);
     try {
+      PsiElement psiElement = null;
       if (root instanceof CompositeElement) {
         if (usePsi) {
-          final PsiElement psiElement = root.getPsi();
+          psiElement = root.getPsi();
           if (psiElement != null) {
             buffer.append(psiElement.toString());
           }
@@ -170,10 +182,18 @@ public class DebugUtil {
         }
         else {
           while (child != null) {
-            treeToBuffer(buffer, child, indent + 2, skipWhiteSpaces, showChildrenRanges, showChildrenRanges, usePsi);
+            treeToBuffer(buffer, child, indent + 2, skipWhiteSpaces, showChildrenRanges, showChildrenRanges, usePsi, extra);
             child = child.getTreeNext();
           }
         }
+      }
+      if (psiElement != null && extra != null ) {
+        extra.consume(psiElement, new Consumer<PsiElement>() {
+          @Override
+          public void consume(PsiElement element) {
+            treeToBuffer(buffer, element.getNode(), indent + 2, skipWhiteSpaces, showChildrenRanges, showChildrenRanges, usePsi, null);
+          }
+        });
       }
     }
     catch (IOException e) {
@@ -398,29 +418,47 @@ public class DebugUtil {
   }
 
   public static String psiToString(@NotNull final PsiElement root, final boolean skipWhiteSpaces, final boolean showRanges) {
+    return psiToString(root, skipWhiteSpaces, showRanges, null);
+  }
+
+  public static String psiToString(@NotNull final PsiElement root, final boolean skipWhiteSpaces, final boolean showRanges, PairConsumer<PsiElement, Consumer<PsiElement>> extra) {
     final LengthBuilder ruler = new LengthBuilder();
-    psiToBuffer(ruler, root, skipWhiteSpaces, showRanges);
+    psiToBuffer(ruler, root, skipWhiteSpaces, showRanges, extra);
     final StringBuilder buffer = new StringBuilder(ruler.getLength());
-    psiToBuffer(buffer, root, skipWhiteSpaces, showRanges);
+    psiToBuffer(buffer, root, skipWhiteSpaces, showRanges, extra);
     return buffer.toString();
   }
 
-  private static void psiToBuffer(final Appendable buffer, final PsiElement root, final boolean skipWhiteSpaces, final boolean showRanges) {
+  private static void psiToBuffer(final Appendable buffer,
+                                  final PsiElement root,
+                                  final boolean skipWhiteSpaces,
+                                  final boolean showRanges,
+                                  PairConsumer<PsiElement, Consumer<PsiElement>> extra) {
     final ASTNode node = root.getNode();
     if (node == null) {
-      psiToBuffer(buffer, root, 0, skipWhiteSpaces, showRanges, showRanges);
+      psiToBuffer(buffer, root, 0, skipWhiteSpaces, showRanges, showRanges, extra);
     }
     else {
-      treeToBuffer(buffer, node, 0, skipWhiteSpaces, showRanges, showRanges, true);
+      treeToBuffer(buffer, node, 0, skipWhiteSpaces, showRanges, showRanges, true, extra);
     }
+  }
+
+  public static void psiToBuffer(@NotNull final Appendable buffer,
+                                 @NotNull final PsiElement root,
+                                 int indent,
+                                 boolean skipWhiteSpaces,
+                                 boolean showRanges,
+                                 boolean showChildrenRanges) {
+    psiToBuffer(buffer, root, indent, skipWhiteSpaces, showRanges, showChildrenRanges, null);
   }
 
   public static void psiToBuffer(@NotNull final Appendable buffer,
                                  @NotNull final PsiElement root,
                                  final int indent,
                                  final boolean skipWhiteSpaces,
-                                 final boolean showRanges,
-                                 final boolean showChildrenRanges) {
+                                 boolean showRanges,
+                                 final boolean showChildrenRanges,
+                                 PairConsumer<PsiElement, Consumer<PsiElement>> extra) {
     if (skipWhiteSpaces && root instanceof PsiWhiteSpace) return;
 
     StringUtil.repeatSymbol(buffer, ' ', indent);
@@ -436,8 +474,16 @@ public class DebugUtil {
       if (showRanges) buffer.append(root.getTextRange().toString());
       buffer.append("\n");
       while (child != null) {
-        psiToBuffer(buffer, child, indent + 2, skipWhiteSpaces, showChildrenRanges, showChildrenRanges);
+        psiToBuffer(buffer, child, indent + 2, skipWhiteSpaces, showChildrenRanges, showChildrenRanges, extra);
         child = child.getNextSibling();
+      }
+      if (extra != null) {
+        extra.consume(root, new Consumer<PsiElement>() {
+          @Override
+          public void consume(PsiElement element) {
+            psiToBuffer(buffer, element, indent + 2, skipWhiteSpaces, showChildrenRanges, showChildrenRanges, null);
+          }
+        });
       }
     }
     catch (IOException e) {

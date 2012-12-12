@@ -24,6 +24,7 @@ import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.util.Condition;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.TestActionEvent;
 import org.jetbrains.android.sdk.AndroidSdkType;
 import org.jetbrains.android.util.AndroidBundle;
@@ -48,7 +49,7 @@ public class AndroidSdkTypeTest extends ProjectWizardTestCase {
 
   public void testSatisfied() throws Exception {
     ProjectSdksModel model = new ProjectSdksModel();
-    model.addSdk(JavaSdkImpl.getMockJdk17());
+    model.addSdk(IdeaTestUtil.getMockJdk17());
     ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
     Sdk sdk = jdkTable.createSdk("a", AndroidSdkType.getInstance());
     mySdks.add(sdk);

@@ -44,6 +44,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.Semaphore;
@@ -518,7 +519,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected static Sdk createJdk(String versionName) {
-    return JavaSdkImpl.getMockJdk17(versionName);
+    return IdeaTestUtil.getMockJdk17(versionName);
   }
 
   protected void compileModules(final String... moduleNames) throws Exception {

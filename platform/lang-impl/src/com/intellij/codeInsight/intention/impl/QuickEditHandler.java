@@ -21,8 +21,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
@@ -43,6 +42,8 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
@@ -50,6 +51,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
@@ -76,8 +78,9 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
   private final LightVirtualFile myNewVirtualFile;
   private final Document myNewDocument;
   private final List<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer>> myMarkers = new LinkedList<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer>>();
+  private final long myOrigCreationStamp;
   private EditorWindow mySplittedWindow;
-  private boolean myReleased;
+  private boolean myCommittingToOriginal;
 
   QuickEditHandler(Project project, PsiFile injectedFile, final PsiFile origFile, Editor editor, QuickEditAction action) {
     myProject = project;
@@ -107,52 +110,43 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
         //nothing
       }
     });
-    myOrigDocument.addDocumentListener(this);
-    myNewDocument.addDocumentListener(new DocumentAdapter() {
-      @Override
-      public void documentChanged(DocumentEvent e) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            commitToOriginal();
-          }
-        });
-      }
-    });
-    EditorFactory editorFactory = EditorFactory.getInstance();
-    assert editorFactory != null;
+    myOrigCreationStamp = myOrigDocument.getModificationStamp(); // store creation stamp for UNDO tracking
+    myOrigDocument.addDocumentListener(this, this);
+    myNewDocument.addDocumentListener(this, this);
+    EditorFactory editorFactory = ObjectUtils.assertNotNull(EditorFactory.getInstance());
+    // not FileEditorManager listener because of RegExp checker and alike
     editorFactory.addEditorFactoryListener(new EditorFactoryAdapter() {
+
+      int myEditorCount;
 
       @Override
       public void editorCreated(@NotNull EditorFactoryEvent event) {
-        if (event.getEditor().getDocument() == myNewDocument) {
-          final EditorActionHandler editorEscape = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ESCAPE);
-          new AnAction() {
-            @Override
-            public void update(AnActionEvent e) {
-              Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
-              e.getPresentation().setEnabled(
-                editor != null && LookupManager.getActiveLookup(editor) == null &&
-                TemplateManager.getInstance(myProject).getActiveTemplate(editor) == null &&
-                (editorEscape == null || !editorEscape.isEnabled(editor, e.getDataContext())));
-            }
+        if (event.getEditor().getDocument() != myNewDocument) return;
+        myEditorCount ++;
+        final EditorActionHandler editorEscape = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ESCAPE);
+        new AnAction() {
+          @Override
+          public void update(AnActionEvent e) {
+            Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
+            e.getPresentation().setEnabled(
+              editor != null && LookupManager.getActiveLookup(editor) == null &&
+              TemplateManager.getInstance(myProject).getActiveTemplate(editor) == null &&
+              (editorEscape == null || !editorEscape.isEnabled(editor, e.getDataContext())));
+          }
 
-            @Override
-            public void actionPerformed(AnActionEvent e) {
-              closeEditor();
-            }
-          }.registerCustomShortcutSet(CommonShortcuts.ESCAPE, event.getEditor().getContentComponent());
-        }
+          @Override
+          public void actionPerformed(AnActionEvent e) {
+            closeEditor();
+          }
+        }.registerCustomShortcutSet(CommonShortcuts.ESCAPE, event.getEditor().getContentComponent());
       }
 
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
-        if (event.getEditor().getDocument() == myNewDocument) {
-          Disposer.dispose(QuickEditHandler.this);
-          myReleased = true;
-          myOrigDocument.removeDocumentListener(QuickEditHandler.this);
-          myInjectedFile.putUserData(QuickEditAction.QUICK_EDIT_HANDLER, null);
-        }
+        if (event.getEditor().getDocument() != myNewDocument) return;
+        if (-- myEditorCount > 0) return;
+        Disposer.dispose(QuickEditHandler.this);
+        myInjectedFile.putUserData(QuickEditAction.QUICK_EDIT_HANDLER, null);
       }
     }, this);
     initMarkers(shreds);
@@ -198,7 +192,30 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
 
   @Override
   public void documentChanged(DocumentEvent e) {
-    closeEditor();
+    UndoManager undoManager = UndoManager.getInstance(myProject);
+    boolean undoOrRedo = undoManager.isUndoInProgress() || undoManager.isRedoInProgress();
+    if (undoOrRedo) {
+      // allow undo/redo up until 'creation stamp' back in time
+      // and check it after action is completed
+      if (e.getDocument() == myOrigDocument) {
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            if (myOrigCreationStamp > myOrigDocument.getModificationStamp()) {
+              closeEditor();
+            }
+          }
+        });
+      }
+    }
+    else if (e.getDocument() == myNewDocument) {
+      commitToOriginal();
+    }
+    else if (e.getDocument() == myOrigDocument) {
+      if (myCommittingToOriginal) return;
+      closeEditor();
+    }
   }
 
   private void closeEditor() {
@@ -255,22 +272,20 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
   private void commitToOriginal() {
     if (!isValid()) return;
     final PsiFile origFile = (PsiFile)myNewFile.getUserData(FileContextUtil.INJECTED_IN_ELEMENT).getElement();
-    if (!myReleased) myOrigDocument.removeDocumentListener(this);
+    VirtualFile origFileVirtualFile = origFile != null? origFile.getVirtualFile() : null;
+    myCommittingToOriginal = true;
     try {
-      new WriteCommandAction.Simple(myProject, origFile) {
-        @Override
-        protected void run() throws Throwable {
-          PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(new Runnable() {
-            @Override
-            public void run() {
-              commitToOriginalInner();
-            }
-          });
-        }
-      }.execute();
+      if (origFileVirtualFile == null || !ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(origFileVirtualFile).hasReadonlyFiles()) {
+        PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(new Runnable() {
+          @Override
+          public void run() {
+            commitToOriginalInner();
+          }
+        });
+      }
     }
     finally {
-      if (!myReleased) myOrigDocument.addDocumentListener(this);
+      myCommittingToOriginal = false;
     }
   }
 

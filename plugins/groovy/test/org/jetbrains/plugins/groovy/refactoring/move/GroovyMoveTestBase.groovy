@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.refactoring.move;
-
+package org.jetbrains.plugins.groovy.refactoring.move
 
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
@@ -33,7 +32,7 @@ public abstract class GroovyMoveTestBase extends JavaCodeInsightFixtureTestCase 
     String root = PathManager.homePath.replace(File.separatorChar, '/' as char) + basePath + getTestName(true);
 
     String rootBefore = "$root/before";
-    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.mockJdk17);
+    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.mockJdk17);
     ArrayList<File> filesToDelete = new ArrayList<File>();
     VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myFixture.project, myModule, rootBefore, filesToDelete);
     def localFileSystem = LocalFileSystem.instance

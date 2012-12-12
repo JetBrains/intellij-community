@@ -24,6 +24,7 @@ import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -35,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.Map;
 import java.util.Set;
@@ -241,7 +243,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
 
 
   @Nullable
-  private static PsiType getEntryForMap(PsiType map, final Project project, final GlobalSearchScope scope) {
+  private static PsiType getEntryForMap(@Nullable PsiType map, @NotNull final Project project, @NotNull final GlobalSearchScope scope) {
     PsiType key = PsiUtil.substituteTypeParameter(map, CommonClassNames.JAVA_UTIL_MAP, 0, true);
     PsiType value = PsiUtil.substituteTypeParameter(map, CommonClassNames.JAVA_UTIL_MAP, 1, true);
 
@@ -262,19 +264,20 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
   }
 
   @Nullable
-  public static PsiType findTypeForIteration(@NotNull GrExpression qualifier, PsiElement context) {
+  public static PsiType findTypeForIteration(@NotNull GrExpression qualifier, @NotNull PsiElement context) {
     PsiType iterType = qualifier.getType();
     if (iterType == null) return null;
 
-    final PsiType type = findTypeForIteration(iterType, context.getManager(), context.getResolveScope());
+    final PsiType type = findTypeForIteration(iterType, context);
     if (type == null) return null;
 
     return PsiImplUtil.normalizeWildcardTypeByPosition(type, qualifier);
   }
 
-  public static PsiType findTypeForIteration(PsiType type,
-                                             final PsiManager manager,
-                                             final GlobalSearchScope resolveScope) {
+  public static PsiType findTypeForIteration(@Nullable PsiType type, @NotNull PsiElement context) {
+    final PsiManager manager = context.getManager();
+    final GlobalSearchScope resolveScope = context.getResolveScope();
+
     if (type instanceof PsiArrayType) {
       return TypesUtil.boxPrimitiveType(((PsiArrayType)type).getComponentType(), manager, resolveScope);
     }
@@ -287,9 +290,14 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
       return ((GrRangeType)type).getIterationType();
     }
 
-    PsiType res = PsiUtil.extractIterableTypeParameter(type, true);
-    if (res != null) {
-      return res;
+    PsiType fromIterator = findTypeFromIteratorMethod(type, context);
+    if (fromIterator != null) {
+      return fromIterator;
+    }
+
+    PsiType extracted = PsiUtil.extractIterableTypeParameter(type, true);
+    if (extracted != null) {
+      return extracted;
     }
 
     if (TypesUtil.isClassType(type, CommonClassNames.JAVA_LANG_STRING) || TypesUtil.isClassType(type, JAVA_IO_FILE)) {
@@ -300,6 +308,21 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
       return getEntryForMap(type, manager.getProject(), resolveScope);
     }
     return type;
+  }
+
+  @Nullable
+  private static PsiType findTypeFromIteratorMethod(@Nullable PsiType type, PsiElement context) {
+    if (!(type instanceof PsiClassType)) return null;
+
+    final GroovyResolveResult[] candidates = ResolveUtil.getMethodCandidates(type, "iterator", context, PsiType.EMPTY_ARRAY);
+    final GroovyResolveResult candidate = PsiImplUtil.extractUniqueResult(candidates);
+    final PsiElement element = candidate.getElement();
+    if (!(element instanceof PsiMethod)) return null;
+
+    final PsiType returnType = org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getSmartReturnType((PsiMethod)element);
+    final PsiType iteratorType = candidate.getSubstitutor().substitute(returnType);
+
+    return PsiUtil.substituteTypeParameter(iteratorType, CommonClassNames.JAVA_UTIL_ITERATOR, 0, false);
   }
 
   @Nullable

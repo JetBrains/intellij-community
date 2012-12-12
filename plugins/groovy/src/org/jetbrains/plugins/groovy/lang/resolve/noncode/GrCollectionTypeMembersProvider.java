@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
@@ -45,7 +44,7 @@ public class GrCollectionTypeMembersProvider extends NonCodeMembersContributor {
   public void processDynamicElements(final @NotNull PsiType qualifierType,
                                      PsiClass aClass,
                                      final PsiScopeProcessor processor,
-                                     final GroovyPsiElement place,
+                                     final PsiElement place,
                                      final ResolveState state) {
     final PsiType collectionType = PsiUtil.extractIterableTypeParameter(qualifierType, true);
     if (collectionType == null) return;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitutor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 
@@ -33,7 +32,7 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
   private final PsiSubstitutor mySubstitutor;
   private final boolean myIsInvokedOnProperty;
 
-  private final GroovyPsiElement myCurrentFileResolveContext;
+  private final PsiElement myCurrentFileResolveContext;
   private final SpreadState mySpreadState;
 
   public GroovyResolveResultImpl(@NotNull PsiElement element, boolean isAccessible) {
@@ -41,7 +40,7 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
   }
 
   public GroovyResolveResultImpl(@NotNull PsiElement element,
-                                 @Nullable GroovyPsiElement resolveContext,
+                                 @Nullable PsiElement resolveContext,
                                  @Nullable SpreadState spreadState,
                                  @NotNull PsiSubstitutor substitutor,
                                  boolean isAccessible,
@@ -54,7 +53,7 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
   }
 
   public GroovyResolveResultImpl(@NotNull PsiElement element,
-                                 @Nullable GroovyPsiElement resolveContext,
+                                 @Nullable PsiElement resolveContext,
                                  @Nullable SpreadState spreadState,
                                  @NotNull PsiSubstitutor substitutor,
                                  boolean isAccessible,
@@ -115,7 +114,7 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
   }
 
   @Nullable
-  public GroovyPsiElement getCurrentFileResolveContext() {
+  public PsiElement getCurrentFileResolveContext() {
     return myCurrentFileResolveContext;
   }
 

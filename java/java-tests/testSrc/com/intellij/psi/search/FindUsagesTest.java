@@ -30,6 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -50,7 +51,7 @@ public class FindUsagesTest extends PsiTestCase{
     super.setUp();
 
     String root = JavaTestUtil.getJavaTestDataPath() + "/psi/search/findUsages/" + getTestName(true);
-    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
+    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
     PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
   }
 

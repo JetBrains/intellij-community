@@ -97,18 +97,18 @@ JNIEXPORT jobject JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_getI
 
 JNIEXPORT jstring JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_resolveSymLink0(JNIEnv* env, jobject method, jstring path) {
     if (__GetFinalPathNameByHandle == NULL) {
-        return NULL;  // links not supported
+        return path;  // links not supported
     }
 
     wchar_t* winPath = ToWinPath(env, path, false);
-    jstring result = NULL;
+    jstring result = path;
 
     WIN32_FIND_DATA data;
     HANDLE h = FindFirstFileW(winPath, &data);
     if (h != INVALID_HANDLE_VALUE) {
         FindClose(h);
 
-        if (IS_SET(data.dwFileAttributes, FILE_ATTRIBUTE_REPARSE_POINT) && IS_SET(data.dwReserved0, IO_REPARSE_TAG_SYMLINK)) {
+        if (IS_SET(data.dwFileAttributes, FILE_ATTRIBUTE_REPARSE_POINT)) {
             HANDLE th = CreateFileW(winPath, 0, FILE_SHARE_ATTRIBUTES, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
             if (th != INVALID_HANDLE_VALUE) {
                 wchar_t buff[MAX_PATH], * finalPath = buff;
@@ -126,7 +126,13 @@ JNIEXPORT jstring JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_reso
                 }
                 CloseHandle(th);
             }
+            else {
+                result = NULL;
+            }
         }
+    }
+    else {
+        result = NULL;
     }
 
     free(winPath);

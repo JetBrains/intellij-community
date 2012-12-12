@@ -377,6 +377,10 @@ public class GridCellImpl implements GridCell {
   }
 
   public void saveUiState() {
+    String key = getDimensionKey();
+    if (key == null)
+      return;
+
     saveProportions();
 
     for (Content each : myContents.getKeys()) {
@@ -389,11 +393,11 @@ public class GridCellImpl implements GridCell {
 
     final DimensionService service = DimensionService.getInstance();
     final Dimension size = myContext.getContentManager().getComponent().getSize();
-    service.setSize(getDimensionKey(), size, myContext.getProject());
+    service.setSize(key, size, myContext.getProject());
     if (myContext.getWindow() != 0) {
       final Window frame = SwingUtilities.getWindowAncestor(myPlaceholder);
       if (frame != null) {
-        service.setLocation(getDimensionKey(), frame.getLocationOnScreen());
+        service.setLocation(key, frame.getLocationOnScreen());
       }
     }
   }
@@ -452,16 +456,26 @@ public class GridCellImpl implements GridCell {
 
   @Nullable
   public Point getLocation() {
-    return DimensionService.getInstance().getLocation(getDimensionKey(), myContext.getProject());
+    String key = getDimensionKey();
+    if (key == null)
+      return null;
+    return DimensionService.getInstance().getLocation(key, myContext.getProject());
   }
 
   @Nullable
   public Dimension getSize() {
-    return DimensionService.getInstance().getSize(getDimensionKey(), myContext.getProject());
+    String key = getDimensionKey();
+    if (key == null)
+      return null;
+    return DimensionService.getInstance().getSize(key, myContext.getProject());
   }
 
+  @Nullable
   private String getDimensionKey() {
-    return "GridCell.Tab." + myContainer.getTab().getIndex() + "." + myPlaceInGrid.name();
+    Tab tab = myContainer.getTab();
+    if (tab == null)
+      return null;
+    return "GridCell.Tab." + tab.getIndex() + "." + myPlaceInGrid.name();
   }
 
   public boolean isValidForCalculateProportions() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.projectRoots.impl.MockJdkWrapper;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.*;
@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.ModuleFixture;
@@ -141,11 +142,11 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
 
     final Sdk jdk;
     if (myJdk != null) {
-      jdk = JavaSdkImpl.getInstance().createJdk(module.getName() + "_jdk", myJdk, false);
+      jdk = JavaSdk.getInstance().createJdk(module.getName() + "_jdk", myJdk, false);
       ((ProjectJdkImpl)jdk).setVersionString("java 1.5");
     }
     else {
-      jdk = JavaSdkImpl.getMockJdk17();
+      jdk = IdeaTestUtil.getMockJdk17();
     }
     if (jdk != null) {
       model.setSdk(new MockJdkWrapper(CompilerConfigurationImpl.getTestsExternalCompilerHome(), jdk));

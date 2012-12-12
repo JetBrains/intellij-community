@@ -23,11 +23,11 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.projectRoots.JavaVersionServiceImpl;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
 
@@ -66,7 +66,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   @Override
   protected Sdk getProjectJDK() {
-    return getTestName(false).contains("Jdk14") ? JavaSdkImpl.getMockJdk14() : super.getProjectJDK();
+    return getTestName(false).contains("Jdk14") ? IdeaTestUtil.getMockJdk14() : super.getProjectJDK();
   }
 
   public void testReferenceTypeParams() throws Exception { doTest(false); }

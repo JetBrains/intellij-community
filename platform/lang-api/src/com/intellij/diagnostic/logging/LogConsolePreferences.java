@@ -68,7 +68,7 @@ public class LogConsolePreferences extends LogFilterRegistrar {
   @NonNls public static final String DEBUG = "DEBUG";
   @NonNls public static final String CUSTOM = "CUSTOM";
 
-  public final static Pattern ERROR_PATTERN = Pattern.compile(".*" + ERROR + ".*");
+  public final static Pattern ERROR_PATTERN = Pattern.compile(".*(" + ERROR + "|FATAL).*");
   public final static Pattern WARNING_PATTERN = Pattern.compile(".*" + WARNING + ".*");
   public final static Pattern WARN_PATTERN = Pattern.compile(".*" + WARN + ".*");
   public final static Pattern INFO_PATTERN = Pattern.compile(".*" + INFO + ".*");

@@ -17,9 +17,7 @@ package org.jetbrains.plugins.groovy.geb;
 
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
@@ -44,7 +42,7 @@ public class GebUtil {
   private static final LightCacheKey<Map<String, PsiField>> KEY = LightCacheKey.createByFileModificationCount();
 
   public static boolean contributeMembersInsideTest(PsiScopeProcessor processor,
-                                                    GroovyPsiElement place,
+                                                    PsiElement place,
                                                     ResolveState state) {
     GroovyPsiManager groovyPsiManager = GroovyPsiManager.getInstance(place.getProject());
 

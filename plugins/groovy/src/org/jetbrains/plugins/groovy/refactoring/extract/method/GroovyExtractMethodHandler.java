@@ -41,7 +41,6 @@ import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -106,7 +105,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
         super.visitReferenceExpression(referenceExpression);
 
         GroovyResolveResult resolveResult = referenceExpression.advancedResolve();
-        GroovyPsiElement resolveContext = resolveResult.getCurrentFileResolveContext();
+        PsiElement resolveContext = resolveResult.getCurrentFileResolveContext();
         if (resolveContext != null &&
             !(resolveContext instanceof GrImportStatement) &&
             !PsiTreeUtil.isAncestor(declarationOwner, resolveContext, true) && !skipResult(resolveResult)) {

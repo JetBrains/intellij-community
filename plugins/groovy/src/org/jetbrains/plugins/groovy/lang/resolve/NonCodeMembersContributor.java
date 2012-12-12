@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.Collection;
@@ -44,7 +43,7 @@ public abstract class NonCodeMembersContributor {
   
   public void processDynamicElements(@NotNull PsiType qualifierType,
                                               PsiScopeProcessor processor,
-                                              GroovyPsiElement place,
+                                              PsiElement place,
                                               ResolveState state) {
     throw new RuntimeException("One of two 'processDynamicElements()' methods must be implemented");
   }
@@ -52,7 +51,7 @@ public abstract class NonCodeMembersContributor {
   public void processDynamicElements(@NotNull PsiType qualifierType,
                                      PsiClass aClass,
                                      PsiScopeProcessor processor,
-                                     GroovyPsiElement place,
+                                     PsiElement place,
                                      ResolveState state) {
     processDynamicElements(qualifierType, processor, place, state);
   }
@@ -78,7 +77,7 @@ public abstract class NonCodeMembersContributor {
   
   public static boolean runContributors(@NotNull final PsiType qualifierType,
                                          PsiScopeProcessor processor,
-                                         final GroovyPsiElement place,
+                                         final PsiElement place,
                                          final ResolveState state) {
 
     MyDelegatingScopeProcessor delegatingProcessor = new MyDelegatingScopeProcessor(processor);

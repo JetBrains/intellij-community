@@ -42,7 +42,7 @@ public abstract class LightIdeaTestCase extends LightPlatformTestCase {
 
   @Override
   protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17();
+    return IdeaTestUtil.getMockJdk17();
   }
 
   @Override

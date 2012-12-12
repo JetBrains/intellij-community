@@ -68,7 +68,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
   }
 
   public MethodResolverProcessor(String name,
-                                 GroovyPsiElement place,
+                                 PsiElement place,
                                  boolean isConstructor,
                                  PsiType thisType,
                                  @Nullable PsiType[] argumentTypes,
@@ -100,7 +100,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
         substitutor = mySubstitutorComputer.obtainSubstitutor(substitutor, method, state);
       }
       boolean isAccessible = isAccessible(method);
-      GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
+      PsiElement resolveContext = state.get(RESOLVE_CONTEXT);
       final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
 
       boolean isStaticsOK = isStaticsOK(method, resolveContext, true);

@@ -160,7 +160,7 @@ public class GrMethodMayBeStaticInspection extends BaseInspection {
         PsiElement element = result.getElement();
         if (isPrintOrPrintln(element)) return;
 
-        GroovyPsiElement resolveContext = result.getCurrentFileResolveContext();
+        PsiElement resolveContext = result.getCurrentFileResolveContext();
         if (qualifier == null && resolveContext != null) return;
         if (element instanceof PsiClass && ((PsiClass)element).getContainingClass() == null) return;
         if (element instanceof PsiMember && !((PsiMember)element).hasModifierProperty(PsiModifier.STATIC)) {

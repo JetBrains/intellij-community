@@ -881,7 +881,7 @@ public class ExtractMethodProcessor implements MatchProvider {
             final int index = ArrayUtil.find(parameters, resolved);
             if (index >= 0) {
               final PsiParameter param = parameters[index];
-              if (!param.hasModifierProperty(PsiModifier.FINAL) && RefactoringUtil.isInsideAnonymous(expression, method)) {
+              if (!param.hasModifierProperty(PsiModifier.FINAL) && RefactoringUtil.isInsideAnonymousOrLocal(expression, method)) {
                 try {
                   PsiUtil.setModifierProperty(param, PsiModifier.FINAL, true);
                 }

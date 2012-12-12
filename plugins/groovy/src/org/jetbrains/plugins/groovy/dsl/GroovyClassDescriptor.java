@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import org.codehaus.groovy.runtime.GroovyCategorySupport;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -51,7 +50,7 @@ public class GroovyClassDescriptor {
   @SuppressWarnings({"SetReplaceableByEnumSet"}) //order is important
   final Set<Factor> affectingFactors = new LinkedHashSet<Factor>();
 
-  public GroovyClassDescriptor(@NotNull PsiType psiType, GroovyPsiElement place, final PsiFile placeFile) {
+  public GroovyClassDescriptor(@NotNull PsiType psiType, PsiElement place, final PsiFile placeFile) {
     myPsiType = psiType;
     myPlace = place;
     myFile = placeFile;
