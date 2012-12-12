@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * @author erokhins
  */
-public class ParseRef {
+public class RefParser {
 
     public static List<Ref> allRefs(@NotNull Reader reader) throws IOException {
         BufferedReader input;

@@ -7,7 +7,7 @@ import static junit.framework.Assert.assertEquals;
 /**
  * @author erokhins
  */
-public class ParseRefTest {
+public class RefParserTest {
 
     public String toStr(Ref ref) {
         StringBuilder s = new StringBuilder();
@@ -18,7 +18,7 @@ public class ParseRefTest {
     }
 
     public void runTest(String inputStr, String outStr) {
-        Ref ref = ParseRef.parse(inputStr);
+        Ref ref = RefParser.parse(inputStr);
         assertEquals(outStr, toStr(ref));
     }
 
