@@ -22,11 +22,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import git4idea.GitPlatformFacade;
 import git4idea.commands.Git;
@@ -195,7 +193,7 @@ public class GitCherryPicker {
   private CherryPickData updateChangeListManager(@NotNull final GitCommit commit) {
     final Collection<FilePath> paths = ChangesUtil.getPaths(commit.getChanges());
     refreshChangedFiles(paths);
-    final String commitMessage = createCommitMessage(commit, paths);
+    final String commitMessage = createCommitMessage(commit);
     LocalChangeList previouslyDefaultChangeList = myChangeListManager.getDefaultChangeList();
     LocalChangeList changeList = createChangeListAfterUpdate(commit, paths, commitMessage);
     return new CherryPickData(changeList, commitMessage, previouslyDefaultChangeList);
@@ -227,11 +225,19 @@ public class GitCherryPicker {
   }
 
   @NotNull
-  private String createCommitMessage(@NotNull GitCommit commit, @NotNull Collection<FilePath> paths) {
-    CheckinEnvironment ce = myPlatformFacade.getVcs(myProject).getCheckinEnvironment();
-    String message = ce == null ? null : ce.getDefaultMessageFor(ArrayUtil.toObjectArray(paths, FilePath.class));
-    message = message == null ? commit.getDescription() + "\n(cherry-picked from " + commit.getShortHash().getString() + ")" : message;
-    return message;
+  private static String createCommitMessage(@NotNull GitCommit commit) {
+    // make sure there is an empty line after description
+    String spaces;
+    if (commit.getDescription().endsWith("\n\n")) {
+      spaces = "";
+    }
+    else if (commit.getDescription().endsWith("\n")) {
+      spaces = "\n";
+    }
+    else {
+      spaces = "\n\n";
+    }
+    return commit.getDescription() + spaces + "(cherry-picked from " + commit.getShortHash().getString() + ")";
   }
 
   private boolean showCommitDialogAndWaitForCommit(@NotNull final GitRepository repository, @NotNull final GitCommitWrapper commit,
