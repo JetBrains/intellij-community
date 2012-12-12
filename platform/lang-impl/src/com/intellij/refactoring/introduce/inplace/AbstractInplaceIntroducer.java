@@ -397,11 +397,14 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   protected void collectAdditionalElementsToRename(List<Pair<PsiElement, TextRange>> stringUsages) {
     if (isReplaceAllOccurrences()) {
       for (E expression : getOccurrences()) {
+        LOG.assertTrue(expression.isValid(), expression.getText());
         stringUsages.add(Pair.<PsiElement, TextRange>create(expression, new TextRange(0, expression.getTextLength())));
       }
     }  else if (getExpr() != null) {
       correctExpression();
-      stringUsages.add(Pair.<PsiElement, TextRange>create(getExpr(), new TextRange(0, getExpr().getTextLength())));
+      final E expr = getExpr();
+      LOG.assertTrue(expr.isValid(), expr.getText());
+      stringUsages.add(Pair.<PsiElement, TextRange>create(expr, new TextRange(0, expr.getTextLength())));
     }
 
     final V localVariable = getLocalVariable();

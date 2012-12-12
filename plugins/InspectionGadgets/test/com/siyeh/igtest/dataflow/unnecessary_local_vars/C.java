@@ -20,4 +20,9 @@ class C {
       System.out.println(r2 + r3);
     }
   }
+  
+  int boxing(Long l) {
+    long ll = l;
+    return (int) ll;
+  }
 }

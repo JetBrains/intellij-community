@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -160,6 +161,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
           return false;
         }
       }
+      if (TypeConversionUtil.boxingConversionApplicable(variable.getType(), ((PsiVariable)referent).getType())) return false;
       return true;
     }
 

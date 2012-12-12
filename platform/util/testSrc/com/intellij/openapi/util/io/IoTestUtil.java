@@ -115,7 +115,7 @@ public class IoTestUtil {
     final int res = runCommand(command);
     assertEquals(command.command().toString(), 0, res);
 
-    final File rootFile = new File(substRoot);
+    final File rootFile = new File(substRoot + "\\");
     assertTrue("target=" + target + ", subst=" + rootFile, rootFile.isDirectory());
     return rootFile;
   }
