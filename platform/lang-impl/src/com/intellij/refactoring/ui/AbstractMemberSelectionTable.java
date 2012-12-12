@@ -213,7 +213,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     }
   }
 
-  private static class MyTableModel<T extends PsiElement, M extends MemberInfoBase<T>> extends AbstractTableModel {
+  protected static class MyTableModel<T extends PsiElement, M extends MemberInfoBase<T>> extends AbstractTableModel {
     private final AbstractMemberSelectionTable<T, M> myTable;
 
     public MyTableModel(AbstractMemberSelectionTable<T, M> table) {
