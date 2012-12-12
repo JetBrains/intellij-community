@@ -1,7 +1,6 @@
 package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
