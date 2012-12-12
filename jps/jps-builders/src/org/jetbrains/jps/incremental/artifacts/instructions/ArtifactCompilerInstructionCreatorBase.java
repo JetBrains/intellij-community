@@ -56,8 +56,9 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
 
   @Override
   public void addExtractDirectoryInstruction(@NotNull File jarFile, @NotNull String pathInJar) {
+    final boolean copyExcluded = myInstructionsBuilder.getRootsIndex().isExcluded(jarFile);
     final SourceFileFilterImpl filter = new SourceFileFilterImpl(null, myInstructionsBuilder.getRootsIndex(),
-                                                                 myInstructionsBuilder.getIgnoredFileIndex(), false);
+                                                                 myInstructionsBuilder.getIgnoredFileIndex(), copyExcluded);
     DestinationInfo destination = createDirectoryDestination();
     if (destination != null) {
       ArtifactRootDescriptor descriptor = myInstructionsBuilder.createJarBasedRoot(jarFile, pathInJar, filter, destination);
