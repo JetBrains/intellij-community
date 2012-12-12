@@ -107,4 +107,10 @@ public class UseJBColorInspection extends DevKitInspectionBase {
   public String getDisplayName() {
     return "Use Darcula aware JBColor";
   }
+
+  @NotNull
+  @Override
+  public String getShortName() {
+    return "UseJBColor";
+  }
 }
