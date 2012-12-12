@@ -20,6 +20,12 @@ import static org.hanuna.gitalk.graph.mutable_graph.MutableGraphUtils.createEdge
  * @author erokhins
  */
 public class GraphBuilder {
+
+    public static Graph build(ReadOnlyList<Commit> commits) {
+        GraphBuilder builder = new GraphBuilder();
+        return builder.runBuild(commits);
+    }
+
     private int lastLogIndex;
     private Map<Hash, MutableNode> notAddedNodes = new HashMap<Hash, MutableNode>();
     private MutableNodeRow nextRow;
@@ -118,7 +124,7 @@ public class GraphBuilder {
     }
 
     @NotNull
-    public Graph build(ReadOnlyList<Commit> commits) {
+    public Graph runBuild(ReadOnlyList<Commit> commits) {
         prepare(commits.size() - 1);
         for (Commit commit : commits) {
             append(commit);

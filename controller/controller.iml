@@ -10,6 +10,7 @@
     <orderEntry type="module" module-name="graph" />
     <orderEntry type="module" module-name="common" />
     <orderEntry type="module" module-name="commits" />
+    <orderEntry type="module" module-name="refs" />
   </component>
 </module>
 
