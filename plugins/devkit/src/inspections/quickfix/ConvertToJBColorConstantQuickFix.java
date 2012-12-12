@@ -45,7 +45,7 @@ public class ConvertToJBColorConstantQuickFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "DevKit";
+    return "Convert to JBColor";
   }
 
   @Override
