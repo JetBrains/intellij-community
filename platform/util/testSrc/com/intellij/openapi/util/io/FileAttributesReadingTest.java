@@ -307,6 +307,13 @@ public class FileAttributesReadingTest {
       final FileAttributes attributes = getAttributes(substRoot);
       assertEquals(FileAttributes.Type.DIRECTORY, attributes.type);
       assertDirectoriesEqual(substRoot);
+
+      final File[] children = substRoot.listFiles();
+      assertNotNull(children);
+      assertEquals(1, children.length);
+      final File file = children[0];
+      final String target = FileSystemUtil.resolveSymLink(file);
+      assertEquals(file.getPath(), target);
     }
     finally {
       IoTestUtil.deleteSubst(substRoot.getPath());
