@@ -57,6 +57,8 @@ public abstract class AbstractVcsTestCase {
   protected IdeaProjectTestFixture myProjectFixture;
   protected boolean myInitChangeListManager = true;
 
+  protected abstract String getPluginName();
+
   protected TestClientRunner createClientRunner() {
     return createClientRunner(null);
   }
@@ -86,25 +88,39 @@ public abstract class AbstractVcsTestCase {
   }
 
   protected void initProject(final File clientRoot, String testName) throws Exception {
-    String name = getClass().getName() + "." + testName;
-    final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name);
-    myProjectFixture = testFixtureBuilder.getFixture();
-    testFixtureBuilder.addModule(EmptyModuleFixtureBuilder.class).addContentRoot(clientRoot.toString());
-    myProjectFixture.setUp();
-    myProject = myProjectFixture.getProject();
-
-    if (myInitChangeListManager) {
-      ((ProjectComponent) ChangeListManager.getInstance(myProject)).projectOpened();
-    }
-    ((ProjectComponent) VcsDirtyScopeManager.getInstance(myProject)).projectOpened();
-
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        myWorkingCopyDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(clientRoot);
-        assert myWorkingCopyDir != null;
+    final String key = "idea.load.plugins.id";
+    final String was = System.getProperty(key);
+    try {
+      final String pluginName = getPluginName();
+      if (pluginName != null) {
+        System.setProperty(key, pluginName);
       }
-    });
+      String name = getClass().getName() + "." + testName;
+      final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name);
+      myProjectFixture = testFixtureBuilder.getFixture();
+      testFixtureBuilder.addModule(EmptyModuleFixtureBuilder.class).addContentRoot(clientRoot.toString());
+      myProjectFixture.setUp();
+      myProject = myProjectFixture.getProject();
+
+      if (myInitChangeListManager) {
+        ((ProjectComponent) ChangeListManager.getInstance(myProject)).projectOpened();
+      }
+      ((ProjectComponent) VcsDirtyScopeManager.getInstance(myProject)).projectOpened();
+
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          myWorkingCopyDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(clientRoot);
+          assert myWorkingCopyDir != null;
+        }
+      });
+    } finally {
+      if (was != null) {
+        System.setProperty(key, was);
+      } else {
+        System.clearProperty(key);
+      }
+    }
   }
 
   protected void activateVCS(final String vcsName) {

@@ -21,9 +21,9 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.testFramework.vcs.AbstractVcsTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
+import com.intellij.testFramework.vcs.AbstractVcsTestCase;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitVcs;
@@ -103,6 +103,11 @@ public abstract class GitTest extends AbstractVcsTestCase {
         }
       }
     });
+  }
+
+  @Override
+  protected String getPluginName() {
+    return "Git4Idea";
   }
 
   private void initRepositories() throws Exception {
