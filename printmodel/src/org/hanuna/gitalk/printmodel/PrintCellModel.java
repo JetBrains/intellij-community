@@ -19,7 +19,7 @@ public class PrintCellModel {
     }
 
     private ReadOnlyList<ShortEdge> getUpEdges(int rowIndex) {
-        PrePrintCell prevPre = new PrePrintCell(layoutModel, rowIndex, selectController);
+        PrePrintCell prevPre = new PrePrintCell(layoutModel, rowIndex - 1, selectController);
         return prevPre.downShortEdges();
     }
 
