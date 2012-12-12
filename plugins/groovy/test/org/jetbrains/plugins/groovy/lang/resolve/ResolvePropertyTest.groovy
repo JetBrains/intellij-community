@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -909,5 +909,41 @@ enum MyEnum {
 }
 ''')
     assertNotNull(ref)
+  }
+
+  void testSpreadWithIterator() {
+    final PsiReference ref = configureByText('''\
+class Person { String name }
+class Twin {
+    Person one, two
+    def iterator() {
+        return [one, two].iterator()
+    }
+}
+
+def tw = new Twin(one: new Person(name:'Tom'),
+                  two: new Person(name:'Tim'))
+assert tw*.nam<caret>e == ['Tom', 'Tim']
+''')
+
+    final resolved = ref.resolve()
+
+    assertInstanceOf(resolved, PsiMember)
+    assertNotNull(resolved.containingClass)
+    assertEquals('Person', resolved.containingClass.name)
+  }
+
+  void testAutoSpread() {
+    def ref = configureByText('''\
+class A {
+    String getString() {return "a";}
+}
+
+println ([[new A()]].stri<caret>ng)
+''')
+
+    final resolved = ref.resolve()
+
+    assertNotNull(resolved)
   }
 }

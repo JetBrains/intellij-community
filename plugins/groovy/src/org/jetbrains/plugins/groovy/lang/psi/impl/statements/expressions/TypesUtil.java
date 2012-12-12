@@ -263,7 +263,7 @@ public class TypesUtil {
 
     if (lType instanceof PsiArrayType) {
       PsiType lComponentType = ((PsiArrayType)lType).getComponentType();
-      PsiType rComponentType = ClosureParameterEnhancer.findTypeForIteration(rType, manager, scope);
+      PsiType rComponentType = ClosureParameterEnhancer.findTypeForIteration(rType, context);
       if (rComponentType != null && isAssignable(lComponentType, rComponentType, context)) {
         return true;
       }
