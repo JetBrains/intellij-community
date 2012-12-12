@@ -65,9 +65,10 @@ public class AnActionEvent implements PlaceProvider<String> {
     myModifiers = modifiers;
   }
 
-  public static AnActionEvent createFromInputEvent(AnAction action, InputEvent event, String place) {
-    DataContext context = event != null ? DataManager.getInstance().getDataContext(event.getComponent()) : DataManager.getInstance().getDataContext();
-    int modifiers = event != null ? event.getModifiers() : 0;
+  @NotNull
+  public static AnActionEvent createFromInputEvent(@NotNull AnAction action, InputEvent event, @NotNull String place) {
+    DataContext context = event == null ? DataManager.getInstance().getDataContext() : DataManager.getInstance().getDataContext(event.getComponent());
+    int modifiers = event == null ? 0 : event.getModifiers();
     return new AnActionEvent(
       event,
       context,
