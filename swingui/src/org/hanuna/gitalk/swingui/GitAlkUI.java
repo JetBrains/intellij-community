@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.swingui;
 
-import org.hanuna.gitalk.controller.Controller;
+import org.hanuna.gitalk.controller.UI_Controller;
 import org.hanuna.gitalk.controller.EventsController;
 import org.hanuna.gitalk.controller.GraphTableCell;
 import org.hanuna.gitalk.graph.graph_elements.GraphElement;
@@ -19,9 +19,9 @@ public class GitAlkUI extends JFrame {
     private JTable table;
     private final DrawGraphTableCell drawGraph = new SimpleDrawGraphTableCell();
     private final MouseAdapter mouseAdapter = new MyMouseAdapter();
-    private final Controller controller;
+    private final UI_Controller controller;
 
-    public GitAlkUI(Controller controller) {
+    public GitAlkUI(UI_Controller controller) {
         this.controller = controller;
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setTitle("GitAlk");

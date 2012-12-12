@@ -26,7 +26,7 @@ import static org.hanuna.gitalk.controller.EventsController.ControllerListener;
 /**
  * @author erokhins
  */
-public class Controller {
+public class UI_Controller {
     private final Graph graph;
     private final SelectController selectController;
     private final PrintCellModel printCellModel;
@@ -36,7 +36,7 @@ public class Controller {
 
     private GraphElement prevGraphElement = null;
 
-    public Controller(Graph graph, RefsModel refsModel) {
+    public UI_Controller(Graph graph, RefsModel refsModel) {
         this.graph = graph;
         this.fragmentController = graph.getFragmentController();
         this.refsModel = refsModel;
