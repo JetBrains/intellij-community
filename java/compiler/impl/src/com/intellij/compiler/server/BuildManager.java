@@ -32,6 +32,7 @@ import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -292,6 +293,10 @@ public class BuildManager implements ApplicationComponent{
         }
       }
     });
+  }
+
+  public static void forceModelLoading(CompileContext context) {
+    context.getCompileScope().putUserData(BuildMain.FORCE_MODEL_LOADING_PARAMETER, Boolean.TRUE.toString());
   }
 
   public void clearState(Project project) {
