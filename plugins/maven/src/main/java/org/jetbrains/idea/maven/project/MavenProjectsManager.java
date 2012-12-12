@@ -968,7 +968,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         if (myProject.isDisposed()) return;
 
         MavenFoldersImporter.updateProjectFolders(myProject, targetFoldersOnly);
-        VirtualFileManager.getInstance().syncRefresh();
+        VirtualFileManager.getInstance().asyncRefresh(null);
       }
     });
   }
