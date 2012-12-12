@@ -1,9 +1,10 @@
 package org.hanuna.gitalk.swingui;
 
 import org.hanuna.gitalk.controller.Controller;
+import org.hanuna.gitalk.controller.EventsController;
 import org.hanuna.gitalk.controller.GraphTableCell;
+import org.hanuna.gitalk.graph.graph_elements.GraphElement;
 import org.hanuna.gitalk.printmodel.PrintCell;
-import org.hanuna.gitalk.printmodel.cells.Cell;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -37,6 +38,19 @@ public class GitAlkUI extends JFrame {
         table.addMouseMotionListener(mouseAdapter);
         table.addMouseListener(mouseAdapter);
 
+        controller.addControllerListener(new EventsController.ControllerListener() {
+            @Override
+            public void jumpToRow(int rowIndex) {
+                table.scrollRectToVisible(new Rectangle(table.getCellRect(rowIndex, 0, false)));
+                table.setRowSelectionInterval(rowIndex, rowIndex);
+            }
+
+            @Override
+            public void updateTable() {
+                table.updateUI();
+            }
+        });
+
         getContentPane().add(new JScrollPane(table));
         pack();
     }
@@ -47,28 +61,22 @@ public class GitAlkUI extends JFrame {
 
     private class MyMouseAdapter extends MouseAdapter {
         @Nullable
-        private Cell overCell(MouseEvent e) {
+        private GraphElement overCell(MouseEvent e) {
             int rowIndex = e.getY() / GraphTableCell.HEIGHT_CELL;
             int y = e.getY() - rowIndex * GraphTableCell.HEIGHT_CELL;
             int x = e.getX();
-            PrintCell row = controller.getPrintRow(rowIndex);
+            PrintCell row = controller.getGraphPrintCell(rowIndex);
             return drawGraph.mouseOver(row, x, y);
         }
 
         @Override
         public void mouseClicked(MouseEvent e) {
-            int jumpToIndex = controller.click(overCell(e));
-            if (jumpToIndex >= 0) {
-                table.scrollRectToVisible(new Rectangle(table.getCellRect(jumpToIndex, 0, false)));
-                table.setRowSelectionInterval(jumpToIndex, jumpToIndex);
-            }
-            table.updateUI();
+           controller.click(overCell(e));
         }
 
         @Override
         public void mouseMoved(MouseEvent e) {
             controller.over(overCell(e));
-            table.updateUI();
         }
     }
 

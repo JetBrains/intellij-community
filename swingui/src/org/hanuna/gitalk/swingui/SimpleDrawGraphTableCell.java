@@ -1,13 +1,11 @@
 package org.hanuna.gitalk.swingui;
 
 import org.hanuna.gitalk.graph.graph_elements.Edge;
+import org.hanuna.gitalk.graph.graph_elements.GraphElement;
 import org.hanuna.gitalk.graph.graph_elements.Node;
 import org.hanuna.gitalk.printmodel.PrintCell;
 import org.hanuna.gitalk.printmodel.ShortEdge;
 import org.hanuna.gitalk.printmodel.SpecialCell;
-import org.hanuna.gitalk.printmodel.cells.Cell;
-import org.hanuna.gitalk.printmodel.cells.EdgeCell;
-import org.hanuna.gitalk.printmodel.cells.NodeCell;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -98,28 +96,31 @@ public class SimpleDrawGraphTableCell implements DrawGraphTableCell {
         this.g2 = g2;
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         for (ShortEdge edge : row.getUpEdges()) {
-            setStroke(edge.isUsual(), edge.isSelect());
+            setStroke(edge.isUsual(), edge.isSelected());
             paintUpLine(edge.getDownPosition(), edge.getUpPosition(), ColorGenerator.getColor(edge.getEdge().getBranch()));
         }
         for (ShortEdge edge : row.getDownEdges()) {
-            setStroke(edge.isUsual(), edge.isSelect());
+            setStroke(edge.isUsual(), edge.isSelected());
             paintDownLine(edge.getUpPosition(), edge.getDownPosition(), ColorGenerator.getColor(edge.getEdge().getBranch()));
         }
         for (SpecialCell cell : row.getSpecialCell()) {
             Edge edge;
             switch (cell.getType()) {
                 case COMMIT_NODE:
-                    Node node = ((NodeCell) cell.getCell()).getNode();
-                    paintCircle(cell.getPosition(), ColorGenerator.getColor(node.getBranch()), node.selected());
+                    Node node = cell.getGraphElement().getNode();
+                    assert node != null;
+                    paintCircle(cell.getPosition(), ColorGenerator.getColor(node.getBranch()), cell.isSelected());
                     break;
                 case SHOW_EDGE:
-                    edge = ((EdgeCell) cell.getCell()).getEdge();
-                    setStroke(edge.getType() == Edge.Type.USUAL, edge.selected());
+                    edge = cell.getGraphElement().getEdge();
+                    assert edge != null;
+                    setStroke(edge.getType() == Edge.Type.USUAL, cell.isSelected());
                     paintShow(cell.getPosition(), ColorGenerator.getColor(edge.getBranch()));
                     break;
                 case HIDE_EDGE:
-                    edge = ((EdgeCell) cell.getCell()).getEdge();
-                    setStroke(edge.getType() == Edge.Type.USUAL, edge.selected());
+                    edge = cell.getGraphElement().getEdge();
+                    assert edge != null;
+                    setStroke(edge.getType() == Edge.Type.USUAL, cell.isSelected());
                     paintHide(cell.getPosition(), ColorGenerator.getColor(edge.getBranch()));
                     break;
                 default:
@@ -160,22 +161,22 @@ public class SimpleDrawGraphTableCell implements DrawGraphTableCell {
 
     @Nullable
     @Override
-    public Cell mouseOver(PrintCell row, int x, int y) {
+    public GraphElement mouseOver(PrintCell row, int x, int y) {
         for (SpecialCell cell : row.getSpecialCell()) {
             if (cell.getType() == SpecialCell.Type.COMMIT_NODE) {
                 if (overNode(cell.getPosition(), x, y)) {
-                    return cell.getCell();
+                    return cell.getGraphElement();
                 }
             }
         }
         for (ShortEdge edge : row.getUpEdges()) {
             if (overUpEdge(edge, x, y)) {
-                return new EdgeCell(edge.getEdge());
+                return edge.getEdge();
             }
         }
         for (ShortEdge edge : row.getDownEdges()) {
             if (overDownEdge(edge, x, y)) {
-                return new EdgeCell(edge.getEdge());
+                return edge.getEdge();
             }
         }
 
