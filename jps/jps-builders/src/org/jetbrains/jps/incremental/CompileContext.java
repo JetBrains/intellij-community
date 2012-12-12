@@ -54,6 +54,4 @@ public interface CompileContext extends UserDataHolder, MessageHandler {
   void markNonIncremental(ModuleBuildTarget target);
 
   void clearNonIncrementalMark(ModuleBuildTarget target);
-
-  FSCache getFSCache();
 }

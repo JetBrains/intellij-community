@@ -265,11 +265,15 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
 
     final Timestamps timestamps = pd.timestamps.getStorage();
-
+    boolean cacheCleared = false;
     for (String deleted : event.getDeletedPathsList()) {
       final File file = new File(deleted);
       Collection<BuildRootDescriptor> descriptor = pd.getBuildRootIndex().findAllParentDescriptors(file, null, null);
       if (!descriptor.isEmpty()) {
+        if (!cacheCleared) {
+          pd.getFSCache().clear();
+          cacheCleared = true;
+        }
         if (Utils.IS_TEST_MODE) {
           LOG.info("Applying deleted path from fs event: " + file.getPath());
         }
@@ -296,6 +300,10 @@ final class BuildSession implements Runnable, CanceledStatus {
             }
             long stamp = timestamps.getStamp(file, descriptor.getTarget());
             if (stamp != fileStamp) {
+              if (!cacheCleared) {
+                pd.getFSCache().clear();
+                cacheCleared = true;
+              }
               pd.fsState.markDirty(null, file, descriptor, timestamps, saveEventStamp);
             }
           }
