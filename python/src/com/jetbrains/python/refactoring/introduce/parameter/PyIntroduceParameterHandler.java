@@ -1,15 +1,14 @@
 package com.jetbrains.python.refactoring.introduce.parameter;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
@@ -60,24 +59,25 @@ public class PyIntroduceParameterHandler extends IntroduceHandler {
     return PyPsiUtils.replaceExpression(expression, newExpression);
   }
 
-  @Override
-  protected boolean checkIntroduceContext(PsiFile file, Editor editor, PsiElement element) {
+  protected boolean isValidIntroduceContext(PsiElement element) {
     if (element != null) {
       final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
-      if (function == null) {
-        CommonRefactoringUtil.showErrorHint(file.getProject(), editor,
-                                            "Introduce Parameter refactoring cannot be performed outside any function",
-                                            RefactoringBundle.message("introduce.parameter.title"), null);
-        return false;
+      final ScopeOwner scopeOwner =  ScopeUtil.getScopeOwner(element);
+      final boolean[] isValid = {true};
+      if (scopeOwner != null) {
+        new PyRecursiveElementVisitor() {
+          @Override
+          public void visitPyReferenceExpression(PyReferenceExpression node) {
+            super.visitPyReferenceExpression(node);
+            if (ControlFlowCache.getScope(scopeOwner).containsDeclaration(node.getName())) {
+              isValid[0] = false;
+            }
+          }
+        }.visitElement(element);
       }
-      if (isResolvedToParameter(element)) {
-        CommonRefactoringUtil.showErrorHint(file.getProject(), editor,
-                                            PyBundle.message("refactoring.introduce.selection.error"),
-                                            RefactoringBundle.message("introduce.parameter.title"), null);
-        return false;
-      }
+      return function != null && !isResolvedToParameter(element) && isValid[0];
     }
-    return super.checkIntroduceContext(file, editor, element);
+    return false;
   }
 
   private boolean isResolvedToParameter(PsiElement element) {
