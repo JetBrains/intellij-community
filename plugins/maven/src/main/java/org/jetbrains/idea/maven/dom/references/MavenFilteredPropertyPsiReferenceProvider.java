@@ -102,6 +102,11 @@ public class MavenFilteredPropertyPsiReferenceProvider extends PsiReferenceProvi
   @NotNull
   @Override
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+    if (element.getFirstChild() != element.getLastChild()) {
+      // Add reference to element with one child or leaf element only to avoid performance problem.
+      return PsiReference.EMPTY_ARRAY;
+    }
+
     if (!MavenDomUtil.isFilteredResourceFile(element)) return PsiReference.EMPTY_ARRAY;
 
     String text = element.getText();
