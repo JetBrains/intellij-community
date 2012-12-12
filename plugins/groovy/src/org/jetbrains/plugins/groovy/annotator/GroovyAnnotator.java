@@ -149,19 +149,16 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   @Override
   public void visitTypeArgumentList(GrTypeArgumentList typeArgumentList) {
     PsiElement parent = typeArgumentList.getParent();
-    final PsiElement resolved;
-    if (parent instanceof GrReferenceElement) {
-      resolved = ((GrReferenceElement)parent).resolve();
-    }
-    else {
-      resolved = null;
-    }
+    if (!(parent instanceof GrReferenceElement)) return;
+
+    final GroovyResolveResult resolveResult = ((GrReferenceElement)parent).advancedResolve();
+    final PsiElement resolved = resolveResult.getElement();
+    final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
 
     if (resolved == null) return;
 
     if (!(resolved instanceof PsiTypeParameterListOwner)) {
-      //myHolder.createErrorAnnotation(typeArgumentList, GroovyBundle.message("type.argument.list.is.no.a"))
-      //todo correct error description
+      myHolder.createWarningAnnotation(typeArgumentList, GroovyBundle.message("type.argument.list.is.not.allowed.here"));
       return;
     }
 
@@ -173,8 +170,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     final GrTypeElement[] arguments = typeArgumentList.getTypeArgumentElements();
 
     if (arguments.length != parameters.length) {
-      myHolder.createErrorAnnotation(typeArgumentList,
-                                     GroovyBundle.message("wrong.number.of.type.arguments", arguments.length, parameters.length));
+      myHolder.createWarningAnnotation(typeArgumentList,
+                                       GroovyBundle.message("wrong.number.of.type.arguments", arguments.length, parameters.length));
       return;
     }
 
@@ -183,8 +180,9 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       final PsiClassType[] superTypes = parameter.getExtendsListTypes();
       final PsiType argType = arguments[i].getType();
       for (PsiClassType superType : superTypes) {
-        if (!superType.isAssignableFrom(argType)) {
-          myHolder.createErrorAnnotation(arguments[i], GroovyBundle
+        final PsiType substitutedSuper = substitutor.substitute(superType);
+        if (substitutedSuper != null && !substitutedSuper.isAssignableFrom(argType)) {
+          myHolder.createWarningAnnotation(arguments[i], GroovyBundle
             .message("type.argument.0.is.not.in.its.bound.should.extend.1", argType.getCanonicalText(), superType.getCanonicalText()));
           break;
         }
