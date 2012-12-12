@@ -301,7 +301,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     List<String> pathList = new ArrayList<String>();
     final SdkAdditionalData sdkAdditionalData = pythonSdk.getSdkAdditionalData();
     if (sdkAdditionalData instanceof PythonSdkAdditionalData) {
-      final Set<VirtualFile> addedPaths = ((PythonSdkAdditionalData)sdkAdditionalData).getAddedPaths();
+      final Set<VirtualFile> addedPaths = ((PythonSdkAdditionalData)sdkAdditionalData).getAddedPathFiles();
       for (VirtualFile file : addedPaths) {
         addToPythonPath(file, pathList);
       }

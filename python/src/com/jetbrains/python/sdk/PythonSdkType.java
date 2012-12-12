@@ -599,15 +599,12 @@ public class PythonSdkType extends SdkType {
 
   public static void updateUserAddedPaths(Sdk sdk, SdkModificator sdkModificator, ProgressIndicator indicator)
     throws InvalidSdkException {
-    Application application = ApplicationManager.getApplication();
-    boolean not_in_unit_test_mode = (application != null && !application.isUnitTestMode());
-
     if (indicator != null) {
       indicator.setText("Adding user-added roots");
     }
     SdkAdditionalData data = sdk.getSdkAdditionalData();
     if (data instanceof PythonSdkAdditionalData) {
-      for (VirtualFile file : ((PythonSdkAdditionalData)data).getAddedPaths()) {
+      for (VirtualFile file : ((PythonSdkAdditionalData)data).getAddedPathFiles()) {
         addSdkRoot(sdkModificator, file);
       }
     }
