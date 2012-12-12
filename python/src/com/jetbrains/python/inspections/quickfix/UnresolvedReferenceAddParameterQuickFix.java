@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * QuickFix to add parameter to unresolved reference
  */
-public class UnresolvedReferenceAddParameterQuickFix implements LocalQuickFix, HighPriorityAction {
+public class UnresolvedReferenceAddParameterQuickFix implements LocalQuickFix {
   private String myName;
   public UnresolvedReferenceAddParameterQuickFix(String name) {
     myName = name;
