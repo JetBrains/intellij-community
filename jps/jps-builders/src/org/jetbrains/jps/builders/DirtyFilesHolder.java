@@ -26,6 +26,8 @@ import java.util.Collection;
 public interface DirtyFilesHolder<R extends BuildRootDescriptor, T extends BuildTarget<R>> {
   void processDirtyFiles(@NotNull FileProcessor<R, T> processor) throws IOException;
 
+  boolean hasDirtyFiles() throws IOException;
+
   boolean hasRemovedFiles();
 
   @NotNull

@@ -38,7 +38,6 @@ import org.jetbrains.jps.android.model.JpsAndroidSdkProperties;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
-import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ExternalProcessUtil;
@@ -77,19 +76,9 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor, Androi
     if (AndroidJpsUtil.isLightBuild(context)) {
       return;
     }
-    final boolean[] hasDirtyFiles = {false};
-
-    holder.processDirtyFiles(new FileProcessor<BuildRootDescriptor, AndroidDexBuildTarget>() {
-      @Override
-      public boolean apply(AndroidDexBuildTarget target, File file, BuildRootDescriptor root) throws IOException {
-        assert target == buildTarget;
-        hasDirtyFiles[0] = true;
-        return false;
-      }
-    });
 
     try {
-      if (!doDexBuild(buildTarget, context, hasDirtyFiles[0])) {
+      if (!doDexBuild(buildTarget, context, holder.hasDirtyFiles())) {
         throw new ProjectBuildException();
       }
     }
