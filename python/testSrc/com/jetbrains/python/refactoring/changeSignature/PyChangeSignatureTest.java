@@ -91,6 +91,12 @@ public class PyChangeSignatureTest extends PyTestCase {
     doChangeSignatureTest("m1", Arrays.asList(new PyParameterInfo(0, "self", null, false)));
   }
 
+  public void testDuplicateParam() {
+    doChangeSignatureTest("some_function_name", Arrays.asList(new PyParameterInfo(0, "argument_1", null, false),
+                                                              new PyParameterInfo(2, "opt2", "None", true),
+                                                              new PyParameterInfo(3, "**extra_info", null, false)));
+  }
+
   public void testEmptyParameterName() {
     doValidationTest(null, Arrays.asList(new PyParameterInfo(-1, "", "2", true)),
                      PyBundle.message("refactoring.change.signature.dialog.validation.parameter.name"));
