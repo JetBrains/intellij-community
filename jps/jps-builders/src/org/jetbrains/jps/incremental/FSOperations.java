@@ -150,7 +150,7 @@ public class FSOperations {
       if (filter == null) {
         context.getProjectDescriptor().fsState.clearRecompile(rd);
       }
-      final FSCache fsCache = rd.canUseFileCache() ? context.getFSCache() : FSCache.NO_CACHE;
+      final FSCache fsCache = rd.canUseFileCache() ? context.getProjectDescriptor().getFSCache() : FSCache.NO_CACHE;
       traverseRecursively(context, rd, rd.getRootFile(), timestamps, forceMarkDirty, currentFiles, filter, fsCache);
     }
   }
