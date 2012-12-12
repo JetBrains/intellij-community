@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixBase;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -31,20 +31,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Konstantin Bulenkov
  */
-public class ConvertToJBColorQuickFix implements LocalQuickFix {
+public class ConvertToJBColorQuickFix extends LocalQuickFixBase {
   public ConvertToJBColorQuickFix() {
-  }
-
-  @NotNull
-  @Override
-  public String getName() {
-    return "Convert to JBColor";
-  }
-
-  @NotNull
-  @Override
-  public String getFamilyName() {
-    return getName();
+    super("Convert to JBColor");
   }
 
   @Override
