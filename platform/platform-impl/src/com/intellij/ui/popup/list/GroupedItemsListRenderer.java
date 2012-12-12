@@ -25,8 +25,6 @@ import javax.swing.*;
 import java.awt.*;
 
 public class GroupedItemsListRenderer extends GroupedElementsRenderer.List implements ListCellRenderer {
-
-
   protected ListItemDescriptor myDescriptor;
 
   protected JLabel myNextStepLabel;
@@ -40,20 +38,22 @@ public class GroupedItemsListRenderer extends GroupedElementsRenderer.List imple
     myDescriptor = descriptor;
   }
 
+  @Override
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
     String caption = myDescriptor.getCaptionAboveOf(value);
     boolean hasSeparator = myDescriptor.hasSeparatorAboveOf(value);
     if (index == 0 && StringUtil.isEmptyOrSpaces(caption)) hasSeparator = false;
 
+    Icon icon = myDescriptor.getIconFor(value);
     final JComponent result = configureComponent(myDescriptor.getTextFor(value), myDescriptor.getTooltipFor(value),
-                                                 myDescriptor.getIconFor(value), myDescriptor.getIconFor(value), isSelected, hasSeparator,
+                                                 icon, icon, isSelected, hasSeparator,
                                                  caption, -1);
-
     customizeComponent(list, value, isSelected);
     return result;
   }
 
 
+  @Override
   protected JComponent createItemComponent() {
     myTextLabel = new ErrorLabel();
     myTextLabel.setOpaque(true);

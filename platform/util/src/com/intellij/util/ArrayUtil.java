@@ -437,21 +437,21 @@ public class ArrayUtil extends ArrayUtilRt {
     return indexOf(src, obj);
   }
 
-  public static boolean startsWith(byte[] array, byte[] subArray) {
-    if (array == subArray) {
+  public static boolean startsWith(byte[] array, byte[] prefix) {
+    if (array == prefix) {
       return true;
     }
-    if (array == null || subArray == null) {
+    if (array == null || prefix == null) {
       return false;
     }
 
-    int length = subArray.length;
+    int length = prefix.length;
     if (array.length < length) {
       return false;
     }
 
     for (int i = 0; i < length; i++) {
-      if (array[i] != subArray[i]) {
+      if (array[i] != prefix[i]) {
         return false;
       }
     }
