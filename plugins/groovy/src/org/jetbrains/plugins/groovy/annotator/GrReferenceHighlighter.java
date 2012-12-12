@@ -29,8 +29,11 @@ import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnr
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -73,6 +76,20 @@ public class GrReferenceHighlighter extends TextEditorHighlightingPass {
           myInfos.add(info);
         }
       }
+
+      @Override
+      public void visitVariable(GrVariable variable) {
+        super.visitVariable(variable);
+
+        if (GroovyRefactoringUtil.isLocalVariable(variable) || variable instanceof GrParameter) {
+          final TextAttributesKey attribute = GrHighlightUtil.getDeclarationHighlightingAttribute(variable);
+          if (attribute != null) {
+            final PsiElement nameElement = variable.getNameIdentifierGroovy();
+            myInfos.add(HighlightInfo.createHighlightInfo(HighlightInfoType.INFORMATION, nameElement, null, attribute));
+          }
+        }
+      }
+
 
       private void visit(GrReferenceElement element) {
         final PsiElement resolved = element.resolve();
