@@ -15,14 +15,16 @@
  */
 package org.jetbrains.idea.svn16;
 
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.testFramework.vcs.DuringChangeListManagerUpdateTestScheme;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.vcs.DuringChangeListManagerUpdateTestScheme;
+import junit.framework.Assert;
 import org.junit.Test;
 
 import java.util.Collection;
@@ -63,6 +65,54 @@ public class SvnConcurrentChangeListManagerTest extends Svn16TestCase {
 
     changeListManager.ensureUpToDate(false);
     checkFilesAreInList(new VirtualFile[] {file}, newName, changeListManager);
+  }
+
+  @Test
+  public void testSwitchedFileAndFolder() throws Exception {
+    final String branchUrl = prepareBranchesStructure();
+
+    final SubTree tree = new SubTree(myWorkingCopyDir);
+
+    verify(runSvn("switch", branchUrl + "/root/source/s1.txt", tree.myS1File.getPath()));
+    verify(runSvn("switch", branchUrl + "/root/target", tree.myTargetDir.getPath()));
+
+    final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
+    changeListManager.ensureUpToDate(false);
+
+    final Runnable check = new Runnable() {
+      @Override
+      public void run() {
+        Assert.assertEquals(FileStatus.SWITCHED, changeListManager.getStatus(tree.myS1File));
+        Assert.assertEquals(FileStatus.NOT_CHANGED, changeListManager.getStatus(tree.myS2File));
+        Assert.assertEquals(FileStatus.NOT_CHANGED, changeListManager.getStatus(tree.mySourceDir));
+        Assert.assertEquals(FileStatus.SWITCHED, changeListManager.getStatus(tree.myTargetDir));
+        Assert.assertEquals(FileStatus.SWITCHED, changeListManager.getStatus(tree.myTargetFiles.get(1)));
+      }
+    };
+    myScheme.doTest(check);
+
+    changeListManager.ensureUpToDate(false);
+    check.run();
+
+    editFileInCommand(myProject, tree.myS1File, "1234543534543 3543 ");
+    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
+    changeListManager.ensureUpToDate(false);
+
+    final Runnable check2 = new Runnable() {
+      @Override
+      public void run() {
+        Assert.assertEquals(FileStatus.MODIFIED, changeListManager.getStatus(tree.myS1File));
+        Assert.assertEquals(FileStatus.NOT_CHANGED, changeListManager.getStatus(tree.myS2File));
+        Assert.assertEquals(FileStatus.NOT_CHANGED, changeListManager.getStatus(tree.mySourceDir));
+        Assert.assertEquals(FileStatus.SWITCHED, changeListManager.getStatus(tree.myTargetDir));
+        Assert.assertEquals(FileStatus.SWITCHED, changeListManager.getStatus(tree.myTargetFiles.get(1)));
+      }
+    };
+    myScheme.doTest(check2);
+
+    changeListManager.ensureUpToDate(false);
+    check2.run();
   }
 
   @Test

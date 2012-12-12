@@ -77,7 +77,7 @@ public class SwitchedFileHolder extends RecursiveFileHolder<Pair<Boolean, String
   public synchronized boolean containsFile(final VirtualFile file) {
     final VirtualFile floor = myMap.floorKey(file);
     if (floor == null) return false;
-    final SortedMap<VirtualFile, Pair<Boolean, String>> floorMap = myMap.headMap(floor);
+    final SortedMap<VirtualFile, Pair<Boolean, String>> floorMap = myMap.headMap(floor, true);
     for (VirtualFile parent : floorMap.keySet()) {
       if (VfsUtil.isAncestor(parent, file, false)) {
         final Pair<Boolean, String> value = floorMap.get(parent);

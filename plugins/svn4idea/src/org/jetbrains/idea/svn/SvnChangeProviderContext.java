@@ -349,6 +349,7 @@ class SvnChangeProviderContext implements StatusReceiver {
   }
 
   private FileStatus correctContentsStatus(final FileStatus fs, final SVNStatus svnStatus) throws SVNException {
+    //if (svnStatus.isSwitched()) return FileStatus.SWITCHED;
     return fs;
     //return SvnStatusConvertor.convertContentsStatus(svnStatus);
   }
