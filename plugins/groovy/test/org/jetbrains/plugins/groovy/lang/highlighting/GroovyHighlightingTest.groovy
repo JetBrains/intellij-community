@@ -408,9 +408,9 @@ private def handleImplicitBind(arg) {
   public void testIncorrectTypeArguments() {
     myFixture.configureByText('_.groovy', '''\
 class C <T extends String> {}
-C<<error descr="Type parameter 'java.lang.Double' is not in its bound; should extend 'java.lang.String'">Double</error>> c
+C<<warning descr="Type parameter 'java.lang.Double' is not in its bound; should extend 'java.lang.String'">Double</warning>> c
 C<String> c2
-C<error descr="Wrong number of type arguments: 2; required: 1"><String, Double></error> c3
+C<warning descr="Wrong number of type arguments: 2; required: 1"><String, Double></warning> c3
 ''')
     myFixture.testHighlighting(true, false, true)
   }
