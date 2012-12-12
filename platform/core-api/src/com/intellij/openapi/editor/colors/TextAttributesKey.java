@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.colors;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 public final class TextAttributesKey implements Comparable<TextAttributesKey>, JDOMExternalizable {
   private static final TextAttributes NULL_ATTRIBUTES = new TextAttributes();
   private static final ConcurrentHashMap<String, TextAttributesKey> ourRegistry = new ConcurrentHashMap<String, TextAttributesKey>();
+  private static final TextAttributeKeyDefaultsProvider OUR_DEFAULTS_PROVIDER = ServiceManager.getService(TextAttributeKeyDefaultsProvider.class);
 
   public String myExternalName;
   public TextAttributes myDefaultAttributes = NULL_ATTRIBUTES;
@@ -106,8 +108,8 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
     if (myDefaultAttributes == NULL_ATTRIBUTES) {
       // E.g. if one text key reuse default attributes of some other predefined key
       myDefaultAttributes = null;
-      if (myDefaultsProvider != null)
-        myDefaultAttributes = myDefaultsProvider.getDefaultAttributes(this);
+      if (OUR_DEFAULTS_PROVIDER != null)
+        myDefaultAttributes = OUR_DEFAULTS_PROVIDER.getDefaultAttributes(this);
     }
     return myDefaultAttributes;
   }
@@ -147,6 +149,4 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
   public interface TextAttributeKeyDefaultsProvider {
     TextAttributes getDefaultAttributes(TextAttributesKey key);
   }
-
-  public static TextAttributeKeyDefaultsProvider myDefaultsProvider;
 }
