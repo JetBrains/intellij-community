@@ -13,23 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.jps.builders;
+package com.intellij.openapi.editor.colors.impl;
 
-import org.jetbrains.annotations.NotNull;
-
-import java.io.IOException;
-import java.util.Collection;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.TextAttributes;
 
 /**
- * @author nik
+ * @author Dennis.Ushakov
  */
-public interface DirtyFilesHolder<R extends BuildRootDescriptor, T extends BuildTarget<R>> {
-  void processDirtyFiles(@NotNull FileProcessor<R, T> processor) throws IOException;
-
-  boolean hasDirtyFiles() throws IOException;
-
-  boolean hasRemovedFiles();
-
-  @NotNull
-  Collection<String> getRemovedFiles(@NotNull T target);
+public class TextAttributeKeyDefaultsProviderImpl implements TextAttributesKey.TextAttributeKeyDefaultsProvider {
+  @Override
+  public TextAttributes getDefaultAttributes(TextAttributesKey key) {
+    return ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).getDefaultAttributes(key);
+  }
 }

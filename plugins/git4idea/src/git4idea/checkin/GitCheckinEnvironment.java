@@ -15,10 +15,11 @@
  */
 package git4idea.checkin;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
@@ -26,6 +27,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.ui.SelectFilePathsDialog;
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
@@ -182,10 +184,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
               commit(myProject, root, files, messageFile, myNextCommitAuthor, myNextCommitAmend, myNextCommitAuthorDate);
             }
             catch (VcsException ex) {
-              if (!isMergeCommit(ex)) {
+              PartialOperation partialOperation = isMergeCommit(ex);
+              if (partialOperation == PartialOperation.NONE) {
                 throw ex;
               }
-              if (!mergeCommit(myProject, root, added, removed, messageFile, myNextCommitAuthor, exceptions)) {
+              if (!mergeCommit(myProject, root, added, removed, messageFile, myNextCommitAuthor, exceptions, partialOperation)) {
                 throw ex;
               }
             }
@@ -223,6 +226,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   /**
    * Preform a merge commit
    *
+   *
    * @param project     a project
    * @param root        a vcs root
    * @param added       added files
@@ -230,6 +234,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    * @param messageFile a message file for commit
    * @param author      an author
    * @param exceptions  the list of exceptions to report
+   * @param partialOperation
    * @return true if merge commit was successful
    */
   private static boolean mergeCommit(final Project project,
@@ -238,7 +243,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                                      final Set<FilePath> removed,
                                      final File messageFile,
                                      final String author,
-                                     List<VcsException> exceptions) {
+                                     List<VcsException> exceptions, @NotNull final PartialOperation partialOperation) {
     HashSet<FilePath> realAdded = new HashSet<FilePath>();
     HashSet<FilePath> realRemoved = new HashSet<FilePath>();
     // perform diff
@@ -278,26 +283,20 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     realAdded.removeAll(added);
     realRemoved.removeAll(removed);
     if (realAdded.size() != 0 || realRemoved.size() != 0) {
-      TreeSet<String> files = new TreeSet<String>();
-      for (FilePath f : realAdded) {
-        files.add(f.getPresentableUrl());
-      }
-      for (FilePath f : realRemoved) {
-        files.add(f.getPresentableUrl());
-      }
-      final StringBuilder fileList = new StringBuilder();
-      for (String f : files) {
-        //noinspection HardCodedStringLiteral
-        fileList.append("<li>");
-        fileList.append(StringUtil.escapeXml(f));
-        fileList.append("</li>");
-      }
-      final int[] rc = new int[1];
+
+      final List<FilePath> files = new ArrayList<FilePath>();
+      files.addAll(realAdded);
+      files.addAll(realRemoved);
+      final Ref<Boolean> mergeAll = new Ref<Boolean>();
       try {
         GuiUtils.runOrInvokeAndWait(new Runnable() {
           public void run() {
-            rc[0] = Messages.showOkCancelDialog(project, GitBundle.message("commit.partial.merge.message", fileList.toString()),
-                                                GitBundle.getString("commit.partial.merge.title"), null);
+            String message = GitBundle.message("commit.partial.merge.message", partialOperation.getName());
+            SelectFilePathsDialog dialog = new SelectFilePathsDialog(project, files, message,
+                                                                     null, "Commit All Files", CommonBundle.getCancelButtonText(), false);
+            dialog.setTitle(GitBundle.getString("commit.partial.merge.title"));
+            dialog.show();
+            mergeAll.set(dialog.isOK());
           }
         });
       }
@@ -307,7 +306,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       catch (Exception ex) {
         throw new RuntimeException("Unable to invoke a message box on AWT thread", ex);
       }
-      if (rc[0] != 0) {
+      if (!mergeAll.get()) {
         return false;
       }
       // update non-indexed files
@@ -342,14 +341,21 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   /**
-   * Check if commit has failed due to unfinished merge
+   * Check if commit has failed due to unfinished merge or cherry-pick.
+   *
    *
    * @param ex an exception to examine
    * @return true if exception means that there is a partial commit during merge
    */
-  private static boolean isMergeCommit(final VcsException ex) {
-    //noinspection HardCodedStringLiteral
-    return ex.getMessage().contains("fatal: cannot do a partial commit during a merge.");
+  private static PartialOperation isMergeCommit(final VcsException ex) {
+    String message = ex.getMessage();
+    if (message.contains("fatal: cannot do a partial commit during a merge")) {
+      return PartialOperation.MERGE;
+    }
+    if (message.contains("fatal: cannot do a partial commit during a cherry-pick")) {
+      return PartialOperation.CHERRY_PICK;
+    }
+    return PartialOperation.NONE;
   }
 
   /**
@@ -512,6 +518,22 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
     }
     return rc;
+  }
+
+  private enum PartialOperation {
+    NONE("none"),
+    MERGE("merge"),
+    CHERRY_PICK("cherry-pick");
+
+    private final String myName;
+
+    PartialOperation(String name) {
+      myName = name;
+    }
+
+    String getName() {
+      return myName;
+    }
   }
 
   /**

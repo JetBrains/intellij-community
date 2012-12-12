@@ -51,7 +51,7 @@
                      bundle="org.jetbrains.idea.devkit.DevKitBundle"
                      groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.UseGrayInspection"/>
-    <localInspection language="JAVA" shortName="InspectionUsingJBColors" displayName="Use Darcula aware JBColor"
+    <localInspection language="JAVA" shortName="UseJBColor" displayName="Use Darcula aware JBColor"
                      bundle="org.jetbrains.idea.devkit.DevKitBundle"
                      groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.UseJBColorInspection"/>

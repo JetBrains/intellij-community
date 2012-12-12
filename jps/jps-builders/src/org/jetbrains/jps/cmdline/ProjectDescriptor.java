@@ -15,10 +15,12 @@
  */
 package org.jetbrains.jps.cmdline;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTargetIndex;
 import org.jetbrains.jps.builders.logging.BuildLoggingManager;
 import org.jetbrains.jps.incremental.CompilerEncodingConfiguration;
+import org.jetbrains.jps.incremental.FSCache;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
@@ -54,6 +56,7 @@ public final class ProjectDescriptor {
   private final BuildRootIndex myBuildRootIndex;
   private final BuildTargetIndex myBuildTargetIndex;
   private final IgnoredFileIndex myIgnoredFileIndex;
+  private FSCache myFSCache = FSCache.NO_CACHE;
 
   public ProjectDescriptor(JpsModel model,
                            BuildFSState fsState,
@@ -82,6 +85,15 @@ public final class ProjectDescriptor {
       }
     }
     myTargetsState = targetsState;
+  }
+
+  @NotNull
+  public FSCache getFSCache() {
+    return myFSCache;
+  }
+
+  public void setFSCache(FSCache cache) {
+    myFSCache = cache == null? FSCache.NO_CACHE : cache;
   }
 
   public BuildRootIndex getBuildRootIndex() {

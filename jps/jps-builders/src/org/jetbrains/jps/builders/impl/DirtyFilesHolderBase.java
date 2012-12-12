@@ -15,13 +15,17 @@
  */
 package org.jetbrains.jps.builders.impl;
 
+import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
+import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.Utils;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -34,6 +38,19 @@ public abstract class DirtyFilesHolderBase<R extends BuildRootDescriptor, T exte
 
   public DirtyFilesHolderBase(CompileContext context) {
     myContext = context;
+  }
+
+  @Override
+  public boolean hasDirtyFiles() throws IOException {
+    final Ref<Boolean> hasDirtyFiles = Ref.create(false);
+    processDirtyFiles(new FileProcessor<R, T>() {
+      @Override
+      public boolean apply(T target, File file, R root) throws IOException {
+        hasDirtyFiles.set(true);
+        return false;
+      }
+    });
+    return hasDirtyFiles.get();
   }
 
   @Override
