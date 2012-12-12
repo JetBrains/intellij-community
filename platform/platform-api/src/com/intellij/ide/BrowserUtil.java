@@ -217,7 +217,7 @@ public class BrowserUtil {
 
   private static List<String> getOpenBrowserWinCommand(@Nullable String browserPath) {
     ArrayList<String> command = new ArrayList<String>();
-    command.add(SystemInfo.isWindows9x ? "command.com" : "cmd.exe");
+    command.add(!SystemInfo.isWin2kOrNewer ? "cmd.exe" : "command.com");
     command.add("/c");
     command.add("start");
     command.add("\"\"");

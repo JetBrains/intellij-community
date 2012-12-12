@@ -95,7 +95,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
     });
 
     UIUtil.setLineStyleAngled(this);
-    if (SystemInfo.isWindowsXP) {
+    if (SystemInfo.isWindows && !SystemInfo.isWinVistaOrNewer) {
       setUI(new BasicTreeUI());   // In WindowsXP UI handles are not shown :(
     }
 

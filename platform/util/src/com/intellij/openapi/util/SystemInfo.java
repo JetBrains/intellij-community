@@ -33,31 +33,47 @@ public class SystemInfo extends SystemInfoRt {
   public static final String SUN_DESKTOP = System.getProperty("sun.desktop", "");
 
   public static final boolean isWindows = SystemInfoRt.isWindows;
-  public static final boolean isWindowsNT = _OS_NAME.startsWith("windows nt");
-  public static final boolean isWindows2000 = _OS_NAME.startsWith("windows 2000");
-  public static final boolean isWindows2003 = _OS_NAME.startsWith("windows 2003");
-  public static final boolean isWindowsXP = _OS_NAME.startsWith("windows xp");
-  public static final boolean isWindowsVista = _OS_NAME.startsWith("windows vista");
-  public static final boolean isWindows7 = _OS_NAME.startsWith("windows 7");
-  public static final boolean isWindows9x = _OS_NAME.startsWith("windows 9") || _OS_NAME.startsWith("windows me");
-  public static final boolean isOS2 = SystemInfoRt.isOS2;
   public static final boolean isMac = SystemInfoRt.isMac;
+  public static final boolean isOS2 = SystemInfoRt.isOS2;
   public static final boolean isLinux = SystemInfoRt.isLinux;
   public static final boolean isFreeBSD = _OS_NAME.startsWith("freebsd");
   public static final boolean isSolaris = _OS_NAME.startsWith("sunos");
   public static final boolean isUnix = SystemInfoRt.isUnix;
-  public static final boolean isXWindow = isUnix && !isMac;
+
+  public static boolean isOsVersionAtLeast(@NotNull String version) {
+    return StringUtil.compareVersionNumbers(version, OS_VERSION) >= 0;
+  }
+
+  // version numbers from http://msdn.microsoft.com/en-us/library/windows/desktop/ms724832.aspx
+  public static final boolean isWin2kOrNewer = isWindows && isOsVersionAtLeast("5.0");
+  public static final boolean isWinVistaOrNewer = isWindows && isOsVersionAtLeast("6.0");
+  public static final boolean isWin7OrNewer = isWindows && isOsVersionAtLeast("6.1");
+  /** @deprecated unsupported (to remove in IDEA 13) */
+  public static final boolean isWindows9x = _OS_NAME.startsWith("windows 9") || _OS_NAME.startsWith("windows me");
+  /** @deprecated unsupported (to remove in IDEA 13) */
+  public static final boolean isWindowsNT = _OS_NAME.startsWith("windows nt");
+  /** @deprecated use {@linkplain #OS_VERSION} (to remove in IDEA 13) */
+  public static final boolean isWindows2000 = _OS_NAME.startsWith("windows 2000");
+  /** @deprecated use {@linkplain #OS_VERSION} (to remove in IDEA 13) */
+  public static final boolean isWindows2003 = _OS_NAME.startsWith("windows 2003");
+  /** @deprecated use {@linkplain #OS_VERSION} (to remove in IDEA 13) */
+  public static final boolean isWindowsXP = _OS_NAME.startsWith("windows xp");
+  /** @deprecated use {@linkplain #OS_VERSION} (to remove in IDEA 13) */
+  public static final boolean isWindowsVista = _OS_NAME.startsWith("windows vista");
+  /** @deprecated use {@linkplain #OS_VERSION} (to remove in IDEA 13) */
+  public static final boolean isWindows7 = _OS_NAME.startsWith("windows 7");
 
   /** @deprecated inaccurate (to remove in IDEA 13) */
   public static final boolean isKDE = SUN_DESKTOP.toLowerCase().contains("kde");
   /** @deprecated inaccurate (to remove in IDEA 13) */
   public static final boolean isGnome = SUN_DESKTOP.toLowerCase().contains("gnome");
 
+  public static final boolean isXWindow = isUnix && !isMac;
+
   public static final boolean isMacSystemMenu = isMac && "true".equals(System.getProperty("apple.laf.useScreenMenuBar"));
 
   public static final boolean isFileSystemCaseSensitive = SystemInfoRt.isFileSystemCaseSensitive;
-  public static final boolean areSymLinksSupported = isUnix ||
-                                                     isWindows && OS_VERSION.compareTo("6.0") >= 0;
+  public static final boolean areSymLinksSupported = isUnix || isWinVistaOrNewer;
 
   public static final boolean is32Bit = ARCH_DATA_MODEL == null || ARCH_DATA_MODEL.equals("32");
   public static final boolean is64Bit = !is32Bit;
