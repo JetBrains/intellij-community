@@ -31,12 +31,19 @@ import java.util.List;
 /**
  * @author nik
  */
-public abstract class AndroidBuildTarget extends ModuleBasedTarget<BuildRootDescriptor> {
+public abstract class AndroidBuildTarget extends BuildTarget<BuildRootDescriptor> {
   private final AndroidBuildTargetType myTargetType;
+  protected final JpsModule myModule;
 
   public AndroidBuildTarget(@NotNull AndroidBuildTargetType targetType, @NotNull JpsModule module) {
-    super(targetType, module);
+    super(targetType);
     myTargetType = targetType;
+    myModule = module;
+  }
+
+  @NotNull
+  public JpsModule getModule() {
+    return myModule;
   }
 
   @Override
@@ -67,11 +74,6 @@ public abstract class AndroidBuildTarget extends ModuleBasedTarget<BuildRootDesc
     return "Android " + myTargetType.getPresentableName();
   }
 
-  @Override
-  public boolean isTests() {
-    return false;
-  }
-
   @Nullable
   @Override
   public BuildRootDescriptor findRootDescriptor(String rootId, BuildRootIndex rootIndex) {
@@ -81,5 +83,23 @@ public abstract class AndroidBuildTarget extends ModuleBasedTarget<BuildRootDesc
       }
     }
     return null;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || !(o instanceof AndroidBuildTarget)) {
+      return false;
+    }
+
+    AndroidBuildTarget target = (AndroidBuildTarget)o;
+    return getTargetType() == target.getTargetType() && getId().equals(target.getId());
+  }
+
+  @Override
+  public int hashCode() {
+    return 31 * getId().hashCode() + getTargetType().hashCode();
   }
 }
