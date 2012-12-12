@@ -247,9 +247,13 @@ public class SvnRecursiveStatusWalker {
         if (SVNStatusType.OBSTRUCTED.equals(status) || SVNStatusType.STATUS_NONE.equals(status)) {
           return;
         }
-        if (vf != null && myCurrentItem.isIsInnerCopyRoot()) {
-          myReceiver.processCopyRoot(vf, statusInner.getURL(),
+        if (vf != null) {
+          if (myCurrentItem.isIsInnerCopyRoot()) {
+            myReceiver.processCopyRoot(vf, statusInner.getURL(),
                                      WorkingCopyFormat.getInstance(statusInner.getWorkingCopyFormat()));
+          } else {
+            myReceiver.bewareRoot(vf, statusInner.getURL(), WorkingCopyFormat.getInstance(statusInner.getWorkingCopyFormat()));
+          }
         }
       }
     }

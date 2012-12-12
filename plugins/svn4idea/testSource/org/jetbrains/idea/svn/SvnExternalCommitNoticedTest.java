@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
@@ -27,6 +28,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -105,6 +107,55 @@ public class SvnExternalCommitNoticedTest extends Svn17TestCase {
     // no dirty scope externally provided! just VFS refresh
     clManager.ensureUpToDate(false);
     Assert.assertEquals(0, clManager.getChangesIn(myWorkingCopyDir).size());
+  }
+
+  @Test
+  public void testExternalSwitch() throws Exception {
+    final String branchUrl = prepareBranchesStructure();
+    final SubTree tree = new SubTree(myWorkingCopyDir);
+
+    verify(runSvn("switch", branchUrl + "/root/source/s1.txt", tree.myS1File.getPath()));
+    verify(runSvn("switch", branchUrl + "/root/target", tree.myTargetDir.getPath()));
+
+    myWorkingCopyDir.refresh(false, true);
+    imitateEvent(myWorkingCopyDir);
+    // no dirty scope externally provided! just VFS refresh
+    clManager.ensureUpToDate(false);
+
+    Assert.assertEquals(FileStatus.SWITCHED, clManager.getStatus(tree.myS1File));
+    Assert.assertEquals(FileStatus.NOT_CHANGED, clManager.getStatus(tree.myS2File));
+    Assert.assertEquals(FileStatus.NOT_CHANGED, clManager.getStatus(tree.mySourceDir));
+    Assert.assertEquals(FileStatus.SWITCHED, clManager.getStatus(tree.myTargetDir));
+    Assert.assertEquals(FileStatus.SWITCHED, clManager.getStatus(tree.myTargetFiles.get(1)));
+  }
+
+  @Test
+  public void testExternalRootSwitch() throws Exception {
+    final String branchUrl = prepareBranchesStructure();
+    final SubTree tree = new SubTree(myWorkingCopyDir);
+
+    SvnConfiguration.getInstance(myProject).DETECT_NESTED_COPIES = true;
+    myVcs.invokeRefreshSvnRoots(false);
+    clManager.ensureUpToDate(false);
+    clManager.ensureUpToDate(false);
+    SvnFileUrlMapping workingCopies = myVcs.getSvnFileUrlMapping();
+    List<RootUrlInfo> infos = workingCopies.getAllWcInfos();
+    Assert.assertEquals(1, infos.size());
+    Assert.assertEquals(myRepoUrl + "/trunk", infos.get(0).getAbsoluteUrl());
+
+    verify(runSvn("switch", branchUrl, myWorkingCopyDir.getPath()));
+
+    myWorkingCopyDir.refresh(false, true);
+    imitateEvent(myWorkingCopyDir);
+    sleep(300);
+    // no dirty scope externally provided! just VFS refresh
+    clManager.ensureUpToDate(false);
+    clManager.ensureUpToDate(false);  //first run queries one more update
+
+    workingCopies = myVcs.getSvnFileUrlMapping();
+    infos = workingCopies.getAllWcInfos();
+    Assert.assertEquals(1, infos.size());
+    Assert.assertEquals(branchUrl, infos.get(0).getAbsoluteUrl());
   }
 
   @Test

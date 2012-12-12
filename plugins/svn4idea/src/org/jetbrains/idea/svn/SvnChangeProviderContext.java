@@ -73,6 +73,10 @@ class SvnChangeProviderContext implements StatusReceiver {
   public void processCopyRoot(VirtualFile file, SVNURL url, WorkingCopyFormat format) {
   }
 
+  @Override
+  public void bewareRoot(VirtualFile vf, SVNURL url, WorkingCopyFormat copyFormat) {
+  }
+
   public ChangelistBuilder getBuilder() {
     return myChangelistBuilder;
   }

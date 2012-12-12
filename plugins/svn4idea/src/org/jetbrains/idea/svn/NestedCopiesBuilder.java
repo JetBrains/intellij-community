@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -29,8 +31,12 @@ import java.util.Set;
 
 public class NestedCopiesBuilder implements StatusReceiver {
   private final Set<MyPointInfo> mySet;
+  private final Project myProject;
+  private final SvnFileUrlMapping myMapping;
 
-  public NestedCopiesBuilder() {
+  public NestedCopiesBuilder(final Project project, final SvnFileUrlMapping mapping) {
+    myProject = project;
+    myMapping = mapping;
     mySet = new HashSet<MyPointInfo>();
   }
 
@@ -65,6 +71,15 @@ public class NestedCopiesBuilder implements StatusReceiver {
   public void processCopyRoot(VirtualFile file, SVNURL url, WorkingCopyFormat format) {
     final MyPointInfo info = new MyPointInfo(file, url, format, NestedCopyType.inner);
     mySet.add(info);
+  }
+
+  @Override
+  public void bewareRoot(VirtualFile vf, SVNURL url, WorkingCopyFormat copyFormat) {
+    final File ioFile = new File(vf.getPath());
+    final RootUrlInfo info = myMapping.getWcRootForFilePath(ioFile);
+    if (info != null && FileUtil.filesEqual(ioFile, info.getIoFile()) && ! info.getAbsoluteUrlAsUrl().equals(url)) {
+      SvnVcs.getInstance(myProject).invokeRefreshSvnRoots(true);
+    }
   }
 
   static class MyPointInfo {
