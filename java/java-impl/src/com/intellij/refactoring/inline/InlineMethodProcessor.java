@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -215,7 +215,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
       @Override
       public void inlineUsage(UsageInfo usage, PsiElement referenced) {
-        throw new UnsupportedOperationException("Don't invoke this method!");
+        if (usage instanceof NonCodeUsageInfo) return;
+
+        throw new UnsupportedOperationException(
+          "usage: " + usage.getClass().getName() + ", referenced: " + referenced.getClass().getName() + "text: " + referenced.getText());
       }
     });
 
