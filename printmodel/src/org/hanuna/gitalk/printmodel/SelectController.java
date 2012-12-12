@@ -16,6 +16,10 @@ import java.util.Set;
 public class SelectController {
     private final Set<GraphElement> selectedElements = new HashSet<GraphElement>();
 
+    //package local
+    SelectController() {
+
+    }
 
     public void select(@Nullable GraphFragment graphFragment) {
         deselectAll();

@@ -11,13 +11,15 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PrintCellModel {
     private final LayoutModel layoutModel;
+    private final SelectController selectController;
 
     public PrintCellModel(Graph graph) {
         this.layoutModel = new LayoutModel(graph);
+        this.selectController = new SelectController();
     }
 
     private ReadOnlyList<ShortEdge> getUpEdges(int rowIndex) {
-        PrePrintCell prevPre = new PrePrintCell(layoutModel, rowIndex);
+        PrePrintCell prevPre = new PrePrintCell(layoutModel, rowIndex, selectController);
         return prevPre.downShortEdges();
     }
 
@@ -25,10 +27,13 @@ public class PrintCellModel {
         layoutModel.recalculate(replace);
     }
 
+    public SelectController getSelectController() {
+        return selectController;
+    }
 
     @NotNull
     public PrintCell getPrintCellRow(final int rowIndex) {
-        final PrePrintCell prePrintCell = new PrePrintCell(layoutModel, rowIndex);
+        final PrePrintCell prePrintCell = new PrePrintCell(layoutModel, rowIndex, selectController);
 
         return new PrintCell() {
             @Override

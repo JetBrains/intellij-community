@@ -9,11 +9,13 @@ public class ShortEdge {
     private final Edge edge;
     private final int upPosition;
     private final int downPosition;
+    private final boolean selected;
 
-    public ShortEdge(Edge edge, int upPosition, int downPosition) {
+    public ShortEdge(Edge edge, int upPosition, int downPosition, boolean selected) {
         this.edge = edge;
         this.upPosition = upPosition;
         this.downPosition = downPosition;
+        this.selected = selected;
     }
 
     public Edge getEdge() {
@@ -26,6 +28,10 @@ public class ShortEdge {
 
     public int getUpPosition() {
         return upPosition;
+    }
+
+    public boolean isSelected() {
+        return selected;
     }
 
     public int getDownPosition() {

@@ -10,11 +10,13 @@ public class SpecialCell {
     private final GraphElement graphElement;
     private final int position;
     private final Type type;
+    private final boolean selected;
 
-    public SpecialCell(@NotNull GraphElement graphElement, int position, @NotNull Type type) {
+    public SpecialCell(@NotNull GraphElement graphElement, int position, @NotNull Type type, boolean selected) {
         this.graphElement = graphElement;
         this.position = position;
         this.type = type;
+        this.selected = selected;
     }
 
     @NotNull
@@ -24,6 +26,10 @@ public class SpecialCell {
 
     public int getPosition() {
         return position;
+    }
+
+    public boolean isSelected() {
+        return selected;
     }
 
     @NotNull

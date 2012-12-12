@@ -22,18 +22,20 @@ class PrePrintCell {
 
     private final boolean hideLongEdge;
     private final LayoutModel layoutModel;
-    public ReadOnlyList<GraphElement> visibleElements;
-    public final int rowIndex;
+    private ReadOnlyList<GraphElement> visibleElements;
+    private final int rowIndex;
+    private final SelectController selectController;
 
-    public PrePrintCell(boolean hideLongEdge, LayoutModel layoutModel, int rowIndex) {
+    public PrePrintCell(boolean hideLongEdge, LayoutModel layoutModel, int rowIndex, SelectController selectController) {
         this.hideLongEdge = hideLongEdge;
         this.layoutModel = layoutModel;
         this.rowIndex = rowIndex;
+        this.selectController = selectController;
         visibleElements = visibleElements(rowIndex);
     }
 
-    public PrePrintCell(LayoutModel layoutModel, int rowIndex) {
-        this(true, layoutModel, rowIndex);
+    public PrePrintCell(LayoutModel layoutModel, int rowIndex, SelectController selectController) {
+        this(true, layoutModel, rowIndex, selectController);
     }
 
     public int getCountCells() {
@@ -105,7 +107,8 @@ class PrePrintCell {
             Node node = element.getNode();
             if (node != null) {
                 if (node.getType() == Node.Type.COMMIT_NODE) {
-                    specialCells.add(new SpecialCell(node, i, SpecialCell.Type.COMMIT_NODE));
+                    specialCells.add(new SpecialCell(node, i, SpecialCell.Type.COMMIT_NODE,
+                            selectController.selected(node)));
                 }
             } else {
                 Edge edge = element.getEdge();
@@ -120,10 +123,12 @@ class PrePrintCell {
                         // do nothing
                         break;
                     case 1:
-                        specialCells.add(new SpecialCell(edge, i, SpecialCell.Type.HIDE_EDGE));
+                        specialCells.add(new SpecialCell(edge, i, SpecialCell.Type.HIDE_EDGE,
+                                selectController.selected(edge)));
                         break;
                     case 2:
-                        specialCells.add(new SpecialCell(edge, i, SpecialCell.Type.SHOW_EDGE));
+                        specialCells.add(new SpecialCell(edge, i, SpecialCell.Type.SHOW_EDGE,
+                                selectController.selected(edge)));
                         break;
                     default:
                         throw new IllegalStateException();
@@ -145,7 +150,7 @@ class PrePrintCell {
                 for (Edge edge : node.getDownEdges()) {
                     int to = getter.getPosition(edge);
                     assert to != -1;
-                    shortEdges.add(new ShortEdge(edge, p, to));
+                    shortEdges.add(new ShortEdge(edge, p, to, selectController.selected(edge)));
                 }
             }
         }
@@ -154,7 +159,7 @@ class PrePrintCell {
             if (edge != null) {
                 int to = getter.getPosition(edge);
                 if (to >= 0) {
-                    shortEdges.add(new ShortEdge(edge, p, to));
+                    shortEdges.add(new ShortEdge(edge, p, to, selectController.selected(edge)));
                 }
             }
         }
