@@ -24,9 +24,7 @@ import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * The handler that is based on per-line processing of the text.
@@ -151,11 +149,13 @@ public class GitLineHandler extends GitTextHandler {
     String trimmed = LineHandlerHelper.trimLineSeparator(line);
     // if line ends with return, then it is a progress line, ignore it
     if (myVcs != null && !"\r".equals(line.substring(trimmed.length()))) {
-      if (outputType == ProcessOutputTypes.STDOUT && !isStdoutSuppressed()) {
+      if (outputType == ProcessOutputTypes.STDOUT && !isStdoutSuppressed() && !mySilent) {
         myVcs.showMessages(trimmed);
+        LOG.info(line);
       }
-      else if (outputType == ProcessOutputTypes.STDERR && !isStderrSuppressed()) {
+      else if (outputType == ProcessOutputTypes.STDERR && !isStderrSuppressed() && !mySilent) {
         myVcs.showErrorMessages(trimmed);
+        LOG.info(line);
       }
     }
     myLineListeners.getMulticaster().onLineAvailable(trimmed, outputType);

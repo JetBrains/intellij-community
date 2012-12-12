@@ -17,8 +17,10 @@ package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.*;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,7 +38,6 @@ public abstract class GitTextHandler extends GitHandler {
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private OSProcessHandler myHandler;
   private volatile boolean myIsDestroyed;
   private final Object myProcessStateLock = new Object();
-  private static final Logger LOG = Logger.getInstance(GitTextHandler.class.getName());
 
   protected GitTextHandler(@NotNull Project project, @NotNull File directory, @NotNull GitCommand command) {
     super(project, directory, command);
