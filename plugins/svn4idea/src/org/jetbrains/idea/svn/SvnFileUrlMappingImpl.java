@@ -131,7 +131,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
       if (rootUrl == null) {
         return null;
       }
-      final RootUrlInfo parentInfo = myMapping.byUrl(rootUrl);
+      final RootUrlInfo parentInfo = myMoreRealMapping.byUrl(rootUrl);
       if (parentInfo == null) {
         return null;
       }
@@ -152,7 +152,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
         return null;
       }
 
-      return myMapping.byFile(root);
+      return myMoreRealMapping.byFile(root);
     }
   }
 
@@ -170,7 +170,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
         return null;
       }
 
-      final RootUrlInfo result = myMapping.byUrl(rootUrl);
+      final RootUrlInfo result = myMoreRealMapping.byUrl(rootUrl);
       if (result == null) {
         LOG.info("Inconsistent maps for url:" + url + " found root url: " + rootUrl);
         return null;
@@ -194,8 +194,8 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
     if (ThreadLocalDefendedInvoker.isInside()) return result;
 
     synchronized (myMonitor) {
-      final List<VirtualFile> cachedRoots = myMapping.getUnderVcsRoots();
-      final List<VirtualFile> lonelyRoots = myMapping.getLonelyRoots();
+      final List<VirtualFile> cachedRoots = myMoreRealMapping.getUnderVcsRoots();
+      final List<VirtualFile> lonelyRoots = myMoreRealMapping.getLonelyRoots();
       if (! lonelyRoots.isEmpty()) {
         myChecker.reportNoRoots(lonelyRoots);
       }
@@ -433,7 +433,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
 
   @Nullable
   public String getUrlRootForUrl(final String currentUrl) {
-    for (String url : myMapping.getUrls()) {
+    for (String url : myMoreRealMapping.getUrls()) {
       if (SVNPathUtil.isAncestor(url, currentUrl)) {
         return url;
       }
@@ -447,7 +447,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
     convertedPath = (currentPath.isDirectory() && (! convertedPath.endsWith(File.separator))) ? convertedPath + File.separator :
         convertedPath;
     synchronized (myMonitor) {
-      return myMapping.getRootForPath(convertedPath);
+      return myMoreRealMapping.getRootForPath(convertedPath);
     }
   }
 
