@@ -297,7 +297,10 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
 
     private boolean processCommentInjections(PsiVariable owner) {
       Ref<PsiComment> causeRef = Ref.create();
-      BaseInjection injection = InjectorUtils.findCommentInjection(owner, LanguageInjectionSupport.JAVA_SUPPORT_ID, causeRef);
+      PsiElement anchor = owner.getFirstChild() instanceof PsiComment?
+                          (owner.getModifierList() != null? owner.getModifierList() : owner.getTypeElement()) : owner;
+      if (anchor == null) return true;
+      BaseInjection injection = InjectorUtils.findCommentInjection(anchor, LanguageInjectionSupport.JAVA_SUPPORT_ID, causeRef);
       return injection == null || processCommentInjectionInner(owner, causeRef.get(), injection);
     }
 
