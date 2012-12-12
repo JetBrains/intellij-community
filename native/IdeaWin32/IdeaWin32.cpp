@@ -108,7 +108,8 @@ JNIEXPORT jstring JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_reso
     if (h != INVALID_HANDLE_VALUE) {
         FindClose(h);
 
-        if (IS_SET(data.dwFileAttributes, FILE_ATTRIBUTE_REPARSE_POINT)) {
+        if (IS_SET(data.dwFileAttributes, FILE_ATTRIBUTE_REPARSE_POINT) &&
+            (IS_SET(data.dwReserved0, IO_REPARSE_TAG_SYMLINK) || IS_SET(data.dwReserved0, IO_REPARSE_TAG_MOUNT_POINT))) {
             HANDLE th = CreateFileW(winPath, 0, FILE_SHARE_ATTRIBUTES, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
             if (th != INVALID_HANDLE_VALUE) {
                 wchar_t buff[MAX_PATH], * finalPath = buff;

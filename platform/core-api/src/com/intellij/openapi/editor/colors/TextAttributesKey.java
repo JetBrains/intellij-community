@@ -17,14 +17,12 @@ package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 
 /**
@@ -33,7 +31,13 @@ import org.jetbrains.annotations.NotNull;
 public final class TextAttributesKey implements Comparable<TextAttributesKey>, JDOMExternalizable {
   private static final TextAttributes NULL_ATTRIBUTES = new TextAttributes();
   private static final ConcurrentHashMap<String, TextAttributesKey> ourRegistry = new ConcurrentHashMap<String, TextAttributesKey>();
-  private static final TextAttributeKeyDefaultsProvider OUR_DEFAULTS_PROVIDER = ServiceManager.getService(TextAttributeKeyDefaultsProvider.class);
+  private static final NullableLazyValue<TextAttributeKeyDefaultsProvider> ourDefaultsProvider = new VolatileNullableLazyValue<TextAttributeKeyDefaultsProvider>() {
+    @Nullable
+    @Override
+    protected TextAttributeKeyDefaultsProvider compute() {
+      return ServiceManager.getService(TextAttributeKeyDefaultsProvider.class);
+    }
+  };
 
   public String myExternalName;
   public TextAttributes myDefaultAttributes = NULL_ATTRIBUTES;
@@ -108,8 +112,9 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
     if (myDefaultAttributes == NULL_ATTRIBUTES) {
       // E.g. if one text key reuse default attributes of some other predefined key
       myDefaultAttributes = null;
-      if (OUR_DEFAULTS_PROVIDER != null)
-        myDefaultAttributes = OUR_DEFAULTS_PROVIDER.getDefaultAttributes(this);
+      final TextAttributeKeyDefaultsProvider provider = ourDefaultsProvider.getValue();
+      if (provider != null)
+        myDefaultAttributes = provider.getDefaultAttributes(this);
     }
     return myDefaultAttributes;
   }

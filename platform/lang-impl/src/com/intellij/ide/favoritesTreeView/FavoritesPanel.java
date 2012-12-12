@@ -23,7 +23,11 @@ import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.Function;
@@ -33,9 +37,11 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -80,38 +86,17 @@ public class FavoritesPanel {
         @Override
         public boolean update(DnDEvent event) {
           final Object obj = event.getAttachedObject();
-          if (obj instanceof TreePath) {
-            event.setDropPossible(((TreePath)obj).getPathCount() > 2);
-            return true;
-          }
-
           if ("".equals(obj)) {
             event.setDropPossible(false);
             return false;
           }
-
-          final Point p = event.getPoint();
-          FavoritesListNode node = findFavoritesListNode(p);
+          if (obj instanceof TreePath && ((TreePath)obj).getPathCount() <= 2) {
+            event.setDropPossible(false);
+            return true;
+          }
+          FavoritesListNode node = findFavoritesListNode(event.getPoint());
+          highlight(node, event);
           if (node != null) {
-            TreePath pathToList = myTree.getPath(node);
-            while (pathToList != null) {
-              final Object pathObj = pathToList.getLastPathComponent();
-              if (pathObj instanceof DefaultMutableTreeNode) {
-                final Object userObject = ((DefaultMutableTreeNode)pathObj).getUserObject();
-                if (userObject instanceof FavoritesTreeNodeDescriptor) {
-                  if (((FavoritesTreeNodeDescriptor)userObject).getElement() == node) {
-                    break;
-                  }
-                }
-              }
-              pathToList = pathToList.getParentPath();
-            }
-            if (pathToList != null) {
-              Rectangle bounds = myTree.getPathBounds(pathToList);
-              if (bounds != null) {
-                event.setHighlighting(new RelativeRectangle(myTree, bounds), DnDEvent.DropTargetHighlightingType.RECTANGLE);
-              }
-            }
             event.setDropPossible(true);
             return true;
           }
@@ -146,26 +131,79 @@ public class FavoritesPanel {
             }
           }
           else if (obj instanceof TransferableWrapper) {
-            final PsiElement[] elements = ((TransferableWrapper)obj).getPsiElements();
-            if (elements != null && elements.length > 0) {
-              ArrayList<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
-              for (PsiElement element : elements) {
-                if (element instanceof SmartPsiElementPointer) {
-                  element = ((SmartPsiElementPointer)element).getElement();
-                }
-                final Collection<AbstractTreeNode> tmp = AddToFavoritesAction
-                  .createNodes(myProject, null, element, true, FavoritesManager.getInstance(myProject).getViewSettings());
-                nodes.addAll(tmp);
-                mgr.addRoots(listTo, nodes);
-              }
-              myTreeBuilder.select(nodes.toArray(), null);
-            }
+            dropPsiElements(mgr, listTo, ((TransferableWrapper)obj).getPsiElements());
+          }
+          else if (obj instanceof DnDNativeTarget.EventInfo) {
+            dropPsiElements(mgr, listTo, getPsiFiles(FileCopyPasteUtil.getFileList(((DnDNativeTarget.EventInfo)obj).getTransferable())));
           }
         }
       })
+      .enableAsNativeTarget()
       .setDisposableParent(myProject)
       .install();
   }
+
+  private void highlight(FavoritesListNode node, DnDEvent event) {
+    if (node != null) {
+      TreePath pathToList = myTree.getPath(node);
+      while (pathToList != null) {
+        final Object pathObj = pathToList.getLastPathComponent();
+        if (pathObj instanceof DefaultMutableTreeNode) {
+          final Object userObject = ((DefaultMutableTreeNode)pathObj).getUserObject();
+          if (userObject instanceof FavoritesTreeNodeDescriptor) {
+            if (((FavoritesTreeNodeDescriptor)userObject).getElement() == node) {
+              break;
+            }
+          }
+        }
+        pathToList = pathToList.getParentPath();
+      }
+      if (pathToList != null) {
+        Rectangle bounds = myTree.getPathBounds(pathToList);
+        if (bounds != null) {
+          event.setHighlighting(new RelativeRectangle(myTree, bounds), DnDEvent.DropTargetHighlightingType.RECTANGLE);
+        }
+      }
+    }
+    else {
+      event.hideHighlighter();
+    }
+  }
+
+  private void dropPsiElements(FavoritesManager mgr, String listTo, PsiElement[] elements) {
+    if (elements != null && elements.length > 0) {
+      ArrayList<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
+      for (PsiElement element : elements) {
+        if (element instanceof SmartPsiElementPointer) {
+          element = ((SmartPsiElementPointer)element).getElement();
+        }
+        final Collection<AbstractTreeNode> tmp = AddToFavoritesAction
+          .createNodes(myProject, null, element, true, FavoritesManager.getInstance(myProject).getViewSettings());
+        nodes.addAll(tmp);
+        mgr.addRoots(listTo, nodes);
+      }
+      myTreeBuilder.select(nodes.toArray(), null);
+    }
+  }
+
+  @Nullable
+  protected PsiFileSystemItem[] getPsiFiles(@Nullable List<File> fileList) {
+    if (fileList == null) return null;
+    List<PsiFileSystemItem> sourceFiles = new ArrayList<PsiFileSystemItem>();
+    for (File file : fileList) {
+      final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+      if (vFile != null) {
+        final PsiFileSystemItem psiFile = vFile.isDirectory()
+                                          ? PsiManager.getInstance(myProject).findDirectory(vFile)
+                                          : PsiManager.getInstance(myProject).findFile(vFile);
+        if (psiFile != null) {
+          sourceFiles.add(psiFile);
+        }
+      }
+    }
+    return sourceFiles.toArray(new PsiFileSystemItem[sourceFiles.size()]);
+  }
+
 
   @Nullable
   private TreeNode findListNode(String listName) {

@@ -19,6 +19,7 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.options.CompileStepBeforeRun;
+import com.intellij.compiler.server.BuildManager;
 import com.intellij.facet.ProjectFacetManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -71,6 +72,11 @@ public class AndroidPrecompileTask implements CompileTask {
   @Override
   public boolean execute(CompileContext context) {
     final Project project = context.getProject();
+
+    if (!ProjectFacetManager.getInstance(project).hasFacets(AndroidFacet.ID)) {
+      return true;
+    }
+    BuildManager.forceModelLoading(context);
 
     // in out-of-process mode gen roots will be excluded by AndroidExcludedJavaSourceRootProvider
     // we do it here for internal mode and also to make there roots 'visibly excluded' in IDE settings
@@ -149,9 +155,6 @@ public class AndroidPrecompileTask implements CompileTask {
 
   private static boolean checkArtifacts(@NotNull CompileContext context) {
     final Project project = context.getProject();
-    if (!ProjectFacetManager.getInstance(project).hasFacets(AndroidFacet.ID)) {
-      return true;
-    }
     final CompileScope scope = context.getCompileScope();
 
     final Set<Artifact> artifacts = ApplicationManager.getApplication().runReadAction(new Computable<Set<Artifact>>() {

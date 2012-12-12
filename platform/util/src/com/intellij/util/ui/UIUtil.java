@@ -1676,7 +1676,7 @@ public class UIUtil {
   }
 
   public static boolean isWinLafOnVista() {
-    return (SystemInfo.isWindowsVista || SystemInfo.isWindows7) && "Windows".equals(UIManager.getLookAndFeel().getName());
+    return SystemInfo.isWinVistaOrNewer && "Windows".equals(UIManager.getLookAndFeel().getName());
   }
 
   public static boolean isStandardMenuLAF() {

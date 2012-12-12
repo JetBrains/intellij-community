@@ -95,6 +95,11 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     listener.after(events);
   }
 
+  @Override
+  protected String getPluginName() {
+    return "Subversion";
+  }
+
   @Before
   public void setUp() throws Exception {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
@@ -237,9 +242,9 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   }
 
   protected class SubTree {
-    public final VirtualFile myRootDir;
+    public VirtualFile myRootDir;
     public VirtualFile mySourceDir;
-    public final VirtualFile myTargetDir;
+    public VirtualFile myTargetDir;
 
     public VirtualFile myS1File;
     public VirtualFile myS2File;
@@ -248,16 +253,26 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     public static final String ourS1Contents = "123";
     public static final String ourS2Contents = "abc";
 
-    public SubTree(final VirtualFile base) throws Exception {
-      myRootDir = createDirInCommand(base, "root");
-      mySourceDir = createDirInCommand(myRootDir, "source");
-      myS1File = createFileInCommand(mySourceDir, "s1.txt", ourS1Contents);
-      myS2File = createFileInCommand(mySourceDir, "s2.txt", ourS2Contents);
+    private VirtualFile findOrCreateChild(final VirtualFile parent, final String name, final String content) {
+      final VirtualFile result = parent.findChild(name);
+      if (result != null) return result;
+      if (content == null) {
+        return createDirInCommand(parent, name);
+      } else {
+        return createFileInCommand(parent, name, content);
+      }
+    }
 
-      myTargetDir = createDirInCommand(myRootDir, "target");
+    public SubTree(final VirtualFile base) throws Exception {
+      myRootDir = findOrCreateChild(base, "root", null);
+      mySourceDir = findOrCreateChild(myRootDir, "source", null);
+      myS1File = findOrCreateChild(mySourceDir, "s1.txt", ourS1Contents);
+      myS2File = findOrCreateChild(mySourceDir, "s2.txt", ourS2Contents);
+
+      myTargetDir = findOrCreateChild(myRootDir, "target", null);
       myTargetFiles = new ArrayList<VirtualFile>();
       for (int i = 0; i < 10; i++) {
-        myTargetFiles.add(createFileInCommand(myTargetDir, "t" + (i+10) +".txt", ourS1Contents));
+        myTargetFiles.add(findOrCreateChild(myTargetDir, "t" + (i + 10) + ".txt", ourS1Contents));
       }
     }
   }
@@ -267,6 +282,36 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
       Thread.sleep(millis);
     }
     catch (InterruptedException ignore) { }
+  }
+
+  public String prepareBranchesStructure() throws Exception {
+    final SvnVcs vcs = SvnVcs.getInstance(myProject);
+    final String mainUrl = myRepoUrl + "/trunk";
+    verify(runSvn("mkdir", "-m", "mkdir", mainUrl));
+    verify(runSvn("mkdir", "-m", "mkdir", myRepoUrl + "/branches"));
+    verify(runSvn("mkdir", "-m", "mkdir", myRepoUrl + "/tags"));
+
+    final ChangeListManagerImpl clManager = (ChangeListManagerImpl)ChangeListManager.getInstance(myProject);
+    clManager.stopEveryThingIfInTestMode();
+    sleep(100);
+    FileUtil.delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn"));
+    sleep(200);
+    myWorkingCopyDir.refresh(false, true);
+
+    verify(runSvn("co", mainUrl, myWorkingCopyDir.getPath()));
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    final SubTree tree = new SubTree(myWorkingCopyDir);
+    checkin();
+    final String branchUrl = myRepoUrl + "/branches/b1";
+    verify(runSvn("copy", "-q", "-m", "coppy", mainUrl, branchUrl));
+
+    clManager.forceGoInTestMode();
+    SvnConfiguration.getInstance(myProject).DETECT_NESTED_COPIES = true;
+    vcs.invokeRefreshSvnRoots(false);
+    clManager.ensureUpToDate(false);
+    clManager.ensureUpToDate(false);
+
+    return branchUrl;
   }
 
   public void prepareExternal() throws Exception {

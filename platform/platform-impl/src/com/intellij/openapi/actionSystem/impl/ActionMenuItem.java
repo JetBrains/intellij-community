@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -267,9 +267,9 @@ public class ActionMenuItem extends JCheckBoxMenuItem {
     if (isToggleable() && myPresentation.getIcon() == null) {
       action.update(myEvent);
       myToggled = Boolean.TRUE.equals(myEvent.getPresentation().getClientProperty(Toggleable.SELECTED_PROPERTY));
-      if ((ActionPlaces.MAIN_MENU.equals(myPlace) && SystemInfo.isMacSystemMenu)
-          || UIUtil.isUnderNimbusLookAndFeel()
-          || (UIUtil.isUnderWindowsLookAndFeel() && !SystemInfo.isWindowsXP)) {
+      if ((ActionPlaces.MAIN_MENU.equals(myPlace) && SystemInfo.isMacSystemMenu) ||
+          UIUtil.isUnderNimbusLookAndFeel() ||
+          UIUtil.isUnderWindowsLookAndFeel() && SystemInfo.isWin7OrNewer) {
         setState(myToggled);
       }
       else if (!(getUI() instanceof GtkMenuItemUI)) {

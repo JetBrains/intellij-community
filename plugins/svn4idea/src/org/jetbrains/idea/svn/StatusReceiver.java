@@ -21,7 +21,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 
-import java.io.File;
 import java.util.EventListener;
 
 public interface StatusReceiver extends EventListener {
@@ -29,4 +28,5 @@ public interface StatusReceiver extends EventListener {
   void processIgnored(final VirtualFile vFile);
   void processUnversioned(final VirtualFile vFile);
   void processCopyRoot(VirtualFile file, SVNURL url, WorkingCopyFormat format);
+  void bewareRoot(VirtualFile vf, SVNURL url, WorkingCopyFormat copyFormat);
 }

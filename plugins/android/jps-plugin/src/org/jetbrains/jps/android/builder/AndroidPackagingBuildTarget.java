@@ -1,7 +1,10 @@
 package org.jetbrains.jps.android.builder;
 
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.android.AndroidJpsUtil;
+import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
@@ -36,12 +39,30 @@ public class AndroidPackagingBuildTarget extends AndroidBuildTarget {
   @NotNull
   @Override
   public Collection<File> getOutputRoots(CompileContext context) {
-    return Collections.emptyList();
+    final File moduleOutputDir = context.getProjectPaths().getModuleOutputDir(myModule, false);
+    final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(myModule);
+
+    if (moduleOutputDir == null || extension == null) {
+      return Collections.emptyList();
+    }
+    final String outputPath = AndroidJpsUtil.getApkPath(extension, moduleOutputDir);
+
+    if (outputPath == null) {
+      return Collections.emptyList();
+    }
+    final String afpFile = AndroidCommonUtils.addSuffixToFileName(
+      outputPath, AndroidCommonUtils.ANDROID_FINAL_PACKAGE_FOR_ARTIFACT_SUFFIX);
+    return Collections.singletonList(new File(FileUtil.toSystemDependentName(afpFile)));
   }
 
   @Override
   protected void fillDependencies(List<BuildTarget<?>> result) {
-    result.add(new AndroidDexBuildTarget(myModule));
+    final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(myModule);
+
+    if (extension != null && !extension.isLibrary()) {
+      // todo: remove this when AndroidPackagingBuilder will be fully target-based
+      result.add(new AndroidDexBuildTarget(myModule));
+    }
   }
 
   public static class MyTargetType extends AndroidBuildTargetType<AndroidPackagingBuildTarget> {
