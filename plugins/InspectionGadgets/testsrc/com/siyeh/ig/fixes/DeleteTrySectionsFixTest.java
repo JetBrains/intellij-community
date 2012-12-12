@@ -47,4 +47,8 @@ public class DeleteTrySectionsFixTest extends IGQuickFixesTestCase {
   public void testDeleteTryWithEmptyFinally() {
     doTest(InspectionGadgetsBundle.message("remove.try.finally.block.quickfix"));
   }
+
+  public void testDeleteTryWithResources() {
+    doTest(InspectionGadgetsBundle.message("delete.catch.section.quickfix"));
+  }
 }
