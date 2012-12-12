@@ -28,10 +28,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Konstantin Bulenkov
  */
-public class ConvertToGayQuickFix extends LocalQuickFixBase {
+public class ConvertToGrayQuickFix extends LocalQuickFixBase {
   private final int myNum;
 
-  public ConvertToGayQuickFix(int num) {
+  public ConvertToGrayQuickFix(int num) {
     super("Convert to Gray._" + num, "Convert to Gray");
     myNum = num;
   }

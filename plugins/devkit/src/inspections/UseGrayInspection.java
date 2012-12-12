@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.intellij.ui.Gray;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.inspections.quickfix.ConvertToGayQuickFix;
+import org.jetbrains.idea.devkit.inspections.quickfix.ConvertToGrayQuickFix;
 
 /**
  * @author Konstantin Bulenkov
@@ -75,7 +75,7 @@ public class UseGrayInspection extends DevKitInspectionBase {
                 int gg = Integer.parseInt(green.toString());
                 int bb = Integer.parseInt(blue.toString());
                 if (rr == gg && gg == bb && 0 <= rr && rr < 256) {
-                  return manager.createProblemDescriptor(expression, "Convert to Gray._" + rr, new ConvertToGayQuickFix(rr), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
+                  return manager.createProblemDescriptor(expression, "Convert to Gray._" + rr, new ConvertToGrayQuickFix(rr), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
                 }
               } catch (Exception ignore){}
             }
@@ -88,7 +88,7 @@ public class UseGrayInspection extends DevKitInspectionBase {
               try {
                 int num = Integer.parseInt(literal.toString());
                 if (0 <= num && num < 256) {
-                  return manager.createProblemDescriptor(expression, "Convert to Gray_" + num, new ConvertToGayQuickFix(num), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
+                  return manager.createProblemDescriptor(expression, "Convert to Gray_" + num, new ConvertToGrayQuickFix(num), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
                 }
               } catch (Exception ignore){}
             }
