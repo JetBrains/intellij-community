@@ -11,6 +11,7 @@ import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.IntroduceOperation;
 import com.jetbrains.python.refactoring.introduce.variable.VariableValidator;
@@ -51,6 +52,12 @@ public class PyIntroduceParameterHandler extends IntroduceHandler {
       return parameterList.findParameterByName(declaration.getTargets()[0].getText());
     }
     return null;
+  }
+
+  @Nullable
+  @Override
+  protected PsiElement replaceExpression(PsiElement expression, PyExpression newExpression, IntroduceOperation operation) {
+    return PyPsiUtils.replaceExpression(expression, newExpression);
   }
 
   @Override

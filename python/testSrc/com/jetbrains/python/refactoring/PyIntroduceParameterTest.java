@@ -27,6 +27,10 @@ public class PyIntroduceParameterTest extends PyIntroduceTestCase {
     doTest();
   }
 
+  public void testLastStatement() {
+    doTest();
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/refactoring/introduceParameter";
