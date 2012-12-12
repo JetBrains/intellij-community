@@ -40,8 +40,8 @@ public class Controller {
         this.graph = graph;
         this.fragmentController = graph.getFragmentController();
         this.refsModel = refsModel;
-        this.selectController = new SelectController();
         this.printCellModel = new PrintCellModel(graph);
+        this.selectController = printCellModel.getSelectController();
     }
 
     public TableModel getTableModel() {
