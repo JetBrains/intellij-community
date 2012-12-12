@@ -191,22 +191,51 @@ public class PsiImplUtil {
 
     newExpr = (GrExpression)oldExpr.replace(newExpr);
 
-    if (newExpr instanceof GrParenthesizedExpression) {
-      final GrCommandArgumentList commandArgList =
-        PsiTreeUtil.getParentOfType(oldParent, GrCommandArgumentList.class, true, GrCodeBlock.class, GrParenthesizedExpression.class);
-      if (commandArgList != null) {
-        final PsiElement[] args = commandArgList.getAllArguments();
-        if (PsiTreeUtil.isAncestor(args[0], newExpr, true)) {
-          final PsiElement parent = commandArgList.getParent();
-          LOG.assertTrue(parent instanceof GrApplicationStatement);
 
-          GrExpression invokedExpression = ((GrApplicationStatement)parent).getInvokedExpression();
-          assert invokedExpression != null;
-          return (GrExpression)parent.replace(factory.createExpressionFromText(invokedExpression.getText() + "(" + commandArgList.getText() + ")"));
+    //if newExpr is the first grand child of command argument list we should replace command arg list with parenthesised arg list.
+    // In other case the code will be broken. So we try to find wrapping command arg list counting levels. After arg list replace we go inside it
+    // to find target parenthesised expression.
+    if (newExpr instanceof GrParenthesizedExpression && isFirstChild(newExpr)) {
+      int parentCount = 0;
+
+      PsiElement element = oldParent;
+      while (element != null && !(element instanceof GrCommandArgumentList)) {
+        if (element instanceof GrCodeBlock || element instanceof GrParenthesizedExpression) break;
+        if (element instanceof PsiFile) break;
+
+
+        final PsiElement parent = element.getParent();
+        if (parent == null) break;
+        if (!isFirstChild(element)) break;
+
+        element = parent;
+        parentCount++;
+      }
+
+      if (element instanceof GrCommandArgumentList) {
+        final GrCommandArgumentList commandArgList = (GrCommandArgumentList)element;
+
+        final PsiElement parent = commandArgList.getParent();
+        LOG.assertTrue(parent instanceof GrApplicationStatement);
+
+        final GrMethodCall methodCall = factory.createMethodCallByAppCall((GrApplicationStatement)parent);
+        final GrMethodCall newCall = (GrMethodCall)parent.replace(methodCall);
+
+        PsiElement result = newCall.getArgumentList().getAllArguments()[0];
+
+        for (int i = 0; i < parentCount; i++) {
+          result = PsiUtil.skipWhitespacesAndComments(result.getFirstChild(), true);
         }
+
+        LOG.assertTrue(result instanceof GrParenthesizedExpression);
+        return (GrExpression)result;
       }
     }
     return newExpr;
+  }
+
+  private static boolean isFirstChild(PsiElement element) {
+    return PsiUtil.skipWhitespacesAndComments(element.getParent().getFirstChild(), true) == element;
   }
 
   /**
