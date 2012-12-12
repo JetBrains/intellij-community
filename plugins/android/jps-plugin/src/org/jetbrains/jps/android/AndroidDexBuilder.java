@@ -73,9 +73,7 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor, Androi
                     @NotNull DirtyFilesHolder<BuildRootDescriptor, AndroidDexBuildTarget> holder,
                     @NotNull BuildOutputConsumer outputConsumer,
                     @NotNull CompileContext context) throws ProjectBuildException, IOException {
-    if (AndroidJpsUtil.isLightBuild(context)) {
-      return;
-    }
+    assert !AndroidJpsUtil.isLightBuild(context);
 
     try {
       if (!doDexBuild(buildTarget, context, holder.hasDirtyFiles())) {
@@ -97,10 +95,7 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor, Androi
 
     final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
     assert extension != null;
-    if (extension.isLibrary()) {
-      return true;
-    }
-
+    assert !extension.isLibrary();
 
     final AndroidPlatform platform = AndroidJpsUtil.getAndroidPlatform(module, context, DEX_BUILDER_NAME);
     if (platform == null) {
