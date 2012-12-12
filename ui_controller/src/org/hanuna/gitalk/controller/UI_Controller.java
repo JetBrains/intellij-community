@@ -73,15 +73,17 @@ public class UI_Controller {
     public void over(@Nullable GraphElement graphElement) {
         if (graphElement == prevGraphElement) {
             return;
+        } else {
+            prevGraphElement = graphElement;
         }
         selectController.deselectAll();
         if (graphElement == null) {
-            return;
+            events.runUpdateTable();
+        } else {
+            GraphFragment graphFragment = fragmentController.relateFragment(graphElement);
+            selectController.select(graphFragment);
+            events.runUpdateTable();
         }
-        GraphFragment graphFragment = fragmentController.relateFragment(graphElement);
-        selectController.select(graphFragment);
-        events.runUpdateTable();
-        prevGraphElement = graphElement;
     }
 
     public void click(@Nullable GraphElement graphElement) {
