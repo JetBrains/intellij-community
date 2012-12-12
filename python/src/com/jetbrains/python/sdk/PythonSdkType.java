@@ -771,11 +771,11 @@ public class PythonSdkType extends SdkType {
     if (pythonSdk != null) {
       final VirtualFile libDir = PyProjectScopeBuilder.findLibDir(pythonSdk);
       if (libDir != null && VfsUtilCore.isAncestor(libDir, vFile, false)) {
-        final VirtualFile sitePackages = libDir.findChild(PyNames.SITE_PACKAGES);
-        if (sitePackages != null && VfsUtilCore.isAncestor(sitePackages, vFile, false)) {
-          return false;
-        }
-        return true;
+        return isNotSitePackages(vFile, libDir);
+      }
+      final VirtualFile venvLibDir = PyProjectScopeBuilder.findVirtualEnvLibDir(pythonSdk);
+      if (venvLibDir != null && VfsUtilCore.isAncestor(venvLibDir, vFile, false)) {
+        return isNotSitePackages(vFile, venvLibDir);
       }
       final VirtualFile skeletonsDir = findSkeletonsDir(pythonSdk);
       if (skeletonsDir != null &&
@@ -784,6 +784,14 @@ public class PythonSdkType extends SdkType {
       }
     }
     return false;
+  }
+
+  private static boolean isNotSitePackages(VirtualFile vFile, VirtualFile libDir) {
+    final VirtualFile sitePackages = libDir.findChild(PyNames.SITE_PACKAGES);
+    if (sitePackages != null && VfsUtilCore.isAncestor(sitePackages, vFile, false)) {
+      return false;
+    }
+    return true;
   }
 
   @Nullable
