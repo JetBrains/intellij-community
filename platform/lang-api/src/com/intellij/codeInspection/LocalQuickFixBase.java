@@ -25,11 +25,22 @@ public abstract class LocalQuickFixBase implements LocalQuickFix {
   private final String myName;
   private final String myFamilyName;
 
-  public LocalQuickFixBase(String name) {
+  /**
+   *
+   * @param name the name of the quick fix
+   */
+  protected LocalQuickFixBase(@NotNull String name) {
     this(name, name);
   }
 
-  public LocalQuickFixBase(String name, String familyName) {
+  /**
+   *
+   * @param name the name of the quick fix
+   * @param familyName text to appear in "Apply Fix" popup when multiple Quick Fixes exist (in the results of batch code inspection). For example,
+   *        if the name of the quickfix is "Create template &lt;filename&gt", the return value of getFamilyName() should be "Create template".
+   *        If the name of the quickfix does not depend on a specific element, simply return getName().
+   */
+  protected LocalQuickFixBase(@NotNull String name, @NotNull String familyName) {
     myName = name;
     myFamilyName = familyName;
   }
