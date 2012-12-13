@@ -86,6 +86,7 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
     CommonCodeStyleSettings defaultSettings = new CommonCodeStyleSettings(PythonLanguage.getInstance());
     CommonCodeStyleSettings.IndentOptions indentOptions = defaultSettings.initIndentOptions();
     indentOptions.INDENT_SIZE = 4;
+    defaultSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     return defaultSettings; 
   }
 
