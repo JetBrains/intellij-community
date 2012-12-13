@@ -30,10 +30,18 @@ public class PyParser implements PsiParser {
     long start = System.currentTimeMillis();
     final PsiBuilder.Marker rootMarker = builder.mark();
     ParsingContext context = createParsingContext(builder, myLanguageLevel, myFutureFlag);
-    StatementParsing stmt_parser = context.getStatementParser();
-    builder.setTokenTypeRemapper(stmt_parser); // must be done before touching the caching lexer with eof() call.
+    StatementParsing statementParser = context.getStatementParser();
+    builder.setTokenTypeRemapper(statementParser); // must be done before touching the caching lexer with eof() call.
+    boolean lastAfterSemicolon = false;
     while (!builder.eof()) {
-      stmt_parser.parseStatement(context.emptyParsingScope());
+      ParsingScope scope = context.emptyParsingScope();
+      if (lastAfterSemicolon) {
+        statementParser.parseSimpleStatement(scope);
+      }
+      else {
+        statementParser.parseStatement(scope);
+      }
+      lastAfterSemicolon = scope.isAfterSemicolon();
     }
     rootMarker.done(root);
     ASTNode ast = builder.getTreeBuilt();
