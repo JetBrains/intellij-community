@@ -4,6 +4,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jdom.Element;
+import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsEncodingConfigurationService;
 import org.jetbrains.jps.model.JpsEncodingProjectConfiguration;
 import org.jetbrains.jps.model.artifact.JpsArtifactService;
@@ -83,6 +84,13 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     JpsModule module = assertOneElement(myProject.getModules());
     JpsModuleSourceRoot root = assertOneElement(module.getSourceRoots());
     assertEquals(getUrl("src"), root.getUrl());
+  }
+
+  public void testProjectSdkWithoutType() {
+    loadProject("/jps/model-serialization/testData/projectSdkWithoutType/projectSdkWithoutType.ipr");
+    JpsSdkReference<JpsDummyElement> reference = myProject.getSdkReferencesTable().getSdkReference(JpsJavaSdkType.INSTANCE);
+    assertNotNull(reference);
+    assertEquals("1.6", reference.getSdkName());
   }
 
   public void testLoadEncoding() {
