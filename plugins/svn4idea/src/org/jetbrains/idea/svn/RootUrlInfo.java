@@ -89,4 +89,32 @@ public class RootUrlInfo implements RootUrlPair {
   public void setType(NestedCopyType type) {
     myType = type;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    RootUrlInfo info = (RootUrlInfo)o;
+
+    if (myAbsoluteUrlAsUrl != null ? !myAbsoluteUrlAsUrl.equals(info.myAbsoluteUrlAsUrl) : info.myAbsoluteUrlAsUrl != null) return false;
+    if (myFormat != info.myFormat) return false;
+    if (myIoFile != null ? !myIoFile.equals(info.myIoFile) : info.myIoFile != null) return false;
+    if (myRepositoryUrlUrl != null ? !myRepositoryUrlUrl.equals(info.myRepositoryUrlUrl) : info.myRepositoryUrlUrl != null) return false;
+    if (myRoot != null ? !myRoot.equals(info.myRoot) : info.myRoot != null) return false;
+    if (myType != info.myType) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myRepositoryUrlUrl != null ? myRepositoryUrlUrl.hashCode() : 0;
+    result = 31 * result + (myAbsoluteUrlAsUrl != null ? myAbsoluteUrlAsUrl.hashCode() : 0);
+    result = 31 * result + (myFormat != null ? myFormat.hashCode() : 0);
+    result = 31 * result + (myIoFile != null ? myIoFile.hashCode() : 0);
+    result = 31 * result + (myRoot != null ? myRoot.hashCode() : 0);
+    result = 31 * result + (myType != null ? myType.hashCode() : 0);
+    return result;
+  }
 }

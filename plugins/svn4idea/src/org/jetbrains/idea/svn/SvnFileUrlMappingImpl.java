@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
@@ -72,6 +73,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
   private final Project myProject;
   private final NestedCopiesSink myTempSink;
   private boolean myInitialized;
+  private boolean myInitedReloaded;
 
   private static class MyRootsHelper extends ThreadLocalDefendedInvoker<VirtualFile[]> {
     private final ProjectLevelVcsManager myPlVcsManager;
@@ -249,12 +251,23 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
         @Override
         public void run() {
           if (myProject.isDisposed()) return;
+          boolean mappingsChanged = false;
           synchronized (myMonitor) {
+            mappingsChanged = ! myMapping.equals(mapping);
+            if (mappingsChanged) {
+              mappingsChanged = ! myMoreRealMapping.equals(groupedMapping);
+            }
             myMapping.copyFrom(mapping);
             myMoreRealMapping.copyFrom(groupedMapping);
           }
-          // all listeners are asynchronous
-          myProject.getMessageBus().syncPublisher(SvnVcs.ROOTS_RELOADED).run();
+
+          if (mappingsChanged || ! myInitedReloaded) {
+            myInitedReloaded = true;
+            // all listeners are asynchronous
+            final MessageBus bus = myProject.getMessageBus();
+            bus.syncPublisher(SvnVcs.ROOTS_RELOADED).run();
+            bus.syncPublisher(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN).directoryMappingChanged();
+          }
         }
       });
     }

@@ -19,10 +19,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.CommittedChangesProvider;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.RepositoryLocation;
+import com.intellij.openapi.vcs.*;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -36,6 +34,15 @@ public class RepositoryLocationCache {
   public RepositoryLocationCache(final Project project) {
     myProject = project;
     myMap = Collections.synchronizedMap(new HashMap<Pair<String, String>, RepositoryLocation>());
+    final MessageBusConnection connection = myProject.getMessageBus().connect();
+    final VcsListener listener = new VcsListener() {
+      @Override
+      public void directoryMappingChanged() {
+        reset();
+      }
+    };
+    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, listener);
+    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, listener);
   }
 
   public RepositoryLocation getLocation(final AbstractVcs vcs, final FilePath filePath, final boolean silent) {
@@ -57,6 +64,10 @@ public class RepositoryLocationCache {
       loader.run();
     }
     return loader.getLocation();
+  }
+
+  public void reset() {
+    myMap.clear();
   }
 
   private class MyLoader implements Runnable {
