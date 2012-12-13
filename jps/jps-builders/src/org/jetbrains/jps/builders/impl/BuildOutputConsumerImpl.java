@@ -51,7 +51,8 @@ public class BuildOutputConsumerImpl implements BuildOutputConsumer {
     for (File outputRoot : myOutputs) {
       String outputRootPath = FileUtil.toSystemIndependentName(outputRoot.getPath());
       final String relativePath = FileUtil.getRelativePath(outputRootPath, outputFilePath, '/');
-      if (relativePath != null) {
+      if (relativePath != null && !relativePath.startsWith("..")) {
+        // the relative path must be under the root or equal to it
         myFileGeneratedEvent.add(outputRootPath, relativePath);
       }
     }
