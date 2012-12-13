@@ -184,10 +184,12 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
     final VirtualFile myManifestFile;
     final String[] myResourcesPaths;
     final IAndroidTarget myAndroidTarget;
-    
+
     final String myPackage;
     final String[] myLibraryPackages;
     final boolean myNonConstantFields;
+
+    final String myRenamedManifest;
 
     final int myPlatformToolsRevision;
     private final MyValidityState myValidityState;
@@ -201,6 +203,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
                               @NotNull String aPackage,
                               @NotNull String[] libPackages,
                               boolean nonConstantFields,
+                              @NotNull String renamedManifest,
                               @Nullable String proguardCfgOutputFileOsPath) {
       myModule = module;
       myManifestFile = manifestFile;
@@ -209,6 +212,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
       myPackage = aPackage;
       myLibraryPackages = libPackages;
       myNonConstantFields = nonConstantFields;
+      myRenamedManifest = renamedManifest;
       myPlatformToolsRevision = platformToolsRevision;
       myProguardCfgOutputFileOsPath = proguardCfgOutputFileOsPath;
       myValidityState = new MyValidityState(myModule, Collections.<String>emptySet(), myPlatformToolsRevision, myNonConstantFields,
@@ -314,6 +318,8 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
           }
           final boolean generateNonFinalFields = facet.getConfiguration().LIBRARY_PROJECT || circularDepLibWithSamePackage != null;
 
+          final String renamedManifest = facet.getConfiguration().RENAMED_MANIFEST;
+
           final VirtualFile outputDirForDex = AndroidDexCompiler.getOutputDirectoryForDex(module);
           final String proguardCfgOutputFileOsPath =
             AndroidCompileUtil.getProguardConfigFilePathIfShouldRun(facet, myContext) != null
@@ -321,7 +327,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
             : null;
 
           items.add(new AptGenerationItem(module, manifestFile, resPaths, target, platformToolsRevision, packageName, libPackages,
-                                          generateNonFinalFields, proguardCfgOutputFileOsPath));
+                                          generateNonFinalFields, renamedManifest, proguardCfgOutputFileOsPath));
         }
       }
       return items.toArray(new GenerationItem[items.size()]);

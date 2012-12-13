@@ -552,13 +552,13 @@ public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, 
       final IgnoredFileIndex ignoredFileIndex = context.getProjectDescriptor().getIgnoredFileIndex();
 
       final Map<AndroidCompilerMessageKind, List<String>> messages = AndroidApt
-        .packageResources(target, -1, manifestFile.getPath(), resourceDirPaths, assetsDirPaths, outputPath, null,
-                          !releasePackage, 0, new FileFilter() {
-          @Override
-          public boolean accept(File pathname) {
-            return !ignoredFileIndex.isIgnored(PathUtilRt.getFileName(pathname.getPath()));
-          }
-        });
+        .packageResources(target, -1, manifestFile.getPath(), resourceDirPaths, assetsDirPaths, outputPath, null, null, !releasePackage, 0,
+                          new FileFilter() {
+                            @Override
+                            public boolean accept(File pathname) {
+                              return !ignoredFileIndex.isIgnored(PathUtilRt.getFileName(pathname.getPath()));
+                            }
+                          });
 
       AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME, moduleName);
       return messages.get(AndroidCompilerMessageKind.ERROR).size() == 0;

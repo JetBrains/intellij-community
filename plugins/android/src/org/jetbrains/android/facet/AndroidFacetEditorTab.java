@@ -26,6 +26,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
@@ -33,6 +34,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtil;
@@ -99,6 +101,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
   private TextFieldWithBrowseButton myProguardConfigFileTextField;
   private JCheckBox myIncludeSystemProguardFileCheckBox;
   private JBCheckBox myIncludeAssetsFromLibraries;
+  private LabeledComponent<EditorTextField> myRenamedManifestComponent;
 
   public AndroidFacetEditorTab(FacetEditorContext context, AndroidFacetConfiguration androidFacetConfiguration) {
     final Project project = context.getProject();
@@ -322,6 +325,9 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     if (myConfiguration.isIncludeAssetsFromLibraries() != myIncludeAssetsFromLibraries.isSelected()) {
       return true;
     }
+    if (!getRenamedManifestPackage().equals(myConfiguration.RENAMED_MANIFEST)) {
+      return true;
+    }
 
     if (checkRelativePath(myConfiguration.PROGUARD_CFG_PATH, myProguardConfigFileTextField.getText())) {
       return true;
@@ -340,6 +346,13 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
   private String getSelectedCustomKeystorePath() {
     final String path = myCustomDebugKeystoreField.getText().trim();
     return path.length() > 0 ? VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(path)) : "";
+  }
+
+  @NotNull
+  private String getRenamedManifestPackage() {
+    EditorTextField textField = myRenamedManifestComponent.getComponent();
+    final String renamedManifest = textField.getText().trim();
+    return renamedManifest.length() > 0 ? renamedManifest : "";
   }
 
   @NotNull
@@ -442,6 +455,8 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
 
     myConfiguration.setIncludeAssetsFromLibraries(myIncludeAssetsFromLibraries.isSelected());
 
+    myConfiguration.RENAMED_MANIFEST = getRenamedManifestPackage();
+
     String absProguardPath = myProguardConfigFileTextField.getText().trim();
     if (absProguardPath.length() == 0) {
       if (myRunProguardCheckBox.isSelected()) {
@@ -533,6 +548,8 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     myNativeLibsFolder.setText(libsAbsPath != null ? libsAbsPath : "");
 
     myCustomDebugKeystoreField.setText(FileUtil.toSystemDependentName(VfsUtil.urlToPath(configuration.CUSTOM_DEBUG_KEYSTORE_PATH)));
+
+    myRenamedManifestComponent.getComponent().setText(configuration.RENAMED_MANIFEST);
 
     String proguardCfgRelPath = configuration.PROGUARD_CFG_PATH;
     String proguardCfgAbsPath = proguardCfgRelPath.length() > 0 ? toAbsolutePath(proguardCfgRelPath) : "";

@@ -181,6 +181,7 @@ public class AndroidRunConfiguration extends AndroidRunConfigurationBase impleme
         activityToLaunch = JavaExecutionUtil.getRuntimeQualifiedName(activityClass);
       }
     }
+
     return new MyApplicationLauncher(activityToLaunch);
   }
 
@@ -231,7 +232,9 @@ public class AndroidRunConfiguration extends AndroidRunConfigurationBase impleme
       String activityName = myActivityName;
       if (activityName == null) return true;
       activityName = activityName.replace("$", "\\$");
-      final String activityPath = state.getPackageName() + '/' + activityName;
+      final String renamedManifest = state.getFacet().getConfiguration().RENAMED_MANIFEST;
+      final String finalPackage = renamedManifest.length() > 0 ? renamedManifest : state.getPackageName();
+      final String activityPath = finalPackage + '/' + activityName;
       ProcessHandler processHandler = state.getProcessHandler();
       if (state.isStopped()) return false;
       processHandler.notifyTextAvailable("Launching application: " + activityPath + ".\n", STDOUT);
