@@ -761,7 +761,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     return FileDocumentManagerListener.EP_NAME.getExtensions();
   }
 
-  protected void handleErrorsOnSave(final Map<Document, IOException> failures) {
+  protected void handleErrorsOnSave(@NotNull Map<Document, IOException> failures) {
+    for (IOException exception : failures.values()) {
+      LOG.warn(exception);
+    }
+
     final String text = StringUtil.join(failures.values(), new Function<IOException, String>() {
       @Override
       public String fun(IOException e) {

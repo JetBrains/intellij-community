@@ -263,7 +263,7 @@ public final class IconLoader {
       graphics.dispose();
       
       Image img = createDisabled(image);
-      if (UIUtil.isRetina()) img = RetinaImage.createFrom(image, 2, ImageLoader.ourComponent);
+      if (UIUtil.isRetina()) img = RetinaImage.createFrom(img, 2, ImageLoader.ourComponent);
       
       disabledIcon = new MyImageIcon(img);
       ourIcon2DisabledIcon.put(icon, disabledIcon);

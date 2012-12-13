@@ -50,7 +50,14 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
       @Override
       public void elementChosen(ChooseByNamePopup popup, final Object element) {
         if (element instanceof OptionDescription) {
-          ShowSettingsUtilImpl.showSettingsDialog(project, ((OptionDescription)element).getConfigurableId(), popup.getEnteredText());
+          final String configurableId = ((OptionDescription)element).getConfigurableId();
+          final String enteredText = popup.getEnteredText();
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              ShowSettingsUtilImpl.showSettingsDialog(project, configurableId, enteredText);
+            }
+          });
         }
         else {
           final AnAction action = (AnAction)((Map.Entry)element).getKey();

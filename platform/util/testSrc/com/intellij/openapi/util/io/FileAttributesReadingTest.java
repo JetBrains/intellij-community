@@ -247,7 +247,7 @@ public class FileAttributesReadingTest {
     assertTrue(attributes.isWritable());
 
     final String resolved1 = FileSystemUtil.resolveSymLink(junction);
-    assertEquals(target.getPath(), resolved1);
+    assertEquals(SystemInfo.isWinVistaOrNewer ? target.getPath() : junction.getPath(), resolved1);
 
     FileUtil.delete(target);
 
@@ -257,7 +257,7 @@ public class FileAttributesReadingTest {
     assertTrue(attributes.isWritable());
 
     final String resolved2 = FileSystemUtil.resolveSymLink(junction);
-    assertNull(resolved2, resolved2);
+    assertEquals(SystemInfo.isWinVistaOrNewer ? null : junction.getPath(), resolved2);
   }
 
   @Test

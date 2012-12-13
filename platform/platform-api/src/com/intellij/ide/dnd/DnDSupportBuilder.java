@@ -24,6 +24,7 @@ import com.intellij.util.Function;
 public interface DnDSupportBuilder {
   DnDSupportBuilder disableAsTarget();
   DnDSupportBuilder disableAsSource();
+  DnDSupportBuilder enableAsNativeTarget();
   DnDSupportBuilder setImageProvider(Function<DnDActionInfo, DnDImage> provider);
   DnDSupportBuilder setBeanProvider(Function<DnDActionInfo, DnDDragStartBean> provider);
   DnDSupportBuilder setDropHandler(DnDDropHandler handler);

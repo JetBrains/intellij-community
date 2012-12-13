@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ public abstract class AppIcon {
     if (SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast("1.6")) {
       return ourMacImpl;
     }
-    else if (SystemInfo.isWindows7) {
+    else if (SystemInfo.isWin7OrNewer) {
       return ourWin7Impl;
     }
     else {
