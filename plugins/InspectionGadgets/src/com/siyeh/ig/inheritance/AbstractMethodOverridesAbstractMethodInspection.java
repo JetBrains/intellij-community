@@ -18,8 +18,10 @@ package com.siyeh.ig.inheritance;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -204,8 +206,12 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
       if (type1 == null) {
         return false;
       }
+      final PsiClass superClass = method2.getContainingClass();
+      final PsiClass aClass = method1.getContainingClass();
+      if (aClass == null || superClass == null) return false;
+      final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
       final PsiType type2 = method2.getReturnType();
-      return type2 != null && type1.equals(type2);
+      return Comparing.equal(TypeConversionUtil.erasure(type1), TypeConversionUtil.erasure(substitutor.substitute(type2)));
     }
 
     private boolean isAbstract(PsiMethod method) {

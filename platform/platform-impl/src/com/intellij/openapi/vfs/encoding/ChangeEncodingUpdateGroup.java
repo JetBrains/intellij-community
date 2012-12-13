@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -26,7 +27,7 @@ import com.intellij.pom.Navigatable;
 /**
  * @author cdr
  */
-public class ChangeEncodingUpdateGroup extends DefaultActionGroup {
+public class ChangeEncodingUpdateGroup extends DefaultActionGroup implements DumbAware {
   private boolean myUpdating;
   
   @Override

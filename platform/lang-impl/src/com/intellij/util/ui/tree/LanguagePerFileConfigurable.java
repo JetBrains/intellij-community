@@ -309,11 +309,20 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
       }
 
       protected abstract void chosen(final VirtualFile file, final T t);
+
+      @Override
+      public boolean isDumbAware() {
+        return LanguagePerFileConfigurable.this.isDumbAware();
+      }
     }
   }
 
   @Nullable
   protected Icon getIcon(T currentValue, T selectableValue) {
     return null;
+  }
+
+  protected boolean isDumbAware() {
+    return true;
   }
 }

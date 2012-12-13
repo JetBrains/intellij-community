@@ -85,4 +85,21 @@ public abstract class RunManagerEx extends RunManager {
 
   public abstract void addRunManagerListener(RunManagerListener listener);
   public abstract void removeRunManagerListener(RunManagerListener listener);
+
+  public static void disableTasks(Project project, RunConfiguration settings, Key<? extends BeforeRunTask>... keys) {
+    for (Key<? extends BeforeRunTask> key : keys) {
+      List<? extends BeforeRunTask> tasks = getInstanceEx(project).getBeforeRunTasks(settings, key);
+      for (BeforeRunTask task : tasks) {
+        task.setEnabled(false);
+      }
+    }
+  }
+
+  public static int getTasksCount(Project project, RunConfiguration settings, Key<? extends BeforeRunTask>... keys) {
+    int result = 0;
+    for (Key<? extends BeforeRunTask> key : keys) {
+      result += getInstanceEx(project).getBeforeRunTasks(settings, key).size();
+    }
+    return result;
+  }
 }
