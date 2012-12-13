@@ -22,7 +22,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.text.DateFormatUtilRt;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -72,7 +72,7 @@ public class MainImpl {
     final ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
     final ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
     LOG.info("IDE: " + namesInfo.getFullProductName() + " (build #" + appInfo.getBuild() + ", " +
-             DateFormatUtil.formatBuildDate(appInfo.getBuildDate()) + ")");
+             DateFormatUtilRt.formatBuildDate(appInfo.getBuildDate()) + ")");
     LOG.info("JRE: " + System.getProperty("java.runtime.version", "-") + " (" + System.getProperty("java.vendor", "-") + ")");
     LOG.info("JVM: " + System.getProperty("java.vm.version", "-") + " (" + System.getProperty("java.vm.vendor", "-") + ")");
 
