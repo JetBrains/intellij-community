@@ -253,4 +253,8 @@ public class PyElementVisitor extends PsiElementVisitor {
   public void visitPyConditionalExpression(PyConditionalExpression node) {
     visitPyElement(node);
   }
+
+  public void visitPyKeywordArgument(PyKeywordArgument node) {
+    visitPyElement(node);
+  }
 }

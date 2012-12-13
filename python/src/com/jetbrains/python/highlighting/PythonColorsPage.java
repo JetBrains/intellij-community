@@ -44,6 +44,7 @@ public class PythonColorsPage implements ColorSettingsPage, InspectionColorSetti
     new AttributesDescriptor("Predefined name", PyHighlighter.PY_PREDEFINED_USAGE),
     new AttributesDescriptor("Parameter", PyHighlighter.PY_PARAMETER),
     new AttributesDescriptor("'self' parameter", PyHighlighter.PY_SELF_PARAMETER),
+    new AttributesDescriptor("Keyword argument", PyHighlighter.PY_KEYWORD_ARGUMENT),
     new AttributesDescriptor("Valid escape sequence", PyHighlighter.PY_VALID_STRING_ESCAPE),
     new AttributesDescriptor("Invalid escape sequence", PyHighlighter.PY_INVALID_STRING_ESCAPE),
   };
@@ -59,6 +60,7 @@ public class PythonColorsPage implements ColorSettingsPage, InspectionColorSetti
     .put("builtin", PyHighlighter.PY_BUILTIN_NAME)
     .put("self", PyHighlighter.PY_SELF_PARAMETER)
     .put("param", PyHighlighter.PY_PARAMETER)
+    .put("kwarg", PyHighlighter.PY_KEYWORD_ARGUMENT)
     .build();
 
   @NotNull
@@ -99,9 +101,9 @@ public class PythonColorsPage implements ColorSettingsPage, InspectionColorSetti
       "\n"+
       "class <classDef>Foo</classDef>:\n"+
       "    def <predefined>__init__</predefined>(<self>self</self>):\n" +
-      "        <self>self</self>.sense = None\n" +
       "        byte_string = 'newline:\\n also newline:\\x0a'\n" +
       "        text_string = u\"Cyrillic \u042f is \\u042f. Oops: \\u042g\"\n"+
+      "        <self>self</self>.makeSense(<kwarg>whatever</kwarg>=1)\n" +
       "    \n" +
       "    def <funcDef>makeSense</funcDef>(<self>self</self>, <param>whatever</param>):\n"+
       "        <self>self</self>.sense = <param>whatever</param>\n"+

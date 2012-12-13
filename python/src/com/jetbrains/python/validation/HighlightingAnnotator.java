@@ -1,5 +1,6 @@
 package com.jetbrains.python.validation;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -33,6 +34,15 @@ public class HighlightingAnnotator extends PyAnnotator {
           annotation.setTextAttributes(isSelf(element, function) ? PyHighlighter.PY_SELF_PARAMETER : PyHighlighter.PY_PARAMETER);
         }
       }
+    }
+  }
+
+  @Override
+  public void visitPyKeywordArgument(PyKeywordArgument node) {
+    ASTNode keywordNode = node.getKeywordNode();
+    if (keywordNode != null) {
+      Annotation annotation = getHolder().createInfoAnnotation(keywordNode, null);
+      annotation.setTextAttributes(PyHighlighter.PY_KEYWORD_ARGUMENT);
     }
   }
 
