@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
+import com.intellij.compiler.options.CompileStepBeforeRunNoErrorCheck;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunProfile;
@@ -60,7 +61,6 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -97,12 +97,7 @@ public class GradleScriptType extends GroovyScriptType {
       configuration.setScriptParameters(target);
       configuration.setName(configuration.getName() + "." + target);
     }
-    
-    final List<CompileStepBeforeRun.MakeBeforeRunTask> runTasks =
-      RunManagerEx.getInstanceEx(file.getProject()).getBeforeRunTasks(configuration, CompileStepBeforeRun.ID);
-    for (CompileStepBeforeRun.MakeBeforeRunTask task : runTasks) {
-      task.setEnabled(false);
-    }
+    RunManagerEx.disableTasks(file.getProject(), configuration, CompileStepBeforeRun.ID, CompileStepBeforeRunNoErrorCheck.ID);
   }
 
   @Nullable
