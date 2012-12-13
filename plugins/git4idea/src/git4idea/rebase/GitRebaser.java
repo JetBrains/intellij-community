@@ -173,6 +173,9 @@ public class GitRebaser {
     return result.get();
   }
 
+  /**
+   * @return true if the failure situation was resolved successfully, false if we failed to resolve the problem.
+   */
   private boolean handleRebaseFailure(final VirtualFile root, final GitLineHandler h, GitRebaseProblemDetector rebaseConflictDetector) {
     if (rebaseConflictDetector.isMergeConflict()) {
       LOG.info("handleRebaseFailure merge conflict");
@@ -185,15 +188,46 @@ public class GitRebaser {
           return continueRebase(root, "--continue");
         }
       }.merge();
-    } else if (rebaseConflictDetector.isNoChangeError()) {
-      LOG.info("handleRebaseFailure no change");
-      mySkippedCommits.add(GitRebaseUtils.getCurrentRebaseCommit(root));
-      return continueRebase(root, "--skip");
-    } else {
+    }
+    else if (rebaseConflictDetector.isNoChangeError()) {
+      LOG.info("handleRebaseFailure no changes error detected");
+      try {
+        if (GitUtil.hasLocalChanges(true, myProject, root)) {
+          LOG.error("The rebase detector incorrectly detected 'no changes' situation. Attempting to continue rebase.");
+          return continueRebase(root);
+        }
+        else if (GitUtil.hasLocalChanges(false, myProject, root)) {
+          LOG.warn("No changes from patch were not added to the index. Adding all changes from tracked files.");
+          stageEverything(root);
+          return continueRebase(root);
+        }
+        else {
+          GitRebaseUtils.CommitInfo commit = GitRebaseUtils.getCurrentRebaseCommit(root);
+          LOG.info("no changes confirmed. Skipping commit " + commit);
+          mySkippedCommits.add(commit);
+          return continueRebase(root, "--skip");
+        }
+      }
+      catch (VcsException e) {
+        LOG.info("Failed to work around 'no changes' error.", e);
+        String message = "Couldn't proceed with rebase. " + e.getMessage();
+        GitUIUtil.notifyImportantError(myProject, "Error rebasing", message);
+        return false;
+      }
+    }
+    else {
       LOG.info("handleRebaseFailure error " + h.errors());
       GitUIUtil.notifyImportantError(myProject, "Error rebasing", GitUIUtil.stringifyErrors(h.errors()));
       return false;
     }
+  }
+
+  private void stageEverything(@NotNull VirtualFile root) throws VcsException {
+    GitSimpleHandler handler = new GitSimpleHandler(myProject, root, GitCommand.ADD);
+    handler.setSilent(false);
+    handler.setNoSSH(true);
+    handler.addParameters("--update");
+    handler.run();
   }
 
   private static GitConflictResolver.Params makeParamsForRebaseConflict() {

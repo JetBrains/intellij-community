@@ -162,5 +162,10 @@ public class GitRebaseUtils {
       this.revision = revision;
       this.subject = subject;
     }
+
+    @Override
+    public String toString() {
+      return revision.toString();
+    }
   }
 }
