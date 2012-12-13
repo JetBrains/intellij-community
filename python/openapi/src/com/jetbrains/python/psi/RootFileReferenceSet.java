@@ -48,7 +48,7 @@ public class RootFileReferenceSet extends FileReferenceSet {
           }
         }
         else {
-          return Lists.newArrayList();
+          return super.computeDefaultContexts();
         }
       }
       else {
