@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.diff.contentroot.GradleContentRootPresenceChange;
 import org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyPresenceChange;
 import org.jetbrains.plugins.gradle.diff.dependency.GradleModuleDependencyPresenceChange;
+import org.jetbrains.plugins.gradle.diff.library.GradleJarPresenceChange;
 import org.jetbrains.plugins.gradle.diff.module.GradleModulePresenceChange;
 import org.jetbrains.plugins.gradle.model.gradle.*;
 import org.jetbrains.plugins.gradle.model.intellij.IntellijEntityVisitor;
@@ -66,6 +67,11 @@ public class GradleDiffUtil {
       @Override
       public void visit(@NotNull GradleLibrary library) {
         // Don't show library nodes. 
+      }
+
+      @Override
+      public void visit(@NotNull GradleJar jar) {
+        context.register(new GradleJarPresenceChange(jar.getId(), null));
       }
 
       @Override

@@ -406,22 +406,9 @@ public class GradleUtil {
     if (result != null) {
       return result;
     }
-    String[] endingsToStrip = { "/", "!", ".jar" };
-    StringBuilder buffer = new StringBuilder();
     for (OrderRootType type : OrderRootType.getAllTypes()) {
       for (String url : library.getUrls(type)) {
-        buffer.setLength(0);
-        buffer.append(url);
-        for (String ending : endingsToStrip) {
-          if (buffer.lastIndexOf(ending) == buffer.length() - ending.length()) {
-            buffer.setLength(buffer.length() - ending.length());
-          }
-        }
-        final int i = buffer.lastIndexOf(PATH_SEPARATOR);
-        if (i < 0 || i >= buffer.length() - 1) {
-          continue;
-        }
-        String candidate = buffer.substring(i + 1);
+        String candidate = extractNameFromPath(url);
         if (!StringUtil.isEmpty(candidate)) {
           return candidate;
         }
@@ -429,6 +416,32 @@ public class GradleUtil {
     }
     assert false;
     return "unknown-lib";
+  }
+
+  @NotNull
+  public static String extractNameFromPath(@NotNull String path) {
+    String strippedPath = stripPath(path);
+    final int i = strippedPath.lastIndexOf(PATH_SEPARATOR);
+    final String result;
+    if (i < 0 || i >= strippedPath.length() - 1) {
+      result = strippedPath;
+    }
+    else {
+      result = strippedPath.substring(i + 1);
+    }
+    return result;
+  }
+
+  @NotNull
+  private static String stripPath(@NotNull String path) {
+    String[] endingsToStrip = { "/", "!", ".jar" };
+    StringBuilder buffer = new StringBuilder(path);
+    for (String ending : endingsToStrip) {
+      if (buffer.lastIndexOf(ending) == buffer.length() - ending.length()) {
+        buffer.setLength(buffer.length() - ending.length());
+      }
+    }
+    return buffer.toString();
   }
 
   /**

@@ -48,6 +48,7 @@
     <!--Import services-->
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleModuleManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleLibraryManager"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleJarManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleContentRootManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleDependencyManager"/>
 
@@ -63,7 +64,6 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.conflict.GradleConflictControlFactory"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.conflict.GradleProjectConflictControlFactory"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.conflict.GradleCommonDependencyConflictControlFactory"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.conflict.GradleLibraryDependencyConflictControlFactory"/>
 
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.config.GradleSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.config.GradleLocalSettings"/>

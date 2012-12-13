@@ -54,6 +54,7 @@ class GradleProjectBuilder extends AbstractProjectBuilder {
   protected createLibrary(String name, Map paths) {
     def result = new GradleLibrary(name)
     applyLibraryPaths(result, paths)
+    project.addLibrary(result)
     result
   }
 

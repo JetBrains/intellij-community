@@ -12,6 +12,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import javax.swing.*;
+
 /**
  * @author Denis Zhdanov
  * @since 01/17/2012
@@ -59,8 +61,8 @@ public class RichTextControlBuilderTest {
   public void completeMetaInfo() {
     String text = String.format("this is a test text with two inline meta-datas: {@%s meta \t text} and {@%s}", META_KEY, META_KEY);
     myMockery.checking(new Expectations() {{
-      one(myProcessor).process("meta \t text");
-      one(myProcessor).process("");
+      one(myProcessor).process("meta \t text"); will(returnValue(new JLabel("")));
+      one(myProcessor).process(""); will(returnValue(new JLabel("")));
     }});
     myBuilder.setText(text);
   }
