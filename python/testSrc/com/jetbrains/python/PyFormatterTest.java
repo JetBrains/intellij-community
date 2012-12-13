@@ -191,6 +191,10 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testSpaceAfterRelativeImport() {  // PY-8112
+    doTest();
+  }
+
   public void testPsiFormatting() { // IDEA-69724
     String initial =
       "def method_name(\n" +
