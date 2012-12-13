@@ -356,6 +356,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testEllipsisAsStatement() {  // PY-7763
+    doTest();
+  }
+
   public void doTest(LanguageLevel languageLevel) {
     LanguageLevel prev = myLanguageLevel;
     myLanguageLevel = languageLevel;

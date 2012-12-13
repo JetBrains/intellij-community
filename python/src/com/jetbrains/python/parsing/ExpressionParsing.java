@@ -72,15 +72,6 @@ public class ExpressionParsing extends Parsing {
       parseReprExpression(myBuilder);
       return true;
     }
-    else if (firstToken == PyTokenTypes.DOT) {
-      final PsiBuilder.Marker maybeEllipsis = myBuilder.mark();
-      myBuilder.advanceLexer();
-      if (matchToken(PyTokenTypes.DOT) && matchToken(PyTokenTypes.DOT)) {
-        maybeEllipsis.done(PyElementTypes.NONE_LITERAL_EXPRESSION);
-        return true;
-      }
-      maybeEllipsis.rollbackTo();
-    }
     return false;
   }
 
@@ -334,7 +325,9 @@ public class ExpressionParsing extends Parsing {
             parseSliceEnd(expr, sliceItemStart);
           }
           else {
-            parseSingleExpression(false);
+            if (!parseEllipsis()) {
+              parseSingleExpression(false);
+            }
             if (atToken(PyTokenTypes.COLON)) {
               sliceOrTupleStart.drop();
               parseSliceEnd(expr, sliceItemStart);
@@ -376,6 +369,19 @@ public class ExpressionParsing extends Parsing {
     while (recastFirstIdentifier);
 
     return true;
+  }
+
+  private boolean parseEllipsis() {
+    if (atToken(PyTokenTypes.DOT)) {
+      final PsiBuilder.Marker maybeEllipsis = myBuilder.mark();
+      myBuilder.advanceLexer();
+      if (matchToken(PyTokenTypes.DOT) && matchToken(PyTokenTypes.DOT)) {
+        maybeEllipsis.done(PyElementTypes.NONE_LITERAL_EXPRESSION);
+        return true;
+      }
+      maybeEllipsis.rollbackTo();
+    }
+    return false;
   }
 
   private static TokenSet BRACKET_OR_COMMA = TokenSet.create(PyTokenTypes.RBRACKET, PyTokenTypes.COMMA);
@@ -420,7 +426,9 @@ public class ExpressionParsing extends Parsing {
     while (atToken(PyTokenTypes.COMMA)) {
       nextToken();
       PsiBuilder.Marker sliceItemStart = myBuilder.mark();
-      parseTestExpression(false, false);
+      if (!parseEllipsis()) {
+        parseTestExpression(false, false);
+      }
       if (matchToken(PyTokenTypes.COLON)) {
         inSlice = true;
         parseTestExpression(false, false);
