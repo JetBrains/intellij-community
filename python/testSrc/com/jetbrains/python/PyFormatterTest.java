@@ -7,6 +7,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
@@ -193,6 +194,12 @@ public class PyFormatterTest extends PyTestCase {
 
   public void testSpaceAfterRelativeImport() {  // PY-8112
     doTest();
+  }
+
+  public void testSpaceWithinBraces() {  // PY-8069
+    settings().getCustomSettings(PyCodeStyleSettings.class).SPACE_WITHIN_BRACES = true;
+    doTest();
+
   }
 
   public void testPsiFormatting() { // IDEA-69724
