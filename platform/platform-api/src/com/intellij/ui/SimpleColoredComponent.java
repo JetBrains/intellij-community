@@ -616,7 +616,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
       final int fragmentWidth = metrics.stringWidth(fragment);
 
       final Color bgColor = attributes.getBgColor();
-      if (isOpaque() && bgColor != null) {
+      if ((attributes.isOpaque() || isOpaque()) && bgColor != null) {
         g.setColor(bgColor);
         g.fillRect(offset, 0, fragmentWidth, getHeight());
       }
