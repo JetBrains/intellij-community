@@ -31,7 +31,7 @@ import java.awt.*;
 @SuppressWarnings({"PointlessBitwiseExpression"})
 public final class SimpleTextAttributes {
 
-  @MagicConstant(flags = {STYLE_PLAIN, STYLE_BOLD, STYLE_ITALIC, STYLE_STRIKEOUT, STYLE_WAVED, STYLE_UNDERLINE, STYLE_BOLD_DOTTED_LINE, STYLE_SEARCH_MATCH, STYLE_SMALLER})
+  @MagicConstant(flags = {STYLE_PLAIN, STYLE_BOLD, STYLE_ITALIC, STYLE_STRIKEOUT, STYLE_WAVED, STYLE_UNDERLINE, STYLE_BOLD_DOTTED_LINE, STYLE_SEARCH_MATCH, STYLE_SMALLER, STYLE_OPAQUE})
   public @interface StyleAttributeConstant { }
 
   public static final int STYLE_PLAIN = Font.PLAIN;
@@ -44,6 +44,7 @@ public final class SimpleTextAttributes {
   public static final int STYLE_BOLD_DOTTED_LINE = STYLE_UNDERLINE << 1;
   public static final int STYLE_SEARCH_MATCH = STYLE_BOLD_DOTTED_LINE << 1;
   public static final int STYLE_SMALLER = STYLE_SEARCH_MATCH << 1;
+  public static final int STYLE_OPAQUE = STYLE_SMALLER << 1;
 
   public static final SimpleTextAttributes REGULAR_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, null);
   public static final SimpleTextAttributes REGULAR_BOLD_ATTRIBUTES = new SimpleTextAttributes(STYLE_BOLD, null);
@@ -94,7 +95,8 @@ public final class SimpleTextAttributes {
            STYLE_UNDERLINE |
            STYLE_BOLD_DOTTED_LINE |
            STYLE_SEARCH_MATCH |
-           STYLE_SMALLER) & style) != 0) {
+           STYLE_SMALLER |
+           STYLE_OPAQUE) & style) != 0) {
       throw new IllegalArgumentException("Wrong style: " + style);
     }
 
@@ -162,6 +164,10 @@ public final class SimpleTextAttributes {
   
   public boolean isSmaller() {
     return (myStyle & STYLE_SMALLER) != 0;
+  }
+
+  public boolean isOpaque() {
+    return (myStyle & STYLE_OPAQUE) != 0;
   }
 
   public static SimpleTextAttributes fromTextAttributes(TextAttributes attributes) {
