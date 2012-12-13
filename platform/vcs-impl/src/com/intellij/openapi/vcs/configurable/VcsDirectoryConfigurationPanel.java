@@ -335,9 +335,9 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
       .setDefaultFill(GridBagConstraints.BOTH);
 
     panel.add(createMappingsTable(), gb.nextLine().next().fillCell().weighty(1));
+    panel.add(createProjectMappingDescription(), gb.nextLine().next().fillCellHorizontally());
     myLimitHistory = new VcsLimitHistoryConfigurable(myProject);
     panel.add(myLimitHistory.createComponent(), gb.nextLine().next().fillCellHorizontally());
-    panel.add(createProjectMappingDescription(), gb.nextLine().next().fillCellHorizontally());
     panel.add(createErrorList(), gb.nextLine().next().fillCellHorizontally());
     panel.add(createShowRecursivelyDirtyOption(), gb.nextLine().next().fillCellHorizontally());
     panel.add(createStoreBaseRevisionOption(), gb.nextLine().next().fillCellHorizontally());
