@@ -33,4 +33,8 @@ public class GraphTableCell {
     public String getText() {
         return text;
     }
+
+    public ReadOnlyList<Ref> getRefsToThisCommit() {
+        return refsToThisCommit;
+    }
 }
