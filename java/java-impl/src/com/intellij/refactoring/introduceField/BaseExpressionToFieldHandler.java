@@ -906,7 +906,6 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           super.visitReferenceExpression(expression);
           final PsiElement resolve = expression.resolve();
           if (resolve instanceof PsiField &&
-              ((PsiField)resolve).hasModifierProperty(PsiModifier.FINAL) &&
               PsiTreeUtil.isAncestor(parentClass, resolve, false) && ((PsiField)resolve).hasInitializer() &&
               !PsiTreeUtil.isAncestor(initializer, resolve, false)) {
             if (refConstantFields[0] == null || refConstantFields[0].getTextOffset() < resolve.getTextOffset()) {

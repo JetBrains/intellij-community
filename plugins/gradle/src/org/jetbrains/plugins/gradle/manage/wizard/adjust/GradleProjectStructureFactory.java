@@ -56,6 +56,11 @@ public class GradleProjectStructureFactory {
       }
 
       @Override
+      public void visit(@NotNull GradleJar jar) {
+        text.set(GradleUtil.extractNameFromPath(jar.getPath()));
+      }
+
+      @Override
       public void visit(@NotNull GradleModuleDependency dependency) {
         visit(dependency.getTarget());
       }
@@ -95,8 +100,12 @@ public class GradleProjectStructureFactory {
 
       @Override
       public void visit(@NotNull GradleLibrary library) {
-        setupController(library, treeModel, treeNodes);
-        result.set(new GradleLibrarySettings(library)); 
+        result.set(new GradleLibrarySettings()); 
+      }
+
+      @Override
+      public void visit(@NotNull GradleJar jar) {
+        result.set(new GradleJarSettings(jar)); 
       }
 
       @Override

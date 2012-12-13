@@ -71,5 +71,6 @@ public class GradleProjectStructureNodeDescriptor<T extends GradleEntityId> exte
 
   public void setToolTip(@NotNull String text) {
     getTemplatePresentation().setTooltip(text);
+    update();
   }
 }

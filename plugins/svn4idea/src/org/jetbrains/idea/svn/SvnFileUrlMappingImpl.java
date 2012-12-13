@@ -366,7 +366,8 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
             }
             for (RootUrlInfo topRoot : myTopRoots) {
               if (VfsUtil.isAncestor(topRoot.getVirtualFile(), info.getFile(), true)) {
-                final SVNURL repoRoot = myRepositoryRoots.ask(info.getUrl());
+                SVNURL repoRoot = info.getRootURL();
+                repoRoot = repoRoot == null ? myRepositoryRoots.ask(info.getUrl(), true) : repoRoot;
                 if (repoRoot != null) {
                   final RootUrlInfo rootInfo = new RootUrlInfo(repoRoot, info.getUrl(), info.getFormat(), info.getFile(), topRoot.getRoot());
                   rootInfo.setType(info.getType());
@@ -405,7 +406,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
       myRoots.add(url);
     }
 
-    public SVNURL ask(final SVNURL url) {
+    public SVNURL ask(final SVNURL url, boolean allowRemote) {
       for (SVNURL root : myRoots) {
         if (root.equals(SVNURLUtil.getCommonURLAncestor(root, url))) {
           return root;
@@ -413,7 +414,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
       }
       final SVNURL newUrl;
       try {
-        newUrl = SvnUtil.getRepositoryRoot(myVcs, url);
+        newUrl = SvnUtil.getRepositoryRoot(myVcs, url, allowRemote);
         if (newUrl != null) {
           myRoots.add(newUrl);
           return newUrl;

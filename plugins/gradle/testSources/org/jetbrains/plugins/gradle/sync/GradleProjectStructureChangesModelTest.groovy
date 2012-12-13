@@ -2,11 +2,12 @@ package org.jetbrains.plugins.gradle.sync;
 
 
 import com.intellij.testFramework.SkipInHeadlessEnvironment
+import org.jetbrains.plugins.gradle.diff.library.GradleJarPresenceChange
+import org.jetbrains.plugins.gradle.diff.module.GradleModulePresenceChange
 import org.jetbrains.plugins.gradle.testutil.AbstractGradleTest
 import org.junit.Test
 
 import static org.junit.Assert.assertEquals
-import org.jetbrains.plugins.gradle.diff.library.GradleMismatchedLibraryPathChange
 import org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyPresenceChange
 import org.jetbrains.plugins.gradle.config.GradleTextAttributes
 
@@ -107,28 +108,30 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
           module {
             dependencies {
               library("lib1")
-              library("lib2", bin: ['1', '2'])
-      } } } },
+              library("lib2", bin: ['jar1', 'jar2']) } } } },
       intellij: {
         project {
           module {
             dependencies {
               library("lib1")
-              library("lib2", bin: ['2', '3'])
-      } } } }
-    )
+              library("lib2", bin: ['jar2', 'jar3']) } } } })
 
     checkChanges {
-      libraryConflict(entity: intellij.libraries['lib2']) {
-        binaryPath(gradle: '1', intellij: ['3'])
-    } }
+      presence {
+        jar(gradle: [findJarId('jar1')])
+        jar(intellij: [findJarId('jar3')])
+      }
+    }
+    
     checkTree {
       project {
         module {
           dependencies {
             lib1()
-            lib2('conflict')
-    } } } }
+            lib2 {
+              jar1('gradle')
+              jar2()
+              jar3('intellij') } } } } }
     
     // Remove one difference from the library setup and check that the corresponding node is still marked as conflicted
     setState(
@@ -137,27 +140,28 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
           module {
             dependencies {
               library("lib1")
-              library("lib2", bin: ['2'])
-      } } } },
+              library("lib2", bin: ['jar2']) } } } },
       intellij: {
         project {
           module {
             dependencies {
               library("lib1")
-              library("lib2", bin: ['2', '3'])
-      } } } }
-    )
+              library("lib2", bin: ['jar2', 'jar3']) } } } })
+    
     checkChanges {
-      libraryConflict(entity: intellij.libraryDependencies.values().flatten().find {it.library.name == 'lib2' }.library) {
-        binaryPath(gradle: null, intellij: '3')
-    } }
+      presence {
+        jar(intellij: [findJarId('jar3')])
+      }
+    }
+    
     checkTree {
       project {
         module {
           dependencies {
             lib1()
-            lib2('conflict')
-    } } } }
+            lib2 {
+              jar2()
+              jar3('intellij') } } } } }
     
     // Match the remaining change and check that the corresponding node is not marked as conflicted anymore.
     setState(
@@ -166,24 +170,102 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
           module {
             dependencies {
               library("lib1")
-              library("lib2", bin: ['2', '3'])
+              library("lib2", bin: ['jar2', 'jar3'])
       } } } },
       intellij: {
         project {
           module {
             dependencies {
               library("lib1")
-              library("lib2", bin: ['2', '3'])
-      } } } }
-    )
+              library("lib2", bin: ['jar2', 'jar3']) } } } })
     checkChanges { } // No changes
     checkTree {
       project {
         module {
           dependencies {
             lib1()
-            lib2()
-    } } } }
+            lib2 {
+              jar2()
+              jar3() } } } } }
+  }
+
+  @Test
+  public void "gradle-local module which library setup differs from intellij when jar presence change goes first"() {
+    init(
+      gradle: {
+        project {
+          module('module1') {
+            dependencies {
+              library("lib1", bin: ['jar1', 'jar2']) }}
+          module('module2') {
+            dependencies {
+              library("lib1", bin: ['jar1', 'jar2']) } } } },
+      intellij: {
+        project {
+          module('module1') {
+            dependencies {
+              library("lib1", bin: ['jar2', 'jar3']) } } } },
+      changesSorter: changeByClassSorter([
+        (GradleJarPresenceChange)               : 1,
+        (GradleLibraryDependencyPresenceChange) : 2,
+        (GradleModulePresenceChange)            : 3,
+      ])
+    )
+
+    checkChanges {
+      presence {
+        jar(gradle: [findJarId('jar1')])
+        jar(intellij: [findJarId('jar3')])
+        library(gradle: gradle.libraryDependencies[gradle.modules['module2']].find { it.name == "lib1" })
+        module(gradle: gradle.modules['module2'])
+      }
+    }
+
+    checkTree {
+      project {
+        module2('gradle') {
+          dependencies {
+            lib1('gradle') {
+              jar1('gradle')
+              jar2('gradle')} } }
+        module1 {
+          dependencies {
+            lib1 {
+              jar1('gradle')
+              jar2()
+              jar3('intellij') } } } } }
+  }
+
+  @Test
+  public void "adding intellij-local jar"() {
+    Closure initialProject = {
+      project {
+        module {
+          dependencies {
+            library('lib1', bin: ['jar1'])} } } }
+    init(gradle: initialProject, intellij: initialProject)
+    checkChanges {} // empty
+    
+    setState(
+      intellij: {
+        project {
+          module {
+            dependencies {
+              library('lib1', bin: ['jar1', 'jar2'])
+      } } } }
+    )
+    
+    checkChanges {
+      presence {
+        jar(intellij: [findJarId('jar2')])
+    } }
+    checkTree {
+      project {
+        module {
+          dependencies {
+            lib1 {
+              jar1()
+              jar2('intellij')} } } } }
   }
   
   @Test
@@ -271,42 +353,42 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
         project {
           module('module1') {
             dependencies {
-              library('lib1', bin: ['1'])
-          } }
+              library('lib1', bin: ['jar1']) } }
           module('module2') {
             dependencies {
-              library('lib1')
-      } } } },
+              library('lib1') } } } },
       intellij: {
         project {
           module('module1') {
             dependencies {
-              library('lib1', bin: ['2'])
-      } } } },
+              library('lib1', bin: ['jar2']) } } } },
       changesSorter: changeByClassSorter([
-        (GradleMismatchedLibraryPathChange)     : 2,
-        (GradleLibraryDependencyPresenceChange) : 1
+        (GradleModulePresenceChange)            : 1,
+        (GradleLibraryDependencyPresenceChange) : 2,
+        (GradleJarPresenceChange)               : 3,
       ])
     )
 
     checkChanges {
       presence {
         module(gradle: gradle.modules['module2'])
+        jar(gradle: [findJarId('jar1')])
+        jar(intellij: [findJarId('jar2')])
         libraryDependency(gradle: gradle.libraryDependencies[gradle.modules['module2']].first())
       }
-      libraryConflict(entity: intellij.libraries['lib1']) {
-        binaryPath(gradle: ['1'], intellij: ['2'])
-    } }
+    }
+    
     checkTree {
       project {
         module2('gradle') {
           dependencies {
-            lib1('gradle') // This is the point of the test. We don't expect to see 'conflict' here.
-        } }
+            lib1('gradle') {
+              jar1('gradle') } } }
         module1() {
           dependencies {
-            lib1('conflict')
-    } } } }
+            lib1 {
+              jar1('gradle')
+              jar2('intellij') } } } } }
   }
   
   @Test
@@ -486,73 +568,6 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
     } } } }
   }
   
-  @Test
-  public void "mismatched library path is highlighted after importing local library dependency"() {
-    init(
-      gradle: {
-        project {
-          module('module1') {
-            dependencies {
-              library('lib1', bin: ['1'])
-          } }
-          module('module2') {
-            dependencies {
-              library('lib1')
-      } } } },
-      intellij: {
-        project {
-          module('module1') {
-            dependencies {
-              library('lib1', bin: ['2'])
-      } } } }
-    )
-    checkChanges {
-      presence {
-        module(gradle: gradle.modules['module2'])
-        libraryDependency(gradle: gradle.libraryDependencies[gradle.modules['module2']])
-      }
-      libraryConflict(entity: intellij.libraries['lib1']) {
-        binaryPath(gradle: '1', intellij: ['2'])
-    } }
-    checkTree {
-      project {
-        module2('gradle') {
-          dependencies {
-            lib1('gradle')
-        } }
-        module1 {
-          dependencies {
-            lib1('conflict')
-    } } } }
-    
-    // Emulate importing missing module and library dependencies. Expecting to see the newly imported library dependency node
-    // highlighted as 'conflict' now.
-    setState(intellij: {
-      project {
-        module('module1') {
-          dependencies {
-            library('lib1', bin: ['2'])
-        } }
-        module('module2') {
-          dependencies {
-            library('lib1')
-    } } } })
-    checkChanges {
-      libraryConflict(entity: intellij.libraries['lib1']) {
-        binaryPath(gradle: '1', intellij: ['2'])
-    } }
-    checkTree {
-      project {
-        module1 {
-          dependencies {
-            lib1('conflict')
-        } }
-        module2() {
-          dependencies {
-            lib1('conflict')
-    } } } }
-  }
-
   @Test
   public void "local content root importing"() {
     init(
@@ -791,7 +806,6 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
       project {
         module2 {
           dependencies {
-            lib1('conflict')
             module1('conflict')
     } } } }
     

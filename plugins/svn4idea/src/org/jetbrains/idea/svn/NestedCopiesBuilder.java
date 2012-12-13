@@ -42,7 +42,7 @@ public class NestedCopiesBuilder implements StatusReceiver {
 
   public void process(final FilePath path, final SVNStatus status) throws SVNException {
     if ((path.getVirtualFile() != null) && SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_EXTERNAL)) {
-      final MyPointInfo info = new MyPointInfo(path.getVirtualFile(), null, WorkingCopyFormat.UNKNOWN, NestedCopyType.external);
+      final MyPointInfo info = new MyPointInfo(path.getVirtualFile(), null, WorkingCopyFormat.UNKNOWN, NestedCopyType.external, null);
       mySet.add(info);
       return;
     }
@@ -57,7 +57,7 @@ public class NestedCopiesBuilder implements StatusReceiver {
       return;
     }
     final MyPointInfo info = new MyPointInfo(path.getVirtualFile(), status.getURL(),
-                                             WorkingCopyFormat.getInstance(status.getWorkingCopyFormat()), type);
+                                             WorkingCopyFormat.getInstance(status.getWorkingCopyFormat()), type, status.getRepositoryRootURL());
     mySet.add(info);
   }
 
@@ -68,8 +68,8 @@ public class NestedCopiesBuilder implements StatusReceiver {
   }
 
   @Override
-  public void processCopyRoot(VirtualFile file, SVNURL url, WorkingCopyFormat format) {
-    final MyPointInfo info = new MyPointInfo(file, url, format, NestedCopyType.inner);
+  public void processCopyRoot(VirtualFile file, SVNURL url, WorkingCopyFormat format, SVNURL rootURL) {
+    final MyPointInfo info = new MyPointInfo(file, url, format, NestedCopyType.inner, rootURL);
     mySet.add(info);
   }
 
@@ -87,16 +87,26 @@ public class NestedCopiesBuilder implements StatusReceiver {
     private SVNURL myUrl;
     private WorkingCopyFormat myFormat;
     private final NestedCopyType myType;
+    private final SVNURL myRootURL;
 
-    MyPointInfo(@NotNull final VirtualFile file, final SVNURL url, final WorkingCopyFormat format, final NestedCopyType type) {
+    MyPointInfo(@NotNull final VirtualFile file,
+                final SVNURL url,
+                final WorkingCopyFormat format,
+                final NestedCopyType type,
+                SVNURL rootURL) {
       myFile = file;
       myUrl = url;
       myFormat = format;
       myType = type;
+      myRootURL = rootURL;
     }
 
     public void setUrl(SVNURL url) {
       myUrl = url;
+    }
+
+    public SVNURL getRootURL() {
+      return myRootURL;
     }
 
     public void setFormat(WorkingCopyFormat format) {

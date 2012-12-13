@@ -70,7 +70,7 @@ class SvnChangeProviderContext implements StatusReceiver {
   }
 
   @Override
-  public void processCopyRoot(VirtualFile file, SVNURL url, WorkingCopyFormat format) {
+  public void processCopyRoot(VirtualFile file, SVNURL url, WorkingCopyFormat format, SVNURL rootURL) {
   }
 
   @Override

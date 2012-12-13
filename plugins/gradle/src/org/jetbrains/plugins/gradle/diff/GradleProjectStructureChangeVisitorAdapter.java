@@ -2,11 +2,8 @@ package org.jetbrains.plugins.gradle.diff;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.diff.contentroot.GradleContentRootPresenceChange;
-import org.jetbrains.plugins.gradle.diff.dependency.GradleDependencyExportedChange;
-import org.jetbrains.plugins.gradle.diff.dependency.GradleDependencyScopeChange;
-import org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyPresenceChange;
-import org.jetbrains.plugins.gradle.diff.dependency.GradleModuleDependencyPresenceChange;
-import org.jetbrains.plugins.gradle.diff.library.GradleMismatchedLibraryPathChange;
+import org.jetbrains.plugins.gradle.diff.dependency.*;
+import org.jetbrains.plugins.gradle.diff.library.GradleJarPresenceChange;
 import org.jetbrains.plugins.gradle.diff.module.GradleModulePresenceChange;
 import org.jetbrains.plugins.gradle.diff.project.GradleLanguageLevelChange;
 import org.jetbrains.plugins.gradle.diff.project.GradleProjectRenameChange;
@@ -37,11 +34,11 @@ public abstract class GradleProjectStructureChangeVisitorAdapter implements Grad
   }
 
   @Override
-  public void visit(@NotNull GradleModuleDependencyPresenceChange change) {
+  public void visit(@NotNull GradleJarPresenceChange change) {
   }
 
   @Override
-  public void visit(@NotNull GradleMismatchedLibraryPathChange change) {
+  public void visit(@NotNull GradleModuleDependencyPresenceChange change) {
   }
 
   @Override

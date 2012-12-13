@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.gradle.testutil
 
+import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentEntry
@@ -107,7 +108,10 @@ class IntellijProjectBuilder extends AbstractProjectBuilder {
   @Override
   protected reset() { }
 
-  private def asVirtualFile(path) {
-    [getPath: { GradleUtil.toCanonicalPath(path) }] as VirtualFile
+  private static def asVirtualFile(path) {
+    [
+      getPath: { GradleUtil.toCanonicalPath(path) },
+      getFileType: { FileTypes.UNKNOWN }
+    ] as VirtualFile
   }
 }

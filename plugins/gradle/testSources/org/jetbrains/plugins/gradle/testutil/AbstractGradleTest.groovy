@@ -2,6 +2,9 @@ package org.jetbrains.plugins.gradle.testutil
 
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.libraries.Library
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.gradle.action.AbstractGradleSyncTreeFilterAction
 import org.jetbrains.plugins.gradle.config.GradleColorAndFontDescriptorsProvider
 import org.jetbrains.plugins.gradle.config.PlatformFacade
@@ -12,12 +15,18 @@ import org.jetbrains.plugins.gradle.diff.dependency.GradleModuleDependencyStruct
 import org.jetbrains.plugins.gradle.diff.library.GradleLibraryStructureChangesCalculator
 import org.jetbrains.plugins.gradle.diff.module.GradleModuleStructureChangesCalculator
 import org.jetbrains.plugins.gradle.diff.project.GradleProjectStructureChangesCalculator
+import org.jetbrains.plugins.gradle.model.GradleEntityOwner
+import org.jetbrains.plugins.gradle.model.gradle.GradleLibrary
+import org.jetbrains.plugins.gradle.model.gradle.LibraryPathType
 import org.jetbrains.plugins.gradle.model.id.GradleEntityIdMapper
+import org.jetbrains.plugins.gradle.model.id.GradleJarId
+import org.jetbrains.plugins.gradle.model.id.GradleLibraryId
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesModel
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeFilter
 import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext
+import org.jetbrains.plugins.gradle.util.GradleUtil
 import org.junit.Before
 import org.picocontainer.MutablePicoContainer
 import org.picocontainer.defaults.DefaultPicoContainer
@@ -32,10 +41,10 @@ public abstract class AbstractGradleTest {
   
   GradleProjectStructureChangesModel changesModel
   GradleProjectStructureTreeModel treeModel
-  def gradle
-  def intellij
+  GradleProjectBuilder gradle
+  IntellijProjectBuilder intellij
   def changesBuilder
-  def treeChecker
+  ProjectStructureChecker treeChecker
   def container
   private Map<TextAttributesKey, GradleProjectStructureNodeFilter> treeFilters = [:]
 
@@ -123,7 +132,7 @@ public abstract class AbstractGradleTest {
     treeChecker.check(expected, treeModel.root)
   }
 
-  protected Closure changeByClassSorter(Map<Class<?>, Integer> rules) {
+  protected static Closure changeByClassSorter(Map<Class<?>, Integer> rules) {
     { a, b ->
       def weightA = rules[a.class] ?: Integer.MAX_VALUE
       def weightB = rules[b.class] ?: Integer.MAX_VALUE
@@ -138,5 +147,36 @@ public abstract class AbstractGradleTest {
 
   protected def applyTreeFilter(TextAttributesKey toShow) {
     treeModel.addFilter(treeFilters[toShow])
+  }
+  
+  @NotNull
+  protected GradleJarId findJarId(@NotNull String path) {
+    String pathToUse = GradleUtil.toCanonicalPath(path)
+    for (GradleLibrary library in (gradle.libraries.values() as Collection<GradleLibrary>)) {
+      for (libPath in library.getPaths(LibraryPathType.BINARY)) {
+        if (libPath == pathToUse) {
+          return new GradleJarId(pathToUse, new GradleLibraryId(GradleEntityOwner.GRADLE, library.name))
+        }
+      }
+    }
+
+    for (Library library in (intellij.libraries.values() as Collection<Library>)) {
+      for (jarFile in library.getFiles(OrderRootType.CLASSES)) {
+        if (pathToUse == jarFile.path) {
+          return new GradleJarId(pathToUse, new GradleLibraryId(GradleEntityOwner.INTELLIJ, library.name))
+        }
+      }
+    }
+    
+    String errorMessage = """
+Can't build an id object for given jar path ($path).
+  Available gradle libraries:
+    ${gradle.libraries.values().collect { GradleLibrary lib -> "${lib.name}: ${lib.getPaths(LibraryPathType.BINARY)}" }.join('\n    ') }
+  Available intellij libraries:
+    ${intellij.libraries.values().collect { Library lib -> "${lib.name}: ${lib.getFiles(OrderRootType.CLASSES).collect{it.path}}" }
+    .join('\n    ')}
+"""
+    
+    throw new IllegalArgumentException(errorMessage)
   }
 }

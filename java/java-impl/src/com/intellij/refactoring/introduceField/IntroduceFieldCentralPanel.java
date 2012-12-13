@@ -16,10 +16,8 @@
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.TypeSelectorManager;
@@ -83,7 +81,27 @@ public abstract class IntroduceFieldCentralPanel {
     myTypeSelectorManager = typeSelectorManager;
   }
 
-  protected abstract boolean setEnabledInitializationPlaces(PsiElement initializerPart, PsiElement initializer);
+  protected boolean setEnabledInitializationPlaces(PsiElement initializerPart, PsiElement initializer) {
+    if (initializerPart instanceof PsiReferenceExpression) {
+      PsiReferenceExpression refExpr = (PsiReferenceExpression)initializerPart;
+      if (refExpr.getQualifierExpression() == null) {
+        PsiElement refElement = refExpr.resolve();
+        if (refElement == null ||
+            (refElement instanceof PsiLocalVariable ||
+             refElement instanceof PsiParameter ||
+             (refElement instanceof PsiField && !((PsiField)refElement).hasInitializer())) &&
+            !PsiTreeUtil.isAncestor(initializer, refElement, true)) {
+          return updateInitializationPlaceModel();
+        }
+      }
+    }
+    PsiElement[] children = initializerPart.getChildren();
+    for (PsiElement child : children) {
+      if (!setEnabledInitializationPlaces(child, initializer)) return false;
+    }
+    return true;
+  }
+
   public abstract BaseExpressionToFieldHandler.InitializationPlace getInitializerPlace();
   protected abstract void initializeInitializerPlace(PsiExpression initializerExpression,
                                                      BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace);
@@ -257,4 +275,6 @@ public abstract class IntroduceFieldCentralPanel {
       ourLastCbFinalState = myCbFinal.isSelected();
     }
   }
+
+  protected abstract boolean updateInitializationPlaceModel();
 }

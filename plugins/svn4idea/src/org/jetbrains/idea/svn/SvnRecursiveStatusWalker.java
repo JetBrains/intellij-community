@@ -250,7 +250,7 @@ public class SvnRecursiveStatusWalker {
         if (vf != null) {
           if (myCurrentItem.isIsInnerCopyRoot()) {
             myReceiver.processCopyRoot(vf, statusInner.getURL(),
-                                     WorkingCopyFormat.getInstance(statusInner.getWorkingCopyFormat()));
+                                     WorkingCopyFormat.getInstance(statusInner.getWorkingCopyFormat()), statusInner.getRepositoryRootURL());
           } else {
             myReceiver.bewareRoot(vf, statusInner.getURL(), WorkingCopyFormat.getInstance(statusInner.getWorkingCopyFormat()));
           }

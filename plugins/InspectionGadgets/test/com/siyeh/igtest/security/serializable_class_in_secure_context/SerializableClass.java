@@ -1,4 +1,4 @@
-package com.siyeh.igtest.serialization.serializable_class_in_secure_context;
+package com.siyeh.igtest.security.serializable_class_in_secure_context;
 
 import java.io.ObjectOutputStream;
 import java.io.Serializable;

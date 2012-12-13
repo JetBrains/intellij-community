@@ -7,8 +7,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.PlatformFacade;
 import org.jetbrains.plugins.gradle.diff.GradleChangesCalculationContext;
 import org.jetbrains.plugins.gradle.diff.GradleStructureChangesCalculator;
+import org.jetbrains.plugins.gradle.model.GradleEntityOwner;
 import org.jetbrains.plugins.gradle.model.gradle.GradleLibrary;
 import org.jetbrains.plugins.gradle.model.gradle.LibraryPathType;
+import org.jetbrains.plugins.gradle.model.id.GradleJarId;
+import org.jetbrains.plugins.gradle.model.id.GradleLibraryId;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.util.HashSet;
@@ -40,8 +43,18 @@ public class GradleLibraryStructureChangesCalculator implements GradleStructureC
       }
     }
 
-    if (!gradleBinaryPaths.equals(intellijBinaryPaths)) {
-      context.register(new GradleMismatchedLibraryPathChange(intellijEntity, gradleBinaryPaths, intellijBinaryPaths));
+    if (!gradleBinaryPaths.isEmpty()) {
+      GradleLibraryId libraryId = new GradleLibraryId(GradleEntityOwner.GRADLE, gradleEntity.getName());
+      for (String path : gradleBinaryPaths) {
+        context.register(new GradleJarPresenceChange(new GradleJarId(path, libraryId), null));
+      }
+    }
+
+    if (!intellijBinaryPaths.isEmpty()) {
+      GradleLibraryId libraryId = new GradleLibraryId(GradleEntityOwner.INTELLIJ, GradleUtil.getLibraryName(intellijEntity));
+      for (String path : intellijBinaryPaths) {
+        context.register(new GradleJarPresenceChange(null, new GradleJarId(path, libraryId)));
+      }
     }
   }
 
