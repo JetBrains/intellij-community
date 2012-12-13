@@ -56,6 +56,10 @@ public class JavacServerBootstrap {
     //appendParam(cmdLine, "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5009");
 
     // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
+    final String encoding = System.getProperty("file.encoding");
+    if (encoding != null) {
+      appendParam(cmdLine, "-Dfile.encoding=" + encoding);
+    }
     final String lang = System.getProperty("user.language");
     if (lang != null) {
       //noinspection HardCodedStringLiteral
