@@ -201,7 +201,7 @@ public class JpsSdkTableSerializer {
     return JpsElementFactory.getInstance().createSdk(name, homePath, versionString, loader.getType(), properties);
   }
 
-  public static JpsSdkPropertiesSerializer<?> getSdkPropertiesSerializer(String typeId) {
+  public static JpsSdkPropertiesSerializer<?> getSdkPropertiesSerializer(@Nullable String typeId) {
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       for (JpsSdkPropertiesSerializer<?> loader : extension.getSdkPropertiesSerializers()) {
         if (loader.getTypeId().equals(typeId)) {
@@ -231,7 +231,7 @@ public class JpsSdkTableSerializer {
     return child != null ? child.getAttributeValue(VALUE_ATTRIBUTE) : null;
   }
 
-  public static JpsSdkType<?> getSdkType(String typeId) {
+  public static JpsSdkType<?> getSdkType(@Nullable String typeId) {
     return getSdkPropertiesSerializer(typeId).getType();
   }
 
