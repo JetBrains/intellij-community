@@ -71,11 +71,10 @@ public class XmlName implements Comparable<XmlName> {
 
   public int compareTo(XmlName o) {
     final int i = myLocalName.compareTo(o.myLocalName);
-    if (i != 0) return i;
-    if (Comparing.equal(myNamespaceKey, o.myNamespaceKey)) return 0;
-    if (myNamespaceKey == null) return -1;
-    if (o.myNamespaceKey == null) return 1;
-    return myNamespaceKey.compareTo(o.myNamespaceKey);
+    if (i != 0) {
+      return i;
+    }
+    return Comparing.compare(myNamespaceKey, o.myNamespaceKey);
   }
 
   public String toString() {
