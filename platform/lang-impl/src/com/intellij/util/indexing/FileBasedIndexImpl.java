@@ -1055,7 +1055,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             filesSet.add(((VirtualFileWithId)fileOrDir).getId());
             return true;
           }
-        }, project, SilentProgressIndicator.create());
+        }, project, ProgressManager.getInstance().getProgressIndicator());
         ProjectIndexableFilesFilter filter = new ProjectIndexableFilesFilter(filesSet, myFilesModCount);
         project.putUserData(ourProjectFilesSetKey, new SoftReference<ProjectIndexableFilesFilter>(filter));
 
@@ -1761,38 +1761,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
   }
 
-  private static class SilentProgressIndicator extends DelegatingProgressIndicator {
-    // suppress verbose messages
-
-    private SilentProgressIndicator(ProgressIndicator indicator) {
-      super(indicator);
-    }
-
-    @Nullable
-    public static SilentProgressIndicator create(){
-      final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-      return indicator != null? new SilentProgressIndicator(indicator) : null;
-    }
-
-    @Override
-    public void setText(String text) {
-    }
-
-    @Override
-    public String getText() {
-      return "";
-    }
-
-    @Override
-    public void setText2(String text) {
-    }
-
-    @Override
-    public String getText2() {
-      return "";
-    }
-  }
-
   private final class ChangedFilesCollector extends VirtualFileAdapter {
     private final Set<VirtualFile> myFilesToUpdate = new ConcurrentHashSet<VirtualFile>();
     private final Queue<InvalidationTask> myFutureInvalidations = new ConcurrentLinkedQueue<InvalidationTask>();
@@ -1879,7 +1847,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
               }
             }
           }
-          // For 'normal indices' schedule the file for update and stop iteration if at least one index accepts it 
+          // For 'normal indices' schedule the file for update and stop iteration if at least one index accepts it
           if (!isTooLarge(file)) {
             for (ID<?, ?> indexId : myIndices.keySet()) {
               if (needsFileContentLoading(indexId) && getInputFilter(indexId).acceptInput(file)) {
@@ -2210,7 +2178,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         }
       }
       else {
-        if (myProgressIndicator != null) {
+        if (myProgressIndicator != null) { // once for dir is cheap enough
           myProgressIndicator.checkCanceled();
           myProgressIndicator.setText("Scanning files to index");
           myProgressIndicator.setText2(file.getPresentableUrl());
@@ -2385,10 +2353,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
-        if (indicator != null) {
-          indicator.checkCanceled();
-          indicator.setText2(file.getPresentableUrl());
-        }
+        // do not update what we are scanning now
+        if (indicator != null) indicator.checkCanceled();
+
         if (!file.isDirectory()) {
           processor.processFile(file);
         }
