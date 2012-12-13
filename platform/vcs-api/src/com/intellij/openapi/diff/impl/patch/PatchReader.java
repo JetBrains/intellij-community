@@ -396,7 +396,7 @@ public class PatchReader {
       else if (line.startsWith("-")) {
         type = PatchLine.Type.REMOVE;
       }
-      else if (line.startsWith(" ")) {
+      else if (line.startsWith(" ") || line.length() == 0) {
         type = PatchLine.Type.CONTEXT;
       }
       else {

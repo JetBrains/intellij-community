@@ -1092,7 +1092,7 @@ public class GenericPatchApplier {
         contextBefore.add(patchLine.getText());
       }
 
-      final boolean addFirst = PatchLine.Type.ADD.equals(lines.get(i).getType());
+      final boolean addFirst = i < lines.size() && PatchLine.Type.ADD.equals(lines.get(i).getType());
       List<String> before = new ArrayList<String>();
       List<String> after = new ArrayList<String>();
       for (; i < lines.size(); i++) {
