@@ -292,6 +292,11 @@ def GetFileNameAndBaseFromFile(f):
 def GetFilenameAndBase(frame):
     #This one is just internal (so, does not need any kind of client-server translation)
     f = frame.f_code.co_filename
+    if f is not None and f.startswith('build/bdist.'):
+        # files from eggs in Python 2.7 have paths like build/bdist.linux-x86_64/egg/<path-inside-egg>
+        f = frame.f_globals['__file__']
+        if f.endswith('.pyc'):
+            f = f[:-1]
     return GetFileNameAndBaseFromFile(f)
 
 def set_pycharm_os(os):
