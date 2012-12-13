@@ -189,10 +189,10 @@ public class SvnHistoryProvider
 
     final LogLoader logLoader;
     if (path.isNonLocal()) {
-      logLoader = new RepositoryLoader(myVcs, path, from, to, limit, peg, forceBackwards);
+      logLoader = new RepositoryLoader(myVcs, committedPath, from, to, limit, peg, forceBackwards);
     }
     else {
-      logLoader = new LocalLoader(myVcs, path, from, to, limit, peg);
+      logLoader = new LocalLoader(myVcs, committedPath, from, to, limit, peg);
     }
 
     try {
