@@ -412,7 +412,7 @@ public class SvnUtil {
   @Nullable
   public static SVNURL getRepositoryRoot(final SvnVcs vcs, final String url) {
     try {
-      return getRepositoryRoot(vcs, SVNURL.parseURIEncoded(url));
+      return getRepositoryRoot(vcs, SVNURL.parseURIEncoded(url), true);
     }
     catch (SVNException e) {
       return null;
@@ -420,8 +420,12 @@ public class SvnUtil {
   }
 
   @Nullable
-  public static SVNURL getRepositoryRoot(final SvnVcs vcs, final SVNURL url) throws SVNException {
+  public static SVNURL getRepositoryRoot(final SvnVcs vcs, final SVNURL url, boolean allowRemote) throws SVNException {
     final SVNWCClient client = vcs.createWCClient();
+    SVNInfo localInfo = client.doInfo(url, SVNRevision.UNDEFINED, SVNRevision.WORKING);
+    if (localInfo != null && localInfo.getRepositoryRootURL() != null || ! allowRemote) {
+      return localInfo == null ? null : localInfo.getRepositoryRootURL();
+    }
     SVNInfo info = client.doInfo(url, SVNRevision.UNDEFINED, SVNRevision.HEAD);
     return (info == null) ? null : info.getRepositoryRootURL();
   }
