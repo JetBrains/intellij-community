@@ -90,4 +90,9 @@ public class JavaSourceRootDescriptor extends BuildRootDescriptor {
   public boolean isGenerated() {
     return isGeneratedSources;
   }
+
+  @Override
+  public boolean canUseFileCache() {
+    return true;
+  }
 }

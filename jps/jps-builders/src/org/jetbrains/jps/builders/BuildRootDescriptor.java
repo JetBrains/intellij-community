@@ -31,4 +31,8 @@ public abstract class BuildRootDescriptor {
   public boolean isGenerated() {
     return false;
   }
+
+  public boolean canUseFileCache() {
+    return false;
+  }
 }

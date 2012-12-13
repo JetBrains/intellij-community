@@ -135,7 +135,8 @@ public class FSOperations {
       if (filter == null) {
         context.getProjectDescriptor().fsState.clearRecompile(rd);
       }
-      traverseRecursively(context, rd, rd.getRootFile(), timestamps, forceMarkDirty, currentFiles, filter);
+      final FSCache fsCache = rd.canUseFileCache() ? context.getProjectDescriptor().getFSCache() : FSCache.NO_CACHE;
+      traverseRecursively(context, rd, rd.getRootFile(), timestamps, forceMarkDirty, currentFiles, filter, fsCache);
     }
   }
 
@@ -144,15 +145,15 @@ public class FSOperations {
                                           final File file,
                                           @NotNull final Timestamps tsStorage,
                                           final boolean forceDirty,
-                                          @Nullable Set<File> currentFiles, @Nullable FileFilter filter) throws IOException {
+                                          @Nullable Set<File> currentFiles, @Nullable FileFilter filter, @NotNull FSCache fsCache) throws IOException {
     if (context.getProjectDescriptor().getIgnoredFileIndex().isIgnored(file.getName())) {
       return;
     }
-    final File[] children = file.listFiles();
+    final File[] children = fsCache.getChildren(file);
     if (children != null) { // is directory
       if (children.length > 0 && !rd.getExcludedRoots().contains(file)) {
         for (File child : children) {
-          traverseRecursively(context, rd, child, tsStorage, forceDirty, currentFiles, filter);
+          traverseRecursively(context, rd, child, tsStorage, forceDirty, currentFiles, filter, fsCache);
         }
       }
     }

@@ -252,6 +252,8 @@ public class FormatterTest extends GroovyFormatterTestCase {
   void testPackageDef1() { doTest() }
   void testPackageDef2() { doTest() }
 
+  void testImplementsList() { doTest() }
+
   private void doGeeseTest() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class);
     boolean oldvalue = customSettings.USE_FLYING_GEESE_BRACES;

@@ -35,7 +35,11 @@ public abstract class JpsSerializationTestCase extends JpsModelTestCase {
   }
 
   protected String getUrl(String relativePath) {
-    return VfsUtilCore.pathToUrl(myProjectHomePath + "/" + relativePath);
+    return VfsUtilCore.pathToUrl(getAbsolutePath(relativePath));
+  }
+
+  protected String getAbsolutePath(String relativePath) {
+    return myProjectHomePath + "/" + relativePath;
   }
 
   protected void loadGlobalSettings(final String optionsDir) {

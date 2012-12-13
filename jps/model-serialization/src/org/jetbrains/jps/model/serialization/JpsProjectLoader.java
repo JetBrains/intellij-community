@@ -183,7 +183,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
     if (rootManagerElement != null) {
       String sdkName = rootManagerElement.getAttributeValue("project-jdk-name");
       String sdkTypeId = rootManagerElement.getAttributeValue("project-jdk-type");
-      if (sdkName != null && sdkTypeId != null) {
+      if (sdkName != null) {
         sdkType = JpsSdkTableSerializer.getSdkType(sdkTypeId);
         JpsSdkTableSerializer.setSdkReference(myProject.getSdkReferencesTable(), sdkName, sdkType);
       }

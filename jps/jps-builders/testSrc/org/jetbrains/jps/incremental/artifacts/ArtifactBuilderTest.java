@@ -214,6 +214,19 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
                            .file("TestRunner.class"));
   }
 
+  public void testExtractDirectoryFromExcludedJar() throws IOException {
+    String jarPath = createFile("dir/lib/j.jar");
+    FileUtil.copy(new File(getJUnitJarPath()), new File(jarPath));
+    JpsModule module = addModule("m");
+    String libDir = PathUtil.getParentPath(jarPath);
+    module.getContentRootsList().addUrl(JpsPathUtil.pathToUrl(PathUtil.getParentPath(libDir)));
+    module.getExcludeRootsList().addUrl(JpsPathUtil.pathToUrl(libDir));
+    final JpsArtifact a = addArtifact("a", root().extractedDir(jarPath, "/junit/textui/"));
+    buildAll();
+    assertOutput(a, fs().file("ResultPrinter.class")
+                        .file("TestRunner.class"));
+  }
+
   public void testPackExtractedDirectory() {
     final JpsArtifact a = addArtifact("a", root().archive("a.jar").extractedDir(getJUnitJarPath(), "/junit/textui/"));
     buildAll();

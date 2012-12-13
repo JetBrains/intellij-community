@@ -46,7 +46,8 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
   private final Set<String> myProcessedAnnotations = new HashSet<String>(); // checked annotation classes
 
   String myClassName;
-  boolean myInstrumented;
+  private boolean myInstrumented;
+  private RuntimeException myPostponedError;
   boolean myIsNonStaticInnerClass;
 
   public PatternInstrumenter(@NotNull String patternAnnotationClassName, ClassVisitor classvisitor,
@@ -64,6 +65,11 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
 
   public boolean instrumented() {
     return myInstrumented;
+  }
+
+  void markInstrumented() {
+    myInstrumented = true;
+    processPostponedErrors();
   }
 
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
@@ -273,4 +279,26 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
       // todo
     }
   }
+
+  void registerError(String methodName, String operationName, Throwable e) {
+    if (myPostponedError == null) {
+      // throw the first error that occurred
+      Throwable err = e.getCause();
+      if (err == null) {
+        err = e;
+      }
+      myPostponedError = new RuntimeException("Operation '" + operationName + "' failed for " + myClassName + "." + methodName + "(): " + err.getMessage(), err);
+    }
+    if (myInstrumented) {
+      processPostponedErrors();
+    }
+  }
+
+  private void processPostponedErrors() {
+    final RuntimeException error = myPostponedError;
+    if (error != null) {
+      throw error;
+    }
+  }
+
 }

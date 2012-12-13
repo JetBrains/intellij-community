@@ -34,7 +34,7 @@ class MoveBookmarkUpAction extends DumbAwareAction {
     super("Up", "Move current bookmark up", AllIcons.Actions.PreviousOccurence);
     myProject = project;
     myList = list;
-    registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(SystemInfo.isMac ? "meta UP" : "control UP")), list);
+    registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(SystemInfo.isMac ? "meta UP" : "alt UP")), list);
   }
 
   @Override

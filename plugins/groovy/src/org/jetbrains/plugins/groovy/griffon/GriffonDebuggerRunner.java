@@ -33,16 +33,17 @@ public class GriffonDebuggerRunner extends GenericDebuggerRunner {
                                                          ExecutionEnvironment env) throws ExecutionException {
     final JavaCommandLine javaCommandLine = (JavaCommandLine)state;
     final JavaParameters params = javaCommandLine.getJavaParameters();
-    //taken from griffonDebug.bat
-    params.getVMParametersList().addParametersString("-Xdebug -Xnoagent -Dgriffon.full.stacktrace=true -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005");
 
-    final boolean useSockets = true;
-    String address = "";
+    if (!params.getVMParametersList().hasProperty("griffon.full.stacktrace")) {
+      params.getVMParametersList().add("-Dgriffon.full.stacktrace=true");
+    }
+
+    String address = null;
     try {
-      address = DebuggerUtils.getInstance().findAvailableDebugAddress(useSockets);
-
       for (String s : params.getProgramParametersList().getList()) {
         if (s.startsWith("run-")) {
+          // Application will be run in forked VM
+          address = DebuggerUtils.getInstance().findAvailableDebugAddress(true);
           params.getProgramParametersList().replaceOrAppend(s, s + " --debug --debugPort=" + address);
           break;
         }
@@ -51,7 +52,11 @@ public class GriffonDebuggerRunner extends GenericDebuggerRunner {
     catch (ExecutionException ignored) {
     }
 
-    RemoteConnection connection = new RemoteConnection(useSockets, "127.0.0.1", address, false);
+    if (address == null) {
+      return super.createContentDescriptor(project, executor, state, contentToReuse, env);
+    }
+
+    RemoteConnection connection = new RemoteConnection(true, "127.0.0.1", address, false);
     return attachVirtualMachine(project, executor, state, contentToReuse, env, connection, true);
   }
 

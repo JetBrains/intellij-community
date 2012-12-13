@@ -22,6 +22,7 @@ import org.sonatype.aether.transfer.TransferEvent;
 import org.sonatype.aether.transfer.TransferListener;
 import org.sonatype.aether.transfer.TransferResource;
 
+import java.io.File;
 import java.rmi.RemoteException;
 
 /**
@@ -45,7 +46,9 @@ public class TransferListenerAdapter implements TransferListener {
   }
 
   private static String formatResourceName(TransferEvent event) {
-    return event.getResource().getFile().getName() + " [" + event.getResource().getRepositoryUrl() + "]";
+    TransferResource resource = event.getResource();
+    File file = resource.getFile();
+    return (file == null ? resource.getResourceName() : file.getName()) + " [" + resource.getRepositoryUrl() + "]";
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowBuilderUtil;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
@@ -124,7 +125,8 @@ public class UnassignedVariableAccessInspection extends GroovyLocalInspectionBas
     final IElementType tokenType = ((GrBinaryExpression)parent).getOperationTokenType();
     if (!(tokenType == GroovyTokenTypes.mEQUAL || tokenType == GroovyTokenTypes.mNOT_EQUAL)) return false;
     if (element == ((GrBinaryExpression)parent).getLeftOperand()) {
-      return GrInspectionUtil.isNull(((GrBinaryExpression)parent).getRightOperand());
+      final GrExpression rightOperand = ((GrBinaryExpression)parent).getRightOperand();
+      return rightOperand != null && GrInspectionUtil.isNull(rightOperand);
     }
     else {
       return GrInspectionUtil.isNull(((GrBinaryExpression)parent).getLeftOperand());

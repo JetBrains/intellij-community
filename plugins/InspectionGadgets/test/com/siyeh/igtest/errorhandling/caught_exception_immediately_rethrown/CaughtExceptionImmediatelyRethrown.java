@@ -1,8 +1,9 @@
-package com.siyeh.igtest.exceptionHandling;
+package com.siyeh.igtest.errorhandling.caught_exception_immediately_rethrown;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.lang.reflect.Method;
 
 public class CaughtExceptionImmediatelyRethrown {
@@ -54,4 +55,14 @@ public class CaughtExceptionImmediatelyRethrown {
 		}
 		return method;
 	}
+
+    public void test() throws IOException {
+        try {
+            // some code here
+        } catch(IllegalStateException | UnsupportedOperationException e) {
+            throw e;
+        } catch(Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

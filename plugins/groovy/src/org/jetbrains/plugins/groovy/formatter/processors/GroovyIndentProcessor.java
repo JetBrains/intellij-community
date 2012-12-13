@@ -43,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrElvisE
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 /**
@@ -131,7 +132,7 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
     }
 
     //For parameter lists
-    if (psiParent instanceof GrParameterList || psiParent instanceof GrExtendsClause || psiParent instanceof GrThrowsClause) {
+    if (psiParent instanceof GrParameterList || psiParent instanceof GrExtendsClause || psiParent instanceof GrImplementsClause || psiParent instanceof GrThrowsClause) {
       Indent parentIndent = parentBlock.getIndent();
       return parentIndent != null ? Indent.getContinuationWithoutFirstIndent() : Indent.getNoneIndent();
     }

@@ -24,7 +24,16 @@ public class JpsEclipseCompilerOptionsSerializer extends JpsProjectExtensionSeri
   public void loadExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
     JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
     EclipseCompilerOptions options = XmlSerializer.deserialize(componentTag, EclipseCompilerOptions.class);
+    if (options == null) {
+      options = new EclipseCompilerOptions();
+    }
     configuration.setCompilerOptions(myCompilerId, options);
+  }
+
+  @Override
+  public void loadExtensionWithDefaultSettings(@NotNull JpsProject project) {
+    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
+    configuration.setCompilerOptions(myCompilerId, new EclipseCompilerOptions());
   }
 
   @Override

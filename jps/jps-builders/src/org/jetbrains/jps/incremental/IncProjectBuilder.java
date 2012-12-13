@@ -305,6 +305,9 @@ public class IncProjectBuilder {
     final CompileContextImpl context = new CompileContextImpl(scope, myProjectDescriptor, isMake, isProjectRebuild, myMessageDispatcher,
                                                               myBuilderParams, myCancelStatus
     );
+    // in project rebuild mode performance gain is hard to observe, so it is better to save memory
+    // in make mode it is critical to traverse file system as fast as possible, so we choose speed over memory savings
+    myProjectDescriptor.setFSCache(isProjectRebuild? FSCache.NO_CACHE : new FSCache());
     JavaBuilderUtil.CONSTANT_SEARCH_SERVICE.set(context, myConstantSearch);
     return context;
   }
@@ -627,7 +630,11 @@ public class IncProjectBuilder {
     boolean doneSomething;
     try {
       Utils.ERRORS_DETECTED_KEY.set(context, Boolean.FALSE);
-      BuildOperations.ensureFSStateInitialized(context, chunk);
+
+      for (BuildTarget<?> target : chunk.getTargets()) {
+        BuildOperations.ensureFSStateInitialized(context, target);
+      }
+
       doneSomething = processDeletedPaths(context, chunk.getTargets());
 
       myProjectDescriptor.fsState.beforeChunkBuildStart(context, chunk);

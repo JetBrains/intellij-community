@@ -1,6 +1,7 @@
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import org.apache.log4j.Level;
 import org.apache.log4j.xml.DOMConfigurator;
@@ -27,6 +28,7 @@ import java.util.UUID;
  *         Date: 4/16/12
  */
 public class BuildMain {
+  public static final Key<String> FORCE_MODEL_LOADING_PARAMETER = Key.create("_force_model_loading");
   private static final String LOG_FILE_NAME = "log.xml";
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.BuildMain");
   private static NioClientSocketChannelFactory ourChannelFactory;

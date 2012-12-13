@@ -4,6 +4,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jdom.Element;
+import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsEncodingConfigurationService;
 import org.jetbrains.jps.model.JpsEncodingProjectConfiguration;
 import org.jetbrains.jps.model.artifact.JpsArtifactService;
@@ -85,6 +86,13 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     assertEquals(getUrl("src"), root.getUrl());
   }
 
+  public void testProjectSdkWithoutType() {
+    loadProject("/jps/model-serialization/testData/projectSdkWithoutType/projectSdkWithoutType.ipr");
+    JpsSdkReference<JpsDummyElement> reference = myProject.getSdkReferencesTable().getSdkReference(JpsJavaSdkType.INSTANCE);
+    assertNotNull(reference);
+    assertEquals("1.6", reference.getSdkName());
+  }
+
   public void testLoadEncoding() {
     loadProject(SAMPLE_PROJECT_PATH);
     JpsEncodingConfigurationService service = JpsEncodingConfigurationService.getInstance();
@@ -92,7 +100,9 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     JpsEncodingProjectConfiguration configuration = service.getEncodingConfiguration(myProject);
     assertNotNull(configuration);
     assertEquals("UTF-8", configuration.getProjectEncoding());
-    assertEquals("windows-1251", configuration.getEncoding(getUrl("util")));
+    assertEquals("windows-1251", configuration.getEncoding(new File(getAbsolutePath("util"))));
+    assertEquals("windows-1251", configuration.getEncoding(new File(getAbsolutePath("util/foo/bar/file.txt"))));
+    assertEquals("UTF-8", configuration.getEncoding(new File(getAbsolutePath("other"))));
   }
 
   public void testSaveProject() {

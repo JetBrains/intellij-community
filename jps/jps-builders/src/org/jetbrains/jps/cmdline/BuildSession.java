@@ -55,6 +55,7 @@ final class BuildSession implements Runnable, CanceledStatus {
   private final Map<Pair<String, String>, ConstantSearchFuture> mySearchTasks = Collections.synchronizedMap(new HashMap<Pair<String, String>, ConstantSearchFuture>());
   private final ConstantSearch myConstantSearch = new ConstantSearch();
   private final BuildRunner myBuildRunner;
+  private final boolean myForceModelLoading;
   private BuildType myBuildType;
 
   BuildSession(UUID sessionId,
@@ -83,6 +84,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
     myInitialFSDelta = delta;
     JpsModelLoaderImpl loader = new JpsModelLoaderImpl(myProjectPath, globalOptionsPath, pathVars, null);
+    myForceModelLoading = Boolean.parseBoolean(builderParams.get(BuildMain.FORCE_MODEL_LOADING_PARAMETER.toString()));
     myBuildRunner = new BuildRunner(loader, scopes, filePaths, builderParams);
   }
 
@@ -158,7 +160,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     if (fsStateStream != null) {
       // optimization: check whether we can skip the build
       final boolean hasWorkToDoWithModules = fsStateStream.readBoolean();
-      if ((myBuildType == BuildType.MAKE || myBuildType == BuildType.UP_TO_DATE_CHECK) && !hasWorkToDoWithModules && scopeContainsModulesOnly(myBuildRunner.getScopes()) && !containsChanges(myInitialFSDelta)) {
+      if (!myForceModelLoading && (myBuildType == BuildType.MAKE || myBuildType == BuildType.UP_TO_DATE_CHECK) && !hasWorkToDoWithModules && scopeContainsModulesOnly(myBuildRunner.getScopes()) && !containsChanges(myInitialFSDelta)) {
         updateFsStateOnDisk(dataStorageRoot, fsStateStream, myInitialFSDelta.getOrdinal());
         return;
       }
@@ -263,11 +265,15 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
 
     final Timestamps timestamps = pd.timestamps.getStorage();
-
+    boolean cacheCleared = false;
     for (String deleted : event.getDeletedPathsList()) {
       final File file = new File(deleted);
       Collection<BuildRootDescriptor> descriptor = pd.getBuildRootIndex().findAllParentDescriptors(file, null, null);
       if (!descriptor.isEmpty()) {
+        if (!cacheCleared) {
+          pd.getFSCache().clear();
+          cacheCleared = true;
+        }
         if (Utils.IS_TEST_MODE) {
           LOG.info("Applying deleted path from fs event: " + file.getPath());
         }
@@ -294,6 +300,10 @@ final class BuildSession implements Runnable, CanceledStatus {
             }
             long stamp = timestamps.getStamp(file, descriptor.getTarget());
             if (stamp != fileStamp) {
+              if (!cacheCleared) {
+                pd.getFSCache().clear();
+                cacheCleared = true;
+              }
               pd.fsState.markDirty(null, file, descriptor, timestamps, saveEventStamp);
             }
           }
