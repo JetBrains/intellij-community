@@ -9,6 +9,7 @@ import com.jetbrains.jinja2.Jinja2ParserTest;
 import com.jetbrains.python.codeInsight.PyCompletionPatternsTest;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.refactoring.*;
+import com.jetbrains.python.refactoring.changeSignature.PyChangeSignatureTest;
 import com.jetbrains.python.refactoring.classes.PyExtractSuperclassTest;
 import com.jetbrains.python.refactoring.classes.PyPullUpTest;
 import com.jetbrains.python.refactoring.classes.PyPushDownTest;
@@ -101,7 +102,8 @@ public class PythonAllTestsSuite {
     Jinja2ParserTest.class,
     DjangoTemplateParserTest.class,
     PyJoinLinesTest.class,
-    PyStatementListTest.class
+    PyStatementListTest.class,
+    PyChangeSignatureTest.class
   };
 
   public static TestSuite suite() {

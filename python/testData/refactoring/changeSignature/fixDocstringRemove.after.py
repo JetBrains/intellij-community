@@ -4,4 +4,5 @@ def foo(a):
   """
   pass
 
+
 foo("a")

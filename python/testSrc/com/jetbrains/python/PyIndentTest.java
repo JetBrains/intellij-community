@@ -200,7 +200,7 @@ public class PyIndentTest extends PyTestCase {
            "class C:\n" +
                       "    def new_method(self):\n" +
                       "        variable = self._stats.get('outer_key', 'inner_key',\n" +
-                      "            <caret>");
+                      "                                   <caret>");
   }
 
   public void testEnterInSet() {  // PY-1947

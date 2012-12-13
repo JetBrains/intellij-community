@@ -4,6 +4,7 @@ def foo():
     else:
         return 1
 
+
 return foo()
 
 
