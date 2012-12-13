@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,16 +33,6 @@ import java.util.Locale;
 public class DateFormatUtil {
   private static final Logger LOG = Logger.getInstance("com.intellij.util.text.DateFormatUtil");
 
-  // do not expose this constants - they are very likely to be changed in future
-  private static final SyncDateFormat DATE_FORMAT = getFormat(DateFormat.SHORT, DateType.DATE);
-  private static final SyncDateFormat TIME_FORMAT = getFormat(DateFormat.SHORT, DateType.TIME);
-  private static final SyncDateFormat TIME_WITH_SECONDS_FORMAT = getFormat(DateFormat.MEDIUM, DateType.TIME);
-  private static final SyncDateFormat DATE_TIME_FORMAT = getFormat(DateFormat.SHORT, DateType.DATETIME);
-
-  // fixed formats - should be locale-independent
-  private static final SimpleDateFormat BUILD_DATE_FORMAT = new SimpleDateFormat("dd MMM yyyy HH:ss", Locale.US);
-  private static final DateFormat ABOUT_DATE_FORMAT = DateFormat.getDateInstance(DateFormat.LONG, Locale.US);
-
   public static final long SECOND = 1000;
   public static final long MINUTE = SECOND * 60;
   public static final long HOUR = MINUTE * 60;
@@ -50,18 +40,34 @@ public class DateFormatUtil {
   public static final long WEEK = DAY * 7;
   public static final long MONTH = DAY * 30;
   public static final long YEAR = DAY * 365;
-  private static final long[] DELIMS = new long[]{YEAR, MONTH, WEEK, DAY, HOUR, MINUTE};
   public static final long DAY_FACTOR = 24L * 60 * 60 * 1000;
 
-  public static long getDifferenceInDays(final Date startDate, final Date endDate) {
-    return (endDate.getTime() - startDate.getTime() + DAY_FACTOR - 1000) / DAY_FACTOR;
-  }
+  // do not expose this constants - they are very likely to be changed in future
+  private static final SyncDateFormat DATE_FORMAT = getFormat(DateFormat.SHORT, DateType.DATE);
+  private static final SyncDateFormat TIME_FORMAT = getFormat(DateFormat.SHORT, DateType.TIME);
+  private static final SyncDateFormat TIME_WITH_SECONDS_FORMAT = getFormat(DateFormat.MEDIUM, DateType.TIME);
+  private static final SyncDateFormat DATE_TIME_FORMAT = getFormat(DateFormat.SHORT, DateType.DATETIME);
+  // fixed formats - should be locale-independent
+  private static final DateFormat ABOUT_DATE_FORMAT = DateFormat.getDateInstance(DateFormat.LONG, Locale.US);
+
+  private static final long[] DENOMINATORS = new long[]{YEAR, MONTH, WEEK, DAY, HOUR, MINUTE};
 
   private enum Period {
     YEAR, MONTH, WEEK, DAY, HOUR, MINUTE
   }
 
-  private static final Period[] PERIOD = new Period[]{Period.YEAR, Period.MONTH, Period.WEEK, Period.DAY, Period.HOUR, Period.MINUTE};
+  private static final Period[] PERIODS = new Period[]{Period.YEAR, Period.MONTH, Period.WEEK, Period.DAY, Period.HOUR, Period.MINUTE};
+
+  private enum DateType {
+    TIME, DATE, DATETIME
+  }
+
+  private static final int MacFormatterNoStyle = 0;
+  private static final int MacFormatterShortStyle = 1;
+  private static final int MacFormatterMediumStyle = 2;
+  private static final int MacFormatterLongStyle = 3;
+  private static final int MacFormatterFullStyle = 4;
+  private static final int MacFormatterBehavior_10_4 = 1040;
 
   private static SyncDateFormat getFormat(int format, DateType type) {
     DateFormat result = null;
@@ -89,7 +95,10 @@ public class DateFormatUtil {
     return new SyncDateFormat(result);
   }
 
-  private DateFormatUtil() {
+  private DateFormatUtil() { }
+
+  public static long getDifferenceInDays(final Date startDate, final Date endDate) {
+    return (endDate.getTime() - startDate.getTime() + DAY_FACTOR - 1000) / DAY_FACTOR;
   }
 
   @NotNull
@@ -216,14 +225,14 @@ public class DateFormatUtil {
 
   @NotNull
   public static String formatDuration(long delta) {
-    StringBuffer buf = new StringBuffer();
-    for (int i = 0; i < DELIMS.length; i++) {
-      long delim = DELIMS[i];
-      int n = (int)(delta / delim);
+    StringBuilder buf = new StringBuilder();
+    for (int i = 0; i < DENOMINATORS.length; i++) {
+      long denominator = DENOMINATORS[i];
+      int n = (int)(delta / denominator);
       if (n != 0) {
-        buf.append(composeDurationMessage(PERIOD[i], n));
+        buf.append(composeDurationMessage(PERIODS[i], n));
         buf.append(' ');
-        delta = delta % delim;
+        delta = delta % denominator;
       }
     }
 
@@ -260,10 +269,10 @@ public class DateFormatUtil {
 
     int n = -1;
     int i;
-    for (i = 0; i < DELIMS.length; i++) {
-      long delim = DELIMS[i];
-      if (delta >= delim) {
-        n = (int)(delta / delim);
+    for (i = 0; i < DENOMINATORS.length; i++) {
+      long denominator = DENOMINATORS[i];
+      if (delta >= denominator) {
+        n = (int)(delta / denominator);
         break;
       }
     }
@@ -273,7 +282,7 @@ public class DateFormatUtil {
         return CommonBundle.message("date.format.a.few.moments.ago");
       }
       else {
-        return someTimeAgoMessage(PERIOD[i], n);
+        return someTimeAgoMessage(PERIODS[i], n);
       }
     }
     else if (d2 < d1) {
@@ -281,7 +290,7 @@ public class DateFormatUtil {
         return CommonBundle.message("date.format.in.a.few.moments");
       }
       else {
-        return composeInSomeTimeMessage(PERIOD[i], n);
+        return composeInSomeTimeMessage(PERIODS[i], n);
       }
     }
 
@@ -366,7 +375,9 @@ public class DateFormatUtil {
 
       Foundation.invoke(dateFormatter, Foundation.createSelector("setTimeStyle:"), timeStyle);
       Foundation.invoke(dateFormatter, Foundation.createSelector("setDateStyle:"), dateStyle);
-      return Foundation.toStringViaUTF8(Foundation.invoke(dateFormatter, Foundation.createSelector("dateFormat")));
+      String format = Foundation.toStringViaUTF8(Foundation.invoke(dateFormatter, Foundation.createSelector("dateFormat")));
+      assert format != null;
+      return format;
     }
     finally {
       Foundation.invoke(autoReleasePool, Foundation.createSelector("release"));
@@ -382,7 +393,6 @@ public class DateFormatUtil {
 
       for (int i = 0; i < macPattern.length(); i++) {
         char c = macPattern.charAt(i);
-        char next = i < macPattern.length() - 1 ? macPattern.charAt(i + 1) : 0;
         if (isSpecial) {
           String replacement = null;
           if (c == '%') replacement = "$";
@@ -464,20 +474,10 @@ public class DateFormatUtil {
     }
   }
 
-  private enum DateType {
-    TIME, DATE, DATETIME
-  }
-
-  private static final int MacFormatterNoStyle = 0;
-  private static final int MacFormatterShortStyle = 1;
-  private static final int MacFormatterMediumStyle = 2;
-  private static final int MacFormatterLongStyle = 3;
-  private static final int MacFormatterFullStyle = 4;
-  private static final int MacFormatterBehavior_10_4 = 1040;
-
-  @NotNull
+  /** @deprecated use {@linkplain DateFormatUtilRt#formatBuildDate(Calendar)} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
   public static String formatBuildDate(@NotNull Calendar cal) {
-    return BUILD_DATE_FORMAT.format(cal.getTime());
+    return DateFormatUtilRt.formatBuildDate(cal);
   }
 
   @NotNull
