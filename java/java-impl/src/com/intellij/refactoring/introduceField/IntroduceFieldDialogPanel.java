@@ -194,27 +194,13 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
     return mainPanel;
   }
 
-  protected boolean setEnabledInitializationPlaces(PsiElement initializerPart, PsiElement initializer) {
-    if (initializerPart instanceof PsiReferenceExpression) {
-      PsiReferenceExpression refExpr = (PsiReferenceExpression) initializerPart;
-      if (refExpr.getQualifierExpression() == null) {
-        PsiElement refElement = refExpr.resolve();
-        if (refElement == null ||
-            (refElement instanceof PsiLocalVariable || refElement instanceof PsiParameter) &&
-            !PsiTreeUtil.isAncestor(initializer, refElement, true)) {
-          myRbInFieldDeclaration.setEnabled(false);
-          myRbInConstructor.setEnabled(false);
-          if (myRbInSetUp != null) myRbInSetUp.setEnabled(false);
-          enableFinal(false);
-          return false;
-        }
-      }
-    }
-    PsiElement[] children = initializerPart.getChildren();
-    for (PsiElement child : children) {
-      if (!setEnabledInitializationPlaces(child, initializer)) return false;
-    }
-    return true;
+  @Override
+  protected boolean updateInitializationPlaceModel() {
+    myRbInFieldDeclaration.setEnabled(false);
+    myRbInConstructor.setEnabled(false);
+    if (myRbInSetUp != null) myRbInSetUp.setEnabled(false);
+    enableFinal(false);
+    return false;
   }
 
   public void setInitializeInFieldDeclaration() {
