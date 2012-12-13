@@ -505,7 +505,7 @@
                      implementationClass="com.jetbrains.django.lang.template.inspection.ExtendsTagPositionInspection"/>
     <localInspection language="DjangoTemplate" shortName="DjangoUnresolvedTemplateReferenceInspection" bundle="com.jetbrains.django.ui.Django"
                      key="inspection.unresolved-template-reference.display-name" groupKey="django" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.jetbrains.django.lang.template.inspection.UnresolvedTemplateReferenceInspection"/>
+                     implementationClass="com.jetbrains.django.lang.template.inspection.DjangoTemplateUnresolvedReferenceInspection"/>
     <localInspection language="DjangoTemplate" shortName="DjangoUnresolvedStaticReferenceInspection" bundle="com.jetbrains.django.ui.Django"
                      key="inspection.unresolved-static-reference.display-name" groupKey="django" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.django.lang.template.inspection.UnresolvedStaticReferenceInspection"/>
