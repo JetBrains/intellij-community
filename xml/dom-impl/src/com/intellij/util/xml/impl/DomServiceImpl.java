@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.ObjectStubTree;
 import com.intellij.psi.stubs.StubTreeLoader;
@@ -66,6 +67,10 @@ public class DomServiceImpl extends DomService {
   @NotNull
   private static XmlFileHeader calcXmlFileHeader(final XmlFile file) {
 
+    if (file instanceof PsiFileEx && ((PsiFileEx)file).isContentsLoaded() && file.getNode().isParsed()) {
+      return computeHeaderByPsi(file);
+    }
+
     if (!XmlUtil.isStubBuilding(file) && file.getFileType() == XmlFileType.INSTANCE) {
       VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile instanceof VirtualFileWithId) {
@@ -76,41 +81,47 @@ public class DomServiceImpl extends DomService {
       }
     }
 
-    final XmlDocument document = file.getDocument();
-    if (document != null) {
-      String publicId = null;
-      String systemId = null;
-      final XmlProlog prolog = document.getProlog();
-      if (prolog != null) {
-        final XmlDoctype doctype = prolog.getDoctype();
-        if (doctype != null) {
-          publicId = doctype.getPublicId();
-          systemId = doctype.getSystemId();
-          if (systemId == null) {
-            systemId = doctype.getDtdUri();
-          }
-        }
-      }
-
-      final XmlTag tag = document.getRootTag();
-      if (tag != null) {
-        String localName = tag.getLocalName();
-        if (StringUtil.isNotEmpty(localName)) {
-          if (tag.getPrevSibling() instanceof PsiErrorElement) {
-            return XmlFileHeader.EMPTY;
-          }
-
-          String psiNs = tag.getNamespace();
-          return new XmlFileHeader(localName, psiNs == XmlUtil.EMPTY_URI || Comparing.equal(psiNs, systemId) ? null : psiNs, publicId,
-                                   systemId);
-        }
-      }
-    }
-
     if (!file.isValid()) return XmlFileHeader.EMPTY;
     return NanoXmlUtil.parseHeader(file);
   }
 
+  private static XmlFileHeader computeHeaderByPsi(XmlFile file) {
+    final XmlDocument document = file.getDocument();
+    if (document == null) {
+      return XmlFileHeader.EMPTY;
+    }
+
+    String publicId = null;
+    String systemId = null;
+    final XmlProlog prolog = document.getProlog();
+    if (prolog != null) {
+      final XmlDoctype doctype = prolog.getDoctype();
+      if (doctype != null) {
+        publicId = doctype.getPublicId();
+        systemId = doctype.getSystemId();
+        if (systemId == null) {
+          systemId = doctype.getDtdUri();
+        }
+      }
+    }
+
+    final XmlTag tag = document.getRootTag();
+    if (tag == null) {
+      return XmlFileHeader.EMPTY;
+    }
+
+    String localName = tag.getLocalName();
+    if (StringUtil.isNotEmpty(localName)) {
+      if (tag.getPrevSibling() instanceof PsiErrorElement) {
+        return XmlFileHeader.EMPTY;
+      }
+
+      String psiNs = tag.getNamespace();
+      return new XmlFileHeader(localName, psiNs == XmlUtil.EMPTY_URI || Comparing.equal(psiNs, systemId) ? null : psiNs, publicId,
+                               systemId);
+    }
+    return XmlFileHeader.EMPTY;
+  }
 
   public ModelMerger createModelMerger() {
     return new ModelMergerImpl();
