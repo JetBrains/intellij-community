@@ -117,6 +117,10 @@ public class GitUpdateProcess {
     String oldText = myProgressIndicator.getText();
     myProgressIndicator.setText("Updating...");
 
+    for (GitRepository repository : myRepositories) {
+      repository.update();
+    }
+
     // check if update is possible
     if (checkRebaseInProgress() || isMergeInProgress() || areUnmergedFiles() || !checkTrackedBranchesConfigured()) {
       return GitUpdateResult.NOT_READY;
