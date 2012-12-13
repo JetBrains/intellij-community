@@ -5,6 +5,7 @@ import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.xml.XmlTagTreeElement;
 import com.intellij.ide.structureView.xml.XmlStructureViewElementProvider;
+import com.intellij.navigation.LocationPresentation;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +25,7 @@ public class HtmlStructureViewElementProvider implements XmlStructureViewElement
     return new HtmlTagTreeElement(tag);
   }
 
-  static class HtmlTagTreeElement extends XmlTagTreeElement {
+  static class HtmlTagTreeElement extends XmlTagTreeElement implements LocationPresentation {
     public HtmlTagTreeElement(final XmlTag tag) {
       super(tag);
     }
@@ -55,8 +56,25 @@ public class HtmlStructureViewElementProvider implements XmlStructureViewElement
       final XmlTag tag = getElement();
       if (tag == null) return null;
 
-      final String text = tag.getValue().getTrimmedText();
+      final String text = normalizeSpaces(tag.getValue().getTrimmedText());
       return text.isEmpty() ? null : shortenTextIfLong(text);
+    }
+
+    private static String normalizeSpaces(final String text) {
+      final StringBuilder buf = new StringBuilder();
+
+      for (char ch : text.toCharArray()) {
+        if (ch <= ' ' || Character.isSpaceChar(ch)) {
+          if (buf.length() == 0 || buf.charAt(buf.length() - 1) != ' ') {
+            buf.append(' ');
+          }
+        }
+        else {
+          buf.append(ch);
+        }
+      }
+
+      return buf.toString();
     }
 
     private static String shortenTextIfLong(final String text) {
@@ -71,6 +89,14 @@ public class HtmlStructureViewElementProvider implements XmlStructureViewElement
 
       final int endIndex = Character.isLetter(index) ? MAX_TEXT_LENGTH : index;
       return text.substring(0, endIndex) + "...";
+    }
+
+    public String getLocationPrefix() {
+      return "  ";
+    }
+
+    public String getLocationSuffix() {
+      return "";
     }
   }
 }
