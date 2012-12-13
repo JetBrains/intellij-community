@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,16 +119,15 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
     PsiElement element=usage.getElement();
 
     assert element instanceof GrExpression && element.getParent() instanceof GrCallExpression;
+
+    final Editor editor = getCurrentEditorIfApplicable(element);
+
     GrCallExpression call = (GrCallExpression) element.getParent();
-    RangeMarker marker = inlineReferenceImpl(call, myMethod, isOnExpressionOrReturnPlace(call), GroovyInlineMethodUtil.isTailMethodCall(call));
+    RangeMarker marker = inlineReferenceImpl(call, myMethod, isOnExpressionOrReturnPlace(call), GroovyInlineMethodUtil.isTailMethodCall(call), editor);
 
     // highlight replaced result
     if (marker != null) {
       Project project = referenced.getProject();
-      FileEditorManager manager = FileEditorManager.getInstance(project);
-      Editor editor = manager.getSelectedTextEditor();
-
-      //GroovyRefactoringUtil.highlightOccurrences(myProject, editor, new PsiElement[]{pointer.getElement()});
       TextRange range = TextRange.create(marker);
       GroovyRefactoringUtil.highlightOccurrencesByRanges(project, editor, new TextRange[]{range});
 
@@ -139,13 +138,27 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
     }
   }
 
-  static RangeMarker inlineReferenceImpl(GrCallExpression call, GrMethod method, boolean resultOfCallExplicitlyUsed, boolean isTailMethodCall) {
+  @Nullable
+  private static Editor getCurrentEditorIfApplicable(PsiElement element) {
+    final Project project = element.getProject();
+    final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+
+    if (editor != null &&
+        editor.getDocument() == PsiDocumentManager.getInstance(project).getDocument(element.getContainingFile())) {
+      return editor;
+    }
+
+    return null;
+  }
+
+  static RangeMarker inlineReferenceImpl(GrCallExpression call,
+                                         GrMethod method,
+                                         boolean resultOfCallExplicitlyUsed,
+                                         boolean isTailMethodCall,
+                                         Editor editor) {
     try {
       GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(call.getProject());
       final Project project = call.getProject();
-
-      FileEditorManager manager = FileEditorManager.getInstance(project);
-      Editor editor = manager.getSelectedTextEditor();
 
       // Variable declaration for qualifier expression
       GrVariableDeclaration qualifierDeclaration = null;
