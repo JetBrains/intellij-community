@@ -111,13 +111,27 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
   }
 
   public void directoryMappingChanged() {
+    HashSet<String> keys;
     synchronized (myLock) {
-      final HashSet<String> keys = new HashSet<String>(myData.keySet());
+      keys = new HashSet<String>(myData.keySet());
+    }
+    final Map<String, Pair<VirtualFile, AbstractVcs>> vFiles = new HashMap<String, Pair<VirtualFile, AbstractVcs>>();
+    for (String key : keys) {
+      final VirtualFile vf = myLfs.refreshAndFindFileByIoFile(new File(key));
+      final AbstractVcs newVcs = (vf == null) ? null : myVcsManager.getVcsFor(vf);
+      vFiles.put(key, vf == null ? Pair.create((VirtualFile) null, (AbstractVcs)null) : Pair.create(vf, newVcs));
+    }
+    synchronized (myLock) {
+      keys = new HashSet<String>(myData.keySet());
       for (String key : keys) {
         final Pair<VcsRoot, VcsRevisionNumber> value = myData.get(key);
         final VcsRoot storedVcsRoot = value.getFirst();
-        final VirtualFile vf = myLfs.refreshAndFindFileByIoFile(new File(key));
-        final AbstractVcs newVcs = (vf == null) ? null : myVcsManager.getVcsFor(vf);
+        final Pair<VirtualFile, AbstractVcs> pair = vFiles.get(key);
+        if (pair == null) {
+          continue; // already added with new mappings
+        }
+        final VirtualFile vf = pair.getFirst();
+        final AbstractVcs newVcs = pair.getSecond();
 
         if (newVcs == null) {
           myData.remove(key);
