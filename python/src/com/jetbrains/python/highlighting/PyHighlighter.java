@@ -116,6 +116,9 @@ public class PyHighlighter extends SyntaxHighlighterBase {
   public static final TextAttributesKey PY_SELF_PARAMETER = TextAttributesKey.createTextAttributesKey(
     "PY.SELF_PARAMETER", new TextAttributes(new Color(148, 85, 141), null, null, null, Font.PLAIN));
 
+  public static final TextAttributesKey PY_KEYWORD_ARGUMENT = TextAttributesKey.createTextAttributesKey(
+    "PY.KEYWORD_ARGUMENT", new TextAttributes(new Color(102, 0, 153), null, null, null, Font.PLAIN));
+
   public static final TextAttributesKey PY_VALID_STRING_ESCAPE = _copy("PY.VALID_STRING_ESCAPE", VALID_STRING_ESCAPE);
 
   public static final TextAttributesKey PY_INVALID_STRING_ESCAPE = _copy("PY.INVALID_STRING_ESCAPE", INVALID_STRING_ESCAPE);

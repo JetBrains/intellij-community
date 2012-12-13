@@ -6,10 +6,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyElementGenerator;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NonNls;
@@ -72,5 +69,10 @@ public class PyKeywordArgumentImpl extends PyElementImpl implements PyKeywordArg
                                                                         expression != null ? expression.getText() : name);
     getNode().replaceChild(getKeywordNode(), keywordArgument.getKeywordNode());
     return this;
+  }
+
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyKeywordArgument(this);
   }
 }
