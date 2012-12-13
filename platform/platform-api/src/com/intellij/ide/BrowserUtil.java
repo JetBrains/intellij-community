@@ -19,7 +19,10 @@ import com.intellij.CommonBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -31,7 +34,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.ui.GuiUtils;
-import com.intellij.util.SmartList;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.OptionsDialog;
 import org.jetbrains.annotations.NonNls;
@@ -40,16 +42,23 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.*;
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+
+import static com.intellij.util.containers.ContainerUtil.newSmartList;
 
 public class BrowserUtil {
   private static final Logger LOG = Logger.getInstance("#" + BrowserUtil.class.getName());
@@ -103,8 +112,9 @@ public class BrowserUtil {
     }
 
     if (url.startsWith("jar:")) {
-      url = extractFiles(url);
-      if (url == null) return;
+      String files = extractFiles(url);
+      if (files == null) return;
+      url = files;
     }
 
     if (getGeneralSettingsInstance().isUseDefaultBrowser() && canStartDefaultBrowser()) {
@@ -144,13 +154,13 @@ public class BrowserUtil {
   @NonNls
   private static List<String> getDefaultBrowserCommand() {
     if (SystemInfo.isWindows) {
-      return getOpenBrowserWinCommand(null);
+      return newSmartList(ExecUtil.getWindowsShellName(), "/c", "start", "\"\"");
     }
     else if (SystemInfo.isMac) {
-      return new SmartList<String>(ExecUtil.getOpenCommandPath());
+      return newSmartList(ExecUtil.getOpenCommandPath());
     }
     else if (SystemInfo.isUnix && SystemInfo.hasXdgOpen()) {
-      return new SmartList<String>("xdg-open");
+      return newSmartList("xdg-open");
     }
 
     return null;
@@ -215,31 +225,19 @@ public class BrowserUtil {
     launchBrowserByCommand(url, getOpenBrowserCommand(browserPath));
   }
 
-  private static List<String> getOpenBrowserWinCommand(@Nullable String browserPath) {
-    ArrayList<String> command = new ArrayList<String>();
-    command.add(SystemInfo.isWin2kOrNewer ? "cmd.exe" : "command.com");
-    command.add("/c");
-    command.add("start");
-    command.add("\"\"");
-    if (browserPath != null) {
-      command.add(browserPath);
+  @NotNull
+  public static List<String> getOpenBrowserCommand(@NonNls @NotNull String browserPath) {
+    if (new File(browserPath).isFile()) {
+      return newSmartList(browserPath);
     }
-    return command;
-  }
-
-  public static List<String> getOpenBrowserCommand(final @NonNls @NotNull String browserPath) {
-    if (SystemInfo.isMac && !new File(browserPath).isFile()) {
-      ArrayList<String> command = new ArrayList<String>();
-      command.add(ExecUtil.getOpenCommandPath());
-      command.add("-a");
-      command.add(browserPath);
-      return command;
+    else if (SystemInfo.isMac) {
+      return newSmartList(ExecUtil.getOpenCommandPath(), "-a", browserPath);
     }
-    else if (SystemInfo.isWindows && !new File(browserPath).isFile()) {
-      return getOpenBrowserWinCommand(browserPath);
+    else if (SystemInfo.isWindows) {
+      return newSmartList(ExecUtil.getWindowsShellName(), "/c", "start", "\"\"", browserPath);
     }
     else {
-      return new SmartList<String>(browserPath);
+      return newSmartList(browserPath);
     }
   }
 
@@ -415,6 +413,7 @@ public class BrowserUtil {
       return true;
     }
 
+    @NotNull
     protected Action[] createActions() {
       setOKButtonText(CommonBundle.getYesButtonText());
       return new Action[]{getOKAction(), getCancelAction()};
