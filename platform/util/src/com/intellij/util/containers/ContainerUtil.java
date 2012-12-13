@@ -166,6 +166,11 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
+  public static <T> List<T> newSmartList(T... elements) {
+    return new SmartList<T>(elements);
+  }
+
+  @NotNull
   public static <T> HashSet<T> newHashSet() {
     return ContainerUtilRt.newHashSet();
   }
