@@ -57,8 +57,10 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
 
     final CommonCodeStyleSettings commonSettings = settings.getCommonSettings(PythonLanguage.getInstance());
     return new SpacingBuilder(settings)
+      .betweenInside(STATEMENT_OR_DECLARATION, CLASS_OR_FUNCTION, file).blankLines(pySettings.BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS)
+      .betweenInside(CLASS_OR_FUNCTION, STATEMENT_OR_DECLARATION, file).blankLines(pySettings.BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS)
       .between(IMPORT_STATEMENTS, TokenSet.andNot(STATEMENT_OR_DECLARATION, IMPORT_STATEMENTS)).blankLines(commonSettings.BLANK_LINES_AFTER_IMPORTS)
-      .betweenInside(CLASS_OR_FUNCTION, CLASS_OR_FUNCTION, file).blankLines(pySettings.BLANK_LINES_BETWEEN_TOP_LEVEL_CLASSES_FUNCTIONS)
+      .betweenInside(CLASS_OR_FUNCTION, CLASS_OR_FUNCTION, file).blankLines(pySettings.BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS)
       .between(CLASS_DECLARATION, STATEMENT_OR_DECLARATION).blankLines(commonSettings.BLANK_LINES_AROUND_CLASS)
       .between(STATEMENT_OR_DECLARATION, CLASS_DECLARATION).blankLines(commonSettings.BLANK_LINES_AROUND_CLASS)
       .between(FUNCTION_DECLARATION, STATEMENT_OR_DECLARATION).blankLines(commonSettings.BLANK_LINES_AROUND_METHOD)

@@ -3,5 +3,6 @@ class A:
     self.x = 1
     self.y = None
 
+
 a = A()
 a.y+1

@@ -168,11 +168,9 @@ private layoutPlugins(layouts) {
       dir("themes") {
         fileset(dir: "${home}/plugins/textmate/lib/themes/", includes: "*.tmTheme")
       }
-      dir("lib") {
-        fileset(dir: "${home}/plugins/textmate/lib") {
-          include(name: "jcodings.jar")
-          include(name: "joni.jar")
-        }
+      fileset(dir: "${home}/plugins/textmate/lib") {
+        include(name: "jcodings.jar")
+        include(name: "joni.jar")
       }
     }
   }

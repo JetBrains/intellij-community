@@ -257,4 +257,8 @@ public class PyElementVisitor extends PsiElementVisitor {
   public void visitPyKeywordArgument(PyKeywordArgument node) {
     visitPyElement(node);
   }
+
+  public void visitPyWithItem(PyWithItem node) {
+    visitPyElement(node);
+  }
 }

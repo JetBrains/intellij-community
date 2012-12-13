@@ -3,4 +3,5 @@ def foo(a):
         # a is 5
         print 'no'
 
+
 foo(5)

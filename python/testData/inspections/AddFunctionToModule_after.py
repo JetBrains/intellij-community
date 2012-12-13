@@ -4,5 +4,6 @@ import AddFunctionToModule # ourselves
 
 AddFunctionToModule.frob(1)
 
+
 def frob(param):
     return None

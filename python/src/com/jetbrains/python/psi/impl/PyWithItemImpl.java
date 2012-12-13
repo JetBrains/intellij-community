@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyWithItem;
 
@@ -12,6 +13,11 @@ import com.jetbrains.python.psi.PyWithItem;
 public class PyWithItemImpl extends PyElementImpl implements PyWithItem {
   public PyWithItemImpl(ASTNode astNode) {
     super(astNode);
+  }
+
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyWithItem(this);
   }
 
   @Override

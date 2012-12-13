@@ -130,11 +130,11 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testNoAlignForMethodArguments() {  // PY-3995
+    settings().getCommonSettings(PythonLanguage.getInstance()).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false;
     doTest();
   }
 
   public void testAlignForMethodArguments() {  // PY-3995
-    settings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest();
   }
 
@@ -202,6 +202,10 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testTupleClosingParen() {  // PY-7946
+    doTest();
+  }
+
+  public void testBeforeTopLevelClass() {  // PY-7743
     doTest();
   }
 
