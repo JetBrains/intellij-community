@@ -453,7 +453,7 @@ public class GitLogUI implements Disposable {
     myDetailsLoaderImpl = new Consumer<CommitI>() {
       @Override
       public void consume(final CommitI commitI) {
-        if (commitI == null) return;
+        if (commitI == null || commitI.holdsDecoration()) return;
         final GitCommit gitCommit = fullCommitPresentation(commitI);
 
         if (gitCommit == null) {
@@ -568,14 +568,16 @@ public class GitLogUI implements Disposable {
     private MeaningfulSelection(int[] rows, final BigTableTableModel tableModel) {
       myMeaningfulRows = 0;
       for (int row : rows) {
-        myCommitI = tableModel.getCommitAt(row);
-        if (!myCommitI.holdsDecoration()) {
-          ++myMeaningfulRows;
+        final CommitI commitAt = tableModel.getCommitAt(row);
+        if (! commitAt.holdsDecoration()) {
+          myCommitI = commitAt;
+          ++ myMeaningfulRows;
           if (myMeaningfulRows > 1) break;
         }
       }
     }
 
+    @Nullable
     public CommitI getCommit() {
       return myCommitI;
     }
