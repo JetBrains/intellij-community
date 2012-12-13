@@ -19,9 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.impl.source.resolve.ProcessCandidateParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -257,8 +255,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     final PsiExpressionList argumentList = expression.getArgumentList();
     final PsiExpression[] expressions = argumentList.getExpressions();
     return resolveHelper
-      .inferTypeArguments(staticFactoryMethod.getTypeParameters(), parameters, expressions, PsiSubstitutor.EMPTY, parent, 
-                          PsiUtil.getLanguageLevel(parent).isAtLeast(LanguageLevel.JDK_1_8) ? ProcessCandidateParameterTypeInferencePolicy.INSTANCE : DefaultParameterTypeInferencePolicy.INSTANCE);
+      .inferTypeArguments(staticFactoryMethod.getTypeParameters(), parameters, expressions, PsiSubstitutor.EMPTY, parent, DefaultParameterTypeInferencePolicy.INSTANCE);
   }
 
   public static boolean hasDefaultConstructor(@NotNull final PsiClass psiClass) {
