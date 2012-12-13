@@ -44,11 +44,11 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -239,19 +239,13 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                 try {
                   if (myManager.getProject().isDisposed()) throw new ProcessCanceledException();
                   List<PsiFile> psiRoots = file.getViewProvider().getAllFiles();
-                  Set<PsiElement> processed = new HashSet<PsiElement>(psiRoots.size() * 2, (float)0.5);
+                  Set<PsiElement> processed = new THashSet<PsiElement>(psiRoots.size() * 2, (float)0.5);
                   for (PsiElement psiRoot : psiRoots) {
                     if (progress != null) progress.checkCanceled();
+                    assert psiRoot != null : "One of the roots of file " + file + " is null. All roots: " + psiRoots +
+                                             "; ViewProvider: " + file.getViewProvider() + "; Virtual file: " + file.getViewProvider().getVirtualFile();
                     if (!processed.add(psiRoot)) continue;
                     if (!psiRoot.isValid()) continue;
-                    assert psiRoot != null : "One of the roots of file " +
-                                             file +
-                                             " is null. All roots: " +
-                                             Arrays.asList(psiRoots) +
-                                             "; Viewprovider: " +
-                                             file.getViewProvider() +
-                                             "; Virtual file: " +
-                                             file.getViewProvider().getVirtualFile();
                     if (!psiRootProcessor.process(psiRoot)) {
                       canceled.set(true);
                       return;

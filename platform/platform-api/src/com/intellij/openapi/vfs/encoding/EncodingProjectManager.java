@@ -20,6 +20,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
 import java.util.Map;
@@ -32,8 +33,9 @@ public abstract class EncodingProjectManager extends EncodingManager implements 
     return project.getComponent(EncodingProjectManager.class);
   }
 
+  @NotNull
   public abstract Map<VirtualFile, Charset> getAllMappings();
 
-  public abstract void setMapping(Map<VirtualFile, Charset> result);
+  public abstract void setMapping(@NotNull Map<VirtualFile, Charset> result);
 
 }
