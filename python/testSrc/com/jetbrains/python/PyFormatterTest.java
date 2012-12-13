@@ -199,7 +199,10 @@ public class PyFormatterTest extends PyTestCase {
   public void testSpaceWithinBraces() {  // PY-8069
     settings().getCustomSettings(PyCodeStyleSettings.class).SPACE_WITHIN_BRACES = true;
     doTest();
+  }
 
+  public void testTupleClosingParen() {  // PY-7946
+    doTest();
   }
 
   public void testPsiFormatting() { // IDEA-69724

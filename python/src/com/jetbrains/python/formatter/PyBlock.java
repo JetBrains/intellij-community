@@ -192,9 +192,13 @@ public class PyBlock implements ASTBlock {
         childIndent = Indent.getNormalIndent();
       }
     }
-    else if ((parentType == PyElementTypes.PARENTHESIZED_EXPRESSION || parentType == PyElementTypes.GENERATOR_EXPRESSION) &&
-             hasLineBreaksBefore(child, 1)) {
-      childIndent = Indent.getNormalIndent();
+    else if ((parentType == PyElementTypes.PARENTHESIZED_EXPRESSION || parentType == PyElementTypes.GENERATOR_EXPRESSION)) {
+      if (childType == PyTokenTypes.RPAR || !hasLineBreaksBefore(child, 1)) {
+        childIndent = Indent.getNoneIndent();
+      }
+      else {
+        childIndent = Indent.getNormalIndent();
+      }
     }
 
     if (isAfterStatementList(child) && !hasLineBreaksBefore(child, 2)) {  // maybe enter was pressed and cut us from a previous (nested) statement list

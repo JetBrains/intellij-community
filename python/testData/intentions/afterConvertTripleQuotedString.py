@@ -4,4 +4,4 @@ if True:
          '\n'
          '            Let\'s go.\n'
          '            And they went out.'
-        )
+    )
