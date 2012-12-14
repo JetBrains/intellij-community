@@ -156,7 +156,9 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
   private CanonicalTypes.Type getReturnType() {
     PsiType returnType = null;
     try {
-      returnType = ((PsiTypeCodeFragment)myReturnTypeCodeFragment).getType();
+      if (myReturnTypeCodeFragment != null) {
+        returnType = ((PsiTypeCodeFragment)myReturnTypeCodeFragment).getType();
+      }
     }
     catch (PsiTypeCodeFragment.TypeSyntaxException ignored) {
     }
@@ -211,7 +213,7 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
       return message("name.is.wrong", getMethodName());
     }
 
-    if (!checkType((PsiTypeCodeFragment)myReturnTypeCodeFragment, true)) {
+    if (myReturnTypeCodeFragment != null && !checkType((PsiTypeCodeFragment)myReturnTypeCodeFragment, true)) {
       return message("return.type.is.wrong");
     }
 
@@ -296,7 +298,7 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
   @Override
   protected String calculateSignature() {
     String name = getMethodName();
-    String type = myReturnTypeCodeFragment.getText().trim();
+    String type = myReturnTypeCodeFragment != null ? myReturnTypeCodeFragment.getText().trim() : "";
 
     StringBuilder builder = new StringBuilder();
     builder.append(myVisibilityPanel.getVisibility()).append(' ');

@@ -43,9 +43,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -346,9 +344,6 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       public String getReportText() {
         final StringBuilder sb = new StringBuilder();
 
-        final Ref<AbstractTreeNode> previousNode = new Ref<AbstractTreeNode>();
-        final int[] depth = new int[1];
-        depth[0] = 0;
         final Object[] elements = myBuilder.getStructure().getChildElements(myBuilder.getRoot());
 
         final TreeUtil.Traverse traverse = new TreeUtil.Traverse() {
@@ -356,21 +351,11 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
           public boolean accept(Object node) {
             if (node instanceof LoadingNode) return true;
             final AbstractTreeNode abstractTreeNode = (AbstractTreeNode)node;
-            final AbstractTreeNode parent = abstractTreeNode.getParent();
-            if (Comparing.equal(previousNode.get(), parent)) {
-              ++depth[0];
-            }
-            else if (previousNode.get() != null && Comparing.equal(previousNode.get().getParent(), parent)) {
-              //-- depth[0];
-            }
-            else if (previousNode.get() != null) {
-              --depth[0];
-            }
             if (sb.length() > 0) {
               sb.append('\n');
             }
-            assert depth[0] >= 0;
-            for (int i = 0; i < depth[0]; i++) {
+            int deepLevel = getDeepLevel((AbstractTreeNode)node);
+            for (int i = 1; i < deepLevel; i++) {
               sb.append('\t');
             }
             abstractTreeNode.update();
@@ -383,12 +368,21 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
             if (locationString != null) {
               sb.append(" (").append(locationString).append(")");
             }
-            previousNode.set(abstractTreeNode);
             return true;
           }
+
+          public int getDeepLevel(AbstractTreeNode node) {
+            int result = 0;
+            while (node.getParent() != null) {
+              result++;
+              node = node.getParent();
+            }
+            return result;
+          }
         };
+
         for (Object element : elements) {
-          traveseDepth((AbstractTreeNode)element, traverse);
+          traverseDepth((AbstractTreeNode)element, traverse);
         }
         return sb.toString();
       }
@@ -409,11 +403,12 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     };
   }
 
-  private boolean traveseDepth(final AbstractTreeNode node, final TreeUtil.Traverse traverse) {
-    if (! traverse.accept(node)) return false;
-    final Collection children = node.getChildren();
-    for (Object child : children) {
-      if (! traveseDepth((AbstractTreeNode)child, traverse)) return false;
+  private static boolean traverseDepth(final AbstractTreeNode node, final TreeUtil.Traverse traverse) {
+    if (!traverse.accept(node)) return false;
+    final Collection<? extends AbstractTreeNode> children = node.getChildren();
+    for (AbstractTreeNode child : children) {
+      child.setParent(node);
+      if (!traverseDepth(child, traverse)) return false;
     }
     return true;
   }
