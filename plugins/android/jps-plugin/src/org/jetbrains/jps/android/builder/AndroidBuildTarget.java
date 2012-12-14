@@ -19,6 +19,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.android.AndroidJpsUtil;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.builders.*;
@@ -93,7 +94,7 @@ public class AndroidBuildTarget extends ModuleBasedTarget<BuildRootDescriptor> {
     if (myTargetType != TargetType.PACKAGING) {
       return Collections.emptyList();
     }
-    final File moduleOutputDir = context.getProjectPaths().getModuleOutputDir(myModule, false);
+    final File moduleOutputDir = ProjectPaths.getModuleOutputDir(myModule, false);
     final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(myModule);
 
     if (moduleOutputDir == null || extension == null) {

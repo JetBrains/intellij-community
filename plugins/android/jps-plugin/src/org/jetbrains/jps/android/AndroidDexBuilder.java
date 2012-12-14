@@ -150,14 +150,13 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor, Androi
       return false;
     }
 
-    final ProjectPaths projectPaths = context.getProjectPaths();
     File dexOutputDir = AndroidJpsUtil.getDirectoryForIntermediateArtifacts(context, module);
     dexOutputDir = AndroidJpsUtil.createDirIfNotExist(dexOutputDir, context, BUILDER_NAME);
     if (dexOutputDir == null) {
       return false;
     }
 
-    final File classesDir = projectPaths.getModuleOutputDir(module, false);
+    final File classesDir = ProjectPaths.getModuleOutputDir(module, false);
     if (classesDir == null || !classesDir.isDirectory()) {
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO, AndroidJpsBundle
         .message("android.jps.warnings.dex.no.compiled.files", module.getName())));
@@ -232,7 +231,7 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor, Androi
         });
 
         if (extension.isPackTestCode()) {
-          final File testsClassDir = projectPaths.getModuleOutputDir(module, true);
+          final File testsClassDir = ProjectPaths.getModuleOutputDir(module, true);
 
           if (testsClassDir != null && testsClassDir.isDirectory()) {
             AndroidJpsUtil.addSubdirectories(testsClassDir, fileSet);
