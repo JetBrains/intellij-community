@@ -22,7 +22,6 @@ import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.util.HgErrorUtil;
-import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -37,7 +36,7 @@ public class HgPullCommand {
   private boolean update = true;
   private boolean rebase = !update;
   private static final Logger LOG = Logger.getInstance(HgPullCommand.class);
-  
+
   public HgPullCommand(Project project, @NotNull VirtualFile repo) {
     this.project = project;
     this.repo = repo;
@@ -60,6 +59,10 @@ public class HgPullCommand {
   }
 
   public boolean execute() {
+    return execute(false);
+  }
+
+  public boolean execute(boolean forceAuthorization) {
     List<String> arguments = new LinkedList<String>();
     if (update) {
       arguments.add("--update");
@@ -78,15 +81,15 @@ public class HgPullCommand {
     executor.setShowOutput(true);
     final HgCommandResult result = executor.executeInCurrentThread(repo, "pull", arguments);
     if (HgErrorUtil.isAuthorizationError(result)) {
-      HgUtil.notifyError(project, "Authorization required", "http authorization required for <code>" + source + "</code>");
+      new HgCommandResultNotifier(project)
+        .notifyError(result, "Authorization required", "http authorization required for <code>" + source + "</code>");
       return false;
-    } else if (HgErrorUtil.isAbort(result)) {
-      new HgCommandResultNotifier(project).process(result, null, null);
+    } else if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
+      new HgCommandResultNotifier(project).notifyError(result, "", "Pull failed");
       return false;
     } else {
       project.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(project, null);
       return true;
     }
   }
-
 }

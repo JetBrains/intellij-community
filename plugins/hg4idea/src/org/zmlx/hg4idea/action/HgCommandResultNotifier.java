@@ -12,48 +12,55 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
-import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.vcsUtil.VcsImplUtil;
-import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.execution.HgCommandResult;
-import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.util.List;
 
 public final class HgCommandResultNotifier {
 
   private final Project myProject;
+  private static final Logger LOG = Logger.getInstance(HgCommandResultNotifier.class);
 
   public HgCommandResultNotifier(Project project) {
     myProject = project;
   }
 
-  public void process(HgCommandResult result, @Nullable String successTitle, @Nullable String successDescription) {
-    process(result, successTitle, successDescription, null, null );
+  public void notifySuccess(@NotNull String title, @NotNull String successDescription) {
+    HgVcs.NOTIFICATION_GROUP.createNotification(title, successDescription, NotificationType.INFORMATION, null).notify(myProject);
   }
 
-  public void process( HgCommandResult result,
-                       @Nullable String successTitle, @Nullable String successDescription,
-                       @Nullable String failureTitle, @Nullable String failureDescription ){
-    List<String> out = result.getOutputLines();
+  public void notifyError(HgCommandResult result, @NotNull String failureTitle, @NotNull String failureDescription) {
+    notifyError(result, failureTitle, failureDescription, null);
+  }
+
+  public void notifyError(@NotNull HgCommandResult result,
+                          @NotNull String failureTitle,
+                          @NotNull String failureDescription,
+                          @Nullable NotificationListener listener) {
     List<String> err = result.getErrorLines();
-    if (!out.isEmpty()) {
-      VcsUtil.showStatusMessage(myProject, out.get(out.size() - 1));
+    String errorMessage;
+    if (StringUtil.isEmptyOrSpaces(failureDescription)) {
+      failureDescription = failureTitle;
     }
-    if (HgErrorUtil.isAbort(result)) {
-      VcsImplUtil.showErrorMessage(
-        myProject, "<html>" + StringUtil.join(err, "<br>") + "</html>", "Error"
-      );
-    } else if ( result.getExitValue() != 0 && failureTitle != null && failureDescription != null ){
-      Notifications.Bus.notify(new Notification(HgVcs.NOTIFICATION_GROUP_ID, failureTitle, failureDescription, NotificationType.ERROR), myProject);
-    } else if (successTitle != null && successDescription != null) {
-      Notifications.Bus.notify(new Notification(HgVcs.NOTIFICATION_GROUP_ID, successTitle, successDescription, NotificationType.INFORMATION), myProject);
+    if (err.isEmpty()) {
+      LOG.assertTrue(!StringUtil.isEmptyOrSpaces(failureDescription),
+                     "Failure title, failure description and errors log can not be empty at the same time");
+      errorMessage = failureDescription;
+    } else if (failureDescription.isEmpty()) {
+      errorMessage = "<html>" + StringUtil.join(err, "<br>") + "</html>";
+    } else {
+      errorMessage = "<html>" + failureDescription + "<br>" + StringUtil.join(err, "<br>") + "</html>";
     }
+    HgVcs.IMPORTANT_ERROR_NOTIFICATION
+      .createNotification(failureTitle, errorMessage, NotificationType.ERROR, listener)
+      .notify(myProject);
   }
 }

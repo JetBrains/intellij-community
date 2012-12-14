@@ -15,9 +15,6 @@
  */
 package org.zmlx.hg4idea.provider;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -31,9 +28,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
+import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgCloneCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.ui.HgCloneDialog;
+import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.io.File;
 
@@ -73,9 +72,11 @@ public class HgCheckoutProvider implements CheckoutProvider {
         // handle result
         final HgCommandResult myCloneResult = clone.execute();
         if (myCloneResult == null) {
-          notifyError("Clone failed", "Clone failed due to unknown error", project);
-        } else if (myCloneResult.getExitValue() != 0) {
-          notifyError("Clone failed", "Clone from " + sourceRepositoryURL + " failed.<br/><br/>" + myCloneResult.getRawError(), project);
+          new HgCommandResultNotifier(project).notifyError(myCloneResult, "Clone failed", "Clone failed due to unknown error");
+        } else if (HgErrorUtil.hasErrorsInCommandExecution(myCloneResult)) {
+          new HgCommandResultNotifier(project).notifyError(myCloneResult, "Clone failed", "Clone from " +
+                                                                                          sourceRepositoryURL +
+                                                                                          " failed.");
         } else {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
@@ -90,10 +91,6 @@ public class HgCheckoutProvider implements CheckoutProvider {
       }
     }.queue();
 
-  }
-
-  private static void notifyError(String title, String description, Project project) {
-    Notifications.Bus.notify(new Notification(HgVcs.NOTIFICATION_GROUP_ID, title, description, NotificationType.ERROR), project);
   }
 
   /**
