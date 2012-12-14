@@ -226,7 +226,15 @@ public class CodeFormatterFacade {
 
   private static TextRange preprocess(@NotNull final ASTNode node, @NotNull TextRange range) {
     TextRange result = range;
-    PsiFile file = node.getPsi().getContainingFile();
+    PsiElement psi = node.getPsi();
+    if (!psi.isValid()) {
+      for(PreFormatProcessor processor: Extensions.getExtensions(PreFormatProcessor.EP_NAME)) {
+        result = processor.process(node, result);
+      }
+      return result;
+    }
+    
+    PsiFile file = psi.getContainingFile();
     
     // We use a set here because we encountered a situation when more than one PSI leaf points to the same injected fragment
     // (at least for sql injected into sql).
