@@ -159,7 +159,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
         if (newBound instanceof PsiCapturedWildcardType) {
           final PsiWildcardType wildcard = ((PsiCapturedWildcardType)newBound).getWildcard();
           if (wildcardType.isExtends() != wildcard.isExtends()) {
-            return wildcard.isBounded() ? PsiWildcardType.createUnbounded(wildcardType.getManager()) : newBound;
+            return wildcard.isBounded() ? wildcard.getBound() : newBound;
           }
           if (!wildcard.isBounded()) return PsiWildcardType.createUnbounded(wildcardType.getManager());
         }
