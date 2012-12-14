@@ -40,6 +40,7 @@ public class PyStringLiteralFileReferenceSet extends RootFileReferenceSet {
 
   @Override
   protected void reparse() {
+    //noinspection ConstantConditions
     if (myStringLiteralExpression != null) {
       MyTextRangeConsumer textRangeConsumer = new MyTextRangeConsumer(this);
 
