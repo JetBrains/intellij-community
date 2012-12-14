@@ -136,6 +136,7 @@ public class GitUpdateLocallyModifiedDialog extends DialogWrapper {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.DIFF);
     h.addParameters("--name-status");
     h.setNoSSH(true);
+    h.setSilent(true);
     h.setStdoutSuppressed(true);
     StringScanner s = new StringScanner(h.run());
     while (s.hasMoreData()) {
