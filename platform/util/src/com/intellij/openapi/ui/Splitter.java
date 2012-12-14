@@ -54,7 +54,7 @@ public class Splitter extends JPanel {
   private final float myMaxProp;
 
 
-  protected float myProportion;
+  protected float myProportion;// first size divided by total size
 
   private final Divider myDivider;
   private JComponent mySecondComponent;
@@ -177,7 +177,7 @@ public class Splitter extends JPanel {
     if (myFirstComponent != null && myFirstComponent.isVisible() && mySecondComponent != null && mySecondComponent.isVisible()) {
       final Dimension firstMinSize = myFirstComponent.getMinimumSize();
       final Dimension secondMinSize = mySecondComponent.getMinimumSize();
-      return getOrientation()
+      return isVertical()
              ? new Dimension(Math.max(firstMinSize.width, secondMinSize.width), firstMinSize.height + dividerWidth + secondMinSize.height)
              : new Dimension(firstMinSize.width + dividerWidth + secondMinSize.width, Math.max(firstMinSize.height, secondMinSize.height));
     }
@@ -199,7 +199,7 @@ public class Splitter extends JPanel {
     if (myFirstComponent != null && myFirstComponent.isVisible() && mySecondComponent != null && mySecondComponent.isVisible()) {
       final Dimension firstPrefSize = myFirstComponent.getPreferredSize();
       final Dimension secondPrefSize = mySecondComponent.getPreferredSize();
-      return getOrientation()
+      return isVertical()
              ? new Dimension(Math.max(firstPrefSize.width, secondPrefSize.width),
                              firstPrefSize.height + dividerWidth + secondPrefSize.height)
              : new Dimension(firstPrefSize.width + dividerWidth + secondPrefSize.width,
@@ -225,11 +225,11 @@ public class Splitter extends JPanel {
       mySkipNextLayouting = false;
       return;
     }
-    final double width = getWidth();
-    final double height = getHeight();
+    int width = getWidth();
+    int height = getHeight();
 
-    final double componentSize = getOrientation() ? height : width;
-    if (componentSize <= 0) return;
+    int total = isVertical() ? height : width;
+    if (total <= 0) return;
 
     if (!isNull(myFirstComponent) && myFirstComponent.isVisible() && !isNull(mySecondComponent) && mySecondComponent.isVisible()) {
       // both first and second components are visible
@@ -237,64 +237,52 @@ public class Splitter extends JPanel {
       Rectangle dividerRect = new Rectangle();
       Rectangle secondRect = new Rectangle();
 
-      double dividerWidth = getDividerWidth();
-      double firstComponentSize;
-      double secondComponentSize;
+      int d = getDividerWidth();
+      double size1;
 
-      if (componentSize <= dividerWidth) {
-        firstComponentSize = 0;
-        secondComponentSize = 0;
-        dividerWidth = componentSize;
+      if (total <= d) {
+        size1 = 0;
+        d = total;
       }
       else {
-        firstComponentSize = myProportion * (float)(componentSize - dividerWidth);
-        secondComponentSize = getOrientation() ? height - firstComponentSize - dividerWidth : width - firstComponentSize - dividerWidth;
+        size1 = myProportion * total;
+        double size2 = total - size1 - d;
 
         if (isHonorMinimumSize()) {
 
-          final double firstMinSize =
-            getOrientation() ? myFirstComponent.getMinimumSize().getHeight() : myFirstComponent.getMinimumSize().getWidth();
-          final double secondMinSize =
-            getOrientation() ? mySecondComponent.getMinimumSize().getHeight() : mySecondComponent.getMinimumSize().getWidth();
+          double mSize1 = isVertical() ? myFirstComponent.getMinimumSize().getHeight() : myFirstComponent.getMinimumSize().getWidth();
+          double mSize2 = isVertical() ? mySecondComponent.getMinimumSize().getHeight() : mySecondComponent.getMinimumSize().getWidth();
 
-          if (firstComponentSize + secondComponentSize < firstMinSize + secondMinSize) {
-            double proportion = firstMinSize / (firstMinSize + secondMinSize);
-            firstComponentSize = (int)(proportion * (float)(componentSize - dividerWidth));
-            secondComponentSize = getOrientation() ? height - firstComponentSize - dividerWidth : width - firstComponentSize - dividerWidth;
+          if (size1 + size2 < mSize1 + mSize2) {
+            double proportion = mSize1 / (mSize1 + mSize2);
+            size1 = proportion * total;
           }
           else {
-            if (firstComponentSize < firstMinSize) {
-              secondComponentSize -= firstMinSize - firstComponentSize;
-              firstComponentSize = firstMinSize;
+            if (size1 < mSize1) {
+              size1 = mSize1;
             }
-            else if (secondComponentSize < secondMinSize) {
-              firstComponentSize -= secondMinSize - secondComponentSize;
-              secondComponentSize = secondMinSize;
+            else if (size2 < mSize2) {
+              size2 = mSize2;
+              size1 = total - size2 - d;
             }
           }
         }
       }
 
-      myProportion = (float)(firstComponentSize / (firstComponentSize + secondComponentSize));
+      myProportion = (float)(size1 / total);
 
-      firstComponentSize = Math.floor(firstComponentSize);
-      secondComponentSize = Math.floor(secondComponentSize);
+      int iSize1 = (int)Math.round(Math.floor(size1));
+      int iSize2 = (int)Math.round(total - size1 - d);
 
-      if (getOrientation()) {
-        // fix flooring
-        secondComponentSize += (int)(height - firstComponentSize - secondComponentSize - dividerWidth);
-
-        firstRect.setBounds(0, 0, (int)width, (int)firstComponentSize);
-        dividerRect.setBounds(0, (int)firstComponentSize, (int)width, (int)dividerWidth);
-        secondRect.setBounds(0, (int)(firstComponentSize + dividerWidth), (int)width, (int)secondComponentSize);
+      if (isVertical()) {
+        firstRect.setBounds(0, 0, width, iSize1);
+        dividerRect.setBounds(0, iSize1, width, d);
+        secondRect.setBounds(0, iSize1 + d, width, iSize2);
       }
       else {
-        // fix flooring
-        secondComponentSize += (int)(width - firstComponentSize - secondComponentSize - dividerWidth);
-
-        firstRect.setBounds(0, 0, (int)firstComponentSize, (int)height);
-        dividerRect.setBounds((int)firstComponentSize, 0, (int)dividerWidth, (int)height);
-        secondRect.setBounds((int)(firstComponentSize + dividerWidth), 0, (int)secondComponentSize, (int)height);
+        firstRect.setBounds(0, 0, iSize1, height);
+        dividerRect.setBounds(iSize1, 0, d, height);
+        secondRect.setBounds((iSize1 + d), 0, iSize2, height);
       }
       myDivider.setVisible(true);
       myFirstComponent.setBounds(firstRect);
@@ -306,13 +294,13 @@ public class Splitter extends JPanel {
     else if (!isNull(myFirstComponent) && myFirstComponent.isVisible()) { // only first component is visible
       hideNull(mySecondComponent);
       myDivider.setVisible(false);
-      myFirstComponent.setBounds(0, 0, (int)width, (int)height);
+      myFirstComponent.setBounds(0, 0, width, height);
       myFirstComponent.revalidate();
     }
     else if (!isNull(mySecondComponent) && mySecondComponent.isVisible()) { // only second component is visible
       hideNull(myFirstComponent);
       myDivider.setVisible(false);
-      mySecondComponent.setBounds(0, 0, (int)width, (int)height);
+      mySecondComponent.setBounds(0, 0, width, height);
       mySecondComponent.revalidate();
     }
     else { // both components are null or invisible
@@ -402,6 +390,13 @@ public class Splitter extends JPanel {
   }
 
   /**
+   * @return true if |-|
+   */
+  public boolean isVertical() {
+    return myVerticalSplit;
+  }
+
+  /**
    * @param verticalSplit <code>true</code> means that splitter will have vertical split
    */
   public void setOrientation(boolean verticalSplit) {
@@ -486,7 +481,7 @@ public class Splitter extends JPanel {
     private void setOrientation(boolean isVerticalSplit) {
       removeAll();
 
-      setCursor(getOrientation() ?
+      setCursor(isVertical() ?
                 Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR) :
                 Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR));
 
@@ -570,7 +565,7 @@ public class Splitter extends JPanel {
       if (MouseEvent.MOUSE_DRAGGED == e.getID()) {
         myPoint = SwingUtilities.convertPoint(this, e.getPoint(), Splitter.this);
         float proportion;
-        if (getOrientation()) {
+        if (isVertical()) {
           if (getHeight() > 0) {
             proportion = Math.min(1.0f, Math.max(.0f, Math
               .min(Math.max(getMinProportion(myFirstComponent), (float)myPoint.y / (float)Splitter.this.getHeight()),
@@ -593,7 +588,7 @@ public class Splitter extends JPanel {
       if (isHonorMinimumSize()) {
         if (component != null && myFirstComponent != null && myFirstComponent.isVisible() && mySecondComponent != null &&
             mySecondComponent.isVisible()) {
-          if (getOrientation()) {
+          if (isVertical()) {
             return (float)component.getMinimumSize().height / (float)(Splitter.this.getHeight() - getDividerWidth());
           }
           else {
@@ -623,7 +618,7 @@ public class Splitter extends JPanel {
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
       }
       else {
-        setCursor(getOrientation() ?
+        setCursor(isVertical() ?
                   Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR) :
                   Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR));
       }
