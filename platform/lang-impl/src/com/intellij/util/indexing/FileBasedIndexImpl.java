@@ -1055,7 +1055,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             filesSet.add(((VirtualFileWithId)fileOrDir).getId());
             return true;
           }
-        }, project, ProgressManager.getInstance().getProgressIndicator());
+        }, project, SilentProgressIndicator.create());
         ProjectIndexableFilesFilter filter = new ProjectIndexableFilesFilter(filesSet, myFilesModCount);
         project.putUserData(ourProjectFilesSetKey, new SoftReference<ProjectIndexableFilesFilter>(filter));
 
@@ -1761,6 +1761,38 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
   }
 
+  private static class SilentProgressIndicator extends DelegatingProgressIndicator {
+    // suppress verbose messages
+
+    private SilentProgressIndicator(ProgressIndicator indicator) {
+      super(indicator);
+    }
+
+    @Nullable
+    private static SilentProgressIndicator create(){
+      final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      return indicator != null? new SilentProgressIndicator(indicator) : null;
+    }
+
+    @Override
+    public void setText(String text) {
+    }
+
+    @Override
+    public String getText() {
+      return "";
+    }
+
+    @Override
+    public void setText2(String text) {
+    }
+
+    @Override
+    public String getText2() {
+      return "";
+    }
+  }
+
   private final class ChangedFilesCollector extends VirtualFileAdapter {
     private final Set<VirtualFile> myFilesToUpdate = new ConcurrentHashSet<VirtualFile>();
     private final Queue<InvalidationTask> myFutureInvalidations = new ConcurrentLinkedQueue<InvalidationTask>();
@@ -2353,11 +2385,13 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
-        // do not update what we are scanning now
         if (indicator != null) indicator.checkCanceled();
 
         if (!file.isDirectory()) {
           processor.processFile(file);
+        } else if (indicator != null) {
+          // once for directory should be cheap enough
+          indicator.setText2(file.getPresentableUrl());
         }
         return true;
       }
