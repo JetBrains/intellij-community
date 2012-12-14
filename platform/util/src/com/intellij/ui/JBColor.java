@@ -22,7 +22,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings("InspectionUsingJBColors")
+@SuppressWarnings("UseJBColor")
 public class JBColor extends Color {
   public JBColor(int rgb, int darkRGB) {
     super(isDark() ? darkRGB : rgb);
