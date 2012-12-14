@@ -62,6 +62,7 @@ import java.net.ServerSocket;
 import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Eugene Zhuravlev
@@ -74,6 +75,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
   public static final boolean USE_EMBEDDED_JAVAC = System.getProperty(GlobalOptions.USE_EXTERNAL_JAVAC_OPTION) == null;
   private static final Key<Integer> JAVA_COMPILER_VERSION_KEY = Key.create("_java_compiler_version_");
   private static final Key<Boolean> IS_ENABLED = Key.create("_java_compiler_enabled_");
+  private static final Key<AtomicReference<String>> COMPILER_VERSION_INFO = Key.create("_java_compiler_version_info_");
+
   private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Arrays.<String>asList(
     "-target"
   ));
@@ -130,10 +133,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     else if (isEclipse) {
       messageText = "Using eclipse compiler to compile java sources";
     }
-    if (messageText != null) {
-      LOG.info(messageText);
-      context.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO, messageText));
-    }
+    COMPILER_VERSION_INFO.set(context, new AtomicReference<String>(messageText));
   }
 
   public ExitCode build(final CompileContext context,
@@ -221,6 +221,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final OutputFilesSink outputSink = new OutputFilesSink(context, outputConsumer, mappingsCallback, chunk.getName());
     try {
       if (hasSourcesToCompile) {
+        final AtomicReference<String> ref = COMPILER_VERSION_INFO.get(context);
+        final String versionInfo = ref.getAndSet(null); // display compiler version info only once per compile session
+        if (versionInfo != null) {
+          LOG.info(versionInfo);
+          context.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO, versionInfo));
+        }
         exitCode = ExitCode.OK;
 
         final Set<File> srcPath = new HashSet<File>();
