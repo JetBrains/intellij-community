@@ -3,10 +3,17 @@ from django.core.management import ManagementUtility
 import inspect
 import os
 import sys
+from importlib import import_module
 
-base_path = sys.argv.pop()
-sys.path.insert(0, base_path)
-os.chdir(base_path)
+project_directory = sys.argv.pop()
+sys.path.insert(0, project_directory)
+
+# setup environment
+sys.path.append(os.path.join(project_directory, os.pardir))
+project_name = os.path.basename(project_directory)
+project_module = import_module(project_name)
+sys.path.pop()
+os.chdir(project_directory)
 
 manage_file = os.getenv('PYCHARM_DJANGO_MANAGE_MODULE')
 if not manage_file:
@@ -75,7 +82,6 @@ class PycharmTestManagementUtility(ManagementUtility):
 
   def execute(self):
     PycharmTestCommand().run_from_argv(self.argv)
-
 
 if __name__ == "__main__":
 
