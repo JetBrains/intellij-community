@@ -69,6 +69,8 @@ import java.util.Map;
 public class MavenServerManager extends RemoteObjectWrapper<MavenServer> implements PersistentStateComponent<Element> {
   @NonNls private static final String MAIN_CLASS = "org.jetbrains.idea.maven.server.RemoteMavenServer";
 
+  private static final String DEFAULT_VM_OPTIONS = "-Xmx512m";
+
   private final RemoteProcessSupport<Object, MavenServer, Object> mySupport;
 
   private final RemoteMavenServerLogger myLogger = new RemoteMavenServerLogger();
@@ -79,7 +81,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   private final Alarm myShutdownAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   private boolean useMaven2 = true;
-  private String mavenEmbedderVMOptions = "-Xmx512m";
+  private String mavenEmbedderVMOptions = DEFAULT_VM_OPTIONS;
 
   public static MavenServerManager getInstance() {
     return ServiceManager.getService(MavenServerManager.class);
@@ -458,6 +460,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   public Element getState() {
     final Element element = new Element("maven-version");
     element.setAttribute("version", useMaven2 ? "2" : "3");
+    element.setAttribute("vmOptions", mavenEmbedderVMOptions);
     return element;
   }
 
@@ -465,6 +468,9 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   public void loadState(Element state) {
     String version = state.getAttributeValue("version");
     useMaven2 = !"3".equals(version);
+
+    String vmOptions = state.getAttributeValue("vmOptions");
+    mavenEmbedderVMOptions = vmOptions == null ? DEFAULT_VM_OPTIONS : vmOptions;
   }
 
   private static class RemoteMavenServerLogger extends MavenRemoteObject implements MavenServerLogger {
