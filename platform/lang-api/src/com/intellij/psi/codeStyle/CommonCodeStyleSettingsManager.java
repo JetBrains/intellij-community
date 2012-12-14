@@ -26,6 +26,7 @@ import org.jdom.Content;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -57,9 +58,12 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
    *         returns the instance of settings for this language. Otherwise returns the instance of parent settings
    *         shared between several languages.
    */
-  public CommonCodeStyleSettings getCommonSettings(Language lang) {
+  public CommonCodeStyleSettings getCommonSettings(@Nullable Language lang) {
     Map<Language, CommonCodeStyleSettings> commonSettingsMap = getCommonSettingsMap();
     CommonCodeStyleSettings settings = commonSettingsMap.get(lang);
+    if (settings == null && lang != null) {
+      settings = commonSettingsMap.get(lang.getBaseLanguage());
+    }
     if (settings != null) {
       return settings;
     }

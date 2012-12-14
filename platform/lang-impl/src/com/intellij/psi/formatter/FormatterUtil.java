@@ -244,21 +244,36 @@ public class FormatterUtil {
     return false;
   }
 
+  /**
+   * There is a possible case that we want to adjust white space which is not represented at the AST/PSI tree, e.g.
+   * we might have a multiline comment which uses tabs for inner lines indents and want to replace them by spaces.
+   * There is no white space element then, the only leaf is the comment itself.
+   * <p/>
+   * This method allows such 'inner element modifications', i.e. it receives information on what new text should be used
+   * at the target inner element range and performs corresponding replacement by generating new leaf with adjusted text
+   * and replacing the old one by it.
+   * 
+   * @param newWhiteSpaceText  new text to use at the target inner element range
+   * @param holder             target range holder
+   * @param whiteSpaceRange    target range which text should be replaced by the given one
+   */
+  public static void replaceInnerWhiteSpace(@NotNull final String newWhiteSpaceText,
+                                            @NotNull final ASTNode holder,
+                                            @NotNull final TextRange whiteSpaceRange)
+  {
+    final CharTable charTable = SharedImplUtil.findCharTableByTree(holder);
+    StringBuilder newText = createNewLeafChars(holder, whiteSpaceRange, newWhiteSpaceText);
+    LeafElement newElement =
+      Factory.createSingleLeafElement(holder.getElementType(), newText, charTable, holder.getPsi().getManager());
+
+    holder.getTreeParent().replaceChild(holder, newElement);
+  }
+  
   public static void replaceWhiteSpace(final String whiteSpace,
                                        final ASTNode leafElement,
                                        final IElementType whiteSpaceToken,
                                        final @Nullable TextRange textRange) {
     final CharTable charTable = SharedImplUtil.findCharTableByTree(leafElement);
-
-    if (textRange != null && textRange.getStartOffset() > leafElement.getTextRange().getStartOffset() &&
-        textRange.getEndOffset() < leafElement.getTextRange().getEndOffset()) {
-      StringBuilder newText = createNewLeafChars(leafElement, textRange, whiteSpace);
-      LeafElement newElement =
-        Factory.createSingleLeafElement(leafElement.getElementType(), newText, charTable, leafElement.getPsi().getManager());
-
-      leafElement.getTreeParent().replaceChild(leafElement, newElement);
-      return;
-    }
 
     ASTNode treePrev = findPreviousWhiteSpace(leafElement, whiteSpaceToken);
     if (treePrev == null) {

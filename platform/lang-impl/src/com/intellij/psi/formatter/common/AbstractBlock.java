@@ -17,11 +17,12 @@
 package com.intellij.psi.formatter.common;
 
 import com.intellij.formatting.*;
-import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,13 +34,11 @@ import java.util.List;
 
 public abstract class AbstractBlock implements ASTBlock {
   public static final List<Block> EMPTY = Collections.emptyList();
-
-  @NotNull protected final  ASTNode   myNode;
-  @Nullable protected final Wrap      myWrap;
-  @Nullable protected final Alignment myAlignment;
-
-  private List<Block> mySubBlocks;
-  private Boolean     myIncomplete;
+  @NotNull protected final  ASTNode     myNode;
+  @Nullable protected final Wrap        myWrap;
+  @Nullable protected final Alignment   myAlignment;
+  private                   List<Block> mySubBlocks;
+  private                   Boolean     myIncomplete;
 
   protected AbstractBlock(@NotNull ASTNode node, @Nullable Wrap wrap, @Nullable Alignment alignment) {
     myNode = node;
@@ -80,24 +79,30 @@ public abstract class AbstractBlock implements ASTBlock {
     if (file == null) {
       return EMPTY;
     }
-    TextRange blockRange = myNode.getTextRange();
-    List<DocumentWindow> documentWindows = InjectedLanguageUtil.getCachedInjectedDocuments(file);
-    for (DocumentWindow documentWindow : documentWindows) {
-      int startOffset = documentWindow.injectedToHost(0);
-      int endOffset = startOffset + documentWindow.getTextLength();
-      if (blockRange.containsRange(startOffset, endOffset)) {
-        PsiElement injected = InjectedLanguageUtil.findInjectedElementNoCommit(file, startOffset);
-        if (injected != null) {
-          List<Block> result = new ArrayList<Block>();
-          DefaultInjectedLanguageBlockBuilder builder = new DefaultInjectedLanguageBlockBuilder(((SettingsAwareBlock)this).getSettings());
-          builder.addInjectedBlocks(result, myNode, getWrap(), getAlignment(), getIndent());
-          return result;
+
+    if (InjectedLanguageUtil.areInjectionsProcessed(file) && InjectedLanguageUtil.getCachedInjectedDocuments(file).isEmpty()) {
+      return EMPTY;
+    }
+    
+    final Ref<PsiFile> injectedRef = new Ref<PsiFile>();
+    InjectedLanguageUtil.enumerate(psi, file, true, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      @Override
+      public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
+        if (injectedRef.get() == null) {
+          injectedRef.set(injectedPsi);
         }
       }
+    });
+    PsiFile injected = injectedRef.get();
+    if (injected != null && myNode.getTextLength() >= injected.getTextLength()) {
+      List<Block> result = new ArrayList<Block>();
+      DefaultInjectedLanguageBlockBuilder builder = new DefaultInjectedLanguageBlockBuilder(((SettingsAwareBlock)this).getSettings());
+      builder.addInjectedBlocks(result, myNode, getWrap(), getAlignment(), getIndent());
+      return result;
     }
     return EMPTY;
   }
-  
+
   protected abstract List<Block> buildChildren();
 
   @Nullable
