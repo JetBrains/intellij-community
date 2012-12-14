@@ -41,59 +41,43 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
     if (statement == null) {
       return;
     }
-    final Project project = statement.getProject();
-    final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
     final PsiExpression iteratedValue = statement.getIteratedValue();
     if (iteratedValue == null) {
       return;
     }
-    @NonNls final StringBuilder newStatement = new StringBuilder();
     final PsiType iteratedValueType = iteratedValue.getType();
     if (!(iteratedValueType instanceof PsiClassType)) {
       return;
     }
-    final PsiClassType classType = (PsiClassType)iteratedValueType;
-    final PsiParameter iterationParameter = statement.getIterationParameter();
-    final PsiType parameterType = iterationParameter.getType();
-    final String iterator = codeStyleManager.suggestUniqueVariableName("iterator", statement, true);
-    final String typeText = parameterType.getCanonicalText();
-    newStatement.append("for(java.util.Iterator");
-    if (classType.hasParameters()) {
-      newStatement.append('<');
-      final PsiType[] parameters = classType.getParameters();
-      if (parameters.length == 1) {
-        newStatement.append(parameters[0].getCanonicalText());
-      } else {
-        newStatement.append(typeText);
-      }
-      newStatement.append("> ");
-    } else {
-      newStatement.append(' ');
-    }
-    newStatement.append(iterator);
-    newStatement.append(" = ");
+    @NonNls final StringBuilder methodCall = new StringBuilder();
     if (ParenthesesUtils.getPrecedence(iteratedValue) > ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
-      newStatement.append('(');
-      newStatement.append(iteratedValue.getText());
-      newStatement.append(')');
+      methodCall.append('(').append(iteratedValue.getText()).append(')');
     }
     else {
-      newStatement.append(iteratedValue.getText());
+      methodCall.append(iteratedValue.getText());
     }
-    newStatement.append(".iterator();");
-    newStatement.append(iterator);
-    newStatement.append(".hasNext();) {");
-    final CodeStyleSettings codeStyleSettings =
-      CodeStyleSettingsManager.getSettings(project);
+    methodCall.append(".iterator()");
+    final Project project = statement.getProject();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiExpression iteratorCall = factory.createExpressionFromText(methodCall.toString(), iteratedValue);
+    final PsiType variableType = GenericsUtil.getVariableTypeByExpressionType(iteratorCall.getType());
+    if (variableType == null) {
+      return;
+    }
+    @NonNls final StringBuilder newStatement = new StringBuilder();
+    newStatement.append("for(").append(variableType.getCanonicalText()).append(' ');
+    final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+    final String iterator = codeStyleManager.suggestUniqueVariableName("iterator", statement, true);
+    newStatement.append(iterator).append("=").append(iteratorCall.getText()).append(';');
+    newStatement.append(iterator).append(".hasNext();) {");
+    final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
     if (codeStyleSettings.GENERATE_FINAL_LOCALS) {
       newStatement.append("final ");
     }
-    newStatement.append(typeText);
-    newStatement.append(' ');
-    newStatement.append(iterationParameter.getName());
-    newStatement.append(" = ");
-    newStatement.append(iterator);
-    newStatement.append(".next();");
+    final PsiParameter iterationParameter = statement.getIterationParameter();
+    final PsiType parameterType = iterationParameter.getType();
+    final String typeText = parameterType.getCanonicalText();
+    newStatement.append(typeText).append(' ').append(iterationParameter.getName()).append(" = ").append(iterator).append(".next();");
     final PsiStatement body = statement.getBody();
     if (body == null) {
       return;

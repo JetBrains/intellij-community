@@ -18,13 +18,15 @@ package com.siyeh.ipp.forloop;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
 
-import java.util.Collection;
-
+/**
+ * @see com.siyeh.ipp.forloop.ReplaceForEachLoopWithIteratorForLoopIntention
+ */
 public class ReplaceForEachLoopWithIteratorForLoopIntentionTest extends IPPTestCase {
   public void testBareCollectionLoop() { doTest(); }
   public void testGenericTypes() { doTest(); }
   public void testBoundedTypes() { doTest(); }
   public void testPrecedence() { doTest(); }
+  public void testWildcards() { doTest(); }
 
   @Override
   protected String getIntentionName() {
@@ -34,11 +36,5 @@ public class ReplaceForEachLoopWithIteratorForLoopIntentionTest extends IPPTestC
   @Override
   protected String getRelativePath() {
     return "forloop/iterator";
-  }
-
-  void x(Collection c) {
-    for (Object n : c) {
-
-    }
   }
 }
