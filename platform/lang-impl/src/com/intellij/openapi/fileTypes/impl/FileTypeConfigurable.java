@@ -35,6 +35,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.templateLanguages.TemplateDataLanguagePatterns;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.PairConvertor;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -355,6 +356,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
 
   public static class RecognizedFileTypes extends JPanel {
     private final JList myFileTypesList;
+    private final MySpeedSearch mySpeedSearch;
     private FileTypeConfigurable myController;
 
     public RecognizedFileTypes() {
@@ -455,15 +457,65 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
       add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
       setBorder(IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetypes.recognized.group"), false));
 
-      new ListSpeedSearch(myFileTypesList) {
-        @Override
-        protected String getElementText(Object element) {
-          if (element instanceof FileType) {
-            return ((FileType)element).getDescription();
-          }
-          return super.getElementText(element);
+      mySpeedSearch = new MySpeedSearch(myFileTypesList);
+    }
+
+    private static class MySpeedSearch extends MultipleTraitsListSpeedSearch {
+      private FileTypeConfigurable myController;
+      private Object myCurrentType;
+      private String myExtension;
+
+      private MySpeedSearch(JList component) {
+        super(component, new ArrayList<PairConvertor<Object, String, Boolean>>());
+        initConvertors();
+      }
+
+      @Override
+      protected void selectElement(Object element, String selectedText) {
+        super.selectElement(element, selectedText);
+        if (myCurrentType != null && myCurrentType.equals(element) && myController != null) {
+          myController.myPatterns.select(myExtension);
         }
-      };
+      }
+
+      private void initConvertors() {
+        final PairConvertor<Object, String, Boolean> simpleConvertor = new PairConvertor<Object, String, Boolean>() {
+          @Override
+          public Boolean convert(Object element, String s) {
+            String value = element.toString();
+            if (element instanceof FileType) {
+               value = ((FileType)element).getDescription();
+            }
+            return getComparator().matchingFragments(s, value) != null;
+          }
+        };
+        final PairConvertor<Object, String, Boolean> byExtensionsConvertor = new PairConvertor<Object, String, Boolean>() {
+          @Override
+          public Boolean convert(Object element, String s) {
+            if (element instanceof FileType && myCurrentType != null) {
+              return myCurrentType.equals(element);
+            }
+            return false;
+          }
+        };
+        myOrderedConvertors.add(simpleConvertor);
+        myOrderedConvertors.add(byExtensionsConvertor);
+      }
+
+      @Override
+      protected void onSearchFieldUpdated(String s) {
+        if (myController == null || myController.myTempPatternsTable == null) return;
+        int index = s.lastIndexOf('.');
+        if (index < 0) {
+          s = "." + s;
+        }
+        myCurrentType = myController.myTempPatternsTable.findAssociatedFileType(s);
+        if (myCurrentType != null) {
+          myExtension = s;
+        } else {
+          myExtension = null;
+        }
+      }
     }
 
     private SchemesManager<FileType, AbstractFileType> getSchemesManager() {
@@ -472,6 +524,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
 
     public void attachActions(final FileTypeConfigurable controller) {
       myController = controller;
+      mySpeedSearch.myController = controller;
     }
 
     private Collection<FileType> collectRegisteredFileTypes() {
@@ -590,6 +643,19 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     public void addPatternAndSelect(String pattern) {
       addPattern(pattern);
       ListScrollingUtil.selectItem(myPatternsList, getListModel().getSize() - 1);
+    }
+
+    public void select(final String pattern) {
+      for (int i = 0; i < myPatternsList.getItemsCount(); i++) {
+        final Object at = myPatternsList.getModel().getElementAt(i);
+        if (at instanceof String) {
+          final FileNameMatcher matcher = FileTypeManager.parseFromString((String)at);
+          if (matcher != null && matcher.accept(pattern)) {
+            ListScrollingUtil.selectItem(myPatternsList, i);
+            return;
+          }
+        }
+      }
     }
 
     public boolean isListEmpty() {

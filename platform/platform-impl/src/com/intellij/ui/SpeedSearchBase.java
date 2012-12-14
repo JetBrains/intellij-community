@@ -380,8 +380,9 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     public void processKeyEvent(KeyEvent e) {
       mySearchField.processKeyEvent(e);
       if (e.isConsumed()) {
-        int keyCode = e.getKeyCode();
         String s = mySearchField.getText();
+        onSearchFieldUpdated(s);
+        int keyCode = e.getKeyCode();
         Object element;
         if (isUpDownHomeEnd(keyCode)) {
           element = findTargetElement(keyCode, s);
@@ -434,6 +435,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       fireStateChanged();
     }
   }
+
+  protected void onSearchFieldUpdated(String s) {}
 
   private class SearchField extends JTextField {
     SearchField() {

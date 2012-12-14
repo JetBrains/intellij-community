@@ -16,7 +16,6 @@
 package com.intellij.ui;
 
 import com.intellij.util.Function;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -41,7 +40,11 @@ public class ListSpeedSearch extends SpeedSearchBase<JList> {
   }
 
   protected Object[] getAllElements() {
-    ListModel model = myComponent.getModel();
+    return getAllListElements(myComponent);
+  }
+
+  public static Object[] getAllListElements(final JList list) {
+    ListModel model = list.getModel();
     if (model instanceof DefaultListModel){ // optimization
       return ((DefaultListModel)model).toArray();
     }
