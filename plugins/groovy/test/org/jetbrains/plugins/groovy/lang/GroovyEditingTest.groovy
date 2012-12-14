@@ -197,6 +197,30 @@ print ''' '''<caret>
 """)
   }
 
+  void testGroovyDoc() {
+    doTest('''\
+/**<caret>
+print 2
+''', '\n', '''\
+/**
+ * <caret>
+ */
+print 2
+''')
+  }
+
+  void testGroovyDoc2() {
+    doTest('''\
+/**<caret>
+class A {}
+''', '\n', '''\
+/**
+ * <caret>
+ */
+class A {}
+''')
+  }
+
   /*
   todo uncomment when implemented
   void testRegex1() {
