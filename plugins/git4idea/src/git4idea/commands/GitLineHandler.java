@@ -151,11 +151,11 @@ public class GitLineHandler extends GitTextHandler {
     if (myVcs != null && !"\r".equals(line.substring(trimmed.length()))) {
       if (outputType == ProcessOutputTypes.STDOUT && !isStdoutSuppressed() && !mySilent) {
         myVcs.showMessages(trimmed);
-        LOG.info(line);
+        LOG.info(line.trim());
       }
       else if (outputType == ProcessOutputTypes.STDERR && !isStderrSuppressed() && !mySilent) {
         myVcs.showErrorMessages(trimmed);
-        LOG.info(line);
+        LOG.info(line.trim());
       }
     }
     myLineListeners.getMulticaster().onLineAvailable(trimmed, outputType);
