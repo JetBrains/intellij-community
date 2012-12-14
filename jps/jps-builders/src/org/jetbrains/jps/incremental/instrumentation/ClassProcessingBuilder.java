@@ -69,11 +69,9 @@ public abstract class ClassProcessingBuilder extends ModuleLevelBuilder {
     try {
       InstrumentationClassFinder finder = CLASS_FINDER.get(context); // try using shared finder
       if (finder == null) {
-        final ProjectPaths paths = context.getProjectPaths();
-        final Collection<File> platformCp = paths.getPlatformCompilationClasspath(chunk, false);
-
+        final Collection<File> platformCp = ProjectPaths.getPlatformCompilationClasspath(chunk, false);
         final Collection<File> classpath = new ArrayList<File>();
-        classpath.addAll(paths.getCompilationClasspath(chunk, false));
+        classpath.addAll(ProjectPaths.getCompilationClasspath(chunk, false));
         classpath.addAll(ProjectPaths.getSourceRootsWithDependents(chunk).keySet());
 
         finder = createInstrumentationClassFinder(platformCp, classpath, outputConsumer);

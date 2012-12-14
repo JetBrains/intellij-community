@@ -5,7 +5,6 @@ import com.intellij.util.SmartList;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetRegistry;
@@ -22,7 +21,6 @@ import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
-import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
 import org.jetbrains.jps.service.JpsServiceManager;
@@ -98,32 +96,7 @@ public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDesc
       addedRoots.add(rootFile);
     }
 
-    final ProcessorConfigProfile profile = findAnnotationProcessingProfile(model);
-    if (profile != null) {
-      final File annotationOut = new ProjectPaths(model.getProject()).getAnnotationProcessorGeneratedSourcesOutputDir(getModule(), isTests(), profile);
-      if (annotationOut != null && !addedRoots.contains(annotationOut) && !FileUtil.filesEqual(annotationOut, getOutputDir())) {
-        roots.add(new ResourceRootDescriptor(annotationOut, this, true, "", computeRootExcludes(annotationOut, index)));
-      }
-    }
-
     return roots;
-  }
-
-  @Nullable
-  private ProcessorConfigProfile findAnnotationProcessingProfile(JpsModel model) {
-    final Collection<ProcessorConfigProfile> allProfiles =
-      JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(model.getProject()).getAnnotationProcessingConfigurations();
-    ProcessorConfigProfile profile = null;
-    final String moduleName = getModule().getName();
-    for (ProcessorConfigProfile p : allProfiles) {
-      if (p.getModuleNames().contains(moduleName)) {
-        if (p.isEnabled()) {
-          profile = p;
-        }
-        break;
-      }
-    }
-    return profile;
   }
 
   @NotNull

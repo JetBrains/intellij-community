@@ -86,11 +86,10 @@ public class FormsInstrumenter extends FormsBuilder {
     }
 
     try {
-      final ProjectPaths paths = context.getProjectPaths();
-      final Collection<File> platformCp = paths.getPlatformCompilationClasspath(chunk, false);
+      final Collection<File> platformCp = ProjectPaths.getPlatformCompilationClasspath(chunk, false);
 
       final List<File> classpath = new ArrayList<File>();
-      classpath.addAll(paths.getCompilationClasspath(chunk, false));
+      classpath.addAll(ProjectPaths.getCompilationClasspath(chunk, false));
       classpath.add(getResourcePath(GridConstraints.class)); // forms_rt.jar
       final Map<File, String> chunkSourcePath = ProjectPaths.getSourceRootsWithDependents(chunk);
       classpath.addAll(chunkSourcePath.keySet()); // sourcepath for loading forms resources

@@ -3,6 +3,7 @@ package org.jetbrains.jps.model.java.compiler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.Collection;
 import java.util.List;
@@ -21,10 +22,21 @@ public interface JpsJavaCompilerConfiguration extends JpsElement {
   JpsCompilerExcludes getCompilerExcludes();
 
   @NotNull
-  ProcessorConfigProfile getDefaultAnnotationProcessingConfiguration();
+  ProcessorConfigProfile getDefaultAnnotationProcessingProfile();
   ProcessorConfigProfile addAnnotationProcessingProfile();
+
+  /**
+   * @return a list of currently configured profiles excluding default one
+   */
   @NotNull
-  Collection<ProcessorConfigProfile> getAnnotationProcessingConfigurations();
+  Collection<ProcessorConfigProfile> getAnnotationProcessingProfiles();
+
+  /**
+   * @param module
+   * @return annotation profile with which the given module is associated
+   */
+  @NotNull
+  ProcessorConfigProfile getAnnotationProcessingProfile(JpsModule module);
 
   void addResourcePattern(String pattern);
   List<String> getResourcePatterns();
