@@ -144,7 +144,7 @@ public class PythonSdkUpdater implements StartupActivity {
     for (String root : sysPath) {
       if (new File(root).exists() &&
           !"egg-info".equals(FileUtil.getExtension(root)) &&
-          (additionalData == null || !wasOldRoot(root, additionalData.getExcludedPaths())) &&
+          (additionalData == null || !wasOldRoot(root, additionalData.getExcludedPathFiles())) &&
           !wasOldRoot(root, oldRoots)) {
         newRoots.add(root);
       }

@@ -37,7 +37,7 @@ public class AbstractLineBreakpointHandler extends XBreakpointHandler<XLineBreak
   public void registerBreakpoint(@NotNull final XLineBreakpoint<XBreakpointProperties> breakpoint) {
     final XSourcePosition position = breakpoint.getSourcePosition();
     if (position != null) {
-      myDebugProcess.addBreakpoint(myDebugProcess.getPositionConverter().convert(position), breakpoint);
+      myDebugProcess.addBreakpoint(myDebugProcess.getPositionConverter().convertToPython(position), breakpoint);
       myBreakPointPositions.put(breakpoint, position);
     }
   }
@@ -45,7 +45,7 @@ public class AbstractLineBreakpointHandler extends XBreakpointHandler<XLineBreak
   public void unregisterBreakpoint(@NotNull final XLineBreakpoint<XBreakpointProperties> breakpoint, final boolean temporary) {
     final XSourcePosition position = myBreakPointPositions.get(breakpoint);
     if (position != null) {
-      myDebugProcess.removeBreakpoint(myDebugProcess.getPositionConverter().convert(position));
+      myDebugProcess.removeBreakpoint(myDebugProcess.getPositionConverter().convertToPython(position));
       myBreakPointPositions.remove(breakpoint);
     }
   }

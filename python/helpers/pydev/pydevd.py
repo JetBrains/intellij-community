@@ -651,7 +651,7 @@ class PyDB:
 
                     file = NormFileToServer(file)
 
-                    if not os.path.exists(file):
+                    if not pydevd_file_utils.exists(file):
                         sys.stderr.write('pydev debugger: warning: trying to add breakpoint'\
                             ' to file that does not exist: %s (will have no effect)\n' % (file,))
                         sys.stderr.flush()

@@ -34,6 +34,10 @@ public class PyMoveFileHandler extends MoveFileHandler {
   @Override
   public void prepareMovedFile(PsiFile file, PsiDirectory moveDestination, Map<PsiElement, PsiElement> oldToNewMap) {
     if (file != null) {
+      VirtualFile virtualFile = file.getVirtualFile();
+      if (virtualFile != null) {
+        PyUtil.deletePycFiles(virtualFile.getPath());
+      }
       final Collection<VirtualFile> roots = PyUtil.getSourceRoots(file);
       PsiDirectory root = moveDestination;
       while (root != null && !roots.contains(root.getVirtualFile())) {

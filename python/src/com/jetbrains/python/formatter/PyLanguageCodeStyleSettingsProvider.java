@@ -55,7 +55,7 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                 SPACES_AROUND_OPERATORS);
       consumer.showCustomOption(PyCodeStyleSettings.class, "SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT", "Around = in keyword argument",
                                 SPACES_AROUND_OPERATORS);
-      consumer.showCustomOption(PyCodeStyleSettings.class, "SPACE_WITHIN_BRACES", "Within braces", SPACES_WITHIN);
+      consumer.showCustomOption(PyCodeStyleSettings.class, "SPACE_WITHIN_BRACES", "Braces", SPACES_WITHIN);
       consumer.showCustomOption(PyCodeStyleSettings.class, "SPACE_BEFORE_PY_COLON", ApplicationBundle.message("checkbox.spaces.before.colon"), SPACES_OTHER);
       consumer.showCustomOption(PyCodeStyleSettings.class, "SPACE_AFTER_PY_COLON", ApplicationBundle.message("checkbox.spaces.after.colon"), SPACES_OTHER);
     }
@@ -65,7 +65,7 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                    "BLANK_LINES_AFTER_IMPORTS",
                                    "KEEP_BLANK_LINES_IN_DECLARATIONS",
                                    "KEEP_BLANK_LINES_IN_CODE");
-      consumer.showCustomOption(PyCodeStyleSettings.class, "BLANK_LINES_BETWEEN_TOP_LEVEL_CLASSES_FUNCTIONS", "Between top-level classes and functions:",
+      consumer.showCustomOption(PyCodeStyleSettings.class, "BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS", "Around top-level classes and functions:",
                                 BLANK_LINES);
     }
     else if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
@@ -86,6 +86,7 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
     CommonCodeStyleSettings defaultSettings = new CommonCodeStyleSettings(PythonLanguage.getInstance());
     CommonCodeStyleSettings.IndentOptions indentOptions = defaultSettings.initIndentOptions();
     indentOptions.INDENT_SIZE = 4;
+    defaultSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     return defaultSettings; 
   }
 

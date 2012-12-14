@@ -12,7 +12,7 @@ import static com.jetbrains.python.PyBundle.message;
  */
 public class AssignTargetAnnotator extends PyAnnotator {
   private enum Operation {
-    Assign, AugAssign, Delete, Except, For
+    Assign, AugAssign, Delete, Except, For, With
   }
 
   @Override
@@ -48,6 +48,14 @@ public class AssignTargetAnnotator extends PyAnnotator {
     PyExpression target = node.getForPart().getTarget();
     if (target != null) {
       target.accept(new ExprVisitor(Operation.For));
+    }
+  }
+
+  @Override
+  public void visitPyWithItem(PyWithItem node) {
+    PyExpression target = node.getTarget();
+    if (target != null) {
+      target.accept(new ExprVisitor(Operation.With));
     }
   }
 

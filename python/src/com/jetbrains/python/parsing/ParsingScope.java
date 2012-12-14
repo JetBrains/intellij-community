@@ -7,6 +7,7 @@ public class ParsingScope {
   private boolean myFunction = false;
   private boolean myClass = false;
   private boolean mySuite = false;
+  private boolean myAfterSemicolon = false;
 
   public ParsingScope withFunction(boolean flag) {
     final ParsingScope result = copy();
@@ -36,6 +37,14 @@ public class ParsingScope {
 
   public boolean isSuite() {
     return mySuite;
+  }
+
+  public boolean isAfterSemicolon() {
+    return myAfterSemicolon;
+  }
+
+  public void setAfterSemicolon(boolean value) {
+    myAfterSemicolon = value;
   }
 
   protected ParsingScope createInstance() {

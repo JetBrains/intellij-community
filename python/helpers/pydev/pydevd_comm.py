@@ -584,7 +584,10 @@ class NetCommandFactory:
 
                     #print "name is ", myName
 
-                    myFile = pydevd_file_utils.NormFileToClient(curFrame.f_code.co_filename)
+                    filename, base = pydevd_file_utils.GetFilenameAndBase(curFrame)
+
+                    myFile = pydevd_file_utils.NormFileToClient(filename)
+
                     #print "file is ", myFile
                     #myFile = inspect.getsourcefile(curFrame) or inspect.getfile(frame)
 

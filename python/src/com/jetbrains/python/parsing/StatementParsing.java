@@ -254,8 +254,10 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     else if (builder.getTokenType() == PyTokenTypes.SEMICOLON) {
       if (!scope.isSuite()) {
         builder.advanceLexer();
+        scope.setAfterSemicolon(true);
         if (builder.getTokenType() == PyTokenTypes.STATEMENT_BREAK) {
           builder.advanceLexer();
+          scope.setAfterSemicolon(false);
         }
       }
     }

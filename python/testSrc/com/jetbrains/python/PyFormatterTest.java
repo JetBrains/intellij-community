@@ -7,6 +7,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
@@ -129,11 +130,11 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testNoAlignForMethodArguments() {  // PY-3995
+    settings().getCommonSettings(PythonLanguage.getInstance()).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false;
     doTest();
   }
 
   public void testAlignForMethodArguments() {  // PY-3995
-    settings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest();
   }
 
@@ -188,6 +189,23 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testSpaceAfterReturn() {
+    doTest();
+  }
+
+  public void testSpaceAfterRelativeImport() {  // PY-8112
+    doTest();
+  }
+
+  public void testSpaceWithinBraces() {  // PY-8069
+    settings().getCustomSettings(PyCodeStyleSettings.class).SPACE_WITHIN_BRACES = true;
+    doTest();
+  }
+
+  public void testTupleClosingParen() {  // PY-7946
+    doTest();
+  }
+
+  public void testBeforeTopLevelClass() {  // PY-7743
     doTest();
   }
 

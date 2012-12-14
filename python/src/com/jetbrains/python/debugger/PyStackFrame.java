@@ -31,7 +31,7 @@ public class PyStackFrame extends XStackFrame {
   public PyStackFrame(@NotNull final PyDebugProcess debugProcess, @NotNull final PyStackFrameInfo frameInfo) {
     myDebugProcess = debugProcess;
     myFrameInfo = frameInfo;
-    myPosition = myDebugProcess.getPositionConverter().convert(frameInfo.getPosition());
+    myPosition = myDebugProcess.getPositionConverter().convertFromPython(frameInfo.getPosition());
   }
 
   @Override

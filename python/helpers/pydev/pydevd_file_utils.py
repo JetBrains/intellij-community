@@ -95,13 +95,26 @@ def _NormFile(filename):
     except KeyError:
         r = normcase(rPath(filename))
         #cache it for fast access later
+        ind = r.find('.zip')
+        if ind == -1:
+            ind = r.find('.egg')
+        if ind != -1:
+            ind+=4
+            zip_path = r[:ind]
+            if r[ind] == "!":
+                ind+=1
+            inner_path = r[ind:]
+            if inner_path.startswith('/'):
+                inner_path = inner_path[1:]
+            r = zip_path + "/" + inner_path
+
         NORM_FILENAME_CONTAINER[filename] = r
         return r
 
 ZIP_SEARCH_CACHE = {}
 def exists(file):
     if os.path.exists(file):
-        return True
+        return file
 
     ind = file.find('.zip')
     if ind == -1:
@@ -110,7 +123,9 @@ def exists(file):
     if ind != -1:
         ind+=4
         zip_path = file[:ind]
-        inner_path = file[ind+1:]
+        if file[ind] == "!":
+            ind+=1
+        inner_path = file[ind:]
         try:
             zip = ZIP_SEARCH_CACHE[zip_path]
         except KeyError:
@@ -119,14 +134,18 @@ def exists(file):
                 zip = zipfile.ZipFile(zip_path, 'r')
                 ZIP_SEARCH_CACHE[zip_path] = zip
             except :
-                return False
+                return None
 
         try:
+            if inner_path.startswith('/'):
+                inner_path = inner_path[1:]
+
             info = zip.getinfo(inner_path)
-            return True
+
+            return zip_path + "/" + inner_path
         except KeyError:
-            return False
-    return False
+            return None
+    return None
 
     
 #Now, let's do a quick test to see if we're working with a version of python that has no problems
@@ -273,6 +292,11 @@ def GetFileNameAndBaseFromFile(f):
 def GetFilenameAndBase(frame):
     #This one is just internal (so, does not need any kind of client-server translation)
     f = frame.f_code.co_filename
+    if f is not None and f.startswith('build/bdist.'):
+        # files from eggs in Python 2.7 have paths like build/bdist.linux-x86_64/egg/<path-inside-egg>
+        f = frame.f_globals['__file__']
+        if f.endswith('.pyc'):
+            f = f[:-1]
     return GetFileNameAndBaseFromFile(f)
 
 def set_pycharm_os(os):

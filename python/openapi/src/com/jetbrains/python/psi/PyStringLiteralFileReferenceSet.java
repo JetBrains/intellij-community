@@ -69,7 +69,9 @@ public class PyStringLiteralFileReferenceSet extends RootFileReferenceSet {
     @Override
     public boolean process(int startOffset, int endOffset, String value) {
       if ("\\".equals(value) || "/".equals(value)) {
-        addReference(startOffset);
+        if (myStartOffset != -1) {
+          addReference(startOffset);
+        }
       }
       else {
         if (myStartOffset == -1) {

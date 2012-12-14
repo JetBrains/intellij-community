@@ -57,8 +57,10 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
 
     final CommonCodeStyleSettings commonSettings = settings.getCommonSettings(PythonLanguage.getInstance());
     return new SpacingBuilder(settings)
+      .betweenInside(STATEMENT_OR_DECLARATION, CLASS_OR_FUNCTION, file).blankLines(pySettings.BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS)
+      .betweenInside(CLASS_OR_FUNCTION, STATEMENT_OR_DECLARATION, file).blankLines(pySettings.BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS)
       .between(IMPORT_STATEMENTS, TokenSet.andNot(STATEMENT_OR_DECLARATION, IMPORT_STATEMENTS)).blankLines(commonSettings.BLANK_LINES_AFTER_IMPORTS)
-      .betweenInside(CLASS_OR_FUNCTION, CLASS_OR_FUNCTION, file).blankLines(pySettings.BLANK_LINES_BETWEEN_TOP_LEVEL_CLASSES_FUNCTIONS)
+      .betweenInside(CLASS_OR_FUNCTION, CLASS_OR_FUNCTION, file).blankLines(pySettings.BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS)
       .between(CLASS_DECLARATION, STATEMENT_OR_DECLARATION).blankLines(commonSettings.BLANK_LINES_AROUND_CLASS)
       .between(STATEMENT_OR_DECLARATION, CLASS_DECLARATION).blankLines(commonSettings.BLANK_LINES_AROUND_CLASS)
       .between(FUNCTION_DECLARATION, STATEMENT_OR_DECLARATION).blankLines(commonSettings.BLANK_LINES_AROUND_METHOD)
@@ -80,12 +82,13 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
       .after(COMMA).spaceIf(commonSettings.SPACE_AFTER_COMMA)
       .before(COMMA).spaceIf(commonSettings.SPACE_BEFORE_COMMA)
       .between(FROM_KEYWORD, DOT).spaces(1)
+      .between(DOT, IMPORT_KEYWORD).spaces(1)
       .around(DOT).spaces(0)
       .before(SEMICOLON).spaceIf(commonSettings.SPACE_BEFORE_SEMICOLON)
       .withinPairInside(LPAR, RPAR, ARGUMENT_LIST).spaceIf(commonSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES)
       .before(LBRACKET).spaceIf(pySettings.SPACE_BEFORE_LBRACKET)
 
-      .withinPair(LBRACE, RBRACE).spaceIf(commonSettings.SPACE_WITHIN_BRACES)
+      .withinPair(LBRACE, RBRACE).spaceIf(pySettings.SPACE_WITHIN_BRACES)
       .withinPair(LBRACKET, RBRACKET).spaceIf(commonSettings.SPACE_WITHIN_BRACKETS)
 
       .before(ARGUMENT_LIST).spaceIf(commonSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES)

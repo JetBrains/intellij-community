@@ -164,6 +164,15 @@ private layoutPlugins(layouts) {
     layouts.layoutPlugin("python-rest")
     layouts.layoutPlugin("pycharm-flask")
     layouts.layoutPlugin("pycharm-numpy")
+    layouts.layoutPlugin("textmate") {
+      dir("themes") {
+        fileset(dir: "${home}/plugins/textmate/lib/themes/", includes: "*.tmTheme")
+      }
+      fileset(dir: "${home}/plugins/textmate/lib") {
+        include(name: "jcodings.jar")
+        include(name: "joni.jar")
+      }
+    }
   }
 
   layouts.layoutPlugins()

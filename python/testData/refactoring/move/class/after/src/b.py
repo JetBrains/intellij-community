@@ -1,6 +1,7 @@
 import lib1
 from lib1 import URLOpener
 
+
 def f(x):
     return x
 

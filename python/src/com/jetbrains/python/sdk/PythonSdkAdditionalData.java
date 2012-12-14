@@ -1,9 +1,11 @@
 package com.jetbrains.python.sdk;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.projectRoots.impl.SimpleProjectRoot;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.django.util.VirtualFileUtil;
@@ -28,8 +30,9 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   @NonNls private static final String ASSOCIATED_PROJECT_PATH = "ASSOCIATED_PROJECT_PATH";
 
 
-  private Set<VirtualFile> myAddedPaths = Sets.newHashSet();
-  private Set<VirtualFile> myExcludedPaths = Sets.newHashSet();
+  private Set<SimpleProjectRoot> myAddedPaths = Sets.newHashSet();
+  private Set<SimpleProjectRoot> myExcludedPaths = Sets.newHashSet();
+
   private final PythonSdkFlavor myFlavor;
   private String myAssociatedProjectPath;
   private boolean myAssociateWithNewProject;
@@ -51,19 +54,33 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     }
   }
 
-  public Set<VirtualFile> getAddedPaths() {
+  public Set<SimpleProjectRoot> getAddedPaths() {
     return myAddedPaths;
   }
 
-  public void setAddedPaths(Set<VirtualFile> addedPaths) {
+  public void setAddedPaths(Set<SimpleProjectRoot> addedPaths) {
     myAddedPaths = Sets.newHashSet(addedPaths);
   }
 
-  public Set<VirtualFile> getExcludedPaths() {
+  public void setAddedPathsFromVirtualFiles(Set<VirtualFile> addedPaths) {
+    myAddedPaths = Sets.newHashSet();
+    for (VirtualFile file : addedPaths) {
+      myAddedPaths.add(new SimpleProjectRoot(file));
+    }
+  }
+
+  public void setExcludedPathsFromVirtualFiles(Set<VirtualFile> addedPaths) {
+    myExcludedPaths = Sets.newHashSet();
+    for (VirtualFile file : addedPaths) {
+      myExcludedPaths.add(new SimpleProjectRoot(file));
+    }
+  }
+
+  public Set<SimpleProjectRoot> getExcludedPaths() {
     return myExcludedPaths;
   }
 
-  public void setExcludedPaths(Set<VirtualFile> excludedPaths) {
+  public void setExcludedPaths(Set<SimpleProjectRoot> excludedPaths) {
     myExcludedPaths = Sets.newHashSet(excludedPaths);
   }
 
@@ -93,19 +110,19 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   }
 
   public void save(@NotNull final Element rootElement) {
-    for (VirtualFile addedPath : myAddedPaths) {
-      final Element child = new Element(PATHS_ADDED_BY_USER_ROOT);
-      child.setAttribute(PATH_ADDED_BY_USER, addedPath.getPath());
-      rootElement.addContent(child);
-    }
+    savePaths(rootElement, myAddedPaths, PATHS_ADDED_BY_USER_ROOT, PATH_ADDED_BY_USER);
+    savePaths(rootElement, myExcludedPaths, PATHS_REMOVED_BY_USER_ROOT, PATH_REMOVED_BY_USER);
 
-    for (VirtualFile removed : myExcludedPaths) {
-      final Element child = new Element(PATHS_REMOVED_BY_USER_ROOT);
-      child.setAttribute(PATH_REMOVED_BY_USER, removed.getPath());
-      rootElement.addContent(child);
-    }
     if (myAssociatedProjectPath != null) {
       rootElement.setAttribute(ASSOCIATED_PROJECT_PATH, myAssociatedProjectPath);
+    }
+  }
+
+  private static void savePaths(Element rootElement, Set<SimpleProjectRoot> paths, String root, String element) {
+    for (SimpleProjectRoot addedPath : paths) {
+      final Element child = new Element(root);
+      child.setAttribute(element, addedPath.getUrl());
+      rootElement.addContent(child);
     }
   }
 
@@ -131,13 +148,18 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     }
   }
 
-  protected static Set<VirtualFile> collectPaths(@NotNull List<String> paths) {
-    final Set<VirtualFile> files = Sets.newHashSet();
+  protected static Set<SimpleProjectRoot> collectPaths(@NotNull List<String> paths) {
+    final Set<SimpleProjectRoot> files = Sets.newHashSet();
     for (String path : paths) {
-      VirtualFile vf = VirtualFileUtil.findFile(path);
-      if (vf != null) {
-        files.add(vf);
+      VirtualFile file = VirtualFileUtil.findFile(path);
+      SimpleProjectRoot root;
+      if (file != null) {
+        root = new SimpleProjectRoot(file);
       }
+      else {
+        root = new SimpleProjectRoot(path);
+      }
+      files.add(root);
     }
     return files;
   }
@@ -151,5 +173,21 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
       }
     }
     return paths;
+  }
+
+  public Set<VirtualFile> getAddedPathFiles() {
+    return getPathsAsVirtualFiles(myAddedPaths);
+  }
+
+  public Set<VirtualFile> getExcludedPathFiles() {
+    return getPathsAsVirtualFiles(myExcludedPaths);
+  }
+
+  private static Set<VirtualFile> getPathsAsVirtualFiles(Set<SimpleProjectRoot> paths) {
+    Set<VirtualFile> ret = Sets.newHashSet();
+    for (SimpleProjectRoot root : paths) {
+      ret.addAll(Lists.newArrayList(root.getVirtualFiles()));
+    }
+    return ret;
   }
 }

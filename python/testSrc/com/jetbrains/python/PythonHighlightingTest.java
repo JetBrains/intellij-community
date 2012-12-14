@@ -65,6 +65,11 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(true, false);
   }
 
+  public void testAssignmentTargetWith() {  // PY-7529
+    setLanguageLevel(LanguageLevel.PYTHON27);
+    doTest(true, false);
+  }
+
   public void testAssignmentTargets3K() {
     doTest(LanguageLevel.PYTHON30, true, false);    
   }

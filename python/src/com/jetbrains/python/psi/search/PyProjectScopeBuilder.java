@@ -8,12 +8,14 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.*;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -133,6 +135,27 @@ public class PyProjectScopeBuilder extends ProjectScopeBuilderImpl {
   @Nullable
   public static VirtualFile findLibDir(Sdk sdk) {
     return findLibDir(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
+  }
+
+  public static VirtualFile findVirtualEnvLibDir(Sdk sdk) {
+    VirtualFile[] classVFiles = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
+    String homePath = sdk.getHomePath();
+    if (homePath != null) {
+      File root = PythonSdkType.getVirtualEnvRoot(homePath);
+      if (root != null) {
+        File libRoot = new File(root, "lib");
+        File[] versionRoots = libRoot.listFiles();
+        if (versionRoots != null && versionRoots.length == 1) {
+          libRoot = versionRoots[0];
+        }
+        for (VirtualFile file : classVFiles) {
+          if (FileUtil.pathsEqual(file.getPath(), libRoot.getPath())) {
+            return file;
+          }
+        }
+      }
+    }
+    return null;
   }
 
   @Nullable

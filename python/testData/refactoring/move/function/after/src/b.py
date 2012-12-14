@@ -1,5 +1,6 @@
 from lib1 import urlopen
 
+
 def g():
     return None
 

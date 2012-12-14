@@ -352,6 +352,13 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON25);
   }
 
+  public void testCompoundStatementAfterSemicolon() {  // PY-7660
+    doTest();
+  }
+
+  public void testEllipsisAsStatement() {  // PY-7763
+    doTest();
+  }
 
   public void doTest(LanguageLevel languageLevel) {
     LanguageLevel prev = myLanguageLevel;
