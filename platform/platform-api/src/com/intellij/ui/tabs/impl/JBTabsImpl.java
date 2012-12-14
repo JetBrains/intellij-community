@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.ui.CaptionPanel;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.switcher.QuickActionProvider;
@@ -1859,15 +1860,15 @@ public class JBTabsImpl extends JComponent
   }
 
   private static Color getBoundsColor() {
-    return UIUtil.isUnderDarcula() ? Gray._0.withAlpha(80) : Color.gray;
+    return new JBColor(Color.gray, Gray._0.withAlpha(80));
   }
 
   private static Color getRightBlockColor() {
-    return UIUtil.isUnderDarcula() ? Gray._0.withAlpha(0) : Color.lightGray;
+    return new JBColor(Color.lightGray, Gray._0.withAlpha(0));
   }
 
   private static Color getTopBlockColor() {
-    return UIUtil.isUnderDarcula() ? Gray._0.withAlpha(0) : Color.white;
+    return new JBColor(Color.white, Gray._0.withAlpha(0));
   }
 
   private void paintNonSelectedTabs(final Graphics2D g2d, final boolean leftGhostExists, final boolean rightGhostExists) {

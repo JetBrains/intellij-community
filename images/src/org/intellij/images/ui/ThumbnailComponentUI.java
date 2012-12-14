@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 package org.intellij.images.ui;
 
 import com.intellij.openapi.ui.Messages;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 import icons.ImagesIcons;
 import org.intellij.images.ImagesBundle;
@@ -256,7 +257,7 @@ public class ThumbnailComponentUI extends ComponentUI {
 
         // Error
         String error = getSubmnailComponentErrorString();
-        g.setColor(Color.RED);
+        g.setColor(JBColor.RED);
         g.setFont(font);
         g.drawString(error, 8, 8 + fontMetrics.getAscent());
     }

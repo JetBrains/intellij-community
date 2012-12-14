@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.hash.HashMap;
@@ -292,7 +293,7 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
         return;
       }
       Graphics2D g2 = (Graphics2D)g;
-      g.setColor(Color.RED);
+      g.setColor(JBColor.RED);
       RenderingHints renderHints = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       renderHints.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
       g2.setRenderingHints(renderHints);

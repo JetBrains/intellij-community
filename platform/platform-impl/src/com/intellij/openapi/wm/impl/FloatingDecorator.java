@@ -323,7 +323,7 @@ public final class FloatingDecorator extends JDialog{
         g.setColor(lightGray);
         UIUtil.drawLine(g, 0, 0, getWidth() - 1, 0);
         UIUtil.drawLine(g, 0, 0, 0, getHeight() - 1);
-        g.setColor(Color.gray);
+        g.setColor(JBColor.GRAY);
         UIUtil.drawLine(g, getWidth() - 1, 0, getWidth() - 1, getHeight() - 1);
       } else if(ANCHOR_LEFT==myAnchor){
         g.setColor(lightGray);

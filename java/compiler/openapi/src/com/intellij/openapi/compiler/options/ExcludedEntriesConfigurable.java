@@ -377,7 +377,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       final ExcludeEntryDescription description = myExcludeEntryDescriptions.get(row);
-      component.setForeground(!description.isValid() ? Color.RED : isSelected ? table.getSelectionForeground() : table.getForeground());
+      component.setForeground(!description.isValid() ? JBColor.RED : isSelected ? table.getSelectionForeground() : table.getForeground());
       component.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
       return component;
     }

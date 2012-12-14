@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.FilePathSplittingPolicy;
 import org.jetbrains.annotations.Nullable;
@@ -125,7 +126,7 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFile> {
     assert itemPresentation != null;
     renderer.setIcon(itemPresentation.getIcon(true));
 
-    renderer.append(itemPresentation.getLocationString(), new SimpleTextAttributes(Font.PLAIN, Color.GRAY));
+    renderer.append(itemPresentation.getLocationString(), new SimpleTextAttributes(Font.PLAIN, JBColor.GRAY));
     return true;
   }
 

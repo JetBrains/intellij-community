@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,9 @@ import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.awt.*;
 
 public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
   protected HierarchyNodeDescriptor myBaseDescriptor;
@@ -193,7 +192,7 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
     public TextInfoNodeDescriptor(final NodeDescriptor parentDescriptor, final String text, final Project project) {
       super(project, parentDescriptor);
       myName = text;
-      myColor = Color.red;
+      myColor = JBColor.RED;
     }
 
     @Override

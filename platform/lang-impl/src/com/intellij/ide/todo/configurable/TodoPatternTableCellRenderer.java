@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@
 package com.intellij.ide.todo.configurable;
 
 import com.intellij.psi.search.TodoPattern;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
 
 final class TodoPatternTableCellRenderer extends DefaultTableCellRenderer{
@@ -46,7 +46,7 @@ final class TodoPatternTableCellRenderer extends DefaultTableCellRenderer{
       setForeground(UIUtil.getTableSelectionForeground());
     }else{
       if(pattern.getPattern()==null){
-        setForeground(Color.RED);
+        setForeground(JBColor.RED);
       }else{
         setForeground(UIUtil.getTableForeground());
       }

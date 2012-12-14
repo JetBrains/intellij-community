@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
@@ -93,7 +94,7 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
               myCurrent.repaint();
             }
           } else {
-            currentFocusGraphics.setColor(myTemporary ? Color.ORANGE : Color.GREEN);
+            currentFocusGraphics.setColor(myTemporary ? JBColor.ORANGE : JBColor.GREEN);
             UIUtil.drawDottedRectangle(currentFocusGraphics, 1, 1, myCurrent.getSize().width - 2, myCurrent.getSize().height - 2);
           }
         }
@@ -107,7 +108,7 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
               myPrevious.repaint();
             }
           } else {
-            previousFocusGraphics.setColor(Color.RED);
+            previousFocusGraphics.setColor(JBColor.RED);
             UIUtil.drawDottedRectangle(previousFocusGraphics, 1, 1, myPrevious.getSize().width - 2, myPrevious.getSize().height - 2);
           }
         }

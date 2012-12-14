@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
+import com.intellij.ui.JBColor;
 import com.intellij.usageView.UsageInfo;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
@@ -283,7 +284,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
   private static TextAttributes getTextAttributesForAdd() {
     final TextAttributes textAttributes = new TextAttributes();
     textAttributes.setEffectType(EffectType.ROUNDED_BOX);
-    textAttributes.setEffectColor(Color.RED);
+    textAttributes.setEffectColor(JBColor.RED);
     return textAttributes;
   }
 

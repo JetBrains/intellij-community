@@ -20,6 +20,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -83,7 +84,7 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
 
         final Color fg = orig.getForeground();
         final Color bg = orig.getBackground();
-        final Color grayedFg = isSelected ? fg : UIUtil.isUnderDarcula() ? Gray._128 : Color.DARK_GRAY;
+        final Color grayedFg = isSelected ? fg : new JBColor(Color.DARK_GRAY, Gray._128);
         myNameLabel.setForeground(fg);
         myStatusLabel.setForeground(grayedFg);
         
@@ -109,7 +110,7 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
           if (!isSelected) myNameLabel.setForeground(FileStatus.MODIFIED.getColor());
           if (hasNewerVersion) {
             if (!isSelected){
-              myNameLabel.setForeground(Color.RED);
+              myNameLabel.setForeground(JBColor.RED);
             }
             myNameLabel.setIcon(AllIcons.Nodes.Pluginobsolete);
           }

@@ -22,10 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.Gray;
-import com.intellij.ui.PanelWithAnchor;
-import com.intellij.ui.SideBorder;
+import com.intellij.ui.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
@@ -181,7 +178,7 @@ public class UIUtil {
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
       Graphics g2 = g.create();
       try {
-        g2.setColor(Color.RED);
+        g2.setColor(JBColor.RED);
         drawDottedRectangle(g2, x, y, x + width - 1, y + height - 1);
       }
       finally {

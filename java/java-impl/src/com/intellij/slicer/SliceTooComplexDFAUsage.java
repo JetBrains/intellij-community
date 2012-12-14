@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
+import com.intellij.ui.JBColor;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.UsagePresentation;
 import com.intellij.util.Processor;
@@ -49,7 +50,7 @@ public class SliceTooComplexDFAUsage extends SliceUsage {
       @NotNull
       public TextChunk[] getText() {
         return new TextChunk[]{
-          new TextChunk(new TextAttributes(Color.RED, null, null, EffectType.WAVE_UNDERSCORE, Font.PLAIN), getTooltipText())
+          new TextChunk(new TextAttributes(JBColor.RED, null, null, EffectType.WAVE_UNDERSCORE, Font.PLAIN), getTooltipText())
         };
       }
 

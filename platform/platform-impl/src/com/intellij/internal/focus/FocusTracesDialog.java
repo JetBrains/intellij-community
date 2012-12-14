@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.wm.impl.FocusRequestInfo;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.UIUtil;
 
@@ -145,7 +146,7 @@ public class FocusTracesDialog extends DialogWrapper {
         prev = info.getComponent();
         if (prev != null && prev.isDisplayable()) {
           final Graphics g = prev.getGraphics();
-          g.setColor(Color.RED);
+          g.setColor(JBColor.RED);
           final Dimension sz = prev.getSize();
           UIUtil.drawDottedRectangle(g, 1, 1, sz.width - 2, sz.height - 2);
         }

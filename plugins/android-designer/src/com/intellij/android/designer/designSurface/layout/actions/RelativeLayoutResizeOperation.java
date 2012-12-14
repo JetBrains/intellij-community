@@ -30,6 +30,7 @@ import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.utils.Position;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.JBColor;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -94,7 +95,7 @@ public class RelativeLayoutResizeOperation implements EditOperation {
       myVerticalTextFeedback.setBorder(IdeBorderFactory.createEmptyBorder(0, 3, 2, 0));
       layer.add(myVerticalTextFeedback);
 
-      myBoundsFeedback = new RectangleFeedback(Color.blue, 2);
+      myBoundsFeedback = new RectangleFeedback(JBColor.BLUE, 2);
       layer.add(myBoundsFeedback);
 
       int direction = myContext.getResizeDirection();
@@ -121,7 +122,7 @@ public class RelativeLayoutResizeOperation implements EditOperation {
           wrapBounds = new Rectangle(bounds.getLocation(), myWrapSize);
         }
 
-        myWrapFeedback = new RectangleFeedback(Color.green, 1);
+        myWrapFeedback = new RectangleFeedback(JBColor.GREEN, 1);
         myWrapFeedback.setBounds(wrapBounds);
         layer.add(myWrapFeedback);
       }

@@ -33,10 +33,10 @@ import com.intellij.designer.model.Property;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.PropertyTable;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
@@ -135,7 +135,7 @@ public class RadRelativeLayout extends RadViewLayoutWithData implements ILayoutD
   @Override
   public ComponentDecorator getChildSelectionDecorator(RadComponent component, List<RadComponent> selection) {
     if (mySelectionDecorator == null) {
-      mySelectionDecorator = new ResizeSelectionDecorator(Color.red, 1);
+      mySelectionDecorator = new ResizeSelectionDecorator(JBColor.RED, 1);
       RelativeLayoutResizeOperation.points(mySelectionDecorator);
     }
     return mySelectionDecorator;

@@ -86,7 +86,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     }
 
     if (value instanceof LoadingNode) {
-      setForeground(Color.gray);
+      setForeground(JBColor.GRAY);
       setIcon(LOADING_NODE_ICON);
     }
     else {

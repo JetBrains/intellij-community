@@ -30,9 +30,9 @@ import com.intellij.designer.designSurface.*;
 import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadLayout;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -101,7 +101,7 @@ public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDeco
     }
 
     if (mySelectionDecorator == null) {
-      mySelectionDecorator = new ResizeSelectionDecorator(Color.red, 1);
+      mySelectionDecorator = new ResizeSelectionDecorator(JBColor.RED, 1);
       ResizeOperation.height(mySelectionDecorator);
     }
     return mySelectionDecorator;

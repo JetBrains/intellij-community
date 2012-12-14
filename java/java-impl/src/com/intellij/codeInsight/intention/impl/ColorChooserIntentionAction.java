@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,13 +33,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ColorChooser;
+import com.intellij.ui.JBColor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-
-import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 /**
  * @author spleaner
@@ -105,7 +103,7 @@ public class ColorChooserIntentionAction extends BaseColorIntentionAction {
       oldColor = Color.decode(text);
     }
     catch (NumberFormatException e) {
-      oldColor = Color.GRAY;
+      oldColor = JBColor.GRAY;
     }
     Color color = ColorChooser.chooseColor(editorComponent, getText(), oldColor, true);
     if (color == null) return;
@@ -178,11 +176,11 @@ public class ColorChooserIntentionAction extends BaseColorIntentionAction {
         }
       }
       catch (Exception e) {
-        c = Color.GRAY;
+        c = JBColor.GRAY;
       }
     }
 
-    c = (c == null) ? Color.GRAY : c;
+    c = (c == null) ? JBColor.GRAY : c;
 
     replaceColor(editorComponent, expression, c);
   }

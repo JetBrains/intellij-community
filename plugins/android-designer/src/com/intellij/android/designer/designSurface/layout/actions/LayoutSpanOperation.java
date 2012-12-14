@@ -34,6 +34,7 @@ import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.utils.Position;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.ui.JBColor;
 import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +47,7 @@ import java.util.List;
 public abstract class LayoutSpanOperation implements EditOperation {
   public static final String TYPE = "layout_span";
 
-  protected static final Color COLOR = Color.green.darker();
+  protected static final Color COLOR = JBColor.GREEN.darker();
 
   protected final OperationContext myContext;
   private final GridSelectionDecorator myDecorator;
@@ -424,7 +425,7 @@ public abstract class LayoutSpanOperation implements EditOperation {
 
   private static class ErrorFeedback extends AlphaFeedback {
     public ErrorFeedback() {
-      super(Color.pink);
+      super(JBColor.PINK);
     }
 
     @Override

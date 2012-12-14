@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 
 import javax.swing.*;
@@ -199,8 +200,8 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
     public FilledRectangleHighlighter() {
       super();
       setOpaque(true);
-      setBorder(BorderFactory.createLineBorder(Color.red));
-      setBackground(Color.red);
+      setBorder(BorderFactory.createLineBorder(JBColor.RED));
+      setBackground(JBColor.RED);
     }
 
     protected void _show(JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
@@ -216,7 +217,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
     public RectangleHighlighter() {
       super();
       setOpaque(false);
-      setBorder(BorderFactory.createLineBorder(Color.red));
+      setBorder(BorderFactory.createLineBorder(JBColor.RED));
     }
 
     protected void _show(JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
