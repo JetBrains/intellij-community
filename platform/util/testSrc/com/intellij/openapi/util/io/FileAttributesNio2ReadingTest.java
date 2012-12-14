@@ -33,7 +33,7 @@ public class FileAttributesNio2ReadingTest extends FileAttributesReadingTest {
       FORCE_USE_NIO_2_KEY = (String)field.get(null);
     }
     catch (Exception e) {
-      throw new AssertionError("Please keep constants in sync", e);
+      throw new AssertionError("Please keep constants in sync: " + e.getMessage());
     }
   }
 
