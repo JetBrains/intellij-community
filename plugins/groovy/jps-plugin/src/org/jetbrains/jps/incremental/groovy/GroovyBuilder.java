@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
@@ -372,7 +373,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     // IMPORTANT! must be the first in classpath
     cp.add(getGroovyRtRoot().getPath());
 
-    for (File file : context.getProjectPaths().getCompilationClasspathFiles(chunk, chunk.containsTests(), false, false)) {
+    for (File file : ProjectPaths.getCompilationClasspathFiles(chunk, chunk.containsTests(), false, false)) {
       cp.add(FileUtil.toCanonicalPath(file.getPath()));
     }
 

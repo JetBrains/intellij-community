@@ -38,7 +38,7 @@ public class JpsCompilerConfigurationTest extends JpsSerializationTestCase {
     assertNotNull(configuration);
     assertFalse(configuration.isClearOutputDirectoryOnRebuild());
     assertFalse(configuration.isAddNotNullAssertions());
-    ProcessorConfigProfile defaultProfile = configuration.getDefaultAnnotationProcessingConfiguration();
+    ProcessorConfigProfile defaultProfile = configuration.getDefaultAnnotationProcessingProfile();
     assertTrue(defaultProfile.isEnabled());
     assertFalse(defaultProfile.isObtainProcessorsFromClasspath());
     assertEquals(FileUtil.toSystemDependentName(JpsPathUtil.urlToPath(getUrl("src"))), defaultProfile.getProcessorPath());
