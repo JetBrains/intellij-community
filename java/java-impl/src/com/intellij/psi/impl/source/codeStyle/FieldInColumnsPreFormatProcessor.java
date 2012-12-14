@@ -54,7 +54,7 @@ public class FieldInColumnsPreFormatProcessor implements PreFormatProcessor {
   public TextRange process(@NotNull ASTNode element, @NotNull TextRange range) {
     //region Checking that everything is ready to expand the range for the 'fields in columns'.
     final PsiElement psi = element.getPsi();
-    if (psi == null) {
+    if (psi == null || !psi.isValid()) {
       return range;
     }
 
