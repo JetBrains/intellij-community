@@ -1,14 +1,23 @@
 import sys, shlex
 from utrunner import debug
-from nose_utils import TeamcityNoseRunner
+from nose_utils import TeamcityPlugin
 
 try:
   from nose.core import TestProgram
-  from nose.plugins.base import Plugin
   from nose.config import Config
   from nose.plugins.manager import DefaultPluginManager
 except:
   raise NameError("Please, install nosetests")
+
+teamcity_plugin = TeamcityPlugin()
+
+class MyConfig(Config):
+  def __init__(self, **kw):
+    super(MyConfig, self).__init__(**kw)
+
+  def __setstate__(self, state):
+    super(MyConfig, self).__setstate__(state)
+    self.plugins.addPlugin(teamcity_plugin)
 
 def process_args():
   tests = []
@@ -50,35 +59,26 @@ def process_args():
       # From method in class or from function
       debug("/ from method " + a[2] + " in testcase " +  a[1] + " in " + a[0])
       if a[1] == "":
-          # test function, not method
-          tests.append(a[0] + ":" + a[2])
+        # test function, not method
+        tests.append(a[0] + ":" + a[2])
       else:
-          tests.append(a[0] + ":" + a[1] + "." + a[2])
+        tests.append(a[0] + ":" + a[1] + "." + a[2])
 
   argv = ['nosetests']
+
+  argv.extend(tests)
+
 
   if opts:
     options = shlex.split(opts)
     argv.extend(options)
 
-  argv.extend(tests)
-  config = Config(plugins=DefaultPluginManager())
+  manager = DefaultPluginManager()
+  manager.addPlugin(teamcity_plugin)
+  config = MyConfig(plugins=manager)
   config.configure(argv)
-  config.plugins.loadPlugins()
 
-  ind = [argv.index(x) for x in argv if x.startswith('--processes')]
-  if ind:
-    processes = argv.pop(ind[0]).split('=')[-1]
-    ind_timeout = [argv.index(x) for x in argv if x.startswith('--process-timeout')]
-    if ind_timeout:
-      timeout = argv.pop(ind_timeout[0]).split('=')[-1]
-    else:
-      timeout = 10
-    from nose_multiprocess import MultiProcessTeamcityNoseRunner
-    TestProgram(argv=argv, testRunner=MultiProcessTeamcityNoseRunner(verbosity=config.verbosity, config=config, processes=processes,
-                                                                     timeout=timeout))
-  else:
-    TestProgram(argv=argv, testRunner=TeamcityNoseRunner(verbosity=config.verbosity, config=config))#, addplugins=[TeamcityPlugin()])
+  TestProgram(argv=argv, config=config)
 
 if __name__ == "__main__":
   process_args()
