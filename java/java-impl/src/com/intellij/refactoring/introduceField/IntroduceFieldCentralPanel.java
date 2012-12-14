@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.introduceField;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -37,7 +38,8 @@ import java.awt.event.ItemListener;
 public abstract class IntroduceFieldCentralPanel {
    protected static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceField.IntroduceFieldDialog");
 
-  public static boolean ourLastCbFinalState = false;
+  private static final String INTRODUCE_FIELD_FINAL_CHECKBOX = "introduce.final.checkbox";
+  public static boolean ourLastCbFinalState = PropertiesComponent.getInstance().getBoolean(INTRODUCE_FIELD_FINAL_CHECKBOX, true);
 
   protected final PsiClass myParentClass;
   protected final PsiExpression myInitializerExpression;
@@ -273,6 +275,7 @@ public abstract class IntroduceFieldCentralPanel {
   public void saveFinalState() {
     if (myCbFinal != null && myCbFinal.isEnabled()) {
       ourLastCbFinalState = myCbFinal.isSelected();
+      PropertiesComponent.getInstance().setValue(INTRODUCE_FIELD_FINAL_CHECKBOX, String.valueOf(ourLastCbFinalState));
     }
   }
 
