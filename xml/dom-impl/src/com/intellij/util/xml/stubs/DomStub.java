@@ -132,4 +132,8 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
   public void setHandler(DomInvocationHandler handler) {
     myHandler = handler;
   }
+
+  public boolean isCustom() {
+    return false;
+  }
 }
