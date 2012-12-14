@@ -152,6 +152,6 @@ public class TypeInferenceTest extends Resolve15TestCase {
   }
 
   public void testBoundComposition() throws Exception {
-    checkResolvesTo("java.lang.Class<?>");
+    checkResolvesTo("java.lang.Class<? super ? extends java.lang.Object>");
   }
 }
