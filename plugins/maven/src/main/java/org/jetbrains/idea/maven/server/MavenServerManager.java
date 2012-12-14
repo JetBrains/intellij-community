@@ -79,6 +79,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   private final Alarm myShutdownAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   private boolean useMaven2 = true;
+  private String mavenEmbedderVMOptions = "-Xmx512m";
 
   public static MavenServerManager getInstance() {
     return ServiceManager.getService(MavenServerManager.class);
@@ -204,10 +205,9 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
 
         boolean xmxSet = false;
 
-        String mavenOpts = System.getenv("MAVEN_OPTS");
-        if (mavenOpts != null) {
+        if (mavenEmbedderVMOptions != null) {
           ParametersList mavenOptsList = new ParametersList();
-          mavenOptsList.addParametersString(mavenOpts);
+          mavenOptsList.addParametersString(mavenEmbedderVMOptions);
 
           for (String param : mavenOptsList.getParameters()) {
             if (param.startsWith("-Xmx")) {
@@ -442,6 +442,15 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
       this.useMaven2 = useMaven2;
       shutdown(false);
     }
+  }
+
+  @NotNull
+  public String getMavenEmbedderVMOptions() {
+    return mavenEmbedderVMOptions;
+  }
+
+  public void setMavenEmbedderVMOptions(@NotNull String mavenEmbedderVMOptions) {
+    this.mavenEmbedderVMOptions = mavenEmbedderVMOptions;
   }
 
   @Nullable

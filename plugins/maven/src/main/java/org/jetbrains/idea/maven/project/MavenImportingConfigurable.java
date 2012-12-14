@@ -36,6 +36,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
   private final List<UnnamedConfigurable> myAdditionalConfigurables;
 
   private final JCheckBox myUseMaven3CheckBox;
+  private final JTextField myEmbedderVMOptions;
 
   public MavenImportingConfigurable(Project project) {
     myImportingSettings = MavenProjectsManager.getInstance(project).getImportingSettings();
@@ -47,6 +48,8 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
 
     myUseMaven3CheckBox = new JCheckBox("Use Maven3 to import project");
     myUseMaven3CheckBox.setToolTipText("If this option is disabled maven 2 will be used");
+
+    myEmbedderVMOptions = new JTextField(30);
   }
 
   public JComponent createComponent() {
@@ -57,6 +60,14 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
     useMaven3Panel.add(myUseMaven3CheckBox, BorderLayout.WEST);
 
     panel.add(useMaven3Panel);
+
+    JPanel embedderVMOptionPanel = new JPanel(new BorderLayout());
+    JLabel vmOptionLabel = new JLabel("VM options for maven import process");
+    embedderVMOptionPanel.add(vmOptionLabel, BorderLayout.WEST);
+    vmOptionLabel.setLabelFor(myEmbedderVMOptions);
+
+    embedderVMOptionPanel.add(myEmbedderVMOptions);
+    panel.add(embedderVMOptionPanel);
 
     for (final UnnamedConfigurable additionalConfigurable : myAdditionalConfigurables) {
       panel.add(additionalConfigurable.createComponent());
@@ -81,6 +92,10 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
       return true;
     }
 
+    if (!MavenServerManager.getInstance().getMavenEmbedderVMOptions().equals(myEmbedderVMOptions.getText())) {
+      return true;
+    }
+
     return mySettingsForm.isModified(myImportingSettings);
   }
 
@@ -88,6 +103,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
     mySettingsForm.getData(myImportingSettings);
 
     MavenServerManager.getInstance().setUseMaven2(!myUseMaven3CheckBox.isSelected());
+    MavenServerManager.getInstance().setMavenEmbedderVMOptions(myEmbedderVMOptions.getText());
 
     for (final UnnamedConfigurable additionalConfigurable : myAdditionalConfigurables) {
       additionalConfigurable.apply();
@@ -98,6 +114,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
     mySettingsForm.setData(myImportingSettings);
 
     myUseMaven3CheckBox.setSelected(!MavenServerManager.getInstance().isUseMaven2());
+    myEmbedderVMOptions.setText(MavenServerManager.getInstance().getMavenEmbedderVMOptions());
 
     for (final UnnamedConfigurable additionalConfigurable : myAdditionalConfigurables) {
       additionalConfigurable.reset();

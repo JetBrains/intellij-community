@@ -103,7 +103,12 @@ class Win7TaskBar {
     Guid.GUID CLSID_TaskbarList = Ole32Util.getGUIDFromString("{56FDF344-FD6D-11d0-958A-006097C9A090}");
     Guid.GUID IID_ITaskbarList3 = Ole32Util.getGUIDFromString("{EA1AFB91-9E28-4B86-90E9-9E9F8A5EEFAF}");
     PointerByReference p = new PointerByReference();
-    ole32.CoCreateInstance(CLSID_TaskbarList, Pointer.NULL, ObjBase.CLSCTX_ALL, IID_ITaskbarList3, p);
+    WinNT.HRESULT hr = ole32.CoCreateInstance(CLSID_TaskbarList, Pointer.NULL, ObjBase.CLSCTX_ALL, IID_ITaskbarList3, p);
+    if (!W32Errors.S_OK.equals(hr)) {
+      LOG.error("Win7TaskBar CoCreateInstance(IID_ITaskbarList3) hResult: " + hr);
+      ourInitialized = false;
+      return;
+    }
 
     myInterfacePointer = p.getValue();
     Pointer vTablePointer = myInterfacePointer.getPointer(0);
