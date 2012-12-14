@@ -87,7 +87,7 @@ public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, 
         throw new ProjectBuildException();
       }
 
-      if (!doPackaging(context, modules)) {
+      if (!doPackaging(context, modules, outputConsumer)) {
         throw new ProjectBuildException();
       }
     }
@@ -315,7 +315,9 @@ public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, 
     return success;
   }
 
-  private static boolean doPackaging(@NotNull CompileContext context, @NotNull Collection<JpsModule> modules) throws IOException {
+  private static boolean doPackaging(@NotNull CompileContext context,
+                                     @NotNull Collection<JpsModule> modules,
+                                     @NotNull BuildOutputConsumer outputConsumer) throws IOException {
     final boolean release = AndroidJpsUtil.isReleaseBuild(context);
     final File dataStorageRoot = context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot();
 
@@ -332,7 +334,8 @@ public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, 
 
       for (JpsModule module : modules) {
         try {
-          if (!doPackagingForModule(context, module, apkFileSetStorage, apkBuilderConfigStateStorage, release)) {
+          if (!doPackagingForModule(context, module, apkFileSetStorage, apkBuilderConfigStateStorage,
+                                    release, outputConsumer)) {
             success = false;
           }
         }
@@ -359,7 +362,8 @@ public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, 
                                               @NotNull JpsModule module,
                                               @NotNull AndroidFileSetStorage apkFileSetStorage,
                                               @NotNull AndroidApkBuilderConfigStateStorage apkBuilderConfigStateStorage,
-                                              boolean release) throws IOException {
+                                              boolean release,
+                                              @NotNull BuildOutputConsumer outputConsumer) throws IOException {
     final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
     if (extension == null || extension.isLibrary()) {
       return true;
@@ -435,6 +439,7 @@ public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, 
       final File dst = new File(
         AndroidCommonUtils.addSuffixToFileName(outputPath, AndroidCommonUtils.ANDROID_FINAL_PACKAGE_FOR_ARTIFACT_SUFFIX));
       FileUtil.copy(new File(outputApkPath), dst);
+      outputConsumer.registerOutputFile(dst, Collections.<String>emptyList());
     }
     AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME, module.getName());
     final boolean success = messages.get(AndroidCompilerMessageKind.ERROR).isEmpty();
