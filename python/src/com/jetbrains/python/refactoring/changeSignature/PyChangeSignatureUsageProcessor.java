@@ -139,7 +139,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
         useKeywords = addOldParameter(params, arguments[currentIndex], useKeywords, info);
       }
       else {
-        useKeywords = addNewParameter(params, arguments, useKeywords, info, oldIndex);
+        useKeywords = addNewParameter(params, arguments, useKeywords, info, currentIndex, oldIndex);
       }
     }
     return params;
@@ -162,11 +162,20 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
 
   private boolean addNewParameter(List<String> params,
                                   PyExpression[] arguments,
-                                  boolean useKeywords, ParameterInfo info, int oldIndex) {
+                                  boolean useKeywords, ParameterInfo info, int currentIndex, int oldIndex) {
     if (oldIndex != -1 && oldIndex < arguments.length) {
-      final PyExpression parameter = arguments[oldIndex];
-      params.add(useKeywords && !(parameter instanceof PyKeywordArgument)?
-                 info.getName() + " = " + parameter.getText() : parameter.getText());
+      if (currentIndex < arguments.length) {
+        final PyExpression currentParameter = arguments[currentIndex];
+        if (currentParameter instanceof PyKeywordArgument && !info.getName().equals(((PyKeywordArgument)currentParameter).getKeyword())) {
+          params.add(currentParameter.getText());
+        }
+        else {
+          addOldParameter(params, arguments[oldIndex], useKeywords, info);
+        }
+      }
+      else {
+        addOldParameter(params, arguments[oldIndex], useKeywords, info);
+      }
     }
     else if (!((PyParameterInfo)info).getDefaultInSignature()){
       params.add(useKeywords? info.getName() + " = " + info.getDefaultValue() : info.getDefaultValue());

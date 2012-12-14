@@ -27,6 +27,14 @@ public class PyIntroduceParameterTest extends PyIntroduceTestCase {
     doTest();
   }
 
+  public void testLastStatement() {
+    doTest();
+  }
+
+  public void testLocalVariable() {
+    doTestCannotPerform(PyBundle.message("refactoring.introduce.selection.error"));
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/refactoring/introduceParameter";

@@ -289,7 +289,7 @@ public class PyQuickFixTest extends PyTestCase {
 
   public void testUnresolvedRefCreateFunction() {  // PY-2092
     doInspectionTest("UnresolvedRefCreateFunction.py", PyUnresolvedReferencesInspection.class,
-                          PyBundle.message("QFIX.unresolved.reference.create.function"), true, true);
+                          PyBundle.message("QFIX.unresolved.reference.create.function.$0", "ref"), true, true);
   }
 
   public void testReplaceNotEqOperator() {
