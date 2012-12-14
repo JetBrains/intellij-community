@@ -445,7 +445,8 @@ public class TabPostFormatProcessor implements PostFormatProcessor {
 
       CharSequence text = myCurrentIndentHolder.getChars();
       for (int i = myLineStartOffset; i < text.length(); i++) {
-        if (text.charAt(i) == '\n') {
+        char c = text.charAt(i);
+        if (c == '\n' || (c != ' ' && c != '\t')) {
           return text.subSequence(myLineStartOffset, i);
         }
       }
@@ -527,7 +528,7 @@ public class TabPostFormatProcessor implements PostFormatProcessor {
 
     @Override
     public void replace(@NotNull String newText, @NotNull TextRange range, @NotNull ASTNode leaf) {
-      FormatterUtil.replaceWhiteSpace(newText, leaf, leaf.getElementType(), range);
+      FormatterUtil.replaceInnerWhiteSpace(newText, leaf, range);
     }
   }
 }

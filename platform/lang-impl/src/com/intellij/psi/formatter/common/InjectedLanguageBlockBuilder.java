@@ -39,8 +39,14 @@ import java.util.List;
 public abstract class InjectedLanguageBlockBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.xml.XmlInjectedLanguageBlockBuilder");
 
-  public Block createInjectedBlock(ASTNode node, Block originalBlock, Indent indent, int offset, TextRange range) {
-    return new InjectedLanguageBlockWrapper(originalBlock, offset, range, indent);
+  public Block createInjectedBlock(ASTNode node,
+                                   Block originalBlock,
+                                   Indent indent,
+                                   int offset,
+                                   TextRange range,
+                                   @Nullable Language language)
+  {
+    return new InjectedLanguageBlockWrapper(originalBlock, offset, range, indent, language);
   }
 
   public abstract CodeStyleSettings getSettings();
@@ -152,7 +158,7 @@ public abstract class InjectedLanguageBlockBuilder {
     Block original = childModel.getRootBlock();
 
     if ((original.isLeaf() && injectedNode.getText().trim().length() > 0) || original.getSubBlocks().size() != 0) {
-      result.add(createInjectedBlock(injectedNode, original, indent, offset, range));
+      result.add(createInjectedBlock(injectedNode, original, indent, offset, range, childLanguage));
     }
   }
 }

@@ -16,6 +16,7 @@
 package com.intellij.psi.formatter.common;
 
 import com.intellij.formatting.*;
+import com.intellij.lang.Language;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,12 +24,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class InjectedLanguageBlockWrapper implements Block {
-  private final Block myOriginal;
-  private final int myOffset;
-  private final TextRange myRange;
-  @Nullable private final Indent myIndent;
-  private List<Block> myBlocks;
+public final class InjectedLanguageBlockWrapper implements BlockEx {
+  private final           Block       myOriginal;
+  private final           int         myOffset;
+  private final           TextRange   myRange;
+  @Nullable private final Indent      myIndent;
+  @Nullable private final Language    myLanguage;
+  private                 List<Block> myBlocks;
 
   /**
    *  main code                  prefix    injected code        suffix
@@ -44,10 +46,20 @@ public final class InjectedLanguageBlockWrapper implements Block {
    * @param indent
    */
   public InjectedLanguageBlockWrapper(final @NotNull Block original, final int offset, @Nullable TextRange range, @Nullable Indent indent) {
+    this(original, offset, range, indent, null);
+  }
+
+  public InjectedLanguageBlockWrapper(final @NotNull Block original,
+                                      final int offset,
+                                      @Nullable TextRange range,
+                                      @Nullable Indent indent,
+                                      @Nullable Language language)
+  {
     myOriginal = original;
     myOffset = offset;
     myRange = range;
     myIndent = indent;
+    myLanguage = language;
   }
 
   @Override
@@ -73,6 +85,12 @@ public final class InjectedLanguageBlockWrapper implements Block {
     return TextRange.from(start, range.getLength());
   }
 
+  @Nullable
+  @Override
+  public Language getLanguage() {
+    return myLanguage;
+  }
+
   @Override
   @NotNull
   public List<Block> getSubBlocks() {
@@ -90,7 +108,7 @@ public final class InjectedLanguageBlockWrapper implements Block {
     final ArrayList<Block> result = new ArrayList<Block>(list.size());
     if (myRange == null) {
       for (Block block : list) {
-        result.add(new InjectedLanguageBlockWrapper(block, myOffset, myRange, null));
+        result.add(new InjectedLanguageBlockWrapper(block, myOffset, myRange, null, myLanguage));
       }
     }
     else {
@@ -103,7 +121,7 @@ public final class InjectedLanguageBlockWrapper implements Block {
     for (Block block : list) {
       final TextRange textRange = block.getTextRange();
       if (range.contains(textRange)) {
-        result.add(new InjectedLanguageBlockWrapper(block, myOffset, range, null));
+        result.add(new InjectedLanguageBlockWrapper(block, myOffset, range, null, myLanguage));
       }
       else if (textRange.intersectsStrict(range)) {
         collectBlocksIntersectingRange(block.getSubBlocks(), result, range);
@@ -152,5 +170,10 @@ public final class InjectedLanguageBlockWrapper implements Block {
   @Override
   public boolean isLeaf() {
     return myOriginal.isLeaf();
+  }
+
+  @Override
+  public String toString() {
+    return myOriginal.toString();
   }
 }
