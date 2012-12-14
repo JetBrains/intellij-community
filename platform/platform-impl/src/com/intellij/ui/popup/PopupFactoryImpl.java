@@ -359,8 +359,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                }, autoSelectionEnabled, showDisabledActions);
   }
 
+  @NotNull
   private static List<ActionItem> makeActionItemsFromActionGroup(@NotNull ActionGroup actionGroup,
-                                                                 DataContext dataContext,
+                                                                 @NotNull DataContext dataContext,
                                                                  boolean showNumbers,
                                                                  boolean useAlphaAsNumbers,
                                                                  boolean showDisabledActions,
@@ -371,6 +372,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     return builder.getItems();
   }
 
+  @NotNull
   private static ListPopupStep createActionsStep(@NotNull ActionGroup actionGroup, @NotNull DataContext dataContext,
                                                  boolean showNumbers, boolean useAlphaAsNumbers, boolean showDisabledActions,
                                                  String title, Component component, boolean honorActionMnemonics,
@@ -827,6 +829,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       myActionPlace = actionPlace;
     }
 
+    @NotNull
     public List<ActionItem> getItems() {
       return myListModel;
     }
