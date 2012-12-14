@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ig.security;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiTypeParameter;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -28,27 +29,23 @@ public class CloneableClassInSecureContextInspection extends BaseInspection {
 
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "cloneable.class.in.secure.context.display.name");
+    return InspectionGadgetsBundle.message("cloneable.class.in.secure.context.display.name");
   }
 
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "cloneable.class.in.secure.context.problem.descriptor");
+    return InspectionGadgetsBundle.message("cloneable.class.in.secure.context.problem.descriptor");
   }
 
   public BaseInspectionVisitor buildVisitor() {
     return new CloneableClassInSecureContextVisitor();
   }
 
-  private static class CloneableClassInSecureContextVisitor
-    extends BaseInspectionVisitor {
+  private static class CloneableClassInSecureContextVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      // no call to super, so it doesn't drill down
-      if (aClass.isInterface() || aClass.isAnnotationType()) {
+      if (aClass.isInterface() || aClass.isAnnotationType() || aClass instanceof PsiTypeParameter) {
         return;
       }
       if (!CloneUtils.isCloneable(aClass)) {

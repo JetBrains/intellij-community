@@ -15,11 +15,8 @@
  */
 package com.intellij.formatting;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.impl.source.codeStyle.PreFormatProcessor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -171,16 +168,6 @@ public class FormatTextRanges {
       }
     }
     return true;
-  }
-
-  public void preprocess(ASTNode fileNode) {
-    for(FormatTextRange range: myRanges) {
-      TextRange result = range.getTextRange();
-      for(PreFormatProcessor processor: Extensions.getExtensions(PreFormatProcessor.EP_NAME)) {
-        result = processor.process(fileNode, result);
-      }
-      range.setTextRange(result);
-    }
   }
 
   public List<FormatTextRange> getRanges() {

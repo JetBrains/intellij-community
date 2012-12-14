@@ -1,13 +1,10 @@
-package org.jetbrains.plugins.gradle.testutil;
+package org.jetbrains.plugins.gradle.testutil
 
-
-import org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyPresenceChange
-import org.jetbrains.plugins.gradle.diff.library.GradleMismatchedLibraryPathChange
-import com.intellij.openapi.roots.libraries.Library
-import org.jetbrains.plugins.gradle.util.GradleUtil
-import org.jetbrains.plugins.gradle.diff.module.GradleModulePresenceChange
-import org.jetbrains.plugins.gradle.diff.dependency.GradleModuleDependencyPresenceChange
 import org.jetbrains.plugins.gradle.diff.contentroot.GradleContentRootPresenceChange
+import org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyPresenceChange
+import org.jetbrains.plugins.gradle.diff.dependency.GradleModuleDependencyPresenceChange
+import org.jetbrains.plugins.gradle.diff.library.GradleJarPresenceChange
+import org.jetbrains.plugins.gradle.diff.module.GradleModulePresenceChange
 
 /**
  * @author Denis Zhdanov
@@ -58,11 +55,9 @@ public class ChangeBuilder extends BuilderSupport {
         changes.addAll attributes.gradle.collect { new GradleContentRootPresenceChange(it, null)}
         changes.addAll attributes.intellij.collect { new GradleContentRootPresenceChange(null, it)}
         return changes
-      case "binaryPath":
-        // Assuming that we're processing library binary path conflict here
-        register(new GradleMismatchedLibraryPathChange(
-          current as Library, collectPaths(attributes.gradle), collectPaths(attributes.intellij)
-        ))
+      case "jar":
+        changes.addAll attributes.gradle.collect { new GradleJarPresenceChange(it, null) }
+        changes.addAll attributes.intellij.collect { new GradleJarPresenceChange(null, it) }
     }
     changes
   }
@@ -78,16 +73,5 @@ public class ChangeBuilder extends BuilderSupport {
   protected def register(change) {
     changes << change
     changes
-  }
-
-  private def collectPaths(paths) {
-    if (!paths) {
-      return [].toSet()
-    }
-    paths.collect { toCanonicalPath(it) }.toSet()
-  }
-  
-  private def toCanonicalPath(String path) {
-    path ? GradleUtil.toCanonicalPath(path) : path
   }
 }

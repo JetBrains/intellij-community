@@ -311,6 +311,11 @@ public class InjectedLanguageUtil {
   }
 
   private static final Key<List<DocumentWindow>> INJECTED_DOCS_KEY = Key.create("INJECTED_DOCS_KEY");
+
+  public static boolean areInjectionsProcessed(@NotNull PsiFile hostPsiFile) {
+    return hostPsiFile.getUserData(INJECTED_DOCS_KEY) != null;
+  }
+  
   @NotNull
   public static List<DocumentWindow> getCachedInjectedDocuments(@NotNull PsiFile hostPsiFile) {
     // modification of cachedInjectedDocuments must be under PsiLock only

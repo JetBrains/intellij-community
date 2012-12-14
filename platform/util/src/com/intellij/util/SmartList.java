@@ -21,29 +21,46 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 /**
- * The List which is optimised for the sizes of 0 and 1.
- * In which cases it would not allocate array at all.
+ * A List which is optimised for the sizes of 0 and 1,
+ * in which cases it would not allocate array at all.
  */
 @SuppressWarnings({"unchecked"})
 public class SmartList<E> extends AbstractList<E> {
   private int mySize = 0;
   private Object myElem = null; // null if mySize==0, (E)elem if mySize==1, Object[] if mySize>=2
 
-  public SmartList() {
+  public SmartList() { }
+
+  public SmartList(E element) {
+    add(element);
   }
 
-  public SmartList(E elem) {
-    add(elem);
+  public SmartList(@NotNull Collection<? extends E> elements) {
+    int size = elements.size();
+    if (size == 1) {
+      E element = elements instanceof List ? (E)((List)elements).get(0) : elements.iterator().next();
+      add(element);
+    }
+    else if (size > 0) {
+      mySize = size;
+      myElem = elements.toArray(new Object[size]);
+    }
   }
 
-  public SmartList(@NotNull Collection<? extends E> c) {
-    addAll(c);
+  public SmartList(E... elements) {
+    if (elements.length == 1) {
+      add(elements[0]);
+    }
+    else if (elements.length > 0) {
+      mySize = elements.length;
+      myElem = Arrays.copyOf(elements, mySize);
+    }
   }
 
   @Override
   public E get(int index) {
     if (index < 0 || index >= mySize) {
-      throw new IndexOutOfBoundsException("index= " + index + ". Must be index >= 0 && index < " + mySize);
+      throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + mySize);
     }
     if (mySize == 1) {
       return (E)myElem;
@@ -87,7 +104,7 @@ public class SmartList<E> extends AbstractList<E> {
   @Override
   public void add(int index, E e) {
     if (index < 0 || index > mySize) {
-      throw new IndexOutOfBoundsException("index= " + index + ". Must be index >= 0 && index < " + mySize);
+      throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + mySize);
     }
 
     if (mySize == 0) {
@@ -132,8 +149,9 @@ public class SmartList<E> extends AbstractList<E> {
   @Override
   public E set(final int index, final E element) {
     if (index < 0 || index >= mySize) {
-      throw new IndexOutOfBoundsException("index= " + index + ". Must be index > 0 && index < " + mySize);
+      throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + mySize);
     }
+
     final E oldValue;
     if (mySize == 1) {
       oldValue = (E)myElem;
@@ -150,8 +168,9 @@ public class SmartList<E> extends AbstractList<E> {
   @Override
   public E remove(final int index) {
     if (index < 0 || index >= mySize) {
-      throw new IndexOutOfBoundsException("index= " + index + ". Must be index >= 0 && index < " + mySize);
+      throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + mySize);
     }
+
     final E oldValue;
     if (mySize == 1) {
       oldValue = (E)myElem;
@@ -244,7 +263,7 @@ public class SmartList<E> extends AbstractList<E> {
         return a;
       }
     }
+    //noinspection SuspiciousToArrayCall
     return super.toArray(a);
   }
 }
-

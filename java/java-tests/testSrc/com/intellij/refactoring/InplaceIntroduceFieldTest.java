@@ -41,6 +41,15 @@ public class InplaceIntroduceFieldTest extends AbstractJavaInplaceIntroduceTest 
     });
   }
 
+  public void testAnchor1() throws Exception {
+
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
+      }
+    });
+  }
+
   public void testBeforeAssignment() throws Exception {
 
     doTest(new Pass<AbstractInplaceIntroducer>() {

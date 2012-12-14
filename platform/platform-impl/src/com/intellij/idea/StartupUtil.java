@@ -212,11 +212,11 @@ public class StartupUtil {
       }
     }
 
-    if (SystemInfo.isWindows && SystemInfo.isWin2kOrNewer) {
+    if (SystemInfo.isWin2kOrNewer) {
       IdeaWin32.isAvailable();  // logging is done there
     }
 
-    if (SystemInfo.isWindows && SystemInfo.isWin2kOrNewer && !isHeadless) {
+    if (SystemInfo.isWin2kOrNewer && !isHeadless) {
       try {
         System.loadLibrary(SystemInfo.isAMD64 ? "focusKiller64" : "focusKiller");
         log.info("Using \"FocusKiller\" library to prevent focus stealing.");

@@ -24,8 +24,8 @@ public class GradleContentRootSettings implements GradleProjectStructureNodeSett
     ROOT_TYPE_TITLES.put(SourceType.EXCLUDED, GradleBundle.message("gradle.import.structure.settings.label.root.excluded"));
     assert ROOT_TYPE_TITLES.size() == SourceType.values().length;
   }
-  
-  private final JComponent        myComponent;
+
+  @NotNull private final JComponent myComponent;
 
   public GradleContentRootSettings(@NotNull GradleContentRoot contentRoot) {
     GradleProjectSettingsBuilder builder = new GradleProjectSettingsBuilder();
@@ -33,7 +33,7 @@ public class GradleContentRootSettings implements GradleProjectStructureNodeSett
       Collection<String> paths = contentRoot.getPaths(sourceType);
       if (paths.isEmpty()) {
         continue;
-      } 
+      }
       builder.add(new JLabel(ROOT_TYPE_TITLES.get(sourceType)));
       for (String path : paths) {
         NamePathComponent component = new NamePathComponent("", "  ", "", "", false);
@@ -45,7 +45,7 @@ public class GradleContentRootSettings implements GradleProjectStructureNodeSett
     }
     myComponent = builder.build();
   }
-  
+
   @Override
   public boolean validate() {
     return true;

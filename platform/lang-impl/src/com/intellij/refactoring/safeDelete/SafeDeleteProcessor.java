@@ -472,4 +472,9 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   public void setSearchNonJava(boolean searchNonJava) {
     mySearchNonJava = searchNonJava;
   }
+
+  @Override
+  protected boolean skipNonCodeUsages() {
+    return true;
+  }
 }

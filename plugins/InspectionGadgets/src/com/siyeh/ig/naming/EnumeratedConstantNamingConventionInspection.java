@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 
-public class EnumeratedConstantNamingConventionInspection
-  extends ConventionInspection {
+public class EnumeratedConstantNamingConventionInspection extends ConventionInspection {
 
   private static final int DEFAULT_MIN_LENGTH = 5;
   private static final int DEFAULT_MAX_LENGTH = 32;
@@ -31,8 +30,7 @@ public class EnumeratedConstantNamingConventionInspection
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "enumerated.constant.naming.convention.display.name");
+    return InspectionGadgetsBundle.message("enumerated.constant.naming.convention.display.name");
   }
 
   @Override
@@ -50,21 +48,17 @@ public class EnumeratedConstantNamingConventionInspection
   public String buildErrorString(Object... infos) {
     final String fieldName = (String)infos[0];
     if (fieldName.length() < getMinLength()) {
-      return InspectionGadgetsBundle.message(
-        "enumerated.constant.naming.convention.problem.descriptor.short");
+      return InspectionGadgetsBundle.message("enumerated.constant.naming.convention.problem.descriptor.short");
     }
     else if (fieldName.length() > getMaxLength()) {
-      return InspectionGadgetsBundle.message(
-        "enumerated.constant.naming.convention.problem.descriptor.long");
+      return InspectionGadgetsBundle.message("enumerated.constant.naming.convention.problem.descriptor.long");
     }
-    return InspectionGadgetsBundle.message(
-      "enumerated.constant.naming.convention.problem.descriptor.regex.mismatch",
-      getRegex());
+    return InspectionGadgetsBundle.message("enumerated.constant.naming.convention.problem.descriptor.regex.mismatch", getRegex());
   }
 
   @Override
   protected String getDefaultRegex() {
-    return "[A-Z][A-Za-z\\d]*";
+    return "[A-Z][A-Z_\\d]*";
   }
 
   @Override

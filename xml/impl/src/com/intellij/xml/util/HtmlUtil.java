@@ -20,20 +20,20 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.HtmlUnknownAttributeInspection;
 import com.intellij.codeInspection.htmlInspections.HtmlUnknownTagInspection;
 import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
+import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.*;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.parsing.xml.HtmlBuilderDriver;
@@ -640,4 +640,12 @@ public class HtmlUtil {
     final PsiElement element = file.findElementAt(offset);
     return isHtmlTagContainingFile(element);
   }
+
+  public static boolean isPureHtmlFile(@NotNull PsiFile file) {
+    FileType fileTypeByName = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
+    return file.getLanguage() == HTMLLanguage.INSTANCE &&
+        fileTypeByName == HtmlFileType.INSTANCE &&
+        !(file.getViewProvider() instanceof MultiplePsiFilesPerDocumentFileViewProvider);
+  }
+
 }

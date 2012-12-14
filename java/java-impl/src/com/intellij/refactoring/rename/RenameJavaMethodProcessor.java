@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -263,6 +263,15 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     final PsiMethod method = (PsiMethod) element;
     OverridingMethodsSearch.search(method, scope, true).forEach(new Processor<PsiMethod>() {
       public boolean process(PsiMethod overrider) {
+        if (overrider instanceof PsiMirrorElement) {
+          final PsiElement prototype = ((PsiMirrorElement)overrider).getPrototype();
+          if (prototype instanceof PsiMethod) {
+            overrider = (PsiMethod)prototype;
+          }
+        }
+
+        if (overrider instanceof SyntheticElement) return true;
+
         final String overriderName = overrider.getName();
         final String baseName = method.getName();
         final String newOverriderName = RefactoringUtil.suggestNewOverriderName(overriderName, baseName, newName);

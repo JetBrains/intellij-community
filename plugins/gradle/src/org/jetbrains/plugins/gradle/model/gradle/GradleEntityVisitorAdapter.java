@@ -24,6 +24,10 @@ public abstract class GradleEntityVisitorAdapter implements GradleEntityVisitor 
   }
 
   @Override
+  public void visit(@NotNull GradleJar jar) {
+  }
+
+  @Override
   public void visit(@NotNull GradleModuleDependency dependency) {
   }
 

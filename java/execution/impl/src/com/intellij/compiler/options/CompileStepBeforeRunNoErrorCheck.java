@@ -99,7 +99,6 @@ public class CompileStepBeforeRunNoErrorCheck
   public static class MakeBeforeRunTaskNoErrorCheck extends BeforeRunTask<MakeBeforeRunTaskNoErrorCheck> {
     private MakeBeforeRunTaskNoErrorCheck() {
       super(ID);
-      setEnabled(true);
     }
   }
 }

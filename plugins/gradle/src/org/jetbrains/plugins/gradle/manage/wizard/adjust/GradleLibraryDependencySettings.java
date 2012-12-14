@@ -18,7 +18,7 @@ public class GradleLibraryDependencySettings implements GradleProjectStructureNo
   private final JComponent              myComponent;
 
   public GradleLibraryDependencySettings(@NotNull GradleLibraryDependency dependency) {
-    myLibrarySettings = new GradleLibrarySettings(dependency.getTarget());
+    myLibrarySettings = new GradleLibrarySettings();
     
     GradleProjectSettingsBuilder builder = new GradleProjectSettingsBuilder();
     builder.add(myLibrarySettings.getComponent(), GradleProjectSettingsBuilder.InsetSize.NONE);

@@ -138,6 +138,8 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
         GradleSettings.applyLinkedProjectPath(myConfigurable.getLinkedProjectPath(), project);
         GradleSettings.applyPreferLocalInstallationToWrapper(myConfigurable.isPreferLocalInstallationToWrapper(), project);
         GradleSettings.applyGradleHome(myConfigurable.getGradleHomePath(), project);
+        // Reset gradle home for default project.
+        GradleSettings.applyLinkedProjectPath(null, ProjectManager.getInstance().getDefaultProject());
 
         if (gradleProject != null) {
           GradleUtil.executeProjectChangeAction(project, project, new Runnable() {

@@ -30,15 +30,16 @@ import java.util.Comparator;
  */
 public class GradleProjectStructureNodeComparator implements Comparator<GradleProjectStructureNode<?>> {
 
-  private static final int PROJECT_WEIGHT = 0;
+  private static final int PROJECT_WEIGHT            = 0;
   private static final int MODULE_WEIGHT             = 1;
   private static final int CONTENT_ROOT_WEIGHT       = 2;
   private static final int SYNTHETIC_WEIGHT          = 3;
   private static final int MODULE_DEPENDENCY_WEIGHT  = 4;
   private static final int LIBRARY_DEPENDENCY_WEIGHT = 5;
   private static final int LIBRARY_WEIGHT            = 6;
+  private static final int JAR_WEIGHT                = 7;
   private static final int UNKNOWN_WEIGHT            = 20;
-  
+
   @NotNull private final GradleProjectStructureContext myContext;
 
   public GradleProjectStructureNodeComparator(@NotNull GradleProjectStructureContext context) {
@@ -98,6 +99,11 @@ public class GradleProjectStructureNodeComparator implements Comparator<GradlePr
         @Override
         public void visit(@NotNull GradleLibrary library) {
           result.set(LIBRARY_WEIGHT);
+        }
+
+        @Override
+        public void visit(@NotNull GradleJar jar) {
+          result.set(JAR_WEIGHT);
         }
 
         @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.rename.RenameDialog;
@@ -28,14 +29,17 @@ import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 
 import java.util.*;
 
@@ -137,8 +141,27 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
   @Override
   public void findCollisions(PsiElement element,
                              final String newName,
-                             Map<? extends PsiElement, String> allRenames,
-                             List<UsageInfo> result) {
+                             final Map<? extends PsiElement, String> allRenames,
+                             final List<UsageInfo> result) {
+    if (element instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod)element;
+      OverridingMethodsSearch.search(method, method.getUseScope(), true).forEach(new Processor<PsiMethod>() {
+        public boolean process(PsiMethod overrider) {
+          PsiElement original = overrider;
+          if (overrider instanceof PsiMirrorElement) {
+            original = ((PsiMirrorElement)overrider).getPrototype();
+          }
+
+          if (original instanceof SyntheticElement) return true;
+
+          if (original instanceof GrField) {
+            result.add(new FieldNameCollisionInfo((GrField)original, method));
+          }
+          return true;
+        }
+      });
+    }
+
     final ListIterator<UsageInfo> iterator = result.listIterator();
     while (iterator.hasNext()) {
       final UsageInfo info = iterator.next();
@@ -175,5 +198,21 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
     document.replaceString(range.getStartOffset(), range.getEndOffset(), newName);
 
     return null;
+  }
+
+  private static class FieldNameCollisionInfo extends UnresolvableCollisionUsageInfo {
+    private String myName;
+    private String myBaseName;
+
+    public FieldNameCollisionInfo(GrField field, PsiMethod baseMethod) {
+      super(field, field);
+      myName = field.getName();
+      myBaseName = baseMethod.getName();
+    }
+
+    @Override
+    public String getDescription() {
+      return GroovyRefactoringBundle.message("cannot.rename.property.0", myName, myBaseName);
+    }
   }
 }

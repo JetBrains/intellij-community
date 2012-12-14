@@ -282,10 +282,15 @@ public abstract class BaseRefactoringProcessor {
     showUsageView(viewDescriptor, factory, usages);
   }
 
+  protected boolean skipNonCodeUsages() {
+    return false;
+  }
+  
   private boolean ensureElementsWritable(@NotNull final UsageInfo[] usages, final UsageViewDescriptor descriptor) {
     Set<PsiElement> elements = new THashSet<PsiElement>();
     for (UsageInfo usage : usages) {
       assert usage != null: "Found null element in usages array";
+      if (skipNonCodeUsages() && usage.isNonCodeUsage()) continue;
       PsiElement element = usage.getElement();
       if (element != null) elements.add(element);
     }
