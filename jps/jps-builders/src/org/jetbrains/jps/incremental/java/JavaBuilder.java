@@ -309,6 +309,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final Map<File, Set<File>> outs = buildOutputDirectoriesMap(context, chunk);
     final List<String> options = getCompilationOptions(context, chunk, profile);
     final ClassProcessingConsumer classesConsumer = new ClassProcessingConsumer(context, outputSink);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Compiling chunk '" + chunk.getName() + "' with options: " + options);
+    }
     try {
       final boolean rc;
       if (USE_EMBEDDED_JAVAC) {
