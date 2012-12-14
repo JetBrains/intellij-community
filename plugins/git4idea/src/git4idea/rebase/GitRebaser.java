@@ -143,7 +143,7 @@ public class GitRebaser {
       final GitTask rebaseTask = new GitTask(myProject, h, "Reordering commits");
       rebaseTask.setProgressIndicator(myProgressIndicator);
       return executeRebaseTaskInBackground(root, h, rebaseConflictDetector, rebaseTask);
-    } finally {
+    } finally { // TODO should be unregistered in the task.success
       // unregistering rebase service
       if (rebaseEditorNo != null) {
         rebaseEditorService.unregisterHandler(rebaseEditorNo);
