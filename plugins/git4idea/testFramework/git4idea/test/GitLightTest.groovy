@@ -16,13 +16,11 @@
 package git4idea.test
 
 import com.intellij.dvcs.test.MockProject
-import com.intellij.dvcs.test.MockVirtualFile
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import git4idea.GitPlatformFacade
 import git4idea.commands.Git
 import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryImpl
 import org.junit.After
 import org.junit.Before
 /**
@@ -34,30 +32,26 @@ import org.junit.Before
  *
  * @author Kirill Likhodedov
  */
-@Mixin(GitExecutor)
-class GitLightTest {
-
-  private static final String USER_NAME = "John Doe";
-  private static final String USER_EMAIL = "John.Doe@example.com";
+class GitLightTest extends GitExecutor {
 
   /**
    * The file system root of test files.
    * Automatically deleted on {@link #tearDown()}.
    * Tests should create new files only inside this directory.
    */
-  protected String myTestRoot
+  public String myTestRoot
 
   /**
    * The file system root of the project. All project should locate inside this directory.
    */
-  protected String myProjectRoot
+  public String myProjectRoot
 
-  protected MockProject myProject
-  protected GitPlatformFacade myPlatformFacade
-  protected Git myGit
+  public MockProject myProject
+  public GitPlatformFacade myPlatformFacade
+  public Git myGit
 
   @Before
-  protected void setUp() {
+  public void setUp() {
     myTestRoot = FileUtil.createTempDirectory("", "").getPath()
     cd myTestRoot
     myProjectRoot = mkdir ("project")
@@ -72,26 +66,8 @@ class GitLightTest {
     Disposer.dispose(myProject)
   }
 
-  protected GitRepository createRepository(String rootDir) {
-    initRepo(rootDir)
-
-    // TODO this smells hacky
-    // the constructor and notifyListeners() should probably be private
-    // getPresentableUrl should probably be final, and we should have a better VirtualFile implementation for tests.
-    GitRepository repository = new GitRepositoryImpl(new MockVirtualFile(rootDir), myPlatformFacade, myProject, myProject, true) {
-      @Override
-      protected void notifyListeners() {
-      }
-
-      @Override
-      String getPresentableUrl() {
-        return rootDir;
-      }
-    }
-
-    registerRepository(repository)
-
-    return repository
+  public GitRepository createRepository(String rootDir) {
+    return GitTestInitUtil.createRepository(rootDir, myPlatformFacade, myProject)
   }
 
   /**
@@ -103,23 +79,4 @@ class GitLightTest {
     cd source
     git("remote add $targetName $myTestRoot/$target");
   }
-
-  private void registerRepository(GitRepositoryImpl repository) {
-    ((GitTestRepositoryManager)myPlatformFacade.getRepositoryManager(myProject)).add(repository)
-  }
-
-  private void initRepo(String repoRoot) {
-    cd repoRoot
-    git("init")
-    setupUsername();
-    touch("file.txt")
-    git("add file.txt")
-    git("commit -m initial")
-  }
-
-  private void setupUsername() {
-    git("config user.name $USER_NAME")
-    git("config user.email $USER_EMAIL")
-  }
-
 }

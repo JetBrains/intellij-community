@@ -197,7 +197,7 @@ public class GitTestImpl implements Git {
                                      @NotNull String hash,
                                      boolean autoCommit,
                                      @NotNull GitLineHandlerListener... listeners) {
-    throw new UnsupportedOperationException();
+    execute(repository, "cherry-pick -x ${autoCommit ? "" : "-n"} $hash")
   }
 
   @NotNull

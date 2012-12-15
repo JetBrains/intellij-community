@@ -8,6 +8,8 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/testFramework" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/test-stepdefs" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/test-features" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -73,6 +75,8 @@
     </orderEntry>
     <orderEntry type="library" scope="TEST" name="Groovy" level="project" />
     <orderEntry type="module" module-name="dvcs" />
+    <orderEntry type="library" scope="TEST" name="cucumber-jvm" level="project" />
+    <orderEntry type="library" scope="TEST" name="cucumber-groovy" level="project" />
   </component>
 </module>
 
