@@ -89,8 +89,8 @@ public class Executor {
       log("{" + result.getExitCode() + "}");
     }
     String stdout = result.getStdout().trim();
-    if (!StringUtil.isEmpty(stdout)) {
-      log(stdout);
+    if (!StringUtil.isEmptyOrSpaces(stdout)) {
+      log(stdout.trim());
     }
     return stdout;
   }
