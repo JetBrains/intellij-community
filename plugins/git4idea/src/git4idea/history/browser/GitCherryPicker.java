@@ -226,7 +226,7 @@ public class GitCherryPicker {
 
   @NotNull
   private static String createCommitMessage(@NotNull GitCommit commit) {
-    return commit.getDescription() + "\n(cherry-picked from " + commit.getShortHash().getString() + ")";
+    return commit.getDescription() + "\n(cherry picked from commit " + commit.getShortHash().getString() + ")";
   }
 
   private boolean showCommitDialogAndWaitForCommit(@NotNull final GitRepository repository, @NotNull final GitCommitWrapper commit,
