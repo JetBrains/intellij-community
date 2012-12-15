@@ -16,6 +16,7 @@
 package git4idea.test
 
 import git4idea.repo.GitRepository
+import static git4idea.test.GitExecutor.*;
 /**
  * Create popular scenarios used in multiple tests, for example:
  *  - create a branch and commit something there;
@@ -24,7 +25,6 @@ import git4idea.repo.GitRepository
  *
  * @author Kirill Likhodedov
  */
-@Mixin(GitExecutor)
 class GitScenarios {
 
   private static final String BRANCH_FOR_UNMERGED_CONFLICTS = "unmerged_files_branch_" + Math.random();
@@ -38,7 +38,7 @@ class GitScenarios {
   /**
    * Create a branch with a commit and return back to master.
    */
-  def branchWithCommit(GitRepository repository, String name, String file = "branch_file.txt", String content = "branch content") {
+  static def branchWithCommit(GitRepository repository, String name, String file = "branch_file.txt", String content = "branch content") {
     cd repository
     git("checkout -b $name")
     touch(file, content)
@@ -51,7 +51,7 @@ class GitScenarios {
   /**
    * Create a branch with a commit and return back to master.
    */
-  def branchWithCommit(Collection<GitRepository> repositories, String name,
+  static def branchWithCommit(Collection<GitRepository> repositories, String name,
                        String file = "branch_file.txt", String content = "branch content") {
     repositories.each { branchWithCommit(it, name, file, content) }
   }
@@ -59,7 +59,7 @@ class GitScenarios {
   /**
    * Make an unmerged file in the repository.
    */
-  def unmergedFiles(GitRepository repository) {
+  static def unmergedFiles(GitRepository repository) {
     conflict(repository, BRANCH_FOR_UNMERGED_CONFLICTS, "unmerged.txt")
     git("merge $BRANCH_FOR_UNMERGED_CONFLICTS")
     git("branch -D $BRANCH_FOR_UNMERGED_CONFLICTS")
@@ -69,7 +69,7 @@ class GitScenarios {
    * Creates a branch with the given name, and produces conflicted content in a file between this branch and master.
    * Branch must not exist at this point.
    */
-  def conflict(GitRepository repository, String branch, String file="conflict.txt") {
+  static def conflict(GitRepository repository, String branch, String file="conflict.txt") {
     assert "Branch [$branch] shouldn't exist for this scenario" : !branchExists(repository, branch)
 
     cd repository
@@ -92,7 +92,7 @@ class GitScenarios {
    * This produces the "some untracked files would be overwritten by..." error when trying to checkout or merge.
    * Branch with the given name shall exist.
    */
-  def untrackedFileOverwrittenBy(GitRepository repository, String branch, Collection<String> fileNames) {
+  static def untrackedFileOverwrittenBy(GitRepository repository, String branch, Collection<String> fileNames) {
     cd repository
     git("checkout $branch")
 
@@ -116,7 +116,7 @@ class GitScenarios {
    *
    * NB: the branch should not exist before this is called!
    */
-  def localChangesOverwrittenByWithoutConflict(GitRepository repository, String branch, Collection<String> fileNames) {
+  static def localChangesOverwrittenByWithoutConflict(GitRepository repository, String branch, Collection<String> fileNames) {
     cd repository
 
     for (it in fileNames) {
@@ -138,24 +138,32 @@ class GitScenarios {
     }
   }
 
-  def append(String fileName, String content) {
+  static def append(String fileName, String content) {
      echo(fileName, content)
   }
 
-  def prepend(String fileName, String content) {
+  static def prepend(String fileName, String content) {
     def previousContent = cat(fileName)
     new File(pwd(), fileName).withWriter("UTF-8") { it.write(content + previousContent) }
   }
 
-  def commit(GitRepository repository, String file = "just_a_file_${Math.random()}.txt") {
+  static def commit(GitRepository repository, String file = "just_a_file_${Math.random()}.txt") {
     cd repository
     touch(file)
     git("add $file")
     git("commit -m just_a_commit")
   }
 
-  public boolean branchExists(GitRepository repo, String branch) {
+  public static boolean branchExists(GitRepository repo, String branch) {
     git(repo, "branch").contains(branch)
   }
 
+  public static void checkout(GitRepository repository, String branch) {
+    if (branchExists(repository, branch)) {
+      git("checkout $branch")
+    }
+    else {
+      git("checkout -b $branch")
+    }
+  }
 }
