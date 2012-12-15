@@ -226,18 +226,7 @@ public class GitCherryPicker {
 
   @NotNull
   private static String createCommitMessage(@NotNull GitCommit commit) {
-    // make sure there is an empty line after description
-    String spaces;
-    if (commit.getDescription().endsWith("\n\n")) {
-      spaces = "";
-    }
-    else if (commit.getDescription().endsWith("\n")) {
-      spaces = "\n";
-    }
-    else {
-      spaces = "\n\n";
-    }
-    return commit.getDescription() + spaces + "(cherry-picked from " + commit.getShortHash().getString() + ")";
+    return commit.getDescription() + "\n(cherry-picked from " + commit.getShortHash().getString() + ")";
   }
 
   private boolean showCommitDialogAndWaitForCommit(@NotNull final GitRepository repository, @NotNull final GitCommitWrapper commit,
