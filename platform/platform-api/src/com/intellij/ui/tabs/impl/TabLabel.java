@@ -45,7 +45,7 @@ public class TabLabel extends JPanel {
   protected final SimpleColoredComponent myLabel = new SimpleColoredComponent() {
     @Override
     protected boolean shouldDrawMacShadow() {
-      return SystemInfo.isMac && !UIUtil.isUnderDarcula();
+      return SystemInfo.isMac || UIUtil.isUnderDarcula();
     }
 
     @Override

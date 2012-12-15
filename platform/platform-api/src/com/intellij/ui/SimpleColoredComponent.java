@@ -51,7 +51,8 @@ import java.util.Locale;
 public class SimpleColoredComponent extends JComponent implements Accessible {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.SimpleColoredComponent");
 
-  public static final Color STYLE_SEARCH_MATCH_BACKGROUND = new Color(250, 250, 250, 140);
+  public static final Color SHADOW_COLOR = new JBColor(new Color(250, 250, 250, 140), Gray._0.withAlpha(50));
+  public static final Color STYLE_SEARCH_MATCH_BACKGROUND = SHADOW_COLOR; //api compatibility
   public static final int   FRAGMENT_ICON                 = -2;
 
   private final ArrayList<String>               myFragments;
@@ -634,7 +635,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
 
       if (!attributes.isSearchMatch()) {
         if (shouldDrawMacShadow()) {
-          g.setColor(STYLE_SEARCH_MATCH_BACKGROUND);
+          g.setColor(SHADOW_COLOR);
           g.drawString(fragment, offset, textBaseline + 1);
         }
 
@@ -701,11 +702,11 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
       g.setFont((Font) info[4]);
 
       if (shouldDrawMacShadow()) {
-        g.setColor(new Color(250, 250, 250, 140));
+        g.setColor(SHADOW_COLOR);
         g.drawString((String) info[3], (Integer) info[0], (Integer) info[2] + 1);
       }
 
-      g.setColor(Gray._50);
+      g.setColor(new JBColor(Gray._50, Gray._0));
       g.drawString((String) info[3], (Integer) info[0], (Integer) info[2]);
     }
     return offset;

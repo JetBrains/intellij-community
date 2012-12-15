@@ -10,7 +10,9 @@
     <option name="CARET_ROW_COLOR" value="323232" />
     <option name="CONSOLE_BACKGROUND_KEY" value="333333" />
     <option name="FILESTATUS_ADDED" value="629755" />
+    <option name="FILESTATUS_IDEA_FILESTATUS_IGNORED" value="848504" />
     <option name="FILESTATUS_MODIFIED" value="6897bb" />
+    <option name="FILESTATUS_UNKNOWN" value="d1675a" />
     <option name="GUTTER_BACKGROUND" value="313335" />
     <option name="INDENT_GUIDE" value="4d4d4d" />
     <option name="LINE_NUMBERS_COLOR" value="888888" />
@@ -3302,7 +3304,7 @@
         <option name="FOREGROUND" />
         <option name="BACKGROUND" />
         <option name="FONT_TYPE" value="0" />
-        <option name="EFFECT_COLOR" value="cccc00" />
+        <option name="EFFECT_COLOR" value="6c6c00" />
         <option name="EFFECT_TYPE" value="2" />
         <option name="ERROR_STRIPE_COLOR" />
       </value>
@@ -3392,7 +3394,7 @@
         <option name="FOREGROUND" />
         <option name="BACKGROUND" />
         <option name="FONT_TYPE" value="0" />
-        <option name="EFFECT_COLOR" value="ffff00" />
+        <option name="EFFECT_COLOR" value="6c6c00" />
         <option name="EFFECT_TYPE" value="2" />
         <option name="ERROR_STRIPE_COLOR" value="8c8c00" />
       </value>
