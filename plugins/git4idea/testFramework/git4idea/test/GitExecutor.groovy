@@ -36,7 +36,7 @@ class GitExecutor extends Executor {
 
   public static String git(String command) {
     printVersionTheFirstTime();
-    def split = StringUtil.split(command, " ")
+    def split = splitCommandInParameters(command)
     split.add(0, GIT_EXECUTABLE)
     log("git $command")
     for (int attempt = 0; attempt < 3; attempt++) {
@@ -51,6 +51,47 @@ class GitExecutor extends Executor {
       }
     }
     throw new RuntimeException("fatal error during execution of Git command: $command");
+  }
+
+  private static List<String> splitCommandInParameters(String command) {
+    List<String> split = new ArrayList<>()
+
+    boolean insideParam = false;
+    StringBuilder currentParam = new StringBuilder()
+    for (char c : command.toCharArray()) {
+      boolean flush = false;
+      if (insideParam) {
+        if (c == '\'') {
+          insideParam = false;
+          flush = true
+        }
+        else {
+          currentParam.append(c)
+        }
+      }
+      else if (c == '\'') {
+        insideParam = true;
+      }
+      else if (c == ' ') {
+        flush = true;
+      }
+      else {
+        currentParam.append(c)
+      }
+
+      if (flush) {
+        if (!StringUtil.isEmptyOrSpaces(currentParam.toString())) {
+          split.add(currentParam.toString())
+        }
+        currentParam = new StringBuilder()
+      }
+    }
+
+    // last flush
+    if (!StringUtil.isEmptyOrSpaces(currentParam.toString())) {
+      split.add(currentParam.toString())
+    }
+    return split;
   }
 
   public static String git(GitRepository repository, String command) {
