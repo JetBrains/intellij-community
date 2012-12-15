@@ -98,7 +98,7 @@ class DarculaEditorTabsPainter implements JBEditorTabsPainter {
 
       g2d.setPaint(new GradientPaint(_x, _y, Gray._255.withAlpha(50), _x, _y + _height, Gray._255.withAlpha(0)));
     } else {
-      g2d.setPaint(new GradientPaint(_x, _y, Gray._105, _x, _y + _height, Gray._80));
+      g2d.setPaint(new GradientPaint(_x, _y, Gray._85, _x, _y + _height, Gray._60));
     }
 
     g2d.fill(selectedShape.fillPath.getShape());
