@@ -338,7 +338,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final List<String> options = getCompilationOptions(context, chunk, profile);
     final ClassProcessingConsumer classesConsumer = new ClassProcessingConsumer(context, outputSink);
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Compiling chunk '" + chunk.getName() + "' with options: " + options);
+      LOG.debug("Compiling chunk [" + chunk.getName() + "] with options: \"" + StringUtil.join(options, " ") + "\"");
     }
     try {
       final boolean rc;
