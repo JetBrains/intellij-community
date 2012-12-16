@@ -9,7 +9,7 @@ import java.awt.*;
 /**
  * @author erokhins
  */
-public interface GraphTableCellPainter {
+public interface GraphCellPainter {
 
     public void draw(Graphics2D g2, PrintCell row);
 

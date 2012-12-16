@@ -1,24 +1,23 @@
 package org.hanuna.gitalk.swing_ui.render;
 
-import org.hanuna.gitalk.controller.GraphCommitCell;
-import org.hanuna.gitalk.swing_ui.render.painters.GraphTableCellPainter;
+import org.hanuna.gitalk.controller.table_models.GraphCommitCell;
+import org.hanuna.gitalk.swing_ui.render.painters.GraphCellPainter;
 import org.hanuna.gitalk.swing_ui.render.painters.RefPainter;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 
-import static org.hanuna.gitalk.controller.GraphCommitCell.WIDTH_NODE;
+import static org.hanuna.gitalk.controller.table_models.GraphCommitCell.WIDTH_NODE;
 
 /**
  * @author erokhins
  */
 public class GraphCommitCellRender extends AbstractPaddingCellRender {
-    private final GraphTableCellPainter graphPainter;
-    private final ExtDefaultCellRender cellRender = new ExtDefaultCellRender();
+    private final GraphCellPainter graphPainter;
     private final RefPainter refPainter = new RefPainter();
 
-    public GraphCommitCellRender(GraphTableCellPainter graphPainter) {
+    public GraphCommitCellRender(GraphCellPainter graphPainter) {
         this.graphPainter = graphPainter;
     }
 

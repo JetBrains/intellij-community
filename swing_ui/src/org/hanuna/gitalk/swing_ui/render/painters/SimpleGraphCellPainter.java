@@ -11,12 +11,12 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 
-import static org.hanuna.gitalk.controller.GraphCommitCell.*;
+import static org.hanuna.gitalk.controller.table_models.GraphCommitCell.*;
 
 /**
  * @author erokhins
  */
-public class SimpleGraphTableCellPainter implements GraphTableCellPainter {
+public class SimpleGraphCellPainter implements GraphCellPainter {
     private Graphics2D g2;
     private final Stroke usual = new BasicStroke(THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
     private final Stroke hide = new BasicStroke(THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{7}, 0);

@@ -1,6 +1,8 @@
 package org.hanuna.gitalk.controller;
 
 import org.hanuna.gitalk.common.compressedlist.Replace;
+import org.hanuna.gitalk.controller.table_models.GraphTableModel;
+import org.hanuna.gitalk.controller.table_models.RefTableModel;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.GraphFragment;
 import org.hanuna.gitalk.graph.graph_elements.GraphElement;

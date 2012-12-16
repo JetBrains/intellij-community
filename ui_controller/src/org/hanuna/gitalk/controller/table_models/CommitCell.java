@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.controller;
+package org.hanuna.gitalk.controller.table_models;
 
 import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.refs.Ref;

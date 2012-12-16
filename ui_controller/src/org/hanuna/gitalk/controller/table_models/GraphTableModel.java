@@ -1,8 +1,9 @@
-package org.hanuna.gitalk.controller;
+package org.hanuna.gitalk.controller.table_models;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitData;
 import org.hanuna.gitalk.common.ReadOnlyList;
+import org.hanuna.gitalk.controller.DateConverter;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.graph_elements.GraphElement;
 import org.hanuna.gitalk.graph.graph_elements.Node;
@@ -17,7 +18,7 @@ import javax.swing.table.AbstractTableModel;
 /**
 * @author erokhins
 */
-class GraphTableModel extends AbstractTableModel {
+public class GraphTableModel extends AbstractTableModel {
     private final String[] columnNames = {"Subject", "Author", "Date"};
     private final Graph graph;
     private final RefsModel refsModel;

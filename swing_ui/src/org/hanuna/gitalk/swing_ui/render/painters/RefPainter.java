@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.swing_ui.render.painters;
 
 import org.hanuna.gitalk.common.ReadOnlyList;
-import org.hanuna.gitalk.controller.GraphCommitCell;
+import org.hanuna.gitalk.controller.table_models.GraphCommitCell;
 import org.hanuna.gitalk.refs.Ref;
 import org.jetbrains.annotations.NotNull;
 

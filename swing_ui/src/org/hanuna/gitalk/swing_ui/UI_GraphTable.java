@@ -1,13 +1,13 @@
 package org.hanuna.gitalk.swing_ui;
 
 import org.hanuna.gitalk.controller.EventsController;
-import org.hanuna.gitalk.controller.GraphCommitCell;
+import org.hanuna.gitalk.controller.table_models.GraphCommitCell;
 import org.hanuna.gitalk.controller.UI_Controller;
 import org.hanuna.gitalk.graph.graph_elements.GraphElement;
 import org.hanuna.gitalk.printmodel.PrintCell;
 import org.hanuna.gitalk.swing_ui.render.GraphCommitCellRender;
-import org.hanuna.gitalk.swing_ui.render.painters.GraphTableCellPainter;
-import org.hanuna.gitalk.swing_ui.render.painters.SimpleGraphTableCellPainter;
+import org.hanuna.gitalk.swing_ui.render.painters.GraphCellPainter;
+import org.hanuna.gitalk.swing_ui.render.painters.SimpleGraphCellPainter;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -20,7 +20,7 @@ import java.awt.event.MouseEvent;
  */
 public class UI_GraphTable extends JTable {
     private final UI_Controller ui_controller;
-    private final GraphTableCellPainter graphPainter = new SimpleGraphTableCellPainter();
+    private final GraphCellPainter graphPainter = new SimpleGraphCellPainter();
     private final MouseAdapter mouseAdapter = new MyMouseAdapter();
 
     public UI_GraphTable(UI_Controller ui_controller) {
