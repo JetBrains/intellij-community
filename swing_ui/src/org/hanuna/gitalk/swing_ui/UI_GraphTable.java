@@ -5,8 +5,8 @@ import org.hanuna.gitalk.controller.GraphCommitCell;
 import org.hanuna.gitalk.controller.UI_Controller;
 import org.hanuna.gitalk.graph.graph_elements.GraphElement;
 import org.hanuna.gitalk.printmodel.PrintCell;
+import org.hanuna.gitalk.swing_ui.render.GraphCommitCellRender;
 import org.hanuna.gitalk.swing_ui.render.painters.GraphTableCellPainter;
-import org.hanuna.gitalk.swing_ui.render.GraphTableCellRender;
 import org.hanuna.gitalk.swing_ui.render.painters.SimpleGraphTableCellPainter;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +30,7 @@ public class UI_GraphTable extends JTable {
     }
 
     private void prepare() {
-        setDefaultRenderer(GraphCommitCell.class, new GraphTableCellRender(graphPainter, mouseAdapter));
+        setDefaultRenderer(GraphCommitCell.class, new GraphCommitCellRender(graphPainter));
         setRowHeight(GraphCommitCell.HEIGHT_CELL);
         setShowHorizontalLines(false);
         setIntercellSpacing(new Dimension(0, 0));
