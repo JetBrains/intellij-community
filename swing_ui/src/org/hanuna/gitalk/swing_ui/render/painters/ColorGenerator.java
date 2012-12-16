@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.swingui;
+package org.hanuna.gitalk.swing_ui.render.painters;
 
 import org.hanuna.gitalk.graph.graph_elements.Branch;
 import org.jetbrains.annotations.NotNull;

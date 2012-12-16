@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.swingui;
+package org.hanuna.gitalk.swing_ui;
 
 import org.hanuna.gitalk.controller.UI_Controller;
 

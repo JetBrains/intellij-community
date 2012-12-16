@@ -1,10 +1,13 @@
-package org.hanuna.gitalk.swingui;
+package org.hanuna.gitalk.swing_ui;
 
 import org.hanuna.gitalk.controller.EventsController;
 import org.hanuna.gitalk.controller.GraphCommitCell;
 import org.hanuna.gitalk.controller.UI_Controller;
 import org.hanuna.gitalk.graph.graph_elements.GraphElement;
 import org.hanuna.gitalk.printmodel.PrintCell;
+import org.hanuna.gitalk.swing_ui.render.painters.GraphTableCellPainter;
+import org.hanuna.gitalk.swing_ui.render.GraphTableCellRender;
+import org.hanuna.gitalk.swing_ui.render.painters.SimpleGraphTableCellPainter;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -17,7 +20,7 @@ import java.awt.event.MouseEvent;
  */
 public class UI_GraphTable extends JTable {
     private final UI_Controller ui_controller;
-    private final DrawGraphTableCell drawGraph = new SimpleDrawGraphTableCell();
+    private final GraphTableCellPainter graphPainter = new SimpleGraphTableCellPainter();
     private final MouseAdapter mouseAdapter = new MyMouseAdapter();
 
     public UI_GraphTable(UI_Controller ui_controller) {
@@ -27,7 +30,7 @@ public class UI_GraphTable extends JTable {
     }
 
     private void prepare() {
-        setDefaultRenderer(GraphCommitCell.class, new GraphTableCellRender(drawGraph, mouseAdapter));
+        setDefaultRenderer(GraphCommitCell.class, new GraphTableCellRender(graphPainter, mouseAdapter));
         setRowHeight(GraphCommitCell.HEIGHT_CELL);
         setShowHorizontalLines(false);
         setIntercellSpacing(new Dimension(0, 0));
@@ -62,7 +65,7 @@ public class UI_GraphTable extends JTable {
             int y = e.getY() - rowIndex * GraphCommitCell.HEIGHT_CELL;
             int x = e.getX();
             PrintCell row = ui_controller.getGraphPrintCell(rowIndex);
-            return drawGraph.mouseOver(row, x, y);
+            return graphPainter.mouseOver(row, x, y);
         }
 
         @Override

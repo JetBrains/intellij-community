@@ -1,6 +1,8 @@
-package org.hanuna.gitalk.swingui;
+package org.hanuna.gitalk.swing_ui.render;
 
 import org.hanuna.gitalk.controller.GraphCommitCell;
+import org.hanuna.gitalk.swing_ui.render.painters.GraphTableCellPainter;
+import org.hanuna.gitalk.swing_ui.render.painters.RefPainter;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -14,13 +16,13 @@ import java.awt.font.FontRenderContext;
  * @author erokhins
  */
 public class GraphTableCellRender implements TableCellRenderer {
-    private final DrawGraphTableCell drawGraph;
+    private final GraphTableCellPainter graphPainter;
     private final ExtDefaultCellRender cellRender = new ExtDefaultCellRender();
     private final MouseAdapter mouseAdapter;
     private final RefPainter refPainter = new RefPainter();
 
-    public GraphTableCellRender(DrawGraphTableCell drawGraph, MouseAdapter mouseAdapter) {
-        this.drawGraph = drawGraph;
+    public GraphTableCellRender(GraphTableCellPainter graphPainter, MouseAdapter mouseAdapter) {
+        this.graphPainter = graphPainter;
         this.mouseAdapter = mouseAdapter;
     }
 
@@ -56,7 +58,7 @@ public class GraphTableCellRender implements TableCellRenderer {
         public void paint(Graphics g) {
             super.paint(g);
             Graphics2D g2 = (Graphics2D) g;
-            drawGraph.draw(g2, cell.getRow());
+            graphPainter.draw(g2, cell.getRow());
 
             int countCells = cell.getRow().countCell();
             int padding = countCells * GraphCommitCell.WIDTH_NODE;

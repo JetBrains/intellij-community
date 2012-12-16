@@ -1,6 +1,5 @@
 import org.hanuna.gitalk.controller.UI_Controller;
-import org.hanuna.gitalk.refs.RefsModel;
-import org.hanuna.gitalk.swingui.GitAlkUI;
+import org.hanuna.gitalk.swing_ui.GitAlkUI;
 
 import java.io.IOException;
 

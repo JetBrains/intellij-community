@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.swingui;
+package org.hanuna.gitalk.swing_ui.render.painters;
 
 import org.hanuna.gitalk.graph.graph_elements.Edge;
 import org.hanuna.gitalk.graph.graph_elements.GraphElement;
@@ -16,7 +16,7 @@ import static org.hanuna.gitalk.controller.GraphCommitCell.*;
 /**
  * @author erokhins
  */
-public class SimpleDrawGraphTableCell implements DrawGraphTableCell {
+public class SimpleGraphTableCellPainter implements GraphTableCellPainter {
     private Graphics2D g2;
     private final Stroke usual = new BasicStroke(THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
     private final Stroke hide = new BasicStroke(THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{7}, 0);

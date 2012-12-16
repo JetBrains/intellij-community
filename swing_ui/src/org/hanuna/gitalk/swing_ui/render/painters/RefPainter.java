@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.swingui;
+package org.hanuna.gitalk.swing_ui.render.painters;
 
 import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.controller.GraphCommitCell;

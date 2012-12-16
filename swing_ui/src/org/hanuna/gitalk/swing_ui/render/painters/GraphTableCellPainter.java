@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.swingui;
+package org.hanuna.gitalk.swing_ui.render.painters;
 
 import org.hanuna.gitalk.graph.graph_elements.GraphElement;
 import org.hanuna.gitalk.printmodel.PrintCell;
@@ -9,7 +9,7 @@ import java.awt.*;
 /**
  * @author erokhins
  */
-public interface DrawGraphTableCell {
+public interface GraphTableCellPainter {
 
     public void draw(Graphics2D g2, PrintCell row);
 
