@@ -593,9 +593,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
         options.add(processorsPath == null? "" : FileUtil.toSystemDependentName(processorsPath.trim()));
       }
 
-      for (String procFQName : profile.getProcessors()) {
+      final Set<String> processors = profile.getProcessors();
+      if (!processors.isEmpty()) {
         options.add("-processor");
-        options.add(procFQName);
+        options.add(StringUtil.join(processors, ","));
       }
 
       for (Map.Entry<String, String> optionEntry : profile.getProcessorOptions().entrySet()) {

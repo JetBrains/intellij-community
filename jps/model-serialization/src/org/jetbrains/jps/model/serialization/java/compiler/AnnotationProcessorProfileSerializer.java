@@ -68,7 +68,7 @@ public class AnnotationProcessorProfileSerializer {
     profile.clearProcessors();
     for (Object procElement : element.getChildren("processor")) {
       final String name = ((Element)procElement).getAttributeValue(NAME);
-      if (StringUtil.isEmptyOrSpaces(name)) {
+      if (!StringUtil.isEmptyOrSpaces(name)) {
         profile.addProcessor(name);
       }
     }
