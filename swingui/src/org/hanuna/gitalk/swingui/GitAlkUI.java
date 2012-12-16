@@ -1,11 +1,6 @@
 package org.hanuna.gitalk.swingui;
 
 import org.hanuna.gitalk.controller.UI_Controller;
-import org.hanuna.gitalk.controller.EventsController;
-import org.hanuna.gitalk.controller.GraphTableCell;
-import org.hanuna.gitalk.graph.graph_elements.GraphElement;
-import org.hanuna.gitalk.printmodel.PrintCell;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,42 +11,51 @@ import java.awt.event.MouseEvent;
  * @author erokhins
  */
 public class GitAlkUI extends JFrame {
-    private JTable table;
-    private final DrawGraphTableCell drawGraph = new SimpleDrawGraphTableCell();
-    private final MouseAdapter mouseAdapter = new MyMouseAdapter();
+    private final UI_GraphTable table;
     private final UI_Controller controller;
 
-    public GitAlkUI(UI_Controller controller) {
-        this.controller = controller;
+
+    public GitAlkUI(final UI_Controller ui_controller) {
+        this.controller = ui_controller;
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setTitle("GitAlk");
-        table = new JTable(controller.getTableModel());
-        table.setDefaultRenderer(GraphTableCell.class, new GraphTableCellRender(drawGraph, mouseAdapter));
-        table.setRowHeight(GraphTableCell.HEIGHT_CELL);
-        table.setShowHorizontalLines(false);
-        table.setIntercellSpacing(new Dimension(0, 0));
+        table = new UI_GraphTable(ui_controller);
+        final JScrollPane scrollPane = new JScrollPane(table);
 
-        table.getColumnModel().getColumn(0).setPreferredWidth(800);
-        table.getColumnModel().getColumn(1).setMinWidth(80);
-        table.getColumnModel().getColumn(2).setMinWidth(80);
+        JTabbedPane tabsTwo = new JTabbedPane(JTabbedPane.TOP);
+        tabsTwo.add("graph", scrollPane);
+        JPanel branches = new JPanel();
+        branches.add(new JButton("button!"));
+        tabsTwo.add("branches", branches);
 
-        table.addMouseMotionListener(mouseAdapter);
-        table.addMouseListener(mouseAdapter);
 
-        controller.addControllerListener(new EventsController.ControllerListener() {
+        JButton b1 = new JButton("B");
+        b1.setPreferredSize(new Dimension(40, 40));
+        b1.addMouseListener(new MouseAdapter() {
             @Override
-            public void jumpToRow(int rowIndex) {
-                table.scrollRectToVisible(new Rectangle(table.getCellRect(rowIndex, 0, false)));
-                table.setRowSelectionInterval(rowIndex, rowIndex);
-            }
-
-            @Override
-            public void updateTable() {
-                table.updateUI();
+            public void mouseClicked(MouseEvent e) {
+                scrollPane.setVisible(! scrollPane.isVisible());
+                GitAlkUI.this.validate();
             }
         });
 
-        getContentPane().add(new JScrollPane(table));
+        JButton b2 = new JButton("B2");
+
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.X_AXIS));
+
+        JPanel leftPanel = new JPanel();
+        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.PAGE_AXIS));
+
+        leftPanel.add(b1);
+        leftPanel.add(b2);
+        leftPanel.add(new  JCheckBox());
+        leftPanel.add(Box.createVerticalGlue());
+
+        mainPanel.add(leftPanel);
+        //mainPanel.add(Box.createVerticalStrut(2));
+        mainPanel.add(tabsTwo);
+        setContentPane(mainPanel);
         pack();
     }
 
@@ -59,25 +63,6 @@ public class GitAlkUI extends JFrame {
         setVisible(true);
     }
 
-    private class MyMouseAdapter extends MouseAdapter {
-        @Nullable
-        private GraphElement overCell(MouseEvent e) {
-            int rowIndex = e.getY() / GraphTableCell.HEIGHT_CELL;
-            int y = e.getY() - rowIndex * GraphTableCell.HEIGHT_CELL;
-            int x = e.getX();
-            PrintCell row = controller.getGraphPrintCell(rowIndex);
-            return drawGraph.mouseOver(row, x, y);
-        }
 
-        @Override
-        public void mouseClicked(MouseEvent e) {
-           controller.click(overCell(e));
-        }
-
-        @Override
-        public void mouseMoved(MouseEvent e) {
-            controller.over(overCell(e));
-        }
-    }
 
 }
