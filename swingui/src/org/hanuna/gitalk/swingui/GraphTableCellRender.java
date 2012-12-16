@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.swingui;
 
-import org.hanuna.gitalk.controller.GraphTableCell;
+import org.hanuna.gitalk.controller.GraphCommitCell;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -33,19 +33,19 @@ public class GraphTableCellRender implements TableCellRenderer {
     }
 
     public class ExtDefaultCellRender extends DefaultTableCellRenderer {
-        private GraphTableCell cell;
+        private GraphCommitCell cell;
         private FontRenderContext fontContext; // need for calculate padding
 
         public Component getTableCellRendererComponent(JTable table, Object value,
                                                        boolean isSelected, boolean hasFocus, int row, int column) {
-            cell = (GraphTableCell) value;
+            cell = (GraphCommitCell) value;
             fontContext = ((Graphics2D) table.getGraphics()).getFontRenderContext();
 
             int refPadding = refPainter.padding(cell.getRefsToThisCommit(), fontContext);
             super.getTableCellRendererComponent(table, cell.getText(), isSelected, hasFocus, row, column);
 
             int countCells = cell.getRow().countCell();
-            int padding = countCells * GraphTableCell.WIDTH_NODE + refPadding;
+            int padding = countCells * GraphCommitCell.WIDTH_NODE + refPadding;
             Border paddingBorder = BorderFactory.createEmptyBorder(0, padding, 0, 0);
             this.setBorder(BorderFactory.createCompoundBorder(this.getBorder(), paddingBorder));
             return this;
@@ -59,7 +59,7 @@ public class GraphTableCellRender implements TableCellRenderer {
             drawGraph.draw(g2, cell.getRow());
 
             int countCells = cell.getRow().countCell();
-            int padding = countCells * GraphTableCell.WIDTH_NODE;
+            int padding = countCells * GraphCommitCell.WIDTH_NODE;
             refPainter.draw(g2, cell.getRefsToThisCommit(), padding);
         }
     }

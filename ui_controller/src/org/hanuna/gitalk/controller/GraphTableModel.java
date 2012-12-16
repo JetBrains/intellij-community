@@ -72,7 +72,7 @@ class GraphTableModel extends AbstractTableModel {
                     message = data.getMessage();
                     refs = refsModel.refsToCommit(commit.hash());
                 }
-                return new GraphTableCell(printCellModel.getPrintCellRow(rowIndex), message, refs);
+                return new GraphCommitCell(printCellModel.getPrintCellRow(rowIndex), message, refs);
             case 1:
                 if (data == null) {
                     return "";
@@ -94,7 +94,7 @@ class GraphTableModel extends AbstractTableModel {
     public Class<?> getColumnClass(int column) {
         switch (column) {
             case 0:
-                return GraphTableCell.class;
+                return GraphCommitCell.class;
             case 1:
                 return String.class;
             case 2:

@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.swingui;
 
 import org.hanuna.gitalk.common.ReadOnlyList;
-import org.hanuna.gitalk.controller.GraphTableCell;
+import org.hanuna.gitalk.controller.GraphCommitCell;
 import org.hanuna.gitalk.refs.Ref;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +30,7 @@ public class RefPainter {
         FontMetrics metrics = g2.getFontMetrics();
         g2.setColor(DEFAULT_FONT_COLOR);
         int x = padding + REF_PADDING / 2;
-        int y = GraphTableCell.HEIGHT_CELL / 2 + (metrics.getAscent() - metrics.getDescent()) / 2;
+        int y = GraphCommitCell.HEIGHT_CELL / 2 + (metrics.getAscent() - metrics.getDescent()) / 2;
         g2.drawString(str, x , y);
     }
 
@@ -54,7 +54,7 @@ public class RefPainter {
         int x = padding + REF_PADDING / 2 - RECTANGLE_X_PADDING;
         int y = RECTANGLE_Y_PADDING;
         int width = metrics.stringWidth(ref.getShortName()) + 2 * RECTANGLE_X_PADDING;
-        int height = GraphTableCell.HEIGHT_CELL -2 * RECTANGLE_Y_PADDING;
+        int height = GraphCommitCell.HEIGHT_CELL -2 * RECTANGLE_Y_PADDING;
         RoundRectangle2D rectangle2D = new RoundRectangle2D.Double(x, y, width, height, ROUND_RADIUS, ROUND_RADIUS);
 
         g2.setColor(refBackgroundColor(ref));
