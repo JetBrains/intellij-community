@@ -25,6 +25,7 @@ public class UI_Controller {
     private final GraphFragmentController fragmentController;
     private final EventsController events = new EventsController();
     private final GraphTableModel graphTableModel;
+    private final RefTableModel refTableModel;
 
     private GraphElement prevGraphElement = null;
 
@@ -34,12 +35,16 @@ public class UI_Controller {
         this.selectController = printCellModel.getSelectController();
 
         this.graphTableModel = new GraphTableModel(graph, refsModel, printCellModel);
+        this.refTableModel = new RefTableModel(refsModel);
     }
 
     public TableModel getGraphTableModel() {
         return graphTableModel;
     }
 
+    public RefTableModel getRefTableModel() {
+        return refTableModel;
+    }
 
     public PrintCell getGraphPrintCell(int rowIndex) {
         return printCellModel.getPrintCellRow(rowIndex);
