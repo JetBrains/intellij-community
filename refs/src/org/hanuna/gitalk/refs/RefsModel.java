@@ -4,7 +4,6 @@ import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.Hash;
 import org.hanuna.gitalk.common.ReadOnlyList;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -21,9 +20,11 @@ public class RefsModel {
             refCommits.add(ref.getCommitHash());
         }
         Set<Hash> existedCommitsRefs = new HashSet<Hash>();
+        List<Commit> orderedLogExistedCommits = new ArrayList<Commit>();
         for (Commit commit : commits) {
             if (refCommits.contains(commit.hash())) {
                 existedCommitsRefs.add(commit.hash());
+                orderedLogExistedCommits.add(commit);
             }
         }
 
@@ -33,28 +34,22 @@ public class RefsModel {
                 existedRef.add(ref);
             }
         }
-        return new RefsModel(existedRef);
+        return new RefsModel(existedRef, orderedLogExistedCommits);
     }
 
     private final List<Ref> allRefs;
     private final Set<Hash> trackedHash = new HashSet<Hash>();
-    private final List<Ref> localBranches = new ArrayList<Ref>();
-    private final List<Ref> remoteBranches = new ArrayList<Ref>();
+    private final List<Commit> orderedLogTrackedCommit;
 
-    public RefsModel(List<Ref> allRefs) {
+    public RefsModel(List<Ref> allRefs, List<Commit> orderedLogTrackedCommit) {
         this.allRefs = allRefs;
+        this.orderedLogTrackedCommit = orderedLogTrackedCommit;
         for (Ref ref : allRefs) {
             trackedHash.add(ref.getCommitHash());
-            if (ref.getType() == Ref.Type.LOCAL_BRANCH) {
-                localBranches.add(ref);
-            }
-            if (ref.getType() == Ref.Type.REMOTE_BRANCH) {
-                remoteBranches.add(ref);
-            }
         }
     }
 
-    @Nullable
+    @NotNull
     public ReadOnlyList<Ref> refsToCommit(@NotNull Hash hash) {
         List<Ref> refs = new ArrayList<Ref>();
         if (trackedHash.contains(hash)) {
@@ -67,12 +62,8 @@ public class RefsModel {
         return ReadOnlyList.newReadOnlyList(refs);
     }
 
-    public ReadOnlyList<Ref> localBranches() {
-        return ReadOnlyList.newReadOnlyList(localBranches);
+    @NotNull
+    public ReadOnlyList<Commit> getOrderedLogTrackedCommit() {
+        return ReadOnlyList.newReadOnlyList(orderedLogTrackedCommit);
     }
-
-    public ReadOnlyList<Ref> remoteBranches() {
-        return ReadOnlyList.newReadOnlyList(remoteBranches);
-    }
-
 }
