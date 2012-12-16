@@ -38,6 +38,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.rt.compiler.JavacRunner;
@@ -295,9 +296,10 @@ public class JavacCompiler extends ExternalCompiler {
         additionalOptions.add("-processorpath");
         additionalOptions.add(FileUtil.toSystemDependentName(processorPath));
       }
-      for (String processorName : config.getProcessors()) {
+      final Set<String> processors = config.getProcessors();
+      if (!processors.isEmpty()) {
         additionalOptions.add("-processor");
-        additionalOptions.add(processorName);
+        additionalOptions.add(StringUtil.join(processors, ","));
       }
       for (Map.Entry<String, String> entry : config.getProcessorOptions().entrySet()) {
         additionalOptions.add("-A" + entry.getKey() + "=" +entry.getValue());
