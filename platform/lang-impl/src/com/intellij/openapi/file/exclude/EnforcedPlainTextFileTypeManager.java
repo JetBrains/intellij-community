@@ -160,6 +160,7 @@ public class EnforcedPlainTextFileTypeManager extends PersistentFileSetManager i
     if (!DirectoryIndex.getInstance(project).isInitialized()) return false;
     myProcessedProjects.add(project);
     ProjectPlainTextFileTypeManager projectPlainTextFileTypeManager = ProjectPlainTextFileTypeManager.getInstance(project);
+    if (projectPlainTextFileTypeManager == null) return true;
     for (VirtualFile file : projectPlainTextFileTypeManager.getFiles()) {
       addFile(file);
     }
