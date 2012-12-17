@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -43,18 +45,19 @@ import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.
  * @author Maxim.Medvedev
  */
 public class ClosureGenerator {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.ClosureGenerator");
+  private static final Logger LOG = Logger.getInstance(ClosureGenerator.class);
+
   public static final String[] MODIFIERS = new String[]{PsiModifier.PUBLIC};
 
-  StringBuilder builder;
-  ExpressionContext context;
+  private final StringBuilder builder;
+  private final ExpressionContext context;
 
-  public ClosureGenerator(StringBuilder builder, ExpressionContext context) {
+  public ClosureGenerator(@NotNull StringBuilder builder, @NotNull ExpressionContext context) {
     this.builder = builder;
     this.context = context;
   }
 
-  public void generate(GrClosableBlock closure) {
+  public void generate(@NotNull GrClosableBlock closure) {
     final String owner = getOwner(closure);
     builder.append("new ");
     writeTypeForNew(builder, closure.getType(), closure);
@@ -78,7 +81,7 @@ public class ClosureGenerator {
     builder.append('}');
   }
 
-  private void generateClosureMainMethod(GrClosableBlock block) {
+  private void generateClosureMainMethod(@NotNull GrClosableBlock block) {
     builder.append("public ");
     final PsiType returnType = block.getReturnType();
     writeType(builder, returnType, block);
@@ -94,7 +97,8 @@ public class ClosureGenerator {
     builder.append('\n');
   }
 
-  private GrMethod generateClosureMethod(GrClosableBlock block) {
+  @NotNull
+  private GrMethod generateClosureMethod(@NotNull GrClosableBlock block) {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.project);
     final GrMethod method = factory.createMethodFromText("def doCall(){}", block);
 
@@ -113,7 +117,9 @@ public class ClosureGenerator {
     return method;
   }
 
-  private static String getOwner(GrClosableBlock closure) {
+  @NonNls
+  @NotNull
+  private static String getOwner(@NotNull GrClosableBlock closure) {
     final GroovyPsiElement context = PsiTreeUtil.getParentOfType(closure, GrMember.class, GrClosableBlock.class, GroovyFile.class);
     LOG.assertTrue(context != null);
 
