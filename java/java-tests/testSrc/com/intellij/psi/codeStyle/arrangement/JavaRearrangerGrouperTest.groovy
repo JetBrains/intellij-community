@@ -29,7 +29,12 @@ import static com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrder
  * @since 9/18/12 11:19 AM
  */
 class JavaRearrangerGrouperTest extends AbstractJavaRearrangerTest {
-
+  
+  void setUp() {
+    super.setUp()
+    commonSettings.BLANK_LINES_AROUND_METHOD = 0
+  }
+  
   void testGettersAndSetters() {
     commonSettings.BLANK_LINES_AROUND_METHOD = 1
     
@@ -55,7 +60,6 @@ class Test {
   
   @Test
   void testUtilityMethodsDepthFirst() {
-    commonSettings.BLANK_LINES_AROUND_METHOD = 0
     doTest(
       initial: '''\
 class Test {
@@ -78,7 +82,6 @@ class Test {
 
   @Test
   void testUtilityMethodsBreadthFirst() {
-    commonSettings.BLANK_LINES_AROUND_METHOD = 0
     doTest(
       initial: '''\
 class Test {
@@ -98,7 +101,6 @@ class Test {
   }
 
   void testOverriddenMethods() {
-    commonSettings.BLANK_LINES_AROUND_METHOD = 0
     doTest(
       initial: '''\
 class Base {
@@ -127,7 +129,6 @@ class Sub extends Base {
 }''')
   }
   void testOverriddenAndUtilityMethods() {
-    commonSettings.BLANK_LINES_AROUND_METHOD = 0
     doTest(
       initial: '''\
 class Base {
@@ -158,5 +159,35 @@ class Sub extends Base {
   void test3() { test4(); }
   void test4() {}
 }''')
+  }
+
+  void "test that calls from anonymous class create a dependency"() {
+    doTest(
+      initial: '''
+class Test {
+  void test2() {}
+  void test1() { test2(); }
+  void root() {
+    new Runnable() {
+      public void run() {
+        test1();
+      }
+    }.run();
+  }
+}''',
+      groups: [group(DEPENDENT_METHODS, DEPTH_FIRST)],
+      expected: '''
+class Test {
+  void root() {
+    new Runnable() {
+      public void run() {
+        test1();
+      }
+    }.run();
+  }
+  void test1() { test2(); }
+  void test2() {}
+}'''
+    )
   }
 }
