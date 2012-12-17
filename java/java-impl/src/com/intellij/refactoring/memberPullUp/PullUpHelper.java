@@ -219,7 +219,7 @@ public class PullUpHelper extends BaseRefactoringProcessor{
       if (info.getMember() instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)info.getMember();
         PsiMethod methodCopy = (PsiMethod)method.copy();
-        if (method.findDeepestSuperMethods().length == 0) {
+        if (method.findSuperMethods(myTargetSuperClass).length == 0) {
           deleteOverrideAnnotationIfFound(methodCopy);
         }
         final boolean isOriginalMethodAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT) || method.hasModifierProperty(PsiModifier.DEFAULT);
