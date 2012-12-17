@@ -495,8 +495,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     if (Comparing.equal(charset, old)) return;
     byte[] bom = charset == null ? null : CharsetToolkit.getBom(charset);
     byte[] existingBOM = getBOM();
-    if (bom == null && charset != null && CharsetToolkit.canHaveBom(charset, existingBOM)) {
-      bom = existingBOM;
+    if (bom == null && charset != null) {
+      bom = CharsetToolkit.canHaveBom(charset, existingBOM) ? existingBOM : null;
     }
     setBOM(bom);
 

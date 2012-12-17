@@ -41,6 +41,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -126,9 +127,32 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
         Charset charset = LoadTextUtil.charsetFromContentOrNull(project, virtualFile, document.getText());
         Charset oldCached = getCachedCharsetFromContent(document);
         if (!Comparing.equal(charset, oldCached)) {
-          document.putUserData(CACHED_CHARSET_FROM_CONTENT, charset);
-          firePropertyChange(PROP_CACHED_ENCODING_CHANGED, oldCached, charset);
+          setCachedCharsetFromContent(charset, oldCached, document);
         }
+      }
+    });
+  }
+
+  private void setCachedCharsetFromContent(Charset charset, Charset oldCached, Document document) {
+    document.putUserData(CACHED_CHARSET_FROM_CONTENT, charset);
+    firePropertyChange(PROP_CACHED_ENCODING_CHANGED, oldCached, charset);
+  }
+
+  @Nullable("returns null if charset set cannot be determined from content")
+  public Charset computeCharsetFromContent(@NotNull final VirtualFile virtualFile) {
+    final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    if (document == null) return null;
+    final Charset cached = EncodingManager.getInstance().getCachedCharsetFromContent(document);
+    if (cached != null) return cached;
+    final Project project = ProjectLocator.getInstance().guessProjectForFile(virtualFile);
+    return ApplicationManager.getApplication().runReadAction(new Computable<Charset>() {
+      @Override
+      public Charset compute() {
+        Charset charsetFromContent = LoadTextUtil.charsetFromContentOrNull(project, virtualFile, document.getText());
+        if (charsetFromContent != null) {
+          setCachedCharsetFromContent(charsetFromContent, cached, document);
+        }
+        return charsetFromContent;
       }
     });
   }
