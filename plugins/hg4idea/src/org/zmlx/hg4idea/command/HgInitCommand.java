@@ -32,7 +32,7 @@ public class HgInitCommand {
       public void process(@Nullable HgCommandResult result) {
         resultHandler.process(result);
       }
-    });
+    }, true);
   }
 
 }

@@ -59,10 +59,6 @@ public class HgPullCommand {
   }
 
   public boolean execute() {
-    return execute(false);
-  }
-
-  public boolean execute(boolean forceAuthorization) {
     List<String> arguments = new LinkedList<String>();
     if (update) {
       arguments.add("--update");
@@ -79,7 +75,10 @@ public class HgPullCommand {
 
     final HgCommandExecutor executor = new HgCommandExecutor(project);
     executor.setShowOutput(true);
-    final HgCommandResult result = executor.executeInCurrentThread(repo, "pull", arguments);
+    HgCommandResult result = executor.executeInCurrentThread(repo, "pull", arguments);
+    if (HgErrorUtil.isAuthorizationError(result)) {
+      result = executor.executeInCurrentThread(repo, "pull", arguments, true);
+    }
     if (HgErrorUtil.isAuthorizationError(result)) {
       new HgCommandResultNotifier(project)
         .notifyError(result, "Authorization required", "http authorization required for <code>" + source + "</code>");

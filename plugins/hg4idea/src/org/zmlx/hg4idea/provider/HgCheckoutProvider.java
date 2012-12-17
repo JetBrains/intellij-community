@@ -16,7 +16,6 @@
 package org.zmlx.hg4idea.provider;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -40,8 +39,6 @@ import java.io.File;
  * Checkout provider for Mercurial
  */
 public class HgCheckoutProvider implements CheckoutProvider {
-
-  private static final Logger LOG = Logger.getInstance(HgCheckoutProvider.class.getName());
 
   public void doCheckout(@NotNull final Project project, @Nullable final Listener listener) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -70,7 +67,10 @@ public class HgCheckoutProvider implements CheckoutProvider {
         clone.setDirectory(targetDir);
 
         // handle result
-        final HgCommandResult myCloneResult = clone.execute();
+        HgCommandResult myCloneResult = clone.execute();
+        if (HgErrorUtil.isAuthorizationError(myCloneResult)) {
+          myCloneResult = clone.execute(true);
+        }
         if (myCloneResult == null) {
           new HgCommandResultNotifier(project).notifyError(myCloneResult, "Clone failed", "Clone failed due to unknown error");
         } else if (HgErrorUtil.hasErrorsInCommandExecution(myCloneResult)) {

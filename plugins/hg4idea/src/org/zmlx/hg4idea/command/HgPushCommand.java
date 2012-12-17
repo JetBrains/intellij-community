@@ -78,7 +78,7 @@ public class HgPushCommand {
         }
         resultHandler.process(result);
       }
-    });
+    }, true);
   }
 
   public VirtualFile getRepo() {

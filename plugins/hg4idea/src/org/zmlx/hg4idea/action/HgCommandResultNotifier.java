@@ -37,27 +37,32 @@ public final class HgCommandResultNotifier {
     HgVcs.NOTIFICATION_GROUP.createNotification(title, successDescription, NotificationType.INFORMATION, null).notify(myProject);
   }
 
-  public void notifyError(HgCommandResult result, @NotNull String failureTitle, @NotNull String failureDescription) {
+  public void notifyError(@Nullable HgCommandResult result, @NotNull String failureTitle, @NotNull String failureDescription) {
     notifyError(result, failureTitle, failureDescription, null);
   }
 
-  public void notifyError(@NotNull HgCommandResult result,
+  public void notifyError(@Nullable HgCommandResult result,
                           @NotNull String failureTitle,
                           @NotNull String failureDescription,
                           @Nullable NotificationListener listener) {
-    List<String> err = result.getErrorLines();
+    List<String> err;
     String errorMessage;
     if (StringUtil.isEmptyOrSpaces(failureDescription)) {
       failureDescription = failureTitle;
     }
-    if (err.isEmpty()) {
-      LOG.assertTrue(!StringUtil.isEmptyOrSpaces(failureDescription),
-                     "Failure title, failure description and errors log can not be empty at the same time");
+    if (result == null) {
       errorMessage = failureDescription;
-    } else if (failureDescription.isEmpty()) {
-      errorMessage = "<html>" + StringUtil.join(err, "<br>") + "</html>";
     } else {
-      errorMessage = "<html>" + failureDescription + "<br>" + StringUtil.join(err, "<br>") + "</html>";
+      err = result.getErrorLines();
+      if (err.isEmpty()) {
+        LOG.assertTrue(!StringUtil.isEmptyOrSpaces(failureDescription),
+                       "Failure title, failure description and errors log can not be empty at the same time");
+        errorMessage = failureDescription;
+      } else if (failureDescription.isEmpty()) {
+        errorMessage = "<html>" + StringUtil.join(err, "<br>") + "</html>";
+      } else {
+        errorMessage = "<html>" + failureDescription + "<br>" + StringUtil.join(err, "<br>") + "</html>";
+      }
     }
     HgVcs.IMPORTANT_ERROR_NOTIFICATION
       .createNotification(failureTitle, errorMessage, NotificationType.ERROR, listener)
