@@ -40,6 +40,7 @@ public class PyStringLiteralFileReferenceSet extends RootFileReferenceSet {
 
   @Override
   protected void reparse() {
+    //noinspection ConstantConditions
     if (myStringLiteralExpression != null) {
       MyTextRangeConsumer textRangeConsumer = new MyTextRangeConsumer(this);
 
@@ -69,9 +70,7 @@ public class PyStringLiteralFileReferenceSet extends RootFileReferenceSet {
     @Override
     public boolean process(int startOffset, int endOffset, String value) {
       if ("\\".equals(value) || "/".equals(value)) {
-        if (myStartOffset != -1) {
-          addReference(startOffset);
-        }
+        addReference(startOffset);
       }
       else {
         if (myStartOffset == -1) {
@@ -84,14 +83,17 @@ public class PyStringLiteralFileReferenceSet extends RootFileReferenceSet {
     }
 
     private void addReference(int startOffset) {
-      final FileReference ref = myFileReferenceSet.createFileReference(
-        new TextRange(myStartOffset, startOffset),
-        myIndex++,
-        myItem.toString());
-      myReferenceList.add(ref);
-      myStartOffset = -1;
-      myItem.setLength(0);
+      if (myStartOffset != -1) {
+        final FileReference ref = myFileReferenceSet.createFileReference(
+          new TextRange(myStartOffset, startOffset),
+          myIndex++,
+          myItem.toString());
+        myReferenceList.add(ref);
+        myStartOffset = -1;
+        myItem.setLength(0);
+      }
     }
+
 
     public void finish() {
       addReference(myEndOffset);
