@@ -16,6 +16,7 @@
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
@@ -203,6 +204,12 @@ public class StringConcatenationInspection extends BaseInspection {
         if (newExpression != null) {
           final PsiType newExpressionType = newExpression.getType();
           if (newExpressionType != null && InheritanceUtil.isInheritor(newExpressionType, "java.lang.Throwable")) {
+            return;
+          }
+        } else {
+          final PsiMethodCallExpression methodCallExpression = 
+            PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class, true, PsiCodeBlock.class);
+          if (methodCallExpression != null && HighlightUtil.isSuperOrThisMethodCall(methodCallExpression)) {
             return;
           }
         }
