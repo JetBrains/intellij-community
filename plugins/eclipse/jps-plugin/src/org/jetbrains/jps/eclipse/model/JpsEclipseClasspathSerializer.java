@@ -41,6 +41,7 @@ public class JpsEclipseClasspathSerializer extends JpsModuleClasspathSerializer 
     final JpsDependenciesList dependenciesList = module.getDependenciesList();
     dependenciesList.clear();
     try {
+      if (classpathDir == null) classpathDir = baseModulePath;
       final File classpathFile = new File(classpathDir, EclipseXml.DOT_CLASSPATH_EXT);
       if (!classpathFile.exists()) return; //no classpath file - no compilation
 
