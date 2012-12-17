@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.assignment;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
@@ -58,7 +57,8 @@ public class AssignmentToNullInspection extends BaseInspection {
     if (!(target instanceof PsiVariable)) {
       return null;
     }
-    return new DelegatingFix(new AddAnnotationFix(AnnotationUtil.NULLABLE, (PsiVariable)target));
+    final NullableNotNullManager manager = NullableNotNullManager.getInstance(target.getProject());
+    return new DelegatingFix(new AddAnnotationFix(manager.getDefaultNullable(), (PsiVariable)target));
   }
 
   @Override
