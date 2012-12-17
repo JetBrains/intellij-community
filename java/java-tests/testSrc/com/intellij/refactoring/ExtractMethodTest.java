@@ -550,6 +550,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testMethod2Interface() throws Exception {
+    doTest();
+  }
+
   public void testParamDetection() throws Exception {
     doTest();
   }

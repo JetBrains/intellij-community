@@ -1048,6 +1048,9 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
     }
 
+    if (myTargetClass.isInterface() && PsiUtil.isLanguageLevel8OrHigher(myTargetClass)) {
+      PsiUtil.setModifierProperty(newMethod, PsiModifier.DEFAULT, true);
+    }
     return (PsiMethod)myStyleManager.reformat(newMethod);
   }
 
