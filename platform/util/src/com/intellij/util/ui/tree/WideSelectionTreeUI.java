@@ -323,7 +323,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
         }
       }
       else {
-        if (UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderDarcula()) {
+        if (UIUtil.isUnderAquaBasedLookAndFeel() && !(!SystemInfo.isMac && UIUtil.isUnderDarcula())) {
           Color bg = UIUtil.getTreeSelectionBackground(tree.hasFocus());
           if (!selected) {
             bg = background;
