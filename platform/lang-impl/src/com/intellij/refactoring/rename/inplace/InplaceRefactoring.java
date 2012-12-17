@@ -131,7 +131,7 @@ public abstract class InplaceRefactoring {
 
   public InplaceRefactoring(
     Editor editor, PsiNamedElement elementToRename, Project project, String initialName, final String oldName) {
-    myEditor = /*(editor instanceof EditorWindow)? ((EditorWindow)editor).getDelegate() : */editor;
+    myEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
     myElementToRename = elementToRename;
     myProject = project;
     myOldName = oldName;
@@ -299,7 +299,7 @@ public abstract class InplaceRefactoring {
         }
 
         revertState();
-        final TemplateState templateState = TemplateManagerImpl.getTemplateState(InjectedLanguageUtil.getTopLevelEditor(myEditor));
+        final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
         if (templateState != null) {
           templateState.gotoEnd(true);
         }
@@ -348,12 +348,11 @@ public abstract class InplaceRefactoring {
     TextRange range = myScope.getTextRange();
     assert range != null;
     myHighlighters = new ArrayList<RangeHighlighter>();
-    Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
-    topLevelEditor.getCaretModel().moveToOffset(range.getStartOffset());
+    myEditor.getCaretModel().moveToOffset(range.getStartOffset());
 
-    TemplateManager.getInstance(myProject).startTemplate(topLevelEditor, template, templateListener);
+    TemplateManager.getInstance(myProject).startTemplate(myEditor, template, templateListener);
     restoreOldCaretPositionAndSelection(offset);
-    highlightTemplateVariables(template, topLevelEditor);
+    highlightTemplateVariables(template, myEditor);
   }
 
   private void highlightTemplateVariables(Template template, Editor topLevelEditor) {
@@ -528,13 +527,12 @@ public abstract class InplaceRefactoring {
     if (myOldName == null) return;
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
-        final Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            final TemplateState state = TemplateManagerImpl.getTemplateState(topLevelEditor);
+            final TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
             assert state != null;
             final int segmentsCount = state.getSegmentsCount();
-            final Document document = topLevelEditor.getDocument();
+            final Document document = myEditor.getDocument();
             for (int i = 0; i < segmentsCount; i++) {
               final TextRange segmentRange = state.getSegmentRange(i);
               document.replaceString(segmentRange.getStartOffset(), segmentRange.getEndOffset(), myOldName);
@@ -542,7 +540,7 @@ public abstract class InplaceRefactoring {
           }
         });
         if (!myProject.isDisposed() && myProject.isOpen()) {
-          PsiDocumentManager.getInstance(myProject).commitDocument(topLevelEditor.getDocument());
+          PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
         }
       }
     }, getCommandName(), null);
@@ -718,21 +716,20 @@ public abstract class InplaceRefactoring {
         releaseIfNotRestart();
       }
     });
-    final Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
-    topLevelEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-    myBalloon.show(new PositionTracker<Balloon>(topLevelEditor.getContentComponent()) {
+    myBalloon.show(new PositionTracker<Balloon>(myEditor.getContentComponent()) {
       @Override
       public RelativePoint recalculateLocation(Balloon object) {
-        if (myTarget != null && !popupFactory.isBestPopupLocationVisible(topLevelEditor)) {
+        if (myTarget != null && !popupFactory.isBestPopupLocationVisible(myEditor)) {
           return myTarget;
         }
-        final RelativePoint target = popupFactory.guessBestPopupLocation(topLevelEditor);
+        final RelativePoint target = popupFactory.guessBestPopupLocation(myEditor);
         if (target == null) return myTarget;
         final Point screenPoint = target.getScreenPoint();
         int y = screenPoint.y;
-        if (target.getPoint().getY() > topLevelEditor.getLineHeight() + myBalloon.getPreferredSize().getHeight()) {
-          y -= topLevelEditor.getLineHeight();
+        if (target.getPoint().getY() > myEditor.getLineHeight() + myBalloon.getPreferredSize().getHeight()) {
+          y -= myEditor.getLineHeight();
         }
         myTarget = new RelativePoint(new Point(screenPoint.x, y));
         return myTarget;
@@ -787,7 +784,7 @@ public abstract class InplaceRefactoring {
       finally {
         if (!bind) {
           try {
-            ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).stopDumb();
+            ((EditorImpl)myEditor).stopDumb();
           }
           finally {
             FinishMarkAction.finish(myProject, myEditor, myMarkAction);
