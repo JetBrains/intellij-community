@@ -11,7 +11,7 @@ public class LinuxTest {
     public static void main(String[] args) throws IOException {
         Controller controller = new Controller();
         controller.prepare();
-        UI_Controller UIController = new UI_Controller(controller.getGraph(), controller.getRefsModel());
+        UI_Controller UIController = new UI_Controller(controller);
         GitAlkUI ui = new GitAlkUI(UIController);
         ui.showUi();
     }

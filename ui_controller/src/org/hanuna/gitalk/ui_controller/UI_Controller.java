@@ -2,6 +2,7 @@ package org.hanuna.gitalk.ui_controller;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.compressedlist.Replace;
+import org.hanuna.gitalk.controller.Controller;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.GraphFragment;
 import org.hanuna.gitalk.graph.graph_elements.GraphElement;
@@ -25,24 +26,35 @@ import static org.hanuna.gitalk.ui_controller.EventsController.ControllerListene
  * @author erokhins
  */
 public class UI_Controller {
-    private final SelectController selectController;
-    private final PrintCellModel printCellModel;
-    private final GraphFragmentController fragmentController;
+    private final Controller controller;
     private final EventsController events = new EventsController();
-    private final GraphTableModel graphTableModel;
     private final RefTableModel refTableModel;
+
+    private Graph graph;
+    private PrintCellModel printCellModel;
+    private GraphTableModel graphTableModel;
 
     private GraphElement prevGraphElement = null;
     private Set<Commit> prevSelectionBranches;
 
-    public UI_Controller(Graph graph, RefsModel refsModel) {
-        this.fragmentController = graph.getFragmentController();
-        this.printCellModel = new PrintCellModel(graph);
-        this.selectController = printCellModel.getSelectController();
+    public UI_Controller(Controller controller) {
+        this.controller = controller;
+        graph = controller.getGraph();
+        RefsModel refsModel = controller.getRefsModel();
 
-        this.graphTableModel = new GraphTableModel(graph, refsModel, printCellModel);
         this.refTableModel = new RefTableModel(refsModel);
+
+        this.printCellModel = new PrintCellModel(graph);
+        this.graphTableModel = new GraphTableModel(graph, refsModel, printCellModel);
+
         this.prevSelectionBranches = new HashSet<Commit>(refTableModel.getCheckedCommits());
+    }
+
+    public void updateGraph() {
+        Graph graph = controller.getGraph();
+        RefsModel refsModel = controller.getRefsModel();
+        this.printCellModel = new PrintCellModel(graph);
+        this.graphTableModel = new GraphTableModel(graph, refsModel, printCellModel);
     }
 
     public TableModel getGraphTableModel() {
@@ -62,6 +74,8 @@ public class UI_Controller {
     }
 
     public void over(@Nullable GraphElement graphElement) {
+        SelectController selectController = printCellModel.getSelectController();
+        GraphFragmentController fragmentController = graph.getFragmentController();
         if (graphElement == prevGraphElement) {
             return;
         } else {
@@ -78,6 +92,8 @@ public class UI_Controller {
     }
 
     public void click(@Nullable GraphElement graphElement) {
+        SelectController selectController = printCellModel.getSelectController();
+        GraphFragmentController fragmentController = graph.getFragmentController();
         selectController.deselectAll();
         if (graphElement == null) {
             return;
