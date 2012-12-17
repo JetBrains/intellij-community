@@ -33,7 +33,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -274,7 +273,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     }
     finally {
       try {
-        ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).stopDumb();
+        ((EditorImpl)myEditor).stopDumb();
       }
       finally {
         FinishMarkAction.finish(myProject, myEditor, markAction);
@@ -329,7 +328,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
       revertStateOnFinish();
     }
     else {
-      ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).stopDumb();
+      ((EditorImpl)myEditor).stopDumb();
     }
   }
 
