@@ -34,4 +34,9 @@ public class GradleScriptTypeDetector extends GroovyScriptTypeDetector {
   public boolean isSpecificScriptFile(@NotNull GroovyFile script) {
     return GradleConstants.EXTENSION.equals(script.getViewProvider().getVirtualFile().getExtension());
   }
+
+  @Override
+  public boolean isHowSwapAware(@NotNull String extension) {
+    return !GradleConstants.EXTENSION.equals(extension);
+  }
 }
