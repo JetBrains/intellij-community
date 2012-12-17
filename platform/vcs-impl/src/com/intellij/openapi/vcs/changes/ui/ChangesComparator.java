@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -51,6 +52,13 @@ public class ChangesComparator implements Comparator<Change> {
       final String parentPath1 = lastSlash1 >= 0 && !filePath1.isDirectory() ? path1.substring(0, lastSlash1) : path1;
       final int lastSlash2 = path2.lastIndexOf('/');
       final String parentPath2 = lastSlash2 >= 0 && !filePath2.isDirectory() ? path2.substring(0, lastSlash2) : path2;
+      // subdirs precede files
+      if (FileUtil.isAncestor(parentPath2, parentPath1, true)) {
+        return -1;
+      }
+      else if (FileUtil.isAncestor(parentPath1, parentPath2, true)) {
+        return 1;
+      }
       final int compare = StringUtil.compare(parentPath1, parentPath2, !SystemInfo.isFileSystemCaseSensitive);
       if (compare != 0) {
         return compare;
