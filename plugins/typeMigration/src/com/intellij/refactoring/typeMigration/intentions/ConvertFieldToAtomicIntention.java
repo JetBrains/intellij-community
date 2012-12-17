@@ -150,7 +150,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
         PsiElement psiElement = reference.getElement();
         if (psiElement instanceof PsiExpression) {
           final PsiElement parent = psiElement.getParent();
-          if (parent instanceof PsiExpression && !(parent instanceof PsiReferenceExpression)) {
+          if (parent instanceof PsiExpression && !(parent instanceof PsiReferenceExpression) && !(parent instanceof PsiPolyadicExpression)) {
             psiElement = parent;
           }
           if (psiElement instanceof PsiBinaryExpression) {
