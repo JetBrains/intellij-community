@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -606,30 +606,62 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     }
 
     if (resolved == null) {
-      if ("class".equals(getReferenceName())) {
-        return TypesUtil.createJavaLangClassType(GrReferenceResolveUtil.getQualifierType(this), getProject(), getResolveScope());
+      final PsiType fromClassRef = getTypeFromClassRef(this);
+      if (fromClassRef != null) {
+        return fromClassRef;
       }
 
-      //map access
-      GrExpression qualifier = getQualifierExpression();
-      if (qualifier != null) {
-        PsiType qType = qualifier.getNominalType();
-        if (qType instanceof PsiClassType) {
-          PsiClassType.ClassResolveResult qResult = ((PsiClassType)qType).resolveGenerics();
-          PsiClass clazz = qResult.getElement();
-          if (clazz != null) {
-            PsiClass mapClass = JavaPsiFacade.getInstance(getProject()).findClass(CommonClassNames.JAVA_UTIL_MAP, getResolveScope());
-            if (mapClass != null && mapClass.getTypeParameters().length == 2) {
-              PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(mapClass, clazz, qResult.getSubstitutor());
-              if (substitutor != null) {
-                return TypeConversionUtil.erasure(substitutor.substitute(mapClass.getTypeParameters()[1]));
-              }
+      final PsiType fromMapAccess = getTypeFromMapAccess(this);
+      if (fromMapAccess != null) {
+        return fromMapAccess;
+      }
+
+      final PsiType fromSpreadOperator = getTypeFromSpreadOperator(this);
+      if (fromSpreadOperator != null) {
+        return fromSpreadOperator;
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static PsiType getTypeFromMapAccess(@NotNull GrReferenceExpressionImpl ref) {
+    //map access
+    GrExpression qualifier = ref.getQualifierExpression();
+    if (qualifier != null) {
+      PsiType qType = qualifier.getNominalType();
+      if (qType instanceof PsiClassType) {
+        PsiClassType.ClassResolveResult qResult = ((PsiClassType)qType).resolveGenerics();
+        PsiClass clazz = qResult.getElement();
+        if (clazz != null) {
+          PsiClass mapClass = JavaPsiFacade.getInstance(ref.getProject()).findClass(CommonClassNames.JAVA_UTIL_MAP, ref.getResolveScope());
+          if (mapClass != null && mapClass.getTypeParameters().length == 2) {
+            PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(mapClass, clazz, qResult.getSubstitutor());
+            if (substitutor != null) {
+              return TypeConversionUtil.erasure(substitutor.substitute(mapClass.getTypeParameters()[1]));
             }
           }
         }
       }
     }
+    return null;
+  }
 
+  @Nullable
+  private static PsiType getTypeFromSpreadOperator(@NotNull GrReferenceExpressionImpl ref) {
+    if (ref.getDotTokenType() == GroovyTokenTypes.mSPREAD_DOT) {
+      return TypesUtil.createType(CommonClassNames.JAVA_UTIL_LIST, ref);
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static PsiType getTypeFromClassRef(@NotNull GrReferenceExpressionImpl ref) {
+    if ("class".equals(ref.getReferenceName())) {
+      return TypesUtil.createJavaLangClassType(GrReferenceResolveUtil.getQualifierType(ref), ref.getProject(), ref.getResolveScope());
+    }
     return null;
   }
 

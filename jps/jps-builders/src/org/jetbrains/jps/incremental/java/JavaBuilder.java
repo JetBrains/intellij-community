@@ -337,6 +337,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final Map<File, Set<File>> outs = buildOutputDirectoriesMap(context, chunk);
     final List<String> options = getCompilationOptions(context, chunk, profile);
     final ClassProcessingConsumer classesConsumer = new ClassProcessingConsumer(context, outputSink);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Compiling chunk [" + chunk.getName() + "] with options: \"" + StringUtil.join(options, " ") + "\"");
+    }
     try {
       final boolean rc;
       if (USE_EMBEDDED_JAVAC) {
@@ -590,9 +593,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
         options.add(processorsPath == null? "" : FileUtil.toSystemDependentName(processorsPath.trim()));
       }
 
-      for (String procFQName : profile.getProcessors()) {
+      final Set<String> processors = profile.getProcessors();
+      if (!processors.isEmpty()) {
         options.add("-processor");
-        options.add(procFQName);
+        options.add(StringUtil.join(processors, ","));
       }
 
       for (Map.Entry<String, String> optionEntry : profile.getProcessorOptions().entrySet()) {
