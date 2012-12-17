@@ -65,7 +65,7 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
 
   public abstract GrCodeReferenceElement createCodeReferenceElementFromText(String text);
 
-  public abstract GrReferenceExpression createThisExpression(PsiManager manager, PsiClass psiClass);
+  public abstract GrReferenceExpression createThisExpression(@Nullable PsiClass psiClass);
 
   public abstract GrBlockStatement createBlockStatementFromText(String text, @Nullable PsiElement context);
 
