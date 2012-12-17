@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.controller;
 
+import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.controller.table_models.GraphTableModel;
 import org.hanuna.gitalk.controller.table_models.RefTableModel;
@@ -16,6 +17,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.TableModel;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import static org.hanuna.gitalk.controller.EventsController.ControllerListener;
 
 /**
@@ -30,6 +34,7 @@ public class UI_Controller {
     private final RefTableModel refTableModel;
 
     private GraphElement prevGraphElement = null;
+    private Set<Commit> prevSelectionBranches;
 
     public UI_Controller(Graph graph, RefsModel refsModel) {
         this.fragmentController = graph.getFragmentController();
@@ -38,6 +43,7 @@ public class UI_Controller {
 
         this.graphTableModel = new GraphTableModel(graph, refsModel, printCellModel);
         this.refTableModel = new RefTableModel(refsModel);
+        this.prevSelectionBranches = new HashSet<Commit>(refTableModel.getCheckedCommits());
     }
 
     public TableModel getGraphTableModel() {
@@ -91,5 +97,13 @@ public class UI_Controller {
         events.runUpdateTable();
         events.runJumpToRow(replace.from());
     }
+
+    public void runUpdateShowBranches() {
+        Set<Commit> checkedCommits = refTableModel.getCheckedCommits();
+        if (! prevSelectionBranches.equals(checkedCommits)) {
+            prevSelectionBranches = new HashSet<Commit>(checkedCommits);
+        }
+    }
+
 
 }

@@ -3,6 +3,8 @@ package org.hanuna.gitalk.swing_ui;
 import org.hanuna.gitalk.controller.UI_Controller;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -11,7 +13,8 @@ import java.awt.event.MouseEvent;
  * @author erokhins
  */
 public class GitAlkUI extends JFrame {
-    private final UI_GraphTable table;
+    private final UI_GraphTable graphTable;
+    private final UI_RefTable refTable;
     private final UI_Controller controller;
 
 
@@ -20,15 +23,24 @@ public class GitAlkUI extends JFrame {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setTitle("GitAlk");
 
-        table = new UI_GraphTable(ui_controller);
-        final JScrollPane scrollPane = new JScrollPane(table);
+        graphTable = new UI_GraphTable(ui_controller);
+        final JScrollPane scrollPane = new JScrollPane(graphTable);
 
-        JTabbedPane tabsTwo = new JTabbedPane(JTabbedPane.TOP);
+        final JTabbedPane tabsTwo = new JTabbedPane(JTabbedPane.TOP);
         tabsTwo.add("graph", scrollPane);
 
-        UI_RefTable refTable = new UI_RefTable(ui_controller);
+        refTable = new UI_RefTable(ui_controller);
         JScrollPane branches = new JScrollPane(refTable);
         tabsTwo.add("branches", branches);
+
+        tabsTwo.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                if (tabsTwo.getSelectedIndex() == 0) {
+                    ui_controller.runUpdateShowBranches();
+                }
+            }
+        });
 
 
         JButton b1 = new JButton("B");
