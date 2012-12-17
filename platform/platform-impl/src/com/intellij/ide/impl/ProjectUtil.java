@@ -75,7 +75,7 @@ public class ProjectUtil {
       LOG.info(e);
       return;
     }
-    GeneralSettings.getInstance().setLastProjectLocation(path.replace(File.separatorChar, '/'));
+    GeneralSettings.getInstance().setLastProjectCreationLocation(path.replace(File.separatorChar, '/'));
   }
 
   /**
@@ -279,7 +279,7 @@ public class ProjectUtil {
   }
 
   public static String getBaseDir() {
-    final String lastProjectLocation = GeneralSettings.getInstance().getLastProjectLocation();
+    final String lastProjectLocation = GeneralSettings.getInstance().getLastProjectCreationLocation();
     if (lastProjectLocation != null) {
       return lastProjectLocation.replace('/', File.separatorChar);
     }
