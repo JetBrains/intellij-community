@@ -405,8 +405,8 @@ public class LambdaUtil {
         }
 
         final PsiElement gParent = expressionList.getParent();
-        if (gParent instanceof PsiCallExpression) {
-          final PsiCallExpression contextCall = (PsiCallExpression)gParent;
+        if (gParent instanceof PsiCall) {
+          final PsiCall contextCall = (PsiCall)gParent;
           final JavaResolveResult resolveResult = contextCall.resolveMethodGenerics();
             final PsiElement resolve = resolveResult.getElement();
             if (resolve instanceof PsiMethod) {
@@ -578,11 +578,11 @@ public class LambdaUtil {
       }
       if (parent instanceof PsiExpressionList) {
         final PsiElement gParent = parent.getParent();
-        if (gParent instanceof PsiCallExpression) {
+        if (gParent instanceof PsiCall) {
           final Map<PsiElement, PsiMethod> map = MethodCandidateInfo.CURRENT_CANDIDATE.get();
           myMethod = map != null ? map.get(parent) : null;
           if (myMethod == null) {
-            myMethod = ((PsiCallExpression)gParent).resolveMethod();
+            myMethod = ((PsiCall)gParent).resolveMethod();
           }
           if (myMethod != null && PsiTreeUtil.isAncestor(myMethod, expression, false)) {
             myMethod = null;
