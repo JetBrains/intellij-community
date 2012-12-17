@@ -292,7 +292,7 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public void setColor(Color c) {
-    log(String.format("setColor(%s) alpha=%d", toHex(c), c.getAlpha()));
+    log(String.format("setColor(%s) alpha=%d", toHex(c), c == null ? 0 : c.getAlpha()));
     myPeer.setColor(c);
   }
 
