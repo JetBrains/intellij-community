@@ -1,9 +1,7 @@
-package org.hanuna.gitalk.controller;
+package org.hanuna.gitalk.ui_controller;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.compressedlist.Replace;
-import org.hanuna.gitalk.controller.table_models.GraphTableModel;
-import org.hanuna.gitalk.controller.table_models.RefTableModel;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.GraphFragment;
 import org.hanuna.gitalk.graph.graph_elements.GraphElement;
@@ -12,15 +10,16 @@ import org.hanuna.gitalk.printmodel.PrintCell;
 import org.hanuna.gitalk.printmodel.PrintCellModel;
 import org.hanuna.gitalk.printmodel.SelectController;
 import org.hanuna.gitalk.refs.RefsModel;
+import org.hanuna.gitalk.ui_controller.table_models.GraphTableModel;
+import org.hanuna.gitalk.ui_controller.table_models.RefTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.TableModel;
-
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.hanuna.gitalk.controller.EventsController.ControllerListener;
+import static org.hanuna.gitalk.ui_controller.EventsController.ControllerListener;
 
 /**
  * @author erokhins

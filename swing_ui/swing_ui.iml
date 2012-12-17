@@ -10,7 +10,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="ui_controller" />
     <orderEntry type="module" module-name="printmodel" />
-    <orderEntry type="module" module-name="graph" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
@@ -23,7 +22,7 @@
     <orderEntry type="module" module-name="common" />
     <orderEntry type="module" module-name="controller" />
     <orderEntry type="module" module-name="refs" />
-    <orderEntry type="module" module-name="commits" />
+    <orderEntry type="module" module-name="graph" />
   </component>
 </module>
 

@@ -32,4 +32,18 @@ class MutableCommit implements Commit {
     public CommitData getData() {
         return commitData;
     }
+
+    @Override
+    public int hashCode() {
+        return hash.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj != null && obj instanceof Commit) {
+            Commit an = (Commit) obj;
+            return hash.equals(an.hash());
+        }
+        return false;
+    }
 }

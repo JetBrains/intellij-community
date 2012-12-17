@@ -1,9 +1,8 @@
 package org.hanuna.gitalk.swing_ui;
 
-import org.hanuna.gitalk.controller.UI_Controller;
-import org.hanuna.gitalk.controller.table_models.CommitCell;
-import org.hanuna.gitalk.controller.table_models.GraphCommitCell;
-import org.hanuna.gitalk.controller.table_models.RefTableModel;
+import org.hanuna.gitalk.ui_controller.UI_Controller;
+import org.hanuna.gitalk.ui_controller.table_models.CommitCell;
+import org.hanuna.gitalk.ui_controller.table_models.GraphCommitCell;
 import org.hanuna.gitalk.swing_ui.render.CommitCellRender;
 
 import javax.swing.*;

@@ -19,7 +19,6 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="common" />
-    <orderEntry type="module" module-name="commits" />
     <orderEntry type="module-library" scope="TEST">
       <library>
         <CLASSES>

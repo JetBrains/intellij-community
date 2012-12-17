@@ -1,3 +1,5 @@
+package org.hanuna.gitalk.controller;
+
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.common.Timer;

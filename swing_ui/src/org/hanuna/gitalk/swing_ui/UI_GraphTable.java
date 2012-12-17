@@ -1,8 +1,8 @@
 package org.hanuna.gitalk.swing_ui;
 
-import org.hanuna.gitalk.controller.EventsController;
-import org.hanuna.gitalk.controller.table_models.GraphCommitCell;
-import org.hanuna.gitalk.controller.UI_Controller;
+import org.hanuna.gitalk.ui_controller.EventsController;
+import org.hanuna.gitalk.ui_controller.table_models.GraphCommitCell;
+import org.hanuna.gitalk.ui_controller.UI_Controller;
 import org.hanuna.gitalk.graph.graph_elements.GraphElement;
 import org.hanuna.gitalk.printmodel.PrintCell;
 import org.hanuna.gitalk.swing_ui.render.GraphCommitCellRender;

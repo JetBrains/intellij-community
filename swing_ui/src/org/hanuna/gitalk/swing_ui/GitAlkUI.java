@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.swing_ui;
 
-import org.hanuna.gitalk.controller.UI_Controller;
+import org.hanuna.gitalk.ui_controller.UI_Controller;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;

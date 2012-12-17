@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.controller;
+package org.hanuna.gitalk.ui_controller;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

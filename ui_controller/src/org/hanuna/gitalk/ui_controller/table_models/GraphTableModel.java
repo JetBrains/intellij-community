@@ -1,9 +1,9 @@
-package org.hanuna.gitalk.controller.table_models;
+package org.hanuna.gitalk.ui_controller.table_models;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitData;
 import org.hanuna.gitalk.common.ReadOnlyList;
-import org.hanuna.gitalk.controller.DateConverter;
+import org.hanuna.gitalk.ui_controller.DateConverter;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.graph_elements.GraphElement;
 import org.hanuna.gitalk.graph.graph_elements.Node;

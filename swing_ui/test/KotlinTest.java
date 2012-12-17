@@ -1,4 +1,5 @@
-import org.hanuna.gitalk.controller.UI_Controller;
+import org.hanuna.gitalk.controller.Controller;
+import org.hanuna.gitalk.ui_controller.UI_Controller;
 import org.hanuna.gitalk.swing_ui.GitAlkUI;
 
 import java.io.IOException;

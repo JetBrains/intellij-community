@@ -11,6 +11,15 @@
     <orderEntry type="module" module-name="common" />
     <orderEntry type="module" module-name="commits" />
     <orderEntry type="module" module-name="refs" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/annotations.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>
 
