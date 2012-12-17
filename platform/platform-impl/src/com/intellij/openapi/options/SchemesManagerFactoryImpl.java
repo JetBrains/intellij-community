@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
                                                                    final SchemeProcessor<E> processor, final RoamingType roamingType) {
     final Application application = ApplicationManager.getApplication();
     if (!(application instanceof ApplicationImpl)) return null;
-    String baseDirPath = ((ApplicationImpl)application).getStateStore().getStateStorageManager().expandMacroses(fileSpec);
+    String baseDirPath = ((ApplicationImpl)application).getStateStore().getStateStorageManager().expandMacros(fileSpec);
 
     if (baseDirPath != null) {
 
