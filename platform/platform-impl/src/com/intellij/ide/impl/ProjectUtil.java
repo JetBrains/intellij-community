@@ -20,6 +20,7 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
@@ -37,6 +38,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.ui.AppIcon;
+import com.intellij.util.SystemProperties;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -274,5 +276,16 @@ public class ProjectUtil {
   @SuppressWarnings("UnusedDeclaration")
   public static boolean isProjectOrWorkspaceFile(final VirtualFile file) {
     return com.intellij.openapi.project.ProjectUtil.isProjectOrWorkspaceFile(file);
+  }
+
+  public static String getBaseDir() {
+    final String lastProjectLocation = GeneralSettings.getInstance().getLastProjectLocation();
+    if (lastProjectLocation != null) {
+      return lastProjectLocation.replace('/', File.separatorChar);
+    }
+    final String userHome = SystemProperties.getUserHome();
+    //noinspection HardCodedStringLiteral
+    return userHome.replace('/', File.separatorChar) + File.separator + ApplicationNamesInfo.getInstance().getLowercaseProductName() +
+           "Projects";
   }
 }
