@@ -375,7 +375,7 @@ public class CompleteReferenceExpression {
       myFieldPointerOperator = place.hasAt();
       myMethodPointerOperator = place.getDotTokenType() == GroovyTokenTypes.mMEMBER_POINTER;
       myIsMap = isMap(place);
-      final PsiType thisType = GrReferenceResolveUtil.getThisType(place);
+      final PsiType thisType = GrReferenceResolveUtil.getQualifierType(place);
       mySubstitutorComputer = new SubstitutorComputer(thisType, PsiType.EMPTY_ARRAY, PsiType.EMPTY_ARRAY, true, place, place.getParent());
     }
 

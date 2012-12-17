@@ -63,6 +63,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrReferenceTypeEnhancer;
+import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -211,7 +212,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     List<GroovyResolveResult> accessorResults = new ArrayList<GroovyResolveResult>();
     for (String accessorName : accessorNames) {
       AccessorResolverProcessor accessorResolver =
-        new AccessorResolverProcessor(accessorName, name, this, !isLValue, false, GrReferenceResolveUtil.getThisType(this),
+        new AccessorResolverProcessor(accessorName, name, this, !isLValue, false, GrReferenceResolveUtil.getQualifierType(this),
                                       getTypeArguments());
       GrReferenceResolveUtil.resolveImpl(accessorResolver, this);
       final GroovyResolveResult[] candidates = accessorResolver.getCandidates();
@@ -338,8 +339,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     //search for getters
     for (String getterName : GroovyPropertyUtils.suggestGettersName(name)) {
       AccessorResolverProcessor getterResolver =
-        new AccessorResolverProcessor(getterName, name, this, true, genericsMatter, GrReferenceResolveUtil.getThisType(this),
-                                      getTypeArguments());
+        new AccessorResolverProcessor(getterName, name, this, true, genericsMatter, GrReferenceResolveUtil.getQualifierType(this), getTypeArguments());
       GrReferenceResolveUtil.resolveImpl(getterResolver, this);
       final GroovyResolveResult[] candidates = getterResolver.getCandidates(); //can be only one candidate
       if (!allVariants && candidates.length == 1) {
@@ -397,7 +397,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         argTypes[i] = TypeConversionUtil.erasure(argTypes[i]);
       }
     }
-    return new MethodResolverProcessor(name, this, false, GrReferenceResolveUtil.getThisType(this), argTypes, getTypeArguments(),
+    return new MethodResolverProcessor(name, this, false, GrReferenceResolveUtil.getQualifierType(this), argTypes, getTypeArguments(),
                                        allVariants, byShape);
   }
 
@@ -556,7 +556,16 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     if (resolved instanceof PsiClass) {
       final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-      if (getParent() instanceof GrReferenceExpression || PsiUtil.isSuperReference(this) || PsiUtil.isInstanceThisRef(this)) {
+      if (PsiUtil.isInstanceThisRef(this)) {
+        final PsiClassType categoryType = GdkMethodUtil.getCategoryType((PsiClass)resolved);
+        if (categoryType != null) {
+          return categoryType;
+        }
+        else {
+          return factory.createType((PsiClass)resolved);
+        }
+      }
+      if (getParent() instanceof GrReferenceExpression || PsiUtil.isSuperReference(this)) {
         return factory.createType((PsiClass)resolved);
       }
       else {

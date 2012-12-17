@@ -40,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
+import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.CompletionProcessor;
@@ -243,19 +244,13 @@ public class GrReferenceResolveUtil {
     }
 
     if (containingClass != null) {
+      final PsiClassType categoryType = GdkMethodUtil.getCategoryType(containingClass);
+      if (categoryType != null) {
+        return categoryType;
+      }
       return JavaPsiFacade.getElementFactory(ref.getProject()).createType(containingClass);
     }
     return null;
-  }
-
-  public static PsiType getThisType(GrReferenceExpression ref) {
-    GrExpression qualifier = ref.getQualifierExpression();
-    if (qualifier != null) {
-      PsiType qType = qualifier.getType();
-      if (qType != null) return qType;
-    }
-
-    return TypesUtil.getJavaLangObject(ref);
   }
 
   public static boolean resolveThisExpression(GrReferenceExpression ref, List<GroovyResolveResult> results) {
