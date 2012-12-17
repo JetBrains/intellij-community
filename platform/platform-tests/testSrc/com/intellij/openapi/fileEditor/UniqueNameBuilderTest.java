@@ -18,30 +18,36 @@ public class UniqueNameBuilderTest extends TestCase {
     UniqueNameBuilder<String> builder = new UniqueNameBuilder<String>("", "/", 100);
     builder.addPath("A", "/Users/yole/idea/foo/buy/index.html");
     builder.addPath("B", "/Users/yole/idea/bar/buy/index.html");
-    assertEquals("foo/buy/index.html", builder.getShortPath("A"));
+    assertEquals("foo/\u2026/index.html", builder.getShortPath("A"));
   }
 
   public void testSeparator() {
     UniqueNameBuilder<String> builder = new UniqueNameBuilder<String>("", "\\", 100);
     builder.addPath("A", "/Users/yole/idea/foo/buy/index.html");
     builder.addPath("B", "/Users/yole/idea/bar/buy/index.html");
-    assertEquals("foo\\buy\\index.html", builder.getShortPath("A"));
+    assertEquals("foo\\\u2026\\index.html", builder.getShortPath("A"));
   }
 
   public void testRoot() {
     UniqueNameBuilder<String> builder = new UniqueNameBuilder<String>("/Users/yole/idea", "/", 100);
     builder.addPath("A", "/Users/yole/idea/build/scripts/layouts.gant");
     builder.addPath("B", "/Users/yole/idea/community/build/scripts/layouts.gant");
-    assertEquals("build/scripts/layouts.gant", builder.getShortPath("A"));
-    assertEquals("community/build/scripts/layouts.gant", builder.getShortPath("B"));
+    assertEquals("build/\u2026/layouts.gant", builder.getShortPath("A"));
+    assertEquals("community/\u2026/layouts.gant", builder.getShortPath("B"));
+
+    builder = new UniqueNameBuilder<String>("", "/", 100);
+    builder.addPath("A", "build/scripts/layouts.gant");
+    builder.addPath("B", "community/build/scripts/layouts.gant");
+    assertEquals("build/\u2026/layouts.gant", builder.getShortPath("A"));
+    assertEquals("community/\u2026/layouts.gant", builder.getShortPath("B"));
   }
 
   public void testShortenNames() {
     UniqueNameBuilder<String> builder = new UniqueNameBuilder<String>("/Users/yole/idea", "/", 25);
     builder.addPath("A", "/Users/yole/idea/build/scripts/layouts.gant");
     builder.addPath("B", "/Users/yole/idea/community/build/scripts/layouts.gant");
-    assertEquals("build/s\u2026/layouts.gant", builder.getShortPath("A"));
-    assertEquals("community/b\u2026/s\u2026/layouts.gant", builder.getShortPath("B"));
+    assertEquals("build/\u2026/layouts.gant", builder.getShortPath("A"));
+    assertEquals("community/\u2026/layouts.gant", builder.getShortPath("B"));
   }
 
   public void testShortenNamesUnique() {
@@ -49,6 +55,14 @@ public class UniqueNameBuilderTest extends TestCase {
     builder.addPath("A", "/Users/yole/idea/pycharm/download/index.html");
     builder.addPath("B", "/Users/yole/idea/pycharm/documentation/index.html");
     builder.addPath("C", "/Users/yole/idea/fabrique/download/index.html");
-    assertEquals("pycharm/dow\u2026/index.html", builder.getShortPath("A"));
+    assertEquals("pycharm/\u2026/index.html", builder.getShortPath("A"));
+  }
+
+  public void testShortenNamesUnique2() {
+    UniqueNameBuilder<String> builder = new UniqueNameBuilder<String>("/Users/yole/idea", "/", 25);
+    builder.addPath("A", "source/components/views/something/tmpl/default.php");
+    builder.addPath("B", "source/components/views/something_else/tmpl/default.php");
+    assertEquals("something/\u2026/default.php", builder.getShortPath("A"));
+    assertEquals("something_else/\u2026/default.php", builder.getShortPath("B"));
   }
 }
