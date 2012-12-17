@@ -134,6 +134,7 @@ public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.
   private final boolean mySupportMultipleDevices;
   private final boolean myClearLogcatBeforeStart;
   private final List<AndroidRunningStateListener> myListeners = new ArrayList<AndroidRunningStateListener>();
+  private final boolean myNonDebuggableOnDevice;
 
   public void setDebugMode(boolean debugMode) {
     myDebugMode = debugMode;
@@ -305,7 +306,8 @@ public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.
                              Map<AndroidFacet, String> additionalFacet2PackageName,
                              boolean supportMultipleDevices,
                              boolean clearLogcatBeforeStart,
-                             @NotNull AndroidRunConfigurationBase configuration) throws ExecutionException {
+                             @NotNull AndroidRunConfigurationBase configuration,
+                             boolean nonDebuggableOnDevice) throws ExecutionException {
     myFacet = facet;
     myCommandLine = commandLine;
     myConfiguration = configuration;
@@ -323,6 +325,7 @@ public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.
     myTargetPackageName = packageName;
     myAdditionalFacet2PackageName = additionalFacet2PackageName;
     myClearLogcatBeforeStart = clearLogcatBeforeStart;
+    myNonDebuggableOnDevice = nonDebuggableOnDevice;
   }
 
   public void setDeploy(boolean deploy) {
@@ -633,6 +636,12 @@ public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.
   }
 
   private boolean prepareAndStartApp(IDevice device) {
+    if (myDebugMode && myNonDebuggableOnDevice && !device.isEmulator()) {
+      message("Cannot debug the application " + myPackageName + " on device '" + device.getName() + "',\n" +
+              "because 'debuggable' attribute is set to 'false' in AndroidManifest.xml.\nYou may remove the attribute " +
+              "and the IDE will automatically assign it during debug and release builds.", STDERR);
+      return false;
+    }
     if (!doPrepareAndStart(device)) {
       fireExecutionFailed();
       return false;

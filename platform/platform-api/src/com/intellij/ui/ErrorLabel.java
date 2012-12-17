@@ -37,7 +37,7 @@ public class ErrorLabel extends JLabel {
   }
 
   public ErrorLabel(String text, Icon icon) {
-    super(text, icon, JLabel.LEFT);
+    super(text, icon, SwingConstants.LEFT);
     setOpaque(false);
   }
 
@@ -52,6 +52,7 @@ public class ErrorLabel extends JLabel {
     }
   }
 
+  @Override
   public void setToolTipText(String text) {
     if (myUnderline) {
       myTooltip = text;
@@ -69,24 +70,26 @@ public class ErrorLabel extends JLabel {
     repaint();
   }
 
+  @Override
   protected void paintComponent(Graphics g) {
-
     super.paintComponent(g);
 
-    if (getText() != null & myUnderline) {
+    String text = getText();
+    if (text != null && myUnderline) {
       g.setColor(myForeground);
       int x = 0;
 
-      if (getIcon() != null) {
-        x = getIcon().getIconWidth() + getIconTextGap();
+      Icon icon = getIcon();
+      if (icon != null) {
+        x = icon.getIconWidth() + getIconTextGap();
       }
 
       if (getHorizontalAlignment() == CENTER) {
-        int w = g.getFontMetrics().stringWidth(getText());
+        int w = g.getFontMetrics().stringWidth(text);
         x += (getWidth() - x - w) >> 1;
       }
 
-      drawWave(this, g, x, getText());
+      drawWave(this, g, x, text);
     }
   }
 
@@ -117,6 +120,6 @@ public class ErrorLabel extends JLabel {
 
   private static int getTextBaseLine(Component c) {
     FontMetrics fm = c.getFontMetrics(c.getFont());
-    return (c.getHeight() >> 1) + ((fm.getHeight() >> 1) - fm.getDescent());
+    return (c.getHeight() >> 1) + (fm.getHeight() >> 1) - fm.getDescent();
   }
 }

@@ -90,7 +90,7 @@ public class NewDirectoryProjectAction extends AnAction implements DumbAware {
         return null;
       }
     }
-    GeneralSettings.getInstance().setLastProjectLocation(location.getParent());
+    GeneralSettings.getInstance().setLastProjectCreationLocation(location.getParent());
     final Object finalSettings = settings;
     return PlatformProjectOpenProcessor.doOpenProject(baseDir, null, false, -1, new ProjectOpenedCallback() {
       @Override

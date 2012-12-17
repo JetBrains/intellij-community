@@ -46,6 +46,7 @@ import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jdom.Element;
+import org.jetbrains.android.dom.manifest.Application;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
@@ -196,7 +197,15 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
     }
 
     boolean debug = DefaultDebugExecutor.EXECUTOR_ID.equals(executor.getId());
+    boolean nonDebuggableOnDevice = false;
+
     if (debug) {
+      final Manifest manifest = facet.getManifest();
+      final Application application = manifest != null ? manifest.getApplication() : null;
+
+      nonDebuggableOnDevice = application != null && Boolean.FALSE.toString().
+        equals(application.getDebuggable().getStringValue());
+
       if (!AndroidSdkUtils.activateDdmsIfNecessary(facet.getModule().getProject(), new Computable<AndroidDebugBridge>() {
         @Nullable
         @Override
@@ -236,7 +245,7 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
     if (applicationLauncher != null) {
       final boolean supportMultipleDevices = supportMultipleDevices() && executor.getId().equals(DefaultRunExecutor.EXECUTOR_ID);
       return new AndroidRunningState(env, facet, targetChooser, computeCommandLine(), aPackage, applicationLauncher,
-                                     depModule2PackageName, supportMultipleDevices, CLEAR_LOGCAT, this);
+                                     depModule2PackageName, supportMultipleDevices, CLEAR_LOGCAT, this, nonDebuggableOnDevice);
     }
     return null;
   }

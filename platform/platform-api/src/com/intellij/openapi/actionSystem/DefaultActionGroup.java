@@ -56,7 +56,7 @@ public class DefaultActionGroup extends ActionGroup {
    * @param actions the actions to add to the group
    * @since 9.0
    */
-  public DefaultActionGroup(AnAction... actions) {
+  public DefaultActionGroup(@NotNull AnAction... actions) {
     this(null, false);
     for (AnAction action : actions) {
       add(action);

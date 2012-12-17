@@ -20,10 +20,7 @@ import junit.framework.TestCase;
 import javax.swing.*;
 import java.awt.*;
 
-import com.intellij.util.concurrency.Semaphore;
-
 public class SplitterTest extends TestCase{
-  private static final int RATHER_LATER_INVOKES = 10;
 
   public void testResizeVert() {
     resizeTest(new Splitter(true));
@@ -43,44 +40,51 @@ public class SplitterTest extends TestCase{
     splitter.setHonorComponentsMinimumSize(true);
 
 
-    // disabled since honoring min size is rather confusing, reasonable min size is hardcoded instead
-    //splitter.setSize(new Dimension(500, 500));
-    //splitter.doLayout();
-    //checkBounds(splitter);
-    //
-    //splitter.setSize(new Dimension(300, 300));
-    //splitter.doLayout();
-    //checkBounds(splitter);
-    //
-    //splitter.setProportion(.1f);
-    //splitter.doLayout();
-    //checkBounds(splitter);
-    //
-    ////assertTrue(Math.abs(splitter.getProportion() - jPanel1.getMinimumSize().height / (splitter.getSize().height - splitter.getDividerWidth())) < .00001);
-    //
-    //splitter.setProportion(.9f);
-    //splitter.doLayout();
-    //checkBounds(splitter);
-    //
-    //splitter.setSize(new Dimension(100, 100));
-    //splitter.doLayout();
-    //checkBounds(splitter);
-    //
-    //splitter.setProportion(.1f);
-    //splitter.doLayout();
-    //checkBounds(splitter);
-    //
-    //splitter.setSize(new Dimension(10, 10));
-    //splitter.doLayout();
-    //checkBounds(splitter);
-    //
-    //splitter.setSize(new Dimension(100, 100));
-    //splitter.doLayout();
-    //checkBounds(splitter);
-    //
-    //splitter.setSize(new Dimension(150, 150));
-    //splitter.doLayout();
-    //checkBounds(splitter);
+    splitter.setSize(new Dimension(500, 500));
+    splitter.doLayout();
+    checkBounds(splitter);
+
+    splitter.setSize(new Dimension(300, 300));
+    splitter.doLayout();
+    checkBounds(splitter);
+
+    splitter.setProportion(.1f);
+    splitter.doLayout();
+    checkBounds(splitter);
+
+    splitter.setProportion(.9f);
+    splitter.doLayout();
+    checkBounds(splitter);
+
+    splitter.setSize(new Dimension(100, 100));
+    splitter.doLayout();
+    checkBounds(splitter);
+
+    splitter.setProportion(.1f);
+    splitter.doLayout();
+    checkBounds(splitter);
+
+    splitter.setSize(new Dimension(10, 10));
+    splitter.doLayout();
+    checkBounds(splitter);
+
+    splitter.setSize(new Dimension(100, 100));
+    splitter.doLayout();
+    checkBounds(splitter);
+
+    splitter.setSize(new Dimension(150, 150));
+    splitter.doLayout();
+    checkBounds(splitter);
+
+    splitter.setSize(splitter.isVertical() ? new Dimension(150, 1000) : new Dimension(1000, 150));
+    for (float f = .01F; f < 1F; f+=.01F) {
+      splitter.setProportion(f);
+      splitter.doLayout();
+      float proportion = splitter.getProportion();
+      assertTrue (proportion>=.1 && proportion<=9);
+      if (f>=.1 && f<=.89)
+        assertEquals(f, proportion, 1e-4);
+    }
   }
 
 
@@ -107,24 +111,4 @@ public class SplitterTest extends TestCase{
       assertTrue(firstSize.height < firstMinimum.height == secondSize.height < secondMinimum.height);
     }
   }
-
-  private void invokeRatherLater(final Runnable runnable) {
-    invokeRatherLater(runnable, RATHER_LATER_INVOKES);
-  }
-
-  private void invokeRatherLater(final Runnable runnable, final int n) {
-    if(n == 0) {
-      runnable.run();
-    }
-    else {
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          invokeRatherLater(runnable, n - 1);
-        }
-      });
-    }
-  }
-
-
 }

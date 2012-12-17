@@ -1,6 +1,10 @@
 package com.intellij.util.xml.stubs;
 
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.stubs.ObjectStubTree;
+import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.DomExtender;
@@ -50,8 +54,13 @@ public class DomStubBuilderTest extends DomStubTest {
   }
 
   public void testNullTag() throws Exception {
-    doBuilderTest("nullTag.xml", "File:foo\n" +
-                                 "  Element:foo\n");
+    PsiFile psiFile = myFixture.configureByFile("nullTag.xml");
+
+    StubTreeLoader loader = StubTreeLoader.getInstance();
+    VirtualFile file = psiFile.getVirtualFile();
+    assertTrue(loader.canHaveStub(file));
+    ObjectStubTree stubTree = loader.readFromVFile(getProject(), file);
+    assertNull(stubTree); // no stubs for invalid XML
   }
 
   public static class TestExtender extends DomExtender<Bar> {

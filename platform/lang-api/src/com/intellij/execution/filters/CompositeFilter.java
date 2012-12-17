@@ -56,7 +56,7 @@ public class CompositeFilter implements Filter, FilterMixin {
         Result result = filter.applyFilter(line, entireLength);
         finalResult = merge(finalResult, result);
         t0 = System.currentTimeMillis() - t0;
-        if (t0 > 100) {
+        if (t0 > 1000) {
           LOG.warn(filter.getClass().getSimpleName() + ".applyFilter() took " + t0 + " ms on '''" + line + "'''");
         }
         if (finalResult != null && finalResult.getNextAction() == NextAction.EXIT) {

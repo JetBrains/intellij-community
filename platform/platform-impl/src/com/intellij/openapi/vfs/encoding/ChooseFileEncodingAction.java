@@ -22,6 +22,7 @@
  */
 package com.intellij.openapi.vfs.encoding;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -32,13 +33,13 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
@@ -56,68 +57,44 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
-    Pair<String, Boolean> result = update(myVirtualFile);
+  public abstract void update(final AnActionEvent e);
 
-    boolean enabled = result.second;
-    if (myVirtualFile != null) {
-      Charset charset = cachedCharsetFromContent(myVirtualFile);
-      String prefix = charset == null ? "" : "Encoding (auto-detected):";
-      if (charset == null) charset = myVirtualFile.getCharset();
-      e.getPresentation().setText(prefix + " " + charset.toString());
-    }
-    e.getPresentation().setEnabled(enabled);
-    e.getPresentation().setDescription(result.first);
-  }
-
-  // returns null if "change encoding" action is enabled for the file;
-  //         reason why not, if it is disabled
-  public static String isEnabledAndWhyNot(@Nullable VirtualFile virtualFile) {
-    if (virtualFile == null) {
-      return "file not specified";
-    }
-    Charset charset = cachedCharsetFromContent(virtualFile);
-    if (charset != null) {
-      return "charset specified inside the file";
-    }
-    if (virtualFile.isDirectory()) {
-      return null;
-    }
+  @NotNull
+  private static Pair<Charset, String> checkFileType(@NotNull VirtualFile virtualFile) {
     FileType fileType = virtualFile.getFileType();
-    if (fileType.isBinary()) return "binary file";
-    if (fileType == StdFileTypes.GUI_DESIGNER_FORM) return "IDEA GUI Designer form";
-    if (fileType == StdFileTypes.IDEA_MODULE) return "IDEA module file";
-    if (fileType == StdFileTypes.IDEA_PROJECT) return "IDEA project file";
-    if (fileType == StdFileTypes.IDEA_WORKSPACE) return "IDEA workspace file";
+    if (fileType.isBinary()) return Pair.create(null, "binary file");
+    if (fileType == StdFileTypes.GUI_DESIGNER_FORM) return Pair.create(CharsetToolkit.UTF8_CHARSET, "IDEA GUI Designer form");
+    if (fileType == StdFileTypes.IDEA_MODULE) return Pair.create(CharsetToolkit.UTF8_CHARSET, "IDEA module file");
+    if (fileType == StdFileTypes.IDEA_PROJECT) return Pair.create(CharsetToolkit.UTF8_CHARSET, "IDEA project file");
+    if (fileType == StdFileTypes.IDEA_WORKSPACE) return Pair.create(CharsetToolkit.UTF8_CHARSET, "IDEA workspace file");
 
-    if (fileType == StdFileTypes.PROPERTIES) return ".properties file";
+    if (fileType == StdFileTypes.PROPERTIES) return Pair.create(virtualFile.getCharset(), ".properties file");
 
     if (fileType == StdFileTypes.XML
         || fileType == StdFileTypes.JSPX && fileType != FileTypes.PLAIN_TEXT // in community tests JSPX==PLAIN_TEXT
       ) {
-      return "XML file";
+      return Pair.create(virtualFile.getCharset(), "XML file");
     }
-    return null;
+    return Pair.create(null, null);
   }
 
-  @Nullable("returns null if charset set cannot be determined from content")
-  public static Charset cachedCharsetFromContent(final VirtualFile virtualFile) {
-    if (virtualFile == null) return null;
-    final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-    if (document == null) return null;
+  private void fillCharsetActions(@NotNull DefaultActionGroup group,
+                                  @Nullable VirtualFile virtualFile,
+                                  @NotNull List<Charset> charsets,
+                                  @Nullable final Condition<Charset> charsetFilter,
+                                  @NotNull String pattern) {
+    for (final Charset slave : charsets) {
+      ChangeFileEncodingTo action = new ChangeFileEncodingTo(virtualFile, slave, pattern) {
+        {
+          if (charsetFilter != null && !charsetFilter.value(slave)) {
+            getTemplatePresentation().setIcon(AllIcons.General.Warning);
+          }
+        }
 
-    return EncodingManager.getInstance().getCachedCharsetFromContent(document);
-  }
+        @Override
+        public void update(AnActionEvent e) {
+        }
 
-  @Override
-  @NotNull
-  protected DefaultActionGroup createPopupActionGroup(final JComponent button) {
-    return createGroup("<Clear>");
-  }
-
-  private void fillCharsetActions(DefaultActionGroup group, final VirtualFile virtualFile, List<Charset> charsets) {
-    for (Charset slave : charsets) {
-      ChangeFileEncodingTo action = new ChangeFileEncodingTo(virtualFile, slave){
         @Override
         protected void chosen(final VirtualFile file, @NotNull final Charset charset) {
           ChooseFileEncodingAction.this.chosen(file, charset);
@@ -127,60 +104,71 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
     }
   }
 
-  // returns (action text, enabled flag)
-  @NotNull
-  public static Pair<String,Boolean> update(@Nullable VirtualFile virtualFile) {
-    String pattern;
-    String failReason = isEnabledAndWhyNot(virtualFile);
-    boolean enabled = failReason == null;
-    Charset charsetFromContent = cachedCharsetFromContent(virtualFile);
-    if (virtualFile != null && FileDocumentManager.getInstance().isFileModified(virtualFile)) {
-      //no sense to reload file with UTF-detected chars using other encoding
-      if (charsetFromContent != null) {
-        pattern = "Encoding (content-specified): {0}";
-        enabled = false;
-      }
-      else if (enabled) {
-        pattern = "Save ''{0}'' file in another encoding";
-      }
-      else {
-        pattern = "Encoding ''{0}'' ("+failReason+")";
-      }
+  @Nullable("null means enabled, notnull means disabled and contains error message")
+  public static String checkCanConvert(@NotNull VirtualFile virtualFile) {
+    if (virtualFile.isDirectory()) {
+      return "file is a directory";
+    }
+    String reason = LoadTextUtil.wasCharsetDetectedFromBytes(virtualFile);
+    if (reason == null) {
+      return null;
+    }
+    String failReason = null;
+
+    Charset charsetFromContent = ((EncodingManagerImpl)EncodingManager.getInstance()).computeCharsetFromContent(virtualFile);
+    if (charsetFromContent != null) {
+      failReason = "hard coded in text, encoding: {0}";
     }
     else {
-      // try to reload
-      // no sense in reloading file with UTF-detected chars using other encoding
-      if (virtualFile != null && LoadTextUtil.wasCharsetDetectedFromBytes(virtualFile)) {
-        pattern = "Encoding (auto-detected): {0}";
-        enabled = false;
-      }
-      else if (enabled && virtualFile != null && virtualFile.isDirectory()) {
-        pattern = "Reload ''{0}'' files under the directory in";
-      }
-      else if (enabled) {
-        pattern = "Reload ''{0}'' file in another encoding";
-      }
-      else if (charsetFromContent != null) {
-        pattern = "Encoding (content-specified): {0}";
-      }
-      else {
-        pattern = "Encoding ''{0}'' ("+failReason+")";
+      Pair<Charset, String> check = checkFileType(virtualFile);
+      if (check.second != null) {
+        failReason = check.second;
       }
     }
 
-    Charset charset = charsetFromContent != null ? charsetFromContent : virtualFile != null ? virtualFile.getCharset() : NO_ENCODING;
-    String text = charset == NO_ENCODING ? "Change file encoding" : MessageFormat.format(pattern, charset.displayName());
+    if (failReason != null) {
+      return MessageFormat.format(failReason, charsetFromContent == null ? "" : charsetFromContent.displayName());
+    }
+    return null;
+  }
 
-    return Pair.create(text, enabled);
+  @NotNull
+  // returns existing charset (null means N/A), failReason: null means enabled, notnull means disabled and contains error message
+  public static Pair<Charset, String> checkCanReload(@NotNull VirtualFile virtualFile) {
+    if (virtualFile.isDirectory()) {
+      return Pair.create(null, "file is a directory");
+    }
+    FileDocumentManager documentManager = FileDocumentManager.getInstance();
+    Document document = documentManager.getDocument(virtualFile);
+    if (document == null) return Pair.create(null, "binary file");
+    Charset charsetFromContent = ((EncodingManagerImpl)EncodingManager.getInstance()).computeCharsetFromContent(virtualFile);
+    Charset existing = charsetFromContent;
+    String failReason = LoadTextUtil.wasCharsetDetectedFromBytes(virtualFile);
+    if (failReason != null) {
+      // no point changing encoding if it was auto-detected
+      existing = virtualFile.getCharset();
+    }
+    else if (charsetFromContent != null) {
+      failReason = "hard coded in text";
+    }
+    else {
+      Pair<Charset, String> fileTypeCheck = checkFileType(virtualFile);
+      if (fileTypeCheck.second != null) {
+        failReason = fileTypeCheck.second;
+        existing = fileTypeCheck.first;
+      }
+    }
+    if (failReason != null) {
+      return Pair.create(existing, failReason);
+    }
+    return Pair.create(virtualFile.getCharset(), null);
   }
 
   private class ClearThisFileEncodingAction extends AnAction {
     private final VirtualFile myFile;
 
     private ClearThisFileEncodingAction(@Nullable VirtualFile file, @NotNull String clearItemText) {
-      super(clearItemText, "Clear " +
-                       (file == null ? "default" : "file '"+file.getName()+"'") +
-                       " encoding.", null);
+      super(clearItemText, "Clear " + (file == null ? "default" : "file '"+file.getName()+"'") + " encoding.", null);
       myFile = file;
     }
 
@@ -209,25 +197,29 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   protected abstract void chosen(@Nullable VirtualFile virtualFile, @NotNull Charset charset);
 
   @NotNull
-  public DefaultActionGroup createGroup(@Nullable String clearItemText) {
+  public DefaultActionGroup createGroup(@Nullable("null means do not show 'clear' text") String clearItemText,
+                                        @Nullable Condition<Charset> charsetFilter,
+                                        @NotNull String pattern,
+                                        Charset alreadySelected) {
     DefaultActionGroup group = new DefaultActionGroup();
     List<Charset> favorites = new ArrayList<Charset>(EncodingManager.getInstance().getFavorites());
     Collections.sort(favorites);
     Charset current = myVirtualFile == null ? null : myVirtualFile.getCharset();
     favorites.remove(current);
+    favorites.remove(alreadySelected);
 
     if (clearItemText != null) {
       group.add(new ClearThisFileEncodingAction(myVirtualFile, clearItemText));
     }
     if (favorites.isEmpty() && clearItemText == null) {
-      fillCharsetActions(group, myVirtualFile, Arrays.asList(CharsetToolkit.getAvailableCharsets()));
+      fillCharsetActions(group, myVirtualFile, Arrays.asList(CharsetToolkit.getAvailableCharsets()), charsetFilter, pattern);
     }
     else {
-      fillCharsetActions(group, myVirtualFile, favorites);
+      fillCharsetActions(group, myVirtualFile, favorites, charsetFilter, pattern);
 
       DefaultActionGroup more = new DefaultActionGroup("more", true);
       group.add(more);
-      fillCharsetActions(more, myVirtualFile, Arrays.asList(CharsetToolkit.getAvailableCharsets()));
+      fillCharsetActions(more, myVirtualFile, Arrays.asList(CharsetToolkit.getAvailableCharsets()), charsetFilter, pattern);
     }
     return group;
   }

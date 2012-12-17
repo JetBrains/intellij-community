@@ -20,6 +20,7 @@ import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 
 /**
+ *
  * @author nik
  */
 public abstract class ExcludedJavaSourceRootProvider {

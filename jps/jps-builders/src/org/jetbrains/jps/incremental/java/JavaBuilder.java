@@ -62,6 +62,7 @@ import java.net.ServerSocket;
 import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Eugene Zhuravlev
@@ -74,6 +75,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
   public static final boolean USE_EMBEDDED_JAVAC = System.getProperty(GlobalOptions.USE_EXTERNAL_JAVAC_OPTION) == null;
   private static final Key<Integer> JAVA_COMPILER_VERSION_KEY = Key.create("_java_compiler_version_");
   private static final Key<Boolean> IS_ENABLED = Key.create("_java_compiler_enabled_");
+  private static final Key<AtomicReference<String>> COMPILER_VERSION_INFO = Key.create("_java_compiler_version_info_");
+
   private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Arrays.<String>asList(
     "-target"
   ));
@@ -130,10 +133,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     else if (isEclipse) {
       messageText = "Using eclipse compiler to compile java sources";
     }
-    if (messageText != null) {
-      LOG.info(messageText);
-      context.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO, messageText));
-    }
+    COMPILER_VERSION_INFO.set(context, new AtomicReference<String>(messageText));
   }
 
   public ExitCode build(final CompileContext context,
@@ -207,12 +207,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
       return exitCode;
     }
 
-    final ProjectPaths paths = context.getProjectPaths();
     final ProjectDescriptor pd = context.getProjectDescriptor();
 
     JavaBuilderUtil.ensureModuleHasJdk(chunk.representativeTarget().getModule(), context, BUILDER_NAME);
-    final Collection<File> classpath = paths.getCompilationClasspath(chunk, false/*context.isProjectRebuild()*/);
-    final Collection<File> platformCp = paths.getPlatformCompilationClasspath(chunk, false/*context.isProjectRebuild()*/);
+    final Collection<File> classpath = ProjectPaths.getCompilationClasspath(chunk, false/*context.isProjectRebuild()*/);
+    final Collection<File> platformCp = ProjectPaths.getPlatformCompilationClasspath(chunk, false/*context.isProjectRebuild()*/);
 
     // begin compilation round
     final DiagnosticSink diagnosticSink = new DiagnosticSink(context);
@@ -221,6 +220,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final OutputFilesSink outputSink = new OutputFilesSink(context, outputConsumer, mappingsCallback, chunk.getName());
     try {
       if (hasSourcesToCompile) {
+        final AtomicReference<String> ref = COMPILER_VERSION_INFO.get(context);
+        final String versionInfo = ref.getAndSet(null); // display compiler version info only once per compile session
+        if (versionInfo != null) {
+          LOG.info(versionInfo);
+          context.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO, versionInfo));
+        }
         exitCode = ExitCode.OK;
 
         final Set<File> srcPath = new HashSet<File>();
@@ -291,14 +296,18 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final TasksCounter counter = new TasksCounter();
     COUNTER_KEY.set(context, counter);
 
+    final JpsJavaExtensionService javaExt = JpsJavaExtensionService.getInstance();
+    final JpsJavaCompilerConfiguration compilerConfig = javaExt.getCompilerConfiguration(context.getProjectDescriptor().getProject());
+    assert compilerConfig != null;
+
     final Set<JpsModule> modules = chunk.getModules();
     ProcessorConfigProfile profile = null;
     if (modules.size() == 1) {
-      profile = context.getAnnotationProcessingProfile(modules.iterator().next());
+      final JpsModule module = modules.iterator().next();
+      profile = compilerConfig.getAnnotationProcessingProfile(module);
     }
     else {
       // perform cycle-related validations
-      final JpsJavaExtensionService javaExt = JpsJavaExtensionService.getInstance();
       Pair<String, LanguageLevel> pair = null;
       for (JpsModule module : modules) {
         final LanguageLevel moduleLevel = javaExt.getLanguageLevel(module);
@@ -316,7 +325,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
       // check that all chunk modules are excluded from annotation processing
       for (JpsModule module : modules) {
-        final ProcessorConfigProfile prof = context.getAnnotationProcessingProfile(module);
+        final ProcessorConfigProfile prof = compilerConfig.getAnnotationProcessingProfile(module);
         if (prof.isEnabled()) {
           final String message = "Annotation processing is not supported for module cycles. Please ensure that all modules from cycle [" + chunk.getName() + "] are excluded from annotation processing";
           diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, message));
@@ -328,6 +337,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final Map<File, Set<File>> outs = buildOutputDirectoriesMap(context, chunk);
     final List<String> options = getCompilationOptions(context, chunk, profile);
     final ClassProcessingConsumer classesConsumer = new ClassProcessingConsumer(context, outputSink);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Compiling chunk [" + chunk.getName() + "] with options: \"" + StringUtil.join(options, " ") + "\"");
+    }
     try {
       final boolean rc;
       if (USE_EMBEDDED_JAVAC) {
@@ -581,16 +593,17 @@ public class JavaBuilder extends ModuleLevelBuilder {
         options.add(processorsPath == null? "" : FileUtil.toSystemDependentName(processorsPath.trim()));
       }
 
-      for (String procFQName : profile.getProcessors()) {
+      final Set<String> processors = profile.getProcessors();
+      if (!processors.isEmpty()) {
         options.add("-processor");
-        options.add(procFQName);
+        options.add(StringUtil.join(processors, ","));
       }
 
       for (Map.Entry<String, String> optionEntry : profile.getProcessorOptions().entrySet()) {
         options.add("-A" + optionEntry.getKey() + "=" + optionEntry.getValue());
       }
 
-      final File srcOutput = context.getProjectPaths().getAnnotationProcessorGeneratedSourcesOutputDir(
+      final File srcOutput = ProjectPaths.getAnnotationProcessorGeneratedSourcesOutputDir(
         chunk.getModules().iterator().next(), chunk.containsTests(), profile
       );
       if (srcOutput != null) {

@@ -255,7 +255,8 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     InspectionProfileEntry[] tools = profile.getInspectionTools(null);
     assertTrue(tools.length > 0);
     InspectionProfileEntry tool = tools[0];
-      String id = tool.getShortName();
+    String id = tool.getShortName();
+    System.out.println(id);
     if (profile.isToolEnabled(HighlightDisplayKey.findById(id))) {
       profile.disableTool(id);
     }

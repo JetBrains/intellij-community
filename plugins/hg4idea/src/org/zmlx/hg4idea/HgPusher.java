@@ -82,14 +82,14 @@ public class HgPusher {
           push(myProject, pushCommand.get());
         }
       }
-    });    
+    });
   }
 
   public static String getDefaultPushPath(@NotNull Project project, @NotNull VirtualFile repo) {
     final HgShowConfigCommand configCommand = new HgShowConfigCommand(project);
     return configCommand.getDefaultPushPath(repo);
   }
-  
+
   public static List<HgTagBranch> getBranches(@NotNull Project project, @NotNull VirtualFile root) {
     final AtomicReference<List<HgTagBranch>> branchesRef = new AtomicReference<List<HgTagBranch>>();
     new HgTagBranchCommand(project, root).listBranches(new Consumer<List<HgTagBranch>>() {
@@ -111,18 +111,16 @@ public class HgPusher {
         }
 
         int commitsNum = getNumberOfPushedCommits(result);
-        if (commitsNum > 0 && result.getExitValue() == 0 ) {
+        if (commitsNum > 0 && result.getExitValue() == 0) {
           String successTitle = "Pushed successfully";
           String successDescription = String.format("Pushed %d %s [%s]", commitsNum, StringUtil.pluralize("commit", commitsNum),
                                                     repo.getPresentableName());
-          new HgCommandResultNotifier(project).process(result, successTitle, successDescription);
-        }
-        else if (commitsNum == 0) {
-          new HgCommandResultNotifier(project).process(result, "", "Nothing to push");
-        }
-        else {
-          new HgCommandResultNotifier(project).process(result, null, null, "Push failed",
-                                                       "Failed to push to [" + repo.getPresentableName() + "]" );
+          new HgCommandResultNotifier(project).notifySuccess(successTitle, successDescription);
+        } else if (commitsNum == 0) {
+          new HgCommandResultNotifier(project).notifySuccess("", "Nothing to push");
+        } else {
+          new HgCommandResultNotifier(project).notifyError(result, "Push failed",
+                                                           "Failed to push to [" + repo.getPresentableName() + "]");
         }
       }
     });

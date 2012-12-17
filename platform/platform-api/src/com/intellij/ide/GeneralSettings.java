@@ -129,11 +129,11 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
   /**
    * @return a path pointing to a directory where the last project was created or null if not available
    */
-  public String getLastProjectLocation() {
+  public String getLastProjectCreationLocation() {
     return myLastProjectLocation;
   }
 
-  public void setLastProjectLocation(String lastProjectLocation) {
+  public void setLastProjectCreationLocation(String lastProjectLocation) {
     myLastProjectLocation = lastProjectLocation;
   }
 

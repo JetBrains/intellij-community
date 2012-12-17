@@ -11,7 +11,7 @@ foo.set(foo.get()++);
 foo.set(foo.get() + 2);
 foo.set(foo.get() - 1);
 foo.set(4);
-org.codehaus.groovy.runtime.DefaultGroovyMethods.print(this, foo.get());
+org.codehaus.groovy.runtime.DefaultGroovyMethods.print(refInClosureInScript.this, foo.get());
 }
 
 public void doCall() {

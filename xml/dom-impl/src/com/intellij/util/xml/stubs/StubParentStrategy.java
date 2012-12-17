@@ -19,6 +19,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.impl.*;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,12 +65,33 @@ public class StubParentStrategy implements DomParentStrategy {
     DomStub parentStub = myStub.getParentStub();
     if (parentStub == null) return null;
     int index = parentStub.getChildIndex(myStub);
-    DomInvocationHandler handler = parentStub.getHandler();
-    XmlTag tag = handler.getXmlTag();
-    if (tag == null) return null;
-    XmlTag[] subTags = tag.findSubTags(myStub.getName());
+    if (index < 0) {
+      return null;
+    }
+    XmlTag parentTag = parentStub.getHandler().getXmlTag();
+    if (parentTag == null) return null;
 
-    return index < 0 || index >= subTags.length ? null : subTags[index];
+    // for custom elements, namespace information is lost
+    // todo: propagate ns info through DomChildDescriptions
+    XmlTag[] tags = parentTag.getSubTags();
+    int i = 0;
+    String nameToFind = myStub.isCustom() ? XmlUtil.findLocalNameByQualifiedName(myStub.getName()) : myStub.getName();
+    assert nameToFind != null;
+    for (XmlTag xmlTag : tags) {
+      if (myStub.isCustom()) {
+        if (nameToFind.equals(xmlTag.getLocalName())) {
+          if (index == i++) {
+            return xmlTag;
+          }
+        }
+      }
+      else if (nameToFind.equals(xmlTag.getName())) {
+        if (index == i++) {
+          return xmlTag;
+        }
+      }
+    }
+    return null;
   }
 
   @NotNull

@@ -28,22 +28,27 @@ public class PopupListElementRenderer extends GroupedItemsListRenderer {
 
   public PopupListElementRenderer(final ListPopupImpl aPopup) {
     super(new ListItemDescriptor() {
+      @Override
       public String getTextFor(Object value) {
         return aPopup.getListStep().getTextFor(value);
       }
 
+      @Override
       public String getTooltipFor(Object value) {
         return null;
       }
 
+      @Override
       public Icon getIconFor(Object value) {
         return aPopup.getListStep().getIconFor(value);
       }
 
+      @Override
       public boolean hasSeparatorAboveOf(Object value) {
         return aPopup.getListModel().isSeparatorAboveOf(value);
       }
 
+      @Override
       public String getCaptionAboveOf(Object value) {
         return aPopup.getListModel().getCaptionAboveOf(value);
       }
@@ -51,6 +56,7 @@ public class PopupListElementRenderer extends GroupedItemsListRenderer {
     myPopup = aPopup;
   }
 
+  @Override
   protected void customizeComponent(JList list, Object value, boolean isSelected) {
     ListPopupStep<Object> step = myPopup.getListStep();
     boolean isSelectable = step.isSelectable(value);

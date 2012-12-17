@@ -644,8 +644,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
             containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class);
           }
           if (containingClasses.size() == 1) {
-            return factory.createThisExpression(parentClass.getManager(),
-                                                containingClasses.contains(parentClass) ? null : containingClasses.iterator().next());
+            return factory.createThisExpression(containingClasses.contains(parentClass) ? null : containingClasses.iterator().next());
           }
         }
       }

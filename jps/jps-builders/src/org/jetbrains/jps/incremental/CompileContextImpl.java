@@ -18,10 +18,8 @@ package org.jetbrains.jps.incremental;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.EventDispatcher;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
-import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.logging.BuildLoggingManager;
@@ -30,10 +28,6 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.FileDeletedEvent;
 import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
-import org.jetbrains.jps.model.java.JpsJavaExtensionService;
-import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
-import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
-import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.*;
 
@@ -49,14 +43,12 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final MessageHandler myDelegateMessageHandler;
   private final Set<ModuleBuildTarget> myNonIncrementalModules = new HashSet<ModuleBuildTarget>();
 
-  private final ProjectPaths myProjectPaths;
   private volatile long myCompilationStartStamp;
   private final ProjectDescriptor myProjectDescriptor;
   private final Map<String, String> myBuilderParams;
   private final CanceledStatus myCancelStatus;
   private volatile float myDone = -1.0f;
   private EventDispatcher<BuildListener> myListeners = EventDispatcher.create(BuildListener.class);
-  private Map<JpsModule, ProcessorConfigProfile> myAnnotationProcessingProfileMap;
 
   public CompileContextImpl(CompileScope scope,
                             ProjectDescriptor pd, boolean isMake,
@@ -72,7 +64,6 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     myIsProjectRebuild = isProjectRebuild;
     myIsMake = !isProjectRebuild && isMake;
     myDelegateMessageHandler = delegateMessageHandler;
-    myProjectPaths = new ProjectPaths(pd.getProject());
   }
 
   @Override
@@ -83,11 +74,6 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   @Override
   public void updateCompilationStartStamp() {
     myCompilationStartStamp = System.currentTimeMillis();
-  }
-
-  @Override
-  public ProjectPaths getProjectPaths() {
-    return myProjectPaths;
   }
 
   @Override
@@ -119,34 +105,6 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   @Override
   public void removeBuildListener(BuildListener listener) {
     myListeners.removeListener(listener);
-  }
-
-  @Override
-  @NotNull
-  public ProcessorConfigProfile getAnnotationProcessingProfile(JpsModule module) {
-    final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
-      getProjectDescriptor().getProject());
-    Map<JpsModule, ProcessorConfigProfile> map = myAnnotationProcessingProfileMap;
-    if (map == null) {
-      map = new HashMap<JpsModule, ProcessorConfigProfile>();
-      final Map<String, JpsModule> namesMap = new HashMap<String, JpsModule>();
-      for (JpsModule m : getProjectDescriptor().getProject().getModules()) {
-        namesMap.put(m.getName(), m);
-      }
-      if (!namesMap.isEmpty()) {
-        for (ProcessorConfigProfile profile : compilerConfig.getAnnotationProcessingConfigurations()) {
-          for (String name : profile.getModuleNames()) {
-            final JpsModule mod = namesMap.get(name);
-            if (mod != null) {
-              map.put(mod, profile);
-            }
-          }
-        }
-      }
-      myAnnotationProcessingProfileMap = map;
-    }
-    final ProcessorConfigProfile profile = map.get(module);
-    return profile != null? profile : compilerConfig.getDefaultAnnotationProcessingConfiguration();
   }
 
   @Override

@@ -370,11 +370,10 @@ public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, 
     }
 
     final String[] sourceRoots = AndroidJpsUtil.toPaths(AndroidJpsUtil.getSourceRootsForModuleAndDependencies(module));
-    final ProjectPaths paths = context.getProjectPaths();
 
     final File intArtifactsDir = AndroidJpsUtil.getDirectoryForIntermediateArtifacts(context, module);
 
-    final File moduleOutputDir = paths.getModuleOutputDir(module, false);
+    final File moduleOutputDir = ProjectPaths.getModuleOutputDir(module, false);
     if (moduleOutputDir == null) {
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle
         .message("android.jps.errors.output.dir.not.specified", module.getName())));

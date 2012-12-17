@@ -30,6 +30,7 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
@@ -118,7 +119,7 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
                                     OutputConsumer outputConsumer) {
     ExitCode exitCode = ExitCode.NOTHING_DONE;
 
-    final Collection<File> classpath = context.getProjectPaths().getCompilationClasspath(chunk, false);
+    final Collection<File> classpath = ProjectPaths.getCompilationClasspath(chunk, false);
     final StringBuilder buf = new StringBuilder();
     for (File file : classpath) {
       if (buf.length() > 0) {

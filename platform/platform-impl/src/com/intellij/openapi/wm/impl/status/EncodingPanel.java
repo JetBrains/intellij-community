@@ -17,7 +17,9 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -25,6 +27,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
@@ -47,7 +50,9 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -66,7 +71,7 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
   public EncodingPanel(@NotNull final Project project) {
     super(project);
 
-    myComponent = new TextPanel(getMaxValue()){
+    myComponent = new TextPanel(getMaxValue()) {
       @Override
       protected void paintComponent(@NotNull final Graphics g) {
         super.paintComponent(g);
@@ -78,6 +83,7 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
         }
       }
     };
+
     new ClickListener() {
       @Override
       public boolean onClick(MouseEvent e, int clickCount) {
@@ -87,6 +93,15 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
       }
     }.installOn(myComponent);
     myComponent.setBorder(WidgetBorder.INSTANCE);
+  }
+
+  @Nullable("returns null if charset set cannot be determined from content")
+  private static Charset cachedCharsetFromContent(final VirtualFile virtualFile) {
+    if (virtualFile == null) return null;
+    final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    if (document == null) return null;
+
+    return EncodingManager.getInstance().getCachedCharsetFromContent(document);
   }
 
   @Override
@@ -105,15 +120,18 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
     return new EncodingPanel(getProject());
   }
 
+  @Override
   @NotNull
   public String ID() {
     return "Encoding";
   }
 
+  @Override
   public WidgetPresentation getPresentation(@NotNull PlatformType type) {
     return null;
   }
 
+  @NonNls
   @NotNull
   private static String getMaxValue() {
     return "windows-1251";
@@ -157,59 +175,49 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
     }, this);
   }
 
+  private final EncodingActionsPair encodingActionsPair = new EncodingActionsPair();
   private void showPopup(MouseEvent e) {
-    ListPopup popup = getPopupStep();
-    if (popup == null) return;
-    final Dimension dimension = popup.getContent().getPreferredSize();
-    final Point at = new Point(0, -dimension.height);
+    if (!actionEnabled) {
+      return;
+    }
+    DataContext dataContext = getContext();
+    DefaultActionGroup group = encodingActionsPair.createActionGroup();
+
+    ListPopup popup =
+      JBPopupFactory.getInstance().createActionGroupPopup("File Encoding", group, dataContext, true, false, false, null, 2, null);
+
+    Dimension dimension = popup.getContent().getPreferredSize();
+    Point at = new Point(0, -dimension.height);
     popup.show(new RelativePoint(e.getComponent(), at));
-    Disposer.register(this, popup); // do not forget to destroy popup on unexpected project close
+    Disposer.register(this, popup); // destroy popup on unexpected project close
   }
 
-  private ListPopup getPopupStep() {
-    Pair<String,Boolean> result = ChooseFileEncodingAction.update(getSelectedFile());
-    boolean enabled = result.second;
-    final DataContext parent = DataManager.getInstance().getDataContext((Component)myStatusBar);
-    final DataContext dataContext =
-      SimpleDataContext.getSimpleContext(PlatformDataKeys.VIRTUAL_FILE.getName(), getSelectedFile(),
-                                         SimpleDataContext.getSimpleContext(PlatformDataKeys.PROJECT.getName(), getProject(), parent));
-    if (!enabled) {
-      return null;
-    }
-    DefaultActionGroup group = new ChooseFileEncodingAction(getSelectedFile()) {
-      @Override
-      protected void chosen(VirtualFile virtualFile, @NotNull Charset charset) {
-        if (virtualFile != null) {
-          EncodingManager.getInstance().setEncoding(virtualFile, charset);
-          update(new AnActionEvent(null, dataContext, ActionPlaces.EDITOR_TOOLBAR, getTemplatePresentation(), ActionManager.getInstance(), 0));
-          EncodingPanel.this.update();
-        }
-      }
-    }.createGroup(null);
-    return JBPopupFactory.getInstance().createActionGroupPopup(null, group, dataContext, false, false, false, null, 30, null);
+  @NotNull
+  private DataContext getContext() {
+    Editor editor = getEditor();
+    DataContext parent = DataManager.getInstance().getDataContext((Component)myStatusBar);
+    return SimpleDataContext.getSimpleContext(PlatformDataKeys.VIRTUAL_FILE.getName(), getSelectedFile(),
+           SimpleDataContext.getSimpleContext(PlatformDataKeys.PROJECT.getName(), getProject(),
+           SimpleDataContext.getSimpleContext(PlatformDataKeys.CONTEXT_COMPONENT.getName(), editor == null ? null : editor.getComponent(), parent)
+           ));
   }
 
   private void update() {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        final VirtualFile file = getSelectedFile();
-        Pair<String, Boolean> result = ChooseFileEncodingAction.update(file);
-        String text;
-        String toolTip;
-        if (file != null) {
-          Charset charset = ChooseFileEncodingAction.cachedCharsetFromContent(file);
-          if (charset == null) charset = file.getCharset();
+        VirtualFile file = getSelectedFile();
+        Charset charset = cachedCharsetFromContent(file);
+        if (charset == null && file != null) charset = file.getCharset();
 
-          text = charset.displayName();
-          actionEnabled = result.second;
-          toolTip = result.first;
-        }
-        else {
-          text = "";
-          actionEnabled = false;
-          toolTip = "";
-        }
+        String text = charset == null ? "" : charset.displayName();
+        actionEnabled = encodingActionsPair.areActionsEnabled(null,getEditor(), (Component)myStatusBar, file, getProject());
+
+        Pair<Charset,String> check = file == null ? null : ChooseFileEncodingAction.checkCanReload(file);
+        String failReason = check == null ? null : check.second;
+        String toolTip = "File Encoding" +
+                         (check == null || check.first == null ? "" : ": "+check.first.displayName()) +
+                         (actionEnabled || failReason == null ? "" : " (change disabled: " + failReason + ")");
         myComponent.setToolTipText(toolTip);
         myComponent.setText(text);
 

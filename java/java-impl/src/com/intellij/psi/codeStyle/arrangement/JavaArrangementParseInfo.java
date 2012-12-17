@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Stack;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -104,14 +105,16 @@ public class JavaArrangementParseInfo {
     Stack<Pair<PsiMethod, JavaArrangementMethodDependencyInfo>> toProcess
       = new Stack<Pair<PsiMethod, JavaArrangementMethodDependencyInfo>>();
     toProcess.push(Pair.create(method, result));
+    Set<PsiMethod> usedMethods = ContainerUtilRt.newHashSet();
     while (!toProcess.isEmpty()) {
       Pair<PsiMethod, JavaArrangementMethodDependencyInfo> pair = toProcess.pop();
       Set<PsiMethod> dependentMethods = myMethodDependencies.get(pair.first);
       if (dependentMethods == null) {
         continue;
       }
+      usedMethods.add(pair.first);
       for (PsiMethod dependentMethod : dependentMethods) {
-        if (dependentMethod == method) {
+        if (usedMethods.contains(dependentMethod)) {
           // Prevent cyclic dependencies.
           return null;
         }

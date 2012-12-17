@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrReferenceTypeEnhancer;
+import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -211,7 +212,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     List<GroovyResolveResult> accessorResults = new ArrayList<GroovyResolveResult>();
     for (String accessorName : accessorNames) {
       AccessorResolverProcessor accessorResolver =
-        new AccessorResolverProcessor(accessorName, name, this, !isLValue, false, GrReferenceResolveUtil.getThisType(this),
+        new AccessorResolverProcessor(accessorName, name, this, !isLValue, false, GrReferenceResolveUtil.getQualifierType(this),
                                       getTypeArguments());
       GrReferenceResolveUtil.resolveImpl(accessorResolver, this);
       final GroovyResolveResult[] candidates = accessorResolver.getCandidates();
@@ -338,8 +339,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     //search for getters
     for (String getterName : GroovyPropertyUtils.suggestGettersName(name)) {
       AccessorResolverProcessor getterResolver =
-        new AccessorResolverProcessor(getterName, name, this, true, genericsMatter, GrReferenceResolveUtil.getThisType(this),
-                                      getTypeArguments());
+        new AccessorResolverProcessor(getterName, name, this, true, genericsMatter, GrReferenceResolveUtil.getQualifierType(this), getTypeArguments());
       GrReferenceResolveUtil.resolveImpl(getterResolver, this);
       final GroovyResolveResult[] candidates = getterResolver.getCandidates(); //can be only one candidate
       if (!allVariants && candidates.length == 1) {
@@ -397,7 +397,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         argTypes[i] = TypeConversionUtil.erasure(argTypes[i]);
       }
     }
-    return new MethodResolverProcessor(name, this, false, GrReferenceResolveUtil.getThisType(this), argTypes, getTypeArguments(),
+    return new MethodResolverProcessor(name, this, false, GrReferenceResolveUtil.getQualifierType(this), argTypes, getTypeArguments(),
                                        allVariants, byShape);
   }
 
@@ -556,7 +556,16 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     if (resolved instanceof PsiClass) {
       final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-      if (getParent() instanceof GrReferenceExpression || PsiUtil.isSuperReference(this) || PsiUtil.isInstanceThisRef(this)) {
+      if (PsiUtil.isInstanceThisRef(this)) {
+        final PsiClassType categoryType = GdkMethodUtil.getCategoryType((PsiClass)resolved);
+        if (categoryType != null) {
+          return categoryType;
+        }
+        else {
+          return factory.createType((PsiClass)resolved);
+        }
+      }
+      if (getParent() instanceof GrReferenceExpression || PsiUtil.isSuperReference(this)) {
         return factory.createType((PsiClass)resolved);
       }
       else {
@@ -606,30 +615,62 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     }
 
     if (resolved == null) {
-      if ("class".equals(getReferenceName())) {
-        return TypesUtil.createJavaLangClassType(GrReferenceResolveUtil.getQualifierType(this), getProject(), getResolveScope());
+      final PsiType fromClassRef = getTypeFromClassRef(this);
+      if (fromClassRef != null) {
+        return fromClassRef;
       }
 
-      //map access
-      GrExpression qualifier = getQualifierExpression();
-      if (qualifier != null) {
-        PsiType qType = qualifier.getNominalType();
-        if (qType instanceof PsiClassType) {
-          PsiClassType.ClassResolveResult qResult = ((PsiClassType)qType).resolveGenerics();
-          PsiClass clazz = qResult.getElement();
-          if (clazz != null) {
-            PsiClass mapClass = JavaPsiFacade.getInstance(getProject()).findClass(CommonClassNames.JAVA_UTIL_MAP, getResolveScope());
-            if (mapClass != null && mapClass.getTypeParameters().length == 2) {
-              PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(mapClass, clazz, qResult.getSubstitutor());
-              if (substitutor != null) {
-                return TypeConversionUtil.erasure(substitutor.substitute(mapClass.getTypeParameters()[1]));
-              }
+      final PsiType fromMapAccess = getTypeFromMapAccess(this);
+      if (fromMapAccess != null) {
+        return fromMapAccess;
+      }
+
+      final PsiType fromSpreadOperator = getTypeFromSpreadOperator(this);
+      if (fromSpreadOperator != null) {
+        return fromSpreadOperator;
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static PsiType getTypeFromMapAccess(@NotNull GrReferenceExpressionImpl ref) {
+    //map access
+    GrExpression qualifier = ref.getQualifierExpression();
+    if (qualifier != null) {
+      PsiType qType = qualifier.getNominalType();
+      if (qType instanceof PsiClassType) {
+        PsiClassType.ClassResolveResult qResult = ((PsiClassType)qType).resolveGenerics();
+        PsiClass clazz = qResult.getElement();
+        if (clazz != null) {
+          PsiClass mapClass = JavaPsiFacade.getInstance(ref.getProject()).findClass(CommonClassNames.JAVA_UTIL_MAP, ref.getResolveScope());
+          if (mapClass != null && mapClass.getTypeParameters().length == 2) {
+            PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(mapClass, clazz, qResult.getSubstitutor());
+            if (substitutor != null) {
+              return TypeConversionUtil.erasure(substitutor.substitute(mapClass.getTypeParameters()[1]));
             }
           }
         }
       }
     }
+    return null;
+  }
 
+  @Nullable
+  private static PsiType getTypeFromSpreadOperator(@NotNull GrReferenceExpressionImpl ref) {
+    if (ref.getDotTokenType() == GroovyTokenTypes.mSPREAD_DOT) {
+      return TypesUtil.createType(CommonClassNames.JAVA_UTIL_LIST, ref);
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static PsiType getTypeFromClassRef(@NotNull GrReferenceExpressionImpl ref) {
+    if ("class".equals(ref.getReferenceName())) {
+      return TypesUtil.createJavaLangClassType(GrReferenceResolveUtil.getQualifierType(ref), ref.getProject(), ref.getResolveScope());
+    }
     return null;
   }
 

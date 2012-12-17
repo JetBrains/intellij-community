@@ -12,15 +12,11 @@
 // limitations under the License.
 package org.zmlx.hg4idea.util;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.FileHistoryPanelImpl;
@@ -284,15 +280,6 @@ public abstract class HgUtil {
     return map;
   }
 
-  /**
-   * Displays an error notification.
-   */
-  public static void notifyError(Project project, String title, String description) {
-    if (StringUtil.isEmptyOrSpaces(description)) {
-      description = title;
-    }
-    Notifications.Bus.notify(new Notification(HgVcs.NOTIFICATION_GROUP_ID, title, description, NotificationType.ERROR), project);
-  }
 
   public static HgFile getFileNameInTargetRevision(Project project, HgRevisionNumber vcsRevisionNumber, HgFile localHgFile) {
     HgStatusCommand statCommand = new HgStatusCommand(project);

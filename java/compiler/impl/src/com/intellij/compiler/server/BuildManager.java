@@ -807,7 +807,7 @@ public class BuildManager implements ApplicationComponent{
       cmdLine.setCharset(mySystemCharset);
       cmdLine.addParameter("-D" + CharsetToolkit.FILE_ENCODING_PROPERTY + "=" + mySystemCharset.name());
     }
-    for (String name : new String[]{"user.language", "user.country", "user.region"}) {
+    for (String name : new String[]{"user.language", "user.country", "user.region", PathManager.PROPERTY_HOME_PATH}) {
       final String value = System.getProperty(name);
       if (value != null) {
         cmdLine.addParameter("-D" + name + "=" + value);

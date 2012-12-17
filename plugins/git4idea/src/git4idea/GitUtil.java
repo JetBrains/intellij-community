@@ -34,7 +34,6 @@ import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
@@ -925,4 +924,24 @@ public class GitUtil {
     }
   }
 
+  /**
+   * git diff --name-only [--cached]
+   * @return true if there is anything in the unstaged/staging area, false if the unstraed/staging area is empty.
+   * @param staged if true checks the staging area, if false checks unstaged files.
+   * @param project
+   * @param root
+   */
+  public static boolean hasLocalChanges(boolean staged, Project project, VirtualFile root) throws VcsException {
+    final GitSimpleHandler diff = new GitSimpleHandler(project, root, GitCommand.DIFF);
+    diff.addParameters("--name-only");
+    if (staged) {
+      diff.addParameters("--cached");
+    }
+    diff.setNoSSH(true);
+    diff.setStdoutSuppressed(true);
+    diff.setStderrSuppressed(true);
+    diff.setSilent(true);
+    final String output = diff.run();
+    return !output.trim().isEmpty();
+  }
 }

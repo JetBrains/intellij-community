@@ -120,6 +120,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     try {
       method.invoke(myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC), args);
     }
+    catch (ClassCastException e) {
+      LOG.error("Arguments: "+ Arrays.toString(args), e);
+    }
     catch (Exception e) {
       LOG.error(e);
     }

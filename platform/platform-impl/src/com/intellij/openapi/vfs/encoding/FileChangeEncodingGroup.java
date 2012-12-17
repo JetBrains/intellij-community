@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,24 @@ package com.intellij.openapi.vfs.encoding;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.impl.status.EncodingActionsPair;
 import com.intellij.pom.Navigatable;
 
 /**
  * @author cdr
  */
-public class ChangeEncodingUpdateGroup extends DefaultActionGroup implements DumbAware {
+public class FileChangeEncodingGroup extends DefaultActionGroup implements DumbAware {
   private boolean myUpdating;
-  
+
+  private final EncodingActionsPair encodingActionsPair = new EncodingActionsPair();
+
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(AnActionEvent e) {
     if (myUpdating) {
       return;
     }
@@ -51,12 +55,19 @@ public class ChangeEncodingUpdateGroup extends DefaultActionGroup implements Dum
       virtualFile = null;
     }
 
-    Pair<String, Boolean> result = ChooseFileEncodingAction.update(virtualFile);
+    Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    boolean enabled =
+      encodingActionsPair.areActionsEnabled(null, editor, editor == null ? null : editor.getComponent(), virtualFile, getEventProject(e));
+    removeAll();
+    if (enabled) {
+      addAll(encodingActionsPair.createActionGroup());
+    }
+
     myUpdating = true;
     try {
-      e.getPresentation().setText(result.getFirst());
+      e.getPresentation().setText("File encoding");
       // updating the enabled state of the action can trigger the menuSelected handler, which updates the action group again
-      e.getPresentation().setEnabled(result.getSecond());
+      e.getPresentation().setEnabled(enabled);
     }
     finally {
       myUpdating = false;

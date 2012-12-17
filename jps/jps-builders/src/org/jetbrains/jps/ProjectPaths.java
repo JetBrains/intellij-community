@@ -21,7 +21,6 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsDummyElement;
-import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
@@ -41,30 +40,25 @@ import java.util.*;
  *         Date: 9/30/11
  */
 public class ProjectPaths {
-  @NotNull
-  private final JpsProject myProject;
-  //private final Map<JpsJavaClasspathKind, Map<ModuleChunk, List<String>>> myCachedClasspath = new HashMap<JpsJavaClasspathKind, Map<ModuleChunk, List<String>>>();
-
-  public ProjectPaths(@NotNull JpsProject project) {
-    myProject = project;
+  private ProjectPaths() {
   }
 
-  public Collection<File> getCompilationClasspathFiles(ModuleChunk chunk,
+  public static Collection<File> getCompilationClasspathFiles(ModuleChunk chunk,
                                                        boolean includeTests,
                                                        final boolean excludeMainModuleOutput,
                                                        final boolean exportedOnly) {
     return getClasspathFiles(chunk, JpsJavaClasspathKind.compile(includeTests), excludeMainModuleOutput, ClasspathPart.WHOLE, exportedOnly);
   }
 
-  public Collection<File> getPlatformCompilationClasspath(ModuleChunk chunk, boolean excludeMainModuleOutput) {
+  public static Collection<File> getPlatformCompilationClasspath(ModuleChunk chunk, boolean excludeMainModuleOutput) {
     return getClasspathFiles(chunk, JpsJavaClasspathKind.compile(chunk.containsTests()), excludeMainModuleOutput, ClasspathPart.BEFORE_JDK, true);
   }
 
-  public Collection<File> getCompilationClasspath(ModuleChunk chunk, boolean excludeMainModuleOutput) {
+  public static Collection<File> getCompilationClasspath(ModuleChunk chunk, boolean excludeMainModuleOutput) {
     return getClasspathFiles(chunk, JpsJavaClasspathKind.compile(chunk.containsTests()), excludeMainModuleOutput, ClasspathPart.AFTER_JDK, true);
   }
 
-  private Collection<File> getClasspathFiles(ModuleChunk chunk,
+  private static Collection<File> getClasspathFiles(ModuleChunk chunk,
                                              JpsJavaClasspathKind kind,
                                              final boolean excludeMainModuleOutput,
                                              ClasspathPart classpathPart, final boolean exportedOnly) {
@@ -159,12 +153,12 @@ public class ProjectPaths {
   }
 
   @Nullable
-  public File getModuleOutputDir(JpsModule module, boolean forTests) {
+  public static File getModuleOutputDir(JpsModule module, boolean forTests) {
     return JpsJavaExtensionService.getInstance().getOutputDirectory(module, forTests);
   }
 
   @Nullable
-  public File getAnnotationProcessorGeneratedSourcesOutputDir(JpsModule module, final boolean forTests, ProcessorConfigProfile profile) {
+  public static File getAnnotationProcessorGeneratedSourcesOutputDir(JpsModule module, final boolean forTests, ProcessorConfigProfile profile) {
     final String sourceDirName = profile.getGeneratedSourcesDirectoryName(forTests);
     if (profile.isOutputRelativeToContentRoot()) {
       List<String> roots = module.getContentRootsList().getUrls();

@@ -17,36 +17,25 @@ package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
+import java.text.MessageFormat;
 
 /**
  * @author cdr
 */
-class ChangeFileEncodingTo extends AnAction implements DumbAware {
+abstract class ChangeFileEncodingTo extends AnAction implements DumbAware {
   private final VirtualFile myFile;
   private final Charset myCharset;
 
-  ChangeFileEncodingTo(@Nullable VirtualFile file, @NotNull Charset charset) {
-    super(charset.displayName());
+  ChangeFileEncodingTo(@Nullable VirtualFile file, @NotNull Charset charset, @NotNull String pattern) {
+    super(charset.displayName(), MessageFormat.format(pattern, file == null ? null : file.getName(), charset.displayName()), null);
     myFile = file;
     myCharset = charset;
-
-    String description;
-    if (file == null) {
-      description = "Change default encoding to '"+charset.displayName()+"'.";
-    }
-    else {
-      Pair<String, Boolean> result = ChooseFileEncodingAction.update(file);
-      boolean enabled = result.second;
-      description = enabled ? result.first + " '" + charset.displayName() + "'" : result.first;
-    }
-    getTemplatePresentation().setDescription(description);
   }
 
   @Override
@@ -54,7 +43,5 @@ class ChangeFileEncodingTo extends AnAction implements DumbAware {
     chosen(myFile, myCharset);
   }
 
-  protected void chosen(@Nullable VirtualFile file, @NotNull Charset charset) {
-    EncodingManager.getInstance().setEncoding(file, charset);
-  }
+  protected abstract void chosen(@Nullable VirtualFile file, @NotNull Charset charset);
 }

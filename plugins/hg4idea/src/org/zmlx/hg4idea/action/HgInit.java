@@ -1,8 +1,5 @@
 package org.zmlx.hg4idea.action;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -12,13 +9,16 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
-import org.zmlx.hg4idea.util.HgUtil;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgInitCommand;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 import org.zmlx.hg4idea.ui.HgInitAlreadyUnderHgDialog;
 import org.zmlx.hg4idea.ui.HgInitDialog;
+import org.zmlx.hg4idea.util.HgErrorUtil;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -110,21 +110,18 @@ public class HgInit extends DumbAwareAction {
   }
 
   private void createRepository(final VirtualFile selectedRoot, final VirtualFile mapRoot) {
-    new HgInitCommand(myProject).execute(selectedRoot, new Consumer<Boolean>() {
+    new HgInitCommand(myProject).execute(selectedRoot, new HgCommandResultHandler() {
       @Override
-      public void consume(Boolean succeeded) {
-        if (succeeded) {
+      public void process(@Nullable HgCommandResult result) {
+        if (!HgErrorUtil.hasErrorsInCommandExecution(result)) {
           updateDirectoryMappings(mapRoot);
+          new HgCommandResultNotifier(myProject.isDefault() ? null : myProject)
+            .notifySuccess("hg4idea.init.created.notification.title", "hg4idea.init.created.notification.description");
+        } else {
+          new HgCommandResultNotifier(myProject.isDefault() ? null : myProject)
+            .notifyError(result, "hg4idea.init.error.title", HgVcsMessages.message("hg4idea.init.error.description",
+                                                                                 selectedRoot.getPresentableUrl()));
         }
-        Notifications.Bus.notify(new Notification(HgVcs.NOTIFICATION_GROUP_ID,
-                                                  HgVcsMessages.message(
-                                                    succeeded ? "hg4idea.init.created.notification.title" : "hg4idea.init.error.title"),
-                                                  HgVcsMessages.message(succeeded
-                                                                        ? "hg4idea.init.created.notification.description"
-                                                                        : "hg4idea.init.error.description",
-                                                                        selectedRoot.getPresentableUrl()),
-                                                  succeeded ? NotificationType.INFORMATION : NotificationType.ERROR),
-                                 myProject.isDefault() ? null : myProject);
       }
     });
   }

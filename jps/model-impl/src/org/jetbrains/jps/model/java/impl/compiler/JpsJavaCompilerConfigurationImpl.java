@@ -24,6 +24,7 @@ import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
+import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.*;
 
@@ -42,6 +43,7 @@ public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<Jp
   private Map<String, String> myModulesByteCodeTargetLevels = new HashMap<String, String>();
   private Map<String, JpsJavaCompilerOptions> myCompilerOptions = new HashMap<String, JpsJavaCompilerOptions>();
   private String myJavaCompilerId = "Javac";
+  private Map<JpsModule, ProcessorConfigProfile> myAnnotationProcessingProfileMap;
 
   public JpsJavaCompilerConfigurationImpl() {
   }
@@ -84,13 +86,13 @@ public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<Jp
 
   @NotNull
   @Override
-  public ProcessorConfigProfile getDefaultAnnotationProcessingConfiguration() {
+  public ProcessorConfigProfile getDefaultAnnotationProcessingProfile() {
     return myDefaultAnnotationProcessingProfile;
   }
 
   @NotNull
   @Override
-  public Collection<ProcessorConfigProfile> getAnnotationProcessingConfigurations() {
+  public Collection<ProcessorConfigProfile> getAnnotationProcessingProfiles() {
     return myAnnotationProcessingProfiles;
   }
 
@@ -162,5 +164,31 @@ public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<Jp
     ProcessorConfigProfileImpl profile = new ProcessorConfigProfileImpl("");
     myAnnotationProcessingProfiles.add(profile);
     return profile;
+  }
+
+  @Override
+  @NotNull
+  public ProcessorConfigProfile getAnnotationProcessingProfile(JpsModule module) {
+    Map<JpsModule, ProcessorConfigProfile> map = myAnnotationProcessingProfileMap;
+    if (map == null) {
+      map = new HashMap<JpsModule, ProcessorConfigProfile>();
+      final Map<String, JpsModule> namesMap = new HashMap<String, JpsModule>();
+      for (JpsModule m : module.getProject().getModules()) {
+        namesMap.put(m.getName(), m);
+      }
+      if (!namesMap.isEmpty()) {
+        for (ProcessorConfigProfile profile : getAnnotationProcessingProfiles()) {
+          for (String name : profile.getModuleNames()) {
+            final JpsModule mod = namesMap.get(name);
+            if (mod != null) {
+              map.put(mod, profile);
+            }
+          }
+        }
+      }
+      myAnnotationProcessingProfileMap = map;
+    }
+    final ProcessorConfigProfile profile = map.get(module);
+    return profile != null? profile : getDefaultAnnotationProcessingProfile();
   }
 }

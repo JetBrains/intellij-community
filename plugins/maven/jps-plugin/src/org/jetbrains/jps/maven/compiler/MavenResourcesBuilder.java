@@ -19,6 +19,8 @@ import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.maven.model.JpsMavenExtensionService;
 import org.jetbrains.jps.maven.model.impl.*;
+import org.jetbrains.jps.model.JpsEncodingConfigurationService;
+import org.jetbrains.jps.model.JpsEncodingProjectConfiguration;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
@@ -49,7 +51,8 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
       return;
     }
     final Set<String> filteringExcludedExtensions = config.getFilteringExcludedExtensions();
-    final String encoding = context.getProjectDescriptor().getEncodingConfiguration().getPreferredModuleEncoding(target.getModule());
+    final JpsEncodingProjectConfiguration encodingConfig =
+      JpsEncodingConfigurationService.getInstance().getEncodingConfiguration(target.getModule().getProject());
     final Date timestamp = new Date();
 
     @Nullable
@@ -111,6 +114,7 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
       }
 
       private void copyWithFiltering(File file, File outputFile) throws IOException {
+        final String encoding = encodingConfig != null? encodingConfig.getEncoding(file) : null;
         PrintWriter writer;
         try {
           writer = encoding != null ? new PrintWriter(outputFile, encoding) : new PrintWriter(outputFile);

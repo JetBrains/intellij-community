@@ -53,5 +53,7 @@ public final class HgErrorUtil {
     return errorLines.get(errorLines.size() - 1);
   }
 
-
+  public static boolean hasErrorsInCommandExecution(HgCommandResult result) {
+    return isAbort(result) || result.getExitValue() != 0;
+  }
 }

@@ -21,13 +21,16 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileTypeLoader;
 import org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerSettings;
+import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.jar.Attributes;
 import java.util.regex.Pattern;
@@ -54,7 +57,9 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
   private static boolean containsGroovyClasses(Project project) {
     final List<String> extensions = new ArrayList<String>();
     for (String extension : GroovyFileTypeLoader.getAllGroovyExtensions()) {
-      extensions.add("." + extension);
+      if (isHotSwapAware(extension)) {
+        extensions.add("." + extension);
+      }
     }
     final GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
     for (String fileName : FilenameIndex.getAllFilenames(project)) {
@@ -65,6 +70,15 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
       }
     }
     return false;
+  }
+
+  private static boolean isHotSwapAware(@NotNull String extension) {
+    for (GroovyScriptTypeDetector ep : GroovyScriptTypeDetector.EP_NAME.getExtensions()) {
+      if (!ep.isHowSwapAware(extension)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private static boolean hasSpringLoadedReloader(JavaParameters javaParameters) {

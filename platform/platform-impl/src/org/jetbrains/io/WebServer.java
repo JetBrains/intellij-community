@@ -232,6 +232,7 @@ public class WebServer {
     }
 
     if (tryAnyPort) {
+      LOG.info("We cannot bind to our default range, so, try to bind to any free port");
       try {
         Channel channel = bootstrap.bind(new InetSocketAddress(0));
         openChannels.add(channel);

@@ -12,6 +12,8 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,6 +34,7 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
@@ -74,7 +77,10 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private static final Logger LOG = Logger.getInstance(HgVcs.class);
 
   public static final String VCS_NAME = "hg4idea";
-  public static final String NOTIFICATION_GROUP_ID = "Mercurial";
+  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup(
+    "Mercurial Messages", ChangesViewContentManager.TOOLWINDOW_ID, true);
+  public static final NotificationGroup IMPORTANT_ERROR_NOTIFICATION = new NotificationGroup(
+    "Mercurial Important Messages", NotificationDisplayType.STICKY_BALLOON, true);
   public static final String HG_EXECUTABLE_FILE_NAME = (SystemInfo.isWindows ? "hg.exe" : "hg");
   private final static VcsKey ourKey = createKey(VCS_NAME);
   private static final int MAX_CONSOLE_OUTPUT_SIZE = 10000;

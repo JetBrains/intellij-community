@@ -18,6 +18,7 @@ package git4idea.commands;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.i18n.GitBundle;
@@ -79,12 +80,16 @@ public class GitSimpleHandler extends GitTextHandler {
    */
   protected void processTerminated(final int exitCode) {
     if (myVcs == null) { return; }
-    if (!isStdoutSuppressed() && myStdoutLine.length() != 0) {
-      myVcs.showMessages(myStdoutLine.toString());
+    String stdout = myStdoutLine.toString();
+    String stderr = myStdoutLine.toString();
+    if (!isStdoutSuppressed() && !StringUtil.isEmptyOrSpaces(stdout)) {
+      myVcs.showMessages(stdout);
+      LOG.info(stdout.trim());
       myStdoutLine.setLength(0);
     }
-    else if (!isStderrSuppressed() && myStderrLine.length() != 0) {
-      myVcs.showErrorMessages(myStderrLine.toString());
+    else if (!isStderrSuppressed() && !StringUtil.isEmptyOrSpaces(stderr)) {
+      myVcs.showErrorMessages(stderr);
+      LOG.info(stderr.trim());
       myStderrLine.setLength(0);
     }
   }
@@ -148,11 +153,13 @@ public class GitSimpleHandler extends GitTextHandler {
           else {
             line = text.substring(start, savedPos);
           }
-          if (ProcessOutputTypes.STDOUT == outputType) {
+          if (ProcessOutputTypes.STDOUT == outputType && !StringUtil.isEmptyOrSpaces(line)) {
             myVcs.showMessages(line);
+            LOG.info(line.trim());
           }
-          else if (ProcessOutputTypes.STDERR == outputType) {
+          else if (ProcessOutputTypes.STDERR == outputType && !StringUtil.isEmptyOrSpaces(line)) {
             myVcs.showErrorMessages(line);
+            LOG.info(line.trim());
           }
         }
         start = savedPos;

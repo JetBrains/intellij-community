@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -579,6 +579,25 @@ def foo(def var) {
 ''', 'java.lang.String')
   }
 
+  void testUnresolvedSpread() {
+    doTest('''\
+def xxx = abc*.name
+print xx<caret>x''', 'java.util.List')
+  }
+
+  void testThisInCategoryClass() {
+    doTest('''\
+class Cat {}
+
+@groovy.lang.Category(Cat)
+class Any {
+  void foo() {
+    print th<caret>is
+  }
+}
+''', 'Cat')
+  }
+
   private void doTest(String text, String type) {
     def file = myFixture.configureByText('_.groovy', text)
     def ref = file.findReferenceAt(myFixture.editor.caretModel.offset) as GrReferenceExpression
@@ -607,4 +626,5 @@ def foo(def var) {
     }
     return b.toString()
   }
+
 }

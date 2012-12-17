@@ -43,7 +43,7 @@ import static com.intellij.util.BitUtil.notSet;
  * @version 11.1
  */
 public class FileSystemUtil {
-  public static final String FORCE_USE_NIO2_KEY = "idea.io.use.nio2";
+  private static final String FORCE_USE_NIO2_KEY = "idea.io.use.nio2";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileSystemUtil");
 

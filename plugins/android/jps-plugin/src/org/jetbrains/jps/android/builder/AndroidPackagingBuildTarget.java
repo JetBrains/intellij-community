@@ -3,6 +3,7 @@ package org.jetbrains.jps.android.builder;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.android.AndroidJpsUtil;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
@@ -39,7 +40,7 @@ public class AndroidPackagingBuildTarget extends AndroidBuildTarget {
   @NotNull
   @Override
   public Collection<File> getOutputRoots(CompileContext context) {
-    final File moduleOutputDir = context.getProjectPaths().getModuleOutputDir(myModule, false);
+    final File moduleOutputDir = ProjectPaths.getModuleOutputDir(myModule, false);
     final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(myModule);
 
     if (moduleOutputDir == null || extension == null) {

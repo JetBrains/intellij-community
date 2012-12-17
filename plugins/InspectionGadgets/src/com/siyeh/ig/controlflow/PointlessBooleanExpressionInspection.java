@@ -188,8 +188,12 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
   private void buildSimplifiedExpression(List<PsiExpression> expressions, String token, boolean negate, StringBuilder out) {
     if (expressions.size() == 1) {
       final PsiExpression expression = expressions.get(0);
+      final String expressionText = expression.getText();
+      if (isBoxedTypeComparison(token, expression)) {
+        out.append(expressionText).append(" != null && ");
+      }
       if (!negate) {
-        out.append(expression.getText());
+        out.append(expressionText);
         return;
       }
       if (ComparisonUtils.isComparison(expression)) {
@@ -202,10 +206,10 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
       }
       else {
         if (ParenthesesUtils.getPrecedence(expression) > ParenthesesUtils.PREFIX_PRECEDENCE) {
-          out.append("!(").append(expression.getText()).append(')');
+          out.append("!(").append(expressionText).append(')');
         }
         else {
-          out.append('!').append(expression.getText());
+          out.append('!').append(expressionText);
         }
       }
     }
@@ -227,6 +231,10 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
         out.append(')');
       }
     }
+  }
+
+  private static boolean isBoxedTypeComparison(String token, PsiExpression expression) {
+    return ("==".equals(token) || "!=".equals(token)) && expression instanceof PsiReferenceExpression && expression.getType() instanceof PsiClassType;
   }
 
   private void buildSimplifiedPrefixExpression(PsiPrefixExpression expression, StringBuilder out) {

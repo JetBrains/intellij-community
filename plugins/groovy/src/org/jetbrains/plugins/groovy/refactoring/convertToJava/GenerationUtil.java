@@ -27,6 +27,7 @@ import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitutor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -647,5 +648,39 @@ public class GenerationUtil {
 
   static PsiType getNotNullType(PsiElement context, PsiType type) {
     return type != null ? type : TypesUtil.getJavaLangObject(context);
+  }
+
+  public static void writeThisReference(@Nullable PsiClass targetClass, StringBuilder buffer, ExpressionContext context) {
+    if (targetClass != null && !(targetClass instanceof PsiAnonymousClass)) {
+      final GrCodeReferenceElement ref = GroovyPsiElementFactory.getInstance(context.project).createCodeReferenceElementFromClass(targetClass);
+      writeCodeReferenceElement(buffer, ref);
+      buffer.append('.');
+    }
+    buffer.append("this");
+  }
+
+  public static void writeSuperReference(@Nullable PsiClass targetClass, StringBuilder buffer, ExpressionContext context) {
+    if (targetClass != null && !(targetClass instanceof PsiAnonymousClass)) {
+      final GrCodeReferenceElement ref = GroovyPsiElementFactory.getInstance(context.project).createCodeReferenceElementFromClass(targetClass);
+      writeCodeReferenceElement(buffer, ref);
+      buffer.append('.');
+    }
+    buffer.append("super");
+  }
+
+  @Nullable
+  static PsiElement getWrappingImplicitClass(@NotNull PsiElement place) {
+    PsiElement parent = place.getParent();
+
+    while (parent != null) {
+      if (parent instanceof PsiClass) return null;
+      if (parent instanceof GroovyFile && !(PsiUtil.isInDummyFile(parent))) return null;
+
+      if (parent instanceof GrClosableBlock) return parent;
+
+      parent = parent.getContext();
+    }
+
+    return null;
   }
 }

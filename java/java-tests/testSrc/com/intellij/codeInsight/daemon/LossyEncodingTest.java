@@ -128,6 +128,6 @@ public class LossyEncodingTest extends LightDaemonAnalyzerTestCase {
     doHighlighting();
     List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getFileLevelHighlights(getProject(), getFile());
     HighlightInfo info = assertOneElement(infos);
-    assertEquals("File was loaded in a wrong encoding: 'UTF-8'", info.description);
+    assertEquals("File was loaded in the wrong encoding: 'UTF-8'", info.description);
   }
 }

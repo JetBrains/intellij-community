@@ -27,7 +27,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.Consumer;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -48,9 +47,11 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
   protected ComboBoxAction() {
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
   }
 
+  @Override
   public JComponent createCustomComponent(Presentation presentation) {
     JPanel panel = new JPanel(new GridBagLayout());
     ComboBoxButton button = createComboBoxButton(presentation);
@@ -114,9 +115,11 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       }
       addActionListener(
         new ActionListener() {
+          @Override
           public void actionPerformed(ActionEvent e) {
             if (!myForcePressed) {
               IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new Runnable() {
+                @Override
                 public void run() {
                   showPopup();
                 }
@@ -197,9 +200,11 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       repaint();
 
       Runnable onDispose = new Runnable() {
+        @Override
         public void run() {
           // give button chance to handle action listener
           UIUtil.invokeLaterIfNeeded(new Runnable() {
+            @Override
             public void run() {
               myForcePressed = false;
               myPopup = null;
@@ -210,7 +215,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       };
 
       myPopup = createPopup(onDispose);
-      myPopup.show(new RelativePoint(this, new Point(0, this.getHeight() - 1)));
+      myPopup.show(new RelativePoint(this, new Point(0, getHeight() - 1)));
     }
 
     @Nullable
@@ -263,7 +268,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     private void updateTooltipText(String description) {
       String tooltip = AnAction.createTooltipText(description, ComboBoxAction.this);
-      setToolTipText(tooltip.length() > 0 ? tooltip : null);
+      setToolTipText(!tooltip.isEmpty() ? tooltip : null);
     }
 
     @Override
@@ -275,16 +280,19 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     }
 
     protected class MyButtonModel extends DefaultButtonModel {
+      @Override
       public boolean isPressed() {
         return myForcePressed || super.isPressed();
       }
 
+      @Override
       public boolean isArmed() {
         return myForcePressed || super.isArmed();
       }
     }
 
     private class MyButtonSynchronizer implements PropertyChangeListener {
+      @Override
       public void propertyChange(PropertyChangeEvent evt) {
         String propertyName = evt.getPropertyName();
         if (Presentation.PROP_TEXT.equals(propertyName)) {
@@ -390,7 +398,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         }
       }
       else {
-        super.paintComponent(g);
+        paintComponent(g);
       }
       final Insets insets = super.getInsets();
       final Icon icon = isEnabled() ? AllIcons.General.ComboArrow : DISABLED_ARROW_ICON;

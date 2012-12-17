@@ -19,6 +19,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.roots.*
+import org.jetbrains.annotations.NotNull
 
 /**
  * 
@@ -32,11 +33,13 @@ class MockProjectRootManager extends ProjectRootManager {
 
   }
 
+  @NotNull
   @Override
   VirtualFile[] getContentRoots() {
     myContentRoots
   }
 
+  @NotNull
   @Override
   ProjectFileIndex getFileIndex() {
     throw new UnsupportedOperationException()
@@ -46,13 +49,15 @@ class MockProjectRootManager extends ProjectRootManager {
 
 
 
+  @NotNull
   @Override
   OrderEnumerator orderEntries() {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  OrderEnumerator orderEntries(Collection<? extends Module> modules) {
+  OrderEnumerator orderEntries(@NotNull Collection<? extends Module> modules) {
     throw new UnsupportedOperationException()
   }
 
@@ -61,6 +66,7 @@ class MockProjectRootManager extends ProjectRootManager {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
   List<String> getContentRootUrls() {
     throw new UnsupportedOperationException()

@@ -92,7 +92,7 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
 
   @Override
   public boolean isDeclareFinal() {
-    return allowFinal();
+    return ourLastCbFinalState && allowFinal();
   }
 
   private void selectInCurrentMethod() {

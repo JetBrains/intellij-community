@@ -21,7 +21,6 @@ import com.intellij.formatting.alignment.AlignmentInColumnsHelper;
 import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -156,7 +155,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                       Wrap wrap,
                                       @NotNull AlignmentStrategy alignmentStrategy,
                                       int startOffset) {
-    Indent actualIndent = indent == null ? getDefaultSubtreeIndent(child, settings.getRootSettings().getIndentOptions(StdFileTypes.JAVA)) : indent;
+    Indent actualIndent = indent == null ? getDefaultSubtreeIndent(child, getJavaIndentOptions(settings)) : indent;
     final IElementType elementType = child.getElementType();
     Alignment alignment = alignmentStrategy.getAlignment(elementType);
 
@@ -207,8 +206,15 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   @NotNull
   public static Block createJavaBlock(@NotNull ASTNode child, @NotNull CommonCodeStyleSettings settings) {
-    return createJavaBlock(child, settings, getDefaultSubtreeIndent(child, settings.getRootSettings().getIndentOptions(StdFileTypes.JAVA)),
+    return createJavaBlock(child, settings, getDefaultSubtreeIndent(child, getJavaIndentOptions(settings)),
                            null, AlignmentStrategy.getNullStrategy());
+  }
+
+  @NotNull
+  private static CommonCodeStyleSettings.IndentOptions getJavaIndentOptions(CommonCodeStyleSettings settings) {
+    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions();
+    assert indentOptions != null : "Java indent options are not initialized";
+    return indentOptions;
   }
 
   private static boolean isLikeExtendsList(final IElementType elementType) {
