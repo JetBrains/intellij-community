@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
@@ -151,6 +152,10 @@ public class JavadocTypedHandler extends TypedHandlerDelegate {
       return false;
     }
 
+    if (element instanceof PsiDocParamRef) {
+      element = element.getParent();
+    }
+    
     if (element instanceof PsiDocTag) {
       // We don't want to provide closing tag for the type parameters, i.e. at situations like the one below:
       // /**
