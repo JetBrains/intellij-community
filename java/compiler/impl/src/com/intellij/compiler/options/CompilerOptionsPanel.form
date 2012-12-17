@@ -47,7 +47,6 @@
             </constraints>
             <properties>
               <font size="11"/>
-              <foreground color="-13487566"/>
               <text value="label"/>
             </properties>
           </component>
