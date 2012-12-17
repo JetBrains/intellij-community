@@ -391,7 +391,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     }
     final String remoteTag = changeList.getBranch();
     if (!Comparing.equal(localTag, remoteTag)) {
-      LOG.info(filePath + ": local tag " + localTag + ", remote tag " + remoteTag);
+      if (LOG.isDebugEnabled()) LOG.info(filePath + ": local tag " + localTag + ", remote tag " + remoteTag);
       return true;
     }
     return false;

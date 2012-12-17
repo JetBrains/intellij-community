@@ -340,7 +340,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
   @NotNull
   public String getTextFor(final IntentionActionWithTextCaching action) {
     final String text = action.getAction().getText();
-    if (text.startsWith("<html>")) {
+    if (LOG.isDebugEnabled() && text.startsWith("<html>")) {
       LOG.info("IntentionAction.getText() returned HTML: action=" + action + " text=" + text);
     }
     return text;
