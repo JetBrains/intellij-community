@@ -295,7 +295,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
       return;
     }
 
-    final List<PsiFile> annotationFiles = xmlFiles == null ? new ArrayList<PsiFile>() : new ArrayList<PsiFile>(xmlFiles);
+    final List<PsiFile> annotationFies = xmlFiles == null ? new ArrayList<PsiFile>() : new ArrayList<PsiFile>(xmlFiles);
 
     new WriteCommandAction(project) {
       @Override
@@ -311,7 +311,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
           else {
             annotationFiles.add(newXml);
             myExternalAnnotations.put(getFQN(packageName, fromFile), annotationFiles);
-            annotateExternally(listOwner, annotationFQName, existingXml, fromFile, value);
+            annotateExternally(listOwner, annotationFQName, newXml, fromFile, value);
           }
         }
 
