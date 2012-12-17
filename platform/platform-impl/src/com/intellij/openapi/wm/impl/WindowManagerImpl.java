@@ -730,7 +730,10 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
       }
       boolean usePreviousBounds = extendedState == Frame.MAXIMIZED_BOTH ||
                                   SystemInfo.isMacOSLion && WindowManagerEx.getInstanceEx().isFullScreen(frame);
-      final Rectangle rectangle = usePreviousBounds ? myFrameBounds : frame.getBounds();
+      Rectangle rectangle = usePreviousBounds ? myFrameBounds : frame.getBounds();
+      if (rectangle == null) { //frame is out of the screen?
+        rectangle = ScreenUtil.getScreenRectangle(0, 0);
+      }
       frameElement.setAttribute(X_ATTR, Integer.toString(rectangle.x));
       frameElement.setAttribute(Y_ATTR, Integer.toString(rectangle.y));
       frameElement.setAttribute(WIDTH_ATTR, Integer.toString(rectangle.width));
