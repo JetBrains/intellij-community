@@ -107,6 +107,7 @@ class BeforeRunStepsPanel extends JPanel {
         BeforeRunTaskProvider<BeforeRunTask> provider = selection.getSecond();
         if (provider.configureTask(myRunConfiguration, task)) {
           myModel.setElementAt(task, index);
+          updateText();
         }
       }
     });
@@ -173,7 +174,7 @@ class BeforeRunStepsPanel extends JPanel {
     StringBuilder sb = new StringBuilder();
 
     if (myShowSettingsBeforeRunCheckBox.isSelected()) {
-      sb.append(ExecutionBundle.message("configuration.edit.before.run")).append(", ");
+      sb.append(ExecutionBundle.message("configuration.edit.before.run"));
     }
 
     List<BeforeRunTask> tasks = myModel.getItems();
@@ -199,12 +200,13 @@ class BeforeRunStepsPanel extends JPanel {
         if (name.startsWith("Run ")) {
           name = name.substring(4);
         }
+        if (sb.length() > 0) {
+          sb.append(", ");
+        }
         sb.append(name);
         if (entry.getValue() > 1) {
           sb.append(" (").append(entry.getValue().intValue()).append(")");
         }
-        if (iterator.hasNext())
-          sb.append(", ");
       }
     }
     if (sb.length() > 0) {
