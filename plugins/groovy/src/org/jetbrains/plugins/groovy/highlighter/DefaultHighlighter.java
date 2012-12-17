@@ -115,11 +115,18 @@ public class DefaultHighlighter {
     TextAttributesKey.createTextAttributesKey("Groovy method declaration",
                                               HighlightInfoType.METHOD_DECLARATION.getAttributesKey().getDefaultAttributes());
 
+  public static final TextAttributesKey CONSTRUCTOR_DECLARATION = TextAttributesKey
+    .createTextAttributesKey("Groovy constructor declaration",
+                             HighlightInfoType.CONSTRUCTOR_DECLARATION.getAttributesKey().getDefaultAttributes());
+
   public static final TextAttributesKey INSTANCE_FIELD = 
     TextAttributesKey.createTextAttributesKey(INSTANCE_FIELD_ID, HighlightInfoType.INSTANCE_FIELD.getAttributesKey().getDefaultAttributes());
   
   public static final TextAttributesKey METHOD_CALL = 
     TextAttributesKey.createTextAttributesKey(METHOD_CALL_ID, HighlightInfoType.METHOD_CALL.getAttributesKey().getDefaultAttributes());
+
+  public static final TextAttributesKey CONSTRUCTOR_CALL = TextAttributesKey
+    .createTextAttributesKey("Groovy constructor call", HighlightInfoType.CONSTRUCTOR_CALL.getAttributesKey().getDefaultAttributes());
 
   public static final TextAttributesKey STATIC_FIELD = 
     TextAttributesKey.createTextAttributesKey(STATIC_FIELD_ID, HighlightInfoType.STATIC_FINAL_FIELD.getAttributesKey().getDefaultAttributes());

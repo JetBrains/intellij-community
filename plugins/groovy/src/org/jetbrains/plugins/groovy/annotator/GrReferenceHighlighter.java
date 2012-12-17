@@ -82,7 +82,7 @@ public class GrReferenceHighlighter extends TextEditorHighlightingPass {
         super.visitVariable(variable);
 
         if (GroovyRefactoringUtil.isLocalVariable(variable) || variable instanceof GrParameter) {
-          final TextAttributesKey attribute = GrHighlightUtil.getDeclarationHighlightingAttribute(variable);
+          final TextAttributesKey attribute = GrHighlightUtil.getDeclarationHighlightingAttribute(variable, null);
           if (attribute != null) {
             final PsiElement nameElement = variable.getNameIdentifierGroovy();
             myInfos.add(HighlightInfo.createHighlightInfo(HighlightInfoType.INFORMATION, nameElement, null, attribute));
@@ -93,7 +93,7 @@ public class GrReferenceHighlighter extends TextEditorHighlightingPass {
 
       private void visit(GrReferenceElement element) {
         final PsiElement resolved = element.resolve();
-        final TextAttributesKey attribute = GrHighlightUtil.getDeclarationHighlightingAttribute(resolved);
+        final TextAttributesKey attribute = GrHighlightUtil.getDeclarationHighlightingAttribute(resolved, element);
         if (attribute != null) {
           final PsiElement refNameElement = GrHighlightUtil.getElementToHighlight(element);
           myInfos.add(HighlightInfo.createHighlightInfo(HighlightInfoType.INFORMATION, refNameElement, null, attribute));
