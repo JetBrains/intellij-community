@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -135,7 +136,7 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
           if (f_modifier != null) {
             // in strict order
             if (has(f_modifier, '-')) out.append("<"); // left align
-            else if ("s".equals(f_conversion) && f_width != null) {
+            else if ("s".equals(f_conversion) && !StringUtil.isEmptyOrSpaces(f_width)) {
               // "%20s" aligns right, "{0:20s}" aligns left; to preserve align, make it explicit
               out.append(">");
             }
