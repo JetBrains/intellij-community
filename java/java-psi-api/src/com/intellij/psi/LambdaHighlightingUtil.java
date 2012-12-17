@@ -41,10 +41,10 @@ public class LambdaHighlightingUtil {
       if (body instanceof PsiCodeBlock) {
         if (!LambdaUtil.getReturnExpressions(lambdaExpression).isEmpty()) return "Unexpected return value";
       } else if (body instanceof PsiExpression) {
-        final PsiType type = ((PsiExpression)body).getType();
+        /*final PsiType type = ((PsiExpression)body).getType();
         if (type != PsiType.VOID) {
           return "Incompatible return type " + (type == PsiType.NULL || type == null ? "<null>" : type.getPresentableText()) +" in lambda expression";
-        }
+        }*/
       }
     } else if (functionalInterfaceReturnType != null) {
       final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(lambdaExpression);
