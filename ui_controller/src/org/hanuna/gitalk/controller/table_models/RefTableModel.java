@@ -6,6 +6,7 @@ import org.hanuna.gitalk.controller.DateConverter;
 import org.hanuna.gitalk.refs.RefsModel;
 
 import javax.swing.table.AbstractTableModel;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -28,7 +29,7 @@ public class RefTableModel extends AbstractTableModel {
     }
 
     public Set<Commit> getCheckedCommits() {
-        return checkedCommits;
+        return Collections.unmodifiableSet(checkedCommits);
     }
 
     @Override
@@ -42,13 +43,18 @@ public class RefTableModel extends AbstractTableModel {
     }
 
     @Override
+    public boolean isCellEditable(int rowIndex, int columnIndex) {
+        return columnIndex == 0;
+    }
+
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        Commit commit = orderedRefCommit.get(columnIndex);
+        Commit commit = orderedRefCommit.get(rowIndex);
         CommitData data = commit.getData();
         assert data != null;
-        switch (rowIndex) {
+        switch (columnIndex) {
             case 0:
-                return new CheckCommit(commit);
+                return checkedCommits.contains(commit);
             case 1:
                 return new CommitCell(data.getMessage(), refsModel.refsToCommit(commit.hash()));
             case 2:
@@ -61,10 +67,23 @@ public class RefTableModel extends AbstractTableModel {
     }
 
     @Override
+    public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+        if (columnIndex == 0) {
+            Boolean select = (Boolean) aValue;
+            Commit commit = orderedRefCommit.get(rowIndex);
+            if (select) {
+                checkedCommits.add(commit);
+            } else {
+                checkedCommits.remove(commit);
+            }
+        }
+    }
+
+    @Override
     public Class<?> getColumnClass(int column) {
         switch (column) {
             case 0:
-                return CheckCommit.class;
+                return Boolean.class;
             case 1:
                 return CommitCell.class;
             case 2:
@@ -81,23 +100,4 @@ public class RefTableModel extends AbstractTableModel {
         return COLUMN_NAMES[column];
     }
 
-    public class CheckCommit {
-        private final Commit commit;
-
-        public CheckCommit(Commit commit) {
-            this.commit = commit;
-        }
-
-        public boolean isChecked() {
-            return checkedCommits.contains(commit);
-        }
-
-        public void setChecked(boolean checked) {
-            if (checked) {
-                checkedCommits.add(commit);
-            } else {
-                checkedCommits.remove(commit);
-            }
-        }
-    }
 }

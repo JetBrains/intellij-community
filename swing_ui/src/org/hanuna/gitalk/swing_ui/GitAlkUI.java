@@ -19,13 +19,15 @@ public class GitAlkUI extends JFrame {
         this.controller = ui_controller;
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setTitle("GitAlk");
+
         table = new UI_GraphTable(ui_controller);
         final JScrollPane scrollPane = new JScrollPane(table);
 
         JTabbedPane tabsTwo = new JTabbedPane(JTabbedPane.TOP);
         tabsTwo.add("graph", scrollPane);
-        JPanel branches = new JPanel();
-        branches.add(new JButton("button!"));
+
+        UI_RefTable refTable = new UI_RefTable(ui_controller);
+        JScrollPane branches = new JScrollPane(refTable);
         tabsTwo.add("branches", branches);
 
 
