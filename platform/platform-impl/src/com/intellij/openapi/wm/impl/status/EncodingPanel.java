@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -70,7 +71,18 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
   public EncodingPanel(@NotNull final Project project) {
     super(project);
 
-    myComponent = new TextPanel(getMaxValue());
+    myComponent = new TextPanel(getMaxValue()) {
+      @Override
+      protected void paintComponent(@NotNull final Graphics g) {
+        super.paintComponent(g);
+        if (actionEnabled && getText() != null) {
+          final Rectangle r = getBounds();
+          final Insets insets = getInsets();
+          AllIcons.Ide.Statusbar_arrows.paintIcon(this, g, r.width - insets.right - AllIcons.Ide.Statusbar_arrows.getIconWidth() - 2,
+                                                  r.height / 2 - AllIcons.Ide.Statusbar_arrows.getIconHeight() / 2);
+        }
+      }
+    };
 
     new ClickListener() {
       @Override
