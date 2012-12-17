@@ -16,9 +16,7 @@
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +28,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
@@ -58,11 +55,16 @@ public class ClosureGenerator {
   }
 
   public void generate(@NotNull GrClosableBlock closure) {
-    final String owner = getOwner(closure);
     builder.append("new ");
     writeTypeForNew(builder, closure.getType(), closure);
     builder.append('(');
-    builder.append(owner).append(", ").append(owner).append(") {\n");
+
+    final CharSequence owner = getOwner(closure);
+    builder.append(owner);
+    builder.append(", ");
+    builder.append(owner);
+
+    builder.append(") {\n");
 
     generateClosureMainMethod(closure);
 
@@ -119,17 +121,39 @@ public class ClosureGenerator {
 
   @NonNls
   @NotNull
-  private static String getOwner(@NotNull GrClosableBlock closure) {
-    final GroovyPsiElement context = PsiTreeUtil.getParentOfType(closure, GrMember.class, GrClosableBlock.class, GroovyFile.class);
+  private CharSequence getOwner(@NotNull GrClosableBlock closure) {
+    final GroovyPsiElement context = PsiTreeUtil.getParentOfType(closure, GrMember.class, GroovyFile.class);
     LOG.assertTrue(context != null);
 
-    if (context instanceof GrTypeDefinition) {
-      LOG.error("closure must have member parent");
+    final PsiClass contextClass;
+    if (context instanceof GroovyFile) {
+      contextClass = ((GroovyFile)context).getScriptClass();
+    }
+    else if (context instanceof PsiClass) {
+      contextClass = (PsiClass)context;
+    }
+    else if (context instanceof GrMember) {
+      if (((GrMember)context).hasModifierProperty(PsiModifier.STATIC)) {
+        contextClass = null; //no context class
+      }
+      else {
+        contextClass = ((GrMember)context).getContainingClass();
+      }
+    }
+    else {
+      contextClass = null;
+    }
+
+    if (contextClass == null) return "null";
+
+    final PsiElement implicitClass = GenerationUtil.getWrappingImplicitClass(closure);
+    if (implicitClass == null) {
       return "this";
     }
-    if (context instanceof GrMember && ((GrMember)context).hasModifierProperty(PsiModifier.STATIC)) {
-      return "null";
+    else {
+      final StringBuilder buffer = new StringBuilder();
+      GenerationUtil.writeThisReference(contextClass, buffer, this.context);
+      return buffer;
     }
-    return "this";
   }
 }

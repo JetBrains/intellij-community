@@ -687,7 +687,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
         text = qname + ".this";
       }
     }
-    return createReferenceExpressionFromText(text);
+    return createReferenceExpressionFromText(text, psiClass);
   }
 
   @Override

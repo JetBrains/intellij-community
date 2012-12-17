@@ -491,7 +491,7 @@ public class PsiUtil {
     return null;
   }
 
-  private static boolean isInDummyFile(@NotNull PsiElement context) {
+  public static boolean isInDummyFile(@NotNull PsiElement context) {
     PsiFile file = context.getContainingFile();
     if (file == null) return false;
 
