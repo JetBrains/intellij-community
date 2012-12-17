@@ -29,8 +29,7 @@ public class LinuxTest {
 
         while (true) {
             t = new Timer("build graph model");
-            GraphBuilder builder = new GraphBuilder();
-            Graph graph = builder.build(commits);
+            Graph graph = GraphBuilder.build(commits);
             t.print();
         }
         //System.out.println(toStr(graph));

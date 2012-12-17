@@ -35,23 +35,14 @@ public class CommitTestUtils {
         if (data == null) {
             throw  new IllegalStateException();
         }
-        s.append(data.getLogIndex()).append("|-");
+        s.append(commit.hash().toStrHash()).append("|-");
         final ReadOnlyList<Commit> parents = data.getParents();
         if (parents.size() > 0) {
-            CommitData data1 = parents.get(0).getData();
-            if (data1 != null) {
-                s.append(data1.getLogIndex());
-            } else {
-                s.append("_");
-            }
+            s.append(parents.get(0).hash().toStrHash());
         }
         for (int i = 1; i < parents.size(); i++) {
-            CommitData data1 = parents.get(i).getData();
-            if (data1 != null) {
-                s.append(" ").append(data1.getLogIndex());
-            } else {
-                s.append(" ").append("_");
-            }
+            Commit parent =  parents.get(i);
+            s.append(" ").append(parent.hash().toStrHash());
         }
         s.append("|-");
 

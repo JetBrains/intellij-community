@@ -42,7 +42,7 @@ public class CommitListBuilder {
             parents.add(parent);
         }
         removeCommit(logData.getHash());
-        CommitData commitData = new CommitData(commits.size(), ReadOnlyList.newReadOnlyList(parents),
+        CommitData commitData = new CommitData(ReadOnlyList.newReadOnlyList(parents),
                 logData.getCommitMessage(), logData.getAuthor(), logData.getTimeStamp());
         commit.setCommitData(commitData);
         commits.add(commit);

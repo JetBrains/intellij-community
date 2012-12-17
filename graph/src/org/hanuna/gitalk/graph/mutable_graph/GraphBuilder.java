@@ -22,22 +22,30 @@ import static org.hanuna.gitalk.graph.mutable_graph.MutableGraphUtils.createEdge
 public class GraphBuilder {
 
     public static Graph build(ReadOnlyList<Commit> commits) {
-        GraphBuilder builder = new GraphBuilder();
+        Map<Commit, Integer> logIndexMap = new HashMap<Commit, Integer>(commits.size());
+        for (int i = 0; i < commits.size(); i++) {
+            logIndexMap.put(commits.get(i), i);
+        }
+        GraphBuilder builder = new GraphBuilder(logIndexMap);
         return builder.runBuild(commits);
+    }
+
+    public GraphBuilder(@NotNull Map<Commit, Integer> logIndexMap) {
+        this.logIndexMap = logIndexMap;
     }
 
     private int lastLogIndex;
     private Map<Hash, MutableNode> notAddedNodes = new HashMap<Hash, MutableNode>();
     private MutableNodeRow nextRow;
     private final List<MutableNodeRow> rows = new ArrayList<MutableNodeRow>();
+    private final Map<Commit, Integer> logIndexMap;
 
-
-    private int getLogIndexOfCommit(Commit commit) {
+    private int getLogIndexOfCommit(@NotNull Commit commit) {
         final CommitData data = commit.getData();
         if (data == null) {
             return lastLogIndex + 1;
         } else {
-            return data.getLogIndex();
+            return logIndexMap.get(commit);
         }
     }
 
@@ -124,7 +132,7 @@ public class GraphBuilder {
     }
 
     @NotNull
-    public Graph runBuild(ReadOnlyList<Commit> commits) {
+    private Graph runBuild(ReadOnlyList<Commit> commits) {
         prepare(commits.size() - 1);
         for (Commit commit : commits) {
             append(commit);

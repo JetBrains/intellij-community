@@ -20,9 +20,9 @@ import javax.swing.table.AbstractTableModel;
 */
 public class GraphTableModel extends AbstractTableModel {
     private final String[] columnNames = {"Subject", "Author", "Date"};
-    private final Graph graph;
     private final RefsModel refsModel;
-    private final PrintCellModel printCellModel;
+    private Graph graph;
+    private PrintCellModel printCellModel;
 
     public GraphTableModel(Graph graph, RefsModel refsModel, PrintCellModel printCellModel) {
         this.graph = graph;
@@ -30,6 +30,10 @@ public class GraphTableModel extends AbstractTableModel {
         this.printCellModel = printCellModel;
     }
 
+    public void rewriteGraph(Graph graph, PrintCellModel printCellModel) {
+        this.graph = graph;
+        this.printCellModel = printCellModel;
+    }
 
     @Nullable
     private Commit getCommitInRow(int rowIndex) {

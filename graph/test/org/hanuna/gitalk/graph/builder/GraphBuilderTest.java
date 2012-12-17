@@ -24,8 +24,7 @@ public class GraphBuilderTest {
         String input = inputTree.replace("\n", "|-aut|-132352112|-mes\n") + "|-aut|-132352112|-mes";
         GitLogParser parser = new GitLogParser(new StringReader(input));
         ReadOnlyList<Commit> commits = parser.readAllCommits();
-        GraphBuilder builder = new GraphBuilder();
-        Graph model = builder.build(commits);
+        Graph model = GraphBuilder.build(commits);
        // System.out.println(toStr(model));
         assertEquals(out, toStr(model));
 

@@ -44,7 +44,7 @@ public class Controller {
         List<Commit> showCommits = new ArrayList<Commit>();
 
         for (Commit commit : commits) {
-            if (startedCommit.contains(commit) || notAddedVisibleCommits.add(commit)) {
+            if (startedCommit.contains(commit) || notAddedVisibleCommits.contains(commit)) {
                 showCommits.add(commit);
                 notAddedVisibleCommits.remove(commit);
                 CommitData data = commit.getData();

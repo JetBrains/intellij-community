@@ -23,8 +23,7 @@ public class LayoutModelBuilderTest {
         String input = inputTree.replace("\n", "|-aut|-132352112|-mes\n") + "|-aut|-132352112|-mes";
         GitLogParser parser = new GitLogParser(new StringReader(input));
         ReadOnlyList<Commit> commits = parser.readAllCommits();
-        GraphBuilder builder = new GraphBuilder();
-        LayoutModel layoutModel = new LayoutModel(builder.build(commits));
+        LayoutModel layoutModel = new LayoutModel(GraphBuilder.build(commits));
         assertEquals(out, toStr(layoutModel));
     }
 

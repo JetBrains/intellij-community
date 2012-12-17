@@ -1,6 +1,7 @@
 package org.hanuna.gitalk.ui_controller;
 
 import org.hanuna.gitalk.commitmodel.Commit;
+import org.hanuna.gitalk.common.Timer;
 import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.controller.Controller;
 import org.hanuna.gitalk.graph.Graph;
@@ -30,7 +31,6 @@ public class UI_Controller {
     private final EventsController events = new EventsController();
     private final RefTableModel refTableModel;
 
-    private Graph graph;
     private PrintCellModel printCellModel;
     private GraphTableModel graphTableModel;
 
@@ -39,7 +39,7 @@ public class UI_Controller {
 
     public UI_Controller(Controller controller) {
         this.controller = controller;
-        graph = controller.getGraph();
+        Graph graph = controller.getGraph();
         RefsModel refsModel = controller.getRefsModel();
 
         this.refTableModel = new RefTableModel(refsModel);
@@ -52,9 +52,8 @@ public class UI_Controller {
 
     public void updateGraph() {
         Graph graph = controller.getGraph();
-        RefsModel refsModel = controller.getRefsModel();
         this.printCellModel = new PrintCellModel(graph);
-        this.graphTableModel = new GraphTableModel(graph, refsModel, printCellModel);
+        graphTableModel.rewriteGraph(graph, printCellModel);
     }
 
     public TableModel getGraphTableModel() {
@@ -75,7 +74,7 @@ public class UI_Controller {
 
     public void over(@Nullable GraphElement graphElement) {
         SelectController selectController = printCellModel.getSelectController();
-        GraphFragmentController fragmentController = graph.getFragmentController();
+        GraphFragmentController fragmentController = controller.getGraph().getFragmentController();
         if (graphElement == prevGraphElement) {
             return;
         } else {
@@ -93,7 +92,7 @@ public class UI_Controller {
 
     public void click(@Nullable GraphElement graphElement) {
         SelectController selectController = printCellModel.getSelectController();
-        GraphFragmentController fragmentController = graph.getFragmentController();
+        GraphFragmentController fragmentController = controller.getGraph().getFragmentController();
         selectController.deselectAll();
         if (graphElement == null) {
             return;
@@ -116,7 +115,15 @@ public class UI_Controller {
     public void runUpdateShowBranches() {
         Set<Commit> checkedCommits = refTableModel.getCheckedCommits();
         if (! prevSelectionBranches.equals(checkedCommits)) {
+            Timer timer = new Timer("update branch shows");
+
             prevSelectionBranches = new HashSet<Commit>(checkedCommits);
+            controller.setShowBranches(checkedCommits);
+            updateGraph();
+            events.runUpdateTable();
+            events.runJumpToRow(0);
+
+            timer.print();
         }
     }
 
