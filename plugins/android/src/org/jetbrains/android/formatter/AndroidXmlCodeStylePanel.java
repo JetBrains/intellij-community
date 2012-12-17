@@ -32,15 +32,16 @@ public class AndroidXmlCodeStylePanel extends CodeStyleAbstractPanel {
 
   AndroidXmlCodeStylePanel(CodeStyleSettings currentSettings, CodeStyleSettings settings) {
     super(XMLLanguage.INSTANCE, currentSettings, settings);
-
-    myPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
-    myPanel.setBorder(IdeBorderFactory.createEmptyBorder(2, 2, 2, 2));
+    myPanel = new JPanel(new BorderLayout());
+    JPanel centerPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
+    centerPanel.setBorder(IdeBorderFactory.createEmptyBorder(2, 2, 2, 2));
+    myPanel.add(centerPanel, BorderLayout.CENTER);
     myUseCustomSettings = new JBCheckBox("Use custom formatting settings for Android XML files");
-    myPanel.add(myUseCustomSettings);
+    myPanel.add(myUseCustomSettings, BorderLayout.NORTH);
 
     myCodeStylePanels = new ArrayList<MyFileSpecificPanel>();
     myFileSpecificCodeStylesPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
-    myPanel.add(myFileSpecificCodeStylesPanel);
+    centerPanel.add(myFileSpecificCodeStylesPanel);
 
     myUseCustomSettings.addActionListener(new ActionListener() {
       @Override
