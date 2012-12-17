@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -36,6 +37,7 @@ public class FileContent extends DiffContent {
   private Document myDocument;
   private final Project myProject;
   private final FileDocumentManager myDocumentManager;
+  private FileType myTypeForEmpty;
 
   public FileContent(Project project, @NotNull VirtualFile file) {
     myProject = project;
@@ -58,6 +60,7 @@ public class FileContent extends DiffContent {
   }
 
   public FileType getContentType() {
+    if (isEmpty()) return myTypeForEmpty;
     return DiffContentUtil.getContentType(myFile);
   }
 
@@ -68,20 +71,32 @@ public class FileContent extends DiffContent {
 
   public boolean isBinary() {
     if (myFile.isDirectory()) return false;
+    if (isEmpty()) return myTypeForEmpty.isBinary();
     return myFile.getFileType().isBinary();
   }
 
   public static FileContent createFromTempFile(Project project, String name, String ext, @NotNull byte[] content) throws IOException {
-    final File tempFile = FileUtil.createTempFile(name, ext);
+    final File tempFile;
+    if (content.length == 0) {
+      tempFile = FileUtil.createTempFile(name, "txt");
+      FileUtil.writeToFile(tempFile, "Does not exist");
+    } else {
+      tempFile = FileUtil.createTempFile(name, ext);
+      FileUtil.writeToFile(tempFile, content);
+    }
     tempFile.deleteOnExit();
-    FileUtil.writeToFile(tempFile, content);
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
     VirtualFile file = lfs.findFileByIoFile(tempFile);
     if (file == null) {
       file = lfs.refreshAndFindFileByIoFile(tempFile);
     }
     if (file != null) {
-      return new FileContent(project, file);
+      final FileContent fileContent = new FileContent(project, file);
+      if (content.length == 0) {
+        fileContent.setIsEmpty(true);
+        fileContent.myTypeForEmpty = FileTypeManager.getInstance().getFileTypeByFileName(name + "." + ext);
+      }
+      return fileContent;
     }
     throw new IOException("Can not create temp file for revision content");
   }

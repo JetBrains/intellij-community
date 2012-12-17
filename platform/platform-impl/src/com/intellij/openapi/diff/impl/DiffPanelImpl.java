@@ -33,7 +33,10 @@ import com.intellij.openapi.diff.impl.fragments.FragmentList;
 import com.intellij.openapi.diff.impl.highlighting.DiffPanelState;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.processing.HorizontalDiffSplitter;
-import com.intellij.openapi.diff.impl.settings.*;
+import com.intellij.openapi.diff.impl.settings.DiffMergeEditorSetting;
+import com.intellij.openapi.diff.impl.settings.DiffMergeSettings;
+import com.intellij.openapi.diff.impl.settings.DiffMergeSettingsAction;
+import com.intellij.openapi.diff.impl.settings.DiffToolSettings;
 import com.intellij.openapi.diff.impl.splitter.DiffDividerPaint;
 import com.intellij.openapi.diff.impl.splitter.LineBlocks;
 import com.intellij.openapi.diff.impl.util.*;
@@ -118,12 +121,19 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   private final GenericDataProvider myDataProvider;
   private final Project myProject;
   private final boolean myIsHorizontal;
+  private final DiffTool myParentTool;
   private CanNotCalculateDiffPanel myNotCalculateDiffPanel;
   private final VisibleAreaListener myVisibleAreaListener;
 
-  public DiffPanelImpl(final Window owner, Project project, boolean enableToolbar, boolean horizontal, int diffDividerPolygonsOffset) {
+  public DiffPanelImpl(final Window owner,
+                       Project project,
+                       boolean enableToolbar,
+                       boolean horizontal,
+                       int diffDividerPolygonsOffset,
+                       DiffTool parentTool) {
     myProject = project;
     myIsHorizontal = horizontal;
+    myParentTool = parentTool;
     myOptions = new DiffPanelOptions(this);
     myPanel = new DiffPanelOuterComponent(TextDiffType.DIFF_TYPES, null);
     myPanel.disableToolbar(!enableToolbar);
@@ -553,6 +563,11 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     panel.add(new JLabel(title == null ? "" : title));
     panel.add(bottomPanel, BorderLayout.SOUTH);
     return panel;
+  }
+
+  @Override
+  public boolean canShowRequest(DiffRequest request) {
+    return myParentTool != null && myParentTool.canShow(request);
   }
 
   public void setDiffRequest(DiffRequest data) {

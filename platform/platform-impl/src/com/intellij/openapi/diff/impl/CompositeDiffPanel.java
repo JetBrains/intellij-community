@@ -18,8 +18,11 @@ package com.intellij.openapi.diff.impl;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.diff.*;
+import com.intellij.openapi.diff.DiffRequest;
+import com.intellij.openapi.diff.DiffViewer;
+import com.intellij.openapi.diff.DiffViewerType;
 import com.intellij.openapi.diff.impl.external.DiscloseMultiRequest;
+import com.intellij.openapi.diff.impl.external.MultiLevelDiffTool;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.content.Content;
@@ -58,6 +61,11 @@ public class CompositeDiffPanel implements DiffViewer {
   }
 
   @Override
+  public boolean canShowRequest(DiffRequest request) {
+    return MultiLevelDiffTool.canShowRequest(request);
+  }
+
+  @Override
   public void setDiffRequest(DiffRequest request) {
     final Map<String, DiffRequest> requestMap = myRequest.discloseRequest(request);
     final HashMap<String, DiffViewer> copy = new HashMap<String, DiffViewer>(myMap);
@@ -67,7 +75,7 @@ public class CompositeDiffPanel implements DiffViewer {
       final DiffRequest diffRequest = entry.getValue();
       diffRequest.getGenericData().put(PlatformDataKeys.COMPOSITE_DIFF_VIEWER.getName(), this);
       final DiffViewer viewer = copy.remove(key);
-      if (viewer != null && viewer.acceptsType(diffRequest.getType())) {
+      if (viewer != null && viewer.acceptsType(diffRequest.getType()) && viewer.canShowRequest(diffRequest)) {
         viewer.setDiffRequest(diffRequest);
       } else {
         if (viewer != null) {
@@ -96,6 +104,7 @@ public class CompositeDiffPanel implements DiffViewer {
 
     if (myMap.isEmpty()) {
       final EmptyDiffViewer emptyDiffViewer = new EmptyDiffViewer();
+      emptyDiffViewer.setMessage("Can not show");
       emptyDiffViewer.setDiffRequest(request);
       myMap.put(FICTIVE_KEY, emptyDiffViewer);
       final Content content = myUi.createContent(FICTIVE_KEY, emptyDiffViewer.getComponent(), FICTIVE_KEY, null,

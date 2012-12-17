@@ -25,6 +25,7 @@ import com.intellij.openapi.diff.impl.util.ContentDocumentListener;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -86,6 +87,16 @@ class EditorPlaceHolder extends DiffMarkup implements DiffVersionComponent {
                 myFileEditorProvider.disposeEditor(myFileEditor);
                 myFileEditor = null;
                 myFileEditorProvider = null;
+                myEditor = null;
+              }
+            });
+          } else {
+            document = new DocumentImpl("Can not show", true);
+            final EditorFactory editorFactory = EditorFactory.getInstance();
+            myEditor = DiffUtil.createEditor(document, getProject(), true);
+            addDisposable(new Disposable() {
+              public void dispose() {
+                editorFactory.releaseEditor(myEditor);
                 myEditor = null;
               }
             });

@@ -635,7 +635,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
         request.setContentTitles(UIBundle.message("file.cache.conflict.diff.content.file.system.content"),
                                  UIBundle.message("file.cache.conflict.diff.content.memory.content"));
         DialogBuilder diffBuilder = new DialogBuilder(project);
-        DiffPanelImpl diffPanel = (DiffPanelImpl)DiffManager.getInstance().createDiffPanel(diffBuilder.getWindow(), project,diffBuilder);
+        DiffPanelImpl diffPanel = (DiffPanelImpl)DiffManager.getInstance().createDiffPanel(diffBuilder.getWindow(), project, diffBuilder, null);
         diffPanel.getOptions().setShowSourcePolicy(DiffPanelOptions.ShowSourcePolicy.DONT_SHOW);
         diffBuilder.setCenterPanel(diffPanel.getComponent());
         diffBuilder.setDimensionServiceKey("FileDocumentManager.FileCacheConflict");

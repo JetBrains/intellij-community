@@ -42,7 +42,7 @@ import java.util.Collection;
 
 // Author: dyoma
 
-class FrameDiffTool implements DiffTool {
+public class FrameDiffTool implements DiffTool {
   public void show(DiffRequest request) {
     Collection hints = request.getHints();
     boolean shouldOpenDialog = shouldOpenDialog(hints);
@@ -134,9 +134,9 @@ class FrameDiffTool implements DiffTool {
   }*/
 
   @Nullable
-  private static DiffPanelImpl createDiffPanelIfShouldShow(DiffRequest request, Window window, @NotNull Disposable parentDisposable,
+  private DiffPanelImpl createDiffPanelIfShouldShow(DiffRequest request, Window window, @NotNull Disposable parentDisposable,
                                                            final boolean showMessage) {
-    DiffPanelImpl diffPanel = (DiffPanelImpl)DiffManagerImpl.createDiffPanel(request, window, parentDisposable);
+    DiffPanelImpl diffPanel = (DiffPanelImpl)DiffManagerImpl.createDiffPanel(request, window, parentDisposable, this);
     if (checkNoDifferenceAndNotify(diffPanel, request, window, showMessage)) {
       Disposer.dispose(diffPanel);
       diffPanel = null;
@@ -155,14 +155,14 @@ class FrameDiffTool implements DiffTool {
     return KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof JDialog;
   }
 
-  private static boolean checkNoDifferenceAndNotify(DiffPanel diffPanel, DiffRequest data, final Window window, final boolean showMessage) {
+  private boolean checkNoDifferenceAndNotify(DiffPanel diffPanel, DiffRequest data, final Window window, final boolean showMessage) {
     if (!diffPanel.hasDifferences() && !data.getHints().contains(HINT_ALLOW_NO_DIFFERENCES)) {
       DiffManagerImpl manager = (DiffManagerImpl) DiffManager.getInstance();
       if (!Comparing.equal(manager.getComparisonPolicy(), ComparisonPolicy.DEFAULT)) {
         ComparisonPolicy oldPolicy = manager.getComparisonPolicy();
         manager.setComparisonPolicy(ComparisonPolicy.DEFAULT);
         Disposable parentDisposable = Disposer.newDisposable();
-        DiffPanel maybeDiffPanel = DiffManagerImpl.createDiffPanel(data, window, parentDisposable);
+        DiffPanel maybeDiffPanel = DiffManagerImpl.createDiffPanel(data, window, parentDisposable, this);
         manager.setComparisonPolicy(oldPolicy);
 
         boolean hasDiffs = maybeDiffPanel.hasDifferences();
@@ -200,6 +200,10 @@ class FrameDiffTool implements DiffTool {
   }
 
   public boolean canShow(DiffRequest data) {
+    return canShowDiff(data);
+  }
+
+  public static boolean canShowDiff(DiffRequest data) {
     DiffContent[] contents = data.getContents();
     if (contents.length != 2) return false;
     for (DiffContent content : contents) {

@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.FileContent;
 import com.intellij.openapi.diff.SimpleContent;
@@ -27,21 +28,26 @@ import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.List;
 
 public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
   private final Project myProject;
   private final Change myChange;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.actions.ChangeDiffRequestPresentable");
   // I don't like that much
   private boolean myIgnoreDirectoryFlag;
 
@@ -138,12 +144,39 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
       final VirtualFile vFile = current.getVirtualFile();
       return vFile != null ? new FileContent(myProject, vFile) : new SimpleContent("");
     }
+    if (revision instanceof BinaryContentRevision) {
+      final String name = revision.getFile().getName();
+      try {
+        return FileContent.createFromTempFile(myProject, name, name, ((BinaryContentRevision)revision).getBinaryContent());
+      }
+      catch (IOException e) {
+        LOG.info(e);
+        try {
+          return FileContent.createFromTempFile(myProject, name, name, ArrayUtil.EMPTY_BYTE_ARRAY);
+        }
+        catch (IOException e1) {
+          LOG.info(e1);
+          return null;
+        }
+      }
+      catch (VcsException e) {
+        LOG.info(e);
+        try {
+          return FileContent.createFromTempFile(myProject, name, name, ArrayUtil.EMPTY_BYTE_ARRAY);
+        }
+        catch (IOException e1) {
+          LOG.info(e1);
+          return null;
+        }
+      }
+    }
 
     String revisionContent;
     try {
       revisionContent = revision.getContent();
     }
     catch(VcsException ex) {
+      LOG.info(ex);
       // TODO: correct exception handling
       revisionContent = null;
     }
@@ -168,19 +201,23 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
       return true;
     }
 
-    if ((bRev != null && (bRev.getFile().getFileType().isBinary() || bRev.getFile().isDirectory())) ||
-        (aRev != null && (aRev.getFile().getFileType().isBinary() || aRev.getFile().isDirectory()))) {
-      if (bRev != null && bRev.getFile().getFileType() == FileTypes.UNKNOWN && !bRev.getFile().isDirectory()) {
-        if (! checkContentsAvailable(bRev, aRev)) return false;
-        if (!checkAssociate(myProject, bRev.getFile(), context)) return false;
-      }
-      else if (aRev != null && aRev.getFile().getFileType() == FileTypes.UNKNOWN && !aRev.getFile().isDirectory()) {
-        if (! checkContentsAvailable(bRev, aRev)) return false;
-        if (!checkAssociate(myProject, aRev.getFile(), context)) return false;
-      }
-      else {
-        return false;
-      }
+    boolean isOk = checkContentRevision(bRev, context);
+    isOk &= checkContentRevision(aRev, context);
+
+    return isOk;
+  }
+
+  private boolean checkContentRevision(ContentRevision rev, final DiffChainContext context) {
+    if (rev == null) return true;
+    if (rev.getFile().isDirectory()) return false;
+    if (! hasContents(rev)) {
+      VcsBalloonProblemNotifier.showOverChangesView(myProject, "Can not get contents for " + rev.getFile().getPath(), MessageType.WARNING);
+      return false;
+    }
+    final FileType type = rev.getFile().getFileType();
+    if (! type.isBinary()) return true;
+    if (FileTypes.UNKNOWN.equals(type)) {
+      final boolean associatedToText = checkAssociate(myProject, rev.getFile(), context);
     }
     return true;
   }

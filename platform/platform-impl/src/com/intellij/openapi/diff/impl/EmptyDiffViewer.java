@@ -15,8 +15,12 @@
  */
 package com.intellij.openapi.diff.impl;
 
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.vcs.AbstractDataProviderPanel;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,14 +37,52 @@ import java.awt.*;
  */
 public class EmptyDiffViewer implements DiffViewer {
   private DiffRequest myRequest;
+  private String myMessage;
+
+  @Override
+  public boolean canShowRequest(DiffRequest request) {
+    return true;
+  }
 
   @Override
   public void setDiffRequest(DiffRequest request) {
     myRequest = request;
   }
 
+  public void setMessage(String message) {
+    myMessage = message;
+  }
+
   @Override
   public JComponent getComponent() {
+    final JPanel result = new AbstractDataProviderPanel(new BorderLayout(), false) {
+      @Override
+      public void calcData(DataKey key, DataSink sink) {
+        final Object data = myRequest.getGenericData().get(key.getName());
+        if (data != null) {
+          sink.put(key, data);
+        }
+      }
+    };
+
+    final ActionManager actionManager = ActionManager.getInstance();
+    final DiffToolbarComponent toolbarComponent = new DiffToolbarComponent(result);
+    final DiffRequest.ToolbarAddons addons = new DiffRequest.ToolbarAddons() {
+      @Override
+      public void customize(DiffToolbar toolbar) {
+        toolbar.addAction(actionManager.getAction("DiffPanel.Toolbar"));
+        toolbar.addAction(actionManager.getAction("ContextHelp"));
+        toolbar.addSeparator();
+      }
+    };
+    toolbarComponent.resetToolbar(addons);
+    final DiffToolbarImpl toolbar = toolbarComponent.getToolbar();
+    myRequest.customizeToolbar(toolbar);
+    /*group.addAction(actionManager.getAction("Diff.PrevChange"));
+    group.addAction(actionManager.getAction("Diff.NextChange"));*/
+
+    result.add(toolbarComponent, BorderLayout.NORTH);
+
     DiffContent content1 = myRequest.getContents()[0];
     DiffContent content2 = myRequest.getContents()[1];
 
@@ -63,17 +105,20 @@ public class EmptyDiffViewer implements DiffViewer {
       JPanel rootPanel = new JPanel(new BorderLayout());
       rootPanel.add(titlePanel, BorderLayout.NORTH);
       rootPanel.add(messagePanel);
-      return rootPanel;
+      result.add(rootPanel, BorderLayout.CENTER);
     }
     else {
-      return messagePanel;
+      result.add(messagePanel, BorderLayout.CENTER);
     }
+    return result;
   }
 
   @NotNull
-  private static JPanel createMessagePanel(@Nullable LineSeparator sep1, @Nullable LineSeparator sep2) {
+  private JPanel createMessagePanel(@Nullable LineSeparator sep1, @Nullable LineSeparator sep2) {
     String message;
-    if (LineSeparator.knownAndDifferent(sep1, sep2)) {
+    if (myMessage != null) {
+      message = myMessage;
+    } else if (LineSeparator.knownAndDifferent(sep1, sep2)) {
       message = DiffBundle.message("diff.contents.have.differences.only.in.line.separators.message.text");
     }
     else {

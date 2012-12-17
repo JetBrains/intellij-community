@@ -63,10 +63,12 @@ public abstract class DiffManager {
   public abstract MarkupEditorFilter getDiffEditorFilter();
 
   /**
+   *
    * @param window this window will be disposed, when user clicks on the line number
    *        You must call Disposer.dispose() when done.
-   * @deprecated use {@link #createDiffPanel(Window, Project, Disposable)} instead
+   * @param disposable
+   *@param parentTool @deprecated use {@link #createDiffPanel(Window, Project, Disposable)} instead
    */
-  public abstract DiffPanel createDiffPanel(Window window, Project project);
-  public abstract DiffPanel createDiffPanel(Window window, Project project, @NotNull Disposable parentDisposable);
+  public abstract DiffPanel createDiffPanel(Window window, Project project, DiffTool parentTool);
+  public abstract DiffPanel createDiffPanel(Window window, Project project, @NotNull Disposable parentDisposable, DiffTool parentTool);
 }

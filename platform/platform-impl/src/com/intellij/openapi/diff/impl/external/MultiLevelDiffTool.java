@@ -142,7 +142,9 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
     for (DiffTool tool : myTools) {
       if (tool.canShow(current)) {
         viewer = tool.createComponent(name, current, window, parentDisposable);
-        break;
+        if (viewer != null) {
+          break;
+        }
       }
     }
     return viewer;
@@ -167,6 +169,11 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
 
   @Override
   public boolean canShow(DiffRequest request) {
+    return canShowRequest(request);
+    //return request.haveMultipleLayers();
+  }
+
+  public static boolean canShowRequest(DiffRequest request) {
     boolean isFile = false;
     DiffContent[] contents = request.getContents();
     for (int i = 0; i < contents.length; i++) {
@@ -181,10 +188,9 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
     if (isFile && DiffManagerImpl.ENABLE_FILES.value(config)) return false;
     if (! isFile && DiffManagerImpl.ENABLE_FOLDERS.value(config)) return false;
     return ! (DiffViewerType.merge.equals(request.getType()) && contentsWriteable(request));
-    //return request.haveMultipleLayers();
   }
 
-  private boolean contentsWriteable(DiffRequest request) {
+  private static boolean contentsWriteable(DiffRequest request) {
     final DiffContent[] contents = request.getContents();
 
     for (DiffContent content : contents) {

@@ -137,13 +137,13 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
     return DIFF_EDITOR_FILTER;
   }
 
-  public DiffPanel createDiffPanel(Window window, Project project) {
-    return new DiffPanelImpl(window, project, true, true, FULL_DIFF_DIVIDER_POLYGONS_OFFSET);
+  public DiffPanel createDiffPanel(Window window, Project project, DiffTool parentTool) {
+    return new DiffPanelImpl(window, project, true, true, FULL_DIFF_DIVIDER_POLYGONS_OFFSET, parentTool);
   }
 
   @Override
-  public DiffPanel createDiffPanel(Window window, Project project, @NotNull Disposable parentDisposable) {
-    DiffPanel diffPanel = createDiffPanel(window, project);
+  public DiffPanel createDiffPanel(Window window, Project project, @NotNull Disposable parentDisposable, DiffTool parentTool) {
+    DiffPanel diffPanel = createDiffPanel(window, project, parentTool);
     Disposer.register(parentDisposable, diffPanel);
     return diffPanel;
   }
@@ -179,10 +179,10 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
 
   public AbstractProperty.AbstractPropertyContainer getProperties() { return myProperties; }
 
-  static DiffPanel createDiffPanel(DiffRequest data, Window window, @NotNull Disposable parentDisposable) {
+  static DiffPanel createDiffPanel(DiffRequest data, Window window, @NotNull Disposable parentDisposable, FrameDiffTool tool) {
     DiffPanel diffPanel = null;
     try {
-      diffPanel = DiffManager.getInstance().createDiffPanel(window, data.getProject(), parentDisposable);
+      diffPanel = DiffManager.getInstance().createDiffPanel(window, data.getProject(), parentDisposable, tool);
       int contentCount = data.getContents().length;
       LOG.assertTrue(contentCount == 2, String.valueOf(contentCount));
       LOG.assertTrue(data.getContentTitles().length == contentCount);

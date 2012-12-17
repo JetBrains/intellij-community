@@ -16,13 +16,24 @@
 
 package com.intellij.openapi.vcs.changes.shelf;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.CurrentBinaryContentRevision;
+import com.intellij.openapi.vcs.changes.TextRevisionNumber;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
 
 /**
  * @author yole
@@ -58,6 +69,29 @@ public class ShelvedBinaryFile implements JDOMExternalizable {
       return FileStatus.DELETED;
     }
     return FileStatus.MODIFIED;
+  }
+
+  public Change createChange(final Project project) {
+    ContentRevision before = null;
+    ContentRevision after = null;
+    final File baseDir = new File(project.getBaseDir().getPath());
+    if (BEFORE_PATH != null) {
+      final FilePathImpl file = new FilePathImpl(new File(baseDir, BEFORE_PATH), false);
+      file.refresh();
+      before = new CurrentBinaryContentRevision(file) {
+        @NotNull
+        @Override
+        public VcsRevisionNumber getRevisionNumber() {
+          return new TextRevisionNumber(VcsBundle.message("local.version.title"));
+        }
+      };
+    }
+    if (AFTER_PATH != null) {
+      final FilePathImpl file = new FilePathImpl(new File(baseDir, AFTER_PATH), false);
+      file.refresh();
+      after = new ShelvedBinaryContentRevision(file, SHELVED_PATH);
+    }
+    return new Change(before, after);
   }
 
   @Override

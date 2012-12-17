@@ -186,8 +186,9 @@ public class ChangeDiffRequest implements ChangeRequestChain {
     if (mySteps.size() > 1 || (myActionsFactory != null)) {
       request.setToolbarAddons(new DiffRequest.ToolbarAddons() {
         public void customize(DiffToolbar toolbar) {
-          if (mySteps.size() > 1)
-          toolbar.addSeparator();
+          if (mySteps.size() > 1) {
+            toolbar.addSeparator();
+          }
           toolbar.addAction(myPrevChangeAction);
           toolbar.addAction(myNextChangeAction);
 
