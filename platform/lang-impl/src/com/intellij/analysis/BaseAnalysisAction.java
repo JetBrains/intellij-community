@@ -23,7 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +59,7 @@ public abstract class BaseAnalysisAction extends AnAction {
     Presentation presentation = event.getPresentation();
     final DataContext dataContext = event.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    final boolean dumbMode = project != null && DumbService.getInstance(project).isDumb();
+    final boolean dumbMode = project == null || DumbService.getInstance(project).isDumb();
     presentation.setEnabled(!dumbMode && getInspectionScope(dataContext) != null);
   }
 
@@ -72,11 +73,6 @@ public abstract class BaseAnalysisAction extends AnAction {
     }
     AnalysisScope scope = getInspectionScope(dataContext);
     LOG.assertTrue(scope != null);
-    /*if (scope.getScopeType() == AnalysisScope.VIRTUAL_FILES){
-    FileDocumentManager.getInstance().saveAllDocuments();
-    analyze(project, scope);
-    return;
-  }*/
     final boolean rememberScope = e.getPlace().equals(ActionPlaces.MAIN_MENU);
     final AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
     PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
@@ -84,7 +80,7 @@ public abstract class BaseAnalysisAction extends AnAction {
                                                                 AnalysisScopeBundle.message("analysis.scope.title", myAnalysisNoon),
                                                                 project,
                                                                 scope,
-                                                                module != null && scope.getScopeType() != AnalysisScope.MODULE ? ModuleUtil
+                                                                module != null && scope.getScopeType() != AnalysisScope.MODULE ? ModuleUtilCore
                                                                   .getModuleNameInReadAction(module) : null,
                                                                 rememberScope, AnalysisUIOptions.getInstance(project), element){
       @Override
@@ -99,6 +95,7 @@ public abstract class BaseAnalysisAction extends AnAction {
         HelpManager.getInstance().invokeHelp(getHelpTopic());
       }
 
+      @NotNull
       @Override
       protected Action[] createActions() {
         return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
@@ -131,7 +128,7 @@ public abstract class BaseAnalysisAction extends AnAction {
   protected abstract void analyze(@NotNull Project project, AnalysisScope scope);
 
   @Nullable
-  private AnalysisScope getInspectionScope(final DataContext dataContext) {
+  private AnalysisScope getInspectionScope(@NotNull DataContext dataContext) {
     if (PlatformDataKeys.PROJECT.getData(dataContext) == null) return null;
 
     AnalysisScope scope = getInspectionScopeImpl(dataContext);
@@ -140,7 +137,7 @@ public abstract class BaseAnalysisAction extends AnAction {
   }
 
   @Nullable
-  private AnalysisScope getInspectionScopeImpl(DataContext dataContext) {
+  private AnalysisScope getInspectionScopeImpl(@NotNull DataContext dataContext) {
     //Possible scopes: file, directory, package, project, module.
     Project projectContext = PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext);
     if (projectContext != null) {
@@ -176,20 +173,16 @@ public abstract class BaseAnalysisAction extends AnAction {
       return new AnalysisScope(psiFile);
     }
 
-    PsiElement psiTarget = LangDataKeys.PSI_ELEMENT.getData(dataContext);
-    if (psiTarget instanceof PsiDirectory) {
-      PsiDirectory psiDirectory = (PsiDirectory)psiTarget;
-      if (!acceptNonProjectDirectories() && !psiDirectory.getManager().isInProject(psiDirectory)) return null;
-      return new AnalysisScope(psiDirectory);
-    }
-    else if (psiTarget != null) {
-      return null;
-    }
-
-    final VirtualFile[] virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
-    if (virtualFiles != null) { //analyze on selection
-      final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    VirtualFile[] virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    if (virtualFiles != null && project != null) { //analyze on selection
+      ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+      if (virtualFiles.length == 1) {
+        PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(virtualFiles[0]);
+        if (psiDirectory != null && (acceptNonProjectDirectories() || psiDirectory.getManager().isInProject(psiDirectory))) {
+          return new AnalysisScope(psiDirectory);
+        }
+      }
       Set<VirtualFile> files = new HashSet<VirtualFile>();
       for (VirtualFile vFile : virtualFiles) {
         if (fileIndex.isInContent(vFile)) {
@@ -197,20 +190,16 @@ public abstract class BaseAnalysisAction extends AnAction {
             files.add(vFile);
             vFile = ((VirtualFileWindow)vFile).getDelegate();
           }
-          traverseDirectory(vFile, files);
+          collectFilesUnder(vFile, files);
         }
       }
       return new AnalysisScope(project, files);
     }
-    return getProjectScope(dataContext);
+    return project == null ? null : new AnalysisScope(project);
   }
 
   protected boolean acceptNonProjectDirectories() {
     return false;
-  }
-
-  private static AnalysisScope getProjectScope(DataContext dataContext) {
-    return new AnalysisScope(PlatformDataKeys.PROJECT.getData(dataContext));
   }
 
   @Nullable
@@ -218,7 +207,7 @@ public abstract class BaseAnalysisAction extends AnAction {
     return null;
   }
 
-  private static void traverseDirectory(final VirtualFile vFile, final Set<VirtualFile> files) {
+  private static void collectFilesUnder(@NotNull VirtualFile vFile, @NotNull final Set<VirtualFile> files) {
     VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
