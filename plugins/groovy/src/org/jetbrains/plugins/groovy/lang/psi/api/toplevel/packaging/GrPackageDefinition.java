@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging;
 
 import com.intellij.psi.PsiModifierListOwner;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
@@ -32,6 +33,6 @@ public interface GrPackageDefinition extends GrTopStatement, PsiModifierListOwne
   @Nullable
   GrCodeReferenceElement getPackageReference();
 
-  @Nullable
+  @NotNull
   GrModifierList getAnnotationList();
 }

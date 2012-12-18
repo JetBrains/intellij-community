@@ -72,6 +72,7 @@ public class GrPackageDefinitionImpl extends GrStubElementBase<GrPackageDefiniti
     return (GrCodeReferenceElement) findChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
   }
 
+  @NotNull
   public GrModifierList getAnnotationList() {
     return getStubOrPsiChild(GroovyElementTypes.MODIFIERS);
   }
