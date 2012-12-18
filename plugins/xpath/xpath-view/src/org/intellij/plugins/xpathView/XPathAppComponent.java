@@ -74,12 +74,12 @@ public class XPathAppComponent implements ApplicationComponent, JDOMExternalizab
     }
 
     public void disposeComponent() {
-
-        final ActionManager actionManager = ActionManager.getInstance();
-        actionManager.unregisterAction(ACTION_FIND_NEXT);
-        actionManager.unregisterAction(ACTION_FIND_PREVIOUS);
-        actionManager.registerAction(ACTION_FIND_NEXT, nextAction);
-        actionManager.registerAction(ACTION_FIND_PREVIOUS, prevAction);
+    // IDEA-97697
+    //    final ActionManager actionManager = ActionManager.getInstance();
+    //    actionManager.unregisterAction(ACTION_FIND_NEXT);
+    //    actionManager.unregisterAction(ACTION_FIND_PREVIOUS);
+    //    actionManager.registerAction(ACTION_FIND_NEXT, nextAction);
+    //    actionManager.registerAction(ACTION_FIND_PREVIOUS, prevAction);
     }
 
     public void readExternal(Element element) throws InvalidDataException {
