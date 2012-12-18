@@ -347,6 +347,11 @@ public class PyQuickFixTest extends PyTestCase {
                      PyBundle.message("QFIX.statement.effect.move.docstring"), true, true);
   }
 
+  public void testRenameUnresolvedReference() {                      //PY-6595
+    doInspectionTest("RenameUnresolvedReference.py", PyUnresolvedReferencesInspection.class,
+                     PyBundle.message("QFIX.rename.unresolved.reference"), true, true);
+  }
+
   public void testSetFunctionToLiteral() {                      //PY-3120
     setLanguageLevel(LanguageLevel.PYTHON27);
     doInspectionTest("SetFunctionToLiteral.py", PySetFunctionToLiteralInspection.class,
