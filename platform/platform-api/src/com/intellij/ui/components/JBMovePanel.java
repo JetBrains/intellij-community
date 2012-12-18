@@ -27,10 +27,10 @@ import java.awt.event.ActionListener;
  * @author Konstantin Bulenkov
  */
 public class JBMovePanel extends JBPanel {
-  private final JButton myMoveLeftButton;
-  private final JButton myMoveAllLeftButton;
-  private final JButton myMoveRightButton;
-  private final JButton myMoveAllRightButton;
+  protected final JButton myMoveLeftButton;
+  protected final JButton myMoveAllLeftButton;
+  protected final JButton myMoveRightButton;
+  protected final JButton myMoveAllRightButton;
   @NotNull protected final JList myLeft;
   @NotNull protected final JList myRight;
 
