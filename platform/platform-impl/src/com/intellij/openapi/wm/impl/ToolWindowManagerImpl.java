@@ -116,7 +116,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   @NonNls private static final String HEIGHT_ATTR = "height";
   @NonNls private static final String EXTENDED_STATE_ATTR = "extended-state";
 
-  private final Set<String> myRestoredToolWindowIds = new HashSet<String>();
   private final FileEditorManager myFileEditorManager;
   private final LafManager myLafManager;
   private final Map<String, Balloon> myWindow2Balloon = new HashMap<String, Balloon>();
@@ -501,10 +500,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         }
       }
       toolWindow.setIcon(icon);
-    }
-
-    if (!getInfo(bean.id).isSplit() && bean.secondary && !myRestoredToolWindowIds.contains(bean.id)) {
-      toolWindow.setSplitMode(bean.secondary, null);
     }
 
     final ActionCallback activation = toolWindow.setActivation(new ActionCallback());
@@ -1860,10 +1855,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
       else if (DesktopLayout.TAG.equals(e.getName())) { // read layout of tool windows
         myLayout.readExternal(e);
-        final WindowInfoImpl[] windowInfos = myLayout.getAllInfos();
-        for (WindowInfoImpl windowInfo : windowInfos) {
-          myRestoredToolWindowIds.add(windowInfo.getId());
-        }
       }
     }
   }

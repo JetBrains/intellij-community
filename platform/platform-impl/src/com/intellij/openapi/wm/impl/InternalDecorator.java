@@ -385,18 +385,19 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       if (!mgr.isToolWindowRegistered(((ToolWindowImpl)myWindow).getId())) return new Insets(0, 0, 0, 0);
 
       List<String> topIds = mgr.getIdsOn(ToolWindowAnchor.TOP);
-      boolean tHasSplitToTheRight = !myWindow.isSplitMode() && hasSplitModeVisible(mgr, topIds, true);
-      boolean tHasSplitToTheLeft = myWindow.isSplitMode() && hasSplitModeVisible(mgr, topIds, false);
+      boolean myWindowSplitMode = myWindow.isSplitMode();
+      boolean tHasSplitToTheRight = !myWindowSplitMode && hasSplitModeVisible(mgr, topIds, true);
+      boolean tHasSplitToTheLeft = myWindowSplitMode && hasSplitModeVisible(mgr, topIds, false);
 
       List<String> bottomIds = mgr.getIdsOn(ToolWindowAnchor.BOTTOM);
-      boolean hasSplitToTheRight = !myWindow.isSplitMode() && hasSplitModeVisible(mgr, bottomIds, true);
-      boolean hasSplitToTheLeft = myWindow.isSplitMode() && hasSplitModeVisible(mgr, bottomIds, false);
+      boolean hasSplitToTheRight = !myWindowSplitMode && hasSplitModeVisible(mgr, bottomIds, true);
+      boolean hasSplitToTheLeft = myWindowSplitMode && hasSplitModeVisible(mgr, bottomIds, false);
 
       List<String> leftIds = mgr.getIdsOn(ToolWindowAnchor.LEFT);
-      boolean hasSplitUnderLeft = !myWindow.isSplitMode() && hasSplitModeVisible(mgr, leftIds, true);
+      boolean hasSplitUnderLeft = !myWindowSplitMode && hasSplitModeVisible(mgr, leftIds, true);
 
       List<String> rightIds = mgr.getIdsOn(ToolWindowAnchor.RIGHT);
-      boolean hasSplitUnderRight = !myWindow.isSplitMode() && hasSplitModeVisible(mgr, rightIds, true);
+      boolean hasSplitUnderRight = !myWindowSplitMode && hasSplitModeVisible(mgr, rightIds, true);
 
       Insets insets = new Insets(0, 0, 0, 0);
       if (myWindow.getAnchor() == ToolWindowAnchor.TOP) {

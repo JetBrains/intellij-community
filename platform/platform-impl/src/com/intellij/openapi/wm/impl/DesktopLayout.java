@@ -309,15 +309,13 @@ public final class DesktopLayout implements JDOMExternalizable {
 
   public List<String> getVisibleIdsOn(final ToolWindowAnchor anchor, ToolWindowManagerImpl manager) {
     ArrayList<String> ids = new ArrayList<String>();
-    for (WindowInfoImpl each : getInfos()) {
+    for (WindowInfoImpl each : getAllInfos(anchor)) {
       if (manager == null) break;
-      if (each.getAnchor() == anchor) {
         final ToolWindow window = manager.getToolWindow(each.getId());
         if (window == null) continue;
         if (window.isAvailable() || UISettings.getInstance().ALWAYS_SHOW_WINDOW_BUTTONS) {
           ids.add(each.getId());
         }
-      }
     }
     return ids;
   }
