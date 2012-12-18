@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -299,6 +299,64 @@ aliased()
 aliased2()
 ''')
 
+  }
+
+  void testAnnotationOnUnusedImport1() {
+    myFixture.addClass('package groovyx.gpars; public class GParsPool{}')
+    myFixture.addClass('package groovyx.gpars; public class GParsExecutorsPool{}')
+
+    myFixture.configureByText('_.groovy', '''\
+@Grab(group='org.codehaus.gpars', module='gpars', version='0.12')
+import groovyx.gpars.GParsPool
+import groovyx.gpars.GParsExecutorsPool
+
+GParsExecutorsPool oi
+''')
+    doOptimizeImports()
+
+    myFixture.checkResult('''\
+@Grab(group = 'org.codehaus.gpars', module = 'gpars', version = '0.12')
+import groovyx.gpars.GParsExecutorsPool
+
+GParsExecutorsPool oi
+''')
+  }
+
+  void testAnnotationOnUnusedImport2() {
+    myFixture.addClass('package groovyx.gpars; public class GParsPool{}')
+
+    myFixture.configureByText('_.groovy', '''\
+@Grab(group='org.codehaus.gpars', module='gpars', version='0.12')
+import groovyx.gpars.GParsPool
+''')
+    doOptimizeImports()
+
+    myFixture.checkResult('''\
+@Grab(group = 'org.codehaus.gpars', module = 'gpars', version = '0.12')
+import java.lang.Object
+''')
+  }
+
+  void testAnnotationOnUnusedImport3() {
+    myFixture.addClass('package groovyx.gpars; public class GParsPool{}')
+    myFixture.addClass('package groovyx.gpars; public class GParsExecutorsPool{}')
+
+    myFixture.configureByText('_.groovy', '''\
+@Grab(group='org.codehaus.gpars', module='gpars', version='0.12')
+@Grab(group='org.codehaus.gpars', module='gpars', version='0.12')
+import groovyx.gpars.GParsPool
+import groovyx.gpars.GParsExecutorsPool
+
+GParsExecutorsPool oi
+''')
+    doOptimizeImports()
+
+    myFixture.checkResult('''\
+@Grab(group = 'org.codehaus.gpars', module = 'gpars', version = '0.12') @Grab(group = 'org.codehaus.gpars', module = 'gpars', version = '0.12')
+import groovyx.gpars.GParsExecutorsPool
+
+GParsExecutorsPool oi
+''')
   }
 
 }
