@@ -228,7 +228,7 @@ public class GuiUtils {
       final Component component1 = pane.getTopComponent();
       final Component component2 = pane.getBottomComponent();
       final int orientation = pane.getOrientation();
-      final Splitter splitter = new Splitter(orientation == JSplitPane.VERTICAL_SPLIT);
+      final Splitter splitter = new JBSplitter(orientation == JSplitPane.VERTICAL_SPLIT);
       splitter.setFirstComponent((JComponent) component1);
       splitter.setSecondComponent((JComponent) component2);
       splitter.setShowDividerControls(pane.isOneTouchExpandable());
