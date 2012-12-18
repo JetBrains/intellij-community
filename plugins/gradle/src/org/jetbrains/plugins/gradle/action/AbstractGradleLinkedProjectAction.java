@@ -57,7 +57,7 @@ public abstract class AbstractGradleLinkedProjectAction extends AnAction {
     }
     
     final String path = GradleSettings.getInstance(project).getLinkedProjectPath();
-    return new Pair<Project, String>(project, path);
+    return path == null ? null : new Pair<Project, String>(project, path);
   }
 
   protected abstract void doUpdate(@NotNull AnActionEvent event, @NotNull Project project, @NotNull String linkedProjectPath);

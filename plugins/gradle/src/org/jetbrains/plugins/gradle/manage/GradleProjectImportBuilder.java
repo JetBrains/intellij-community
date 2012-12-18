@@ -153,6 +153,11 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
               }); 
             }
           });
+
+          final String linkedProjectPath = myConfigurable.getLinkedProjectPath();
+          assert linkedProjectPath != null;
+          myConfigurable = null;
+          myGradleProject = null;
           
           final Runnable resolveDependenciesTask = new Runnable() {
             @Override
@@ -161,8 +166,6 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
                 new Task.Backgroundable(project, GradleBundle.message("gradle.library.resolve.progress.text"), false) {
                   @Override
                   public void run(@NotNull final ProgressIndicator indicator) {
-                    String linkedProjectPath = myConfigurable.getLinkedProjectPath();
-                    assert linkedProjectPath != null;
                     GradleResolveProjectTask task = new GradleResolveProjectTask(project, linkedProjectPath, true);
                     task.execute(indicator);
                     GradleProject projectWithResolvedLibraries = task.getGradleProject();
