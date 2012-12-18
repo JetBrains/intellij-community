@@ -226,15 +226,15 @@ public class ShowFilePathAction extends AnAction {
 
   private static void doOpen(@NotNull final File dir, @Nullable final File toSelect) throws IOException, ExecutionException {
     if (SystemInfo.isWindows) {
-      final GeneralCommandLine cmd;
+      String cmd;
       if (toSelect != null) {
-        cmd = new GeneralCommandLine("explorer", "/select,\"" + toSelect.getAbsolutePath() + '"');
+        cmd = "explorer /select," + toSelect.getAbsolutePath();
       }
       else {
-        cmd = new GeneralCommandLine("explorer", "/root,\"" + dir.getAbsolutePath() + '"');
+        cmd = "explorer /root," + dir.getAbsolutePath();
       }
-      cmd.putUserData(GeneralCommandLine.DO_NOT_ESCAPE_QUOTES, true);
-      cmd.createProcess();
+      // no quoting/escaping is needed
+      Runtime.getRuntime().exec(cmd);
       return;
     }
 
