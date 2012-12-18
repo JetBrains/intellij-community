@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.ZipperUpdater;
@@ -80,7 +81,14 @@ public class ChangelistConflictTracker {
     final Runnable runnable = new Runnable() {
       @Override
       public void run() {
-        if (application.isDisposed() || myProject.isDisposed() || !myProject.isOpen()) return;
+        if (Boolean.TRUE.equals(application.runReadAction(new Computable<Boolean>() {
+          @Override
+          public Boolean compute() {
+            return (application.isDisposed() || myProject.isDisposed() || !myProject.isOpen());
+          }
+        }))) {
+          return;
+        }
         final Set<VirtualFile> localSet;
         synchronized (myCheckSetLock) {
           localSet = new HashSet<VirtualFile>();
