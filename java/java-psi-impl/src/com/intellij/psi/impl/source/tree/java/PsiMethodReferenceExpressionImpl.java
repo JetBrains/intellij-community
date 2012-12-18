@@ -115,7 +115,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
     final IElementType elType = child.getElementType();
     if (elType == JavaTokenType.DOUBLE_COLON) {
       return ChildRole.DOUBLE_COLON;
-    } else if (elType == JavaTokenType.IDENTIFIER) {
+    } else if (elType == JavaTokenType.IDENTIFIER || elType == JavaElementType.REFERENCE_EXPRESSION) {
       return ChildRole.REFERENCE_NAME;
     }
     return ChildRole.EXPRESSION;
