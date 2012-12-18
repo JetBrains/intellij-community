@@ -591,7 +591,7 @@ class IntToIntBtree {
       if (parent != null) parent.syncWithStore();
       btree.root.syncWithStore();
 
-      newIndexNode.setIndexLeaf(indexLeaf);
+      newIndexNode.setIndexLeaf(indexLeaf); // newIndexNode becomes dirty
 
       int nextPage = getNextPage();
       setNextPage(newIndexNode.address);
@@ -632,7 +632,7 @@ class IntToIntBtree {
           final int avg = keys.length / 2;
           medianKey = keys[avg];
           --btree.hashedPagesCount;
-          setChildrenCount((short)0);
+          setChildrenCount((short)0);  // this node becomes dirty
           newIndexNode.setChildrenCount((short)0);
 
           for(int i = 0; i < avg; ++i) {
@@ -657,7 +657,7 @@ class IntToIntBtree {
         }
       } else {
         short recordCountInNewNode = (short)(recordCount - maxIndex);
-        newIndexNode.setChildrenCount(recordCountInNewNode);
+        newIndexNode.setChildrenCount(recordCountInNewNode); // newIndexNode node becomes dirty
 
         if (btree.isLarge) {
           ByteBuffer buffer = getBytes(indexToOffset(maxIndex), recordCountInNewNode * INTERIOR_SIZE);
@@ -675,7 +675,7 @@ class IntToIntBtree {
           --maxIndex;
           medianKey = keyAt(maxIndex);     // key count is odd (since children count is even) and middle key goes to parent
         }
-        setChildrenCount(maxIndex);
+        setChildrenCount(maxIndex); // "this" node becomes dirty
       }
 
       if (parent != null) {
@@ -715,7 +715,7 @@ class IntToIntBtree {
         btree.root.setAddress(newRootAddress);
         parentAddress = newRootAddress;
 
-        btree.root.setChildrenCount((short)1);
+        btree.root.setChildrenCount((short)1); // btree.root becomes dirty
         btree.root.setKeyAt(0, medianKey);
         btree.root.setAddressAt(0, -address);
         btree.root.setAddressAt(1, -newIndexNode.address);
@@ -759,8 +759,9 @@ class IntToIntBtree {
           }
 
           parent.setKeyAt(indexInParent, keys[numberOfKeysToMove]);
+          if (!parent.myIsDirty) parent.markDirty();
 
-          setChildrenCount((short)0);
+          setChildrenCount((short)0); // "this" node becomes dirty
           --btree.hashedPagesCount;
           hashLeafData.clean();
 
@@ -806,15 +807,16 @@ class IntToIntBtree {
         final int lastChildIndex = childrenCount - numberOfKeysToMove;
         for(int i = lastChildIndex; i < childrenCount; ++i) {
           final int key = keys[i];
-          sibling.insert(key, map.get(key));
+          sibling.insert(key, map.get(key)); // sibling will be dirty
         }
 
         if (doSanityCheck) {
           sibling.dump("Right sibling after");
         }
         parent.setKeyAt(indexInParent, keys[lastChildIndex]);
+        if (!parent.myIsDirty) parent.markDirty();
 
-        setChildrenCount((short)0);
+        setChildrenCount((short)0); // "this" node becomes dirty
         --btree.hashedPagesCount;
         hashLeafData.clean();
 
@@ -853,6 +855,7 @@ class IntToIntBtree {
           }
 
           parent.setKeyAt(indexInParent, keyAt(toMove));
+          if (!parent.myIsDirty) parent.markDirty();
 
           int indexOfLastChildToMove = (int)getChildrenCount() - toMove;
           btree.movedMembersCount += indexOfLastChildToMove;
@@ -868,7 +871,7 @@ class IntToIntBtree {
             }
           }
 
-          setChildrenCount((short)indexOfLastChildToMove);
+          setChildrenCount((short)indexOfLastChildToMove);  // "this" node becomes dirty
         }
         else if (indexInParent + 1 < parent.getChildrenCount()) {
           insertToRightSiblingWhenSorted(parent, indexInParent + 1, sibling);
@@ -899,12 +902,13 @@ class IntToIntBtree {
 
         int childrenCount = getChildrenCount();
         int lastChildIndex = childrenCount - toMove;
-        for(int i = lastChildIndex; i < childrenCount; ++i) sibling.insert(keyAt(i), addressAt(i));
+        for(int i = lastChildIndex; i < childrenCount; ++i) sibling.insert(keyAt(i), addressAt(i)); // sibling will be dirty
         if (doSanityCheck) {
           sibling.dump("Right sibling after");
         }
         parent.setKeyAt(indexInParent, keyAt(lastChildIndex));
-        setChildrenCount((short)lastChildIndex);
+        if (!parent.myIsDirty) parent.markDirty();
+        setChildrenCount((short)lastChildIndex); // "this" node becomes dirty
       }
     }
 
@@ -983,7 +987,7 @@ class IntToIntBtree {
 
           setKeyAt(index, valueHC);
           setAddressAt(index, newValueId);
-          setChildrenCount((short)(recordCount + 1));
+          setChildrenCount((short)(recordCount + 1)); // "this" node becomes dirty
           return;
         }
       }
@@ -991,7 +995,7 @@ class IntToIntBtree {
       int medianKeyInParent = search(valueHC);
       if (doSanityCheck) myAssert(medianKeyInParent < 0);
       int index = -medianKeyInParent - 1;
-      setChildrenCount((short)(recordCount + 1));
+      setChildrenCount((short)(recordCount + 1)); // "this" node becomes dirty
 
       final int itemsToMove = recordCount - index;
       btree.movedMembersCount += itemsToMove;
