@@ -139,7 +139,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
   }
 
-  private static void autodetectPlatformPrefix() {
+  static void autodetectPlatformPrefix() {
     if (ourPlatformPrefixInitialized) {
       return;
     }
@@ -785,6 +785,17 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     initPlatformPrefix(IDEA_MARKER_CLASS, "PlatformLangXml");
   }
 
+  /**
+   * This is the main point to set up your platform prefix. This allows you to use some sub-set of
+   * core plugin descriptors to make initialization faster (e.g. for running tests in classpath of the module where the test is located).
+   * It is calculated by some marker class presence in classpath.
+   * Note that it applies NEGATIVE logic for detection: prefix will be set if only marker class
+   * is NOT present in classpath.
+   * Also, only the very FIRST call to this method will take effect.
+   *
+   * @param classToTest marker class qualified name e.g. {@link #IDEA_MARKER_CLASS}.
+   * @param prefix platform prefix to be set up if marker class not found in classpath.
+   */
   public static void initPlatformPrefix(String classToTest, String prefix) {
     if (!ourPlatformPrefixInitialized) {
       ourPlatformPrefixInitialized = true;
@@ -801,7 +812,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
   }
 
-  public static void setPlatformPrefix(String prefix) {
+  private static void setPlatformPrefix(String prefix) {
     System.setProperty("idea.platform.prefix", prefix);
   }
 
