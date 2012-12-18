@@ -456,6 +456,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           if (parentFunction != null && decorator == null) {
             actions.add(new UnresolvedReferenceAddParameterQuickFix(refname));
           }
+          actions.add(new PyRenameUnresolvedRefQuickFix());
         }
         // unqualified:
         // may be module's
