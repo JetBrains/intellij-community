@@ -355,7 +355,16 @@ public class ClipboardSynchronizer implements ApplicationComponent {
           return null;
         }
 
-        return super.getContents();
+        try {
+          return super.getContents();
+        }
+        catch (IllegalArgumentException e) {
+          if ("Comparison method violates its general contract!".equals(e.getMessage())) {
+            LOG.error("Cannot sort: " + flavors, e);
+            return null;
+          }
+          throw e;
+        }
       }
       catch (NullPointerException e) {
         LOG.warn("Sun bug #6322854", e);
