@@ -40,6 +40,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -57,7 +58,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -308,10 +308,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
   private static TextRange calculateRangeToUse(GrImportStatement unusedImport) {
     final TextRange range = unusedImport.getTextRange();
 
-    final GrModifierList list = unusedImport.getAnnotationList();
-    if (list == null) {
-      return range;
-    }
+    if (StringUtil.isEmptyOrSpaces(unusedImport.getAnnotationList().getText())) return range;
 
     int start = 0;
     for (PsiElement child = unusedImport.getFirstChild(); child != null; child = child.getNextSibling()) {
