@@ -15,7 +15,12 @@
  */
 package org.jetbrains.jps.model.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.text.XmlCharsetDetector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElementChildRole;
@@ -27,6 +32,7 @@ import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,7 +42,9 @@ import java.util.Map;
  */
 public class JpsEncodingProjectConfigurationImpl extends JpsElementBase<JpsEncodingProjectConfigurationImpl>
   implements JpsEncodingProjectConfiguration {
+  private static final Logger LOG = Logger.getInstance(JpsEncodingProjectConfigurationImpl.class);
   public static final JpsElementChildRole<JpsEncodingProjectConfiguration> ROLE = JpsElementChildRoleBase.create("encoding configuration");
+  private static final String XML_NAME_SUFFIX = ".xml";
   private final Map<String, String> myUrlToEncoding = new HashMap<String, String>();
   private final String myProjectEncoding;
 
@@ -48,6 +56,18 @@ public class JpsEncodingProjectConfigurationImpl extends JpsElementBase<JpsEncod
   @Nullable
   @Override
   public String getEncoding(@NotNull File file) {
+    if (isXmlFile(file)) {
+      try {
+        String encoding = XmlCharsetDetector.extractXmlEncodingFromProlog(FileUtil.loadFileBytes(file));
+        if (encoding != null) {
+          return encoding;
+        }
+      }
+      catch (IOException e) {
+        LOG.info("Cannot detect encoding for xml file " + file.getAbsolutePath(), e);
+      }
+    }
+
     if (!myUrlToEncoding.isEmpty()) {
 
       File current = file;
@@ -69,6 +89,11 @@ public class JpsEncodingProjectConfigurationImpl extends JpsElementBase<JpsEncod
     final JpsModel model = getModel();
     assert model != null;
     return JpsEncodingConfigurationService.getInstance().getGlobalEncoding(model.getGlobal());
+  }
+
+  private static boolean isXmlFile(File file) {
+    String fileName = file.getName();
+    return SystemInfo.isFileSystemCaseSensitive ? fileName.endsWith(XML_NAME_SUFFIX) : StringUtil.endsWithIgnoreCase(fileName, XML_NAME_SUFFIX);
   }
 
   @NotNull

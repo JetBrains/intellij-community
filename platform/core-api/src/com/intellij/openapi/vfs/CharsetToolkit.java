@@ -17,6 +17,7 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.text.CharsetUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -74,7 +75,7 @@ import java.util.Map;
  * @author Guillaume LAFORGE
  */
 public class CharsetToolkit {
-  @NonNls public static final String UTF8 = "UTF-8";
+  @NonNls public static final String UTF8 = CharsetUtil.UTF8;
   public static final Charset UTF8_CHARSET = Charset.forName(UTF8);
   public static final Charset UTF_16LE_CHARSET = Charset.forName("UTF-16LE");
   public static final Charset UTF_16BE_CHARSET = Charset.forName("UTF-16BE");
@@ -86,7 +87,7 @@ public class CharsetToolkit {
   private final Charset defaultCharset;
   private boolean enforce8Bit = false;
 
-  public static final byte[] UTF8_BOM = {0xffffffef, 0xffffffbb, 0xffffffbf, };
+  public static final byte[] UTF8_BOM = CharsetUtil.UTF8_BOM;
   public static final byte[] UTF16LE_BOM = {-1, -2, };
   public static final byte[] UTF16BE_BOM = {-2, -1, };
   public static final byte[] UTF32BE_BOM = {0, 0, -2, -1, };
@@ -441,7 +442,7 @@ public class CharsetToolkit {
    * @return true if the buffer has a BOM for UTF8.
    */
   public static boolean hasUTF8Bom(@NotNull byte[] bom) {
-    return ArrayUtil.startsWith(bom, UTF8_BOM);
+    return CharsetUtil.hasUTF8Bom(bom);
   }
 
   /**
@@ -486,12 +487,7 @@ public class CharsetToolkit {
 
   @NotNull
   public static byte[] getUtf8Bytes(@NotNull String s) {
-    try {
-      return s.getBytes(UTF8);
-    }
-    catch (UnsupportedEncodingException e) {
-      throw new RuntimeException("UTF-8 must be supported", e);
-    }
+    return CharsetUtil.getUtf8Bytes(s);
   }
 
   public static int getBOMLength(@NotNull byte[] content, Charset charset) {
