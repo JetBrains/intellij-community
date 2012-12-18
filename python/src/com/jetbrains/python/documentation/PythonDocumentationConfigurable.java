@@ -81,7 +81,7 @@ public class PythonDocumentationConfigurable implements SearchableConfigurable, 
 
     @Override
     public String getColumnName(int columnIndex) {
-      return columnIndex == 0 ? "Module Name" : "URL Pattern";
+      return columnIndex == 0 ? "Module Name" : "URL/Path Pattern";
     }
 
     @Override

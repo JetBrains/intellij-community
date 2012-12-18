@@ -329,4 +329,9 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
     }
     return seeker;
   }
+
+  @Override
+  public Module getModule() {
+    return myContext.getModule();
+  }
 }
