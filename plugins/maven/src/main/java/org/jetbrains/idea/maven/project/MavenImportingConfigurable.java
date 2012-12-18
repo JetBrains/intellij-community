@@ -62,7 +62,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
     panel.add(useMaven3Panel);
 
     JPanel embedderVMOptionPanel = new JPanel(new BorderLayout());
-    JLabel vmOptionLabel = new JLabel("VM options for maven import process");
+    JLabel vmOptionLabel = new JLabel("VM options for importer:");
     embedderVMOptionPanel.add(vmOptionLabel, BorderLayout.WEST);
     vmOptionLabel.setLabelFor(myEmbedderVMOptions);
 
