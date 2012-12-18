@@ -53,17 +53,4 @@ public class Java15CompletionData extends JavaCompletionData {
     }
   }
 
-  @Override
-  protected void initVariantsInClassScope() {
-    super.initVariantsInClassScope();
-    {
-      //Completion of "extends" & "super" inside wildcards
-      final CompletionVariant variant = new CompletionVariant(JavaMemberNameCompletionContributor.INSIDE_TYPE_PARAMS_PATTERN);
-      variant.includeScopeClass(PsiVariable.class, true);
-      variant.includeScopeClass(PsiExpressionStatement.class, true);
-      variant.addCompletion(PsiKeyword.SUPER, TailType.HUMBLE_SPACE_BEFORE_WORD);
-      variant.addCompletion(PsiKeyword.EXTENDS, TailType.HUMBLE_SPACE_BEFORE_WORD);
-      registerVariant(variant);
-    }
-  }
 }

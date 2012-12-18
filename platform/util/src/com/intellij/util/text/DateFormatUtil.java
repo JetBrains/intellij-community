@@ -198,7 +198,7 @@ public class DateFormatUtil {
 
     if (formatTime) {
       long delta = currentTime - time;
-      if (delta <= HOUR) {
+      if (delta <= HOUR && delta >= 0) {
         return CommonBundle.message("date.format.minutes.ago", (int)Math.rint(delta / (double)MINUTE));
       }
     }

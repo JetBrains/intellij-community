@@ -53,4 +53,21 @@ public class SingleRootClasspathElement implements SimpleClasspathElement {
   public List<String> getClassesRootUrls() {
     return Collections.singletonList(myUrl);
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    SingleRootClasspathElement element = (SingleRootClasspathElement)o;
+
+    if (!myUrl.equals(element.myUrl)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myUrl.hashCode();
+  }
 }

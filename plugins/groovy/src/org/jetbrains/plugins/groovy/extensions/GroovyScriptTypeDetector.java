@@ -53,10 +53,6 @@ public abstract class GroovyScriptTypeDetector {
 
   public abstract boolean isSpecificScriptFile(@NotNull GroovyFile script);
 
-  public boolean isHowSwapAware(@NotNull String extension) {
-    return true;
-  }
-
   @NotNull
   public static GroovyScriptType getScriptType(@NotNull GroovyFile script) {
     for (GroovyScriptTypeDetector detector : EP_NAME.getExtensions()) {

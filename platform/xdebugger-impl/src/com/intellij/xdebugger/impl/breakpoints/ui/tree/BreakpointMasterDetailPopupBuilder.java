@@ -279,17 +279,16 @@ public class BreakpointMasterDetailPopupBuilder {
   }
 
   private Set<XBreakpointGroupingRule> getInitialGroupingRules() {
-      java.util.HashSet<XBreakpointGroupingRule> rules = new java.util.HashSet<XBreakpointGroupingRule>();
-      XBreakpointsDialogState settings = ((XBreakpointManagerImpl)getBreakpointManager()).getBreakpointsDialogSettings();
-      if (settings != null) {
-        for (XBreakpointGroupingRule rule : myRulesAvailable) {
-          if (settings.getSelectedGroupingRules().contains(rule.getId()) || rule.isAlwaysEnabled()) {
-            rules.add(rule);
-          }
-        }
+    java.util.HashSet<XBreakpointGroupingRule> rules = new java.util.HashSet<XBreakpointGroupingRule>();
+    XBreakpointsDialogState settings = ((XBreakpointManagerImpl)getBreakpointManager()).getBreakpointsDialogSettings();
+
+    for (XBreakpointGroupingRule rule : myRulesAvailable) {
+      if (rule.isAlwaysEnabled() || (settings != null && settings.getSelectedGroupingRules().contains(rule.getId()) ) ) {
+        rules.add(rule);
       }
-      return rules;
     }
+    return rules;
+  }
 
   private XBreakpointManager getBreakpointManager() {
     return XDebuggerManager.getInstance(myProject).getBreakpointManager();

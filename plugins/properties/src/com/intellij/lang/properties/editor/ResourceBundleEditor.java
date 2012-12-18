@@ -24,7 +24,6 @@ import com.intellij.ide.FileEditorProvider;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.properties.IProperty;
@@ -50,7 +49,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -59,6 +57,8 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.JBSplitter;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
@@ -102,9 +102,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   private final Set<PropertiesFile> myBackSlashPressed = new THashSet<PropertiesFile>();
   @NonNls private static final String VALUES = "values";
   @NonNls private static final String NO_PROPERTY_SELECTED = "noPropertySelected";
-  private VirtualFileListener myVfsListener; 
-  private PsiTreeChangeAdapter myPsiTreeChangeAdapter;
-  @NonNls protected static final String PROPORTION_PROPERTY = "RESOURCE_BUNDLE_SPLITTER_PROPORTION";
+  private VirtualFileListener myVfsListener;
 
   public ResourceBundleEditor(Project project, ResourceBundle resourceBundle) {
     myProject = project;
@@ -143,6 +141,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       setState(new ResourceBundleEditorState(propName));
     }
     myDataProviderPanel = new DataProviderPanel(myPanel);
+    
+    getSplitter().setSplitterProportionKey(getClass() + ".splitter");
   }
 
   private Editor mySelectedEditor;
@@ -269,7 +269,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     };
     
     virtualFileManager.addVirtualFileListener(myVfsListener, this);
-    myPsiTreeChangeAdapter = new PsiTreeChangeAdapter() {
+    PsiTreeChangeAdapter psiTreeChangeAdapter = new PsiTreeChangeAdapter() {
       public void childAdded(@NotNull PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
@@ -294,7 +294,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
         updateEditorsFromProperties();
       }
     };
-    PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeAdapter, this);
+    PsiManager.getInstance(myProject).addPsiTreeChangeListener(psiTreeChangeAdapter, this);
   }
 
   private final Alarm myUpdateEditorAlarm = new Alarm();
@@ -351,7 +351,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
             }, "", this);
 
             JPanel titledPanel = myTitledPanels.get(propertiesFile);
-            ((TitledBorder)titledPanel.getBorder()).setTitleColor(property == null ? Color.red : UIUtil.getLabelTextForeground());
+            ((TitledBorder)titledPanel.getBorder()).setTitleColor(property == null ? JBColor.RED : UIUtil.getLabelTextForeground());
             titledPanel.repaint();
           }
         }
@@ -373,7 +373,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   }
 
   private void updatePropertyValueFromDocument(final String propertyName,
-                                               final Project project,
                                                final PropertiesFile propertiesFile,
                                                final String text) {
     if (PropertiesUtil.isUnescapedBackSlashAtTheEnd(text)) {
@@ -444,6 +443,9 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
                 PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
                 documentManager.commitDocument(document);
                 Document propertiesFileDocument = documentManager.getDocument(propertiesFile.getContainingFile());
+                if (propertiesFileDocument == null) {
+                  return;
+                }
                 documentManager.commitDocument(propertiesFileDocument);
 
                 if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
@@ -458,7 +460,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
                 }
                 String propertyName = getSelectedPropertyName();
                 if (propertyName == null) return;
-                updatePropertyValueFromDocument(propertyName, project, propertiesFile, text);
+                updatePropertyValueFromDocument(propertyName, propertiesFile, text);
               }
             });
           }
@@ -552,8 +554,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     return new ResourceBundleEditorState(getSelectedPropertyName());
   }
 
-  private Splitter getSplitter() {
-    return (Splitter)mySplitParent.getComponents()[0];
+  private JBSplitter getSplitter() {
+    return (JBSplitter)mySplitParent.getComponents()[0];
   }
 
   public void setState(@NotNull FileEditorState state) {
@@ -563,22 +565,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       myStructureViewComponent.select(propertyName, true);
       selectionChanged();
     }
-    float proportion = 0.5f;
-    try {
-      String value = PropertiesComponent.getInstance(myProject).getValue(PROPORTION_PROPERTY);
-      if (value != null) {
-        proportion = Float.parseFloat(value);
-      }
-    }
-    catch (NumberFormatException ignored) {
-    }
-
-    final float proportion1 = proportion;
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        getSplitter().setProportion(proportion1);
-      }
-    });
   }
 
   public boolean isModified() {
@@ -618,8 +604,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   }
 
   public void dispose() {
-    float proportion = getSplitter().getProportion();
-    PropertiesComponent.getInstance(myProject).setValue(PROPORTION_PROPERTY, Double.toString(proportion));
     VirtualFileManager.getInstance().removeVirtualFileListener(myVfsListener);
 
     myDisposed = true;

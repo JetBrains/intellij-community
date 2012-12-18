@@ -78,7 +78,13 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
     myComboBox.setRenderer(new ListCellRendererWrapper<GithubTagInfo>() {
       @Override
       public void customize(JList list, GithubTagInfo tag, int index, boolean selected, boolean hasFocus) {
-        String text = tag == null ? "Unavailable" : tag.getName();
+        final String text;
+        if (tag == null) {
+          text = isBackgroundJobRunning() ? "Loading..." : "Unavailable";
+        }
+        else {
+          text = tag.getName();
+        }
         setText(text);
       }
     });
@@ -98,8 +104,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
       return;
     }
     List<GithubTagInfo> sortedTags = createSortedTagList(tags);
-    GithubTagInfo previouslySelectedTag = getSelectedTag();
-    GithubTagInfo selectedItem = previouslySelectedTag;
+    GithubTagInfo selectedItem = getSelectedTag();
     if (selectedItem == null && sortedTags.size() > 0) {
       selectedItem = sortedTags.get(0);
     }
@@ -119,9 +124,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
       }
     }
     myComboBox.updateUI();
-    if (previouslySelectedTag == null && selectedItem != null) {
-      fireStateChanged();
-    }
+    fireStateChanged();
   }
 
   void onTagsUpdateError(@NotNull final String errorMessage) {
@@ -264,9 +267,8 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
 
   @NotNull
   private JPanel createReloadInProgressPanel() {
-    JPanel panel = new JPanel(new BorderLayout(3, 0));
-    panel.add(myLoadingVersionIcon, BorderLayout.CENTER);
-    panel.add(new JLabel("Loading..."), BorderLayout.EAST);
+    JPanel panel = new JPanel();
+    panel.add(myLoadingVersionIcon);
     return panel;
   }
 

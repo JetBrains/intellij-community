@@ -16,9 +16,8 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.StreamProvider;
@@ -51,11 +50,11 @@ import java.util.regex.Pattern;
 
 public abstract class StateStorageManagerImpl implements StateStorageManager, Disposable, StreamProvider, ComponentVersionProvider {
   private static final Logger LOG = Logger.getInstance("#" + StateStorageManagerImpl.class.getName());
-  private static final boolean ourHeadlessEnvironment;
 
+  private static final boolean ourHeadlessEnvironment;
   static {
-    final ApplicationEx ex = ApplicationManagerEx.getApplicationEx();
-    ourHeadlessEnvironment = ex.isHeadlessEnvironment() || ex.isUnitTestMode();
+    final Application app = ApplicationManager.getApplication();
+    ourHeadlessEnvironment = app.isHeadlessEnvironment() || app.isUnitTestMode();
   }
 
   private final Map<String, String> myMacros = new HashMap<String, String>();
@@ -67,7 +66,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   private final PicoContainer myPicoContainer;
 
   private Map<String, Long> myComponentVersions;
-  private final Object myComponentVersLock = new Object();
+  private final Object myComponentVersionsLock = new Object();
 
   private String myVersionsFilePath = null;
 
@@ -143,7 +142,6 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
         myStorages.put(key, stateStorage);
       }
     }
-
   }
 
   public long getVersion(String name) {
@@ -154,7 +152,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   @TestOnly
   public void changeVersionsFilePath(String newPath) {
     myVersionsFilePath = newPath;
-    synchronized (myComponentVersLock) {
+    synchronized (myComponentVersionsLock) {
       myComponentVersions = null;
     }
     isDirty=false;
@@ -187,8 +185,8 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   public static void loadComponentVersions(Map<String, Long> result, Document document) {
-    List componentObjs = document.getRootElement().getChildren("component");
-    for (Object componentObj : componentObjs) {
+    List componentObjects = document.getRootElement().getChildren("component");
+    for (Object componentObj : componentObjects) {
       if (componentObj instanceof Element) {
         Element componentEl = (Element)componentObj;
         String name = componentEl.getAttributeValue("name");
@@ -245,7 +243,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   @Nullable
   private StateStorage createDirectoryStateStorage(final String file, final Class<? extends StateSplitter> splitterClass)
     throws StateStorageException {
-    final String expandedFile = expandMacroses(file);
+    final String expandedFile = expandMacros(file);
     if (expandedFile == null) {
       myStorages.put(file, null);
       return null;
@@ -268,7 +266,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   @Nullable
   StateStorage createFileStateStorage(@NotNull final String fileSpec) {
-    String expandedFile = expandMacroses(fileSpec);
+    String expandedFile = expandMacros(fileSpec);
     if (expandedFile == null) {
       myStorages.put(fileSpec, null);
       return null;
@@ -294,7 +292,6 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   public void saveContent(final String fileSpec, final InputStream content, final long size, final RoamingType roamingType, boolean async) {
-
     for (StreamProvider streamProvider : getStreamProviders(roamingType)) {
       try {
         if (streamProvider.isEnabled()) {
@@ -308,8 +305,6 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
         LOG.debug(e);
       }
     }
-
-
   }
 
   public void deleteFile(final String fileSpec, final RoamingType roamingType) {
@@ -323,7 +318,6 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
         LOG.debug(e);
       }
     }
-
   }
 
   public StreamProvider[] getStreamProviders(RoamingType type) {
@@ -357,7 +351,6 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
 
     return null;
-
   }
 
   public String[] listSubFiles(final String fileSpec) {
@@ -375,13 +368,12 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     return myPathMacroSubstitutor;
   }
 
-
   protected abstract StorageData createStorageData(String storageSpec);
 
   private static final Pattern MACRO_PATTERN = Pattern.compile("(\\$[^\\$]*\\$)");
 
   @Nullable
-  public String expandMacroses(final String file) {
+  public synchronized String expandMacros(final String file) {
     final Matcher matcher = MACRO_PATTERN.matcher(file);
     while (matcher.find()) {
       String m = matcher.group(1);
@@ -390,15 +382,10 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       }
     }
 
-
     String actualFile = file;
 
     for (String macro : myMacros.keySet()) {
       final String replacement = myMacros.get(macro);
-      /*if (replacement == null) {
-        return null;
-      }*/
-
       if (replacement != null) {
         actualFile = StringUtil.replace(actualFile, macro, replacement);
       }
@@ -412,19 +399,14 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       LOG.error("Starting duplicate externalization session: " + mySession);
     }
     ExternalizationSession session = new MyExternalizationSession();
-
     mySession = session;
-
     return session;
   }
 
   public SaveSession startSave(final ExternalizationSession externalizationSession)  {
     assert mySession == externalizationSession;
-
     SaveSession session = createSaveSession(externalizationSession);
-
     mySession = session;
-
     return session;
   }
 
@@ -473,8 +455,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   @Nullable
-  public StateStorage getOldStorage(Object component, final String componentName, final StateStorageOperation operation) throws
-                                                                                                                         StateStorageException {
+  public StateStorage getOldStorage(Object component, String componentName, StateStorageOperation operation) throws StateStorageException {
     return getFileStateStorage(getOldStorageSpec(component, componentName, operation));
   }
 
@@ -483,15 +464,6 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   protected class MySaveSession implements SaveSession {
     CompoundSaveSession myCompoundSaveSession;
-
-    /*
-    private final String myCreationPoint;
-
-    @Override
-    public String toString() {
-      return super.toString() + " " + myCreationPoint;
-    }
-    */
 
     public MySaveSession(final MyExternalizationSession externalizationSession) {
       myCompoundSaveSession = new CompoundSaveSession(externalizationSession.myCompoundExternalizationSession);
@@ -508,7 +480,6 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
     public void save() throws StateStorageException {
       assert mySession == this;
-
       myCompoundSaveSession.save();
     }
 
@@ -559,7 +530,10 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     if (!isDirty) return;
     String filePath = getNotNullVersionsFilePath();
     if (filePath != null) {
-      new File(filePath).getParentFile().mkdirs();
+      File dir = new File(filePath).getParentFile();
+      if (!dir.isDirectory() && !dir.mkdirs()) {
+        LOG.warn("Unable to create: " + dir);
+      }
       try {
         JDOMUtil.writeDocument(new Document(createComponentVersionsXml(getComponentVersions())), filePath, "\n");
         isDirty = false;
@@ -571,7 +545,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   private Map<String, Long> getComponentVersions() {
-    synchronized (myComponentVersLock) {
+    synchronized (myComponentVersionsLock) {
       if (myComponentVersions == null) {
         myComponentVersions = loadVersions();
       }
@@ -580,7 +554,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   public static Element createComponentVersionsXml(Map<String, Long> versions) {
-    Element vers = new Element("versions");
+    Element root = new Element("versions");
     String[] componentNames = ArrayUtil.toStringArray(versions.keySet());
     Arrays.sort(componentNames);
 
@@ -588,12 +562,12 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       long version = versions.get(name);
       if (version != 0) {
         Element element = new Element("component");
-        vers.addContent(element);
+        root.addContent(element);
         element.setAttribute("name", name);
         element.setAttribute("version", String.valueOf(version));
       }
 
     }
-    return vers;
+    return root;
   }
 }

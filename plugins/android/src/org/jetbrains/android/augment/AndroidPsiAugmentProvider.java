@@ -1,6 +1,7 @@
 package org.jetbrains.android.augment;
 
 import com.android.resources.ResourceType;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -21,25 +22,41 @@ import java.util.*;
  * @author Eugene.Kudelevsky
  */
 public class AndroidPsiAugmentProvider extends PsiAugmentProvider {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.augment.AndroidPsiAugmentProvider");
+
   @SuppressWarnings("unchecked")
   @NotNull
   @Override
   public <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element, @NotNull Class<Psi> type) {
     if ((type != PsiClass.class && type != PsiField.class) ||
-        !(element instanceof PsiExtensibleClass) ||
-        DumbService.isDumb(element.getProject())) {
+        !(element instanceof PsiExtensibleClass)) {
       return Collections.emptyList();
     }
     final PsiExtensibleClass aClass = (PsiExtensibleClass)element;
     final String className = aClass.getName();
+    final boolean rClassAugment = AndroidUtils.R_CLASS_NAME.equals(className)
+                                  && type == PsiClass.class;
+
+    if (DumbService.isDumb(element.getProject())) {
+      if (rClassAugment) {
+        LOG.info("R_CLASS_AUGMENT: empty because of dumb mode");
+      }
+      return Collections.emptyList();
+    }
 
     final AndroidFacet facet = AndroidFacet.getInstance(element);
     if (facet == null) {
+      if (rClassAugment) {
+        LOG.info("R_CLASS_AUGMENT: empty because no facet");
+      }
       return Collections.emptyList();
     }
 
     final PsiFile containingFile = element.getContainingFile();
     if (containingFile == null) {
+      if (rClassAugment) {
+        LOG.info("R_CLASS_AUGMENT: empty because of no containing file");
+      }
       return Collections.emptyList();
     }
 
@@ -56,12 +73,19 @@ public class AndroidPsiAugmentProvider extends PsiAugmentProvider {
             result.add((Psi)resClass);
           }
         }
+        if (rClassAugment) {
+          LOG.info("R_CLASS_AUGMENT: " + result.size() + " classes added");
+        }
         return result;
       }
       else if (AndroidUtils.MANIFEST_CLASS_NAME.equals(className) &&
                AndroidResourceUtil.isManifestJavaFile(facet, containingFile)) {
         return Arrays.asList((Psi)new PermissionClass(facet, aClass),
                              (Psi)new PermissionGroupClass(facet, aClass));
+      }
+
+      if (rClassAugment) {
+        LOG.info("R_CLASS_AUGMENT: empty because containing file is not actual R.java file");
       }
     }
     else if (type == PsiField.class && !(aClass instanceof AndroidLightClass)) {

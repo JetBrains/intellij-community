@@ -63,7 +63,7 @@ public class JavaAPIUsagesInspectionTest extends InspectionTestCase {
 
   @SuppressWarnings("UnusedDeclaration")
   public void _testCollectSinceApiUsages() {
-    final String version = "1.4";
+    final String version = "1.7";
     final ContentIterator contentIterator = new ContentIterator() {
       @Override
       public boolean processFile(VirtualFile fileOrDir) {
@@ -97,4 +97,13 @@ public class JavaAPIUsagesInspectionTest extends InspectionTestCase {
     assert srcFile != null;
     VfsUtilCore.iterateChildrenRecursively(srcFile, VirtualFileFilter.ALL, contentIterator);
   }
+/*
+  @Override
+  protected void setUpJdk() {
+    Module[] modules = ModuleManager.getInstance(myProject).getModules();
+    final Sdk sdk = JavaSdk.getInstance().createJdk("1.7", "c:/program files (x86)/java/jdk1.7.0_09/", false);
+    for (Module module : modules) {
+      ModuleRootModificationUtil.setModuleSdk(module, sdk);
+    }
+  }*/
 }

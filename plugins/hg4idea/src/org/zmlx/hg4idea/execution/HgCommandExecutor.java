@@ -84,11 +84,35 @@ public final class HgCommandExecutor {
     myShowOutput = showOutput;
   }
 
-  public void execute(@Nullable final VirtualFile repo, final String operation, final List<String> arguments, @Nullable final HgCommandResultHandler handler) {
+  public void execute(@Nullable final VirtualFile repo,
+                      final String operation,
+                      final List<String> arguments,
+                      @Nullable final HgCommandResultHandler handler) {
+    execute(repo, operation, arguments, handler, false);
+  }
+
+  /**
+   * Method is called with forceAutorization = true, if authorization may be failed and update login_password dialog required
+   * f.e. if repository password was changed, but idea was not restarted.
+   *
+   * @param repo
+   * @param operation
+   * @param arguments
+   * @param handler
+   * @param forceAuthorization
+   */
+  public void execute(@Nullable final VirtualFile repo,
+                      final String operation,
+                      final List<String> arguments,
+                      @Nullable final HgCommandResultHandler handler,
+                      final boolean forceAuthorization) {
     HgUtil.executeOnPooledThreadIfNeeded(new Runnable() {
       @Override
       public void run() {
-        final HgCommandResult result = executeInCurrentThread(repo, operation, arguments);
+        HgCommandResult result = executeInCurrentThread(repo, operation, arguments);
+        if (forceAuthorization && HgErrorUtil.isAuthorizationError(result)) {
+          result = executeInCurrentThread(repo, operation, arguments, true);
+        }
         if (handler != null) {
           handler.process(result);
         }
@@ -98,13 +122,22 @@ public final class HgCommandExecutor {
 
   @Nullable
   public HgCommandResult executeInCurrentThread(@Nullable final VirtualFile repo, @NotNull final String operation,
-                                                @Nullable final List<String> arguments) {
-    return executeInCurrentThread(repo, operation, arguments, null);
+                                                @Nullable final List<String> arguments, boolean forceAuthorization) {
+    return executeInCurrentThread(repo, operation, arguments, null, forceAuthorization);
   }
 
   @Nullable
   public HgCommandResult executeInCurrentThread(@Nullable final VirtualFile repo, @NotNull final String operation,
-                                                @Nullable final List<String> arguments, @Nullable HgPromptHandler handler) {
+                                                @Nullable final List<String> arguments) {
+    return executeInCurrentThread(repo, operation, arguments, false);
+  }
+
+  @Nullable
+  public HgCommandResult executeInCurrentThread(@Nullable final VirtualFile repo,
+                                                @NotNull final String operation,
+                                                @Nullable final List<String> arguments,
+                                                @Nullable HgPromptHandler handler,
+                                                boolean forceAuthorization) {
     //LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread()); disabled for release
     if (myProject == null || myProject.isDisposed() || myVcs == null) {
       return null;
@@ -118,7 +151,7 @@ public final class HgCommandExecutor {
     }
 
     WarningReceiver warningReceiver = new WarningReceiver();
-    PassReceiver passReceiver = new PassReceiver(myProject);
+    PassReceiver passReceiver = new PassReceiver(myProject, forceAuthorization);
 
     SocketServer promptServer = new SocketServer(new PromptReceiver(handler));
     SocketServer warningServer = new SocketServer(warningReceiver);
@@ -328,9 +361,11 @@ public final class HgCommandExecutor {
   private static class PassReceiver extends SocketServer.Protocol{
     private final Project myProject;
     private HgCommandAuthenticator myAuthenticator;
+    private boolean myForceAuthorization;
 
-    private PassReceiver(Project project) {
+    private PassReceiver(Project project, boolean forceAuthorization) {
       myProject = project;
+      myForceAuthorization = forceAuthorization;
     }
 
     @Override
@@ -344,7 +379,7 @@ public final class HgCommandExecutor {
       String path = new String(readDataBlock(dataInputStream));
       String proposedLogin = new String(readDataBlock(dataInputStream));
 
-      HgCommandAuthenticator authenticator = new HgCommandAuthenticator(myProject);
+      HgCommandAuthenticator authenticator = new HgCommandAuthenticator(myProject, myForceAuthorization);
       boolean ok = authenticator.promptForAuthentication(myProject, proposedLogin, uri, path);
       if (ok) {
         myAuthenticator = authenticator;

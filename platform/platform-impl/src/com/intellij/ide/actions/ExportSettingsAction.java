@@ -100,7 +100,7 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
         output.close();
       }
       ShowFilePathAction.showDialog(project, IdeBundle.message("message.settings.exported.successfully"),
-                                    IdeBundle.message("title.export.successful"), saveFile);
+                                    IdeBundle.message("title.export.successful"), saveFile, null);
     }
     catch (IOException e1) {
       Messages.showErrorDialog(IdeBundle.message("error.writing.settings", e1.toString()),IdeBundle.message("title.error.writing.file"));

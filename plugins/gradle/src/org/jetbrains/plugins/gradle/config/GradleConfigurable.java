@@ -22,6 +22,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -260,7 +261,10 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     myLinkedGradleProjectPathField.addBrowseFolderListener(
       "",
       GradleBundle.message("gradle.settings.label.select.project"),
-      myProject, GradleUtil.getGradleProjectFileChooserDescriptor()
+      myProject,
+      GradleUtil.getGradleProjectFileChooserDescriptor(),
+      TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
+      false
     );
     myLinkedGradleProjectPathField.getTextField().getDocument().addDocumentListener(new DocumentListener() {
       @Override
@@ -331,7 +335,9 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
       "",
       GradleBundle.message("gradle.settings.text.home.path"),
       null,
-      GradleUtil.getGradleHomeFileChooserDescriptor()
+      GradleUtil.getGradleHomeFileChooserDescriptor(),
+      TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
+      false
     );
     myGradleHomePathField.getTextField().getDocument().addDocumentListener(new DocumentListener() {
       @Override
@@ -358,7 +364,9 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
       "",
       GradleBundle.message("gradle.settings.title.service.dir.path"),
       myProject,
-      new FileChooserDescriptor(false, true, false, false, false, false)
+      new FileChooserDescriptor(false, true, false, false, false, false),
+      TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
+      false
     );
     myServiceDirectoryPathField.getTextField().getDocument().addDocumentListener(new DocumentListener() {
       @Override

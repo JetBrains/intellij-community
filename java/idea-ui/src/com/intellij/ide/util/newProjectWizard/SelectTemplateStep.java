@@ -137,7 +137,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     });
 
     if (myWizardContext.isCreatingNewProject()) {
-      addField("Project \u001bformat:", myFormatPanel.getStorageFormatComboBox(), myModulePanel);
+      addProjectFormat(myModulePanel);
     }
 
     mySplitter = new JBSplitter(false, 0.3f, 0.3f, 0.6f);
@@ -145,6 +145,10 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     myLeftPanel.setMinimumSize(new Dimension(200, 200));
     mySplitter.setFirstComponent(myLeftPanel);
     mySplitter.setSecondComponent(myRightPanel);
+  }
+
+  private void addProjectFormat(JPanel panel) {
+    addField("Project \u001bformat:", myFormatPanel.getStorageFormatComboBox(), panel);
   }
 
   @Override
@@ -194,10 +198,10 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
       }
     }
 
-//    mySettingsPanel.setVisible(template != null);
-    myExpertPlaceholder.setVisible(!(myModuleBuilder instanceof TemplateModuleBuilder) &&
-                                   !(myModuleBuilder instanceof EmptyModuleBuilder) &&
-                                   myExpertPanel.getComponentCount() > 0);
+    myExpertPlaceholder.setVisible(!(myModuleBuilder instanceof TemplateModuleBuilder) && myExpertPanel.getComponentCount() > 0);
+    for (int i = 0; i < 6; i++) {
+      myModulePanel.getComponent(i).setVisible(!(myModuleBuilder instanceof EmptyModuleBuilder));
+    }
     myDescriptionPanel.setVisible(StringUtil.isNotEmpty(description));
 
     mySettingsPanel.revalidate();

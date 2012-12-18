@@ -38,9 +38,11 @@ class HgCommandAuthenticator {
   
   private GetPasswordRunnable myRunnable;
   private final Project myProject;
+  private boolean myForceAuthorization;
 
-  public HgCommandAuthenticator(Project project) {
+  public HgCommandAuthenticator(Project project, boolean forceAuthorization) {
     myProject = project;
+    myForceAuthorization = forceAuthorization;
   }
 
   public void saveCredentials() {
@@ -79,7 +81,7 @@ class HgCommandAuthenticator {
   }
 
   public boolean promptForAuthentication(Project project, String proposedLogin, String uri, String path) {
-    GetPasswordRunnable runnable = new GetPasswordRunnable(project, proposedLogin, uri, path);
+    GetPasswordRunnable runnable = new GetPasswordRunnable(project, proposedLogin, uri, path, myForceAuthorization);
     // Don't use Application#invokeAndWait here, as IntelliJ 
     // may already be showing a dialog (such as the clone dialog)
     ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.defaultModalityState());
@@ -105,11 +107,13 @@ class HgCommandAuthenticator {
     private boolean ok = false;
     @Nullable private String myURL;
     private boolean myRememberPassword;
+    private boolean myForceAuthorization;
 
-    public GetPasswordRunnable(Project project, String proposedLogin, String uri, String path) {
+    public GetPasswordRunnable(Project project, String proposedLogin, String uri, String path, boolean forceAuthorization) {
       this.myProject = project;
       this.myProposedLogin = proposedLogin;
       this.myURL = uri + path;
+      this.myForceAuthorization = forceAuthorization;
     }
     
     public void run() {
@@ -151,8 +155,8 @@ class HgCommandAuthenticator {
         }
       }
 
-      // don't show dialog if we don't have to (both fields are known)
-      if (!StringUtil.isEmptyOrSpaces(
+      // don't show dialog if we don't have to (both fields are known) except force authorization required
+      if (!myForceAuthorization && !StringUtil.isEmptyOrSpaces(
         password) && !StringUtil.isEmptyOrSpaces(login)) {
         myUserName = login;
         myPassword = password;

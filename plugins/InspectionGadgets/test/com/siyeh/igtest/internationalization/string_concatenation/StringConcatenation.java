@@ -25,3 +25,17 @@ public class StringConcatenation
     private void boom(@NonNls String s) {
     }
 }
+
+class ExceptionsInside {
+  class MyException extends Exception {
+      MyException(String message) {
+          super(message);
+      }
+  }
+  
+  class MyChildException extends MyException {
+      MyChildException(String a) {
+          super("Message: " + a + "....");
+      }
+  }
+}

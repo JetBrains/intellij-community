@@ -27,7 +27,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -46,6 +46,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.Set;
+
+import static org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter.*;
 
 /**
  * @author Max Medvedev
@@ -103,44 +105,63 @@ public class GrHighlightUtil {
   }
 
   @Nullable
-  static TextAttributesKey getDeclarationHighlightingAttribute(PsiElement resolved) {
+  static TextAttributesKey getDeclarationHighlightingAttribute(PsiElement resolved, @Nullable PsiElement refElement) {
     if (resolved instanceof PsiField || resolved instanceof GrVariable && ResolveUtil.isScriptField((GrVariable)resolved)) {
       boolean isStatic = ((PsiVariable)resolved).hasModifierProperty(PsiModifier.STATIC);
-      return isStatic ? DefaultHighlighter.STATIC_FIELD : DefaultHighlighter.INSTANCE_FIELD;
+      return isStatic ? STATIC_FIELD : INSTANCE_FIELD;
     }
     else if (resolved instanceof GrAccessorMethod) {
       boolean isStatic = ((GrAccessorMethod)resolved).hasModifierProperty(PsiModifier.STATIC);
-      return isStatic ? DefaultHighlighter.STATIC_PROPERTY_REFERENCE : DefaultHighlighter.INSTANCE_PROPERTY_REFERENCE;
+      return isStatic ? STATIC_PROPERTY_REFERENCE : INSTANCE_PROPERTY_REFERENCE;
     }
     else if (resolved instanceof PsiMethod) {
-      if (!((PsiMethod)resolved).isConstructor()) {
-        boolean isStatic = ((PsiMethod)resolved).hasModifierProperty(PsiModifier.STATIC);
-        if (GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)resolved)) {
-          return isStatic ? DefaultHighlighter.STATIC_PROPERTY_REFERENCE : DefaultHighlighter.INSTANCE_PROPERTY_REFERENCE;
+      if (((PsiMethod)resolved).isConstructor()) {
+        if (refElement != null) {
+          if (refElement.getNode().getElementType() == GroovyTokenTypes.kTHIS || //don't highlight this() or super()
+              refElement.getNode().getElementType() == GroovyTokenTypes.kSUPER) {
+            return null;
+          }
+          else {
+            return CONSTRUCTOR_CALL;
+          }
         }
         else {
-          return isStatic ? DefaultHighlighter.STATIC_METHOD_ACCESS : DefaultHighlighter.METHOD_CALL;
+          return CONSTRUCTOR_DECLARATION;
+        }
+      }
+      else {
+        boolean isStatic = ((PsiMethod)resolved).hasModifierProperty(PsiModifier.STATIC);
+        if (GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)resolved)) {
+          return isStatic ? STATIC_PROPERTY_REFERENCE : INSTANCE_PROPERTY_REFERENCE;
+        }
+        else {
+          if (refElement != null) {
+            return isStatic ? STATIC_METHOD_ACCESS : METHOD_CALL;
+          }
+          else {
+            return METHOD_DECLARATION;
+          }
         }
       }
     }
     else if (resolved instanceof PsiTypeParameter) {
-      return DefaultHighlighter.TYPE_PARAMETER;
+      return TYPE_PARAMETER;
     }
     else if (resolved instanceof PsiClass) {
       if (((PsiClass)resolved).isAnnotationType()) {
-        return DefaultHighlighter.ANNOTATION;
+        return ANNOTATION;
       }
       else {
-        return DefaultHighlighter.CLASS_REFERENCE;
+        return CLASS_REFERENCE;
       }
     }
     else if (resolved instanceof GrParameter) {
       boolean reassigned = isReassigned((GrParameter)resolved);
-      return reassigned ? DefaultHighlighter.REASSIGNED_PARAMETER : DefaultHighlighter.PARAMETER;
+      return reassigned ? REASSIGNED_PARAMETER : PARAMETER;
     }
     else if (resolved instanceof GrVariable) {
       boolean reassigned = isReassigned((GrVariable)resolved);
-      return reassigned ? DefaultHighlighter.REASSIGNED_LOCAL_VARIABLE : DefaultHighlighter.LOCAL_VARIABLE;
+      return reassigned ? REASSIGNED_LOCAL_VARIABLE : LOCAL_VARIABLE;
     }
     return null;
   }

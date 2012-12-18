@@ -346,6 +346,8 @@
                            order="last"/>
     <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.geb.GebPageFieldNameCompletionContributor"/>
 
+    <cantBeStatic implementation="org.jetbrains.plugins.groovy.codeInspection.declaration.GrCategoryMethodsCantBeStaticExtension" />
+
     <psi.referenceContributor  language="Properties" implementation="org.jetbrains.plugins.groovy.dgm.DGMReferenceContributor"/>
 
     <weigher key="completion" implementationClass="org.jetbrains.plugins.groovy.lang.completion.weighers.GrWithWeigher"

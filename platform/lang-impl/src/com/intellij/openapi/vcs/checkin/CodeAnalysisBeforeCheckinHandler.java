@@ -19,6 +19,7 @@ package com.intellij.openapi.vcs.checkin;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.CodeSmellInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -51,6 +52,7 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
 
   private final Project myProject;
   private final CheckinProjectPanel myCheckinPanel;
+  private static final Logger LOG = Logger.getInstance("#" + CodeAnalysisBeforeCheckinHandler.class.getName());
 
   public CodeAnalysisBeforeCheckinHandler(final Project project, CheckinProjectPanel panel) {
     myProject = project;
@@ -159,6 +161,7 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
       catch (ProcessCanceledException e) {
         return ReturnResult.CANCEL;
       } catch (Exception e) {
+        LOG.error(e);
         if (Messages.showOkCancelDialog(myProject,
                                 "Code analysis failed with exception: " + e.getClass().getName() + ": " + e.getMessage(),
                                 "Code analysis failed", "&Commit", "&Cancel", null) == DialogWrapper.OK_EXIT_CODE) {

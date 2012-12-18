@@ -20,7 +20,7 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddMethodBodyFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateConstructorMatchingSuperFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteMethodBodyFix;
-import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.lang.ASTNode;
@@ -51,7 +51,6 @@ import org.jetbrains.plugins.groovy.annotator.intentions.*;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
-import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -651,11 +650,11 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (constructorReference != null) {
       final PsiElement startToken = listOrMap.getFirstChild();
       if (startToken != null && startToken.getNode().getElementType() == GroovyTokenTypes.mLBRACK) {
-        myHolder.createInfoAnnotation(startToken, null).setTextAttributes(DefaultHighlighter.LITERAL_CONVERSION);
+        myHolder.createInfoAnnotation(startToken, null).setTextAttributes(LITERAL_CONVERSION);
       }
       final PsiElement endToken = listOrMap.getLastChild();
       if (endToken != null && endToken.getNode().getElementType() == GroovyTokenTypes.mRBRACK) {
-        myHolder.createInfoAnnotation(endToken, null).setTextAttributes(DefaultHighlighter.LITERAL_CONVERSION);
+        myHolder.createInfoAnnotation(endToken, null).setTextAttributes(LITERAL_CONVERSION);
       }
     }
 
@@ -860,7 +859,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     for (GrNamedArgument namedArgument : namedArguments) {
       final GrArgumentLabel label = namedArgument.getLabel();
       if (label != null && label.getExpression() == null && label.getNameElement().getNode().getElementType() != GroovyTokenTypes.mSTAR) {
-        myHolder.createInfoAnnotation(label, null).setTextAttributes(DefaultHighlighter.MAP_KEY);
+        myHolder.createInfoAnnotation(label, null).setTextAttributes(MAP_KEY);
       }
     }
   }
@@ -940,7 +939,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
           String qname = clazz.getQualifiedName();
           LOG.assertTrue(qname != null, clazz.getText());
           Annotation annotation = myHolder.createErrorAnnotation(refElement, GroovyBundle.message("cannot.reference.nonstatic", qname));
-          annotation.setTextAttributes(DefaultHighlighter.UNRESOLVED_ACCESS);
+          annotation.setTextAttributes(UNRESOLVED_ACCESS);
         }
       }
     }
@@ -1442,7 +1441,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
         if (PsiTreeUtil.isAncestor(resolved, ref, true)) {
           if (PsiUtil.hasEnclosingInstanceInScope((PsiClass)resolved, ref, true)) {
-            holder.createInfoAnnotation(nameElement, null).setTextAttributes(DefaultHighlighter.KEYWORD);
+            holder.createInfoAnnotation(nameElement, null).setTextAttributes(KEYWORD);
           }
         }
         else {
@@ -1466,12 +1465,11 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     ASTNode node = element.getNode();
     if (node != null && TokenSets.BUILT_IN_TYPE.contains(node.getElementType())) {
       Annotation annotation = holder.createInfoAnnotation(element, null);
-      annotation.setTextAttributes(DefaultHighlighter.KEYWORD);
+      annotation.setTextAttributes(KEYWORD);
     }
   }
 
-  private static void checkAnnotationList(AnnotationHolder holder, @Nullable GrModifierList modifierList, String message) {
-    if (modifierList == null) return;
+  private static void checkAnnotationList(AnnotationHolder holder, @NotNull GrModifierList modifierList, String message) {
     final PsiElement[] modifiers = modifierList.getModifiers();
     for (PsiElement modifier : modifiers) {
       if (!(modifier instanceof PsiAnnotation)) {
@@ -1485,7 +1483,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (typeDefinition.isAnnotationType()) return;
     if (typeDefinition instanceof GrTypeParameter) return;
 
-    Collection<CandidateInfo> collection = OverrideImplementUtil.getMethodsToOverrideImplement(typeDefinition, true);
+    Collection<CandidateInfo> collection = OverrideImplementExploreUtil.getMethodsToOverrideImplement(typeDefinition, true);
     if (collection.isEmpty()) return;
 
     final PsiElement element = collection.iterator().next().getElement();

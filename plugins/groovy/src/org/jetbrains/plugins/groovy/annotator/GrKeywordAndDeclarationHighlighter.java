@@ -136,6 +136,6 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
     //don't highlight local vars and parameters here because their highlighting needs index.
     if (GroovyRefactoringUtil.isLocalVariable(parent) || parent instanceof GrParameter) return null;
 
-    return GrHighlightUtil.getDeclarationHighlightingAttribute(parent);
+    return GrHighlightUtil.getDeclarationHighlightingAttribute(parent, null);
   }
 }

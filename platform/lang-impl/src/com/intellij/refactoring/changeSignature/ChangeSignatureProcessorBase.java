@@ -83,6 +83,7 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
 
     List<UsageInfo> result = new ArrayList<UsageInfo>(infos.size() / 2);
     for (UsageInfo info : infos) {
+      LOG.assertTrue(info != null, getClass());
       PsiElement element = info.getElement();
       if (info instanceof MoveRenameUsageInfo) {
         if (usedElements.contains(element)) continue;

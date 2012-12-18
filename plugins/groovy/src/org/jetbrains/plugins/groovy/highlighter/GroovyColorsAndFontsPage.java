@@ -73,9 +73,11 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
       new AttributesDescriptor("Reassigned parameter", DefaultHighlighter.REASSIGNED_PARAMETER),
       new AttributesDescriptor("Static field", DefaultHighlighter.STATIC_FIELD),
       new AttributesDescriptor("Instance field", DefaultHighlighter.INSTANCE_FIELD),
+      new AttributesDescriptor("Constructor call", DefaultHighlighter.CONSTRUCTOR_CALL),
       new AttributesDescriptor("Instance method call", DefaultHighlighter.METHOD_CALL),
       new AttributesDescriptor("Static method call", DefaultHighlighter.STATIC_METHOD_ACCESS),
       new AttributesDescriptor("Method declaration", DefaultHighlighter.METHOD_DECLARATION),
+      new AttributesDescriptor("Constructor declaration", DefaultHighlighter.CONSTRUCTOR_DECLARATION),
       new AttributesDescriptor("Class reference", DefaultHighlighter.CLASS_REFERENCE),
       new AttributesDescriptor("Type parameter reference", DefaultHighlighter.TYPE_PARAMETER),
       new AttributesDescriptor("Map key accessed as a property", DefaultHighlighter.MAP_KEY),
@@ -107,6 +109,7 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
            " */</gdoc>\n" +
            "<annotation>@SpecialBean</annotation> \n" +
            "<keyword>class</keyword> <classref>Demo</classref> {\n" +
+           "  <keyword>public</keyword> <constructor>Demo</constructor>() {}\n" +
            "  <keyword>def</keyword> <instfield>property</instfield>\n" +
            "//This is a line comment\n" +
            "/* This is a block comment */\n" +
@@ -129,7 +132,7 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
            "<label>label</label>:<keyword>def</keyword> <reLocal>f1</reLocal> = []\n" +
            "<reLocal>f1</reLocal> = [2]\n" +
            "<classref>File</classref> <local>f</local>=<literal>[</literal>'path'<literal>]</literal>\n" +
-           "<instmet>print</instmet> <keyword>new</keyword> <classref>Demo</classref>().<prop>property</prop>\n" +
+           "<instmet>print</instmet> <keyword>new</keyword> <constructorCall>Demo</constructorCall>().<prop>property</prop>\n" +
            "<instmet>print</instmet> '<validescape>\\n</validescape> <invalidescape>\\x</invalidescape>'"
 
       ;
@@ -142,6 +145,7 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
     map.put("annotation", DefaultHighlighter.ANNOTATION);
     map.put("statmet", DefaultHighlighter.STATIC_METHOD_ACCESS);
     map.put("instmet", DefaultHighlighter.METHOD_CALL);
+    map.put("constructorCall", DefaultHighlighter.CONSTRUCTOR_CALL);
     map.put("statfield", DefaultHighlighter.STATIC_FIELD);
     map.put("instfield", DefaultHighlighter.INSTANCE_FIELD);
     map.put("gdoc", DefaultHighlighter.DOC_COMMENT_CONTENT);
@@ -160,6 +164,7 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
     map.put("param", DefaultHighlighter.PARAMETER);
     map.put("reParam", DefaultHighlighter.REASSIGNED_PARAMETER);
     map.put("method", DefaultHighlighter.METHOD_DECLARATION);
+    map.put("constructor", DefaultHighlighter.CONSTRUCTOR_DECLARATION);
     map.put("label", DefaultHighlighter.LABEL);
     return map;
   }
