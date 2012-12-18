@@ -93,9 +93,9 @@ public class LambdaUtil {
   }
 
   public static boolean isLambdaFullyInferred(PsiLambdaExpression expression, PsiType functionalInterfaceType) {
-    if (expression.getParameterList().getParametersCount() > 0 ||
-        getFunctionalInterfaceReturnType(functionalInterfaceType) != PsiType.VOID) {   //todo check that void lambdas without params check
-      if (!checkRawAcceptable(expression, functionalInterfaceType)) {
+    final boolean hasParams = expression.getParameterList().getParametersCount() > 0;
+    if (hasParams || getFunctionalInterfaceReturnType(functionalInterfaceType) != PsiType.VOID) {   //todo check that void lambdas without params check
+      if (hasParams && !checkRawAcceptable(expression, functionalInterfaceType)) {
         return false;
       }
       return !dependsOnTypeParams(functionalInterfaceType, functionalInterfaceType, expression, null);
