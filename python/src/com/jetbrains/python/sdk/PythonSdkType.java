@@ -801,6 +801,7 @@ public class PythonSdkType extends SdkType {
       return moduleSDK;
     }
     List<Sdk> allSdks = getAllSdks();
+    Collections.sort(allSdks, PreferredSdkComparator.INSTANCE);
     for (Sdk sdk : allSdks) {
       if (!getLanguageLevelForSdk(sdk).isPy3K()) {
         return sdk;
