@@ -3,6 +3,7 @@ package com.jetbrains.env.python;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -66,9 +67,14 @@ public class PythonSkeletonsTest extends PyTestCase {
         assertEquals(SkeletonVersionChecker.BUILTIN_NAME, header.getBinaryFile());
 
         // Resolve a single reference to built-ins
-        myFixture.configureByText("a.py", "len('foo')\n");
+        myFixture.configureByText("a.py", "len('foo')");
         final PyExpression expr = myFixture.findElementByText("len", PyExpression.class);
         assertNotNull(expr);
+
+        final Module module = ModuleUtil.findModuleForPsiElement(expr.getContainingFile());
+        assertEquals(getSingleModule(project), module);
+        final Sdk sdkFromModule = PythonSdkType.findPythonSdk(module);
+        assertNotNull(sdkFromModule);
 
         final Sdk sdkFromPsi = PyBuiltinCache.findSdkForFile(expr.getContainingFile());
         final PyFile builtinsFromSdkCache = PythonSdkPathCache.getInstance(project, sdkFromPsi).getBuiltins().getBuiltinsFile();
