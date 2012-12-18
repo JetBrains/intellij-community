@@ -1682,6 +1682,11 @@ public class StringUtil extends StringUtilRt {
     builder.append(quotingChar);
   }
 
+  @NotNull
+  public static String doubleQuote(@NotNull String str) {
+    return '\"' + str + "\"";
+  }
+
   @NonNls private static final String[] REPLACES_REFS = {"&lt;", "&gt;", "&amp;", "&#39;", "&quot;"};
   @NonNls private static final String[] REPLACES_DISP = {"<", ">", "&", "'", "\""};
 
