@@ -12,16 +12,21 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
 import com.jetbrains.env.python.debug.PyTestTask;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.sdk.InvalidSdkException;
-import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,7 +51,8 @@ public class PythonSkeletonsTest extends PyTestCase {
       @Override
       public void runTestOn(@NotNull Sdk sdk) {
         // Check the builtin skeleton header
-        final PyFile builtins = PyBuiltinCache.getBuiltinsForSdk(myFixture.getProject(), sdk);
+        final Project project = myFixture.getProject();
+        final PyFile builtins = PyBuiltinCache.getBuiltinsForSdk(project, sdk);
         assertNotNull(builtins);
         final VirtualFile virtualFile = builtins.getVirtualFile();
         assertNotNull(virtualFile);
@@ -57,6 +63,20 @@ public class PythonSkeletonsTest extends PyTestCase {
         final int version = header.getVersion();
         assertTrue("Header version must be > 0, currently it is " + version, version > 0);
         assertEquals(SkeletonVersionChecker.BUILTIN_NAME, header.getBinaryFile());
+
+        // Resolve a single reference to built-ins
+        myFixture.configureByText("a.py", "len('foo')\n");
+        final PyExpression expr = myFixture.findElementByText("len", PyExpression.class);
+        assertNotNull(expr);
+        final PsiReference ref = expr.getReference();
+        assertNotNull(ref);
+        final PsiElement resolved = ref.resolve();
+        assertNotNull(resolved);
+        assertInstanceOf(resolved, PyFunction.class);
+        final PyFunction len = (PyFunction)resolved;
+        assertEquals("len", len.getName());
+        final PsiFile file = resolved.getContainingFile();
+        assertEquals(builtins, file);
 
         // Run inspections on a file that uses builtins
         myFixture.configureByFile("skeletons/" + getTestName(false) + ".py");
