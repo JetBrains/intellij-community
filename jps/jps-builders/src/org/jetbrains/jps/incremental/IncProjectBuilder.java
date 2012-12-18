@@ -68,9 +68,9 @@ public class IncProjectBuilder {
   private static final Key<Set<BuildTarget<?>>> TARGET_WITH_CLEARED_OUTPUT = Key.create("_targets_with_cleared_output_");
   private static final int MAX_BUILDER_THREADS;
   static {
-    int maxThreads = 4;
+    int maxThreads = 6;
     try {
-      maxThreads = Math.max(2, Integer.parseInt(System.getProperty(GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION, "4")));
+      maxThreads = Math.max(2, Integer.parseInt(System.getProperty(GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION, Integer.toString(maxThreads))));
     }
     catch (NumberFormatException ignored) {
     }
