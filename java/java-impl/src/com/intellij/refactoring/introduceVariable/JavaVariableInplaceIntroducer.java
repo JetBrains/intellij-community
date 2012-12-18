@@ -57,8 +57,6 @@ import java.util.List;
  * Date: 12/8/10
  */
 public class JavaVariableInplaceIntroducer extends InplaceVariableIntroducer<PsiExpression> {
-  protected final Editor myEditor;
-
   protected final Project myProject;
   private final SmartPsiElementPointer<PsiDeclarationStatement> myPointer;
 
@@ -83,7 +81,6 @@ public class JavaVariableInplaceIntroducer extends InplaceVariableIntroducer<Psi
                                        final String title) {
     super(elementToRename, editor, project, title, new PsiExpression[0], null);
     myProject = project;
-    myEditor = editor;
     myCantChangeFinalModifier = cantChangeFinalModifier;
     myTitle = title;
     setExprMarker(exprMarker);

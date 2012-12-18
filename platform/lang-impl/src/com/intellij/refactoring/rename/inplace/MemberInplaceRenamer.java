@@ -210,7 +210,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
     }
     finally {
       try {
-        ((EditorImpl)myEditor).stopDumb();
+        ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).stopDumb();
       }
       finally {
         FinishMarkAction.finish(myProject, myEditor, markAction);
@@ -256,8 +256,9 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
   @Override
   protected void revertStateOnFinish() {
-    if (myEditor == FileEditorManager.getInstance(myProject).getSelectedTextEditor()) {
-      ((EditorImpl)myEditor).startDumb();
+    final Editor editor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
+    if (editor == FileEditorManager.getInstance(myProject).getSelectedTextEditor()) {
+      ((EditorImpl)editor).startDumb();
     }
     revertState();
   }
