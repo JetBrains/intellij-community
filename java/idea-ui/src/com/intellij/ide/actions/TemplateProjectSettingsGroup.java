@@ -29,7 +29,7 @@ public class TemplateProjectSettingsGroup extends DefaultActionGroup {
     setPopup(true);
     Presentation presentation = getTemplatePresentation();
 
-    presentation.setText("Template Project");
+    presentation.setText("Project Defaults");
     presentation.setIcon(AllIcons.General.TemplateProjectSettings);
 
     add(new TemplateProjectPropertiesAction() {{

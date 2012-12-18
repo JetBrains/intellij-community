@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -223,7 +224,7 @@ public class LinearLayoutOperation extends FlowBaseOperation {
 
     protected void paintComponent(Graphics g) {
       super.paintComponent(g);
-      g.setColor(Color.magenta);
+      g.setColor(JBColor.MAGENTA);
 
       if (myHorizontal) {
         paintHorizontalCell(g);

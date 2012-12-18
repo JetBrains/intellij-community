@@ -44,6 +44,7 @@ public class UsageViewPresentation {
   private List<Action> myNotFoundActions;
   private boolean myDetachedMode; // no UI will be shown
   private String myDynamicCodeUsagesString;
+  private boolean myMergeDupLinesAvailable = true;
 
   public String getTabText() {
     return myTabText;
@@ -173,6 +174,14 @@ public class UsageViewPresentation {
 
   public String getDynamicCodeUsagesString() {
     return myDynamicCodeUsagesString;
+  }
+
+  public boolean isMergeDupLinesAvailable() {
+    return myMergeDupLinesAvailable;
+  }
+
+  public void setMergeDupLinesAvailable(boolean mergeDupLinesAvailable) {
+    myMergeDupLinesAvailable = mergeDupLinesAvailable;
   }
 }
 

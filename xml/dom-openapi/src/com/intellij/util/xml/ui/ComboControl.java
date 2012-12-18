@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
@@ -200,7 +201,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
         final Dimension dimension = getPreferredSize();
         if (!validity.value(text)) {
           setFont(getFont().deriveFont(Font.ITALIC));
-          setForeground(Color.RED);
+          setForeground(JBColor.RED);
         }
         setIcon(pair == null ? null : pair.second);
         setPreferredSize(new Dimension(-1, dimension.height));

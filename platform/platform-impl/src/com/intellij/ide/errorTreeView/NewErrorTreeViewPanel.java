@@ -559,7 +559,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     private final AnAction myCloseAction;
 
     public RerunAction(@NotNull Runnable rerunAction, @NotNull AnAction closeAction) {
-      super(IdeBundle.message("action.refresh"), null, AllIcons.Actions.RefreshUsages);
+      super(IdeBundle.message("action.refresh"), null, AllIcons.Actions.Rerun);
       myRerunAction = rerunAction;
       myCloseAction = closeAction;
     }

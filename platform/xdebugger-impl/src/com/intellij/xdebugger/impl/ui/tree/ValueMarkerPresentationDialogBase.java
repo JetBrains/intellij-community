@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,7 @@ package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
-import com.intellij.ui.ColorChooser;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -33,7 +30,7 @@ import java.awt.event.ActionListener;
  * @author nik
  */
 public abstract class ValueMarkerPresentationDialogBase extends DialogWrapper {
-  private static final Color DEFAULT_COLOR = Color.RED;
+  private static final Color DEFAULT_COLOR = JBColor.RED;
   private SimpleColoredComponent myColorSample;
   private Color myColor;
   private JPanel myMainPanel;

@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
@@ -50,7 +51,7 @@ public class TelemetryToolWindow {
       actionManager.createActionToolbar(TOOL_WINDOW_ID,
                                         toolbarGroup, true);
     contentPanel = new JPanel(new BorderLayout());
-    contentPanel.setBackground(Color.gray);
+    contentPanel.setBackground(JBColor.GRAY);
     final JComponent toolbarComponent = toolbar.getComponent();
     contentPanel.add(toolbarComponent, BorderLayout.NORTH);
     final JComponent displayContentPane = telemetryDisplay.getContentPane();

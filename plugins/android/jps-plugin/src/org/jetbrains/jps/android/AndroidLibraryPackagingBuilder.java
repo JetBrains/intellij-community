@@ -60,7 +60,6 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
         continue;
       }
 
-      final ProjectPaths projectPaths = context.getProjectPaths();
       File outputDir = AndroidJpsUtil.getDirectoryForIntermediateArtifacts(context, module);
       outputDir = AndroidJpsUtil.createDirIfNotExist(outputDir, context, BUILDER_NAME);
       if (outputDir == null) {
@@ -68,7 +67,7 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
         continue;
       }
 
-      final File classesDir = projectPaths.getModuleOutputDir(module, false);
+      final File classesDir = ProjectPaths.getModuleOutputDir(module, false);
       if (classesDir == null || !classesDir.isDirectory()) {
         continue;
       }

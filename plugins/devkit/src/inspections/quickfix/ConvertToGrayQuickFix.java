@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixBase;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
@@ -28,23 +28,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Konstantin Bulenkov
  */
-public class ConvertToGayQuickFix implements LocalQuickFix {
+public class ConvertToGrayQuickFix extends LocalQuickFixBase {
   private final int myNum;
 
-  public ConvertToGayQuickFix(int num) {
+  public ConvertToGrayQuickFix(int num) {
+    super("Convert to Gray._" + num, "Convert to Gray");
     myNum = num;
-  }
-
-  @NotNull
-  @Override
-  public String getName() {
-    return "Convert to Gray._" + myNum;
-  }
-
-  @NotNull
-  @Override
-  public String getFamilyName() {
-    return "DevKit";
   }
 
   @Override

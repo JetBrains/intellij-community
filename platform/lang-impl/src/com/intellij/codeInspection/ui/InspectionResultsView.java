@@ -824,7 +824,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private class RerunAction extends AnAction {
     public RerunAction(JComponent comp) {
       super(InspectionsBundle.message("inspection.action.rerun"), InspectionsBundle.message("inspection.action.rerun"),
-            AllIcons.Actions.RefreshUsages);
+            AllIcons.Actions.Rerun);
       registerCustomShortcutSet(CommonShortcuts.getRerun(), comp);
     }
 

@@ -15,6 +15,7 @@
  */
 package org.intellij.images.options;
 
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
@@ -38,7 +39,7 @@ public interface GridOptions extends Cloneable {
 
     int DEFAULT_LINE_ZOOM_FACTOR = 3;
     int DEFAULT_LINE_SPAN = 1;
-    Color DEFAULT_LINE_COLOR = Color.DARK_GRAY;
+    Color DEFAULT_LINE_COLOR = JBColor.DARK_GRAY;
 
     boolean isShowDefault();
 

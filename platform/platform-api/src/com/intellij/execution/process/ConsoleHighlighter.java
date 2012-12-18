@@ -18,6 +18,7 @@ package com.intellij.execution.process;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.PlatformColors;
 import org.jetbrains.annotations.NonNls;
 
@@ -44,13 +45,13 @@ public class ConsoleHighlighter {
   public static final TextAttributes GRAY_DEFAULT_ATTRS = HighlighterColors.TEXT.getDefaultAttributes().clone();
 
   static {
-    RED_DEFAULT_ATTRS.setForegroundColor(Color.RED);
+    RED_DEFAULT_ATTRS.setForegroundColor(JBColor.RED);
     GREEN_DEFAULT_ATTRS.setForegroundColor(new Color(0, 128, 0));
     YELLOW_DEFAULT_ATTRS.setForegroundColor(new Color(255, 204, 0));
     BLUE_DEFAULT_ATTRS.setForegroundColor(PlatformColors.BLUE);
-    MAGENTA_DEFAULT_ATTRS.setForegroundColor(Color.MAGENTA);
-    CYAN_DEFAULT_ATTRS.setForegroundColor(Color.CYAN.darker());
-    GRAY_DEFAULT_ATTRS.setForegroundColor(Color.GRAY.darker());
+    MAGENTA_DEFAULT_ATTRS.setForegroundColor(JBColor.MAGENTA);
+    CYAN_DEFAULT_ATTRS.setForegroundColor(JBColor.CYAN.darker());
+    GRAY_DEFAULT_ATTRS.setForegroundColor(JBColor.GRAY.darker());
   }
 
   public static final TextAttributesKey RED = TextAttributesKey.createTextAttributesKey(RED_ID, RED_DEFAULT_ATTRS);

@@ -93,6 +93,12 @@ final class BuildSession implements Runnable, CanceledStatus {
     final Ref<Boolean> hasErrors = new Ref<Boolean>(false);
     final Ref<Boolean> doneSomething = new Ref<Boolean>(false);
     try {
+      ProfilingHelper profilingHelper = null;
+      if (Utils.IS_PROFILING_MODE) {
+        profilingHelper = new ProfilingHelper();
+        profilingHelper.startProfiling();
+      }
+
       runBuild(new MessageHandler() {
         public void processMessage(BuildMessage buildMessage) {
           final CmdlineRemoteProto.Message.BuilderMessage response;
@@ -134,6 +140,10 @@ final class BuildSession implements Runnable, CanceledStatus {
           }
         }
       }, this);
+
+      if (profilingHelper != null) {
+        profilingHelper.stopProfiling();
+      }
     }
     catch (Throwable e) {
       LOG.info(e);

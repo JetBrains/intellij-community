@@ -20,6 +20,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ImageLoader;
+import com.intellij.util.RetinaImage;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.ui.UIUtil;
@@ -64,6 +65,7 @@ public final class IconLoader {
 
     ourDeprecatedIconsReplacements.put("/vcs/refresh.png", "AllIcons.Actions.Refresh");
     ourDeprecatedIconsReplacements.put("/actions/sync.png", "AllIcons.Actions.Refresh");
+    ourDeprecatedIconsReplacements.put("/actions/refreshUsages.png", "AllIcons.Actions.Rerun");
 
     ourDeprecatedIconsReplacements.put("/compiler/error.png", "AllIcons.General.Error");
     ourDeprecatedIconsReplacements.put("/compiler/hideWarnings.png", "AllIcons.General.HideWarnings");
@@ -75,7 +77,7 @@ public final class IconLoader {
     ourDeprecatedIconsReplacements.put("/inspector/useFilter.png", "AllIcons.General.Filter");
   }
 
-  private static final ImageIcon EMPTY_ICON = new ImageIcon(new BufferedImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)) {
+  private static final ImageIcon EMPTY_ICON = new ImageIcon(UIUtil.createImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)) {
     @NonNls
     public String toString() {
       return "Empty icon " + super.toString();
@@ -97,7 +99,7 @@ public final class IconLoader {
   //}
 
   @NotNull
-  public static Icon getIcon(@NonNls final String path) {
+  public static Icon getIcon(@NonNls @NotNull final String path) {
     int stackFrameCount = 2;
     Class callerClass = Reflection.getCallerClass(stackFrameCount);
     while (callerClass != null && callerClass.getClassLoader() == null) { // looks like a system class
@@ -248,16 +250,22 @@ public final class IconLoader {
         LOG.error(icon); // # 22481
         return EMPTY_ICON;
       }
-      final BufferedImage image = new BufferedImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+      final int scale = UIUtil.isRetina() ? 2 : 1;
+      @SuppressWarnings("UndesirableClassUsage")
+      BufferedImage image = new BufferedImage(scale*icon.getIconWidth(), scale*icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
       final Graphics2D graphics = image.createGraphics();
 
       graphics.setColor(UIUtil.TRANSPARENT_COLOR);
       graphics.fillRect(0, 0, icon.getIconWidth(), icon.getIconHeight());
+      graphics.scale(scale, scale);
       icon.paintIcon(LabelHolder.ourFakeComponent, graphics, 0, 0);
 
       graphics.dispose();
-
-      disabledIcon = new MyImageIcon(createDisabled(image));
+      
+      Image img = createDisabled(image);
+      if (UIUtil.isRetina()) img = RetinaImage.createFrom(img, 2, ImageLoader.ourComponent);
+      
+      disabledIcon = new MyImageIcon(img);
       ourIcon2DisabledIcon.put(icon, disabledIcon);
     }
     return disabledIcon;

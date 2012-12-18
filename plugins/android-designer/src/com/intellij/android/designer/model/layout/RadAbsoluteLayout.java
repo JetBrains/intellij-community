@@ -25,9 +25,9 @@ import com.intellij.designer.designSurface.EditOperation;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.util.List;
 
 /**
@@ -64,7 +64,7 @@ public class RadAbsoluteLayout extends RadViewLayoutWithData {
   @Override
   public ComponentDecorator getChildSelectionDecorator(RadComponent component, List<RadComponent> selection) {
     if (mySelectionDecorator == null) {
-      mySelectionDecorator = new ResizeSelectionDecorator(Color.red, 1);
+      mySelectionDecorator = new ResizeSelectionDecorator(JBColor.RED, 1);
       ResizeOperation.points(mySelectionDecorator);
     }
     return mySelectionDecorator;

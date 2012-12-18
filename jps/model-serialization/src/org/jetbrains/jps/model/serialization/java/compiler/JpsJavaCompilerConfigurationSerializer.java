@@ -65,7 +65,7 @@ public class JpsJavaCompilerConfigurationSerializer extends JpsProjectExtensionS
       for (Element profileTag : profiles) {
         boolean isDefault = Boolean.parseBoolean(profileTag.getAttributeValue("default"));
         if (isDefault) {
-          AnnotationProcessorProfileSerializer.readExternal(configuration.getDefaultAnnotationProcessingConfiguration(), profileTag);
+          AnnotationProcessorProfileSerializer.readExternal(configuration.getDefaultAnnotationProcessingProfile(), profileTag);
         }
         else {
           AnnotationProcessorProfileSerializer.readExternal(configuration.addAnnotationProcessingProfile(), profileTag);

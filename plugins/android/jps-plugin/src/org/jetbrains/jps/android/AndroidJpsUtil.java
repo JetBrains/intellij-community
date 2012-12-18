@@ -1,7 +1,7 @@
 package org.jetbrains.jps.android;
 
-import com.android.sdklib.IAndroidTarget;
 import com.android.SdkConstants;
+import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
@@ -17,28 +17,26 @@ import org.jetbrains.android.util.AndroidCompilerMessageKind;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.android.model.*;
-import org.jetbrains.jps.android.model.impl.JpsAndroidFinalPackageElement;
-import org.jetbrains.jps.builders.storage.BuildDataPaths;
-import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
-import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactUtil;
-import org.jetbrains.jps.model.JpsElement;
-import org.jetbrains.jps.model.artifact.JpsArtifact;
-import org.jetbrains.jps.model.artifact.JpsArtifactService;
-import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
-import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
-import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
+import org.jetbrains.jps.android.model.*;
+import org.jetbrains.jps.android.model.impl.JpsAndroidFinalPackageElement;
 import org.jetbrains.jps.android.model.impl.JpsAndroidModuleExtensionImpl;
+import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ModuleLevelBuilder;
 import org.jetbrains.jps.incremental.ProjectBuildException;
+import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
+import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactUtil;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
+import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.JpsSimpleElement;
+import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.jetbrains.jps.model.artifact.JpsArtifactService;
+import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
@@ -48,6 +46,8 @@ import org.jetbrains.jps.model.library.JpsLibraryRoot;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.*;
+import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.*;
 import java.util.*;
@@ -246,7 +246,6 @@ public class AndroidJpsUtil {
     if (!visitedModules.add(module.getName())) {
       return;
     }
-    final ProjectPaths paths = context.getProjectPaths();
 
     if (processor.isToProcess(AndroidDependencyType.EXTERNAL_LIBRARY)) {
       for (JpsDependencyElement item : JpsJavaExtensionService.getInstance().getDependencies(module, JpsJavaClasspathKind.PRODUCTION_RUNTIME, exportedLibrariesOnly)) {
@@ -277,7 +276,7 @@ public class AndroidJpsUtil {
         if (depModule == null) continue;
         final JpsAndroidModuleExtension depExtension = getExtension(depModule);
         final boolean depLibrary = depExtension != null && depExtension.isLibrary();
-        final File depClassDir = paths.getModuleOutputDir(depModule, false);
+        final File depClassDir = ProjectPaths.getModuleOutputDir(depModule, false);
 
         if (depLibrary) {
           if (processor.isToProcess(AndroidDependencyType.ANDROID_LIBRARY_PACKAGE)) {

@@ -58,6 +58,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.EditorNotificationPanel;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBLabel;
@@ -545,7 +546,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   static JComponent createComponentForTitle(@Nullable String title, @NotNull final LineSeparator separator, boolean left) {
     JPanel bottomPanel = new JPanel(new BorderLayout());
     JLabel sepLabel = new JLabel(separator.name());
-    sepLabel.setForeground(separator.equals(LineSeparator.CRLF) ? Color.RED : PlatformColors.BLUE);
+    sepLabel.setForeground(separator.equals(LineSeparator.CRLF) ? JBColor.RED : PlatformColors.BLUE);
     bottomPanel.add(sepLabel, left ? BorderLayout.EAST : BorderLayout.WEST);
 
     JPanel panel = new JPanel(new BorderLayout());

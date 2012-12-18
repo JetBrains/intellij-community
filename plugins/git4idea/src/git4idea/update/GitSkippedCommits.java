@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
@@ -123,7 +124,7 @@ public class GitSkippedCommits extends PanelWithActionsAndCloseButton {
           r.setForeground(sel ? textSelectionColor : textNonSelectionColor);
         }
         else if (o instanceof String) {
-          r.setForeground(sel ? textSelectionColor : Color.RED);
+          r.setForeground(sel ? textSelectionColor : JBColor.RED);
           r.setFont(tree.getFont());
         }
         else {

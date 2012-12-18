@@ -23,6 +23,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.execution.ParametersListUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.android.compiler.tools.AndroidDxRunner;
@@ -40,11 +41,13 @@ import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
+import org.jetbrains.jps.builders.storage.StorageProvider;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.jps.incremental.storage.StorageOwner;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
@@ -52,19 +55,27 @@ import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 /**
  * @author Eugene.Kudelevsky
  */
-public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,AndroidBuildTarget> {
+public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor, AndroidBuildTarget> {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.android.AndroidDexBuilder");
   @NonNls private static final String BUILDER_NAME = "Android Dex";
 
   private static final Key<BuildListener> BUILD_LISTENER_KEY = Key.create("BUILD_LISTENER_KEY");
   public static final Key<Set<String>> DIRTY_OUTPUT_DIRS = Key.create("DIRTY_OUTPUT_DIRS");
+
+  private static final StorageProvider<MyDirtyOutputDirsStorage> DIRTY_OUTPUT_DIRS_STORAGE_PROVIDER =
+    new StorageProvider<MyDirtyOutputDirsStorage>() {
+      @NotNull
+      @Override
+      public MyDirtyOutputDirsStorage createStorage(File targetDataDir) throws IOException {
+        return new MyDirtyOutputDirsStorage(new File(targetDataDir, "dirty_output_dirs" + File.separator + "data"));
+      }
+    };
 
   public AndroidDexBuilder() {
     super(Collections.singletonList(AndroidBuildTarget.TargetType.DEX));
@@ -75,12 +86,22 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
                     @NotNull DirtyFilesHolder<BuildRootDescriptor, AndroidBuildTarget> holder,
                     @NotNull BuildOutputConsumer outputConsumer,
                     @NotNull CompileContext context) throws ProjectBuildException {
-    if (AndroidJpsUtil.isLightBuild(context)) {
-      return;
-    }
-
     try {
-      doBuild(target.getModule(), context);
+      final MyDirtyOutputDirsStorage storage = context.getProjectDescriptor().dataManager.getStorage(
+        target, DIRTY_OUTPUT_DIRS_STORAGE_PROVIDER);
+      final Set<String> dirtyOutputDirs = context.getUserData(DIRTY_OUTPUT_DIRS);
+      assert dirtyOutputDirs != null;
+
+      final Set<String> savedDirtyOutputs = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+      savedDirtyOutputs.addAll(storage.loadDirtyOutputs());
+      savedDirtyOutputs.addAll(dirtyOutputDirs);
+      storage.saveDirtyOutputs(savedDirtyOutputs);
+
+      if (AndroidJpsUtil.isLightBuild(context)) {
+        return;
+      }
+      doBuild(target.getModule(), context, savedDirtyOutputs);
+      storage.saveDirtyOutputs(Collections.<String>emptySet());
     }
     catch (ProjectBuildException e) {
       throw e;
@@ -90,7 +111,7 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
     }
   }
 
-  private static void doBuild(JpsModule module, CompileContext context) throws IOException, ProjectBuildException {
+  private static void doBuild(JpsModule module, CompileContext context, Set<String> dirtyOutputDirs) throws IOException, ProjectBuildException {
     final File root = context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot();
 
     AndroidFileSetStorage dexStateStorage = null;
@@ -99,7 +120,7 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
       dexStateStorage = new AndroidFileSetStorage(root, "dex");
       proguardStateStorage = new AndroidFileSetStorage(root, "proguard");
 
-      if (!doDexBuild(module, context, dexStateStorage, proguardStateStorage)) {
+      if (!doDexBuild(module, context, dexStateStorage, proguardStateStorage, dirtyOutputDirs)) {
         throw new ProjectBuildException();
       }
     }
@@ -116,7 +137,8 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
   private static boolean doDexBuild(@NotNull JpsModule module,
                                     @NotNull CompileContext context,
                                     @NotNull AndroidFileSetStorage dexStateStorage,
-                                    @NotNull AndroidFileSetStorage proguardStateStorage) throws IOException {
+                                    @NotNull AndroidFileSetStorage proguardStateStorage,
+                                    @NotNull Set<String> dirtyOutputDirs) throws IOException {
     final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
     assert extension != null;
     if (extension.isLibrary()) {
@@ -128,14 +150,13 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
       return false;
     }
 
-    final ProjectPaths projectPaths = context.getProjectPaths();
     File dexOutputDir = AndroidJpsUtil.getDirectoryForIntermediateArtifacts(context, module);
     dexOutputDir = AndroidJpsUtil.createDirIfNotExist(dexOutputDir, context, BUILDER_NAME);
     if (dexOutputDir == null) {
       return false;
     }
 
-    final File classesDir = projectPaths.getModuleOutputDir(module, false);
+    final File classesDir = ProjectPaths.getModuleOutputDir(module, false);
     if (classesDir == null || !classesDir.isDirectory()) {
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO, AndroidJpsBundle
         .message("android.jps.warnings.dex.no.compiled.files", module.getName())));
@@ -164,7 +185,8 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
           FileUtil.toSystemDependentName(dexOutputDir.getPath() + '/' + AndroidCommonUtils.PROGUARD_OUTPUT_JAR_NAME);
 
         if (!runProguardIfNecessary(extension, classesDir, platform, externalLibraries, context, outputJarPath,
-                                    proguardCfgFilePaths, proGuardOptions.isIncludeSystemCfgFile(), proguardStateStorage)) {
+                                    proguardCfgFilePaths, proGuardOptions.isIncludeSystemCfgFile(), proguardStateStorage,
+                                    dirtyOutputDirs)) {
           return false;
         }
         fileSet = jars = Collections.singleton(outputJarPath);
@@ -209,7 +231,7 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
         });
 
         if (extension.isPackTestCode()) {
-          final File testsClassDir = projectPaths.getModuleOutputDir(module, true);
+          final File testsClassDir = ProjectPaths.getModuleOutputDir(module, true);
 
           if (testsClassDir != null && testsClassDir.isDirectory()) {
             AndroidJpsUtil.addSubdirectories(testsClassDir, fileSet);
@@ -222,8 +244,6 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
       if (context.isMake()) {
         final AndroidFileSetState oldState = dexStateStorage.getState(module.getName());
         if (oldState != null && oldState.equalsTo(newState)) {
-          final Set<String> dirtyOutputDirs = context.getUserData(DIRTY_OUTPUT_DIRS);
-          assert dirtyOutputDirs != null;
           boolean outputDirsDirty = false;
 
           for (String outputDir : outputDirs) {
@@ -386,7 +406,8 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
                                                 @NotNull String outputJarPath,
                                                 @NotNull String[] proguardCfgPaths,
                                                 boolean includeSystemProguardCfg,
-                                                @NotNull AndroidFileSetStorage proguardStateStorage) throws IOException {
+                                                @NotNull AndroidFileSetStorage proguardStateStorage,
+                                                @NotNull Set<String> dirtyOutputDirs) throws IOException {
     final JpsModule module = extension.getModule();
     final File[] proguardCfgFiles = new File[proguardCfgPaths.length];
 
@@ -436,15 +457,13 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
     });
 
     final String logsDirOsPath =
-          FileUtil.toSystemDependentName(mainContentRoot.getPath() + '/' + AndroidCommonUtils.DIRECTORY_FOR_LOGS_NAME);
+      FileUtil.toSystemDependentName(mainContentRoot.getPath() + '/' + AndroidCommonUtils.DIRECTORY_FOR_LOGS_NAME);
     final AndroidFileSetState newState = new AndroidFileSetState(externalJars, AndroidJpsUtil.CLASSES_AND_JARS_FILTER, true);
 
     if (context.isMake()) {
       final AndroidFileSetState oldState = proguardStateStorage.getState(module.getName());
 
       if (!areFilesChanged(proguardCfgFiles, module, context) && newState.equalsTo(oldState)) {
-        final Set<String> dirtyOutputDirs = context.getUserData(DIRTY_OUTPUT_DIRS);
-        assert dirtyOutputDirs != null;
         boolean outputDirsDirty = false;
         for (String outputDir : outputDirs) {
           if (dirtyOutputDirs.contains(outputDir)) {
@@ -500,5 +519,72 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor,Android
       }
     }
     return false;
+  }
+
+  private static class MyDirtyOutputDirsStorage implements StorageOwner {
+    private final File myFile;
+
+    MyDirtyOutputDirsStorage(@NotNull File file) {
+      myFile = file;
+    }
+
+    @Override
+    public void flush(boolean memoryCachesOnly) {
+    }
+
+    @Override
+    public void clean() throws IOException {
+      FileUtil.delete(myFile);
+    }
+
+    @Override
+    public void close() throws IOException {
+    }
+
+    void saveDirtyOutputs(@NotNull Set<String> dirtyOutputs) {
+      FileUtil.createParentDirs(myFile);
+      try {
+        final DataOutputStream stream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(myFile)));
+
+        try {
+          stream.writeInt(dirtyOutputs.size());
+
+          for (String path : dirtyOutputs) {
+            stream.writeUTF(path);
+          }
+        }
+        finally {
+          stream.close();
+        }
+      }
+      catch (IOException e) {
+        LOG.info(e);
+      }
+    }
+
+    @NotNull
+    Set<String> loadDirtyOutputs() {
+      try {
+        final DataInputStream stream = new DataInputStream(new FileInputStream(myFile));
+        try {
+          final int size = stream.readInt();
+          final Set<String> result = new HashSet<String>(size);
+
+          for (int i = 0; i < size; i++) {
+            result.add(stream.readUTF());
+          }
+          return result;
+        }
+        finally {
+          stream.close();
+        }
+      }
+      catch (FileNotFoundException ignored) {
+      }
+      catch (IOException e) {
+        LOG.info(e);
+      }
+      return Collections.emptySet();
+    }
   }
 }

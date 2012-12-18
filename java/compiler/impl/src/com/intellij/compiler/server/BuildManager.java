@@ -56,6 +56,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -94,6 +95,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
@@ -153,10 +155,13 @@ public class BuildManager implements ApplicationComponent{
   private final BuildMessageDispatcher myMessageDispatcher = new BuildMessageDispatcher();
   private volatile int myListenPort = -1;
   private volatile CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings myGlobals;
+  @Nullable
+  private final Charset mySystemCharset;
 
   public BuildManager(final ProjectManager projectManager) {
     IS_UNIT_TEST_MODE = ApplicationManager.getApplication().isUnitTestMode();
     myProjectManager = projectManager;
+    mySystemCharset = CharsetToolkit.getDefaultSystemCharset();
     final String systemPath = PathManager.getSystemPath();
     File system = new File(systemPath);
     try {
@@ -555,13 +560,7 @@ public class BuildManager implements ApplicationComponent{
                     return;
                   }
                   myBuildsInProgress.put(projectPath, future);
-                  final Process process = launchBuildProcess(project, myListenPort, sessionId);
-                  final OSProcessHandler processHandler = new OSProcessHandler(process) {
-                    @Override
-                    protected boolean shouldDestroyProcessRecursively() {
-                      return true;
-                    }
-                  };
+                  final OSProcessHandler processHandler = launchBuildProcess(project, myListenPort, sessionId);
                   final StringBuilder stdErrOutput = new StringBuilder();
                   processHandler.addProcessListener(new ProcessAdapter() {
                     @Override
@@ -684,7 +683,7 @@ public class BuildManager implements ApplicationComponent{
     return cmdBuilder.build();
   }
 
-  private Process launchBuildProcess(Project project, final int port, final UUID sessionId) throws ExecutionException {
+  private OSProcessHandler launchBuildProcess(Project project, final int port, final UUID sessionId) throws ExecutionException {
     // choosing sdk with which the build process should be run
     Sdk projectJdk = null;
     JavaSdkVersion sdkVersion = null;
@@ -775,11 +774,16 @@ public class BuildManager implements ApplicationComponent{
     }
     cmdLine.addParameter("-D"+ GlobalOptions.COMPILE_PARALLEL_OPTION +"=" + Boolean.toString(config.PARALLEL_COMPILATION));
 
+    boolean isProfilingMode = false;
     final String additionalOptions = config.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS;
     if (!StringUtil.isEmpty(additionalOptions)) {
       final StringTokenizer tokenizer = new StringTokenizer(additionalOptions, " ", false);
       while (tokenizer.hasMoreTokens()) {
-        cmdLine.addParameter(tokenizer.nextToken());
+        final String option = tokenizer.nextToken();
+        if ("-Dprofiling.mode=true".equals(option)) {
+          isProfilingMode = true;
+        }
+        cmdLine.addParameter(option);
       }
     }
 
@@ -798,17 +802,28 @@ public class BuildManager implements ApplicationComponent{
     }
 
     // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
-    String[] propertyNames = {"user.language", "user.country", "user.region"};
-    for (String name : propertyNames) {
+    if (mySystemCharset != null) {
+      cmdLine.setCharset(mySystemCharset);
+      cmdLine.addParameter("-D" + CharsetToolkit.FILE_ENCODING_PROPERTY + "=" + mySystemCharset.name());
+    }
+    for (String name : new String[]{"user.language", "user.country", "user.region"}) {
       final String value = System.getProperty(name);
       if (value != null) {
         cmdLine.addParameter("-D" + name + "=" + value);
       }
     }
 
+    final File workDirectory = getBuildSystemDirectory();
+    workDirectory.mkdirs();
+    ensureLogConfigExists(workDirectory);
+
     final List<String> cp = ClasspathBootstrap.getBuildProcessApplicationClasspath();
     cp.add(compilerPath);
     cp.addAll(myClasspathManager.getCompileServerPluginsClasspath(project));
+    if (isProfilingMode) {
+      cp.add(new File(workDirectory, "yjp-controller-api-redist.jar").getPath());
+      cmdLine.addParameter("-agentlib:yjpagent=disablej2ee,disablealloc,sessionname=ExternalBuild");
+    }
 
     cmdLine.addParameter("-classpath");
     cmdLine.addParameter(classpathToString(cp));
@@ -818,15 +833,18 @@ public class BuildManager implements ApplicationComponent{
     cmdLine.addParameter(Integer.toString(port));
     cmdLine.addParameter(sessionId.toString());
 
-    final File workDirectory = getBuildSystemDirectory();
-    workDirectory.mkdirs();
-    ensureLogConfigExists(workDirectory);
-
     cmdLine.addParameter(FileUtil.toSystemIndependentName(workDirectory.getPath()));
 
     cmdLine.setWorkDirectory(workDirectory);
 
-    return cmdLine.createProcess();
+    final Process process = cmdLine.createProcess();
+
+    return new OSProcessHandler(process, null, mySystemCharset) {
+      @Override
+      protected boolean shouldDestroyProcessRecursively() {
+        return true;
+      }
+    };
   }
 
   public File getBuildSystemDirectory() {

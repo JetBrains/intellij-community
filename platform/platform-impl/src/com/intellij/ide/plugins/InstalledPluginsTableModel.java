@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.ui.BooleanTableCellEditor;
 import com.intellij.ui.BooleanTableCellRenderer;
+import com.intellij.ui.JBColor;
 import com.intellij.util.Function;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.ColumnInfo;
@@ -593,7 +594,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
         final Set<PluginId> required = myDependentToRequiredListMap.get(pluginId);
         if (required != null && required.size() > 0) {
-          myNameLabel.setForeground(Color.RED);
+          myNameLabel.setForeground(JBColor.RED);
 
           final StringBuilder s = new StringBuilder();
           if (myEnabled.get(pluginId) == null) {
@@ -621,7 +622,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
         if (PluginManager.isIncompatible(myPluginDescriptor)) {
           myPanel.setToolTipText(
             IdeBundle.message("plugin.manager.incompatible.tooltip.warning", ApplicationNamesInfo.getInstance().getFullProductName()));
-          myNameLabel.setForeground(Color.red);
+          myNameLabel.setForeground(JBColor.RED);
         }
       }
 

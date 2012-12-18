@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.ExcludeFolder;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,7 +56,7 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
             if (contentEntry != null) {
               final String prefix = getPrefix(contentEntry, file);
               if (!prefix.isEmpty()) {
-                append(" (" + prefix + ")", new SimpleTextAttributes(Font.PLAIN, Color.GRAY));
+                append(" (" + prefix + ")", new SimpleTextAttributes(Font.PLAIN, JBColor.GRAY));
               }
               setIcon(updateIcon(contentEntry, file, getIcon()));
             }

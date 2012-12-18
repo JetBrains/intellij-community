@@ -330,7 +330,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
         }
         final boolean noContexts = sb.length() == 0;
         ctxLabel.setText((noContexts ? "No applicable contexts" + (allowNoContexts ? "" : " yet") : "Applicable in " + sb.toString()) + ".  ");
-        ctxLabel.setForeground(noContexts ? allowNoContexts ? Color.GRAY : Color.RED : UIUtil.getLabelForeground());
+        ctxLabel.setForeground(noContexts ? allowNoContexts ? JBColor.GRAY : JBColor.RED : UIUtil.getLabelForeground());
         change.setText(noContexts ? "Define" : "Change");
       }
     };

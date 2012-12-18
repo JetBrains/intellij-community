@@ -17,6 +17,7 @@ package com.maddyhome.idea.copyright.ui;
 
 import com.intellij.ide.DataManager;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.scopeChooser.PackageSetChooserCombo;
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
@@ -262,7 +263,7 @@ public class ProjectSettingsPanel {
           final Component rendererComponent = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
           if (!isSelected) {
             final CopyrightProfile profile = myProfilesModel.getAllProfiles().get(scopeSetting.getProfileName());
-            setForeground(profile == null ? Color.RED : UIUtil.getTableForeground());
+            setForeground(profile == null ? JBColor.RED : UIUtil.getTableForeground());
           }
           setText(scopeSetting.getProfileName());
           return rendererComponent;
@@ -327,7 +328,7 @@ public class ProjectSettingsPanel {
             final String scopeName = ((NamedScope)value).getName();
             if (!isSelected) {
               final NamedScope scope = NamedScopesHolder.getScope(myProject, scopeName);
-              if (scope == null) setForeground(Color.RED);
+              if (scope == null) setForeground(JBColor.RED);
             }
             setText(scopeName);
           }

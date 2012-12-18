@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.notification;
 
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewUtil;
-import com.intellij.execution.impl.EditorCopyAction;
 import com.intellij.execution.impl.EditorHyperlinkSupport;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.notification.impl.NotificationsManagerImpl;
@@ -39,6 +38,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.text.DateFormatUtil;
@@ -48,7 +48,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -172,8 +172,8 @@ class EventLogConsole {
     for (int line = line1; line < line2; line++) {
       final RangeHighlighter lineHighlighter = markupModel.addLineHighlighter(line, HighlighterLayer.CARET_ROW + 1, bold);
       Color color = notification.getType() == NotificationType.ERROR
-                    ? Color.red
-                    : notification.getType() == NotificationType.WARNING ? Color.yellow : Color.green;
+                    ? JBColor.RED
+                    : notification.getType() == NotificationType.WARNING ? JBColor.YELLOW : JBColor.GREEN;
       lineHighlighter.setErrorStripeMarkColor(color);
       lineHighlighter.setErrorStripeTooltip(message);
       lineColors.add(lineHighlighter);
