@@ -115,8 +115,10 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
     final IElementType elType = child.getElementType();
     if (elType == JavaTokenType.DOUBLE_COLON) {
       return ChildRole.DOUBLE_COLON;
-    } else if (elType == JavaTokenType.IDENTIFIER || elType == JavaElementType.REFERENCE_EXPRESSION) {
+    } else if (elType == JavaTokenType.IDENTIFIER) {
       return ChildRole.REFERENCE_NAME;
+    } else if (elType == JavaElementType.REFERENCE_EXPRESSION) {
+      return ChildRole.CLASS_REFERENCE;
     }
     return ChildRole.EXPRESSION;
   }
@@ -205,6 +207,9 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
   @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     PsiElement oldIdentifier = findChildByRoleAsPsiElement(ChildRole.REFERENCE_NAME);
+    if (oldIdentifier == null) {
+      oldIdentifier = findChildByRoleAsPsiElement(ChildRole.CLASS_REFERENCE);
+    }
     if (oldIdentifier == null) {
       throw new IncorrectOperationException();
     }
