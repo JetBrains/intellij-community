@@ -961,6 +961,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       if (expectedType == null) {
         return getFailedInferenceConstraint(typeParameter);
       }
+    } else if (parent instanceof PsiTypeCastExpression) {
+      expectedType = ((PsiTypeCastExpression)parent).getType();
     }
 
     final PsiManager manager = typeParameter.getManager();
