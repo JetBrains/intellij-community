@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
 import com.jetbrains.django.facet.DjangoFacetType;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -42,6 +41,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
   private int myRelativeLevel = -1;
   private boolean myWithoutRoots;
   private boolean myWithoutForeign;
+  private boolean myWithMembers;
 
   public QualifiedNameResolverImpl(@NotNull String qNameString) {
     myQualifiedName = PyQualifiedName.fromDottedString(qNameString);
@@ -130,6 +130,12 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
     return this;
   }
 
+  @Override
+  public QualifiedNameResolver withMembers() {
+    myWithMembers = true;
+    return this;
+  }
+
   /**
    * Specifies that we're looking for a file in a directory hierarchy, not a module in the Python package hierarchy
    * (so we don't need to check for existence of __init__.py)
@@ -146,7 +152,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
     if (!root.isValid()) {
       return true;
     }
-    PsiFileSystemItem resolveResult = resolveInRoot(root);
+    PsiElement resolveResult = resolveInRoot(root);
     if (resolveResult != null) {
       addRoot(resolveResult, isModuleSource);
     }
@@ -161,7 +167,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
     return true;
   }
 
-  private void addRoot(PsiFileSystemItem resolveResult, boolean isModuleSource) {
+  private void addRoot(PsiElement resolveResult, boolean isModuleSource) {
     if (isModuleSource) {
       mySourceResults.add(resolveResult);
     }
@@ -185,7 +191,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
         dir = ResolveImportUtil.stepBackFrom(footholdFile, myRelativeLevel);
       }
 
-      PsiFileSystemItem module = resolveModuleAt(dir);
+      PsiElement module = resolveModuleAt(dir);
       if (module != null) {
         addRoot(module, true);
       }
@@ -302,7 +308,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
   }
 
   @Nullable
-  private PsiFileSystemItem resolveInRoot(VirtualFile root) {
+  private PsiElement resolveInRoot(VirtualFile root) {
     if (!root.isDirectory()) {
       // if we have added a file as a root, it's unlikely that we'll be able to resolve anything under it in 'files only' resolve mode
       return null;
@@ -316,16 +322,16 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
    * @param directory where to start from; top qualifier will be searched for here.
    */
   @Nullable
-  private PsiFileSystemItem resolveModuleAt(@Nullable PsiDirectory directory) {
+  private PsiElement resolveModuleAt(@Nullable PsiDirectory directory) {
     // prerequisites
     if (directory == null || !directory.isValid()) return null;
 
-    PsiFileSystemItem seeker = directory;
+    PsiElement seeker = directory;
     for (String name : myQualifiedName.getComponents()) {
       if (name == null) {
         return null;
       }
-      seeker = (PsiFileSystemItem)ResolveImportUtil.resolveChild(seeker, name, myContext.getFootholdFile(), true, myCheckForPackage);
+      seeker = ResolveImportUtil.resolveChild(seeker, name, myContext.getFootholdFile(), !myWithMembers, myCheckForPackage);
     }
     return seeker;
   }
