@@ -24,6 +24,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
@@ -68,6 +69,16 @@ public class PythonSkeletonsTest extends PyTestCase {
         myFixture.configureByText("a.py", "len('foo')\n");
         final PyExpression expr = myFixture.findElementByText("len", PyExpression.class);
         assertNotNull(expr);
+
+        final Sdk sdkFromPsi = PyBuiltinCache.findSdkForFile(expr.getContainingFile());
+        final PyFile builtinsFromSdkCache = PythonSdkPathCache.getInstance(project, sdkFromPsi).getBuiltins().getBuiltinsFile();
+        assertNotNull(builtinsFromSdkCache);
+        assertEquals(builtins, builtinsFromSdkCache);
+
+        final PyFile builtinsFromPsi = PyBuiltinCache.getInstance(expr).getBuiltinsFile();
+        assertNotNull(builtinsFromPsi);
+        assertEquals(builtins, builtinsFromPsi);
+
         final PsiReference ref = expr.getReference();
         assertNotNull(ref);
         final PsiElement resolved = ref.resolve();
