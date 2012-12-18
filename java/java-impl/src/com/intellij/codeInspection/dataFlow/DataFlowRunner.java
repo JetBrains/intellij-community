@@ -36,6 +36,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -69,25 +70,22 @@ public class DataFlowRunner {
 
   @Nullable
   protected Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock, InstructionVisitor visitor) {
-    if (psiBlock.getParent() instanceof PsiMethod) {
-      final PsiClass containingClass = ((PsiMethod)psiBlock.getParent()).getContainingClass();
-      if (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass)) {
-        final PsiElement parent = containingClass.getParent();
-        final PsiCodeBlock block = DfaUtil.getTopmostBlockInSameClass(parent);
-        if ((parent instanceof PsiNewExpression || parent instanceof PsiDeclarationStatement) && block != null) {
-          final EnvironmentalInstructionVisitor envVisitor = new EnvironmentalInstructionVisitor(visitor, parent);
-          final RunnerResult result = analyzeMethod(block, envVisitor);
-          if (result == RunnerResult.OK) {
-            final Collection<DfaMemoryState> closureStates = envVisitor.getClosureStates();
-            if (!closureStates.isEmpty()) {
-              return closureStates;
-            }
+    PsiClass containingClass = PsiTreeUtil.getParentOfType(psiBlock, PsiClass.class);
+    if (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass)) {
+      final PsiElement parent = containingClass.getParent();
+      final PsiCodeBlock block = DfaUtil.getTopmostBlockInSameClass(parent);
+      if ((parent instanceof PsiNewExpression || parent instanceof PsiDeclarationStatement) && block != null) {
+        final EnvironmentalInstructionVisitor envVisitor = new EnvironmentalInstructionVisitor(visitor, parent);
+        final RunnerResult result = analyzeMethod(block, envVisitor);
+        if (result == RunnerResult.OK) {
+          final Collection<DfaMemoryState> closureStates = envVisitor.getClosureStates();
+          if (!closureStates.isEmpty()) {
+            return closureStates;
           }
-          return null;
         }
+        return null;
       }
     }
-
 
     return Arrays.asList(createMemoryState());
   }

@@ -51,6 +51,7 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
   public void testLocalClass() throws Throwable { doTest(); }
 
   public void testFieldInAnonymous() throws Throwable { doTest(); }
+  public void testFieldInitializerInAnonymous() throws Throwable { doTest(); }
   public void testNullableField() throws Throwable { doTest(); }
   public void testCanBeNullDoesntImplyIsNull() throws Throwable { doTest(); }
   public void testAnnReport() throws Throwable { doTest(); }
