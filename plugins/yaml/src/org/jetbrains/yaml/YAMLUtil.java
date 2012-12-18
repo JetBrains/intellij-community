@@ -91,7 +91,7 @@ public class YAMLUtil {
   }
 
   @Nullable
-  public static Pair<PsiElement, String> getValue(final YAMLFile file, final String[] key) {
+  public static Pair<PsiElement, String> getValue(final YAMLFile file, String... key) {
     final YAMLPsiElement record = getRecord(file, key);
     if (record instanceof YAMLKeyValue) {
       final PsiElement psiValue = ((YAMLKeyValue)record).getValue();
