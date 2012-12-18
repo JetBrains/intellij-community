@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -285,7 +286,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
     AnnotationHolder annotationHolder = new AnnotationHolderImpl(new AnnotationSession(myFile));
     List<HighlightInfo> infos = new ArrayList<HighlightInfo>(myUnusedDeclarations);
     for (GrImportStatement unusedImport : myUnusedImports) {
-      Annotation annotation = annotationHolder.createWarningAnnotation(unusedImport, GroovyInspectionBundle.message("unused.import"));
+      Annotation annotation = annotationHolder.createWarningAnnotation(calculateRangeToUse(unusedImport), GroovyInspectionBundle.message("unused.import"));
       annotation.setHighlightType(ProblemHighlightType.LIKE_UNUSED_SYMBOL);
       annotation.registerFix(createUnusedImportIntention());
       infos.add(HighlightInfo.fromAnnotation(annotation));
@@ -302,6 +303,23 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
         }
       }, myFile, myEditor);
     }
+  }
+
+  private static TextRange calculateRangeToUse(GrImportStatement unusedImport) {
+    final TextRange range = unusedImport.getTextRange();
+
+    final GrModifierList list = unusedImport.getAnnotationList();
+    if (list == null) {
+      return range;
+    }
+
+    int start = 0;
+    for (PsiElement child = unusedImport.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (child.getNode().getElementType() == GroovyTokenTypes.kIMPORT) {
+        start = child.getTextRange().getStartOffset();
+      }
+    }
+    return new TextRange(start, range.getEndOffset());
   }
 
   private boolean timeToOptimizeImports() {
