@@ -470,7 +470,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   public void addFilteringActions(@NotNull DefaultActionGroup group) {
     final JComponent component = getComponent();
 
-    if (getPresentation().isDupLinesFilterAvailable()) {
+    if (getPresentation().isMergeDupLinesAvailable()) {
       final MergeDupLines mergeDupLines = new MergeDupLines();
       mergeDupLines.registerCustomShortcutSet(mergeDupLines.getShortcutSet(), component, this);
       group.add(mergeDupLines);
