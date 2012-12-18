@@ -44,6 +44,7 @@ public class UsageViewPresentation {
   private List<Action> myNotFoundActions;
   private boolean myDetachedMode; // no UI will be shown
   private String myDynamicCodeUsagesString;
+  private boolean myDupLinesFilterAvailable = true;
 
   public String getTabText() {
     return myTabText;
@@ -173,6 +174,14 @@ public class UsageViewPresentation {
 
   public String getDynamicCodeUsagesString() {
     return myDynamicCodeUsagesString;
+  }
+
+  public boolean isDupLinesFilterAvailable() {
+    return myDupLinesFilterAvailable;
+  }
+
+  public void setDupLinesFilterAvailable(boolean dupLinesFilterAvailable) {
+    myDupLinesFilterAvailable = dupLinesFilterAvailable;
   }
 }
 
