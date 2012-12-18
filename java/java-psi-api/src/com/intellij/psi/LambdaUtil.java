@@ -18,6 +18,7 @@ package com.intellij.psi;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -396,11 +397,11 @@ public class LambdaUtil {
       if (lambdaIdx > -1) {
 
         if (!tryToSubstitute) {
-          final Map<PsiElement, PsiMethod> currentMethodCandidates = MethodCandidateInfo.CURRENT_CANDIDATE.get();
-          final PsiMethod method = currentMethodCandidates != null ? currentMethodCandidates.get(parent) : null;
+          final Map<PsiElement,Pair<PsiMethod,PsiSubstitutor>> currentMethodCandidates = MethodCandidateInfo.CURRENT_CANDIDATE.get();
+          final Pair<PsiMethod, PsiSubstitutor> method = currentMethodCandidates != null ? currentMethodCandidates.get(parent) : null;
           if (method != null) {
-            final PsiParameter[] parameters = method.getParameterList().getParameters();
-            return lambdaIdx < parameters.length ? parameters[lambdaIdx].getType() : null;
+            final PsiParameter[] parameters = method.first.getParameterList().getParameters();
+            return lambdaIdx < parameters.length ? method.second.substitute(parameters[lambdaIdx].getType()) : null;
           }
         }
 
@@ -579,8 +580,14 @@ public class LambdaUtil {
       if (parent instanceof PsiExpressionList) {
         final PsiElement gParent = parent.getParent();
         if (gParent instanceof PsiCall) {
-          final Map<PsiElement, PsiMethod> map = MethodCandidateInfo.CURRENT_CANDIDATE.get();
-          myMethod = map != null ? map.get(parent) : null;
+          final Map<PsiElement, Pair<PsiMethod, PsiSubstitutor>> map = MethodCandidateInfo.CURRENT_CANDIDATE.get();
+          if (map != null) {
+            final Pair<PsiMethod, PsiSubstitutor> pair = map.get(parent);
+            myMethod = pair != null ? pair.first : null;
+          }
+          else {
+            myMethod = null;
+          }
           if (myMethod == null) {
             myMethod = ((PsiCall)gParent).resolveMethod();
           }
