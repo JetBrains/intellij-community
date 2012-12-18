@@ -319,10 +319,14 @@ public class ShowFilePathAction extends AnAction {
         return CommonBundle.message("dialog.options.do.not.ask");
       }
     };
+    showDialog(project, message, title, file, option);
+    return ref[0];
+  }
+
+  public static void showDialog(Project project, String message, String title, File file, DialogWrapper.DoNotAskOption option) {
     if (Messages.showOkCancelDialog(project, message, title, RevealFileAction.getActionName(),
                                     IdeBundle.message("action.close"), Messages.getInformationIcon(), option) == 0) {
       openFile(file);
     }
-    return ref[0];
   }
 }
