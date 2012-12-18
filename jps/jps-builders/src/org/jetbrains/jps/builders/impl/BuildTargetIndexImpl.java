@@ -173,4 +173,11 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
       }
     }
   }
+
+  @NotNull
+  @Override
+  public Collection<BuildTarget<?>> getDependencies(@NotNull BuildTarget<?> target, @NotNull CompileContext context) {
+    initializeChunks(context);
+    return myDependencies.get(target);
+  }
 }
