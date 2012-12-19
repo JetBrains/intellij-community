@@ -144,7 +144,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       if (PsiKeyword.RETURN.equals(keyword) && isLastStatement(PsiTreeUtil.getParentOfType(myPosition, PsiStatement.class))) {
         return MyResult.probableKeyword;
       }
-      if (PsiKeyword.ELSE.equals(keyword) || PsiKeyword.FINALLY.equals(keyword) || PsiKeyword.NULL.equals(keyword)) {
+      if (PsiKeyword.ELSE.equals(keyword) || PsiKeyword.FINALLY.equals(keyword)) {
         return MyResult.probableKeyword;
       }
     }

@@ -254,7 +254,7 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems(0, "foo", "false");
     myFixture.type(',');
     complete();
-    assertPreferredItems(0, "bar", "null", "foo", "equals", "false", "true");
+    assertPreferredItems(0, "bar", "foo", "equals", "false", "true");
   }
 
   public void testFieldNameOutweighsStats() throws Throwable {
