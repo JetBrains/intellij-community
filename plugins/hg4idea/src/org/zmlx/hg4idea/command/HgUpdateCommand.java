@@ -52,13 +52,9 @@ public class HgUpdateCommand {
     this.clean = clean;
   }
 
-  @Nullable
-  public HgCommandResult execute() {
-    return execute(false);
-  }
 
   @Nullable
-  public HgCommandResult execute(boolean forceAuthorization) {
+  public HgCommandResult execute() {
     List<String> arguments = new LinkedList<String>();
     if (clean) {
       arguments.add("--clean");
@@ -74,7 +70,7 @@ public class HgUpdateCommand {
     final HgCommandExecutor executor = new HgCommandExecutor(project);
     executor.setShowOutput(true);
     final HgCommandResult result =
-      executor.executeInCurrentThread(repo, "update", arguments, new HgDeleteModifyPromptHandler(), forceAuthorization);
+      executor.executeInCurrentThread(repo, "update", arguments, new HgDeleteModifyPromptHandler());
     project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
     VfsUtil.markDirtyAndRefresh(true, true, false, repo);
     return result;

@@ -67,9 +67,6 @@ public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
     }
     HgCommandExecutor executor = new HgCommandExecutor(project);
     HgCommandResult result = executor.executeInCurrentThread(repo, command, args);
-    if (HgErrorUtil.isAuthorizationError(result)) {
-      result = executor.executeInCurrentThread(repo, command, args, true);
-    }
     if (result == HgCommandResult.CANCELLED || HgErrorUtil.isAuthorizationError(result)) {
       final HgVcs vcs = HgVcs.getInstance(project);
       if (vcs == null) {

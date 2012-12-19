@@ -57,7 +57,7 @@ public class HgMergeCommand {
       arguments.add(branch);
     }
     final HgCommandResult result =
-      commandExecutor.executeInCurrentThread(repo, "merge", arguments, new HgDeleteModifyPromptHandler(), false);
+      commandExecutor.executeInCurrentThread(repo, "merge", arguments, new HgDeleteModifyPromptHandler());
     project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
     return result;
   }

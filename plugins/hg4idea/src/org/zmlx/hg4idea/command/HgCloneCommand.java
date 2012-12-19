@@ -28,16 +28,11 @@ public class HgCloneCommand {
 
   @Nullable
   public HgCommandResult execute() {
-    return execute(false);
-  }
-
-  @Nullable
-  public HgCommandResult execute(boolean forceAuthorization) {
     final List<String> arguments = new ArrayList<String>(2);
     arguments.add(repositoryURL);
     arguments.add(directory);
     final HgCommandExecutor executor = new HgCommandExecutor(project);
     executor.setShowOutput(true);
-    return executor.executeInCurrentThread(null, "clone", arguments, forceAuthorization);
+    return executor.executeInCurrentThread(null, "clone", arguments);
   }
 }
