@@ -32,11 +32,16 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition
 import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
+import org.junit.Assert
+
 /**
  * @author Denis Zhdanov
  * @since 7/20/12 2:54 PM
  */
 abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTestCase {
+  
+  static final def RICH_TEXT_HANDLERS = [ new RangeHandler(), new FoldingHandler() ]
   
   FileType fileType
   Language language;
@@ -92,38 +97,125 @@ abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTes
   }
   
   protected void doTest(@NotNull args) {
-    def (String textToUse, List<TextRange> rangesToUse) = parseRanges(args.initial)
-    if (rangesToUse && args.ranges) {
+    Info info = parse(args.initial)
+    if (info.ranges && args.ranges) {
       junit.framework.Assert.fail(
-      "Duplicate ranges info detected: explicitly given: $args.ranges, derived from markup: $rangesToUse. Text:\n$args.initial"
+      "Duplicate ranges info detected: explicitly given: $args.ranges, derived from markup: ${info.ranges}. Text:\n$args.initial"
       )
     }
-    if (!rangesToUse) {
-      rangesToUse = args.ranges ?: [TextRange.from(0, args.initial.length())]
+    if (!info.ranges) {
+      info.ranges = args.ranges ?: [TextRange.from(0, args.initial.length())]
     }
     
-    myFixture.configureByText(fileType, textToUse)
+    myFixture.configureByText(fileType, info.text)
+
+    def foldingModel = myFixture.editor.foldingModel
+    
+    info.foldings.each { FoldingInfo foldingInfo ->
+      foldingModel.runBatchFoldingOperation {
+        def region = foldingModel.addFoldRegion(foldingInfo.start, foldingInfo.end, foldingInfo.placeholder)
+        region.expanded = false
+      }
+    }
+    
     def settings = CodeStyleSettingsManager.getInstance(myFixture.project).currentSettings.getCommonSettings(language)
     settings.arrangementSettings = new StdArrangementSettings(args.groups ?: [], args.rules ?: [])
     ArrangementEngine engine = ServiceManager.getService(myFixture.project, ArrangementEngine)
-    engine.arrange(myFixture.file, rangesToUse);
-    junit.framework.Assert.assertEquals(args.expected, myFixture.editor.document.text);
+    engine.arrange(myFixture.editor, myFixture.file, info.ranges);
+    
+    // Check expectation.
+    info = parse(args.expected)
+    Assert.assertEquals(info.text, myFixture.editor.document.text)
+    info.foldings.each {
+      def foldRegion = foldingModel.getCollapsedRegionAtOffset(it.start)
+      assertNotNull("Expected to find fold region at offset ${it.start}", foldRegion)
+      assertEquals(it.end, foldRegion.endOffset)
+    }
   }
   
   @NotNull
-  private static def parseRanges(@NotNull String text) {
-    def clearText = new StringBuilder(text)
-    def ranges = []
-    int shift = 0
-    int shiftIncrease = '<range>'.length() * 2 + 1
-    def match = text =~ '(?is)<range>.*?</range>'
-    match.each {
-      ranges << TextRange.create(match.start() - shift, match.end() - shift - shiftIncrease)
-      clearText.delete(match.end() - '</range>'.length() - shift, match.end() - shift)
-      clearText.delete(match.start() - shift, match.start() + '<range>'.length() - shift)
-      shift += shiftIncrease
+  private static def parse(@NotNull String text) {
+    def handlers = [:]
+    RICH_TEXT_HANDLERS.each { handlers["<${it.marker}"] = it }
+    def result = new Info()
+    def buffer = new StringBuilder(text)
+    int offset = 0
+    int richTextMarkStart = -1
+    RichTextHandler handler = null
+    while (offset < buffer.length()) {
+      handlers.each { String key, RichTextHandler value ->
+        int i = buffer.indexOf(key, offset)
+        if (i >= 0 && (handler == null || i < richTextMarkStart)) {
+          richTextMarkStart = i
+          handler = value
+        }
+      }
+      
+      if (handler) {
+        int openingTagEndOffset = buffer.indexOf('>', richTextMarkStart)
+        int openTagLength = openingTagEndOffset - richTextMarkStart + 1
+        def attributes = parseAttributes(buffer.substring(1 + richTextMarkStart + handler.marker.length(), openingTagEndOffset))
+        
+        def closingTag = "</${handler.marker}>"
+        int closingTagStart = buffer.indexOf(closingTag)
+        assert closingTagStart > 0
+        int closingTagLength = 3 + handler.marker.length() // </marker>
+        handler.handle(result, attributes, richTextMarkStart, closingTagStart - openTagLength)
+        buffer.delete(closingTagStart, closingTagStart + closingTagLength)
+        buffer.delete(richTextMarkStart, openingTagEndOffset + 1)
+        offset = closingTagStart - openTagLength
+        richTextMarkStart = -1
+        handler = null
+      }
+      else {
+        break
+      }
     }
-    
-    [clearText.toString(), ranges]
+    result.text = buffer.toString()
+    result
+  }
+  
+  @NotNull
+  private static Map<String, String> parseAttributes(@NotNull String text) {
+    def result = [:]
+    (text =~ /([^\s]+)=([^\s]+)/).each {
+      result[it[1]] = it[2]
+    }
+    result
+  }
+  
+  private static class Info {
+    String text
+    @Nullable List<TextRange> ranges = []
+    List<FoldingInfo> foldings = []
+  }
+  
+  private static class FoldingInfo {
+    def placeholder
+    def start
+    def end
+  }
+  
+  private interface RichTextHandler {
+    String getMarker()
+    void handle(@NotNull Info info, @NotNull Map<String, String> attributes, int start, int end)
+  }
+  
+  private static class RangeHandler implements RichTextHandler {
+    @Override String getMarker() { "range" }
+
+    @Override
+    void handle(Info info, Map<String, String> attributes, int start, int end) {
+      info.ranges << TextRange.create(start, end)
+    }
+  }
+  
+  private static class FoldingHandler implements RichTextHandler {
+    @Override String getMarker() { "fold" }
+
+    @Override
+    void handle(Info info, Map<String, String> attributes, int start, int end) {
+      info.foldings << new FoldingInfo(placeholder: attributes.text ?: '...', start: start, end: end)
+    }
   }
 }

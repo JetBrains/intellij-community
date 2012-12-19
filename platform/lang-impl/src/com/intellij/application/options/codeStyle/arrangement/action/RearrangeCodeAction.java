@@ -91,7 +91,7 @@ public class RearrangeCodeAction extends AnAction {
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
         @Override
         public void run() {
-          engine.arrange(file, ranges); 
+          engine.arrange(editor, file, ranges); 
         }
       }, getTemplatePresentation().getText(), null);
     }
