@@ -29,6 +29,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.TextTransferrable;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.debugger.UiDebuggerExtension;
@@ -393,7 +394,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
         presentation.setPresentableText(objectString);
 
         if (getValue().getOwnModification() < myTree.myModificationToFilter) {
-          presentation.setForcedTextForeground(Color.gray);
+          presentation.setForcedTextForeground(JBColor.GRAY);
         }
 
         if (objectString != null) {

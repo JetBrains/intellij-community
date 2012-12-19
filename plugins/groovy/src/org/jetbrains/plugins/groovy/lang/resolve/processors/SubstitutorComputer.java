@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -51,7 +50,7 @@ import java.util.Set;
 public class SubstitutorComputer {
   private static final Logger LOG = Logger.getInstance(SubstitutorComputer.class);
 
-  protected final GroovyPsiElement myPlace;
+  protected final PsiElement myPlace;
 
   private final PsiType myThisType;
   @Nullable private final PsiType[] myArgumentTypes;
@@ -67,7 +66,7 @@ public class SubstitutorComputer {
                              @Nullable PsiType[] argumentTypes,
                              PsiType[] typeArguments,
                              boolean allVariants,
-                             GroovyPsiElement place,
+                             PsiElement place,
                              PsiElement placeToInferContext) {
     myThisType = thisType;
     myArgumentTypes = argumentTypes;
@@ -125,7 +124,7 @@ public class SubstitutorComputer {
 
     if (myArgumentTypes != null && method.hasTypeParameters()) {
       PsiType[] argTypes = myArgumentTypes;
-      final GroovyPsiElement resolveContext = state.get(ResolverProcessor.RESOLVE_CONTEXT);
+      final PsiElement resolveContext = state.get(ResolverProcessor.RESOLVE_CONTEXT);
       if (method instanceof GrGdkMethod) {
         //type inference should be performed from static method
         PsiType[] newArgTypes = new PsiType[argTypes.length + 1];
@@ -203,9 +202,8 @@ public class SubstitutorComputer {
   }
 
   private PsiType handleConversion(PsiType paramType, PsiType argType) {
-    final GroovyPsiElement context = myPlace;
-    if (!TypesUtil.isAssignable(TypeConversionUtil.erasure(paramType), argType, context.getManager(), context.getResolveScope(), false) &&
-        TypesUtil.isAssignableByMethodCallConversion(paramType, argType, context)) {
+    if (!TypesUtil.isAssignable(TypeConversionUtil.erasure(paramType), argType, myPlace) &&
+        TypesUtil.isAssignableByMethodCallConversion(paramType, argType, myPlace)) {
       return paramType;
     }
     return argType;

@@ -5,7 +5,9 @@ import com.siyeh.ig.IGInspectionTestCase;
 public class StringConcatenationInspectionTest extends IGInspectionTestCase {
 
   public void test() throws Exception {
+    final StringConcatenationInspection concatenationInspection = new StringConcatenationInspection();
+    concatenationInspection.ignoreThrowableArguments = true;
     doTest("com/siyeh/igtest/internationalization/string_concatenation",
-           new StringConcatenationInspection());
+           concatenationInspection);
   }
 }

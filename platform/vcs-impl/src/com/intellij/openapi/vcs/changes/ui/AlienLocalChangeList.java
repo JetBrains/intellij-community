@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -64,6 +65,12 @@ public class AlienLocalChangeList extends LocalChangeList {
   }
 
   public void setReadOnly(final boolean isReadOnly) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Nullable
+  @Override
+  public Object getData() {
     throw new UnsupportedOperationException();
   }
 

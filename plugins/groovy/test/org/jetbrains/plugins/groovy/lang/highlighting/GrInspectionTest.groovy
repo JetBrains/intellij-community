@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.codeInspection.confusing.*
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyUnnecessaryReturnInspection
+import org.jetbrains.plugins.groovy.codeInspection.declaration.GrMethodMayBeStaticInspection
 import org.jetbrains.plugins.groovy.codeInspection.metrics.GroovyOverlyLongMethodInspection
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
@@ -184,4 +185,20 @@ print foo+<warning descr="Access to 'bar' exceeds its access rights">bar</warnin
 
   public void testUntypedAccess() { doTest(new GroovyUntypedAccessInspection()) }
 
+  public void testMethodMayBeStaticForCategoryClasses() {
+    testHighlighting('''\
+class Cat{
+  def <warning descr="Method may be static">foo</warning>() {
+      print 2
+  }
+}
+
+@groovy.lang.Category(Cat)
+class I{
+    def foo() {
+      print 2
+    }
+}
+''', GrMethodMayBeStaticInspection)
+  }
 }

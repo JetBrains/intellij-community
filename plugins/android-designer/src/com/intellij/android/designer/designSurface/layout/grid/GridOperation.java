@@ -27,6 +27,7 @@ import com.intellij.designer.designSurface.feedbacks.InsertFeedback;
 import com.intellij.designer.designSurface.feedbacks.TextFeedback;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.JBColor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -56,7 +57,7 @@ public abstract class GridOperation extends AbstractEditOperation {
     if (myFeedback == null) {
       FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
 
-      myInsertFeedback = new InsertFeedback(Color.green);
+      myInsertFeedback = new InsertFeedback(JBColor.GREEN);
       layer.add(myInsertFeedback);
 
       myBounds = myContainer.getBounds(layer);

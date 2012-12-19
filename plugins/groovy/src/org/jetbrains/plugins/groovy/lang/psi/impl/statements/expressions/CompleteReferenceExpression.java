@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.hash.HashSet;
 import icons.JetgroovyIcons;
@@ -53,6 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrRe
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -147,27 +147,8 @@ public class CompleteReferenceExpression {
   private static void getVariantsFromQualifierForSpreadOperator(GrReferenceExpression refExpr,
                                                                 ResolverProcessor processor,
                                                                 GrExpression qualifier) {
-    PsiType qualifierType = qualifier.getType();
-    if (qualifierType instanceof PsiClassType) {
-      PsiClassType.ClassResolveResult result = ((PsiClassType)qualifierType).resolveGenerics();
-      PsiClass clazz = result.getElement();
-      if (clazz != null) {
-        PsiClass listClass =
-          JavaPsiFacade.getInstance(refExpr.getProject()).findClass(CommonClassNames.JAVA_UTIL_COLLECTION, refExpr.getResolveScope());
-        if (listClass != null && listClass.getTypeParameters().length == 1) {
-          PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(listClass, clazz, result.getSubstitutor());
-          if (substitutor != null) {
-            PsiType componentType = substitutor.substitute(listClass.getTypeParameters()[0]);
-            if (componentType != null) {
-              getVariantsFromQualifierType(refExpr, processor, componentType, refExpr.getProject());
-            }
-          }
-        }
-      }
-    }
-    else if (qualifierType instanceof PsiArrayType) {
-      getVariantsFromQualifierType(refExpr, processor, ((PsiArrayType)qualifierType).getComponentType(), refExpr.getProject());
-    }
+    final PsiType spreadType = ClosureParameterEnhancer.findTypeForIteration(qualifier, refExpr);
+    getVariantsFromQualifierType(refExpr, processor, spreadType, refExpr.getProject());
   }
 
   @NotNull
@@ -394,7 +375,7 @@ public class CompleteReferenceExpression {
       myFieldPointerOperator = place.hasAt();
       myMethodPointerOperator = place.getDotTokenType() == GroovyTokenTypes.mMEMBER_POINTER;
       myIsMap = isMap(place);
-      final PsiType thisType = GrReferenceResolveUtil.getThisType(place);
+      final PsiType thisType = GrReferenceResolveUtil.getQualifierType(place);
       mySubstitutorComputer = new SubstitutorComputer(thisType, PsiType.EMPTY_ARRAY, PsiType.EMPTY_ARRAY, true, place, place.getParent());
     }
 
@@ -415,7 +396,7 @@ public class CompleteReferenceExpression {
         PsiNamedElement namedElement = (PsiNamedElement)element;
 
         boolean isAccessible = isAccessible(namedElement);
-        final GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
+        final PsiElement resolveContext = state.get(RESOLVE_CONTEXT);
         final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
         boolean isStaticsOK = isStaticsOK(namedElement, resolveContext, myParameters.getInvocationCount() <= 1);
 

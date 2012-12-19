@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class TemplateDataLanguageConfigurable extends LanguagePerFileConfigurable<Language> {
-  public TemplateDataLanguageConfigurable(Project project) {
+  public TemplateDataLanguageConfigurable(@NotNull Project project) {
     super(project, Language.class, TemplateDataLanguageMappings.getInstance(project),
           LangBundle.message("dialog.template.data.language.caption", ApplicationNamesInfo.getInstance().getFullProductName()),
           LangBundle.message("template.data.language.configurable.tree.table.title"),

@@ -45,6 +45,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Function;
@@ -142,7 +143,9 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep>
         provider.getBuilder().setFileToImport(defaultPath);
       }
       if (myImportProviders.length == 1) {
-        myWizardContext.setProjectBuilder(myImportProviders[0].getBuilder());
+        final ProjectImportBuilder builder = myImportProviders[0].getBuilder();
+        myWizardContext.setProjectBuilder(builder);
+        builder.setUpdate(getWizardContext().getProject() != null);
       }
     }
     init();

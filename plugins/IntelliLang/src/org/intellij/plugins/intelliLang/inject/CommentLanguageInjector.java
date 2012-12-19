@@ -3,6 +3,7 @@ package org.intellij.plugins.intelliLang.inject;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
@@ -26,17 +27,15 @@ public class CommentLanguageInjector implements MultiHostInjector {
     PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)context;
     final ElementManipulator<PsiLanguageInjectionHost> manipulator = ElementManipulators.getManipulator(host);
     if (manipulator == null) return;
-    PsiComment comment = InjectorUtils.findNearestComment(context);
-    if (comment == null) return;
-
-    String text = ElementManipulators.getValueText(comment).trim();
-    BaseInjection injection = InjectorUtils.detectInjectionFromText("comment", text);
+    TextRange rangeInElement = manipulator.getRangeInElement(host);
+    if (rangeInElement.isEmpty()) return;
+    BaseInjection injection = InjectorUtils.findCommentInjection(context, "comment", Ref.<PsiComment>create());
     if (injection == null) return;
     InjectedLanguage injectedLanguage = InjectedLanguage.create(injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix(), false);
     Language language = injectedLanguage != null ? injectedLanguage.getLanguage() : null;
     if (language != null) {
       Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> info =
-        Trinity.create(host, injectedLanguage, manipulator.getRangeInElement(host));
+        Trinity.create(host, injectedLanguage, rangeInElement);
       InjectorUtils.registerInjection(language, Collections.singletonList(info), context.getContainingFile(), registrar);
     }
   }

@@ -137,7 +137,7 @@ public abstract class DiffElement<T> /*implements Disposable */{
       return null;
     }
     if (request != null) {
-      myDiffPanel = DiffManager.getInstance().createDiffPanel(parentWindow, project, disposableParent);
+      myDiffPanel = DiffManager.getInstance().createDiffPanel(parentWindow, project, disposableParent, null);
       myDiffPanel.setRequestFocus(false);
       myDiffPanel.setDiffRequest(request);
       myDiffPanel.setTitle1(getName());

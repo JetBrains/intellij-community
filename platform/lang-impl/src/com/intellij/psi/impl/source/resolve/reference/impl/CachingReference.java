@@ -51,7 +51,7 @@ public abstract class CachingReference implements PsiReference, EmptyResolveMess
   public static <T extends PsiElement> ElementManipulator<T> getManipulator(T currentElement){
     ElementManipulator<T> manipulator = ElementManipulators.getManipulator(currentElement);
     if (manipulator == null) {
-      throw new IncorrectOperationException("Manipulator for this element is not defined: " + currentElement);
+      throw new IncorrectOperationException("Manipulator for this element is not defined: " + currentElement + "; " + currentElement.getClass());
     }
     return manipulator;
   }

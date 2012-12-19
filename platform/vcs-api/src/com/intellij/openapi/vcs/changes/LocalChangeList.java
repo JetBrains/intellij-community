@@ -63,6 +63,12 @@ public abstract class LocalChangeList implements Cloneable, ChangeList {
 
   public abstract void setReadOnly(boolean isReadOnly);
 
+  /**
+   * Get additional data associated with this changelist.
+   */
+  @Nullable
+  public abstract Object getData();
+
   public abstract LocalChangeList copy();
 
   public boolean hasDefaultName() {

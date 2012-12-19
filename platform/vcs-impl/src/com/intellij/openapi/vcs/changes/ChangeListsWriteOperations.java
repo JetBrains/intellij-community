@@ -23,7 +23,7 @@ public interface ChangeListsWriteOperations {
   @Nullable
   String setDefault(String name);
   boolean setReadOnly(String name, boolean value);
-  LocalChangeList addChangeList(@NotNull String name, @Nullable String description);
+  LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable Object data);
   boolean removeChangeList(@NotNull String name);
   @Nullable
   MultiMap<LocalChangeList, Change> moveChangesTo(String name, Change[] changes);

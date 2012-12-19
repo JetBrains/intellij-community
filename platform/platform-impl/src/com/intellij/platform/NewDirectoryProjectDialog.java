@@ -18,15 +18,13 @@ package com.intellij.platform;
 import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
-import com.intellij.ide.GeneralSettings;
-import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ListCellRendererWrapper;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +34,6 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.util.List;
 
 /**
@@ -66,7 +63,7 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
 
     myLocationLabel.setLabelFor(myLocationField.getChildComponent());
 
-    new LocationNameFieldsBinding(project, myLocationField, myProjectNameTextField, getBaseDir(), "Select Location for Project Directory");
+    new LocationNameFieldsBinding(project, myLocationField, myProjectNameTextField, ProjectUtil.getBaseDir(), "Select Location for Project Directory");
 
     final DirectoryProjectGenerator[] generators = getGenerators();
     if (generators.length == 0) {
@@ -215,17 +212,6 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
         validatorsManager.validate();
       }
     });
-  }
-
-  public static String getBaseDir() {
-    final String lastProjectLocation = GeneralSettings.getInstance().getLastProjectLocation();
-    if (lastProjectLocation != null) {
-      return lastProjectLocation.replace('/', File.separatorChar);
-    }
-    final String userHome = SystemProperties.getUserHome();
-    //noinspection HardCodedStringLiteral
-    return userHome.replace('/', File.separatorChar) + File.separator + ApplicationNamesInfo.getInstance().getLowercaseProductName() +
-           "Projects";
   }
 
   protected JComponent createCenterPanel() {

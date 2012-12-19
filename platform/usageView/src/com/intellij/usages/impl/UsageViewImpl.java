@@ -469,9 +469,12 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   public void addFilteringActions(@NotNull DefaultActionGroup group) {
     final JComponent component = getComponent();
-    final MergeDupLines mergeDupLines = new MergeDupLines();
-    mergeDupLines.registerCustomShortcutSet(mergeDupLines.getShortcutSet(), component, this);
-    group.add(mergeDupLines);
+
+    if (getPresentation().isMergeDupLinesAvailable()) {
+      final MergeDupLines mergeDupLines = new MergeDupLines();
+      mergeDupLines.registerCustomShortcutSet(mergeDupLines.getShortcutSet(), component, this);
+      group.add(mergeDupLines);
+    }
 
     final UsageFilteringRuleProvider[] providers = Extensions.getExtensions(UsageFilteringRuleProvider.EP_NAME);
     for (UsageFilteringRuleProvider provider : providers) {
@@ -983,6 +986,10 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         }
       });
     }
+  }
+
+  public boolean isDisposed() {
+    return isDisposed;
   }
 
   private void showNode(@NotNull final UsageNode node) {

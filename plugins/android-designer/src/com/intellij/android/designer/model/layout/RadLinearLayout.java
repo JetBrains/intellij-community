@@ -38,6 +38,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -123,7 +124,7 @@ public class RadLinearLayout extends RadViewLayoutWithData implements ILayoutDec
   @Override
   public ComponentDecorator getChildSelectionDecorator(RadComponent component, List<RadComponent> selection) {
     if (mySelectionDecorator == null) {
-      mySelectionDecorator = new ResizeSelectionDecorator(Color.red, 1) {
+      mySelectionDecorator = new ResizeSelectionDecorator(JBColor.RED, 1) {
         @Override
         protected boolean visible(RadComponent component, ResizePoint point) {
           if (point.getType() == LayoutMarginOperation.TYPE) {

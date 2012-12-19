@@ -70,7 +70,11 @@ class SvnChangeProviderContext implements StatusReceiver {
   }
 
   @Override
-  public void processCopyRoot(VirtualFile file, SVNURL url, WorkingCopyFormat format) {
+  public void processCopyRoot(VirtualFile file, SVNURL url, WorkingCopyFormat format, SVNURL rootURL) {
+  }
+
+  @Override
+  public void bewareRoot(VirtualFile vf, SVNURL url, WorkingCopyFormat copyFormat) {
   }
 
   public ChangelistBuilder getBuilder() {
@@ -349,6 +353,7 @@ class SvnChangeProviderContext implements StatusReceiver {
   }
 
   private FileStatus correctContentsStatus(final FileStatus fs, final SVNStatus svnStatus) throws SVNException {
+    //if (svnStatus.isSwitched()) return FileStatus.SWITCHED;
     return fs;
     //return SvnStatusConvertor.convertContentsStatus(svnStatus);
   }

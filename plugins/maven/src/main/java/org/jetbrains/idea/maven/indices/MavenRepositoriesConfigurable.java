@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
@@ -339,10 +340,10 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable implements S
       MavenIndex index = getIndexAt(row);
       if (index.getFailureMessage() != null) {
         if (isSelected) {
-          setForeground(Color.PINK);
+          setForeground(JBColor.PINK);
         }
         else {
-          setBackground(Color.PINK);
+          setBackground(JBColor.PINK);
         }
       }
 

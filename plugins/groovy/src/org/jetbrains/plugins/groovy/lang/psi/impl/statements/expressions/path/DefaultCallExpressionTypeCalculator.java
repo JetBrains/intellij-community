@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,12 +117,13 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
       }
     }
     else if (type instanceof PsiClassType) {
+      final GrExpression invoked = callExpression.getInvokedExpression();
       final GroovyResolveResult[] calls = ResolveUtil
-        .getMethodCandidates(type, "call", callExpression, PsiUtil.getArgumentTypes(callExpression.getInvokedExpression(), false));
+        .getMethodCandidates(type, "call", invoked != null ? invoked : callExpression, PsiUtil.getArgumentTypes(invoked, false));
       returnType = null;
       final PsiManager manager = callExpression.getManager();
       for (GroovyResolveResult call : calls) {
-        final PsiType substituted = ResolveUtil.extractReturnTypeFromCandidate(call, callExpression, PsiUtil.getArgumentTypes(callExpression.getInvokedExpression(), true));
+        final PsiType substituted = ResolveUtil.extractReturnTypeFromCandidate(call, callExpression, PsiUtil.getArgumentTypes(invoked, true));
         returnType = TypesUtil.getLeastUpperBoundNullable(returnType, substituted, manager);
       }
     }

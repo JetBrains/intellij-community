@@ -251,6 +251,19 @@ public class ChangeSignatureTest extends LightRefactoringTestCase {
            false);
   }
 
+  public void testConstructorException() throws Exception {
+    doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
+           new GenExceptions() {
+             @Override
+             public ThrownExceptionInfo[] genExceptions(PsiMethod method) {
+               return new ThrownExceptionInfo[] {
+                 new JavaThrownExceptionInfo(-1, JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createTypeByFQClassName("java.io.IOException", method.getResolveScope()))
+               };
+             }
+           },
+           false);
+  }
+
   public void testAddRuntimeException() throws Exception {
     doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
            new GenExceptions() {

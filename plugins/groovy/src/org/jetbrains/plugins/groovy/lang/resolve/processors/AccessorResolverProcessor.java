@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public class AccessorResolverProcessor extends MethodResolverProcessor {
 
   public AccessorResolverProcessor(String accessorName,
                                    String propertyName,
-                                   GroovyPsiElement place,
+                                   PsiElement place,
                                    boolean searchForGetter,
                                    boolean byShape,
                                    @Nullable PsiType thisType,
@@ -55,12 +55,12 @@ public class AccessorResolverProcessor extends MethodResolverProcessor {
   }
 
   public boolean execute(@NotNull PsiElement element, ResolveState state) {
-    final GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
+    final PsiElement resolveContext = state.get(RESOLVE_CONTEXT);
     String importedName = resolveContext instanceof GrImportStatement ? ((GrImportStatement)resolveContext).getImportedName() : null;
     if (mySearchForGetter) {
       if (element instanceof PsiMethod &&
           (importedName != null && isSimplePropertyGetter((PsiMethod)element, null) &&
-           (myPropertyName.equals(getPropertyNameByGetter((PsiMethod)element, importedName)) || myPropertyName.equals(importedName)) ||
+           (isAppropriatePropertyNameForGetter((PsiMethod)element, importedName, myPropertyName) || myPropertyName.equals(importedName)) ||
            importedName == null && isSimplePropertyGetter((PsiMethod)element, myPropertyName))) {
         return addAccessor((PsiMethod)element, state);
       }
@@ -68,12 +68,28 @@ public class AccessorResolverProcessor extends MethodResolverProcessor {
     else {
       if (element instanceof PsiMethod &&
           (importedName != null && isSimplePropertySetter((PsiMethod)element, null) &&
-           (myPropertyName.equals(getPropertyNameBySetterName(importedName)) || myPropertyName.equals(importedName)) ||
+           (isAppropriatePropertyNameForSetter(importedName, myPropertyName) || myPropertyName.equals(importedName)) ||
            importedName == null && isSimplePropertySetter((PsiMethod)element, myPropertyName))) {
         return addAccessor((PsiMethod)element, state);
       }
     }
     return true;
+  }
+
+  /**
+   * use only for imported properties
+   */
+  private static boolean isAppropriatePropertyNameForSetter(@NotNull String importedName, @NotNull String propertyName) {
+    propertyName = decapitalize(propertyName);
+    return propertyName.equals(getPropertyNameBySetterName(importedName));
+  }
+
+  /**
+   * use only for imported properties
+   */
+  private static boolean isAppropriatePropertyNameForGetter(@NotNull PsiMethod getter, @NotNull String importedNameForGetter, @NotNull String propertyName) {
+    propertyName = decapitalize(propertyName);
+    return propertyName.equals(getPropertyNameByGetter(getter, importedNameForGetter));
   }
 
   @Nullable
@@ -93,7 +109,7 @@ public class AccessorResolverProcessor extends MethodResolverProcessor {
       substitutor = mySubstitutorComputer.obtainSubstitutor(substitutor, method, state);
     }
     boolean isAccessible = isAccessible(method);
-    final GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
+    final PsiElement resolveContext = state.get(RESOLVE_CONTEXT);
     final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
     boolean isStaticsOK = isStaticsOK(method, resolveContext, true);
     final GroovyResolveResultImpl candidate =

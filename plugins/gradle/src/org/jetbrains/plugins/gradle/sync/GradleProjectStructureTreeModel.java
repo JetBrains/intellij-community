@@ -4,8 +4,12 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -22,12 +26,14 @@ import org.jetbrains.plugins.gradle.diff.dependency.GradleDependencyExportedChan
 import org.jetbrains.plugins.gradle.diff.dependency.GradleDependencyScopeChange;
 import org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyPresenceChange;
 import org.jetbrains.plugins.gradle.diff.dependency.GradleModuleDependencyPresenceChange;
-import org.jetbrains.plugins.gradle.diff.library.GradleMismatchedLibraryPathChange;
+import org.jetbrains.plugins.gradle.diff.library.GradleJarPresenceChange;
 import org.jetbrains.plugins.gradle.diff.module.GradleModulePresenceChange;
 import org.jetbrains.plugins.gradle.diff.project.GradleLanguageLevelChange;
 import org.jetbrains.plugins.gradle.diff.project.GradleProjectRenameChange;
 import org.jetbrains.plugins.gradle.model.GradleEntityOwner;
+import org.jetbrains.plugins.gradle.model.gradle.GradleLibrary;
 import org.jetbrains.plugins.gradle.model.gradle.GradleModule;
+import org.jetbrains.plugins.gradle.model.gradle.LibraryPathType;
 import org.jetbrains.plugins.gradle.model.id.*;
 import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
@@ -54,19 +60,7 @@ import java.util.*;
 public class GradleProjectStructureTreeModel extends DefaultTreeModel {
   
   private static final Function<GradleEntityId, GradleEntityId> SELF_MAPPER = new Function.Self<GradleEntityId, GradleEntityId>();
-  
-  private static final Function<GradleEntityId, GradleEntityId> LIBRARY_DEPENDENCY_TO_LIBRARY_MAPPER
-    = new Function<GradleEntityId, GradleEntityId>()
-  {
-    @Override
-    public GradleEntityId fun(GradleEntityId id) {
-      if (id instanceof GradleLibraryDependencyId) {
-        return ((GradleLibraryDependencyId)id).getLibraryId();
-      }
-      return id;
-    }
-  };
-  
+
   /**
    * <pre>
    *     ...
@@ -119,14 +113,16 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
         final Runnable task = new Runnable() {
           @Override
           public void run() {
-            Collection<GradleProjectStructureChange> c = ContainerUtil.subtract(oldChanges, currentChanges);
+            List<GradleProjectStructureChange> currentChangesToUse = ContainerUtilRt.newArrayList(currentChanges);
+            Collection<GradleProjectStructureChange> obsoleteChangesToUse = ContainerUtil.subtract(oldChanges, currentChanges);
             if (myChangesComparator != null) {
-              List<GradleProjectStructureChange> toSort = new ArrayList<GradleProjectStructureChange>(c);
+              List<GradleProjectStructureChange> toSort = ContainerUtilRt.newArrayList(obsoleteChangesToUse);
               Collections.sort(toSort, myChangesComparator);
-              c = toSort;
+              obsoleteChangesToUse = toSort;
+              Collections.sort(currentChangesToUse, myChangesComparator);
             }
-            processObsoleteChanges(c);
-            processCurrentChanges(currentChanges);
+            processObsoleteChanges(obsoleteChangesToUse);
+            processCurrentChanges(currentChangesToUse);
           }
         };
         if (myProcessChangesAtTheSameThread) {
@@ -157,7 +153,8 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     GradleProjectStructureNode<GradleProjectId> root = buildNode(projectId, getProject().getName());
     setRoot(root);
     final Collection<Module> modules = myPlatformFacade.getModules(getProject());
-    final List<GradleProjectStructureNode<?>> dependencies = new ArrayList<GradleProjectStructureNode<?>>();
+    final List<GradleProjectStructureNode<?>> dependencies = ContainerUtilRt.newArrayList();
+    final List<Pair<GradleProjectStructureNode<GradleLibraryDependencyId>, Library>> libraryDependencies = ContainerUtilRt.newArrayList();
     RootPolicy<Object> visitor = new RootPolicy<Object>() {
       @Override
       public Object visitModuleOrderEntry(ModuleOrderEntry moduleOrderEntry, Object value) {
@@ -172,12 +169,15 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
           return value;
         }
         GradleLibraryDependencyId id = GradleEntityIdMapper.mapEntityToId(libraryOrderEntry);
-        dependencies.add(buildNode(id, id.getDependencyName()));
+        GradleProjectStructureNode<GradleLibraryDependencyId> dependencyNode = buildNode(id, id.getDependencyName());
+        libraryDependencies.add(Pair.create(dependencyNode, libraryOrderEntry.getLibrary()));
+        dependencies.add(dependencyNode);
         return value;
       }
     };
     for (Module module : modules) {
       dependencies.clear();
+      libraryDependencies.clear();
       final GradleModuleId moduleId = GradleEntityIdMapper.mapEntityToId(module);
       final GradleProjectStructureNode<GradleModuleId> moduleNode = buildNode(moduleId, moduleId.getModuleName());
       myModules.put(module.getName(), moduleNode); // Assuming that module names are unique.
@@ -201,9 +201,32 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
       for (GradleProjectStructureNode<?> dependency : dependencies) {
         dependenciesNode.add(dependency);
       }
+      
+      // The general idea is to add jar nodes when all tree nodes above have already been initialized.
+      if (!libraryDependencies.isEmpty()) {
+        for (Pair<GradleProjectStructureNode<GradleLibraryDependencyId>, Library> p : libraryDependencies) {
+          populateLibraryDependencyNode(p.first, p.second);
+        }
+      }
     }
     processCurrentChanges(myChangesModel.getChanges());
     filterNodes(root);
+  }
+
+  private void populateLibraryDependencyNode(@NotNull GradleProjectStructureNode<GradleLibraryDependencyId> node,
+                                             @Nullable Library library)
+  {
+    if (library == null) {
+      return;
+    }
+
+    GradleLibraryId libraryId = node.getDescriptor().getElement().getLibraryId();
+    for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
+      GradleJarId jarId = new GradleJarId(GradleUtil.getLocalFileSystemPath(file), libraryId);
+      GradleProjectStructureNode<GradleJarId> jarNode = buildNode(jarId, GradleUtil.extractNameFromPath(jarId.getPath()));
+      jarNode.getDescriptor().setToolTip(jarId.getPath());
+      node.add(jarNode);
+    }
   }
 
   @TestOnly
@@ -436,10 +459,6 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     getRoot().addConflictChange(change);
   }
 
-  private void processNewMismatchedLibraryPathChange(@NotNull GradleMismatchedLibraryPathChange change) {
-    processDependencyConflictChange(change, LIBRARY_DEPENDENCY_TO_LIBRARY_MAPPER, false);
-  }
-
   private void processNewDependencyScopeChange(@NotNull GradleDependencyScopeChange change) {
     processDependencyConflictChange(change, SELF_MAPPER, false);
   }
@@ -449,14 +468,88 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
   }
   
   private void processNewLibraryDependencyPresenceChange(@NotNull GradleLibraryDependencyPresenceChange change) {
-    processNewDependencyPresenceChange(change);
+    GradleProjectStructureNode<GradleLibraryDependencyId> dependencyNode = processNewDependencyPresenceChange(change);
+    GradleLibraryDependencyId id = change.getGradleEntity();
+    if (dependencyNode != null && id != null) {
+      GradleLibrary library = myProjectStructureHelper.findGradleLibrary(id.getLibraryId());
+      if (library != null) {
+        GradleLibraryId libraryId = dependencyNode.getDescriptor().getElement().getLibraryId();
+        for (String path : library.getPaths(LibraryPathType.BINARY)) {
+          GradleJarId jarId = new GradleJarId(path, libraryId);
+          GradleProjectStructureNode<GradleJarId> jarNode = buildNode(jarId, GradleUtil.extractNameFromPath(jarId.getPath()));
+          jarNode.setAttributes(GradleTextAttributes.GRADLE_LOCAL_CHANGE);
+          jarNode.getDescriptor().setToolTip(jarId.getPath());
+          dependencyNode.add(jarNode);
+        }
+      }
+    }
   }
 
+  private void processJarPresenceChange(@NotNull GradleJarPresenceChange change, boolean obsolete) {
+    GradleJarId jarId = change.getGradleEntity();
+    TextAttributesKey attributes = GradleTextAttributes.GRADLE_LOCAL_CHANGE;
+    if (jarId == null) {
+      jarId = change.getIntellijEntity();
+      attributes = GradleTextAttributes.INTELLIJ_LOCAL_CHANGE;
+      assert jarId != null;
+    }
+    if (obsolete) {
+      attributes = GradleTextAttributes.NO_CHANGE;
+    }
+
+    for (Map.Entry<String, GradleProjectStructureNode<GradleSyntheticId>> entry : myModuleDependencies.entrySet()) {
+      Collection<GradleProjectStructureNode<GradleLibraryDependencyId>> libraryDependencies
+        = entry.getValue().getChildren(GradleLibraryDependencyId.class);
+
+      insideModule:
+      for (GradleProjectStructureNode<GradleLibraryDependencyId> libraryDependencyNode : libraryDependencies) {
+        if (!libraryDependencyNode.getDescriptor().getElement().getLibraryId().equals(jarId.getLibraryId())) {
+          continue;
+        }
+
+        for (GradleProjectStructureNode<GradleJarId> jarNode : libraryDependencyNode.getChildren(GradleJarId.class)) {
+          if (jarNode.getDescriptor().getElement().equals(jarId)) {
+            if (obsolete && myProjectStructureHelper.findIntellijJar(jarId) == null) {
+              // It was a gradle-local change which is now obsolete. Remove the jar node then.
+              jarNode.removeFromParent();
+            }
+            else {
+              jarNode.setAttributes(attributes);
+            }
+            break insideModule;
+          }
+        }
+
+        if (obsolete) {
+          continue;
+        }
+
+        // There is a possible case that both gradle and intellij have a library with the same name but different jar sets.
+        // We don't want to show intellij-local jars for the gradle-local module which uses that library then.
+        if (jarId.getOwner() ==  GradleEntityOwner.INTELLIJ
+            && myModules.get(entry.getKey()).getDescriptor().getAttributes() == GradleTextAttributes.GRADLE_LOCAL_CHANGE)
+        {
+          continue;
+        }
+
+          // When control flow reaches this place that means that this is a new jar attached to a library. Hence, we need to add a node.
+        GradleProjectStructureNode<GradleJarId> newNode = buildNode(jarId, GradleUtil.extractNameFromPath(jarId.getPath()));
+        newNode.setAttributes(attributes);
+        newNode.getDescriptor().setToolTip(jarId.getPath());
+        if (passFilters(newNode)) {
+          libraryDependencyNode.add(newNode);
+        }
+      }
+    }
+  }
+  
   private void processNewModuleDependencyPresenceChange(@NotNull GradleModuleDependencyPresenceChange change) {
     processNewDependencyPresenceChange(change);
   }
   
-  private <I extends GradleAbstractDependencyId> void processNewDependencyPresenceChange(
+  @SuppressWarnings("unchecked")
+  @Nullable
+  private <I extends GradleAbstractDependencyId> GradleProjectStructureNode<I> processNewDependencyPresenceChange(
     @NotNull GradleAbstractEntityPresenceChange<I> change)
   {
     I id = change.getGradleEntity();
@@ -467,21 +560,25 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     }
     assert id != null;
     final GradleProjectStructureNode<GradleSyntheticId> dependenciesNode = getDependenciesNode(id.getOwnerModuleId());
-    for (GradleProjectStructureNode<? extends GradleAbstractDependencyId> node : dependenciesNode.getChildren(id.getClass())) {
+    Class<I> clazz = (Class<I>)id.getClass();
+    for (GradleProjectStructureNode<I> node : dependenciesNode.getChildren(clazz)) {
       if (id.equals(node.getDescriptor().getElement())) {
         node.setAttributes(attributes);
-        return;
+        return node;
       }
     }
     GradleProjectStructureNode<I> newNode = buildNode(id, id.getDependencyName());
     dependenciesNode.add(newNode);
     newNode.setAttributes(attributes);
 
-    if (!passFilters(newNode)) {
-      newNode.removeFromParent();
-      removeModuleDependencyNodeIfEmpty(dependenciesNode, id.getOwnerModuleId());
-      removeModuleNodeIfEmpty(getModuleNode(id.getOwnerModuleId()));
+    if (passFilters(newNode)) {
+      return newNode;
     }
+
+    newNode.removeFromParent();
+    removeModuleDependencyNodeIfEmpty(dependenciesNode, id.getOwnerModuleId());
+    removeModuleNodeIfEmpty(getModuleNode(id.getOwnerModuleId()));
+    return null;
   }
 
   private void processNewModulePresenceChange(@NotNull GradleModulePresenceChange change) {
@@ -537,10 +634,6 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     getRoot().removeConflictChange(change);
   }
   
-  private void processObsoleteMismatchedLibraryPathChange(@NotNull GradleMismatchedLibraryPathChange change) {
-    processDependencyConflictChange(change, LIBRARY_DEPENDENCY_TO_LIBRARY_MAPPER, true);
-  }
-
   private void processObsoleteDependencyScopeChange(@NotNull GradleDependencyScopeChange change) {
     processDependencyConflictChange(change, SELF_MAPPER, true);
   }
@@ -740,8 +833,8 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     @Override public void visit(@NotNull GradleModulePresenceChange change) { processNewModulePresenceChange(change); }
     @Override public void visit(@NotNull GradleContentRootPresenceChange change) { processNewContentRootPresenceChange(change); }
     @Override public void visit(@NotNull GradleLibraryDependencyPresenceChange change) { processNewLibraryDependencyPresenceChange(change); }
+    @Override public void visit(@NotNull GradleJarPresenceChange change) { processJarPresenceChange(change, false); }
     @Override public void visit(@NotNull GradleModuleDependencyPresenceChange change) { processNewModuleDependencyPresenceChange(change); }
-    @Override public void visit(@NotNull GradleMismatchedLibraryPathChange change) { processNewMismatchedLibraryPathChange(change); }
     @Override public void visit(@NotNull GradleDependencyScopeChange change) { processNewDependencyScopeChange(change); }
     @Override public void visit(@NotNull GradleDependencyExportedChange change) { processNewDependencyExportedChange(change);
     }
@@ -755,10 +848,10 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     @Override public void visit(@NotNull GradleLibraryDependencyPresenceChange change) {
       processObsoleteLibraryDependencyPresenceChange(change); 
     }
+    @Override public void visit(@NotNull GradleJarPresenceChange change) { processJarPresenceChange(change, true); }
     @Override public void visit(@NotNull GradleModuleDependencyPresenceChange change) {
       processObsoleteModuleDependencyPresenceChange(change); 
     }
-    @Override public void visit(@NotNull GradleMismatchedLibraryPathChange change) { processObsoleteMismatchedLibraryPathChange(change); }
     @Override public void visit(@NotNull GradleDependencyScopeChange change) { processObsoleteDependencyScopeChange(change); }
     @Override public void visit(@NotNull GradleDependencyExportedChange change) { processObsoleteDependencyExportedChange(change); }
   }

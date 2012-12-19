@@ -94,7 +94,7 @@ public class WizardContext {
     if (myProjectFileDirectory != null) {
       return myProjectFileDirectory;
     }
-    final String lastProjectLocation = GeneralSettings.getInstance().getLastProjectLocation();
+    final String lastProjectLocation = GeneralSettings.getInstance().getLastProjectCreationLocation();
     if (lastProjectLocation != null) {
       return lastProjectLocation.replace('/', File.separatorChar);
     }

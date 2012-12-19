@@ -92,4 +92,146 @@ class Foo {
 )<caret>
 ''')
   }
+
+  void testQuote() {
+    doTest('''\
+print <caret>
+''', "'", '''\
+print '<caret>'
+''')
+  }
+
+  void testDoubleQuote() {
+    doTest('''\
+print <caret>
+''', '"', '''\
+print "<caret>"
+''')
+  }
+
+  void testTripleQuote() {
+    doTest("""\
+print ''<caret>
+""", "'", """\
+print '''<caret>'''
+""")
+  }
+
+  void testDontInsertTripleQuote1() {
+    doTest("""\
+print '''<caret>'''
+""", "'", """\
+print ''''<caret>''
+""")
+  }
+
+  void testDontInsertTripleQuote2() {
+    doTest("""\
+print ''' ''<caret>'
+""", "'", """\
+print ''' '''<caret>
+""")
+  }
+
+  void testDontInsertTripleQuote3() {
+    doTest('''\
+print """ ""<caret>
+''', '"', '''\
+print """ """<caret>
+''')
+  }
+
+  void testDontInsertTripleQuote4() {
+    doTest('''\
+print """ ${} ""<caret>
+''', '"', '''\
+print """ ${} """<caret>
+''')
+  }
+
+  void testSkipQuoteAtLiteralEnd1() {
+    doTest('''\
+print """ <caret>"""
+''', '"', '''\
+print """ "<caret>""
+''')
+  }
+
+  void testSkipQuoteAtLiteralEnd2() {
+    doTest('''\
+print """ "<caret>""
+''', '"', '''\
+print """ ""<caret>"
+''')
+  }
+
+  void testSkipQuoteAtLiteralEnd3() {
+    doTest('''\
+print """ ""<caret>"
+''', '"', '''\
+print """ """<caret>
+''')
+  }
+
+  void testSkipQuoteAtLiteralEnd4() {
+    doTest("""\
+print ''' <caret>'''
+""", "'", """\
+print ''' '<caret>''
+""")
+  }
+
+  void testSkipQuoteAtLiteralEnd5() {
+    doTest("""\
+print ''' '<caret>''
+""", "'", """\
+print ''' ''<caret>'
+""")
+  }
+
+  void testSkipQuoteAtLiteralEnd6() {
+    doTest("""\
+print ''' ''<caret>'
+""", "'", """\
+print ''' '''<caret>
+""")
+  }
+
+  void testGroovyDoc() {
+    doTest('''\
+/**<caret>
+print 2
+''', '\n', '''\
+/**
+ * <caret>
+ */
+print 2
+''')
+  }
+
+  void testGroovyDoc2() {
+    doTest('''\
+/**<caret>
+class A {}
+''', '\n', '''\
+/**
+ * <caret>
+ */
+class A {}
+''')
+  }
+
+  /*
+  todo uncomment when implemented
+  void testRegex1() {
+    doTest('<caret>', '/', '/<caret>/')
+  }
+
+  void testRegex2() {
+    doTest('/a<caret>/', '/', '/a/<caret>')
+  }
+
+  void testDollarRegex1() {
+    doTest('$<caret>', '/', '$/<caret>/$')
+  }*/
 }

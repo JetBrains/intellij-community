@@ -18,15 +18,14 @@ package git4idea.commands;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.LineHandlerHelper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * The handler that is based on per-line processing of the text.
@@ -151,11 +150,13 @@ public class GitLineHandler extends GitTextHandler {
     String trimmed = LineHandlerHelper.trimLineSeparator(line);
     // if line ends with return, then it is a progress line, ignore it
     if (myVcs != null && !"\r".equals(line.substring(trimmed.length()))) {
-      if (outputType == ProcessOutputTypes.STDOUT && !isStdoutSuppressed()) {
+      if (outputType == ProcessOutputTypes.STDOUT && !isStdoutSuppressed() && !mySilent && !StringUtil.isEmptyOrSpaces(line)) {
         myVcs.showMessages(trimmed);
+        LOG.info(line.trim());
       }
-      else if (outputType == ProcessOutputTypes.STDERR && !isStderrSuppressed()) {
+      else if (outputType == ProcessOutputTypes.STDERR && !isStderrSuppressed() && !mySilent && !StringUtil.isEmptyOrSpaces(line)) {
         myVcs.showErrorMessages(trimmed);
+        LOG.info(line.trim());
       }
     }
     myLineListeners.getMulticaster().onLineAvailable(trimmed, outputType);

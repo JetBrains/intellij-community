@@ -828,9 +828,12 @@ public class RefactoringUtil {
     removeFinalParameters(method);
   }
 
-  public static boolean isInsideAnonymous(PsiElement element, PsiElement upTo) {
+  public static boolean isInsideAnonymousOrLocal(PsiElement element, PsiElement upTo) {
     for (PsiElement current = element; current != null && current != upTo; current = current.getParent()) {
       if (current instanceof PsiAnonymousClass) return true;
+      if (current instanceof PsiClass && current.getParent() instanceof PsiDeclarationStatement) {
+        return true;
+      }
     }
     return false;
   }

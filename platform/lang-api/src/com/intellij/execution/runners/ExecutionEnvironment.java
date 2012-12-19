@@ -22,9 +22,11 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +43,7 @@ public class ExecutionEnvironment extends UserDataHolderBase {
   @Nullable private RunnerSettings myRunnerSettings;
   @Nullable private ConfigurationPerRunnerSettings myConfigurationSettings;
   @Nullable private final RunnerAndConfigurationSettings myRunnerAndConfigurationSettings;
-  @Nullable private final RunContentDescriptor myContentToReuse;
+  @Nullable private RunContentDescriptor myContentToReuse;
 
   @TestOnly
   public ExecutionEnvironment() {
@@ -123,6 +125,14 @@ public class ExecutionEnvironment extends UserDataHolderBase {
     myProject = project;
     myContentToReuse = contentToReuse;
     myRunnerAndConfigurationSettings = settings;
+    if (myContentToReuse != null) {
+      Disposer.register(myContentToReuse, new Disposable() {
+        @Override
+        public void dispose() {
+          myContentToReuse = null;
+        }
+      });
+    }
   }
 
   /**

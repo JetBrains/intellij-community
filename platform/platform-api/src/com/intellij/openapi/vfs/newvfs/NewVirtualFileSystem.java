@@ -94,18 +94,23 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   public abstract int getRank();
 
   @Override
-  public abstract VirtualFile copyFile(final Object requestor, @NotNull final VirtualFile file, @NotNull final VirtualFile newParent, @NotNull final String copyName) throws IOException;
+  public abstract VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent, @NotNull String copyName) throws IOException;
+
   @Override
   @NotNull
-  public abstract VirtualFile createChildDirectory(final Object requestor, @NotNull final VirtualFile parent, @NotNull final String dir) throws IOException;
+  public abstract VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile parent, @NotNull String dir) throws IOException;
+
   @Override
-  public abstract VirtualFile createChildFile(final Object requestor, @NotNull final VirtualFile parent, @NotNull final String file) throws IOException;
+  public abstract VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String file) throws IOException;
+
   @Override
-  public abstract void deleteFile(final Object requestor, @NotNull final VirtualFile file) throws IOException;
+  public abstract void deleteFile(Object requestor, @NotNull VirtualFile file) throws IOException;
+
   @Override
-  public abstract void moveFile(final Object requestor, @NotNull final VirtualFile file, @NotNull final VirtualFile newParent) throws IOException;
+  public abstract void moveFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent) throws IOException;
+
   @Override
-  public abstract void renameFile(final Object requestor, @NotNull final VirtualFile file, @NotNull final String newName) throws IOException;
+  public abstract void renameFile(final Object requestor, @NotNull VirtualFile file, @NotNull String newName) throws IOException;
 
   public boolean markNewFilesAsDirty() {
     return false;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import java.util.Set;
  */
 public interface StateStorageManager {
   void addMacro(String macro, String expansion);
+
   @Nullable
   TrackingPathMacroSubstitutor getMacroSubstitutor();
 
@@ -50,11 +51,10 @@ public interface StateStorageManager {
   void finishSave(SaveSession saveSession);
 
   @Nullable
-  StateStorage getOldStorage(Object component, final String componentName, final StateStorageOperation operation) throws
-                                                                                                                  StateStorageException;
+  StateStorage getOldStorage(Object component, String componentName, StateStorageOperation operation) throws StateStorageException;
 
   @Nullable
-  String expandMacroses(String file);
+  String expandMacros(String file);
 
   void registerStreamProvider(StreamProvider streamProvider, final RoamingType type);
 
@@ -66,8 +66,8 @@ public interface StateStorageManager {
 
 
   interface ExternalizationSession {
-    void setState(@NotNull Storage[] storageSpecs, Object component, final String componentName, Object state) throws StateStorageException;
-    void setStateInOldStorage(Object component, final String componentName, Object state) throws StateStorageException;
+    void setState(@NotNull Storage[] storageSpecs, Object component, String componentName, Object state) throws StateStorageException;
+    void setStateInOldStorage(Object component, String componentName, Object state) throws StateStorageException;
   }
 
   interface SaveSession {

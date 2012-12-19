@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.analysis.PackagesScopesProvider;
@@ -27,6 +42,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PatternPackageSet;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
@@ -43,7 +59,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
   @Override
   protected Sdk getTestProjectJdk() {
     LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_4);
-    return JavaSdkImpl.getMockJdk14();
+    return IdeaTestUtil.getMockJdk14();
   }
 
   public void testPackageLocals() throws Exception {
@@ -220,8 +236,8 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     ModuleManager moduleManager = ModuleManager.getInstance(getProject());
     final Module java4 = moduleManager.findModuleByName("java4");
     Module java5 = moduleManager.findModuleByName("java5");
-    ModuleRootModificationUtil.setModuleSdk(java4, JavaSdkImpl.getMockJdk17("java 1.4"));
-    ModuleRootModificationUtil.setModuleSdk(java5, JavaSdkImpl.getMockJdk17("java 1.5"));
+    ModuleRootModificationUtil.setModuleSdk(java4, IdeaTestUtil.getMockJdk17("java 1.4"));
+    ModuleRootModificationUtil.setModuleSdk(java5, IdeaTestUtil.getMockJdk17("java 1.5"));
     ModuleRootModificationUtil.addDependency(java5, java4);
 
     assert root != null;

@@ -16,11 +16,13 @@
 package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -64,7 +66,9 @@ import java.util.concurrent.TimeUnit;
  * @author peter
  */
 public class GradleConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-
+  
+  private enum PathColor { NORMAL, DEDUCED }
+  
   @NonNls public static final String HELP_TOPIC = "reference.settingsdialog.project.gradle";
 
   private static final long BALLOON_DELAY_MILLIS = TimeUnit.SECONDS.toMillis(1);
@@ -77,11 +81,13 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
 
   @NotNull private GradleHomeSettingType myGradleHomeSettingType = GradleHomeSettingType.UNKNOWN;
 
-  @NotNull private final JLabel myLinkedProjectLabel = new JBLabel(GradleBundle.message("gradle.import.label.select.project"));
-  @NotNull private final JLabel myGradleHomeLabel    = new JBLabel(GradleBundle.message("gradle.import.text.home.path"));
+  @NotNull private final JLabel myLinkedProjectLabel = new JBLabel(GradleBundle.message("gradle.settings.label.select.project"));
+  @NotNull private final JLabel myGradleHomeLabel    = new JBLabel(GradleBundle.message("gradle.settings.text.home.path"));
+  @NotNull private final JLabel myServiceDirectoryLabel = new JBLabel(GradleBundle.message("gradle.settings.text.service.dir.path"));
 
   @NotNull private TextFieldWithBrowseButton myLinkedGradleProjectPathField;
   @NotNull private TextFieldWithBrowseButton myGradleHomePathField;
+  @NotNull private TextFieldWithBrowseButton myServiceDirectoryPathField;
   @NotNull private JBCheckBox                myPreferWrapperWheneverPossibleCheckBox;
   @NotNull private JBRadioButton             myUseWrapperButton;
   @NotNull private JBRadioButton             myUseLocalDistributionButton;
@@ -91,6 +97,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
   private boolean myAlwaysShowLinkedProjectControls;
   private boolean myShowBalloonIfNecessary;
   private boolean myGradleHomeModifiedByUser;
+  private boolean myServiceDirectoryModifiedByUser;
 
   public GradleConfigurable(@Nullable Project project) {
     this(project, ServiceManager.getService(GradleInstallationManager.class));
@@ -176,6 +183,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     initLinkedGradleProjectPathControl();
     initWrapperVsLocalControls();
     initGradleHome();
+    initServiceDirectoryHome();
     assert myComponent != null;
 
     GridBag pathLabelConstraints = new GridBag().anchor(GridBagConstraints.WEST).weightx(0);
@@ -194,6 +202,9 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
 
     myComponent.add(myGradleHomeLabel, pathLabelConstraints);
     myComponent.add(myGradleHomePathField, pathConstraints);
+
+    myComponent.add(myServiceDirectoryLabel, pathLabelConstraints);
+    myComponent.add(myServiceDirectoryPathField, pathConstraints);
 
     myComponent.add(Box.createVerticalGlue(), new GridBag().weightx(1).weighty(1).fillCell().coverLine());
   }
@@ -249,8 +260,11 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     myLinkedGradleProjectPathField = new TextFieldWithBrowseButton();
     myLinkedGradleProjectPathField.addBrowseFolderListener(
       "",
-      GradleBundle.message("gradle.import.label.select.project"),
-      myProject, GradleUtil.getGradleProjectFileChooserDescriptor()
+      GradleBundle.message("gradle.settings.label.select.project"),
+      myProject,
+      GradleUtil.getGradleProjectFileChooserDescriptor(),
+      TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
+      false
     );
     myLinkedGradleProjectPathField.getTextField().getDocument().addDocumentListener(new DocumentListener() {
       @Override
@@ -319,19 +333,52 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     myGradleHomePathField = new TextFieldWithBrowseButton();
     myGradleHomePathField.addBrowseFolderListener(
       "",
-      GradleBundle.message("gradle.import.title.select.project"),
+      GradleBundle.message("gradle.settings.text.home.path"),
       null,
-      GradleUtil.getGradleHomeFileChooserDescriptor()
+      GradleUtil.getGradleHomeFileChooserDescriptor(),
+      TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
+      false
     );
     myGradleHomePathField.getTextField().getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void insertUpdate(DocumentEvent e) {
-        useNormalColorForPath();
+        useColorForPath(PathColor.NORMAL, myGradleHomePathField);
+        myGradleHomeModifiedByUser = true;
       }
 
       @Override
       public void removeUpdate(DocumentEvent e) {
-        useNormalColorForPath();
+        useColorForPath(PathColor.NORMAL, myGradleHomePathField);
+        myGradleHomeModifiedByUser = true;
+      }
+
+      @Override
+      public void changedUpdate(DocumentEvent e) {
+      }
+    });
+  }
+
+  private void initServiceDirectoryHome() {
+    myServiceDirectoryPathField = new TextFieldWithBrowseButton();
+    myServiceDirectoryPathField.addBrowseFolderListener(
+      "",
+      GradleBundle.message("gradle.settings.title.service.dir.path"),
+      myProject,
+      new FileChooserDescriptor(false, true, false, false, false, false),
+      TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
+      false
+    );
+    myServiceDirectoryPathField.getTextField().getDocument().addDocumentListener(new DocumentListener() {
+      @Override
+      public void insertUpdate(DocumentEvent e) {
+        useColorForPath(PathColor.NORMAL, myServiceDirectoryPathField);
+        myServiceDirectoryModifiedByUser = true;
+      }
+
+      @Override
+      public void removeUpdate(DocumentEvent e) {
+        useColorForPath(PathColor.NORMAL, myServiceDirectoryPathField);
+        myServiceDirectoryModifiedByUser = true; 
       }
 
       @Override
@@ -365,7 +412,12 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     if (myGradleHomeModifiedByUser &&
         !Comparing.equal(normalizePath(myGradleHomePathField.getText()), normalizePath(settings.getGradleHome())))
     {
-      useNormalColorForPath();
+      return true;
+    }
+
+    if (myServiceDirectoryModifiedByUser &&
+        !Comparing.equal(normalizePath(myServiceDirectoryPathField.getText()), normalizePath(settings.getServiceDirectoryPath())))
+    {
       return true;
     }
     
@@ -382,9 +434,15 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     if (myProject == null) {
       return;
     }
-    
+
+    GradleSettings settings = GradleSettings.getInstance(myProject);
+
     String linkedProjectPath = myLinkedGradleProjectPathField.getText();
-    String gradleHomePath = myGradleHomePathField.getText();
+    final String gradleHomePath = getPathToUse(myGradleHomeModifiedByUser, settings.getGradleHome(), myGradleHomePathField.getText());
+    final String serviceDirPath = getPathToUse(myServiceDirectoryModifiedByUser,
+                                               settings.getServiceDirectoryPath(),
+                                               myServiceDirectoryPathField.getText());
+    
     boolean preferLocalToWrapper;
     if (myPreferWrapperWheneverPossibleCheckBox.isVisible()) {
       preferLocalToWrapper = !myPreferWrapperWheneverPossibleCheckBox.isSelected();
@@ -392,7 +450,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     else {
       preferLocalToWrapper = myUseLocalDistributionButton.isSelected();
     }
-    GradleSettings.applySettings(linkedProjectPath, gradleHomePath, preferLocalToWrapper, myProject);
+    GradleSettings.applySettings(linkedProjectPath, gradleHomePath, preferLocalToWrapper, serviceDirPath, myProject);
 
     Project defaultProject = ProjectManager.getInstance().getDefaultProject();
     if (myProject != defaultProject) {
@@ -400,22 +458,44 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     }
 
     if (isValidGradleHome(gradleHomePath)) {
-      myGradleHomeSettingType = GradleHomeSettingType.EXPLICIT_CORRECT;
-      // There is a possible case that user defines gradle home for particular open project. We want to apply that value
-      // to the default project as well if it's still non-defined.
-      if (defaultProject != myProject && !isValidGradleHome(GradleSettings.getInstance(defaultProject).getGradleHome())) {
-        GradleSettings.applyGradleHome(gradleHomePath, defaultProject);
+      if (myGradleHomeModifiedByUser) {
+        myGradleHomeSettingType = GradleHomeSettingType.EXPLICIT_CORRECT;
+        // There is a possible case that user defines gradle home for particular open project. We want to apply that value
+        // to the default project as well if it's still non-defined.
+        if (defaultProject != myProject && !isValidGradleHome(GradleSettings.getInstance(defaultProject).getGradleHome())) {
+          GradleSettings.applyGradleHome(gradleHomePath, defaultProject);
+        }
       }
-      return;
-    }
-
-    useNormalColorForPath();
-    if (StringUtil.isEmpty(gradleHomePath)) {
-      myGradleHomeSettingType = GradleHomeSettingType.UNKNOWN;
+      else {
+        myGradleHomeSettingType = GradleHomeSettingType.DEDUCED;
+      }
     }
     else {
-      myGradleHomeSettingType = GradleHomeSettingType.EXPLICIT_INCORRECT;
-      myHelper.showBalloon(MessageType.ERROR, myGradleHomeSettingType, 0);
+      if (StringUtil.isEmpty(gradleHomePath)) {
+        myGradleHomeSettingType = GradleHomeSettingType.UNKNOWN;
+      }
+      else {
+        myGradleHomeSettingType = GradleHomeSettingType.EXPLICIT_INCORRECT;
+        myHelper.showBalloon(MessageType.ERROR, myGradleHomeSettingType, 0);
+      }
+    }
+  }
+
+  @Nullable
+  private static String getPathToUse(boolean modifiedByUser, @Nullable String settingsPath, @Nullable String uiPath) {
+    if (modifiedByUser) {
+      return StringUtil.isEmpty(uiPath) ? null : uiPath;
+    }
+    else {
+      // There are two possible cases:
+      //   *) the path is initially set from settings and hasn't been modified; 
+      //   *) the path is undefined at the settings and has been deduced;
+      if (Comparing.equal(normalizePath(settingsPath), normalizePath(uiPath))) {
+        return settingsPath;
+      }
+      else {
+        return null;
+      }
     }
   }
 
@@ -442,7 +522,8 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     //           distribution should be show;
     //      2.2. Gradle wrapper is not configured for the target project - radio buttons should be shown and 
     //           'use gradle wrapper' option should be disabled;
-    useNormalColorForPath();
+    useColorForPath(PathColor.NORMAL, myGradleHomePathField);
+    useColorForPath(PathColor.NORMAL, myServiceDirectoryPathField);
     GradleSettings settings = myHelper.getSettings(myProject);
     String linkedProjectPath = myLinkedGradleProjectPathField.getText();
     if (StringUtil.isEmpty(linkedProjectPath)) {
@@ -483,7 +564,11 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     }
     
     String localDistributionPath = settings.getGradleHome();
-    if (!StringUtil.isEmpty(localDistributionPath)) {
+    if (StringUtil.isEmpty(localDistributionPath)) {
+      myGradleHomeSettingType = GradleHomeSettingType.UNKNOWN;
+      deduceGradleHomeIfPossible();
+    }
+    else {
       myGradleHomeSettingType = myHelper.isGradleSdkHome(new File(localDistributionPath)) ?
                                 GradleHomeSettingType.EXPLICIT_CORRECT :
                                 GradleHomeSettingType.EXPLICIT_INCORRECT;
@@ -492,15 +577,21 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
         myHelper.showBalloon(MessageType.ERROR, myGradleHomeSettingType, 0);
       }
       myGradleHomePathField.setText(localDistributionPath);
-      return;
     }
-    myGradleHomeSettingType = GradleHomeSettingType.UNKNOWN;
-    deduceGradleHomeIfPossible();
+
+    String serviceDirectoryPath = settings.getServiceDirectoryPath();
+    if (StringUtil.isEmpty(serviceDirectoryPath)) {
+      deduceServiceDirectoryIfPossible();
+    }
+    else {
+      myServiceDirectoryPathField.setText(serviceDirectoryPath);
+      useColorForPath(PathColor.NORMAL, myServiceDirectoryPathField);
+    }
   }
 
-  private void useNormalColorForPath() {
-    myGradleHomePathField.getTextField().setForeground(UIManager.getColor("TextField.foreground"));
-    myGradleHomeModifiedByUser = true;
+  private static void useColorForPath(@NotNull PathColor color, @NotNull TextFieldWithBrowseButton pathControl) {
+    Color c = color == PathColor.NORMAL ? UIManager.getColor("TextField.foreground") : UIManager.getColor("TextField.inactiveForeground");
+    pathControl.getTextField().setForeground(c);
   }
 
   /**
@@ -517,6 +608,16 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     myGradleHomePathField.setText(gradleHome.getPath());
     myGradleHomePathField.getTextField().setForeground(UIManager.getColor("TextField.inactiveForeground"));
     myGradleHomeModifiedByUser = false;
+  }
+
+  private void deduceServiceDirectoryIfPossible() {
+    String path = System.getenv().get(GradleUtil.SYSTEM_DIRECTORY_PATH_KEY);
+    if (StringUtil.isEmpty(path)) {
+      path = new File(System.getProperty("user.home"), ".gradle").getAbsolutePath();
+    }
+    myServiceDirectoryPathField.setText(path);
+    useColorForPath(PathColor.DEDUCED, myServiceDirectoryPathField);
+    myServiceDirectoryModifiedByUser = false;
   }
 
   @SuppressWarnings("ConstantConditions")
@@ -546,7 +647,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     }
     if (isModified()) {
       return myHelper.isGradleSdkHome(new File(path)) ? GradleHomeSettingType.EXPLICIT_CORRECT
-                                                                   : GradleHomeSettingType.EXPLICIT_INCORRECT;
+                                                      : GradleHomeSettingType.EXPLICIT_INCORRECT;
     }
     return myGradleHomeSettingType;
   }

@@ -277,8 +277,8 @@ public class SvnConfigurable implements Configurable {
 
   public void apply() throws ConfigurationException {
     SvnConfiguration configuration = SvnConfiguration.getInstance(myProject);
-    configuration.setConfigurationDirectory(myConfigurationDirectoryText.getText());
-    configuration.setUseDefaultConfiguation(myUseDefaultCheckBox.isSelected());
+    configuration.setConfigurationDirParameters(myUseDefaultCheckBox.isSelected(), myConfigurationDirectoryText.getText());
+
     configuration.setIsUseDefaultProxy(myUseCommonProxy.isSelected());
     final SvnVcs vcs17 = SvnVcs.getInstance(myProject);
     if ((! configuration.DETECT_NESTED_COPIES) && (configuration.DETECT_NESTED_COPIES != myDetectNestedWorkingCopiesCheckBox.isSelected())) {

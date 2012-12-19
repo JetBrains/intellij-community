@@ -99,6 +99,10 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
   }
 
   public boolean executeTask(DataContext context, final RunConfiguration configuration, final ExecutionEnvironment env, MakeBeforeRunTask task) {
+    return doMake(myProject, configuration, env, false);
+  }
+
+   static boolean doMake(final Project myProject, final RunConfiguration configuration, final ExecutionEnvironment env, final boolean ignoreErrors) {
     if (!(configuration instanceof RunProfileWithCompileBeforeLaunchOption)) {
       return true;
     }
@@ -115,7 +119,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
       done.down();
       final CompileStatusNotification callback = new CompileStatusNotification() {
         public void finished(final boolean aborted, final int errors, final int warnings, CompileContext compileContext) {
-          if (errors == 0 && !aborted) {
+          if ((errors == 0  || ignoreErrors) && !aborted) {
             result.set(Boolean.TRUE);
           }
           done.up();

@@ -92,7 +92,7 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
 
   @Override
   public boolean isDeclareFinal() {
-    return allowFinal();
+    return ourLastCbFinalState && allowFinal();
   }
 
   private void selectInCurrentMethod() {
@@ -186,26 +186,12 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
     return null;
   }
 
-  protected boolean setEnabledInitializationPlaces(PsiElement initializerPart, PsiElement initializer) {
-    if (initializerPart instanceof PsiReferenceExpression) {
-      PsiReferenceExpression refExpr = (PsiReferenceExpression) initializerPart;
-      if (refExpr.getQualifierExpression() == null) {
-        PsiElement refElement = refExpr.resolve();
-        if (refElement == null ||
-            (refElement instanceof PsiLocalVariable || refElement instanceof PsiParameter) &&
-            !PsiTreeUtil.isAncestor(initializer, refElement, true)) {
-          myInitialisersPlaceModel.removeElement(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION);
-          myInitialisersPlaceModel.removeElement(BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR);
-          myInitialisersPlaceModel.removeElement(BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD);
-          return false;
-        }
-      }
-    }
-    PsiElement[] children = initializerPart.getChildren();
-    for (PsiElement child : children) {
-      if (!setEnabledInitializationPlaces(child, initializer)) return false;
-    }
-    return true;
+  @Override
+  protected boolean updateInitializationPlaceModel() {
+    myInitialisersPlaceModel.removeElement(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION);
+    myInitialisersPlaceModel.removeElement(BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR);
+    myInitialisersPlaceModel.removeElement(BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD);
+    return false;
   }
 
   public void setInitializeInFieldDeclaration() {

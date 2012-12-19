@@ -31,7 +31,7 @@ public abstract class AsyncFutureFactory {
     return result;
   }
 
-  public static <V> AsyncFuture<V> wrapException(Exception e) {
+  public static <V> AsyncFuture<V> wrapException(Throwable e) {
     final AsyncFutureResult<V> result = getInstance().createAsyncFutureResult();
     result.setException(e);
     return result;

@@ -425,9 +425,9 @@ public class ExpressionGenerator extends Generator {
    * x.putAt(a, 4) [4]
    */
   @Override
-  public void visitAssignmentExpression(GrAssignmentExpression expression) {
+  public void visitAssignmentExpression(final GrAssignmentExpression expression) {
     final GrExpression lValue = expression.getLValue();
-    GrExpression rValue = expression.getRValue();
+    final GrExpression rValue = expression.getRValue();
     final IElementType token = expression.getOperationToken();
 
     PsiElement realLValue = PsiUtil.skipParentheses(lValue, false);
@@ -486,14 +486,14 @@ public class ExpressionGenerator extends Generator {
       lValue.accept(this);
       builder.append(" = ");
 
-      final PsiType rType = getDeclaredType(rValue, context);
-      if (lType != null && rType != null && !TypesUtil.isAssignableByMethodCallConversion(lType, rType, expression)) {
-        builder.append('(');
-        writeType(builder, lType, expression);
-        builder.append(')');
-      }
       if (rValue != null) {
-        rValue.accept(this);
+        final PsiType rType = getDeclaredType(rValue, context);
+        wrapInCastIfNeeded(builder, getNotNullType(expression, lType), rType, expression, context, new StatementWriter() {
+          @Override
+          public void writeStatement(StringBuilder builder, ExpressionContext context) {
+            rValue.accept(ExpressionGenerator.this);
+          }
+        });
       }
     }
     else {
@@ -506,20 +506,20 @@ public class ExpressionGenerator extends Generator {
         builder.append(" = ");
 
         final PsiType rType = getDeclaredType((PsiMethod)resolved, resolveResult.getSubstitutor(), context);
-        if (lType != null && rType != null && !TypesUtil.isAssignableByMethodCallConversion(lType, rType, expression)) {
-          builder.append('(');
-          writeType(builder, lType, expression);
-          builder.append(')');
-        }
-        invokeMethodOn(
-          ((PsiMethod)resolved),
-          (GrExpression)lValue.copy(),
-          rValue == null ? GrExpression.EMPTY_ARRAY : new GrExpression[]{rValue},
-          GrNamedArgument.EMPTY_ARRAY,
-          EMPTY_ARRAY,
-          resolveResult.getSubstitutor(),
-          expression
-        );
+        wrapInCastIfNeeded(builder, getNotNullType(expression, lType),  rType, expression, context, new StatementWriter() {
+          @Override
+          public void writeStatement(StringBuilder builder, ExpressionContext context) {
+            invokeMethodOn(
+              ((PsiMethod)resolved),
+              (GrExpression)lValue.copy(),
+              rValue == null ? GrExpression.EMPTY_ARRAY : new GrExpression[]{rValue},
+              GrNamedArgument.EMPTY_ARRAY,
+              EMPTY_ARRAY,
+              resolveResult.getSubstitutor(),
+              expression
+            );
+          }
+        });
       }
       else {
         writeSimpleBinaryExpression(expression.getOpToken(), lValue, rValue);
@@ -915,12 +915,10 @@ public class ExpressionGenerator extends Generator {
     final GrExpression qualifier = referenceExpression.getQualifier();
     final GroovyResolveResult resolveResult = referenceExpression.advancedResolve();
     final PsiElement resolved = resolveResult.getElement();
+    final String referenceName = referenceExpression.getReferenceName();
 
     if (PsiUtil.isThisOrSuperRef(referenceExpression)) {
-      if (!context.isInAnonymousContext() && qualifier != null) {
-        qualifier.accept(this);
-      }
-      builder.append(referenceExpression.getReferenceName());
+      writeThisOrSuperRef(referenceExpression, qualifier, referenceName);
       return;
     }
 
@@ -939,8 +937,8 @@ public class ExpressionGenerator extends Generator {
     }
 
     //don't try to resolve local vars that are provided my this generator (they are listed in myUsedVarNames)
-    if (resolved == null && qualifier == null && context.myUsedVarNames.contains(referenceExpression.getReferenceName())) {
-      builder.append(referenceExpression.getReferenceName());
+    if (resolved == null && qualifier == null && context.myUsedVarNames.contains(referenceName)) {
+      builder.append(referenceName);
       return;
     }
 
@@ -965,7 +963,7 @@ public class ExpressionGenerator extends Generator {
       LOG.assertTrue(qualifier != null);
       builder.append("new ").append(GroovyCommonClassNames.ORG_CODEHAUS_GROOVY_RUNTIME_METHOD_CLOSURE).append('(');
       qualifier.accept(this);
-      builder.append(", \"").append(referenceExpression.getReferenceName()).append("\")");
+      builder.append(", \"").append(referenceName).append("\")");
       return;
     }
 
@@ -1018,7 +1016,7 @@ public class ExpressionGenerator extends Generator {
       }
       else {
         //unresolved reference
-        final String refName = referenceExpression.getReferenceName();
+        final String refName = referenceName;
         if (refName != null) {
           if (PsiUtil.isAccessedForWriting(referenceExpression)) {
             builder.append(refName);
@@ -1055,6 +1053,35 @@ public class ExpressionGenerator extends Generator {
       builder.append(')');
     }
 
+  }
+
+  private void writeThisOrSuperRef(GrReferenceExpression referenceExpression, GrExpression qualifier, String referenceName) {
+    if (!context.isInAnonymousContext() && qualifier != null) {
+      qualifier.accept(this);
+      builder.append('.');
+      builder.append(referenceName);
+    }
+    else if (getWrappingImplicitClass(referenceExpression) != null) {
+      final PsiClass contextClass;
+      if ("this".equals(referenceName)) {
+        final PsiElement _contextClass = referenceExpression.resolve();
+        if (_contextClass instanceof PsiClass) {
+          contextClass = (PsiClass)_contextClass;
+        }
+        else {
+          contextClass = null;
+        }
+        writeThisReference(contextClass, builder, context);
+      }
+      else { //super ref
+        //super ref is used without qualifier. So we should use context class as a qualifier
+        contextClass = PsiUtil.getContextClass(referenceExpression);
+        writeSuperReference(contextClass, builder, context);
+      }
+    }
+    else {
+      builder.append(referenceName);
+    }
   }
 
   private String createVarByInitializer(@NotNull GrExpression initializer) {
@@ -1226,7 +1253,7 @@ public class ExpressionGenerator extends Generator {
     final GrExpression[] exprArgs = argList.getExpressionArguments();
     final GrNamedArgument[] namedArgs = argList.getNamedArguments();
 
-    if (!PsiImplUtil.isSimpleArrayAccess(thisType, argTypes, manager, resolveScope, PsiUtil.isLValue(expression))) {
+    if (!PsiImplUtil.isSimpleArrayAccess(thisType, argTypes, expression, PsiUtil.isLValue(expression))) {
       final GroovyResolveResult candidate = PsiImplUtil.extractUniqueResult(expression.multiResolve(false));
       PsiElement element = candidate.getElement();
       if (element != null || !PsiUtil.isLValue(expression)) {                     //see the case of l-value in assignment expression

@@ -309,7 +309,7 @@ class MockGit implements Git {
   }
 
   static String commitMessageForCherryPick(GitCommit commit) {
-    "$commit.subject\n(cherry-picked from ${commit.shortHash.getString()})"
+    "$commit.subject\n\n(cherry-picked from ${commit.shortHash.getString()})"
   }
 
 }

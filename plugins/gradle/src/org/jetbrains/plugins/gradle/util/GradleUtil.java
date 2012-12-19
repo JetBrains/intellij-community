@@ -73,11 +73,11 @@ import java.util.concurrent.TimeUnit;
  */
 public class GradleUtil {
 
-  public static final String PATH_SEPARATOR = "/";
+  public static final String PATH_SEPARATOR            = "/";
+  public static final String SYSTEM_DIRECTORY_PATH_KEY = "GRADLE_USER_HOME";
 
   private static final NotNullLazyValue<GradleInstallationManager> INSTALLATION_MANAGER =
-    new NotNullLazyValue<GradleInstallationManager>()
-    {
+    new NotNullLazyValue<GradleInstallationManager>() {
       @NotNull
       @Override
       protected GradleInstallationManager compute() {
@@ -406,22 +406,9 @@ public class GradleUtil {
     if (result != null) {
       return result;
     }
-    String[] endingsToStrip = { "/", "!", ".jar" };
-    StringBuilder buffer = new StringBuilder();
     for (OrderRootType type : OrderRootType.getAllTypes()) {
       for (String url : library.getUrls(type)) {
-        buffer.setLength(0);
-        buffer.append(url);
-        for (String ending : endingsToStrip) {
-          if (buffer.lastIndexOf(ending) == buffer.length() - ending.length()) {
-            buffer.setLength(buffer.length() - ending.length());
-          }
-        }
-        final int i = buffer.lastIndexOf(PATH_SEPARATOR);
-        if (i < 0 || i >= buffer.length() - 1) {
-          continue;
-        }
-        String candidate = buffer.substring(i + 1);
+        String candidate = extractNameFromPath(url);
         if (!StringUtil.isEmpty(candidate)) {
           return candidate;
         }
@@ -429,6 +416,32 @@ public class GradleUtil {
     }
     assert false;
     return "unknown-lib";
+  }
+
+  @NotNull
+  public static String extractNameFromPath(@NotNull String path) {
+    String strippedPath = stripPath(path);
+    final int i = strippedPath.lastIndexOf(PATH_SEPARATOR);
+    final String result;
+    if (i < 0 || i >= strippedPath.length() - 1) {
+      result = strippedPath;
+    }
+    else {
+      result = strippedPath.substring(i + 1);
+    }
+    return result;
+  }
+
+  @NotNull
+  private static String stripPath(@NotNull String path) {
+    String[] endingsToStrip = { "/", "!", ".jar" };
+    StringBuilder buffer = new StringBuilder(path);
+    for (String ending : endingsToStrip) {
+      if (buffer.lastIndexOf(ending) == buffer.length() - ending.length()) {
+        buffer.setLength(buffer.length() - ending.length());
+      }
+    }
+    return buffer.toString();
   }
 
   /**
@@ -503,23 +516,34 @@ public class GradleUtil {
     return INSTALLATION_MANAGER.getValue().getGradleHome(project) != null;
   }
 
+  
   public static void executeProjectChangeAction(@NotNull Project project, @NotNull Object entityToChange, @NotNull Runnable task) {
     executeProjectChangeAction(project, Collections.singleton(entityToChange), task);
   }
   
-  public static void executeProjectChangeAction(@NotNull Project project, @NotNull Iterable<?> entitiesToChange, @NotNull Runnable task) {
-    final GradleProjectEntityChangeListener publisher = project.getMessageBus().syncPublisher(GradleProjectEntityChangeListener.TOPIC);
-    for (Object e : entitiesToChange) {
-      publisher.onChangeStart(e);
-    }
-    try {
-      task.run();
-    }
-    finally {
-      for (Object e : entitiesToChange) {
-        publisher.onChangeEnd(e);
+  public static void executeProjectChangeAction(@NotNull final Project project, @NotNull final Iterable<?> entitiesToChange, @NotNull final Runnable task) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            final GradleProjectEntityChangeListener publisher = project.getMessageBus().syncPublisher(GradleProjectEntityChangeListener.TOPIC);
+            for (Object e : entitiesToChange) {
+              publisher.onChangeStart(e);
+            }
+            try {
+              task.run();
+            }
+            finally {
+              for (Object e : entitiesToChange) {
+                publisher.onChangeEnd(e);
+              }
+            } 
+          }
+        });
       }
-    }
+    });
   }
   
   private interface TaskUnderProgress {

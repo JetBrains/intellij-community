@@ -61,6 +61,7 @@ public class FileAttributesReadingTest {
 
     final FileAttributes attributes = FileSystemUtil.getAttributes(file);
     assertNull(attributes);
+
     final String target = FileSystemUtil.resolveSymLink(file);
     assertNull(target);
   }
@@ -71,6 +72,9 @@ public class FileAttributesReadingTest {
     FileUtil.writeToFile(file, myTestData);
 
     assertFileAttributes(file);
+
+    final String target = FileSystemUtil.resolveSymLink(file);
+    assertEquals(file.getPath(), target);
   }
 
   @Test
@@ -86,6 +90,9 @@ public class FileAttributesReadingTest {
     if (SystemInfo.isWindows) {
       assertDirectoriesEqual(file);
     }
+
+    final String target = FileSystemUtil.resolveSymLink(file);
+    assertEquals(file.getPath(), target);
   }
 
   @Test
@@ -107,8 +114,7 @@ public class FileAttributesReadingTest {
     assertFileAttributes(new File(file.getPath() + StringUtil.repeat(File.separator, 3)));
     assertFileAttributes(new File(file.getPath().replace(File.separator, StringUtil.repeat(File.separator, 3))));
     assertFileAttributes(new File(file.getPath().replace(File.separator, File.separator + "." + File.separator)));
-    assertFileAttributes(new File(myTempDirectory,
-                                  File.separator + ".." + File.separator + myTempDirectory.getName() + File.separator + file.getName()));
+    assertFileAttributes(new File(myTempDirectory, File.separator + ".." + File.separator + myTempDirectory.getName() + File.separator + file.getName()));
 
     if (SystemInfo.isUnix) {
       final File backSlashFile = FileUtil.createTempFile(myTempDirectory, "test\\", "\\txt");
@@ -127,6 +133,9 @@ public class FileAttributesReadingTest {
     assertEquals(0, attributes.flags);
     assertEquals(0, attributes.length);
     assertTrue(attributes.isWritable());
+
+    final String target = FileSystemUtil.resolveSymLink(file);
+    assertEquals(file.getPath(), target);
   }
 
   @Test
@@ -205,7 +214,7 @@ public class FileAttributesReadingTest {
     assertEquals(0, attributes.length);
 
     final String target = FileSystemUtil.resolveSymLink(link);
-    assertNull(target);
+    assertNull(target, target);
   }
 
   @Test
@@ -237,12 +246,18 @@ public class FileAttributesReadingTest {
     assertEquals(0, attributes.flags);
     assertTrue(attributes.isWritable());
 
+    final String resolved1 = FileSystemUtil.resolveSymLink(junction);
+    assertEquals(SystemInfo.isWinVistaOrNewer ? target.getPath() : junction.getPath(), resolved1);
+
     FileUtil.delete(target);
 
     attributes = getAttributes(junction);
     assertEquals(FileAttributes.Type.DIRECTORY, attributes.type);
     assertEquals(0, attributes.flags);
     assertTrue(attributes.isWritable());
+
+    final String resolved2 = FileSystemUtil.resolveSymLink(junction);
+    assertEquals(SystemInfo.isWinVistaOrNewer ? null : junction.getPath(), resolved2);
   }
 
   @Test
@@ -277,6 +292,9 @@ public class FileAttributesReadingTest {
     if (SystemInfo.isWindows) {
       assertDirectoriesEqual(dir);
     }
+
+    final String target = FileSystemUtil.resolveSymLink(file);
+    assertEquals(file.getPath(), target);
   }
 
   @Test
@@ -289,6 +307,13 @@ public class FileAttributesReadingTest {
       final FileAttributes attributes = getAttributes(substRoot);
       assertEquals(FileAttributes.Type.DIRECTORY, attributes.type);
       assertDirectoriesEqual(substRoot);
+
+      final File[] children = substRoot.listFiles();
+      assertNotNull(children);
+      assertEquals(1, children.length);
+      final File file = children[0];
+      final String target = FileSystemUtil.resolveSymLink(file);
+      assertEquals(file.getPath(), target);
     }
     finally {
       IoTestUtil.deleteSubst(substRoot.getPath());
@@ -314,6 +339,9 @@ public class FileAttributesReadingTest {
     assertEquals(FileAttributes.Type.FILE, attributes.type);
     assertEquals(target.length(), attributes.length);
     assertTimestampsEqual(target.lastModified(), attributes.lastModified);
+
+    final String resolved = FileSystemUtil.resolveSymLink(link);
+    assertEquals(link.getPath(), resolved);
   }
 
   @NotNull

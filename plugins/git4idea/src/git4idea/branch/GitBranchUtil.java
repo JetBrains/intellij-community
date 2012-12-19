@@ -112,6 +112,7 @@ public class GitBranchUtil {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.REV_PARSE);
     handler.addParameters("--abbrev-ref", "HEAD");
     handler.setNoSSH(true);
+    handler.setSilent(true);
     try {
       String name = handler.run();
       if (!name.equals("HEAD")) {

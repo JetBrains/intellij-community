@@ -17,14 +17,10 @@ package org.jetbrains.plugins.groovy.dgm;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.ResolveState;
+import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 
 import java.util.List;
@@ -37,7 +33,7 @@ public class DGMMemberContributor extends NonCodeMembersContributor {
   public void processDynamicElements(@NotNull PsiType qualifierType,
                                      PsiClass aClass,
                                      PsiScopeProcessor processor,
-                                     GroovyPsiElement place,
+                                     PsiElement place,
                                      ResolveState state) {
     Project project = place.getProject();
     GlobalSearchScope resolveScope = place.getResolveScope();

@@ -119,7 +119,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
           for (PsiMethod overridden : isGetter ? getters : setters) {
             if (InheritanceUtil.isInheritorOrSelf(myClass, ancestor, true)) {
               conflicts.putValue(overridden, "There is already a " +
-                                             CommonRefactoringUtil.htmlEmphasize(RefactoringUIUtil.getDescription(overridden, true)) +
+                                             RefactoringUIUtil.getDescription(overridden, true) +
                                              " which would hide generated " +
                                              (isGetter ? "getter" : "setter") + " for " + place.getText());
               break;
@@ -168,7 +168,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
               }
 
               if (InheritanceUtil.isInheritorOrSelf(inheritor, myClass, true)) {
-                conflicts.putValue(existing, "There is already a " + CommonRefactoringUtil.htmlEmphasize(RefactoringUIUtil.getDescription(existing, true)) + " which would be hidden by generated " + (isGetter ? "getter" : "setter"));
+                conflicts.putValue(existing, "There is already a " + RefactoringUIUtil.getDescription(existing, true) + " which would be hidden by generated " + (isGetter ? "getter" : "setter"));
                 break;
               }
             }

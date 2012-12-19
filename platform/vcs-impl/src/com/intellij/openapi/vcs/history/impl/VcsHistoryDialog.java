@@ -19,14 +19,11 @@ import com.intellij.diff.Block;
 import com.intellij.diff.FindBlock;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffPanel;
 import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -140,7 +137,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
 
     myList.getEmptyText().setText(VcsBundle.message("history.empty"));
 
-    myDiffPanel = DiffManager.getInstance().createDiffPanel(getWindow(), myProject,getDisposable());
+    myDiffPanel = DiffManager.getInstance().createDiffPanel(getWindow(), myProject,getDisposable(), null);
     myDiffPanel.setRequestFocus(false);
 
     myRevisions.addAll(session.getRevisionList());

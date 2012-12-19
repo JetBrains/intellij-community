@@ -311,7 +311,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
           else {
             annotationFiles.add(newXml);
             myExternalAnnotations.put(getFQN(packageName, fromFile), annotationFiles);
-            annotateExternally(listOwner, annotationFQName, existingXml, fromFile, value);
+            annotateExternally(listOwner, annotationFQName, newXml, fromFile, value);
           }
         }
 

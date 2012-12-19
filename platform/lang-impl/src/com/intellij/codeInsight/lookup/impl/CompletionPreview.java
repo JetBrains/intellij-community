@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -65,7 +66,7 @@ public class CompletionPreview {
     }, "preview");
     final RangeHighlighter highlighter = myLookup.getEditor().getMarkupModel()
       .addRangeHighlighter(caret, previewEnd, HighlighterLayer.LAST,
-                           new TextAttributes(Color.LIGHT_GRAY, null, null, null, Font.PLAIN),
+                           new TextAttributes(JBColor.GRAY, null, null, null, Font.PLAIN),
                            HighlighterTargetArea.EXACT_RANGE);
     
     myUninstaller = new Disposable() {
@@ -121,11 +122,21 @@ public class CompletionPreview {
     } else {
       String tailText = presentation.getTailText();
       if (tailText != null && tailText.startsWith("(") && tailText.contains(")")) {
-        text += "()";
+        Editor editor = lookup.getEditor();
+        CharSequence seq = editor.getDocument().getCharsSequence();
+        int caret = editor.getCaretModel().getOffset();
+        if (caret < seq.length() && seq.charAt(caret) != '(') {
+          text += "()";
+        }
       }
     }
 
-    new CompletionPreview(lookup, text, lookup.itemPattern(item));
+    String prefix = lookup.itemPattern(item);
+    if (prefix.length() > text.length()) {
+      return;
+    }
+    
+    new CompletionPreview(lookup, text, prefix);
   }
 
   public void uninstallPreview() {

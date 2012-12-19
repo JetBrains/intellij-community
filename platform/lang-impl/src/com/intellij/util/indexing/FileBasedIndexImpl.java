@@ -47,7 +47,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -113,7 +112,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   private static final int REBUILD_IN_PROGRESS = 3;
   private static final Map<ID<?, ?>, AtomicInteger> ourRebuildStatus = new THashMap<ID<?, ?>, AtomicInteger>();
 
-  private final VirtualFileManagerEx myVfManager;
+  private final VirtualFileManager myVfManager;
   private final FileDocumentManager myFileDocumentManager;
   private final FileTypeManager myFileTypeManager;
   private final ConcurrentHashSet<ID<?, ?>> myUpToDateIndices = new ConcurrentHashSet<ID<?, ?>>();
@@ -131,7 +130,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"}) private volatile boolean myInitialized;
     // need this variable for memory barrier
 
-  public FileBasedIndexImpl(final VirtualFileManagerEx vfManager,
+  public FileBasedIndexImpl(VirtualFileManager vfManager,
                             FileDocumentManager fdm,
                             FileTypeManager fileTypeManager,
                             @NotNull MessageBus bus,
@@ -1770,7 +1769,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
 
     @Nullable
-    public static SilentProgressIndicator create(){
+    private static SilentProgressIndicator create(){
       final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       return indicator != null? new SilentProgressIndicator(indicator) : null;
     }
@@ -1880,7 +1879,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
               }
             }
           }
-          // For 'normal indices' schedule the file for update and stop iteration if at least one index accepts it 
+          // For 'normal indices' schedule the file for update and stop iteration if at least one index accepts it
           if (!isTooLarge(file)) {
             for (ID<?, ?> indexId : myIndices.keySet()) {
               if (needsFileContentLoading(indexId) && getInputFilter(indexId).acceptInput(file)) {
@@ -2211,7 +2210,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         }
       }
       else {
-        if (myProgressIndicator != null) {
+        if (myProgressIndicator != null) { // once for dir is cheap enough
           myProgressIndicator.checkCanceled();
           myProgressIndicator.setText("Scanning files to index");
           myProgressIndicator.setText2(file.getPresentableUrl());
@@ -2386,12 +2385,13 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
-        if (indicator != null) {
-          indicator.checkCanceled();
-          indicator.setText2(file.getPresentableUrl());
-        }
+        if (indicator != null) indicator.checkCanceled();
+
         if (!file.isDirectory()) {
           processor.processFile(file);
+        } else if (indicator != null) {
+          // once for directory should be cheap enough
+          indicator.setText2(file.getPresentableUrl());
         }
         return true;
       }

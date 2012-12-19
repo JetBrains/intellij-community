@@ -15,7 +15,7 @@
  */
 package com.intellij.util.ui;
 
-import com.intellij.ui.DarculaColors;
+import com.intellij.ui.JBColor;
 
 import java.awt.*;
 
@@ -23,5 +23,5 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class PlatformColors {
-  public static final Color BLUE = UIUtil.isUnderDarcula() ? DarculaColors.BLUE : Color.BLUE;
+  public static final Color BLUE = JBColor.BLUE;
 }

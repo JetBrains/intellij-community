@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.ui.JBColor;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
@@ -61,7 +62,7 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
 
     final boolean hasErrors = errorProblems.size() > 0;
     if (hasErrors) {
-      component.setForeground(Color.RED);
+      component.setForeground(JBColor.RED);
       if (component instanceof JComponent) {
         ((JComponent)component).setToolTipText(TooltipUtils.getTooltipText(errorProblems));
       }
@@ -79,7 +80,7 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
     }
     else if (warningProblems.size() > 0) {
       component.setBackground(BaseControl.WARNING_BACKGROUND);
-      if(isSelected) component.setForeground(Color.BLACK);
+      if(isSelected) component.setForeground(JBColor.foreground);
     }
 
     final List<DomElementProblemDescriptor> errorDescriptors =

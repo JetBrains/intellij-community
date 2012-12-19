@@ -4,7 +4,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.android.builder.AndroidBuildTarget;
+import org.jetbrains.jps.android.builder.AndroidPackagingBuildTarget;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.android.model.impl.JpsAndroidFinalPackageElement;
 import org.jetbrains.jps.builders.BuildTarget;
@@ -43,7 +43,7 @@ public class AndroidFinalPackageElementBuilder extends LayoutElementBuilderServi
   public Collection<? extends BuildTarget<?>> getDependencies(@NotNull JpsAndroidFinalPackageElement element, TargetOutputIndex outputIndex) {
     final JpsModule module = element.getModuleReference().resolve();
     return module != null
-           ? Collections.singletonList(new AndroidBuildTarget(AndroidBuildTarget.TargetType.PACKAGING, module))
+           ? Collections.singletonList(new AndroidPackagingBuildTarget(module))
            : Collections.<BuildTarget<?>>emptyList();
   }
 

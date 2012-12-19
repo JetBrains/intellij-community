@@ -23,8 +23,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.impl.external.BinaryDiffTool;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -177,7 +175,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
     int newIndex = -1;
     final List<Change> changeList = new ArrayList<Change>();
     for (Change change : changes) {
-      if (! directoryOrBinary(change)) {
+      if (! directoryOrBinary(change)) {    //todo
         changeList.add(change);
         if ((newIndex == -1) && selectionChecker.value(change)) {
           newIndex = cnt;
@@ -197,10 +195,10 @@ public class ShowDiffAction extends AnAction implements DumbAware {
 
   public static void showDiffForChange(final Change[] changes, int index, final Project project, @NotNull ShowDiffUIContext context) {
     final Change selected = index >= 0 ? changes[index] : null;
-    if (isBinaryDiff(project, changes, index)) {
+    /*if (isBinaryDiff(project, changes, index)) {
       showBinaryDiff(project, changes[index]);
       return;
-    }
+    }*/
     showDiffForChange(Arrays.asList(changes), new Condition<Change>() {
                         @Override
                         public boolean value(final Change change) {
@@ -317,10 +315,10 @@ public class ShowDiffAction extends AnAction implements DumbAware {
     if (path.isDirectory()) {
       return ! change.hasOtherLayers();
     }
-    final FileType type = path.getFileType();
+    /*final FileType type = path.getFileType();
     if ((! FileTypes.UNKNOWN.equals(type)) && (type.isBinary())) {
       return true;
-    }
+    }*/
     return false;
   }
 

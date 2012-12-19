@@ -1,7 +1,7 @@
 package org.jetbrains.jps.android;
 
-import com.android.sdklib.IAndroidTarget;
 import com.android.SdkConstants;
+import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
@@ -17,28 +17,27 @@ import org.jetbrains.android.util.AndroidCompilerMessageKind;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.android.model.*;
 import org.jetbrains.jps.android.model.impl.JpsAndroidFinalPackageElement;
-import org.jetbrains.jps.builders.storage.BuildDataPaths;
-import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
-import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactUtil;
-import org.jetbrains.jps.model.JpsElement;
-import org.jetbrains.jps.model.artifact.JpsArtifact;
-import org.jetbrains.jps.model.artifact.JpsArtifactService;
-import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
-import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
-import org.jetbrains.jps.util.JpsPathUtil;
-import org.jetbrains.jps.ModuleChunk;
-import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.android.model.impl.JpsAndroidModuleExtensionImpl;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
+import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.incremental.ModuleLevelBuilder;
 import org.jetbrains.jps.incremental.ProjectBuildException;
+import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
+import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactUtil;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
+import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.JpsSimpleElement;
+import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.jetbrains.jps.model.artifact.JpsArtifactService;
+import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
@@ -48,6 +47,8 @@ import org.jetbrains.jps.model.library.JpsLibraryRoot;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.*;
+import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.*;
 import java.util.*;
@@ -166,7 +167,13 @@ public class AndroidJpsUtil {
   @NotNull
   public static File getDirectoryForIntermediateArtifacts(@NotNull CompileContext context,
                                                           @NotNull JpsModule module) {
-    final File androidStorage = new File(context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot(), ANDROID_STORAGE_DIR);
+    return getDirectoryForIntermediateArtifacts(context.getProjectDescriptor().dataManager.getDataPaths(), module);
+  }
+
+  @NotNull
+  public static File getDirectoryForIntermediateArtifacts(@NotNull BuildDataPaths dataPaths,
+                                                           @NotNull JpsModule module) {
+    final File androidStorage = new File(dataPaths.getDataStorageRoot(), ANDROID_STORAGE_DIR);
     return new File(new File(androidStorage, INTERMEDIATE_ARTIFACTS_STORAGE), module.getName());
   }
 
@@ -199,6 +206,14 @@ public class AndroidJpsUtil {
   public static Set<String> getExternalLibraries(@NotNull CompileContext context,
                                                  @NotNull JpsModule module,
                                                  @NotNull AndroidPlatform platform) {
+    final BuildDataPaths paths = context.getProjectDescriptor().dataManager.getDataPaths();
+    return getExternalLibraries(paths, module, platform);
+  }
+
+  @NotNull
+  public static Set<String> getExternalLibraries(@NotNull BuildDataPaths paths,
+                                                 @NotNull JpsModule module,
+                                                 @Nullable AndroidPlatform platform) {
     final Set<String> result = new HashSet<String>();
     final AndroidDependencyProcessor processor = new AndroidDependencyProcessor() {
       @Override
@@ -211,8 +226,11 @@ public class AndroidJpsUtil {
         return type == AndroidDependencyType.EXTERNAL_LIBRARY;
       }
     };
-    processClasspath(context, module, processor);
-    addAnnotationsJarIfNecessary(platform, result);
+    processClasspath(paths, module, processor);
+
+    if (platform != null) {
+      addAnnotationsJarIfNecessary(platform, result);
+    }
     return result;
   }
 
@@ -230,14 +248,21 @@ public class AndroidJpsUtil {
   public static void processClasspath(@NotNull CompileContext context,
                                       @NotNull JpsModule module,
                                       @NotNull AndroidDependencyProcessor processor) {
+    final BuildDataPaths paths = context.getProjectDescriptor().dataManager.getDataPaths();
+    processClasspath(paths, module, processor);
+  }
+
+  public static void processClasspath(@NotNull BuildDataPaths paths,
+                                      @NotNull JpsModule module,
+                                      @NotNull AndroidDependencyProcessor processor) {
     // In a module imported from Maven dependencies are transitive, so we don't need to traverse all dependency tree
     // and compute all jars referred by library modules. Moreover it would be incorrect,
     // because Maven has dependency resolving algorithm based on versioning
     final boolean recursive = shouldProcessDependenciesRecursively(module);
-    processClasspath(context, module, processor, new HashSet<String>(), false, recursive);
+    processClasspath(paths, module, processor, new HashSet<String>(), false, recursive);
   }
 
-  private static void processClasspath(@NotNull CompileContext context,
+  private static void processClasspath(@NotNull BuildDataPaths paths,
                                        @NotNull final JpsModule module,
                                        @NotNull final AndroidDependencyProcessor processor,
                                        @NotNull final Set<String> visitedModules,
@@ -246,8 +271,6 @@ public class AndroidJpsUtil {
     if (!visitedModules.add(module.getName())) {
       return;
     }
-    final ProjectPaths paths = context.getProjectPaths();
-
     if (processor.isToProcess(AndroidDependencyType.EXTERNAL_LIBRARY)) {
       for (JpsDependencyElement item : JpsJavaExtensionService.getInstance().getDependencies(module, JpsJavaClasspathKind.PRODUCTION_RUNTIME, exportedLibrariesOnly)) {
         if (item instanceof JpsLibraryDependency) {
@@ -277,32 +300,28 @@ public class AndroidJpsUtil {
         if (depModule == null) continue;
         final JpsAndroidModuleExtension depExtension = getExtension(depModule);
         final boolean depLibrary = depExtension != null && depExtension.isLibrary();
-        final File depClassDir = paths.getModuleOutputDir(depModule, false);
+        final File depClassDir = new ModuleBuildTarget(depModule, JavaModuleBuildTargetType.PRODUCTION).getOutputDir();
 
         if (depLibrary) {
           if (processor.isToProcess(AndroidDependencyType.ANDROID_LIBRARY_PACKAGE)) {
-            final File intArtifactsDir = getDirectoryForIntermediateArtifacts(context, depModule);
+            final File intArtifactsDir = getDirectoryForIntermediateArtifacts(paths, depModule);
             final File packagedClassesJar = new File(intArtifactsDir, AndroidCommonUtils.CLASSES_JAR_FILE_NAME);
-
-            if (packagedClassesJar.isFile()) {
-              processor.processAndroidLibraryPackage(packagedClassesJar);
-            }
+            processor.processAndroidLibraryPackage(packagedClassesJar);
           }
           if (processor.isToProcess(AndroidDependencyType.ANDROID_LIBRARY_OUTPUT_DIRECTORY)) {
-            if (depClassDir != null && depClassDir.isDirectory()) {
+            if (depClassDir != null) {
               processor.processAndroidLibraryOutputDirectory(depClassDir);
             }
           }
         }
         else if (processor.isToProcess(AndroidDependencyType.JAVA_MODULE_OUTPUT_DIR) &&
                  depExtension == null &&
-                 depClassDir != null &&
-                 depClassDir.isDirectory()) {
+                 depClassDir != null) {
           // do not support android-app->android-app compile dependencies
           processor.processJavaModuleOutputDirectory(depClassDir);
         }
         if (recursive) {
-          processClasspath(context, depModule, processor, visitedModules, !depLibrary || exportedLibrariesOnly, recursive);
+          processClasspath(paths, depModule, processor, visitedModules, !depLibrary || exportedLibrariesOnly, recursive);
         }
       }
     }
@@ -329,13 +348,15 @@ public class AndroidJpsUtil {
 
   @Nullable
   public static IAndroidTarget parseAndroidTarget(@NotNull JpsSdk<JpsSimpleElement<JpsAndroidSdkProperties>> sdk,
-                                                  @NotNull CompileContext context,
-                                                  @NotNull String builderName) {
+                                                  @Nullable CompileContext context,
+                                                  String builderName) {
     JpsAndroidSdkProperties sdkProperties = sdk.getSdkProperties().getData();
     final String targetHashString = sdkProperties.getBuildTargetHashString();
     if (targetHashString == null) {
-      context.processMessage(new CompilerMessage(builderName, BuildMessage.Kind.ERROR,
-                                                 "Cannot parse SDK " + sdk.getParent().getName() + ": build target is not specified"));
+      if (context != null) {
+        context.processMessage(new CompilerMessage(builderName, BuildMessage.Kind.ERROR,
+                                                   "Cannot parse SDK " + sdk.getParent().getName() + ": build target is not specified"));
+      }
       return null;
     }
 
@@ -344,16 +365,21 @@ public class AndroidJpsUtil {
 
     if (manager == null) {
       final String message = log.getErrorMessage();
-      context.processMessage(new CompilerMessage(builderName, BuildMessage.Kind.ERROR,
-                                                 "Android SDK is parsed incorrectly." +
-                                                 (message.length() > 0 ? " Parsing log:\n" + message : "")));
+      if (context != null) {
+        context.processMessage(new CompilerMessage(builderName, BuildMessage.Kind.ERROR,
+                                                   "Android SDK is parsed incorrectly." +
+                                                   (message.length() > 0 ? " Parsing log:\n" + message : "")));
+      }
       return null;
     }
 
     final IAndroidTarget target = manager.getTargetFromHashString(targetHashString);
     if (target == null) {
-      context.processMessage(new CompilerMessage(builderName, BuildMessage.Kind.ERROR,
-                                                 "Cannot parse SDK '" + sdk.getParent().getName() + "': unknown target " + targetHashString));
+      if (context != null) {
+        context.processMessage(new CompilerMessage(builderName, BuildMessage.Kind.ERROR,
+                                                   "Cannot parse SDK '" + sdk.getParent().getName() +
+                                                   "': unknown target " + targetHashString));
+      }
       return null;
     }
     return target;
@@ -432,19 +458,23 @@ public class AndroidJpsUtil {
 
   @Nullable
   public static AndroidPlatform getAndroidPlatform(@NotNull JpsModule module,
-                                                   @NotNull CompileContext context,
-                                                   @NotNull String builderName) {
+                                                   @Nullable CompileContext context,
+                                                   String builderName) {
     final JpsSdk<JpsSimpleElement<JpsAndroidSdkProperties>> sdk = module.getSdk(JpsAndroidSdkType.INSTANCE);
     if (sdk == null) {
-      context.processMessage(new CompilerMessage(builderName, BuildMessage.Kind.ERROR,
-                                                 AndroidJpsBundle.message("android.jps.errors.sdk.not.specified", module.getName())));
+      if (context != null) {
+        context.processMessage(new CompilerMessage(builderName, BuildMessage.Kind.ERROR,
+                                                   AndroidJpsBundle.message("android.jps.errors.sdk.not.specified", module.getName())));
+      }
       return null;
     }
 
     final IAndroidTarget target = parseAndroidTarget(sdk, context, builderName);
     if (target == null) {
-      context.processMessage(new CompilerMessage(builderName, BuildMessage.Kind.ERROR,
-                                                 AndroidJpsBundle.message("android.jps.errors.sdk.invalid", module.getName())));
+      if (context != null) {
+        context.processMessage(new CompilerMessage(builderName, BuildMessage.Kind.ERROR,
+                                                   AndroidJpsBundle.message("android.jps.errors.sdk.invalid", module.getName())));
+      }
       return null;
     }
     return new AndroidPlatform(sdk, target);

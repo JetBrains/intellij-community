@@ -22,7 +22,6 @@ import com.intellij.execution.PsiLocation;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit2.info.MethodLocation;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -37,8 +36,7 @@ public class TestMethodConfigurationProducer extends JUnitConfigurationProducer 
 
   protected RunnerAndConfigurationSettings createConfigurationByElement(final Location location, final ConfigurationContext context) {
     final Project project = location.getProject();
-    final PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context.getDataContext());
-    if (elements != null && PatternConfigurationProducer.collectTestMembers(elements).size() > 1) {
+    if (PatternConfigurationProducer.isMultipleElementsSelected(context)) {
       return null;
     }
     myMethodLocation = getTestMethod(location);

@@ -158,4 +158,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testUncheckedWarningIDEA60166() throws Exception { doTest(true, false); }
   public void testUncheckedWarningIDEA21432() throws Exception { doTest(true, false); }
   public void testUncheckedWarningIDEA26738() throws Exception { doTest(true, false); }
+  public void testDefaultMethodVisibility() throws Exception { doTest(true, false); }
+  public void testEnclosingInstance() throws Exception { doTest(false, false); }
+  public void testWrongArgsAndUnknownTypeParams() throws Exception { doTest(false, false); }
 }

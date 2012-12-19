@@ -29,17 +29,21 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<StubElement> implements StubElement<T> {
-  private final List<StubElement> myChildren = new SmartList<StubElement>();
+  private SmartList<StubElement> myChildren = null;
   private final IStubElementType myElementType;
   private volatile T myPsi;
 
+  @SuppressWarnings("unchecked")
   protected StubBase(final StubElement parent, final IStubElementType elementType) {
     super(parent);
     myElementType = elementType;
     if (parent != null) {
+      if (((StubBase)parent).myChildren == null)
+        ((StubBase)parent).myChildren = new SmartList<StubElement>();
       ((StubBase)parent).myChildren.add(this);
     }
   }
@@ -50,7 +54,11 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public List<StubElement> getChildrenStubs() {
+    if (myChildren == null)
+      return Collections.emptyList();
+
     return myChildren;
   }
 

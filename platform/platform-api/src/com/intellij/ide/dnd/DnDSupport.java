@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -50,7 +51,8 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
                      DnDDropActionHandler dropActionHandler,
                      Runnable cleanUpCallback,
                      boolean asTarget,
-                     boolean asSource) {
+                     boolean asSource,
+                     boolean asNativeTarget) {
     myComponent = component;
     myBeanProvider = beanProvider;
     myImageProvider = imageProvider;
@@ -62,7 +64,7 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
     myAsTarget = asTarget;
     myAsSource = asSource;
     if (myAsTarget) {
-      DnDManager.getInstance().registerTarget(this, myComponent);
+      DnDManager.getInstance().registerTarget(asNativeTarget ? new DnDNativeTargetWrapper(this) : this, myComponent);
     }
     if (myAsSource) {
       DnDManager.getInstance().registerSource(this, myComponent);
@@ -149,10 +151,39 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
     }
   }
 
+  private static class DnDNativeTargetWrapper implements DnDNativeTarget {
+    @NotNull private final DnDTarget myTarget;
+
+    private DnDNativeTargetWrapper(@NotNull DnDTarget target) {
+      myTarget = target;
+    }
+
+    @Override
+    public void cleanUpOnLeave() {
+      myTarget.cleanUpOnLeave();
+    }
+
+    @Override
+    public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
+      myTarget.updateDraggedImage(image, dropPoint, imageOffset);
+    }
+
+    @Override
+    public void drop(DnDEvent event) {
+      myTarget.drop(event);
+    }
+
+    @Override
+    public boolean update(DnDEvent event) {
+      return myTarget.update(event);
+    }
+  }
+
   public static DnDSupportBuilder createBuilder(JComponent component) {
     final JComponent myComponent = component;
     final Ref<Boolean> asTarget = Ref.create(true);
     final Ref<Boolean> asSource = Ref.create(true);
+    final Ref<Boolean> asNativeTarget = Ref.create(false);
     final Ref<Function<DnDActionInfo, DnDImage>> imageProvider = Ref.create(null);
     final Ref<Function<DnDActionInfo, DnDDragStartBean>> beanProvider = Ref.create(null);
     final Ref<Runnable> dropEnded = Ref.create(null);
@@ -172,6 +203,12 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
       @Override
       public DnDSupportBuilder disableAsSource() {
         asSource.set(false);
+        return this;
+      }
+
+      @Override
+      public DnDSupportBuilder enableAsNativeTarget() {
+        asNativeTarget.set(true);
         return this;
       }
 
@@ -235,7 +272,8 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
                           dropActionHandler.get(),
                           cleanUp.get(),
                           asSource.get(),
-                          asTarget.get());
+                          asTarget.get(),
+                          asNativeTarget.get());
       }
     };
   }

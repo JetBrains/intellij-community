@@ -74,6 +74,9 @@
     <group id="Git.LogContextMenu">
       <separator/>
     </group>
+
+    <action id="Git.CherryPick" class="git4idea.cherrypick.GitCherryPickAction" text="Cherry-Pick" icon="Git4ideaIcons.CherryPick" anchor="First"/>
+
   </actions>
 
   <project-components>
@@ -90,6 +93,8 @@
     <checkoutProvider implementation="git4idea.checkout.GitCheckoutProvider"/>
     <vcsPopupProvider implementation="git4idea.actions.GitQuickListContentProvider"/>
     <vcsCheckinHandlerFactory implementation="git4idea.checkin.GitCheckinHandlerFactory"/>
+    <checkinHandlerFactory implementation="git4idea.checkin.UnresolvedMergeCheckFactory"/>
+
     <vcsChangesViewRefresher implementation="git4idea.changes.GitChangesViewRefresher" />
 
     <projectService

@@ -15,8 +15,9 @@
  */
 package org.jetbrains.android.compiler;
 
-import com.android.sdklib.IAndroidTarget;
 import com.android.SdkConstants;
+import com.android.sdklib.IAndroidTarget;
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -63,6 +64,9 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
   }
 
   public static boolean isToCompileModule(Module module, AndroidFacetConfiguration configuration) {
+    if (CompilerWorkspaceConfiguration.getInstance(module.getProject()).useOutOfProcessBuild()) {
+      return true;
+    }
     if (!(configuration.RUN_PROCESS_RESOURCES_MAVEN_TASK && AndroidMavenUtil.isMavenizedModule(module))) {
       return true;
     }

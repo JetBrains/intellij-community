@@ -17,6 +17,7 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.text.CharsetUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -74,24 +75,31 @@ import java.util.Map;
  * @author Guillaume LAFORGE
  */
 public class CharsetToolkit {
-  @NonNls public static final String UTF8 = "UTF-8";
+  @NonNls public static final String UTF8 = CharsetUtil.UTF8;
   public static final Charset UTF8_CHARSET = Charset.forName(UTF8);
   public static final Charset UTF_16LE_CHARSET = Charset.forName("UTF-16LE");
   public static final Charset UTF_16BE_CHARSET = Charset.forName("UTF-16BE");
+  public static final Charset UTF_32BE_CHARSET = Charset.forName("UTF-32BE");
+  public static final Charset UTF_32LE_CHARSET = Charset.forName("UTF-32LE");
+  public static final Charset UTF_16_CHARSET = Charset.forName("UTF-16");
 
   private final byte[] buffer;
   private final Charset defaultCharset;
   private boolean enforce8Bit = false;
 
-  public static final byte[] UTF8_BOM = {0xffffffef, 0xffffffbb, 0xffffffbf, };
+  public static final byte[] UTF8_BOM = CharsetUtil.UTF8_BOM;
   public static final byte[] UTF16LE_BOM = {-1, -2, };
   public static final byte[] UTF16BE_BOM = {-2, -1, };
+  public static final byte[] UTF32BE_BOM = {0, 0, -2, -1, };
+  public static final byte[] UTF32LE_BOM = {-1, -2, 0, 0 };
   @NonNls public static final String FILE_ENCODING_PROPERTY = "file.encoding";
 
   @NonNls private static final Map<Charset, byte[]> CHARSET_TO_BOM = new THashMap<Charset, byte[]>(2);
   static {
     CHARSET_TO_BOM.put(UTF_16LE_CHARSET, UTF16LE_BOM);
     CHARSET_TO_BOM.put(UTF_16BE_CHARSET, UTF16BE_BOM);
+    CHARSET_TO_BOM.put(UTF_32BE_CHARSET, UTF32BE_BOM);
+    CHARSET_TO_BOM.put(UTF_32LE_CHARSET, UTF32LE_BOM);
   }
 
   /**
@@ -320,6 +328,8 @@ public class CharsetToolkit {
   @Nullable
   public static Charset guessFromBOM(@NotNull byte[] buffer) {
     if (hasUTF8Bom(buffer)) return UTF8_CHARSET;
+    if (hasUTF32BEBom(buffer)) return UTF_32BE_CHARSET;
+    if (hasUTF32LEBom(buffer)) return UTF_32LE_CHARSET;
     if (hasUTF16LEBom(buffer)) return UTF_16LE_CHARSET;
     if (hasUTF16BEBom(buffer)) return UTF_16BE_CHARSET;
 
@@ -432,7 +442,7 @@ public class CharsetToolkit {
    * @return true if the buffer has a BOM for UTF8.
    */
   public static boolean hasUTF8Bom(@NotNull byte[] bom) {
-    return ArrayUtil.startsWith(bom, UTF8_BOM);
+    return CharsetUtil.hasUTF8Bom(bom);
   }
 
   /**
@@ -456,6 +466,12 @@ public class CharsetToolkit {
   public static boolean hasUTF16BEBom(@NotNull byte[] bom) {
     return ArrayUtil.startsWith(bom, UTF16BE_BOM);
   }
+  public static boolean hasUTF32BEBom(@NotNull byte[] bom) {
+    return ArrayUtil.startsWith(bom, UTF32BE_BOM);
+  }
+  public static boolean hasUTF32LEBom(@NotNull byte[] bom) {
+    return ArrayUtil.startsWith(bom, UTF32LE_BOM);
+  }
 
   /**
    * Retrieves all the available <code>Charset</code>s on the platform,
@@ -471,17 +487,18 @@ public class CharsetToolkit {
 
   @NotNull
   public static byte[] getUtf8Bytes(@NotNull String s) {
-    try {
-      return s.getBytes(UTF8);
-    }
-    catch (UnsupportedEncodingException e) {
-      throw new RuntimeException("UTF-8 must be supported", e);
-    }
+    return CharsetUtil.getUtf8Bytes(s);
   }
 
   public static int getBOMLength(@NotNull byte[] content, Charset charset) {
     if (charset != null && charset.name().contains(UTF8) && hasUTF8Bom(content)) {
       return UTF8_BOM.length;
+    }
+    if (hasUTF32BEBom(content)) {
+      return UTF32BE_BOM.length;
+    }
+    if (hasUTF32BEBom(content)) {
+      return UTF32BE_BOM.length;
     }
     if (hasUTF16LEBom(content)) {
       return UTF16LE_BOM.length;
@@ -502,7 +519,7 @@ public class CharsetToolkit {
     return bom != null && charset.equals(UTF8_CHARSET) && Arrays.equals(bom, UTF8_BOM);
   }
 
-  public static Charset forName(String name) {
+  public static Charset forName(@Nullable String name) {
     Charset charset = null;
     if (name != null) {
       try {
@@ -519,37 +536,94 @@ public class CharsetToolkit {
     return charset;
   }
 
+  private static final byte FF = (byte)0xff;
+  private static final byte FE = (byte)0xfe;
+  private static final byte EF = (byte)0xef;
+  private static final byte BB = (byte)0xbb;
+  private static final byte BF = (byte)0xbf;
   @NotNull
   public static InputStream inputStreamSkippingBOM(@NotNull InputStream stream) throws IOException {
     assert stream.markSupported() :stream;
-    stream.mark(3);
+    stream.mark(4);
     boolean mustReset = true;
     try {
       int ret = stream.read();
       if (ret == -1) {
-        return stream;
+        return stream; // no bom
       }
       byte b0 = (byte)ret;
-      if (b0 != UTF8_BOM[0] && b0 != UTF16LE_BOM[0] && b0 != UTF16BE_BOM[0]) return stream;
+      if (b0 != EF && b0 != FF && b0 != FE && b0 != 0) return stream; // no bom
 
       ret = stream.read();
       if (ret == -1) {
-        return stream;
+        return stream; // no bom
       }
       byte b1 = (byte)ret;
-      if (b0 == UTF16LE_BOM[0] && b1 == UTF16LE_BOM[1]) { mustReset = false; return stream; }
-      if (b0 == UTF16BE_BOM[0] && b1 == UTF16BE_BOM[1]) { mustReset = false; return stream; }
-      if (b0 != UTF8_BOM[0] || b1 != UTF8_BOM[1]) {
+      if (b0 == FF && b1 == FE) {
+        stream.mark(2);
+        ret = stream.read();
+        if (ret == -1) {
+          return stream;  // utf-16 LE
+        }
+        byte b2 = (byte)ret;
+        if (b2 != 0) {
+          return stream; // utf-16 LE
+        }
+        ret = stream.read();
+        if (ret == -1) {
+          return stream;
+        }
+        byte b3 = (byte)ret;
+        if (b3 != 0) {
+          return stream; // utf-16 LE
+        }
+
+        // utf-32 LE
+        mustReset = false;
+        return stream;
+      }
+      if (b0 == FE && b1 == FF) {
+        mustReset = false;
+        return stream; // utf-16 BE
+      }
+      if (b0 == EF && b1 == BB) {
+        ret = stream.read();
+        if (ret == -1) {
+          return stream; // no bom
+        }
+        byte b2 = (byte)ret;
+        if (b2 == BF) {
+          mustReset = false;
+          return stream; // utf-8 bom
+        }
+
+        // no bom
         return stream;
       }
 
-      ret = stream.read();
-      if (ret == -1) {
-        return stream;
-      }
-      byte b2 = (byte)ret;
-      if (b2 == UTF8_BOM[2]) { mustReset = false; return stream; }
+      if (b0 == 0 && b1 == 0) {
+        ret = stream.read();
+        if (ret == -1) {
+          return stream;  // no bom
+        }
+        byte b2 = (byte)ret;
+        if (b2 != FE) {
+          return stream; // no bom
+        }
+        ret = stream.read();
+        if (ret == -1) {
+          return stream;  // no bom
+        }
+        byte b3 = (byte)ret;
+        if (b3 != FF) {
+          return stream; // no bom
+        }
 
+        mustReset = false;
+        return stream; // UTF-32 BE
+      }
+
+      // no bom
       return stream;
     }
     finally {

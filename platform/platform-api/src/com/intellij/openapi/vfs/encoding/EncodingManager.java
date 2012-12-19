@@ -31,7 +31,6 @@ import java.util.Collection;
  * @author cdr
  */
 public abstract class EncodingManager extends EncodingRegistry {
-
   @NonNls public static final String PROP_NATIVE2ASCII_SWITCH = "native2ascii";
   @NonNls public static final String PROP_PROPERTIES_FILES_ENCODING = "propertiesFilesEncoding";
 
@@ -55,7 +54,7 @@ public abstract class EncodingManager extends EncodingRegistry {
     return charset == null ? null : charset.displayName();
   }
 
-  public void setDefaultCharsetName(String name) {
+  public void setDefaultCharsetName(@NotNull String name) {
     throw new UnsupportedOperationException("Not implemented");
   }
 

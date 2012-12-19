@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.execution.process.BaseOSProcessHandler;
@@ -47,6 +62,7 @@ import java.net.ServerSocket;
 import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Eugene Zhuravlev
@@ -59,6 +75,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
   public static final boolean USE_EMBEDDED_JAVAC = System.getProperty(GlobalOptions.USE_EXTERNAL_JAVAC_OPTION) == null;
   private static final Key<Integer> JAVA_COMPILER_VERSION_KEY = Key.create("_java_compiler_version_");
   private static final Key<Boolean> IS_ENABLED = Key.create("_java_compiler_enabled_");
+  private static final Key<AtomicReference<String>> COMPILER_VERSION_INFO = Key.create("_java_compiler_version_info_");
+
   private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Arrays.<String>asList(
     "-target"
   ));
@@ -100,18 +118,22 @@ public class JavaBuilder extends ModuleLevelBuilder {
   @Override
   public void buildStarted(CompileContext context) {
     final JpsProject project = context.getProjectDescriptor().getProject();
-    final String compilerId = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project).getJavaCompilerId();
+    final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project);
+    final String compilerId = config == null? JavaCompilers.JAVAC_ID : config.getJavaCompilerId();
     if (LOG.isDebugEnabled()) {
       LOG.debug("Java compiler ID: " + compilerId);
     }
-    boolean isJavacOrEclipse = false;
-    for (String id : Arrays.asList(JavaCompilers.JAVAC_ID, JavaCompilers.ECLIPSE_ID, JavaCompilers.JAVAC_API_ID, JavaCompilers.ECLIPSE_EMBEDDED_ID)) {
-      if (id.equalsIgnoreCase(compilerId)) {
-        isJavacOrEclipse = true;
-        break;
-      }
+    final boolean isJavac = JavaCompilers.JAVAC_ID.equalsIgnoreCase(compilerId) || JavaCompilers.JAVAC_API_ID.equalsIgnoreCase(compilerId);
+    final boolean isEclipse = JavaCompilers.ECLIPSE_ID.equalsIgnoreCase(compilerId) || JavaCompilers.ECLIPSE_EMBEDDED_ID.equalsIgnoreCase(compilerId);
+    IS_ENABLED.set(context, isJavac || isEclipse);
+    String messageText = null;
+    if (isJavac) {
+      messageText = "Using javac " + System.getProperty("java.version") + " to compile java sources";
     }
-    IS_ENABLED.set(context, isJavacOrEclipse);
+    else if (isEclipse) {
+      messageText = "Using eclipse compiler to compile java sources";
+    }
+    COMPILER_VERSION_INFO.set(context, new AtomicReference<String>(messageText));
   }
 
   public ExitCode build(final CompileContext context,
@@ -185,12 +207,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
       return exitCode;
     }
 
-    final ProjectPaths paths = context.getProjectPaths();
     final ProjectDescriptor pd = context.getProjectDescriptor();
 
     JavaBuilderUtil.ensureModuleHasJdk(chunk.representativeTarget().getModule(), context, BUILDER_NAME);
-    final Collection<File> classpath = paths.getCompilationClasspath(chunk, false/*context.isProjectRebuild()*/);
-    final Collection<File> platformCp = paths.getPlatformCompilationClasspath(chunk, false/*context.isProjectRebuild()*/);
+    final Collection<File> classpath = ProjectPaths.getCompilationClasspath(chunk, false/*context.isProjectRebuild()*/);
+    final Collection<File> platformCp = ProjectPaths.getPlatformCompilationClasspath(chunk, false/*context.isProjectRebuild()*/);
 
     // begin compilation round
     final DiagnosticSink diagnosticSink = new DiagnosticSink(context);
@@ -199,6 +220,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final OutputFilesSink outputSink = new OutputFilesSink(context, outputConsumer, mappingsCallback, chunk.getName());
     try {
       if (hasSourcesToCompile) {
+        final AtomicReference<String> ref = COMPILER_VERSION_INFO.get(context);
+        final String versionInfo = ref.getAndSet(null); // display compiler version info only once per compile session
+        if (versionInfo != null) {
+          LOG.info(versionInfo);
+          context.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO, versionInfo));
+        }
         exitCode = ExitCode.OK;
 
         final Set<File> srcPath = new HashSet<File>();
@@ -269,14 +296,18 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final TasksCounter counter = new TasksCounter();
     COUNTER_KEY.set(context, counter);
 
+    final JpsJavaExtensionService javaExt = JpsJavaExtensionService.getInstance();
+    final JpsJavaCompilerConfiguration compilerConfig = javaExt.getCompilerConfiguration(context.getProjectDescriptor().getProject());
+    assert compilerConfig != null;
+
     final Set<JpsModule> modules = chunk.getModules();
     ProcessorConfigProfile profile = null;
     if (modules.size() == 1) {
-      profile = context.getAnnotationProcessingProfile(modules.iterator().next());
+      final JpsModule module = modules.iterator().next();
+      profile = compilerConfig.getAnnotationProcessingProfile(module);
     }
     else {
       // perform cycle-related validations
-      final JpsJavaExtensionService javaExt = JpsJavaExtensionService.getInstance();
       Pair<String, LanguageLevel> pair = null;
       for (JpsModule module : modules) {
         final LanguageLevel moduleLevel = javaExt.getLanguageLevel(module);
@@ -294,7 +325,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
       // check that all chunk modules are excluded from annotation processing
       for (JpsModule module : modules) {
-        final ProcessorConfigProfile prof = context.getAnnotationProcessingProfile(module);
+        final ProcessorConfigProfile prof = compilerConfig.getAnnotationProcessingProfile(module);
         if (prof.isEnabled()) {
           final String message = "Annotation processing is not supported for module cycles. Please ensure that all modules from cycle [" + chunk.getName() + "] are excluded from annotation processing";
           diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, message));
@@ -306,6 +337,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final Map<File, Set<File>> outs = buildOutputDirectoriesMap(context, chunk);
     final List<String> options = getCompilationOptions(context, chunk, profile);
     final ClassProcessingConsumer classesConsumer = new ClassProcessingConsumer(context, outputSink);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Compiling chunk [" + chunk.getName() + "] with options: \"" + StringUtil.join(options, " ") + "\"");
+    }
     try {
       final boolean rc;
       if (USE_EMBEDDED_JAVAC) {
@@ -338,7 +372,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
       return false;
     }
     JpsProject project = context.getProjectDescriptor().getProject();
-    final String compilerId = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project).getJavaCompilerId();
+    final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project);
+    final String compilerId = configuration != null? configuration.getJavaCompilerId() : null;
     return JavaCompilers.ECLIPSE_ID.equalsIgnoreCase(compilerId) || JavaCompilers.ECLIPSE_EMBEDDED_ID.equalsIgnoreCase(compilerId);
   }
 
@@ -366,7 +401,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
       return descriptor.client;
     }
     // start server here
-    final String hostString = System.getProperty(GlobalOptions.HOSTNAME_OPTION, "localhost");
     final int port = findFreePort();
     final int heapSize = getJavacServerHeapSize(context);
 
@@ -388,7 +422,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     );
     final JavacServerClient client = new JavacServerClient();
     try {
-      client.connect(hostString, port);
+      client.connect("127.0.0.1", port);
     }
     catch (Throwable ex) {
       processHandler.destroyProcess();
@@ -476,14 +510,20 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return cached;
   }
 
-  public static List<String> getCompilationOptions(CompileContext context, ModuleChunk chunk, @Nullable ProcessorConfigProfile profile) {
+  private static List<String> getCompilationOptions(CompileContext context, ModuleChunk chunk, @Nullable ProcessorConfigProfile profile) {
     List<String> cached = JAVAC_OPTIONS.get(context);
     if (cached == null) {
       loadCommonJavacOptions(context);
       cached = JAVAC_OPTIONS.get(context);
+      assert cached != null : context;
     }
 
-    final List<String> options = new ArrayList<String>(cached);
+    List<String> options = new ArrayList<String>(cached);
+    addCompilationOptions(options, context, chunk, profile);
+    return options;
+  }
+
+  public static void addCompilationOptions(List<String> options, CompileContext context, ModuleChunk chunk, @Nullable ProcessorConfigProfile profile) {
     if (!isEncodingSet(options)) {
       final CompilerEncodingConfiguration config = context.getProjectDescriptor().getEncodingConfiguration();
       final String encoding = config.getPreferredModuleChunkEncoding(chunk);
@@ -553,16 +593,17 @@ public class JavaBuilder extends ModuleLevelBuilder {
         options.add(processorsPath == null? "" : FileUtil.toSystemDependentName(processorsPath.trim()));
       }
 
-      for (String procFQName : profile.getProcessors()) {
+      final Set<String> processors = profile.getProcessors();
+      if (!processors.isEmpty()) {
         options.add("-processor");
-        options.add(procFQName);
+        options.add(StringUtil.join(processors, ","));
       }
 
       for (Map.Entry<String, String> optionEntry : profile.getProcessorOptions().entrySet()) {
         options.add("-A" + optionEntry.getKey() + "=" + optionEntry.getValue());
       }
 
-      final File srcOutput = context.getProjectPaths().getAnnotationProcessorGeneratedSourcesOutputDir(
+      final File srcOutput = ProjectPaths.getAnnotationProcessorGeneratedSourcesOutputDir(
         chunk.getModules().iterator().next(), chunk.containsTests(), profile
       );
       if (srcOutput != null) {
@@ -574,8 +615,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
     else {
       options.add("-proc:none");
     }
-
-    return options;
   }
 
   private static String getLanguageLevel(JpsModule module) {

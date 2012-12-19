@@ -72,7 +72,7 @@ public class GradleConfigNotificationManager extends AbstractProjectComponent {
   public void processRefreshError(@NotNull String message) {
     final Notification notification = NOTIFICATION_GROUP.createNotification(
       GradleBundle.message("gradle.notification.refresh.fail.description", message),
-      GradleBundle.message("gradle.notification.action.configure"),
+      GradleBundle.message("gradle.notification.action.show.settings"),
       NotificationType.WARNING,
       new NotificationListener() {
         @Override
@@ -91,7 +91,7 @@ public class GradleConfigNotificationManager extends AbstractProjectComponent {
   public void processUnknownGradleHome() {
     final Notification notification = NOTIFICATION_GROUP.createNotification(
       GradleBundle.message("gradle.notification.gradle.home.undefined.description"),
-      GradleBundle.message("gradle.notification.action.configure"),
+      GradleBundle.message("gradle.notification.action.show.settings"),
       NotificationType.WARNING,
       new NotificationListener() {
         @Override

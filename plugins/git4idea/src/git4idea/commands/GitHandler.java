@@ -58,7 +58,7 @@ public abstract class GitHandler {
   private final List<VcsException> myErrors = Collections.synchronizedList(new ArrayList<VcsException>());
   private final List<String> myLastOutput = Collections.synchronizedList(new ArrayList<String>());
   private final int LAST_OUTPUT_SIZE = 5;
-  private static final Logger LOG = Logger.getInstance(GitHandler.class.getName());
+  protected static final Logger LOG = Logger.getInstance(GitHandler.class.getName());
   final GeneralCommandLine myCommandLine;
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   Process myProcess;
@@ -87,7 +87,7 @@ public abstract class GitHandler {
 
   private final EventDispatcher<ProcessEventListener> myListeners = EventDispatcher.create(ProcessEventListener.class);
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
-  private boolean mySilent; // if true, the command execution is not logged in version control view
+  protected boolean mySilent; // if true, the command execution is not logged in version control view
 
   protected final GitVcs myVcs;
   private final Map<String, String> myEnv;

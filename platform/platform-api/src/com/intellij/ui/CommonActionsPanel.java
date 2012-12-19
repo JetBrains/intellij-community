@@ -270,8 +270,8 @@ public class CommonActionsPanel extends JPanel {
       case ADD: return CommonShortcuts.getNewForDialogs();
       case EDIT: return CustomShortcutSet.fromString("ENTER");
       case REMOVE: return CustomShortcutSet.fromString(SystemInfo.isMac ? "meta BACK_SPACE" : "alt DELETE");
-      case UP: return CustomShortcutSet.fromString("alt UP");
-      case DOWN: return CustomShortcutSet.fromString("alt DOWN");
+      case UP: return CommonShortcuts.MOVE_UP;
+      case DOWN: return CommonShortcuts.MOVE_DOWN;
     }
     return null;
   }

@@ -52,15 +52,19 @@ public class CheckForUpdateAction extends AnAction implements DumbAware {
         indicator.setIndeterminate(true);
         final CheckForUpdateResult result = UpdateChecker.checkForUpdates(instance, true);
 
+        if (result.getState() == UpdateStrategy.State.CONNECTION_ERROR) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              UpdateChecker.showConnectionErrorDialog();
+            }
+          });
+          return;
+        }
+
         final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(true, hostsConfigurable, indicator);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            if (result.getState() == UpdateStrategy.State.CONNECTION_ERROR) {
-              UpdateChecker.showConnectionErrorDialog();
-              return;
-            }
-
             instance.saveLastCheckedInfo();
             UpdateChecker.showUpdateResult(result, updatedPlugins, true, enableLink, true);
           }

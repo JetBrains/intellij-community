@@ -43,7 +43,7 @@ import static com.intellij.util.BitUtil.notSet;
  * @version 11.1
  */
 public class FileSystemUtil {
-  public static final String FORCE_USE_NIO2_KEY = "idea.io.use.nio2";
+  private static final String FORCE_USE_NIO2_KEY = "idea.io.use.nio2";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileSystemUtil");
 
@@ -121,7 +121,7 @@ public class FileSystemUtil {
   private FileSystemUtil() { }
 
   @Nullable
-  public static FileAttributes getAttributes(@NotNull final String path) {
+  public static FileAttributes getAttributes(@NotNull String path) {
     try {
       return ourMediator.getAttributes(path);
     }
@@ -131,9 +131,8 @@ public class FileSystemUtil {
     return null;
   }
 
-  @SuppressWarnings("UnusedDeclaration")
   @Nullable
-  public static FileAttributes getAttributes(@NotNull final File file) {
+  public static FileAttributes getAttributes(@NotNull File file) {
     return getAttributes(file.getPath());
   }
 
@@ -142,7 +141,7 @@ public class FileSystemUtil {
     return attributes != null ? attributes.lastModified : 0;
   }
 
-  public static boolean isSymLink(@NotNull final String path) {
+  public static boolean isSymLink(@NotNull String path) {
     if (SystemInfo.areSymLinksSupported) {
       final FileAttributes attributes = getAttributes(path);
       return attributes != null && attributes.isSymLink();
@@ -150,13 +149,12 @@ public class FileSystemUtil {
     return false;
   }
 
-  @SuppressWarnings("UnusedDeclaration")
-  public static boolean isSymLink(@NotNull final File file) {
+  public static boolean isSymLink(@NotNull File file) {
     return isSymLink(file.getAbsolutePath());
   }
 
   @Nullable
-  public static String resolveSymLink(@NotNull final String path) {
+  public static String resolveSymLink(@NotNull String path) {
     try {
       final String realPath = ourMediator.resolveSymLink(path);
       if (realPath != null && new File(realPath).exists()) {
@@ -169,23 +167,22 @@ public class FileSystemUtil {
     return null;
   }
 
-  @SuppressWarnings("UnusedDeclaration")
   @Nullable
-  public static String resolveSymLink(@NotNull final File file) {
+  public static String resolveSymLink(@NotNull File file) {
     return resolveSymLink(file.getAbsolutePath());
   }
 
-  public static int getPermissions(@NotNull final String path) {
+  public static int getPermissions(@NotNull String path) {
     final FileAttributes attributes = getAttributes(path);
     return attributes != null ? attributes.permissions : -1;
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  public static int getPermissions(@NotNull final File file) {
+  public static int getPermissions(@NotNull File file) {
     return getPermissions(file.getAbsolutePath());
   }
 
-  public static void setPermissions(@NotNull final String path, final int permissions) {
+  public static void setPermissions(@NotNull String path, int permissions) {
     if (SystemInfo.isUnix) {
       try {
         ourMediator.setPermissions(path, permissions);
@@ -196,7 +193,7 @@ public class FileSystemUtil {
     }
   }
 
-  public static void setPermissions(@NotNull final File file, final int permissions) {
+  public static void setPermissions(@NotNull File file, int permissions) {
     setPermissions(file.getAbsolutePath(), permissions);
   }
 

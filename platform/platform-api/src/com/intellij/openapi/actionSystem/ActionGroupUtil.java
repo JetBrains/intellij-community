@@ -36,7 +36,24 @@ public class ActionGroupUtil {
   }
 
   public static boolean isGroupEmpty(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent e) {
-    return getEnabledChildren(actionGroup, e, new HashMap<AnAction, Presentation>()).isEmpty();
+    return isGroupEmpty(actionGroup, e, new HashMap<AnAction, Presentation>());
+  }
+
+  private static boolean isGroupEmpty(@NotNull ActionGroup actionGroup,
+                                                   @NotNull AnActionEvent e,
+                                                   @NotNull Map<AnAction, Presentation> action2presentation) {
+    AnAction[] actions = actionGroup.getChildren(e);
+    for (AnAction action : actions) {
+      if (action instanceof ActionGroup) {
+        if (!isGroupEmpty((ActionGroup)action, e, action2presentation)) {
+          return false;
+        }
+      }
+      else if (!(action instanceof Separator) && isActionEnabledAndVisible(e, action2presentation, action)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Nullable

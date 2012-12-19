@@ -125,6 +125,7 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
     final List<String> hints = offlineProblemDescriptor.getHints();
     if (element instanceof RefElement) {
       final PsiElement psiElement = ((RefElement)element).getElement();
+      if (psiElement == null) return null;
       ProblemDescriptor descriptor = inspectionManager.createProblemDescriptor(psiElement, offlineProblemDescriptor.getDescription(),
                                                                                (LocalQuickFix)null,
                                                                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);

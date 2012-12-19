@@ -22,10 +22,7 @@ import com.intellij.util.ui.SortableColumnModel;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -133,7 +130,11 @@ abstract public class PluginTableModel extends AbstractTableModel implements Sor
     final ArrayList<IdeaPluginDescriptor> desc = new ArrayList<IdeaPluginDescriptor>();
 
     final List<IdeaPluginDescriptor> toProcess = toProcess();
-    toProcess.addAll(filtered);
+    for (IdeaPluginDescriptor descriptor : filtered) {
+      if (!toProcess.contains(descriptor)) {
+        toProcess.add(descriptor);
+      }
+    }
     filtered.clear();
     for (IdeaPluginDescriptor descriptor : toProcess) {
       if (isPluginDescriptorAccepted(descriptor) &&

@@ -188,15 +188,11 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
     List<GradleModule> modules = new ArrayList<GradleModule>(project.getModules());
     Collections.sort(modules, Named.COMPARATOR);
     List<MutableTreeNode> moduleNodes = new ArrayList<MutableTreeNode>();
-    Map<GradleModule, GradleModule> moduleMappings = new HashMap<GradleModule, GradleModule>();
     
-    GradleEntityCloneContext cloneContext = new GradleEntityCloneContext();
     for (GradleModule module : modules) {
-      GradleModule moduleCopy = module.clone(cloneContext);
-      moduleMappings.put(module, moduleCopy);
       GradleProjectStructureNode<GradleEntityId> moduleNode = buildNode(module, entity2nodes, counter++);
       moduleNodes.add(moduleNode);
-      for (GradleContentRoot contentRoot : moduleCopy.getContentRoots()) {
+      for (GradleContentRoot contentRoot : module.getContentRoots()) {
         moduleNode.add(buildNode(contentRoot, entity2nodes, counter++));
       }
       Collection<GradleDependency> dependencies = module.getDependencies();
@@ -263,7 +259,6 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
     }
     
     myTree.expandPath(new TreePath(root.getPath()));
-    builder.setModuleMappings(moduleMappings);
   }
 
   private GradleProjectStructureNode<GradleEntityId> buildNode(

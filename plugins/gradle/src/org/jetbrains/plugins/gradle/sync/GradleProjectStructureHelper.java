@@ -3,10 +3,7 @@ package org.jetbrains.plugins.gradle.sync;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModuleOrderEntry;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.RootPolicy;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Ref;
@@ -15,9 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.PlatformFacade;
 import org.jetbrains.plugins.gradle.model.gradle.*;
-import org.jetbrains.plugins.gradle.model.id.GradleContentRootId;
-import org.jetbrains.plugins.gradle.model.id.GradleLibraryDependencyId;
-import org.jetbrains.plugins.gradle.model.id.GradleModuleDependencyId;
+import org.jetbrains.plugins.gradle.model.id.*;
 import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
@@ -151,6 +146,20 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
     }
     return null;
   }
+
+  @Nullable
+  public Library findIntellijLibrary(@NotNull String libraryName, @NotNull String jarPath) {
+    Library library = findIntellijLibrary(libraryName);
+    if (library == null) {
+      return null;
+    }
+    for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
+      if (jarPath.equals(GradleUtil.getLocalFileSystemPath(file))) {
+        return library;
+      }
+    }
+    return null;
+  }
   
   @Nullable
   public LibraryOrderEntry findIntellijLibraryDependency(@NotNull final String moduleName, @NotNull final String libraryName) {
@@ -178,6 +187,26 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
   }
 
   @Nullable
+  public LibraryOrderEntry findIntellijLibraryDependency(@NotNull final String libraryName,
+                                                         @NotNull ModifiableRootModel model)
+  {
+    for (OrderEntry entry : model.getOrderEntries()) {
+      if (entry instanceof LibraryOrderEntry) {
+        LibraryOrderEntry candidate = (LibraryOrderEntry)entry;
+        if (libraryName.equals(candidate.getLibraryName())) {
+          return candidate;
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public GradleLibrary findGradleLibrary(@NotNull final GradleLibraryId id) {
+    return findGradleLibrary(id.getLibraryName());
+  }
+  
+  @Nullable
   public GradleLibrary findGradleLibrary(@NotNull final String libraryName) {
     final GradleProject project = myModel.getGradleProject();
     if (project == null) {
@@ -189,6 +218,15 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
       }
     }
     return null;
+  }
+
+  @Nullable
+  public GradleLibrary findGradleLibrary(@NotNull String libraryName, @NotNull String jarPath) {
+    GradleLibrary library = findGradleLibrary(libraryName);
+    if (library == null) {
+      return null;
+    }
+    return library.getPaths(LibraryPathType.BINARY).contains(jarPath) ? library : null;
   }
   
   @Nullable
@@ -268,6 +306,32 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
       }
     }
     return null;
+  }
 
+  @Nullable
+  public ModuleOrderEntry findIntellijModuleDependency(@NotNull GradleModuleDependency dependency, @NotNull ModifiableRootModel model) {
+    for (OrderEntry entry : model.getOrderEntries()) {
+      if (entry instanceof ModuleOrderEntry) {
+        ModuleOrderEntry candidate = (ModuleOrderEntry)entry;
+        if (dependency.getName().equals(candidate.getModuleName())) {
+          return candidate;
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public GradleJar findIntellijJar(@NotNull GradleJarId jarId) {
+    Library library = findIntellijLibrary(jarId.getLibraryId().getLibraryName());
+    if (library == null) {
+      return null;
+    }
+    for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
+      if (jarId.getPath().equals(GradleUtil.getLocalFileSystemPath(file))) {
+        return new GradleJar(jarId.getPath(), library, null);
+      }
+    }
+    return null;
   }
 }

@@ -14,7 +14,7 @@
         </constraints>
         <properties>
           <labelFor value="d7106"/>
-          <text value="Keyboard Shortcuts Scheme:"/>
+          <text value="Keyboard shortcuts scheme:"/>
         </properties>
       </component>
       <component id="9f9cd" class="javax.swing.JLabel">
@@ -23,7 +23,7 @@
         </constraints>
         <properties>
           <labelFor value="f7d28"/>
-          <text value="Color Scheme:"/>
+          <text value="Color scheme:"/>
         </properties>
       </component>
       <component id="d7106" class="javax.swing.JComboBox" binding="myKeymapComboBox" default-binding="true">

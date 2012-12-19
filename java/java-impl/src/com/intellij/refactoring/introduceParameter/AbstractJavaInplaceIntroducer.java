@@ -17,6 +17,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
@@ -36,7 +37,7 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
                                        PsiVariable localVariable,
                                        PsiExpression[] occurrences,
                                        TypeSelectorManagerImpl typeSelectorManager, String title) {
-    super(project, editor, expr, localVariable, occurrences, title, StdFileTypes.JAVA);
+    super(project, InjectedLanguageUtil.getTopLevelEditor(editor), expr, localVariable, occurrences, title, StdFileTypes.JAVA);
     myTypeSelectorManager = typeSelectorManager;
   }
 
@@ -135,8 +136,11 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
     if (exprText == null) return null;
     if (psiVariable == null || !psiVariable.isValid()) return null;
     final PsiElement refVariableElement = containingFile.findElementAt(marker.getStartOffset());
-    PsiExpression expression = PsiTreeUtil.getParentOfType(refVariableElement, PsiReferenceExpression.class);
-    if (expression instanceof PsiReferenceExpression) {
+    final PsiElement refVariableElementParent = refVariableElement != null ? refVariableElement.getParent() : null;
+    PsiExpression expression = refVariableElement instanceof PsiKeyword && refVariableElementParent instanceof PsiNewExpression 
+                               ? (PsiNewExpression)refVariableElementParent 
+                               : PsiTreeUtil.getParentOfType(refVariableElement, PsiReferenceExpression.class);
+    if (expression instanceof PsiReferenceExpression && !(expression.getParent() instanceof PsiMethodCallExpression)) {
       final String referenceName = ((PsiReferenceExpression)expression).getReferenceName();
       if (((PsiReferenceExpression)expression).resolve() == psiVariable ||
           Comparing.strEqual(psiVariable.getName(), referenceName) ||

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.jps.builders
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.ModuleChunk
@@ -44,18 +59,14 @@ public class ModuleClasspathTest extends JpsRebuildTestCase {
   public void testCompilationClasspath() {
     ModuleChunk chunk = createChunk('main')
     assertClasspath(["util/lib/exported.jar", "out/production/util", "/jdk.jar"],
-            getPathsList(getProjectPaths().getPlatformCompilationClasspath(chunk, true)))
+            getPathsList(ProjectPaths.getPlatformCompilationClasspath(chunk, true)))
     assertClasspath(["main/lib/service.jar"],
-            getPathsList(getProjectPaths().getCompilationClasspath(chunk, true)))
-  }
-
-  private ProjectPaths getProjectPaths() {
-    return new ProjectPaths(myProject)
+            getPathsList(ProjectPaths.getCompilationClasspath(chunk, true)))
   }
 
   private def assertClasspath(String moduleName, boolean includeTests, List<String> expected) {
     ModuleChunk chunk = createChunk(moduleName)
-    final List<String> classpath = getPathsList(new ProjectPaths(myProject).getCompilationClasspathFiles(chunk, includeTests, true, true))
+    final List<String> classpath = getPathsList(new ProjectPaths().getCompilationClasspathFiles(chunk, includeTests, true, true))
     assertClasspath(expected, toSystemIndependentPaths(classpath))
   }
 

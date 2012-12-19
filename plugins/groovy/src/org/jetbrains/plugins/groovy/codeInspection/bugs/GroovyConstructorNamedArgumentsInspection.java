@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,9 +120,8 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
         if (label.getName() == null) {
           final PsiElement nameElement = label.getNameElement();
           if (nameElement instanceof GrExpression) {
-            final PsiType stringType = TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, arg);
             final PsiType argType = ((GrExpression)nameElement).getType();
-            if (argType != null && !TypesUtil.isAssignable(stringType, argType, arg)) {
+            if (argType != null && !TypesUtil.isAssignableByMethodCallConversion(TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, arg), argType, arg)) {
               registerError(nameElement, GroovyBundle.message("property.name.expected"));
             }
           }

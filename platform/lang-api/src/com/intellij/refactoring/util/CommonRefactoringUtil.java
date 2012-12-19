@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
@@ -77,7 +78,7 @@ public class CommonRefactoringUtil {
 
   @NonNls
   public static String htmlEmphasize(String text) {
-    return "<b><code>" + text + "</code></b>";
+    return "<b><code>" + StringUtil.escapeXml(text) + "</code></b>";
   }
 
   public static boolean checkReadOnlyStatus(@NotNull PsiElement element) {

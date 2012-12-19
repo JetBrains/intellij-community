@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -39,6 +39,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
+import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.CompletionProcessor;
@@ -78,7 +80,7 @@ public class GrReferenceResolveUtil {
     else {
       if (place.getDotTokenType() == mSPREAD_DOT) {
         final PsiType qtype = qualifier.getType();
-        final PsiType componentType = getComponentTypeForSpreadDot(qtype, place);
+        final PsiType componentType = ClosureParameterEnhancer.findTypeForIteration(qtype, place);
         if (componentType != null) {
           final ResolveState state = ResolveState.initial()
             .put(ResolverProcessor.RESOLVE_CONTEXT, qualifier)
@@ -129,28 +131,6 @@ public class GrReferenceResolveUtil {
     return true;
   }
 
-  @Nullable
-  private static PsiType getComponentTypeForSpreadDot(@Nullable PsiType qualifierType, @NotNull GroovyPsiElement place) {
-    if (qualifierType instanceof PsiArrayType) {
-      return ((PsiArrayType)qualifierType).getComponentType();
-    }
-    //process for collections
-    if (!(qualifierType instanceof PsiClassType)) return null;
-
-    PsiClassType.ClassResolveResult result = ((PsiClassType)qualifierType).resolveGenerics();
-    PsiClass clazz = result.getElement();
-    if (clazz == null) return null;
-
-    PsiClass collection = GroovyPsiManager.getInstance(place.getProject()).findClassWithCache(CommonClassNames.JAVA_UTIL_COLLECTION,
-                                                                                              place.getResolveScope());
-    if (collection == null || collection.getTypeParameters().length != 1) return null;
-
-    PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(collection, clazz, result.getSubstitutor());
-    if (substitutor == null) return null;
-
-    return substitutor.substitute(collection.getTypeParameters()[0]);
-  }
-
   public static boolean processQualifier(PsiScopeProcessor processor, GrExpression qualifier, GrReferenceExpression place) {
     PsiType qualifierType = qualifier.getType();
     ResolveState state = ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, qualifier);
@@ -185,7 +165,9 @@ public class GrReferenceResolveUtil {
             }
             if (!javaLangClass.processDeclarations(processor, state, null, place)) return false;
             PsiType javaLangClassType = TypesUtil.createJavaLangClassType(qualifierType, place.getProject(), place.getResolveScope());
-            if (!ResolveUtil.processNonCodeMembers(javaLangClassType, processor, place, state)) return false;
+            if (javaLangClassType != null) {
+              if (!ResolveUtil.processNonCodeMembers(javaLangClassType, processor, place, state)) return false;
+            }
           }
         }
       }
@@ -223,8 +205,8 @@ public class GrReferenceResolveUtil {
       if (!arrayClass.processDeclarations(processor, state, null, place)) return false;
     }
 
-    if (!(place.getParent() instanceof GrMethodCall)) {
-      final PsiType componentType = getComponentTypeForSpreadDot(qualifierType, place);
+    if (!(place.getParent() instanceof GrMethodCall) && InheritanceUtil.isInheritor(qualifierType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
+      final PsiType componentType = ClosureParameterEnhancer.findTypeForIteration(qualifierType, place);
       if (componentType != null) {
         final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
         processQualifierType(processor, componentType, state.put(SpreadState.SPREAD_STATE, SpreadState.create(qualifierType, spreadState)),
@@ -262,19 +244,13 @@ public class GrReferenceResolveUtil {
     }
 
     if (containingClass != null) {
+      final PsiClassType categoryType = GdkMethodUtil.getCategoryType(containingClass);
+      if (categoryType != null) {
+        return categoryType;
+      }
       return JavaPsiFacade.getElementFactory(ref.getProject()).createType(containingClass);
     }
     return null;
-  }
-
-  public static PsiType getThisType(GrReferenceExpression ref) {
-    GrExpression qualifier = ref.getQualifierExpression();
-    if (qualifier != null) {
-      PsiType qType = qualifier.getType();
-      if (qType != null) return qType;
-    }
-
-    return TypesUtil.getJavaLangObject(ref);
   }
 
   public static boolean resolveThisExpression(GrReferenceExpression ref, List<GroovyResolveResult> results) {

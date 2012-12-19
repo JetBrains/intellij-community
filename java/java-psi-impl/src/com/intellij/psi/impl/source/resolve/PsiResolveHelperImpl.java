@@ -588,14 +588,14 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       final PsiElement parent = skipParenthesizedExprUp(lambdaExpression.getParent());
       if (parent instanceof PsiExpressionList) {
         final PsiExpressionList expressionList = (PsiExpressionList)parent;
-        final Map<PsiElement,PsiMethod> methodMap = MethodCandidateInfo.CURRENT_CANDIDATE.get();
-        final PsiMethod method = methodMap != null ? methodMap.get(expressionList) : null;
-        if (method != null) {
+        final Map<PsiElement, Pair<PsiMethod, PsiSubstitutor>> methodMap = MethodCandidateInfo.CURRENT_CANDIDATE.get();
+        final Pair<PsiMethod, PsiSubstitutor> pair = methodMap != null ? methodMap.get(expressionList) : null;
+        if (pair != null) {
           final int i = LambdaUtil.getLambdaIdx(expressionList, lambdaExpression);
           if (i < 0) return null;
-          final PsiParameter[] parameters = method.getParameterList().getParameters();
+          final PsiParameter[] parameters = pair.first.getParameterList().getParameters();
           if (parameters.length <= i) return null;
-          return inferConstraintFromFunctionalInterfaceMethod(typeParam, lambdaExpression, parameters[i].getType(), lowerBound);
+          return inferConstraintFromFunctionalInterfaceMethod(typeParam, lambdaExpression, pair.second.substitute(parameters[i].getType()), lowerBound);
         }
       }
       else {
@@ -961,6 +961,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       if (expectedType == null) {
         return getFailedInferenceConstraint(typeParameter);
       }
+    } else if (parent instanceof PsiTypeCastExpression) {
+      expectedType = ((PsiTypeCastExpression)parent).getType();
     }
 
     final PsiManager manager = typeParameter.getManager();

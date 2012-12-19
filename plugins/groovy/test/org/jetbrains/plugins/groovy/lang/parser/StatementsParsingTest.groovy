@@ -165,6 +165,7 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testTypedef$constructors$constructor11() throws Throwable { doTest(); }
   public void testTypedef$constructors$constructor13() throws Throwable { doTest(); }
   public void testTypedef$constructors$constructor14() throws Throwable { doTest(); }
+  public void testTypedef$constructors$constructor15() throws Throwable { doTest(); }
   public void testTypedef$constructors$constructor2() throws Throwable { doTest(); }
   public void testTypedef$constructors$constructor3() throws Throwable { doTest(); }
   public void testTypedef$constructors$constructor4() throws Throwable { doTest(); }

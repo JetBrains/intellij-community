@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.ModuleTestCase;
 import com.intellij.util.messages.MessageBusConnection;
 
@@ -83,7 +84,7 @@ public class RootsChangedTest extends ModuleTestCase {
     final Module moduleB = createModule("b.iml");
     assertEventsCount(2);
 
-    final Sdk jdk = JavaSdkImpl.getMockJdk17();
+    final Sdk jdk = IdeaTestUtil.getMockJdk17();
     ProjectJdkTable.getInstance().addJdk(jdk);
     assertEventsCount(0);
 
@@ -111,11 +112,11 @@ public class RootsChangedTest extends ModuleTestCase {
     final Module moduleB = createModule("b.iml");
     assertEventsCount(2);
 
-    final Sdk jdk = JavaSdkImpl.getMockJdk17("AAA");
+    final Sdk jdk = IdeaTestUtil.getMockJdk17("AAA");
     ProjectJdkTable.getInstance().addJdk(jdk);
     assertEventsCount(0);
 
-    final Sdk jdkBBB = JavaSdkImpl.getMockJdk17("BBB");
+    final Sdk jdkBBB = IdeaTestUtil.getMockJdk17("BBB");
     ProjectJdkTable.getInstance().addJdk(jdk);
     assertEventsCount(0);
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.infos;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
@@ -31,7 +32,7 @@ import java.util.Set;
  * @author ik, dsl
  */
 public class MethodCandidateInfo extends CandidateInfo{
-  public static final ThreadLocal<Map<PsiElement, PsiMethod>> CURRENT_CANDIDATE = new ThreadLocal<Map<PsiElement, PsiMethod>>();
+  public static final ThreadLocal<Map<PsiElement,  Pair<PsiMethod, PsiSubstitutor>>> CURRENT_CANDIDATE = new ThreadLocal<Map<PsiElement,  Pair<PsiMethod, PsiSubstitutor>>>();
   @ApplicabilityLevelConstant private int myApplicabilityLevel = 0;
   private final PsiElement myArgumentList;
   private final PsiType[] myArgumentTypes;
@@ -96,15 +97,15 @@ public class MethodCandidateInfo extends CandidateInfo{
       PsiSubstitutor incompleteSubstitutor = super.getSubstitutor();
       PsiMethod method = getElement();
       if (myTypeArguments == null) {
-        Map<PsiElement, PsiMethod> map;
+        Map<PsiElement, Pair<PsiMethod, PsiSubstitutor>> map;
         synchronized (LOCK) {
           map = CURRENT_CANDIDATE.get();
           if (map == null) {
-            map = new ConcurrentWeakHashMap<PsiElement, PsiMethod>();
+            map = new ConcurrentWeakHashMap<PsiElement,  Pair<PsiMethod, PsiSubstitutor>>();
             CURRENT_CANDIDATE.set(map);
           }
         }
-        map.put(myArgumentList, getElement());
+        map.put(myArgumentList, Pair.create(getElement(), incompleteSubstitutor));
         try {
 
           final Set<PsiParameterList> lists = LambdaUtil.ourParams.get();
@@ -132,8 +133,11 @@ public class MethodCandidateInfo extends CandidateInfo{
 
 
   public boolean isTypeArgumentsApplicable() {
-    PsiTypeParameter[] typeParams = getElement().getTypeParameters();
-    if (myTypeArguments != null && typeParams.length != myTypeArguments.length) return false;
+    final PsiMethod psiMethod = getElement();
+    PsiTypeParameter[] typeParams = psiMethod.getTypeParameters();
+    if (myTypeArguments != null && typeParams.length != myTypeArguments.length && !PsiUtil.isLanguageLevel7OrHigher(psiMethod)){
+      return false;
+    }
     PsiSubstitutor substitutor = getSubstitutor();
     return GenericsUtil.isTypeArgumentsApplicable(typeParams, substitutor, getParent());
   }

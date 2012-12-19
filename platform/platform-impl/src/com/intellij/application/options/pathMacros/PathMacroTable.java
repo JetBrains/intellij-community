@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.Table;
 
 import javax.swing.*;
@@ -64,7 +65,7 @@ public class PathMacroTable extends Table {
         final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         final String macroValue = getMacroValueAt(row);
         component.setForeground(macroValue.length() == 0
-                                ? Color.RED
+                                ? JBColor.RED
                                 : isSelected ? table.getSelectionForeground() : table.getForeground());
         return component;
       }

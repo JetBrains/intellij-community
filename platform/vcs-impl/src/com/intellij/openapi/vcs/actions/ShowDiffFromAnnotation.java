@@ -80,7 +80,9 @@ class ShowDiffFromAnnotation extends AnAction implements LineNumberListener {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setVisible(myEnabled && getActualLineNumber() >= 0);
+    final int number = getActualLineNumber();
+    e.getPresentation().setVisible(myEnabled);
+    e.getPresentation().setEnabled(myEnabled && number >= 0 && number < myFileAnnotation.getLineCount());
   }
 
   private int getActualLineNumber() {

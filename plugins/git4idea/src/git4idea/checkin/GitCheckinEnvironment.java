@@ -15,20 +15,20 @@
  */
 package git4idea.checkin;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.ui.SelectFilePathsDialog;
+import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,6 +49,7 @@ import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.history.NewGitUsersComponent;
+import git4idea.history.browser.GitCommit;
 import git4idea.i18n.GitBundle;
 import git4idea.push.GitPusher;
 import git4idea.repo.GitRepositoryFiles;
@@ -61,6 +62,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
@@ -73,13 +75,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   @NonNls private static final String GIT_COMMIT_MSG_FILE_EXT = ".txt"; // the file extension for commit message file
 
   private final Project myProject;
+  public static final SimpleDateFormat COMMIT_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
   private final VcsDirtyScopeManager myDirtyScopeManager;
   private final GitVcsSettings mySettings;
 
   private String myNextCommitAuthor = null; // The author for the next commit
   private boolean myNextCommitAmend; // If true, the next commit is amended
   private Boolean myNextCommitIsPushed = null; // The push option of the next commit
-
+  private Date myNextCommitAuthorDate;
 
   public GitCheckinEnvironment(@NotNull Project project, @NotNull final VcsDirtyScopeManager dirtyScopeManager, final GitVcsSettings settings) {
     myProject = project;
@@ -178,13 +181,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
               Set<FilePath> files = new HashSet<FilePath>();
               files.addAll(added);
               files.addAll(removed);
-              commit(myProject, root, files, messageFile, myNextCommitAuthor, myNextCommitAmend);
+              commit(myProject, root, files, messageFile, myNextCommitAuthor, myNextCommitAmend, myNextCommitAuthorDate);
             }
             catch (VcsException ex) {
-              if (!isMergeCommit(ex)) {
+              PartialOperation partialOperation = isMergeCommit(ex);
+              if (partialOperation == PartialOperation.NONE) {
                 throw ex;
               }
-              if (!mergeCommit(myProject, root, added, removed, messageFile, myNextCommitAuthor, exceptions)) {
+              if (!mergeCommit(myProject, root, added, removed, messageFile, myNextCommitAuthor, exceptions, partialOperation)) {
                 throw ex;
               }
             }
@@ -222,6 +226,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   /**
    * Preform a merge commit
    *
+   *
    * @param project     a project
    * @param root        a vcs root
    * @param added       added files
@@ -229,6 +234,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    * @param messageFile a message file for commit
    * @param author      an author
    * @param exceptions  the list of exceptions to report
+   * @param partialOperation
    * @return true if merge commit was successful
    */
   private static boolean mergeCommit(final Project project,
@@ -237,7 +243,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                                      final Set<FilePath> removed,
                                      final File messageFile,
                                      final String author,
-                                     List<VcsException> exceptions) {
+                                     List<VcsException> exceptions, @NotNull final PartialOperation partialOperation) {
     HashSet<FilePath> realAdded = new HashSet<FilePath>();
     HashSet<FilePath> realRemoved = new HashSet<FilePath>();
     // perform diff
@@ -277,26 +283,20 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     realAdded.removeAll(added);
     realRemoved.removeAll(removed);
     if (realAdded.size() != 0 || realRemoved.size() != 0) {
-      TreeSet<String> files = new TreeSet<String>();
-      for (FilePath f : realAdded) {
-        files.add(f.getPresentableUrl());
-      }
-      for (FilePath f : realRemoved) {
-        files.add(f.getPresentableUrl());
-      }
-      final StringBuilder fileList = new StringBuilder();
-      for (String f : files) {
-        //noinspection HardCodedStringLiteral
-        fileList.append("<li>");
-        fileList.append(StringUtil.escapeXml(f));
-        fileList.append("</li>");
-      }
-      final int[] rc = new int[1];
+
+      final List<FilePath> files = new ArrayList<FilePath>();
+      files.addAll(realAdded);
+      files.addAll(realRemoved);
+      final Ref<Boolean> mergeAll = new Ref<Boolean>();
       try {
         GuiUtils.runOrInvokeAndWait(new Runnable() {
           public void run() {
-            rc[0] = Messages.showOkCancelDialog(project, GitBundle.message("commit.partial.merge.message", fileList.toString()),
-                                                GitBundle.getString("commit.partial.merge.title"), null);
+            String message = GitBundle.message("commit.partial.merge.message", partialOperation.getName());
+            SelectFilePathsDialog dialog = new SelectFilePathsDialog(project, files, message,
+                                                                     null, "Commit All Files", CommonBundle.getCancelButtonText(), false);
+            dialog.setTitle(GitBundle.getString("commit.partial.merge.title"));
+            dialog.show();
+            mergeAll.set(dialog.isOK());
           }
         });
       }
@@ -306,7 +306,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       catch (Exception ex) {
         throw new RuntimeException("Unable to invoke a message box on AWT thread", ex);
       }
-      if (rc[0] != 0) {
+      if (!mergeAll.get()) {
         return false;
       }
       // update non-indexed files
@@ -341,14 +341,21 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   /**
-   * Check if commit has failed due to unfinished merge
+   * Check if commit has failed due to unfinished merge or cherry-pick.
+   *
    *
    * @param ex an exception to examine
    * @return true if exception means that there is a partial commit during merge
    */
-  private static boolean isMergeCommit(final VcsException ex) {
-    //noinspection HardCodedStringLiteral
-    return ex.getMessage().contains("fatal: cannot do a partial commit during a merge.");
+  private static PartialOperation isMergeCommit(final VcsException ex) {
+    String message = ex.getMessage();
+    if (message.contains("fatal: cannot do a partial commit during a merge")) {
+      return PartialOperation.MERGE;
+    }
+    if (message.contains("fatal: cannot do a partial commit during a cherry-pick")) {
+      return PartialOperation.CHERRY_PICK;
+    }
+    return PartialOperation.NONE;
   }
 
   /**
@@ -440,12 +447,15 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   /**
    * Prepare delete files handler.
    *
-   * @param project          the project
-   * @param root             a vcs root
-   * @param files            a files to commit
-   * @param message          a message file to use
-   * @param nextCommitAuthor a author for the next commit
-   * @param nextCommitAmend  true, if the commit should be amended
+   *
+   *
+   * @param project              the project
+   * @param root                 a vcs root
+   * @param files                a files to commit
+   * @param message              a message file to use
+   * @param nextCommitAuthor     a author for the next commit
+   * @param nextCommitAmend      true, if the commit should be amended
+   * @param nextCommitAuthorDate Author date timestamp to override the date of the commit or null if this overriding is not needed.
    * @return a simple handler that does the task
    * @throws VcsException in case of git problem
    */
@@ -454,7 +464,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                              Collection<FilePath> files,
                              File message,
                              final String nextCommitAuthor,
-                             boolean nextCommitAmend)
+                             boolean nextCommitAmend, Date nextCommitAuthorDate)
     throws VcsException {
     boolean amend = nextCommitAmend;
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
@@ -469,6 +479,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       handler.addParameters("--only", "-F", message.getAbsolutePath());
       if (nextCommitAuthor != null) {
         handler.addParameters("--author=" + nextCommitAuthor);
+      }
+      if (nextCommitAuthorDate != null) {
+        handler.addParameters("--date", COMMIT_DATE_FORMAT.format(nextCommitAuthorDate));
       }
       handler.endOptions();
       handler.addParameters(paths);
@@ -505,6 +518,22 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
     }
     return rc;
+  }
+
+  private enum PartialOperation {
+    NONE("none"),
+    MERGE("merge"),
+    CHERRY_PICK("cherry-pick");
+
+    private final String myName;
+
+    PartialOperation(String name) {
+      myName = name;
+    }
+
+    String getName() {
+      return myName;
+    }
   }
 
   /**
@@ -559,12 +588,13 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     myNextCommitAmend = false;
     myNextCommitAuthor = null;
     myNextCommitIsPushed = null;
+    myNextCommitAuthorDate = null;
   }
 
   /**
    * Checkin options for git
    */
-  private class GitCheckinOptions implements RefreshableOnComponent {
+  private class GitCheckinOptions implements CheckinChangeListSpecificComponent {
     /**
      * A container panel
      */
@@ -577,6 +607,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
      * The amend checkbox
      */
     private final JCheckBox myAmend;
+    private Date myAuthorDate;
 
     /**
      * A constructor
@@ -661,7 +692,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
      * {@inheritDoc}
      */
     public void saveState() {
-      String author = (String)myAuthor.getSelectedItem();
+      String author = (String)myAuthor.getEditor().getItem();
       myNextCommitAuthor = author.length() == 0 ? null : author;
       if (author.length() == 0) {
         myNextCommitAuthor = null;
@@ -671,6 +702,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         mySettings.saveCommitAuthor(author);
       }
       myNextCommitAmend = myAmend.isSelected();
+      myNextCommitAuthorDate = myAuthorDate;
     }
 
     /**
@@ -678,6 +710,17 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
      */
     public void restoreState() {
       refresh();
+    }
+
+    @Override
+    public void onChangeListSelected(LocalChangeList list) {
+      Object data = list.getData();
+      if (data instanceof GitCommit) {
+        GitCommit commit = (GitCommit)data;
+        String author = String.format("%s <%s>", commit.getAuthor(), commit.getAuthorEmail());
+        myAuthor.getEditor().setItem(author);
+        myAuthorDate = new Date(commit.getAuthorTime());
+      }
     }
   }
 

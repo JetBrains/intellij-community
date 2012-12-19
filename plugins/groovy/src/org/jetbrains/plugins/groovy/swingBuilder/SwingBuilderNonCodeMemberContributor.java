@@ -26,7 +26,6 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrMethodWrapper;
@@ -833,7 +832,7 @@ public class SwingBuilderNonCodeMemberContributor extends NonCodeMembersContribu
   public void processDynamicElements(@NotNull PsiType qualifierType,
                                      PsiClass aClass,
                                      PsiScopeProcessor processor,
-                                     GroovyPsiElement place,
+                                     PsiElement place,
                                      ResolveState state) {
     ClassHint classHint = processor.getHint(ClassHint.KEY);
     if (classHint != null && !classHint.shouldProcess(ClassHint.ResolveKind.METHOD)) return;

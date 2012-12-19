@@ -76,7 +76,7 @@ public class InvalidateClassFileTest extends PsiTestCase {
 
     try {
       dstFile.setLastModified(System.currentTimeMillis());
-      VirtualFileManager.getInstance().refresh(false);
+      VirtualFileManager.getInstance().syncRefresh();
       assertTrue("No event sent!", notified[0]);
     }
     finally {

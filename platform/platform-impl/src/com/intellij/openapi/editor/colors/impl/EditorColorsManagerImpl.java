@@ -118,18 +118,15 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
     loadAllSchemes();
 
     setGlobalScheme(myDefaultColorSchemesManager.getAllSchemes()[0]);
+  }
 
-    TextAttributesKey.myDefaultsProvider = new TextAttributesKey.TextAttributeKeyDefaultsProvider() {
-      final boolean dark = UIUtil.isUnderDarcula() && getScheme("Darcula") != null;
-      @Override
-      public TextAttributes getDefaultAttributes(TextAttributesKey key) {
-        // It is reasonable to fetch attributes from Default color scheme. Otherwise if we launch IDE and then
-        // try switch from custom colors scheme (e.g. with dark background) to default one. Editor will show
-        // incorrect highlighting with "traces" of color scheme which was active during IDE startup.
-        final EditorColorsScheme defaultColorScheme = getScheme(dark ? "Darcula" : EditorColorsScheme.DEFAULT_SCHEME_NAME);
-        return defaultColorScheme.getAttributes(key);
-      }
-    };
+  public TextAttributes getDefaultAttributes(TextAttributesKey key) {
+    final boolean dark = UIUtil.isUnderDarcula() && getScheme("Darcula") != null;
+    // It is reasonable to fetch attributes from Default color scheme. Otherwise if we launch IDE and then
+    // try switch from custom colors scheme (e.g. with dark background) to default one. Editor will show
+    // incorrect highlighting with "traces" of color scheme which was active during IDE startup.
+    final EditorColorsScheme defaultColorScheme = getScheme(dark ? "Darcula" : EditorColorsScheme.DEFAULT_SCHEME_NAME);
+    return defaultColorScheme.getAttributes(key);
   }
 
   private void extendDefaultScheme() {

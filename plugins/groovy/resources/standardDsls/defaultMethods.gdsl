@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,11 +49,13 @@ private String constructElementTypeArg(PsiType psiType) {
   return "<$arg>"
 }
 
+/*
 contributor(ctype: "java.util.Collection") {
-  method name: "getAt", params: [arg: "java.lang.Number"], type: extractIterableParameter(psiType)
+  method name: "getAt", params: [arg: "int"], type: extractIterableParameter(psiType)
   method name: "getAt", params: [arg: "groovy.lang.Range"], type: "java.util.List${constructElementTypeArg(psiType)}"
   method name: "getAt", params: [arg: "java.util.Collection"], type: "java.util.List${constructElementTypeArg(psiType)}"
 }
+*/
 
 contributor(ctype:"groovy.lang.GString") {
   delegatesTo(findClass("java.lang.String"))

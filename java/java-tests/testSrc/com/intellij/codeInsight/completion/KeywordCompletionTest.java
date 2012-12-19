@@ -85,6 +85,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     checkResultByFile(BASE_PATH + "/" + getTestName(true) + "_after.java");
   }
   public void testExtendsInCastTypeParameters() throws Exception { doTest(false); }
+  public void testExtendsInCastTypeParameters2() throws Exception { doTest(2, "extends", "super"); }
   public void testExtendsWithRightContextInClassTypeParameters() throws Exception { doTest(false); }
   public void testTrueInVariableDeclaration() throws Exception { doTest(true); }
   public void testNullInIf() throws Exception { doTest(true); }

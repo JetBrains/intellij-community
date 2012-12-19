@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,8 +61,8 @@ public abstract class AbstractValueHint {
   };
   private static final TextAttributes ourReferenceAttributes = new TextAttributes();
   static {
-    ourReferenceAttributes.setForegroundColor(Color.blue);
-    ourReferenceAttributes.setEffectColor(Color.blue);
+    ourReferenceAttributes.setForegroundColor(JBColor.BLUE);
+    ourReferenceAttributes.setEffectColor(JBColor.BLUE);
     ourReferenceAttributes.setEffectType(EffectType.LINE_UNDERSCORE);
   }
 

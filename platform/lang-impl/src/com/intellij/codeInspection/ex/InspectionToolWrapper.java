@@ -68,7 +68,14 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     if (myTool == null) {
       //noinspection unchecked
       myTool = (T)myEP.instantiateTool();
-      LOG.assertTrue(myTool.getShortName().equals(myEP.getShortName()), "myTool: " + myTool.getShortName() + "; ep.shortName " + myEP.getShortName());
+      if (!myTool.getShortName().equals(myEP.getShortName())) {
+        LOG.error("Short name not matched for " +
+                  myTool.getClass() +
+                  ": getShortName() = " +
+                  myTool.getShortName() +
+                  "; ep.shortName = " +
+                  myEP.getShortName());
+      }
     }
     return myTool;
   }

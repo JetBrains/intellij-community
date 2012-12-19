@@ -66,7 +66,8 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
         final SingleConfigurableEditor configurableEditor =
           new SingleConfigurableEditor(myActionsPanel, configurable, ShowSettingsUtilImpl.createDimensionKey(configurable), false) {
             {
-              setOKButtonText(CommonBundle.getCloseButtonText());
+              setOKButtonText(CommonBundle.message("close.action.name"));
+              setOKButtonMnemonic('C');
             }
 
             @Override

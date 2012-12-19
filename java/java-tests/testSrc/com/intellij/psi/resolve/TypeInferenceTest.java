@@ -40,7 +40,7 @@ public class TypeInferenceTest extends Resolve15TestCase {
     assertTrue(type instanceof PsiClassType);
     PsiType[] paramTypes = ((PsiClassType)type).getParameters();
     assertEquals(1, paramTypes.length);
-    assertEquals(CommonClassNames.JAVA_LANG_OBJECT, paramTypes[0].getCanonicalText());
+    assertEquals(CommonClassNames.JAVA_LANG_STRING, paramTypes[0].getCanonicalText());
   }
 
   public void testInferWithBounds () throws Exception {
@@ -152,6 +152,6 @@ public class TypeInferenceTest extends Resolve15TestCase {
   }
 
   public void testBoundComposition() throws Exception {
-    checkResolvesTo("java.lang.Class<?>");
+    checkResolvesTo("java.lang.Class<? super ? extends java.lang.Object>");
   }
 }

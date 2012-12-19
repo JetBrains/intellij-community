@@ -49,11 +49,10 @@ class WebServerManagerImpl extends WebServerManager {
       return;
     }
 
-    LOG.assertTrue(server == null);
-    server = new WebServer();
     application.executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
+        server = new WebServer();
         detectedPortNumber = server.start(getDefaultPort(), PORTS_COUNT, true, new Computable<Consumer<ChannelPipeline>[]>() {
           @Override
           public Consumer<ChannelPipeline>[] compute() {

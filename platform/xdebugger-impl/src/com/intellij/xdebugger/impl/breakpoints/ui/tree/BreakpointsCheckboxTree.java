@@ -51,5 +51,6 @@ public class BreakpointsCheckboxTree extends CheckboxTree {
 
   public BreakpointsCheckboxTree(BreakpointItemsTreeController model) {
     super(new BreakpointsTreeCellRenderer.BreakpointsCheckboxTreeCellRenderer(), model.getRoot());
+    setHorizontalAutoScrollingEnabled(false);
   }
 }

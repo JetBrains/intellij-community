@@ -211,7 +211,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
     String path = mySrcDir1.getPath().replace('/', File.separatorChar);
     assertTrue(new File(path + File.separatorChar + "dir1" + File.separatorChar + "dir2").mkdirs());
     assertTrue(new File(path + File.separatorChar + "CVS").mkdirs());
-    VirtualFileManager.getInstance().refresh(false);
+    VirtualFileManager.getInstance().syncRefresh();
 
     myIndex.checkConsistency();
   }
@@ -436,7 +436,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
     };
 
     VirtualFileManager.getInstance().addVirtualFileListener(l, getTestRootDisposable());
-    VirtualFileManager.getInstance().refresh(false);
+    VirtualFileManager.getInstance().syncRefresh();
   }
 
   public void testProcessingNestedContentRootsOfExcludedDirsOnCreation() {

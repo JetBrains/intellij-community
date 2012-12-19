@@ -33,7 +33,8 @@ public class RepositoryLibraryEditor extends LibraryPropertiesEditorBase<Reposit
   protected void edit() {
     final Project project = myEditorComponent.getProject();
     final NewLibraryConfiguration configuration = RepositoryAttachHandler.chooseLibraryAndDownload(project,
-                                                                                                   myEditorComponent.getProperties().getMavenId());
+                                                                                                   myEditorComponent.getProperties().getMavenId(),
+                                                                                                   getMainPanel());
     if (configuration == null) return;
 
     final LibraryEditorBase target = (LibraryEditorBase)myEditorComponent.getLibraryEditor();

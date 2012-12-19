@@ -135,7 +135,8 @@ public class JavaCompletionData extends JavaAwareCompletionData {
         not(psiElement().afterLeaf(PsiKeyword.CASE)),
         not(psiElement().afterLeaf(psiElement().withText(".").afterLeaf(PsiKeyword.THIS, PsiKeyword.SUPER))),
         not(psiElement().inside(PsiAnnotation.class)),
-        not(START_SWITCH));
+        not(START_SWITCH),
+        not(JavaMemberNameCompletionContributor.INSIDE_TYPE_PARAMS_PATTERN));
 
   private static final String[] PRIMITIVE_TYPES = new String[]{
     PsiKeyword.SHORT, PsiKeyword.BOOLEAN,
@@ -521,6 +522,11 @@ public class JavaCompletionData extends JavaAwareCompletionData {
       if (SameSignatureCallParametersProvider.IN_CALL_ARGUMENT.accepts(position)) {
         new SameSignatureCallParametersProvider().addCompletions(parameters, new ProcessingContext(), result);
       }
+    }
+
+    if (JavaMemberNameCompletionContributor.INSIDE_TYPE_PARAMS_PATTERN.accepts(position)) {
+      result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.EXTENDS), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.SUPER), TailType.HUMBLE_SPACE_BEFORE_WORD));
     }
   }
 

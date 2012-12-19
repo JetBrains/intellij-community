@@ -22,6 +22,7 @@ import com.intellij.designer.designSurface.FlowBaseOperation;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.feedbacks.LineInsertFeedback;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.ui.JBColor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -55,7 +56,7 @@ public abstract class VerticalCaptionFlowBaseOperation<T extends RadViewComponen
       Rectangle bounds = myMainContainer.getBounds(layer);
       myMainXLocation = bounds.x;
 
-      myMainInsertFeedback = new LineInsertFeedback(Color.green, true);
+      myMainInsertFeedback = new LineInsertFeedback(JBColor.GREEN, true);
       myMainInsertFeedback.size(getMainFeedbackWidth(layer, myMainXLocation), 0);
 
       layer.add(myMainInsertFeedback);

@@ -36,8 +36,12 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -75,7 +79,10 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
     }
   };
 
-  public EncodingProjectManagerImpl(Project project, GeneralSettings generalSettings, EditorSettingsExternalizable editorSettings, PsiDocumentManager documentManager) {
+  public EncodingProjectManagerImpl(Project project,
+                                    GeneralSettings generalSettings,
+                                    EditorSettingsExternalizable editorSettings,
+                                    PsiDocumentManager documentManager) {
     myProject = project;
     myGeneralSettings = generalSettings;
     myEditorSettings = editorSettings;
@@ -123,6 +130,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
   @Override
   public void loadState(Element element) {
     List<Element> files = element.getChildren("file");
+    final Map<VirtualFile, Charset> mapping = new HashMap<VirtualFile, Charset>();
     for (Element fileElement : files) {
       String url = fileElement.getAttributeValue("url");
       String charsetName = fileElement.getAttributeValue("charset");
@@ -130,9 +138,23 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
       if (charset == null) continue;
       VirtualFile file = url.equals("PROJECT") ? null : VirtualFileManager.getInstance().findFileByUrl(url);
       if (file != null || url.equals("PROJECT")) {
-        myMapping.put(file, charset);
+        mapping.put(file, charset);
       }
     }
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
+      @Override
+      public void run() {
+        if (myProject.isDisposed()) {
+          // give last chance to save
+          myMapping.clear();
+          myMapping.putAll(mapping);
+        }
+        else {
+          setMapping(mapping);
+        }
+      }
+    });
+
     myUseUTFGuessing = Boolean.parseBoolean(element.getAttributeValue("useUTFGuessing"));
     myNative2AsciiForPropertiesFiles = Boolean.parseBoolean(element.getAttributeValue("native2AsciiForPropertiesFiles"));
     myDefaultCharsetForPropertiesFiles = CharsetToolkit.forName(element.getAttributeValue("defaultCharsetForPropertiesFiles"));
@@ -206,12 +228,11 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
     setAndSaveOrReload(virtualFileOrDir, charset);
   }
 
-  private static void setAndSaveOrReload(final VirtualFile virtualFileOrDir, final Charset charset) {
-    if (virtualFileOrDir == null || virtualFileOrDir.isDirectory()) {
+  private static void setAndSaveOrReload(VirtualFile virtualFileOrDir, Charset charset) {
+    if (virtualFileOrDir == null) {
       return;
     }
     virtualFileOrDir.setCharset(charset);
-    LoadTextUtil.setCharsetWasDetectedFromBytes(virtualFileOrDir, false);
     saveOrReload(virtualFileOrDir);
   }
 
@@ -235,29 +256,44 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
     result.addAll(myMapping.values());
     result.add(CharsetToolkit.UTF8_CHARSET);
     result.add(CharsetToolkit.getDefaultSystemCharset());
+    result.add(CharsetToolkit.UTF_16_CHARSET);
+    result.add(CharsetToolkit.forName("ISO-8859-1"));
+    result.add(CharsetToolkit.forName("US-ASCII"));
+    result.add(EncodingManager.getInstance().getDefaultCharset());
+    result.add(EncodingManager.getInstance().getDefaultCharsetForPropertiesFiles(null));
     return result;
   }
 
+  @NotNull
   @Override
   public Map<VirtualFile, Charset> getAllMappings() {
     return myMapping;
   }
 
   @Override
-  public void setMapping(final Map<VirtualFile, Charset> result) {
-    Map<VirtualFile, Charset> map = new HashMap<VirtualFile, Charset>(result);
-    //todo return it back as soon as FileIndex get to the platform
-    //ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    //for (VirtualFile file : result.keySet()) {
-    //  if (file != null && !fileIndex.isInContent(file)) {
-    //    map.remove(file);
-    //  }
-    //}
+  public void setMapping(@NotNull final Map<VirtualFile, Charset> result) {
+    Map<VirtualFile, Charset> map = new HashMap<VirtualFile, Charset>(result.size());
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    for (Map.Entry<VirtualFile, Charset> entry : result.entrySet()) {
+      VirtualFile virtualFile = entry.getKey();
+      Charset charset = entry.getValue();
+      if (virtualFile != null && !fileIndex.isInContent(virtualFile)) {
+        continue;
+      }
+      Pair<Charset, String> check = virtualFile == null || virtualFile.isDirectory() ? null : ChooseFileEncodingAction.checkCanReload(virtualFile);
+      String failReason = check == null ? null : check.second;
+      boolean enabled = failReason == null;
+      if (!enabled) {
+        continue;  // file became autodetected, exclude from explicitly specified
+      }
+      map.put(virtualFile, charset);
+    }
     myMapping.clear();
     myMapping.putAll(map);
-    for (VirtualFile virtualFile : map.keySet()) {
-      Charset charset = map.get(virtualFile);
+    for (Map.Entry<VirtualFile, Charset> entry : map.entrySet()) {
+      Charset charset = entry.getValue();
       assert charset != null;
+      VirtualFile virtualFile = entry.getKey();
       setAndSaveOrReload(virtualFile, charset);
     }
     if (!myProject.isDefault()) {

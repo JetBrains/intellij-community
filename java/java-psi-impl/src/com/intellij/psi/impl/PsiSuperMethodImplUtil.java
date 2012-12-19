@@ -215,14 +215,14 @@ public class PsiSuperMethodImplUtil {
       LOG.assertTrue(copy.getMethod().isValid());
       map.put(signature, copy);
     }
+    else if (isSuperMethod(aClass, existing, hierarchicalMethodSignature)) {
+      mergeSupers(existing, hierarchicalMethodSignature);
+    }
     else if (isReturnTypeIsMoreSpecificThan(hierarchicalMethodSignature, existing) && isSuperMethod(aClass, hierarchicalMethodSignature, existing)) {
       HierarchicalMethodSignatureImpl newSuper = copy(hierarchicalMethodSignature);
       mergeSupers(newSuper, existing);
       LOG.assertTrue(newSuper.getMethod().isValid());
       map.put(signature, newSuper);
-    }
-    else if (isSuperMethod(aClass, existing, hierarchicalMethodSignature)) {
-      mergeSupers(existing, hierarchicalMethodSignature);
     }
     // just drop an invalid method declaration there - to highlight accordingly
     else if (!result.containsKey(signature)) {
@@ -271,7 +271,9 @@ public class PsiSuperMethodImplUtil {
             if (superClass != null) {
               if (superClass.isInterface() ||
                   CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
-                return true;
+                if (!superMethod.hasModifierProperty(PsiModifier.DEFAULT) || !InheritanceUtil.isInheritorOrSelf(superClass, containingClass, true)) {
+                  return true;
+                }
               }
 
               if (containingClass != null) {

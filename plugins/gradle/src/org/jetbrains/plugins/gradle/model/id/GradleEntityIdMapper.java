@@ -75,6 +75,11 @@ public class GradleEntityIdMapper {
         public void visit(@NotNull GradleLibrary library) {
           result.set(new GradleLibraryId(GradleEntityOwner.GRADLE, library.getName())); 
         }
+
+        @Override
+        public void visit(@NotNull GradleJar jar) {
+          result.set(jar.getId());
+        }
       });
     }
 

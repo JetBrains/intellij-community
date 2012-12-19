@@ -365,4 +365,18 @@ public class MockChangeListManager extends ChangeListManagerEx {
   public void freezeImmediately(@Nullable String reason) {
   }
 
+  @Override
+  public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable Object data) {
+    return addChangeList(name, comment);
+  }
+
+  @Override
+  public void blockModalNotifications() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void unblockModalNotifications() {
+    throw new UnsupportedOperationException();
+  }
 }

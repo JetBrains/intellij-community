@@ -288,7 +288,7 @@ public class UpdateRequestsQueue {
             myWaitingUpdateCompletionQueue.removeAll(copy);
           }
 
-          if (! myWaitingUpdateCompletionQueue.isEmpty() && ! myRequestSubmitted) {
+          if (! myWaitingUpdateCompletionQueue.isEmpty() && ! myRequestSubmitted && ! myStopped) {
             LOG.error("No update task to handle request(s)");
           }
         }

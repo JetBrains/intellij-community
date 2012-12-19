@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.lang.javascript.boilerplate;
 
 import com.google.common.collect.ImmutableCollection;
@@ -13,6 +28,7 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.WebProjectGenerator;
 import com.intellij.platform.templates.github.GithubTagInfo;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -51,7 +67,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
   private UpdateStatus myUpdateStatus;
 
   public GithubProjectGeneratorPeer(@NotNull AbstractGithubTagDownloadedProjectGenerator generator) {
-    myErrorMessage.setForeground(Color.RED);
+    myErrorMessage.setForeground(JBColor.RED);
     String ghUserName = generator.getGithubUserName();
     String ghRepoName = generator.getGithubRepositoryName();
     myMasterTag = new GithubTagInfo(
@@ -62,7 +78,13 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
     myComboBox.setRenderer(new ListCellRendererWrapper<GithubTagInfo>() {
       @Override
       public void customize(JList list, GithubTagInfo tag, int index, boolean selected, boolean hasFocus) {
-        String text = tag == null ? "Unavailable" : tag.getName();
+        final String text;
+        if (tag == null) {
+          text = isBackgroundJobRunning() ? "Loading..." : "Unavailable";
+        }
+        else {
+          text = tag.getName();
+        }
         setText(text);
       }
     });
@@ -82,8 +104,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
       return;
     }
     List<GithubTagInfo> sortedTags = createSortedTagList(tags);
-    GithubTagInfo previouslySelectedTag = getSelectedTag();
-    GithubTagInfo selectedItem = previouslySelectedTag;
+    GithubTagInfo selectedItem = getSelectedTag();
     if (selectedItem == null && sortedTags.size() > 0) {
       selectedItem = sortedTags.get(0);
     }
@@ -103,9 +124,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
       }
     }
     myComboBox.updateUI();
-    if (previouslySelectedTag == null && selectedItem != null) {
-      fireStateChanged();
-    }
+    fireStateChanged();
   }
 
   void onTagsUpdateError(@NotNull final String errorMessage) {
@@ -248,9 +267,8 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
 
   @NotNull
   private JPanel createReloadInProgressPanel() {
-    JPanel panel = new JPanel(new BorderLayout(3, 0));
-    panel.add(myLoadingVersionIcon, BorderLayout.CENTER);
-    panel.add(new JLabel("Loading..."), BorderLayout.EAST);
+    JPanel panel = new JPanel();
+    panel.add(myLoadingVersionIcon);
     return panel;
   }
 

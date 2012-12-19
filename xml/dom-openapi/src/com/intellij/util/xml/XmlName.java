@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,12 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
-*/
+ */
 public class XmlName implements Comparable<XmlName> {
   private final String myLocalName;
   private final String myNamespaceKey;
+
+  private final int myHashCode;
 
   public XmlName(@NotNull @NonNls final String localName) {
     this(localName, null);
@@ -34,6 +36,8 @@ public class XmlName implements Comparable<XmlName> {
   public XmlName(@NotNull @NonNls final String localName, @Nullable final String namespaceKey) {
     myLocalName = localName;
     myNamespaceKey = namespaceKey;
+
+    myHashCode = 31 * myLocalName.hashCode() + (myNamespaceKey != null ? myNamespaceKey.hashCode() : 0);
   }
 
   @NotNull
@@ -61,20 +65,16 @@ public class XmlName implements Comparable<XmlName> {
   }
 
   public int hashCode() {
-    int result;
-    result = myLocalName.hashCode();
-    result = 31 * result + (myNamespaceKey != null ? myNamespaceKey.hashCode() : 0);
-    return result;
+    return myHashCode;
   }
 
 
   public int compareTo(XmlName o) {
     final int i = myLocalName.compareTo(o.myLocalName);
-    if (i != 0) return i;
-    if (Comparing.equal(myNamespaceKey, o.myNamespaceKey)) return 0;
-    if (myNamespaceKey == null) return -1;
-    if (o.myNamespaceKey == null) return 1;
-    return myNamespaceKey.compareTo(o.myNamespaceKey);
+    if (i != 0) {
+      return i;
+    }
+    return Comparing.compare(myNamespaceKey, o.myNamespaceKey);
   }
 
   public String toString() {

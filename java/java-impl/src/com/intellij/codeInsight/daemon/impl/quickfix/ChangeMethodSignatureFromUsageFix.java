@@ -28,6 +28,7 @@ import com.intellij.find.findUsages.JavaMethodFindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -229,6 +230,12 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         @NotNull
         protected UsageInfo[] findUsages() {
           return changeAllUsages ? super.findUsages() : UsageInfo.EMPTY_ARRAY;
+        }
+
+        @Override
+        protected void performRefactoring(UsageInfo[] usages) {
+          CommandProcessor.getInstance().setCurrentCommandName(getCommandName());
+          super.performRefactoring(usages);
         }
       };
       processor.run();

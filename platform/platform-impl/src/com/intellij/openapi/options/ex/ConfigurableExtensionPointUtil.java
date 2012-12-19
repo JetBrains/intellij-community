@@ -43,33 +43,38 @@ public class ConfigurableExtensionPointUtil {
                                                           final Configurable[] components,
                                                           @Nullable ConfigurableFilter filter,
                                                           ExtensionPointName<ConfigurableEP<Configurable>> configurablesExtensionPoint) {
-    List<Configurable> result = new ArrayList<Configurable>();
-    Map<String, ConfigurableWrapper> idToConfigurable = new HashMap<String, ConfigurableWrapper>();
-    List<ConfigurableWrapper> orphans = new ArrayList<ConfigurableWrapper>();
+    final List<Configurable> result = new ArrayList<Configurable>();
+    ContainerUtil.addAll(result, components);
+    final Map<String, ConfigurableWrapper> idToConfigurable = new HashMap<String, ConfigurableWrapper>();
     for (ConfigurableEP<Configurable> ep : extensions) {
       final Configurable configurable = ConfigurableWrapper.wrapConfigurable(ep);
       if (configurable instanceof ConfigurableWrapper) {
-        ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
-        if (wrapper.getParentId() != null) {
-          orphans.add(wrapper);
-        } else {
-          idToConfigurable.put(wrapper.getId(), wrapper);
-        }
+        final ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
+        idToConfigurable.put(wrapper.getId(), wrapper);
       }
       else {
 //        dumpConfigurable(configurablesExtensionPoint, ep, configurable);
         ContainerUtil.addIfNotNull(configurable, result);
       }
     }
-    ContainerUtil.addAll(result, components);
-
-    for (ConfigurableWrapper orphan : orphans) {
-      String parentId = orphan.getParentId();
-      ConfigurableWrapper parent = idToConfigurable.get(parentId);
-      LOG.assertTrue(parent != null, "Can't find parent for " + parentId + " (" + orphan + ")");
-      idToConfigurable.put(parentId, parent.addChild(orphan));
+    //modify configurables (append children)
+    for (final String id : idToConfigurable.keySet()) {
+      final ConfigurableWrapper wrapper = idToConfigurable.get(id);
+      final String parentId = wrapper.getParentId();
+      if (parentId != null) {
+        final ConfigurableWrapper parent = idToConfigurable.get(parentId);
+        LOG.assertTrue(parent != null, "Can't find parent for " + parentId + " (" + wrapper + ")");
+        idToConfigurable.put(parentId, parent.addChild(wrapper));
+      }
     }
-
+    //leave only roots (i.e. configurables without parents)
+    for (final Iterator<String> iterator = idToConfigurable.keySet().iterator(); iterator.hasNext(); ) {
+      final String key = iterator.next();
+      final ConfigurableWrapper wrapper = idToConfigurable.get(key);
+      if (wrapper.getParentId() != null) {
+        iterator.remove();
+      }
+    }
     ContainerUtil.addAll(result, idToConfigurable.values());
 
     final ListIterator<Configurable> iterator = result.listIterator();

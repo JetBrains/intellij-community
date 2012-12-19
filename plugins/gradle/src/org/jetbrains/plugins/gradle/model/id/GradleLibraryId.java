@@ -17,7 +17,12 @@ public class GradleLibraryId extends GradleAbstractEntityId {
     super(GradleEntityType.LIBRARY, owner);
     myLibraryName = libraryName;
   }
-  
+
+  @NotNull
+  public String getLibraryName() {
+    return myLibraryName;
+  }
+
   @Override
   public Object mapToEntity(@NotNull GradleProjectStructureContext context) {
     switch (getOwner()) {

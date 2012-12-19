@@ -34,6 +34,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -83,7 +84,7 @@ public class LayoutMarginOperation implements EditOperation {
   }
 
   protected Color getFeedbackColor() {
-    return Color.orange;
+    return JBColor.ORANGE;
   }
 
   @Override
@@ -195,7 +196,7 @@ public class LayoutMarginOperation implements EditOperation {
   public static void points(ResizeSelectionDecorator decorator) {
     pointFeedback(decorator);
 
-    decorator.addPoint(new DirectionResizePoint(Color.orange, Color.black, Position.WEST, TYPE, "Change layout:margin.left") { // left
+    decorator.addPoint(new DirectionResizePoint(JBColor.ORANGE, Color.black, Position.WEST, TYPE, "Change layout:margin.left") { // left
       @Override
       protected Point getLocation(DecorationLayer layer, RadComponent component) {
         Point location = super.getLocation(layer, component);
@@ -204,9 +205,9 @@ public class LayoutMarginOperation implements EditOperation {
       }
     });
 
-    pointRight(decorator, Color.orange, 0.25, TYPE, "Change layout:margin.right");
+    pointRight(decorator, JBColor.ORANGE, 0.25, TYPE, "Change layout:margin.right");
 
-    decorator.addPoint(new DirectionResizePoint(Color.orange, Color.black, Position.NORTH, TYPE, "Change layout:margin.top") { // top
+    decorator.addPoint(new DirectionResizePoint(JBColor.ORANGE, Color.black, Position.NORTH, TYPE, "Change layout:margin.top") { // top
       @Override
       protected Point getLocation(DecorationLayer layer, RadComponent component) {
         Point location = super.getLocation(layer, component);
@@ -215,7 +216,7 @@ public class LayoutMarginOperation implements EditOperation {
       }
     });
 
-    pointBottom(decorator, Color.orange, 0.25, TYPE, "Change layout:margin.bottom");
+    pointBottom(decorator, JBColor.ORANGE, 0.25, TYPE, "Change layout:margin.bottom");
   }
 
   public static final BasicStroke STROKE = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1, new float[]{1, 2}, 0);
@@ -228,7 +229,7 @@ public class LayoutMarginOperation implements EditOperation {
         applyMargins(bounds, ((RadViewComponent)component).getMargins());
 
         g.setStroke(STROKE);
-        g.setColor(Color.red);
+        g.setColor(JBColor.RED);
         g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
       }
     });

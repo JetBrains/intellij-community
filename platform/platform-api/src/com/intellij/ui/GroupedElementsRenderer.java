@@ -113,57 +113,66 @@ public abstract class GroupedElementsRenderer {
     return getBorder();
   }
 
-  private Border getSelectedBorder() {
+  private static Border getSelectedBorder() {
     return UIUtil.isToUseDottedCellBorder() ? new DottedBorder(UIUtil.getListCellPadding(), SELECTED_FRAME_FOREGROUND) : new EmptyBorder(UIUtil.getListCellPadding());
   }
 
-  private Border getBorder() {
+  private static Border getBorder() {
     return new EmptyBorder(UIUtil.getListCellPadding());
   }
 
-  public static abstract class List extends GroupedElementsRenderer {
-
+  public abstract static class List extends GroupedElementsRenderer {
+    @Override
     protected final void layout() {
       myRendererComponent.add(mySeparatorComponent, BorderLayout.NORTH);
       myRendererComponent.add(myComponent, BorderLayout.CENTER);
     }
 
+    @Override
     protected final Color getSelectionBackground() {
       return UIUtil.getListSelectionBackground();
     }
 
+    @Override
     protected final Color getSelectionForeground() {
       return UIUtil.getListSelectionForeground();
     }
 
+    @Override
     protected final Color getBackground() {
       return UIUtil.getListBackground();
     }
 
+    @Override
     protected final Color getForeground() {
       return UIUtil.getListForeground();
     }
   }
 
-  public static abstract class Tree extends GroupedElementsRenderer implements TreeCellRenderer {
+  public abstract static class Tree extends GroupedElementsRenderer implements TreeCellRenderer {
 
+    @Override
     protected void layout() {
       myRendererComponent.add(mySeparatorComponent, BorderLayout.NORTH);
       myRendererComponent.add(myComponent, BorderLayout.WEST);
     }
 
+    @Override
     protected final Color getSelectionBackground() {
       return UIUtil.getTreeSelectionBackground();
     }
 
+    @Override
     protected final Color getSelectionForeground() {
       return UIUtil.getTreeSelectionForeground();
     }
 
+    @Override
     protected final Color getBackground() {
       return UIUtil.getTreeTextBackground();
     }
 
+    @Override
     protected final Color getForeground() {
       return UIUtil.getTreeTextForeground();
     }

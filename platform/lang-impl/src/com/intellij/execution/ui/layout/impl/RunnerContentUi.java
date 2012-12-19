@@ -221,7 +221,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       public void beforeSelectionChanged(TabInfo oldSelection, TabInfo newSelection) {
         if (oldSelection != null && !isStateBeingRestored()) {
           final GridImpl grid = getGridFor(oldSelection);
-          if (grid != null) {
+          if (grid != null && getTabFor(grid) != null) {
             grid.saveUiState();
           }
         }

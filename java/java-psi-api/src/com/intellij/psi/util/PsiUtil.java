@@ -34,6 +34,7 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.EmptyIterable;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -722,80 +723,35 @@ public final class PsiUtil extends PsiUtilCore {
     return modifier;
   }
 
-  private static class TypeParameterIterator implements Iterator<PsiTypeParameter> {
-    private int myIndex;
-    private PsiTypeParameterListOwner myCurrentOwner;
-    private boolean myNextObtained;
-    private PsiTypeParameter[] myCurrentParams;
-
-    private PsiTypeParameter myNext;
-
-    private TypeParameterIterator(@NotNull PsiTypeParameterListOwner owner) {
-      myCurrentOwner = owner;
-      obtainCurrentParams(owner);
-      myNextObtained = false;
-    }
-
-    private void obtainCurrentParams(@NotNull PsiTypeParameterListOwner owner) {
-      myCurrentParams = owner.getTypeParameters();
-      myIndex = myCurrentParams.length - 1;
-    }
-
-    @Override
-    public boolean hasNext() {
-      nextElement();
-      return myNext != null;
-    }
-
-    @Override
-    public PsiTypeParameter next() {
-      nextElement();
-      if (myNext == null) throw new NoSuchElementException();
-      myNextObtained = false;
-      return myNext;
-    }
-
-    @Override
-    public void remove() {
-      throw new UnsupportedOperationException("TypeParameterIterator.remove");
-    }
-
-    private void nextElement() {
-      if (myNextObtained) return;
-      if (myIndex >= 0) {
-        myNext = myCurrentParams[myIndex--];
-        myNextObtained = true;
-        return;
-      }
-      final PsiClass containingClass = myCurrentOwner.getContainingClass();
-      if (myCurrentOwner.hasModifierProperty(PsiModifier.STATIC) || containingClass == null) {
-        myNext = null;
-        myNextObtained = true;
-        return;
-      }
-      myCurrentOwner = containingClass;
-      obtainCurrentParams(myCurrentOwner);
-      nextElement();
-    }
-  }
-
   /*
    * Returns iterator of type parameters visible in owner. Type parameters are iterated in
    * inner-to-outer, right-to-left order.
    */
   @NotNull
   public static Iterator<PsiTypeParameter> typeParametersIterator(@NotNull PsiTypeParameterListOwner owner) {
-    return new TypeParameterIterator(owner);
+    return typeParametersIterable(owner).iterator();
   }
+
   @NotNull
   public static Iterable<PsiTypeParameter> typeParametersIterable(@NotNull final PsiTypeParameterListOwner owner) {
-    return new Iterable<PsiTypeParameter>() {
-      @NotNull
-      @Override
-      public Iterator<PsiTypeParameter> iterator() {
-        return typeParametersIterator(owner);
+    ArrayList<PsiTypeParameter> result = null;
+
+    PsiTypeParameterListOwner currentOwner = owner;
+    while (currentOwner != null) {
+      PsiTypeParameter[] typeParameters = currentOwner.getTypeParameters();
+      if (typeParameters.length > 0) {
+        if (result == null) result = new ArrayList<PsiTypeParameter>(typeParameters.length);
+        for (int i = typeParameters.length - 1; i >= 0; i--) {
+          result.add(typeParameters[i]);
+        }
       }
-    };
+
+      if (currentOwner.hasModifierProperty(PsiModifier.STATIC)) break;
+      currentOwner = currentOwner.getContainingClass();
+    }
+
+    if (result == null) return EmptyIterable.getInstance();
+    return result;
   }
 
   public static boolean canBeOverriden(@NotNull PsiMethod method) {

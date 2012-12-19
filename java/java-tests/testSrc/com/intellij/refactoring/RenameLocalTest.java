@@ -54,6 +54,10 @@ public class RenameLocalTest extends LightRefactoringTestCase {
     doTest("_i");
   }
 
+  public void testClassNameUsedInMethodRefs() throws Exception {
+    doTest("Bar1");
+  }
+
   public void testRenameParamUniqueName() throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiElement element = TargetElementUtilBase

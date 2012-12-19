@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.Processor;
@@ -236,7 +237,7 @@ public class Bookmark {
       g.setColor(LightColors.YELLOW);
       g.fillRect(x, y, getIconWidth(), getIconHeight());
 
-      g.setColor(Color.gray);
+      g.setColor(JBColor.GRAY);
       g.drawRect(x, y, getIconWidth(), getIconHeight());
 
       g.setColor(Color.black);

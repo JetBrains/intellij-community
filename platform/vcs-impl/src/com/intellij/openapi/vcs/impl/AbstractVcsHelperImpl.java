@@ -47,10 +47,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AnnotateToggleAction;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.CommitExecutor;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.committed.*;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vcs.history.*;
@@ -193,7 +190,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
 
     final SelectFilePathsDialog dlg =
-      new SelectFilePathsDialog(myProject, files, prompt, confirmationOption, okActionName, cancelActionName);
+      new SelectFilePathsDialog(myProject, files, prompt, confirmationOption, okActionName, cancelActionName, true);
     dlg.setTitle(title);
     if (! confirmationOption.isPersistent()) {
       dlg.setDoNotAskOption(null);
@@ -225,9 +222,11 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
   
   @Override
-  public boolean commitChanges(@NotNull List<Change> changes, @NotNull LocalChangeList initialChangeList,
-                               @NotNull String commitMessage, @Nullable CommitExecutor executor) {
-    return CommitChangeListDialog.commitChanges(myProject, changes, initialChangeList, executor, commitMessage);
+  public boolean commitChanges(@NotNull Collection<Change> changes, @NotNull LocalChangeList initialChangeList,
+                               @NotNull String commitMessage, @Nullable CommitResultHandler customResultHandler) {
+      return CommitChangeListDialog.commitChanges(myProject, changes, initialChangeList,
+                                                  CommitChangeListDialog.collectExecutors(myProject, changes), true, commitMessage,
+                                                  customResultHandler);
   }
 
   private static void addDirectMessages(VcsErrorViewPanel vcsErrorViewPanel, List<VcsException> abstractVcsExceptions) {

@@ -30,7 +30,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -220,11 +219,10 @@ public abstract class InspectionTestCase extends PsiTestCase {
 
   @Override
   protected void setUpJdk() {
-
   }
 
   protected Sdk getTestProjectSdk() {
-    Sdk sdk = JavaSdkImpl.getMockJdk17();
+    Sdk sdk = IdeaTestUtil.getMockJdk17();
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     return sdk;
   }

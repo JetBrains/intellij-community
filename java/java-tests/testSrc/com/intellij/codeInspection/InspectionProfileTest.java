@@ -248,6 +248,26 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     assertEquals(0, countInitializedTools(model));
   }
 
+  public void testDoNotInstantiateOnSave() throws Exception {
+    InspectionProfileImpl profile = new InspectionProfileImpl("profile");
+    profile.setBaseProfile(InspectionProfileImpl.getDefaultProfile());
+    assertEquals(0, countInitializedTools(profile));
+    InspectionProfileEntry[] tools = profile.getInspectionTools(null);
+    assertTrue(tools.length > 0);
+    InspectionProfileEntry tool = tools[0];
+    String id = tool.getShortName();
+    System.out.println(id);
+    if (profile.isToolEnabled(HighlightDisplayKey.findById(id))) {
+      profile.disableTool(id);
+    }
+    else {
+      profile.enableTool(id);
+    }
+    profile.writeExternal(new Element("profile"));
+    List<InspectionProfileEntry> initializedTools = getInitializedTools(profile);
+    assertEquals(initializedTools.toString(), 1, initializedTools.size());
+  }
+
   public void testInspectionInitializationForSerialization() throws Exception {
     InspectionProfileImpl foo = new InspectionProfileImpl("foo");
     foo.readExternal(JDOMUtil.loadDocument("<profile version=\"1.0\" is_locked=\"false\">\n" +

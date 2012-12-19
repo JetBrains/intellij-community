@@ -41,6 +41,15 @@ public class InplaceIntroduceFieldTest extends AbstractJavaInplaceIntroduceTest 
     });
   }
 
+  public void testAnchor1() throws Exception {
+
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
+      }
+    });
+  }
+
   public void testBeforeAssignment() throws Exception {
 
     doTest(new Pass<AbstractInplaceIntroducer>() {
@@ -81,6 +90,15 @@ public class InplaceIntroduceFieldTest extends AbstractJavaInplaceIntroduceTest 
 
   public void testReplaceAll() throws Exception {
 
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
+        inplaceIntroduceFieldPopup.setReplaceAllOccurrences(true);
+      }
+    });
+  }
+
+  public void testRestoreNewExpression() throws Exception {
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {

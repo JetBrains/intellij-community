@@ -17,8 +17,6 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -26,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.util.HgErrorUtil;
@@ -66,21 +65,27 @@ public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
       LOG.info("executeCommand no default path configured");
       return null;
     }
-    HgCommandResult result = new HgCommandExecutor(project).executeInCurrentThread(repo, command, args);
+    HgCommandExecutor executor = new HgCommandExecutor(project);
+    HgCommandResult result = executor.executeInCurrentThread(repo, command, args);
+    if (HgErrorUtil.isAuthorizationError(result)) {
+      result = executor.executeInCurrentThread(repo, command, args, true);
+    }
     if (result == HgCommandResult.CANCELLED || HgErrorUtil.isAuthorizationError(result)) {
       final HgVcs vcs = HgVcs.getInstance(project);
       if (vcs == null) {
         return result;
       }
-      Notifications.Bus.notify(new Notification(HgVcs.NOTIFICATION_GROUP_ID, "Checking for incoming/outgoing changes disabled",
-                                                "Authentication is required to check incoming/outgoing changes in " + repositoryURL +
-                                                "<br/>You may enable checking for changes <a href='#'>in the Settings</a>."
-        , NotificationType.ERROR, new NotificationListener() {
-          @Override
-          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-            ShowSettingsUtil.getInstance().showSettingsDialog(project, vcs.getConfigurable().getDisplayName());
-          }
-        }), project);
+      new HgCommandResultNotifier(project).notifyError(result, "Checking for incoming/outgoing changes disabled",
+                                                       "Authentication is required to check incoming/outgoing changes in " + repositoryURL +
+                                                       "<br/>You may enable checking for changes <a href='#'>in the Settings</a>.",
+                                                       new NotificationListener() {
+                                                         @Override
+                                                         public void hyperlinkUpdate(@NotNull Notification notification,
+                                                                                     @NotNull HyperlinkEvent event) {
+                                                           ShowSettingsUtil.getInstance()
+                                                             .showSettingsDialog(project, vcs.getConfigurable().getDisplayName());
+                                                         }
+                                                       });
       final HgProjectSettings projectSettings = vcs.getProjectSettings();
       projectSettings.setCheckIncomingOutgoing(false);
     }

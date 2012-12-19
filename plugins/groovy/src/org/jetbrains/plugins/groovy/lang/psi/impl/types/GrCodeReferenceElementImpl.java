@@ -37,7 +37,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -382,7 +381,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
         if (element instanceof PsiClass) {
           final PsiSubstitutor substitutor = result.getSubstitutor();
           final PsiSubstitutor newSubstitutor = substitutor.putAll((PsiClass) element, args);
-          GroovyPsiElement context = result.getCurrentFileResolveContext();
+          PsiElement context = result.getCurrentFileResolveContext();
           GroovyResolveResultImpl newResult = new GroovyResolveResultImpl(element, context, null, newSubstitutor, result.isAccessible(), result.isStaticsOK());
           results[i] = newResult;
           if (context instanceof GrImportStatement) {

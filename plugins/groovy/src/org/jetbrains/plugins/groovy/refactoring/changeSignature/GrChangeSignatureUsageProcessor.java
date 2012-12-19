@@ -644,8 +644,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
             containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class);
           }
           if (containingClasses.size() == 1) {
-            return factory.createThisExpression(parentClass.getManager(),
-                                                containingClasses.contains(parentClass) ? null : containingClasses.iterator().next());
+            return factory.createThisExpression(containingClasses.contains(parentClass) ? null : containingClasses.iterator().next());
           }
         }
       }
@@ -749,7 +748,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       public boolean value(PsiClassType o) {
         if (!InheritanceUtil.isInheritor(o, CommonClassNames.JAVA_LANG_EXCEPTION)) return false;
         for (PsiClassType type : handledExceptions) {
-          if (TypesUtil.isAssignable(type, o, context.getManager(), context.getResolveScope(), false)) return false;
+          if (TypesUtil.isAssignableByMethodCallConversion(type, o, context)) return false;
         }
         return true;
       }

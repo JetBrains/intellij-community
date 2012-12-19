@@ -15,11 +15,14 @@
  */
 package com.intellij.openapi.diff.impl.mergeTool;
 
-import com.intellij.openapi.diff.*;
-import com.intellij.openapi.ui.FrameWrapper;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diff.DiffContent;
+import com.intellij.openapi.diff.DiffRequest;
+import com.intellij.openapi.diff.DiffTool;
+import com.intellij.openapi.diff.DiffViewer;
 import com.intellij.openapi.diff.impl.incrementalMerge.ui.MergePanel2;
 import com.intellij.openapi.ui.DialogBuilder;
-import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,6 +68,10 @@ public class MergeTool implements DiffTool {
   }
 
   public boolean canShow(DiffRequest data) {
+    return canShowRequest(data);
+  }
+
+  public static boolean canShowRequest(DiffRequest data) {
     DiffContent[] contents = data.getContents();
     if (contents.length != 3) return false;
     for (DiffContent content : contents) {

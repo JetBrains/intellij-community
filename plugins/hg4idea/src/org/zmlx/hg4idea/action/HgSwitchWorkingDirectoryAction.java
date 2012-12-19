@@ -20,6 +20,7 @@ import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.command.HgUpdateCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.ui.HgSwitchDialog;
+import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.util.Collection;
 
@@ -39,7 +40,7 @@ public class HgSwitchWorkingDirectoryAction extends HgAbstractGlobalAction {
     };
   }
 
-  private HgGlobalCommand buildCommand(final HgSwitchDialog dialog, final Project project) {
+  private static HgGlobalCommand buildCommand(final HgSwitchDialog dialog, final Project project) {
     return new HgGlobalCommand() {
       public VirtualFile getRepo() {
         return dialog.getRepository();
@@ -62,12 +63,16 @@ public class HgSwitchWorkingDirectoryAction extends HgAbstractGlobalAction {
           @Override
           public void run() {
             HgCommandResult result = command.execute();
-            new HgCommandResultNotifier(project).process(result, null, null);
+            if (HgErrorUtil.isAuthorizationError(result)) {
+              result = command.execute(true);
+            }
+            if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
+              new HgCommandResultNotifier(project).notifyError(result, "", "Update failed");
+            }
             project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
           }
         });
       }
     };
   }
-
 }

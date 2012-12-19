@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,7 @@ import com.intellij.execution.junit2.states.TestState;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
-import com.intellij.ui.ColoredTableCellRenderer;
-import com.intellij.ui.SimpleColoredRenderer;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.TableCellState;
+import com.intellij.ui.*;
 import com.intellij.util.ui.ColumnInfo;
 
 import javax.swing.*;
@@ -170,12 +167,13 @@ public abstract class TestColumnInfo extends ColumnInfo implements Comparator {
 
   private static class CountDefectsRenderer extends JPanel implements TableCellRenderer {
     private static final SimpleTextAttributes RUNNING_COLOR = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, Color.BLACK);
-    private static final SimpleTextAttributes DEFECT_ATTRIBUTE = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, Color.RED);
+    private static final SimpleTextAttributes DEFECT_ATTRIBUTE = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, JBColor.RED);
 
     private final SimpleColoredRenderer myCounters = new SimpleColoredRenderer();
     private final SimpleColoredRenderer myProgressIndicator = new SimpleColoredRenderer();
     private final TableCellState myCellState = new TableCellState();
-    private static final SimpleTextAttributes TERMINATED_ATTRIBUTE = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, Color.ORANGE);
+    private static final SimpleTextAttributes TERMINATED_ATTRIBUTE = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD,
+                                                                                              JBColor.ORANGE);
 
     public CountDefectsRenderer() {
       super(new BorderLayout());

@@ -211,7 +211,7 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
   private static String getWindowsPathToChrome() {
     if (!SystemInfo.isWindows) return null;
 
-    String localSettings = SystemProperties.getUserHome() + (SystemInfo.isWindows7 ? "/AppData/Local" : "/Local Settings");
+    String localSettings = SystemProperties.getUserHome() + (SystemInfo.isWin7OrNewer ? "/AppData/Local" : "/Local Settings");
     return FileUtil.toSystemDependentName(localSettings + "/Google/Chrome/Application/chrome.exe");
   }
 

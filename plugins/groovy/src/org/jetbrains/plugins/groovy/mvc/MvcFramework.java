@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.mvc;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
+import com.intellij.compiler.options.CompileStepBeforeRunNoErrorCheck;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunManagerEx;
@@ -358,10 +359,7 @@ public abstract class MvcFramework {
     runManager.addConfiguration(runSettings, false);
     runManager.setActiveConfiguration(runSettings);
 
-    final List<CompileStepBeforeRun.MakeBeforeRunTask> runTasks = runManager.getBeforeRunTasks(configuration, CompileStepBeforeRun.ID);
-    for (CompileStepBeforeRun.MakeBeforeRunTask task : runTasks) {
-      task.setEnabled(false);
-    }
+    RunManagerEx.disableTasks(module.getProject(), configuration, CompileStepBeforeRun.ID, CompileStepBeforeRunNoErrorCheck.ID);
   }
 
   public abstract String getFrameworkName();

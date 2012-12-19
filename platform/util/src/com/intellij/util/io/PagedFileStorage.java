@@ -96,7 +96,7 @@ public class PagedFileStorage implements Forceable {
   }
 
   private final byte[] myTypedIOBuffer;
-  private boolean isDirty = false;
+  private volatile boolean isDirty = false;
   private final File myFile;
   protected long mySize = -1;
   protected final int myPageSize;
@@ -125,7 +125,6 @@ public class PagedFileStorage implements Forceable {
 
   public void putInt(int addr, int value) {
     if (myValuesAreBufferAligned) {
-      isDirty = true;
       int page = addr / myPageSize;
       int page_offset = addr % myPageSize;
       getBuffer(page).putInt(page_offset, value);
@@ -148,7 +147,6 @@ public class PagedFileStorage implements Forceable {
 
   public final void putShort(int addr, short value) {
     if (myValuesAreBufferAligned) {
-      isDirty = true;
       int page = addr / myPageSize;
       int page_offset = addr % myPageSize;
       getBuffer(page).putShort(page_offset, value);
@@ -179,7 +177,6 @@ public class PagedFileStorage implements Forceable {
 
   public void putLong(int addr, long value) {
     if (myValuesAreBufferAligned) {
-      isDirty = true;
       int page = addr / myPageSize;
       int page_offset = addr % myPageSize;
       getBuffer(page).putLong(page_offset, value);
@@ -217,7 +214,6 @@ public class PagedFileStorage implements Forceable {
   }
 
   public void put(int index, byte value) {
-    isDirty = true;
     int page = index / myPageSize;
     int offset = index % myPageSize;
 
@@ -254,7 +250,6 @@ public class PagedFileStorage implements Forceable {
   }
 
   public void put(int index, byte[] src, int offset, int length) {
-    isDirty = true;
     int i = index;
     int o = offset;
     int l = length;
@@ -364,19 +359,19 @@ public class PagedFileStorage implements Forceable {
     if (myLastPage == page) {
       ByteBuffer buf = myLastBuffer.getCachedBuffer();
       if (buf != null && myLastChangeCount == myStorageLockContext.myStorageLock.myMappingChangeCount) {
-        if (modify) myLastBuffer.markDirty();
+        if (modify) markDirty(myLastBuffer);
         return buf;
       }
     } else if (myLastPage2 == page) {
       ByteBuffer buf = myLastBuffer2.getCachedBuffer();
       if (buf != null && myLastChangeCount2 == myStorageLockContext.myStorageLock.myMappingChangeCount) {
-        if (modify) myLastBuffer2.markDirty();
+        if (modify) markDirty(myLastBuffer2);
         return buf;
       }
     } else if (myLastPage3 == page) {
       ByteBuffer buf = myLastBuffer3.getCachedBuffer();
       if (buf != null && myLastChangeCount3 == myStorageLockContext.myStorageLock.myMappingChangeCount) {
-        if (modify) myLastBuffer3.markDirty();
+        if (modify) markDirty(myLastBuffer3);
         return buf;
       }
     }
@@ -388,7 +383,7 @@ public class PagedFileStorage implements Forceable {
         myStorageIndex = myStorageLockContext.myStorageLock.registerPagedFileStorage(this);
       }
       ByteBufferWrapper byteBufferWrapper = myStorageLockContext.myStorageLock.get(myStorageIndex | page);
-      if (modify) byteBufferWrapper.markDirty();
+      if (modify) markDirty(byteBufferWrapper);
       ByteBuffer buf = byteBufferWrapper.getBuffer();
 
       if (myLastPage != page) {
@@ -413,6 +408,11 @@ public class PagedFileStorage implements Forceable {
     catch (IOException e) {
       throw new MappingFailedException("Cannot map buffer", e);
     }
+  }
+
+  private void markDirty(ByteBufferWrapper buffer) {
+    if (!isDirty) isDirty = true;
+    buffer.markDirty();
   }
 
   public void force() {

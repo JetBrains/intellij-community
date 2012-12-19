@@ -28,12 +28,12 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RestartAction;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ContextHelpAction;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.Constraints;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -48,7 +48,7 @@ public class DefaultDebugUIEnvironment implements DebugUIEnvironment {
   private final Executor myExecutor;
   private final ProgramRunner myRunner;
   private final ExecutionEnvironment myExecutionEnvironment;
-  @Nullable private final RunContentDescriptor myReuseContent;
+  @Nullable private RunContentDescriptor myReuseContent;
   private final RunProfile myRunProfile;
   private final DebugEnvironment myModelEnvironment;
 
@@ -73,6 +73,14 @@ public class DefaultDebugUIEnvironment implements DebugUIEnvironment {
                                                      remoteConnection,
                                                      pollConnection);
     myReuseContent = reuseContent;
+    if (myReuseContent != null) {
+      Disposer.register(myReuseContent, new Disposable() {
+        @Override
+        public void dispose() {
+          myReuseContent = null;
+        }
+      });
+    }
   }
 
   @Override

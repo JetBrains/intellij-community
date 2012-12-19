@@ -206,7 +206,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   }
 
   private void appendChildNodes(AbstractTreeNode node, TreeItem<Pair<AbstractUrl, String>> treeItem) {
-    final Collection<AbstractTreeNode> children = node.getChildren();
+    final Collection<? extends AbstractTreeNode> children = node.getChildren();
     for (AbstractTreeNode child : children) {
       final TreeItem<Pair<AbstractUrl, String>> childTreeItem = new TreeItem<Pair<AbstractUrl, String>>(createPairForNode(child));
       treeItem.addChild(childTreeItem);

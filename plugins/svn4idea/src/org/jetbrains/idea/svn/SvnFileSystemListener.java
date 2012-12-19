@@ -249,8 +249,15 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
         SVNStatus srcStatus = getFileStatus(src);
         final File toDir = dst.getParentFile();
         SVNStatus dstStatus = getFileStatus(toDir);
-        if ((srcStatus == null || SvnVcs.svnStatusIsUnversioned(srcStatus)) && (dstStatus == null || SvnVcs.svnStatusIsUnversioned(dstStatus))) {
+        final boolean srcUnversioned = srcStatus == null || SvnVcs.svnStatusIsUnversioned(srcStatus);
+        if (srcUnversioned && (dstStatus == null || SvnVcs.svnStatusIsUnversioned(dstStatus))) {
           return false;
+        }
+        if (srcUnversioned) {
+          SVNStatus dstWasStatus = getFileStatus(dst);
+          if (dstWasStatus == null || SvnVcs.svnStatusIsUnversioned(dstWasStatus)) {
+            return false;
+          }
         }
         if (for17move(vcs, src, dst, isUndo, srcStatus)) return false;
       } else {
@@ -319,16 +326,20 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
         }.execute();
         return false;
       }
-      final SVNCopyClient copyClient = vcs.createCopyClient();
-      final SVNCopySource svnCopySource = new SVNCopySource(SVNRevision.UNDEFINED, SVNRevision.WORKING, src);
-      new RepeatSvnActionThroughBusy() {
-        @Override
-        protected void executeImpl() throws SVNException {
-          copyClient.doCopy(new SVNCopySource[]{svnCopySource}, dst, true, false, true);
-        }
-      }.execute();
+      moveFileWithSvn(vcs, src, dst);
     }
     return false;
+  }
+
+  public static void moveFileWithSvn(SvnVcs vcs, File src, final File dst) throws SVNException {
+    final SVNCopyClient copyClient = vcs.createCopyClient();
+    final SVNCopySource svnCopySource = new SVNCopySource(SVNRevision.UNDEFINED, SVNRevision.WORKING, src);
+    new RepeatSvnActionThroughBusy() {
+      @Override
+      protected void executeImpl() throws SVNException {
+        copyClient.doCopy(new SVNCopySource[]{svnCopySource}, dst, true, false, true);
+      }
+    }.execute();
   }
 
   private void copyUnversionedMembersOfDirectory(final File src, final File dst) throws SVNException {

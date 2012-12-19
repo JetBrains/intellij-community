@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.Key;
@@ -135,7 +150,8 @@ public class FSOperations {
       if (filter == null) {
         context.getProjectDescriptor().fsState.clearRecompile(rd);
       }
-      traverseRecursively(context, rd, rd.getRootFile(), timestamps, forceMarkDirty, currentFiles, filter);
+      final FSCache fsCache = rd.canUseFileCache() ? context.getProjectDescriptor().getFSCache() : FSCache.NO_CACHE;
+      traverseRecursively(context, rd, rd.getRootFile(), timestamps, forceMarkDirty, currentFiles, filter, fsCache);
     }
   }
 
@@ -144,15 +160,15 @@ public class FSOperations {
                                           final File file,
                                           @NotNull final Timestamps tsStorage,
                                           final boolean forceDirty,
-                                          @Nullable Set<File> currentFiles, @Nullable FileFilter filter) throws IOException {
+                                          @Nullable Set<File> currentFiles, @Nullable FileFilter filter, @NotNull FSCache fsCache) throws IOException {
     if (context.getProjectDescriptor().getIgnoredFileIndex().isIgnored(file.getName())) {
       return;
     }
-    final File[] children = file.listFiles();
+    final File[] children = fsCache.getChildren(file);
     if (children != null) { // is directory
       if (children.length > 0 && !rd.getExcludedRoots().contains(file)) {
         for (File child : children) {
-          traverseRecursively(context, rd, child, tsStorage, forceDirty, currentFiles, filter);
+          traverseRecursively(context, rd, child, tsStorage, forceDirty, currentFiles, filter, fsCache);
         }
       }
     }

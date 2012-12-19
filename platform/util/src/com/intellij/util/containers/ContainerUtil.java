@@ -21,10 +21,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.*;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TObjectHashingStrategy;
+import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -166,6 +163,11 @@ public class ContainerUtil extends ContainerUtilRt {
         return size;
       }
     };
+  }
+
+  @NotNull
+  public static <T> List<T> newSmartList(T... elements) {
+    return new SmartList<T>(elements);
   }
 
   @NotNull
@@ -737,7 +739,18 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
-  public static <T> List<T> filter(@NotNull Condition<? super T> condition, T... collection) {
+  public static int[] filter(@NotNull int[] collection, @NotNull TIntProcedure condition) {
+    TIntArrayList result = new TIntArrayList();
+    for (int t : collection) {
+      if (condition.execute(t)) {
+        result.add(t);
+      }
+    }
+    return result.isEmpty() ? ArrayUtil.EMPTY_INT_ARRAY : result.toNativeArray();
+  }
+
+  @NotNull
+  public static <T> List<T> filter(@NotNull Condition<? super T> condition, @NotNull T... collection) {
     return findAll(collection, condition);
   }
 

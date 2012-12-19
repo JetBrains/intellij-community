@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.completion.impl;
 
-import com.intellij.codeInsight.completion.CompletionLookupArranger;
 import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.Condition;
@@ -47,16 +46,17 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
       return new ArrayList<LookupElement>(1);
     }
   };
-  private final Map<LookupElement, FList<LookupElement>> myToLiftForSorting = newIdentityHashMap();
-  private final Map<LookupElement, FList<LookupElement>> myToLiftForPreselection = newIdentityHashMap();
+  private final Map<LookupElement, FList<LookupElement>> myToLift = newIdentityHashMap();
   private final IdentityHashMap<FList<LookupElement>, IdentityHashMap<LookupElement, FList<LookupElement>>> myPrepends = newIdentityHashMap();
   private final Classifier<LookupElement> myNext;
   private final LiftingCondition myCondition;
+  private final boolean myLiftBefore;
   private int myCount = 0;
 
-  public LiftShorterItemsClassifier(Classifier<LookupElement> next, LiftingCondition condition) {
+  public LiftShorterItemsClassifier(Classifier<LookupElement> next, LiftingCondition condition, boolean liftBefore) {
     myNext = next;
     myCondition = condition;
+    myLiftBefore = liftBefore;
   }
 
   @Override
@@ -85,10 +85,10 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   }
 
   private void updateLongerItem(LookupElement shorter, LookupElement longer) {
-    boolean forPreselection = myCondition.shouldLift(shorter, longer);
-    Map<LookupElement, FList<LookupElement>> map = forPreselection ? myToLiftForPreselection : myToLiftForSorting;
-    FList<LookupElement> oldValue = ContainerUtil.getOrElse(map, longer, FList.<LookupElement>emptyList());
-    map.put(longer, prependOrReuse(oldValue, shorter));
+    if (myCondition.shouldLift(shorter, longer)) {
+      FList<LookupElement> oldValue = ContainerUtil.getOrElse(myToLift, longer, FList.<LookupElement>emptyList());
+      myToLift.put(longer, prependOrReuse(oldValue, shorter));
+    }
   }
 
   private FList<LookupElement> prependOrReuse(FList<LookupElement> tail, LookupElement head) {
@@ -104,27 +104,21 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   }
 
   private void calculateToLift(LookupElement element) {
-    FList<LookupElement> forPreselection = FList.emptyList();
-    FList<LookupElement> forSorting = FList.emptyList();
+    FList<LookupElement> toLift = FList.emptyList();
 
     for (String string : element.getAllLookupStrings()) {
       for (int len = 1; len < string.length(); len++) {
         String prefix = string.substring(0, len);
         for (LookupElement shorterElement : myElements.get(prefix)) {
           if (myCondition.shouldLift(shorterElement, element)) {
-            forPreselection = prependOrReuse(forPreselection, shorterElement);
-          } else {
-            forSorting = prependOrReuse(forSorting, shorterElement);
+            toLift = prependOrReuse(toLift, shorterElement);
           }
         }
       }
     }
 
-    if (!forPreselection.isEmpty()) {
-      myToLiftForPreselection.put(element, forPreselection);
-    }
-    if (!forSorting.isEmpty()) {
-      myToLiftForSorting.put(element, forSorting);
+    if (!toLift.isEmpty()) {
+      myToLift.put(element, toLift);
     }
   }
 
@@ -164,7 +158,7 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
 
   public static class LiftingCondition {
     public boolean shouldLift(LookupElement shorterElement, LookupElement longerElement) {
-      return false;
+      return true;
     }
   }
 
@@ -189,7 +183,6 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
       final Set<LookupElement> processed = newIdentityTroveSet(mySrcSet.size());
       final Set<FList<LookupElement>> arraysProcessed = newIdentityTroveSet();
 
-      final boolean forSorting = myContext.get(CompletionLookupArranger.PURE_RELEVANCE) != Boolean.TRUE;
       final Iterable<LookupElement> next = myNext.classify(mySource, myContext);
       Iterator<LookupElement> base = FilteringIterator.create(next.iterator(), new Condition<LookupElement>() {
         @Override
@@ -200,17 +193,16 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
       return new FlatteningIterator<LookupElement, LookupElement>(base) {
         @Override
         protected Iterator<LookupElement> createValueIterator(LookupElement element) {
-          List<LookupElement> shorter = addShorterElements(null, myToLiftForPreselection.get(element));
-          if (forSorting) {
-            shorter = addShorterElements(shorter, myToLiftForSorting.get(element));
-          }
+          List<LookupElement> shorter = addShorterElements(null, myToLift.get(element));
+          List<LookupElement> singleton = Collections.singletonList(element);
           if (shorter != null) {
             if (myLifted != null) {
               myLifted.addAll(shorter);
             }
-            return ContainerUtil.concat(myNext.classify(shorter, myContext), Collections.singletonList(element)).iterator();
+            Iterable<LookupElement> lifted = myNext.classify(shorter, myContext);
+            return (myLiftBefore ? ContainerUtil.concat(lifted, singleton) : ContainerUtil.concat(singleton, lifted)).iterator();
           }
-          return Collections.singletonList(element).iterator();
+          return singleton.iterator();
         }
 
         @Nullable

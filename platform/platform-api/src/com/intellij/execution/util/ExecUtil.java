@@ -86,6 +86,7 @@ public class ExecUtil {
     return process.waitFor();
   }
 
+  @NotNull
   public static String loadTemplate(@NotNull final ClassLoader loader,
                                     @NotNull final String templateName,
                                     @Nullable final Map<String, String> variables) throws IOException {
@@ -110,6 +111,7 @@ public class ExecUtil {
     return buffer.toString();
   }
 
+  @NotNull
   public static File createTempExecutableScript(@NotNull final String prefix,
                                                 @NotNull final String suffix,
                                                 @NotNull final String source) throws IOException, ExecutionException {
@@ -121,14 +123,22 @@ public class ExecUtil {
     return tempFile;
   }
 
+  @NotNull
   public static String getOsascriptPath() {
     return "/usr/bin/osascript";
   }
 
+  @NotNull
   public static String getOpenCommandPath() {
     return "/usr/bin/open";
   }
 
+  @NotNull
+  public static String getWindowsShellName() {
+    return SystemInfo.isWin2kOrNewer ? "cmd.exe" : "command.com";
+  }
+
+  @NotNull
   public static ProcessOutput execAndGetOutput(@NotNull final List<String> command,
                                                @Nullable final String workDir) throws ExecutionException {
     assert command.size() > 0;
@@ -155,15 +165,16 @@ public class ExecUtil {
     return null;
   }
 
+  @NotNull
   public static ProcessOutput sudoAndGetOutput(@NotNull final String scriptPath,
                                                @NotNull final String prompt) throws IOException, ExecutionException {
     return sudoAndGetOutput(scriptPath, prompt, null);
   }
 
   /**
-   *
-   * @param scriptPath is already escaped filepath
+   * @param scriptPath is already escaped file path
    */
+  @NotNull
   public static ProcessOutput sudoAndGetOutput(@NotNull final String scriptPath,
                                                @NotNull final String prompt,
                                                @Nullable String workDir) throws IOException, ExecutionException {
@@ -205,6 +216,7 @@ public class ExecUtil {
     return SystemInfo.isWindows || SystemInfo.isMac || hasKdeTerminal.getValue() || hasGnomeTerminal.getValue() || hasXTerm.getValue();
   }
 
+  @NotNull
   public static List<String> getTerminalCommand(@Nullable final String title, @NotNull final String command) {
     if (SystemInfo.isWindows) {
       return Arrays.asList("cmd.exe", "/c", "start", '"' + (title != null ? title : "") + '"', command);

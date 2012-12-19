@@ -23,6 +23,7 @@ public class GradleLocalNodeManageHelperTest extends AbstractGradleTest {
     container.registerComponentImplementation(GradleLocalNodeManageHelper)
     container.registerComponentImplementation(GradleModuleManager)
     container.registerComponentImplementation(GradleLibraryManager)
+    container.registerComponentImplementation(GradleJarManager)
     container.registerComponentImplementation(GradleDependencyManager)
     container.registerComponentImplementation(GradleContentRootManager)
   }
@@ -49,7 +50,8 @@ public class GradleLocalNodeManageHelperTest extends AbstractGradleTest {
           contentRoot('1', transitive: true, order: 1)
     } } }
   }
-  
+
+  @SuppressWarnings("GroovyAssignabilityCheck")
   private def doTest(Closure c) {
     myHelper = container.getComponentInstance(GradleLocalNodeManageHelper)
     def compositeBuilder = new CompositeProjectBuilder(gradleBuilder: gradle, intellijBuilder: intellij)

@@ -48,3 +48,15 @@ class MyTest1 {
         }
     }
 }
+
+class MyTest2<T> {
+    static class A {
+      private MyTest2 myTest;
+  
+      public Object foo() {
+        return myTest.new Bar();
+      }
+    }
+
+    class Bar {}
+}

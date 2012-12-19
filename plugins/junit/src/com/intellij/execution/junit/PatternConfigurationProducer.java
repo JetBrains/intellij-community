@@ -22,12 +22,16 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 public class PatternConfigurationProducer extends JUnitConfigurationProducer {
@@ -74,6 +78,15 @@ public class PatternConfigurationProducer extends JUnitConfigurationProducer {
     return foundMembers;
   }
 
+  public static boolean isMultipleElementsSelected(ConfigurationContext context) {
+    final LinkedHashSet<String> classes = new LinkedHashSet<String>();
+    final PsiElement[] elements = collectPatternElements(context, classes);
+    if (elements != null && collectTestMembers(elements).size() > 1) {
+      return true;
+    }
+    return false;
+  }
+  
   private static PsiElement[] collectPatternElements(ConfigurationContext context, LinkedHashSet<String> classes) {
     final DataContext dataContext = context.getDataContext();
     PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
@@ -83,12 +96,20 @@ public class PatternConfigurationProducer extends JUnitConfigurationProducer {
       }
       return elements;
     } else {
-      final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
-      if (file instanceof PsiClassOwner) {
-        for (PsiMember psiMember : collectTestMembers(((PsiClassOwner)file).getClasses())) {
-          classes.add(((PsiClass)psiMember).getQualifiedName());
+      final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+      if (files != null) {
+        final List<PsiFile> psiFiles = new ArrayList<PsiFile>();
+        final PsiManager psiManager = PsiManager.getInstance(context.getProject());
+        for (VirtualFile file : files) {
+          final PsiFile psiFile = psiManager.findFile(file);
+          if (psiFile instanceof PsiClassOwner) {
+            for (PsiMember psiMember : collectTestMembers(((PsiClassOwner)psiFile).getClasses())) {
+              classes.add(((PsiClass)psiMember).getQualifiedName());
+            }
+            psiFiles.add(psiFile);
+          }
         }
-        return new PsiElement[]{file};
+        return psiFiles.toArray(new PsiElement[psiFiles.size()]);
       }
     }
     return null;

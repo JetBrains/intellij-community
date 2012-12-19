@@ -130,7 +130,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   private List<Match> myDuplicates;
   @PsiModifier.ModifierConstant private String myMethodVisibility = PsiModifier.PRIVATE;
   protected boolean myGenerateConditionalExit;
-  private PsiStatement myFirstExitStatementCopy;
+  protected PsiStatement myFirstExitStatementCopy;
   private PsiMethod myExtractedMethod;
   private PsiMethodCallExpression myMethodCall;
   private boolean myNullConditionalCheck = false;
@@ -725,7 +725,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         PsiIfStatement ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (a) b;", null);
         ifStatement = (PsiIfStatement)addToMethodCallLocation(ifStatement);
         myMethodCall = (PsiMethodCallExpression)ifStatement.getCondition().replace(myMethodCall);
-        ifStatement.getThenBranch().replace(myFirstExitStatementCopy);
+        myFirstExitStatementCopy = (PsiStatement)ifStatement.getThenBranch().replace(myFirstExitStatementCopy);
         CodeStyleManager.getInstance(myProject).reformat(ifStatement);
       }
       else if (myOutputVariable != null) {
@@ -881,7 +881,7 @@ public class ExtractMethodProcessor implements MatchProvider {
             final int index = ArrayUtil.find(parameters, resolved);
             if (index >= 0) {
               final PsiParameter param = parameters[index];
-              if (!param.hasModifierProperty(PsiModifier.FINAL) && RefactoringUtil.isInsideAnonymous(expression, method)) {
+              if (!param.hasModifierProperty(PsiModifier.FINAL) && RefactoringUtil.isInsideAnonymousOrLocal(expression, method)) {
                 try {
                   PsiUtil.setModifierProperty(param, PsiModifier.FINAL, true);
                 }
@@ -1048,6 +1048,9 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
     }
 
+    if (myTargetClass.isInterface() && PsiUtil.isLanguageLevel8OrHigher(myTargetClass)) {
+      PsiUtil.setModifierProperty(newMethod, PsiModifier.DEFAULT, true);
+    }
     return (PsiMethod)myStyleManager.reformat(newMethod);
   }
 

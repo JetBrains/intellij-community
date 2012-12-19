@@ -150,7 +150,7 @@ public class GitMergeUpdater extends GitUpdater {
   @Override
   public boolean isSaveNeeded() {
     try {
-      if (hasStagedChanges()) {
+      if (GitUtil.hasLocalChanges(true, myProject, myRoot)) {
         return true;
       }
     }
@@ -183,21 +183,6 @@ public class GitMergeUpdater extends GitUpdater {
       LOG.info("failed to get remotely changed files for " + currentBranch + ".." + remoteBranch, e);
       return true; // fail safe
     }
-  }
-
-  /**
-   * git diff --name-only --cached
-   * @return true if there is anything in the staging area, false if the staging area is empty.
-   */
-  private boolean hasStagedChanges() throws VcsException {
-    final GitSimpleHandler diff = new GitSimpleHandler(myProject, myRoot, GitCommand.DIFF);
-    diff.addParameters("--name-only", "--cached");
-    diff.setNoSSH(true);
-    diff.setStdoutSuppressed(true);
-    diff.setStderrSuppressed(true);
-    diff.setSilent(true);
-    final String output = diff.run();
-    return !output.trim().isEmpty();
   }
 
   private void cancel() {

@@ -57,6 +57,11 @@ public class GotoImplementationHandler extends GotoTargetHandler {
         protected boolean accept(PsiElement element) {
           return instance.acceptImplementationForReference(reference, element);
         }
+
+        @Override
+        protected boolean canShowPopupWithOneItem(PsiElement element) {
+          return false;
+        }
       }.searchImplementations(editor, source, offset), Collections.<AdditionalAction>emptyList());
       
       gotoData.listUpdaterTask = new ImplementationsUpdaterTask(gotoData, editor, offset, reference);
@@ -66,7 +71,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
         protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements, int offset) {
           final List<PsiElement> result = new ArrayList<PsiElement>();
           for (PsiElement targetElement : targetElements) {
-            if (instance.acceptImplementationForReference(reference, element)) {
+            if (instance.acceptImplementationForReference(reference, targetElement)) {
               result.add(targetElement);
             }
           }

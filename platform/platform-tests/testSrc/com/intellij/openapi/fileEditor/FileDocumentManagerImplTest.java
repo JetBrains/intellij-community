@@ -571,7 +571,7 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
     }
 
     @Override
-    protected void handleErrorsOnSave(Map<Document, IOException> failures) {
+    protected void handleErrorsOnSave(@NotNull Map<Document, IOException> failures) {
       myExceptionOnSave = failures.values();
     }
 

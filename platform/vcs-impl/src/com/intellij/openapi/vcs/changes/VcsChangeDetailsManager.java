@@ -24,19 +24,19 @@ import com.intellij.openapi.diff.DiffPanel;
 import com.intellij.openapi.diff.ex.DiffPanelEx;
 import com.intellij.openapi.diff.ex.DiffPanelOptions;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
+import com.intellij.openapi.diff.impl.external.BinaryDiffTool;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.util.BeforeAfter;
-import com.intellij.util.containers.HashMap;
 import com.intellij.vcsUtil.UIVcsUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +45,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 /**
  * todo extract interface and create stub for dummy project
@@ -170,7 +169,7 @@ public class VcsChangeDetailsManager {
       myRequestFromChange = new BinaryDiffRequestFromChange(myProject);
       myChangeListManager = ChangeListManager.getInstance(myProject);
 
-      myPanel = DiffManager.getInstance().createDiffPanel(null, myProject,this);
+      myPanel = DiffManager.getInstance().createDiffPanel(null, myProject, this, BinaryDiffTool.INSTANCE);
       myPanel.enableToolbar(false);
       myPanel.removeStatusBar();
       DiffPanelOptions o = ((DiffPanelEx)myPanel).getOptions();
@@ -207,6 +206,8 @@ public class VcsChangeDetailsManager {
       try {
         contents = value.get();
         if (contents == null) throw new VcsException("Can not load content");
+        if (isUnknownType(contents)) return UIVcsUtil.errorPanel("Can not show", false);
+        if (isEmpty(contents)) throw new VcsException("Can not load content");
       }
       catch (VcsException e) {
         return UIVcsUtil.errorPanel(e.getMessage(), true);
@@ -231,6 +232,25 @@ public class VcsChangeDetailsManager {
       //wholeWrapper.add(new JBScrollPane(panel.getComponent()), BorderLayout.CENTER);
       wholeWrapper.add(myPanel.getComponent(), BorderLayout.CENTER);
       return wholeWrapper;
+    }
+
+    private boolean isUnknownType(List<BeforeAfter<DiffContent>> contents) {
+      for (BeforeAfter<DiffContent> content : contents) {
+        if (content.getBefore() != null && FileTypes.UNKNOWN.equals(content.getBefore().getContentType())) return true;
+        if (content.getAfter() != null && FileTypes.UNKNOWN.equals(content.getAfter().getContentType())) return true;
+      }
+      return false;
+    }
+
+    private boolean isEmpty(List<BeforeAfter<DiffContent>> contents) {
+      for (BeforeAfter<DiffContent> content : contents) {
+        if (! contentIsEmpty(content.getAfter()) || ! contentIsEmpty(content.getBefore())) return false;
+      }
+      return true;
+    }
+
+    private boolean contentIsEmpty(final DiffContent content) {
+      return content != null && content.isEmpty();
     }
 
     @Override

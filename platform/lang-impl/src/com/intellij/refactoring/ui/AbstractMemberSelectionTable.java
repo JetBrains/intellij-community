@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -213,7 +213,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     }
   }
 
-  private static class MyTableModel<T extends PsiElement, M extends MemberInfoBase<T>> extends AbstractTableModel {
+  protected static class MyTableModel<T extends PsiElement, M extends MemberInfoBase<T>> extends AbstractTableModel {
     private final AbstractMemberSelectionTable<T, M> myTable;
 
     public MyTableModel(AbstractMemberSelectionTable<T, M> table) {
@@ -364,10 +364,10 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
       final int problem = myTable.myMemberInfoModel.checkForProblems(memberInfo);
       Color c = null;
       if (problem == MemberInfoModel.ERROR) {
-        c = Color.red;
+        c = JBColor.RED;
       }
       else if (problem == MemberInfoModel.WARNING && !isSelected) {
-        c = Color.blue;
+        c = JBColor.BLUE;
       }
       append((String)value, new SimpleTextAttributes(Font.PLAIN, c));
     }

@@ -21,7 +21,7 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testJComponentAdd() throws Throwable {
-    checkPreferredItems(0, "name", "getName", "b", "foo", "fooBean239", "this");
+    checkPreferredItems(0, "name", "getName", "b", "fooBean239", "foo", "this");
   }
   
   public void testJComponentAddNew() throws Throwable {
@@ -237,10 +237,6 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "Goo", "InnerGoo", "Bar", "AGoo");
   }
 
-  public void _testPrefixOutweighsGenericity() { //todo[peter]
-    checkPreferredItems(0, "getUserData", "getUserDataString");
-  }
-
   public void testLocalVariablesOutweighStats() throws Throwable {
     final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java");
     assertPreferredItems(0, "foo", "param", "this", "bar", "goo");
@@ -254,11 +250,11 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testPreferredByNameDontChangeStatistics() throws Throwable {
-    final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java");
+    invokeCompletion(getTestName(false) + ".java");
     assertPreferredItems(0, "foo", "false");
     myFixture.type(',');
     complete();
-    assertPreferredItems(0, "bar", "foo", "equals", "false", "true");
+    assertPreferredItems(0, "bar", "null", "foo", "equals", "false", "true");
   }
 
   public void testFieldNameOutweighsStats() throws Throwable {

@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.vcs.CalledInAwt;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -31,4 +33,18 @@ public abstract class ChangeListManagerEx extends ChangeListManager {
 
 
   public abstract void freezeImmediately(@Nullable String reason);
+
+  public abstract LocalChangeList addChangeList(@NotNull String name, @Nullable final String comment, @Nullable Object data);
+
+  /**
+   * Blocks modal dialogs that we don't want to popup during some process, for example, above the commit dialog.
+   */
+  @CalledInAwt
+  public abstract void blockModalNotifications();
+
+  /**
+   * Unblocks modal dialogs showing and shows the ones which were queued.
+   */
+  @CalledInAwt
+  public abstract void unblockModalNotifications();
 }

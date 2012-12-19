@@ -38,28 +38,32 @@ public class PropertiesFileType extends LanguageFileType {
     super(PropertiesLanguage.INSTANCE);
   }
 
+  @Override
   @NotNull
   public String getName() {
     return "Properties";
   }
 
+  @Override
   @NotNull
   public String getDescription() {
     return PropertiesBundle.message("properties.files.file.type.description");
   }
 
+  @Override
   @NotNull
   public String getDefaultExtension() {
     return DEFAULT_EXTENSION;
   }
 
+  @Override
   public Icon getIcon() {
     return AllIcons.FileTypes.Properties;
   }
 
+  @Override
   public String getCharset(@NotNull VirtualFile file, final byte[] content) {
     Charset charset = EncodingManager.getInstance().getDefaultCharsetForPropertiesFiles(file);
-    String defaultCharsetName = charset == null ? CharsetToolkit.getDefaultSystemCharset().name() : charset.name();
-    return defaultCharsetName;
+    return charset == null ? CharsetToolkit.getDefaultSystemCharset().name() : charset.name();
   }
 }

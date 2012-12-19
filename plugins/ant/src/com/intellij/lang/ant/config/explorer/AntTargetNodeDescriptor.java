@@ -35,6 +35,7 @@ import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HtmlListCellRenderer;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.UIUtil;
@@ -44,7 +45,7 @@ import java.awt.*;
 import java.util.ArrayList;
 
 final class AntTargetNodeDescriptor extends AntNodeDescriptor {
-  private static final TextAttributes ourPostfixAttributes = new TextAttributes(new Color(128, 0, 0), null, null, EffectType.BOXED, Font.PLAIN);
+  private static final TextAttributes ourPostfixAttributes = new TextAttributes(new JBColor(new Color(128, 0, 0), JBColor.RED), null, null, EffectType.BOXED, Font.PLAIN);
 
   private final AntBuildTargetBase myTarget;
   private CompositeAppearance myHighlightedText;

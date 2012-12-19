@@ -673,15 +673,21 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   @Override
-  public GrReferenceExpression createThisExpression(PsiManager manager, @Nullable PsiClass psiClass) {
+  public GrReferenceExpression createThisExpression(@Nullable PsiClass psiClass) {
     final String text;
     if (psiClass == null) {
       text = "this";
     }
     else {
-      text = psiClass.getQualifiedName() + ".this";
+      final String qname = psiClass.getQualifiedName();
+      if (StringUtil.isEmpty(qname)) {
+        text = "this";
+      }
+      else {
+        text = qname + ".this";
+      }
     }
-    return createReferenceExpressionFromText(text);
+    return createReferenceExpressionFromText(text, psiClass);
   }
 
   @Override
@@ -696,7 +702,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   @Override
-  public GrModifierList createModifierList(String text) {
+  public GrModifierList createModifierList(CharSequence text) {
     final GrMethod method = createMethodFromText(text + " void foo()");
     return method.getModifierList();
   }

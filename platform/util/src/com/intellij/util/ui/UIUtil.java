@@ -22,10 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.Gray;
-import com.intellij.ui.PanelWithAnchor;
-import com.intellij.ui.SideBorder;
+import com.intellij.ui.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
@@ -88,6 +85,9 @@ public class UIUtil {
     }
   };
 
+  private static final String[] STANDARD_FONT_SIZES =
+    {"8", "9", "10", "11", "12", "14", "16", "18", "20", "22", "24", "26", "28", "36", "48", "72"};
+
   public static void applyStyle(@NotNull ComponentStyle componentStyle, @NotNull Component comp) {
     if (!(comp instanceof JComponent)) return;
 
@@ -96,9 +96,12 @@ public class UIUtil {
     if (isUnderAquaLookAndFeel()) {
       c.putClientProperty("JComponent.sizeVariant",
                           componentStyle == ComponentStyle.REGULAR ? "regular" : componentStyle == ComponentStyle.SMALL ? "small" : "mini");
-    } else {
+    }
+    else {
       c.setFont(getFont(
-        componentStyle == ComponentStyle.REGULAR ? FontSize.NORMAL : componentStyle == ComponentStyle.SMALL ? FontSize.SMALL : FontSize.MINI, c.getFont()));
+        componentStyle == ComponentStyle.REGULAR
+        ? FontSize.NORMAL
+        : componentStyle == ComponentStyle.SMALL ? FontSize.SMALL : FontSize.MINI, c.getFont()));
     }
     Container p = c.getParent();
     if (p != null) {
@@ -108,12 +111,13 @@ public class UIUtil {
 
   public static Cursor getTextCursor(final Color backgroundColor) {
     return SystemInfo.isMac && ColorUtil.isDark(backgroundColor) ?
-                                MacUIUtil.getInvertedTextCursor(): Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR);
+           MacUIUtil.getInvertedTextCursor() : Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR);
   }
 
   /**
    * Draws two horizontal lines, the first at {@code topY}, the second at {@code bottomY}.
    * The purpose of this method (and the ground of the name) is to draw two lines framing a horizontal filled rectangle.
+   *
    * @param g       Graphics context to draw with.
    * @param startX  x-start point.
    * @param endX    x-end point.
@@ -128,12 +132,15 @@ public class UIUtil {
 
   private static final GrayFilter DEFAULT_GRAY_FILTER = new GrayFilter(true, 65);
   private static final GrayFilter DARCULA_GRAY_FILTER = new GrayFilter(true, 30);
+
   public static GrayFilter getGrayFilter() {
     return isUnderDarcula() ? DARCULA_GRAY_FILTER : DEFAULT_GRAY_FILTER;
   }
 
   public enum FontSize {NORMAL, SMALL, MINI}
+
   public enum ComponentStyle {REGULAR, SMALL, MINI}
+
   public enum FontColor {NORMAL, BRIGHTER}
 
   public static final char MNEMONIC = BundleBase.MNEMONIC;
@@ -181,7 +188,7 @@ public class UIUtil {
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
       Graphics g2 = g.create();
       try {
-        g2.setColor(Color.RED);
+        g2.setColor(JBColor.RED);
         drawDottedRectangle(g2, x, y, x + width - 1, y + height - 1);
       }
       finally {
@@ -204,7 +211,8 @@ public class UIUtil {
 
   private static final Ref<Boolean> ourRetina = Ref.create(SystemInfo.isMac ? null : false);
 
-  private UIUtil() { }
+  private UIUtil() {
+  }
 
   public static boolean isRetina() {
     synchronized (ourRetina) {
@@ -281,13 +289,15 @@ public class UIUtil {
   public static void drawLinePickedOut(Graphics graphics, int x, int y, int x1, int y1) {
     if (x == x1) {
       int minY = Math.min(y, y1);
-      int maxY = Math.max(y,  y1);
-      graphics.drawLine(x,  minY+1, x1, maxY-1);
-    } else if (y == y1) {
+      int maxY = Math.max(y, y1);
+      graphics.drawLine(x, minY + 1, x1, maxY - 1);
+    }
+    else if (y == y1) {
       int minX = Math.min(x, x1);
       int maxX = Math.max(x, x1);
-      graphics.drawLine(minX+1, y,  maxX-1, y1);
-    } else {
+      graphics.drawLine(minX + 1, y, maxX - 1, y1);
+    }
+    else {
       drawLine(graphics, x, y, x1, y1);
     }
   }
@@ -327,7 +337,6 @@ public class UIUtil {
         for (int i = 0; i < subComponentCount; i++) {
           setEnabled(container.getComponent(i), enabled, recursively);
         }
-
       }
     }
   }
@@ -431,7 +440,8 @@ public class UIUtil {
   public static Color getLabelFontColor(FontColor fontColor) {
     Color defColor = getLabelForeground();
     if (fontColor == FontColor.BRIGHTER) {
-      return new Color(Math.min(defColor.getRed() + 50, 255), Math.min(defColor.getGreen() + 50, 255), Math.min(defColor.getBlue() + 50, 255));
+      return new JBColor(new Color(Math.min(defColor.getRed() + 50, 255), Math.min(defColor.getGreen() + 50, 255), Math.min(
+        defColor.getBlue() + 50, 255)), defColor.darker());
     }
     return defColor;
   }
@@ -592,8 +602,13 @@ public class UIUtil {
     LookAndFeel.installBorder(contentPane, "PopupMenu.border");
   }
 
-  /** @deprecated Motif is gone (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration") public static boolean isMotifLookAndFeel() { return false; }
+  /**
+   * @deprecated Motif is gone (to remove in IDEA 13)
+   */
+  @SuppressWarnings("UnusedDeclaration")
+  public static boolean isMotifLookAndFeel() {
+    return false;
+  }
 
   public static Color getTreeSelectionBorderColor() {
     return UIManager.getColor("Tree.selectionBorderColor");
@@ -816,11 +831,11 @@ public class UIUtil {
   }
 
   public static Color getTableFocusCellForeground() {
-  return UIManager.getColor("Table.focusCellForeground");
+    return UIManager.getColor("Table.focusCellForeground");
   }
 
   /**
-   * @deprecated  use com.intellij.util.ui.UIUtil#getPanelBackground() instead
+   * @deprecated use com.intellij.util.ui.UIUtil#getPanelBackground() instead
    */
   public static Color getPanelBackgound() {
     return getPanelBackground();
@@ -918,8 +933,13 @@ public class UIUtil {
     return UIManager.getColor("OptionPane.background");
   }
 
-  /** @deprecated Quaqua is gone (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration") public static boolean isUnderQuaquaLookAndFeel() { return false; }
+  /**
+   * @deprecated Quaqua is gone (to remove in IDEA 13)
+   */
+  @SuppressWarnings("UnusedDeclaration")
+  public static boolean isUnderQuaquaLookAndFeel() {
+    return false;
+  }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderAlloyLookAndFeel() {
@@ -941,8 +961,13 @@ public class UIUtil {
     return UIManager.getLookAndFeel().getName().equals("Windows Classic");
   }
 
-  /** @deprecated Metal is gone (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration") public static boolean isUnderMetalLookAndFeel() { return false; }
+  /**
+   * @deprecated Metal is gone (to remove in IDEA 13)
+   */
+  @SuppressWarnings("UnusedDeclaration")
+  public static boolean isUnderMetalLookAndFeel() {
+    return false;
+  }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderNimbusLookAndFeel() {
@@ -964,8 +989,13 @@ public class UIUtil {
     return SystemInfo.isMac && (isUnderAquaLookAndFeel() || isUnderDarcula());
   }
 
-  /** @deprecated Motif is gone (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration") public static boolean isUnderMotif() { return false; }
+  /**
+   * @deprecated Motif is gone (to remove in IDEA 13)
+   */
+  @SuppressWarnings("UnusedDeclaration")
+  public static boolean isUnderMotif() {
+    return false;
+  }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderDarcula() {
@@ -1056,8 +1086,12 @@ public class UIUtil {
     return !isUnderNativeMacLookAndFeel();
   }
 
-  /** @deprecated Quaqua is gone (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration") public static void removeQuaquaVisualMarginsIn(Component component) { }
+  /**
+   * @deprecated Quaqua is gone (to remove in IDEA 13)
+   */
+  @SuppressWarnings("UnusedDeclaration")
+  public static void removeQuaquaVisualMarginsIn(Component component) {
+  }
 
   public static boolean isControlKeyDown(MouseEvent mouseEvent) {
     return SystemInfo.isMac ? mouseEvent.isMetaDown() : mouseEvent.isControlDown();
@@ -1065,24 +1099,45 @@ public class UIUtil {
 
   public static String[] getValidFontNames(final boolean familyName) {
     Set<String> result = new TreeSet<String>();
-    Font[] fonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
-    for (Font font : fonts) {
-      // Adds fonts that can display symbols at [A, Z] + [a, z] + [0, 9]
+
+    // adds fonts that can display symbols at [A, Z] + [a, z] + [0, 9]
+    for (Font font : GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts()) {
       try {
-        if (font.canDisplay('a') && font.canDisplay('z') && font.canDisplay('A') && font.canDisplay('Z') && font.canDisplay('0') &&
-            font.canDisplay('1')) {
+        if (isValidFont(font)) {
           result.add(familyName ? font.getFamily() : font.getName());
         }
       }
-      catch (Exception e) {
+      catch (Exception ignore) {
         // JRE has problems working with the font. Just skip.
       }
     }
+
+    // add label font (if isn't listed among above)
+    Font labelFont = getLabelFont();
+    if (labelFont != null && isValidFont(labelFont)) {
+      result.add(familyName ? labelFont.getFamily() : labelFont.getName());
+    }
+
     return ArrayUtil.toStringArray(result);
   }
 
   public static String[] getStandardFontSizes() {
-    return new String[]{"8", "9", "10", "11", "12", "14", "16", "18", "20", "22", "24", "26", "28", "36", "48", "72"};
+    return STANDARD_FONT_SIZES;
+  }
+
+  public static boolean isValidFont(@NotNull Font font) {
+    try {
+      return font.canDisplay('a') &&
+             font.canDisplay('z') &&
+             font.canDisplay('A') &&
+             font.canDisplay('Z') &&
+             font.canDisplay('0') &&
+             font.canDisplay('1');
+    }
+    catch (Exception e) {
+      // JRE has problems working with the font. Just skip.
+      return false;
+    }
   }
 
   public static void setupEnclosingDialogBounds(final JComponent component) {
@@ -1182,9 +1237,9 @@ public class UIUtil {
   }
 
   public static void drawSearchMatch(final Graphics2D g,
-                                        final int startX,
-                                        final int endX,
-                                        final int height) {
+                                     final int startX,
+                                     final int endX,
+                                     final int height) {
     Color c1 = new Color(255, 234, 162);
     Color c2 = new Color(255, 208, 66);
     drawSearchMatch(g, startX, endX, height, c1, c2);
@@ -1214,8 +1269,8 @@ public class UIUtil {
   }
 
   public static void drawRectPickedOut(Graphics2D g, int x, int y, int w, int h) {
-    g.drawLine(x+1, y, x+w-1, y);
-    g.drawLine(x+w, y+1, x+w, y+h-1);
+    g.drawLine(x + 1, y, x + w - 1, y);
+    g.drawLine(x + w, y + 1, x + w, y + h - 1);
     g.drawLine(x + w - 1, y + h, x + 1, y + h);
     g.drawLine(x, y + 1, x, y + h - 1);
   }
@@ -1290,27 +1345,27 @@ public class UIUtil {
     g.drawLine(x, drawTopLine ? 1 : 0, width, drawTopLine ? 1 : 0);
 
     if (active) {
-      g.setColor(new Color(100, 150, 230, toolWindow? 50 : 30));
+      g.setColor(new Color(100, 150, 230, toolWindow ? 50 : 30));
       g.fillRect(x, 0, width, height);
     }
   }
 
   public static void drawDoubleSpaceDottedLine(final Graphics2D g,
-                                          final int start,
-                                          final int end,
-                                          final int xOrY,
-                                          final Color fgColor,
-                                          boolean horizontal) {
+                                               final int start,
+                                               final int end,
+                                               final int xOrY,
+                                               final Color fgColor,
+                                               boolean horizontal) {
 
     g.setColor(fgColor);
-    for (int dot = start; dot < end; dot+=3) {
+    for (int dot = start; dot < end; dot += 3) {
       if (horizontal) {
         g.drawLine(dot, xOrY, dot, xOrY);
-      } else {
+      }
+      else {
         g.drawLine(xOrY, dot, xOrY, dot);
       }
     }
-
   }
 
   private static void drawAppleDottedLine(final Graphics2D g,
@@ -1423,7 +1478,7 @@ public class UIUtil {
     if (isRetina()) {
       return RetinaImage.create(width, height, type);
     }
-      //noinspection UndesirableClassUsage
+    //noinspection UndesirableClassUsage
     return new BufferedImage(width, height, type);
   }
 
@@ -1431,7 +1486,10 @@ public class UIUtil {
     paintWithRetina(size, g, true, paintRoutine);
   }
 
-  public static void paintWithRetina(@NotNull Dimension size, @NotNull Graphics g, boolean useRetinaCondition, Consumer<Graphics2D> paintRoutine) {
+  public static void paintWithRetina(@NotNull Dimension size,
+                                     @NotNull Graphics g,
+                                     boolean useRetinaCondition,
+                                     Consumer<Graphics2D> paintRoutine) {
     if (!useRetinaCondition || !isRetina() || Registry.is("ide.mac.retina.disableDrawingFix", false)) {
       paintRoutine.consume((Graphics2D)g);
     }
@@ -1462,7 +1520,7 @@ public class UIUtil {
    * The whole idea is that <a href="http://en.wikipedia.org/wiki/X_Rendering_Extension">XRender-based</a> pipeline doesn't support
    * {@link AlphaComposite#SRC} and we should use {@link AlphaComposite#SRC_OVER} instead.
    *
-   * @param g  target graphics container
+   * @param g target graphics container
    */
   public static void setupComposite(@NotNull Graphics2D g) {
     g.setComposite(X_RENDER_ACTIVE.getValue() ? AlphaComposite.SrcOver : AlphaComposite.Src);
@@ -1611,14 +1669,14 @@ public class UIUtil {
     @NonNls @Language("HTML")
     String body = "body, div, td, p {" + fontFamilyAndSize + " " + (fgColor != null ? "color:" + ColorUtil.toHex(fgColor) : "") + "}";
     if (resource != null) {
-      body +=  "ul {list-style-image: " + resource.toExternalForm() +"}";
+      body += "ul {list-style-image: " + resource.toExternalForm() + "}";
     }
     @NonNls String link = linkColor != null ? "a {" + fontFamilyAndSize + " color:" + ColorUtil.toHex(linkColor) + "}" : "";
     return "<style> " + body + " " + link + "</style>";
   }
 
   public static boolean isWinLafOnVista() {
-    return (SystemInfo.isWindowsVista || SystemInfo.isWindows7) && "Windows".equals(UIManager.getLookAndFeel().getName());
+    return SystemInfo.isWinVistaOrNewer && "Windows".equals(UIManager.getLookAndFeel().getName());
   }
 
   public static boolean isStandardMenuLAF() {
@@ -1894,13 +1952,15 @@ public class UIUtil {
       String each = html.substring(currentPos, currentPos + 1);
       if ("<".equals(each)) {
         braces++;
-      } else if (">".equals(each)) {
+      }
+      else if (">".equals(each)) {
         braces--;
       }
 
       if (" ".equals(each) && braces == 0) {
         result.append("&nbsp;");
-      } else {
+      }
+      else {
         result.append(each);
       }
       currentPos++;
@@ -1955,12 +2015,13 @@ public class UIUtil {
 
   /**
    * Avoid blinking while changing background.
-   * @param component   component.
-   * @param background  new background.
+   *
+   * @param component  component.
+   * @param background new background.
    */
   public static void changeBackGround(final Component component, final Color background) {
     final Color oldBackGround = component.getBackground();
-    if (background == null || !background.equals(oldBackGround)){
+    if (background == null || !background.equals(oldBackGround)) {
       component.setBackground(background);
     }
   }
@@ -2024,7 +2085,7 @@ public class UIUtil {
           else if (component != null) {
             final String str = component.toString();
             // skip default Component.toString and handle SimpleColoredComponent case
-            text = str == null || str.startsWith(component.getClass().getName()+"[")? null : str;
+            text = str == null || str.startsWith(component.getClass().getName() + "[") ? null : str;
           }
           else {
             text = null;
@@ -2046,7 +2107,7 @@ public class UIUtil {
       try {
         final Field popup = BasicComboBoxUI.class.getDeclaredField("popup");
         popup.setAccessible(true);
-        return (ComboPopup) popup.get(ui);
+        return (ComboPopup)popup.get(ui);
       }
       catch (NoSuchFieldException e) {
         return null;
@@ -2107,11 +2168,12 @@ public class UIUtil {
 
   @SuppressWarnings("deprecation")
   public static void setComboBoxEditorBounds(int x, int y, int width, int height, JComponent editor) {
-    if(SystemInfo.isMac && isUnderAquaLookAndFeel()) {
+    if (SystemInfo.isMac && isUnderAquaLookAndFeel()) {
       // fix for too wide combobox editor, see AquaComboBoxUI.layoutContainer:
       // it adds +4 pixels to editor width. WTF?!
       editor.reshape(x, y, width - 4, height - 1);
-    } else {
+    }
+    else {
       editor.reshape(x, y, width, height);
     }
   }
@@ -2354,7 +2416,8 @@ public class UIUtil {
             if (myDrawShadow) {
               c = g.getColor();
               g.setColor(myShadowColor);
-              g.drawLine(x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent() + 1, x + maxWidth[0] + 10, yOffset[0] + fm.getDescent() + 1);
+              g.drawLine(x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent() + 1, x + maxWidth[0] + 10,
+                         yOffset[0] + fm.getDescent() + 1);
               g.setColor(c);
             }
           }
@@ -2387,7 +2450,8 @@ public class UIUtil {
     Component eachParent = c;
     while (eachParent != null) {
       if (eachParent instanceof JComponent) {
-        @SuppressWarnings({"unchecked"}) WeakReference<JRootPane> pane = (WeakReference<JRootPane>)((JComponent)eachParent).getClientProperty(ROOT_PANE);
+        @SuppressWarnings({"unchecked"}) WeakReference<JRootPane> pane =
+          (WeakReference<JRootPane>)((JComponent)eachParent).getClientProperty(ROOT_PANE);
         if (pane != null) return pane.get();
       }
       eachParent = eachParent.getParent();
@@ -2407,7 +2471,7 @@ public class UIUtil {
   }
 
   public static Timer createNamedTimer(@NonNls @NotNull final String name, int delay, @NotNull ActionListener listener) {
-    return new Timer(delay, listener){
+    return new Timer(delay, listener) {
       @Override
       public String toString() {
         return name;
@@ -2424,7 +2488,7 @@ public class UIUtil {
   }
 
   @Nullable
-  public static JComponent mergeComponentsWithAnchor(PanelWithAnchor...panels) {
+  public static JComponent mergeComponentsWithAnchor(PanelWithAnchor... panels) {
     return mergeComponentsWithAnchor(Arrays.asList(panels));
   }
 
@@ -2514,7 +2578,8 @@ public class UIUtil {
         pixelGrabber.grabPixels();
         return new Color(pixels[0]);
       }
-      catch (InterruptedException ignored) { }
+      catch (InterruptedException ignored) {
+      }
     }
 
     return null;
@@ -2533,6 +2598,7 @@ public class UIUtil {
 
   private static final Color DECORATED_ROW_BG_COLOR = new Color(242, 245, 249);
   private static final Color DECORATED_ROW_BG_COLOR_DARK = Gray._75;
+
   public static Color getDecoratedRowColor() {
     return isUnderDarcula() ? DECORATED_ROW_BG_COLOR_DARK : DECORATED_ROW_BG_COLOR;
   }

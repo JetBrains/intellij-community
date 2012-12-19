@@ -408,9 +408,9 @@ private def handleImplicitBind(arg) {
   public void testIncorrectTypeArguments() {
     myFixture.configureByText('_.groovy', '''\
 class C <T extends String> {}
-C<<error descr="Type parameter 'java.lang.Double' is not in its bound; should extend 'java.lang.String'">Double</error>> c
+C<<warning descr="Type parameter 'java.lang.Double' is not in its bound; should extend 'java.lang.String'">Double</warning>> c
 C<String> c2
-C<error descr="Wrong number of type arguments: 2; required: 1"><String, Double></error> c3
+C<warning descr="Wrong number of type arguments: 2; required: 1"><String, Double></warning> c3
 ''')
     myFixture.testHighlighting(true, false, true)
   }
@@ -953,6 +953,25 @@ print new Foo()
 <error descr="Ambiguous code block">{
   String toString() {'abc'}
 }</error>
+''')
+  }
+
+  void testGenerics() {
+    addHashSet()
+    testHighlighting('''
+
+class NodeInfo{}
+
+interface NodeEvent<T> {}
+
+interface TrackerEventsListener<N extends NodeInfo, E extends NodeEvent<N>> {
+    void onEvents(Collection<E> events)
+}
+
+class AgentInfo extends NodeInfo {}
+
+print new HashSet<TrackerEventsListener<AgentInfo, NodeEvent<AgentInfo>>>() //correct
+print new HashSet<TrackerEventsListener<AgentInfo, <warning descr="Type parameter 'NodeEvent<java.lang.Object>' is not in its bound; should extend 'NodeEvent<N>'">NodeEvent<Object></warning>>>() //incorrect
 ''')
   }
 }

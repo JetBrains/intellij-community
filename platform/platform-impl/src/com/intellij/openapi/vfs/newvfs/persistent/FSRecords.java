@@ -49,7 +49,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class FSRecords implements Forceable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
 
-  private static final int VERSION = 17;
+  private static final int VERSION = 18;
 
   private static final int PARENT_OFFSET = 0;
   private static final int PARENT_SIZE = 4;
@@ -555,7 +555,7 @@ public class FSRecords implements Forceable {
     }
   }
 
-  public static void deleteRecordRecursively(int id) {
+  static void deleteRecordRecursively(int id) {
     try {
       w.lock();
       incModCount(id);
@@ -613,7 +613,7 @@ public class FSRecords implements Forceable {
     }
   }
 
-  static void addToFreeRecordsList(int id) {
+  private static void addToFreeRecordsList(int id) {
     DbConnection.addFreeRecord(id);
     setFlags(id, FREE_RECORD_FLAG, false);
   }

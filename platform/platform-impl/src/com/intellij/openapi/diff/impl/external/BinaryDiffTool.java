@@ -19,7 +19,6 @@ import com.intellij.ide.diff.DiffElement;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
-import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileTypes.UIBasedFileType;
 import com.intellij.openapi.project.Project;
@@ -74,7 +73,7 @@ public class BinaryDiffTool implements DiffTool {
 
             @Override
             protected JComponent createCenterPanel() {
-              myPanel = creator.create(getWindow(), getDisposable());
+              myPanel = creator.create(getWindow(), getDisposable(), BinaryDiffTool.this);
               return myPanel.getComponent();
             }
           }.show();
@@ -116,33 +115,26 @@ public class BinaryDiffTool implements DiffTool {
       final DiffContent current = data.getContents()[0];
       final DiffContent upToDate = data.getContents()[1];
       final Project project = data.getProject();
-      if ((current instanceof FileContent && upToDate instanceof FileContent)
-          || (current.getContentType() instanceof UIBasedFileType && upToDate.getContentType() instanceof UIBasedFileType)) {
-        mySrc = current.getFile();
-        myTrg = upToDate.getFile();
-        if (mySrc != null && myTrg != null) {
-          final FileEditorProvider[] srcProvider = FileEditorProviderManager.getInstance().getProviders(project, mySrc);
-          final FileEditorProvider[] trgProvider = FileEditorProviderManager.getInstance().getProviders(project, myTrg);
-          if (srcProvider.length > 0 && trgProvider.length > 0) {
-            myCanCreatePanel = true;
-          }
-        }
-      }
+      mySrc = current.getFile();
+      myTrg = upToDate.getFile();
+      myCanCreatePanel = canShowContent(project, mySrc) && canShowContent(project, myTrg);
+    }
+
+    private boolean canShowContent(final Project project, final VirtualFile file) {
+      if (file == null) return true;
+      return FileEditorProviderManager.getInstance().getProviders(project, file).length > 0;
     }
 
     public boolean isCanCreatePanel() {
       return myCanCreatePanel;
     }
 
-    public DiffPanel create(final Window window, final Disposable disposable) {
+    public DiffPanel create(final Window window, final Disposable disposable, final BinaryDiffTool tool) {
       if (! myCanCreatePanel) return null;
 
       final Project project = myData.getProject();
-      final DiffPanel panel = DiffManager.getInstance().createDiffPanel(window, project, disposable);
+      final DiffPanel panel = DiffManager.getInstance().createDiffPanel(window, project, disposable, tool);
       panel.setDiffRequest(myData);
-      panel.setTitle1(mySrc.getPath());
-      panel.setTitle2(myTrg.getPath());
-      panel.enableToolbar(false);
       panel.removeStatusBar();
       return panel;
     }
@@ -155,7 +147,11 @@ public class BinaryDiffTool implements DiffTool {
     }
     for (DiffContent content : contents) {
       final VirtualFile file = content.getFile();
-      if (file == null || file.isDirectory()) {
+      if (file == null) {
+        if (content.isEmpty()) continue;
+        return false;
+      }
+      if (file.isDirectory()) {
         return false;
       }
     }
@@ -166,7 +162,7 @@ public class BinaryDiffTool implements DiffTool {
   public DiffViewer createComponent(String title, DiffRequest request, Window window, @NotNull Disposable parentDisposable) {
     final PanelCreator creator = new PanelCreator(request);
     if (! creator.isCanCreatePanel()) return null;
-    return creator.create(window, parentDisposable);
+    return creator.create(window, parentDisposable, BinaryDiffTool.this);
   }
 
   public static boolean canShow(@NotNull Project project, VirtualFile file) {

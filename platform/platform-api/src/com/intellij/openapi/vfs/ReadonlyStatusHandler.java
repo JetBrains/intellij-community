@@ -32,7 +32,10 @@ public abstract class ReadonlyStatusHandler {
   public static boolean ensureDocumentWritable(@NotNull Project project, @NotNull Document document) {
     final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     boolean okWritable;
-    if (psiFile != null) {
+    if (psiFile == null) {
+      okWritable = document.isWritable();
+    }
+    else {
       final VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile != null) {
         okWritable = ensureFilesWritable(project, virtualFile);
@@ -40,9 +43,6 @@ public abstract class ReadonlyStatusHandler {
       else {
         okWritable = psiFile.isWritable();
       }
-    }
-    else {
-      okWritable = document.isWritable();
     }
     return okWritable;
   }
@@ -60,7 +60,7 @@ public abstract class ReadonlyStatusHandler {
   public abstract OperationStatus ensureFilesWritable(@NotNull VirtualFile... files);
 
   public OperationStatus ensureFilesWritable(@NotNull Collection<VirtualFile> files) {
-    return ensureFilesWritable(VfsUtil.toVirtualFileArray(files));
+    return ensureFilesWritable(VfsUtilCore.toVirtualFileArray(files));
   }
 
   public static ReadonlyStatusHandler getInstance(Project project) {

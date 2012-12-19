@@ -54,7 +54,7 @@ import java.util.Set;
 public class PathEditor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.ui.PathEditor");
 
-  public static final Color INVALID_COLOR = new Color(210, 0, 0);
+  public static final Color INVALID_COLOR = new JBColor(new Color(210, 0, 0), JBColor.RED);
 
   protected JPanel myPanel;
   private JBList myList;

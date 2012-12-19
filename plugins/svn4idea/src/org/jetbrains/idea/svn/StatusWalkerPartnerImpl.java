@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Computable;
@@ -74,6 +75,7 @@ public class StatusWalkerPartnerImpl implements StatusWalkerPartner {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
+        if (myVcs.getProject().isDisposed()) throw new ProcessCanceledException();
         return myExcludedFileIndex.isExcludedFile(vFile);
       }
     });

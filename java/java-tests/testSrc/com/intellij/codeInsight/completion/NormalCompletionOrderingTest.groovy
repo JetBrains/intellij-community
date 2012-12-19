@@ -162,10 +162,10 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     FileDocumentManager.instance.saveAllDocuments()
 
     invokeCompletion("SameStatsForDifferentQualifiersJLabel.java");
-    assertPreferredItems(1, "getComponent", "getComponents");
+    assertPreferredItems(0, "getComponents", "getComponent");
 
     invokeCompletion("SameStatsForDifferentQualifiersJComponent.java");
-    assertPreferredItems(1, "getComponent", "getComponents");
+    assertPreferredItems(0, "getComponents", "getComponent");
   }
 
   public void testSameStatsForDifferentQualifiers2() throws Throwable {
@@ -175,10 +175,10 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     FileDocumentManager.instance.saveAllDocuments()
 
     invokeCompletion("SameStatsForDifferentQualifiersJComponent.java");
-    assertPreferredItems(1, "getComponent", "getComponents");
+    assertPreferredItems(0, "getComponents", "getComponent");
 
     invokeCompletion("SameStatsForDifferentQualifiersJLabel.java");
-    assertPreferredItems(1, "getComponent", "getComponents");
+    assertPreferredItems(0, "getComponents", "getComponent");
   }
 
   public void testDispreferFinalize() throws Throwable {
@@ -200,7 +200,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testLocalVarsOverMethods() {
-    checkPreferredItems(1, "value", "valueOf");
+    checkPreferredItems(0, "value", "validate", "validateTree", "valueOf");
   }
 
   public void testCurrentClassBest() {
@@ -222,8 +222,8 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     assertEquals("Baaaaaaar", ((JavaPsiClassReferenceElement)lookup.getItems().get(1)).getQualifiedName());
   }
 
-  public void _testSkipLifted() {
-    checkPreferredItems(1, "hashCode", "hashCodeMine")
+  public void testSkipLifted() {
+    checkPreferredItems(0, "hashCodeMine", "hashCode")
   }
 
   public void testDispreferInnerClasses() {
@@ -248,7 +248,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testPreferFinallyToFinal() {
-    checkPreferredItems(1, "final", "finally");
+    checkPreferredItems(0, "finally", "final");
   }
 
   public void testPreferReturn() {
@@ -332,11 +332,13 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
 
   public void testExpectedTypeIsMoreImportantThanCase() {
     CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE;
-    checkPreferredItems(0, "ENABLED", "enable");
+    checkPreferredItems 0, "enable", "ENABLED"
+    incUseCount(lookup, 1)
+    assertPreferredItems 0, "ENABLED", "enable"
   }
 
   public void testPreferKeywordsToVoidMethodsInExpectedTypeContext() {
-    checkPreferredItems 0, 'noo', 'new', 'null', 'noo2', 'notify', 'notifyAll'
+    checkPreferredItems 0, 'null', 'noo', 'new', 'noo2', 'notify', 'notifyAll'
   }
 
   public void testPreferBetterMatchingConstantToMethods() {
@@ -471,8 +473,8 @@ import java.lang.annotation.Target;
     for (i in 0..10) {
       incUseCount(lookup, 1)
     }
-    assertPreferredItems 1, 'add', 'addAll'
-    incUseCount(lookup, 0)
+    assertPreferredItems 0, 'addAll', 'add'
+    incUseCount(lookup, 1)
     assertPreferredItems 0, 'add', 'addAll'
   }
 
@@ -483,20 +485,42 @@ import java.lang.annotation.Target;
     assertPreferredItems 0, 'myClass', 'myExtendsClause'
   }
 
-  public void _testCommonPrefixMoreImportantThanExpectedType() {
+  public void testCommonPrefixMoreImportantThanExpectedType() {
     checkPreferredItems 0, 'myStep', 'myCurrentStep'
+  }
+
+  public void testStatsMoreImportantThanExpectedType() {
+    invokeCompletion(getTestName(false) + ".java")
+    assertPreferredItems 0, 'getNumber', 'getNumProvider'
+    lookup.currentItem = lookup.items[1]
+    myFixture.type '\n, getn'
+    myFixture.completeBasic()
+    assertPreferredItems 0, 'getNumProvider', 'getNumber'
   }
 
   public void testIfConditionStats() {
     invokeCompletion(getTestName(false) + ".java")
     myFixture.completeBasic()
     myFixture.type('cont')
-    assertPreferredItems 1, 'contains', 'containsAll'
-    myFixture.lookup.currentItem = myFixture.lookupElements[0]
+    assertPreferredItems 0, 'containsAll', 'contains'
+    myFixture.lookup.currentItem = myFixture.lookupElements[1]
     myFixture.type('\nc)) {\nif (set.')
     myFixture.completeBasic()
     myFixture.type('cont')
     assertPreferredItems 0, 'contains', 'containsAll'
+  }
+
+  public void testDeepestSuperMethodStats() {
+    invokeCompletion(getTestName(false) + ".java")
+    assertPreferredItems 0, 'addX', 'addY'
+    myFixture.type('y\n;set1.ad')
+
+    myFixture.completeBasic()
+    assertPreferredItems 0, 'addY', 'addX'
+    myFixture.type('x\n;set2.ad')
+
+    myFixture.completeBasic()
+    assertPreferredItems 0, 'addX', 'addY'
   }
 
   public void testCommonPrefixMoreImportantThanKind() {

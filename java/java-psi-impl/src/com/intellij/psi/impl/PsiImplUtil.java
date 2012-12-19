@@ -299,8 +299,12 @@ public class PsiImplUtil {
   }
 
   @Nullable public static PsiAnnotation findAnnotation(@NotNull PsiAnnotationOwner modifierList, @NotNull String qualifiedName) {
-    final String shortName = StringUtil.getShortName(qualifiedName);
     PsiAnnotation[] annotations = modifierList.getAnnotations();
+    if (annotations.length == 0) {
+      return null;
+    }
+
+    final String shortName = StringUtil.getShortName(qualifiedName);
     for (PsiAnnotation annotation : annotations) {
       final PsiJavaCodeReferenceElement referenceElement = annotation.getNameReferenceElement();
       if (referenceElement != null && shortName.equals(referenceElement.getReferenceName())) {

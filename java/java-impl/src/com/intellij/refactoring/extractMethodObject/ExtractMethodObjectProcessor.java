@@ -266,7 +266,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     }
     final PsiCodeBlock body = getMethod().getBody();
     LOG.assertTrue(body != null);
-    final List<PsiLocalVariable> vars = new ArrayList<PsiLocalVariable>();
+    final LinkedHashSet<PsiLocalVariable> vars = new LinkedHashSet<PsiLocalVariable>();
     final Map<PsiElement, PsiElement> replacementMap = new LinkedHashMap<PsiElement, PsiElement>();
     final List<PsiReturnStatement> returnStatements = new ArrayList<PsiReturnStatement>();
     body.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -787,9 +787,42 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         } else if (myElements[0] instanceof PsiPostfixExpression || myElements[0] instanceof PsiPrefixExpression) {
           getMethodCall().getParent().replace(((PsiBinaryExpression)getMethodCall().getParent()).getLOperand());
         }
+
+        rebindExitStatement(object);
       }
       else {
         super.declareNecessaryVariablesAfterCall(outputVariable);
+      }
+    }
+
+    private void rebindExitStatement(final String objectName) {
+      final PsiStatement exitStatementCopy = myExtractProcessor.myFirstExitStatementCopy;
+      if (exitStatementCopy != null) {
+        myExtractProcessor.getDuplicates().clear();
+        final Map<String, PsiVariable> outVarsNames = new HashMap<String, PsiVariable>();
+        for (PsiVariable variable : myOutputVariables) {
+          outVarsNames.put(variable.getName(), variable);
+        }
+        final Map<PsiElement, PsiElement> replaceMap = new HashMap<PsiElement, PsiElement>();
+        exitStatementCopy.accept(new JavaRecursiveElementWalkingVisitor() {
+          @Override
+          public void visitReferenceExpression(PsiReferenceExpression expression) {
+            super.visitReferenceExpression(expression);
+            if (expression.resolve() == null) {
+              final PsiVariable variable = outVarsNames.get(expression.getReferenceName());
+              if (variable != null) {
+                final String call2Getter = objectName + "." + PropertyUtil.suggestGetterName(getPureName(variable), variable.getType()) + "()";
+                final PsiExpression callToGetter = myElementFactory.createExpressionFromText(call2Getter, variable);
+                replaceMap.put(expression, callToGetter);
+              }
+            }
+          }
+        });
+        for (PsiElement element : replaceMap.keySet()) {
+          if (element.isValid()) {
+            element.replace(replaceMap.get(element));
+          }
+        }
       }
     }
 

@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
@@ -72,6 +73,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
   private final Project myProject;
   private final NestedCopiesSink myTempSink;
   private boolean myInitialized;
+  private boolean myInitedReloaded;
 
   private static class MyRootsHelper extends ThreadLocalDefendedInvoker<VirtualFile[]> {
     private final ProjectLevelVcsManager myPlVcsManager;
@@ -131,7 +133,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
       if (rootUrl == null) {
         return null;
       }
-      final RootUrlInfo parentInfo = myMapping.byUrl(rootUrl);
+      final RootUrlInfo parentInfo = myMoreRealMapping.byUrl(rootUrl);
       if (parentInfo == null) {
         return null;
       }
@@ -152,7 +154,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
         return null;
       }
 
-      return myMapping.byFile(root);
+      return myMoreRealMapping.byFile(root);
     }
   }
 
@@ -170,7 +172,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
         return null;
       }
 
-      final RootUrlInfo result = myMapping.byUrl(rootUrl);
+      final RootUrlInfo result = myMoreRealMapping.byUrl(rootUrl);
       if (result == null) {
         LOG.info("Inconsistent maps for url:" + url + " found root url: " + rootUrl);
         return null;
@@ -194,8 +196,8 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
     if (ThreadLocalDefendedInvoker.isInside()) return result;
 
     synchronized (myMonitor) {
-      final List<VirtualFile> cachedRoots = myMapping.getUnderVcsRoots();
-      final List<VirtualFile> lonelyRoots = myMapping.getLonelyRoots();
+      final List<VirtualFile> cachedRoots = myMoreRealMapping.getUnderVcsRoots();
+      final List<VirtualFile> lonelyRoots = myMoreRealMapping.getLonelyRoots();
       if (! lonelyRoots.isEmpty()) {
         myChecker.reportNoRoots(lonelyRoots);
       }
@@ -249,12 +251,23 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
         @Override
         public void run() {
           if (myProject.isDisposed()) return;
+          boolean mappingsChanged = false;
           synchronized (myMonitor) {
+            mappingsChanged = ! myMapping.equals(mapping);
+            if (mappingsChanged) {
+              mappingsChanged = ! myMoreRealMapping.equals(groupedMapping);
+            }
             myMapping.copyFrom(mapping);
             myMoreRealMapping.copyFrom(groupedMapping);
           }
-          // all listeners are asynchronous
-          myProject.getMessageBus().syncPublisher(SvnVcs.ROOTS_RELOADED).run();
+
+          if (mappingsChanged || ! myInitedReloaded) {
+            myInitedReloaded = true;
+            // all listeners are asynchronous
+            final MessageBus bus = myProject.getMessageBus();
+            bus.syncPublisher(SvnVcs.ROOTS_RELOADED).run();
+            bus.syncPublisher(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN).directoryMappingChanged();
+          }
         }
       });
     }
@@ -353,7 +366,8 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
             }
             for (RootUrlInfo topRoot : myTopRoots) {
               if (VfsUtil.isAncestor(topRoot.getVirtualFile(), info.getFile(), true)) {
-                final SVNURL repoRoot = myRepositoryRoots.ask(info.getUrl());
+                SVNURL repoRoot = info.getRootURL();
+                repoRoot = repoRoot == null ? myRepositoryRoots.ask(info.getUrl(), true) : repoRoot;
                 if (repoRoot != null) {
                   final RootUrlInfo rootInfo = new RootUrlInfo(repoRoot, info.getUrl(), info.getFormat(), info.getFile(), topRoot.getRoot());
                   rootInfo.setType(info.getType());
@@ -392,7 +406,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
       myRoots.add(url);
     }
 
-    public SVNURL ask(final SVNURL url) {
+    public SVNURL ask(final SVNURL url, boolean allowRemote) {
       for (SVNURL root : myRoots) {
         if (root.equals(SVNURLUtil.getCommonURLAncestor(root, url))) {
           return root;
@@ -400,7 +414,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
       }
       final SVNURL newUrl;
       try {
-        newUrl = SvnUtil.getRepositoryRoot(myVcs, url);
+        newUrl = SvnUtil.getRepositoryRoot(myVcs, url, allowRemote);
         if (newUrl != null) {
           myRoots.add(newUrl);
           return newUrl;
@@ -433,7 +447,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
 
   @Nullable
   public String getUrlRootForUrl(final String currentUrl) {
-    for (String url : myMapping.getUrls()) {
+    for (String url : myMoreRealMapping.getUrls()) {
       if (SVNPathUtil.isAncestor(url, currentUrl)) {
         return url;
       }
@@ -447,7 +461,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
     convertedPath = (currentPath.isDirectory() && (! convertedPath.endsWith(File.separator))) ? convertedPath + File.separator :
         convertedPath;
     synchronized (myMonitor) {
-      return myMapping.getRootForPath(convertedPath);
+      return myMoreRealMapping.getRootForPath(convertedPath);
     }
   }
 

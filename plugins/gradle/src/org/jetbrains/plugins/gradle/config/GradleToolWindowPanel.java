@@ -81,6 +81,7 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
       @Override public void onLinkedProjectPathChange(@Nullable String oldPath, @Nullable String newPath) { refreshAll(); }
       @Override public void onPreferLocalGradleDistributionToWrapperChange(boolean preferLocalToWrapper) { refreshAll(); }
       @Override public void onGradleHomeChange(@Nullable String oldPath, @Nullable String newPath) { refreshAll(); }
+      @Override public void onServiceDirectoryPathChange(@Nullable String oldPath, @Nullable String newPath) { refreshAll(); }
       
       private void refreshAll() {
         if (myInBulk) {
@@ -123,7 +124,10 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
     setToolbar(toolbarControl);
     
     final JComponent payloadControl = buildContent();
-    myContent.add(ScrollPaneFactory.createScrollPane(payloadControl), CONTENT_CARD_NAME);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(payloadControl);
+    JScrollBar scrollBar = scrollPane.getVerticalScrollBar();
+    scrollBar.setUnitIncrement(scrollBar.getUnitIncrement() * 7);
+    myContent.add(scrollPane, CONTENT_CARD_NAME);
     RichTextControlBuilder builder = new RichTextControlBuilder();
     builder.setBackgroundColor(payloadControl.getBackground());
     builder.setForegroundColor(UIUtil.getInactiveTextColor());

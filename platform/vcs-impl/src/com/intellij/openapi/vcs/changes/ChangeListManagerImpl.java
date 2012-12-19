@@ -71,6 +71,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListManagerImpl");
 
   private final Project myProject;
+  private final VcsConfiguration myConfig;
   private final ChangesViewI myChangesViewManager;
   private final FileStatusManager myFileStatusManager;
   private final UpdateRequestsQueue myUpdater;
@@ -119,6 +120,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private VcsDirtyScopeManager myDirtyScopeManager;
   private VcsDirtyScopeVfsListener myVfsListener;
 
+  private boolean myModalNotificationsBlocked;
+  @NotNull private final Collection<LocalChangeList> myListsToBeDeleted = new HashSet<LocalChangeList>();
+
   public static ChangeListManagerImpl getInstanceImpl(final Project project) {
     return (ChangeListManagerImpl)PeriodicalTasksCloser.getInstance().safeGetComponent(project, ChangeListManager.class);
   }
@@ -129,6 +133,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   public ChangeListManagerImpl(Project project, final VcsConfiguration config) {
     myProject = project;
+    myConfig = config;
     myFreezeName = new AtomicReference<String>(null);
     myAdditionalInfo = null;
     myChangesViewManager = myProject.isDefault() ? new DummyChangesView(myProject) : ChangesViewManager.getInstance(myProject);
@@ -147,37 +152,26 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myListeners.addListener(new ChangeListAdapter() {
       @Override
       public void defaultListChanged(final ChangeList oldDefaultList, ChangeList newDefaultList) {
-        if (oldDefaultList == null || ((LocalChangeList)oldDefaultList).hasDefaultName() || oldDefaultList.equals(newDefaultList)) return;
+        final LocalChangeList oldList = (LocalChangeList)oldDefaultList;
+        if (oldDefaultList == null || oldList.hasDefaultName() || oldDefaultList.equals(newDefaultList)) return;
 
         if (!ApplicationManager.getApplication().isUnitTestMode() &&
             oldDefaultList.getChanges().isEmpty() &&
-            !((LocalChangeList)oldDefaultList).isReadOnly()) {
+            !oldList.isReadOnly()) {
 
           invokeAfterUpdate(new Runnable() {
             public void run() {
-              if (getChangeList(((LocalChangeList)oldDefaultList).getId()) == null) {
+              if (getChangeList(oldList.getId()) == null) {
                 return; // removed already  
               }
               switch (config.REMOVE_EMPTY_INACTIVE_CHANGELISTS) {
-
                 case SHOW_CONFIRMATION:
-                  VcsConfirmationDialog dialog = new VcsConfirmationDialog(myProject, new VcsShowConfirmationOption() {
-                    public Value getValue() {
-                      return config.REMOVE_EMPTY_INACTIVE_CHANGELISTS;
-                    }
+                  if (myModalNotificationsBlocked) {
+                    myListsToBeDeleted.add(oldList);
+                    return;
+                  }
 
-                    public void setValue(Value value) {
-                      config.REMOVE_EMPTY_INACTIVE_CHANGELISTS = value;
-                    }
-
-                    @Override
-                    public boolean isPersistent() {
-                      return true;
-                    }
-                  }, "<html>The empty changelist '" + StringUtil.first(oldDefaultList.getName(), 30, true) + "' is no longer active.<br>" +
-                     "Do you want to remove it?</html>", "&Remember my choice");
-                  dialog.show();
-                  if (!dialog.isOK()) {
+                  if (!showRemoveEmptyChangeListsProposal(config, Collections.singletonList(oldList))) {
                     return;
                   }
                   break;
@@ -186,12 +180,75 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                 case DO_ACTION_SILENTLY:
                   break;
               }
-              removeChangeList((LocalChangeList)oldDefaultList);
+              removeChangeList(oldList);
             }
           }, InvokeAfterUpdateMode.SILENT, null, null);
         }
       }
     });
+  }
+
+  /**
+   * Shows the proposal to delete one or more changelists that were default and became empty.
+   * @return true if the changelists have to be deleted, false if not.
+   */
+  private boolean showRemoveEmptyChangeListsProposal(@NotNull final VcsConfiguration config, @NotNull Collection<LocalChangeList> lists) {
+    if (lists.isEmpty()) {
+      return false;
+    }
+
+    final String question;
+    if (lists.size() == 1) {
+      question = String.format("<html>The empty changelist '%s' is no longer active.<br>Do you want to remove it?</html>",
+                               StringUtil.first(lists.iterator().next().getName(), 30, true));
+    }
+    else {
+      question = String.format("<html>Empty changelists<br/>%s are no longer active.<br>Do you want to remove them?</html>",
+                               StringUtil.join(lists, new Function<LocalChangeList, String>() {
+                                 @Override
+                                 public String fun(LocalChangeList list) {
+                                   return StringUtil.first(list.getName(), 30, true);
+                                 }
+                               }, "<br/>"));
+    }
+
+    VcsConfirmationDialog dialog = new VcsConfirmationDialog(myProject, new VcsShowConfirmationOption() {
+      public Value getValue() {
+        return config.REMOVE_EMPTY_INACTIVE_CHANGELISTS;
+      }
+
+      public void setValue(Value value) {
+        config.REMOVE_EMPTY_INACTIVE_CHANGELISTS = value;
+      }
+
+      @Override
+      public boolean isPersistent() {
+        return true;
+      }
+    }, question, "&Remember my choice");
+    dialog.show();
+    return dialog.isOK();
+  }
+
+  @Override
+  @CalledInAwt
+  public void blockModalNotifications() {
+    myModalNotificationsBlocked = true;
+  }
+
+  @Override
+  @CalledInAwt
+  public void unblockModalNotifications() {
+    myModalNotificationsBlocked = false;
+    if (myListsToBeDeleted.isEmpty()) {
+      return ;
+    }
+    if (showRemoveEmptyChangeListsProposal(myConfig, myListsToBeDeleted)) {
+      for (LocalChangeList list : myListsToBeDeleted) {
+        removeChangeList(list);
+      }
+    }
+    myListsToBeDeleted.clear();
   }
 
   public void projectOpened() {
@@ -230,7 +287,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       public void run() {
         synchronized (myDataLock) {
           if (myWorker.isEmpty()) {
-            final LocalChangeList list = myWorker.addChangeList(VcsBundle.message("changes.default.changlist.name"), null);
+            final LocalChangeList list = myWorker.addChangeList(VcsBundle.message("changes.default.changlist.name"), null, null);
             setDefaultChangeList(list);
 
             if (myIgnoredIdeaLevel.isEmpty()) {
@@ -829,17 +886,23 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   public LocalChangeList addChangeList(@NotNull final String name, @Nullable final String comment) {
+    return addChangeList(name, comment, null);
+  }
+
+  @Override
+  public LocalChangeList addChangeList(@NotNull final String name, @Nullable final String comment, @Nullable final Object data) {
     return ApplicationManager.getApplication().runReadAction(new Computable<LocalChangeList>() {
       @Override
       public LocalChangeList compute() {
         synchronized (myDataLock) {
-          final LocalChangeList changeList = myModifier.addChangeList(name, comment);
+          final LocalChangeList changeList = myModifier.addChangeList(name, comment, data);
           myChangesViewManager.scheduleRefresh();
           return changeList;
         }
       }
     });
   }
+
 
   public void removeChangeList(final String name) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -1019,11 +1082,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       if (myComposite.getVFHolder(FileHolder.HolderType.MODIFIED_WITHOUT_EDITING).containsFile(file)) return FileStatus.HIJACKED;
       if (myComposite.getIgnoredFileHolder().containsFile(file)) return FileStatus.IGNORED;
 
+      final boolean switched = myWorker.isSwitched(file);
       final FileStatus status = myWorker.getStatus(file);
       if (status != null) {
-        return status;
+        return FileStatus.NOT_CHANGED.equals(status) && switched ? FileStatus.SWITCHED : status;
       }
-      if (myWorker.isSwitched(file)) return FileStatus.SWITCHED;
+      if (switched) return FileStatus.SWITCHED;
       return FileStatus.NOT_CHANGED;
     }
   }
@@ -1158,7 +1222,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private boolean doCommit(final LocalChangeList changeList, final List<Change> changes, final boolean synchronously) {
     return new CommitHelper(myProject, changeList, changes, changeList.getName(),
-                     changeList.getComment(), new ArrayList<CheckinHandler>(), false, synchronously, NullableFunction.NULL).doCommit();
+                     changeList.getComment(), new ArrayList<CheckinHandler>(), false, synchronously, NullableFunction.NULL, null).doCommit();
   }
 
   public void commitChangesSynchronously(LocalChangeList changeList, List<Change> changes) {

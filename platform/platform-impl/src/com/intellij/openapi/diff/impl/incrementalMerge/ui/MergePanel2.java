@@ -34,6 +34,7 @@ import com.intellij.openapi.diff.impl.incrementalMerge.ChangeCounter;
 import com.intellij.openapi.diff.impl.incrementalMerge.ChangeList;
 import com.intellij.openapi.diff.impl.incrementalMerge.MergeList;
 import com.intellij.openapi.diff.impl.mergeTool.MergeRequestImpl;
+import com.intellij.openapi.diff.impl.mergeTool.MergeTool;
 import com.intellij.openapi.diff.impl.settings.DiffMergeEditorSetting;
 import com.intellij.openapi.diff.impl.settings.DiffMergeSettings;
 import com.intellij.openapi.diff.impl.settings.DiffMergeSettingsAction;
@@ -300,6 +301,11 @@ public class MergePanel2 implements DiffViewer {
     for (DiffDivider myDivider : myDividers) {
       myDivider.stopListenEditors();
     }
+  }
+
+  @Override
+  public boolean canShowRequest(DiffRequest request) {
+    return MergeTool.canShowRequest(request);
   }
 
   public void setDiffRequest(DiffRequest data) {

@@ -26,6 +26,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
@@ -56,7 +57,7 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
   private JPanel myPanel;
   private JLabel myLabel;
 
-  protected LanguagePerFileConfigurable(final Project project, Class<T> valueClass, PerFileMappings<T> mappings, String caption, String treeTableTitle, String overrideQuestion, String overrideTitle) {
+  protected LanguagePerFileConfigurable(@NotNull Project project, Class<T> valueClass, PerFileMappings<T> mappings, String caption, String treeTableTitle, String overrideQuestion, String overrideTitle) {
     myProject = project;
     myValueClass = valueClass;
     myMappings = mappings;
@@ -131,9 +132,8 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
   }
 
   private class MyTreeTable extends AbstractFileTreeTable<T> {
-
     public MyTreeTable() {
-      super(myProject, myValueClass, myTreeTableTitle);
+      super(myProject, myValueClass, myTreeTableTitle, VirtualFileFilter.ALL, true);
       getValueColumn().setCellEditor(new DefaultCellEditor(new JComboBox()) {
         private VirtualFile myVirtualFile;
 
@@ -309,11 +309,20 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
       }
 
       protected abstract void chosen(final VirtualFile file, final T t);
+
+      @Override
+      public boolean isDumbAware() {
+        return LanguagePerFileConfigurable.this.isDumbAware();
+      }
     }
   }
 
   @Nullable
   protected Icon getIcon(T currentValue, T selectableValue) {
     return null;
+  }
+
+  protected boolean isDumbAware() {
+    return true;
   }
 }

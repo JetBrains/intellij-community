@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,29 +61,23 @@ public class ConstantNamingConventionInspection extends ConventionInspection {
   public String buildErrorString(Object... infos) {
     final String fieldName = (String)infos[0];
     if (fieldName.length() < getMinLength()) {
-      return InspectionGadgetsBundle.message(
-        "constant.naming.convention.problem.descriptor.short");
+      return InspectionGadgetsBundle.message("constant.naming.convention.problem.descriptor.short");
     }
     else if (fieldName.length() > getMaxLength()) {
-      return InspectionGadgetsBundle.message(
-        "constant.naming.convention.problem.descriptor.long");
+      return InspectionGadgetsBundle.message("constant.naming.convention.problem.descriptor.long");
     }
-    return InspectionGadgetsBundle.message(
-      "constant.naming.convention.problem.descriptor.regex.mismatch",
-      getRegex());
+    return InspectionGadgetsBundle.message("constant.naming.convention.problem.descriptor.regex.mismatch", getRegex());
   }
 
   @Override
   public Collection<? extends JComponent> createExtraOptions() {
     return Arrays.asList(
-      new CheckBox(InspectionGadgetsBundle.message(
-        "constant.naming.convention.immutables.option"), this,
-                   "onlyCheckImmutables"));
+      new CheckBox(InspectionGadgetsBundle.message("constant.naming.convention.immutables.option"), this, "onlyCheckImmutables"));
   }
 
   @Override
   protected String getDefaultRegex() {
-    return "[A-Z_\\d]*";
+    return "[A-Z][A-Z_\\d]*";
   }
 
   @Override
@@ -109,8 +103,7 @@ public class ConstantNamingConventionInspection extends ConventionInspection {
       if (field instanceof PsiEnumConstant) {
         return;
       }
-      if (!field.hasModifierProperty(PsiModifier.STATIC) ||
-          !field.hasModifierProperty(PsiModifier.FINAL)) {
+      if (!field.hasModifierProperty(PsiModifier.STATIC) || !field.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
       final String name = field.getName();

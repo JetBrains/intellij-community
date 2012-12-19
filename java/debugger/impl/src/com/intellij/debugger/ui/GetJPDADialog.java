@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -61,7 +62,7 @@ public class GetJPDADialog extends DialogWrapper {
         return true;
       }
     }.installOn(label2);
-    label2.setForeground(Color.blue.darker());
+    label2.setForeground(JBColor.BLUE.darker());
     label2.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     _panel2.add(new JLabel(DebuggerBundle.message("label.get.jpda.dialog.error.description")), BorderLayout.NORTH);
     _panel2.add(label1, BorderLayout.WEST);

@@ -40,6 +40,7 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
   public int startRunnerWithArgs(String[] args, ArrayList listeners, boolean sendTree) {
 
     final Request request = JUnit4TestRunnerUtil.buildRequest(args, sendTree);
+    if (request == null) return -1;
     final Runner testRunner = request.getRunner();
     try {
       Description description = testRunner.getDescription();
@@ -145,6 +146,7 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
 
   public Object getTestToStart(String[] args) {
     final Request request = JUnit4TestRunnerUtil.buildRequest(args, false);
+    if (request == null) return null;
     final Runner testRunner = request.getRunner();
     Description description = null;
     try {

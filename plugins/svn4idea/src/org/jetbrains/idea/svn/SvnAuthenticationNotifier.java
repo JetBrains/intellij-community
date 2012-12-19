@@ -347,7 +347,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
                                                                 new Consumer<String>() {
                                                                   @Override
                                                                   public void consume(String s) {
-                                                                    configuration.setConfigurationDirectory(s);
+                                                                    configuration.setConfigurationDirParameters(false, s);
                                                                   }
                                                                 }, project, null);
                                                             }

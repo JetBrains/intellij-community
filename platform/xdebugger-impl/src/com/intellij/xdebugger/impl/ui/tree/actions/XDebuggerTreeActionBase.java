@@ -30,19 +30,20 @@ import javax.swing.tree.TreePath;
  * @author nik
  */
 public abstract class XDebuggerTreeActionBase extends AnAction {
+  @Override
   public void actionPerformed(final AnActionEvent e) {
     XValueNodeImpl node = getSelectedNode(e.getDataContext());
-    if (node == null) return;
-
-    String nodeName = node.getName();
-    if (nodeName == null) return;
-
-    perform(node, nodeName, e);
+    if (node != null) {
+      String nodeName = node.getName();
+      if (nodeName != null) {
+        perform(node, nodeName, e);
+      }
+    }
   }
 
   protected abstract void perform(final XValueNodeImpl node, @NotNull String nodeName, final AnActionEvent e);
 
-
+  @Override
   public void update(final AnActionEvent e) {
     XValueNodeImpl node = getSelectedNode(e.getDataContext());
     e.getPresentation().setEnabled(node != null && isEnabled(node));
@@ -61,10 +62,7 @@ public abstract class XDebuggerTreeActionBase extends AnAction {
     if (path == null) return null;
 
     Object node = path.getLastPathComponent();
-    if (node instanceof XValueNodeImpl) {
-      return (XValueNodeImpl)node;
-    }
-    return null;
+    return node instanceof XValueNodeImpl ? (XValueNodeImpl)node : null;
   }
 
   @Nullable

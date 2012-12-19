@@ -23,7 +23,6 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
@@ -44,7 +43,7 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
   @Override
   public void processDynamicElements(@NotNull final PsiType qualifierType,
                                      @NotNull PsiScopeProcessor processor,
-                                     @NotNull final GroovyPsiElement place,
+                                     @NotNull final PsiElement place,
                                      @NotNull ResolveState state) {
     if (!(qualifierType instanceof PsiClassType)) return;
     if (isInAnnotation(place)) return;
@@ -100,7 +99,7 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
     return result;
   }
 
-  private static boolean isInAnnotation(GroovyPsiElement place) {
+  private static boolean isInAnnotation(PsiElement place) {
     return place.getParent() instanceof GrAnnotation || place.getParent() instanceof GrAnnotationArrayInitializer;
   }
 

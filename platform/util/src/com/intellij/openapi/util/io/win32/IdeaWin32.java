@@ -38,7 +38,7 @@ public class IdeaWin32 {
 
   static {
     boolean available = false;
-    if (SystemInfo.isWindows && !SystemInfo.isWindows9x) {
+    if (SystemInfo.isWin2kOrNewer) {
       String libName = SystemInfo.is64Bit ? "IdeaWin64" : "IdeaWin32";
       try {
         String path = PathManager.getBinPath() + "/" + libName + ".dll";

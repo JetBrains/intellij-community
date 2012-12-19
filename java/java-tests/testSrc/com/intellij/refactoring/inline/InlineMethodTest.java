@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
@@ -198,6 +213,11 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestConflict("Inlined result would contain parse errors");
   }
 
+
+  public void testInSuperCall() throws Exception {
+    doTestConflict("Inline cannot be applied to multiline method in constructor call");
+  }
+
   private void doTestConflict(final String conflict) throws Exception {
     try {
       doTest();
@@ -228,6 +248,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestInlineThisOnly();
   }
 
+  public void testNonCodeUsage() throws Exception {
+    doTest(true);
+  }
+
   private void doTestInlineThisOnly() {
     @NonNls String fileName = "/refactoring/inlineMethod/" + getTestName(false) + ".java";
     configureByFile(fileName);
@@ -236,23 +260,27 @@ public class InlineMethodTest extends LightRefactoringTestCase {
       public boolean isInlineThisOnly() {
         return true;
       }
-    });
+    }, false);
     checkResultByFile(fileName + ".after");
   }
 
   private void doTest() throws Exception {
+    doTest(false);
+  }
+
+  private void doTest(final boolean nonCode) throws Exception {
     String name = getTestName(false);
     @NonNls String fileName = "/refactoring/inlineMethod/" + name + ".java";
     configureByFile(fileName);
-    performAction();
+    performAction(nonCode);
     checkResultByFile(fileName + ".after");
   }
 
-  private void performAction() {
-    performAction(new MockInlineMethodOptions());
+  private void performAction(final boolean nonCode) {
+    performAction(new MockInlineMethodOptions(), nonCode);
   }
 
-  private void performAction(final InlineOptions options) {
+  private void performAction(final InlineOptions options, final boolean nonCode) {
     PsiElement element = TargetElementUtilBase
       .findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
     final PsiReference ref = myFile.findReferenceAt(myEditor.getCaretModel().getOffset());
@@ -261,7 +289,8 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     PsiMethod method = (PsiMethod)element;
     final boolean condition = InlineMethodProcessor.checkBadReturns(method) && !InlineUtil.allUsagesAreTailCalls(method);
     assertFalse("Bad returns found", condition);
-    final InlineMethodProcessor processor = new InlineMethodProcessor(getProject(), method, refExpr, myEditor, options.isInlineThisOnly());
+    final InlineMethodProcessor processor =
+      new InlineMethodProcessor(getProject(), method, refExpr, myEditor, options.isInlineThisOnly(), nonCode, nonCode);
     processor.run();
   }
 }

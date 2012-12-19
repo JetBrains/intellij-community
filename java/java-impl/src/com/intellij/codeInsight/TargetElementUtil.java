@@ -262,23 +262,33 @@ public class TargetElementUtil extends TargetElementUtilBase {
       return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
         @Override
         public Boolean compute() {
+          PsiClass containingClass = ((PsiMember)element).getContainingClass();
           final PsiExpression expression = ((PsiReferenceExpression)reference).getQualifierExpression();
-          final PsiClass psiClass;
+          PsiClass psiClass;
           if (expression != null) {
             psiClass = PsiUtil.resolveClassInType(expression.getType());
           } else {
             if (element instanceof PsiClass) {
+              psiClass = (PsiClass)element;
               final PsiElement resolve = reference.resolve();
               if (resolve instanceof PsiClass) {
-                return InheritanceUtil.isInheritorOrSelf((PsiClass)resolve, (PsiClass)element, true) ||
-                       InheritanceUtil.isInheritorOrSelf((PsiClass)element, (PsiClass)resolve, true);
+                containingClass = (PsiClass)resolve;
               }
+            } else {
+              psiClass = PsiTreeUtil.getParentOfType((PsiReferenceExpression)reference, PsiClass.class);
             }
-            psiClass = PsiTreeUtil.getParentOfType((PsiReferenceExpression)reference, PsiClass.class);
           }
-          final PsiClass containingClass = ((PsiMember)element).getContainingClass();
-          if (containingClass == psiClass) return true;
-          return psiClass != null && containingClass != null && (containingClass.isInheritor(psiClass, true) || psiClass.isInheritor(containingClass, true));
+
+          if (containingClass == null && psiClass == null) return true;
+          if (containingClass != null) {
+            while (psiClass != null) {
+              if (InheritanceUtil.isInheritorOrSelf(containingClass, psiClass, true) || InheritanceUtil.isInheritorOrSelf(psiClass, containingClass, true)) {
+                return true;
+              }
+              psiClass = psiClass.getContainingClass();
+            }
+          }
+          return false;
         }
       });
     }

@@ -21,6 +21,10 @@ public abstract class GradleConfigNotifierAdapter implements GradleConfigNotifie
   }
 
   @Override
+  public void onServiceDirectoryPathChange(@Nullable String oldPath, @Nullable String newPath) {
+  }
+
+  @Override
   public void onBulkChangeStart() {
   }
 

@@ -290,7 +290,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     myContext.getDaemonAnalyzer().clearCaches();
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        BuildManager.getInstance().clearState(myProject);
+        BuildManager.getInstance().scheduleAutoMake();
       }
     });
   }

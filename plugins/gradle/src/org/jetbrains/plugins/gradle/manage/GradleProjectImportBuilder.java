@@ -4,11 +4,18 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Ref;
@@ -16,14 +23,17 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.projectImport.ProjectImportBuilder;
+import com.intellij.util.ui.UIUtil;
 import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleConfigurable;
 import org.jetbrains.plugins.gradle.config.GradleSettings;
-import org.jetbrains.plugins.gradle.model.gradle.GradleEntity;
+import org.jetbrains.plugins.gradle.model.gradle.GradleLibrary;
 import org.jetbrains.plugins.gradle.model.gradle.GradleModule;
 import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
+import org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper;
+import org.jetbrains.plugins.gradle.task.GradleResolveProjectTask;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleLog;
@@ -31,7 +41,10 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * GoF builder for gradle-backed projects.
@@ -42,11 +55,21 @@ import java.util.*;
 @SuppressWarnings("MethodMayBeStatic")
 public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProject> {
 
-  /** @see #setModuleMappings(Map) */
-  private final Map<GradleModule/*origin*/, GradleModule/*adjusted*/> myModuleMappings = new HashMap<GradleModule, GradleModule>();
-  
-  private GradleProject myGradleProject;
+  @NotNull private final GradleModuleManager     myModuleManager;
+  @NotNull private final GradleLibraryManager    myLibraryManager;
+  @NotNull private final GradleDependencyManager myDependencyManager;
+
+  private GradleProject      myGradleProject;
   private GradleConfigurable myConfigurable;
+
+  public GradleProjectImportBuilder(@NotNull GradleModuleManager moduleManager,
+                                    @NotNull GradleLibraryManager libraryManager,
+                                    @NotNull GradleDependencyManager manager)
+  {
+    myModuleManager = moduleManager;
+    myLibraryManager = libraryManager;
+    myDependencyManager = manager;
+  }
 
   @NotNull
   @Override
@@ -93,12 +116,13 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
     }
     myConfigurable.setLinkedGradleProjectPath(pathToUse);
   }
-  
+
   @Override
   public List<Module> commit(final Project project,
                              ModifiableModuleModel model,
                              ModulesProvider modulesProvider,
-                             ModifiableArtifactModel artifactModel) {
+                             ModifiableArtifactModel artifactModel)
+  {
     System.setProperty(GradleConstants.NEWLY_IMPORTED_PROJECT, Boolean.TRUE.toString());
     final GradleProject gradleProject = getGradleProject();
     if (gradleProject != null) {
@@ -114,15 +138,112 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
         GradleSettings.applyLinkedProjectPath(myConfigurable.getLinkedProjectPath(), project);
         GradleSettings.applyPreferLocalInstallationToWrapper(myConfigurable.isPreferLocalInstallationToWrapper(), project);
         GradleSettings.applyGradleHome(myConfigurable.getGradleHomePath(), project);
+        // Reset gradle home for default project.
+        GradleSettings.applyLinkedProjectPath(null, ProjectManager.getInstance().getDefaultProject());
+
+        if (gradleProject != null) {
+          GradleUtil.executeProjectChangeAction(project, project, new Runnable() {
+            @Override
+            public void run() {
+              ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(new Runnable() {
+                @Override
+                public void run() {
+                  myModuleManager.importModules(gradleProject.getModules(), project, true);
+                }
+              }); 
+            }
+          });
+
+          final String linkedProjectPath = myConfigurable.getLinkedProjectPath();
+          assert linkedProjectPath != null;
+          myConfigurable = null;
+          myGradleProject = null;
+          
+          final Runnable resolveDependenciesTask = new Runnable() {
+            @Override
+            public void run() {
+              ProgressManager.getInstance().run(
+                new Task.Backgroundable(project, GradleBundle.message("gradle.library.resolve.progress.text"), false) {
+                  @Override
+                  public void run(@NotNull final ProgressIndicator indicator) {
+                    GradleResolveProjectTask task = new GradleResolveProjectTask(project, linkedProjectPath, true);
+                    task.execute(indicator);
+                    GradleProject projectWithResolvedLibraries = task.getGradleProject();
+                    if (projectWithResolvedLibraries == null) {
+                      return;
+                    }
+
+                    setupLibraries(projectWithResolvedLibraries, project);
+                  }
+                });
+            }
+          };
+          UIUtil.invokeLaterIfNeeded(resolveDependenciesTask);
+        }
       }
     });
-    GradleModulesImporter importer = new GradleModulesImporter();
+    return Collections.emptyList();
+  }
 
-    File projectFile = getProjectFile();
-    assert projectFile != null;
-    Map<GradleModule, Module> mappings =
-      importer.importModules(myModuleMappings.values(), project, model, projectFile.getAbsolutePath());
-    return new ArrayList<Module>(mappings.values());
+  /**
+   * The whole import sequence looks like below:
+   * <p/>
+   * <pre>
+   * <ol>
+   *   <li>Get project view from the gradle tooling api without resolving dependencies (downloading libraries);</li>
+   *   <li>Allow to adjust project settings before importing;</li>
+   *   <li>Create IJ project and modules;</li>
+   *   <li>Ask gradle tooling api to resolve library dependencies (download the if necessary);</li>
+   *   <li>Configure libraries used by the gradle project at intellij;</li>
+   *   <li>Configure library dependencies;</li>
+   * </ol>
+   * </pre>
+   * <p/>
+   *
+   * @param projectWithResolvedLibraries  gradle project with resolved libraries (libraries have already been downloaded and
+   *                                      are available at file system under gradle service directory)
+   * @param project                       current intellij project which should be configured by libraries and module library
+   *                                      dependencies information available at the given gradle project
+   */
+  private void setupLibraries(final GradleProject projectWithResolvedLibraries, final Project project) {
+    final Set<? extends GradleLibrary> libraries = projectWithResolvedLibraries.getLibraries();
+    GradleUtil.executeProjectChangeAction(project, libraries, new Runnable() {
+      @Override
+      public void run() {
+        ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(new Runnable() {
+          @Override
+          public void run() {
+            // Clean existing libraries (if any).
+            LibraryTable projectLibraryTable = ProjectLibraryTable.getInstance(project);
+            if (projectLibraryTable == null) {
+              GradleLog.LOG.warn(
+                "Can't resolve external dependencies of the target gradle project (" + project + "). Reason: project "
+                + "library table is undefined"
+              );
+              return;
+            }
+            LibraryTable.ModifiableModel model = projectLibraryTable.getModifiableModel();
+            try {
+              for (Library library : model.getLibraries()) {
+                model.removeLibrary(library);
+              }
+            }
+            finally {
+              model.commit();
+            }
+
+            // Register libraries.
+            myLibraryManager.importLibraries(projectWithResolvedLibraries.getLibraries(), project);
+            GradleProjectStructureHelper helper = project.getComponent(GradleProjectStructureHelper.class);
+            for (GradleModule module : projectWithResolvedLibraries.getModules()) {
+              Module intellijModule = helper.findIntellijModule(module);
+              assert intellijModule != null;
+              myDependencyManager.importDependencies(module.getDependencies(), intellijModule);
+            }
+          }
+        });
+      }
+    });
   }
 
   @Nullable
@@ -204,32 +325,6 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
     context.setProjectFileDirectory(myGradleProject.getProjectFileDirectoryPath());
     context.setCompilerOutputDirectory(myGradleProject.getCompileOutputPath());
     context.setProjectJdk(myGradleProject.getSdk());
-  }
-
-  /**
-   * The whole import sequence looks like below:
-   * <p/>
-   * <pre>
-   * <ol>
-   *   <li>Get project view from the gradle tooling api without resolving dependencies (downloading libraries);</li>
-   *   <li>Allow to adjust project settings before importing;</li>
-   *   <li>Create IJ project and modules;</li>
-   *   <li>Ask gradle tooling api to resolve library dependencies (download the if necessary);</li>
-   *   <li>Configure modules dependencies;</li>
-   * </ol>
-   * </pre>
-   * <p/>
-   * {@link GradleEntity} guarantees correct {@link #equals(Object)}/{@link #hashCode()} implementation, so, we expect
-   * to get {@link GradleModule modules} that are the same in terms of {@link #equals(Object)} on subsequent calls. However,
-   * end-user is allowed to change their settings before the importing (e.g. module name), so, we need to map modules with
-   * resolved libraries to the modules from project 'view'. That's why end-user adjusts settings of the cloned modules.
-   * Given collection holds mappings between them.
-   * 
-   * @param mappings  origin-adjusted modules mappings
-   */
-  public void setModuleMappings(@NotNull Map<GradleModule/*origin module*/, GradleModule/*adjusted module*/> mappings) {
-    myModuleMappings.clear();
-    myModuleMappings.putAll(mappings);
   }
 
   /**

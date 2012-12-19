@@ -17,8 +17,6 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.module.Module;
@@ -38,13 +36,9 @@ import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.dom.MavenDomUtil;
-import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
-import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl;
@@ -53,8 +47,6 @@ import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -220,65 +212,14 @@ public class MavenModuleImporter {
   }
 
   private void configSurefirePlugin() {
-    List<String> urls = new ArrayList<String>();
-
-    AccessToken accessToken = ReadAction.start();
-    try {
-      MavenDomProjectModel domModel = null;
-
-      Element config = myMavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-surefire-plugin");
-      for (String each : MavenJDOMUtil.findChildrenValuesByPath(config, "additionalClasspathElements", "additionalClasspathElement")) {
-        String url = VfsUtil.pathToUrl(each);
-
-        if (domModel == null) {
-          domModel = MavenDomUtil.getMavenDomProjectModel(myModule.getProject(), myMavenProject.getFile());
-        }
-
-        if (domModel != null) {
-          url = MavenPropertyResolver.resolve(url, domModel);
-        }
-
-        urls.add(url);
-      }
-    }
-    finally {
-      accessToken.finish();
-    }
-
+    // Remove "maven-surefire-plugin urls" library created by previous version of IDEA.
+    // todo remove this code after 01.06.2013
     LibraryTable moduleLibraryTable = myRootModelAdapter.getRootModel().getModuleLibraryTable();
 
     Library library = moduleLibraryTable.getLibraryByName(SUREFIRE_PLUGIN_LIBRARY_NAME);
-    if (library == null) {
-      if (urls.isEmpty()) {
-        return;
-      }
-
-      library = moduleLibraryTable.createLibrary(SUREFIRE_PLUGIN_LIBRARY_NAME);
-      LibraryOrderEntry orderEntry = myRootModelAdapter.getRootModel().findLibraryOrderEntry(library);
-      orderEntry.setScope(DependencyScope.TEST);
+    if (library != null) {
+      moduleLibraryTable.removeLibrary(library);
     }
-    else {
-      if (urls.isEmpty()) {
-        moduleLibraryTable.removeLibrary(library);
-        return;
-      }
-    }
-
-    String[] oldUrls = library.getUrls(OrderRootType.CLASSES);
-    if (!urls.equals(Arrays.asList(oldUrls))) {
-      Library.ModifiableModel modifiableModel = library.getModifiableModel();
-
-      for (String url : oldUrls) {
-        modifiableModel.removeRoot(url, OrderRootType.CLASSES);
-      }
-
-      for (String url : urls) {
-        modifiableModel.addRoot(url, OrderRootType.CLASSES);
-      }
-
-      modifiableModel.commit();
-    }
-
   }
 
   private void addAttachArtifactDependency(@NotNull Element buildHelperCfg,
@@ -357,22 +298,17 @@ public class MavenModuleImporter {
       return;
     }
 
-    String oldAnnotationProcessorDirectory = currentProfile.getGeneratedSourcesDirectoryName(false);
-    String oldTestAnnotationProcessorDirectory = currentProfile.getGeneratedSourcesDirectoryName(true);
-    String annotationProcessorDirectory = null;
-    String testAnnotationProcessorDirectory = null;
-
     ProcessorConfigProfile moduleProfile = compilerConfiguration.findModuleProcessorProfile(moduleProfileName);
 
     ProcessorConfigProfile defaultMavenProfile = compilerConfiguration.findModuleProcessorProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE);
 
     if (shouldEnableAnnotationProcessors()) {
-      annotationProcessorDirectory = getRelativeAnnotationProcessorDirectory(false);
+      String annotationProcessorDirectory = getRelativeAnnotationProcessorDirectory(false);
       if (annotationProcessorDirectory == null) {
         annotationProcessorDirectory = DEFAULT_ANNOTATION_PATH_OUTPUT;
       }
 
-      testAnnotationProcessorDirectory = getRelativeAnnotationProcessorDirectory(true);
+      String testAnnotationProcessorDirectory = getRelativeAnnotationProcessorDirectory(true);
       if (testAnnotationProcessorDirectory == null) {
         testAnnotationProcessorDirectory = DEFAULT_TEST_ANNOTATION_OUTPUT;
       }
@@ -447,49 +383,6 @@ public class MavenModuleImporter {
 
       if (moduleProfile != null) {
         compilerConfiguration.removeModuleProcessorProfile(moduleProfile);
-      }
-    }
-
-    if (!Boolean.parseBoolean(System.getProperty("idea.maven.dont.exclude.annotation.processors.output"))) {
-      if (!oldAnnotationProcessorDirectory.equals(annotationProcessorDirectory) && !oldAnnotationProcessorDirectory.equals(testAnnotationProcessorDirectory)) {
-        removeFromCompilerExclude(oldAnnotationProcessorDirectory);
-      }
-
-      if (!oldTestAnnotationProcessorDirectory.equals(annotationProcessorDirectory) && !oldTestAnnotationProcessorDirectory.equals(testAnnotationProcessorDirectory)) {
-        removeFromCompilerExclude(oldTestAnnotationProcessorDirectory);
-      }
-
-      if (annotationProcessorDirectory != null) {
-        addToCompilerExclude(annotationProcessorDirectory);
-      }
-      if (testAnnotationProcessorDirectory != null) {
-        addToCompilerExclude(testAnnotationProcessorDirectory);
-      }
-    }
-  }
-
-  private void addToCompilerExclude(@NotNull String path) {
-    String url = VfsUtil.pathToUrl(myMavenProject.getDirectory() + '/' + path);
-
-    CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myModule.getProject());
-    ExcludedEntriesConfiguration excludedCfg = configuration.getExcludedEntriesConfiguration();
-
-    for (ExcludeEntryDescription description : excludedCfg.getExcludeEntryDescriptions()) {
-      if (url.equals(description.getUrl())) return;
-    }
-
-    excludedCfg.addExcludeEntryDescription(new ExcludeEntryDescription(url, true, false, excludedCfg));
-  }
-
-  private void removeFromCompilerExclude(@NotNull String path) {
-    String url = VfsUtil.pathToUrl(myMavenProject.getDirectory() + '/' + path);
-
-    CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myModule.getProject());
-    ExcludedEntriesConfiguration excludedCfg = configuration.getExcludedEntriesConfiguration();
-
-    for (ExcludeEntryDescription description : excludedCfg.getExcludeEntryDescriptions()) {
-      if (url.equals(description.getUrl())) {
-        excludedCfg.removeExcludeEntryDescription(description);
       }
     }
   }

@@ -56,7 +56,8 @@ public class HgMergeCommand {
     } else if (!StringUtil.isEmptyOrSpaces(branch)) {
       arguments.add(branch);
     }
-    final HgCommandResult result = commandExecutor.executeInCurrentThread(repo, "merge", arguments, new HgDeleteModifyPromptHandler());
+    final HgCommandResult result =
+      commandExecutor.executeInCurrentThread(repo, "merge", arguments, new HgDeleteModifyPromptHandler(), false);
     project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
     return result;
   }

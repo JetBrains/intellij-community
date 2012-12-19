@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class EditorBasedWidget extends FileEditorManagerAdapter implements StatusBarWidget {
   protected StatusBar myStatusBar;
-  private Project myProject;
+  protected Project myProject;
 
   protected MessageBusConnection myConnection;
   private boolean myDisposed;
@@ -92,6 +92,7 @@ public abstract class EditorBasedWidget extends FileEditorManagerAdapter impleme
     myDisposed = true;
 
     myStatusBar = null;
+    myConnection.disconnect();
     myConnection = null;
     myProject = null;
   }

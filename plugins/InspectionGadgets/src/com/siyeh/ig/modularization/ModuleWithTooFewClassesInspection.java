@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,9 @@ import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import org.jetbrains.annotations.NotNull;
@@ -39,17 +42,13 @@ public class ModuleWithTooFewClassesInspection extends BaseGlobalInspection {
   @NotNull
   @Override
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "module.with.too.few.classes.display.name");
+    return InspectionGadgetsBundle.message("module.with.too.few.classes.display.name");
   }
 
   @Override
   @Nullable
-  public CommonProblemDescriptor[] checkElement(
-    RefEntity refEntity,
-    AnalysisScope analysisScope,
-    InspectionManager inspectionManager,
-    GlobalInspectionContext globalInspectionContext) {
+  public CommonProblemDescriptor[] checkElement(RefEntity refEntity, AnalysisScope analysisScope, InspectionManager inspectionManager,
+                                                GlobalInspectionContext globalInspectionContext) {
     if (!(refEntity instanceof RefModule)) {
       return null;
     }
@@ -67,10 +66,13 @@ public class ModuleWithTooFewClassesInspection extends BaseGlobalInspection {
     if (numClasses >= limit || numClasses == 0) {
       return null;
     }
-    final String errorString = InspectionGadgetsBundle.message(
-      "module.with.too.few.classes.problem.descriptor",
-      refModule.getName(), Integer.valueOf(numClasses),
-      Integer.valueOf(limit));
+    final Project project = globalInspectionContext.getProject();
+    final Module[] modules = ModuleManager.getInstance(project).getModules();
+    if (modules.length == 1) {
+      return null;
+    }
+    final String errorString = InspectionGadgetsBundle.message("module.with.too.few.classes.problem.descriptor",
+                                                               refModule.getName(), Integer.valueOf(numClasses), Integer.valueOf(limit));
     return new CommonProblemDescriptor[]{
       inspectionManager.createProblemDescriptor(errorString)
     };
@@ -78,9 +80,6 @@ public class ModuleWithTooFewClassesInspection extends BaseGlobalInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "module.with.too.few.classes.min.option"),
-      this, "limit");
+    return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("module.with.too.few.classes.min.option"), this, "limit");
   }
 }

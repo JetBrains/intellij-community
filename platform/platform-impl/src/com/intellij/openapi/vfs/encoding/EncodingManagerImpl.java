@@ -41,9 +41,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
@@ -67,21 +67,20 @@ import java.util.Set;
 @State(
   name = "Encoding",
   storages = {
-      @Storage( file = StoragePathMacros.APP_CONFIG + "/encoding.xml")
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/encoding.xml")
   }
 )
 public class EncodingManagerImpl extends EncodingManager implements PersistentStateComponent<Element>, Disposable {
-  public static final Equality<Reference<Document>> REFERENCE_EQUALITY = new Equality<Reference<Document>>() {
+  private static final Equality<Reference<Document>> REFERENCE_EQUALITY = new Equality<Reference<Document>>() {
     @Override
     public boolean equals(Reference<Document> o1, Reference<Document> o2) {
-      if (o1 == null && o2 == null) return true;
-      if (o1 == null || o2 == null) return false;
-      return o1.get() == o2.get();
+      Object v1 = o1 == null ? REFERENCE_EQUALITY : o1.get();
+      Object v2 = o2 == null ? REFERENCE_EQUALITY : o2.get();
+      return v1 == v2;
     }
   };
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
-  private String myDefaultEncoding = CharsetToolkit.UTF8;
-  private Charset myCachedCharset = null;
+  private Charset myDefaultEncoding = CharsetToolkit.UTF8_CHARSET;
 
   private final Alarm updateEncodingFromContent = new Alarm(Alarm.ThreadToUse.OWN_THREAD, this);
   private static final Key<Charset> CACHED_CHARSET_FROM_CONTENT = Key.create("CACHED_CHARSET_FROM_CONTENT");
@@ -100,7 +99,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
       }
     });
 
-  public EncodingManagerImpl(EditorFactory editorFactory) {
+  public EncodingManagerImpl(@NotNull EditorFactory editorFactory) {
     editorFactory.getEventMulticaster().addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent e) {
@@ -117,7 +116,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
 
   @NonNls public static final String PROP_CACHED_ENCODING_CHANGED = "cachedEncoding";
 
-  private void handleDocument(final Document document) {
+  private void handleDocument(@NotNull final Document document) {
     ApplicationManager.getApplication().runReadAction(new Runnable(){
       @Override
       public void run() {
@@ -128,9 +127,32 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
         Charset charset = LoadTextUtil.charsetFromContentOrNull(project, virtualFile, document.getText());
         Charset oldCached = getCachedCharsetFromContent(document);
         if (!Comparing.equal(charset, oldCached)) {
-          document.putUserData(CACHED_CHARSET_FROM_CONTENT, charset);
-          firePropertyChange(PROP_CACHED_ENCODING_CHANGED, oldCached, charset);
+          setCachedCharsetFromContent(charset, oldCached, document);
         }
+      }
+    });
+  }
+
+  private void setCachedCharsetFromContent(Charset charset, Charset oldCached, Document document) {
+    document.putUserData(CACHED_CHARSET_FROM_CONTENT, charset);
+    firePropertyChange(PROP_CACHED_ENCODING_CHANGED, oldCached, charset);
+  }
+
+  @Nullable("returns null if charset set cannot be determined from content")
+  public Charset computeCharsetFromContent(@NotNull final VirtualFile virtualFile) {
+    final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    if (document == null) return null;
+    final Charset cached = EncodingManager.getInstance().getCachedCharsetFromContent(document);
+    if (cached != null) return cached;
+    final Project project = ProjectLocator.getInstance().guessProjectForFile(virtualFile);
+    return ApplicationManager.getApplication().runReadAction(new Computable<Charset>() {
+      @Override
+      public Charset compute() {
+        Charset charsetFromContent = LoadTextUtil.charsetFromContentOrNull(project, virtualFile, document.getText());
+        if (charsetFromContent != null) {
+          setCachedCharsetFromContent(charsetFromContent, cached, document);
+        }
+        return charsetFromContent;
       }
     });
   }
@@ -151,17 +173,18 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     return document.getUserData(CACHED_CHARSET_FROM_CONTENT);
   }
 
+  @NonNls private static final String DEFAULT_ENCODING_TAG = "default_encoding";
   @Override
   public Element getState() {
     Element result = new Element("x");
-    result.setAttribute("default_encoding", myDefaultEncoding);
+    result.setAttribute(DEFAULT_ENCODING_TAG, getDefaultCharsetName());
     return result;
   }
 
   @Override
   public void loadState(final Element state) {
-    myCachedCharset = null;
-    myDefaultEncoding = state.getAttributeValue("default_encoding");
+    String name = state.getAttributeValue(DEFAULT_ENCODING_TAG);
+    setDefaultCharsetName(name);
   }
 
   @Override
@@ -232,42 +255,22 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     EncodingProjectManager.getInstance(project).setNative2AsciiForPropertiesFiles(virtualFile, native2Ascii);
   }
   @Override
-  @Nullable
+  @NotNull
   public Charset getDefaultCharset() {
-    Charset result = myCachedCharset;
-    if (result == null) {
-      result = cacheCharset();
-      myCachedCharset = result;
-    }
-
-    return result;
-  }
-
-  @Override
-  @Nullable
-  public String getDefaultCharsetName() {
     return myDefaultEncoding;
   }
 
   @Override
-  public void setDefaultCharsetName(final String name) {
-    myDefaultEncoding = name;
-    myCachedCharset = null;
+  @NotNull
+  public String getDefaultCharsetName() {
+    return myDefaultEncoding.name();
   }
 
-  @Nullable
-  private Charset cacheCharset() {
-    Charset result = CharsetToolkit.getDefaultSystemCharset();
-    if (!StringUtil.isEmpty(myDefaultEncoding)) {
-      try {
-        result = Charset.forName(myDefaultEncoding);
-      }
-      catch (Exception e) {
-        // Do nothing
-      }
-    }
-
-    return result;
+  @Override
+  public void setDefaultCharsetName(@NotNull String name) {
+    myDefaultEncoding = CharsetToolkit.forName(name);
+    if (myDefaultEncoding == null) myDefaultEncoding = CharsetToolkit.getDefaultSystemCharset();
+    if (myDefaultEncoding == null) myDefaultEncoding = CharsetToolkit.UTF8_CHARSET;
   }
 
   @Override

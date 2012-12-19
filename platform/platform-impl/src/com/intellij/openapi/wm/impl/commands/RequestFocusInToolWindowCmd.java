@@ -124,6 +124,11 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
 
   private void bringOwnerToFront() {
     final Window owner = SwingUtilities.getWindowAncestor(myToolWindow.getComponent());
+    //Toolwindow component shouldn't take focus back if new dialog or frame appears
+    //Example: Ctrl+D on file history brings a diff dialog to front and then hides it by main frame by calling
+    // toFront on toolwindow window
+    Window activeFrame = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+    if (activeFrame != null && activeFrame != owner) return;
     //if (owner == null) {
     //  System.out.println("owner = " + owner);
     //  return;
@@ -131,7 +136,7 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
     // if owner is active window or it has active child window which isn't floating decorator then
     // don't bring owner window to font. If we will make toFront every time then it's possible
     // the following situation:
-    // 1. user prform refactoring
+    // 1. user perform refactoring
     // 2. "Do not show preview" dialog is popping up.
     // 3. At that time "preview" tool window is being activated and modal "don't show..." dialog
     // isn't active.

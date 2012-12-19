@@ -87,6 +87,7 @@ public class RunContentDescriptor implements Disposable {
       DataManager.removeDataProvider(myComponent);
       myComponent = null;
     }
+    myRestarter = null;
   }
 
   @Nullable

@@ -10,4 +10,11 @@ public class MismatchedStringBuilderQueryUpdate {
     final StringBuilder c = new StringBuilder();
     c.append(' ');
   }
+
+  private static CharSequence getSomething()
+  {
+    StringBuilder sb = new StringBuilder();
+    sb.append("abc");
+    return sb.reverse();
+  }
 }

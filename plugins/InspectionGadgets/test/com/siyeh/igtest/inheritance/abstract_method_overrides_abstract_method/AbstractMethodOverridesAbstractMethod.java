@@ -29,3 +29,34 @@ abstract class Child extends AbstractMethodOverridesAbstractMethod
 
   public abstract void three();
 }
+
+class MethodTypeParams {
+  interface Top
+  {
+    <T> List<T> getList();
+  }
+
+  interface Middle extends Top
+  {
+    <T> List<T> getList();
+  }
+
+  abstract class Bottom implements Middle
+  {
+    @Override
+    public abstract <T> ArrayList<T> getList();
+  }
+}
+
+class SuperclassSubst {
+    interface Top<T>
+    {
+        T getList();
+    }
+
+    abstract class Bottom implements Top<String>
+    {
+        @Override
+        public abstract String getList();
+    }
+}

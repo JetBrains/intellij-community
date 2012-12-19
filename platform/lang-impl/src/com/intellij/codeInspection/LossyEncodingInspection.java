@@ -22,23 +22,25 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.ide.DataManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.ChooseFileEncodingAction;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.ReloadFileInOtherEncodingAction;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
+import com.intellij.openapi.wm.impl.status.EncodingActionsPair;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nls;
@@ -57,24 +59,28 @@ public class LossyEncodingInspection extends LocalInspectionTool {
   private static final LocalQuickFix CHANGE_ENCODING_FIX = new ChangeEncodingFix();
   private static final LocalQuickFix RELOAD_ENCODING_FIX = new ReloadInAnotherEncodingFix();
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.internationalization.issues");
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("lossy.encoding");
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getShortName() {
     return "LossyEncoding";
   }
 
+  @Override
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) return null;
@@ -93,44 +99,61 @@ public class LossyEncodingInspection extends LocalInspectionTool {
 
     List<ProblemDescriptor> descriptors = new SmartList<ProblemDescriptor>();
     checkIfCharactersWillBeLostAfterSave(file, manager, isOnTheFly, text, charset, descriptors);
-    checkFileLoadedInWrongEncoding(file, manager, isOnTheFly, virtualFile, charset, descriptors);
+    checkFileLoadedInWrongEncoding(file, manager, isOnTheFly, text, virtualFile, charset, descriptors);
 
     return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
   }
 
-  private static void checkFileLoadedInWrongEncoding(PsiFile file,
-                                                     InspectionManager manager,
+  private static void checkFileLoadedInWrongEncoding(@NotNull PsiFile file,
+                                                     @NotNull InspectionManager manager,
                                                      boolean isOnTheFly,
-                                                     VirtualFile virtualFile,
-                                                     Charset charset, List<ProblemDescriptor> descriptors) {
+                                                     @NotNull String text,
+                                                     @NotNull VirtualFile virtualFile,
+                                                     @NotNull Charset charset,
+                                                     @NotNull List<ProblemDescriptor> descriptors) {
     if (FileDocumentManager.getInstance().isFileModified(virtualFile) // when file is modified, it's too late to reload it
-        || ChooseFileEncodingAction.isEnabledAndWhyNot(virtualFile) != null // can't reload in another encoding, no point trying
+        || ChooseFileEncodingAction.checkCanReload(virtualFile).second != null // can't reload in another encoding, no point trying
       ) {
       return;
     }
-    // check if file was loaded in correct encoding
+    boolean ok = isGoodCharset(file.getProject(), virtualFile, text, charset);
+    if (!ok) {
+      descriptors.add(manager.createProblemDescriptor(file, "File was loaded in the wrong encoding: '"+charset+"'",
+                                                      RELOAD_ENCODING_FIX, ProblemHighlightType.GENERIC_ERROR, isOnTheFly));
+    }
+  }
+
+  // check if file was loaded in correct encoding
+  // returns true if text converted with charset is equals to the bytes currently on disk
+  public static boolean isGoodCharset(@NotNull Project project,
+                                      @NotNull VirtualFile virtualFile,
+                                      @NotNull String text,
+                                      @NotNull Charset charset) {
     byte[] bytes;
     try {
       bytes = virtualFile.contentsToByteArray();
     }
     catch (IOException e) {
-      return;
+      return true;
     }
-    String separator = FileDocumentManager.getInstance().getLineSeparator(virtualFile, file.getProject());
-    String toSave = StringUtil.convertLineSeparators(file.getText(), separator);
+    String separator = FileDocumentManager.getInstance().getLineSeparator(virtualFile, project);
+    String toSave = StringUtil.convertLineSeparators(text, separator);
     byte[] bom = virtualFile.getBOM();
-    byte[] bytesToSave = ArrayUtil.mergeArrays(bom == null ? ArrayUtil.EMPTY_BYTE_ARRAY : bom, toSave.getBytes(charset));
-    if (!Arrays.equals(bytesToSave, bytes)) {
-      descriptors.add(manager.createProblemDescriptor(file, "File was loaded in a wrong encoding: '"+charset+"'",
-                                                      RELOAD_ENCODING_FIX, ProblemHighlightType.GENERIC_ERROR, isOnTheFly));
+    bom = bom == null ? ArrayUtil.EMPTY_BYTE_ARRAY : bom;
+    byte[] bytesToSave = toSave.getBytes(charset);
+    if (!ArrayUtil.startsWith(bytesToSave, bom)) {
+      bytesToSave = ArrayUtil.mergeArrays(bom, bytesToSave); // for 2-byte encodings String.getBytes(Charset) adds BOM automatically
     }
+
+    return Arrays.equals(bytesToSave, bytes);
   }
 
-  private static void checkIfCharactersWillBeLostAfterSave(PsiFile file,
-                                                           InspectionManager manager,
+  private static void checkIfCharactersWillBeLostAfterSave(@NotNull PsiFile file,
+                                                           @NotNull InspectionManager manager,
                                                            boolean isOnTheFly,
-                                                           String text,
-                                                           Charset charset, List<ProblemDescriptor> descriptors) {
+                                                           @NotNull String text,
+                                                           @NotNull Charset charset,
+                                                           @NotNull List<ProblemDescriptor> descriptors) {
     int errorCount = 0;
     int start = -1;
     for (int i = 0; i <= text.length(); i++) {
@@ -153,7 +176,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     }
   }
 
-  private static boolean isRepresentable(final char c, final Charset charset) {
+  private static boolean isRepresentable(final char c, @NotNull Charset charset) {
     String str = Character.toString(c);
     ByteBuffer out = charset.encode(str);
     CharBuffer buffer = charset.decode(out);
@@ -191,17 +214,12 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiFile psiFile = descriptor.getPsiElement().getContainingFile();
       VirtualFile virtualFile = psiFile.getVirtualFile();
-      ChooseFileEncodingAction action = new ChooseFileEncodingAction(virtualFile) {
-        @Override
-        protected void chosen(VirtualFile virtualFile, Charset charset) {
-          if (virtualFile != null) {
-            EncodingManager.getInstance().setEncoding(virtualFile, charset);
-          }
-        }
-      };
-      DefaultActionGroup group = action.createGroup(false);
-      DataContext dataContext = DataManager.getInstance().getDataContext();
-      JBPopupFactory.getInstance().createActionGroupPopup(null, group, dataContext, false, false, false, null, 30, null).showInBestPositionFor(dataContext);
+
+      Editor editor = PsiUtilBase.findEditor(psiFile);
+      DataContext dataContext =
+        EncodingActionsPair.createDataContext(editor, editor == null ? null : editor.getComponent(), virtualFile, project);
+      ReloadFileInOtherEncodingAction reloadAction = new ReloadFileInOtherEncodingAction();
+      reloadAction.actionPerformed(new AnActionEvent(null, dataContext, "", reloadAction.getTemplatePresentation(), ActionManager.getInstance(), 0));
     }
   }
 }

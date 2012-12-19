@@ -115,6 +115,11 @@ public class ImplementationSearcher {
     @Override
     protected PsiElement[] searchDefinitions(final PsiElement element) {
       final PsiElement[][] result = new PsiElement[1][];
+
+      if (canShowPopupWithOneItem(element)) {
+        return new PsiElement[]{element};
+      }
+
       final PsiElementProcessor.CollectElementsWithLimit<PsiElement> collectProcessor = new PsiElementProcessor.CollectElementsWithLimit<PsiElement>(2, new THashSet<PsiElement>());
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         @Override
@@ -139,7 +144,11 @@ public class ImplementationSearcher {
       }
       return result[0];
     }
-    
+
+    protected boolean canShowPopupWithOneItem(PsiElement element) {
+      return accept(element);
+    }
+
     protected boolean accept(PsiElement element) {
       return true;
     }

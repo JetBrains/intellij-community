@@ -39,7 +39,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -131,6 +133,9 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
       return null;
     }
 
-    return GrHighlightUtil.getDeclarationHighlightingAttribute(parent);
+    //don't highlight local vars and parameters here because their highlighting needs index.
+    if (GroovyRefactoringUtil.isLocalVariable(parent) || parent instanceof GrParameter) return null;
+
+    return GrHighlightUtil.getDeclarationHighlightingAttribute(parent, null);
   }
 }

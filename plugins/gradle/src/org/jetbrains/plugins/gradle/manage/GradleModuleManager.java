@@ -16,6 +16,7 @@ import org.jetbrains.plugins.gradle.util.GradleLog;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -50,7 +51,13 @@ public class GradleModuleManager {
     importModules(Collections.singleton(module), project, false);
   }
 
-  public void importModules(@NotNull final Iterable<GradleModule> modules, @NotNull final Project project, final boolean recursive) {
+  public void importModules(@NotNull final Collection<? extends GradleModule> modules,
+                            @NotNull final Project project,
+                            final boolean recursive)
+  {
+    if (modules.isEmpty()) {
+      return;
+    }
     if (!project.isInitialized()) {
       myAlarm.addRequest(new ImportModulesTask(project, modules, recursive), PROJECT_INITIALISATION_DELAY_MS);
       return;
@@ -65,7 +72,7 @@ public class GradleModuleManager {
           @Override
           public void run() {
             final ModuleManager moduleManager = ModuleManager.getInstance(project);
-            final GradleProjectEntityChangeListener publisher 
+            final GradleProjectEntityChangeListener publisher
               = project.getMessageBus().syncPublisher(GradleProjectEntityChangeListener.TOPIC);
             for (GradleModule module : modules) {
               publisher.onChangeStart(module);
@@ -121,7 +128,7 @@ public class GradleModuleManager {
     });
   }
 
-  private static void removeExistingModulesConfigs(@NotNull Iterable<GradleModule> modules) {
+  private static void removeExistingModulesConfigs(@NotNull Collection<? extends  GradleModule> modules) {
     for (GradleModule module : modules) {
       // Remove existing '*.iml' file if necessary.
       final String moduleFilePath = module.getModuleFilePath();
@@ -136,43 +143,37 @@ public class GradleModuleManager {
   }
 
   @SuppressWarnings("MethodMayBeStatic")
-  public void removeModules(@NotNull final Iterable<Module> modules) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+  public void removeModules(@NotNull final Collection<? extends Module> modules) {
+    if (modules.isEmpty()) {
+      return;
+    }
+    Project project = modules.iterator().next().getProject();
+    GradleUtil.executeProjectChangeAction(project, modules, new Runnable() {
       @Override
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            for (final Module module : modules) {
-              GradleUtil.executeProjectChangeAction(module.getProject(), module, new Runnable() {
-                @Override
-                public void run() {
-                  ModuleManager moduleManager = ModuleManager.getInstance(module.getProject());
-                  String path = module.getModuleFilePath();
-                  moduleManager.disposeModule(module);
-                  File file = new File(path);
-                  if (file.isFile()) {
-                    boolean success = file.delete();
-                    if (!success) {
-                      GradleLog.LOG.warn("Can't remove module file at '" + path + "'");
-                    }
-                  }
-                }
-              });
-            } 
+        for (Module module : modules) {
+          ModuleManager moduleManager = ModuleManager.getInstance(module.getProject());
+          String path = module.getModuleFilePath();
+          moduleManager.disposeModule(module);
+          File file = new File(path);
+          if (file.isFile()) {
+            boolean success = file.delete();
+            if (!success) {
+              GradleLog.LOG.warn("Can't remove module file at '" + path + "'");
+            }
           }
-        });
+        }
       }
     });
   }
   
   private class ImportModulesTask implements Runnable {
 
-    private final Project                myProject;
-    private final Iterable<GradleModule> myModules;
-    private final boolean                myRecursive;
+    private final Project                            myProject;
+    private final Collection<? extends GradleModule> myModules;
+    private final boolean                            myRecursive;
 
-    ImportModulesTask(@NotNull Project project, @NotNull Iterable<GradleModule> modules, boolean recursive) {
+    ImportModulesTask(@NotNull Project project, @NotNull Collection<? extends GradleModule> modules, boolean recursive) {
       myProject = project;
       myModules = modules;
       myRecursive = recursive;
@@ -192,5 +193,4 @@ public class GradleModuleManager {
       importModules(myModules, myProject, myRecursive);
     }
   }
-
 }

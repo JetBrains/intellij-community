@@ -19,10 +19,7 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Null-safe {@code equal} methods.
@@ -174,5 +171,11 @@ public class Comparing {
     if (o1 == null) return o2 == null ? 0 : -1;
     if (o2 == null) return 1;
     return o1.compareTo(o2);
+  }
+
+  public static <T> int compare(@Nullable final T o1, @Nullable final T o2, @NotNull final Comparator<T> notNullComparator) {
+    if (o1 == null) return o2 == null ? 0 : -1;
+    if (o2 == null) return 1;
+    return notNullComparator.compare(o1, o2);
   }
 }

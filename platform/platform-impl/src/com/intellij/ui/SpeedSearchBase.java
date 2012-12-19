@@ -335,13 +335,13 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
     public SearchPopup(String initialString) {
       final Color foregroundColor = UIUtil.getToolTipForeground();
-      Color color1 = UIUtil.getToolTipBackground();
+      Color color1 = new JBColor(UIUtil.getToolTipBackground().brighter(), Gray._111);
       mySearchField = new SearchField();
       final JLabel searchLabel = new JLabel(" " + UIBundle.message("search.popup.search.for.label") + " ");
       searchLabel.setFont(searchLabel.getFont().deriveFont(Font.BOLD));
       searchLabel.setForeground(foregroundColor);
       mySearchField.setBorder(null);
-      mySearchField.setBackground(color1.brighter());
+      mySearchField.setBackground(color1);
       mySearchField.setForeground(foregroundColor);
 
       mySearchField.setDocument(new PlainDocument() {
@@ -358,7 +358,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
           String newText = oldText.substring(0, offs) + str + oldText.substring(offs);
           super.insertString(offs, str, a);
           if (findElement(newText) == null) {
-            mySearchField.setForeground(Color.RED);
+            mySearchField.setForeground(JBColor.RED);
           }
           else {
             mySearchField.setForeground(foregroundColor);
@@ -368,7 +368,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       mySearchField.setText(initialString);
 
       setBorder(BorderFactory.createLineBorder(Color.gray, 1));
-      setBackground(color1.brighter());
+      setBackground(color1);
       setLayout(new BorderLayout());
       add(searchLabel, BorderLayout.WEST);
       add(mySearchField, BorderLayout.EAST);
@@ -380,8 +380,9 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     public void processKeyEvent(KeyEvent e) {
       mySearchField.processKeyEvent(e);
       if (e.isConsumed()) {
-        int keyCode = e.getKeyCode();
         String s = mySearchField.getText();
+        onSearchFieldUpdated(s);
+        int keyCode = e.getKeyCode();
         Object element;
         if (isUpDownHomeEnd(keyCode)) {
           element = findTargetElement(keyCode, s);
@@ -421,10 +422,10 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     private void updateSelection(Object element) {
       if (element != null) {
         selectElement(element, mySearchField.getText());
-        mySearchField.setForeground(Color.black);
+        mySearchField.setForeground(UIUtil.getLabelForeground());
       }
       else {
-        mySearchField.setForeground(Color.red);
+        mySearchField.setForeground(JBColor.red);
       }
       if (mySearchPopup != null) {
         mySearchPopup.setSize(mySearchPopup.getPreferredSize());
@@ -434,6 +435,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       fireStateChanged();
     }
   }
+
+  protected void onSearchFieldUpdated(String s) {}
 
   private class SearchField extends JTextField {
     SearchField() {

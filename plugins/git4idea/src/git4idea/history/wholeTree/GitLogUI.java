@@ -1,9 +1,12 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,14 +21,11 @@ import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.CaptionIcon;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -59,16 +59,12 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.AdjustComponentWhenShown;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
-import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitBrancher;
 import git4idea.changes.GitChangeUtils;
-import git4idea.commands.Git;
-import git4idea.config.GitVcsSettings;
 import git4idea.history.browser.*;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import git4idea.ui.branch.GitBranchUiUtil;
 import icons.Git4ideaIcons;
 import org.jetbrains.annotations.NotNull;
@@ -131,7 +127,6 @@ public class GitLogUI implements Disposable {
   private MoreAction myMoreAction;
   private UsersFilterAction myUsersFilterAction;
   private MyFilterUi myUserFilterI;
-  private MyCherryPick myCherryPickAction;
   private MyRefreshAction myRefreshAction;
   private MyStructureFilter myStructureFilter;
   private StructureFilterAction myStructureFilterAction;
@@ -458,7 +453,7 @@ public class GitLogUI implements Disposable {
     myDetailsLoaderImpl = new Consumer<CommitI>() {
       @Override
       public void consume(final CommitI commitI) {
-        if (commitI == null) return;
+        if (commitI == null || commitI.holdsDecoration()) return;
         final GitCommit gitCommit = fullCommitPresentation(commitI);
 
         if (gitCommit == null) {
@@ -573,14 +568,16 @@ public class GitLogUI implements Disposable {
     private MeaningfulSelection(int[] rows, final BigTableTableModel tableModel) {
       myMeaningfulRows = 0;
       for (int row : rows) {
-        myCommitI = tableModel.getCommitAt(row);
-        if (!myCommitI.holdsDecoration()) {
-          ++myMeaningfulRows;
+        final CommitI commitAt = tableModel.getCommitAt(row);
+        if (! commitAt.holdsDecoration()) {
+          myCommitI = commitAt;
+          ++ myMeaningfulRows;
           if (myMeaningfulRows > 1) break;
         }
       }
     }
 
+    @Nullable
     public CommitI getCommit() {
       return myCommitI;
     }
@@ -842,7 +839,7 @@ public class GitLogUI implements Disposable {
           myUsersFilterAction.setPreselectedUser(commit.getCommitter());
         }
       }
-      group.add(myCherryPickAction);
+      group.add(getCherryPickAction());
       group.add(new CreatePatchFromChangesAction() {
         @Override
         public void update(AnActionEvent e) {
@@ -966,9 +963,8 @@ public class GitLogUI implements Disposable {
     };
     myDatesFilterAction = new DatesFilterAction(myProject, myDatesFilter);
     group.add(myDatesFilterAction);
-    myCherryPickAction = new MyCherryPick();
     group.add(myFilterStarredAction);
-    group.add(myCherryPickAction);
+    group.add(getCherryPickAction());
     group.add(ActionManager.getInstance().getAction("ChangesView.CreatePatchFromChanges"));
     myRefreshAction = new MyRefreshAction();
     myRootsAction = new MyRootsAction(rootsGetter, myJBTable);
@@ -1030,6 +1026,10 @@ public class GitLogUI implements Disposable {
     return ActionManager.getInstance().createActionToolbar("Git log", group, true);
   }
 
+  private static AnAction getCherryPickAction() {
+    return ActionManager.getInstance().getAction("Git.CherryPick");
+  }
+
   private void setupDetailsSplitter(boolean state) {
     myDetailsSplitter.setSecondComponent(state ? myDetailsPanel.getComponent() : null);
     if (state) {
@@ -1041,8 +1041,18 @@ public class GitLogUI implements Disposable {
   }
 
   private class DataProviderPanel extends JPanel implements TypeSafeDataProvider {
+
+    private GitCommitDetailsProvider myCommitDetailsProvider;
+
     private DataProviderPanel(LayoutManager layout) {
       super(layout);
+      myCommitDetailsProvider = new GitCommitDetailsProvider() {
+        @NotNull
+        @Override
+        public List<String> getContainingBranches(@NotNull VirtualFile root, @NotNull AbstractHash commitHash) {
+          return myDetailsCache.getBranches(root, commitHash);
+        }
+      };
     }
 
     @Override
@@ -1061,7 +1071,14 @@ public class GitLogUI implements Disposable {
         else if (GitVcs.GIT_COMMIT.equals(key)) {
           sink.put(key, gitCommit);
         }
-      } else if (VcsDataKeys.PRESET_COMMIT_MESSAGE.equals(key)) {
+      }
+      else if (GitVcs.SELECTED_COMMITS.equals(key)) {
+        sink.put(key, getSelectedCommits());
+      }
+      else if (GitVcs.COMMIT_DETAILS_PROVIDER.equals(key)) {
+        sink.put(key, myCommitDetailsProvider);
+      }
+      else if (VcsDataKeys.PRESET_COMMIT_MESSAGE.equals(key)) {
         final int[] rows = myJBTable.getSelectedRows();
         if (rows.length != 1) return;
         final CommitI commitAt = myTableModel.getCommitAt(rows[0]);
@@ -1072,6 +1089,34 @@ public class GitLogUI implements Disposable {
       }
     }
   }
+
+    /**
+     * Returns the list of selected commits. The list is sorted so that newest commits go first (because they are above in the log).
+     */
+    @NotNull
+    private List<GitCommit> getSelectedCommits() {
+      if (myJBTable == null) {
+        return Collections.emptyList();
+      }
+
+      final List<GitCommit> commits = new ArrayList<GitCommit>();
+      for (int row : myJBTable.getSelectedRows()) {
+        final CommitI commitI = myTableModel.getCommitAt(row);
+        if (commitI == null) {
+          return Collections.emptyList();
+        }
+        if (commitI.holdsDecoration()) {
+          continue;
+        }
+        final VirtualFile root = commitI.selectRepository(myRootsUnderVcs);
+        final GitCommit gitCommit = myDetailsCache.convert(root, commitI.getHash());
+        if (gitCommit == null) {
+          return Collections.emptyList();
+        }
+        commits.add(gitCommit);
+      }
+      return commits;
+    }
 
   @Nullable
   private GitCommit getCommitAtRow(int row) {
@@ -1735,119 +1780,10 @@ public class GitLogUI implements Disposable {
   }
 
   interface Colors {
-    Color tag = UIUtil.isUnderDarcula() ? new Color(0x7D7B12) : new Color(0xf1ef9e);
-    Color remote = UIUtil.isUnderDarcula() ? new Color(0xbcbcfc).darker().darker() : new Color(0xbcbcfc);
-    Color local = UIUtil.isUnderDarcula() ? new Color(0x0D6D4F) : new Color(0x75eec7);
-    Color highlighted = UIUtil.isUnderDarcula() ? UIUtil.getTableBackground() : new Color(210,255,233);
-  }
-
-  private class MyCherryPick extends DumbAwareAction {
-    private final Set<AbstractHash> myIdsInProgress;
-
-    private MyCherryPick() {
-      super("Cherry-pick", "Cherry-pick", Git4ideaIcons.CherryPick);
-      myIdsInProgress = new HashSet<AbstractHash>();
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      final MultiMap<VirtualFile, GitCommit> commits = getSelectedCommitsAndCheck();
-      if (commits.isEmpty()) return;
-      for (GitCommit commit : commits.values()) {
-        myIdsInProgress.add(commit.getShortHash());
-      }
-
-      new Task.Backgroundable(myProject, "Cherry-picking", false) {
-        public void run(@NotNull ProgressIndicator indicator) {
-          boolean autoCommit = GitVcsSettings.getInstance(myProject).isAutoCommitOnCherryPick();
-          Map<GitRepository, List<GitCommit>> commitsInRoots = prepareCommitsForCherryPick(commits);
-          new GitCherryPicker(myProject, ServiceManager.getService(Git.class), ServiceManager.getService(GitPlatformFacade.class), autoCommit)
-            .cherryPick(commitsInRoots);
-
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              for (GitCommit commit : commits.values()) {
-                myIdsInProgress.remove(commit.getShortHash());
-              }
-            }
-          });
-        }
-      }.queue();
-    }
-
-    private Map<GitRepository, List<GitCommit>> prepareCommitsForCherryPick(MultiMap<VirtualFile, GitCommit> commits) {
-      Map<GitRepository, List<GitCommit>> commitsInRoots = new HashMap<GitRepository, List<GitCommit>>();
-      GitRepositoryManager repositoryManager = ServiceManager.getService(myProject, GitRepositoryManager.class);
-      for (Map.Entry<VirtualFile, Collection<GitCommit>> entry : commits.entrySet()) {
-        List<GitCommit> sortedCommits = new ArrayList<GitCommit>(entry.getValue());
-        // earliest first!!!
-        Collections.reverse(sortedCommits);
-        GitRepository repository = repositoryManager.getRepositoryForRoot(entry.getKey());
-        if (repository == null) {
-          continue;
-        }
-        commitsInRoots.put(repository, sortedCommits);
-      }
-      return commitsInRoots;
-    }
-
-    // newest first
-    @NotNull
-    private MultiMap<VirtualFile, GitCommit> getSelectedCommitsAndCheck() {
-      if (myJBTable == null) {
-        return MultiMap.emptyInstance();
-      }
-      final int[] rows = myJBTable.getSelectedRows();
-      final MultiMap<VirtualFile, GitCommit> hashes = new MultiMap<VirtualFile, GitCommit>();
-
-      for (int row : rows) {
-        final CommitI commitI = myTableModel.getCommitAt(row);
-        if (commitI == null) {
-          return MultiMap.emptyInstance();
-
-        }
-        if (commitI.holdsDecoration()) {
-          return MultiMap.emptyInstance();
-        }
-        if (myIdsInProgress.contains(commitI.getHash())) {
-          return MultiMap.emptyInstance();
-        }
-        final VirtualFile root = commitI.selectRepository(myRootsUnderVcs);
-        final GitCommit gitCommit = myDetailsCache.convert(root, commitI.getHash());
-        if (gitCommit == null) {
-          return MultiMap.emptyInstance();
-        }
-        hashes.putValue(root, gitCommit);
-      }
-      return hashes;
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      super.update(e);
-      e.getPresentation().setEnabled(enabled());
-    }
-
-    private boolean enabled() {
-      final MultiMap<VirtualFile, GitCommit> commitsAndCheck = getSelectedCommitsAndCheck();
-      if (commitsAndCheck.isEmpty()) {
-        return false;
-      }
-      for (VirtualFile root : commitsAndCheck.keySet()) {
-        final SymbolicRefsI refs = myRefs.get(root);
-        final String currentBranch = refs == null ? null : (refs.getCurrent() == null ? null : refs.getCurrent().getName());
-        if (currentBranch == null) continue;
-        final Collection<GitCommit> commits = commitsAndCheck.get(root);
-        for (GitCommit commit : commits) {
-          if (commit.getParentsHashes().size() > 1) return false;
-          final List<String> branches = myDetailsCache.getBranches(root, commit.getShortHash());
-          if (branches != null && branches.contains(currentBranch)) {
-            return false;
-          }
-        }
-      }
-      return true;
-    }
+    Color tag = new JBColor(new Color(0xf1ef9e), new Color(0x7D7B12));
+    Color remote = new JBColor(new Color(0xbcbcfc), new Color(0xbcbcfc).darker().darker());
+    Color local = new JBColor(new Color(0x75eec7), new Color(0x0D6D4F));
+    Color highlighted = new JBColor(new Color(210,255,233), UIUtil.getTableBackground());
   }
 
   private void updateMoreVisibility() {

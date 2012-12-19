@@ -16,6 +16,8 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
@@ -41,10 +43,12 @@ import java.util.List;
  * Date: 02.06.2009
  */
 public class GrStubUtils {
+  private static final Logger LOG = Logger.getInstance(GrStubUtils.class);
 
   public static void writeStringArray(StubOutputStream dataStream, String[] array) throws IOException {
     dataStream.writeByte(array.length);
     for (String s : array) {
+      LOG.assertTrue(s != null);
       dataStream.writeName(s);
     }
   }
@@ -81,7 +85,10 @@ public class GrStubUtils {
     final PsiModifierList modifierList = psi.getModifierList();
     if (modifierList instanceof GrModifierList) {
       for (GrAnnotation annotation : ((GrModifierList)modifierList).getAnnotations()) {
-        annoNames.add(annotation.getShortName());
+        final String name = annotation.getShortName();
+        if (StringUtil.isNotEmpty(name)) {
+          annoNames.add(name);
+        }
       }
     }
     return ArrayUtil.toStringArray(annoNames);

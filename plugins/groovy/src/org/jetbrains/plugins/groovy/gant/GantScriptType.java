@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
+import com.intellij.compiler.options.CompileStepBeforeRunNoErrorCheck;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.openapi.module.Module;
@@ -97,11 +98,7 @@ public class GantScriptType extends GroovyScriptType {
       configuration.setScriptParameters(target);
       configuration.setName(configuration.getName() + "." + target);
     }
-    final List<CompileStepBeforeRun.MakeBeforeRunTask> runTasks =
-      RunManagerEx.getInstanceEx(file.getProject()).getBeforeRunTasks(configuration, CompileStepBeforeRun.ID);
-    for (CompileStepBeforeRun.MakeBeforeRunTask task : runTasks) {
-      task.setEnabled(false);
-    }
+    RunManagerEx.disableTasks(file.getProject(), configuration, CompileStepBeforeRun.ID, CompileStepBeforeRunNoErrorCheck.ID);
   }
 
   public static List<VirtualFile> additionalScopeFiles(@NotNull GroovyFile file) {

@@ -310,25 +310,31 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         final List<ShelvedChangeList> changeLists = TreeUtil.collectSelectedObjectsOfType(this, ShelvedChangeList.class);*/
       } else if (key == VcsDataKeys.CHANGES) {
         List<ShelvedChange> shelvedChanges = TreeUtil.collectSelectedObjectsOfType(this, ShelvedChange.class);
-        if (shelvedChanges.size() > 0) {
-          Change[] changes = new Change[shelvedChanges.size()];
-          for(int i=0; i<shelvedChanges.size(); i++) {
-            changes [i] = shelvedChanges.get(i).getChange(myProject);
+        final List<ShelvedBinaryFile> shelvedBinaryFiles = TreeUtil.collectSelectedObjectsOfType(this, ShelvedBinaryFile.class);
+        if (! shelvedChanges.isEmpty() || ! shelvedBinaryFiles.isEmpty()) {
+          final List<Change> changes = new ArrayList<Change>(shelvedChanges.size() + shelvedBinaryFiles.size());
+          for (ShelvedChange shelvedChange : shelvedChanges) {
+            changes.add(shelvedChange.getChange(myProject));
           }
-          sink.put(VcsDataKeys.CHANGES, changes);
+          for (ShelvedBinaryFile binaryFile : shelvedBinaryFiles) {
+            changes.add(binaryFile.createChange(myProject));
+          }
+          sink.put(VcsDataKeys.CHANGES, changes.toArray(new Change[changes.size()]));
         }
         else {
           final List<ShelvedChangeList> changeLists = TreeUtil.collectSelectedObjectsOfType(this, ShelvedChangeList.class);
-          if (changeLists.size() > 0) {
-            List<Change> changes = new ArrayList<Change>();
-            for(ShelvedChangeList changeList: changeLists) {
-              shelvedChanges = changeList.getChanges(myProject);
-              for(ShelvedChange shelvedChange: shelvedChanges) {
-                changes.add(shelvedChange.getChange(myProject));
-              }
+          final List<Change> changes = new ArrayList<Change>();
+          for(ShelvedChangeList changeList: changeLists) {
+            shelvedChanges = changeList.getChanges(myProject);
+            for(ShelvedChange shelvedChange: shelvedChanges) {
+              changes.add(shelvedChange.getChange(myProject));
             }
-            sink.put(VcsDataKeys.CHANGES, changes.toArray(new Change[changes.size()]));
+            final List<ShelvedBinaryFile> binaryFiles = changeList.getBinaryFiles();
+            for (ShelvedBinaryFile file : binaryFiles) {
+              changes.add(file.createChange(myProject));
+            }
           }
+          sink.put(VcsDataKeys.CHANGES, changes.toArray(new Change[changes.size()]));
         }
       }
       else if (key == PlatformDataKeys.DELETE_ELEMENT_PROVIDER) {

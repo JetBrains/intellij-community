@@ -31,7 +31,7 @@ import java.awt.*;
 /**
  * @author Alexander Lobas
  */
-public abstract class AbstractResourceRenderer implements PropertyRenderer {
+public abstract class AbstractResourceRenderer<T> implements PropertyRenderer {
   protected final ColorIcon myColorIcon = new ColorIcon(10, 9);
   protected final SimpleColoredComponent myColoredComponent = new SimpleColoredComponent() {
     @Override
@@ -51,12 +51,12 @@ public abstract class AbstractResourceRenderer implements PropertyRenderer {
                                  boolean hasFocus) {
     myColoredComponent.clear();
     PropertyTable.updateRenderer(myColoredComponent, selected);
-    formatValue((RadComponent)container, (String)value);
+    formatValue((RadComponent)container, (T)value);
 
     return myColoredComponent;
   }
 
-  protected abstract void formatValue(RadComponent container, String value);
+  protected abstract void formatValue(RadComponent container, T value);
 
   @Override
   public void updateUI() {

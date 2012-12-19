@@ -7,7 +7,7 @@ class Test1 {
         VoidReturnType aI = () -> System.out.println();
         VoidReturnType aI1 = () -> {System.out.println();};
         VoidReturnType aI2 = <error descr="Unexpected return value">() -> {return 1;}</error>;
-        VoidReturnType aI3 = <error descr="Incompatible return type int in lambda expression">() -> 1</error>;
+        VoidReturnType aI3 = () -> 1;
         VoidReturnType aI4 = () -> {return;};
     }
 }

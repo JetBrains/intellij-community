@@ -23,7 +23,6 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.io.URLUtil;
-import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import com.intellij.util.text.FilePathHashingStrategy;
 import gnu.trove.TObjectHashingStrategy;
 import org.intellij.lang.annotations.RegExp;
@@ -833,12 +832,8 @@ public class FileUtil extends FileUtilRt {
   }
 
   @NotNull
-  public static String resolveShortWindowsName(@NotNull final String path) throws IOException {
-    if (SystemInfo.isWindows) {
-      //todo: this resolves symlinks on Windows, but we'd rather not do it
-      return new File(path.replace(File.separatorChar, '/')).getCanonicalPath();
-    }
-    return path;
+  public static String resolveShortWindowsName(@NotNull String path) throws IOException {
+    return SystemInfo.isWindows && StringUtil.containsChar(path, '~') ? new File(path).getCanonicalPath() : path;
   }
 
   public static void collectMatchedFiles(@NotNull File root, @NotNull Pattern pattern, @NotNull List<File> outFiles) {

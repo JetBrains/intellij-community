@@ -296,16 +296,12 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     }
 
     private boolean processCommentInjections(PsiVariable owner) {
-      PsiElement prev = owner.getFirstChild();
-      prev = prev instanceof PsiComment? prev : PsiTreeUtil.skipSiblingsBackward(owner.getParent(), PsiWhiteSpace.class);
-      if (prev instanceof PsiComment) {
-        String text = ElementManipulators.getValueText(prev).trim();
-        BaseInjection injection = InjectorUtils.detectInjectionFromText(LanguageInjectionSupport.JAVA_SUPPORT_ID, text);
-        if (injection != null) {
-          return processCommentInjectionInner(owner, prev, injection);
-        }
-      }
-      return true;
+      Ref<PsiComment> causeRef = Ref.create();
+      PsiElement anchor = owner.getFirstChild() instanceof PsiComment?
+                          (owner.getModifierList() != null? owner.getModifierList() : owner.getTypeElement()) : owner;
+      if (anchor == null) return true;
+      BaseInjection injection = InjectorUtils.findCommentInjection(anchor, LanguageInjectionSupport.JAVA_SUPPORT_ID, causeRef);
+      return injection == null || processCommentInjectionInner(owner, causeRef.get(), injection);
     }
 
     protected boolean processCommentInjectionInner(PsiVariable owner, PsiElement comment, BaseInjection injection) {

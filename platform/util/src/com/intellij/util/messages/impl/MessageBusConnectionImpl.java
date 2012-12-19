@@ -23,18 +23,19 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.MessageHandler;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class MessageBusConnectionImpl implements MessageBusConnection {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.messages.impl.MessageBusConnectionImpl");
 
   private final MessageBusImpl myBus;
-  private final ThreadLocal<Queue<Message>> myPendingMessages = new QueueThreadLocal();
+  private final ThreadLocal<Queue<Message>> myPendingMessages = MessageBusImpl.createThreadLocalQueue();
+
   private MessageHandler myDefaultHandler;
   private final Map<Topic, Object> mySubscriptions = new HashMap<Topic, Object>();
 
@@ -43,7 +44,7 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
   }
 
   @Override
-  public <L> void subscribe(Topic<L> topic, L handler) throws IllegalStateException {
+  public <L> void subscribe(@NotNull Topic<L> topic, @NotNull L handler) throws IllegalStateException {
     if (mySubscriptions.put(topic, handler) != null) {
       throw new IllegalStateException("Subscription to " + topic + " already exists");
     }
@@ -52,7 +53,7 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
 
   @Override
   @SuppressWarnings("unchecked")
-  public <L> void subscribe(Topic<L> topic) throws IllegalStateException {
+  public <L> void subscribe(@NotNull Topic<L> topic) throws IllegalStateException {
     if (myDefaultHandler == null) {
       throw new IllegalStateException("Connection must have default handler installed prior to any anonymous subscriptions. "
                                       + "Target topic: " + topic);
@@ -87,12 +88,13 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
 
   @Override
   public void deliverImmediately() {
-    while (!myPendingMessages.get().isEmpty()) {
+    Queue<Message> messages = myPendingMessages.get();
+    while (!messages.isEmpty()) {
       myBus.deliverSingleMessage();
     }
   }
 
-  void deliverMessage(Message message) {
+  void deliverMessage(@NotNull Message message) {
     final Message messageOnLocalQueue = myPendingMessages.get().poll();
     assert messageOnLocalQueue == message;
 
@@ -123,12 +125,5 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
 
   public String toString() {
     return mySubscriptions.keySet().toString();
-  }
-
-  private static class QueueThreadLocal extends ThreadLocal<Queue<Message>> {
-    @Override
-    protected Queue<Message> initialValue() {
-      return new ConcurrentLinkedQueue<Message>();
-    }
   }
 }

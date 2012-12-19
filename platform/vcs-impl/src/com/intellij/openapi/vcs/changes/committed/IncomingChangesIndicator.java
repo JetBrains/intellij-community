@@ -62,7 +62,7 @@ public class IncomingChangesIndicator {
         });
       }
     });
-    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, new VcsListener() {
+    final VcsListener listener = new VcsListener() {
       @Override
       public void directoryMappingChanged() {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -72,7 +72,9 @@ public class IncomingChangesIndicator {
           }
         });
       }
-    });
+    };
+    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, listener);
+    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, listener);
   }
 
   private void updateIndicatorVisibility() {

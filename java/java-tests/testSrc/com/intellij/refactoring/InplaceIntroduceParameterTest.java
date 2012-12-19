@@ -69,6 +69,14 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
     });
   }
 
+  public void testParamNameEqMethodName() throws Exception {
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroducePopup) {
+      }
+    });
+  }
+
   @Override
   protected String getBasePath() {
     return BASE_PATH;

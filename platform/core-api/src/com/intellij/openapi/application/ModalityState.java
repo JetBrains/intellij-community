@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,15 +24,12 @@ import java.awt.*;
  */
 public abstract class ModalityState {
   @NotNull public static final ModalityState NON_MODAL;
-  @NotNull @Deprecated public static final ModalityState NON_MMODAL;
 
   static {
     try {
+      @SuppressWarnings("unchecked")
       final Class<? extends ModalityState> ex = (Class<? extends ModalityState>)Class.forName("com.intellij.openapi.application.impl.ModalityStateEx");
       NON_MODAL = ex.newInstance();
-      NON_MMODAL = NON_MODAL;
-
-      assert NON_MODAL != null;
     }
     catch (ClassNotFoundException e) {
       throw new IllegalStateException(e);

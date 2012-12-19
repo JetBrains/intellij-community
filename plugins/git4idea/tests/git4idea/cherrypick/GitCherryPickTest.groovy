@@ -160,7 +160,7 @@ hint: and commit the result with 'git commit'
   }
 
   String newCommitMessage(GitCommit commit) {
-    "${commit.description}\n(cherry-picked from ${commit.hash.value})"
+    "${commit.description}\n\n(cherry-picked from ${commit.hash.value})"
   }
 
   protected static class OKCommitDialogHandler implements MockVcsHelper.CommitHandler {

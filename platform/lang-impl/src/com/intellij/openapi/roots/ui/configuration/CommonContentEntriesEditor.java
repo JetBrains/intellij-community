@@ -40,7 +40,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
-import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.roots.ToolbarPanel;
 import com.intellij.util.Consumer;
@@ -101,7 +100,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
         }
       }
     };
-    final VirtualFileManagerEx fileManager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
+    final VirtualFileManager fileManager = VirtualFileManager.getInstance();
     fileManager.addVirtualFileManagerListener(fileManagerListener);
     registerDisposable(new Disposable() {
       @Override

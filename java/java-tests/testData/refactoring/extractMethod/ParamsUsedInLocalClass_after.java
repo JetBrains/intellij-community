@@ -7,7 +7,7 @@ class A {
         System.out.println("");
     }
 
-    private boolean newMethod(int abc, boolean b) {
+    private boolean newMethod(final int abc, boolean b) {
         if (b) {
           class T {
             void bar() {

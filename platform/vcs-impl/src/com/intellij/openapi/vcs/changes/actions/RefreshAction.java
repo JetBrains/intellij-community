@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,13 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 02.11.2006
- * Time: 21:54:49
  */
 package com.intellij.openapi.vcs.changes.actions;
 
@@ -34,8 +27,11 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @author yole
+ * @since 02.11.2006
+ */
 public class RefreshAction extends AnAction implements DumbAware {
-
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) return;
@@ -48,10 +44,10 @@ public class RefreshAction extends AnAction implements DumbAware {
     FileDocumentManager.getInstance().saveAllDocuments();
     invokeCustomRefreshes(project);
 
-    VirtualFileManager.getInstance().refresh(true, new Runnable() {
+    VirtualFileManager.getInstance().asyncRefresh(new Runnable() {
       public void run() {
         // already called in EDT or under write action
-        if (! project.isDisposed()) {
+        if (!project.isDisposed()) {
           VcsDirtyScopeManager.getInstance(project).markEverythingDirty();
         }
       }
@@ -64,5 +60,4 @@ public class RefreshAction extends AnAction implements DumbAware {
       refresher.refresh(project);
     }
   }
-
 }

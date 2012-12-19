@@ -27,6 +27,7 @@ import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.Nullable;
@@ -199,7 +200,7 @@ public class FrameLayoutOperation extends AbstractEditOperation {
     private Gravity myVertical;
 
     public GravityFeedback() {
-      super(Color.green);
+      super(JBColor.GREEN);
     }
 
     public void setGravity(Gravity horizontal, Gravity vertical) {

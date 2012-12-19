@@ -15,43 +15,115 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.actions;
 
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
+import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.nodes.WatchMessageNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.util.List;
 
-/**
- * User: ksafonov
- */
-public abstract class XFetchValueActionBase extends XDebuggerTreeActionBase {
+public abstract class XFetchValueActionBase extends AnAction {
+  @Nullable
+  private static TreePath[] getSelectedNodes(DataContext dataContext) {
+    XDebuggerTree tree = XDebuggerTree.getTree(dataContext);
+    return tree == null ? null : tree.getSelectionPaths();
+  }
 
-  protected abstract void handle(final Project project, final String value);
+  @Override
+  public void update(AnActionEvent e) {
+    TreePath[] paths = getSelectedNodes(e.getDataContext());
+    if (paths != null) {
+      for (TreePath path : paths) {
+        Object node = path.getLastPathComponent();
+        if (node instanceof XValueNodeImpl) {
+          XValueNodeImpl valueNode = (XValueNodeImpl)node;
+          if (valueNode.getName() != null && valueNode.getValue() != null) {
+            e.getPresentation().setEnabled(true);
+            return;
+          }
+        }
+        else if (node instanceof WatchMessageNode) {
+          e.getPresentation().setEnabled(true);
+          return;
+        }
+      }
+    }
+    e.getPresentation().setEnabled(false);
+  }
 
-  protected void perform(final XValueNodeImpl node, @NotNull final String nodeName, final AnActionEvent e) {
-    XFullValueEvaluator fullValueEvaluator = node.getFullValueEvaluator();
-    if (fullValueEvaluator == null) {
-      String value = node.getValue();
-      handle(node.getTree().getProject(), value);
+  @Override
+  public void actionPerformed(final AnActionEvent e) {
+    TreePath[] paths = getSelectedNodes(e.getDataContext());
+    if (paths == null) {
       return;
     }
 
-    final XDebugSession session = node.getTree().getSession();
-    startFetchingValue(fullValueEvaluator, session);
+    ValueCollector valueCollector = new ValueCollector();
+    for (TreePath path : paths) {
+      Object node = path.getLastPathComponent();
+      if (node instanceof XValueNodeImpl) {
+        XValueNodeImpl valueNode = (XValueNodeImpl)node;
+        XFullValueEvaluator fullValueEvaluator = valueNode.getFullValueEvaluator();
+        if (fullValueEvaluator == null) {
+          valueCollector.add(StringUtil.notNullize(valueNode.getValue()));
+        }
+        else {
+          startFetchingValue(fullValueEvaluator, new CopyValueEvaluationCallback(valueNode.getTree().getSession(), valueCollector));
+        }
+      }
+      else if (node instanceof WatchMessageNode) {
+        valueCollector.add(((WatchMessageNode)node).getExpression());
+      }
+    }
+    valueCollector.processed = true;
+    valueCollector.finish(e.getProject());
   }
 
-  private void startFetchingValue(@NotNull XFullValueEvaluator fullValueEvaluator,
-                                  final @NotNull XDebugSession session) {
-    final CopyValueEvaluationCallback callback = new CopyValueEvaluationCallback(session);
+  private final class ValueCollector {
+    private final List<String> values = new SmartList<String>();
+    private volatile boolean processed;
+
+    public void add(@NotNull String value) {
+      values.add(value);
+    }
+
+    public void finish(Project project) {
+      if (processed && !values.contains(null) && !project.isDisposed()) {
+        handle(project, StringUtil.join(values, "\n"));
+      }
+    }
+
+    public int acquire() {
+      int index = values.size();
+      values.add(null);
+      return index;
+    }
+
+    public void evaluationComplete(int index, @NotNull String value, Project project) {
+      values.set(index, value);
+      finish(project);
+    }
+  }
+
+  protected abstract void handle(final Project project, final String value);
+
+  private static void startFetchingValue(XFullValueEvaluator fullValueEvaluator, final CopyValueEvaluationCallback callback) {
     fullValueEvaluator.startEvaluation(callback);
     new Alarm().addRequest(new Runnable() {
       @Override
@@ -61,26 +133,27 @@ public abstract class XFetchValueActionBase extends XDebuggerTreeActionBase {
     }, 500);
   }
 
-  protected boolean isEnabled(final XValueNodeImpl node) {
-    return super.isEnabled(node) && node.getValue() != null;
-  }
+  private static final class CopyValueEvaluationCallback implements XFullValueEvaluator.XFullValueEvaluationCallback {
+    private final XDebugSession session;
 
-  private class CopyValueEvaluationCallback implements XFullValueEvaluator.XFullValueEvaluationCallback {
-    private final XDebugSession mySession;
-    private volatile boolean myEvaluated;
-    private volatile boolean myCanceled;
-    private Semaphore mySemaphore;
+    private final int valueIndex;
+    private final ValueCollector valueCollector;
 
-    public CopyValueEvaluationCallback(XDebugSession session) {
-      mySession = session;
-      mySemaphore = new Semaphore();
-      mySemaphore.down();
+    private volatile boolean evaluated;
+    private volatile boolean canceled;
+    private final Semaphore semaphore;
+
+    public CopyValueEvaluationCallback(XDebugSession session, ValueCollector valueCollector) {
+      this.session = session;
+      this.valueCollector = valueCollector;
+      valueIndex = valueCollector.acquire();
+      semaphore = new Semaphore();
+      semaphore.down();
     }
 
     @Override
     public void evaluated(@NotNull String fullValue) {
-      handle(mySession.getProject(), fullValue);
-      evaluationComplete();
+      evaluationComplete(fullValue);
     }
 
     @Override
@@ -90,32 +163,41 @@ public abstract class XFetchValueActionBase extends XDebuggerTreeActionBase {
 
     @Override
     public void errorOccurred(@NotNull String errorMessage) {
-      mySession.reportError(XDebuggerBundle.message("load.value.task.error", errorMessage));
-      evaluationComplete();
+      try {
+        session.reportError(XDebuggerBundle.message("load.value.task.error", errorMessage));
+      }
+      finally {
+        evaluationComplete(errorMessage);
+      }
     }
 
-    private void evaluationComplete() {
-      myEvaluated = true;
-      mySemaphore.up();
+    private void evaluationComplete(String value) {
+      try {
+        evaluated = true;
+        semaphore.up();
+      }
+      finally {
+        valueCollector.evaluationComplete(valueIndex, value, session.getProject());
+      }
     }
 
     @Override
     public boolean isObsolete() {
-      return myCanceled;
+      return canceled;
     }
 
     public void showProgress() {
-      if (myEvaluated || mySession.isStopped()) return;
+      if (evaluated || session.isStopped()) return;
 
-      new Task.Backgroundable(mySession.getProject(), XDebuggerBundle.message("load.value.task.text")) {
+      new Task.Backgroundable(session.getProject(), XDebuggerBundle.message("load.value.task.text")) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           indicator.setIndeterminate(true);
           int i = 0;
-          while (!myCanceled && !myEvaluated) {
+          while (!canceled && !evaluated) {
             indicator.checkCanceled();
             indicator.setFraction(((i++) % 100) * 0.01);
-            mySemaphore.waitFor(300);
+            semaphore.waitFor(300);
           }
         }
 
@@ -126,7 +208,7 @@ public abstract class XFetchValueActionBase extends XDebuggerTreeActionBase {
 
         @Override
         public void onCancel() {
-          myCanceled = true;
+          canceled = true;
         }
       }.queue();
     }

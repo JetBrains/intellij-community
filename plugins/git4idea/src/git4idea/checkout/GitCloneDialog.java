@@ -15,10 +15,12 @@
  */
 package git4idea.checkout;
 
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.EditorComboBox;
@@ -126,7 +128,11 @@ public class GitCloneDialog extends DialogWrapper {
       }
     };
     myParentDirectory.getChildComponent().getDocument().addDocumentListener(updateOkButtonListener);
-    myParentDirectory.setText(GitRememberedInputs.getInstance().getCloneParentDir());
+    String parentDir = GitRememberedInputs.getInstance().getCloneParentDir();
+    if (StringUtil.isEmptyOrSpaces(parentDir)) {
+      parentDir = ProjectUtil.getBaseDir();
+    }
+    myParentDirectory.setText(parentDir);
 
     myDirectoryName.getDocument().addDocumentListener(updateOkButtonListener);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.wm;
 
+import com.intellij.ui.JBColor;
+
 import java.awt.*;
 
 public class AppIconScheme {
@@ -23,11 +25,11 @@ public class AppIconScheme {
 
     static final Progress TESTS = new Progress() {
       public Color getOkColor() {
-        return Color.green;
+        return JBColor.GREEN;
       }
 
       public Color getErrorColor() {
-        return Color.red;
+        return JBColor.RED;
       }
     };
 
@@ -37,7 +39,7 @@ public class AppIconScheme {
       }
 
       public Color getErrorColor() {
-        return Color.red;
+        return JBColor.RED;
       }
     };
 
@@ -47,7 +49,7 @@ public class AppIconScheme {
       }
 
       public Color getErrorColor() {
-        return Color.red;
+        return JBColor.RED;
       }
     };
 

@@ -1375,7 +1375,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       final List<AnAction> addActions = new ArrayList<AnAction>();
       final Point p = e.getPoint();
       int line = myEditor.yPositionToLogicalLine((int)p.getY());
-      if (line >= myEditor.getDocument().getLineCount()) return;
+      //if (line >= myEditor.getDocument().getLineCount()) return;
 
       for (TextAnnotationGutterProvider gutterProvider : myTextAnnotationGutters) {
         final List<AnAction> list = gutterProvider.getPopupActions(line, myEditor);

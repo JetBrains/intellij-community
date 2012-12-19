@@ -15,9 +15,10 @@
  */
 package com.intellij.xml;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -138,7 +139,7 @@ public class DefaultXmlExtension extends XmlExtension {
     final XmlTag parentTag = tag.getParentTag();
     ns: for (Iterator<String> i = set.iterator(); i.hasNext();) {
       final String s = i.next();
-      final Collection<XmlFile> namespaces = XmlUtil.findNSFilesByURI(s, element.getProject(), ModuleUtil.findModuleForPsiElement(file));
+      final Collection<XmlFile> namespaces = XmlUtil.findNSFilesByURI(s, element.getProject(), ModuleUtilCore.findModuleForPsiElement(file));
       for (XmlFile namespace : namespaces) {
         final XmlDocument document = namespace.getDocument();
         assert document != null;
@@ -149,6 +150,9 @@ public class DefaultXmlExtension extends XmlExtension {
         }
         final XmlElementDescriptor[] descriptors = nsDescriptor.getRootElementsDescriptors(document);
         for (XmlElementDescriptor descriptor : descriptors) {
+          if (descriptor == null) {
+            LOG.error(nsDescriptor + " returned null element for getRootElementsDescriptors() array");
+          }
           if (descriptor.getName().equals(name)) {
             continue ns;
           }
@@ -278,4 +282,6 @@ public class DefaultXmlExtension extends XmlExtension {
     }
     return possibleUris;
   }
+
+  private final static Logger LOG = Logger.getInstance(DefaultXmlExtension.class);
 }

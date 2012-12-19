@@ -399,6 +399,34 @@ public class SvnRenameTest extends Svn17TestCase {
   }
 
   @Test
+  public void testUndoMoveUnversionedToUnversioned() throws Exception {
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+
+    disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
+    verifySorted(runSvn("status"), "? a.txt");
+    final VirtualFile unversioned = createDirInCommand(myWorkingCopyDir, "unversioned");
+    moveFileInCommand(file, unversioned);
+    verifySorted(runSvn("status"), "? unversioned");
+    undo();
+    verifySorted(runSvn("status"), "? a.txt", "? unversioned");
+  }
+
+  @Test
+  public void testUndoMoveAddedToUnversioned() throws Exception {
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+
+    final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
+    verifySorted(runSvn("status"), "A a.txt");
+    disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    final VirtualFile unversioned = createDirInCommand(myWorkingCopyDir, "unversioned");
+    moveFileInCommand(file, unversioned);
+    verifySorted(runSvn("status"), "? unversioned");
+    undo();
+    verifySorted(runSvn("status"), "? a.txt", "? unversioned");
+  }
+
+  @Test
   public void testUndoMoveToUnversionedCommitted() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");

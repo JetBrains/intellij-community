@@ -18,10 +18,9 @@ package com.intellij.ide.bookmarks.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.bookmarks.BookmarkManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ListUtil;
 
 import javax.swing.*;
@@ -34,7 +33,7 @@ class MoveBookmarkUpAction extends DumbAwareAction {
     super("Up", "Move current bookmark up", AllIcons.Actions.PreviousOccurence);
     myProject = project;
     myList = list;
-    registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(SystemInfo.isMac ? "meta UP" : "alt UP")), list);
+    registerCustomShortcutSet(CommonShortcuts.MOVE_UP, list);
   }
 
   @Override

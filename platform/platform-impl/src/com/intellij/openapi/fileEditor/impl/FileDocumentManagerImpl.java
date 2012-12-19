@@ -37,9 +37,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
-import com.intellij.openapi.fileChooser.FileSaverDescriptor;
-import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
@@ -51,7 +48,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -73,9 +69,7 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.io.File;
 import java.io.IOException;
-import java.io.Writer;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
@@ -121,9 +115,13 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     myMultiCaster = (FileDocumentManagerListener)Proxy.newProxyInstance(loader, new Class[]{FileDocumentManagerListener.class}, handler);
   }
 
-  private void multiCast(Method method, Object[] args) {
+  @SuppressWarnings("OverlyBroadCatchBlock")
+  private void multiCast(@NotNull Method method, Object[] args) {
     try {
       method.invoke(myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC), args);
+    }
+    catch (ClassCastException e) {
+      LOG.error("Arguments: "+ Arrays.toString(args), e);
     }
     catch (Exception e) {
       LOG.error(e);
@@ -366,11 +364,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       if (!myUnsavedDocuments.contains(document)) return;
     }
 
-    if (!file.isValid() && !ApplicationManager.getApplication().isUnitTestMode() && false) {
-      file = handleExternalDeletion(file);
-      if (!myUnsavedDocuments.contains(document)) return;
-    }
-
     final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
     try {
       doSaveDocumentInWriteAction(document, file);
@@ -380,8 +373,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     }
   }
 
-  private void doSaveDocumentInWriteAction(Document document, @Nullable VirtualFile file) throws IOException {
-    if (file == null || !file.isValid()) {
+  private void doSaveDocumentInWriteAction(@NotNull Document document, @NotNull VirtualFile file) throws IOException {
+    if (!file.isValid()) {
       removeFromUnsaved(document);
       return;
     }
@@ -416,56 +409,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     }
 
     Project project = ProjectLocator.getInstance().guessProjectForFile(file);
-    Writer writer = LoadTextUtil.getWriter(project, file, this, text, document.getModificationStamp());
-    try {
-      writer.write(text);
-    }
-    finally {
-      writer.close();
-    }
+    LoadTextUtil.write(project, file, this, text, document.getModificationStamp());
 
     myUnsavedDocuments.remove(document);
     LOG.assertTrue(!myUnsavedDocuments.contains(document));
     myTrailingSpacesStripper.clearLineModificationFlags(document);
-  }
-
-  @Nullable
-  private static VirtualFile handleExternalDeletion(VirtualFile file) {
-    String path = file.getPath();
-    int result = suggestToRestoreDeletedFile(path, new String[]{"Restore", "Save under a different name", "Discard changes"});
-    if (result == 0) return createFile(new File(path));
-    if (result == 1) return saveUnderDifferentName(file);
-    return null;
-  }
-
-  @Nullable
-  private static VirtualFile saveUnderDifferentName(VirtualFile file) {
-    FileSaverDescriptor descriptor = new FileSaverDescriptor("Save File As...", "Save file under a different name");
-    FileSaverDialog dialog = FileChooserFactory.getInstance().createSaveFileDialog(descriptor, (Project)null);
-    VirtualFileWrapper wrapper = dialog.save(findValidParent(file), file.getName());
-    return wrapper == null ? null : createFile(wrapper.getFile());
-  }
-
-  private static int suggestToRestoreDeletedFile(String path, String[] options) {
-    String message = "File has been deleted on disk: " + FileUtil.toSystemDependentName(path);
-    return Messages.showDialog(message, "File Deleted", options, 0, Messages.getQuestionIcon());
-  }
-
-  @Nullable
-  private static VirtualFile createFile(File newFile) {
-    if (!FileUtil.createIfDoesntExist(newFile)) {
-      return null;
-    }
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(newFile);
-  }
-
-  @Nullable
-  private static VirtualFile findValidParent(VirtualFile file) {
-    VirtualFile validParent = file;
-    while (validParent != null && !validParent.isValid()) {
-      validParent = validParent.getParent();
-    }
-    return validParent;
   }
 
   private static void updateModifiedProperty(@NotNull VirtualFile file) {
@@ -485,11 +433,15 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     LOG.assertTrue(!myUnsavedDocuments.contains(document));
   }
 
-  private static boolean isSaveNeeded(@NotNull Document document, @NotNull VirtualFile file) {
+  private static boolean isSaveNeeded(@NotNull Document document, @NotNull VirtualFile file) throws IOException {
     if (file.getFileType().isBinary() || document.getTextLength() > 1000 * 1000) {    // don't compare if the file is too big
       return true;
     }
-    return !Comparing.equal(document.getCharsSequence(), LoadTextUtil.loadText(file));
+
+    byte[] bytes = file.contentsToByteArray();
+    CharSequence loaded = LoadTextUtil.getTextByBinaryPresentation(bytes, file, false, false);
+
+    return !Comparing.equal(document.getCharsSequence(), loaded);
   }
 
   private static boolean needsRefresh(final VirtualFile file) {
@@ -525,8 +477,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   public boolean requestWriting(@NotNull Document document, Project project) {
     final VirtualFile file = getInstance().getFile(document);
     if (project != null && file != null && file.isValid()) {
-      if (file.getFileType().isBinary()) return false;
-      return ReadonlyStatusHandler.ensureFilesWritable(project, file);
+      return !file.getFileType().isBinary() && ReadonlyStatusHandler.ensureFilesWritable(project, file);
     }
     if (document.isWritable()) {
       return true;
@@ -604,12 +555,12 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     final VirtualFile file = event.getFile();
     final Document document = getCachedDocument(file);
     if (document == null) {
-      fireFileWithNoDocumentChanged(file);
+      myMultiCaster.fileWithNoDocumentChanged(file);
       return;
     }
 
     if (isBinaryWithDecompiler(file)) {
-      fireFileWithNoDocumentChanged(file); // This will generate PSI event at FileManagerImpl
+      myMultiCaster.fileWithNoDocumentChanged(file); // This will generate PSI event at FileManagerImpl
     }
 
     long documentStamp = document.getModificationStamp();
@@ -619,25 +570,13 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       LOG.info("  documentStamp:" + documentStamp);
       LOG.info("  oldFileStamp:" + oldFileStamp);
 
-      Runnable askReloadRunnable = new Runnable() {
-        @Override
-        public void run() {
-          if (!file.isValid()) return;
-          if (askReloadFromDisk(file, document)) {
-            reloadFromDisk(document);
-          }
-        }
-      };
-
-      askReloadRunnable.run();
+      if (file.isValid() && askReloadFromDisk(file, document)) {
+        reloadFromDisk(document);
+      }
     }
     else {
       reloadFromDisk(document);
     }
-  }
-
-  private void fireFileWithNoDocumentChanged(@NotNull VirtualFile file) {
-    myMultiCaster.fileWithNoDocumentChanged(file);
   }
 
   @Override
@@ -699,7 +638,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
         request.setContentTitles(UIBundle.message("file.cache.conflict.diff.content.file.system.content"),
                                  UIBundle.message("file.cache.conflict.diff.content.memory.content"));
         DialogBuilder diffBuilder = new DialogBuilder(project);
-        DiffPanelImpl diffPanel = (DiffPanelImpl)DiffManager.getInstance().createDiffPanel(diffBuilder.getWindow(), project,diffBuilder);
+        DiffPanelImpl diffPanel = (DiffPanelImpl)DiffManager.getInstance().createDiffPanel(diffBuilder.getWindow(), project, diffBuilder, null);
         diffPanel.getOptions().setShowSourcePolicy(DiffPanelOptions.ShowSourcePolicy.DONT_SHOW);
         diffBuilder.setCenterPanel(diffPanel.getComponent());
         diffBuilder.setDimensionServiceKey("FileDocumentManager.FileCacheConflict");
@@ -825,7 +764,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     return FileDocumentManagerListener.EP_NAME.getExtensions();
   }
 
-  protected void handleErrorsOnSave(final Map<Document, IOException> failures) {
+  protected void handleErrorsOnSave(@NotNull Map<Document, IOException> failures) {
+    for (IOException exception : failures.values()) {
+      LOG.warn(exception);
+    }
+
     final String text = StringUtil.join(failures.values(), new Function<IOException, String>() {
       @Override
       public String fun(IOException e) {

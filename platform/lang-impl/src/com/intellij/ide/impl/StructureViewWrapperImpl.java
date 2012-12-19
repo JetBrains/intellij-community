@@ -279,6 +279,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
             myModuleStructureComponent = new ModuleStructureComponent(module);
             focusedComponent = hadFocus ? IdeFocusTraversalPolicy.getPreferredFocusedComponent(myModuleStructureComponent) : null;
             createSinglePanel(myModuleStructureComponent.getComponent());
+            Disposer.register(this, myModuleStructureComponent);
           }
         }
       }
@@ -293,7 +294,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
           final StructureViewBuilder structureViewBuilder = editor.getStructureViewBuilder();
           if (structureViewBuilder != null) {
             myStructureView = structureViewBuilder.createStructureView(editor, myProject);
-
+            Disposer.register(this, myStructureView);
             updateHeaderActions(myStructureView);
 
             if (myStructureView instanceof StructureView.Scrollable) {

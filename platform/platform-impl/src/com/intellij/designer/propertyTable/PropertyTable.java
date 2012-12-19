@@ -798,11 +798,12 @@ public abstract class PropertyTable extends JBTable {
   private boolean setValueAtRow(int row, final Object newValue) {
     final Property property = myProperties.get(row);
 
+    final Object[] oldValue = new Object[1];
     boolean isNewValue;
     try {
-      Object oldValue = getValue(property);
-      isNewValue = !Comparing.equal(oldValue, newValue);
-      if (newValue == null && oldValue instanceof String && ((String)oldValue).length() == 0) {
+      oldValue[0] = getValue(property);
+      isNewValue = !Comparing.equal(oldValue[0], newValue);
+      if (newValue == null && oldValue[0] instanceof String && ((String)oldValue[0]).length() == 0) {
         isNewValue = false;
       }
     }
@@ -819,7 +820,7 @@ public abstract class PropertyTable extends JBTable {
         public void run() throws Exception {
           for (PropertiesContainer component : myContainers) {
             property.setValue(component, newValue);
-            needRefresh[0] |= property.needRefreshPropertyList(component, newValue);
+            needRefresh[0] |= property.needRefreshPropertyList(component, oldValue[0], newValue);
           }
         }
       });

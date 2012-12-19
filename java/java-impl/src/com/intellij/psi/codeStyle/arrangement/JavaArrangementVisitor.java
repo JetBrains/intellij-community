@@ -203,8 +203,15 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
     if (overridden != null) {
       myInfo.onOverriddenMethod(overridden.getMethod(), method);
     }
-    myMethodBodyProcessor.setBaseMethod(method);
-    method.accept(myMethodBodyProcessor);
+    boolean reset = myMethodBodyProcessor.setBaseMethod(method);
+    try {
+      method.accept(myMethodBodyProcessor);
+    }
+    finally {
+      if (reset) {
+        myMethodBodyProcessor.setBaseMethod(null);
+      }
+    }
   }
 
   private void parseProperties(PsiMethod method, JavaElementArrangementEntry entry) {
@@ -310,7 +317,7 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
     if (canArrange) {
       TextRange expandedRange = myDocument == null ? null : ArrangementUtil.expandToLine(range, myDocument);
       TextRange rangeToUse = expandedRange == null ? range : expandedRange;
-      entry = new JavaElementArrangementEntry(current, rangeToUse, type, name, myDocument == null || expandedRange != null);
+      entry = new JavaElementArrangementEntry(current, rangeToUse, type, name, true);
     }
     else {
       entry = new JavaElementArrangementEntry(current, range, type, name, false);
@@ -361,7 +368,7 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
   private static class MethodBodyProcessor extends JavaRecursiveElementVisitor {
     
     @NotNull private final JavaArrangementParseInfo myInfo;
-    @NotNull private PsiMethod myBaseMethod;
+    @Nullable private PsiMethod myBaseMethod;
 
     MethodBodyProcessor(@NotNull JavaArrangementParseInfo info) {
       myInfo = info;
@@ -374,14 +381,27 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
       }
       PsiElement e = reference.resolve();
       if (e instanceof PsiMethod) {
-        myInfo.registerDependency(myBaseMethod, (PsiMethod)e);
+        assert myBaseMethod != null;
+        PsiMethod m = (PsiMethod)e;
+        if (m.getContainingClass() == myBaseMethod.getContainingClass()) {
+          myInfo.registerDependency(myBaseMethod, m);
+        }
       }
-      // Now parse the expression list, it also might contain method calls.
-      super.visitExpressionList(psiMethodCallExpression.getArgumentList());
+      
+      // We process all method call expression children because there is a possible case like below:
+      //   new Runnable() {
+      //     void test();
+      //   }.run();
+      // Here we want to process that 'Runnable.run()' implementation.
+      super.visitMethodCallExpression(psiMethodCallExpression);
     }
 
-    public void setBaseMethod(@NotNull PsiMethod baseMethod) {
-      myBaseMethod = baseMethod;
+    public boolean setBaseMethod(@Nullable PsiMethod baseMethod) {
+      if (baseMethod == null || myBaseMethod == null /* don't override a base method in case of method-local anonymous classes */) {
+        myBaseMethod = baseMethod;
+        return true;
+      }
+      return false;
     }
   }
 }

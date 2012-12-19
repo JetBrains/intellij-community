@@ -132,6 +132,8 @@
 
   <applicationService serviceInterface="com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager"
                       serviceImplementation="com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager"/>
+  <applicationService serviceInterface="com.intellij.openapi.editor.colors.TextAttributesKey$TextAttributeKeyDefaultsProvider"
+                      serviceImplementation="com.intellij.openapi.editor.colors.impl.TextAttributeKeyDefaultsProviderImpl"/>
   <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorColorsManager"                 
                       serviceImplementation="com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl"/>
   <exportable serviceInterface="com.intellij.openapi.editor.colors.EditorColorsManager"/>

@@ -164,7 +164,9 @@ public class DuplicatesFinder {
 
   @Nullable
   private Match isDuplicateFragment(PsiElement candidate, boolean ignoreParameterTypes) {
-    if (PsiTreeUtil.isAncestor(myPattern[0], candidate, false)) return null;
+    for (PsiElement pattern : myPattern) {
+      if (PsiTreeUtil.isAncestor(pattern, candidate, false)) return null;
+    }
     PsiElement sibling = candidate;
     ArrayList<PsiElement> candidates = new ArrayList<PsiElement>();
     for (final PsiElement element : myPattern) {

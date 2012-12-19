@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 2011-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,8 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
   private static class MismatchedQueryAndUpdateOfStringBuilderVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitField(PsiField field) { super.visitField(field);
+    public void visitField(PsiField field) {
+      super.visitField(field);
       if (!field.hasModifierProperty(PsiModifier.PRIVATE)) {
         return;
       }
@@ -272,19 +273,6 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
       queryNames.add("substring");
     }
 
-    @NonNls
-    private static final Set<String> returnThisNames = new HashSet();
-
-    static {
-      returnThisNames.add("append");
-      returnThisNames.add("appendCodePoint");
-      returnThisNames.add("delete");
-      returnThisNames.add("delete");
-      returnThisNames.add("deleteCharAt");
-      returnThisNames.add("insert");
-      returnThisNames.add("replace");
-    }
-
     private final PsiVariable variable;
     private boolean queried = false;
 
@@ -340,7 +328,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
       final String name = methodExpression.getReferenceName();
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
       if (!queryNames.contains(name)) {
-        if (returnThisNames.contains(name) && hasReferenceToVariable(variable, qualifierExpression) && isVariableValueUsed(expression)) {
+        if (returnSelfNames.contains(name) && hasReferenceToVariable(variable, qualifierExpression) && isVariableValueUsed(expression)) {
           queried = true;
         }
         return;

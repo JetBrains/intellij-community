@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,7 +25,10 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.util.List;
 
-public abstract class ManagingFS implements FileSystemInterface, FileSystemPersistence {
+/**
+ * @author max
+ */
+public abstract class ManagingFS implements FileSystemInterface {
   private static class ManagingFSHolder {
     private static final ManagingFS ourInstance = ApplicationManager.getApplication().getComponent(ManagingFS.class);
   }
@@ -47,7 +46,6 @@ public abstract class ManagingFS implements FileSystemInterface, FileSystemPersi
   public abstract int getModificationCount(@NotNull VirtualFile fileOrDirectory);
 
   // Only counts modifications done in current IDEA session
-  @Override
   public abstract int getCheapFileSystemModificationCount();
 
   public abstract int getFilesystemModificationCount();
@@ -63,7 +61,8 @@ public abstract class ManagingFS implements FileSystemInterface, FileSystemPersi
   @Nullable
   public abstract NewVirtualFile findRoot(@NotNull String basePath, @NotNull NewVirtualFileSystem fs);
 
-  public abstract void refresh(final boolean asynchronous);
+  @NotNull
+  public abstract VirtualFile[] getRoots();
 
   @NotNull
   public abstract VirtualFile[] getRoots(@NotNull NewVirtualFileSystem fs);
@@ -71,10 +70,6 @@ public abstract class ManagingFS implements FileSystemInterface, FileSystemPersi
   @NotNull
   public abstract VirtualFile[] getLocalRoots();
 
-  @Override
   @Nullable
   public abstract VirtualFile findFileById(int id);
-
-  @NotNull
-  public abstract VirtualFile[] getRoots();
 }

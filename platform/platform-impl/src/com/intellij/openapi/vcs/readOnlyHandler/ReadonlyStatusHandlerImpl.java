@@ -26,10 +26,7 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.MultiValuesMap;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.WritingAccessProvider;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -59,14 +56,17 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     myAccessProviders = WritingAccessProvider.getProvidersForProject(myProject);
   }
 
+  @Override
   public State getState() {
     return myState;
   }
 
+  @Override
   public void loadState(State state) {
     myState = state;
   }
 
+  @Override
   public OperationStatus ensureFilesWritable(@NotNull VirtualFile... files) {
     if (files.length == 0) {
       return new OperationStatusImpl(VirtualFile.EMPTY_ARRAY);
@@ -80,7 +80,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
         realFiles.add(file);
       }
     }
-    files = VfsUtil.toVirtualFileArray(realFiles);
+    files = VfsUtilCore.toVirtualFileArray(realFiles);
 
     for (final WritingAccessProvider accessProvider : myAccessProviders) {
       Collection<VirtualFile> denied = ContainerUtil.filter(files, new Condition<VirtualFile>() {
@@ -94,7 +94,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
         denied = accessProvider.requestWriting(files);
       }
       if (!denied.isEmpty()) {
-        return new OperationStatusImpl(VfsUtil.toVirtualFileArray(denied));
+        return new OperationStatusImpl(VfsUtilCore.toVirtualFileArray(denied));
       }
     }
     
@@ -131,7 +131,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
       }
     }
 
-    return new OperationStatusImpl(VfsUtil.toVirtualFileArray(readOnlyFiles));
+    return new OperationStatusImpl(VfsUtilCore.toVirtualFileArray(readOnlyFiles));
   }
 
   private FileInfo[] createFileInfos(VirtualFile[] files) {
@@ -170,15 +170,18 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
       myReadonlyFiles = readonlyFiles;
     }
 
+    @Override
     @NotNull
     public VirtualFile[] getReadonlyFiles() {
       return myReadonlyFiles;
     }
 
+    @Override
     public boolean hasReadonlyFiles() {
       return myReadonlyFiles.length > 0;
     }
 
+    @Override
     @NotNull
     public String getReadonlyFilesMessage() {
       if (hasReadonlyFiles()) {

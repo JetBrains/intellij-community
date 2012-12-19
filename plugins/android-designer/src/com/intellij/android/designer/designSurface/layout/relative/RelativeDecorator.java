@@ -20,6 +20,7 @@ import com.intellij.android.designer.model.layout.relative.RelativeInfo;
 import com.intellij.designer.designSurface.DecorationLayer;
 import com.intellij.designer.designSurface.StaticDecorator;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.ui.JBColor;
 
 import java.awt.*;
 import java.util.List;
@@ -62,7 +63,7 @@ public class RelativeDecorator extends StaticDecorator {
     }
 
     g.setStroke(stroke);
-    g.setColor(Color.orange);
+    g.setColor(JBColor.ORANGE);
 
     for (RadComponent component : selection) {
       RelativeInfo info = relativeInfos.get(component);
