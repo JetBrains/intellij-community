@@ -33,6 +33,7 @@ public class HashMap<K, V> extends java.util.HashMap<K, V> {
     super(map);
   }
 
+  @Override
   public void clear() {
     if (size() == 0) return; // optimization
     super.clear();
