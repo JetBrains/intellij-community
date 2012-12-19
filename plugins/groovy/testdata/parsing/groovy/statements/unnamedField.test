@@ -16,5 +16,7 @@ Groovy script
         <empty list>
       PsiWhiteSpace('\n   ')
       PsiElement(def)('def')
+      PsiErrorElement:';', '}' or new line expected
+        <empty list>
       PsiElement(new line)('\n')
       PsiElement(})('}')

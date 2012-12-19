@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -246,12 +246,21 @@ public class TypeDefinition implements GroovyElementTypes {
       return false;
     }
 
+    parseMembers(builder, className, parser);
+
+    ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
+
+    cbMarker.done(CLASS_BODY);
+    return true;
+  }
+
+  private static void parseMembers(PsiBuilder builder, String className, GroovyParser parser) {
     Separators.parse(builder);
 
     while (!builder.eof() && builder.getTokenType() != mRCURLY) {
       if (!ClassMember.parse(builder, className, parser)) {
-        builder.getTokenType();
         builder.advanceLexer();
+        builder.error(GroovyBundle.message("separator.or.rcurly.expected"));
       }
       if (builder.getTokenType() == mRCURLY) {
         break;
@@ -260,11 +269,6 @@ public class TypeDefinition implements GroovyElementTypes {
         builder.error(GroovyBundle.message("separator.or.rcurly.expected"));
       }
     }
-
-    ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
-
-    cbMarker.done(CLASS_BODY);
-    return true;
   }
 
   private static boolean parseEnumBlock(PsiBuilder builder, @Nullable String enumName, GroovyParser parser) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,8 @@ public class InterfaceMember implements GroovyElementTypes {
     if (Declaration.parse(builder, true, parser)) {
       declMarker.drop();
       return true;
-    } else {
+    }
+    else {
       declMarker.rollbackTo();
     }
 
@@ -67,7 +68,8 @@ public class InterfaceMember implements GroovyElementTypes {
       if (OpenOrClosableBlock.parseOpenBlock(builder, parser)) {
         builder.error(GroovyBundle.message("interface.must.has.no.static.compound.statemenet"));
         return true;
-      } else {
+      }
+      else {
         builder.error(GroovyBundle.message("compound.statemenet.expected"));
         return false;
       }

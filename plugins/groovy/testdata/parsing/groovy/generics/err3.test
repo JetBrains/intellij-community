@@ -33,6 +33,8 @@ Groovy script
         <empty list>
       PsiWhiteSpace(' ')
       PsiElement(Integer)('5')
+      PsiErrorElement:';', '}' or new line expected
+        <empty list>
       PsiElement(new line)('\n  ')
       Variable definitions
         Modifiers
