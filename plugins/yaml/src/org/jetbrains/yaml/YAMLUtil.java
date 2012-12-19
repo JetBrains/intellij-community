@@ -52,14 +52,14 @@ public class YAMLUtil {
   }
 
   @Nullable
-  public static YAMLPsiElement getRecord(final YAMLFile file, final String[] key) {
+  public static YAMLPsiElement getRecord(final YAMLFile file, String... key) {
     assert key.length != 0;
     final YAMLPsiElement root = file.getDocuments().get(0);
     if (root != null){
       YAMLPsiElement record = root;
-      for (int i=0;i<key.length;i++){
-        record = findByName(record, key[i]);
-        if (record == null){
+      for (String aKey : key) {
+        record = findChildByName(record, aKey);
+        if (record == null) {
           return null;
         }
       }
@@ -69,7 +69,7 @@ public class YAMLUtil {
   }
 
   @Nullable
-  private static YAMLKeyValue findByName(final YAMLPsiElement element, final String name){
+  public static YAMLKeyValue findChildByName(final YAMLPsiElement element, final String name){
     final List<YAMLPsiElement> list;
     if (element instanceof YAMLKeyValue) {
       final PsiElement value = ((YAMLKeyValue)element).getValue();
@@ -160,7 +160,7 @@ public class YAMLUtil {
       final int keyLength = key.length;
       int i;
       for (i=0;i<keyLength;i++) {
-        YAMLKeyValue nextRecord = findByName(record, key[i]);
+        YAMLKeyValue nextRecord = findChildByName(record, key[i]);
         if (i == 0 && nextRecord == null) {
           final YAMLFile yamlFile =
             (YAMLFile) PsiFileFactory.getInstance(file.getProject())

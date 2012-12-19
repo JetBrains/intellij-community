@@ -8,6 +8,7 @@ import com.intellij.psi.PsiNamedElement;
  * @author oleg
  */
 public interface YAMLKeyValue extends YAMLPsiElement, PsiNamedElement, PomTarget {
+  YAMLKeyValue[] EMPTY_ARRAY = new YAMLKeyValue[0];
   
   PsiElement getKey();
 
