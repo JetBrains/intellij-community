@@ -183,39 +183,4 @@ abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTes
     }
     result
   }
-  
-  private static class Info {
-    String text
-    @Nullable List<TextRange> ranges = []
-    List<FoldingInfo> foldings = []
-  }
-  
-  private static class FoldingInfo {
-    def placeholder
-    def start
-    def end
-  }
-  
-  private interface RichTextHandler {
-    String getMarker()
-    void handle(@NotNull Info info, @NotNull Map<String, String> attributes, int start, int end)
-  }
-  
-  private static class RangeHandler implements RichTextHandler {
-    @Override String getMarker() { "range" }
-
-    @Override
-    void handle(Info info, Map<String, String> attributes, int start, int end) {
-      info.ranges << TextRange.create(start, end)
-    }
-  }
-  
-  private static class FoldingHandler implements RichTextHandler {
-    @Override String getMarker() { "fold" }
-
-    @Override
-    void handle(Info info, Map<String, String> attributes, int start, int end) {
-      info.foldings << new FoldingInfo(placeholder: attributes.text ?: '...', start: start, end: end)
-    }
-  }
 }
