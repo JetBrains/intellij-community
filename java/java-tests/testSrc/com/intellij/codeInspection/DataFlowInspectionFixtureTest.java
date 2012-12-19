@@ -18,6 +18,8 @@ package com.intellij.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
@@ -106,18 +108,23 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
   public void testEqualsImpliesNotNull() throws Throwable { doTest(); }
 
   public void testAnnotatedTypeParameters() throws Throwable {
+    setupCustomAnnotations();
+    doTest();
+  }
+
+  private void setupCustomAnnotations() {
     myFixture.addClass("package foo; public @interface Nullable {}");
     myFixture.addClass("package foo; public @interface NotNull {}");
-    NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(getProject());
+    final NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(getProject());
     nnnManager.setNotNulls("foo.NotNull");
     nnnManager.setNullables("foo.Nullable");
-    try {
-      doTest();
-    }
-    finally {
-      nnnManager.setNotNulls();
-      nnnManager.setNullables();
-    }
+    Disposer.register(myTestRootDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        nnnManager.setNotNulls();
+        nnnManager.setNullables();
+      }
+    });
   }
 
   public void testSkipAssertions() {
@@ -140,5 +147,9 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
   public void testMethodCallFlushesField() { doTest(); }
   public void testUnknownFloatMayBeNaN() { doTest(); }
   public void testLastConstantConditionInAnd() { doTest(); }
+  public void testNullableForeachVariable() {
+    setupCustomAnnotations();
+    doTest();
+  }
 
 }

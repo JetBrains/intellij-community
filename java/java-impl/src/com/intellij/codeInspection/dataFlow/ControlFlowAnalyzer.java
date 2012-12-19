@@ -368,11 +368,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     int offset = myCurrentFlow.getInstructionCount();
     DfaVariableValue dfaVariable = myFactory.getVarFactory().createVariableValue(parameter, false);
-    addInstruction(new PushInstruction(dfaVariable, null));
-    pushUnknown();
-    addInstruction(new AssignInstruction(null));
-
-    addInstruction(new PopInstruction());
+    addInstruction(new FlushVariableInstruction(dfaVariable));
 
     pushUnknown();
     addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), true, null));
