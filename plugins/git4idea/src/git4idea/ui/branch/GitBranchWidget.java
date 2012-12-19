@@ -138,7 +138,7 @@ public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidge
           return;
         }
 
-        GitRepository repo = GitBranchUiUtil.getCurrentRepository(getProject());
+        GitRepository repo = GitBranchUiUtil.getCurrentRepository(project);
         if (repo == null) { // the file is not under version control => display nothing
           emptyTextAndTooltip();
           return;
