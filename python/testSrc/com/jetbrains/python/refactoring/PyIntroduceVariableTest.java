@@ -88,6 +88,51 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
     doTest();
   }
 
+  // PY-3654
+  public void testLeftSubstring() {
+    doTest();
+  }
+
+  // PY-3654
+  public void testRightSubstring() {
+    doTest();
+  }
+
+  // PY-3654
+  public void testMiddleSubstring() {
+    doTest();
+  }
+
+  // PY-3654
+  public void testLeftQuoteSubstring() {
+    doTest();
+  }
+
+  // PY-3654
+  public void testSubstringInExpression() {
+    doTest();
+  }
+
+  // PY-3654
+  public void testSubstringInStatement() {
+    doTest();
+  }
+
+  // PY-3654
+  public void testTripleQuotedSubstring() {
+    doTest();
+  }
+
+  // PY-3654
+  public void testSubstringInExpressionStatement() {
+    doTest();
+  }
+
+  // PY-6354
+  public void testBytesSubstring() {
+    doTest();
+  }
+
   private void doTestCannotPerform() {
     boolean thrownExpectedException = false;
     try {

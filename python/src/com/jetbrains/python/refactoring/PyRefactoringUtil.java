@@ -42,6 +42,22 @@ public class PyRefactoringUtil {
           occurrences.add(element);
           return;
         }
+        if (element instanceof PyStringLiteralExpression) {
+          final Pair<PsiElement, TextRange> selection = pattern.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE);
+          if (selection != null) {
+            final String substring = selection.getSecond().substring(pattern.getText());
+            final PyStringLiteralExpression expr = (PyStringLiteralExpression)element;
+            final String text = element.getText();
+            if (text != null && expr.getStringNodes().size() == 1) {
+              final int start = text.indexOf(substring);
+              if (start >= 0) {
+                element.putUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE, Pair.create(element, TextRange.from(start, substring.length())));
+                occurrences.add(element);
+                return;
+              }
+            }
+          }
+        }
         element.acceptChildren(this);
       }
     };
