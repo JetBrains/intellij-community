@@ -132,7 +132,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         myComboBox.setRenderer(new ListCellRendererWrapper<HistoryElement>() {
           @Override
           public void customize(JList list, HistoryElement value, int index, boolean selected, boolean hasFocus) {
-            setText(value.expression);
+            setText(value != null ? value.expression : "");
           }
         });
         myComboBox.setModel(myModel);
