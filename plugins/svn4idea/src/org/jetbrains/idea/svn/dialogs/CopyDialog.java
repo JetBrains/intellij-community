@@ -84,6 +84,7 @@ public class CopyDialog extends DialogWrapper {
   @NonNls private static final String HELP_ID = "vcs.subversion.branch";
   private SvnBranchConfigurationNew myBranchConfiguration;
   private final VirtualFile mySrcVirtualFile;
+  private final String myWcRootUrl;
 
   public CopyDialog(final Project project, boolean canBeParent, File file) throws VcsException {
     super(project, canBeParent);
@@ -139,6 +140,7 @@ public class CopyDialog extends DialogWrapper {
       throw new VcsException("Can not find working copy for file: " + file.getPath());
     }
     this.mySrcVirtualFile = srcVirtualFile;
+    myWcRootUrl = root.getUrl();
 
     myRevisionPanel.setRoot(mySrcVirtualFile);
     myRevisionPanel.setProject(myProject);
@@ -174,7 +176,7 @@ public class CopyDialog extends DialogWrapper {
     updateToURL();
     myProjectButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        myRepositoryField.setText(myBranchConfiguration.getBaseUrl(mySrcURL));
+        myRepositoryField.setText(myWcRootUrl);
       }
     });
     myBranchTagBaseComboBox.addActionListener(new ActionListener() {
