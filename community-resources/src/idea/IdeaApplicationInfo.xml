@@ -1,5 +1,5 @@
 <component>
-  <version codename="Community Edition" major="12" minor="1" eap="false"/>
+  <version codename="Community Edition" major="12" minor="0.1" eap="false"/>
   <company name="JetBrains s.r.o." url="http://www.jetbrains.com/"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <install-over minbuild="123.1" maxbuild="123.9999" version="12"/>
