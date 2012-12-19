@@ -1024,13 +1024,22 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
                                         final String commandName,
                                         final String cannotMakeString,
                                         @NotNull String shortDescription) {
-    addButtonToLowerPane(newPerformOperationRunnable(processRunnable, commandName, cannotMakeString), shortDescription);
+    addPerformOperationAction(processRunnable, commandName, cannotMakeString, shortDescription, true);
+  }
+
+  @Override
+  public void addPerformOperationAction(@NotNull Runnable processRunnable,
+                                        String commandName,
+                                        String cannotMakeString,
+                                        @NotNull String shortDescription,
+                                        boolean checkReadOnlyStatus) {
+    addButtonToLowerPane(newPerformOperationRunnable(processRunnable, commandName, cannotMakeString, checkReadOnlyStatus), shortDescription);
   }
 
   public MyPerformOperationRunnable newPerformOperationRunnable(Runnable processRunnable,
-                                                                 String commandName,
-                                                                 String cannotMakeString) {
-    return new MyPerformOperationRunnable(cannotMakeString, processRunnable, commandName);
+                                                                String commandName,
+                                                                String cannotMakeString, boolean checkReadOnlyStatus) {
+    return new MyPerformOperationRunnable(cannotMakeString, processRunnable, commandName, checkReadOnlyStatus);
   }
 
   private boolean allTargetsAreValid() {
@@ -1452,16 +1461,21 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     private final String myCannotMakeString;
     private final Runnable myProcessRunnable;
     private final String myCommandName;
+    private final boolean myCheckReadOnlyStatus;
 
-    private MyPerformOperationRunnable(final String cannotMakeString, final Runnable processRunnable, final String commandName) {
+    private MyPerformOperationRunnable(final String cannotMakeString,
+                                       final Runnable processRunnable,
+                                       final String commandName,
+                                       boolean checkReadOnlyStatus) {
       myCannotMakeString = cannotMakeString;
       myProcessRunnable = processRunnable;
       myCommandName = commandName;
+      myCheckReadOnlyStatus = checkReadOnlyStatus;
     }
 
     @Override
     public void run() {
-      if (!checkReadonlyUsages()) return;
+      if (myCheckReadOnlyStatus && !checkReadonlyUsages()) return;
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       if (myCannotMakeString != null && myChangesDetected) {
         String title = UsageViewBundle.message("changes.detected.error.title");

@@ -397,8 +397,9 @@ public abstract class BaseRefactoringProcessor {
       @Override
       public void run() {
         Set<UsageInfo> usagesToRefactor = getUsageInfosToRefactor(usageView);
-        if (ensureElementsWritable(usagesToRefactor.toArray(new UsageInfo[usagesToRefactor.size()]), viewDescriptor)) {
-          doRefactoring(usagesToRefactor);
+        final UsageInfo[] infos = usagesToRefactor.toArray(new UsageInfo[usagesToRefactor.size()]);
+        if (ensureElementsWritable(infos, viewDescriptor)) {
+          execute(infos);
         }
       }
     };
@@ -410,7 +411,7 @@ public abstract class BaseRefactoringProcessor {
 
   protected void addDoRefactoringAction(UsageView usageView, Runnable refactoringRunnable, String canNotMakeString) {
     usageView.addPerformOperationAction(refactoringRunnable, getCommandName(), canNotMakeString,
-                                        RefactoringBundle.message("usageView.doAction"));
+                                        RefactoringBundle.message("usageView.doAction"), false);
   }
 
   private static Set<UsageInfo> getUsageInfosToRefactor(final UsageView usageView) {

@@ -13,21 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.codeStyle.arrangement.match;
+package com.intellij.psi.codeStyle.arrangement.engine;
 
-import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
- * Enumerates all possible {@link ArrangementEntry entry} types.
- * <p/>
- * This enum is expected to be populated every time new entry type is introduced.
- * 
  * @author Denis Zhdanov
- * @since 7/17/12 11:14 AM
+ * @since 11/21/12 12:54 PM
  */
-public enum ArrangementEntryType {
-  
-  CLASS, ANONYMOUS_CLASS, FIELD, CONSTRUCTOR, METHOD, ENUM, INTERFACE,
+public interface ArrangementCallback {
 
-  CONST, VAR, PROPERTY, EVENT_HANDLER, STATIC_INIT
+  /**
+   * Callback to be notified when arrangement has been performed.
+   * 
+   * @param moveInfos  information about the changes performed during arrangement
+   */
+  void afterArrangement(@NotNull List<ArrangementMoveInfo> moveInfos);
 }

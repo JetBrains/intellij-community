@@ -17,6 +17,7 @@ package com.intellij.psi.codeStyle.arrangement.engine;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -34,6 +35,7 @@ import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.text.CharArrayUtil;
@@ -55,6 +57,16 @@ import java.util.*;
  */
 public class ArrangementEngine {
 
+  public void arrange(@NotNull final Editor editor, @NotNull PsiFile file, Collection<TextRange> ranges) {
+    arrange(file, ranges, null);
+    // This should be uncommented as soon as cdr pushed fixes for range markers processing.
+    //arrange(file, ranges, new RestoreFoldArrangementCallback(editor));
+  }
+
+  public void arrange(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) {
+    arrange(file, ranges, null);
+  }
+  
   /**
    * Arranges given PSI root contents that belong to the given ranges.
    *
@@ -62,7 +74,7 @@ public class ArrangementEngine {
    * @param ranges  target ranges to use within the given root
    */
   @SuppressWarnings("MethodMayBeStatic")
-  public void arrange(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) {
+  public void arrange(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges, @Nullable final ArrangementCallback callback) {
     final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
     if (document == null) {
       return;
@@ -99,14 +111,17 @@ public class ArrangementEngine {
       @Override
       public void run() {
         if (documentEx != null) {
-          documentEx.setInBulkUpdate(true);
+          //documentEx.setInBulkUpdate(true);
         }
         try {
           doArrange(context);
+          if (callback != null) {
+            callback.afterArrangement(context.moveInfos);
+          }
         }
         finally {
           if (documentEx != null) {
-            documentEx.setInBulkUpdate(false);
+            //documentEx.setInBulkUpdate(false);
           }
         }
       }
@@ -327,6 +342,8 @@ public class ArrangementEngine {
 
   private static class Context<E extends ArrangementEntry> {
 
+    @NotNull public final List<ArrangementMoveInfo> moveInfos = ContainerUtilRt.newArrayList();
+
     @NotNull public final Rearranger<E>                          rearranger;
     @NotNull public final Collection<ArrangementEntryWrapper<E>> wrappers;
     @NotNull public final Document                               document;
@@ -348,6 +365,10 @@ public class ArrangementEngine {
       this.changer = changer;
     }
 
+    public void addMoveInfo(int oldStart, int oldEnd, int newStart) {
+      moveInfos.add(new ArrangementMoveInfo(oldStart, oldEnd, newStart));
+    }
+    
     public static <T extends ArrangementEntry> Context<T> from(@NotNull Rearranger<T> rearranger,
                                                                @NotNull Document document,
                                                                @NotNull PsiElement root,
@@ -464,6 +485,9 @@ public class ArrangementEngine {
       String newEntryText = myParentText.substring(newWrapper.getStartOffset() - myParentShift, newWrapper.getEndOffset() - myParentShift);
       int lineFeedsDiff = desiredBlankLinesNumber - blankLinesBefore;
       if (lineFeedsDiff == 0 || desiredBlankLinesNumber < 0) {
+        context.addMoveInfo(newWrapper.getStartOffset() - myParentShift,
+                            newWrapper.getEndOffset() - myParentShift,
+                            oldWrapper.getStartOffset());
         context.document.replaceString(oldWrapper.getStartOffset(), oldWrapper.getEndOffset(), newEntryText);
         return;
       }
@@ -547,6 +571,7 @@ public class ArrangementEngine {
         insertionOffset -= newWrapper.getEndOffset() - newWrapper.getStartOffset();
       }
       if (newWrapper.getStartOffset() != oldWrapper.getStartOffset() || !newWrapper.equals(oldWrapper)) {
+        context.addMoveInfo(newWrapper.getStartOffset(), newWrapper.getEndOffset(), oldWrapper.getStartOffset());
         myDocument.moveText(newWrapper.getStartOffset(), newWrapper.getEndOffset(), oldWrapper.getStartOffset());
         for (int i = myWrappers.size() - 1; i >= 0; i--) {
           ArrangementEntryWrapper<E> w = myWrappers.get(i);
