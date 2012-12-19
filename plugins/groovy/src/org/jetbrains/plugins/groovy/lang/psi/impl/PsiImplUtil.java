@@ -563,7 +563,6 @@ public class PsiImplUtil {
     return AstBufferUtil.getTextSkippingWhitespaceComments(node);
   }
 
-  @Nullable
   public static PsiCodeBlock getOrCreatePsiCodeBlock(GrOpenBlock block) {
     if (block == null) return null;
 
@@ -575,8 +574,7 @@ public class PsiImplUtil {
     return newBody;
   }
 
-  @Nullable
-  public static PsiTypeElement getOrCreateTypeElement(@Nullable GrTypeElement typeElement) {
+  public static PsiTypeElement getOrCreateTypeElement(GrTypeElement typeElement) {
     if (typeElement == null) return null;
 
     final SoftReference<PsiTypeElement> ref = typeElement.getUserData(PSI_TYPE_ELEMENT);
@@ -587,8 +585,7 @@ public class PsiImplUtil {
     return newTypeElement;
   }
 
-  @Nullable
-  public static PsiExpression getOrCreatePisExpression(@Nullable GrExpression expr) {
+  public static PsiExpression getOrCreatePisExpression(GrExpression expr) {
     if (expr == null) return null;
 
     final SoftReference<PsiExpression> ref = expr.getUserData(PSI_EXPRESSION);
