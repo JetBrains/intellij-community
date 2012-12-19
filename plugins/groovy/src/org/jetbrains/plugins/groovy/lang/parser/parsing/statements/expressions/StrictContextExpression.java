@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.VariableInitia
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations.Annotation;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.BranchStatement;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.DeclarationStart;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.Declaration;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
@@ -43,11 +42,19 @@ public class StrictContextExpression implements GroovyElementTypes {
     if (mAT.equals(builder.getTokenType())) {
       return Annotation.parse(builder, parser);
     }
-    if (DeclarationStart.parse(builder, parser)) {
+
+
+    PsiBuilder.Marker declStartMarker = builder.mark();
+
+    if (Declaration.parse(builder, false, false, null, parser)) {
+      declStartMarker.rollbackTo();
       singleDeclarationParse(builder, parser);
       return true;
     }
-    return ExpressionStatement.argParse(builder, parser);
+    else {
+      declStartMarker.rollbackTo();
+      return ExpressionStatement.argParse(builder, parser);
+    }
   }
 
   public static void singleDeclarationParse(PsiBuilder builder, GroovyParser parser) {
