@@ -20,13 +20,13 @@ import com.intellij.execution.junit2.segments.ObjectReader;
 
 public class Statistics {
   public int myTime = 0;
-  protected int myBeforeMemory = 0;
-  protected int myAfterMemory = 0;
+  protected long myBeforeMemory = 0;
+  protected long myAfterMemory = 0;
 
   public Statistics(final ObjectReader reader) {
     myTime = reader.readInt();
-    myBeforeMemory = reader.readInt();
-    myAfterMemory = reader.readInt();
+    myBeforeMemory = reader.readLong();
+    myAfterMemory = reader.readLong();
   }
 
   public Statistics() {
@@ -36,15 +36,15 @@ public class Statistics {
     return myTime;
   }
 
-  public int getBeforeMemory() {
+  public long getBeforeMemory() {
     return myBeforeMemory;
   }
 
-  public int getAfterMemory() {
+  public long getAfterMemory() {
     return myAfterMemory;
   }
 
-  public int getMemoryUsage() {
+  public long getMemoryUsage() {
     return myAfterMemory - myBeforeMemory;
   }
 }

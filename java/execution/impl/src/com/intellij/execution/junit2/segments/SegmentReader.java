@@ -62,6 +62,11 @@ public class SegmentReader {
     return Integer.parseInt(intString);
   }
 
+  public long readLong() {
+    final String longString = upTo(PoolOfDelimiters.INTEGER_DELIMITER);
+    return Long.parseLong(longString);
+  }
+
   public char readChar() {
     myPosition++;
     return myChars[myPosition - 1];

@@ -47,7 +47,7 @@ class ActualStatistics implements TestStatistics {
     return showMemory(myStatistics.getAfterMemory());
   }
 
-  private String showMemory(final int memoryUsage) {
+  private String showMemory(final long memoryUsage) {
     return myPrefix + Formatters.printFullKBMemory(memoryUsage);
   }
 }
