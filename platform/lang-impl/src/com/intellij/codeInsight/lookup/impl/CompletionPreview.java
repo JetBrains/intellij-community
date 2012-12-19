@@ -125,7 +125,7 @@ public class CompletionPreview {
         Editor editor = lookup.getEditor();
         CharSequence seq = editor.getDocument().getCharsSequence();
         int caret = editor.getCaretModel().getOffset();
-        if (caret < seq.length() && seq.charAt(caret) != '(') {
+        if (caret >= seq.length() || seq.charAt(caret) != '(') {
           text += "()";
         }
       }
