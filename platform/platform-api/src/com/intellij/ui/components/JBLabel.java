@@ -98,6 +98,12 @@ public class JBLabel extends JLabel implements AnchorableComponent {
   }
 
   @Override
+  public void setForeground(Color fg) {
+    myFontColor = null;
+    super.setForeground(fg);
+  }
+
+  @Override
   public void setAnchor(@Nullable JComponent anchor) {
     myAnchor = anchor;
   }
