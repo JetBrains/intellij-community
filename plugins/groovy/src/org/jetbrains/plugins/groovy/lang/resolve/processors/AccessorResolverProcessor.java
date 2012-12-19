@@ -60,7 +60,7 @@ public class AccessorResolverProcessor extends MethodResolverProcessor {
     if (mySearchForGetter) {
       if (element instanceof PsiMethod &&
           (importedName != null && isSimplePropertyGetter((PsiMethod)element, null) &&
-           (myPropertyName.equals(getPropertyNameByGetter((PsiMethod)element, importedName)) || myPropertyName.equals(importedName)) ||
+           (isAppropriatePropertyNameForGetter((PsiMethod)element, importedName, myPropertyName) || myPropertyName.equals(importedName)) ||
            importedName == null && isSimplePropertyGetter((PsiMethod)element, myPropertyName))) {
         return addAccessor((PsiMethod)element, state);
       }
@@ -68,12 +68,28 @@ public class AccessorResolverProcessor extends MethodResolverProcessor {
     else {
       if (element instanceof PsiMethod &&
           (importedName != null && isSimplePropertySetter((PsiMethod)element, null) &&
-           (myPropertyName.equals(getPropertyNameBySetterName(importedName)) || myPropertyName.equals(importedName)) ||
+           (isAppropriatePropertyNameForSetter(importedName, myPropertyName) || myPropertyName.equals(importedName)) ||
            importedName == null && isSimplePropertySetter((PsiMethod)element, myPropertyName))) {
         return addAccessor((PsiMethod)element, state);
       }
     }
     return true;
+  }
+
+  /**
+   * use only for imported properties
+   */
+  private static boolean isAppropriatePropertyNameForSetter(@NotNull String importedName, @NotNull String propertyName) {
+    propertyName = decapitalize(propertyName);
+    return propertyName.equals(getPropertyNameBySetterName(importedName));
+  }
+
+  /**
+   * use only for imported properties
+   */
+  private static boolean isAppropriatePropertyNameForGetter(@NotNull PsiMethod getter, @NotNull String importedNameForGetter, @NotNull String propertyName) {
+    propertyName = decapitalize(propertyName);
+    return propertyName.equals(getPropertyNameByGetter(getter, importedNameForGetter));
   }
 
   @Nullable

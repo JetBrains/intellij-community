@@ -946,4 +946,95 @@ println ([[new A()]].stri<caret>ng)
 
     assertNotNull(resolved)
   }
+
+  void testImportedProperty() {
+    myFixture.addFileToProject('pack/Const.groovy', '''\
+package pack
+
+class Const {
+  static final int Field1 = 2
+}
+''')
+
+    final ref = configureByText('''\
+import static pack.Const.getField1
+
+print Fie<caret>ld1
+''')
+
+    assertNotNull(ref.resolve())
+  }
+
+  void testImportedProperty2() {
+    myFixture.addFileToProject('pack/Const.groovy', '''\
+package pack
+
+class Const {
+  static final int Field1 = 2
+}
+''')
+
+    final ref = configureByText('''\
+import static pack.Const.getField1
+
+print fie<caret>ld1
+''')
+
+    assertNotNull(ref.resolve())
+  }
+
+  void testImportedProperty3() {
+    myFixture.addFileToProject('pack/Const.groovy', '''\
+package pack
+
+class Const {
+  static final int Field1 = 2
+}
+''')
+
+    final ref = configureByText('''\
+import static pack.Const.getField1 as getBar
+
+print Ba<caret>r
+''')
+
+    assertNotNull(ref.resolve())
+  }
+
+  void testImportedProperty4() {
+    myFixture.addFileToProject('pack/Const.groovy', '''\
+package pack
+
+class Const {
+  static final int Field1 = 2
+}
+''')
+
+    final ref = configureByText('''\
+import static pack.Const.getField1 as getBar
+
+print ba<caret>r
+''')
+
+    assertNotNull(ref.resolve())
+  }
+
+  void testImportedProperty5() {
+    myFixture.addFileToProject('pack/Const.groovy', '''\
+package pack
+
+class Const {
+  static final int field1 = 2
+}
+''')
+
+    final ref = configureByText('''\
+import static pack.Const.getField1
+
+print Fie<caret>ld1
+''')
+
+    assertNotNull(ref.resolve())
+
+  }
 }
