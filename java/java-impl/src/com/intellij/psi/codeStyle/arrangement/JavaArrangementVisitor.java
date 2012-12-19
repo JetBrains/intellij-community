@@ -87,7 +87,9 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
 
   @Override
   public void visitAnonymousClass(PsiAnonymousClass aClass) {
-    JavaElementArrangementEntry entry = createNewEntry(aClass, aClass.getTextRange(), ArrangementEntryType.CLASS, aClass.getName(), false);
+    JavaElementArrangementEntry entry = createNewEntry(
+      aClass, aClass.getTextRange(), ArrangementEntryType.ANONYMOUS_CLASS, aClass.getName(), false
+    );
     processEntry(entry, null, aClass);
   }
 
