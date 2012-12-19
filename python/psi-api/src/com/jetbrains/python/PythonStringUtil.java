@@ -1,5 +1,6 @@
 package com.jetbrains.python;
 
+import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
@@ -23,9 +24,11 @@ import static com.intellij.openapi.util.text.StringUtil.startsWith;
 
 /**
  * @author Alexei Orischenko
- *         Date: Nov 26, 2009
+ * @author vlan
  */
 public class PythonStringUtil {
+  private static final ImmutableList<String> QUOTES = ImmutableList.of("'''", "\"\"\"", "'", "\"");
+
   private PythonStringUtil() {
   }
 
@@ -44,12 +47,11 @@ public class PythonStringUtil {
 
 
   public static TextRange getStringValueTextRange(@NotNull String s) {
-    if ((s.charAt(0) == '\'' || s.charAt(0) == '"') && (s.charAt(0) == s.charAt(s.length() - 1)) && s.length() > 1) {
-      return TextRange.create(1, s.length() - 1);
+    final Pair<String, String> quotes = getQuotes(s);
+    if (quotes != null) {
+      return TextRange.create(quotes.getFirst().length(), s.length() - quotes.getSecond().length());
     }
-    else {
-      return TextRange.create(0, s.length());
-    }
+    return TextRange.allOf(s);
   }
 
   @NotNull
@@ -169,23 +171,7 @@ public class PythonStringUtil {
    */
 
   public static boolean isQuoted(@Nullable String text) {
-    if (text == null) {
-      return false;
-    }
-    if (text.toLowerCase().startsWith("u")) {
-      text = text.substring(1);
-    }
-
-    assert text != null;
-    if (text.toLowerCase().startsWith("r")) {
-      text = text.substring(1);
-    }
-
-    assert text != null;
-    if (text.length() > 1 && text.charAt(0) == text.charAt(text.length() - 1) && (text.charAt(0) == '\'' || text.charAt(0) == '"')) {
-      return true;
-    }
-    return false;
+    return text != null && getQuotes(text) != null;
   }
 
   /**
@@ -197,27 +183,42 @@ public class PythonStringUtil {
    *         UR"unicode raw string" -> (UR", ")
    */
   @Nullable
-  public static Pair<String, String> getQuotes(@NotNull String text) {
-    String first = "";
-
-    if (text.toLowerCase().startsWith("u")) {
-      first += text.substring(0, 1);
-      text = text.substring(1);
+  public static Pair<String, String> getQuotes(@NotNull final String text) {
+    boolean start = true;
+    int pos = 0;
+    for (int i = 0; i < text.length(); i++) {
+      final char c = Character.toLowerCase(text.charAt(i));
+      if (start) {
+        if (c == 'u' || c == 'r' || c == 'b') {
+          pos = i + 1;
+        }
+        else {
+          start = false;
+        }
+      }
+      else {
+        break;
+      }
     }
-
-    if (text.toLowerCase().startsWith("r")) {
-      first += text.substring(0, 1);
-      text = text.substring(1);
+    final String prefix = text.substring(0, pos);
+    final String mainText = text.substring(pos);
+    for (String quote : QUOTES) {
+      final Pair<String, String> quotes = getQuotes(mainText, prefix, quote);
+      if (quotes != null) {
+        return quotes;
+      }
     }
+    return null;
+  }
 
-    int last = text.length() - 1;
-
-    if (text.length() > 2 && (text.charAt(0) == '\'' || text.charAt(0) == '"') && (text.charAt(last) == '\'' || text.charAt(last) == '"')) {
-      return Pair.create(first + text.substring(0, 1), text.substring(last));
+  @Nullable
+  private static Pair<String, String> getQuotes(@NotNull String text, @NotNull String prefix, @NotNull String quote) {
+    final int length = text.length();
+    final int n = quote.length();
+    if (length >= 2 * n && text.startsWith(quote) && text.endsWith(quote)) {
+      return Pair.create(prefix + text.substring(0, n), text.substring(length - n));
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
   @Nullable
