@@ -32,7 +32,6 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition
 import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
 import org.junit.Assert
 
 /**
