@@ -317,8 +317,8 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
         else {
           return commonSettings.BLANK_LINES_AROUND_METHOD;
         }
-      default:
-        return commonSettings.BLANK_LINES_AROUND_CLASS;
+      case CLASS: return commonSettings.BLANK_LINES_AROUND_CLASS;
+      default: return -1;
     }
   }
 
