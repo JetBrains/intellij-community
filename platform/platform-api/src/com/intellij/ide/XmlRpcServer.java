@@ -25,11 +25,6 @@ public interface XmlRpcServer {
   boolean hasHandler(String name);
   void removeHandler(String name);
 
-  /**
-   * @deprecated use {@link org.jetbrains.ide.WebServerManager#getInstance().getPort()} (to remove in IDEA 13)
-   */
-  int getPortNumber();
-
   final class SERVICE {
     private SERVICE() {
     }

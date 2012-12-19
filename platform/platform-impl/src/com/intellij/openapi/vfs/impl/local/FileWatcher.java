@@ -168,13 +168,17 @@ public class FileWatcher {
     return null;
   }
 
-  private void notifyOnFailure(String cause, @Nullable NotificationListener listener) {
+  private void notifyOnFailure(final String cause, @Nullable final NotificationListener listener) {
     LOG.warn(cause);
 
     if (!myFailureShownToTheUser) {
       myFailureShownToTheUser = true;
-      String title = ApplicationBundle.message("watcher.slow.sync");
-      Notifications.Bus.notify(NOTIFICATION_GROUP.getValue().createNotification(title, cause, NotificationType.WARNING, listener));
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          String title = ApplicationBundle.message("watcher.slow.sync");
+          Notifications.Bus.notify(NOTIFICATION_GROUP.getValue().createNotification(title, cause, NotificationType.WARNING, listener));
+        }
+      });
     }
   }
 

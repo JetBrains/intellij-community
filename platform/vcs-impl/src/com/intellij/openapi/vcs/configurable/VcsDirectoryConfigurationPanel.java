@@ -535,6 +535,9 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
       setBackground(new Color(255, 186, 192));
 
       JBLabel label = new JBLabel(title);
+      if( UIUtil.isUnderDarcula()) {
+        label.setForeground(UIUtil.getPanelBackground());
+      }
 
       myAddLabel = new LinkLabel("Add root", null);
 
