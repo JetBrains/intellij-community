@@ -63,9 +63,6 @@ public class HgSwitchWorkingDirectoryAction extends HgAbstractGlobalAction {
           @Override
           public void run() {
             HgCommandResult result = command.execute();
-            if (HgErrorUtil.isAuthorizationError(result)) {
-              result = command.execute(true);
-            }
             if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
               new HgCommandResultNotifier(project).notifyError(result, "", "Update failed");
             }

@@ -77,9 +77,6 @@ public class HgPullCommand {
     executor.setShowOutput(true);
     HgCommandResult result = executor.executeInCurrentThread(repo, "pull", arguments);
     if (HgErrorUtil.isAuthorizationError(result)) {
-      result = executor.executeInCurrentThread(repo, "pull", arguments, true);
-    }
-    if (HgErrorUtil.isAuthorizationError(result)) {
       new HgCommandResultNotifier(project)
         .notifyError(result, "Authorization required", "http authorization required for <code>" + source + "</code>");
       return false;

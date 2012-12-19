@@ -68,9 +68,6 @@ public class HgCheckoutProvider implements CheckoutProvider {
 
         // handle result
         HgCommandResult myCloneResult = clone.execute();
-        if (HgErrorUtil.isAuthorizationError(myCloneResult)) {
-          myCloneResult = clone.execute(true);
-        }
         if (myCloneResult == null) {
           new HgCommandResultNotifier(project).notifyError(myCloneResult, "Clone failed", "Clone failed due to unknown error");
         } else if (HgErrorUtil.hasErrorsInCommandExecution(myCloneResult)) {

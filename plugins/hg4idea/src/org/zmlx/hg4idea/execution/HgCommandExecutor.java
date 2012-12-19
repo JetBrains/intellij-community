@@ -88,31 +88,10 @@ public final class HgCommandExecutor {
                       final String operation,
                       final List<String> arguments,
                       @Nullable final HgCommandResultHandler handler) {
-    execute(repo, operation, arguments, handler, false);
-  }
-
-  /**
-   * Method is called with forceAutorization = true, if authorization may be failed and update login_password dialog required
-   * f.e. if repository password was changed, but idea was not restarted.
-   *
-   * @param repo
-   * @param operation
-   * @param arguments
-   * @param handler
-   * @param forceAuthorization
-   */
-  public void execute(@Nullable final VirtualFile repo,
-                      final String operation,
-                      final List<String> arguments,
-                      @Nullable final HgCommandResultHandler handler,
-                      final boolean forceAuthorization) {
     HgUtil.executeOnPooledThreadIfNeeded(new Runnable() {
       @Override
       public void run() {
         HgCommandResult result = executeInCurrentThread(repo, operation, arguments);
-        if (forceAuthorization && HgErrorUtil.isAuthorizationError(result)) {
-          result = executeInCurrentThread(repo, operation, arguments, true);
-        }
         if (handler != null) {
           handler.process(result);
         }
@@ -122,14 +101,18 @@ public final class HgCommandExecutor {
 
   @Nullable
   public HgCommandResult executeInCurrentThread(@Nullable final VirtualFile repo, @NotNull final String operation,
-                                                @Nullable final List<String> arguments, boolean forceAuthorization) {
-    return executeInCurrentThread(repo, operation, arguments, null, forceAuthorization);
+                                                @Nullable final List<String> arguments) {
+    return executeInCurrentThread(repo, operation, arguments, null);
   }
 
   @Nullable
   public HgCommandResult executeInCurrentThread(@Nullable final VirtualFile repo, @NotNull final String operation,
-                                                @Nullable final List<String> arguments) {
-    return executeInCurrentThread(repo, operation, arguments, false);
+                                                @Nullable final List<String> arguments, @Nullable HgPromptHandler handler) {
+    HgCommandResult result = executeInCurrentThread(repo, operation, arguments, handler, false);
+    if (HgErrorUtil.isAuthorizationError(result)) {
+      result = executeInCurrentThread(repo, operation, arguments, handler, true);
+    }
+    return result;
   }
 
   @Nullable
