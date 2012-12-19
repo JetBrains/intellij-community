@@ -40,7 +40,6 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
@@ -115,6 +114,8 @@ public class ImplementAbstractMethodHandler {
       return;
     }
 
+    final MyPsiElementListCellRenderer elementListCellRenderer = new MyPsiElementListCellRenderer();
+    elementListCellRenderer.sort(result[0]);
     myList = new JBList(result[0]);
     myList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     final Runnable runnable = new Runnable(){
@@ -125,7 +126,6 @@ public class ImplementAbstractMethodHandler {
         implementInClass(myList.getSelectedValues());
       }
     };
-    final PsiElementListCellRenderer<PsiElement> elementListCellRenderer = new MyPsiElementListCellRenderer(result[0]);
     myList.setCellRenderer(elementListCellRenderer);
     final PopupChooserBuilder builder = new PopupChooserBuilder(myList);
     elementListCellRenderer.installSpeedSearch(builder);
@@ -192,8 +192,11 @@ public class ImplementAbstractMethodHandler {
   private static class MyPsiElementListCellRenderer extends PsiElementListCellRenderer<PsiElement> {
     private final PsiClassListCellRenderer myRenderer;
 
-    public MyPsiElementListCellRenderer(PsiElement[] result) {
+    public MyPsiElementListCellRenderer() {
       myRenderer = new PsiClassListCellRenderer();
+    }
+
+    void sort(PsiElement[] result) {
       final Comparator<PsiClass> comparator = myRenderer.getComparator();
       Arrays.sort(result, new Comparator<PsiElement>() {
         @Override
