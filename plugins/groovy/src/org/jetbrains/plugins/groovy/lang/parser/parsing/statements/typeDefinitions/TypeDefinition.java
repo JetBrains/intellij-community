@@ -285,13 +285,8 @@ public class TypeDefinition implements GroovyElementTypes {
     if (parseEnumConstantStart(builder, parser)) {
       EnumConstant.parseConstantList(builder, parser);
     }
-    else {
-      ClassMember.parse(builder, enumName, parser);
-    }
 
-    while (Separators.parse(builder)) {
-      ClassMember.parse(builder, enumName, parser);
-    }
+    parseMembers(builder, enumName, parser);
 
     ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
 
