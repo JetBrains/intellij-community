@@ -105,7 +105,7 @@ public class CopyDialog extends DialogWrapper {
     });
     myRepositoryField.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        String url = SelectLocationDialog.selectLocation(project, myRepositoryField.getText());
+        String url = SelectLocationDialog.selectLocation(project, mySrcURL);
         if (url != null) {
           myRepositoryField.setText(url);
         }
@@ -346,15 +346,16 @@ public class CopyDialog extends DialogWrapper {
         return true;
       }
       else if (myWorkingCopyRadioButton.isSelected()) {
+        String srcUrl;
         try {
           SVNWCClient client = SvnVcs.getInstance(myProject).createWCClient();
           SVNInfo info = client.doInfo(mySrcFile, SVNRevision.UNDEFINED);
-          mySrcURL = info != null && info.getURL() != null ? info.getURL().toString() : null;
+          srcUrl = info != null && info.getURL() != null ? info.getURL().toString() : null;
         }
         catch (SVNException e) {
-          mySrcURL = null;
+          srcUrl = null;
         }
-        if (mySrcURL == null) {
+        if (srcUrl == null) {
           myErrorLabel.setText(SvnBundle.message("create.branch.no.working.copy.error", myWorkingCopyField.getText()));
           return false;
         }
