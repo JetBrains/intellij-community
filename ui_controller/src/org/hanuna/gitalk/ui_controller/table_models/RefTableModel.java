@@ -2,14 +2,12 @@ package org.hanuna.gitalk.ui_controller.table_models;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitData;
-import org.hanuna.gitalk.ui_controller.DateConverter;
+import org.hanuna.gitalk.refs.Ref;
 import org.hanuna.gitalk.refs.RefsModel;
+import org.hanuna.gitalk.ui_controller.DateConverter;
 
 import javax.swing.table.AbstractTableModel;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author erokhins
@@ -17,14 +15,32 @@ import java.util.Set;
 public class RefTableModel extends AbstractTableModel {
     private static final String[] COLUMN_NAMES = {"", "Subject", "Author", "Date"};
 
+    private static List<Commit> getOrderedBranchCommit(RefsModel refsModel) {
+        List<Commit> orderedCommit = new ArrayList<Commit>();
+        for (Commit commit : refsModel.getOrderedLogTrackedCommit()) {
+            boolean hasBranchRef = false;
+            for (Ref ref : refsModel.refsToCommit(commit.hash())) {
+                if (ref.getType() != Ref.Type.TAG) {
+                    hasBranchRef = true;
+                }
+            }
+            if (hasBranchRef) {
+                orderedCommit.add(commit);
+            }
+        }
+        return orderedCommit;
+    }
+
 
     private final RefsModel refsModel;
     private final List<Commit> orderedRefCommit;
     private final Set<Commit> checkedCommits;
 
+
+
     public RefTableModel(RefsModel refsModel) {
         this.refsModel = refsModel;
-        this.orderedRefCommit = refsModel.getOrderedLogTrackedCommit();
+        this.orderedRefCommit = getOrderedBranchCommit(refsModel);
         checkedCommits = new HashSet<Commit>(orderedRefCommit);
     }
 
@@ -75,6 +91,9 @@ public class RefTableModel extends AbstractTableModel {
                 checkedCommits.add(commit);
             } else {
                 checkedCommits.remove(commit);
+                if (checkedCommits.size() == 0) {
+                    checkedCommits.add(orderedRefCommit.get(0));
+                }
             }
         }
     }
