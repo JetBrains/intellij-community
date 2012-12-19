@@ -1683,7 +1683,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @NotNull
-  public static String doubleQuote(@NotNull String str) {
+  public static String wrapWithDoubleQuote(@NotNull String str) {
     return '\"' + str + "\"";
   }
 
