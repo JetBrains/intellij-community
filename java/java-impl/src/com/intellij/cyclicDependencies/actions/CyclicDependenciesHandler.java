@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import com.intellij.cyclicDependencies.ui.CyclicDependenciesPanel;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.DependenciesToolWindow;
-import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
 
 import javax.swing.*;
 
@@ -53,7 +53,7 @@ public class CyclicDependenciesHandler {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             CyclicDependenciesPanel panel = new CyclicDependenciesPanel(myProject, builder);
-            Content content = PeerFactory.getInstance().getContentFactory().createContent(panel, AnalysisScopeBundle.message(
+            Content content = ContentFactory.SERVICE.getInstance().createContent(panel, AnalysisScopeBundle.message(
               "action.analyzing.cyclic.dependencies.in.scope", builder.getScope().getDisplayName()), false);
             content.setDisposer(panel);
             panel.setContent(content);

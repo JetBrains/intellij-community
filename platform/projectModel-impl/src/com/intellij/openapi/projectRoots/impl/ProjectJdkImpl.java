@@ -69,6 +69,12 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
     myRootContainer.addProjectRootContainerListener(myRootProvider);
   }
 
+  public ProjectJdkImpl(String name, SdkTypeId sdkType, String homePath, String version) {
+    this(name, sdkType);
+    myHomePath = homePath;
+    myVersionString = version;
+  }
+
   @Override
   @NotNull
   public SdkTypeId getSdkType() {
