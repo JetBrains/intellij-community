@@ -417,7 +417,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
     }
     else {
-      addInstruction(new PushInstruction(myFactory.getConstFactory().getTrue(), null));
+      addInstruction(new PushInstruction(null, null));
     }
     addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), true, condition));
 
