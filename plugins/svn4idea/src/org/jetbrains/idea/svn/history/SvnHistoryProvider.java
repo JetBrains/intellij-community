@@ -37,10 +37,7 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnRevisionNumber;
-import org.jetbrains.idea.svn.SvnUtil;
-import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.*;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -84,7 +81,7 @@ public class SvnHistoryProvider
     final ColumnInfo[] columns;
     final Consumer<VcsFileRevision> listener;
     final JComponent addComp;
-    if (((SvnHistorySession)session).isSupports15()) {
+    if (((SvnHistorySession)session).isHaveMergeSources()) {
       final MergeSourceColumnInfo mergeSourceColumn = new MergeSourceColumnInfo((SvnHistorySession)session);
       columns = new ColumnInfo[]{new CopyFromColumnInfo(), mergeSourceColumn};
 
@@ -145,7 +142,7 @@ public class SvnHistoryProvider
 
   @Override
   public Boolean getAddinionallyCachedData(SvnHistorySession session) {
-    return session.isSupports15();
+    return session.isHaveMergeSources();
   }
 
   @Override
@@ -187,12 +184,13 @@ public class SvnHistoryProvider
       }
     }
 
+    final boolean showMergeSources = SvnConfiguration.getInstance(myVcs.getProject()).SHOW_MERGE_SOURCES_IN_ANNOTATE;
     final LogLoader logLoader;
     if (path.isNonLocal()) {
-      logLoader = new RepositoryLoader(myVcs, committedPath, from, to, limit, peg, forceBackwards);
+      logLoader = new RepositoryLoader(myVcs, committedPath, from, to, limit, peg, forceBackwards, showMergeSources);
     }
     else {
-      logLoader = new LocalLoader(myVcs, committedPath, from, to, limit, peg);
+      logLoader = new LocalLoader(myVcs, committedPath, from, to, limit, peg, showMergeSources);
     }
 
     try {
@@ -205,10 +203,12 @@ public class SvnHistoryProvider
       throw new VcsException(e);
     }
     logLoader.check();
-    logLoader.initSupports15();
+    if (showMergeSources) {
+      logLoader.initSupports15();
+    }
 
     final SvnHistorySession historySession =
-      new SvnHistorySession(myVcs, Collections.<VcsFileRevision>emptyList(), committedPath, Boolean.TRUE.equals(logLoader.mySupport15), null, false,
+      new SvnHistorySession(myVcs, Collections.<VcsFileRevision>emptyList(), committedPath, showMergeSources && Boolean.TRUE.equals(logLoader.mySupport15), null, false,
                             ! path.isNonLocal());
 
     final Ref<Boolean> sessionReported = new Ref<Boolean>();
@@ -232,6 +232,7 @@ public class SvnHistoryProvider
   }
 
   private static abstract class LogLoader {
+    protected final boolean myShowMergeSources;
     protected String myUrl;
     protected boolean mySupport15;
     protected final SvnVcs myVcs;
@@ -244,7 +245,7 @@ public class SvnHistoryProvider
     protected final ProgressIndicator myPI;
     protected VcsException myException;
 
-    protected LogLoader(SvnVcs vcs, FilePath file, SVNRevision from, SVNRevision to, int limit, SVNRevision peg) {
+    protected LogLoader(SvnVcs vcs, FilePath file, SVNRevision from, SVNRevision to, int limit, SVNRevision peg, boolean showMergeSources) {
       myVcs = vcs;
       myFile = file;
       myFrom = from;
@@ -252,6 +253,7 @@ public class SvnHistoryProvider
       myLimit = limit;
       myPeg = peg;
       myPI = ProgressManager.getInstance().getProgressIndicator();
+      myShowMergeSources = showMergeSources;
     }
 
     public void setConsumer(Consumer<VcsFileRevision> consumer) {
@@ -275,8 +277,8 @@ public class SvnHistoryProvider
   private static class LocalLoader extends LogLoader {
     private SVNInfo myInfo;
 
-    private LocalLoader(SvnVcs vcs, FilePath file, SVNRevision from, SVNRevision to, int limit, SVNRevision peg) {
-      super(vcs, file, from, to, limit, peg);
+    private LocalLoader(SvnVcs vcs, FilePath file, SVNRevision from, SVNRevision to, int limit, SVNRevision peg, boolean showMergeSources) {
+      super(vcs, file, from, to, limit, peg, showMergeSources);
     }
 
     @Override
@@ -320,7 +322,7 @@ public class SvnHistoryProvider
         client
           .doLog(new File[]{new File(myFile.getIOFile().getAbsolutePath())},
                  myFrom == null ? SVNRevision.HEAD : myFrom, myTo == null ? SVNRevision.create(1) : myTo, myPeg,
-                 false, true, mySupport15, myLimit, null,
+                 false, true, myShowMergeSources && mySupport15, myLimit, null,
                  new MyLogEntryHandler(myVcs, myUrl, pegRevision, relativeUrl, createConsumerAdapter(myConsumer), repoRootURL, myFile.getCharset()));
       }
       catch (SVNCancelException e) {
@@ -353,8 +355,8 @@ public class SvnHistoryProvider
                              SVNRevision to,
                              int limit,
                              SVNRevision peg,
-                             boolean forceBackwards) {
-      super(vcs, file, from, to, limit, peg);
+                             boolean forceBackwards, boolean showMergeSources) {
+      super(vcs, file, from, to, limit, peg, showMergeSources);
       myForceBackwards = forceBackwards;
     }
 
@@ -392,7 +394,7 @@ public class SvnHistoryProvider
         }
         SVNLogClient client = myVcs.createLogClient();
         client.doLog(svnurl, new String[]{}, myPeg == null ? myFrom : myPeg,
-                     operationalFrom, myTo == null ? SVNRevision.create(1) : myTo, false, true, mySupport15, myLimit, null,
+                     operationalFrom, myTo == null ? SVNRevision.create(1) : myTo, false, true, myShowMergeSources && mySupport15, myLimit, null,
                      new RepositoryLogEntryHandler(myVcs, myUrl, SVNRevision.UNDEFINED, relativeUrl, createConsumerAdapter(myConsumer), rootURL));
       }
       catch (SVNCancelException e) {
@@ -427,7 +429,7 @@ public class SvnHistoryProvider
                                         }, rootURL);
         repositoryLogEntryHandler.setThrowCancelOnMeetPathCreation(true);
 
-        client.doLog(rootURL, new String[]{}, myFrom, myFrom, myTo == null ? SVNRevision.create(1) : myTo, false, true, mySupport15, 0, null, repositoryLogEntryHandler);
+        client.doLog(rootURL, new String[]{}, myFrom, myFrom, myTo == null ? SVNRevision.create(1) : myTo, false, true, myShowMergeSources && mySupport15, 0, null, repositoryLogEntryHandler);
     }
 
     private SVNURL getRepositoryRoot(SVNURL svnurl, SVNRevision operationalFrom) throws SVNException {

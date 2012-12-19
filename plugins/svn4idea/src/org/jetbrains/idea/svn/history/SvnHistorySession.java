@@ -38,15 +38,15 @@ import java.util.List;
 public class SvnHistorySession extends VcsAbstractHistorySession {
   private final SvnVcs myVcs;
   private final FilePath myCommittedPath;
-  private final boolean mySupports15;
+  private final boolean myHaveMergeSources;
   private final boolean myHasLocalSource;
 
-  public SvnHistorySession(SvnVcs vcs, final List<VcsFileRevision> revisions, final FilePath committedPath, final boolean supports15,
+  public SvnHistorySession(SvnVcs vcs, final List<VcsFileRevision> revisions, final FilePath committedPath, final boolean haveMergeSources,
                            @Nullable final VcsRevisionNumber currentRevision, boolean skipRefreshOnStart, boolean source) {
     super(revisions, currentRevision);
     myVcs = vcs;
     myCommittedPath = committedPath;
-    mySupports15 = supports15;
+    myHaveMergeSources = haveMergeSources;
     myHasLocalSource = source;
     if (!skipRefreshOnStart) {
       shouldBeRefreshed();
@@ -95,13 +95,13 @@ public class SvnHistorySession extends VcsAbstractHistorySession {
     return !myCommittedPath.isDirectory();
   }
 
-  public boolean isSupports15() {
-    return mySupports15;
+  public boolean isHaveMergeSources() {
+    return myHaveMergeSources;
   }
 
   @Override
   public VcsHistorySession copy() {
-    return new SvnHistorySession(myVcs, getRevisionList(), myCommittedPath, mySupports15, getCurrentRevisionNumber(), true, myHasLocalSource);
+    return new SvnHistorySession(myVcs, getRevisionList(), myCommittedPath, myHaveMergeSources, getCurrentRevisionNumber(), true, myHasLocalSource);
   }
 
   @Override
