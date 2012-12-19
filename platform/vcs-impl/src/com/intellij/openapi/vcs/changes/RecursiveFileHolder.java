@@ -1,17 +1,11 @@
-
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.MembershipMap;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PairProcessor;
 
 import java.util.*;
 
@@ -21,15 +15,18 @@ import java.util.*;
 public class RecursiveFileHolder<T> extends AbstractIgnoredFilesHolder {
   protected final HolderType myHolderType;
   protected final TreeMap<VirtualFile, T> myMap;
+  protected final TreeMap<VirtualFile, T> myDirMap;
 
   public RecursiveFileHolder(final Project project, final HolderType holderType) {
     super(project);
     myMap = new TreeMap<VirtualFile, T>(FilePathComparator.getInstance());
+    myDirMap = new TreeMap<VirtualFile, T>(FilePathComparator.getInstance());
     myHolderType = holderType;
   }
 
   public void cleanAll() {
     myMap.clear();
+    myDirMap.clear();
   }
 
   @Override
@@ -48,23 +45,31 @@ public class RecursiveFileHolder<T> extends AbstractIgnoredFilesHolder {
   public void addFile(final VirtualFile file) {
     if (! containsFile(file)) {
       myMap.put(file, null);
+      if (file.isDirectory()) {
+        myDirMap.put(file, null);
+      }
     }
   }
 
   public void removeFile(final VirtualFile file) {
     myMap.remove(file);
+    if (file.isDirectory()) {
+      myDirMap.remove(file);
+    }
   }
 
   public RecursiveFileHolder copy() {
     final RecursiveFileHolder<T> copyHolder = new RecursiveFileHolder<T>(myProject, myHolderType);
     copyHolder.myMap.putAll(myMap);
+    copyHolder.myDirMap.putAll(myDirMap);
     return copyHolder;
   }
 
   public boolean containsFile(final VirtualFile file) {
-    final VirtualFile floor = myMap.floorKey(file);
+    if (myMap.containsKey(file)) return true;
+    final VirtualFile floor = myDirMap.floorKey(file);
     if (floor == null) return false;
-    final SortedMap<VirtualFile, T> floorMap = myMap.headMap(floor, true);
+    final SortedMap<VirtualFile, T> floorMap = myDirMap.headMap(floor, true);
     for (VirtualFile parent : floorMap.keySet()) {
       if (VfsUtil.isAncestor(parent, file, false)) {
         return true;
