@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AnActionButton;
@@ -167,7 +166,7 @@ public class BranchConfigurationDialog extends DialogWrapper {
   }
 
   public static void configureBranches(final Project project, final VirtualFile file, final boolean isRoot) {
-    final VirtualFile vcsRoot = (isRoot) ? file : ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file);
+    final VirtualFile vcsRoot = (isRoot) ? file : getRoot(project, file);
     if (vcsRoot == null) {
       return;
     }
@@ -203,6 +202,11 @@ public class BranchConfigurationDialog extends DialogWrapper {
     if (dlg.isOK()) {
       SvnBranchConfigurationManager.getInstance(project).setConfiguration(vcsRoot, clonedConfiguration);
     }
+  }
+
+  private static VirtualFile getRoot(Project project, VirtualFile file) {
+    RootUrlInfo path = SvnVcs.getInstance(project).getSvnFileUrlMapping().getWcRootForFilePath(new File(file.getPath()));
+    return path == null ? null : path.getVirtualFile();
   }
 
   private static class MyListModel extends AbstractListModel {

@@ -23,14 +23,13 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -86,7 +85,7 @@ public class CopyDialog extends DialogWrapper {
   private SvnBranchConfigurationNew myBranchConfiguration;
   private final VirtualFile mySrcVirtualFile;
 
-  public CopyDialog(final Project project, boolean canBeParent, File file) {
+  public CopyDialog(final Project project, boolean canBeParent, File file) throws VcsException {
     super(project, canBeParent);
     mySrcFile = file;
     myProject = project;
@@ -130,8 +129,15 @@ public class CopyDialog extends DialogWrapper {
       }
     });
 
-    VirtualFile srcVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
-    srcVirtualFile = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(srcVirtualFile);
+    VirtualFile srcVirtualFile;
+    RootUrlInfo root = SvnVcs.getInstance(myProject).getSvnFileUrlMapping().getWcRootForFilePath(file);
+    if (root == null) {
+      throw new VcsException("Can not find working copy for file: " + file.getPath());
+    }
+    srcVirtualFile = root.getVirtualFile();
+    if (srcVirtualFile == null) {
+      throw new VcsException("Can not find working copy for file: " + file.getPath());
+    }
     this.mySrcVirtualFile = srcVirtualFile;
 
     myRevisionPanel.setRoot(mySrcVirtualFile);
@@ -173,7 +179,7 @@ public class CopyDialog extends DialogWrapper {
     });
     myBranchTagBaseComboBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        BranchConfigurationDialog.configureBranches(project, mySrcVirtualFile);
+        BranchConfigurationDialog.configureBranches(project, mySrcVirtualFile, true);
         updateBranchTagBases();
         updateControls();
       }
