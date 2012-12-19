@@ -24,8 +24,8 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.util.JreVersionDetector;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.ClassFilter;
+import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ConfigurationException;
@@ -33,10 +33,10 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.PackageChooser;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.peer.PeerFactory;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiPackage;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.classFilter.ClassFilterEditor;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;
@@ -86,8 +86,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     }
 
     protected void addPatternFilter() {
-      PackageChooser chooser = PeerFactory.getInstance().getUIHelper().
-        createPackageChooser(CodeInsightBundle.message("coverage.pattern.filter.editor.choose.package.title"), myProject);
+      PackageChooser chooser = new PackageChooserDialog(CodeInsightBundle.message("coverage.pattern.filter.editor.choose.package.title"), myProject);
       chooser.show();
       if (chooser.isOK()) {
         List<PsiPackage> packages = chooser.getSelectedPackages();
