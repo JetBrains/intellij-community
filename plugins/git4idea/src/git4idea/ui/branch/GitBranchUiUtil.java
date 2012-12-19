@@ -15,6 +15,7 @@
  */
 package git4idea.ui.branch;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -51,6 +52,8 @@ import java.util.*;
  * @author Kirill Likhodedov
  */
 public class GitBranchUiUtil {
+
+  private static final Logger LOG = Logger.getInstance(GitBranchUiUtil.class);
 
   private GitBranchUiUtil() {
   }
@@ -160,25 +163,28 @@ public class GitBranchUiUtil {
    *         or if the current Git root couldn't be determined.
    */
   @Nullable
-  public static GitRepository getCurrentRepository(@Nullable Project project) {
-    if (project == null) {
-      return null;
-    }
+  public static GitRepository getCurrentRepository(@NotNull Project project) {
     GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
     VirtualFile file = getSelectedFile(project);
-    if (file != null) {
-      return manager.getRepositoryForRoot(getVcsRootFor(project, file));
-    }
-    return manager.getRepositoryForRoot(guessGitRoot(project));
-  } 
+    VirtualFile root = getVcsRootOrGuess(project, file);
+    return manager.getRepositoryForRoot(root);
+  }
   
   @Nullable
-  public static VirtualFile getVcsRootFor(@NotNull Project project, @NotNull VirtualFile file) {
+  public static VirtualFile getVcsRootOrGuess(@NotNull Project project, @Nullable VirtualFile file) {
+    VirtualFile root = null;
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    if (fileIndex.isInLibrarySource(file) || fileIndex.isInLibraryClasses(file)) {
-      return getVcsRootForLibraryFile(project, file);
+    if (file != null) {
+      if (fileIndex.isInLibrarySource(file) || fileIndex.isInLibraryClasses(file)) {
+        LOG.debug("File is in library sources " + file);
+        root = getVcsRootForLibraryFile(project, file);
+      }
+      else {
+        LOG.debug("File is not in library sources " + file);
+        root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file);
+      }
     }
-    return ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file);
+    return root != null ? root : guessGitRoot(project);
   }
 
   @Nullable
@@ -187,6 +193,7 @@ public class GitBranchUiUtil {
     // for a file inside .jar/.zip consider the .jar/.zip file itself
     VirtualFile root = vcsManager.getVcsRootFor(VfsUtilCore.getVirtualFileForJar(file));
     if (root != null) {
+      LOG.debug("Found root for zip/jar file: " + root);
       return root;
     }
     
@@ -203,6 +210,7 @@ public class GitBranchUiUtil {
     }
 
     if (libraryRoots.size() == 0) {
+      LOG.debug("No library roots");
       return null;
     }
 
@@ -216,6 +224,7 @@ public class GitBranchUiUtil {
         topLibraryRoot = libRoot;
       }
     }
+    LOG.debug("Several library roots, returning " + topLibraryRoot);
     return topLibraryRoot;
   }
 
@@ -223,19 +232,23 @@ public class GitBranchUiUtil {
   
   @Nullable
   private static VirtualFile guessGitRoot(@NotNull Project project) {
+    LOG.debug("Guessing Git root...");
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     AbstractVcs gitVcs = GitVcs.getInstance(project);
     if (gitVcs == null) {
+      LOG.debug("GitVcs not found.");
       return null;
     }
     VirtualFile[] gitRoots = vcsManager.getRootsUnderVcs(gitVcs);
     if (gitRoots.length == 0) {
+      LOG.debug("No Git roots in the project.");
       return null;
     }
 
-    // no selected files
     if (gitRoots.length == 1) {
-      return gitRoots[0];
+      VirtualFile onlyRoot = gitRoots[0];
+      LOG.debug("Only one Git root in the project, returning: " + onlyRoot);
+      return onlyRoot;
     }
 
     // remember the last visited Git root
@@ -245,6 +258,7 @@ public class GitBranchUiUtil {
       if (recentRootPath != null) {
         VirtualFile recentRoot = VcsUtil.getVirtualFile(recentRootPath);
         if (recentRoot != null) {
+          LOG.debug("Returning the recent root: " + recentRoot);
           return recentRoot;
         }
       }
@@ -253,7 +267,9 @@ public class GitBranchUiUtil {
     // otherwise return the root of the project dir or the root containing the project dir, if there is such
     VirtualFile projectBaseDir = project.getBaseDir();
     if (projectBaseDir == null) {
-      return null;
+      VirtualFile firstRoot = gitRoots[0];
+      LOG.debug("Project base dir is null, returning the first root: " + firstRoot);
+      return firstRoot;
     }
     VirtualFile rootCandidate = null;
     for (VirtualFile root : gitRoots) {
@@ -264,7 +280,7 @@ public class GitBranchUiUtil {
         rootCandidate = root;
       }
     }
-    
+    LOG.debug("Returning the best candidate: " + rootCandidate);
     return rootCandidate;
   }
 
