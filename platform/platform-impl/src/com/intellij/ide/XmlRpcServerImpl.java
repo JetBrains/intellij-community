@@ -29,7 +29,6 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ide.WebServerManager;
 import org.jetbrains.io.Responses;
 
 import java.util.Arrays;
@@ -78,10 +77,6 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
   @Override
   public void consume(ChannelPipeline pipeline) {
     pipeline.addLast("pluggable_xmlRpc", this);
-  }
-
-  public int getPortNumber() {
-    return WebServerManager.getInstance().getPort();
   }
 
   @Override
