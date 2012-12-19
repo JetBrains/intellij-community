@@ -331,27 +331,27 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     return myStep;
   }
 
-  public final void dispatch(KeyEvent event) {
+  public final boolean dispatch(KeyEvent event) {
     if (event.getID() != KeyEvent.KEY_PRESSED && event.getID() != KeyEvent.KEY_RELEASED) {
-      return;
+      return false;
     }
 
     if (event.getID() == KeyEvent.KEY_PRESSED) {
       final KeyStroke stroke = KeyStroke.getKeyStroke(event.getKeyCode(), event.getModifiers(), false);
-      if (proceedKeyEvent(event, stroke)) return;
+      if (proceedKeyEvent(event, stroke)) return false;
     }
 
     if (event.getID() == KeyEvent.KEY_RELEASED) {
       final KeyStroke stroke = KeyStroke.getKeyStroke(event.getKeyCode(), event.getModifiers(), true);
-      proceedKeyEvent(event, stroke);
-      return;
+      return proceedKeyEvent(event, stroke);
     }
 
     myMnemonicsSearch.process(event);
     mySpeedSearch.process(event);
 
-    if (event.isConsumed()) return;
+    if (event.isConsumed()) return true;
     process(event);
+    return event.isConsumed();
   }
 
   private boolean proceedKeyEvent(KeyEvent event, KeyStroke stroke) {

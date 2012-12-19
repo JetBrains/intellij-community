@@ -4,7 +4,8 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.popup.PopupUpdateProcessor;
+import com.intellij.ui.popup.PopupUpdateProcessorBase;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -53,6 +54,7 @@ public abstract class JBListWithHintProvider extends JBList {
     });
   }
 
+  @Nullable
   protected abstract PsiElement getPsiElementForHint(final Object selectedValue);
 
   public void registerHint(final JBPopup hint) {
@@ -71,7 +73,7 @@ public abstract class JBListWithHintProvider extends JBList {
   public void updateHint(PsiElement element) {
     if (myHint == null || !myHint.isVisible()) return;
 
-    final PopupUpdateProcessor updateProcessor = myHint.getUserData(PopupUpdateProcessor.class);
+    final PopupUpdateProcessorBase updateProcessor = myHint.getUserData(PopupUpdateProcessorBase.class);
     if (updateProcessor != null) {
       updateProcessor.updatePopup(element);
     }
