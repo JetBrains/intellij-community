@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,19 +20,17 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifierList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 
 /**
  * @author ilyas
@@ -54,9 +52,7 @@ public class GrClassInitializerImpl extends GroovyPsiElementImpl implements GrCl
 
   @NotNull
   public GrOpenBlock getBlock() {
-    GrOpenBlock block = findChildByClass(GrOpenBlock.class);
-    assert block != null;
-    return block;
+    return findNotNullChildByClass(GrOpenBlock.class);
   }
 
   public boolean isStatic() {
@@ -75,15 +71,13 @@ public class GrClassInitializerImpl extends GroovyPsiElementImpl implements GrCl
     return null;
   }
 
-  @Nullable
+  @NotNull
   public GrModifierList getModifierList() {
-    return findChildByClass(GrModifierListImpl.class);
+    return findNotNullChildByClass(GrModifierList.class);
   }
 
-  public boolean hasModifierProperty(@NonNls @NotNull String name) {
-    PsiModifierList list = getModifierList();
-    assert list != null;
-    return list.hasModifierProperty(name);
+  public boolean hasModifierProperty(@GrModifier.GrModifierConstant @NonNls @NotNull String name) {
+    return getModifierList().hasModifierProperty(name);
   }
 
   @NotNull
