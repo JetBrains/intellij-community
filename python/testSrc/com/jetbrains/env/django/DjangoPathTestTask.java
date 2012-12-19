@@ -143,7 +143,7 @@ public abstract class DjangoPathTestTask extends PyExecutionFixtureTestTask {
       task.setWorkingDirectory(getWorkingFolder());
       task.setRunnerScript(PythonHelpersLocator.getHelperPath("pycharm/django_manage.py"));
       final ImmutableList.Builder<String> parametersString =
-        new ImmutableList.Builder<String>().add("validate").add(getTestDataPath());
+        new ImmutableList.Builder<String>().add(getSubcommand()).add(getTestDataPath());
       task.setParameters(parametersString.build());
 
       myProcessHandler = task.createProcess();
@@ -215,6 +215,10 @@ public abstract class DjangoPathTestTask extends PyExecutionFixtureTestTask {
         }
       });
     }
+  }
+
+  protected String getSubcommand() {
+    return "validate";
   }
 
   protected void configure(AbstractPythonRunConfiguration config) throws IOException {
