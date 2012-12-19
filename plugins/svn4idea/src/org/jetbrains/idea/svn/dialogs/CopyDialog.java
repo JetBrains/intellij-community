@@ -216,6 +216,14 @@ public class CopyDialog extends DialogWrapper {
     }
   }
 
+  private String getToURLTextFromBranch() {
+    final Object selectedBranch = myBranchTagBaseComboBox.getComboBox().getSelectedItem();
+    if (selectedBranch != null) {
+      return selectedBranch + "/" + myBranchTextField.getText();
+    }
+    return null;
+  }
+
   private void updateControls() {
     myWorkingCopyField.setEnabled(myWorkingCopyRadioButton.isSelected());
     myRepositoryField.setEnabled(myRepositoryRadioButton.isSelected());
@@ -284,6 +292,9 @@ public class CopyDialog extends DialogWrapper {
   }
 
   public String getToURL() {
+    if (myBranchOrTagRadioButton.isSelected()) {
+      return getToURLTextFromBranch();
+    }
     return myToURLText.getText();
   }
 
@@ -312,7 +323,7 @@ public class CopyDialog extends DialogWrapper {
       myErrorLabel.setText(SvnBundle.message("create.branch.no.base.location.error"));
       return false;
     }
-    String url = myToURLText.getText();
+    String url = getToURL();
     if (url != null && url.trim().length() > 0) {
       if (myRepositoryRadioButton.isSelected()) {
         SVNRevision revision;
