@@ -88,6 +88,7 @@ import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntIntHashMap;
 import org.intellij.lang.annotations.JdkConstants;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -200,6 +201,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private EditorHighlighter myHighlighter;
   private final TextDrawingCallback myTextDrawingCallback = new MyTextDrawingCallback();
 
+  @MagicConstant(intValues = {VERTICAL_SCROLLBAR_LEFT, VERTICAL_SCROLLBAR_RIGHT})
   private int myScrollBarOrientation;
   private boolean myMousePressedInsideSelection;
   private FontMetrics myPlainFontMetrics;
@@ -2695,6 +2697,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPaintSelection = paintSelection;
   }
 
+  @Override
   @NotNull
   @NonNls
   public String dumpState() {
@@ -4699,24 +4702,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void setVerticalScrollbarVisible(boolean b) {
-    if (b) {
-      myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-    }
-    else {
-      myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-    }
+    myScrollPane.setVerticalScrollBarPolicy(b ? ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS : ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
   }
 
   @Override
   public void setHorizontalScrollbarVisible(boolean b) {
-    if (b) {
-      myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    }
-    else {
-      myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    }
+    myScrollPane.setHorizontalScrollBarPolicy(b ? ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED : ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
   }
 
+  @Override
   public int getVerticalScrollbarOrientation() {
     return myScrollBarOrientation;
   }

@@ -352,6 +352,7 @@ public class WebServer {
         HttpResponse response;
         if (new QueryStringDecoder(message.getUri()).getPath().equals(START_TIME_PATH)) {
           response = new DefaultHttpResponse(HTTP_1_1, OK);
+          response.setHeader("Access-Control-Allow-Origin", "*");
           response.setContent(ChannelBuffers.copiedBuffer(getApplicationStartTime(), CharsetUtil.US_ASCII));
         }
         else {

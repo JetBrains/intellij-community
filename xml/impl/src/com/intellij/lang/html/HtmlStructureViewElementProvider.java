@@ -78,7 +78,7 @@ public class HtmlStructureViewElementProvider implements XmlStructureViewElement
     }
 
     private static String shortenTextIfLong(final String text) {
-      if (text.length() < MAX_TEXT_LENGTH) return text;
+      if (text.length() <= MAX_TEXT_LENGTH) return text;
 
       int index;
       for (index = MAX_TEXT_LENGTH; index > MAX_TEXT_LENGTH - 20; index--) {

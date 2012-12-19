@@ -170,7 +170,7 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
 
     Charset ideCharset = mySelectedIdeCharset.get();
     EncodingManager.getInstance().setDefaultCharsetName(ideCharset == null ? "" : ideCharset.name());
-    Charset projectCharset = mySelectedIdeCharset.get();
+    Charset projectCharset = mySelectedProjectCharset.get();
     EncodingProjectManager.getInstance(myProject).setEncoding(null, projectCharset);
   }
 

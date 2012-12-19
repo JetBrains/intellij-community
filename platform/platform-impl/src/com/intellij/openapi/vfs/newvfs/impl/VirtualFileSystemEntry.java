@@ -235,7 +235,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     String suffix = getEncodedSuffix();
     int rawNameLength = o instanceof String ? ((String)o).length() : ((byte[])o).length;
     int nameLength = rawNameLength + suffix.length();
-    boolean appendSlash = SystemInfo.isWindows && myParent == null && suffix.length() == 0 && rawNameLength == 2 &&
+    boolean appendSlash = SystemInfo.isWindows && myParent == null && suffix.isEmpty() && rawNameLength == 2 &&
                           (o instanceof String ? ((String)o).charAt(1) : (char)((byte[])o)[1]) == ':';
 
     char[] chars;
@@ -398,7 +398,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   private static void validateName(String name) throws IOException {
-    if (name == null || name.length() == 0) throw new IOException("File name cannot be empty");
+    if (name == null || name.isEmpty()) throw new IOException("File name cannot be empty");
     if (name.indexOf('/') >= 0 || name.indexOf(File.separatorChar) >= 0) {
       throw new IOException("File name cannot contain file path separators: '" + name + "'");
     }
@@ -419,7 +419,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   public void setNewName(@NotNull final String newName) {
-    if (newName.length() == 0) {
+    if (newName.isEmpty()) {
       throw new IllegalArgumentException("Name of the virtual file cannot be set to empty string");
     }
 
@@ -446,37 +446,36 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public Charset getCharset() {
+    return isCharsetSet() ? super.getCharset() : computeCharset();
+  }
+
+  private Charset computeCharset() {
     Charset charset;
-    if (isCharsetSet()) {
+    if (isDirectory()) {
+      Charset configured = EncodingManager.getInstance().getEncoding(this, true);
+      charset = configured == null ? Charset.defaultCharset() : configured;
+      setCharset(charset);
+    }
+    else if (SingleRootFileViewProvider.isTooLargeForContentLoading(this)) {
       charset = super.getCharset();
     }
     else {
-      if (isDirectory()) {
-        Charset configured = EncodingManager.getInstance().getEncoding(this, true);
-        charset = configured == null ? Charset.defaultCharset() : configured;
-        setCharset(charset);
-      }
-      else if (SingleRootFileViewProvider.isTooLargeForContentLoading(this)) {
-        charset = super.getCharset();
-      }
-      else {
+      try {
+        final byte[] content;
         try {
-          final byte[] content;
-          try {
-            content = contentsToByteArray();
-          }
-          catch (FileNotFoundException e) {
-            // file has already been deleted from disk
-            return super.getCharset();
-          }
-          charset = LoadTextUtil.detectCharsetAndSetBOM(this, content);
+          content = contentsToByteArray();
         }
-        catch (FileTooBigException e) {
+        catch (FileNotFoundException e) {
+          // file has already been deleted from disk
           return super.getCharset();
         }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+        charset = LoadTextUtil.detectCharsetAndSetBOM(this, content);
+      }
+      catch (FileTooBigException e) {
+        return super.getCharset();
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
       }
     }
     return charset;
@@ -486,7 +485,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public String getPresentableName() {
     if (UISettings.getInstance().HIDE_KNOWN_EXTENSION_IN_TABS && !isDirectory()) {
       final String nameWithoutExtension = getNameWithoutExtension();
-      return nameWithoutExtension.length() == 0 ? getName() : nameWithoutExtension;
+      return nameWithoutExtension.isEmpty() ? getName() : nameWithoutExtension;
     }
     return getName();
   }
@@ -507,12 +506,11 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       if (isSymLink()) {
         return getUserData(SYMLINK_TARGET);
       }
-      else if (myParent != null) {
-        return myParent.getCanonicalPath() + "/" + getName();
+      VirtualDirectoryImpl parent = myParent;
+      if (parent != null) {
+        return parent.getCanonicalPath() + "/" + getName();
       }
-      else {
-        return getName();
-      }
+      return getName();
     }
     return getPath();
   }

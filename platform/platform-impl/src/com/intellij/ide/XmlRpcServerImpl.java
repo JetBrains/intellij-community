@@ -100,6 +100,7 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
   public void messageReceived(ChannelHandlerContext context, MessageEvent e) throws Exception {
     if (e.getMessage() instanceof HttpRequest) {
       HttpRequest request = (HttpRequest)e.getMessage();
+
       if (request.getMethod() == HttpMethod.POST) {
         ChannelBuffer result;
         ChannelBufferInputStream in = new ChannelBufferInputStream(request.getContent());
@@ -117,6 +118,15 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
 
         HttpResponse response = Responses.create("text/xml");
         response.setContent(result);
+        Responses.send(response, request, context);
+        return;
+      }
+
+      if (request.getMethod() == HttpMethod.OPTIONS &&
+          HttpMethod.POST.getName().equals(request.getHeader("Access-Control-Request-Method"))) {
+        HttpResponse response = Responses.create("text/plain");
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
         Responses.send(response, request, context);
         return;
       }
