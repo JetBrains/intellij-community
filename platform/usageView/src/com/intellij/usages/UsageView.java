@@ -65,6 +65,11 @@ public interface UsageView extends Disposable {
 
   void addPerformOperationAction(@NotNull Runnable processRunnable, String commandName, String cannotMakeString, @NotNull String shortDescription);
 
+  /**
+   * @param checkReadOnlyStatus if false, check is performed inside processRunnable
+   */
+  void addPerformOperationAction(@NotNull Runnable processRunnable, String commandName, String cannotMakeString, @NotNull String shortDescription, boolean checkReadOnlyStatus);
+
   UsageViewPresentation getPresentation();
 
   @NotNull
