@@ -12,11 +12,10 @@ Groovy script
     PsiWhiteSpace(' ')
     Type definition body
       PsiElement({)('{')
-      PsiErrorElement:Variable definition expected
-        <empty list>
       PsiWhiteSpace('\n   ')
-      PsiElement(def)('def')
-      PsiErrorElement:';', '}' or new line expected
-        <empty list>
+      Modifiers
+        PsiElement(def)('def')
       PsiElement(new line)('\n')
+      PsiErrorElement:Identifier, string literal or '(' expected
+        <empty list>
       PsiElement(})('}')

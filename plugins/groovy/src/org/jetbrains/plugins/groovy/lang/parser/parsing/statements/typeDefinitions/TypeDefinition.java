@@ -25,9 +25,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.Declaration;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members.ClassMember;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members.EnumConstant;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members.InterfaceMember;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeParameters;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
@@ -186,10 +184,13 @@ public class TypeDefinition implements GroovyElementTypes {
       return false;
     }
 
-    if (!ParserUtils.getToken(builder, mIDENT)) {
+    if (builder.getTokenType() != mIDENT) {
       builder.error(GroovyBundle.message("annotation.definition.qualified.name.expected"));
       return false;
     }
+
+    String annotationName = builder.getTokenText();
+    ParserUtils.getToken(builder, mIDENT);
 
     PsiBuilder.Marker abMarker = builder.mark();
 
@@ -201,7 +202,7 @@ public class TypeDefinition implements GroovyElementTypes {
     Separators.parse(builder);
 
     while (!builder.eof() && builder.getTokenType() != mRCURLY) {
-      if (!parseAnnotationMember(builder, parser)) builder.advanceLexer();
+      if (!parseAnnotationMember(builder, parser, annotationName)) builder.advanceLexer();
       if (builder.getTokenType() == mRCURLY) break;
       if (!Separators.parse(builder)) {
         builder.error(GroovyBundle.message("separator.or.rcurly.expected"));
@@ -214,7 +215,7 @@ public class TypeDefinition implements GroovyElementTypes {
     return true;
   }
 
-  private static boolean parseAnnotationMember(PsiBuilder builder, GroovyParser parser) {
+  private static boolean parseAnnotationMember(PsiBuilder builder, GroovyParser parser, String annotationName) {
     //type definition
     PsiBuilder.Marker typeDeclStartMarker = builder.mark();
 
@@ -227,7 +228,7 @@ public class TypeDefinition implements GroovyElementTypes {
 
     PsiBuilder.Marker declMarker = builder.mark();
 
-    if (Declaration.parse(builder, true, true, parser)) {
+    if (Declaration.parse(builder, true, true, annotationName, parser)) {
       declMarker.drop();
       return true;
     }
@@ -258,7 +259,7 @@ public class TypeDefinition implements GroovyElementTypes {
     Separators.parse(builder);
 
     while (!builder.eof() && builder.getTokenType() != mRCURLY) {
-      if (!ClassMember.parse(builder, className, parser)) {
+      if (!parser.parseDeclaration(builder, true, false, className)) {
         builder.advanceLexer();
         builder.error(GroovyBundle.message("separator.or.rcurly.expected"));
       }
@@ -316,15 +317,7 @@ public class TypeDefinition implements GroovyElementTypes {
       return false;
     }
 
-    Separators.parse(builder);
-
-    while (!builder.eof() && builder.getTokenType() != mRCURLY) {
-      if (!InterfaceMember.parse(builder, interfaceName, parser)) builder.advanceLexer();
-      if (builder.getTokenType() == mRCURLY) break;
-      if (!Separators.parse(builder)) {
-        builder.error(GroovyBundle.message("separator.or.rcurly.expected"));
-      }
-    }
+    parseMembers(builder, interfaceName, parser);
 
     ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
 

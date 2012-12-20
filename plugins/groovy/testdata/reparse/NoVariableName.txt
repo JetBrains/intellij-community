@@ -111,11 +111,10 @@ Groovy script
               PsiElement(Integer)('2')
             PsiElement(:)(':')
           PsiElement(new line)('\n        ')
-          Variable definitions
-            Modifiers
-              PsiElement(def)('def')
-            PsiErrorElement:Identifier, string literal or '(' expected
-              <empty list>
+          Modifiers
+            PsiElement(def)('def')
+          PsiErrorElement:Identifier, string literal or '(' expected
+            <empty list>
           PsiWhiteSpace('  ')
           PsiElement(=)('=')
           PsiWhiteSpace(' ')

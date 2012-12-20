@@ -1,4 +1,4 @@
-interface a {
+interface A {
   @Nullable def String a (String[][] s, def int a = 5)
 }
 -----
@@ -8,7 +8,7 @@ Groovy script
       <empty list>
     PsiElement(interface)('interface')
     PsiWhiteSpace(' ')
-    PsiElement(identifier)('a')
+    PsiElement(identifier)('A')
     PsiWhiteSpace(' ')
     Type definition body
       PsiElement({)('{')

@@ -24,7 +24,7 @@ Groovy script
       Class initializer
         Modifiers
           PsiElement(static)('static')
-          PsiElement(new line)('\n  ')
+        PsiElement(new line)('\n  ')
         Open block
           PsiElement({)('{')
           PsiWhiteSpace('\n    ')

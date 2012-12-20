@@ -14,27 +14,26 @@ Groovy script
     Type definition body
       PsiElement({)('{')
       PsiWhiteSpace('\n  ')
-      PsiErrorElement:Method definition expected
+      Variable definitions
         Modifiers
           PsiElement(def)('def')
         PsiWhiteSpace(' ')
-        Type parameter list
-          PsiElement(<)('<')
-          Type parameter
-            PsiElement(identifier)('T')
-            Type extends bounds list
-              <empty list>
-          PsiElement(>)('>')
+        PsiErrorElement:Type parameters are unxepected
+          Type parameter list
+            PsiElement(<)('<')
+            Type parameter
+              PsiElement(identifier)('T')
+              Type extends bounds list
+                <empty list>
+            PsiElement(>)('>')
         PsiWhiteSpace(' ')
-        PsiElement(identifier)('t')
-      PsiWhiteSpace(' ')
-      PsiElement(=)('=')
-      PsiErrorElement:';', '}' or new line expected
-        <empty list>
-      PsiWhiteSpace(' ')
-      PsiElement(Integer)('5')
-      PsiErrorElement:';', '}' or new line expected
-        <empty list>
+        Field
+          PsiElement(identifier)('t')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace(' ')
+          Literal
+            PsiElement(Integer)('5')
       PsiElement(new line)('\n  ')
       Variable definitions
         Modifiers

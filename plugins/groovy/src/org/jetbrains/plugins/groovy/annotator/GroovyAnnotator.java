@@ -465,9 +465,14 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
                                            GroovyBundle.message("method.0.is.too.complex.too.analyze", method.getName()));
     }
 
-    if (method.isConstructor() && method.getContainingClass() instanceof GrAnonymousClassDefinition) {
-      myHolder
-        .createErrorAnnotation(method.getNameIdentifierGroovy(), GroovyBundle.message("constructors.are.not.allowed.in.anonymous.class"));
+    final PsiClass containingClass = method.getContainingClass();
+    if (method.isConstructor()) {
+      if (containingClass instanceof GrAnonymousClassDefinition) {
+        myHolder.createErrorAnnotation(method.getNameIdentifierGroovy(), GroovyBundle.message("constructors.are.not.allowed.in.anonymous.class"));
+      }
+      else if (containingClass != null && containingClass.isInterface()) {
+        myHolder.createErrorAnnotation(method.getNameIdentifierGroovy(), GroovyBundle.message("constructors.are.not.allowed.in.interface"));
+      }
     }
 
     if (!method.hasModifierProperty(ABSTRACT) && method.getBlock() == null && !method.hasModifierProperty(NATIVE)) {
@@ -708,6 +713,29 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     else if (parent instanceof GrVariableDeclaration && parent.getParent() instanceof GrTypeDefinition) {
       checkFieldModifiers(myHolder, (GrVariableDeclaration)parent);
     }
+    else if (parent instanceof GrClassInitializer) {
+      checkClassInitializerModifiers(myHolder, modifierList);
+    }
+  }
+
+  private static void checkClassInitializerModifiers(AnnotationHolder holder, GrModifierList modifierList) {
+    for (GrAnnotation annotation : modifierList.getAnnotations()) {
+      holder.createErrorAnnotation(annotation, GroovyBundle.message("initializer.cannot.have.annotations"));
+    }
+
+    for (@GrModifier.GrModifierConstant String modifier : GrModifier.GROOVY_MODIFIERS) {
+      if (STATIC.equals(modifier)) continue;
+      checkModifierIsNotAllowed(modifierList, modifier, GroovyBundle.message("initializer.cannot.be.0", modifier), holder);
+    }
+  }
+
+  @Override
+  public void visitClassInitializer(GrClassInitializer initializer) {
+    final PsiClass aClass = initializer.getContainingClass();
+    if (aClass != null && aClass.isInterface()) {
+      final TextRange range = GrHighlightUtil.getInitializerHeaderTextRange(initializer);
+      myHolder.createErrorAnnotation(range, GroovyBundle.message("initializers.are.not.allowed.in.interface"));
+    }
   }
 
   private static void checkFieldModifiers(AnnotationHolder holder, GrVariableDeclaration fieldDeclaration) {
@@ -735,7 +763,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   private static void checkModifierIsNotAllowed(GrModifierList modifierList,
-                                                @ModifierConstant String modifier,
+                                                @GrModifier.GrModifierConstant String modifier,
                                                 String message,
                                                 AnnotationHolder holder) {
     if (modifierList.hasModifierProperty(modifier)) {

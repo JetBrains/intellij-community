@@ -1,11 +1,10 @@
 def ((a))
 -----
 Groovy script
-  Variable definitions
-    Modifiers
-      PsiElement(def)('def')
-    PsiErrorElement:Identifier expected
-      <empty list>
+  Modifiers
+    PsiElement(def)('def')
+  PsiErrorElement:Identifier expected
+    <empty list>
   PsiWhiteSpace(' ')
   PsiErrorElement:';' or new line expected
     PsiElement(()('(')
