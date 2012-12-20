@@ -72,6 +72,7 @@ import static com.jetbrains.python.sdk.PythonEnvUtil.setPythonUnbuffered;
 public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonConsoleView> {
   private static final Logger LOG = Logger.getInstance(PydevConsoleRunner.class.getName());
   public static final String PYDEV_PYDEVCONSOLE_PY = "pydev/pydevconsole.py";
+  public static final int PORTS_WAITING_TIMEOUT = 20000;
 
   private Sdk mySdk;
   @NotNull private final CommandLineArgumentsProvider myCommandLineArgumentsProvider;
@@ -267,7 +268,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     Scanner s = new Scanner(remoteProcess.getInputStream());
     boolean received = false;
     long started = System.currentTimeMillis();
-    while (!received && (System.currentTimeMillis() - started < 2000)) {
+    while (!received && (System.currentTimeMillis() - started < PORTS_WAITING_TIMEOUT)) {
       try {
         int port = s.nextInt();
         int port2 = s.nextInt();
