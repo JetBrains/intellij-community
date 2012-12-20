@@ -371,6 +371,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   @Override
   public void disposeComponent() {
+    for (String id : new ArrayList<String>(myId2StripeButton.keySet())) {
+      unregisterToolWindow(id);
+    }
+
+    assert myId2StripeButton.isEmpty();
+
     KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(myFocusListener);
   }
 
