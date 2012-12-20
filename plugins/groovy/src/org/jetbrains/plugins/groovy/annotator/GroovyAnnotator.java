@@ -696,6 +696,9 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (parent instanceof GrAnnotationMethod) {
       checkAnnotationAttributeType(typeElement, myHolder);
     }
+    else if (((GrMethod)parent).isConstructor()) {
+      myHolder.createErrorAnnotation(typeElement, GroovyBundle.message("constructors.cannot.have.return.type"));
+    }
     else {
       checkMethodReturnType(((GrMethod)parent), typeElement, myHolder);
     }
@@ -762,11 +765,19 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
   }
 
-  private static void checkModifierIsNotAllowed(GrModifierList modifierList,
-                                                @GrModifier.GrModifierConstant String modifier,
-                                                String message,
-                                                AnnotationHolder holder) {
-    if (modifierList.hasModifierProperty(modifier)) {
+  private static void checkModifierIsNotAllowed(@NotNull GrModifierList modifierList,
+                                                @NotNull @GrModifier.GrModifierConstant String modifier,
+                                                @Nullable String message,
+                                                @NotNull AnnotationHolder holder) {
+    checkModifierIsNotAllowedImpl(modifierList, modifier, message, holder, false);
+  }
+
+  private static void checkModifierIsNotAllowedImpl(@NotNull GrModifierList modifierList,
+                                                    @NotNull @GrModifier.GrModifierConstant String modifier,
+                                                    @Nullable String message,
+                                                    @NotNull AnnotationHolder holder,
+                                                    final boolean explicit) {
+    if (explicit ? modifierList.hasModifierProperty(modifier) : modifierList.hasExplicitModifier(modifier)) {
       PsiElement toHighlight = PsiUtil.findModifierInList(modifierList, modifier);
       if (toHighlight == null) toHighlight = modifierList;
       final Annotation annotation = holder.createErrorAnnotation(toHighlight, message);
