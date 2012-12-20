@@ -122,7 +122,7 @@ public class DfaValueFactory {
     }
 
     final PsiVariable variable = (PsiVariable)psiSource;
-    if (variable.hasModifierProperty(PsiModifier.FINAL)) {
+    if (variable.hasModifierProperty(PsiModifier.FINAL) && !variable.hasModifierProperty(PsiModifier.TRANSIENT)) {
       DfaValue constValue = getConstFactory().create(variable);
       if (constValue != null) return constValue;
 
