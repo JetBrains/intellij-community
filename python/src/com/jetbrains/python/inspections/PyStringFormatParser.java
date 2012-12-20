@@ -1,5 +1,8 @@
 package com.jetbrains.python.inspections;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,10 +36,10 @@ public class PyStringFormatParser {
   }
 
   public static class SubstitutionChunk extends FormatStringChunk {
-    private String myMappingKey;
-    private String myConversionFlags;
-    private String myWidth;
-    private String myPrecision;
+    @Nullable private String myMappingKey;
+    @Nullable private String myConversionFlags;
+    @Nullable private String myWidth;
+    @Nullable private String myPrecision;
     private char myLengthModifier;
     private char myConversionType;
     private boolean myUnclosedMapping;
@@ -45,7 +48,7 @@ public class PyStringFormatParser {
       super(startIndex, startIndex);
     }
 
-    public void setEndIndex(int endIndex) {
+    private void setEndIndex(int endIndex) {
       myEndIndex = endIndex;
     }
 
@@ -53,39 +56,43 @@ public class PyStringFormatParser {
       return myConversionType;
     }
 
-    public void setConversionType(char conversionType) {
+    private void setConversionType(char conversionType) {
       myConversionType = conversionType;
     }
 
+    @Nullable
     public String getMappingKey() {
       return myMappingKey;
     }
 
-    public void setMappingKey(String mappingKey) {
+    private void setMappingKey(@Nullable String mappingKey) {
       myMappingKey = mappingKey;
     }
 
+    @Nullable
     public String getConversionFlags() {
       return myConversionFlags;
     }
 
-    public void setConversionFlags(String conversionFlags) {
+    private void setConversionFlags(@Nullable String conversionFlags) {
       myConversionFlags = conversionFlags;
     }
 
+    @Nullable
     public String getWidth() {
       return myWidth;
     }
 
-    public void setWidth(String width) {
+    private void setWidth(@Nullable String width) {
       myWidth = width;
     }
 
+    @Nullable
     public String getPrecision() {
       return myPrecision;
     }
 
-    public void setPrecision(String precision) {
+    private void setPrecision(@Nullable String precision) {
       myPrecision = precision;
     }
 
@@ -93,7 +100,7 @@ public class PyStringFormatParser {
       return myLengthModifier;
     }
 
-    public void setLengthModifier(char lengthModifier) {
+    private void setLengthModifier(char lengthModifier) {
       myLengthModifier = lengthModifier;
     }
 
@@ -101,13 +108,13 @@ public class PyStringFormatParser {
       return myUnclosedMapping;
     }
 
-    public void setUnclosedMapping(boolean unclosedMapping) {
+    private void setUnclosedMapping(boolean unclosedMapping) {
       myUnclosedMapping = unclosedMapping;
     }
   }
 
-  private final String myLiteral;
-  private final List<FormatStringChunk> myResult = new ArrayList<FormatStringChunk>();
+  @NotNull private final String myLiteral;
+  @NotNull private final List<FormatStringChunk> myResult = new ArrayList<FormatStringChunk>();
   private int myPos;
 
   private static final String CONVERSION_FLAGS = "#0- +";
@@ -115,10 +122,11 @@ public class PyStringFormatParser {
   private static final String LENGTH_MODIFIERS = "hlL";
   private static final String VALID_CONVERSION_TYPES = "diouxXeEfFgGcrs";
 
-  public PyStringFormatParser(String literal) {
+  public PyStringFormatParser(@NotNull String literal) {
     myLiteral = literal;
   }
 
+  @NotNull
   public List<FormatStringChunk> parse() {
     myPos = 0;
     while(myPos < myLiteral.length()) {
@@ -173,7 +181,7 @@ public class PyStringFormatParser {
     chunk.setEndIndex(myPos);
   }
 
-  private boolean isAtSet(final String characterSet) {
+  private boolean isAtSet(@NotNull final String characterSet) {
     return myPos < myLiteral.length() && characterSet.indexOf(myLiteral.charAt(myPos)) >= 0;
   }
 
@@ -181,6 +189,7 @@ public class PyStringFormatParser {
     return myPos < myLiteral.length() && myLiteral.charAt(myPos) == c;
   }
 
+  @NotNull
   private String parseWidth() {
     if (isAt('*')) {
       myPos++;
@@ -189,7 +198,8 @@ public class PyStringFormatParser {
     return parseWhileCharacterInSet(DIGITS);
   }
 
-  private String parseWhileCharacterInSet(final String characterSet) {
+  @NotNull
+  private String parseWhileCharacterInSet(@NotNull final String characterSet) {
     int flagStart = myPos;
     while(isAtSet(characterSet)) {
       myPos++;
@@ -197,6 +207,7 @@ public class PyStringFormatParser {
     return myLiteral.substring(flagStart, myPos);
   }
 
+  @NotNull
   public List<SubstitutionChunk> parseSubstitutions() {
     List<SubstitutionChunk> result = new ArrayList<SubstitutionChunk>();
     for (FormatStringChunk chunk : parse()) {
