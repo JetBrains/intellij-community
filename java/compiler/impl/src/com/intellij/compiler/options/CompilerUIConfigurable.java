@@ -19,25 +19,20 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.MalformedPatternException;
-import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
-import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.StringTokenizer;
 
 public class CompilerUIConfigurable implements SearchableConfigurable, Configurable.NoScroll {
@@ -128,30 +123,8 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     configuration.removeResourceFilePatterns();
     String extensionString = myResourcePatternsField.getText().trim();
     applyResourcePatterns(extensionString, (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject));
-
-    // this will schedule for compilation all files that might become compilable after resource patterns' changing
-    final TranslatingCompilerFilesMonitor monitor = TranslatingCompilerFilesMonitor.getInstance();
-    if (workspaceConfiguration.USE_COMPILE_SERVER) {
-      monitor.suspendProject(myProject);
-    }
-    else {
-      // use old make
-      if (wasUsingExternalMake) {
-        monitor.watchProject(myProject);
-        monitor.scanSourcesForCompilableFiles(myProject);
-        if (!myProject.isDefault()) {
-          final File buildSystem = BuildManager.getInstance().getBuildSystemDirectory();
-          final File[] subdirs = buildSystem.listFiles();
-          if (subdirs != null) {
-            final String prefix = myProject.getName().toLowerCase(Locale.US) + "_";
-            for (File subdir : subdirs) {
-              if (subdir.getName().startsWith(prefix)) {
-                FileUtil.asyncDelete(subdir);
-              }
-            }
-          }
-        }
-      }
+    if (wasUsingExternalMake != workspaceConfiguration.USE_COMPILE_SERVER) {
+      myProject.getMessageBus().syncPublisher(ExternalBuildOptionListener.TOPIC).externalBuildOptionChanged(workspaceConfiguration.USE_COMPILE_SERVER);
     }
   }
 
