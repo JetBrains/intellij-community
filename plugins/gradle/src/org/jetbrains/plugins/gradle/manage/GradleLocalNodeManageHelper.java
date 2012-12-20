@@ -5,7 +5,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ExportableOrderEntry;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
@@ -189,15 +191,33 @@ public class GradleLocalNodeManageHelper {
   private void collectLibraryDependencyEntities(@NotNull GradleLibraryDependency dependency, @NotNull Context context) {
     final LibraryOrderEntry intellijDependency
       = myProjectStructureHelper.findIntellijLibraryDependency(dependency.getOwnerModule().getName(), dependency.getName());
-    if (intellijDependency != null) {
-      // Already imported.
-      return;
+    Set<String> intellijPaths = ContainerUtilRt.newHashSet();
+    GradleLibrary gradleLibrary = dependency.getTarget();
+    Library intellijLibrary = null;
+    if (intellijDependency == null) {
+      context.dependencies.add(dependency);
     }
-    context.dependencies.add(dependency);
-    final GradleLibrary gradleLibrary = dependency.getTarget();
-    final Library intellijLibrary = myProjectStructureHelper.findIntellijLibrary(gradleLibrary);
+    else {
+      intellijLibrary = intellijDependency.getLibrary();
+    }
+
+    if (intellijLibrary == null) {
+      intellijLibrary = myProjectStructureHelper.findIntellijLibrary(gradleLibrary);
+    }
+
     if (intellijLibrary == null) {
       context.libraries.add(gradleLibrary);
+    }
+    else {
+      for (VirtualFile jarFile : intellijLibrary.getFiles(OrderRootType.CLASSES)) {
+        intellijPaths.add(GradleUtil.getLocalFileSystemPath(jarFile));
+      }
+    }
+    
+    for (String gradleJarPath : gradleLibrary.getPaths(LibraryPathType.BINARY)) {
+      if (!intellijPaths.contains(gradleJarPath)) {
+        context.jars.add(new GradleJar(gradleJarPath, null, gradleLibrary));
+      }
     }
   }
 
@@ -256,7 +276,6 @@ public class GradleLocalNodeManageHelper {
         }
       });
     }
-    GradleUtil.refreshProject(myProjectStructureHelper.getProject());
   }
 
   public void removeNodes(@NotNull Collection<GradleProjectStructureNode<?>> nodes) {
@@ -283,7 +302,9 @@ public class GradleLocalNodeManageHelper {
     
     for (GradleProjectStructureNode<?> node : nodes) {
       GradleProjectStructureNodeDescriptor<? extends GradleEntityId> descriptor = node.getDescriptor();
-      if (descriptor.getAttributes() != GradleTextAttributes.INTELLIJ_LOCAL_CHANGE) {
+      if (descriptor.getAttributes() == GradleTextAttributes.GRADLE_LOCAL_CHANGE
+          || descriptor.getElement().getType() == GradleEntityType.SYNTHETIC
+          || node.getParent() == null /* is root */) {
         continue;
       }
       Object entity = myIdMapper.mapIdToEntity(descriptor.getElement());
@@ -300,7 +321,6 @@ public class GradleLocalNodeManageHelper {
     myModuleDependencyManager.removeDependencies(dependencies);
     myModuleManager.removeModules(modules);
     myLibraryManager.removeLibraries(libraries);
-    GradleUtil.refreshProject(myProjectStructureHelper.getProject());
   }
   
   private class Context {

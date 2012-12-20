@@ -227,7 +227,8 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
           dependencies {
             lib1('gradle') {
               jar1('gradle')
-              jar2('gradle')} } }
+              jar2()
+              jar3('intellij')} } }
         module1 {
           dependencies {
             lib1 {
@@ -344,51 +345,6 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
         module1()
         module2() // Imported module node is not highlighted anymore.
     } }
-  }
-  
-  @Test
-  public void "gradle local library dependency outweighs library path conflict"() {
-    init(
-      gradle: {
-        project {
-          module('module1') {
-            dependencies {
-              library('lib1', bin: ['jar1']) } }
-          module('module2') {
-            dependencies {
-              library('lib1') } } } },
-      intellij: {
-        project {
-          module('module1') {
-            dependencies {
-              library('lib1', bin: ['jar2']) } } } },
-      changesSorter: changeByClassSorter([
-        (GradleModulePresenceChange)            : 1,
-        (GradleLibraryDependencyPresenceChange) : 2,
-        (GradleJarPresenceChange)               : 3,
-      ])
-    )
-
-    checkChanges {
-      presence {
-        module(gradle: gradle.modules['module2'])
-        jar(gradle: [findJarId('jar1')])
-        jar(intellij: [findJarId('jar2')])
-        libraryDependency(gradle: gradle.libraryDependencies[gradle.modules['module2']].first())
-      }
-    }
-    
-    checkTree {
-      project {
-        module2('gradle') {
-          dependencies {
-            lib1('gradle') {
-              jar1('gradle') } } }
-        module1() {
-          dependencies {
-            lib1 {
-              jar1('gradle')
-              jar2('intellij') } } } } }
   }
   
   @Test
@@ -789,7 +745,7 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
         module('module1')
         module('module2') {
           dependencies {
-            library('lib1', bin: ['1'])
+            library('lib1', bin: ['jar1'])
             module('module1', scope: 'compile')
     } } } }
     init(gradle: gradleProject, intellij: {
@@ -797,7 +753,7 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
         module('module1')
         module('module2') {
           dependencies {
-            library('lib1', bin: ['2'])
+            library('lib1', bin: ['jar2'])
             module('module1', scope: 'test')
     } } } })
     
@@ -813,5 +769,89 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
     checkTree {
       project {
     } }
+  }
+  
+  @Test
+  public void "gradle-local library dependency with mixed jars state"() {
+    init(
+      gradle: {
+        project {
+          module('module1') {
+            dependencies {
+              library('lib1', bin: ['jar1', 'jar2']) } }
+          module('module2') {
+            dependencies {
+              library('lib1', bin: ['jar1', 'jar2'])} } } },
+      intellij: {
+        project {
+          module('module1') {
+            dependencies {
+              library('lib1', bin: ['jar2', 'jar3']) }}
+          module('module2') }}
+    )
+    
+    checkChanges {
+      presence {
+        libraryDependency(gradle: gradle.modules['module2'].dependencies)
+        jar(gradle: [findJarId('jar1')])
+        jar(intellij: [findJarId('jar3')])
+      }
+    }
+    checkTree {
+      project {
+        module1 {
+          dependencies {
+            lib1 {
+              jar1('gradle')
+              jar2()
+              jar3('intellij')} } }
+        module2 {
+          dependencies {
+            lib1('gradle') {
+              jar1('gradle')
+              jar2()
+              jar3('intellij') } } } } }
+  }
+
+  @Test
+  public void "intellij-local library dependency with mixed jars state"() {
+    init(
+      gradle: {
+        project {
+          module('module1') {
+            dependencies {
+              library('lib1', bin: ['jar1', 'jar2']) } }
+          module('module2')} },
+      intellij: {
+        project {
+          module('module1') {
+            dependencies {
+              library('lib1', bin: ['jar2', 'jar3']) }}
+          module('module2') {
+            dependencies {
+              library('lib1', bin: ['jar1', 'jar2'])}}}}
+    )
+
+    checkChanges {
+      presence {
+        libraryDependency(intellij: intellij.libraryDependencies[intellij.modules['module2']])
+        jar(gradle: [findJarId('jar1')])
+        jar(intellij: [findJarId('jar3')])
+      }
+    }
+    checkTree {
+      project {
+        module1 {
+          dependencies {
+            lib1 {
+              jar1('gradle')
+              jar2()
+              jar3('intellij')} } }
+        module2 {
+          dependencies {
+            lib1('intellij') {
+              jar1('gradle')
+              jar2()
+              jar3('intellij') } } } } }
   }
 }

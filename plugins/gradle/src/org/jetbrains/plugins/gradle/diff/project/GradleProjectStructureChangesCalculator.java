@@ -2,6 +2,7 @@ package org.jetbrains.plugins.gradle.diff.project;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.PlatformFacade;
@@ -9,10 +10,12 @@ import org.jetbrains.plugins.gradle.diff.GradleChangesCalculationContext;
 import org.jetbrains.plugins.gradle.diff.GradleDiffUtil;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
 import org.jetbrains.plugins.gradle.diff.GradleStructureChangesCalculator;
+import org.jetbrains.plugins.gradle.diff.library.GradleLibraryStructureChangesCalculator;
 import org.jetbrains.plugins.gradle.diff.module.GradleModuleStructureChangesCalculator;
 import org.jetbrains.plugins.gradle.model.gradle.GradleModule;
 import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
@@ -26,12 +29,16 @@ import java.util.Set;
  */
 public class GradleProjectStructureChangesCalculator implements GradleStructureChangesCalculator<GradleProject, Project> {
 
-  private final GradleModuleStructureChangesCalculator myModuleChangesCalculator;
-  private final PlatformFacade myPlatformFacade;
+  @NotNull private final GradleModuleStructureChangesCalculator myModuleChangesCalculator;
+  @NotNull private final GradleLibraryStructureChangesCalculator myLibraryChangesCalculator;
+  @NotNull private final PlatformFacade myPlatformFacade;
 
   public GradleProjectStructureChangesCalculator(@NotNull GradleModuleStructureChangesCalculator moduleCalculator,
-                                                 @NotNull PlatformFacade platformFacade) {
+                                                 @NotNull GradleLibraryStructureChangesCalculator calculator,
+                                                 @NotNull PlatformFacade platformFacade)
+  {
     myModuleChangesCalculator = moduleCalculator;
+    myLibraryChangesCalculator = calculator;
     myPlatformFacade = platformFacade;
   }
 
@@ -45,6 +52,9 @@ public class GradleProjectStructureChangesCalculator implements GradleStructureC
     final Set<? extends GradleModule> gradleSubEntities = gradleEntity.getModules();
     final Collection<Module> intellijSubEntities = myPlatformFacade.getModules(intellijEntity);
     GradleDiffUtil.calculate(myModuleChangesCalculator, gradleSubEntities, intellijSubEntities, context);
+    
+    LibraryTable libraryTable = myPlatformFacade.getProjectLibraryTable(intellijEntity);
+    GradleDiffUtil.calculate(myLibraryChangesCalculator, gradleEntity.getLibraries(), Arrays.asList(libraryTable.getLibraries()), context);
   }
 
   @NotNull

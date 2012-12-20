@@ -62,7 +62,7 @@ public class GradleJarManager {
         Library.ModifiableModel model = library.getModifiableModel();
         try {
           for (VirtualFile file : model.getFiles(OrderRootType.CLASSES)) {
-            if (jar.getPath().equals(file.getPath())) {
+            if (jar.getPath().equals(GradleUtil.getLocalFileSystemPath(file))) {
               return;
             }
           }
