@@ -173,6 +173,10 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testReturnTypeCompatibilityBeforeSpecificsCheck() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
   }

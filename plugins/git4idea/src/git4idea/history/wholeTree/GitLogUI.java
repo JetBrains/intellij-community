@@ -495,7 +495,7 @@ public class GitLogUI implements Disposable {
         if (commitI == null) return;
         final VirtualFile root = commitI.selectRepository(myRootsUnderVcs);
         final List<String> branches = myDetailsCache.getBranches(root, commitI.getHash());
-        if (branches != null) {
+        if (branches != null && ! branches.isEmpty()) {
           try {
             myBranchesLoader.take(commitI, branches);
           }

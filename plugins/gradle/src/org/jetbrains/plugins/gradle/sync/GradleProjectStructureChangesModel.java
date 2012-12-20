@@ -63,8 +63,7 @@ public class GradleProjectStructureChangesModel extends AbstractProjectComponent
    */
   public void update(@NotNull GradleProject gradleProject) {
     myGradleProject.set(gradleProject);
-    GradleChangesCalculationContext context = new GradleChangesCalculationContext(myChanges.get(), myPlatformFacade);
-    myChangesCalculator.calculate(gradleProject, myProject, context);
+    GradleChangesCalculationContext context = getCurrentChangesContext(gradleProject);
     if (!context.hasNewChanges()) {
       return;
     }
@@ -93,6 +92,13 @@ public class GradleProjectStructureChangesModel extends AbstractProjectComponent
     return myListeners.add(listener);
   }
 
+  @NotNull
+  public GradleChangesCalculationContext getCurrentChangesContext(@NotNull GradleProject gradleProject) {
+    GradleChangesCalculationContext context = new GradleChangesCalculationContext(myChanges.get(), myPlatformFacade);
+    myChangesCalculator.calculate(gradleProject, myProject, context);
+    return context;
+  }
+  
   /**
    * @return collection of project structure changes registered within the current model
    */

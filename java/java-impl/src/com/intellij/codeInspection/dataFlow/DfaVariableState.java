@@ -63,7 +63,7 @@ public class DfaVariableState implements Cloneable {
   }
 
   private static boolean isNullableInitialized(PsiVariable var, boolean nullable) {
-    if (!var.hasModifierProperty(PsiModifier.FINAL) || !(var instanceof PsiField)) {
+    if (!isFinalField(var)) {
       return false;
     }
 
@@ -88,6 +88,10 @@ public class DfaVariableState implements Cloneable {
       }
     }
     return !nullable;
+  }
+
+  public static boolean isFinalField(PsiVariable var) {
+    return var.hasModifierProperty(PsiModifier.FINAL) && !var.hasModifierProperty(PsiModifier.TRANSIENT) && var instanceof PsiField;
   }
 
   public boolean isNullable() {

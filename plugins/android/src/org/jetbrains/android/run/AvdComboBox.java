@@ -110,7 +110,7 @@ public abstract class AvdComboBox extends ComboboxWithBrowseButton {
       if (myAddEmptyElement) {
         newAvdList.add("");
       }
-      for (AvdInfo avd : facet.getAllCompatibleAvds()) {
+      for (AvdInfo avd : facet.getAllAvds()) {
         final String avdName = avd.getName();
         if (!filteringSet.contains(avdName)) {
           newAvdList.add(avdName);

@@ -17,10 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.gradle.config.GradleTextAttributes;
 import org.jetbrains.plugins.gradle.config.PlatformFacade;
-import org.jetbrains.plugins.gradle.diff.GradleAbstractConflictingPropertyChange;
-import org.jetbrains.plugins.gradle.diff.GradleAbstractEntityPresenceChange;
-import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
-import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChangeVisitor;
+import org.jetbrains.plugins.gradle.diff.*;
 import org.jetbrains.plugins.gradle.diff.contentroot.GradleContentRootPresenceChange;
 import org.jetbrains.plugins.gradle.diff.dependency.GradleDependencyExportedChange;
 import org.jetbrains.plugins.gradle.diff.dependency.GradleDependencyScopeChange;
@@ -33,6 +30,7 @@ import org.jetbrains.plugins.gradle.diff.project.GradleProjectRenameChange;
 import org.jetbrains.plugins.gradle.model.GradleEntityOwner;
 import org.jetbrains.plugins.gradle.model.gradle.GradleLibrary;
 import org.jetbrains.plugins.gradle.model.gradle.GradleModule;
+import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
 import org.jetbrains.plugins.gradle.model.gradle.LibraryPathType;
 import org.jetbrains.plugins.gradle.model.id.*;
 import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
@@ -110,33 +108,46 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
       public void onChanges(@NotNull final Collection<GradleProjectStructureChange> oldChanges,
                             @NotNull final Collection<GradleProjectStructureChange> currentChanges)
       {
-        final Runnable task = new Runnable() {
-          @Override
-          public void run() {
-            List<GradleProjectStructureChange> currentChangesToUse = ContainerUtilRt.newArrayList(currentChanges);
-            Collection<GradleProjectStructureChange> obsoleteChangesToUse = ContainerUtil.subtract(oldChanges, currentChanges);
-            if (myChangesComparator != null) {
-              List<GradleProjectStructureChange> toSort = ContainerUtilRt.newArrayList(obsoleteChangesToUse);
-              Collections.sort(toSort, myChangesComparator);
-              obsoleteChangesToUse = toSort;
-              Collections.sort(currentChangesToUse, myChangesComparator);
-            }
-            processObsoleteChanges(obsoleteChangesToUse);
-            processCurrentChanges(currentChangesToUse);
-          }
-        };
-        if (myProcessChangesAtTheSameThread) {
-          task.run();
-        }
-        else {
-          UIUtil.invokeLaterIfNeeded(task);
-        }
+        processChanges(oldChanges, currentChanges);
       }
     });
 
     if (rebuild) {
       rebuild();
     }
+  }
+  
+  private void processChanges(@NotNull final Collection<GradleProjectStructureChange> oldChanges,
+                              @NotNull final Collection<GradleProjectStructureChange> currentChanges)
+  {
+    final Runnable task = new Runnable() {
+      @Override
+      public void run() {
+        Collection<GradleProjectStructureChange> obsoleteChangesToUse = ContainerUtil.subtract(oldChanges, currentChanges);
+        Collection<GradleProjectStructureChange> currentChangesToUse = currentChanges;
+        if (myChangesComparator != null) {
+          obsoleteChangesToUse = sort(obsoleteChangesToUse, myChangesComparator);
+          currentChangesToUse = sort(currentChangesToUse, myChangesComparator);
+        }
+        processObsoleteChanges(obsoleteChangesToUse);
+        processCurrentChanges(currentChangesToUse);
+      }
+    };
+    if (myProcessChangesAtTheSameThread) {
+      task.run();
+    }
+    else {
+      UIUtil.invokeLaterIfNeeded(task);
+    }
+  }
+  
+  @NotNull
+  private static Collection<GradleProjectStructureChange> sort(@NotNull Collection<GradleProjectStructureChange> changes,
+                                                               @NotNull Comparator<GradleProjectStructureChange> myChangesComparator)
+  {
+    List<GradleProjectStructureChange> toSort = ContainerUtilRt.newArrayList(changes);
+    Collections.sort(toSort, myChangesComparator);
+    return toSort;
   }
 
   @SuppressWarnings("unchecked")
@@ -209,8 +220,13 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
         }
       }
     }
-    processCurrentChanges(myChangesModel.getChanges());
-    filterNodes(root);
+
+    GradleProject project = myChangesModel.getGradleProject();
+    if (project != null) {
+      GradleChangesCalculationContext context = myChangesModel.getCurrentChangesContext(project);
+      processChanges(context.getKnownChanges(), context.getCurrentChanges());
+      filterNodes(root);
+    }
   }
 
   private void populateLibraryDependencyNode(@NotNull GradleProjectStructureNode<GradleLibraryDependencyId> node,
@@ -470,17 +486,55 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
   private void processNewLibraryDependencyPresenceChange(@NotNull GradleLibraryDependencyPresenceChange change) {
     GradleProjectStructureNode<GradleLibraryDependencyId> dependencyNode = processNewDependencyPresenceChange(change);
     GradleLibraryDependencyId id = change.getGradleEntity();
-    if (dependencyNode != null && id != null) {
-      GradleLibrary library = myProjectStructureHelper.findGradleLibrary(id.getLibraryId());
-      if (library != null) {
-        GradleLibraryId libraryId = dependencyNode.getDescriptor().getElement().getLibraryId();
-        for (String path : library.getPaths(LibraryPathType.BINARY)) {
-          GradleJarId jarId = new GradleJarId(path, libraryId);
-          GradleProjectStructureNode<GradleJarId> jarNode = buildNode(jarId, GradleUtil.extractNameFromPath(jarId.getPath()));
-          jarNode.setAttributes(GradleTextAttributes.GRADLE_LOCAL_CHANGE);
-          jarNode.getDescriptor().setToolTip(jarId.getPath());
-          dependencyNode.add(jarNode);
+    if (dependencyNode == null || id == null) {
+      return;
+    }
+    GradleLibrary gradleLibrary = myProjectStructureHelper.findGradleLibrary(id.getLibraryId());
+    if (gradleLibrary == null) {
+      return;
+    }
+
+    Map<GradleJarId, GradleProjectStructureNode<GradleJarId>> existingJarNodes = ContainerUtilRt.newHashMap();
+    for (GradleProjectStructureNode<GradleJarId> jarNode : dependencyNode.getChildren(GradleJarId.class)) {
+      existingJarNodes.put(jarNode.getDescriptor().getElement(), jarNode);
+    }
+
+    Map<GradleJarId, GradleProjectStructureNode<GradleJarId>> gradleJarIds = ContainerUtilRt.newHashMap();
+    GradleLibraryId libraryId = dependencyNode.getDescriptor().getElement().getLibraryId();
+    for (String path : gradleLibrary.getPaths(LibraryPathType.BINARY)) {
+      GradleJarId jarId = new GradleJarId(path, libraryId);
+      GradleProjectStructureNode<GradleJarId> jarNode = existingJarNodes.get(jarId);
+      if (jarNode == null) {
+        jarNode = buildNode(jarId, GradleUtil.extractNameFromPath(jarId.getPath()));
+        jarNode.setAttributes(GradleTextAttributes.NO_CHANGE);
+        jarNode.getDescriptor().setToolTip(jarId.getPath());
+        dependencyNode.add(jarNode);
+      }
+      gradleJarIds.put(jarId, jarNode);
+    }
+
+    Library intellijLibrary = myProjectStructureHelper.findIntellijLibrary(gradleLibrary);
+    if (intellijLibrary == null) {
+      for (GradleProjectStructureNode<?> jarNode : dependencyNode) {
+        jarNode.setAttributes(GradleTextAttributes.GRADLE_LOCAL_CHANGE);
+      }
+    }
+    else {
+      Set<GradleJarId> intellijJarIds = ContainerUtilRt.newHashSet();
+      for (VirtualFile jarFile : intellijLibrary.getFiles(OrderRootType.CLASSES)) {
+        GradleJarId jarId = new GradleJarId(GradleUtil.getLocalFileSystemPath(jarFile), libraryId);
+        if (gradleJarIds.remove(jarId) == null) {
+          intellijJarIds.add(jarId);
         }
+      }
+      for (GradleProjectStructureNode<GradleJarId> jarNode : gradleJarIds.values()) {
+        jarNode.setAttributes(GradleTextAttributes.GRADLE_LOCAL_CHANGE);
+      }
+      for (GradleJarId jarId : intellijJarIds) {
+        GradleProjectStructureNode<GradleJarId> jarNode = buildNode(jarId, GradleUtil.extractNameFromPath(jarId.getPath()));
+        jarNode.setAttributes(GradleTextAttributes.INTELLIJ_LOCAL_CHANGE);
+        jarNode.getDescriptor().setToolTip(jarId.getPath());
+        dependencyNode.add(jarNode);
       }
     }
   }

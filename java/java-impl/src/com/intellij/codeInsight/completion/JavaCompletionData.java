@@ -625,10 +625,8 @@ public class JavaCompletionData extends JavaAwareCompletionData {
         afterNew ||
         expressionPosition ||
         isStatementPosition(position)) {
-      boolean needSpace = !inCast && !typeFragment && !expressionPosition && !inGenerics && !afterNew;
       for (String primitiveType : PRIMITIVE_TYPES) {
-        LookupElement keyword = createKeyword(position, primitiveType);
-        result.addElement(needSpace ? new OverrideableSpace(keyword, TailType.HUMBLE_SPACE_BEFORE_WORD) : keyword);
+        result.addElement(createKeyword(position, primitiveType));
       }
     }
     if (declaration) {

@@ -32,6 +32,7 @@ import org.jetbrains.plugins.gradle.config.GradleSettings;
 import org.jetbrains.plugins.gradle.model.gradle.GradleLibrary;
 import org.jetbrains.plugins.gradle.model.gradle.GradleModule;
 import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
+import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesModel;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper;
 import org.jetbrains.plugins.gradle.task.GradleResolveProjectTask;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
@@ -240,6 +241,9 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
               assert intellijModule != null;
               myDependencyManager.importDependencies(module.getDependencies(), intellijModule);
             }
+
+            GradleProjectStructureChangesModel changesModel = project.getComponent(GradleProjectStructureChangesModel.class);
+            changesModel.update(projectWithResolvedLibraries);
           }
         });
       }

@@ -1,3 +1,3 @@
 public class Foo {
-  Object foo(boolean <caret>){ }
+  Object foo(boolean<caret>){ }
 }

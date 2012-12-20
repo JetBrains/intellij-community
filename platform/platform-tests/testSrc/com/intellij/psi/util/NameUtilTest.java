@@ -321,6 +321,10 @@ public class NameUtilTest extends UsefulTestCase {
     assertFalse(pattern + " matches " + name + "!!!", caseInsensitiveMatcher(pattern).matches(name));
   }
 
+  public void testUpperCaseMatchesLowerCase() {
+    assertMatches("ABC_B.C", "abc_b.c");
+  }
+
   public void testLowerCaseHumps() {
     assertMatches("foo", "foo");
     assertDoesntMatch("foo", "fxoo");

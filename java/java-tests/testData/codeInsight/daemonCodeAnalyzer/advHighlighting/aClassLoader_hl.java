@@ -1723,7 +1723,7 @@ class SystemClassLoaderAction implements <error descr="Cannot resolve symbol 'Pr
 	}
 
 	c = Class.forName<error descr="'forName(java.lang.String, boolean, java.lang.ClassLoader)' in 'java.lang.Class' cannot be applied to '(java.lang.String, boolean, ClassLoader)'">(cls, true, parent)</error>;
-	<error descr="Incompatible types. Found: 'java.lang.reflect.Constructor<T>', required: 'Constructor'">ctor = c.getDeclaredConstructor(cp)</error>;
+	ctor = c.getDeclaredConstructor(cp);
 	sys = (ClassLoader) ctor.<error descr="Cannot resolve method 'newInstance(java.lang.Object[])'">newInstance</error>(params);
 	Thread.currentThread().setContextClassLoader<error descr="'setContextClassLoader(java.lang.ClassLoader)' in 'java.lang.Thread' cannot be applied to '(ClassLoader)'">(sys)</error>;
 	return sys;

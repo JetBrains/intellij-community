@@ -157,7 +157,8 @@ public class DetailsCache {
                   @Override
                   public void run(@NotNull ProgressIndicator indicator) {
                     if (!recheck.process(abstractHash)) return;
-                    if (getBranches(root, abstractHash) != null) return;
+                    List<String> branches1 = getBranches(root, abstractHash);
+                    if (branches1 != null && ! branches1.isEmpty()) return;
                     List<String> branches;
                     try {
                       branches = new LowLevelAccessImpl(myProject, root).getBranchesWithCommit(abstractHash.getString());

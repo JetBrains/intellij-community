@@ -155,7 +155,7 @@ public class GradleProjectStructureChangesDetector extends AbstractProjectCompon
 
           // There is a possible case that we need to add/remove IJ-specific new nodes because of the IJ project structure changes.
           rebuildTreeModel();
-          GradleUtil.refreshProject(myProject);
+          //GradleUtil.refreshProject(myProject);
         }
       });
     }

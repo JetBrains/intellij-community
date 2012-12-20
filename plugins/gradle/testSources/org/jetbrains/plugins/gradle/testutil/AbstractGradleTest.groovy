@@ -43,7 +43,7 @@ public abstract class AbstractGradleTest {
   GradleProjectStructureTreeModel treeModel
   GradleProjectBuilder gradle
   IntellijProjectBuilder intellij
-  def changesBuilder
+  ChangeBuilder changesBuilder
   ProjectStructureChecker treeChecker
   def container
   private Map<TextAttributesKey, GradleProjectStructureNodeFilter> treeFilters = [:]
