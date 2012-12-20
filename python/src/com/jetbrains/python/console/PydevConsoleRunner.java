@@ -32,6 +32,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -40,6 +41,7 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.django.run.Runner;
@@ -297,6 +299,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   private static Pair<Integer, Integer> getRemotePortsFromProcess(RemoteSshProcess process) throws ExecutionException {
     Scanner s = new Scanner(process.getInputStream());
 
+
     long started = System.currentTimeMillis();
 
     while (System.currentTimeMillis() - started < PORTS_WAITING_TIMEOUT) {
@@ -312,6 +315,24 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
         }
         catch (InterruptedException e1) {
         }
+      }
+      try {
+        if (process.exitValue() != 0) {
+          String error;
+          try {
+            error = "Console process terminated with error:\n" + StreamUtil.readText(process.getErrorStream());
+          }
+          catch (Exception e) {
+            error = "Console process terminated with exit code " + process.exitValue();
+          }
+          throw new ExecutionException(error);
+        }
+        else {
+          break;
+        }
+      }
+      catch (IllegalThreadStateException e) {
+        //continue
       }
     }
 
