@@ -55,7 +55,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
     runPythonConsole(project, e.getData(LangDataKeys.MODULE));
   }
 
-  @Nullable
+  @NotNull
   public static PydevConsoleRunner runPythonConsole(Project project, Module contextModule) {
     assert project != null : "Project is null";
 
