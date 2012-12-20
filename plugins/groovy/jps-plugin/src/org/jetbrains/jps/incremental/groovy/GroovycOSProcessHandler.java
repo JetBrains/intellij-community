@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.GroovyCompilerMessageCategories;
@@ -102,11 +103,15 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
         }
 
         final String compiled = handleOutputBuffer(GroovyRtConstants.COMPILED_START, GroovyRtConstants.COMPILED_END);
-        final List<String> list = StringUtil.split(compiled, GroovyRtConstants.SEPARATOR);
+        final List<String> list = splitAndTrim(compiled);
         String outputPath = list.get(0);
         String sourceFile = list.get(1);
 
-        ContainerUtil.addIfNotNull(getOutputItem(outputPath, sourceFile), myCompiledItems);
+        OutputItem item = new OutputItem(outputPath, sourceFile);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Output: " + item);
+        }
+        myCompiledItems.add(item);
 
       }
       else if (outputBuffer.indexOf(GroovyRtConstants.TO_RECOMPILE_START) != -1) {
@@ -122,7 +127,7 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
 
         text = handleOutputBuffer(GroovyRtConstants.MESSAGES_START, GroovyRtConstants.MESSAGES_END);
 
-        List<String> tokens = StringUtil.split(text, GroovyRtConstants.SEPARATOR);
+        List<String> tokens = splitAndTrim(text);
         LOG.assertTrue(tokens.size() > 4, "Wrong number of output params");
 
         String category = tokens.get(0);
@@ -150,7 +155,11 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
                                    ? BuildMessage.Kind.WARNING
                                    : BuildMessage.Kind.INFO;
 
-        compilerMessages.add(new CompilerMessage("Groovyc", kind, message, url, -1, -1, -1, lineInt, columnInt));
+        CompilerMessage compilerMessage = new CompilerMessage("Groovyc", kind, message, url, -1, -1, -1, lineInt, columnInt);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Message: " + compilerMessage);
+        }
+        compilerMessages.add(compilerMessage);
       }
     }
   }
@@ -169,9 +178,12 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
     return text.trim();
   }
 
-  @Nullable
-  private static OutputItem getOutputItem(final String outputPath, final String sourceFile) {
-    return new OutputItem(outputPath, sourceFile);
+  private static List<String> splitAndTrim(String compiled) {
+    return ContainerUtil.map(StringUtil.split(compiled, GroovyRtConstants.SEPARATOR), new Function<String, String>() {
+      public String fun(String s) {
+        return s.trim();
+      }
+    });
   }
 
   public List<OutputItem> getSuccessfullyCompiled() {

@@ -5,7 +5,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.impl.BuildOutputConsumerImpl;
-import org.jetbrains.jps.javac.BinaryContent;
 
 import java.io.File;
 import java.io.IOException;

@@ -1,4 +1,4 @@
-package org.jetbrains.jps.javac;
+package org.jetbrains.jps.incremental;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -7,41 +7,41 @@ import java.io.Writer;
 * @author Eugene Zhuravlev
 *         Date: 9/24/11
 */
-abstract class LineOutputWriter extends Writer {
+public abstract class LineOutputWriter extends Writer {
   private final LineParser myLineParser = new LineParser();
 
-  public void write(int c) throws IOException {
+  public void write(int c) {
     processData(new CharSequenceIterator(c));
   }
 
-  public void write(char[] cbuf) throws IOException {
+  public void write(char[] cbuf) {
     processData(new CharSequenceIterator(cbuf));
   }
 
-  public void write(String str) throws IOException {
+  public void write(String str) {
     processData(new CharSequenceIterator(str));
   }
 
-  public void write(String str, int off, int len) throws IOException {
+  public void write(String str, int off, int len) {
     processData(new CharSequenceIterator(str.subSequence(off, off + len)));
   }
 
-  public Writer append(CharSequence csq) throws IOException {
+  public Writer append(CharSequence csq) {
     processData(new CharSequenceIterator(csq));
     return this;
   }
 
-  public Writer append(CharSequence csq, int start, int end) throws IOException {
+  public Writer append(CharSequence csq, int start, int end) {
     processData(new CharSequenceIterator(csq.subSequence(start, end)));
     return this;
   }
 
-  public Writer append(char c) throws IOException {
+  public Writer append(char c) {
     processData(new CharSequenceIterator(c));
     return this;
   }
 
-  public void write(char[] cbuf, int off, int len) throws IOException {
+  public void write(char[] cbuf, int off, int len) {
     processData(new CharSequenceIterator(cbuf, off, len));
   }
 

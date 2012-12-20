@@ -9,11 +9,11 @@ import org.jetbrains.asm4.ClassWriter;
 import org.jetbrains.asm4.Opcodes;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
+import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.CompiledClass;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
-import org.jetbrains.jps.javac.BinaryContent;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 
 import java.io.File;

@@ -131,8 +131,6 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
 
     assert compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.MAVEN_DEFAULT_ANNOTATION_PROFILE) == null
     assert compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.PROFILE_PREFIX + "project").getGeneratedSourcesDirectoryName(false).replace('\\', '/').endsWith("out/generated")
-
-    assert compilerConfiguration.excludedEntriesConfiguration.excludeEntryDescriptions.find {it.url.endsWith("out/generated")} != null
   }
 
   public void testImportAnnotationProcessorOptions() {
@@ -209,9 +207,6 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
     def profile = compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.PROFILE_PREFIX + "project")
     assert profile.getGeneratedSourcesDirectoryName(false).replace('\\', '/').endsWith("target/metamodel")
     assert profile.getGeneratedSourcesDirectoryName(true).replace('\\', '/').endsWith("target/metamodelTest")
-
-    assert compilerConfiguration.excludedEntriesConfiguration.excludeEntryDescriptions.find {it.url.endsWith("target/metamodel")} != null
-    assert compilerConfiguration.excludedEntriesConfiguration.excludeEntryDescriptions.find {it.url.endsWith("target/metamodelTest")} != null
   }
 
   public void testMavenProcessorPluginDefault() {
