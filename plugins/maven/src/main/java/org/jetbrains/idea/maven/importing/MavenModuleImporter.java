@@ -220,65 +220,14 @@ public class MavenModuleImporter {
   }
 
   private void configSurefirePlugin() {
-    List<String> urls = new ArrayList<String>();
-
-    AccessToken accessToken = ReadAction.start();
-    try {
-      MavenDomProjectModel domModel = null;
-
-      Element config = myMavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-surefire-plugin");
-      for (String each : MavenJDOMUtil.findChildrenValuesByPath(config, "additionalClasspathElements", "additionalClasspathElement")) {
-        String url = VfsUtil.pathToUrl(each);
-
-        if (domModel == null) {
-          domModel = MavenDomUtil.getMavenDomProjectModel(myModule.getProject(), myMavenProject.getFile());
-        }
-
-        if (domModel != null) {
-          url = MavenPropertyResolver.resolve(url, domModel);
-        }
-
-        urls.add(url);
-      }
-    }
-    finally {
-      accessToken.finish();
-    }
-
+    // Remove "maven-surefire-plugin urls" library created by previous version of IDEA.
+    // todo remove this code after 01.06.2013
     LibraryTable moduleLibraryTable = myRootModelAdapter.getRootModel().getModuleLibraryTable();
 
     Library library = moduleLibraryTable.getLibraryByName(SUREFIRE_PLUGIN_LIBRARY_NAME);
-    if (library == null) {
-      if (urls.isEmpty()) {
-        return;
-      }
-
-      library = moduleLibraryTable.createLibrary(SUREFIRE_PLUGIN_LIBRARY_NAME);
-      LibraryOrderEntry orderEntry = myRootModelAdapter.getRootModel().findLibraryOrderEntry(library);
-      orderEntry.setScope(DependencyScope.TEST);
+    if (library != null) {
+      moduleLibraryTable.removeLibrary(library);
     }
-    else {
-      if (urls.isEmpty()) {
-        moduleLibraryTable.removeLibrary(library);
-        return;
-      }
-    }
-
-    String[] oldUrls = library.getUrls(OrderRootType.CLASSES);
-    if (!urls.equals(Arrays.asList(oldUrls))) {
-      Library.ModifiableModel modifiableModel = library.getModifiableModel();
-
-      for (String url : oldUrls) {
-        modifiableModel.removeRoot(url, OrderRootType.CLASSES);
-      }
-
-      for (String url : urls) {
-        modifiableModel.addRoot(url, OrderRootType.CLASSES);
-      }
-
-      modifiableModel.commit();
-    }
-
   }
 
   private void addAttachArtifactDependency(@NotNull Element buildHelperCfg,

@@ -774,7 +774,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
                             getProjectPath() + "/m3/target/classes");
   }
 
-  public void testAdditionalClasspathElementsInTests() throws Exception {
+  public void _testAdditionalClasspathElementsInTests() throws Exception {
     File iof1 = new File(myDir, "foo/bar1");
     File iof2 = new File(myDir, "foo/bar2");
     iof1.mkdirs();
