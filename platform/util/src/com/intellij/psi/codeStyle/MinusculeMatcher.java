@@ -61,7 +61,7 @@ public class MinusculeMatcher implements Matcher {
     }
     int i = 0;
     while (isWildcard(i)) i++;
-    myHasHumps = hasHumps(i + 1);
+    myHasHumps = hasFlag(i + 1, isUpperCase) && hasFlag(i + 1, isLowerCase);
     myHasDots = hasDots(i);
     myHasWildCards = hasWildCards();
   }
@@ -75,9 +75,9 @@ public class MinusculeMatcher implements Matcher {
     return false;
   }
 
-  private boolean hasHumps(int start) {
+  private boolean hasFlag(int start, boolean[] flags) {
     for (int i = start; i < myPattern.length; i++) {
-      if (isUpperCase[i]) {
+      if (flags[i]) {
         return true;
       }
     }
