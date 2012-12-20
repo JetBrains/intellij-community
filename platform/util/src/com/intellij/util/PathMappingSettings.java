@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -107,8 +108,16 @@ public class PathMappingSettings implements Cloneable {
     return false;
   }
 
-  private static String norm(String s) {
-    return FileUtil.toSystemIndependentName(s);
+  private static String norm(@NotNull String path) {
+    return FileUtil.toSystemIndependentName(path);
+  }
+
+  private static String normLocal(@NotNull String path) {
+    if (SystemInfo.isWindows) {
+      path = path.toLowerCase();
+    }
+
+    return norm(path);
   }
 
   public boolean isUseMapping() {
@@ -213,10 +222,8 @@ public class PathMappingSettings implements Cloneable {
         return false;
       }
 
-      path = norm(path);
-
-      String localPrefix = norm(myLocalRoot);
-      return localPrefix.length() > 0 && path.startsWith(localPrefix);
+      String localPrefix = normLocal(myLocalRoot);
+      return localPrefix.length() > 0 && normLocal(path).startsWith(localPrefix);
     }
 
     public String mapToRemote(@NotNull String path) {
@@ -224,7 +231,7 @@ public class PathMappingSettings implements Cloneable {
         return path;
       }
 
-      return norm(path).replace(norm(myLocalRoot), norm(myRemoteRoot));
+      return normLocal(path).replace(normLocal(myLocalRoot), norm(myRemoteRoot));
     }
 
     private boolean isEmpty() {
