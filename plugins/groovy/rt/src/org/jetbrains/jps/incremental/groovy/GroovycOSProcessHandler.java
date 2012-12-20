@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
@@ -101,7 +102,7 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
         }
 
         final String compiled = handleOutputBuffer(GroovycRunner.COMPILED_START, GroovycRunner.COMPILED_END);
-        final List<String> list = StringUtil.split(compiled, GroovycRunner.SEPARATOR);
+        final List<String> list = splitAndTrim(compiled);
         String outputPath = list.get(0);
         String sourceFile = list.get(1);
 
@@ -121,7 +122,7 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
 
         text = handleOutputBuffer(GroovycRunner.MESSAGES_START, GroovycRunner.MESSAGES_END);
 
-        List<String> tokens = StringUtil.split(text, GroovycRunner.SEPARATOR);
+        List<String> tokens = splitAndTrim(text);
         LOG.assertTrue(tokens.size() > 4, "Wrong number of output params");
 
         String category = tokens.get(0);
@@ -152,6 +153,14 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
         compilerMessages.add(new CompilerMessage("Groovyc", kind, message, url, -1, -1, -1, lineInt, columnInt));
       }
     }
+  }
+
+  private static List<String> splitAndTrim(String compiled) {
+    return ContainerUtil.map(StringUtil.split(compiled, GroovycRunner.SEPARATOR), new Function<String, String>() {
+      public String fun(String s) {
+        return s.trim();
+      }
+    });
   }
 
   private String handleOutputBuffer(String startMarker, String endMarker) {
