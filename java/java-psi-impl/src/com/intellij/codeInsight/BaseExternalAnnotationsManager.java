@@ -16,21 +16,16 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ConcurrentSoftHashMap;
 import com.intellij.util.containers.ConcurrentSoftValueHashMap;
 import com.intellij.util.containers.MultiMap;
@@ -45,11 +40,11 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
-public class BaseExternalAnnotationsManager extends ExternalAnnotationsManager {
+public abstract class BaseExternalAnnotationsManager extends ExternalAnnotationsManager{
   private static final Logger LOG = Logger.getInstance("#" + BaseExternalAnnotationsManager.class.getName());
   @NotNull private static final List<PsiFile> NULL = new ArrayList<PsiFile>();
-  @NotNull protected final ConcurrentMap<String, List<PsiFile>> myExternalAnnotations = new ConcurrentSoftValueHashMap<String, List<PsiFile>>();
-  @NotNull private volatile ThreeState myHasAnyAnnotationsRoots = ThreeState.UNSURE;
+  @NotNull protected final ConcurrentMap<String, List<PsiFile>>
+    myExternalAnnotations = new ConcurrentSoftValueHashMap<String, List<PsiFile>>();
   protected final PsiManager myPsiManager;
 
   public BaseExternalAnnotationsManager(final PsiManager psiManager) {
@@ -95,22 +90,7 @@ public class BaseExternalAnnotationsManager extends ExternalAnnotationsManager {
     return StringUtil.trimEnd(buf.toString(), ", ") + externalName.substring(rightIdx);
   }
 
-  protected boolean hasAnyAnnotationsRoots() {
-    if (myHasAnyAnnotationsRoots == ThreeState.UNSURE) {
-      final Module[] modules = ModuleManager.getInstance(myPsiManager.getProject()).getModules();
-      for (Module module : modules) {
-        for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
-          final String[] urls = AnnotationOrderRootType.getUrls(entry);
-          if (urls.length > 0) {
-            myHasAnyAnnotationsRoots = ThreeState.YES;
-            return true;
-          }
-        }
-      }
-      myHasAnyAnnotationsRoots = ThreeState.NO;
-    }
-    return myHasAnyAnnotationsRoots == ThreeState.YES;
-  }
+  protected abstract boolean hasAnyAnnotationsRoots();
 
   @Override
   @Nullable
@@ -216,7 +196,7 @@ public class BaseExternalAnnotationsManager extends ExternalAnnotationsManager {
       if (onlyWritable && !file.isWritable()) continue;
 
       final MultiMap<String, AnnotationData> fileData = getDataFromFile(file);
-      
+
       collectAnnotations(result, fileData.get(externalName), factory);
       collectAnnotations(result, fileData.get(oldExternalName), factory);
     }
@@ -241,24 +221,7 @@ public class BaseExternalAnnotationsManager extends ExternalAnnotationsManager {
   }
 
   @NotNull
-  protected List<VirtualFile> getExternalAnnotationsRoots(@NotNull VirtualFile libraryFile) {
-    final List<OrderEntry> entries = ProjectRootManager.getInstance(myPsiManager.getProject()).getFileIndex().getOrderEntriesForFile(
-      libraryFile);
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
-    for (OrderEntry entry : entries) {
-      if (entry instanceof ModuleOrderEntry) {
-        continue;
-      }
-      final String[] externalUrls = AnnotationOrderRootType.getUrls(entry);
-      for (String url : externalUrls) {
-        VirtualFile root = VirtualFileManager.getInstance().findFileByUrl(url);
-        if (root != null) {
-          result.add(root);
-        }
-      }
-    }
-    return result;
-  }
+  protected abstract List<VirtualFile> getExternalAnnotationsRoots(@NotNull VirtualFile libraryFile);
 
   @Override
   @Nullable
@@ -321,7 +284,6 @@ public class BaseExternalAnnotationsManager extends ExternalAnnotationsManager {
   protected void dropCache() {
     myExternalAnnotations.clear();
     annotationsFileToDataAndModificationStamp.clear();
-    myHasAnyAnnotationsRoots = ThreeState.UNSURE;
     cache.clear();
   }
 
