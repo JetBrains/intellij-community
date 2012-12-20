@@ -88,12 +88,7 @@ public class QueueProcessor<T> {
 
   @NotNull
   public static QueueProcessor<Runnable> createRunnableQueueProcessor() {
-    return new QueueProcessor<Runnable>(new Consumer<Runnable>() {
-          @Override
-          public void consume(Runnable runnable) {
-            runnable.run();
-          }
-        });
+    return new QueueProcessor<Runnable>(new RunnableConsumer());
   }
 
   @NotNull
@@ -266,6 +261,13 @@ public class QueueProcessor<T> {
     @Override
     public boolean equals(Object obj) {
       return ((MyOverrideEquals)obj).myDelegate == myDelegate;
+    }
+  }
+
+  public static final class RunnableConsumer implements Consumer<Runnable> {
+    @Override
+    public void consume(Runnable runnable) {
+      runnable.run();
     }
   }
 }
