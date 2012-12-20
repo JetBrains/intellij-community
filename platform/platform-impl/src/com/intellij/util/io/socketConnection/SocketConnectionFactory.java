@@ -41,8 +41,8 @@ public class SocketConnectionFactory {
 
   public static <Request extends AbstractRequest, Response extends AbstractResponse>
   ClientSocketConnection<Request, Response> createConnection(final @Nullable InetAddress host, int initialPort,
-                                                       int portsNumberToTry,
-                                                       RequestResponseExternalizerFactory<Request, Response> factory) {
+                                                             int portsNumberToTry,
+                                                             RequestResponseExternalizerFactory<Request, Response> factory) {
     return new SocketConnectionImpl<Request, Response>(host, initialPort, portsNumberToTry, factory);
   }
 }

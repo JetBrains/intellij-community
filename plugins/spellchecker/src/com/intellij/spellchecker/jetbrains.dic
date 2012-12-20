@@ -124,6 +124,7 @@ freelist
 freelists
 freepools
 frontend
+ftlvariable
 fulltext
 func
 gdata
@@ -471,6 +472,7 @@ varray
 verdana
 versa
 vertices
+vtlvariable
 watchlist
 webservice
 whitespace

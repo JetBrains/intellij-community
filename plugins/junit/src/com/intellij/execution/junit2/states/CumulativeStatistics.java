@@ -16,10 +16,8 @@
 
 package com.intellij.execution.junit2.states;
 
-import com.intellij.execution.junit2.states.Statistics;
-
 public class CumulativeStatistics extends Statistics {
-  private int myMemoryUsage = 0;
+  private long myMemoryUsage = 0;
   private boolean myIsEmpty = true;
   public CumulativeStatistics() {
   }
@@ -33,7 +31,7 @@ public class CumulativeStatistics extends Statistics {
     myIsEmpty = false;
   }
 
-  public int getMemoryUsage() {
+  public long getMemoryUsage() {
     return myMemoryUsage;
   }
 }

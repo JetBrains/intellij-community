@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -229,7 +229,7 @@ public class PeerFactoryImpl extends PeerFactory {
   }
 
   public PsiBuilder createBuilder(ASTNode tree, Language lang, CharSequence seq, final Project project) {
-    return PsiBuilderFactory.getInstance().createBuilder(project, tree, lang, seq);
+    return PsiBuilderFactory.getInstance().createBuilder(project, tree, null, lang, seq);
   }
 
   public PsiBuilder createBuilder(final ASTNode tree, final Lexer lexer, final Language lang, final CharSequence seq, final Project project) {

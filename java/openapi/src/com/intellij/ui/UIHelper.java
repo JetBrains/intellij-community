@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,18 +31,11 @@ import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 
-/**
- * @see com.intellij.peer.PeerFactory#getUIHelper()
- */
+/** @deprecated to remove in IDEA 13 */
+@SuppressWarnings({"UnusedDeclaration", "deprecation"})
 public interface UIHelper {
-  /**
-   * @deprecated use JBTree class instead, it will automatically configure tool tips
-   */
   void installToolTipHandler(JTree tree);
 
-  /**
-   * @deprecated use JBTable class instead, it will automatically configure tool tips
-   */
   void installToolTipHandler(JTable table);
 
   void installEditSourceOnDoubleClick(JTree tree);
@@ -77,12 +70,6 @@ public interface UIHelper {
 
   void installSelectionSaver(JTree tree);
 
-  /**
-   * @param text
-   * @param type expected type that the expression to be input in this field should have, subtypes accepted
-   * @param context where the expression is to be virtually inserted (for smart completing variables from the context)
-   * @param project
-   */
   TextComponent createTypedTextField(final String text, PsiType type, PsiElement context, final Project project);
 
   PackageChooser createPackageChooser(String title, Project project);

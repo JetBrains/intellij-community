@@ -890,6 +890,7 @@ public class ListUtils {
   }
 
   public void testCastInstanceofedQualifier() throws Throwable { doTest(); }
+  public void testCastInstanceofedQualifierInForeach() throws Throwable { doTest(); }
   public void testCastComplexInstanceofedQualifier() throws Throwable { doTest(); }
 
   public void testCastTooComplexInstanceofedQualifier() throws Throwable { doAntiTest(); }

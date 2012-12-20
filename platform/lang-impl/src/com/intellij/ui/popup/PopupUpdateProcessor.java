@@ -21,7 +21,6 @@ import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiElement;
@@ -34,7 +33,7 @@ import java.awt.*;
 /**
  * @author yole
  */
-public abstract class PopupUpdateProcessor extends JBPopupAdapter {
+public abstract class PopupUpdateProcessor extends PopupUpdateProcessorBase {
 
   private final Project myProject;
 
@@ -42,8 +41,6 @@ public abstract class PopupUpdateProcessor extends JBPopupAdapter {
     myProject = project;
     
   }
-
-  public abstract void updatePopup(Object lookupItemObject);
 
   public void beforeShown(final LightweightWindowEvent windowEvent) {
     final Lookup activeLookup = LookupManager.getInstance(myProject).getActiveLookup();

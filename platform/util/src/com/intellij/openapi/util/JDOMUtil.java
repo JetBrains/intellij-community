@@ -179,7 +179,7 @@ public class JDOMUtil {
     }
   }
 
-  public static void internElement(final Element element, final StringInterner interner) {
+  public static void internElement(@NotNull Element element, @NotNull StringInterner interner) {
     element.setName(intern(interner, element.getName()));
 
     final List attributes = element.getAttributes();

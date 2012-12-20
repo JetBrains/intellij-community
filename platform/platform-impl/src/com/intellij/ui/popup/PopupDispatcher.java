@@ -118,9 +118,7 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
     if (ourShowingStep == null) {
       return false;
     }
-    ourShowingStep.dispatch(e);
-
-    return true;
+    return ourShowingStep.dispatch(e);
   }
 
   public static void setShowing(WizardPopup aBaseWizardPopup) {

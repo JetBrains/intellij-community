@@ -22,4 +22,10 @@
     <description>Type of variable &lt;code&gt;iaex&lt;/code&gt; may be weakened to 'java.lang.RuntimeException'</description>
   </problem>
 
+  <problem>
+    <file>AutoClosableTest.java</file>
+    <line>34</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Type may be weakened</problem_class>
+    <description>Type of variable &lt;code&gt;bar&lt;/code&gt; may be weakened to 'com.siyeh.igtest.abstraction.weaken_type.AutoClosableTest2.Foo' #loc</description>
+  </problem>
 </problems>

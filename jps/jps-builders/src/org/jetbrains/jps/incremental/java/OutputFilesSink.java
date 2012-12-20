@@ -92,16 +92,6 @@ class OutputFilesSink implements OutputFileConsumer {
       }
     }
 
-    if (!isTemp && outKind != JavaFileObject.Kind.CLASS && outKind != JavaFileObject.Kind.SOURCE) {
-      try {
-        // this should be a generated resource
-        FSOperations.markDirty(myContext, fileObject.getFile());
-      }
-      catch (IOException e) {
-        LOG.info(e);
-      }
-    }
-
     try {
       writeToDisk(fileObject, isTemp);
     }

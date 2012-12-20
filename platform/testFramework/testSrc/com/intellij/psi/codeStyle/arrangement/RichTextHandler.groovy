@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util;
+package com.intellij.psi.codeStyle.arrangement
 
-import com.intellij.openapi.util.Key;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NotNull
 
 /**
- * @author ik
+ * @author Denis Zhdanov
+ * @since 12/19/12 5:31 PM
  */
-public interface CharTable {
-  Key<CharTable> CHAR_TABLE_KEY = new Key<CharTable>("Char table");
+interface RichTextHandler {
 
-  @NotNull
-  CharSequence intern(@NotNull CharSequence text);
-
-  @NotNull
-  CharSequence intern(@NotNull CharSequence baseText, int startOffset, int endOffset);
+  String getMarker()
+  void handle(@NotNull Info info, @NotNull Map<String, String> attributes, int start, int end)
 }

@@ -101,8 +101,6 @@ public final class LoadTextUtil {
   }
 
   private static Charset detectCharset(@NotNull VirtualFile virtualFile, @NotNull byte[] content) {
-    if (virtualFile.isCharsetSet()) return virtualFile.getCharset();
-
     Charset charset = doDetectCharset(virtualFile, content);
     charset = charset == null ? EncodingRegistry.getInstance().getDefaultCharset() : charset;
     if (EncodingRegistry.getInstance().isNative2Ascii(virtualFile)) {
@@ -119,10 +117,10 @@ public final class LoadTextUtil {
 
   @NotNull
   private static Pair<Charset, byte[]> doDetectCharsetAndSetBOM(@NotNull VirtualFile virtualFile, @NotNull byte[] content, boolean saveBOM) {
-    Charset charset = detectCharset(virtualFile, content);
+    Charset charset = virtualFile.isCharsetSet() ? virtualFile.getCharset() : detectCharset(virtualFile, content);
     Pair<Charset,byte[]> bomAndCharset = getBOMAndCharset(content, charset);
     final byte[] bom = bomAndCharset.second;
-    if (saveBOM && bom.length != 0) {
+    if (saveBOM && bom != null && bom.length != 0) {
       virtualFile.setBOM(bom);
     }
     return bomAndCharset;
@@ -136,8 +134,8 @@ public final class LoadTextUtil {
     String charsetName = fileType.getCharset(virtualFile, content);
 
     if (charsetName == null) {
-      Charset saved = EncodingRegistry.getInstance().getEncoding(virtualFile, true);
-      if (saved != null) return saved;
+      Charset specifiedExplicitly = EncodingRegistry.getInstance().getEncoding(virtualFile, true);
+      if (specifiedExplicitly != null) return specifiedExplicitly;
     }
     return CharsetToolkit.forName(charsetName);
   }

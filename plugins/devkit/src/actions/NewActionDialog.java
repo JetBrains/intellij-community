@@ -24,10 +24,10 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.peer.PeerFactory;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -126,7 +126,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
         }
       }
     });
-    PeerFactory.getInstance().getUIHelper().installListSpeedSearch(myGroupList, new Function<Object, String>() {
+    new ListSpeedSearch(myGroupList, new Function<Object, String>() {
       public String fun(final Object o) {
         return ActionManager.getInstance().getId((AnAction) o);
       }

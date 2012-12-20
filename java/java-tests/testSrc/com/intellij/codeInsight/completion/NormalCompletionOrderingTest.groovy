@@ -125,10 +125,10 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     myFixture.complete(CompletionType.BASIC, 2);
   }
 
-  public void _testDontDispreferImplsAfterNew() { //todo[peter]
+  public void testImplsAfterNew() {
     myFixture.addClass("package foo; public interface Xxx {}");
     configureSecondCompletion();
-    assertPreferredItems(0, "Xxx", "XxxImpl");
+    assertPreferredItems(0, "XxxImpl", "Xxx");
   }
 
   public void testPreferLessHumps() throws Throwable {
@@ -338,7 +338,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testPreferKeywordsToVoidMethodsInExpectedTypeContext() {
-    checkPreferredItems 0, 'null', 'noo', 'new', 'noo2', 'notify', 'notifyAll'
+    checkPreferredItems 0, 'noo', 'new', 'null', 'noo2', 'notify', 'notifyAll'
   }
 
   public void testPreferBetterMatchingConstantToMethods() {

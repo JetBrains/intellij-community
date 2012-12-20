@@ -470,4 +470,34 @@
   <item name='javax.swing.SwingUtilities java.awt.Point convertPoint(java.awt.Component, java.awt.Point, java.awt.Component) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='javax.swing.JScrollPane JScrollPane(java.awt.Component, int, int) 1'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="intValues" val="{javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS}"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.JScrollPane JScrollPane(int, int) 0'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="intValues" val="{javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS}"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.JScrollPane int getVerticalScrollBarPolicy()'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="intValues" val="{javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS}"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.JScrollPane JScrollPane(java.awt.Component, int, int) 2'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="intValues" val="{javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED, javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER, javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS}"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.JScrollPane JScrollPane(int, int) 1'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="intValues" val="{javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED, javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER, javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS}"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.JScrollPane int getHorizontalScrollBarPolicy()'>
+    <annotation name='org.intellij.lang.annotations.MagicConstant'>
+      <val name="intValues" val="{javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED, javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER, javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS}"/>
+    </annotation>
+  </item>
 </root>

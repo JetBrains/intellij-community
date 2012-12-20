@@ -156,10 +156,14 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
   private GroovycOSProcessHandler runGroovyc(final CompileContext context, ModuleChunk chunk, File tempFile) throws IOException {
     //todo xmx
+    ArrayList<String> classpath = new ArrayList<String>(generateClasspath(context, chunk));
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Groovyc classpath: " + classpath);
+    }
     final List<String> cmd = ExternalProcessUtil.buildJavaCommandLine(
       getJavaExecutable(chunk),
       "org.jetbrains.groovy.compiler.rt.GroovycRunner",
-      Collections.<String>emptyList(), new ArrayList<String>(generateClasspath(context, chunk)),
+      Collections.<String>emptyList(), classpath,
       Arrays.asList("-Xmx384m",
                     "-Dfile.encoding=" + System.getProperty("file.encoding")/*,
                     "-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239"*/),

@@ -54,7 +54,9 @@ public abstract class TestColumnInfo extends ColumnInfo implements Comparator {
     }
 
     public final int compare(final Object o1, final Object o2) {
-      return getAspect(getTestStatistics(o2)) - getAspect(getTestStatistics(o1));
+      final long a2 = getAspect(getTestStatistics(o2));
+      final long a1 = getAspect(getTestStatistics(o1));
+      return a2 > a1 ? 1 : a1 > a2 ? -1 : 0;
     }
 
     private static Statistics getTestStatistics(final Object o1) {
@@ -65,7 +67,7 @@ public abstract class TestColumnInfo extends ColumnInfo implements Comparator {
       return new RightAlignedRenderer();
     }
 
-    protected abstract int getAspect(Statistics statistics);
+    protected abstract long getAspect(Statistics statistics);
   }
 
   private static final ColumnInfo TEST = new TestColumnInfo(ExecutionBundle.message("junit.runing.info.test.column.name")) {
@@ -90,7 +92,7 @@ public abstract class TestColumnInfo extends ColumnInfo implements Comparator {
       return Formatters.statisticsFor(test).getTime();
     }
 
-    public int getAspect(final Statistics statistics) {
+    public long getAspect(final Statistics statistics) {
       return statistics.getTime();
     }
   };
@@ -99,7 +101,7 @@ public abstract class TestColumnInfo extends ColumnInfo implements Comparator {
       return Formatters.statisticsFor(test).getMemoryUsageDelta();
     }
 
-    public int getAspect(final Statistics statistics) {
+    public long getAspect(final Statistics statistics) {
       return statistics.getMemoryUsage();
     }
   };
@@ -109,7 +111,7 @@ public abstract class TestColumnInfo extends ColumnInfo implements Comparator {
       return Formatters.statisticsFor(test).getBeforeMemory();
     }
 
-    public int getAspect(final Statistics statistics) {
+    public long getAspect(final Statistics statistics) {
       return statistics.getBeforeMemory();
     }
   };
@@ -119,7 +121,7 @@ public abstract class TestColumnInfo extends ColumnInfo implements Comparator {
       return Formatters.statisticsFor(test).getAfterMemory();
     }
 
-    public int getAspect(final Statistics statistics) {
+    public long getAspect(final Statistics statistics) {
       return statistics.getAfterMemory();
     }
   };

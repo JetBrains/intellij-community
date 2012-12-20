@@ -24,11 +24,12 @@ import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.MultiSelectionListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.ui.JBListWithHintProvider;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.SeparatorWithText;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.ClosableByLeftArrow;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.util.ui.UIUtil;
@@ -474,9 +475,14 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     myIndexForShowingChild = aIndexForShowingChild;
   }
 
-  private class MyList extends JBList implements DataProvider{
+  private class MyList extends JBListWithHintProvider implements DataProvider {
     public MyList() {
       super(myListModel);
+    }
+
+    @Override
+    protected PsiElement getPsiElementForHint(Object selectedValue) {
+      return selectedValue instanceof PsiElement ? (PsiElement)selectedValue : null;
     }
 
     @Override

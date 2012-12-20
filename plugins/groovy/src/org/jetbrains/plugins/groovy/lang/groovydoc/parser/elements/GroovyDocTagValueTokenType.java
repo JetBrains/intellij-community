@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.parser.elements;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.peer.PeerFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.util.containers.HashSet;
@@ -103,10 +103,9 @@ public class GroovyDocTagValueTokenType extends GroovyDocChameleonElementType im
   }
 
   private ASTNode parseImpl(ASTNode chameleon) {
-    final PeerFactory factory = PeerFactory.getInstance();
     final PsiElement parentElement = chameleon.getTreeParent().getPsi();
     final Project project = parentElement.getProject();
-    final PsiBuilder builder = factory.createBuilder(chameleon, new GroovyLexer(), getLanguage(), chameleon.getText(), project);
+    final PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(project, chameleon, new GroovyLexer(), getLanguage(), chameleon.getText());
 
     PsiBuilder.Marker rootMarker = builder.mark();
     if (BUILT_IN_TYPES.contains(chameleon.getText())) {

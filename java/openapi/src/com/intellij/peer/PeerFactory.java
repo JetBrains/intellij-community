@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,48 +42,39 @@ import org.apache.xmlrpc.XmlRpcServer;
 
 import java.net.InetAddress;
 
+/** @deprecated to remove in IDEA 13 */
+@SuppressWarnings({"UnusedDeclaration", "deprecation"})
 public abstract class PeerFactory {
   public static PeerFactory getInstance() {
     return ServiceManager.getService(PeerFactory.class);
   }
 
-  @Deprecated
   public abstract FileStatusFactory getFileStatusFactory();
 
-  @Deprecated
   public abstract DialogWrapperPeerFactory getDialogWrapperPeerFactory();
 
-  @Deprecated
   public abstract PackageSetFactory getPackageSetFactory();
 
   public abstract UIHelper getUIHelper();
 
-  @Deprecated
   public abstract ErrorViewFactory getErrorViewFactory();
 
-  @Deprecated
   public abstract ContentFactory getContentFactory();
 
-  @Deprecated
   public abstract FileSystemTreeFactory getFileSystemTreeFactory();
 
-  @Deprecated
   public abstract DiffRequestFactory getDiffRequestFactory();
 
-  @Deprecated
   public abstract VcsContextFactory getVcsContextFactory();
 
-  @Deprecated
   public abstract PsiBuilder createBuilder(ASTNode tree, Language lang, CharSequence seq, final Project project);
 
-  @Deprecated
   public abstract PsiBuilder createBuilder(ASTNode tree, Lexer lexer, Language lang, CharSequence seq, final Project project);
 
   public abstract XmlRpcServer createRpcServer();
 
-  public abstract WebServer createWebServer(int port, InetAddress addr, XmlRpcServer xmlrpc);
+  public abstract WebServer createWebServer(int port, InetAddress addr, XmlRpcServer xmlRpc);
 
-  @Deprecated
   public abstract EditorHighlighter createEditorHighlighter(SyntaxHighlighter syntaxHighlighter, EditorColorsScheme colors);
 
   public abstract Sdk createProjectJdk(String name, final String version, final String homePath, SdkType sdkType);

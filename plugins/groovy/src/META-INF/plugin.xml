@@ -1463,7 +1463,7 @@
 
     <action id="Groovy.Doc.Generating"
             class="org.jetbrains.plugins.groovy.doc.actions.GenerateGroovyDocAction"
-            text="Generate GroovyDoc" description="Generating Groovy Documentation"
+            text="Generate GroovyDoc..." description="Generating Groovy Documentation"
             icon="JetgroovyIcons.Groovy.GroovyDoc">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>

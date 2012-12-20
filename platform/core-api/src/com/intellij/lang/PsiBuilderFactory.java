@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,21 +36,19 @@ public abstract class PsiBuilderFactory {
   @NotNull
   public abstract PsiBuilder createBuilder(@NotNull Project project, @NotNull LighterLazyParseableNode chameleon);
 
-  /**
-   * @deprecated consider using {@link #createBuilder(com.intellij.openapi.project.Project, ASTNode)} instead.
-   */
   @NotNull
-  public PsiBuilder createBuilder(@NotNull Project project, @NotNull ASTNode tree, @NotNull Language lang, @NotNull CharSequence seq) {
-    return createBuilder(project, tree, null, lang, seq);
-  }
+  public abstract PsiBuilder createBuilder(@NotNull Project project,
+                                           @NotNull ASTNode chameleon,
+                                           @Nullable Lexer lexer,
+                                           @NotNull Language lang,
+                                           @NotNull CharSequence seq);
 
   @NotNull
-  public abstract PsiBuilder createBuilder(@NotNull Project project, @NotNull ASTNode chameleon, @Nullable Lexer lexer,
-                                           @NotNull Language lang, @NotNull CharSequence seq);
-
-  @NotNull
-  public abstract PsiBuilder createBuilder(@NotNull Project project, @NotNull LighterLazyParseableNode chameleon, @Nullable Lexer lexer,
-                                           @NotNull Language lang, @NotNull CharSequence seq);
+  public abstract PsiBuilder createBuilder(@NotNull Project project,
+                                           @NotNull LighterLazyParseableNode chameleon,
+                                           @Nullable Lexer lexer,
+                                           @NotNull Language lang,
+                                           @NotNull CharSequence seq);
 
   @NotNull
   public abstract PsiBuilder createBuilder(@NotNull ParserDefinition parserDefinition, @NotNull Lexer lexer, @NotNull CharSequence seq);

@@ -17,6 +17,7 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 
 /*
  * User: max
@@ -27,13 +28,15 @@ public class IdentityCharTable implements CharTable {
 
   public static final IdentityCharTable INSTANCE = new IdentityCharTable();
 
+  @NotNull
   @Override
-  public CharSequence intern(final CharSequence text) {
+  public CharSequence intern(@NotNull final CharSequence text) {
     return text;
   }
 
+  @NotNull
   @Override
-  public CharSequence intern(CharSequence baseText, int startOffset, int endOffset) {
+  public CharSequence intern(@NotNull CharSequence baseText, int startOffset, int endOffset) {
     if (endOffset - startOffset == baseText.length()) return baseText.toString();
     return baseText.subSequence(startOffset, endOffset);
   }
