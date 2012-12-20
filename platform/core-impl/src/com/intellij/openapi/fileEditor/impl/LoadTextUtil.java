@@ -120,7 +120,7 @@ public final class LoadTextUtil {
     Charset charset = virtualFile.isCharsetSet() ? virtualFile.getCharset() : detectCharset(virtualFile, content);
     Pair<Charset,byte[]> bomAndCharset = getBOMAndCharset(content, charset);
     final byte[] bom = bomAndCharset.second;
-    if (saveBOM && bom.length != 0) {
+    if (saveBOM && bom != null && bom.length != 0) {
       virtualFile.setBOM(bom);
     }
     return bomAndCharset;
