@@ -167,7 +167,9 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
   }
 
   protected DefaultActionGroup createPopupActionGroup() {
-    return (DefaultActionGroup)ActionManager.getInstance().getAction("DomCollectionControl");
+    final DefaultActionGroup group = new DefaultActionGroup();
+    group.addAll((DefaultActionGroup)ActionManager.getInstance().getAction("DomCollectionControl"));
+    return group;
   }
 
   protected ColumnInfo[] createColumnInfos(DomElement parent) {
