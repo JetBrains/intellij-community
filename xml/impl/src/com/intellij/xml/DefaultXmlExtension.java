@@ -271,7 +271,7 @@ public class DefaultXmlExtension extends XmlExtension {
     final Collection<VirtualFile> files = XmlTagNamesIndex.getFilesByTagName(tagName, project);
     final Set<String> possibleUris = new LinkedHashSet<String>(files.size());
     for (VirtualFile virtualFile : files) {
-      final String namespace = XmlNamespaceIndex.getNamespace(virtualFile, project);
+      final String namespace = XmlNamespaceIndex.getNamespace(virtualFile, project, file);
       if (namespace != null) {
         possibleUris.add(namespace);
       }
