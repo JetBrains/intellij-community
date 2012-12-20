@@ -81,13 +81,13 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     // then noone can be more specific
     if (!atLeastOneMatch) return null;
 
+    checkLambdaApplicable(conflicts);
+    if (conflicts.size() == 1) return conflicts.get(0);
+
     checkSpecifics(conflicts, applicabilityLevel);
     if (conflicts.size() == 1) return conflicts.get(0);
 
     checkPrimitiveVarargs(conflicts, myActualParameterTypes.length);
-    if (conflicts.size() == 1) return conflicts.get(0);
-
-    checkLambdaApplicable(conflicts);
     if (conflicts.size() == 1) return conflicts.get(0);
 
     THashSet<CandidateInfo> uniques = new THashSet<CandidateInfo>(conflicts);
