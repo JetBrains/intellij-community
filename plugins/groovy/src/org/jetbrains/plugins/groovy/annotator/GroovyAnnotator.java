@@ -650,6 +650,14 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   @Override
+  public void visitTypeParameterList(GrTypeParameterList list) {
+    final PsiElement parent = list.getParent();
+    if (parent instanceof GrMethod && ((GrMethod)parent).isConstructor()) {
+      myHolder.createErrorAnnotation(list, GroovyBundle.message("type.parameters.are.unexpected"));
+    }
+  }
+
+  @Override
   public void visitListOrMap(GrListOrMap listOrMap) {
     final PsiReference constructorReference = listOrMap.getReference();
     if (constructorReference != null) {
@@ -1619,6 +1627,10 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
             holder.createErrorAnnotation(modifiersList, GroovyBundle.message("only.abstract.class.can.have.abstract.method"));
           registerMakeAbstractMethodNotAbstractFix(annotation, method, true);
         }
+      }
+
+      if (method.isConstructor()) {
+        checkModifierIsNotAllowed(modifiersList, STATIC, GroovyBundle.message("constructor.cannot.have.static.modifier"), holder);
       }
     }
 
