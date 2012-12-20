@@ -29,10 +29,7 @@ import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.profile.ApplicationProfileManager;
 import com.intellij.profile.DefaultProjectProfileManager;
 import com.intellij.profile.ProfileEx;
@@ -43,6 +40,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashMap;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -261,8 +259,10 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       ((SeverityProvider)getProfileManager()).getOwnSeverityRegistrar().readExternal(highlightElement);
     }
 
+    StringInterner interner = new StringInterner();
     for (final Object o : element.getChildren(INSPECTION_TOOL_TAG)) {
       Element toolElement = (Element)o;
+      JDOMUtil.internElement(toolElement, interner);
 
       String toolClassName = toolElement.getAttributeValue(CLASS_TAG);
 
