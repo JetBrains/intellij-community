@@ -24,6 +24,7 @@ package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
@@ -31,22 +32,22 @@ import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -71,7 +72,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
   private boolean myUseUTFGuessing = true;
   private boolean myNative2AsciiForPropertiesFiles;
   private Charset myDefaultCharsetForPropertiesFiles;
-  private long myModificationCount;
+  private volatile long myModificationCount;
   private final ModificationTracker myModificationTracker = new ModificationTracker() {
     @Override
     public long getModificationCount() {
@@ -141,19 +142,8 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
         mapping.put(file, charset);
       }
     }
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
-      @Override
-      public void run() {
-        if (myProject.isDisposed()) {
-          // give last chance to save
-          myMapping.clear();
-          myMapping.putAll(mapping);
-        }
-        else {
-          setMapping(mapping);
-        }
-      }
-    });
+    myMapping.clear();
+    myMapping.putAll(mapping);
 
     myUseUTFGuessing = Boolean.parseBoolean(element.getAttributeValue("useUTFGuessing"));
     myNative2AsciiForPropertiesFiles = Boolean.parseBoolean(element.getAttributeValue("native2AsciiForPropertiesFiles"));
@@ -212,6 +202,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
     return null;
   }
 
+  @NotNull
   public ModificationTracker getModificationTracker() {
     return myModificationTracker;
   }
@@ -225,10 +216,10 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
       myMapping.put(virtualFileOrDir, charset);
     }
     myModificationCount++;
-    setAndSaveOrReload(virtualFileOrDir, charset);
+    reloadDir(virtualFileOrDir, charset);
   }
 
-  private static void setAndSaveOrReload(VirtualFile virtualFileOrDir, Charset charset) {
+  private void setAndSaveOrReload(VirtualFile virtualFileOrDir, Charset charset) {
     if (virtualFileOrDir == null) {
       return;
     }
@@ -236,16 +227,21 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
     saveOrReload(virtualFileOrDir);
   }
 
-  private static void saveOrReload(final VirtualFile virtualFile) {
+  private void saveOrReload(@NotNull VirtualFile virtualFile) {
     FileDocumentManager documentManager = FileDocumentManager.getInstance();
+    Document document = documentManager.getDocument(virtualFile);
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    if (document != null) {
+      PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(document);
+    }
     if (documentManager.isFileModified(virtualFile)) {
-      Document document = documentManager.getDocument(virtualFile);
       if (document != null) {
         documentManager.saveDocument(document);
       }
     }
     else {
-      ((VirtualFileListener)documentManager).contentsChanged(new VirtualFileEvent(null, virtualFile, virtualFile.getName(), virtualFile.getParent()));
+      ((VirtualFileListener)documentManager)
+        .contentsChanged(new VirtualFileEvent(null, virtualFile, virtualFile.getName(), virtualFile.getParent()));
     }
   }
 
@@ -272,7 +268,8 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
 
   @Override
   public void setMapping(@NotNull final Map<VirtualFile, Charset> result) {
-    Map<VirtualFile, Charset> map = new HashMap<VirtualFile, Charset>(result.size());
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    final Map<VirtualFile, Charset> map = new HashMap<VirtualFile, Charset>(result.size());
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     for (Map.Entry<VirtualFile, Charset> entry : result.entrySet()) {
       VirtualFile virtualFile = entry.getKey();
@@ -288,22 +285,56 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
       }
       map.put(virtualFile, charset);
     }
+
+    final Map<VirtualFile, Charset> oldMapping = new HashMap<VirtualFile, Charset>(myMapping);
     myMapping.clear();
     myMapping.putAll(map);
-    for (Map.Entry<VirtualFile, Charset> entry : map.entrySet()) {
-      Charset charset = entry.getValue();
-      assert charset != null;
-      VirtualFile virtualFile = entry.getKey();
-      setAndSaveOrReload(virtualFile, charset);
-    }
-    if (!myProject.isDefault()) {
-      for (VirtualFile open : FileEditorManager.getInstance(myProject).getOpenFiles()) {
-        if (!map.containsKey(open)) {
-          saveOrReload(open);
+
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      @Override
+      public void run() {
+        Set<VirtualFile> changed = new HashSet<VirtualFile>(map.keySet());
+        changed.addAll(oldMapping.keySet());
+        for (VirtualFile changedFile : changed) {
+          Charset newCharset = map.get(changedFile);
+          Charset oldCharset = oldMapping.get(changedFile);
+          if (!Comparing.equal(newCharset, oldCharset)) {
+            reloadDir(changedFile, newCharset);
+          }
         }
       }
-    }
+    }, "Reload Files", false, myProject);
+
     myModificationCount++;
+  }
+
+  private void reloadDir(VirtualFile file, final Charset newCharset) {
+    if (file == null) {
+      for (VirtualFile virtualFile : ProjectRootManager.getInstance(myProject).getContentRoots()) {
+        reloadDir(virtualFile, newCharset);
+      }
+      return;
+    }
+
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+      @Override
+      public boolean visitFile(@NotNull final VirtualFile file) {
+        if (!(file instanceof VirtualFileSystemEntry)) return false;
+        if (!file.isCharsetSet()) return true;
+        Charset oldCharset = file.getCharset();
+
+        if (!Comparing.equal(newCharset, oldCharset)) {
+          ProgressManager.progress("Reloading files...", file.getPresentableUrl());
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              setAndSaveOrReload(file, newCharset);
+            }
+          });
+        }
+        return true;
+      }
+    });
   }
 
   //retrieves encoding for the Project node
