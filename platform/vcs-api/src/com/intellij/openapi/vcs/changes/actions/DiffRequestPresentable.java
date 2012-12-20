@@ -26,7 +26,7 @@ public interface DiffRequestPresentable {
   MyResult step(DiffChainContext context);
 
   void haveStuff() throws VcsException;
-  List<? extends AnAction> createActions(final ShowDiffAction.DiffExtendUIFactory uiFactory);
+  List<? extends AnAction> createActions(final DiffExtendUIFactory uiFactory);
   String getPathPresentation();
 
   class MyResult {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,29 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.changes;
+package com.intellij.openapi.vcs.changes.actions;
 
-import com.intellij.openapi.diff.DiffRequest;
-import com.intellij.openapi.vcs.changes.actions.DiffRequestPresentable;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.vcs.changes.Change;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.util.Collections;
 import java.util.List;
 
-public interface ChangeRequestChain {
-  boolean canMoveForward();
+public interface DiffExtendUIFactory {
+  DiffExtendUIFactory NONE = new DiffExtendUIFactory() {
+    public List<? extends AnAction> createActions(Change change) {
+      return Collections.emptyList();
+    }
 
-  boolean canMoveBack();
+    @Nullable
+    public JComponent createBottomComponent() {
+      return null;
+    }
+  };
+  List<? extends AnAction> createActions(Change change);
 
   @Nullable
-  DiffRequest moveForward();
-
-  @Nullable
-  DiffRequest moveBack();
-
-  @NotNull
-  List<DiffRequestPresentable> getAllRequests();
-
-  @Nullable
-  DiffRequest moveTo(DiffRequestPresentable request);
+  JComponent createBottomComponent();
 }

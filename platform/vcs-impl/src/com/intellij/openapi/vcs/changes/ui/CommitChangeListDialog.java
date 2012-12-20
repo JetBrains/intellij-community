@@ -35,7 +35,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
+import com.intellij.openapi.vcs.changes.actions.DiffExtendUIFactory;
 import com.intellij.openapi.vcs.checkin.*;
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager;
 import com.intellij.openapi.vcs.ui.CommitMessage;
@@ -323,7 +323,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         updateOnListSelection();
       }
     });
-    myBrowser.setDiffExtendUIFactory(new ShowDiffAction.DiffExtendUIFactory() {
+    myBrowser.setDiffExtendUIFactory(new DiffExtendUIFactory() {
       public List<? extends AnAction> createActions(final Change change) {
         return myBrowser.createDiffActions(change);
       }

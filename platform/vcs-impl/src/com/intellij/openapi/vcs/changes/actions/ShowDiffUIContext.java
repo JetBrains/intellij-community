@@ -19,24 +19,24 @@ import com.intellij.openapi.diff.DiffNavigationContext;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowDiffUIContext {
-  private ShowDiffAction.DiffExtendUIFactory myActionsFactory;
+  private DiffExtendUIFactory myActionsFactory;
   private boolean myShowFrame;
   private DiffNavigationContext myDiffNavigationContext;
 
   public ShowDiffUIContext() {
-    myActionsFactory = ShowDiffAction.DiffExtendUIFactory.NONE;
+    myActionsFactory = DiffExtendUIFactory.NONE;
   }
 
   public ShowDiffUIContext(boolean showFrame) {
     myShowFrame = showFrame;
-    myActionsFactory = ShowDiffAction.DiffExtendUIFactory.NONE;
+    myActionsFactory = DiffExtendUIFactory.NONE;
   }
 
-  public ShowDiffAction.DiffExtendUIFactory getActionsFactory() {
+  public DiffExtendUIFactory getActionsFactory() {
     return myActionsFactory;
   }
 
-  public void setActionsFactory(@NotNull ShowDiffAction.DiffExtendUIFactory actionsFactory) {
+  public void setActionsFactory(@NotNull DiffExtendUIFactory actionsFactory) {
     this.myActionsFactory = actionsFactory;
   }
 

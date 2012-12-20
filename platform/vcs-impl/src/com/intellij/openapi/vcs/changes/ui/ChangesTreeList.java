@@ -46,6 +46,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.TIntArrayList;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -153,6 +154,12 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
         }
       }, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
     }
+
+    registerKeyboardAction(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        myDoubleClickHandler.run();
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
     new ClickListener() {
       @Override
@@ -632,6 +639,21 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
       new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_A, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK)),
       this);
     return actions;
+  }
+
+  public void setSelectionMode(@JdkConstants.ListSelectionMode int mode) {
+    myList.setSelectionMode(mode);
+    myTree.getSelectionModel().setSelectionMode(getTreeSelectionModeFromListSelectionMode(mode));
+  }
+
+  @JdkConstants.TreeSelectionMode
+  private static int getTreeSelectionModeFromListSelectionMode(@JdkConstants.ListSelectionMode int mode) {
+    switch (mode) {
+      case ListSelectionModel.SINGLE_SELECTION: return TreeSelectionModel.SINGLE_TREE_SELECTION;
+      case ListSelectionModel.SINGLE_INTERVAL_SELECTION: return TreeSelectionModel.CONTIGUOUS_TREE_SELECTION;
+      case ListSelectionModel.MULTIPLE_INTERVAL_SELECTION: return TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION;
+    }
+    throw new IllegalArgumentException("Illegal selection mode: " + mode);
   }
 
   private class MyTreeCellRenderer extends JPanel implements TreeCellRenderer {
