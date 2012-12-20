@@ -71,12 +71,16 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     // Override this method if you want to customize default destroy behaviour, e.g.
     // if you want use some soft-kill.
     final Process process = getProcess();
-    if (shouldDestroyProcessRecursively()) {
+    if (shouldDestroyProcessRecursively() && processCanBeKilledByOS(process)) {
       killProcessTree(process);
     }
     else {
       process.destroy();
     }
+  }
+
+  public static boolean processCanBeKilledByOS(Process process) {
+    return !(process instanceof OSProcessManager.SelfKiller);
   }
 
   /**
