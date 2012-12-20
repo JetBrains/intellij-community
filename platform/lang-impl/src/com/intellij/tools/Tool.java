@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Tool implements SchemeElement {
   @NonNls public final static String ACTION_ID_PREFIX = "Tool_";
@@ -201,22 +202,22 @@ public class Tool implements SchemeElement {
   }
 
   public void copyFrom(Tool source) {
-    myName = source.myName;
-    myDescription = source.myDescription;
-    myGroup = source.myGroup;
-    myShownInMainMenu = source.myShownInMainMenu;
-    myShownInEditor = source.myShownInEditor;
-    myShownInProjectViews = source.myShownInProjectViews;
-    myShownInSearchResultsPopup = source.myShownInSearchResultsPopup;
-    myEnabled = source.myEnabled;
-    myUseConsole = source.myUseConsole;
-    myShowConsoleOnStdOut = source.myShowConsoleOnStdOut;
-    myShowConsoleOnStdErr = source.myShowConsoleOnStdErr;
-    mySynchronizeAfterExecution = source.mySynchronizeAfterExecution;
-    myWorkingDirectory = source.myWorkingDirectory;
-    myProgram = source.myProgram;
-    myParameters = source.myParameters;
-    myOutputFilters = (ArrayList<FilterInfo>)source.myOutputFilters.clone();
+    myName = source.getName();
+    myDescription = source.getDescription();
+    myGroup = source.getGroup();
+    myShownInMainMenu = source.isShownInMainMenu();
+    myShownInEditor = source.isShownInEditor();
+    myShownInProjectViews = source.isShownInProjectViews();
+    myShownInSearchResultsPopup = source.isShownInSearchResultsPopup();
+    myEnabled = source.isEnabled();
+    myUseConsole = source.isUseConsole();
+    myShowConsoleOnStdOut = source.isShowConsoleOnStdOut();
+    myShowConsoleOnStdErr = source.isShowConsoleOnStdErr();
+    mySynchronizeAfterExecution = source.synchronizeAfterExecution();
+    myWorkingDirectory = source.getWorkingDirectory();
+    myProgram = source.getProgram();
+    myParameters = source.getParameters();
+    myOutputFilters = new ArrayList<FilterInfo>(Arrays.asList(source.getOutputFilters()));
   }
 
   public boolean equals(Object obj) {
