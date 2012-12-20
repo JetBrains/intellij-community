@@ -63,13 +63,13 @@ public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiEle
         });
 
         if (infos != null && ! infos.isEmpty()) {
-          final Project project = XmlUtil.getContainingFile(xml).getProject();
+          XmlFile file = XmlUtil.getContainingFile(xml);
+          final Project project = file.getProject();
           final Module module = ModuleUtil.findModuleForPsiElement(queryParameters);
           //if (module == null) return false;
 
-          final XmlFile file = XmlUtil.getContainingFile(xml);
           final VirtualFile vf = file.getVirtualFile();
-          String thisNs = XmlNamespaceIndex.getNamespace(vf, project);
+          String thisNs = XmlNamespaceIndex.getNamespace(vf, project, file);
           thisNs = thisNs == null ? getDefaultNs(file) : thisNs;
           // so thisNs can be null
           if (thisNs == null) return false;
