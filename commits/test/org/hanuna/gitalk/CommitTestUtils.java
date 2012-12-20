@@ -33,7 +33,7 @@ public class CommitTestUtils {
         StringBuilder s = new StringBuilder();
         CommitData data = commit.getData();
         if (data == null) {
-            throw  new IllegalStateException();
+            throw new IllegalStateException();
         }
         s.append(commit.hash().toStrHash()).append("|-");
         final ReadOnlyList<Commit> parents = data.getParents();
@@ -44,9 +44,7 @@ public class CommitTestUtils {
             Commit parent =  parents.get(i);
             s.append(" ").append(parent.hash().toStrHash());
         }
-        s.append("|-");
 
-        s.append(commit.hash().toStrHash());
         return s.toString();
     }
 

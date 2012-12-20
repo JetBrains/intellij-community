@@ -39,7 +39,7 @@ class MutableCommit implements Commit {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(@Nullable Object obj) {
         if (obj != null && obj instanceof Commit) {
             Commit an = (Commit) obj;
             return hash.equals(an.hash());

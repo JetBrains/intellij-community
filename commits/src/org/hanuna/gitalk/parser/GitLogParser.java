@@ -36,13 +36,13 @@ public class GitLogParser {
             String message = matcher.group(5);
 
             String[] parentsStr = parents.split("\\s");
-            List<Hash> hashs = new ArrayList<Hash>(parentsStr.length);
+            List<Hash> hashes = new ArrayList<Hash>(parentsStr.length);
             for (String aParentsStr : parentsStr) {
                 if (aParentsStr.length() > 0) {
-                    hashs.add(Hash.build(aParentsStr));
+                    hashes.add(Hash.build(aParentsStr));
                 }
             }
-            return new CommitLogData(hash, ReadOnlyList.newReadOnlyList(hashs), message, author, timeStamp);
+            return new CommitLogData(hash, ReadOnlyList.newReadOnlyList(hashes), message, author, timeStamp);
         } else {
             throw new IllegalArgumentException("unexpected format of string:" + inputStr);
         }

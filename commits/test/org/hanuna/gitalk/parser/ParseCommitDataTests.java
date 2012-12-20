@@ -32,13 +32,13 @@ public class ParseCommitDataTests {
     }
 
     @Test
-    public void moreChildrens() throws Exception {
+    public void moreChildren() throws Exception {
         runTestParseCommitData("adf23|-a1 a2 a3|-a|-|-mes|-age", "adf23|-a1 a2 a3|-a|-0|-mes|-age");
     }
 
     @Test
     public void testSpecSymbolsInMessage() throws Exception {
-        runTestParseCommitData("adf23|-adf2|-a|-1|-mes|-age", "adf23|-adf2|-a|-1|-mes|-age");
+        runTestParseCommitData("adf23|-adf2|-a|-1|-mes|-age\\/", "adf23|-adf2|-a|-1|-mes|-age\\/");
     }
 
 }

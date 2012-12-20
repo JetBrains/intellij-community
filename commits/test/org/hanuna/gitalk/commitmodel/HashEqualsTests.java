@@ -34,17 +34,4 @@ public class HashEqualsTests {
         Assert.assertTrue(hash1.equals(hash2));
     }
 
-    @Test
-    public void testEq() throws Exception {
-        Hash hash1 = Hash.build("adf");
-        Hash hash2 = Hash.build("adf");
-        Assert.assertTrue(hash1 == hash2);
-    }
-
-    @Test
-    public void testEqNone() throws Exception {
-        Hash hash1 = Hash.build("");
-        Hash hash2 = Hash.build("");
-        Assert.assertTrue(hash1 == hash2);
-    }
 }

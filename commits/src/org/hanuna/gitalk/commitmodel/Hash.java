@@ -1,6 +1,7 @@
 package org.hanuna.gitalk.commitmodel;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -15,10 +16,11 @@ import java.util.Map;
  * </code>
  */
 public final class Hash {
-    private static final Map<Hash, Hash> ourCache = new HashMap<Hash, Hash>();
+    private static final int CAPABILITY = 5000;
+    private static final Map<Hash, Hash> ourCache = new HashMap<Hash, Hash>(CAPABILITY);
 
     private static void clearMap() {
-        if (ourCache.size() > 1000) {
+        if (ourCache.size() >= CAPABILITY) {
             ourCache.clear();
         }
     }
@@ -85,7 +87,7 @@ public final class Hash {
         return sb.toString();
     }
 
-    public boolean equals(Object obj) {
+    public boolean equals(@Nullable Object obj) {
         if (obj != null && obj.getClass() == Hash.class) {
             Hash hash = (Hash) obj;
             return hash.hashCode() == this.hashCode() && Arrays.equals(this.data, hash.data);
