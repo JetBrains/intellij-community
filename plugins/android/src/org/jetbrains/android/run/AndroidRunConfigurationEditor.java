@@ -15,6 +15,8 @@
  */
 package org.jetbrains.android.run;
 
+import com.android.sdklib.internal.avd.AvdInfo;
+import com.android.sdklib.internal.avd.AvdManager;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ModalityState;
@@ -98,17 +100,28 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
     });
     myAvdCombo = myAvdComboComponent.getComponent();
 
+    myAvdCombo.getComboBox().addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final String warning = myEmulatorRadioButton.isSelected()
+                               ? getAvdCompatibilityWarning()
+                               : null;
+        resetAvdCompatibilityWarningLabel(warning);
+      }
+    });
     myMinSdkInfoMessageLabel.setBorder(IdeBorderFactory.createEmptyBorder(10, 0, 0, 0));
-    myMinSdkInfoMessageLabel.setIcon(AllIcons.General.Warning);
-    myMinSdkInfoMessageLabel.setDisabledIcon(AllIcons.General.Warning);
+    myMinSdkInfoMessageLabel.setIcon(AllIcons.General.BalloonWarning);
 
     Disposer.register(this, myAvdCombo);
 
     final ActionListener listener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        boolean enabled = myEmulatorRadioButton.isSelected();
-        myAvdComboComponent.setEnabled(enabled);
-        myMinSdkInfoMessageLabel.setEnabled(enabled);
+        boolean emulatorSelected = myEmulatorRadioButton.isSelected();
+        myAvdComboComponent.setEnabled(emulatorSelected);
+        final String warning = emulatorSelected
+                               ? getAvdCompatibilityWarning()
+                               : null;
+        resetAvdCompatibilityWarningLabel(warning);
       }
     };
     myModulesComboBox.addActionListener(new ActionListener() {
@@ -122,6 +135,36 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
 
     myNetworkSpeedCombo.setModel(new DefaultComboBoxModel(NETWORK_SPEEDS));
     myNetworkLatencyCombo.setModel(new DefaultComboBoxModel(NETWORK_LATENCIES));
+  }
+
+  private void resetAvdCompatibilityWarningLabel(@Nullable String warning) {
+    if (warning != null) {
+      myMinSdkInfoMessageLabel.setVisible(true);
+      myMinSdkInfoMessageLabel.setText(warning);
+    }
+    else {
+      myMinSdkInfoMessageLabel.setVisible(false);
+    }
+  }
+
+  private String getAvdCompatibilityWarning() {
+    final String selectedAvdName = (String)myAvdCombo.getComboBox().getSelectedItem();
+
+    if (selectedAvdName != null) {
+      final Module module = getModuleSelector().getModule();
+      final AndroidFacet facet = module != null ? AndroidFacet.getInstance(module) : null;
+      final AvdManager avdManager = facet != null ? facet.getAvdManagerSilently() : null;
+
+      if (avdManager != null) {
+        final AvdInfo avd = avdManager.getAvd(selectedAvdName, false);
+
+        if (avd != null && !facet.isCompatibleAvd(avd)) {
+          // todo: provide info about current module configuration
+          return "'" + selectedAvdName + "' may be incompatible with your configuration";
+        }
+      }
+    }
+    return null;
   }
 
   @Override
@@ -173,7 +216,10 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
     myUsbDeviceRadioButton.setSelected(targetSelectionMode == TargetSelectionMode.USB_DEVICE);
 
     myAvdComboComponent.setEnabled(targetSelectionMode == TargetSelectionMode.EMULATOR);
-    myMinSdkInfoMessageLabel.setEnabled(targetSelectionMode == TargetSelectionMode.EMULATOR);
+
+    resetAvdCompatibilityWarningLabel(targetSelectionMode == TargetSelectionMode.EMULATOR
+                                      ? getAvdCompatibilityWarning()
+                                      : null);
     
     myCommandLineField.setText(configuration.COMMAND_LINE);
     myConfigurationSpecificEditor.resetFrom(configuration);
