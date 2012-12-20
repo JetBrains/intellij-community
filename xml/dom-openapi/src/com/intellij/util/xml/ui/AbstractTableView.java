@@ -128,7 +128,7 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
     final ActionManager actionManager = ActionManager.getInstance();
     final ToolbarPosition position = getToolbarPosition();
     final ActionToolbar myActionToolbar = actionManager.createActionToolbar(ActionPlaces.PROJECT_VIEW_TOOLBAR, actionGroup, position == ToolbarPosition.TOP || position == ToolbarPosition.BOTTOM);
-    myActionToolbar.setTargetComponent(myTable);
+    myActionToolbar.setTargetComponent(myInnerPanel);
     final JComponent toolbarComponent = myActionToolbar.getComponent();
     final MatteBorder matteBorder = BorderFactory.createMatteBorder(0, 0, position == ToolbarPosition.TOP ? 1 : 0, 0, JBColor.DARK_GRAY);
     toolbarComponent.setBorder(BorderFactory.createCompoundBorder(matteBorder, toolbarComponent.getBorder()));
