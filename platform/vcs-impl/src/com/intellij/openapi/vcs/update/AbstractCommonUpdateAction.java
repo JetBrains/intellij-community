@@ -79,11 +79,14 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
     boolean showUpdateOptions = myActionInfo.showOptions(project);
 
+    LOG.debug(String.format("project: %s, show update options: %s", project, showUpdateOptions));
+
     if (project != null) {
       try {
         final FilePath[] filePaths = myScopeInfo.getRoots(context, myActionInfo);
         final FilePath[] roots = DescindingFilesFilter.filterDescindingFiles(filterRoots(filePaths, context), project);
         if (roots.length == 0) {
+          LOG.debug("No roots found.");
           return;
         }
 
@@ -93,6 +96,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           final UpdateEnvironment updateEnvironment = myActionInfo.getEnvironment(vcs);
           if ((updateEnvironment != null) && (! updateEnvironment.validateOptions(vcsToVirtualFiles.get(vcs)))) {
             // messages already shown
+            LOG.debug("Options not valid for files: " + vcsToVirtualFiles);
             return;
           }
         }
@@ -145,6 +149,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
   private void showOptionsDialog(final Map<AbstractVcs, Collection<FilePath>> updateEnvToVirtualFiles, final Project project,
                                  final VcsContext dataContext) {
     LinkedHashMap<Configurable, AbstractVcs> envToConfMap = createConfigurableToEnvMap(updateEnvToVirtualFiles);
+    LOG.debug("configurables map: " + envToConfMap);
     if (!envToConfMap.isEmpty()) {
       UpdateOrStatusOptionsDialog dialogOrStatus = myActionInfo.createOptionsDialog(project, envToConfMap,
                                                                                     myScopeInfo.getScopeName(dataContext,
