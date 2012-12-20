@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ik
@@ -23,7 +24,9 @@ import com.intellij.openapi.util.Key;
 public interface CharTable {
   Key<CharTable> CHAR_TABLE_KEY = new Key<CharTable>("Char table");
 
-  CharSequence intern(CharSequence text);
+  @NotNull
+  CharSequence intern(@NotNull CharSequence text);
 
-  CharSequence intern(CharSequence baseText, int startOffset, int endOffset);
+  @NotNull
+  CharSequence intern(@NotNull CharSequence baseText, int startOffset, int endOffset);
 }

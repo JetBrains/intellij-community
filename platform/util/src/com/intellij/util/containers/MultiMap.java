@@ -28,7 +28,6 @@ import java.util.*;
  * @author Dmitry Avdeev
  */
 public class MultiMap<K, V> implements Serializable {
-
   public static final MultiMap EMPTY = new MultiMap() {
     @Override
     protected Map createMap() {
@@ -156,11 +155,12 @@ public class MultiMap<K, V> implements Serializable {
   public Collection<? extends V> values() {
     if (values == null) {
       values = new AbstractCollection<V>() {
+        @NotNull
         @Override
         public Iterator<V> iterator() {
           return new Iterator<V>() {
 
-            private Iterator<Collection<V>> mapIterator = myMap.values().iterator();
+            private final Iterator<Collection<V>> mapIterator = myMap.values().iterator();
 
             private Iterator<V> itr = EmptyIterator.getInstance();
 

@@ -53,6 +53,8 @@ public class CharArrayCharSequence implements CharSequenceBackedByArray {
     return start == 0 && end == length() ? this : new CharArrayCharSequence(myChars, myStart + start, myStart + end);
   }
 
+  @Override
+  @NotNull
   public String toString() {
     return new String(myChars, myStart, myEnd - myStart); //TODO StringFactory
   }
@@ -66,6 +68,7 @@ public class CharArrayCharSequence implements CharSequenceBackedByArray {
     return chars;
   }
 
+  @Override
   public int hashCode() {
     return StringUtil.stringHashCode(myChars, myStart, myEnd);
   }

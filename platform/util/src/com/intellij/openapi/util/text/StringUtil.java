@@ -1935,10 +1935,12 @@ public class StringUtil extends StringUtilRt {
     if (v1 == null && v2 == null) {
       return 0;
     }
-    else if (v1 == null) {
+    if (v1 == null) {
       return -1;
     }
-    else if (v2 == null) return 1;
+    if (v2 == null) {
+      return 1;
+    }
 
     String[] part1 = v1.split("[\\.\\_\\-]");
     String[] part2 = v2.split("[\\.\\_\\-]");
