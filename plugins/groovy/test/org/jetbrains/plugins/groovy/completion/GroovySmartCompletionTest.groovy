@@ -104,19 +104,6 @@ String s = <caret>
 
     myFixture.complete(CompletionType.SMART, 2)
     assertOrderedEquals(myFixture.lookupElementStrings,
-                        'copyValueOf',
-                        'copyValueOf',
-                        'format',
-                        'format',
-                        'valueOf',
-                        'valueOf',
-                        'valueOf',
-                        'valueOf',
-                        'valueOf',
-                        'valueOf',
-                        'valueOf',
-                        'valueOf',
-                        'valueOf',
                         'foo',
                         'string',
                         'toString')
