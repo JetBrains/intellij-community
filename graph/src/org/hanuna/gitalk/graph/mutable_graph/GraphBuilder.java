@@ -53,7 +53,7 @@ public class GraphBuilder {
     private MutableNode addCurrentCommitAndFinishRow(Commit commit) {
         MutableNode node = notAddedNodes.remove(commit.hash());
         if (node == null) {
-            node = new MutableNode(commit, new Branch());
+            node = new MutableNode(commit, new Branch(commit));
         }
         node.setRow(nextRow);
         node.setType(Node.Type.COMMIT_NODE);
@@ -73,7 +73,7 @@ public class GraphBuilder {
         } else {
             int index = getLogIndexOfCommit(parent);
             createEdge(node, parentNode, Edge.Type.USUAL, branch);
-            // i.e. we need create new Node
+            // i.e. we need create new Node (parent commit isn't situated in next row)
             if (index != rows.size()) {
                 // remove old node
                 notAddedNodes.remove(parent.hash());
@@ -86,10 +86,8 @@ public class GraphBuilder {
                 parentNode.setRow(nextRow);
                 nextRow.add(parentNode);
             } else {
-                // i.e. it was real node. Fix branch if necessary.
-                if (branch.younger(parentNode.getBranch())) {
-                    parentNode.setBranch(branch);
-                }
+                // i.e. it was real node.
+                // do nothing
             }
         }
     }
@@ -107,7 +105,7 @@ public class GraphBuilder {
             if (i == 0) {
                 addParent(node, parent, node.getBranch());
             } else {
-                addParent(node, parent, new Branch());
+                addParent(node, parent, new Branch(parent));
             }
         }
     }

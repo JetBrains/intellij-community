@@ -4,7 +4,6 @@ import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.GraphFragment;
-import org.hanuna.gitalk.graph.graph_elements.Branch;
 import org.hanuna.gitalk.graph.mutable_graph.GraphBuilder;
 import org.hanuna.gitalk.graph.mutable_graph.MutableGraph;
 import org.hanuna.gitalk.graph.mutable_graph.graph_fragment_controller.GraphFragmentController;
@@ -27,7 +26,6 @@ import static org.hanuna.gitalk.GraphTestUtils.toStr;
 public class GraphModelImplTest {
 
     private Graph builder(String inputTree) throws IOException {
-        Branch.clearCountBranch();
         String input = inputTree.replace("\n", "|-aut|-132352112|-mes\n") + "|-aut|-132352112|-mes";
         GitLogParser parser = new GitLogParser(new StringReader(input));
         List<Commit> commits = parser.readAllCommits();
@@ -50,18 +48,18 @@ public class GraphModelImplTest {
                 "a8|-"
         );
         assertEquals("start",
-                "a0|-|-a0:a3:USUAL:0 a0:a1:USUAL:1 a0:a5:USUAL:2 a0:a12:USUAL:3|-COMMIT_NODE|-0|-0\n" +
-                "a1|-a0:a1:USUAL:1|-a1:a2:USUAL:1|-COMMIT_NODE|-1|-1\n" +
-                "a2|-a1:a2:USUAL:1|-a2:a4:USUAL:1|-COMMIT_NODE|-1|-2\n" +
-                "a3|-a0:a3:USUAL:0|-a3:a5:USUAL:0 a3:a12:USUAL:4|-COMMIT_NODE|-0|-3\n" +
-                "a5|-a0:a5:USUAL:2 a3:a5:USUAL:0|-a5:a5:USUAL:2|-EDGE_NODE|-2|-4\n" +
-                "   a12|-a0:a12:USUAL:3 a3:a12:USUAL:4|-a12:a12:USUAL:3|-EDGE_NODE|-3|-4\n" +
-                "   a4|-a2:a4:USUAL:1|-a4:a7:USUAL:1|-COMMIT_NODE|-1|-4\n" +
-                "a5|-a5:a5:USUAL:2|-a5:a6:USUAL:2|-COMMIT_NODE|-2|-5\n" +
-                "a6|-a5:a6:USUAL:2|-a6:a8:USUAL:2|-COMMIT_NODE|-2|-6\n" +
-                "a7|-a4:a7:USUAL:1|-a7:a8:USUAL:1|-COMMIT_NODE|-1|-7\n" +
-                "a8|-a6:a8:USUAL:2 a7:a8:USUAL:1|-|-COMMIT_NODE|-1|-8\n" +
-                "a12|-a12:a12:USUAL:3|-|-END_COMMIT_NODE|-3|-9"
+                "a0|-|-a0:a3:USUAL:993 a0:a1:USUAL:994 a0:a5:USUAL:998 a0:a12:USUAL:31649|-COMMIT_NODE|-993|-0\n" +
+                "a1|-a0:a1:USUAL:994|-a1:a2:USUAL:994|-COMMIT_NODE|-994|-1\n" +
+                "a2|-a1:a2:USUAL:994|-a2:a4:USUAL:994|-COMMIT_NODE|-994|-2\n" +
+                "a3|-a0:a3:USUAL:993|-a3:a5:USUAL:993 a3:a12:USUAL:31649|-COMMIT_NODE|-993|-3\n" +
+                "a5|-a0:a5:USUAL:998 a3:a5:USUAL:993|-a5:a5:USUAL:998|-EDGE_NODE|-998|-4\n" +
+                "   a12|-a0:a12:USUAL:31649 a3:a12:USUAL:31649|-a12:a12:USUAL:31649|-EDGE_NODE|-31649|-4\n" +
+                "   a4|-a2:a4:USUAL:994|-a4:a7:USUAL:994|-COMMIT_NODE|-994|-4\n" +
+                "a5|-a5:a5:USUAL:998|-a5:a6:USUAL:998|-COMMIT_NODE|-998|-5\n" +
+                "a6|-a5:a6:USUAL:998|-a6:a8:USUAL:998|-COMMIT_NODE|-998|-6\n" +
+                "a7|-a4:a7:USUAL:994|-a7:a8:USUAL:994|-COMMIT_NODE|-994|-7\n" +
+                "a8|-a6:a8:USUAL:998 a7:a8:USUAL:994|-|-COMMIT_NODE|-998|-8\n" +
+                "a12|-a12:a12:USUAL:31649|-|-END_COMMIT_NODE|-31649|-9"
                 ,
                 toStr(graph)
         );
@@ -75,16 +73,16 @@ public class GraphModelImplTest {
         assertEquals(4, replace.addElementsCount());
 
         assertEquals("hide",
-                "a0|-|-a0:a3:USUAL:0 a0:a1:USUAL:1 a0:a5:USUAL:2 a0:a12:USUAL:3|-COMMIT_NODE|-0|-0\n" +
-                "a1|-a0:a1:USUAL:1|-a1:a7:HIDE_FRAGMENT:1|-COMMIT_NODE|-1|-1\n" +
-                "a3|-a0:a3:USUAL:0|-a3:a5:USUAL:0 a3:a12:USUAL:4|-COMMIT_NODE|-0|-2\n" +
-                "a5|-a0:a5:USUAL:2 a3:a5:USUAL:0|-a5:a5:USUAL:2|-EDGE_NODE|-2|-3\n" +
-                "   a12|-a0:a12:USUAL:3 a3:a12:USUAL:4|-a12:a12:USUAL:3|-EDGE_NODE|-3|-3\n" +
-                "a5|-a5:a5:USUAL:2|-a5:a6:USUAL:2|-COMMIT_NODE|-2|-4\n" +
-                "a6|-a5:a6:USUAL:2|-a6:a8:USUAL:2|-COMMIT_NODE|-2|-5\n" +
-                "a7|-a1:a7:HIDE_FRAGMENT:1|-a7:a8:USUAL:1|-COMMIT_NODE|-1|-6\n" +
-                "a8|-a6:a8:USUAL:2 a7:a8:USUAL:1|-|-COMMIT_NODE|-1|-7\n" +
-                "a12|-a12:a12:USUAL:3|-|-END_COMMIT_NODE|-3|-8"
+                "a0|-|-a0:a3:USUAL:993 a0:a1:USUAL:994 a0:a5:USUAL:998 a0:a12:USUAL:31649|-COMMIT_NODE|-993|-0\n" +
+                "a1|-a0:a1:USUAL:994|-a1:a7:HIDE_FRAGMENT:994|-COMMIT_NODE|-994|-1\n" +
+                "a3|-a0:a3:USUAL:993|-a3:a5:USUAL:993 a3:a12:USUAL:31649|-COMMIT_NODE|-993|-2\n" +
+                "a5|-a0:a5:USUAL:998 a3:a5:USUAL:993|-a5:a5:USUAL:998|-EDGE_NODE|-998|-3\n" +
+                "   a12|-a0:a12:USUAL:31649 a3:a12:USUAL:31649|-a12:a12:USUAL:31649|-EDGE_NODE|-31649|-3\n" +
+                "a5|-a5:a5:USUAL:998|-a5:a6:USUAL:998|-COMMIT_NODE|-998|-4\n" +
+                "a6|-a5:a6:USUAL:998|-a6:a8:USUAL:998|-COMMIT_NODE|-998|-5\n" +
+                "a7|-a1:a7:HIDE_FRAGMENT:994|-a7:a8:USUAL:994|-COMMIT_NODE|-994|-6\n" +
+                "a8|-a6:a8:USUAL:998 a7:a8:USUAL:994|-|-COMMIT_NODE|-998|-7\n" +
+                "a12|-a12:a12:USUAL:31649|-|-END_COMMIT_NODE|-31649|-8"
                 ,
                 toStr(graph)
         );
@@ -96,18 +94,18 @@ public class GraphModelImplTest {
         assertEquals(5, replace.addElementsCount());
 
         assertEquals("show",
-                "a0|-|-a0:a3:USUAL:0 a0:a1:USUAL:1 a0:a5:USUAL:2 a0:a12:USUAL:3|-COMMIT_NODE|-0|-0\n" +
-                        "a1|-a0:a1:USUAL:1|-a1:a2:USUAL:1|-COMMIT_NODE|-1|-1\n" +
-                        "a2|-a1:a2:USUAL:1|-a2:a4:USUAL:1|-COMMIT_NODE|-1|-2\n" +
-                        "a3|-a0:a3:USUAL:0|-a3:a5:USUAL:0 a3:a12:USUAL:4|-COMMIT_NODE|-0|-3\n" +
-                        "a5|-a0:a5:USUAL:2 a3:a5:USUAL:0|-a5:a5:USUAL:2|-EDGE_NODE|-2|-4\n" +
-                        "   a12|-a0:a12:USUAL:3 a3:a12:USUAL:4|-a12:a12:USUAL:3|-EDGE_NODE|-3|-4\n" +
-                        "   a4|-a2:a4:USUAL:1|-a4:a7:USUAL:1|-COMMIT_NODE|-1|-4\n" +
-                        "a5|-a5:a5:USUAL:2|-a5:a6:USUAL:2|-COMMIT_NODE|-2|-5\n" +
-                        "a6|-a5:a6:USUAL:2|-a6:a8:USUAL:2|-COMMIT_NODE|-2|-6\n" +
-                        "a7|-a4:a7:USUAL:1|-a7:a8:USUAL:1|-COMMIT_NODE|-1|-7\n" +
-                        "a8|-a6:a8:USUAL:2 a7:a8:USUAL:1|-|-COMMIT_NODE|-1|-8\n" +
-                        "a12|-a12:a12:USUAL:3|-|-END_COMMIT_NODE|-3|-9"
+                "a0|-|-a0:a3:USUAL:993 a0:a1:USUAL:994 a0:a5:USUAL:998 a0:a12:USUAL:31649|-COMMIT_NODE|-993|-0\n" +
+                "a1|-a0:a1:USUAL:994|-a1:a2:USUAL:994|-COMMIT_NODE|-994|-1\n" +
+                "a2|-a1:a2:USUAL:994|-a2:a4:USUAL:994|-COMMIT_NODE|-994|-2\n" +
+                "a3|-a0:a3:USUAL:993|-a3:a5:USUAL:993 a3:a12:USUAL:31649|-COMMIT_NODE|-993|-3\n" +
+                "a5|-a0:a5:USUAL:998 a3:a5:USUAL:993|-a5:a5:USUAL:998|-EDGE_NODE|-998|-4\n" +
+                "   a12|-a0:a12:USUAL:31649 a3:a12:USUAL:31649|-a12:a12:USUAL:31649|-EDGE_NODE|-31649|-4\n" +
+                "   a4|-a2:a4:USUAL:994|-a4:a7:USUAL:994|-COMMIT_NODE|-994|-4\n" +
+                "a5|-a5:a5:USUAL:998|-a5:a6:USUAL:998|-COMMIT_NODE|-998|-5\n" +
+                "a6|-a5:a6:USUAL:998|-a6:a8:USUAL:998|-COMMIT_NODE|-998|-6\n" +
+                "a7|-a4:a7:USUAL:994|-a7:a8:USUAL:994|-COMMIT_NODE|-994|-7\n" +
+                "a8|-a6:a8:USUAL:998 a7:a8:USUAL:994|-|-COMMIT_NODE|-998|-8\n" +
+                "a12|-a12:a12:USUAL:31649|-|-END_COMMIT_NODE|-31649|-9"
                 ,
                 toStr(graph)
         );

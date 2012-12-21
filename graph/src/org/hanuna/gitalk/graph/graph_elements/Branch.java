@@ -1,27 +1,19 @@
 package org.hanuna.gitalk.graph.graph_elements;
 
+import org.hanuna.gitalk.commitmodel.Commit;
+
 /**
  * @author erokhins
  */
 public class Branch {
-    private static int count = 0;
+    private final Commit commit;
 
-    public static void clearCountBranch() {
-        count = 0;
+    public Branch(Commit commit) {
+        this.commit = commit;
     }
 
-    private final int numberOfBranch;
-
-    public Branch() {
-        numberOfBranch = count;
-        count++;
+    public int getBranchNumber() {
+        return commit.hashCode();
     }
 
-    public int getNumberOfBranch() {
-        return numberOfBranch;
-    }
-
-    public boolean younger(Branch another) {
-        return this.getNumberOfBranch() < another.getNumberOfBranch();
-    }
 }

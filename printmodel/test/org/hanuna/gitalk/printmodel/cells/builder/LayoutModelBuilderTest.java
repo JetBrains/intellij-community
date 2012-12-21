@@ -19,7 +19,6 @@ import static org.hanuna.gitalk.printmodel.LayoutTestUtils.toStr;
  */
 public class LayoutModelBuilderTest {
     private void runTest(String inputTree, String out) throws IOException {
-        Branch.clearCountBranch();
         String input = inputTree.replace("\n", "|-aut|-132352112|-mes\n") + "|-aut|-132352112|-mes";
         GitLogParser parser = new GitLogParser(new StringReader(input));
         List<Commit> commits = parser.readAllCommits();
