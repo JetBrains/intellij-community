@@ -514,7 +514,7 @@ public class NameUtilTest extends UsefulTestCase {
     }
 
     System.out.println("measuring start: " + System.currentTimeMillis());
-    PlatformTestUtil.startPerformanceTest("Matcher is slow", 3500, new ThrowableRunnable() {
+    PlatformTestUtil.startPerformanceTest("Matcher is slow", 3700, new ThrowableRunnable() {
       @Override
       public void run() {
         System.out.println("attempt start: " + System.currentTimeMillis());
@@ -529,7 +529,7 @@ public class NameUtilTest extends UsefulTestCase {
         }
         System.out.println("attempt end: " + System.currentTimeMillis());
       }
-    }).cpuBound().attempts(20).assertTiming();
+    }).cpuBound().assertTiming();
   }
 
  public void testSpeedSearchComparator() {
