@@ -4,6 +4,8 @@ package org.hanuna.gitalk.common.compressedlist;
  * @author erokhins
  */
 public class Replace {
+    public static final Replace ID_REPLACE = new Replace(0, 1, 0);
+
     /**
      * This class describe replace in list or another ordered set's
      * Elements (from, to) will be remove, and add addElementsCount new's element
@@ -15,7 +17,7 @@ public class Replace {
      * after:    10, 20,  1,  2, 40, 50, ...
      */
 
-    public static Replace buildFromChangeInterval(int oldFrom, int oldTo, int newFrom, int newTo) {
+    public static Replace buildFromToInterval(int oldFrom, int oldTo, int newFrom, int newTo) {
         if (oldFrom != newFrom || oldFrom >= oldTo || newFrom >= newTo) {
             throw new IllegalArgumentException("oldFrom: " + oldFrom + ", oldTo: " + oldTo +
                     ", newFrom: " + newFrom + ", newTo: " + newTo);

@@ -15,9 +15,9 @@ import java.util.List;
  */
 public final class MutableNode implements Node {
     private final Commit commit;
+    private final Branch branch;
     private Type type = null;
     private MutableNodeRow row = null;
-    private Branch branch;
     private boolean visible = true;
 
     private final List<Edge> upEdges = new ArrayList<Edge>(2);
@@ -45,10 +45,6 @@ public final class MutableNode implements Node {
         this.row = row;
     }
 
-    public void setBranch(@NotNull Branch branch) {
-        this.branch = branch;
-    }
-
     public void addUpEdge(@NotNull Edge edge) {
         upEdges.add(edge);
     }
@@ -63,11 +59,6 @@ public final class MutableNode implements Node {
 
     public void removeDownEdge(@NotNull Edge edge) {
         downEdges.remove(edge);
-    }
-
-    @NotNull
-    public MutableNodeRow getRow() {
-        return row;
     }
 
     @NotNull

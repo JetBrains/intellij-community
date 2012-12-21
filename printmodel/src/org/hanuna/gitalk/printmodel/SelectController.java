@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.printmodel;
 
-import org.hanuna.gitalk.graph.GraphFragment;
+import org.hanuna.gitalk.graph.graph_elements.GraphFragment;
 import org.hanuna.gitalk.graph.graph_elements.Edge;
 import org.hanuna.gitalk.graph.graph_elements.GraphElement;
 import org.hanuna.gitalk.graph.graph_elements.Node;
@@ -28,7 +28,7 @@ public class SelectController {
         }
         selectedElements.add(graphFragment.getUpNode());
         selectedElements.add(graphFragment.getDownNode());
-        graphFragment.intermediateWalker(new GraphFragment.Runner() {
+        graphFragment.intermediateWalker(new GraphFragment.GraphElementRunnable() {
             @Override
             public void edgeRun(@NotNull Edge edge) {
                 selectedElements.add(edge);

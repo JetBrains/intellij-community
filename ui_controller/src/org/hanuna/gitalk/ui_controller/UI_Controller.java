@@ -5,9 +5,9 @@ import org.hanuna.gitalk.common.Timer;
 import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.controller.Controller;
 import org.hanuna.gitalk.graph.Graph;
-import org.hanuna.gitalk.graph.GraphFragment;
+import org.hanuna.gitalk.graph.graph_elements.GraphFragment;
 import org.hanuna.gitalk.graph.graph_elements.GraphElement;
-import org.hanuna.gitalk.graph.mutable_graph.graph_fragment_controller.GraphFragmentController;
+import org.hanuna.gitalk.graph.GraphFragmentController;
 import org.hanuna.gitalk.printmodel.PrintCell;
 import org.hanuna.gitalk.printmodel.PrintCellModel;
 import org.hanuna.gitalk.printmodel.SelectController;
@@ -101,12 +101,8 @@ public class UI_Controller {
         if (fragment == null) {
             return;
         }
-        Replace replace;
-        if (fragmentController.isHidden(fragment)) {
-            replace = fragmentController.showFragment(fragment);
-        } else {
-            replace = fragmentController.hideFragment(fragment);
-        }
+        boolean visible = fragmentController.isVisible(fragment);
+        Replace replace = fragmentController.setVisible(fragment, !visible);
         printCellModel.recalculate(replace);
         events.runUpdateTable();
         events.runJumpToRow(replace.from());

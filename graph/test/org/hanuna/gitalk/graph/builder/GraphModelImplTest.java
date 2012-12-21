@@ -3,11 +3,11 @@ package org.hanuna.gitalk.graph.builder;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.graph.Graph;
-import org.hanuna.gitalk.graph.GraphFragment;
+import org.hanuna.gitalk.graph.graph_elements.GraphFragment;
 import org.hanuna.gitalk.graph.mutable_graph.GraphBuilder;
 import org.hanuna.gitalk.graph.mutable_graph.MutableGraph;
-import org.hanuna.gitalk.graph.mutable_graph.graph_fragment_controller.GraphFragmentController;
-import org.hanuna.gitalk.graph.mutable_graph.graph_fragment_controller.SimpleGraphFragmentController;
+import org.hanuna.gitalk.graph.GraphFragmentController;
+import org.hanuna.gitalk.graph.mutable_graph.SimpleGraphFragmentController;
 import org.hanuna.gitalk.parser.GitLogParser;
 import org.junit.Test;
 
@@ -67,7 +67,7 @@ public class GraphModelImplTest {
         GraphFragmentController graphController = new SimpleGraphFragmentController((MutableGraph) graph);
         GraphFragment fragment = graphController.relateFragment(getNode(graph, 1));
         assertTrue(fragment != null);
-        Replace replace = graphController.hideFragment(fragment);
+        Replace replace = graphController.setVisible(fragment, false);
         assertEquals(1, replace.from());
         assertEquals(7, replace.to());
         assertEquals(4, replace.addElementsCount());
@@ -88,7 +88,7 @@ public class GraphModelImplTest {
         );
 
 
-        replace = graphController.showFragment(fragment);
+        replace = graphController.setVisible(fragment, true);
         assertEquals(1, replace.from());
         assertEquals(6, replace.to());
         assertEquals(5, replace.addElementsCount());

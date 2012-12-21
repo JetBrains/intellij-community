@@ -1,6 +1,6 @@
-package org.hanuna.gitalk.graph.mutable_graph.graph_fragment_controller;
+package org.hanuna.gitalk.graph.mutable_graph.graph_elements_impl;
 
-import org.hanuna.gitalk.graph.GraphFragment;
+import org.hanuna.gitalk.graph.graph_elements.GraphFragment;
 import org.hanuna.gitalk.graph.graph_elements.Edge;
 import org.hanuna.gitalk.graph.graph_elements.Node;
 import org.jetbrains.annotations.NotNull;
@@ -57,40 +57,40 @@ public class GraphFragmentImpl implements GraphFragment {
     }
 
     /**
-     * @param node - not run runner.nodeRun(node) & not check count up edges
+     * @param node - not run graphRunnable.nodeRun(node) & not check count up edges
      */
-    private void startRunner(@NotNull Node node, @NotNull Runner runner) {
+    private void startRunner(@NotNull Node node, @NotNull GraphElementRunnable graphRunnable) {
         if (node == downNode) {
             return;
         }
         while (node.getDownEdges().size() == 1) {
             Edge edge = firstDownEdge(node);
-            runner.edgeRun(edge);
+            graphRunnable.edgeRun(edge);
 
             Node nextNode = edge.getDownNode();
             if (nextNode == downNode) {
                 return;
             }
             if (notVisited(nextNode)) {
-                runner.nodeRun(nextNode);
+                graphRunnable.nodeRun(nextNode);
             }
             node = nextNode;
         }
 
         // i.e. node.getDownEdges().size() != 1 && node above downNode
         for (Edge edge : node.getDownEdges()) {
-            runner.edgeRun(edge);
+            graphRunnable.edgeRun(edge);
             Node next = edge.getDownNode();
             if (notVisited(next)) {
-                runner.nodeRun(next);
-                startRunner(next, runner);
+                graphRunnable.nodeRun(next);
+                startRunner(next, graphRunnable);
             }
         }
     }
 
     @Override
-    public void intermediateWalker(@NotNull Runner runner) {
+    public void intermediateWalker(@NotNull GraphElementRunnable graphRunnable) {
         visitedNodes.clear();
-        startRunner(upNode, runner);
+        startRunner(upNode, graphRunnable);
     }
 }

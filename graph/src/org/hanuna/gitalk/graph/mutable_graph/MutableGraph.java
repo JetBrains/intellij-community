@@ -4,8 +4,7 @@ import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.graph_elements.NodeRow;
 import org.hanuna.gitalk.graph.mutable_graph.graph_elements_impl.MutableNodeRow;
-import org.hanuna.gitalk.graph.mutable_graph.graph_fragment_controller.GraphFragmentController;
-import org.hanuna.gitalk.graph.mutable_graph.graph_fragment_controller.SimpleGraphFragmentController;
+import org.hanuna.gitalk.graph.GraphFragmentController;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -38,7 +37,7 @@ public class MutableGraph implements Graph {
             allRows.get(i).updateVisibleNodes();
         }
         recalculateRowIndex();
-        return new Replace(fromRowIndex, toRowIndex, downRow.getRowIndex() - upRow.getRowIndex() - 1);
+        return Replace.buildFromToInterval(fromRowIndex, toRowIndex, upRow.getRowIndex(), downRow.getRowIndex());
     }
 
     private void recalculateRowIndex() {

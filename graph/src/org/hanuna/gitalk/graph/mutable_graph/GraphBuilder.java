@@ -20,34 +20,32 @@ import static org.hanuna.gitalk.graph.mutable_graph.MutableGraphUtils.createEdge
  */
 public class GraphBuilder {
     public static Graph build(List<Commit> commits) {
-        Map<Commit, Integer> logIndexMap = new HashMap<Commit, Integer>(commits.size());
+        Map<Commit, Integer> commitLogIndexes = new HashMap<Commit, Integer>(commits.size());
         for (int i = 0; i < commits.size(); i++) {
-            logIndexMap.put(commits.get(i), i);
+            commitLogIndexes.put(commits.get(i), i);
         }
-        GraphBuilder builder = new GraphBuilder(logIndexMap);
+        GraphBuilder builder = new GraphBuilder(commitLogIndexes);
         return builder.runBuild(commits);
     }
 
-    public GraphBuilder(@NotNull Map<Commit, Integer> logIndexMap) {
-        this.logIndexMap = logIndexMap;
+    private GraphBuilder(@NotNull Map<Commit, Integer> commitLogIndexes) {
+        this.commitLogIndexes = commitLogIndexes;
     }
 
     private int lastLogIndex;
     private Map<Hash, MutableNode> notAddedNodes = new HashMap<Hash, MutableNode>();
     private MutableNodeRow nextRow;
     private final List<MutableNodeRow> rows = new ArrayList<MutableNodeRow>();
-    private final Map<Commit, Integer> logIndexMap;
+    private final Map<Commit, Integer> commitLogIndexes;
 
     private int getLogIndexOfCommit(@NotNull Commit commit) {
         final CommitData data = commit.getData();
         if (data == null) {
             return lastLogIndex + 1;
         } else {
-            return logIndexMap.get(commit);
+            return commitLogIndexes.get(commit);
         }
     }
-
-
 
     // return added node
     private MutableNode addCurrentCommitAndFinishRow(Commit commit) {
@@ -136,7 +134,5 @@ public class GraphBuilder {
         lastActions();
         return new MutableGraph(rows);
     }
-
-
 
 }

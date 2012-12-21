@@ -1,7 +1,7 @@
-package org.hanuna.gitalk.graph.mutable_graph.graph_fragment_controller;
+package org.hanuna.gitalk.graph;
 
 import org.hanuna.gitalk.common.compressedlist.Replace;
-import org.hanuna.gitalk.graph.GraphFragment;
+import org.hanuna.gitalk.graph.graph_elements.GraphFragment;
 import org.hanuna.gitalk.graph.graph_elements.GraphElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,10 +15,7 @@ public interface GraphFragmentController {
     public GraphFragment relateFragment(@NotNull GraphElement graphElement);
 
     @NotNull
-    public Replace hideFragment(@NotNull GraphFragment fragment);
+    public Replace setVisible(@NotNull GraphFragment fragment, boolean visible);
 
-    @NotNull
-    public Replace showFragment(@NotNull GraphFragment fragment);
-
-    public boolean isHidden(@NotNull GraphFragment fragment);
+    public boolean isVisible(@NotNull GraphFragment fragment);
 }

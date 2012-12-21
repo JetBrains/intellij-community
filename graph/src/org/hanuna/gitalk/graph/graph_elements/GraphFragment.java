@@ -1,7 +1,5 @@
-package org.hanuna.gitalk.graph;
+package org.hanuna.gitalk.graph.graph_elements;
 
-import org.hanuna.gitalk.graph.graph_elements.Edge;
-import org.hanuna.gitalk.graph.graph_elements.Node;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -15,14 +13,11 @@ public interface GraphFragment {
     @NotNull
     public Node getDownNode();
 
-    public void intermediateWalker(@NotNull Runner runner);
+    public void intermediateWalker(@NotNull GraphElementRunnable graphRunnable);
 
-    public static interface Runner {
-
+    public static interface GraphElementRunnable {
         public void edgeRun(@NotNull Edge edge);
-
         public void nodeRun(@NotNull Node node);
-
     }
 
 }

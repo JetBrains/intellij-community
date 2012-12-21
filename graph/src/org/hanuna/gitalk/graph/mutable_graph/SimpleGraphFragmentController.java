@@ -1,12 +1,12 @@
-package org.hanuna.gitalk.graph.mutable_graph.graph_fragment_controller;
+package org.hanuna.gitalk.graph.mutable_graph;
 
 import org.hanuna.gitalk.common.compressedlist.Replace;
-import org.hanuna.gitalk.graph.GraphFragment;
+import org.hanuna.gitalk.graph.GraphFragmentController;
 import org.hanuna.gitalk.graph.graph_elements.Edge;
 import org.hanuna.gitalk.graph.graph_elements.GraphElement;
+import org.hanuna.gitalk.graph.graph_elements.GraphFragment;
 import org.hanuna.gitalk.graph.graph_elements.Node;
-import org.hanuna.gitalk.graph.mutable_graph.MutableGraph;
-import org.hanuna.gitalk.graph.mutable_graph.MutableGraphUtils;
+import org.hanuna.gitalk.graph.mutable_graph.graph_elements_impl.GraphFragmentImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -138,9 +138,8 @@ public class SimpleGraphFragmentController implements GraphFragmentController {
     }
 
     @NotNull
-    @Override
-    public Replace hideFragment(@NotNull GraphFragment fragment) {
-        fragment.intermediateWalker(new GraphFragment.Runner() {
+    private Replace hideFragment(@NotNull GraphFragment fragment) {
+        fragment.intermediateWalker(new GraphFragment.GraphElementRunnable() {
             @Override
             public void edgeRun(@NotNull Edge edge) {
                 // do nothing
@@ -169,8 +168,7 @@ public class SimpleGraphFragmentController implements GraphFragmentController {
     }
 
     @NotNull
-    @Override
-    public Replace showFragment(@NotNull GraphFragment fragment) {
+    private Replace showFragment(@NotNull GraphFragment fragment) {
         Node upNode = fragment.getUpNode();
         Edge longEdge = firstDownEdge(upNode);
         final Node downNode = fragment.getDownNode();
@@ -184,7 +182,7 @@ public class SimpleGraphFragmentController implements GraphFragmentController {
         final Node downHiddenNode = hiddenFragment.getDownHiddenNode();
         createEdge(downHiddenNode, downNode, Edge.Type.USUAL, downHiddenNode.getBranch());
 
-        fragment.intermediateWalker(new GraphFragment.Runner() {
+        fragment.intermediateWalker(new GraphFragment.GraphElementRunnable() {
             @Override
             public void edgeRun(@NotNull Edge edge) {
                 // do nothing
@@ -199,10 +197,25 @@ public class SimpleGraphFragmentController implements GraphFragmentController {
         return graph.fixRowVisibility(upNode.getRowIndex(), downNode.getRowIndex());
     }
 
+    @NotNull
     @Override
-    public boolean isHidden(@NotNull GraphFragment fragment) {
+    public Replace setVisible(@NotNull GraphFragment fragment, boolean visible) {
+        if (visible) {
+            if (!isVisible(fragment)) {
+                return showFragment(fragment);
+            }
+        } else {
+            if (isVisible(fragment)) {
+                return hideFragment(fragment);
+            }
+        }
+        return Replace.ID_REPLACE;
+    }
+
+    @Override
+    public boolean isVisible(@NotNull GraphFragment fragment) {
         Edge first = firstDownEdge(fragment.getUpNode());
-        return first.getType() == Edge.Type.HIDE_FRAGMENT;
+        return first.getType() != Edge.Type.HIDE_FRAGMENT;
     }
 
     private static class HiddenFragment {
