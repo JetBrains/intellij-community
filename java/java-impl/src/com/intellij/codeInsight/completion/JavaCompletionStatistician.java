@@ -31,7 +31,7 @@ public class JavaCompletionStatistician extends CompletionStatistician{
   public StatisticsInfo serialize(final LookupElement element, final CompletionLocation location) {
     Object o = element.getObject();
 
-    if (o instanceof PsiLocalVariable || o instanceof PsiParameter || o instanceof PsiThisExpression) {
+    if (o instanceof PsiLocalVariable || o instanceof PsiParameter || o instanceof PsiThisExpression || o instanceof PsiKeyword) {
       return StatisticsInfo.EMPTY;
     }
 
