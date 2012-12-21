@@ -974,4 +974,12 @@ print new HashSet<TrackerEventsListener<AgentInfo, NodeEvent<AgentInfo>>>() //co
 print new HashSet<TrackerEventsListener<AgentInfo, <warning descr="Type parameter 'NodeEvent<java.lang.Object>' is not in its bound; should extend 'NodeEvent<N>'">NodeEvent<Object></warning>>>() //incorrect
 ''')
   }
+
+  void testTypeInConstructor() {
+    testHighlighting('''\
+class X {
+  public <error descr="Return type element is not allowed in constructor">void</error> X() {}
+}
+''')
+  }
 }
