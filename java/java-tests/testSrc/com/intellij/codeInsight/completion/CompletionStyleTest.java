@@ -45,26 +45,6 @@ public class CompletionStyleTest extends LightCodeInsightTestCase{
     checkResultByFile(path + "/after1.java");
   }
 
-  public void testIDEADEV4566() throws Exception {
-    configureFromFileText(
-      "A.java",
-      "public class A {\n" +
-      "  public static Object createA(String s) {}\n" +
-      "  public static void foo() {\n" +
-      "    createA(<caret>);\n" +
-      "  }\n" +
-      "}");
-    performSmartCompletion();
-    select(Lookup.NORMAL_SELECT_CHAR, 0);
-    checkResultByText(
-      "public class A {\n" +
-      "  public static Object createA(String s) {}\n" +
-      "  public static void foo() {\n" +
-      "    createA(String.copyValueOf(<caret>));\n" +
-      "  }\n" +
-      "}");
-  }
-
   public void testIDEADEV5935() throws Exception {
     configureFromFileText("A.java",
                           "public class A {\n" +
