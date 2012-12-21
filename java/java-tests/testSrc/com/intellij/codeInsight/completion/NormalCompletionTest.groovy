@@ -568,7 +568,7 @@ public class ListUtils {
     checkResult()
   }
 
-  public void testDefaultAnnoParam() throws Throwable { doTest('\n'); }
+  public void testDefaultAnnoParam() throws Throwable { doTest(); }
 
   public void testSpaceAfterLookupString() throws Throwable {
     configureByFile(getTestName(false) + ".java");

@@ -148,19 +148,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     if (psiElement().inside(PsiAnnotationParameterList.class).accepts(position)) {
-      OrFilter orFilter = new OrFilter(ElementClassFilter.CLASS,
-                                     ElementClassFilter.PACKAGE_FILTER,
-                                     new AndFilter(new ClassFilter(PsiField.class),
-                                                   new ModifierFilter(PsiModifier.STATIC, PsiModifier.FINAL)));
-      if (psiElement().insideStarting(psiNameValuePair()).accepts(position)) {
-        orFilter.addFilter(new ClassFilter(PsiAnnotationMethod.class) {
-          @Override
-          public boolean isAcceptable(Object element, PsiElement context) {
-            return element instanceof PsiAnnotationMethod && PsiUtil.isAnnotationMethod((PsiElement)element);
-          }
-        });
-      }
-      return orFilter;
+      return createAnnotationFilter(position);
     }
 
     if (psiElement().afterLeaf("=").inside(PsiVariable.class).accepts(position)) {
@@ -179,6 +167,22 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     return TrueFilter.INSTANCE;
+  }
+
+  private static ElementFilter createAnnotationFilter(PsiElement position) {
+    OrFilter orFilter = new OrFilter(ElementClassFilter.CLASS,
+                                   ElementClassFilter.PACKAGE_FILTER,
+                                   new AndFilter(new ClassFilter(PsiField.class),
+                                                 new ModifierFilter(PsiModifier.STATIC, PsiModifier.FINAL)));
+    if (psiElement().insideStarting(psiNameValuePair()).accepts(position)) {
+      orFilter.addFilter(new ClassFilter(PsiAnnotationMethod.class) {
+        @Override
+        public boolean isAcceptable(Object element, PsiElement context) {
+          return element instanceof PsiAnnotationMethod && PsiUtil.isAnnotationMethod((PsiElement)element);
+        }
+      });
+    }
+    return orFilter;
   }
 
   @Override
@@ -437,7 +441,7 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     if (showClasses && insertedElement.getParent() instanceof PsiReferenceExpression) {
       final Set<LookupElement> set = JavaCompletionUtil.processJavaReference(
-        insertedElement, (PsiJavaReference)insertedElement.getParent(), TrueFilter.INSTANCE, JavaCompletionProcessor.Options.DEFAULT_OPTIONS, result.getPrefixMatcher(), parameters);
+        insertedElement, (PsiJavaReference)insertedElement.getParent(), new ElementExtractorFilter(createAnnotationFilter(insertedElement)), JavaCompletionProcessor.Options.DEFAULT_OPTIONS, result.getPrefixMatcher(), parameters);
       for (final LookupElement element : set) {
         result.addElement(element);
       }
