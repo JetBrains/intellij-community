@@ -90,7 +90,7 @@ public abstract class MembersGetter {
 
   public void processMembers(final Consumer<LookupElement> results, @Nullable final PsiClass where,
                              final boolean acceptMethods, final boolean searchInheritors) {
-    if (where == null) return;
+    if (where == null || CommonClassNames.JAVA_LANG_STRING.equals(where.getQualifiedName())) return;
 
     final boolean searchFactoryMethods = searchInheritors &&
                                    !CommonClassNames.JAVA_LANG_OBJECT.equals(where.getQualifiedName()) &&

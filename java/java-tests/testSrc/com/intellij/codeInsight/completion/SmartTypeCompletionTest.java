@@ -726,8 +726,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testDontAutoCastWhenAlreadyCasted() throws Throwable {
     configureByTestName();
-    assertEquals("s", myItems[0].getLookupString());
-    assertEquals("copyValueOf", myItems[1].getLookupString());
+    myFixture.assertPreferredCompletionItems(0, "s", "toString");
     select();
     checkResultByTestName();
   }
