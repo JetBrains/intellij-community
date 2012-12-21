@@ -89,7 +89,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
         substitutor = substitutor.putAll((PsiClass)namedElement, myTypeArguments);
       }
 
-      if (namedElement instanceof PsiClass) {
+      if (namedElement instanceof PsiClass  && !(namedElement instanceof PsiTypeParameter)) {
         final PsiClass aClass = (PsiClass)namedElement;
         if (myProcessedClasses == null) myProcessedClasses = new HashSet<String>();
         if (!myProcessedClasses.add(aClass.getQualifiedName())) {

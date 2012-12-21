@@ -28,7 +28,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
-import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -63,8 +62,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.CompleteReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -282,8 +279,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
         suggestVariableNames(position, result);
 
-        addUnfinishedMethodTypeParameters(position, result);
-
         GrReferenceElement reference = findGroovyReference(position);
         if (reference == null) {
           if (parameters.getInvocationCount() >= 2) {
@@ -369,26 +364,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
       return ((GrReferenceElement)parent).getQualifier() == null;
     }
     return couldContainReference(position);
-  }
-
-  private static void addUnfinishedMethodTypeParameters(PsiElement position, CompletionResultSet result) {
-    final ProcessingContext context = new ProcessingContext();
-    if (PsiJavaPatterns.psiElement().inside(
-      PsiJavaPatterns.psiElement(GrTypeElement.class).afterLeaf(
-        PsiJavaPatterns.psiElement().withText(">").withParent(
-          PsiJavaPatterns.psiElement(GrTypeParameterList.class).withParent(PsiErrorElement.class).save("typeParameterList")))).accepts(
-      position, context)) {
-      final GrTypeParameterList list = (GrTypeParameterList)context.get("typeParameterList");
-      PsiElement current = list.getParent().getParent();
-      if (current instanceof PsiField) {
-        current = current.getParent();
-      }
-      if (current instanceof GrTypeDefinitionBody) {
-        for (PsiTypeParameter typeParameter : list.getTypeParameters()) {
-          result.addElement(new JavaPsiClassReferenceElement(typeParameter));
-        }
-      }
-    }
   }
 
   @Override
