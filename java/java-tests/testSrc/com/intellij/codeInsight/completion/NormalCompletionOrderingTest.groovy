@@ -200,7 +200,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testLocalVarsOverMethods() {
-    checkPreferredItems(0, "value", "validate", "validateTree", "valueOf");
+    checkPreferredItems(0, "value", "validate", "validateTree");
   }
 
   public void testCurrentClassBest() {
@@ -244,7 +244,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testPreferClassStaticMembers() {
-    checkPreferredItems(0, "Zoo", "Zoo.A", "Zoo.B", "Zoo.C", "Zoo.D", "Zoo.E", "Zoo.F", "Zoo.G", "Zoo.H");
+    checkPreferredItems(0, "Zoo.A", "Zoo", "Zoo.B", "Zoo.C", "Zoo.D", "Zoo.E", "Zoo.F", "Zoo.G", "Zoo.H");
   }
 
   public void testPreferFinallyToFinal() {
@@ -257,6 +257,10 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
 
   public void testPreferModifiers() {
     checkPreferredItems(0, "private", "protected", "public", "paaa", "paab");
+  }
+
+  public void testPreferEnumConstants() {
+    checkPreferredItems(0, "MyEnum.bar", "MyEnum", "MyEnum.foo");
   }
 
   public void testPreferElse() {
@@ -389,7 +393,7 @@ import java.lang.annotation.Target;
   }
 
   public void testPreferClassToItsConstants() {
-    checkPreferredItems 0, 'Calendar', 'Calendar.FIELD_COUNT'
+    checkPreferredItems 0, 'Calendar.FIELD_COUNT', 'Calendar', 'Calendar.AM'
   }
 
   public void testPreferLocalsToStaticsInSecondCompletion() {
@@ -453,7 +457,7 @@ import java.lang.annotation.Target;
     repeatCompletion 'b'
 
     myFixture.completeBasic();
-    assertPreferredItems(0, 'return', '_boo2', '_foo2', '_boo1', '_foo1', '_goo1', '_goo2')
+    assertPreferredItems(0, '_boo2', '_foo2', 'return', '_boo1', '_foo1', '_goo1', '_goo2')
     myFixture.type('_');
     assertPreferredItems(0, '_boo2', '_foo2', '_boo1', '_foo1', '_goo1', '_goo2')
     myFixture.type('g')

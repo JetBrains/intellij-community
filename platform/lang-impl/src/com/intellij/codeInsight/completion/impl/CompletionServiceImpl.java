@@ -261,7 +261,7 @@ public class CompletionServiceImpl extends CompletionService{
     return sorter.withClassifier("priority", true, new ClassifierFactory<LookupElement>("liftShorter") {
       @Override
       public Classifier<LookupElement> createClassifier(final Classifier<LookupElement> next) {
-        return new LiftShorterItemsClassifier(next, new LiftShorterItemsClassifier.LiftingCondition(), false);
+        return new LiftShorterItemsClassifier("liftShorter", next, new LiftShorterItemsClassifier.LiftingCondition(), false);
       }
     });
   }

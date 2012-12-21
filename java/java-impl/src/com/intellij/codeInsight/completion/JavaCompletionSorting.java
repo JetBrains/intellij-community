@@ -79,42 +79,17 @@ public class JavaCompletionSorting {
     if (!smart && afterNew) {
       sorter = sorter.weighBefore("liftShorter", new PreferExpected(true, expectedTypes));
     } else {
-      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(position.getProject()).getFileIndex();
-      sorter = ((CompletionSorterImpl)sorter).withClassifier("liftShorter", true, new ClassifierFactory<LookupElement>("liftShorterClasses") {
-        @Override
-        public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
-          return new LiftShorterItemsClassifier(next, new LiftShorterItemsClassifier.LiftingCondition() {
-            @Override
-            public boolean shouldLift(LookupElement shorterElement, LookupElement longerElement) {
-              Object object = shorterElement.getObject();
-              if (object instanceof PsiClass) {
-                PsiClass psiClass = (PsiClass)object;
-                PsiFile file = psiClass.getContainingFile();
-                if (file != null) {
-                  VirtualFile vFile = file.getOriginalFile().getVirtualFile();
-                  if (vFile != null && fileIndex.isInSource(vFile)) {
-                    return true;
-                  }
-                }
-                Object longerObject = longerElement.getObject();
-                if (longerObject instanceof PsiMember &&
-                    psiClass.getManager().areElementsEquivalent(psiClass, ((PsiMember)longerObject).getContainingClass())) {
-                  return true;
-                }
-              }
-              return false;
-            }
-          }, true);
-        }
-      });
+      sorter = ((CompletionSorterImpl)sorter).withClassifier("liftShorterClasses", true, new LiftShorterClasses(position));
     }
 
     List<LookupElementWeigher> afterPrefix = ContainerUtil.newArrayList();
-    afterPriority.add(new PreferByKindWeigher(type, position, true));
-    afterPrefix.add(new PreferByKindWeigher(type, position, false));
+    if (smart) {
+      afterPriority.add(new PreferByKindWeigher(type, position, true));
+    }
     if (!smart && !afterNew) {
       afterPrefix.add(new PreferExpected(false, expectedTypes));
     }
+    afterPrefix.add(new PreferByKindWeigher(type, position, false));
     Collections.addAll(afterPrefix, new PreferNonGeneric(), new PreferAccessible(position), new PreferSimple(),
                        new PreferEnumConstants(parameters));
     
@@ -565,6 +540,38 @@ public class JavaCompletionSorting {
         return NameUtil.nameToWords(name).length - 1000;
       }
       return 0;
+    }
+  }
+
+  private static class LiftShorterClasses extends ClassifierFactory<LookupElement> {
+    final ProjectFileIndex fileIndex;
+    private final PsiElement myPosition;
+
+    public LiftShorterClasses(PsiElement position) {
+      super("liftShorterClasses");
+      myPosition = position;
+      fileIndex = ProjectRootManager.getInstance(myPosition.getProject()).getFileIndex();
+    }
+
+    @Override
+    public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
+      return new LiftShorterItemsClassifier("liftShorterClasses", next, new LiftShorterItemsClassifier.LiftingCondition() {
+        @Override
+        public boolean shouldLift(LookupElement shorterElement, LookupElement longerElement) {
+          Object object = shorterElement.getObject();
+          if (object instanceof PsiClass && longerElement.getObject() instanceof PsiClass) {
+            PsiClass psiClass = (PsiClass)object;
+            PsiFile file = psiClass.getContainingFile();
+            if (file != null) {
+              VirtualFile vFile = file.getOriginalFile().getVirtualFile();
+              if (vFile != null && fileIndex.isInSource(vFile)) {
+                return true;
+              }
+            }
+          }
+          return false;
+        }
+      }, true);
     }
   }
 }
