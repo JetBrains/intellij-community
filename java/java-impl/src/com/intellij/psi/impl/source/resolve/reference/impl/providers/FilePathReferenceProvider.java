@@ -138,20 +138,17 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
       }
     }
 
-    for (Module module : modules) {
-      moduleRootManager = ModuleRootManager.getInstance(module);
-      VirtualFile[] sourceRoots = moduleRootManager.getSourceRoots();
-      for (VirtualFile root : sourceRoots) {
-        final PsiDirectory directory = psiManager.findDirectory(root);
-        if (directory != null) {
-          final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
-          if (aPackage != null && aPackage.getName() != null) {
-            // package prefix
-            result.add(PackagePrefixFileSystemItem.create(directory));
-          }
-          else {
-            result.add(directory);
-          }
+    VirtualFile[] sourceRoots = moduleRootManager.orderEntries().recursively().withoutSdk().withoutLibraries().getSourceRoots();
+    for (VirtualFile root : sourceRoots) {
+      final PsiDirectory directory = psiManager.findDirectory(root);
+      if (directory != null) {
+        final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
+        if (aPackage != null && aPackage.getName() != null) {
+          // package prefix
+          result.add(PackagePrefixFileSystemItem.create(directory));
+        }
+        else {
+          result.add(directory);
         }
       }
     }
