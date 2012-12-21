@@ -41,7 +41,7 @@ import java.util.Map;
 public class DomExtensionImpl implements DomExtension {
   public static final Key<DomAnchor> KEY_DOM_DECLARATION = Key.create("DOM_DECLARATION");
   public static final Key<List<DomExtender>> DOM_EXTENDER_KEY = Key.create("Dom.Extender");
-  public static Key<SmartPsiElementPointer<?>> DECLARING_ELEMENT_KEY = Key.create("Dom.Extension.PsiDeclaration");
+  public static final Key<SmartPsiElementPointer<?>> DECLARING_ELEMENT_KEY = Key.create("Dom.Extension.PsiDeclaration");
   private final XmlName myXmlName;
   private final Type myType;
   private Converter myConverter;
