@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.xml.impl.dtd.XmlNSDescriptorImpl;
@@ -27,9 +26,7 @@ import java.util.List;
 public class DomPerformanceTest extends DomHardCoreTestCase{
 
   public void testVisitorPerformance() throws Throwable {
-    final MyElement element = createElement("<!DOCTYPE faces-config PUBLIC\n" +
-                                            "  \"-//Sun Microsystems, Inc.//DTD JavaServer Faces Config 1.1//EN\"\n" +
-                                            "  \"http://java.sun.com/dtd/web-facesconfig_1_1.dtd\">", MyElement.class);
+    final MyElement element = createElement("<root xmlns=\"adsf\" targetNamespace=\"adsf\"/>", MyElement.class);
 
     MetaRegistry.bindDataToElement(DomUtil.getFile(element).getDocument(), new XmlNSDescriptorImpl());
 
@@ -44,15 +41,17 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
     child.addChildElement().addBarComposite().setValue("ssss");
     child.addBarChild().getChild2().getAttr().setValue("234178956023");
 
-    long start = System.currentTimeMillis();
-    for (int i = 0; i < 239; i++) {
-      element.addChildElement().copyFrom(child);
-    }
-    IdeaTestUtil.assertTiming("", 30000, System.currentTimeMillis() - start);
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 30000, new ThrowableRunnable() {
+      @Override
+      public void run() throws Exception {
+        for (int i = 0; i < 239; i++) {
+          element.addChildElement().copyFrom(child);
+        }
+      }
+    }).cpuBound().attempts(1).assertTiming();
 
     final MyElement newElement = createElement(DomUtil.getFile(element).getText(), MyElement.class);
 
-    //ProfilingUtil.startCPUProfiling();
     PlatformTestUtil.startPerformanceTest(getTestName(false), 200, new ThrowableRunnable() {
       @Override
       public void run() throws Exception {
@@ -62,14 +61,6 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
             element.acceptChildren(this);
           }
         });
-        /*
-        try {
-          ProfilingUtil.captureCPUSnapshot("aaa");
-        }
-        catch (Exception e) {
-          e.printStackTrace();
-        }
-        */
 
       }
     }).cpuBound().assertTiming();
