@@ -26,6 +26,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
@@ -227,15 +229,23 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     apkPathComboBoxComponent.setMinimumSize(new Dimension(10, apkPathComboBoxComponent.getMinimumSize().height));
     apkPathComboBoxComponent.setPreferredSize(new Dimension(10, apkPathComboBoxComponent.getPreferredSize().height));
 
-    myApkPathCombo.addBrowseFolderListener(project, new FileChooserDescriptor(true, false, false, false, false, false) {
-      @Override
-      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-        if (!super.isFileVisible(file, showHiddenFiles)) {
-          return false;
-        }
-        return file.isDirectory() || "apk".equals(file.getExtension());
+    final FileChooserDescriptor apkPathChooserDescriptor = new FileChooserDescriptor(false, true, false, false, false, false);
+
+    final TextComponentAccessor<JComboBox> apkPathComboAccessor = new TextComponentAccessor<JComboBox>() {
+      public String getText(JComboBox comboBox) {
+        Object item = comboBox.getEditor().getItem();
+        final String filePath = item.toString();
+        return new File(filePath).getParent();
       }
-    });
+
+      public void setText(JComboBox comboBox, String text) {
+        final String defaultApkName = AndroidCompileUtil.getApkName(myContext.getModule());
+        comboBox.getEditor().setItem(new File(text, defaultApkName).getPath());
+      }
+    };
+    myApkPathCombo.addBrowseFolderListener(project, new ComponentWithBrowseButton.BrowseFolderActionListener<JComboBox>(
+      "Select Directory for APK", null, myApkPathCombo, project,
+      apkPathChooserDescriptor, apkPathComboAccessor));
   }
 
   private void updateAptPanel() {
