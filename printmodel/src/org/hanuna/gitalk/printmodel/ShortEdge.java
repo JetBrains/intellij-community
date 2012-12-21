@@ -1,6 +1,7 @@
 package org.hanuna.gitalk.printmodel;
 
 import org.hanuna.gitalk.graph.graph_elements.Edge;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author erokhins
@@ -11,13 +12,14 @@ public class ShortEdge {
     private final int downPosition;
     private final boolean selected;
 
-    public ShortEdge(Edge edge, int upPosition, int downPosition, boolean selected) {
+    public ShortEdge(@NotNull Edge edge, int upPosition, int downPosition, boolean selected) {
         this.edge = edge;
         this.upPosition = upPosition;
         this.downPosition = downPosition;
         this.selected = selected;
     }
 
+    @NotNull
     public Edge getEdge() {
         return edge;
     }

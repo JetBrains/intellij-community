@@ -16,11 +16,6 @@ import java.util.Set;
 public class SelectController {
     private final Set<GraphElement> selectedElements = new HashSet<GraphElement>();
 
-    //package local
-    SelectController() {
-
-    }
-
     public void select(@Nullable GraphFragment graphFragment) {
         deselectAll();
         if (graphFragment == null) {
@@ -45,16 +40,8 @@ public class SelectController {
         selectedElements.clear();
     }
 
-    public boolean selected(@NotNull GraphElement element) {
+    public boolean isSelected(@NotNull GraphElement element) {
         return selectedElements.contains(element);
-    }
-
-    public boolean selected(@NotNull ShortEdge edge) {
-        return selected(edge.getEdge());
-    }
-
-    public boolean selected(@NotNull SpecialCell cell) {
-        return selected(cell.getGraphElement());
     }
 
 

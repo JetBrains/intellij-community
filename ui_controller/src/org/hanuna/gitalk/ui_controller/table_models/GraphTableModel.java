@@ -5,8 +5,8 @@ import org.hanuna.gitalk.commitmodel.CommitData;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.graph_elements.GraphElement;
 import org.hanuna.gitalk.graph.graph_elements.Node;
-import org.hanuna.gitalk.printmodel.PrintCellModel;
-import org.hanuna.gitalk.printmodel.SpecialCell;
+import org.hanuna.gitalk.printmodel.GraphPrintCellModel;
+import org.hanuna.gitalk.printmodel.SpecialPrintElement;
 import org.hanuna.gitalk.refs.Ref;
 import org.hanuna.gitalk.refs.RefsModel;
 import org.hanuna.gitalk.ui_controller.DateConverter;
@@ -23,25 +23,25 @@ public class GraphTableModel extends AbstractTableModel {
     private final String[] columnNames = {"Subject", "Author", "Date"};
     private final RefsModel refsModel;
     private Graph graph;
-    private PrintCellModel printCellModel;
+    private GraphPrintCellModel graphPrintCellModel;
 
-    public GraphTableModel(Graph graph, RefsModel refsModel, PrintCellModel printCellModel) {
+    public GraphTableModel(Graph graph, RefsModel refsModel, GraphPrintCellModel graphPrintCellModel) {
         this.graph = graph;
         this.refsModel = refsModel;
-        this.printCellModel = printCellModel;
+        this.graphPrintCellModel = graphPrintCellModel;
     }
 
-    public void rewriteGraph(Graph graph, PrintCellModel printCellModel) {
+    public void rewriteGraph(Graph graph, GraphPrintCellModel graphPrintCellModel) {
         this.graph = graph;
-        this.printCellModel = printCellModel;
+        this.graphPrintCellModel = graphPrintCellModel;
     }
 
     @Nullable
     private Commit getCommitInRow(int rowIndex) {
-        List<SpecialCell> cells = printCellModel.getPrintCellRow(rowIndex).getSpecialCell();
-        for (SpecialCell cell : cells) {
-            if (cell.getType() == SpecialCell.Type.COMMIT_NODE) {
-                GraphElement element = cell.getGraphElement();
+        List<SpecialPrintElement> printElements = graphPrintCellModel.getGraphPrintCell(rowIndex).getSpecialPrintElements();
+        for (SpecialPrintElement printElement : printElements) {
+            if (printElement.getType() == SpecialPrintElement.Type.COMMIT_NODE) {
+                GraphElement element = printElement.getGraphElement();
                 Node node =  element.getNode();
                 assert node != null;
                 return node.getCommit();
@@ -78,7 +78,7 @@ public class GraphTableModel extends AbstractTableModel {
                     message = data.getMessage();
                     refs = refsModel.refsToCommit(commit.hash());
                 }
-                return new GraphCommitCell(printCellModel.getPrintCellRow(rowIndex), message, refs);
+                return new GraphCommitCell(graphPrintCellModel.getGraphPrintCell(rowIndex), message, refs);
             case 1:
                 if (data == null) {
                     return "";

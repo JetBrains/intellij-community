@@ -13,7 +13,7 @@ import java.util.*;
 /**
  * @author erokhins
  */
-public class LayoutRowGenerator extends AbstractGenerator<MutableLayoutRow, LayoutRow> {
+class LayoutRowGenerator extends AbstractGenerator<MutableLayoutRow, LayoutRow> {
     private final Graph graph;
 
     public LayoutRowGenerator(@NotNull Graph graph) {
@@ -26,7 +26,8 @@ public class LayoutRowGenerator extends AbstractGenerator<MutableLayoutRow, Layo
         return new MutableLayoutRow(cellRow);
     }
 
-    private List<Edge> orderAddEdges(List<Edge> edges) {
+    @NotNull
+    private List<Edge> orderAddEdges(@NotNull List<Edge> edges) {
         if (edges.size() <= 1) {
             return edges;
         } else {
@@ -48,11 +49,11 @@ public class LayoutRowGenerator extends AbstractGenerator<MutableLayoutRow, Layo
     @NotNull
     @Override
     protected MutableLayoutRow oneStep(@NotNull MutableLayoutRow row) {
-        int newRowIndex = row.getGraphRow().getRowIndex() + 1;
+        int newRowIndex = row.getGraphNodeRow().getRowIndex() + 1;
         if (newRowIndex == graph.getNodeRows().size()) {
             throw new NoSuchElementException();
         }
-        List<GraphElement> layoutRow = row.getEditableLayoutRow();
+        List<GraphElement> layoutRow = row.getModifiableOrderedGraphElements();
         for (ListIterator<GraphElement> iterator = layoutRow.listIterator(); iterator.hasNext(); ) {
             GraphElement element = iterator.next();
             Node node = element.getNode();
@@ -93,7 +94,7 @@ public class LayoutRowGenerator extends AbstractGenerator<MutableLayoutRow, Layo
                 layoutRow.add(node);
             }
         }
-        row.setRow(nextGraphRow);
+        row.setNodeRow(nextGraphRow);
         return row;
     }
 }

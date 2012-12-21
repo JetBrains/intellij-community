@@ -8,9 +8,10 @@ import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.graph_elements.GraphFragment;
 import org.hanuna.gitalk.graph.graph_elements.GraphElement;
 import org.hanuna.gitalk.graph.GraphFragmentController;
-import org.hanuna.gitalk.printmodel.PrintCell;
-import org.hanuna.gitalk.printmodel.PrintCellModel;
+import org.hanuna.gitalk.printmodel.GraphPrintCell;
+import org.hanuna.gitalk.printmodel.GraphPrintCellModel;
 import org.hanuna.gitalk.printmodel.SelectController;
+import org.hanuna.gitalk.printmodel.impl.GraphPrintCellModelImpl;
 import org.hanuna.gitalk.refs.RefsModel;
 import org.hanuna.gitalk.ui_controller.table_models.GraphTableModel;
 import org.hanuna.gitalk.ui_controller.table_models.RefTableModel;
@@ -31,7 +32,7 @@ public class UI_Controller {
     private final EventsController events = new EventsController();
     private final RefTableModel refTableModel;
 
-    private PrintCellModel printCellModel;
+    private GraphPrintCellModel graphPrintCellModel;
     private GraphTableModel graphTableModel;
 
     private GraphElement prevGraphElement = null;
@@ -44,16 +45,16 @@ public class UI_Controller {
 
         this.refTableModel = new RefTableModel(refsModel);
 
-        this.printCellModel = new PrintCellModel(graph);
-        this.graphTableModel = new GraphTableModel(graph, refsModel, printCellModel);
+        this.graphPrintCellModel = new GraphPrintCellModelImpl(graph);
+        this.graphTableModel = new GraphTableModel(graph, refsModel, graphPrintCellModel);
 
         this.prevSelectionBranches = new HashSet<Commit>(refTableModel.getCheckedCommits());
     }
 
     public void updateGraph() {
         Graph graph = controller.getGraph();
-        this.printCellModel = new PrintCellModel(graph);
-        graphTableModel.rewriteGraph(graph, printCellModel);
+        this.graphPrintCellModel = new GraphPrintCellModelImpl(graph);
+        graphTableModel.rewriteGraph(graph, graphPrintCellModel);
     }
 
     public TableModel getGraphTableModel() {
@@ -64,8 +65,8 @@ public class UI_Controller {
         return refTableModel;
     }
 
-    public PrintCell getGraphPrintCell(int rowIndex) {
-        return printCellModel.getPrintCellRow(rowIndex);
+    public GraphPrintCell getGraphPrintCell(int rowIndex) {
+        return graphPrintCellModel.getGraphPrintCell(rowIndex);
     }
 
     public void addControllerListener(@NotNull ControllerListener listener) {
@@ -73,7 +74,7 @@ public class UI_Controller {
     }
 
     public void over(@Nullable GraphElement graphElement) {
-        SelectController selectController = printCellModel.getSelectController();
+        SelectController selectController = graphPrintCellModel.getSelectController();
         GraphFragmentController fragmentController = controller.getGraph().getFragmentController();
         if (graphElement == prevGraphElement) {
             return;
@@ -91,7 +92,7 @@ public class UI_Controller {
     }
 
     public void click(@Nullable GraphElement graphElement) {
-        SelectController selectController = printCellModel.getSelectController();
+        SelectController selectController = graphPrintCellModel.getSelectController();
         GraphFragmentController fragmentController = controller.getGraph().getFragmentController();
         selectController.deselectAll();
         if (graphElement == null) {
@@ -103,7 +104,7 @@ public class UI_Controller {
         }
         boolean visible = fragmentController.isVisible(fragment);
         Replace replace = fragmentController.setVisible(fragment, !visible);
-        printCellModel.recalculate(replace);
+        graphPrintCellModel.recalculate(replace);
         events.runUpdateTable();
         events.runJumpToRow(replace.from());
     }

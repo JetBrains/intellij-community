@@ -6,13 +6,13 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author erokhins
  */
-public class SpecialCell {
+public class SpecialPrintElement {
     private final GraphElement graphElement;
     private final int position;
     private final Type type;
     private final boolean selected;
 
-    public SpecialCell(@NotNull GraphElement graphElement, int position, @NotNull Type type, boolean selected) {
+    public SpecialPrintElement(@NotNull GraphElement graphElement, int position, @NotNull Type type, boolean selected) {
         this.graphElement = graphElement;
         this.position = position;
         this.type = type;
@@ -39,7 +39,7 @@ public class SpecialCell {
 
     public static enum Type {
         COMMIT_NODE,
-        SHOW_EDGE,
-        HIDE_EDGE
+        UP_ARROW,
+        DOWN_ARROW
     }
 }

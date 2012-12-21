@@ -11,25 +11,27 @@ import java.util.List;
 /**
  * @author erokhins
  */
-public class MutableLayoutRow implements LayoutRow {
+class MutableLayoutRow implements LayoutRow {
     private final List<GraphElement> graphElements;
-    private NodeRow row;
+    private NodeRow nodeRow;
 
     public MutableLayoutRow() {
         graphElements = new LinkedList<GraphElement>();
     }
 
-    public MutableLayoutRow(LayoutRow layoutRow) {
+    public MutableLayoutRow(@NotNull LayoutRow layoutRow) {
         this.graphElements = new LinkedList<GraphElement>(layoutRow.getOrderedGraphElements());
-        this.row = layoutRow.getGraphRow();
+        this.nodeRow = layoutRow.getGraphNodeRow();
     }
 
-    public List<GraphElement> getEditableLayoutRow() {
+    // modifiable List
+    @NotNull
+    public List<GraphElement> getModifiableOrderedGraphElements() {
         return graphElements;
     }
 
-    public void setRow(NodeRow row) {
-        this.row = row;
+    public void setNodeRow(@NotNull NodeRow nodeRow) {
+        this.nodeRow = nodeRow;
     }
 
     @NotNull
@@ -39,7 +41,7 @@ public class MutableLayoutRow implements LayoutRow {
     }
 
     @Override
-    public NodeRow getGraphRow() {
-        return row;
+    public NodeRow getGraphNodeRow() {
+        return nodeRow;
     }
 }

@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * @author erokhins
  */
-public interface PrintCell {
+public interface GraphPrintCell {
     public int countCell();
 
     @NotNull
@@ -17,5 +17,5 @@ public interface PrintCell {
     public List<ShortEdge> getDownEdges();
 
     @NotNull
-    public List<SpecialCell> getSpecialCell();
+    public List<SpecialPrintElement> getSpecialPrintElements();
 }

@@ -12,6 +12,6 @@ import java.util.List;
 public interface LayoutRow {
     @NotNull
     public List<GraphElement> getOrderedGraphElements();
-    public NodeRow getGraphRow();
 
+    public NodeRow getGraphNodeRow();
 }

@@ -3,9 +3,9 @@ package org.hanuna.gitalk.swing_ui.render.painters;
 import org.hanuna.gitalk.graph.graph_elements.Edge;
 import org.hanuna.gitalk.graph.graph_elements.GraphElement;
 import org.hanuna.gitalk.graph.graph_elements.Node;
-import org.hanuna.gitalk.printmodel.PrintCell;
+import org.hanuna.gitalk.printmodel.GraphPrintCell;
 import org.hanuna.gitalk.printmodel.ShortEdge;
-import org.hanuna.gitalk.printmodel.SpecialCell;
+import org.hanuna.gitalk.printmodel.SpecialPrintElement;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -92,7 +92,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     }
 
     @Override
-    public void draw(Graphics2D g2, PrintCell row) {
+    public void draw(Graphics2D g2, GraphPrintCell row) {
         this.g2 = g2;
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         for (ShortEdge edge : row.getUpEdges()) {
@@ -103,25 +103,25 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
             setStroke(edge.isUsual(), edge.isSelected());
             paintDownLine(edge.getUpPosition(), edge.getDownPosition(), ColorGenerator.getColor(edge.getEdge().getBranch()));
         }
-        for (SpecialCell cell : row.getSpecialCell()) {
+        for (SpecialPrintElement printElement : row.getSpecialPrintElements()) {
             Edge edge;
-            switch (cell.getType()) {
+            switch (printElement.getType()) {
                 case COMMIT_NODE:
-                    Node node = cell.getGraphElement().getNode();
+                    Node node = printElement.getGraphElement().getNode();
                     assert node != null;
-                    paintCircle(cell.getPosition(), ColorGenerator.getColor(node.getBranch()), cell.isSelected());
+                    paintCircle(printElement.getPosition(), ColorGenerator.getColor(node.getBranch()), printElement.isSelected());
                     break;
-                case SHOW_EDGE:
-                    edge = cell.getGraphElement().getEdge();
+                case UP_ARROW:
+                    edge = printElement.getGraphElement().getEdge();
                     assert edge != null;
-                    setStroke(edge.getType() == Edge.Type.USUAL, cell.isSelected());
-                    paintShow(cell.getPosition(), ColorGenerator.getColor(edge.getBranch()));
+                    setStroke(edge.getType() == Edge.Type.USUAL, printElement.isSelected());
+                    paintShow(printElement.getPosition(), ColorGenerator.getColor(edge.getBranch()));
                     break;
-                case HIDE_EDGE:
-                    edge = cell.getGraphElement().getEdge();
+                case DOWN_ARROW:
+                    edge = printElement.getGraphElement().getEdge();
                     assert edge != null;
-                    setStroke(edge.getType() == Edge.Type.USUAL, cell.isSelected());
-                    paintHide(cell.getPosition(), ColorGenerator.getColor(edge.getBranch()));
+                    setStroke(edge.getType() == Edge.Type.USUAL, printElement.isSelected());
+                    paintHide(printElement.getPosition(), ColorGenerator.getColor(edge.getBranch()));
                     break;
                 default:
                     throw new IllegalStateException();
@@ -161,11 +161,11 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
 
     @Nullable
     @Override
-    public GraphElement mouseOver(PrintCell row, int x, int y) {
-        for (SpecialCell cell : row.getSpecialCell()) {
-            if (cell.getType() == SpecialCell.Type.COMMIT_NODE) {
-                if (overNode(cell.getPosition(), x, y)) {
-                    return cell.getGraphElement();
+    public GraphElement mouseOver(GraphPrintCell row, int x, int y) {
+        for (SpecialPrintElement printElement : row.getSpecialPrintElements()) {
+            if (printElement.getType() == SpecialPrintElement.Type.COMMIT_NODE) {
+                if (overNode(printElement.getPosition(), x, y)) {
+                    return printElement.getGraphElement();
                 }
             }
         }

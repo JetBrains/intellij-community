@@ -17,11 +17,11 @@ import java.util.List;
  */
 public class LayoutModel {
     private final Graph graph;
-    private CompressedList<LayoutRow> generateModel;
+    private CompressedList<LayoutRow> layoutRowCompressedList;
     private final Generator<LayoutRow> generator;
 
 
-    public LayoutModel(Graph graph) {
+    public LayoutModel(@NotNull Graph graph) {
         this.graph = graph;
         this.generator = new LayoutRowGenerator(graph);
         build();
@@ -33,21 +33,21 @@ public class LayoutModel {
 
         NodeRow firstRow = rows.get(0);
         MutableLayoutRow firstCellRow = new MutableLayoutRow();
-        firstCellRow.setRow(firstRow);
-        List<GraphElement> editableLayoutRow = firstCellRow.getEditableLayoutRow();
+        firstCellRow.setNodeRow(firstRow);
+        List<GraphElement> editableLayoutRow = firstCellRow.getModifiableOrderedGraphElements();
         for (Node node : firstRow.getVisibleNodes()) {
             editableLayoutRow.add(node);
         }
-        generateModel = new RuntimeGenerateCompressedList<LayoutRow>(generator, firstCellRow, rows.size());
+        layoutRowCompressedList = new RuntimeGenerateCompressedList<LayoutRow>(generator, firstCellRow, rows.size());
     }
 
 
     @NotNull
     public List<LayoutRow> getLayoutRows() {
-        return generateModel.getList();
+        return layoutRowCompressedList.getList();
     }
 
     public void recalculate(@NotNull Replace replace) {
-        generateModel.recalculate(replace);
+        layoutRowCompressedList.recalculate(replace);
     }
 }
