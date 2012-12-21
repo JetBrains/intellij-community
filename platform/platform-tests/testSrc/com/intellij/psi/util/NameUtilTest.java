@@ -501,6 +501,7 @@ public class NameUtilTest extends UsefulTestCase {
   }
 
   public void testPerformance() {
+    System.out.println("test start: " + System.currentTimeMillis());
     @NonNls final String longName = "ThisIsAQuiteLongNameWithParentheses().Dots.-Minuses-_UNDERSCORES_digits239:colons:/slashes\\AndOfCourseManyLetters";
     final List<MinusculeMatcher> matching = new ArrayList<MinusculeMatcher>();
     final List<MinusculeMatcher> nonMatching = new ArrayList<MinusculeMatcher>();
@@ -512,9 +513,11 @@ public class NameUtilTest extends UsefulTestCase {
       nonMatching.add(new MinusculeMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
     }
 
+    System.out.println("measuring start: " + System.currentTimeMillis());
     PlatformTestUtil.startPerformanceTest("Matcher is slow", 3500, new ThrowableRunnable() {
       @Override
       public void run() {
+        System.out.println("attempt start: " + System.currentTimeMillis());
         for (int i = 0; i < 100000; i++) {
           for (MinusculeMatcher matcher : matching) {
             assertTrue(matcher.toString(), matcher.matches(longName));
@@ -524,6 +527,7 @@ public class NameUtilTest extends UsefulTestCase {
             assertFalse(matcher.toString(), matcher.matches(longName));
           }
         }
+        System.out.println("attempt end: " + System.currentTimeMillis());
       }
     }).cpuBound().attempts(20).assertTiming();
   }
