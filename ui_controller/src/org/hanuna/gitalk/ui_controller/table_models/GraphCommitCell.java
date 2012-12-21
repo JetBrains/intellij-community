@@ -1,8 +1,9 @@
 package org.hanuna.gitalk.ui_controller.table_models;
 
-import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.printmodel.PrintCell;
 import org.hanuna.gitalk.refs.Ref;
+
+import java.util.List;
 
 
 /**
@@ -17,7 +18,7 @@ public class GraphCommitCell extends CommitCell {
 
     private final PrintCell row;
 
-    public GraphCommitCell(PrintCell row, String text, ReadOnlyList<Ref> refsToThisCommit) {
+    public GraphCommitCell(PrintCell row, String text, List<Ref> refsToThisCommit) {
         super(text, refsToThisCommit);
         this.row = row;
     }

@@ -1,11 +1,12 @@
 package org.hanuna.gitalk.printmodel;
 
-import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.graph.graph_elements.Edge;
 import org.hanuna.gitalk.graph.graph_elements.GraphElement;
 import org.hanuna.gitalk.graph.graph_elements.Node;
 import org.hanuna.gitalk.printmodel.layout.LayoutModel;
 import org.hanuna.gitalk.printmodel.layout.LayoutRow;
+
+import java.util.List;
 
 /**
  * @author erokhins
@@ -29,7 +30,7 @@ public class LayoutTestUtils {
     }
 
     public static String toStr(LayoutRow row) {
-        ReadOnlyList<GraphElement> orderedGraphElements = row.getOrderedGraphElements();
+        List<GraphElement> orderedGraphElements = row.getOrderedGraphElements();
         if (orderedGraphElements.isEmpty()) {
             return "";
         }
@@ -42,7 +43,7 @@ public class LayoutTestUtils {
     }
 
     public static String toStr(LayoutModel layoutModel) {
-        ReadOnlyList<LayoutRow> cells = layoutModel.getLayoutRows();
+        List<LayoutRow> cells = layoutModel.getLayoutRows();
         if (cells.isEmpty()) {
             return "";
         }

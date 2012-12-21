@@ -1,7 +1,8 @@
 package org.hanuna.gitalk.printmodel;
 
-import org.hanuna.gitalk.common.ReadOnlyList;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author erokhins
@@ -10,11 +11,11 @@ public interface PrintCell {
     public int countCell();
 
     @NotNull
-    public ReadOnlyList<ShortEdge> getUpEdges();
+    public List<ShortEdge> getUpEdges();
 
     @NotNull
-    public ReadOnlyList<ShortEdge> getDownEdges();
+    public List<ShortEdge> getDownEdges();
 
     @NotNull
-    public ReadOnlyList<SpecialCell> getSpecialCell();
+    public List<SpecialCell> getSpecialCell();
 }

@@ -1,10 +1,10 @@
 package org.hanuna.gitalk.common.compressedlist;
 
 import org.hanuna.gitalk.common.compressedlist.generator.Generator;
-import org.hanuna.gitalk.common.ReadOnlyList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -37,8 +37,8 @@ public class NoCompressedList<T> implements CompressedList<T> {
 
     @NotNull
     @Override
-    public ReadOnlyList<T> getList() {
-        return ReadOnlyList.newReadOnlyList(calcList);
+    public List<T> getList() {
+        return Collections.unmodifiableList(calcList);
     }
 
 

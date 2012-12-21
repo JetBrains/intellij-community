@@ -1,15 +1,15 @@
 package org.hanuna.gitalk.graph.builder;
 
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.common.ReadOnlyList;
-import org.hanuna.gitalk.graph.graph_elements.Branch;
 import org.hanuna.gitalk.graph.Graph;
+import org.hanuna.gitalk.graph.graph_elements.Branch;
 import org.hanuna.gitalk.graph.mutable_graph.GraphBuilder;
 import org.hanuna.gitalk.parser.GitLogParser;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.List;
 
 import static junit.framework.Assert.assertEquals;
 import static org.hanuna.gitalk.GraphTestUtils.toStr;
@@ -23,9 +23,8 @@ public class GraphBuilderTest {
         Branch.clearCountBranch();
         String input = inputTree.replace("\n", "|-aut|-132352112|-mes\n") + "|-aut|-132352112|-mes";
         GitLogParser parser = new GitLogParser(new StringReader(input));
-        ReadOnlyList<Commit> commits = parser.readAllCommits();
+        List<Commit> commits = parser.readAllCommits();
         Graph model = GraphBuilder.build(commits);
-       // System.out.println(toStr(model));
         assertEquals(out, toStr(model));
 
     }

@@ -1,20 +1,22 @@
 package org.hanuna.gitalk.commitmodel.builder;
 
 import org.hanuna.gitalk.commitmodel.Hash;
-import org.hanuna.gitalk.common.ReadOnlyList;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author erokhins
  */
 public class CommitLogData {
     private final Hash hash;
-    private final ReadOnlyList<Hash> parents;
+    private final List<Hash> parents;
     private final String commitMessage;
     private final String author;
     private final long timeStamp;
 
-    public CommitLogData(@NotNull Hash hash, @NotNull ReadOnlyList<Hash> parents, @NotNull String commitMessage,
+    // unmodifiableList parents
+    public CommitLogData(@NotNull Hash hash, @NotNull List<Hash> parents, @NotNull String commitMessage,
                          @NotNull String author, long timeStamp) {
         this.hash = hash;
         this.parents = parents;
@@ -29,7 +31,7 @@ public class CommitLogData {
     }
 
     @NotNull
-    public ReadOnlyList<Hash> getParentsHash() {
+    public List<Hash> getParentsHash() {
         return parents;
     }
 

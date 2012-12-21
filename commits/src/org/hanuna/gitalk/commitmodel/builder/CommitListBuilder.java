@@ -3,13 +3,9 @@ package org.hanuna.gitalk.commitmodel.builder;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitData;
 import org.hanuna.gitalk.commitmodel.Hash;
-import org.hanuna.gitalk.common.ReadOnlyList;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author erokhins
@@ -42,7 +38,7 @@ public class CommitListBuilder {
             parents.add(parent);
         }
         removeCommit(logData.getHash());
-        CommitData commitData = new CommitData(ReadOnlyList.newReadOnlyList(parents),
+        CommitData commitData = new CommitData(Collections.unmodifiableList(parents),
                 logData.getCommitMessage(), logData.getAuthor(), logData.getTimeStamp());
         commit.setCommitData(commitData);
         commits.add(commit);
@@ -52,10 +48,11 @@ public class CommitListBuilder {
         return cache.size() == 0;
     }
 
+    // modifiable List
     @NotNull
-    public ReadOnlyList<Commit> build() {
+    public List<Commit> build() {
         wasBuild = true;
-        return ReadOnlyList.newReadOnlyList(commits);
+        return commits;
     }
 
 }

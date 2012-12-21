@@ -1,6 +1,5 @@
 package org.hanuna.gitalk.printmodel.layout;
 
-import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.common.compressedlist.CompressedList;
 import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.common.compressedlist.RuntimeGenerateCompressedList;
@@ -29,7 +28,7 @@ public class LayoutModel {
     }
 
     private void build() {
-        ReadOnlyList<NodeRow> rows = graph.getNodeRows();
+        List<NodeRow> rows = graph.getNodeRows();
         assert ! rows.isEmpty();
 
         NodeRow firstRow = rows.get(0);
@@ -44,7 +43,7 @@ public class LayoutModel {
 
 
     @NotNull
-    public ReadOnlyList<LayoutRow> getLayoutRows() {
+    public List<LayoutRow> getLayoutRows() {
         return generateModel.getList();
     }
 

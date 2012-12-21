@@ -1,11 +1,12 @@
 package org.hanuna.gitalk;
 
-import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.graph_elements.Edge;
 import org.hanuna.gitalk.graph.graph_elements.Node;
 import org.hanuna.gitalk.graph.graph_elements.NodeRow;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author erokhins
@@ -21,7 +22,7 @@ public class GraphTestUtils {
         s.append(edge.getBranch().getNumberOfBranch());
         return s.toString();
     }
-    public static String toShortStr(ReadOnlyList<Edge> edges) {
+    public static String toShortStr(List<Edge> edges) {
         StringBuilder s = new StringBuilder();
         if (edges.size() > 0) {
             s.append(toShortStr(edges.get(0)));
@@ -44,7 +45,7 @@ public class GraphTestUtils {
     }
     public static String toStr(NodeRow row) {
         StringBuilder s = new StringBuilder();
-        ReadOnlyList<Node> nodes = row.getVisibleNodes();
+        List<Node> nodes = row.getVisibleNodes();
         if (nodes.size() > 0) {
             s.append(toStr(nodes.get(0)));
         }
@@ -56,7 +57,7 @@ public class GraphTestUtils {
 
     public static String toStr(Graph graph) {
         StringBuilder s = new StringBuilder();
-        final ReadOnlyList<NodeRow> rows = graph.getNodeRows();
+        List<NodeRow> rows = graph.getNodeRows();
         if (rows.size() > 0)  {
             s.append(toStr(rows.get(0)));
         }

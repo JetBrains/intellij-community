@@ -3,7 +3,6 @@ package org.hanuna.gitalk.graph.mutable_graph;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitData;
 import org.hanuna.gitalk.commitmodel.Hash;
-import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.graph_elements.Branch;
 import org.hanuna.gitalk.graph.graph_elements.Edge;
@@ -20,8 +19,7 @@ import static org.hanuna.gitalk.graph.mutable_graph.MutableGraphUtils.createEdge
  * @author erokhins
  */
 public class GraphBuilder {
-
-    public static Graph build(ReadOnlyList<Commit> commits) {
+    public static Graph build(List<Commit> commits) {
         Map<Commit, Integer> logIndexMap = new HashMap<Commit, Integer>(commits.size());
         for (int i = 0; i < commits.size(); i++) {
             logIndexMap.put(commits.get(i), i);
@@ -103,7 +101,7 @@ public class GraphBuilder {
         if (data == null) {
             throw new IllegalStateException("commit was append, but commitData is null");
         }
-        final ReadOnlyList<Commit> parents = data.getParents();
+        List<Commit> parents = data.getParents();
         for (int i = 0; i < parents.size(); i++) {
             Commit parent = parents.get(i);
             if (i == 0) {
@@ -132,7 +130,7 @@ public class GraphBuilder {
     }
 
     @NotNull
-    private Graph runBuild(ReadOnlyList<Commit> commits) {
+    private Graph runBuild(List<Commit> commits) {
         prepare(commits.size() - 1);
         for (Commit commit : commits) {
             append(commit);

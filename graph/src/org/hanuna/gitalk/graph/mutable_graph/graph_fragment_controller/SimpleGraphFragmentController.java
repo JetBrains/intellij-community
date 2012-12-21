@@ -69,7 +69,7 @@ public class SimpleGraphFragmentController implements GraphFragmentController {
     }
 
     private boolean isTrivialFragment(@NotNull Node up, @NotNull Node down) {
-        assert up.getRowIndex() > down.getRowIndex();
+        assert up.getRowIndex() < down.getRowIndex() : "up: " + up.getRowIndex() + " down: " + down.getRowIndex();
         Edge edge = firstDownEdge(up);
         if (edge.getType() == Edge.Type.USUAL && edge.getDownNode() == down) {
             return true;

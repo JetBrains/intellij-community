@@ -1,13 +1,13 @@
 package org.hanuna.gitalk.swing_ui.render.painters;
 
-import org.hanuna.gitalk.common.ReadOnlyList;
-import org.hanuna.gitalk.ui_controller.table_models.GraphCommitCell;
 import org.hanuna.gitalk.refs.Ref;
+import org.hanuna.gitalk.ui_controller.table_models.GraphCommitCell;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.geom.RoundRectangle2D;
+import java.util.List;
 
 /**
  * @author erokhins
@@ -63,7 +63,7 @@ public class RefPainter {
         drawText(g2, ref.getShortName(), padding);
     }
 
-    public int padding(@NotNull ReadOnlyList<Ref> refs, @NotNull FontRenderContext renderContext) {
+    public int padding(@NotNull List<Ref> refs, @NotNull FontRenderContext renderContext) {
         float p = 0;
         for (Ref ref : refs) {
             p += paddingStr(ref.getShortName(), renderContext);
@@ -71,7 +71,7 @@ public class RefPainter {
         return Math.round(p);
     }
 
-    public void draw(@NotNull Graphics2D g2, @NotNull ReadOnlyList<Ref> refs, int startPadding) {
+    public void draw(@NotNull Graphics2D g2, @NotNull List<Ref> refs, int startPadding) {
         float currentPadding = startPadding;
         g2.setFont(DEFAULT_FONT);
         FontRenderContext renderContext = g2.getFontRenderContext();

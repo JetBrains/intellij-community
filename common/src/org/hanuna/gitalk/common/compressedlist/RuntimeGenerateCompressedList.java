@@ -3,7 +3,6 @@ package org.hanuna.gitalk.common.compressedlist;
 import org.hanuna.gitalk.common.CacheGet;
 import org.hanuna.gitalk.common.Get;
 import org.hanuna.gitalk.common.compressedlist.generator.Generator;
-import org.hanuna.gitalk.common.ReadOnlyList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.AbstractList;
@@ -67,8 +66,8 @@ public class RuntimeGenerateCompressedList<T> implements CompressedList<T> {
 
     @NotNull
     @Override
-    public ReadOnlyList<T> getList() {
-        return ReadOnlyList.newReadOnlyList(new AbstractList<T>() {
+    public List<T> getList() {
+        return new AbstractList<T>() {
             @Override
             public T get(int index) {
                 return cache.get(index);
@@ -78,7 +77,7 @@ public class RuntimeGenerateCompressedList<T> implements CompressedList<T> {
             public int size() {
                 return size;
             }
-        });
+        };
     }
 
 

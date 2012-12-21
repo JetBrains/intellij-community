@@ -1,7 +1,6 @@
 package org.hanuna.gitalk;
 
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.common.Timer;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.mutable_graph.GraphBuilder;
@@ -10,6 +9,7 @@ import org.hanuna.gitalk.parser.GitLogParser;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @author erokhins
@@ -24,7 +24,7 @@ public class LinuxTest {
 
         Timer t = new Timer("git run + commits model");
         GitLogParser parser = new GitLogParser(r);
-        ReadOnlyList<Commit> commits = parser.readAllCommits();
+        List<Commit> commits = parser.readAllCommits();
         t.print();
 
         while (true) {

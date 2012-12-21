@@ -2,8 +2,6 @@ package org.hanuna.gitalk.ui_controller.table_models;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitData;
-import org.hanuna.gitalk.common.ReadOnlyList;
-import org.hanuna.gitalk.ui_controller.DateConverter;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.graph_elements.GraphElement;
 import org.hanuna.gitalk.graph.graph_elements.Node;
@@ -11,9 +9,12 @@ import org.hanuna.gitalk.printmodel.PrintCellModel;
 import org.hanuna.gitalk.printmodel.SpecialCell;
 import org.hanuna.gitalk.refs.Ref;
 import org.hanuna.gitalk.refs.RefsModel;
+import org.hanuna.gitalk.ui_controller.DateConverter;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
+import java.util.Collections;
+import java.util.List;
 
 /**
 * @author erokhins
@@ -37,7 +38,7 @@ public class GraphTableModel extends AbstractTableModel {
 
     @Nullable
     private Commit getCommitInRow(int rowIndex) {
-        ReadOnlyList<SpecialCell> cells = printCellModel.getPrintCellRow(rowIndex).getSpecialCell();
+        List<SpecialCell> cells = printCellModel.getPrintCellRow(rowIndex).getSpecialCell();
         for (SpecialCell cell : cells) {
             if (cell.getType() == SpecialCell.Type.COMMIT_NODE) {
                 GraphElement element = cell.getGraphElement();
@@ -72,7 +73,7 @@ public class GraphTableModel extends AbstractTableModel {
         switch (columnIndex) {
             case 0:
                 String message = "";
-                ReadOnlyList<Ref> refs = ReadOnlyList.emptyList();
+                List<Ref> refs = Collections.emptyList();
                 if (data != null) {
                     message = data.getMessage();
                     refs = refsModel.refsToCommit(commit.hash());

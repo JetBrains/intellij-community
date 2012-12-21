@@ -1,10 +1,11 @@
 package org.hanuna.gitalk.printmodel;
 
-import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.printmodel.layout.LayoutModel;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author erokhins
@@ -18,7 +19,7 @@ public class PrintCellModel {
         this.selectController = new SelectController();
     }
 
-    private ReadOnlyList<ShortEdge> getUpEdges(int rowIndex) {
+    private List<ShortEdge> getUpEdges(int rowIndex) {
         PrePrintCell prevPre = new PrePrintCell(layoutModel, rowIndex - 1, selectController);
         return prevPre.downShortEdges();
     }
@@ -43,19 +44,19 @@ public class PrintCellModel {
 
             @NotNull
             @Override
-            public ReadOnlyList<ShortEdge> getUpEdges() {
+            public List<ShortEdge> getUpEdges() {
                 return PrintCellModel.this.getUpEdges(rowIndex);
             }
 
             @NotNull
             @Override
-            public ReadOnlyList<ShortEdge> getDownEdges() {
+            public List<ShortEdge> getDownEdges() {
                 return prePrintCell.downShortEdges();
             }
 
             @NotNull
             @Override
-            public ReadOnlyList<SpecialCell> getSpecialCell() {
+            public List<SpecialCell> getSpecialCell() {
                 return prePrintCell.specialCells();
             }
         };

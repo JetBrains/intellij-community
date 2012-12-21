@@ -2,13 +2,9 @@ package org.hanuna.gitalk.refs;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.Hash;
-import org.hanuna.gitalk.common.ReadOnlyList;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author erokhins
@@ -49,8 +45,9 @@ public class RefsModel {
         }
     }
 
+    // modifiable List
     @NotNull
-    public ReadOnlyList<Ref> refsToCommit(@NotNull Hash hash) {
+    public List<Ref> refsToCommit(@NotNull Hash hash) {
         List<Ref> refs = new ArrayList<Ref>();
         if (trackedHash.contains(hash)) {
             for (Ref ref : allRefs) {
@@ -59,11 +56,11 @@ public class RefsModel {
                 }
             }
         }
-        return ReadOnlyList.newReadOnlyList(refs);
+        return refs;
     }
 
     @NotNull
-    public ReadOnlyList<Commit> getOrderedLogTrackedCommit() {
-        return ReadOnlyList.newReadOnlyList(orderedLogTrackedCommit);
+    public List<Commit> getOrderedLogTrackedCommit() {
+        return Collections.unmodifiableList(orderedLogTrackedCommit);
     }
 }

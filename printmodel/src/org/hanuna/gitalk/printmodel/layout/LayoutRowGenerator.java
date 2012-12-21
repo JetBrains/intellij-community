@@ -1,6 +1,5 @@
 package org.hanuna.gitalk.printmodel.layout;
 
-import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.common.compressedlist.generator.AbstractGenerator;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.graph_elements.Edge;
@@ -58,7 +57,7 @@ public class LayoutRowGenerator extends AbstractGenerator<MutableLayoutRow, Layo
             GraphElement element = iterator.next();
             Node node = element.getNode();
             if (node != null) {
-                ReadOnlyList<Edge> edges = node.getDownEdges();
+                List<Edge> edges = node.getDownEdges();
                 if (edges.size() == 0) {
                     iterator.remove();
                 } else {

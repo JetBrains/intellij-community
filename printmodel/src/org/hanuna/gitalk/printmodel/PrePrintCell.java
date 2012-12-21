@@ -1,6 +1,5 @@
 package org.hanuna.gitalk.printmodel;
 
-import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.graph.graph_elements.Edge;
 import org.hanuna.gitalk.graph.graph_elements.GraphElement;
 import org.hanuna.gitalk.graph.graph_elements.Node;
@@ -8,10 +7,7 @@ import org.hanuna.gitalk.printmodel.layout.LayoutModel;
 import org.hanuna.gitalk.printmodel.layout.LayoutRow;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author erokhins
@@ -22,7 +18,7 @@ class PrePrintCell {
 
     private final boolean hideLongEdge;
     private final LayoutModel layoutModel;
-    private ReadOnlyList<GraphElement> visibleElements;
+    private List<GraphElement> visibleElements;
     private final int rowIndex;
     private final SelectController selectController;
 
@@ -70,12 +66,12 @@ class PrePrintCell {
         return -1;
     }
 
-    private ReadOnlyList<GraphElement> visibleElements(int rowIndex) {
+    private List<GraphElement> visibleElements(int rowIndex) {
         if (rowIndex < 0 || rowIndex >= layoutModel.getLayoutRows().size()) {
-            return ReadOnlyList.emptyList();
+            return Collections.emptyList();
         }
         LayoutRow cellRow = layoutModel.getLayoutRows().get(rowIndex);
-        ReadOnlyList<GraphElement> cells = cellRow.getOrderedGraphElements();
+        List<GraphElement> cells = cellRow.getOrderedGraphElements();
         if (!hideLongEdge) {
             return cells;
         }
@@ -95,11 +91,11 @@ class PrePrintCell {
             }
         }
 
-        return ReadOnlyList.newReadOnlyList(visibleElements);
+        return Collections.unmodifiableList(visibleElements);
     }
 
     @NotNull
-    public ReadOnlyList<SpecialCell> specialCells() {
+    public List<SpecialCell> specialCells() {
         List<SpecialCell> specialCells = new ArrayList<SpecialCell>();
 
         for (int i = 0; i < visibleElements.size(); i++) {
@@ -135,11 +131,11 @@ class PrePrintCell {
                 }
             }
         }
-        return ReadOnlyList.newReadOnlyList(specialCells);
+        return Collections.unmodifiableList(specialCells);
     }
 
     @NotNull
-    public ReadOnlyList<ShortEdge> downShortEdges() {
+    public List<ShortEdge> downShortEdges() {
         GetterPosition getter = new GetterPosition(visibleElements(rowIndex + 1));
 
         List<ShortEdge> shortEdges = new ArrayList<ShortEdge>();
@@ -164,7 +160,7 @@ class PrePrintCell {
             }
         }
 
-        return ReadOnlyList.newReadOnlyList(shortEdges);
+        return Collections.unmodifiableList(shortEdges);
     }
 
     private static class GetterPosition {

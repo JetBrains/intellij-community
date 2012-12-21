@@ -1,13 +1,13 @@
 package org.hanuna.gitalk.graph.mutable_graph.graph_elements_impl;
 
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.graph.graph_elements.Branch;
 import org.hanuna.gitalk.graph.graph_elements.Edge;
 import org.hanuna.gitalk.graph.graph_elements.Node;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -83,14 +83,14 @@ public final class MutableNode implements Node {
 
     @NotNull
     @Override
-    public ReadOnlyList<Edge> getUpEdges() {
-        return ReadOnlyList.newReadOnlyList(upEdges);
+    public List<Edge> getUpEdges() {
+        return Collections.unmodifiableList(upEdges);
     }
 
     @NotNull
     @Override
-    public ReadOnlyList<Edge> getDownEdges() {
-        return ReadOnlyList.newReadOnlyList(downEdges);
+    public List<Edge> getDownEdges() {
+        return Collections.unmodifiableList(downEdges);
     }
 
     @NotNull

@@ -1,6 +1,5 @@
 package org.hanuna.gitalk.graph.mutable_graph;
 
-import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.graph_elements.NodeRow;
@@ -10,6 +9,7 @@ import org.hanuna.gitalk.graph.mutable_graph.graph_fragment_controller.SimpleGra
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -55,8 +55,8 @@ public class MutableGraph implements Graph {
 
     @NotNull
     @Override
-    public ReadOnlyList<NodeRow> getNodeRows() {
-        return ReadOnlyList.<NodeRow>newReadOnlyList(visibleRows);
+    public List<NodeRow> getNodeRows() {
+        return Collections.<NodeRow>unmodifiableList(visibleRows);
     }
 
     @NotNull

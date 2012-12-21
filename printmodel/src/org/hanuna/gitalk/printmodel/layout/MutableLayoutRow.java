@@ -1,10 +1,10 @@
 package org.hanuna.gitalk.printmodel.layout;
 
-import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.graph.graph_elements.GraphElement;
 import org.hanuna.gitalk.graph.graph_elements.NodeRow;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -34,8 +34,8 @@ public class MutableLayoutRow implements LayoutRow {
 
     @NotNull
     @Override
-    public ReadOnlyList<GraphElement> getOrderedGraphElements() {
-        return ReadOnlyList.newReadOnlyList(graphElements);
+    public List<GraphElement> getOrderedGraphElements() {
+        return Collections.unmodifiableList(graphElements);
     }
 
     @Override

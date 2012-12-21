@@ -1,8 +1,9 @@
 package org.hanuna.gitalk.graph.graph_elements;
 
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.common.ReadOnlyList;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author erokhins
@@ -15,10 +16,10 @@ public interface Node extends GraphElement {
     public Type getType();
 
     @NotNull
-    public ReadOnlyList<Edge> getUpEdges();
+    public List<Edge> getUpEdges();
 
     @NotNull
-    public ReadOnlyList<Edge> getDownEdges();
+    public List<Edge> getDownEdges();
 
     /**
      *

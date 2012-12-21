@@ -2,7 +2,6 @@ package org.hanuna.gitalk.controller;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitData;
-import org.hanuna.gitalk.common.ReadOnlyList;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.mutable_graph.GraphBuilder;
 import org.hanuna.gitalk.refs.Ref;
@@ -10,17 +9,14 @@ import org.hanuna.gitalk.refs.RefsModel;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author erokhins
  */
 public class Controller {
-    private ReadOnlyList<Commit> commits;
-    private ReadOnlyList<Ref> allRefs;
+    private List<Commit> commits;
+    private List<Ref> allRefs;
     private RefsModel refsModel;
     private Graph graph;
 
@@ -55,7 +51,7 @@ public class Controller {
                 }
             }
         }
-        graph = GraphBuilder.build(ReadOnlyList.newReadOnlyList(showCommits));
+        graph = GraphBuilder.build(Collections.unmodifiableList(showCommits));
     }
 
 }

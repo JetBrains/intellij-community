@@ -1,7 +1,8 @@
 package org.hanuna.gitalk.graph.graph_elements;
 
-import org.hanuna.gitalk.common.ReadOnlyList;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author erokhins
@@ -9,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 public interface NodeRow {
 
     @NotNull
-    public ReadOnlyList<Node> getVisibleNodes();
+    public List<Node> getVisibleNodes();
 
     public int getRowIndex();
 }
