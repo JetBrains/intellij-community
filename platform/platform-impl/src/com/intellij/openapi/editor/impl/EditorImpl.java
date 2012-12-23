@@ -70,6 +70,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.GuiUtils;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBScrollBar;
@@ -132,6 +133,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public static final Key<Pair<String, String>> EDITABLE_AREA_MARKER = Key.create("editable.area.marker");
   private static final boolean HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK = Boolean.parseBoolean(System.getProperty("idea.honor.camel.humps.on.triple.click"));
   private static final Key<BufferedImage> BUFFER = Key.create("buffer");
+  public static final JBColor CURSOR_FOREGROUND = new JBColor(Color.white, Color.black);
   @NotNull private final DocumentImpl myDocument;
 
   private final JPanel myPanel;
@@ -4291,13 +4293,47 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
       }
       else {
-        Color background = myScheme.getColor(EditorColors.CARET_ROW_COLOR);
-        if (background == null) background = getBackgroundColor();
-        g.setXORMode(background);
-
+        Color caretColor = myScheme.getColor(EditorColors.CARET_COLOR);
+        if (caretColor == null) caretColor = new JBColor(Color.BLACK, Color.WHITE);
+        g.setColor(caretColor);
         g.fillRect(x, y, myWidth, lineHeight - 1);
-
-        g.setPaintMode();
+        final LogicalPosition startPosition = getCaretModel().getLogicalPosition();
+        final int offset = logicalPositionToOffset(startPosition);
+        char[] chars = myDocument.getRawChars();
+        if (chars.length > offset) {
+          FoldRegion folding = myFoldingModel.getCollapsedRegionAtOffset(offset);
+          final char ch;
+          if (folding == null || folding.isExpanded()) {
+            ch = chars[offset];
+          } else {
+            VisualPosition visual = getCaretModel().getVisualPosition();
+            VisualPosition foldingPosition = offsetToVisualPosition(folding.getStartOffset());
+            if (visual.line == foldingPosition.line) {
+              ch = folding.getPlaceholderText().charAt(visual.column - foldingPosition.column);
+            } else {
+              ch = chars[offset];
+            }
+          }
+          IterationState state = null;
+          try {
+            //don't worry it's cheap. Cache is not required
+            state = new IterationState(EditorImpl.this, offset, offset + 1, true);
+            TextAttributes attributes = state.getMergedAttributes();
+            if (attributes != null) {
+              FontInfo info = EditorUtil.fontForChar(ch, attributes.getFontType(), EditorImpl.this);
+              if (info != null) {
+                g.setFont(info.getFont());
+              }
+            }
+            //todo[kb]
+            //in case of italic style we paint out of the cursor block. Painting the symbol to a dedicated buffered image
+            //solves the problem, but still looks weird because it leaves colored pixels at right.
+            g.setColor(CURSOR_FOREGROUND);
+            g.drawChars(new char[]{ch}, 0, 1, x, y + getLineHeight() - getDescent());
+          } finally {
+            if (state != null) state.dispose();
+          }
+        }
       }
     }
   }
