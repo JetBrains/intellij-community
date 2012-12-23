@@ -17,9 +17,7 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.module.Module;
@@ -94,6 +92,7 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
       @Override
       protected OSProcessHandler startProcess() throws ExecutionException {
         OSProcessHandler result = super.startProcess();
+        result.setShouldDestroyProcessRecursively(true);
         result.addProcessListener(new ProcessAdapter() {
           @Override
           public void processTerminated(ProcessEvent event) {
