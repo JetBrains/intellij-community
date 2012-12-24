@@ -60,6 +60,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.XmlCharsetDetector;
 import com.intellij.xml.*;
 import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
 import com.intellij.xml.impl.schema.TypeDescriptor;
@@ -1518,103 +1519,14 @@ public class XmlUtil {
     return StringUtil.escapeXml(text);
   }
 
-  @NonNls private static final String XML_PROLOG_START = "<?xml";
-  @NonNls private static final byte[] XML_PROLOG_START_BYTES = CharsetToolkit.getUtf8Bytes(XML_PROLOG_START);
-  @NonNls private static final String ENCODING = "encoding";
-  @NonNls private static final byte[] ENCODING_BYTES = CharsetToolkit.getUtf8Bytes(ENCODING);
-  @NonNls private static final String XML_PROLOG_END = "?>";
-  @NonNls private static final byte[] XML_PROLOG_END_BYTES = CharsetToolkit.getUtf8Bytes(XML_PROLOG_END);
-
   @Nullable
   public static String extractXmlEncodingFromProlog(final byte[] content) {
-    return detect(content);
-  }
-
-  @Nullable
-  private static String detect(final byte[] bytes) {
-    int index = 0;
-    if (CharsetToolkit.hasUTF8Bom(bytes)) {
-      index = CharsetToolkit.UTF8_BOM.length;
-    }
-
-    index = skipWhiteSpace(index, bytes);
-    if (!ArrayUtil.startsWith(bytes, index, XML_PROLOG_START_BYTES)) return null;
-    index += XML_PROLOG_START_BYTES.length;
-    while (index < bytes.length) {
-      index = skipWhiteSpace(index, bytes);
-      if (ArrayUtil.startsWith(bytes, index, XML_PROLOG_END_BYTES)) return null;
-      if (ArrayUtil.startsWith(bytes, index, ENCODING_BYTES)) {
-        index += ENCODING_BYTES.length;
-        index = skipWhiteSpace(index, bytes);
-        if (index >= bytes.length || bytes[index] != '=') continue;
-        index++;
-        index = skipWhiteSpace(index, bytes);
-        if (index >= bytes.length || bytes[index] != '\'' && bytes[index] != '\"') continue;
-        byte quote = bytes[index];
-        index++;
-        StringBuilder encoding = new StringBuilder();
-        while (index < bytes.length) {
-          if (bytes[index] == quote) return encoding.toString();
-          encoding.append((char)bytes[index++]);
-        }
-      }
-      index++;
-    }
-    return null;
-  }
-  @Nullable
-  private static String detect(@NotNull String text) {
-    int index = 0;
-
-    index = skipWhiteSpace(index, text);
-    if (!StringUtil.startsWith(text, index, XML_PROLOG_START)) return null;
-    index += XML_PROLOG_START.length();
-    while (index < text.length()) {
-      index = skipWhiteSpace(index, text);
-      if (StringUtil.startsWith(text, index, XML_PROLOG_END)) return null;
-      if (StringUtil.startsWith(text, index, ENCODING)) {
-        index += ENCODING.length();
-        index = skipWhiteSpace(index, text);
-        if (index >= text.length() || text.charAt(index) != '=') continue;
-        index++;
-        index = skipWhiteSpace(index, text);
-        if (index >= text.length()) continue;
-        char quote = text.charAt(index);
-        if (quote != '\'' && quote != '\"') continue;
-        index++;
-        StringBuilder encoding = new StringBuilder();
-        while (index < text.length()) {
-          char c = text.charAt(index);
-          if (c == quote) return encoding.toString();
-          encoding.append(c);
-          index++;
-        }
-      }
-      index++;
-    }
-    return null;
-  }
-
-  private static int skipWhiteSpace(int start, @NotNull byte[] bytes) {
-    while (start < bytes.length) {
-      char c = (char)bytes[start];
-      if (!Character.isWhitespace(c)) break;
-      start++;
-    }
-    return start;
-  }
-  private static int skipWhiteSpace(int start, @NotNull String text) {
-    while (start < text.length()) {
-      char c = text.charAt(start);
-      if (!Character.isWhitespace(c)) break;
-      start++;
-    }
-    return start;
+    return XmlCharsetDetector.extractXmlEncodingFromProlog(content);
   }
 
   @Nullable
   public static String extractXmlEncodingFromProlog(String text) {
-    return detect(text);
+    return XmlCharsetDetector.extractXmlEncodingFromProlog(text);
   }
 
   public static void registerXmlAttributeValueReferenceProvider(PsiReferenceRegistrar registrar,
