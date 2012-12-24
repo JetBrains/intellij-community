@@ -27,6 +27,7 @@
                              implementationClass="com.jetbrains.python.refactoring.surround.PyStatementSurroundDescriptor"/>
     <lang.surroundDescriptor language="Python"
                              implementationClass="com.jetbrains.python.refactoring.surround.PyExpressionSurroundDescriptor"/>
+    <lang.unwrapDescriptor language="Python" implementationClass="com.jetbrains.python.refactoring.unwrap.PyUnwrapDescriptor"/>
     <lang.psiStructureViewFactory language="Python" implementationClass="com.jetbrains.python.structureView.PyStructureViewFactory"/>
     <lang.documentationProvider language="Python" implementationClass="com.jetbrains.python.documentation.PythonDocumentationProvider"/>
     <lang.documentationProvider language="Python" implementationClass="com.jetbrains.python.console.PydevDocumentationProvider"/>
@@ -999,6 +1000,12 @@
 
     <action id="MarkTemplateDirectory" class="com.jetbrains.python.templateLanguages.MarkTemplateDirectoryAction" text="Template Directory">
       <add-to-group group-id="MarkRootGroup" anchor="after" relative-to-action="MarkSourceRoot"/>
+    </action>
+
+    <action id="PyFillParagraph" class="com.jetbrains.python.actions.PyFillParagraphAction" text="Fill paragraph action"
+            description="Reformat string literal or comment to fit maximum width (usually 80)">
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="CompareClipboardWithSelection"/>
+      <keyboard-shortcut keymap="$default" first-keystroke="alt Q"/>
     </action>
   </actions>
 
