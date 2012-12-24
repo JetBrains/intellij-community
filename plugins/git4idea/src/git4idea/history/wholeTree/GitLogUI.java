@@ -971,7 +971,7 @@ public class GitLogUI implements Disposable {
     group.add(myRootsAction);
     group.add(myMyShowTreeAction);
 
-    group.add(new ToggleAction("Show Details", "Display details panel", AllIcons.Actions.ShowSource) {
+    group.add(new ToggleAction("Show Details", "Display details panel", AllIcons.Actions.Preview) {
         @Override
         public boolean isSelected(AnActionEvent e) {
           return !myProject.isDisposed() && mySettings.isShowDetails();
