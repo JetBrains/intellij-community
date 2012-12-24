@@ -365,7 +365,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                              @NotNull final PsiNonJavaFileReferenceProcessor processor,
                                              @NotNull final GlobalSearchScope initialScope) {
     if (qName.isEmpty()) {
-      throw new IllegalArgumentException("Cannot search for elements with empty text");
+      throw new IllegalArgumentException("Cannot search for elements with empty text. Element: "+originalElement+ "; "+(originalElement == null ? null : originalElement.getClass()));
     }
     final ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
 
