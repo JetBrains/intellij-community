@@ -17,6 +17,7 @@
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -500,6 +501,23 @@ public class NameUtilTest extends UsefulTestCase {
     assertTrue(iLess + ">=" + iMore + "; " + less + ">=" + more, iLess < iMore);
   }
 
+ public void testSpeedSearchComparator() {
+   final SpeedSearchComparator c = new SpeedSearchComparator(false, true);
+
+   assertTrue(c.matchingFragments("a", "Ant") != null);
+   assertTrue(c.matchingFragments("an", "Changes") != null);
+   assertTrue(c.matchingFragments("a", "Changes") != null);
+ }
+
+  public void testFilePatterns() {
+    assertMatches("groovy*.jar", "groovy-1.7.jar");
+    assertDoesntMatch("*.ico", "a.i.c.o");
+  }
+
+  public void testUsingCapsMeansTheyShouldMatchCaps() {
+    assertDoesntMatch("URLCl", "UrlClassLoader");
+  }
+
   public void testPerformance() {
     System.out.println("test start: " + System.currentTimeMillis());
     @NonNls final String longName = "ThisIsAQuiteLongNameWithParentheses().Dots.-Minuses-_UNDERSCORES_digits239:colons:/slashes\\AndOfCourseManyLetters";
@@ -532,20 +550,15 @@ public class NameUtilTest extends UsefulTestCase {
     }).cpuBound().assertTiming();
   }
 
- public void testSpeedSearchComparator() {
-   final SpeedSearchComparator c = new SpeedSearchComparator(false, true);
-
-   assertTrue(c.matchingFragments("a", "Ant") != null);
-   assertTrue(c.matchingFragments("an", "Changes") != null);
-   assertTrue(c.matchingFragments("a", "Changes") != null);
- }
-
-  public void testFilePatterns() {
-    assertMatches("groovy*.jar", "groovy-1.7.jar");
-    assertDoesntMatch("*.ico", "a.i.c.o");
-  }
-
-  public void testUsingCapsMeansTheyShouldMatchCaps() {
-    assertDoesntMatch("URLCl", "UrlClassLoader");
+  public void testOnlyUnderscoresPerformance() {
+    PlatformTestUtil.startPerformanceTest("Matcher is exponential", 300, new ThrowableRunnable() {
+      @Override
+      public void run() {
+        String small = StringUtil.repeat("_", 50);
+        String big = StringUtil.repeat("_", small.length() + 1);
+        assertMatches("*" + small, big);
+        assertDoesntMatch("*" + big, small);
+      }
+    }).cpuBound().assertTiming();
   }
 }
