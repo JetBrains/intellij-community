@@ -1112,7 +1112,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         try {
           JDOMUtil.writeDocument(document, mavenConfigFile, "\n");
 
-          DataOutputStream crcOutput = new DataOutputStream(new FileOutputStream(crcFile));
+          DataOutputStream crcOutput = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(crcFile)));
           try {
             crcOutput.writeInt(crc);
           }
