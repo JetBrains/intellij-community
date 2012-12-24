@@ -283,6 +283,11 @@ public class MinusculeMatcher implements Matcher {
       return FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, i));
     }
     while (i >= minFragment) {
+      if (isWordSeparator[patternIndex + i - 1] && myPattern[patternIndex + i - 1] == myPattern[patternIndex + i]) {
+        i--;
+        continue;
+      }
+
       FList<TextRange> ranges = isWildcard(patternIndex + i) ?
                                 matchWildcards(name, patternIndex + i, nameIndex + i, isAsciiName) :
                                 matchSkippingWords(name, patternIndex + i, nameIndex + i, false, isAsciiName);
