@@ -1048,7 +1048,8 @@ public final class GuiEditor extends JPanel implements DataProvider, ModuleProvi
 
     public void update(final AnActionEvent e) {
       final UIDesignerToolWindowManager manager = UIDesignerToolWindowManager.getInstance(getProject());
-      e.getPresentation().setEnabled(!manager.getPropertyInspector().isEditing());
+      PropertyInspector inspector = manager.getPropertyInspector();
+      e.getPresentation().setEnabled(inspector != null && !inspector.isEditing());
     }
   }
 
