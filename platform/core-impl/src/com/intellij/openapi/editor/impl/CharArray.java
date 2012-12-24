@@ -385,20 +385,16 @@ abstract class CharArray implements CharSequenceBackedByArray, Dumpable {
     return originalSequence == null ? this : originalSequence;
   }
 
+  @NotNull
   public String toString() {
     assertConsistency();
     String str = myStringRef == null ? null : myStringRef.get();
     if (str == null) {
-      if (!myHasDeferredChanges) {
-        if (myOriginalSequence != null) {
-          str = myOriginalSequence.toString();
-        }
-        else {
-          str = new String(myArray, myStart, myCount);
-        }
+      if (myHasDeferredChanges) {
+        str = substring(0, length()).toString();
       }
       else {
-        str = substring(0, length()).toString();
+        str = myOriginalSequence == null ? new String(myArray, myStart, myCount) : myOriginalSequence.toString();
       }
       myStringRef = new SoftReference<String>(str);
     }
@@ -669,6 +665,7 @@ abstract class CharArray implements CharSequenceBackedByArray, Dumpable {
     assertConsistency();
   }
 
+  @Override
   @NonNls
   @NotNull
   public String dumpState() {
