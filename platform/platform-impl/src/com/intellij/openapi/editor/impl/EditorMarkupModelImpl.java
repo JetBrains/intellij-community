@@ -728,7 +728,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
   }
 
-  private void showTooltip(MouseEvent e, final TooltipRenderer tooltipObject, HintHint hintHint) {
+  private void showTooltip(MouseEvent e, final TooltipRenderer tooltipObject, @NotNull HintHint hintHint) {
     TooltipController tooltipController = TooltipController.getInstance();
     tooltipController.showTooltipByMouseMove(myEditor, new RelativePoint(e), tooltipObject,
                                              myEditor.getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_RIGHT,
@@ -821,7 +821,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         }
 
         @Override
-        public LightweightHint show(@NotNull Editor editor, @NotNull Point p, boolean alignToRight, TooltipGroup group, @NotNull HintHint hintHint) {
+        public LightweightHint show(@NotNull Editor editor, @NotNull Point p, boolean alignToRight, @NotNull TooltipGroup group, @NotNull HintHint hintHint) {
           JLabel label = new JLabel("WTF");
           return new LightweightHint(label){
             @Override

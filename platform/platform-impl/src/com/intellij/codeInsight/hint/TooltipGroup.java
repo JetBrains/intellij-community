@@ -20,13 +20,14 @@
 package com.intellij.codeInsight.hint;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class TooltipGroup implements Comparable<TooltipGroup> {
   private final String myName;
   // the higher priority the more probable this tooltip will overlap other tooltips
   private final int myPriority;
 
-  public TooltipGroup(@NonNls String name, int priority) {
+  public TooltipGroup(@NotNull @NonNls String name, int priority) {
     myName = name;
     myPriority = priority;
   }
