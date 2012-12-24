@@ -293,7 +293,7 @@ public class UIUtil {
     }
   }
 
-  static void showTooltip(@NotNull Editor editor, final int start, int end, @NotNull String text, TooltipGroup group) {
+  static void showTooltip(@NotNull Editor editor, final int start, int end, @NotNull String text, @NotNull TooltipGroup group) {
     Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
     Point top = editor.logicalPositionToXY(editor.offsetToLogicalPosition(start));
     final int documentLength = editor.getDocument().getTextLength();
