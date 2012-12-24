@@ -65,7 +65,7 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
         final String name = entry.getName();
         if (name.startsWith(prefix)) {
           String relativePath = name.substring(prefix.length());
-          processor.process(entry.isDirectory() ? null : zipFile.getInputStream(entry), relativePath);
+          processor.process(entry.isDirectory() ? null : zipFile.getInputStream(entry), relativePath, entry);
         }
       }
     }
@@ -90,7 +90,7 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
     }
     processEntries(new EntryProcessor() {
       @Override
-      public void process(@Nullable InputStream inputStream, @NotNull String relativePath) throws IOException {
+      public void process(@Nullable InputStream inputStream, @NotNull String relativePath, ZipEntry entry) throws IOException {
         final String fullOutputPath = FileUtil.toSystemDependentName(JpsArtifactPathUtil.appendToPath(outputPath, relativePath));
         final File outputFile = new File(fullOutputPath);
 
@@ -119,6 +119,6 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
   }
 
   public interface EntryProcessor {
-    void process(@Nullable InputStream inputStream, @NotNull String relativePath) throws IOException;
+    void process(@Nullable InputStream inputStream, @NotNull String relativePath, ZipEntry entry) throws IOException;
   }
 }
