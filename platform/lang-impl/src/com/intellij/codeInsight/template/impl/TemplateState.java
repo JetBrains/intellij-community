@@ -822,12 +822,25 @@ public class TemplateState implements Disposable {
     gotoEnd(true);
   }
 
+  public void cancelTemplate() {
+    if (myTemplate == null) return;
+
+    LookupManager.getInstance(myProject).hideActiveLookup();
+
+    cleanupTemplateState(true);
+  }
+
   private void finishTemplateEditing(boolean brokenOff) {
     if (myTemplate == null) return;
 
 
     LookupManager.getInstance(myProject).hideActiveLookup();
 
+    setFinalEditorState();
+    cleanupTemplateState(brokenOff);
+  }
+
+  private void setFinalEditorState() {
     int endSegmentNumber = myTemplate.getEndSegmentNumber();
     int offset = -1;
     if (endSegmentNumber >= 0) {
@@ -850,6 +863,9 @@ public class TemplateState implements Disposable {
     if (selStart >= 0 && selEnd >= 0) {
       myEditor.getSelectionModel().setSelection(mySegments.getSegmentStart(selStart), mySegments.getSegmentStart(selEnd));
     }
+  }
+
+  private void cleanupTemplateState(boolean brokenOff) {
     final Editor editor = myEditor;
     fireBeforeTemplateFinished();
     int oldVar = myCurrentVariableNumber;

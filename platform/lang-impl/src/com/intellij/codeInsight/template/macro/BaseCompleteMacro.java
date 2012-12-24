@@ -105,8 +105,14 @@ public abstract class BaseCompleteMacro extends Macro {
     TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
     if (templateState != null) {
       TextRange range = templateState.getCurrentVariableRange();
-      if (range != null && range.getLength() > 0 && editor.getCaretModel().getOffset() == range.getEndOffset()) {
-        templateState.nextTab();
+      if (range != null && range.getLength() > 0) {
+        int caret = editor.getCaretModel().getOffset();
+        if (caret == range.getEndOffset()) {
+          templateState.nextTab();
+        }
+        else if (caret > range.getEndOffset()) {
+          templateState.cancelTemplate();
+        }
       }
     }
   }
