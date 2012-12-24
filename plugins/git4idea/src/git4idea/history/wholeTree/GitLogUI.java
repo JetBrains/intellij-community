@@ -18,6 +18,7 @@ package git4idea.history.wholeTree;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ContextHelpAction;
+import com.intellij.ide.actions.RefreshAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -884,10 +885,8 @@ public class GitLogUI implements Disposable {
 
       group.addAll(getCustomActions());
 
-      final CustomShortcutSet refreshShortcut =
-        new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK));
-      myRefreshAction.registerCustomShortcutSet(refreshShortcut, myJBTable);
-      myRefreshAction.registerCustomShortcutSet(refreshShortcut, myGraphGutter.getComponent());
+      myRefreshAction.registerShortcutOn(myJBTable);
+      myRefreshAction.registerShortcutOn(myGraphGutter.getComponent());
 
       myContextMenu = ActionManager.getInstance().createActionPopupMenu(GIT_LOG_TABLE_PLACE, group);
     }
@@ -1609,7 +1608,7 @@ public class GitLogUI implements Disposable {
     }
   }
 
-  private class MyRefreshAction extends DumbAwareAction {
+  private class MyRefreshAction extends RefreshAction {
     private MyRefreshAction() {
       super("Refresh", "Refresh", AllIcons.Actions.Refresh);
     }
@@ -1630,6 +1629,11 @@ public class GitLogUI implements Disposable {
           LOG.warn("Couldn't update references in repository " + root, e);
         }
       }
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(true);
     }
   }
 
