@@ -39,7 +39,7 @@
   </item>
   <item name='java.lang.System java.lang.String getProperty(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.lang.Runtime Process exec(java.lang.String[]) 0'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
