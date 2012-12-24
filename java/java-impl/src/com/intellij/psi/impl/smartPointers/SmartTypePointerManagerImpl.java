@@ -114,9 +114,7 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
         if (myIsExtending) {
           return PsiWildcardType.createExtends(myManager, type);
         }
-        else {
-          return PsiWildcardType.createSuper(myManager, type);
-        }
+        return PsiWildcardType.createSuper(myManager, type);
       }
     }
   }
@@ -140,7 +138,8 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
       for (Map.Entry<SmartPsiElementPointer, SmartTypePointer> entry : set) {
         PsiElement element = entry.getKey().getElement();
         if (element instanceof PsiTypeParameter) {
-          resurrected.put((PsiTypeParameter)element, entry.getValue().getType());
+          SmartTypePointer typePointer = entry.getValue();
+          resurrected.put((PsiTypeParameter)element, typePointer == null ? null : typePointer.getType());
         }
       }
       for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable((PsiClass)classElement)) {
