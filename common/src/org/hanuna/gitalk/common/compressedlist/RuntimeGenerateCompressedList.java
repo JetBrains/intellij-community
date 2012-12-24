@@ -110,6 +110,9 @@ public class RuntimeGenerateCompressedList<T> implements CompressedList<T> {
 
     @Override
     public void recalculate(@NotNull Replace replace) {
+        if (replace == Replace.ID_REPLACE) {
+            return;
+        }
         checkReplace(replace);
         cache.clear();
         int deltaSize = replace.addElementsCount() - replace.removeElementsCount();

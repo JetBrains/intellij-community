@@ -127,6 +127,9 @@ public class GraphBuilder {
 
     @NotNull
     private Graph runBuild(List<Commit> commits) {
+        if (commits.size() == 0) {
+            throw new IllegalArgumentException("Empty list commits");
+        }
         prepare(commits.size() - 1);
         for (Commit commit : commits) {
             append(commit);

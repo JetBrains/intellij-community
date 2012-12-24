@@ -44,6 +44,9 @@ public class NoCompressedList<T> implements CompressedList<T> {
 
     @Override
     public void recalculate(@NotNull Replace replace) {
+        if (replace == Replace.ID_REPLACE) {
+            return;
+        }
         if (replace.to() >= size) {
             throw new IllegalArgumentException("Bad replace: " + replace.from() + ", " +
                     + replace.to() + ", " + replace.addElementsCount());

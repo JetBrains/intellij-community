@@ -19,7 +19,10 @@ public class MutableGraph implements Graph {
     private final List<MutableNodeRow> visibleRows;
     private final GraphFragmentController fragmentController;
 
-    public MutableGraph(List<MutableNodeRow> allRows) {
+    MutableGraph(List<MutableNodeRow> allRows) {
+        if (allRows.size() == 0) {
+            throw new IllegalArgumentException("Empty list Rows");
+        }
         this.allRows = allRows;
         this.visibleRows = new ArrayList<MutableNodeRow>(allRows);
         recalculateRowIndex();
