@@ -110,7 +110,9 @@ public class AddImportHelper {
     else {
       containingFile = source != null ? source.getContainingFile() : null;
     }
-    ImportPriority relativeToPriority = source == null ? ImportPriority.BUILTIN : getImportPriority(file, containingFile);
+    ImportPriority relativeToPriority = source == null || containingFile == null
+                                        ? ImportPriority.BUILTIN
+                                        : getImportPriority(file, containingFile);
     final int rc = priority.compareTo(relativeToPriority);
     if (rc < 0) {
       return true;
