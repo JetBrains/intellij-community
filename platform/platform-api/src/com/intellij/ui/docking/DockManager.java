@@ -34,7 +34,7 @@ public abstract class DockManager implements ProjectComponent {
     return project.getComponent(DockManager.class);
   }
 
-  public abstract DragSession createDragSession(MouseEvent mouseEvent, DockableContent content);
+  public abstract DragSession createDragSession(MouseEvent mouseEvent, @NotNull DockableContent content);
 
   public abstract Set<DockContainer> getContainers();
 

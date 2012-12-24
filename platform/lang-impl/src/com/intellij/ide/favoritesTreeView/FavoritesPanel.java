@@ -17,7 +17,6 @@ package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
-import com.intellij.ide.favoritesTreeView.actions.AddToFavoritesAction;
 import com.intellij.ide.projectView.impl.TransferableWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -25,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.SmartPsiElementPointer;
@@ -34,12 +32,10 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -94,7 +90,7 @@ public class FavoritesPanel {
             event.setDropPossible(false);
             return true;
           }
-          FavoritesListNode node = findFavoritesListNode(event.getPoint());
+          FavoritesListNode node = myViewPanel.findFavoritesListNode(event.getPoint());
           highlight(node, event);
           if (node != null) {
             event.setDropPossible(true);
@@ -107,7 +103,7 @@ public class FavoritesPanel {
       .setDropHandler(new DnDDropHandler() {
         @Override
         public void drop(DnDEvent event) {
-          final FavoritesListNode node = findFavoritesListNode(event.getPoint());
+          final FavoritesListNode node = myViewPanel.findFavoritesListNode(event.getPoint());
           final FavoritesManager mgr = FavoritesManager.getInstance(myProject);
 
           if (node == null) return;
@@ -117,7 +113,7 @@ public class FavoritesPanel {
 
           if (obj instanceof TreePath) {
             final TreePath path = (TreePath)obj;
-            final String listFrom = getListNodeFromPath(path).getValue();
+            final String listFrom = FavoritesTreeViewPanel.getListNodeFromPath(path).getValue();
             if (listTo.equals(listFrom)) return;
             if (path.getPathCount() == 3) {
               final AbstractTreeNode abstractTreeNode =
@@ -131,10 +127,11 @@ public class FavoritesPanel {
             }
           }
           else if (obj instanceof TransferableWrapper) {
-            dropPsiElements(mgr, listTo, ((TransferableWrapper)obj).getPsiElements());
+            myViewPanel.dropPsiElements(mgr, node, ((TransferableWrapper)obj).getPsiElements());
           }
           else if (obj instanceof DnDNativeTarget.EventInfo) {
-            dropPsiElements(mgr, listTo, getPsiFiles(FileCopyPasteUtil.getFileList(((DnDNativeTarget.EventInfo)obj).getTransferable())));
+            myViewPanel.dropPsiElements(mgr, node,
+                                        getPsiFiles(FileCopyPasteUtil.getFileList(((DnDNativeTarget.EventInfo)obj).getTransferable())));
           }
         }
       })
@@ -170,22 +167,6 @@ public class FavoritesPanel {
     }
   }
 
-  private void dropPsiElements(FavoritesManager mgr, String listTo, PsiElement[] elements) {
-    if (elements != null && elements.length > 0) {
-      ArrayList<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
-      for (PsiElement element : elements) {
-        if (element instanceof SmartPsiElementPointer) {
-          element = ((SmartPsiElementPointer)element).getElement();
-        }
-        final Collection<AbstractTreeNode> tmp = AddToFavoritesAction
-          .createNodes(myProject, null, element, true, FavoritesManager.getInstance(myProject).getViewSettings());
-        nodes.addAll(tmp);
-        mgr.addRoots(listTo, nodes);
-      }
-      myTreeBuilder.select(nodes.toArray(), null);
-    }
-  }
-
   @Nullable
   protected PsiFileSystemItem[] getPsiFiles(@Nullable List<File> fileList) {
     if (fileList == null) return null;
@@ -202,47 +183,5 @@ public class FavoritesPanel {
       }
     }
     return sourceFiles.toArray(new PsiFileSystemItem[sourceFiles.size()]);
-  }
-
-
-  @Nullable
-  private TreeNode findListNode(String listName) {
-    final Object root = myTree.getModel().getRoot();
-    
-    if (root instanceof DefaultMutableTreeNode) {
-      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)root;
-      for (int i = 0; i < node.getChildCount(); i++) {
-        final TreeNode listNode = node.getChildAt(i);
-        if (listName.equals(listNode.toString())) {
-          return listNode; 
-        }
-      }
-    }
-    return null;
-  }
-
-
-  @Nullable
-  private FavoritesListNode findFavoritesListNode(Point point) {
-    final TreePath path = myTree.getPathForLocation(point.x, point.y);
-    final FavoritesListNode node = getListNodeFromPath(path);
-    return node == null ? (FavoritesListNode)((FavoritesRootNode)myTreeStructure.getRootElement()).getChildren().iterator().next()
-                        : node;
-  }
-
-  private static FavoritesListNode getListNodeFromPath(TreePath path) {
-    if (path != null && path.getPathCount() > 1) {
-      final Object o = path.getPath()[1];
-      if (o instanceof DefaultMutableTreeNode) {
-        final Object obj = ((DefaultMutableTreeNode)o).getUserObject();
-        if (obj instanceof FavoritesTreeNodeDescriptor) {
-          final AbstractTreeNode node = ((FavoritesTreeNodeDescriptor)obj).getElement();
-          if (node instanceof FavoritesListNode) {
-            return (FavoritesListNode)node;
-          }
-        }
-      }
-    }
-    return null;
   }
 }
