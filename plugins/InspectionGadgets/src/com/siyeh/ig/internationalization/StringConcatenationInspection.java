@@ -178,14 +178,14 @@ public class StringConcatenationInspection extends BaseInspection {
       }
       if (ignoreAsserts) {
         final PsiAssertStatement assertStatement =
-          PsiTreeUtil.getParentOfType(expression, PsiAssertStatement.class, true, PsiCodeBlock.class);
+          PsiTreeUtil.getParentOfType(expression, PsiAssertStatement.class, true, PsiCodeBlock.class, PsiClass.class);
         if (assertStatement != null) {
           return;
         }
       }
       if (ignoreSystemErrs || ignoreSystemOuts) {
         final PsiMethodCallExpression methodCallExpression =
-          PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class, true, PsiCodeBlock.class);
+          PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class, true, PsiCodeBlock.class, PsiClass.class);
         if (methodCallExpression != null) {
           final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
           @NonNls
@@ -200,16 +200,16 @@ public class StringConcatenationInspection extends BaseInspection {
       }
       if (ignoreThrowableArguments) {
         final PsiNewExpression newExpression =
-          PsiTreeUtil.getParentOfType(expression, PsiNewExpression.class, true, PsiCodeBlock.class);
+          PsiTreeUtil.getParentOfType(expression, PsiNewExpression.class, true, PsiCodeBlock.class, PsiClass.class);
         if (newExpression != null) {
           final PsiType newExpressionType = newExpression.getType();
-          if (newExpressionType != null && InheritanceUtil.isInheritor(newExpressionType, "java.lang.Throwable")) {
+          if (InheritanceUtil.isInheritor(newExpressionType, "java.lang.Throwable")) {
             return;
           }
         } else {
-          final PsiMethodCallExpression methodCallExpression = 
-            PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class, true, PsiCodeBlock.class);
-          if (methodCallExpression != null && HighlightUtil.isSuperOrThisMethodCall(methodCallExpression)) {
+          final PsiMethodCallExpression methodCallExpression =
+            PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class, true, PsiCodeBlock.class, PsiClass.class);
+          if (HighlightUtil.isSuperOrThisMethodCall(methodCallExpression)) {
             return;
           }
         }
