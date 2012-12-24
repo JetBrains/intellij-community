@@ -39,6 +39,15 @@
         </value>
 
       </option>
+
+      <option name="DEFAULT_TEMPLATE_LANGUAGE_COLOR">
+        <value>
+          <option name="FOREGROUND"/>
+          <option name="BACKGROUND" vlaue="cccccc"/>
+          <option name="EFFECT_COLOR"/>
+        </value>
+      </option>
+
       <option name="LINE_PARTIAL_COVERAGE">
         <value>
           <option name="FOREGROUND" value="ffffcc"/>
