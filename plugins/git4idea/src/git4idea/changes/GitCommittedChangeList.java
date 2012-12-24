@@ -16,7 +16,10 @@
 package git4idea.changes;
 
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
+import com.intellij.openapi.vcs.versionBrowser.VcsRevisionNumberAware;
+import git4idea.GitRevisionNumber;
 
 import java.util.Collection;
 import java.util.Date;
@@ -26,18 +29,25 @@ import java.util.Date;
  *         Date: 6/30/11
  *         Time: 4:03 PM
  */
-public class GitCommittedChangeList extends CommittedChangeListImpl {
+public class GitCommittedChangeList extends CommittedChangeListImpl implements VcsRevisionNumberAware {
 
+  private final GitRevisionNumber myRevisionNumber;
   private final boolean myModifiable;
 
-  public GitCommittedChangeList(String name, String comment, String committerName, long number, Date commitDate, Collection<Change> changes,
-                                boolean isModifiable) {
-    super(name, comment, committerName, number, commitDate, changes);
+  public GitCommittedChangeList(String name, String comment, String committerName, GitRevisionNumber revisionNumber, Date commitDate,
+                                Collection<Change> changes, boolean isModifiable) {
+    super(name, comment, committerName, GitChangeUtils.longForSHAHash(revisionNumber.asString()), commitDate, changes);
+    myRevisionNumber = revisionNumber;
     myModifiable = isModifiable;
   }
 
   @Override
   public boolean isModifiable() {
     return myModifiable;
+  }
+
+  @Override
+  public VcsRevisionNumber getRevisionNumber() {
+    return myRevisionNumber;
   }
 }

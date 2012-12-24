@@ -27,12 +27,12 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 /**
  * @author Konstantin Bulenkov
  */
-public class CopyRevisionNumberAction extends AnAction implements LineNumberListener {
+public class CopyRevisionNumberFromAnnotateAction extends AnAction implements LineNumberListener {
   private final UpToDateLineNumberProvider myGetUpToDateLineNumber;
   private final FileAnnotation myAnnotation;
   private int myLineNumber = -1;
 
-  public CopyRevisionNumberAction(UpToDateLineNumberProvider getUpToDateLineNumber, FileAnnotation annotation) {
+  public CopyRevisionNumberFromAnnotateAction(UpToDateLineNumberProvider getUpToDateLineNumber, FileAnnotation annotation) {
     super("Copy revision number");
     myGetUpToDateLineNumber = getUpToDateLineNumber;
     myAnnotation = annotation;

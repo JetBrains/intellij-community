@@ -13,50 +13,48 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.history;
+package com.intellij.openapi.vcs.history;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.util.PlatformIcons;
-import git4idea.i18n.GitBundle;
 
 import java.awt.datatransfer.StringSelection;
 
 /**
  * The action that copies a revision number text to clipboard
  */
-public class GitCopyHistoryRevisionNumberAction extends AnAction implements DumbAware {
+public class CopyRevisionNumberAction extends DumbAwareAction {
 
-  /**
-   * The constructor
-   */
-  public GitCopyHistoryRevisionNumberAction() {
-    super(GitBundle.getString("history.copy.revsion.number"),
-          GitBundle.getString("history.copy.revsion.number"),
+  public CopyRevisionNumberAction() {
+    super(VcsBundle.getString("history.copy.revision.number"), VcsBundle.getString("history.copy.revision.number"),
           PlatformIcons.COPY_ICON);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public void actionPerformed(AnActionEvent e) {
-    VcsFileRevision revision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
-    if (revision != null) {
-      CopyPasteManager.getInstance().setContents(new StringSelection(revision.getRevisionNumber().asString()));
+    VcsRevisionNumber revision = e.getData(VcsDataKeys.VCS_REVISION_NUMBER);
+    if (revision == null) {
+      VcsFileRevision fileRevision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
+      if (fileRevision != null) {
+        revision = fileRevision.getRevisionNumber();
+      }
     }
+    if (revision == null) {
+      return;
+    }
+
+    String rev = revision instanceof ShortVcsRevisionNumber ? ((ShortVcsRevisionNumber)revision).toShortString() : revision.asString();
+    CopyPasteManager.getInstance().setContents(new StringSelection(rev));
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabled((e.getData(VcsDataKeys.VCS_FILE_REVISION) != null));
+    e.getPresentation().setEnabled((e.getData(VcsDataKeys.VCS_FILE_REVISION) != null
+                                    || e.getData(VcsDataKeys.VCS_REVISION_NUMBER) != null));
   }
 }
