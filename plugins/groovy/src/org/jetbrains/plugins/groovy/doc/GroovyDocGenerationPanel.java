@@ -54,10 +54,10 @@ public final class GroovyDocGenerationPanel extends JPanel {
   private final DefaultListModel myDataModel;
 
   GroovyDocGenerationPanel() {
-    myInputDir.addBrowseFolderListener(GroovyDocBundle.message("groovydoc.generate.input.directory.browse"), null, null,
+    myInputDir.addBrowseFolderListener(GroovyDocBundle.message("groovydoc.generate.directory.browse"), null, null,
                                        FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
-    myOutputDir.addBrowseFolderListener(GroovyDocBundle.message("groovydoc.generate.output.directory.browse"), null, null,
+    myOutputDir.addBrowseFolderListener(GroovyDocBundle.message("groovydoc.generate.directory.browse"), null, null,
                                         FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
     myDataModel = new DefaultListModel();
