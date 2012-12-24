@@ -27,6 +27,7 @@
     <option name="SELECTION_FOREGROUND" value="" />
     <option name="TEARLINE_COLOR" value="909090" />
     <option name="WHITESPACES" value="404040" />
+    <option name="REMOTE_HOST_MAPPED_BACKGROUND_KEY" value="164716" />
   </colors>
   <attributes>
     <option name="ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES">
