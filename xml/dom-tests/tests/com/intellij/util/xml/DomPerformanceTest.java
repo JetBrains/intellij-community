@@ -41,7 +41,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
     child.addChildElement().addBarComposite().setValue("ssss");
     child.addBarChild().getChild2().getAttr().setValue("234178956023");
 
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 30000, new ThrowableRunnable() {
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 80000, new ThrowableRunnable() {
       @Override
       public void run() throws Exception {
         for (int i = 0; i < 239; i++) {
