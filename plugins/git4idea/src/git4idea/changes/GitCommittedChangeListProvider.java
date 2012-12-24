@@ -18,6 +18,7 @@ package git4idea.changes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
@@ -190,17 +191,16 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
       return null;
     }
     final GitCommit gitCommit = gitCommits.get(0);
-    final CommittedChangeList commit = new GitCommittedChangeList(gitCommit.getDescription() + " (" + gitCommit.getShortHash().getString() + ")",
-                                                                   gitCommit.getDescription(), gitCommit.getCommitter(),
-                                                                   (GitRevisionNumber)number,
-                                                                   gitCommit.getDate(), gitCommit.getChanges(), true);
+    CommittedChangeList commit = new GitCommittedChangeList(gitCommit.getDescription() + " (" + gitCommit.getShortHash().getString() + ")",
+                                                            gitCommit.getDescription(), gitCommit.getAuthor(), (GitRevisionNumber)number,
+                                                            new Date(gitCommit.getAuthorTime()), gitCommit.getChanges(), true);
 
     final Collection<Change> changes = commit.getChanges();
     if (changes.size() == 1) {
       return new Pair<CommittedChangeList, FilePath>(commit, changes.iterator().next().getAfterRevision().getFile());
     }
     for (Change change : changes) {
-      if (change.getAfterRevision() != null && filePath.getIOFile().equals(change.getAfterRevision().getFile().getIOFile())) {
+      if (change.getAfterRevision() != null && FileUtil.filesEqual(filePath.getIOFile(), change.getAfterRevision().getFile().getIOFile())) {
         return new Pair<CommittedChangeList, FilePath>(commit, filePath);
       }
     }
