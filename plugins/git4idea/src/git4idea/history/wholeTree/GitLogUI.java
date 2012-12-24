@@ -495,7 +495,7 @@ public class GitLogUI implements Disposable {
         if (commitI == null) return;
         final VirtualFile root = commitI.selectRepository(myRootsUnderVcs);
         final List<String> branches = myDetailsCache.getBranches(root, commitI.getHash());
-        if (branches != null && ! branches.isEmpty()) {
+        if (branches != null) {
           try {
             myBranchesLoader.take(commitI, branches);
           }
@@ -1050,7 +1050,8 @@ public class GitLogUI implements Disposable {
         @NotNull
         @Override
         public List<String> getContainingBranches(@NotNull VirtualFile root, @NotNull AbstractHash commitHash) {
-          return myDetailsCache.getBranches(root, commitHash);
+          List<String> branches = myDetailsCache.getBranches(root, commitHash);
+          return branches == null ? Collections.<String>emptyList() : branches;
         }
       };
     }

@@ -101,11 +101,10 @@ public class DetailsCache {
     }
   }
 
-  @NotNull
+  @Nullable
   public List<String> getBranches(final VirtualFile root, final AbstractHash hash) {
     synchronized (myLock) {
-      List<String> branches = myBranches.get(new Pair<VirtualFile, AbstractHash>(root, hash));
-      return branches == null ? Collections.<String>emptyList() : branches;
+      return myBranches.get(new Pair<VirtualFile, AbstractHash>(root, hash));
     }
   }
 
@@ -157,8 +156,7 @@ public class DetailsCache {
                   @Override
                   public void run(@NotNull ProgressIndicator indicator) {
                     if (!recheck.process(abstractHash)) return;
-                    List<String> branches1 = getBranches(root, abstractHash);
-                    if (branches1 != null && ! branches1.isEmpty()) return;
+                    if (getBranches(root, abstractHash) != null) return;
                     List<String> branches;
                     try {
                       branches = new LowLevelAccessImpl(myProject, root).getBranchesWithCommit(abstractHash.getString());
