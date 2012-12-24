@@ -64,8 +64,8 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
 
       constructor = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(constructor);
       Template template = templateBuilder.buildTemplate();
-      if (targetClass == null) return;
       final Editor editor = positionCursor(project, targetClass.getContainingFile(), targetClass);
+      if (editor == null) return;
       final TextRange textRange = constructor.getTextRange();
       editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
       editor.getCaretModel().moveToOffset(textRange.getStartOffset());

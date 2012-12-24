@@ -80,9 +80,11 @@ public class CreateEnumConstantFromUsageFix extends CreateVarFromUsageFix implem
 
         final Project project = targetClass.getProject();
         final Editor newEditor = positionCursor(project, targetClass.getContainingFile(), enumConstant);
-        final TextRange range = enumConstant.getTextRange();
-        newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
-        startTemplate(newEditor, template, project);
+        if (newEditor != null) {
+          final TextRange range = enumConstant.getTextRange();
+          newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
+          startTemplate(newEditor, template, project);
+        }
       }
     }
   }

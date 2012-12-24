@@ -256,6 +256,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     TextRange textRange = accessor.getTextRange();
     final PsiFile file = targetClass.getContainingFile();
     final Editor editor = positionCursor(project, targetClass.getContainingFile(), accessor);
+    if (editor == null) return;
     editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
     editor.getCaretModel().moveToOffset(textRange.getStartOffset());
 

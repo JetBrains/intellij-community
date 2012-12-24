@@ -97,6 +97,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
     }
 
     final Editor newEditor = positionCursor(project, targetFile, field);
+    if (newEditor == null) return;
     Template template =
       CreateFieldFromUsageHelper.setupTemplate(field, expectedTypes, targetClass, newEditor, myReferenceExpression, createConstantField());
 

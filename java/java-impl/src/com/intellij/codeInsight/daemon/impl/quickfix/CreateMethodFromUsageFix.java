@@ -235,6 +235,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
 
     RangeMarker rangeMarker = document.createRangeMarker(method.getTextRange());
     final Editor newEditor = positionCursor(project, targetFile, method);
+    if (newEditor == null) return;
     Template template = builder.buildTemplate();
     newEditor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
     newEditor.getDocument().deleteString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());

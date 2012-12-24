@@ -33,9 +33,11 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
@@ -146,11 +148,16 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       showInBestPositionFor(editor);
   }
 
-  protected static Editor positionCursor(Project project, @NotNull PsiFile targetFile, @NotNull PsiElement element) {
+  @Nullable("null means unable to open the editor")
+  protected static Editor positionCursor(@NotNull Project project, @NotNull PsiFile targetFile, @NotNull PsiElement element) {
     TextRange range = element.getTextRange();
     int textOffset = range.getStartOffset();
-
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, targetFile.getVirtualFile(), textOffset);
+    VirtualFile file = targetFile.getVirtualFile();
+    if (file == null) {
+      file = PsiUtilCore.getVirtualFile(element);
+      if (file == null) return null;
+    }
+    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file, textOffset);
     return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
   }
 
