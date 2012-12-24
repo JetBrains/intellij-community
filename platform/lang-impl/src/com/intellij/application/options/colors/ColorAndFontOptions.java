@@ -759,23 +759,41 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   private static class SchemeTextAttributesDescription extends TextAttributesDescription {
     private final TextAttributes myAttributesToApply;
     private final TextAttributesKey key;
+    private TextAttributes myFallbackAttributes;
 
     private SchemeTextAttributesDescription(String name, String group, TextAttributesKey key, EditorColorsScheme scheme, Icon icon,
                                            String toolTip) {
       super(name, group,
-            scheme.getAttributes(key) == null
-            ? new TextAttributes()
-            : scheme.getAttributes(key).clone(),
+            getEditableAttributes(scheme, key),
             key, scheme, icon, toolTip);
       this.key = key;
-      myAttributesToApply = scheme.getAttributes(key);
+      myAttributesToApply = getInitialAttributes(scheme, key);
+      if (key.getFallbackAttributeKey() != null) {
+        myFallbackAttributes = scheme.getAttributes(key.getFallbackAttributeKey());
+      }
       initCheckedStatus();
+    }
+
+    private static TextAttributes getEditableAttributes(EditorColorsScheme scheme, TextAttributesKey key) {
+      TextAttributes attributes = getInitialAttributes(scheme, key);
+      if (attributes != null) return attributes.clone();
+      return new TextAttributes();
+    }
+
+    private static TextAttributes getInitialAttributes(EditorColorsScheme scheme, TextAttributesKey key) {
+      TextAttributes attributes = scheme.getAttributes(key);
+      TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
+      if (attributes == null && fallbackKey != null) {
+        TextAttributes fallbackAttributes = scheme.getAttributes(fallbackKey);
+        if (fallbackAttributes != null) return null;
+      }
+      return attributes;
     }
 
     @Override
     public void apply(EditorColorsScheme scheme) {
       if (scheme == null) scheme = getScheme();
-      if (myAttributesToApply != null) {
+      if (myAttributesToApply != null && !getTextAttributes().equals(myFallbackAttributes)) {
         scheme.setAttributes(key, getTextAttributes());
       }
     }
