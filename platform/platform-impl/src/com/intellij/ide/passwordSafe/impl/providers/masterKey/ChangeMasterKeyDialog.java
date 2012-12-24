@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.passwordSafe.impl.providers.masterKey;
 
+import com.intellij.ide.passwordSafe.HelpID;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.util.Processor;
@@ -79,6 +80,14 @@ public class ChangeMasterKeyDialog extends DialogWrapper {
     });
     setErrorText(error);
     init();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  protected String getHelpId() {
+    return HelpID.CHANGE_PASSWORD;
   }
 
   /**
