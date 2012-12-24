@@ -19,6 +19,7 @@ import com.intellij.ide.palette.PaletteGroup;
 import com.intellij.ide.palette.PaletteItem;
 import com.intellij.ide.palette.PaletteItemProvider;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -88,11 +89,15 @@ public class PaletteWindow extends JPanel implements DataProvider {
     new ClearActiveItemAction().registerCustomShortcutSet(new CustomShortcutSet(escStroke), myScrollPane);
     refreshPalette();
 
-    DragSource.getDefaultDragSource().addDragSourceListener(myDragSourceListener);
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      DragSource.getDefaultDragSource().addDragSourceListener(myDragSourceListener);
+    }
   }
 
   public void dispose() {
-    DragSource.getDefaultDragSource().removeDragSourceListener(myDragSourceListener);
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      DragSource.getDefaultDragSource().removeDragSourceListener(myDragSourceListener);
+    }
   }
 
   public void refreshPalette() {

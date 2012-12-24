@@ -17,6 +17,7 @@ package com.intellij.designer.palette;
 
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -89,11 +90,15 @@ public class PalettePanel extends JPanel implements DataProvider {
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)), scrollPane);
 
-    DragSource.getDefaultDragSource().addDragSourceListener(myDragSourceListener);
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      DragSource.getDefaultDragSource().addDragSourceListener(myDragSourceListener);
+    }
   }
 
   public void dispose() {
-    DragSource.getDefaultDragSource().removeDragSourceListener(myDragSourceListener);
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      DragSource.getDefaultDragSource().removeDragSourceListener(myDragSourceListener);
+    }
   }
 
   @Nullable
