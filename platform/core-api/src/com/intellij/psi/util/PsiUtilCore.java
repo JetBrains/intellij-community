@@ -38,7 +38,6 @@ import java.util.Collection;
  * @author yole
  */
 public class PsiUtilCore {
-  @SuppressWarnings("ConstantConditions")
   public static final PsiElement NULL_PSI_ELEMENT = new PsiElement() {
     @Override
     @NotNull
