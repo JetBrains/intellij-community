@@ -15,6 +15,9 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +27,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class JBPanel extends JPanel {
+public class JBPanel extends JPanel implements TypeSafeDataProvider {
   @Nullable
   private Icon myBackgroundImage;
   @Nullable
@@ -86,5 +89,10 @@ public class JBPanel extends JPanel {
     if (myCenterImage != null) {
       IconUtil.paintInCenterOf(this, g, myCenterImage);
     }
+  }
+
+  @Override
+  public void calcData(DataKey key, DataSink sink) {
+    // override this to provide additional context
   }
 }
