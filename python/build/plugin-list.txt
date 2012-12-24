@@ -48,3 +48,4 @@ python-rest
 pycharm-flask
 pycharm-numpy
 textmate
+restClient

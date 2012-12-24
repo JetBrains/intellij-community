@@ -29,6 +29,8 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PythonStringUtil;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -44,22 +46,23 @@ import java.util.*;
 
 /**
  * @author Alexey.Ivanov
+ * @author vlan
  */
 abstract public class IntroduceHandler implements RefactoringActionHandler {
   protected static PsiElement findAnchor(List<PsiElement> occurrences) {
     PsiElement anchor = occurrences.get(0);
     next:
     do {
-      PyStatement statement = PsiTreeUtil.getParentOfType(anchor, PyStatement.class);
-
-      final PsiElement parent = statement.getParent();
-      for (PsiElement element : occurrences) {
-        if (!PsiTreeUtil.isAncestor(parent, element, true)) {
-          anchor = statement;
-          continue next;
+      final PyStatement statement = PsiTreeUtil.getParentOfType(anchor, PyStatement.class);
+      if (statement != null) {
+        final PsiElement parent = statement.getParent();
+        for (PsiElement element : occurrences) {
+          if (!PsiTreeUtil.isAncestor(parent, element, true)) {
+            anchor = statement;
+            continue next;
+          }
         }
       }
-
       return statement;
     }
     while (true);
@@ -112,7 +115,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   protected PsiElement replaceExpression(PsiElement expression, PyExpression newExpression, IntroduceOperation operation) {
     PyExpressionStatement statement = PsiTreeUtil.getParentOfType(expression, PyExpressionStatement.class);
     if (statement != null) {
-      if (statement.getExpression() == expression) {
+      if (statement.getExpression() == expression && expression.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE) == null) {
         statement.delete();
         return null;
       }
@@ -169,6 +172,10 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       }
     };
     String text = expression.getText();
+    final Pair<PsiElement, TextRange> selection = expression.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE);
+    if (selection != null) {
+      text = selection.getSecond().substring(text);
+    }
     if (expression instanceof PyCallExpression) {
       final PyExpression callee = ((PyCallExpression)expression).getCallee();
       if (callee != null) {
@@ -263,13 +270,26 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       return;
     }
 
-    // Introduce refactoring for substrings is not supported yet
-    TextRange r = element1.getTextRange();
-    if (singleElementSelection && element1 instanceof PyStringLiteralExpression &&
-        (r.getStartOffset() < selectionModel.getSelectionStart() || r.getEndOffset() > selectionModel.getSelectionEnd())) {
-      showCannotPerformError(project, editor);
-      return;
+    if (singleElementSelection && element1 instanceof PyStringLiteralExpression) {
+      // TODO: Protect against escapes
+      // TODO: Protect against substrings with format characters
+      // TODO: Handle extracting substring from a string with formatting
+      final PyStringLiteralExpression literal = (PyStringLiteralExpression)element1;
+      if (literal.getStringNodes().size() > 1) {
+        showCannotPerformError(project, editor);
+        return;
+      }
+      final int offset = element1.getTextOffset();
+      final TextRange selectionRange = TextRange.create(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+      final TextRange elementRange = element1.getTextRange();
+      if (!elementRange.equals(selectionRange) && elementRange.contains(selectionRange)) {
+        final TextRange innerRange = literal.getStringValueTextRange();
+        final TextRange intersection = selectionRange.shiftRight(-offset).intersection(innerRange);
+        final TextRange finalRange = intersection != null ? intersection : selectionRange;
+        element1.putUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE, Pair.create(element1, finalRange));
+      }
     }
+
     if (!checkIntroduceContext(file, editor, element1)) {
       return;
     }
@@ -357,10 +377,10 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
                                     (PyExpression)element;
     operation.setInitializer(initializer);
 
-    if (initializer.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE) == null) {
+    if (initializer != null) {
       operation.setOccurrences(getOccurrences(element, initializer));
+      operation.setSuggestedNames(getSuggestedNames(initializer));
     }
-    operation.setSuggestedNames(getSuggestedNames(initializer));
     if (operation.getOccurrences().size() == 0) {
       operation.setReplaceAll(false);
     }
@@ -453,21 +473,33 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
 
     @Override
     public void visitPyStringLiteralExpression(PyStringLiteralExpression node) {
-      ASTNode child = node.getNode().getFirstChildNode();
-      while (child != null) {
-        String text = child.getText();
-        if (child.getElementType() == TokenType.WHITE_SPACE) {
-          if (text.contains("\n")) {
-            if (!text.contains("\\")) {
-              myResult.append("\\");
+      final Pair<PsiElement, TextRange> data = node.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE);
+      if (data != null) {
+        final PsiElement parent = data.getFirst();
+        final String text = parent.getText();
+        final Pair<String, String> detectedQuotes = PythonStringUtil.getQuotes(text);
+        final Pair<String, String> quotes = detectedQuotes != null ? detectedQuotes : Pair.create("'", "'");
+        final TextRange range = data.getSecond();
+        final String substring = range.substring(text);
+        myResult.append(quotes.getFirst() + substring + quotes.getSecond());
+      }
+      else {
+        ASTNode child = node.getNode().getFirstChildNode();
+        while (child != null) {
+          String text = child.getText();
+          if (child.getElementType() == TokenType.WHITE_SPACE) {
+            if (text.contains("\n")) {
+              if (!text.contains("\\")) {
+                myResult.append("\\");
+              }
+              myResult.append(text);
             }
+          }
+          else {
             myResult.append(text);
           }
+          child = child.getTreeNext();
         }
-        else {
-          myResult.append(text);
-        }
-        child = child.getTreeNext();
       }
     }
 
@@ -498,14 +530,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   protected List<PsiElement> getOccurrences(PsiElement element, @NotNull final PyExpression expression) {
-    PsiElement context = PsiTreeUtil.getParentOfType(expression, PyFunction.class);
-    if (context == null) {
-      context = PsiTreeUtil.getParentOfType(expression, PyClass.class);
-    }
-    if (context == null) {
-      context = expression.getContainingFile();
-    }
-    return PyRefactoringUtil.getOccurrences(expression, context);
+    return PyRefactoringUtil.getOccurrences(expression, ScopeUtil.getScopeOwner(expression));
   }
 
   private PsiElement performReplace(@NotNull final PsiElement declaration,
@@ -551,7 +576,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   protected PyExpression createExpression(Project project, String name, PsiElement declaration) {
-    return PyElementGenerator.getInstance(project).createExpressionFromText(name);
+    return PyElementGenerator.getInstance(project).createExpressionFromText(LanguageLevel.forElement(declaration), name);
   }
 
   @Nullable

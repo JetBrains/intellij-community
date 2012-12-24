@@ -46,4 +46,6 @@ public interface QualifiedNameResolver {
   QualifiedNameResolver withoutForeign();
 
   Module getModule();
+
+  QualifiedNameResolver withMembers();
 }

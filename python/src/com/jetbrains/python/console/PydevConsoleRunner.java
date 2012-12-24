@@ -30,7 +30,9 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -39,6 +41,7 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.django.run.Runner;
@@ -72,15 +75,17 @@ import static com.jetbrains.python.sdk.PythonEnvUtil.setPythonUnbuffered;
 public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonConsoleView> {
   private static final Logger LOG = Logger.getInstance(PydevConsoleRunner.class.getName());
   public static final String PYDEV_PYDEVCONSOLE_PY = "pydev/pydevconsole.py";
+  public static final int PORTS_WAITING_TIMEOUT = 20000;
 
   private Sdk mySdk;
-  @NotNull private final CommandLineArgumentsProvider myCommandLineArgumentsProvider;
-  private final int[] myPorts;
+  @NotNull private CommandLineArgumentsProvider myCommandLineArgumentsProvider;
+  private int[] myPorts;
   private PydevConsoleCommunication myPydevConsoleCommunication;
   private PyConsoleProcessHandler myProcessHandler;
   private PydevConsoleExecuteActionHandler myConsoleExecuteActionHandler;
   private List<ConsoleListener> myConsoleListeners = Lists.newArrayList();
   private final PyConsoleType myConsoleType;
+  private Map<String, String> myEnvironmentVariables;
   private String myCommandLine;
   private String[] myStatementsToExecute = ArrayUtil.EMPTY_STRING_ARRAY;
 
@@ -92,14 +97,12 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
   protected PydevConsoleRunner(@NotNull final Project project,
                                @NotNull Sdk sdk, @NotNull final PyConsoleType consoleType,
-                               @NotNull final CommandLineArgumentsProvider commandLineArgumentsProvider,
                                @Nullable final String workingDir,
-                               int[] ports) {
+                               Map<String, String> environmentVariables) {
     super(project, consoleType.getTitle(), workingDir);
     mySdk = sdk;
     myConsoleType = consoleType;
-    myCommandLineArgumentsProvider = commandLineArgumentsProvider;
-    myPorts = ports;
+    myEnvironmentVariables = environmentVariables;
   }
 
   public void setStatementsToExecute(String... statementsToExecute) {
@@ -132,7 +135,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     return actions;
   }
 
-  @Nullable
+  @NotNull
   public static PydevConsoleRunner createAndRun(@NotNull final Project project,
                                                 @NotNull final Sdk sdk,
                                                 @NotNull final PyConsoleType consoleType,
@@ -140,13 +143,18 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
                                                 @NotNull final Map<String, String> environmentVariables,
                                                 final String... statements2execute) {
     final PydevConsoleRunner consoleRunner = create(project, sdk, consoleType, workingDirectory, environmentVariables);
-    if (consoleRunner == null) return null;
     consoleRunner.setStatementsToExecute(statements2execute);
     consoleRunner.run();
     return consoleRunner;
   }
 
   public void run() {
+    myPorts = findAvailablePorts(getProject(), myConsoleType);
+
+    assert myPorts != null;
+
+    myCommandLineArgumentsProvider = createCommandLineArgumentsProvider(mySdk, myEnvironmentVariables, myPorts);
+
     ProgressManager.getInstance().run(new Task.Backgroundable(getProject(), "Connecting to console", false) {
       public void run(@NotNull final ProgressIndicator indicator) {
         indicator.setText("Connecting to console...");
@@ -168,11 +176,16 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     return create(project, sdk, consoleType, workingDirectory, Maps.<String, String>newHashMap());
   }
 
+  @NotNull
   private static PydevConsoleRunner create(@NotNull final Project project,
                                            @NotNull final Sdk sdk,
                                            @NotNull final PyConsoleType consoleType,
                                            @Nullable final String workingDirectory,
                                            @NotNull final Map<String, String> environmentVariables) {
+    return new PydevConsoleRunner(project, sdk, consoleType, workingDirectory, environmentVariables);
+  }
+
+  private static int[] findAvailablePorts(Project project, PyConsoleType consoleType) {
     final int[] ports;
     try {
       // File "pydev/console/pydevconsole.py", line 223, in <module>
@@ -183,6 +196,12 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       ExecutionHelper.showErrors(project, Arrays.<Exception>asList(e), consoleType.getTitle(), null);
       return null;
     }
+    return ports;
+  }
+
+  private static CommandLineArgumentsProvider createCommandLineArgumentsProvider(final Sdk sdk,
+                                                                                 final Map<String, String> environmentVariables,
+                                                                                 int[] ports) {
     final ArrayList<String> args = new ArrayList<String>();
     args.add(sdk.getHomePath());
     final String versionString = sdk.getVersionString();
@@ -193,7 +212,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     for (int port : ports) {
       args.add(String.valueOf(port));
     }
-    final CommandLineArgumentsProvider provider = new CommandLineArgumentsProvider() {
+    return new CommandLineArgumentsProvider() {
       public String[] getArguments() {
         return ArrayUtil.toStringArray(args);
       }
@@ -206,8 +225,6 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
         return addDefaultEnvironments(sdk, environmentVariables);
       }
     };
-
-    return new PydevConsoleRunner(project, sdk, consoleType, provider, workingDirectory, ports);
   }
 
   @Override
@@ -223,8 +240,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     if (PySdkUtil.isRemote(mySdk)) {
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {
-          return createRemoteConsoleProcess(manager, myCommandLineArgumentsProvider.getArguments(),
-                                            myCommandLineArgumentsProvider.getAdditionalEnvs());
+        return createRemoteConsoleProcess(manager, myCommandLineArgumentsProvider.getArguments(),
+                                          myCommandLineArgumentsProvider.getAdditionalEnvs());
       }
       throw new PythonRemoteInterpreterManager.PyRemoteInterpreterExecutionException();
     }
@@ -264,16 +281,33 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       manager.createRemoteProcess(getProject(), data, commandLine, false);
 
 
-    Scanner s = new Scanner(remoteProcess.getInputStream());
-    boolean received = false;
+    Pair<Integer, Integer> remotePorts = getRemotePortsFromProcess(remoteProcess);
+
+    remoteProcess.addLocalTunnel(myPorts[0], data.getHost(), remotePorts.first);
+    remoteProcess.addRemoteTunnel(remotePorts.second, "localhost", myPorts[1]);
+
+
+    try {
+      myPydevConsoleCommunication = new PydevConsoleCommunication(getProject(), myPorts[0], remoteProcess, myPorts[1]);
+      return remoteProcess;
+    }
+    catch (Exception e) {
+      throw new ExecutionException(e.getMessage());
+    }
+  }
+
+  private static Pair<Integer, Integer> getRemotePortsFromProcess(RemoteSshProcess process) throws ExecutionException {
+    Scanner s = new Scanner(process.getInputStream());
+
+
     long started = System.currentTimeMillis();
-    while (!received && (System.currentTimeMillis() - started < 2000)) {
+
+    while (System.currentTimeMillis() - started < PORTS_WAITING_TIMEOUT) {
       try {
         int port = s.nextInt();
         int port2 = s.nextInt();
-        received = true;
-        remoteProcess.addLocalTunnel(myPorts[0], data.getHost(), port);
-        remoteProcess.addRemoteTunnel(port2, "localhost", myPorts[1]);
+
+        return Pair.create(port, port2);
       }
       catch (Exception e) {
         try {
@@ -282,17 +316,27 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
         catch (InterruptedException e1) {
         }
       }
+      try {
+        if (process.exitValue() != 0) {
+          String error;
+          try {
+            error = "Console process terminated with error:\n" + StreamUtil.readText(process.getErrorStream());
+          }
+          catch (Exception e) {
+            error = "Console process terminated with exit code " + process.exitValue();
+          }
+          throw new ExecutionException(error);
+        }
+        else {
+          break;
+        }
+      }
+      catch (IllegalThreadStateException e) {
+        //continue
+      }
     }
-    if (!received) {
-      throw new ExecutionException("Couldn't get remote ports for console connection.");
-    }
-    try {
-      myPydevConsoleCommunication = new PydevConsoleCommunication(getProject(), myPorts[0], remoteProcess, myPorts[1]);
-      return remoteProcess;
-    }
-    catch (Exception e) {
-      throw new ExecutionException(e.getMessage());
-    }
+
+    throw new ExecutionException("Couldn't get remote ports for console connection.");
   }
 
   @Override
