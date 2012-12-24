@@ -108,7 +108,7 @@ public class PyRemoteDebuggerTask extends PyBaseDebuggerTask {
                   public XDebugProcess start(@NotNull final XDebugSession session) {
                     myDebugProcess =
                       new PyRemoteDebugProcess(session, serverSocket, res.getExecutionConsole(),
-                                               res.getProcessHandler());
+                                               res.getProcessHandler(), null);
                     myDebugProcess.setPositionConverter(new PyRemotePositionConverter(myDebugProcess, conf.getMappingSettings()));
 
                     myDebugProcess.getProcessHandler().addProcessListener(new ProcessAdapter() {
