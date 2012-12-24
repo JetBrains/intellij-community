@@ -380,6 +380,14 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
 
       result.setSystemProperties(mySystemProperties);
 
+      for (String profile : activeProfiles) {
+        result.addActiveProfile(profile);  // Don't use result.setActiveProfiles(profiles) to avoid removing profiles added by populator.
+      }
+
+      for (String profile : inactiveProfiles) {
+        result.addInactiveProfile(profile); // Don't use result.setInactiveProfiles(profiles) to avoid removing profiles added by populator.
+      }
+
       return result;
     }
     catch (MavenExecutionRequestPopulationException e) {
