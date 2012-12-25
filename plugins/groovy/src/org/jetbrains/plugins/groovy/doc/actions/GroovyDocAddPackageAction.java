@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.doc.actions;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiPackage;
@@ -41,7 +41,7 @@ public class GroovyDocAddPackageAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(final AnActionEvent e) {
-    final Project project = DataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
 
     PackageChooserDialog chooser = new PackageChooserDialog("Choose packages", project);
     chooser.show();
@@ -51,7 +51,7 @@ public class GroovyDocAddPackageAction extends AnAction implements DumbAware {
     for (PsiPackage aPackage : packages) {
       final String qualifiedName = aPackage.getQualifiedName();
 
-      if ("".equals(qualifiedName)){
+      if (qualifiedName.isEmpty()){
         myDataModel.addElement(GroovyDocConfiguration.ALL_PACKAGES);
       }
       myDataModel.addElement(qualifiedName);
