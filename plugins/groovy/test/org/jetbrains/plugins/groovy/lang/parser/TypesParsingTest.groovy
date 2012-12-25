@@ -33,6 +33,7 @@ public class TypesParsingTest extends GroovyParsingTestCase {
   public void testType10() throws Throwable { doTest(); }
   public void testType11() throws Throwable { doTest(); }
   public void testType12() throws Throwable { doTest(); }
+  public void testType13() throws Throwable { doTest(); }
   public void testType2() throws Throwable { doTest(); }
   public void testType3() throws Throwable { doTest(); }
   public void testType4() throws Throwable { doTest(); }

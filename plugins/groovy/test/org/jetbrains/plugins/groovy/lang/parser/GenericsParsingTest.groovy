@@ -24,10 +24,12 @@ public class GenericsParsingTest extends GroovyParsingTestCase {
   public void testErr1() throws Throwable { doTest(); }
   public void testErr2() throws Throwable { doTest(); }
   public void testErr3() throws Throwable { doTest(); }
+  public void testErr4() { doTest() }
   public void testGenmethod1() throws Throwable { doTest(); }
   public void testGenmethod2() throws Throwable { doTest(); }
   public void testGenmethod3() throws Throwable { doTest(); }
   public void testGenmethod4() throws Throwable { doTest(); }
+  public void testGenmethod5() { doTest() }
   public void testTypeargs1() throws Throwable { doTest(); }
   public void testTypeparam1() throws Throwable { doTest(); }
   public void testTypeparam2() throws Throwable { doTest(); }
