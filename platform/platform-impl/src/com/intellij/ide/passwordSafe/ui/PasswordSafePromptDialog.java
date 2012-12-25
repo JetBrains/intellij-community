@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -124,29 +125,30 @@ public class PasswordSafePromptDialog extends DialogWrapper {
                                    final Class<?> requester,
                                    final String key,
                                    boolean resetPassword) {
-    return askPassword(project, title, message, requester, key, resetPassword, null);
+    return askPassword(project, null, title, message, requester, key, resetPassword, null);
   }
 
   /**
    * Ask password possibly asking password database first. The method could be invoked from any thread. If UI needs to be shown,
    * the method invokes {@link UIUtil#invokeAndWaitIfNeeded(Runnable)}
    *
+   *
    * @param project       the context project
-   * @param title         the dialog title
+   * @param modalityState
+   *@param title         the dialog title
    * @param message       the message describing a resource for which password is asked
    * @param requester     the password requester
    * @param key           the password key
    * @param resetPassword if true, the old password is removed from database and new password will be asked.
-   * @param error         the error to show in the dialog
-   * @return null if dialog was cancelled or password (stored in database or a entered by user)
+   * @param error         the error to show in the dialog       @return null if dialog was cancelled or password (stored in database or a entered by user)
    */
   public static String askPassword(final Project project,
-                                   final String title,
+                                   @Nullable ModalityState modalityState, final String title,
                                    final String message,
                                    final Class<?> requester,
                                    final String key,
                                    boolean resetPassword, String error) {
-    return askPassword(project, title, message, requester, key, resetPassword, error, null, null);
+    return askPassword(project, modalityState, title, message, requester, key, resetPassword, error, null, null);
   }
 
   /**
@@ -187,30 +189,35 @@ public class PasswordSafePromptDialog extends DialogWrapper {
                                      final Class<?> requester,
                                      final String key,
                                      boolean resetPassword) {
-    return askPassphrase(project, title, message, requester, key, resetPassword, null);
+    return askPassphrase(project, null, title, message, requester, key, resetPassword, null);
   }
 
   /**
    * Ask passphrase possibly asking password database first. The method could be invoked from any thread. If UI needs to be shown,
    * the method invokes {@link UIUtil#invokeAndWaitIfNeeded(Runnable)}
    *
+   *
+   *
+   *
    * @param project       the context project (might be null)
+   * @param modalityState the modality state using which any prompts initiated by the git process should be shown in the UI.
+   *                      If null then {@link ModalityState#defaultModalityState() the default modality state} will be used.
    * @param title         the dialog title
    * @param message       the message describing a resource for which password is asked
    * @param requester     the password requester
    * @param key           the password key
    * @param resetPassword if true, the old password is removed from database and new password will be asked.
-   * @param error         the error to show in the dialog
-   * @return null if dialog was cancelled or password (stored in database or a entered by user)
+   * @param error         the error to show in the dialog       @return null if dialog was cancelled or password (stored in database or a entered by user)
    */
   public static String askPassphrase(final Project project,
-                                     final String title,
+                                     @Nullable ModalityState modalityState, final String title,
                                      final String message,
                                      final Class<?> requester,
                                      final String key,
                                      boolean resetPassword,
                                      String error) {
-    return askPassword(project, title, message, requester, key, resetPassword, error, "Passphrase:", "Remember the passphrase");
+    return askPassword(project, modalityState, title, message, requester, key, resetPassword, error,
+                       "Passphrase:", "Remember the passphrase");
   }
 
   /**
@@ -238,6 +245,8 @@ public class PasswordSafePromptDialog extends DialogWrapper {
    * the method invokes {@link UIUtil#invokeAndWaitIfNeeded(Runnable)}
    *
    * @param project       the context project
+   * @param modalityState the modality state using which any prompts initiated by the git process should be shown in the UI.
+   *                      If null then {@link ModalityState#defaultModalityState() the default modality state} will be used.
    * @param title         the dialog title
    * @param message       the message describing a resource for which password is asked
    * @param requester     the password requester
@@ -248,7 +257,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
    * @param checkboxLabel the checkbox text   @return null if dialog was cancelled or password (stored in database or a entered by user)
    */
   private static String askPassword(final Project project,
-                                    final String title,
+                                    @Nullable ModalityState modalityState, final String title,
                                     final String message,
                                     final Class<?> requester,
                                     final String key,
@@ -305,7 +314,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
           }
         }
       }
-    }, ModalityState.defaultModalityState());
+    }, modalityState == null ? ModalityState.defaultModalityState() : modalityState);
     return pw.get();
   }
 }
