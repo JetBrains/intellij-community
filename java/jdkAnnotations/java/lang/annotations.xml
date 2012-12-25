@@ -31,9 +31,6 @@
   <item name='java.lang.String boolean matches(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
-  <item name='java.lang.Class java.lang.reflect.Method getDeclaredMethod(java.lang.String, java.lang.Class...) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
   <item name='java.lang.ClassLoader InputStream getResourceAsStream(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
