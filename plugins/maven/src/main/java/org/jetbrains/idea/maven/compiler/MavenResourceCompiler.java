@@ -56,6 +56,7 @@ import java.util.regex.Pattern;
 public class MavenResourceCompiler implements ClassPostProcessingCompiler {
   private static final Key<List<String>> FILES_TO_DELETE_KEY = Key.create(MavenResourceCompiler.class.getSimpleName() + ".FILES_TO_DELETE");
 
+  // See org.apache.maven.shared.filtering.DefaultMavenResourcesFiltering#defaultNonFilteredFileExtensions
   private static final Set<String> DEFAULT_NON_FILTERED_EXTENSIONS = ContainerUtil.newHashSet("jpg", "jpeg", "gif", "bmp", "png");
 
   private Map<String, Set<String>> myOutputItemsCache = new THashMap<String, Set<String>>();
