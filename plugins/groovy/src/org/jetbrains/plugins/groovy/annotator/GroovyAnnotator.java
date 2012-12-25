@@ -652,7 +652,9 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   @Override
   public void visitTypeParameterList(GrTypeParameterList list) {
     final PsiElement parent = list.getParent();
-    if (parent instanceof GrMethod && ((GrMethod)parent).isConstructor()) {
+    if (parent instanceof GrMethod && ((GrMethod)parent).isConstructor() ||
+        parent instanceof GrEnumTypeDefinition ||
+        parent instanceof GrAnnotationTypeDefinition) {
       myHolder.createErrorAnnotation(list, GroovyBundle.message("type.parameters.are.unexpected"));
     }
   }

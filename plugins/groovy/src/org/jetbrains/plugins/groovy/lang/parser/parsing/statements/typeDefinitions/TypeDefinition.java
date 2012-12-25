@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefiniti
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -43,27 +44,30 @@ public class TypeDefinition implements GroovyElementTypes {
   public static IElementType parseAfterModifiers(PsiBuilder builder, GroovyParser parser) {
     if (builder.getTokenType() == kCLASS) {
       builder.advanceLexer();
-      if (parseClassAfterKeyword(builder, parser, false)) {
+      if (parseAfterKeyword(builder, parser, false, false)) {
         return CLASS_DEFINITION;
       }
     }
 
     if (builder.getTokenType() == kINTERFACE) {
       builder.advanceLexer();
-      if (parseClassAfterKeyword(builder, parser, false)) {
+      if (parseAfterKeyword(builder, parser, false, false)) {
         return INTERFACE_DEFINITION;
       }
     }
 
-    if (builder.getTokenType() == kENUM && parseEnum(builder, parser)) {
-      return ENUM_DEFINITION;
+    if (builder.getTokenType() == kENUM) {
+      builder.advanceLexer();
+      if (parseAfterKeyword(builder, parser, false, true)) {
+        return ENUM_DEFINITION;
+      }
     }
 
     if (builder.getTokenType() == mAT) {
       builder.advanceLexer();
       if (builder.getTokenType() == kINTERFACE) {
         builder.advanceLexer();
-        if (parseClassAfterKeyword(builder, parser, true)) {
+        if (parseAfterKeyword(builder, parser, true, false)) {
           return ANNOTATION_DEFINITION;
         }
       }
@@ -72,13 +76,14 @@ public class TypeDefinition implements GroovyElementTypes {
     return WRONGWAY;
   }
 
-  private static boolean parseClassAfterKeyword(PsiBuilder builder, GroovyParser parser, final boolean isInAnnotation) {
+  private static boolean parseAfterKeyword(PsiBuilder builder, GroovyParser parser, final boolean isInAnnotation, final boolean isInEnum) {
     if (builder.getTokenType() != mIDENT) {
       builder.error(GroovyBundle.message("identifier.expected"));
       return false;
     }
 
     String name = builder.getTokenText();
+    assert name != null;
     builder.advanceLexer();
 
     ParserUtils.getToken(builder, mNLS);
@@ -94,7 +99,12 @@ public class TypeDefinition implements GroovyElementTypes {
     ParserUtils.getToken(builder, mNLS);
 
     if (builder.getTokenType() == mLCURLY) {
-      parseClassBody(builder, name, parser, isInAnnotation);
+      if (isInEnum) {
+        parseEnumBody(builder, name, parser);
+      }
+      else {
+        parseBody(builder, name, parser, isInAnnotation);
+      }
     }
     else {
       builder.error(GroovyBundle.message("lcurly.expected"));
@@ -102,7 +112,10 @@ public class TypeDefinition implements GroovyElementTypes {
     return true;
   }
 
-  public static boolean parseClassBody(PsiBuilder builder, @Nullable String className, GroovyParser parser, final boolean isInAnnotation) {
+  public static boolean parseBody(@NotNull PsiBuilder builder,
+                                  @Nullable String className,
+                                  @NotNull GroovyParser parser,
+                                  final boolean isInAnnotation) {
     //allow errors
     PsiBuilder.Marker cbMarker = builder.mark();
 
@@ -120,7 +133,10 @@ public class TypeDefinition implements GroovyElementTypes {
     return true;
   }
 
-  private static void parseMembers(PsiBuilder builder, String className, GroovyParser parser, final boolean isInAnnotation) {
+  private static void parseMembers(@NotNull PsiBuilder builder,
+                                   @Nullable String className,
+                                   @NotNull GroovyParser parser,
+                                   final boolean isInAnnotation) {
     Separators.parse(builder);
 
     while (!builder.eof() && builder.getTokenType() != mRCURLY) {
@@ -137,32 +153,9 @@ public class TypeDefinition implements GroovyElementTypes {
     }
   }
 
-  private static boolean parseEnum(PsiBuilder builder, GroovyParser parser) {
-    if (!ParserUtils.getToken(builder, kENUM)) {
-      return false;
-    }
-
-    if (builder.getTokenType() != mIDENT) {
-      builder.error(GroovyBundle.message("identifier.expected"));
-      return false;
-    }
-
-    String name = builder.getTokenText();
-    builder.advanceLexer();
-
-    ReferenceElement.parseReferenceList(builder, kEXTENDS, EXTENDS_CLAUSE);
-    ParserUtils.getToken(builder, mNLS);
-
-    ReferenceElement.parseReferenceList(builder, kIMPLEMENTS, IMPLEMENTS_CLAUSE);
-    ParserUtils.getToken(builder, mNLS);
-
-
-    parseEnumBlock(builder, name, parser);
-
-    return true;
-  }
-
-  private static boolean parseEnumBlock(PsiBuilder builder, @Nullable String enumName, GroovyParser parser) {
+  private static boolean parseEnumBody(@NotNull PsiBuilder builder,
+                                       @NotNull String enumName,
+                                       @NotNull GroovyParser parser) {
     PsiBuilder.Marker ebMarker = builder.mark();
 
     if (!ParserUtils.getToken(builder, mLCURLY)) {
@@ -172,9 +165,7 @@ public class TypeDefinition implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, mNLS);
 
-    if (parseEnumConstantStart(builder, parser)) {
-      EnumConstant.parseConstantList(builder, parser);
-    }
+    EnumConstant.parseConstantList(builder, parser);
 
     parseMembers(builder, enumName, parser, false);
 
@@ -183,19 +174,4 @@ public class TypeDefinition implements GroovyElementTypes {
     ebMarker.done(ENUM_BODY);
     return true;
   }
-
-  private static boolean parseEnumConstantStart(PsiBuilder builder, GroovyParser parser) {
-    PsiBuilder.Marker checkMarker = builder.mark();
-
-    boolean result = EnumConstant.parseEnumConstant(builder, parser) &&
-                     (ParserUtils.getToken(builder, mCOMMA)
-                      || ParserUtils.getToken(builder, mSEMI)
-                      || ParserUtils.getToken(builder, mNLS)
-                      || ParserUtils.getToken(builder, mRCURLY));
-
-    checkMarker.rollbackTo();
-    return result;
-  }
-
-
 }
