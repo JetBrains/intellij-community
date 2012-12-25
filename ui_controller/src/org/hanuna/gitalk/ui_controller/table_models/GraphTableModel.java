@@ -31,7 +31,7 @@ public class GraphTableModel extends AbstractTableModel {
         this.graphPrintCellModel = graphPrintCellModel;
     }
 
-    public void rewriteGraph(Graph graph, GraphPrintCellModel graphPrintCellModel) {
+    public void rewriteData(Graph graph, GraphPrintCellModel graphPrintCellModel) {
         this.graph = graph;
         this.graphPrintCellModel = graphPrintCellModel;
     }
