@@ -17,7 +17,7 @@ Groovy script
         Modifiers
           PsiElement(public)('public')
         PsiWhiteSpace(' ')
-        PsiErrorElement:Type parameters are unxepected
+        PsiErrorElement:Type parameters are unexpected
           Type parameter list
             PsiElement(<)('<')
             Type parameter
