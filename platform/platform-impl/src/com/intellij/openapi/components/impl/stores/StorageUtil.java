@@ -114,9 +114,9 @@ public class StorageUtil {
       final Ref<IOException> refIOException = Ref.create(null);
 
       final Pair<String, String> pair = loadFile(LocalFileSystem.getInstance().findFileByIoFile(file));
-      final byte[] text = JDOMUtil.writeParent(element, pair.second).getBytes(CharsetToolkit.UTF8);
+      final String text = JDOMUtil.writeParent(element, pair.second);
       if (file.exists()) {
-        if (new String(text).equals(pair.first)) return null;
+        if (text.equals(pair.first)) return null;
         IFile backupFile = deleteBackup(filePath);
         file.renameTo(backupFile);
       }
@@ -131,7 +131,8 @@ public class StorageUtil {
           try {
             final VirtualFile virtualFile = getOrCreateVirtualFile(requestor, file);
 
-            virtualFile.setBinaryContent(text, -1, -1, requestor);
+            byte[] bytes = text.getBytes(CharsetToolkit.UTF8);
+            virtualFile.setBinaryContent(bytes, -1, -1, requestor);
             result[0] = virtualFile;
           }
           catch (IOException e) {
