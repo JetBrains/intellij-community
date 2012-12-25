@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes.conflicts;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
@@ -26,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collections;
-import java.util.List;
 
 /**
 * @author Dmitry Avdeev
@@ -61,8 +61,13 @@ public class ChangelistConflictNotificationPanel extends EditorNotificationPanel
 
     createActionLabel("Switch changelist", new Runnable() {
       public void run() {
-        List<Change> changes = Collections.singletonList(myTracker.getChangeListManager().getChange(myFile));
-        ChangelistConflictResolution.SWITCH.resolveConflict(myTracker.getProject(), changes);
+        Change change = myTracker.getChangeListManager().getChange(myFile);
+        if (change == null) {
+          Messages.showInfoMessage("No changes for this file", "Message");
+        }
+        else {
+          ChangelistConflictResolution.SWITCH.resolveConflict(myTracker.getProject(), Collections.singletonList(change));
+        }
       }
     }).setToolTipText("Set active changelist to '" + myChangeList.getName() + "'");
 
@@ -71,8 +76,6 @@ public class ChangelistConflictNotificationPanel extends EditorNotificationPanel
         myTracker.ignoreConflict(myFile, true);
       }
     }).setToolTipText("Hide this notification");
-
-//    setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
 
     myLinksPanel.add(new InplaceButton("Show options dialog", AllIcons.General.Settings, new ActionListener() {
       public void actionPerformed(ActionEvent e) {
