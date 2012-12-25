@@ -926,7 +926,9 @@ public class MavenProjectsTree {
           updateCrc(crc, file.lastModified());
         }
 
-        updateCrc(crc, getEscapeString(mavenProject));
+        Element pluginConfiguration = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
+        updateCrc(crc, MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "escapeString"));
+        updateCrc(crc, MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "escapeWindowsPaths"));
       }
 
       return (int)crc.getValue();
@@ -935,13 +937,6 @@ public class MavenProjectsTree {
       readUnlock();
     }
   }
-
-  public static String getEscapeString(MavenProject mavenProject) {
-    return MavenJDOMUtil.findChildValueByPath(
-      mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin"), "escapeString", "\\"
-    );
-  }
-
 
   public List<VirtualFile> getRootProjectsFiles() {
     return MavenUtil.collectFiles(getRootProjects());

@@ -330,11 +330,37 @@ public abstract class ResourceFilteringTest extends MavenImportingTestCase {
   }
 
 
-  public void testEscapingSpecialCharsInProperties() throws Exception {
+  public void testEscapingWindowsChars() throws Exception {
     createProjectSubFile("resources/file.txt", "value=${foo}\n" +
-                                               "value2=@foo@");
-    createProjectSubFile("resources/file.properties", "value=${foo}\n" +
-                                                      "value2=@foo@");
+                                               "value2=@foo@\n" +
+                                               "value3=${bar}");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<properties>" +
+                  "  <foo>c:\\projects\\foo/bar</foo>" +
+                  "  <bar>a\\b\\c</foo>" +
+                  "</properties>" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>resources</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+    compileModules("project");
+
+    assertResult("target/classes/file.txt", "value=c:\\\\projects\\\\foo/bar\n" +
+                                            "value2=c:\\\\projects\\\\foo/bar\n" +
+                                            "value3=a\\b\\c");
+  }
+
+  public void testDontEscapingWindowsChars() throws Exception {
+    createProjectSubFile("resources/file.txt", "value=${foo}");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -351,13 +377,19 @@ public abstract class ResourceFilteringTest extends MavenImportingTestCase {
                   "      <filtering>true</filtering>" +
                   "    </resource>" +
                   "  </resources>" +
+                  "" +
+                  "    <plugins>" +
+                  "      <plugin>" +
+                  "        <artifactId>maven-resources-plugin</artifactId>" +
+                  "        <configuration>" +
+                  "          <escapeWindowsPaths>false</escapeWindowsPaths>" +
+                  "        </configuration>" +
+                  "      </plugin>" +
+                  "    </plugins>" +
                   "</build>");
     compileModules("project");
 
-    assertResult("target/classes/file.txt", "value=c:\\projects\\foo/bar\n" +
-                                            "value2=c:\\projects\\foo/bar");
-    assertResult("target/classes/file.properties", "value=c:\\\\projects\\\\foo/bar\n" +
-                                                   "value2=c:\\\\projects\\\\foo/bar");
+    assertResult("target/classes/file.txt", "value=c:\\projects\\foo/bar");
   }
 
   public void testFilteringPropertiesWithEmptyValues() throws Exception {

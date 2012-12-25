@@ -405,7 +405,6 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
         if (shouldFilter) {
           String charset = sourceVirtualFile.getCharset().name();
           String text = new String(FileUtil.loadFileBytes(sourceFile), charset);
-          String escapedCharacters = sourceVirtualFile.getName().endsWith(".properties") ? "\\" : null;
 
           PrintWriter printWriter = new PrintWriter(outputFile, charset);
           try {
@@ -413,7 +412,6 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
                                                text,
                                                eachItem.getProperties(),
                                                eachItem.getEscapeString(),
-                                               escapedCharacters,
                                                printWriter);
           }
           finally {
