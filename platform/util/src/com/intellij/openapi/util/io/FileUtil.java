@@ -573,7 +573,7 @@ public class FileUtil extends FileUtilRt {
     }
   }
 
-  public static void ensureExists(File dir) throws IOException {
+  public static void ensureExists(@NotNull File dir) throws IOException {
     if (!dir.exists() && !dir.mkdirs()) {
       throw new IOException(CommonBundle.message("exception.directory.can.not.create", dir.getPath()));
     }

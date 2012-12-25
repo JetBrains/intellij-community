@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.StorageScheme;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -103,6 +104,7 @@ public class NewProjectUtil {
 
     try {
       File projectDir = new File(projectFilePath).getParentFile();
+      LOG.assertTrue(projectDir != null, "Cannot create project in '" + projectFilePath + "': no parent file exists");
       FileUtil.ensureExists(projectDir);
       if (StorageScheme.DIRECTORY_BASED == dialog.getStorageScheme()) {
         final File ideaDir = new File(projectFilePath, Project.DIRECTORY_STORE_FOLDER);
@@ -245,4 +247,6 @@ public class NewProjectUtil {
       }
     }
   }
+
+  private final static Logger LOG = Logger.getInstance(NewProjectUtil.class);
 }
