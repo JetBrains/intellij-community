@@ -37,7 +37,7 @@ import java.util.Arrays;
 public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements XmlRpcServer, Consumer<ChannelPipeline> {
   private static final Logger LOG = Logger.getInstance(XmlRpcServerImpl.class);
 
-  private final XmlRpcHandlerMappingImpl handlerMapping = new LoggingDefaultHandlerMapping();
+  private final XmlRpcHandlerMappingImpl handlerMapping;
   // idea doesn't use authentication
   private final XmlRpcContext xmlRpcContext = new XmlRpcContext() {
     @Nullable
@@ -59,6 +59,8 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
   };
 
   public XmlRpcServerImpl() {
+    handlerMapping = LOG.isDebugEnabled() ? new LoggingDefaultHandlerMapping() : new XmlRpcHandlerMappingImpl();
+
     for (XmlRpcHandlerBean handlerBean : Extensions.getExtensions(XmlRpcHandlerBean.EP_NAME)) {
       final Object handler;
       try {
@@ -71,7 +73,7 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
       handlerMapping.addHandler(handlerBean.name, handler);
     }
 
-    LOG.info("XmlRpcServerImpl instantiated, handlers " + handlerMapping);
+    LOG.debug("XmlRpcServerImpl instantiated, handlers " + handlerMapping);
   }
 
   @Override
@@ -185,7 +187,7 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
   private static class LoggingDefaultHandlerMapping extends XmlRpcHandlerMappingImpl {
     @Override
     public void addHandler(@NotNull String handlerName, @NotNull Object handler) {
-      LOG.info(String.format("addHandler: handlerName: %s, handler: %s%s", handlerName, handler, getHandlers()));
+      LOG.debug(String.format("addHandler: handlerName: %s, handler: %s%s", handlerName, handler, getHandlers()));
       super.addHandler(handlerName, handler);
     }
 
@@ -197,7 +199,7 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
 
     @Override
     public Object getHandler(String methodName) {
-      LOG.info(String.format("getHandler: methodName: %s%s", methodName, getHandlers()));
+      LOG.debug(String.format("getHandler: methodName: %s%s", methodName, getHandlers()));
       return super.getHandler(methodName);
     }
 
