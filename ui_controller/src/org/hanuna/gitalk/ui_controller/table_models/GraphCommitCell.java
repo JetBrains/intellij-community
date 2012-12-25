@@ -23,7 +23,7 @@ public class GraphCommitCell extends CommitCell {
         this.row = row;
     }
 
-    public GraphPrintCell getRow() {
+    public GraphPrintCell getPrintCell() {
         return row;
     }
 

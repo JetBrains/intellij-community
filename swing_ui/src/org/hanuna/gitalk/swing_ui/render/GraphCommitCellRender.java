@@ -33,7 +33,7 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
         FontRenderContext fontContext = ((Graphics2D) table.getGraphics()).getFontRenderContext();
         int refPadding = refPainter.padding(cell.getRefsToThisCommit(), fontContext);
 
-        int countCells = cell.getRow().countCell();
+        int countCells = cell.getPrintCell().countCell();
         int graphPadding = countCells * WIDTH_NODE;
 
         return refPadding + graphPadding;
@@ -49,9 +49,9 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
     protected void additionPaint(Graphics g, JTable table, Object value) {
         GraphCommitCell cell = getAssertGraphCommitCell(value);
         Graphics2D g2 = (Graphics2D) g;
-        graphPainter.draw(g2, cell.getRow());
+        graphPainter.draw(g2, cell.getPrintCell());
 
-        int countCells = cell.getRow().countCell();
+        int countCells = cell.getPrintCell().countCell();
         int padding = countCells * WIDTH_NODE;
         refPainter.draw(g2, cell.getRefsToThisCommit(), padding);
     }
