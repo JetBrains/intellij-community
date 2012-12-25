@@ -81,6 +81,7 @@ import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepend
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.ide.PooledThreadExecutor;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.api.GlobalOptions;
@@ -140,12 +141,7 @@ public class BuildManager implements ApplicationComponent{
   private final Map<RequestFuture, Project> myAutomakeFutures = new HashMap<RequestFuture, Project>();
   private final Map<String, RequestFuture> myBuildsInProgress = Collections.synchronizedMap(new HashMap<String, RequestFuture>());
   private final CompileServerClasspathManager myClasspathManager = new CompileServerClasspathManager();
-  private final Executor myPooledThreadExecutor = new Executor() {
-    @Override
-    public void execute(@NotNull Runnable command) {
-      ApplicationManager.getApplication().executeOnPooledThread(command);
-    }
-  };
+  private final Executor myPooledThreadExecutor = new PooledThreadExecutor();
   private final SequentialTaskExecutor myRequestsProcessor = new SequentialTaskExecutor(myPooledThreadExecutor);
   private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<String, ProjectData>());
 

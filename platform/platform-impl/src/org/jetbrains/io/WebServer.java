@@ -15,7 +15,6 @@
  */
 package org.jetbrains.io;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
@@ -35,6 +34,7 @@ import org.jboss.netty.handler.codec.http.*;
 import org.jboss.netty.util.CharsetUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -59,15 +59,12 @@ public class WebServer {
   @NonNls
   private static final String PROPERTY_ONLY_ANY_HOST = "rpc.onlyAnyHost";
 
-  private final Executor pooledThreadExecutor = new Executor() {
-    private final Application application = ApplicationManager.getApplication();
+  private final NioServerSocketChannelFactory channelFactory;
 
-    @Override
-    public void execute(@NotNull Runnable command) {
-      application.executeOnPooledThread(command);
-    }
-  };
-  private final NioServerSocketChannelFactory channelFactory = new NioServerSocketChannelFactory(pooledThreadExecutor, pooledThreadExecutor, 1);
+  public WebServer() {
+    Executor pooledThreadExecutor = new PooledThreadExecutor();
+    channelFactory = new NioServerSocketChannelFactory(pooledThreadExecutor, pooledThreadExecutor, 1);
+  }
 
   public boolean isRunning() {
     return !openChannels.isEmpty();
@@ -96,8 +93,8 @@ public class WebServer {
     return bind(firstPort, portsCount, tryAnyPort, bootstrap);
   }
 
-  private boolean checkPort(final InetSocketAddress remoteAddress) {
-    final ClientBootstrap bootstrap = new ClientBootstrap(new OioClientSocketChannelFactory(pooledThreadExecutor));
+  private static boolean checkPort(final InetSocketAddress remoteAddress) {
+    final ClientBootstrap bootstrap = new ClientBootstrap(new OioClientSocketChannelFactory(new PooledThreadExecutor()));
     bootstrap.setOption("child.tcpNoDelay", true);
 
     final AtomicBoolean result = new AtomicBoolean(false);
