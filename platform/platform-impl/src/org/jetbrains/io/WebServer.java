@@ -243,7 +243,7 @@ public class WebServer {
     return -1;
   }
 
-  private boolean checkPortSafe(@NotNull InetSocketAddress localAddress) {
+  private static boolean checkPortSafe(@NotNull InetSocketAddress localAddress) {
     LOG.info("We have tried to bind to 127.0.0.1 host but have got exception (" +
              SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION + "), " +
              "so, try to check - are we really need to bind to 127.0.0.1");
