@@ -108,15 +108,7 @@ public class Declaration implements GroovyElementTypes {
                                                           @Nullable String typeDefinitionName,
                                                           @NotNull GroovyParser parser,
                                                           boolean expressionPossible) {
-    //if definition starts with lower case letter than it can be just call expression
-
-    String text = builder.getTokenText();
-    if (!builder.eof()
-        && !TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())
-        && text != null && StringUtil.isNotEmpty(text)
-        && (Character.isLowerCase((text.charAt(0))) || !Character.isLetter(text.charAt(0))) &&
-        (ParserUtils.lookAhead(builder, mIDENT, mIDENT) || ParserUtils.lookAhead(builder, mIDENT, mLPAREN))) {
-      //call expression
+    if (isCall(builder)) {
       return WRONGWAY;
     }
 
@@ -125,7 +117,6 @@ public class Declaration implements GroovyElementTypes {
       typeParsed = TypeSpec.parse(builder, true, expressionPossible) != FAIL;
       //type specification starts with upper case letter
       if (!typeParsed) {
-        builder.error(GroovyBundle.message("type.specification.expected"));
         return WRONGWAY;
       }
     }
@@ -139,6 +130,19 @@ public class Declaration implements GroovyElementTypes {
     }
 
     return WRONGWAY;
+  }
+
+  private static boolean isCall(@NotNull PsiBuilder builder) {
+    if (builder.eof()) return false;
+    if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())) return false;
+
+    final String text = builder.getTokenText();
+    if (StringUtil.isEmpty(text)) return false;
+    assert text != null;
+
+    final char firstChar = text.charAt(0);
+    return (Character.isLowerCase(firstChar) || !Character.isLetter(firstChar)) &&
+           (ParserUtils.lookAhead(builder, mIDENT, mIDENT) || ParserUtils.lookAhead(builder, mIDENT, mLPAREN));
   }
 
   private static IElementType parseDeclarationWithoutGenerics(@NotNull PsiBuilder builder,
