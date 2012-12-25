@@ -54,6 +54,12 @@ public final class GenerateGroovyDocDialog extends DialogWrapper {
     }
   }
 
+  @Override
+  protected void dispose() {
+    super.dispose();
+    //Disposer.dispose(myPanel);
+  }
+
   @Nullable
   @Override
   protected String getHelpId() {

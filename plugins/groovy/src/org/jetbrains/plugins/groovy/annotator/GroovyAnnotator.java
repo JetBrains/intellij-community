@@ -1400,12 +1400,15 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     else if (typeDefinition.isEnum()) {
       myHolder.createErrorAnnotation(extendsClause, GroovyBundle.message("enums.may.not.have.extends.clause"));
     }
+    else if (typeDefinition.isAnnotationType()) {
+      myHolder.createErrorAnnotation(extendsClause, GroovyBundle.message("annotation.types.may.not.have.extends.clause"));
+    }
     else {
       checkReferenceList(myHolder, extendsClause, false, GroovyBundle.message("no.interface.expected.here"),
                          new ChangeExtendsImplementsQuickFix(typeDefinition));
+      checkForWildCards(myHolder, extendsClause);
     }
 
-    checkForWildCards(myHolder, extendsClause);
   }
 
   @Override
@@ -1415,12 +1418,14 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (typeDefinition.isInterface()) {
       myHolder.createErrorAnnotation(implementsClause, GroovyBundle.message("no.implements.clause.allowed.for.interface"));
     }
+    else if (typeDefinition.isAnnotationType()) {
+      myHolder.createErrorAnnotation(implementsClause, GroovyBundle.message("annotation.types.may.not.have.implements.clause"));
+    }
     else {
       checkReferenceList(myHolder, implementsClause, true, GroovyBundle.message("no.class.expected.here"),
                          new ChangeExtendsImplementsQuickFix(typeDefinition));
+      checkForWildCards(myHolder, implementsClause);
     }
-
-    checkForWildCards(myHolder, implementsClause);
   }
 
   private static void checkReferenceList(@NotNull AnnotationHolder holder,
