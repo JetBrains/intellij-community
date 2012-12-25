@@ -34,7 +34,7 @@ public abstract class GrIntentionTestCase extends LightCodeInsightFixtureTestCas
   protected final String myHint;
   private final Class<? extends LocalInspectionTool>[] myInspections
 
-  GrIntentionTestCase(@Nullable String hint = null, @NotNull Class<? extends LocalInspectionTool>... inspections) {
+  GrIntentionTestCase(@Nullable String hint = null, @NotNull Class<? extends LocalInspectionTool>... inspections = []) {
     myInspections = inspections
     myHint = hint
   }
