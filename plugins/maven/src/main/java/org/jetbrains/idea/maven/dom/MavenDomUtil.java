@@ -327,7 +327,7 @@ public class MavenDomUtil {
     if (cachedValue == null || cachedValue.first != VirtualFileManager.getInstance().getModificationCount()) {
       Set<VirtualFile> set = null;
 
-      for (MavenResource resource : mavenProject.getResources()) {
+      for (MavenResource resource : ContainerUtil.concat(mavenProject.getResources(), mavenProject.getTestResources())) {
         if (!resource.isFiltered()) continue;
 
         VirtualFile resourceDir = LocalFileSystem.getInstance().findFileByPath(resource.getDirectory());

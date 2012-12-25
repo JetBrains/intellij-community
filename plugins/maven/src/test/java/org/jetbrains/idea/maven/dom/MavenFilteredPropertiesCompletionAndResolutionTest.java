@@ -48,6 +48,28 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     assertResolved(f, findTag("project.version"));
   }
 
+  public void testTestResourceProperties() throws Exception {
+    createProjectSubDir("res");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <testResources>" +
+                  "    <testResource>" +
+                  "      <directory>res</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </testResource>" +
+                  "  </testResources>" +
+                  "</build>");
+
+    VirtualFile f = createProjectSubFile("res/foo.properties",
+                                         "foo=abc${project<caret>.version}abc");
+
+    assertResolved(f, findTag("project.version"));
+  }
+
   public void testBasicAt() throws Exception {
     createProjectSubDir("res");
 
