@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.util.ui.UIUtil;
 import git4idea.config.SSHConnectionSettings;
 import git4idea.i18n.GitBundle;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.git4idea.ssh.GitSSHService;
 
@@ -37,11 +38,8 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Swing GUI handler for the SSH events
  */
-public class GitSSHGUIHandler implements GitSSHService.Handler {
-  /**
-   * the project for the handler (used for popups)
-   */
-  private final Project myProject;
+class GitSSHGUIHandler implements GitSSHService.Handler {
+  @Nullable private final Project myProject;
   @Nullable private final ModalityState myState;
 
   /**
@@ -50,14 +48,11 @@ public class GitSSHGUIHandler implements GitSSHService.Handler {
    * @param project a project to use
    * @param state   modality state using which any prompts initiated by the git process should be shown in the UI.
    */
-  public GitSSHGUIHandler(Project project, @Nullable ModalityState state) {
+  GitSSHGUIHandler(@Nullable Project project, @Nullable ModalityState state) {
     myProject = project;
     myState = state;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public boolean verifyServerHostKey(final String hostname,
                                      final int port,
                                      final String serverHostKeyAlgorithm,
@@ -79,9 +74,6 @@ public class GitSSHGUIHandler implements GitSSHService.Handler {
     return rc.get();
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public String askPassphrase(final String username, final String keyPath, boolean resetPassword, final String lastError) {
     String error = processLastError(resetPassword, lastError);
     return PasswordSafePromptDialog.askPassphrase(myProject, myState, GitBundle.getString("ssh.ask.passphrase.title"),
@@ -114,20 +106,12 @@ public class GitSSHGUIHandler implements GitSSHService.Handler {
     return error;
   }
 
-  /**
-   * Show error if it is not empty
-   *
-   * @param lastError a error to show
-   */
   private void showError(final String lastError) {
     if (lastError.length() != 0) {
       Messages.showErrorDialog(myProject, lastError, GitBundle.getString("ssh.error.title"));
     }
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @SuppressWarnings({"UseOfObsoleteCollectionType", "unchecked"})
   public Vector<String> replyToChallenge(final String username,
                                          final String name,
@@ -166,9 +150,6 @@ public class GitSSHGUIHandler implements GitSSHService.Handler {
                                                 GitSSHGUIHandler.class, "PASSWORD:" + username, resetPassword, error);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public String getLastSuccessful(String userName) {
     SSHConnectionSettings s = SSHConnectionSettings.getInstance();
@@ -176,9 +157,6 @@ public class GitSSHGUIHandler implements GitSSHService.Handler {
     return rc == null ? "" : rc;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public void setLastSuccessful(String userName, String method, final String error) {
     SSHConnectionSettings s = SSHConnectionSettings.getInstance();
@@ -192,9 +170,6 @@ public class GitSSHGUIHandler implements GitSSHService.Handler {
     }
   }
 
-  /**
-   * Keyboard interactive input dialog
-   */
   @SuppressWarnings({"UseOfObsoleteCollectionType"})
   private class GitSSHKeyboardInteractiveDialog extends DialogWrapper {
     /**
@@ -324,6 +299,7 @@ public class GitSSHGUIHandler implements GitSSHService.Handler {
     /**
      * {@inheritDoc}
      */
+    @NotNull
     @Override
     protected Action[] createActions() {
       return new Action[]{getOKAction(), getCancelAction()};
