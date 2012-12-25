@@ -23,6 +23,7 @@ public class CommitReader extends AbstractProcessOutputReader {
         builder.append(GitLogParser.parseCommitData(line));
     }
 
+    @NotNull
     public List<Commit> readAllCommits() throws GitException, IOException {
         Process process = GitProcessFactory.allLog();
         try {
@@ -36,6 +37,7 @@ public class CommitReader extends AbstractProcessOutputReader {
         }
     }
 
+    @NotNull
     public List<Commit> readLastCommits(int monthCount) throws GitException, IOException {
         Process process = GitProcessFactory.lastMonth(monthCount);
         try {
@@ -46,8 +48,5 @@ public class CommitReader extends AbstractProcessOutputReader {
         }
     }
 
-    public List<Commit> readLastCommits() throws GitException, IOException {
-        return readLastCommits(6);
-    }
 
 }

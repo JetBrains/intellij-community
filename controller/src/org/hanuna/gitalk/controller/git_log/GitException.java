@@ -8,6 +8,4 @@ public class GitException extends Exception {
         super(message);
     }
 
-    public GitException() {
-    }
 }
