@@ -29,6 +29,7 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor implement
     super(project, new RunConfigurable(project));
     ((RunConfigurable)getConfigurable()).setRunDialog(this);
     setTitle(ExecutionBundle.message("run.debug.dialog.title"));
+    setHorizontalStretch(1.3F);
   }
 
   @Override
