@@ -1,102 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <root>
-  <item name='java.lang.String java.lang.String toLowerCase(java.util.Locale) 0'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
+  <item name="java.lang.CharSequence java.lang.String toString()">
+    <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
-  <item name='java.lang.String java.lang.String toLowerCase(java.util.Locale)'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
-  <item name='java.lang.String java.lang.String toUpperCase(java.util.Locale) 0'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
-  <item name='java.lang.String java.lang.String toUpperCase(java.util.Locale)'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
-  <item name='java.lang.Class java.lang.reflect.Field getDeclaredField(java.lang.String) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='java.lang.Class java.lang.reflect.Method getMethod(java.lang.String, java.lang.Class...) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='java.lang.System java.lang.String setProperty(java.lang.String, java.lang.String) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
-  <item name='java.lang.System java.lang.String setProperty(java.lang.String, java.lang.String) 1'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
-  <item name='java.lang.Thread Thread(java.lang.Runnable, java.lang.String) 1'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='java.lang.String boolean matches(java.lang.String) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='java.lang.ClassLoader InputStream getResourceAsStream(java.lang.String) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='java.lang.System java.lang.String getProperty(java.lang.String) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
-  <item name='java.lang.Runtime Process exec(java.lang.String[]) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='java.lang.Class java.lang.reflect.Method getDeclaredMethod(java.lang.String, java.lang.Class<?>...) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='java.lang.Iterable Iterator<T> iterator()'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
-  <item name='java.lang.ClassLoader java.net.URL getResource(java.lang.String) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='java.lang.String String(byte[], java.lang.String) 1'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='java.lang.String byte[] getBytes(java.lang.String) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
-  <item name='java.lang.RuntimeException RuntimeException(java.lang.String) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='java.lang.Class java.lang.reflect.Method getMethod(java.lang.String, java.lang.Class<?>...) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='java.lang.Runtime java.lang.Process exec(java.lang.String[]) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='java.lang.ClassLoader java.io.InputStream getResourceAsStream(java.lang.String) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='java.lang.ClassLoader java.net.URL getResource(java.lang.String)'>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
-  </item>
-  <item name='java.lang.Class int getModifiers()'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="flagsFromClass" val="java.lang.reflect.Modifier.class"/>
+  <item name="java.lang.Class int getModifiers()">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.lang.reflect.Modifier.class" />
     </annotation>
   </item>
-  <item name='java.lang.SecurityManager void checkMemberAccess(java.lang.Class<?>, int) 1'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="valuesFromClass" val="java.lang.reflect.Member.class"/>
+  <item name="java.lang.Class java.lang.Class&lt;?&gt; forName(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name="java.lang.Class java.lang.reflect.Field getDeclaredField(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name="java.lang.Class java.lang.reflect.Field getField(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name="java.lang.Class java.lang.reflect.Method getDeclaredMethod(java.lang.String, java.lang.Class&lt;?&gt;...) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name="java.lang.Class java.lang.reflect.Method getMethod(java.lang.String, java.lang.Class...) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name="java.lang.Class java.lang.reflect.Method getMethod(java.lang.String, java.lang.Class&lt;?&gt;...) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name="java.lang.ClassLoader InputStream getResourceAsStream(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name="java.lang.ClassLoader java.io.InputStream getResourceAsStream(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name="java.lang.ClassLoader java.net.URL getResource(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Nullable" />
+  </item>
+  <item name="java.lang.ClassLoader java.net.URL getResource(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name="java.lang.Iterable Iterator&lt;T&gt; iterator()">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.Runtime Process exec(java.lang.String[]) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name="java.lang.Runtime java.lang.Process exec(java.lang.String[]) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name="java.lang.RuntimeException RuntimeException(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name="java.lang.SecurityManager void checkMemberAccess(java.lang.Class&lt;?&gt;, int) 1">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="valuesFromClass" val="java.lang.reflect.Member.class" />
     </annotation>
   </item>
-  <item name='java.lang.Thread java.lang.Thread currentThread()'>
-    <annotation name='org.jetbrains.annotations.NotNull'>
-    </annotation>
+  <item name="java.lang.String String(byte[], java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
-  <item name='java.lang.CharSequence java.lang.String toString()'>
-    <annotation name='org.jetbrains.annotations.NotNull'>
-    </annotation>
+  <item name="java.lang.String boolean matches(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
-  <item name='java.lang.Class java.lang.Class&lt;?&gt; forName(java.lang.String) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+  <item name="java.lang.String byte[] getBytes(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+    <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
-  <item name='java.lang.Class java.lang.reflect.Field getField(java.lang.String) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+  <item name="java.lang.String byte[] getBytes(java.nio.charset.Charset) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
-  <item name='java.lang.String byte[] getBytes(java.nio.charset.Charset) 0'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
+  <item name="java.lang.String java.lang.String toLowerCase(java.util.Locale)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String toLowerCase(java.util.Locale) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String toUpperCase(java.util.Locale)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String toUpperCase(java.util.Locale) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.System java.lang.String getProperty(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.System java.lang.String setProperty(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.System java.lang.String setProperty(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.Thread Thread(java.lang.Runnable, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name="java.lang.Thread java.lang.Thread currentThread()">
+    <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
 </root>
+
