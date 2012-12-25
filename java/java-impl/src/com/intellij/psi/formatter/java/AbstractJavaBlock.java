@@ -940,8 +940,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       // There is a special case - comment block that is located at the very start of the line. We don't reformat such a blocks,
       // hence, no alignment should be applied to them in order to avoid subsequent blocks aligned with the same alignment to
       // be located at the left editor edge as well.
-      if (previous != null && previous.getElementType() == TokenType.WHITE_SPACE && previous.getChars().length() > 0
-          && previous.getChars().charAt(previous.getChars().length() - 1) == '\n') {
+      CharSequence prevChars;
+      if (previous != null && previous.getElementType() == TokenType.WHITE_SPACE && (prevChars = previous.getChars()).length() > 0
+          && prevChars.charAt(prevChars.length() - 1) == '\n') {
         return null;
       }
       return defaultAlignment;
