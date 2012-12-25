@@ -594,8 +594,8 @@ public class HtmlUtil {
     return isHtmlFile(file) || file.getViewProvider() instanceof TemplateLanguageFileViewProvider;
   }
 
-  public static boolean isHtmlFile(final PsiFile file) {
-    final Language language = file.getLanguage();
+  public static boolean isHtmlFile(PsiElement element) {
+    Language language = element.getLanguage();
     return language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE;
   }
 
