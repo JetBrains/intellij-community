@@ -24,6 +24,7 @@ import com.intellij.codeInspection.visibility.VisibilityInspection;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * @author Dmitry Avdeev
@@ -65,7 +66,7 @@ public class GlobalInspectionContextTest extends CodeInsightTestCase {
         return;
       }
     }
-    fail("No disabled tools found");
+    fail("No disabled tools found: " + Arrays.asList(tools));
   }
 
   @Override
