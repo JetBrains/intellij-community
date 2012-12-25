@@ -78,6 +78,8 @@ public final class GroovyDocGenerationPanel extends JPanel {
     myPanel.setMinimumSize(new Dimension(275, 350));
   }
 
+
+
   private ActionGroup getActionGroup() {
     if (myActionGroup == null) {
       initActions();
