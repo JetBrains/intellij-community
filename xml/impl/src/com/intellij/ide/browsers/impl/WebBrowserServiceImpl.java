@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ide.browsers.impl;
 import com.intellij.ide.browsers.WebBrowserService;
 import com.intellij.ide.browsers.WebBrowserUrlProvider;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.psi.PsiElement;
@@ -47,32 +48,28 @@ public class WebBrowserServiceImpl extends WebBrowserService {
     if (psiFile == null) {
       return null;
     }
-    final VirtualFile virtualFile = psiFile.getVirtualFile();
+    VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) {
       return null;
     }
-    final String localUrl = virtualFile.getUrl();
     if (virtualFile instanceof HttpVirtualFile) {
-      return localUrl;
+      return virtualFile.getUrl();
     }
 
-    if (preferLocalUrl && HtmlUtil.isHtmlFile(psiFile)) {
-      return localUrl;
-    }
-
-    final WebBrowserUrlProvider provider = getProvider(psiElement);
-    if (provider == null) {
-      return localUrl;
-    }
-    try {
-      return provider.getUrl(psiElement);
-    }
-    catch (WebBrowserUrlProvider.BrowserException e) {
-      if (HtmlUtil.isHtmlFile(psiFile)) {
-        return localUrl;
+    if (!(preferLocalUrl && HtmlUtil.isHtmlFile(psiFile))) {
+      WebBrowserUrlProvider provider = getProvider(psiElement);
+      if (provider != null) {
+        try {
+          return provider.getUrl(psiElement, psiFile, virtualFile);
+        }
+        catch (WebBrowserUrlProvider.BrowserException e) {
+          if (!HtmlUtil.isHtmlFile(psiFile)) {
+            throw e;
+          }
+        }
       }
-      throw e;
     }
+    return VfsUtil.toUri(virtualFile).toASCIIString();
   }
 
   @Nullable

@@ -42,6 +42,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
@@ -495,6 +497,26 @@ public class VfsUtil extends VfsUtilCore {
       }
     }
     return url;
+  }
+
+  /**
+   * @return correct URI, must be used only for external communication
+   */
+  @NotNull
+  public static URI toUri(@NotNull VirtualFile file) {
+    String path = file.getPath();
+    try {
+      if (file.isInLocalFileSystem()) {
+        if (SystemInfo.isWindows && path.charAt(0) != '/') {
+          path = '/' + path;
+        }
+        return new URI(file.getFileSystem().getProtocol(), "", path, null, null);
+      }
+      return new URI(file.getFileSystem().getProtocol(), path, null);
+    }
+    catch (URISyntaxException e) {
+      throw new IllegalArgumentException(e);
+    }
   }
 
   /**
