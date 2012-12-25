@@ -1,13 +1,13 @@
 package org.hanuna.gitalk.swing_ui;
 
-import org.hanuna.gitalk.printmodel.GraphPrintCell;
-import org.hanuna.gitalk.ui_controller.EventsController;
-import org.hanuna.gitalk.ui_controller.table_models.GraphCommitCell;
-import org.hanuna.gitalk.ui_controller.UI_Controller;
 import org.hanuna.gitalk.graph.graph_elements.GraphElement;
+import org.hanuna.gitalk.printmodel.GraphPrintCell;
 import org.hanuna.gitalk.swing_ui.render.GraphCommitCellRender;
 import org.hanuna.gitalk.swing_ui.render.painters.GraphCellPainter;
 import org.hanuna.gitalk.swing_ui.render.painters.SimpleGraphCellPainter;
+import org.hanuna.gitalk.ui_controller.EventsController;
+import org.hanuna.gitalk.ui_controller.UI_Controller;
+import org.hanuna.gitalk.ui_controller.table_models.GraphCommitCell;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -64,7 +64,8 @@ public class UI_GraphTable extends JTable {
             int rowIndex = e.getY() / GraphCommitCell.HEIGHT_CELL;
             int y = e.getY() - rowIndex * GraphCommitCell.HEIGHT_CELL;
             int x = e.getX();
-            GraphPrintCell row = ui_controller.getGraphPrintCell(rowIndex);
+            GraphCommitCell commitCell = (GraphCommitCell) UI_GraphTable.this.getModel().getValueAt(rowIndex, 0);
+            GraphPrintCell row = commitCell.getPrintCell();
             return graphPainter.mouseOver(row, x, y);
         }
 
