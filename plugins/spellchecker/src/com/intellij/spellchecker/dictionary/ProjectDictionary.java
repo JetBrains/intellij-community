@@ -15,7 +15,6 @@
  */
 package com.intellij.spellchecker.dictionary;
 
-import com.intellij.spellchecker.compress.EncodingException;
 import com.intellij.util.Consumer;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -56,22 +55,23 @@ public class ProjectDictionary implements EditableDictionary {
     this.activeName = name;
   }
 
-  public boolean contains(String word) {
+  @Nullable
+  public Boolean contains(String word) {
     if (word == null || dictionaries == null) {
       return false;
     }
     int errors = 0;
     for (Dictionary dictionary : dictionaries) {
-      try {
-        if (dictionary.contains(word)) {
-          return true;
-        }
-      }
-      catch (EncodingException e) {
+      Boolean contains = dictionary.contains(word);
+      if (contains == null) {
         errors++;
       }
+      else
+      if (contains) {
+        return true;
+      }
     }
-    if (errors==dictionaries.size()) throw new EncodingException("WORD_OF_ENTIRELY_UNKNOWN_LETTERS_FOR_ALL");
+    if (errors==dictionaries.size()) return null;//("WORD_OF_ENTIRELY_UNKNOWN_LETTERS_FOR_ALL");
     return false;
   }
 
