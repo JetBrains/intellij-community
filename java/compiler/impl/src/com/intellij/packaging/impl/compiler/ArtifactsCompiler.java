@@ -15,9 +15,12 @@
  */
 package com.intellij.packaging.impl.compiler;
 
-import com.intellij.openapi.compiler.generic.*;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.generic.CompileItem;
+import com.intellij.openapi.compiler.generic.GenericCompiler;
+import com.intellij.openapi.compiler.generic.GenericCompilerInstance;
+import com.intellij.openapi.compiler.generic.VirtualFilePersistentState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.packaging.artifacts.Artifact;
@@ -46,7 +49,7 @@ public class ArtifactsCompiler extends GenericCompiler<String, VirtualFilePersis
     return compilers.length == 1 ? compilers[0] : null;
   }
 
-  static void addChangedArtifact(final CompileContext context, Artifact artifact) {
+  public static void addChangedArtifact(final CompileContext context, Artifact artifact) {
     Set<Artifact> artifacts = context.getUserData(CHANGED_ARTIFACTS);
     if (artifacts == null) {
       artifacts = new THashSet<Artifact>();
@@ -55,7 +58,7 @@ public class ArtifactsCompiler extends GenericCompiler<String, VirtualFilePersis
     artifacts.add(artifact);
   }
 
-  static void addWrittenPaths(final CompileContext context, Set<String> writtenPaths) {
+  public static void addWrittenPaths(final CompileContext context, Set<String> writtenPaths) {
     Set<String> paths = context.getUserData(WRITTEN_PATHS_KEY);
     if (paths == null) {
       paths = new THashSet<String>();
