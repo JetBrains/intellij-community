@@ -12,17 +12,12 @@ import java.io.InputStreamReader;
  * @author erokhins
  */
 public abstract class AbstractProcessOutputReader {
-    private final Process process;
-    private final ErrorListener errorListener;
     private final ProgressUpdater progressUpdater;
     private int countReadLine = 0;
     private String errorMsg = null;
 
-    public AbstractProcessOutputReader(@NotNull Process process, @NotNull ProgressUpdater progressUpdater) {
-        this.process = process;
+    public AbstractProcessOutputReader(@NotNull ProgressUpdater progressUpdater) {
         this.progressUpdater = progressUpdater;
-        errorListener = new ErrorListener(process.getErrorStream());
-        errorListener.start();
     }
 
     private void incCountReadLine() {
@@ -38,23 +33,9 @@ public abstract class AbstractProcessOutputReader {
         this.errorMsg = errorMsg;
     }
 
+    @Nullable
     private synchronized String readErrorMsg() {
         return errorMsg;
-    }
-
-    /**
-     * join errorListener & return errorMsg
-     *
-     * @return null if no errors
-     */
-    @Nullable
-    protected String getErrorMsg() {
-        try {
-            errorListener.join();
-        } catch (InterruptedException e) {
-            return e.getMessage();
-        }
-        return readErrorMsg();
     }
 
     private class ErrorListener extends Thread {
@@ -86,20 +67,27 @@ public abstract class AbstractProcessOutputReader {
 
     }
 
+    public interface ProgressUpdater {
+        public void startDataRead();
+        public void updateCuntReadLine(int countReadLine);
+    }
+
     protected abstract void appendLine(@NotNull String line);
 
-    protected void startRead() throws IOException {
+    protected void startRead(@NotNull Process process) throws IOException, InterruptedException, GitException {
+        ErrorListener errorListener = new ErrorListener(process.getErrorStream());
+        errorListener.start();
+
         BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
         String line;
         while ((line = reader.readLine()) != null) {
             appendLine(line);
             incCountReadLine();
         }
-    }
-
-    public interface ProgressUpdater {
-        public void startDataRead();
-
-        public void updateCuntReadLine(int countReadLine);
+        errorListener.join();
+        String errorMsg = readErrorMsg();
+        if (errorMsg != null) {
+            throw new GitException(errorMsg);
+        }
     }
 }
