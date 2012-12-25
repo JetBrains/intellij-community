@@ -138,8 +138,10 @@ public class HgPushDialog extends DialogWrapper {
   }
 
   private void updateRepositoryUrlText(String defaultPath) {
-    myRepositoryURL.setText(defaultPath);
-    update();
+    if (defaultPath != null) {
+      myRepositoryURL.setText(defaultPath);
+      update();
+    }
   }
 
   private void updateBranchComboBox(@NotNull List<HgTagBranch> branches) {
