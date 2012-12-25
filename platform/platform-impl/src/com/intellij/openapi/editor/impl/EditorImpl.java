@@ -688,7 +688,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     );
   }
 
-  public void throwDisposalError(String msg) {
+  public void throwDisposalError(@NonNls @NotNull String msg) {
     myTraceableDisposable.throwDisposalError(msg);
   }
   public void release() {
@@ -3496,10 +3496,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (depth >= 0) {
           stackDepth.set(depth + 1);
           if (depth > 15) {
-            LOG.error(String.format(
-              "Detected potential StackOverflowError at logical->visual position mapping. Given logical position: '%s'. State: %s",
-              logicalPos, dumpState()
-            ));
+            LOG.error("Detected potential StackOverflowError at logical->visual position mapping. Given logical position: '" +
+              logicalPos + "'. State: " + dumpState());
             stackDepth.set(-1);
           }
         }
