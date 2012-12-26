@@ -149,12 +149,17 @@ public class XDebuggerTestUtil {
 
   @NotNull
   public static XValue findVar(Collection<XValue> vars, String name) {
+    StringBuilder names = new StringBuilder();
     for (XValue each : vars) {
       if (each instanceof XNamedValue) {
-        if (((XNamedValue)each).getName().equals(name)) return each;
+        String eachName = ((XNamedValue)each).getName();
+        if (eachName.equals(name)) return each;
+
+        if (names.length() > 0) names.append(", ");
+        names.append(eachName);
       }
     }
-    throw new AssertionError("var '" + name + "' not found");
+    throw new AssertionError("var '" + name + "' not found among " + names);
   }
 
   public static XTestValueNode computePresentation(@NotNull XValue value) throws InterruptedException {
