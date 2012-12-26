@@ -58,6 +58,10 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
 
   @NotNull
   public String getPathToGit() {
+    if (myState.myPathToGit == null) {
+      // can happen only if GitVcs#activate hasn't been called: it is when configurables are built, returning the default value.
+      return GitExecutableDetector.DEFAULT_WIN_GIT;
+    }
     return myState.myPathToGit;
   }
 

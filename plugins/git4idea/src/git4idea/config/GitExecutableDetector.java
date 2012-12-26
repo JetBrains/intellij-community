@@ -52,6 +52,8 @@ public class GitExecutableDetector {
   private static final String GIT_CMD = "git.cmd";
   private static final String GIT_EXE = "git.exe";
 
+  public static final String DEFAULT_WIN_GIT = GIT_EXE;
+
   @NotNull
   public String detect() {
     if (SystemInfo.isWindows) {
