@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.util.io.URLUtil;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -224,7 +225,7 @@ public class CustomRegexpFilter implements Filter {
 
     VirtualFile file;
     // try to interpret the filename as URL
-    if (fileName.indexOf("://") != -1) {
+    if (URLUtil.containsScheme(fileName)) {
       try {
         file = VfsUtil.findFileByURL(new URL(fileName));
       } catch (MalformedURLException e) {
