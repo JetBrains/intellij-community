@@ -402,8 +402,10 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     final MarkupModel markupModel = DocumentMarkupModel.forDocument(history, myProject, true);
     final int oldHistoryLength = history.getTextLength();
     appendToHistoryDocument(history, sb.toString());
-    assert (oldHistoryLength + offsets[i]) == history.getTextLength()
-      : "Last offset - " + offsets[i] + " history length: old " + oldHistoryLength + ", new - " + history.getTextLength();
+    if ((oldHistoryLength + offsets[i]) != history.getTextLength()) {
+      assert false : "Last offset - " + offsets[i] + " history length: old " + oldHistoryLength + ", new - " + history.getTextLength()
+        + ", history - " + history;
+    }
     LOG.debug("printToHistory(): text added");
     i = 0;
     for (final Pair<String, TextAttributes> pair : attributedText) {
