@@ -9,6 +9,8 @@ import org.hanuna.gitalk.graph.graph_elements.Edge;
 import org.hanuna.gitalk.graph.graph_elements.Node;
 import org.hanuna.gitalk.graph.mutable_graph.graph_elements_impl.MutableNode;
 import org.hanuna.gitalk.graph.mutable_graph.graph_elements_impl.MutableNodeRow;
+import org.hanuna.gitalk.refs.Ref;
+import org.hanuna.gitalk.refs.RefsModel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -19,13 +21,19 @@ import static org.hanuna.gitalk.graph.mutable_graph.MutableGraphUtils.createEdge
  * @author erokhins
  */
 public class GraphBuilder {
-    public static Graph build(List<Commit> commits) {
+    public static Graph build(@NotNull List<Commit> commits, @NotNull RefsModel refsModel) {
         Map<Commit, Integer> commitLogIndexes = new HashMap<Commit, Integer>(commits.size());
         for (int i = 0; i < commits.size(); i++) {
             commitLogIndexes.put(commits.get(i), i);
         }
         GraphBuilder builder = new GraphBuilder(commitLogIndexes);
-        return builder.runBuild(commits);
+        return builder.runBuild(commits, refsModel);
+    }
+
+    public static Graph build(@NotNull List<Commit> commits) {
+        RefsModel emptyRefModel = RefsModel.existedCommitRefs(Collections.<Ref>emptyList(),
+                Collections.<Commit>emptyList());
+        return build(commits, emptyRefModel);
     }
 
     private GraphBuilder(@NotNull Map<Commit, Integer> commitLogIndexes) {
@@ -126,7 +134,7 @@ public class GraphBuilder {
     }
 
     @NotNull
-    private Graph runBuild(List<Commit> commits) {
+    private Graph runBuild(@NotNull List<Commit> commits, @NotNull RefsModel refsModel) {
         if (commits.size() == 0) {
             throw new IllegalArgumentException("Empty list commits");
         }
@@ -135,7 +143,7 @@ public class GraphBuilder {
             append(commit);
         }
         lastActions();
-        return new MutableGraph(rows);
+        return new MutableGraph(rows, refsModel);
     }
 
 }

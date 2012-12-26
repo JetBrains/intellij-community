@@ -7,6 +7,7 @@ import org.hanuna.gitalk.graph.graph_elements.GraphElement;
 import org.hanuna.gitalk.graph.graph_elements.GraphFragment;
 import org.hanuna.gitalk.graph.graph_elements.Node;
 import org.hanuna.gitalk.graph.mutable_graph.graph_elements_impl.GraphFragmentImpl;
+import org.hanuna.gitalk.refs.RefsModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,14 +21,17 @@ import static org.hanuna.gitalk.graph.mutable_graph.MutableGraphUtils.*;
  */
 public class SimpleGraphFragmentController implements GraphFragmentController {
     private final MutableGraph graph;
+    private final RefsModel refsModel;
     private final Map<Edge, HiddenFragment> hiddenFragments = new HashMap<Edge, HiddenFragment>();
 
-    public SimpleGraphFragmentController(MutableGraph graph) {
+    public SimpleGraphFragmentController(@NotNull MutableGraph graph, @NotNull RefsModel refsModel) {
         this.graph = graph;
+        this.refsModel = refsModel;
     }
 
-    private boolean simpleNode(@NotNull Node node) {
-        return node.getUpEdges().size() <= 1 && node.getDownEdges().size() <= 1;
+    private boolean simpleNoRefsNode(@NotNull Node node) {
+        boolean noRefs = refsModel.refsToCommit(node.getCommit().hash()).isEmpty();
+        return node.getUpEdges().size() <= 1 && node.getDownEdges().size() <= 1 && noRefs;
     }
 
     /**
@@ -35,12 +39,12 @@ public class SimpleGraphFragmentController implements GraphFragmentController {
      */
     @Nullable
     private Node lowestSimpleNode(@NotNull Node node) {
-        if (!simpleNode(node)) {
+        if (!simpleNoRefsNode(node)) {
             return null;
         }
         while (node.getDownEdges().size() == 1) {
             Node nextNode = firstDownEdge(node).getDownNode();
-            if (simpleNode(nextNode)) {
+            if (simpleNoRefsNode(nextNode)) {
                 node = nextNode;
             } else {
                 return node;
@@ -54,12 +58,12 @@ public class SimpleGraphFragmentController implements GraphFragmentController {
      */
     @Nullable
     private Node upperSimpleNode(@NotNull Node node) {
-        if (!simpleNode(node)) {
+        if (!simpleNoRefsNode(node)) {
             return null;
         }
         while (node.getUpEdges().size() == 1) {
             Node prevNode = firstUpEdge(node).getUpNode();
-            if (simpleNode(prevNode)) {
+            if (simpleNoRefsNode(prevNode)) {
                 node = prevNode;
             } else {
                 return node;
@@ -90,7 +94,7 @@ public class SimpleGraphFragmentController implements GraphFragmentController {
                 return new GraphFragmentImpl(edge.getUpNode(), edge.getDownNode());
             }
         }
-        if (!simpleNode(node)) {
+        if (!simpleNoRefsNode(node)) {
             return null;
         }
         Node up = upperSimpleNode(node);
@@ -211,6 +215,7 @@ public class SimpleGraphFragmentController implements GraphFragmentController {
         }
         return Replace.ID_REPLACE;
     }
+
 
     @Override
     public boolean isVisible(@NotNull GraphFragment fragment) {

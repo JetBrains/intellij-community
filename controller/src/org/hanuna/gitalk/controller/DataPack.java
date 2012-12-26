@@ -28,7 +28,7 @@ public class DataPack {
         this.refsModel = refsModel;
         this.commits = commits;
         MyTimer graphTimer = new MyTimer("graph build");
-        graph = GraphBuilder.build(commits);
+        graph = GraphBuilder.build(commits, refsModel);
         graphTimer.print();
 
         updatePrintModel();
@@ -50,7 +50,7 @@ public class DataPack {
                 }
             }
         }
-        graph = GraphBuilder.build(Collections.unmodifiableList(showCommits));
+        graph = GraphBuilder.build(Collections.unmodifiableList(showCommits), refsModel);
         printCellModel = new GraphPrintCellModelImpl(graph);
     }
 

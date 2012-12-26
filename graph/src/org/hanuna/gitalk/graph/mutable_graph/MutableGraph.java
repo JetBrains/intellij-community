@@ -2,9 +2,10 @@ package org.hanuna.gitalk.graph.mutable_graph;
 
 import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.graph.Graph;
+import org.hanuna.gitalk.graph.GraphFragmentController;
 import org.hanuna.gitalk.graph.graph_elements.NodeRow;
 import org.hanuna.gitalk.graph.mutable_graph.graph_elements_impl.MutableNodeRow;
-import org.hanuna.gitalk.graph.GraphFragmentController;
+import org.hanuna.gitalk.refs.RefsModel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -19,14 +20,14 @@ public class MutableGraph implements Graph {
     private final List<MutableNodeRow> visibleRows;
     private final GraphFragmentController fragmentController;
 
-    MutableGraph(List<MutableNodeRow> allRows) {
+    MutableGraph(List<MutableNodeRow> allRows, @NotNull RefsModel refsModel) {
         if (allRows.size() == 0) {
             throw new IllegalArgumentException("Empty list Rows");
         }
         this.allRows = allRows;
         this.visibleRows = new ArrayList<MutableNodeRow>(allRows);
         recalculateRowIndex();
-        fragmentController = new SimpleGraphFragmentController(this);
+        fragmentController = new SimpleGraphFragmentController(this, refsModel);
     }
 
     @NotNull
