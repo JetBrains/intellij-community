@@ -110,6 +110,10 @@ public abstract class GotoActionBase extends AnAction {
   }
 
   protected static Pair<String, Integer> getInitialText(boolean useEditorSelection, AnActionEvent e) {
+    final String predefined = e.getData(PlatformDataKeys.PREDEFINED_TEXT);
+    if (!StringUtil.isEmpty(predefined)) {
+      return Pair.create(predefined, 0);
+    }
     if (useEditorSelection) {
       final Editor editor = e.getData(PlatformDataKeys.EDITOR);
       if (editor != null) {
