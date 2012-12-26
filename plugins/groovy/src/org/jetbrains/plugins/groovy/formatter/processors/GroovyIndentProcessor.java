@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
  */
 public abstract class GroovyIndentProcessor implements GroovyElementTypes {
   public static final int GDOC_COMMENT_INDENT = 1;
-  private static TokenSet GSTRING_TOKENS_INNER = TokenSet.create(mGSTRING_BEGIN,mGSTRING_CONTENT,mGSTRING_END,mDOLLAR);
+  private static final TokenSet GSTRING_TOKENS_INNER = TokenSet.create(mGSTRING_BEGIN,mGSTRING_CONTENT,mGSTRING_END,mDOLLAR);
 
   /**
    * Calculates indent, based on code style, between parent block and child node
@@ -116,6 +116,16 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
       CommonCodeStyleSettings.IndentOptions indentOptions = parentBlock.getSettings().getIndentOptions();
       boolean isLabelIndentAbsolute = indentOptions != null && indentOptions.LABEL_INDENT_ABSOLUTE;
       return isLabelIndentAbsolute ? Indent.getAbsoluteLabelIndent() : Indent.getLabelIndent();
+    }
+
+    if (parentType == ANNOTATION) {
+      if (childType == ANNOTATION_ARGUMENTS) return Indent.getContinuationIndent();
+      return Indent.getNoneIndent();
+    }
+
+    if (parentType == ANNOTATION_ARGUMENTS) {
+      if (childType == mLPAREN || childType == mRPAREN) return Indent.getNoneIndent();
+      return Indent.getContinuationIndent();
     }
 
     // for control structures
