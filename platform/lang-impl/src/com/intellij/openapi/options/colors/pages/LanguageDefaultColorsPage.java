@@ -43,9 +43,11 @@ public class LanguageDefaultColorsPage implements ColorSettingsPage, DisplayPrio
 
   static {
     TAG_HIGHLIGHTING_MAP.put("template_language", LanguageDefaultHighlighterColors.TEMPLATE_LANGUAGE_COLOR);
+    TAG_HIGHLIGHTING_MAP.put("identifier", LanguageDefaultHighlighterColors.IDENTIFIER);
   }
 
   private static final AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = {
+    new AttributesDescriptor("Identifier", LanguageDefaultHighlighterColors.IDENTIFIER),
     new AttributesDescriptor("Template language", LanguageDefaultHighlighterColors.TEMPLATE_LANGUAGE_COLOR)
   };
 
@@ -64,7 +66,9 @@ public class LanguageDefaultColorsPage implements ColorSettingsPage, DisplayPrio
   @NotNull
   @Override
   public String getDemoText() {
-    return "<template_language>{% Template language %}</template_language>";
+    return
+      "<identifier>Identifier</identifier>\n" +
+      "<template_language>{% Template language %}</template_language>";
   }
 
   @Nullable

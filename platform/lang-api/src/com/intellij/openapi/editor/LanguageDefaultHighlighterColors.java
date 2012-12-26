@@ -25,4 +25,6 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 public class LanguageDefaultHighlighterColors {
   public final static TextAttributesKey TEMPLATE_LANGUAGE_COLOR =
     TextAttributesKey.createTextAttributesKey("DEFAULT_TEMPLATE_LANGUAGE_COLOR");
+
+  public final static TextAttributesKey IDENTIFIER = TextAttributesKey.createTextAttributesKey("DEFAULT_IDENTIFIER");
 }

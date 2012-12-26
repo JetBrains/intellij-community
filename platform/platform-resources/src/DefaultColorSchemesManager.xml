@@ -47,6 +47,11 @@
           <option name="EFFECT_COLOR"/>
         </value>
       </option>
+      <option name="DEFAULT_IDENTIFIER">
+        <value>
+          <option name="FOREGROUND"/>
+        </value>
+      </option>
 
       <option name="LINE_PARTIAL_COVERAGE">
         <value>
