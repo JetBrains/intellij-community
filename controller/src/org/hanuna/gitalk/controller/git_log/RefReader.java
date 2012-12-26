@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.controller.git_log;
 
+import org.hanuna.gitalk.common.ProgressUpdater;
 import org.hanuna.gitalk.refs.Ref;
 import org.hanuna.gitalk.refs.RefParser;
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +17,10 @@ public class RefReader extends AbstractProcessOutputReader {
 
     public RefReader(@NotNull ProgressUpdater progressUpdater) {
         super(progressUpdater);
+    }
+
+    public RefReader() {
+        super();
     }
 
     @Override

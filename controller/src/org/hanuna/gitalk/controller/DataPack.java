@@ -2,6 +2,7 @@ package org.hanuna.gitalk.controller;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitData;
+import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.GraphFragmentController;
 import org.hanuna.gitalk.graph.mutable_graph.GraphBuilder;
@@ -12,6 +13,7 @@ import org.hanuna.gitalk.refs.RefsModel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+
 
 /**
  * @author erokhins
@@ -25,8 +27,13 @@ public class DataPack {
     public DataPack(RefsModel refsModel, List<Commit> commits) {
         this.refsModel = refsModel;
         this.commits = commits;
+        MyTimer graphTimer = new MyTimer("graph build");
         graph = GraphBuilder.build(commits);
+        graphTimer.print();
+
+        MyTimer printModelTimer = new MyTimer("print model build");
         printCellModel = new GraphPrintCellModelImpl(graph);
+        printModelTimer.print();
     }
 
     public void setShowBranches(@NotNull Set<Commit> startedCommit) {

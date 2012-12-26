@@ -21,6 +21,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="printmodel" />
+    <orderEntry type="module" module-name="swing_ui" />
   </component>
 </module>
 

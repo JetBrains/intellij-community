@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.controller.git_log;
 
+import org.hanuna.gitalk.common.ProgressUpdater;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,12 +21,12 @@ public abstract class AbstractProcessOutputReader {
         this.progressUpdater = progressUpdater;
     }
 
+    public AbstractProcessOutputReader() {
+        this(new ProgressUpdater() {});
+    }
+
     private void incCountReadLine() {
-        if (countReadLine == 0) {
-            progressUpdater.startDataRead();
-        } else {
-            progressUpdater.updateCuntReadLine(countReadLine);
-        }
+        progressUpdater.updateFinishedCount(countReadLine);
         countReadLine++;
     }
 
@@ -67,10 +68,6 @@ public abstract class AbstractProcessOutputReader {
 
     }
 
-    public interface ProgressUpdater {
-        public void startDataRead();
-        public void updateCuntReadLine(int countReadLine);
-    }
 
     protected abstract void appendLine(@NotNull String line);
 
