@@ -1281,7 +1281,7 @@ public class PsiUtil {
     return qualifier instanceof GrReferenceExpression && (isThisReference(qualifier) || isSuperReference(qualifier));
   }
 
-  public static boolean isInstanceThisRef(GrExpression qualifier) {
+  public static boolean isInstanceThisRef(PsiElement qualifier) {
     if (isThisReference(qualifier)) {
       GrReferenceExpression ref = (GrReferenceExpression)qualifier;
 
