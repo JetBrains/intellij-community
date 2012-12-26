@@ -2,7 +2,6 @@ package org.hanuna.gitalk.controller.git_log;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.builder.CommitListBuilder;
-import org.hanuna.gitalk.common.ProgressUpdater;
 import org.hanuna.gitalk.parser.GitLogParser;
 import org.jetbrains.annotations.NotNull;
 

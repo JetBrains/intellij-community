@@ -2,7 +2,7 @@ package org.hanuna.gitalk.controller;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.MyTimer;
-import org.hanuna.gitalk.common.ProgressUpdater;
+import org.hanuna.gitalk.controller.git_log.AbstractProcessOutputReader;
 import org.hanuna.gitalk.controller.git_log.CommitReader;
 import org.hanuna.gitalk.controller.git_log.GitException;
 import org.hanuna.gitalk.controller.git_log.RefReader;
@@ -29,7 +29,7 @@ public class Controller {
 
         final MyTimer gitThink = new MyTimer("git think");
         final MyTimer commitReadTimer = new MyTimer("commits read");
-        CommitReader commitReader = new CommitReader(new ProgressUpdater() {
+        CommitReader commitReader = new CommitReader(new AbstractProcessOutputReader.ProgressUpdater() {
             @Override
             public void updateFinishedCount(int count) {
                 if (count == 0) {

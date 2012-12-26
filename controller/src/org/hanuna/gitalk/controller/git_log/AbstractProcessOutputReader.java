@@ -1,6 +1,5 @@
 package org.hanuna.gitalk.controller.git_log;
 
-import org.hanuna.gitalk.common.ProgressUpdater;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,5 +85,9 @@ public abstract class AbstractProcessOutputReader {
         if (errorMsg != null) {
             throw new GitException(errorMsg);
         }
+    }
+
+    public static abstract class ProgressUpdater {
+        public void updateFinishedCount(int count) {}
     }
 }
