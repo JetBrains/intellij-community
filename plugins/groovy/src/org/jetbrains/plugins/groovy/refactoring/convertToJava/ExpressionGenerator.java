@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.intentions.conversions.strings.ConvertGStringToStringIntention;
@@ -629,6 +630,11 @@ public class ExpressionGenerator extends Generator {
       builder.append(')');
       return;
     }
+    if ((op == mEQUAL || op == mNOT_EQUAL) && (GrInspectionUtil.isNull(left) || right != null && GrInspectionUtil.isNull(right))) {
+      writeSimpleBinaryExpression(token, left, right);
+      return;
+    }
+
     if (shouldNotReplaceOperatorWithMethod(ltype, right, op)) {
       writeSimpleBinaryExpression(token, left, right);
       return;

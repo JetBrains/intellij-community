@@ -187,4 +187,6 @@ public final class Matcher {
   void testEquals() { doTest() }
 
   void testSelfNavigatingOperator() { doTest() }
+
+  void testComparisonToNull() { doTest() }
 }
