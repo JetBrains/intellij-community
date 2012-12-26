@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.controller;
+package org.hanuna.gitalk.ui_controller;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitData;

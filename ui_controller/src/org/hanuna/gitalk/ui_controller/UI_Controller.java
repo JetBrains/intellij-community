@@ -3,7 +3,6 @@ package org.hanuna.gitalk.ui_controller;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.Replace;
-import org.hanuna.gitalk.controller.DataPack;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.GraphFragmentController;
 import org.hanuna.gitalk.graph.graph_elements.GraphElement;

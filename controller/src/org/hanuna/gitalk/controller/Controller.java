@@ -12,6 +12,7 @@ import org.hanuna.gitalk.swing_ui.ErrorFrame;
 import org.hanuna.gitalk.swing_ui.GitAlkUI;
 import org.hanuna.gitalk.swing_ui.progress.ProgressFrame;
 import org.hanuna.gitalk.swing_ui.progress.ProgressModel;
+import org.hanuna.gitalk.ui_controller.DataPack;
 import org.hanuna.gitalk.ui_controller.UI_Controller;
 
 import java.io.IOException;
