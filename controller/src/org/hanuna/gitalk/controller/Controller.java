@@ -8,8 +8,11 @@ import org.hanuna.gitalk.controller.git_log.GitException;
 import org.hanuna.gitalk.controller.git_log.RefReader;
 import org.hanuna.gitalk.refs.Ref;
 import org.hanuna.gitalk.refs.RefsModel;
+import org.hanuna.gitalk.swing_ui.ErrorFrame;
+import org.hanuna.gitalk.swing_ui.GitAlkUI;
 import org.hanuna.gitalk.swing_ui.progress.ProgressFrame;
 import org.hanuna.gitalk.swing_ui.progress.ProgressModel;
+import org.hanuna.gitalk.ui_controller.UI_Controller;
 
 import java.io.IOException;
 import java.util.List;
@@ -23,7 +26,7 @@ public class Controller {
     private final ProgressModel progressModel = new ProgressModel();
     private final ProgressFrame frame = new ProgressFrame(progressModel, START_MESSAGE);
 
-    public DataPack prepare() throws IOException, GitException {
+    public DataPack readData(int monthCount) throws IOException, GitException {
         progressModel.setMessage(START_MESSAGE);
         progressModel.setState(ProgressModel.State.UNREFINED_PROGRESS);
 
@@ -41,7 +44,12 @@ public class Controller {
                 }
             }
         });
-        List<Commit> commits = commitReader.readAllCommits();
+        List<Commit> commits;
+        if (monthCount == 0) {
+            commits = commitReader.readAllCommits();
+        } else {
+            commits = commitReader.readLastCommits(monthCount);
+        }
         commitReadTimer.print();
 
 
@@ -55,5 +63,22 @@ public class Controller {
 
         return dataPack;
     }
+
+    public void run() throws IOException {
+        DataPack dataPack;
+        try {
+            dataPack = readData(0);
+        } catch (GitException e) {
+            progressModel.setState(ProgressModel.State.HIDE);
+            new ErrorFrame(e.getMessage());
+            return;
+        }
+        UI_Controller UIController = new UI_Controller(dataPack);
+        GitAlkUI ui = new GitAlkUI(UIController);
+        ui.showUi();
+    }
+
+
+
 
 }

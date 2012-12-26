@@ -20,7 +20,6 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="common" />
-    <orderEntry type="module" module-name="controller" />
     <orderEntry type="module" module-name="refs" />
     <orderEntry type="module" module-name="graph" />
   </component>
