@@ -7,8 +7,6 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
-import static java.lang.Math.abs;
-
 /**
  * @author erokhins
  */
@@ -26,12 +24,17 @@ public class ColorGenerator {
         return color;
     }
 
+    private static int rangeFix(int n) {
+        return Math.abs(n) % 200;
+    }
+
+
     private static Color getColor(int indexColor) {
         int r = indexColor * 200 + 30;
         int g = indexColor * 130 + 50;
         int b = indexColor * 90 + 100;
         try {
-            return new Color(abs(r) % 256, abs(g) % 256, abs(b) % 256);
+            return new Color(rangeFix(r), rangeFix(g), rangeFix(b));
         } catch (IllegalArgumentException a) {
             throw new IllegalArgumentException("indexColor: " + indexColor + " " + r % 256 + " " +  (g % 256) + " "+ (b % 256));
         }
