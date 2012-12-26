@@ -59,6 +59,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import static com.intellij.util.containers.ContainerUtil.newSmartList;
+import static com.intellij.util.containers.ContainerUtilRt.newArrayList;
 
 public class BrowserUtil {
   private static final Logger LOG = Logger.getInstance("#" + BrowserUtil.class.getName());
@@ -154,7 +155,7 @@ public class BrowserUtil {
   @NonNls
   private static List<String> getDefaultBrowserCommand() {
     if (SystemInfo.isWindows) {
-      return newSmartList(ExecUtil.getWindowsShellName(), "/c", "start", "\"\"");
+      return newArrayList(ExecUtil.getWindowsShellName(), "/c", "start", "\"\"");
     }
     else if (SystemInfo.isMac) {
       return newSmartList(ExecUtil.getOpenCommandPath());
@@ -231,10 +232,10 @@ public class BrowserUtil {
       return newSmartList(browserPath);
     }
     else if (SystemInfo.isMac) {
-      return newSmartList(ExecUtil.getOpenCommandPath(), "-a", browserPath);
+      return newArrayList(ExecUtil.getOpenCommandPath(), "-a", browserPath);
     }
     else if (SystemInfo.isWindows) {
-      return newSmartList(ExecUtil.getWindowsShellName(), "/c", "start", "\"\"", browserPath);
+      return newArrayList(ExecUtil.getWindowsShellName(), "/c", "start", "\"\"", browserPath);
     }
     else {
       return newSmartList(browserPath);
