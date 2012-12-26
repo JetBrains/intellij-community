@@ -69,15 +69,8 @@ public class GitAlkUI extends JFrame {
         int width = screenDimension.width * 3 / 4;
 
         setSize(new Dimension(width, height));
-        updateLocation();
-    }
 
-    public void updateLocation() {
-        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-        Dimension frameDimension = this.getSize();
-        int x = screenDimension.width / 2 - frameDimension.width / 2;
-        int y = screenDimension.height / 2 - frameDimension.height / 2;
-        setLocation(x, y);
+        UI_Utilities.setCenterLocation(this);
     }
 
     public void showUi() {

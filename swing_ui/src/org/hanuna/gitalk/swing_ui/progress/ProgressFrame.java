@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.swing_ui.progress;
 
+import org.hanuna.gitalk.swing_ui.UI_Utilities;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -38,16 +39,10 @@ public class ProgressFrame extends JFrame {
         setMinimumSize(new Dimension(250, 70));
 
         pack();
-        updateLocation();
+        UI_Utilities.setCenterLocation(this);
     }
 
-    public void updateLocation() {
-        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-        Dimension frameDimension = this.getSize();
-        int x = screenDimension.width / 2 - frameDimension.width / 2;
-        int y = screenDimension.height / 2 - frameDimension.height / 2;
-        setLocation(x, y);
-    }
+
 
     private class UpdaterImp implements ProgressModel.Updater {
         @Override
