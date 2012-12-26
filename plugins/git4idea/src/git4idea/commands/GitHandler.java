@@ -279,17 +279,19 @@ public abstract class GitHandler {
 
   @NotNull
   private static String escapeParameterIfNeeded(@NotNull String parameter) {
-    if (SystemInfo.isWindows && parameter.contains("^")) {
-      return parameter.replaceAll("\\^", "^^^^");
-    }
+    // strange situation: stopped reproducing the "escape" behavior while being on the same computer.
+    // let's keep this code commented until the problem is fully investigated & tested
+    //if (SystemInfo.isWindows && parameter.contains("^")) {
+    //  return parameter.replaceAll("\\^", "^^^^");
+    //}
     return parameter;
   }
 
   @NotNull
   private String unescapeCommandLine(@NotNull String commandLine) {
-    if (SystemInfo.isWindows && commandLine.contains("^")) {
-      return commandLine.replaceAll("\\^\\^\\^\\^", "^");
-    }
+    //if (SystemInfo.isWindows && commandLine.contains("^")) {
+    //  return commandLine.replaceAll("\\^\\^\\^\\^", "^");
+    //}
     return commandLine;
   }
 
