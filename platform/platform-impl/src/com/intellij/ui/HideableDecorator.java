@@ -101,8 +101,8 @@ public class HideableDecorator {
 
   protected void on() {
     myOn = true;
-    myTitledSeparator.getLabel().setIcon(AllIcons.General.ComboArrowDown);
-    myTitledSeparator.getLabel().setDisabledIcon(IconLoader.getTransparentIcon(AllIcons.General.ComboArrowDown, 0.5f));
+    myTitledSeparator.getLabel().setIcon(AllIcons.General.SplitDown);
+    myTitledSeparator.getLabel().setDisabledIcon(IconLoader.getTransparentIcon(AllIcons.General.SplitDown, 0.5f));
     myTitledSeparator.getLabel().setIconTextGap(5);
     if (myContent != null) {
       myContent.setVisible(true);
@@ -114,10 +114,8 @@ public class HideableDecorator {
 
   protected void off() {
     myOn = false;
-    myTitledSeparator.getLabel().setIcon(AllIcons.General.ComboArrowRight);
-    myTitledSeparator.getLabel().setDisabledIcon(IconLoader.getTransparentIcon(AllIcons.General.ComboArrowRight, 0.5f));
-    myTitledSeparator.getLabel()
-      .setIconTextGap(5 + AllIcons.General.ComboArrowDown.getIconWidth() - AllIcons.General.ComboArrowRight.getIconWidth());
+    myTitledSeparator.getLabel().setIcon(AllIcons.General.SplitRight);
+    myTitledSeparator.getLabel().setDisabledIcon(IconLoader.getTransparentIcon(AllIcons.General.SplitRight, 0.5f));
     if (myContent != null) {
       myContent.setVisible(false);
       myPreviousContentSize = myContent.getSize();
