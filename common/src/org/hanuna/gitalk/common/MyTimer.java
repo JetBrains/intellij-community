@@ -5,13 +5,13 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author erokhins
  */
-public class Timer {
+public class MyTimer {
     private long timestamp = System.currentTimeMillis();
     private String message = "timer:";
 
-    public Timer() {}
+    public MyTimer() {}
 
-    public Timer(@NotNull String message) {
+    public MyTimer(@NotNull String message) {
         this.message = message;
     }
 

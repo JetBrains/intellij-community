@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.ui_controller;
 
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.common.Timer;
+import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.controller.DataPack;
 import org.hanuna.gitalk.graph.GraphFragmentController;
@@ -91,7 +91,7 @@ public class UI_Controller {
     public void runUpdateShowBranches() {
         Set<Commit> checkedCommits = refTableModel.getCheckedCommits();
         if (! prevSelectionBranches.equals(checkedCommits)) {
-            Timer timer = new Timer("update branch shows");
+            MyTimer timer = new MyTimer("update branch shows");
 
             prevSelectionBranches = new HashSet<Commit>(checkedCommits);
             dataPack.setShowBranches(checkedCommits);
