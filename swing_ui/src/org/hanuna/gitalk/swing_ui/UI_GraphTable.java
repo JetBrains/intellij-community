@@ -11,6 +11,8 @@ import org.hanuna.gitalk.ui_controller.table_models.GraphCommitCell;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
+import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -25,6 +27,8 @@ public class UI_GraphTable extends JTable {
 
     public UI_GraphTable(UI_Controller ui_controller) {
         super(ui_controller.getGraphTableModel());
+        UIManager.put("Table.focusCellHighlightBorder", new BorderUIResource(
+                new LineBorder(new Color(255,0,0, 0))));
         this.ui_controller = ui_controller;
         prepare();
     }
@@ -35,9 +39,9 @@ public class UI_GraphTable extends JTable {
         setShowHorizontalLines(false);
         setIntercellSpacing(new Dimension(0, 0));
 
-        getColumnModel().getColumn(0).setPreferredWidth(800);
-        getColumnModel().getColumn(1).setMinWidth(80);
-        getColumnModel().getColumn(2).setMinWidth(80);
+        getColumnModel().getColumn(0).setPreferredWidth(700);
+        getColumnModel().getColumn(1).setMinWidth(90);
+        getColumnModel().getColumn(2).setMinWidth(90);
 
         addMouseMotionListener(mouseAdapter);
         addMouseListener(mouseAdapter);
