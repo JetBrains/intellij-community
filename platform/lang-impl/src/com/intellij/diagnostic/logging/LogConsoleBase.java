@@ -63,6 +63,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   private static final Logger LOG = Logger.getInstance("com.intellij.diagnostic.logging.LogConsoleImpl");
   @NonNls public static final String APPLYING_FILTER_TITLE = "Applying filter...";
 
+  private boolean myDisposed;
   private ConsoleView myConsole;
   private final LightProcessHandler myProcessHandler = new LightProcessHandler();
   private ReaderThread myReaderThread;
@@ -107,6 +108,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
     myConsole = builder.getConsole();
     myConsole.attachToProcess(myProcessHandler);
+    myDisposed = false;
     myModel.addFilterListener(this);
   }
 
@@ -239,6 +241,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     myModel.removeFilterListener(this);
     stopRunning(false);
     synchronized (this) {
+      myDisposed = true;
       if (myConsole != null) {
         Disposer.dispose(myConsole);
         myConsole = null;
@@ -391,6 +394,9 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   private synchronized void doFilter() {
+    if (myDisposed) {
+      return;
+    }
     final ConsoleView console = getConsoleNotNull();
     console.clear();
     myModel.processingStarted();
