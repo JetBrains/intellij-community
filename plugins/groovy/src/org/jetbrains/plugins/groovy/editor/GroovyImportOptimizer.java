@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -74,7 +75,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
                                   @Nullable final Map<String, String> annotations) {
     if (!(file instanceof GroovyFile)) return;
 
-    ((GroovyFile)file).accept(new PsiRecursiveElementWalkingVisitor() {
+    file.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
         super.visitElement(element);
@@ -136,13 +137,6 @@ public class GroovyImportOptimizer implements ImportOptimizer {
 
               final String importRef = getImportReferenceText(importStatement);
 
-              if (annotations != null) {
-                if (isAnnotatedImport(importStatement)) {
-                  annotations.put(importRef, importStatement.getAnnotationList().getText());
-                }
-              }
-
-
               if (importStatement.isAliasedImport()) {
                 if (aliased != null) {
                   aliased.put(importRef, importedName);
@@ -198,6 +192,19 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         return true;
       }
     });
+
+    if (annotations != null) {
+      ((GroovyFile)file).acceptChildren(new GroovyElementVisitor() {
+        @Override
+        public void visitImportStatement(GrImportStatement importStatement) {
+          final String annotationText = importStatement.getAnnotationList().getText();
+          if (!StringUtil.isEmptyOrSpaces(annotationText)) {
+            final String importRef = getImportReferenceText(importStatement);
+            annotations.put(importRef, annotationText);
+          }
+        }
+      });
+    }
   }
 
   @Nullable
@@ -265,11 +272,13 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         tempFile.addImport(newImport);
       }
 
-      final int startOffset = oldImports.get(0).getTextRange().getStartOffset();
-      final int endOffset = oldImports.get(oldImports.size() - 1).getTextRange().getEndOffset();
-      String oldText = oldImports.isEmpty() ? "" : myFile.getText().substring(startOffset, endOffset);
-      if (tempFile.getText().trim().equals(oldText)) {
-        return;
+      if (oldImports.size() > 0) {
+        final int startOffset = oldImports.get(0).getTextRange().getStartOffset();
+        final int endOffset = oldImports.get(oldImports.size() - 1).getTextRange().getEndOffset();
+        String oldText = oldImports.isEmpty() ? "" : myFile.getText().substring(startOffset, endOffset);
+        if (tempFile.getText().trim().equals(oldText)) {
+          return;
+        }
       }
 
       for (GrImportStatement statement : tempFile.getImportStatements()) {
@@ -296,6 +305,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       TObjectIntHashMap<String> packageCountMap = new TObjectIntHashMap<String>();
       TObjectIntHashMap<String> classCountMap = new TObjectIntHashMap<String>();
 
+      //init packageCountMap
       for (String importedClass : importedClasses) {
         if (implicitlyImported.contains(importedClass) ||
             innerClasses.contains(importedClass) ||
@@ -310,6 +320,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         packageCountMap.increment(packageName);
       }
 
+      //init classCountMap
       for (String importedMember : staticallyImportedMembers) {
         if (aliased.containsKey(importedMember) || annotations.containsKey(importedMember)) continue;
 
@@ -321,11 +332,12 @@ public class GroovyImportOptimizer implements ImportOptimizer {
 
       final Set<String> onDemandImportedSimpleClassNames = new HashSet<String>();
       final List<GrImportStatement> result = new ArrayList<GrImportStatement>();
+
       packageCountMap.forEachEntry(new TObjectIntProcedure<String>() {
         public boolean execute(String s, int i) {
           if (i >= settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND || settings.PACKAGES_TO_USE_IMPORT_ON_DEMAND.contains(s)) {
             final GrImportStatement imp = factory.createImportStatementFromText(s, false, true, null);
-            String annos = annotations.get(s + ".*");
+            String annos = annotations.remove(s + ".*");
             if (annos != null) {
               imp.getAnnotationList().replace(factory.createModifierList(annos));
             }
@@ -345,7 +357,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         public boolean execute(String s, int i) {
           if (i >= settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND) {
             final GrImportStatement imp = factory.createImportStatementFromText(s, true, true, null);
-            String annos = annotations.get(s + ".*");
+            String annos = annotations.remove(s + ".*");
             if (annos != null) {
               imp.getAnnotationList().replace(factory.createModifierList(annos));
             }
@@ -370,7 +382,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         }
 
         final GrImportStatement imp = factory.createImportStatementFromText(importedClass, false, false, null);
-        String annos = annotations.get(importedClass);
+        String annos = annotations.remove(importedClass);
         if (annos != null) {
           imp.getAnnotationList().replace(factory.createModifierList(annos));
         }
@@ -387,6 +399,10 @@ public class GroovyImportOptimizer implements ImportOptimizer {
 
       for (GrImportStatement anImport : usedImports) {
         if (anImport.isAliasedImport() || isAnnotatedImport(anImport)) {
+          if (isAnnotatedImport(anImport)) {
+            annotations.remove(getImportReferenceText(anImport));
+          }
+
           if (anImport.isStatic()) {
             result.add(anImport);
           }
@@ -401,6 +417,22 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       Collections.sort(explicated, comparator);
 
       explicated.addAll(result);
+
+      if (!annotations.isEmpty()) {
+        StringBuilder allSkippedAnnotations = new StringBuilder();
+        for (String anno : annotations.values()) {
+          allSkippedAnnotations.append(anno).append(' ');
+        }
+        if (explicated.isEmpty()) {
+          explicated.add(factory.createImportStatementFromText(CommonClassNames.JAVA_LANG_OBJECT, false, false, null));
+        }
+
+        final GrImportStatement first = explicated.get(0);
+
+        allSkippedAnnotations.append(first.getAnnotationList().getText());
+        first.getAnnotationList().replace(factory.createModifierList(allSkippedAnnotations));
+      }
+
       return explicated.toArray(new GrImportStatement[explicated.size()]);
     }
   }

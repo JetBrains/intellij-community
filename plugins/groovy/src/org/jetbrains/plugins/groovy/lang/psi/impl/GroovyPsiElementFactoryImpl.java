@@ -694,7 +694,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   @Override
-  public GrModifierList createModifierList(String text) {
+  public GrModifierList createModifierList(CharSequence text) {
     final GrMethod method = createMethodFromText(text + " void foo()");
     return method.getModifierList();
   }
