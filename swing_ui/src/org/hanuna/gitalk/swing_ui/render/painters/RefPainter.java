@@ -53,20 +53,23 @@ public class RefPainter {
         FontMetrics metrics = g2.getFontMetrics();
         int x = padding + REF_PADDING / 2 - RECTANGLE_X_PADDING;
         int y = RECTANGLE_Y_PADDING;
-        int width = metrics.stringWidth(ref.getShortName()) + 2 * RECTANGLE_X_PADDING;
+        int width = metrics.stringWidth(ref.getName()) + 2 * RECTANGLE_X_PADDING;
         int height = GraphCommitCell.HEIGHT_CELL -2 * RECTANGLE_Y_PADDING;
         RoundRectangle2D rectangle2D = new RoundRectangle2D.Double(x, y, width, height, ROUND_RADIUS, ROUND_RADIUS);
 
         g2.setColor(refBackgroundColor(ref));
         g2.fill(rectangle2D);
 
-        drawText(g2, ref.getShortName(), padding);
+        g2.setColor(Color.black);
+        g2.draw(rectangle2D);
+
+        drawText(g2, ref.getName(), padding);
     }
 
     public int padding(@NotNull List<Ref> refs, @NotNull FontRenderContext renderContext) {
         float p = 0;
         for (Ref ref : refs) {
-            p += paddingStr(ref.getShortName(), renderContext);
+            p += paddingStr(ref.getName(), renderContext);
         }
         return Math.round(p);
     }
@@ -74,10 +77,12 @@ public class RefPainter {
     public void draw(@NotNull Graphics2D g2, @NotNull List<Ref> refs, int startPadding) {
         float currentPadding = startPadding;
         g2.setFont(DEFAULT_FONT);
+        g2.setStroke(new BasicStroke(1.5f));
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         FontRenderContext renderContext = g2.getFontRenderContext();
         for (Ref ref : refs) {
             draw(g2, ref, (int) currentPadding);
-            currentPadding += paddingStr(ref.getShortName(), renderContext);
+            currentPadding += paddingStr(ref.getName(), renderContext);
         }
     }
 
