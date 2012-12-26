@@ -227,18 +227,18 @@ public class BrowserUtil {
   }
 
   @NotNull
-  public static List<String> getOpenBrowserCommand(@NonNls @NotNull String browserPath) {
-    if (new File(browserPath).isFile()) {
-      return newSmartList(browserPath);
+  public static List<String> getOpenBrowserCommand(@NonNls @NotNull String browserPathOrName) {
+    if (new File(browserPathOrName).isFile()) {
+      return newSmartList(browserPathOrName);
     }
     else if (SystemInfo.isMac) {
-      return newArrayList(ExecUtil.getOpenCommandPath(), "-a", browserPath);
+      return newArrayList(ExecUtil.getOpenCommandPath(), "-a", browserPathOrName);
     }
     else if (SystemInfo.isWindows) {
-      return newArrayList(ExecUtil.getWindowsShellName(), "/c", "start", "\"\"", browserPath);
+      return newArrayList(ExecUtil.getWindowsShellName(), "/c", "start", "\"\"", browserPathOrName);
     }
     else {
-      return newSmartList(browserPath);
+      return newSmartList(browserPathOrName);
     }
   }
 
@@ -350,7 +350,7 @@ public class BrowserUtil {
                     myImportantOnly = importantOnly;
                   }
 
-                  public boolean accept(File dir, String name) {
+                  public boolean accept(@NotNull File dir, @NotNull String name) {
                     indicator.checkCanceled();
                     boolean result = myImportantOnly == myImportantDirs.contains(dir);
                     if (result) {

@@ -78,7 +78,7 @@ public class DefaultUrlOpener extends UrlOpener {
     List<String> command = BrowserUtil.getOpenBrowserCommand(browserPath);
     addArgs(command, browserArgs, url, forceOpenNewInstanceOnMac);
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Launching browser: " + StringUtil.join(browserArgs, " "));
+      LOG.debug("Launching browser: " + StringUtil.join(command, " "));
     }
     new ProcessBuilder(command).start();
   }
