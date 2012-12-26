@@ -49,8 +49,11 @@ public class Controller {
         List<Ref> allRefs = refReader.readAllRefs();
         RefsModel refsModel = RefsModel.existedCommitRefs(allRefs, commits);
 
+        progressModel.setMessage("graph build");
+        DataPack dataPack = new DataPack(refsModel, commits);
         progressModel.setState(ProgressModel.State.HIDE);
-        return new DataPack(refsModel, commits);
+
+        return dataPack;
     }
 
 }

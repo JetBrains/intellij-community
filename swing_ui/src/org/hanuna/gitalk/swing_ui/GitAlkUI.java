@@ -5,6 +5,7 @@ import org.hanuna.gitalk.ui_controller.UI_Controller;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import java.awt.*;
 
 /**
  * @author erokhins
@@ -53,6 +54,20 @@ public class GitAlkUI extends JFrame {
         mainPanel.add(tabsTwo);
         setContentPane(mainPanel);
         pack();
+        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
+        int height = screenDimension.height * 4 / 5;
+        int width = screenDimension.width * 3 / 4;
+
+        setSize(new Dimension(width, height));
+        updateLocation();
+    }
+
+    public void updateLocation() {
+        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
+        Dimension frameDimension = this.getSize();
+        int x = screenDimension.width / 2 - frameDimension.width / 2;
+        int y = screenDimension.height / 2 - frameDimension.height / 2;
+        setLocation(x, y);
     }
 
     public void showUi() {
