@@ -135,7 +135,6 @@ public class UI_Controller {
             currentRowIndex++;
         }
 
-        dataPack.getSelectController().deselectAll();
         dataPack.updatePrintModel();
         graphTableModel.rewriteData(graph, dataPack.getPrintCellModel());
         events.runUpdateTable();

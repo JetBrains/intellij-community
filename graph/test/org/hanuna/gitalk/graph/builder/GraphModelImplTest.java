@@ -3,11 +3,9 @@ package org.hanuna.gitalk.graph.builder;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.graph.Graph;
+import org.hanuna.gitalk.graph.GraphFragmentController;
 import org.hanuna.gitalk.graph.graph_elements.GraphFragment;
 import org.hanuna.gitalk.graph.mutable_graph.GraphBuilder;
-import org.hanuna.gitalk.graph.mutable_graph.MutableGraph;
-import org.hanuna.gitalk.graph.GraphFragmentController;
-import org.hanuna.gitalk.graph.mutable_graph.SimpleGraphFragmentController;
 import org.hanuna.gitalk.parser.GitLogParser;
 import org.junit.Test;
 
@@ -64,7 +62,7 @@ public class GraphModelImplTest {
                 toStr(graph)
         );
 
-        GraphFragmentController graphController = new SimpleGraphFragmentController((MutableGraph) graph);
+        GraphFragmentController graphController = graph.getFragmentController();
         GraphFragment fragment = graphController.relateFragment(getNode(graph, 1));
         assertTrue(fragment != null);
         Replace replace = graphController.setVisible(fragment, false);
