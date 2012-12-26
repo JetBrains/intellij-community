@@ -8,8 +8,8 @@ import org.hanuna.gitalk.controller.git_log.GitException;
 import org.hanuna.gitalk.controller.git_log.RefReader;
 import org.hanuna.gitalk.refs.Ref;
 import org.hanuna.gitalk.refs.RefsModel;
-import org.hanuna.gitalk.swing_ui.prgress.ProgressFrame;
-import org.hanuna.gitalk.swing_ui.prgress.ProgressModel;
+import org.hanuna.gitalk.swing_ui.progress.ProgressFrame;
+import org.hanuna.gitalk.swing_ui.progress.ProgressModel;
 
 import java.io.IOException;
 import java.util.List;

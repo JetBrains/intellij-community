@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.swing_ui.prgress;
+package org.hanuna.gitalk.swing_ui.progress;
 
 import org.jetbrains.annotations.NotNull;
 

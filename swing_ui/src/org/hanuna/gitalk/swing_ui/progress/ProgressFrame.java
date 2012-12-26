@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.swing_ui.prgress;
+package org.hanuna.gitalk.swing_ui.progress;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -6,7 +6,7 @@ import javax.swing.*;
 
 import java.awt.*;
 
-import static org.hanuna.gitalk.swing_ui.prgress.ProgressModel.State;
+import static org.hanuna.gitalk.swing_ui.progress.ProgressModel.State;
 
 /**
  * @author erokhins
