@@ -162,6 +162,13 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
     return getForegroundColor() == null && getBackgroundColor() == null && getEffectColor() == null && getFontType() == Font.PLAIN;
   }
 
+  public void reset() {
+    setForegroundColor(null);
+    setBackgroundColor(null);
+    setEffectColor(null);
+    setFontType(Font.PLAIN);
+  }
+
   @NotNull
   public AttributesFlyweight getFlyweight() {
     return myAttrs;

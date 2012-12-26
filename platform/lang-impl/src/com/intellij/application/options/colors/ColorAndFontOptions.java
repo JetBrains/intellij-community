@@ -790,10 +790,44 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       return attributes;
     }
 
+    private boolean equalToFallbackAttributes() {
+      if (myFallbackAttributes != null) {
+        return myFallbackAttributes.equals(getTextAttributes());
+      }
+      return false;
+    }
+
+    @Override
+    public boolean isBackgroundChecked() {
+      if (equalToFallbackAttributes()) return false;
+      return super.isBackgroundChecked();
+    }
+
+    @Override
+    public boolean isForegroundChecked() {
+      if (equalToFallbackAttributes()) return false;
+      return super.isForegroundChecked();
+    }
+
+    @Override
+    public boolean isErrorStripeChecked() {
+      if (equalToFallbackAttributes()) return false;
+      return super.isErrorStripeChecked();
+    }
+
+    @Override
+    public boolean isEffectsColorChecked() {
+      if (equalToFallbackAttributes()) return false;
+      return super.isEffectsColorChecked();
+    }
+
     @Override
     public void apply(EditorColorsScheme scheme) {
       if (scheme == null) scheme = getScheme();
-      if (myAttributesToApply != null && !getTextAttributes().equals(myFallbackAttributes)) {
+      if (myAttributesToApply != null) {
+        if (equalToFallbackAttributes()) {
+          getTextAttributes().reset();
+        }
         scheme.setAttributes(key, getTextAttributes());
       }
     }
