@@ -13,6 +13,8 @@
     <configurationProducer implementation="com.jetbrains.rest.run.docutils.DocutilsConfigurationProducer"/>
     <configurationProducer implementation="com.jetbrains.rest.run.sphinx.SphinxConfigurationProducer"/>
     <lang.substitutor language="TEXT" implementationClass="com.jetbrains.rest.RestLanguageSubstitutor"/>
+
+    <languageInjector implementation="com.jetbrains.rest.PyRestDocstringLanguageInjector"/>
   </extensions>
 
   <actions>

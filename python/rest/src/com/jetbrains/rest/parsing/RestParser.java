@@ -61,6 +61,15 @@ public class RestParser implements PsiParser {
         builder.advanceLexer();
         marker.done(RestElementTypes.REFERENCE_TARGET);
       }
+      else if (type == RestTokenTypes.LINE) {
+        PsiBuilder.Marker marker = builder.mark();
+        while (type == RestTokenTypes.LINE || type == RestTokenTypes.WHITESPACE) {
+          builder.advanceLexer();
+          type = builder.getTokenType();
+        }
+
+        marker.done(RestElementTypes.LINE_TEXT);
+      }
       else
         builder.advanceLexer();
     }

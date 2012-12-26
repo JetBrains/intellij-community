@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.ResolveResult;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
 import com.jetbrains.python.psi.resolve.*;
@@ -62,7 +63,8 @@ public class PyDocReference extends PyReferenceImpl {
 
       ResolveProcessor processor = new ResolveProcessor(referencedName);
 
-      PyResolveUtil.scopeCrawlUp(processor, (ScopeOwner)file, referencedName, file);
+      final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(myElement);
+      PyResolveUtil.scopeCrawlUp(processor, scopeOwner != null? scopeOwner : (ScopeOwner)file, referencedName, file);
       final List<RatedResolveResult> resultList = getResultsFromProcessor(referencedName, processor, file, file);
       if (resultList.size() > 0)
         return resultList.toArray(new RatedResolveResult[resultList.size()]);

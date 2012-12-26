@@ -10,5 +10,7 @@ public interface RestElementTypes {
   RestElementType REFERENCE_TARGET = new RestElementType("REFERENCE");
   RestElementType DIRECTIVE_BLOCK = new RestElementType("DIRECTIVE_BLOCK");
   RestElementType INLINE_BLOCK = new RestElementType("INLINE_BLOCK");
+
+  RestElementType LINE_TEXT = new RestElementType("LINE_TEXT");
 }
 
