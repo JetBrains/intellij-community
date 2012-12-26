@@ -59,7 +59,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     myEditor = new ConfigurationSettingsEditor(settings);
     Disposer.register(this, myEditor);
     myBeforeRunStepsPanel = new BeforeRunStepsPanel(this);
-    myDecorator = new HideableDecorator(myBeforeLaunchContainer, "", true) {
+    myDecorator = new HideableDecorator(myBeforeLaunchContainer, "", false) {
       @Override
       protected void on() {
         super.on();
