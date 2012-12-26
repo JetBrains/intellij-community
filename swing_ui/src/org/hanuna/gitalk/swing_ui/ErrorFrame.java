@@ -18,8 +18,8 @@ public class ErrorFrame extends JFrame {
 
     private void prepare(@NotNull String message) {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        JLabel label = new JLabel(message);
-        setContentPane(label);
+        JTextArea textArea = new JTextArea(message);
+        setContentPane(textArea);
         pack();
         setModalExclusionType(Dialog.ModalExclusionType.NO_EXCLUDE);
         setMinimumSize(new Dimension(200, 50));
