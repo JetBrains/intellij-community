@@ -40,6 +40,7 @@ import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
@@ -457,7 +458,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   public void visitMethod(GrMethod method) {
     checkMethodWithTypeParamsShouldHaveReturnType(myHolder, method);
     checkInnerMethod(myHolder, method);
-    checkMethodParameters(myHolder, method);
+    checkOptionalParametersInAbstractMethod(myHolder, method);
 
     GrOpenBlock block = method.getBlock();
     if (block != null && TypeInferenceHelper.isTooComplexTooAnalyze(block)) {
@@ -480,6 +481,45 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         myHolder.createErrorAnnotation(method.getNameIdentifierGroovy(), GroovyBundle.message("not.abstract.method.should.have.body"));
       annotation.registerFix(new AddMethodBodyFix(method));
     }
+
+    checkOverridingMethod(myHolder, method);
+  }
+
+  private static void checkOverridingMethod(@NotNull AnnotationHolder holder, @NotNull GrMethod method) {
+    final List<HierarchicalMethodSignature> signatures = method.getHierarchicalMethodSignature().getSuperSignatures();
+
+    for (HierarchicalMethodSignature signature : signatures) {
+      final PsiMethod superMethod = signature.getMethod();
+      if (superMethod.hasModifierProperty(FINAL)) {
+
+        final String current = GroovyPresentationUtil.getSignaturePresentation(method.getSignature(PsiSubstitutor.EMPTY));
+        final String superPresentation = GroovyPresentationUtil.getSignaturePresentation(signature);
+        final String superQName = getQNameOfMember(superMethod);
+
+        holder.createErrorAnnotation(
+          GrHighlightUtil.getMethodHeaderTextRange(method),
+          GroovyBundle.message("method.0.cannot.override.method.1.in.2.overridden.method.is.final", current, superPresentation, superQName)
+        );
+
+        return;
+      }
+
+      final String currentModifier = VisibilityUtil.getVisibilityModifier(method.getModifierList());
+      final String superModifier = VisibilityUtil.getVisibilityModifier(superMethod.getModifierList());
+
+      if (PUBLIC.equals(superModifier) && (PROTECTED.equals(currentModifier) || PRIVATE.equals(currentModifier)) ||
+          PROTECTED.equals(superModifier) && PRIVATE.equals(currentModifier)) {
+        final String currentPresentation = GroovyPresentationUtil.getSignaturePresentation(method.getSignature(PsiSubstitutor.EMPTY));
+        final String superPresentation = GroovyPresentationUtil.getSignaturePresentation(signature);
+        final String superQName = getQNameOfMember(superMethod);
+
+        final PsiElement modifier = PsiUtil.findModifierInList(method.getModifierList(), currentModifier);
+        holder.createErrorAnnotation(
+          modifier != null? modifier : method.getNameIdentifierGroovy(),
+          GroovyBundle.message("method.0.cannot.have.weaker.access.privileges.1.than.2.in.3.4", currentPresentation, currentModifier, superPresentation, superQName, superModifier)
+        );
+      }
+    }
   }
 
   private static void checkMethodWithTypeParamsShouldHaveReturnType(AnnotationHolder holder, GrMethod method) {
@@ -494,7 +534,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
   }
 
-  private static void checkMethodParameters(AnnotationHolder holder, GrMethod method) {
+  private static void checkOptionalParametersInAbstractMethod(AnnotationHolder holder, GrMethod method) {
     if (!method.hasModifierProperty(ABSTRACT)) return;
 
     for (GrParameter parameter : method.getParameters()) {
@@ -865,8 +905,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       return null;
     }
 
-    String qName = getQName(method);
-    String baseQName = getQName(superMethod);
+    String qName = getQNameOfMember(method);
+    String baseQName = getQNameOfMember(superMethod);
     final String presentation = returnType.getCanonicalText() + " " + GroovyPresentationUtil.getSignaturePresentation(methodSignature);
     final String basePresentation =
       superReturnType.getCanonicalText() + " " + GroovyPresentationUtil.getSignaturePresentation(superMethodSignature);
@@ -874,10 +914,15 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   @NotNull
-  private static String getQName(PsiMethod method) {
-    final PsiClass aClass = method.getContainingClass();
+  private static String getQNameOfMember(@NotNull PsiMember member) {
+    final PsiClass aClass = member.getContainingClass();
+    return getQName(aClass);
+  }
+
+  @NotNull
+  private static String getQName(@Nullable PsiClass aClass) {
     if (aClass instanceof PsiAnonymousClass) {
-      return GroovyBundle.message("anonymous.class.derived.from") + " " + ((PsiAnonymousClass)aClass).getBaseClassType().getCanonicalText();
+      return GroovyBundle.message("anonymous.class.derived.from.0", ((PsiAnonymousClass)aClass).getBaseClassType().getCanonicalText());
     }
     if (aClass != null) {
       final String qname = aClass.getQualifiedName();

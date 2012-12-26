@@ -982,4 +982,64 @@ class X {
 }
 ''')
   }
+
+  void testFinalMethodOverriding() {
+    testHighlighting('''\
+class A {
+    final void foo() {}
+}
+
+class B extends A{
+    <error descr="Method 'foo()' cannot override method 'foo()' in 'A'; overridden method is final">void foo()</error> {}
+}
+''')
+  }
+
+  void testWeakerMethodAccess0() {
+    testHighlighting('''\
+class A {
+    void foo() {}
+}
+
+class B extends A{
+    <error descr="Method 'foo()' cannot have weaker access privileges ('protected') than 'foo()' in 'A' ('public')">protected</error> void foo() {}
+}
+''')
+  }
+
+  void testWeakerMethodAccess1() {
+    testHighlighting('''\
+class A {
+    void foo() {}
+}
+
+class B extends A{
+    <error descr="Method 'foo()' cannot have weaker access privileges ('private') than 'foo()' in 'A' ('public')">private</error> void foo() {}
+}
+''')
+  }
+
+  void testWeakerMethodAccess2() {
+    testHighlighting('''\
+class A {
+    public void foo() {}
+}
+
+class B extends A{
+    void foo() {} //don't highlight anything
+}
+''')
+  }
+
+  void testWeakerMethodAccess3() {
+    testHighlighting('''\
+class A {
+    protected void foo() {}
+}
+
+class B extends A{
+    <error descr="Method 'foo()' cannot have weaker access privileges ('private') than 'foo()' in 'A' ('protected')">private</error> void foo() {}
+}
+''')
+  }
 }
