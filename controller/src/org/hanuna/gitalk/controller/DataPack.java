@@ -3,6 +3,7 @@ package org.hanuna.gitalk.controller;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitData;
 import org.hanuna.gitalk.common.MyTimer;
+import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.GraphFragmentController;
 import org.hanuna.gitalk.graph.mutable_graph.GraphBuilder;
@@ -51,7 +52,7 @@ public class DataPack {
             }
         }
         graph = GraphBuilder.build(Collections.unmodifiableList(showCommits), refsModel);
-        printCellModel = new GraphPrintCellModelImpl(graph);
+        updatePrintModel();
     }
 
     @NotNull
@@ -83,5 +84,13 @@ public class DataPack {
         MyTimer printModelTimer = new MyTimer("print model build");
         printCellModel = new GraphPrintCellModelImpl(graph);
         printModelTimer.print();
+
+        graph.removeAllListeners();
+        graph.addUpdateListener(new Graph.GraphUpdateListener() {
+            @Override
+            public void doReplace(@NotNull Replace replace) {
+                printCellModel.recalculate(replace);
+            }
+        });
     }
 }

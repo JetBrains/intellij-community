@@ -2,6 +2,7 @@ package org.hanuna.gitalk.ui_controller.table_models;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitData;
+import org.hanuna.gitalk.controller.DataPack;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.graph_elements.GraphElement;
 import org.hanuna.gitalk.graph.graph_elements.Node;
@@ -10,6 +11,7 @@ import org.hanuna.gitalk.printmodel.SpecialPrintElement;
 import org.hanuna.gitalk.refs.Ref;
 import org.hanuna.gitalk.refs.RefsModel;
 import org.hanuna.gitalk.ui_controller.DateConverter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
@@ -25,15 +27,15 @@ public class GraphTableModel extends AbstractTableModel {
     private Graph graph;
     private GraphPrintCellModel graphPrintCellModel;
 
-    public GraphTableModel(Graph graph, RefsModel refsModel, GraphPrintCellModel graphPrintCellModel) {
-        this.graph = graph;
-        this.refsModel = refsModel;
-        this.graphPrintCellModel = graphPrintCellModel;
+    public GraphTableModel(@NotNull DataPack dataPack) {
+        this.graph = dataPack.getGraph();
+        this.refsModel = dataPack.getRefsModel();
+        this.graphPrintCellModel = dataPack.getPrintCellModel();
     }
 
-    public void rewriteData(Graph graph, GraphPrintCellModel graphPrintCellModel) {
-        this.graph = graph;
-        this.graphPrintCellModel = graphPrintCellModel;
+    public void rewriteData(@NotNull DataPack dataPack) {
+        this.graph = dataPack.getGraph();
+        this.graphPrintCellModel = dataPack.getPrintCellModel();
     }
 
     @Nullable

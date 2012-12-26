@@ -38,8 +38,7 @@ public class UI_Controller {
         this.dataPack = dataPack;
 
         this.refTableModel = new RefTableModel(dataPack.getRefsModel());
-        this.graphTableModel = new GraphTableModel(dataPack.getGraph(),
-                dataPack.getRefsModel(), dataPack.getPrintCellModel());
+        this.graphTableModel = new GraphTableModel(dataPack);
         this.prevSelectionBranches = new HashSet<Commit>(refTableModel.getCheckedCommits());
     }
 
@@ -87,7 +86,6 @@ public class UI_Controller {
         }
         boolean visible = fragmentController.isVisible(fragment);
         Replace replace = fragmentController.setVisible(fragment, !visible);
-        dataPack.getPrintCellModel().recalculate(replace);
         events.runUpdateTable();
         events.runJumpToRow(replace.from());
     }
@@ -99,7 +97,7 @@ public class UI_Controller {
 
             prevSelectionBranches = new HashSet<Commit>(checkedCommits);
             dataPack.setShowBranches(checkedCommits);
-            graphTableModel.rewriteData(dataPack.getGraph(), dataPack.getPrintCellModel());
+            graphTableModel.rewriteData(dataPack);
 
             events.runUpdateTable();
             events.runJumpToRow(0);
@@ -136,7 +134,7 @@ public class UI_Controller {
         }
 
         dataPack.updatePrintModel();
-        graphTableModel.rewriteData(graph, dataPack.getPrintCellModel());
+        graphTableModel.rewriteData(dataPack);
         events.runUpdateTable();
         events.runJumpToRow(0);
     }

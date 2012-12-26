@@ -19,6 +19,7 @@ public class MutableGraph implements Graph {
     private final List<MutableNodeRow> allRows;
     private final List<MutableNodeRow> visibleRows;
     private final GraphFragmentController fragmentController;
+    private final UpdateListenerController listenerController = new UpdateListenerController();
 
     MutableGraph(List<MutableNodeRow> allRows, @NotNull RefsModel refsModel) {
         if (allRows.size() == 0) {
@@ -41,7 +42,9 @@ public class MutableGraph implements Graph {
             allRows.get(i).updateVisibleNodes();
         }
         recalculateRowIndex();
-        return Replace.buildFromToInterval(fromRowIndex, toRowIndex, upRow.getRowIndex(), downRow.getRowIndex());
+        Replace replace = Replace.buildFromToInterval(fromRowIndex, toRowIndex, upRow.getRowIndex(), downRow.getRowIndex());
+        listenerController.runDoReplace(replace);
+        return replace;
     }
 
     private void recalculateRowIndex() {
@@ -66,6 +69,34 @@ public class MutableGraph implements Graph {
     @Override
     public GraphFragmentController getFragmentController() {
         return fragmentController;
+    }
+
+    @Override
+    public void addUpdateListener(@NotNull GraphUpdateListener updateListener) {
+        listenerController.addUpdateListener(updateListener);
+    }
+
+    @Override
+    public void removeAllListeners() {
+        listenerController.removeAllListeners();
+    }
+
+    private static class UpdateListenerController {
+        private final List<GraphUpdateListener> listeners = new ArrayList<GraphUpdateListener>();
+
+        public void addUpdateListener(@NotNull GraphUpdateListener updateListener) {
+            listeners.add(updateListener);
+        }
+
+        public void runDoReplace(@NotNull Replace replace) {
+            for (GraphUpdateListener updateListener : listeners) {
+                updateListener.doReplace(replace);
+            }
+        }
+
+        public void removeAllListeners() {
+            listeners.clear();
+        }
     }
 
 }
