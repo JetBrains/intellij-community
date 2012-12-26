@@ -6,6 +6,8 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  * @author erokhins
@@ -47,6 +49,14 @@ public class GitAlkUI extends JFrame {
 
         JPanel leftPanel = new JPanel();
         leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.PAGE_AXIS));
+        JButton hideButton = new JButton("H");
+        hideButton.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                ui_controller.hideAll();
+            }
+        });
+        leftPanel.add(hideButton);
 
         leftPanel.add(Box.createVerticalGlue());
 

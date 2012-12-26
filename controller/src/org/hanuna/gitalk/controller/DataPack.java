@@ -31,9 +31,7 @@ public class DataPack {
         graph = GraphBuilder.build(commits);
         graphTimer.print();
 
-        MyTimer printModelTimer = new MyTimer("print model build");
-        printCellModel = new GraphPrintCellModelImpl(graph);
-        printModelTimer.print();
+        updatePrintModel();
     }
 
     public void setShowBranches(@NotNull Set<Commit> startedCommit) {
@@ -79,5 +77,11 @@ public class DataPack {
     @NotNull
     public SelectController getSelectController() {
         return printCellModel.getSelectController();
+    }
+
+    public void updatePrintModel() {
+        MyTimer printModelTimer = new MyTimer("print model build");
+        printCellModel = new GraphPrintCellModelImpl(graph);
+        printModelTimer.print();
     }
 }

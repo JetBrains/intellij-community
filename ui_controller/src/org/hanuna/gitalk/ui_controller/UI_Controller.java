@@ -4,9 +4,12 @@ import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.controller.DataPack;
+import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.GraphFragmentController;
 import org.hanuna.gitalk.graph.graph_elements.GraphElement;
 import org.hanuna.gitalk.graph.graph_elements.GraphFragment;
+import org.hanuna.gitalk.graph.graph_elements.Node;
+import org.hanuna.gitalk.graph.graph_elements.NodeRow;
 import org.hanuna.gitalk.printmodel.SelectController;
 import org.hanuna.gitalk.ui_controller.table_models.GraphTableModel;
 import org.hanuna.gitalk.ui_controller.table_models.RefTableModel;
@@ -14,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static org.hanuna.gitalk.ui_controller.EventsController.ControllerListener;
@@ -102,6 +106,40 @@ public class UI_Controller {
 
             timer.print();
         }
+    }
+
+    @Nullable
+    private Node mainNodeInRow(int rowIndex) {
+        List<NodeRow> nodeRows = dataPack.getGraph().getNodeRows();
+        assert rowIndex < nodeRows.size();
+        for (Node node : nodeRows.get(rowIndex).getVisibleNodes()) {
+            if (node.getType() == Node.Type.COMMIT_NODE) {
+                return node;
+            }
+        }
+        return null;
+    }
+
+    public void hideAll() {
+        int currentRowIndex = 0;
+        Graph graph = dataPack.getGraph();
+        GraphFragmentController fragmentController = graph.getFragmentController();
+        while (currentRowIndex < graph.getNodeRows().size()) {
+            Node node = mainNodeInRow(currentRowIndex);
+            if (node != null) {
+                GraphFragment fragment = fragmentController.relateFragment(node);
+                if (fragment != null && fragmentController.isVisible(fragment)) {
+                    fragmentController.setVisible(fragment, false);
+                }
+            }
+            currentRowIndex++;
+        }
+
+        dataPack.getSelectController().deselectAll();
+        dataPack.updatePrintModel();
+        graphTableModel.rewriteData(graph, dataPack.getPrintCellModel());
+        events.runUpdateTable();
+        events.runJumpToRow(0);
     }
 
 
