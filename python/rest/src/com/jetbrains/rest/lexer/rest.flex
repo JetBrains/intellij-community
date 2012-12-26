@@ -87,7 +87,7 @@ ANY= .|\n
 "*"[^*\n\r ][^*\n\r]*[^*\n\r ]"*"                   { return ITALIC;}
 "|"[^*|\n\r ][^*|\n\r]*[^*|\n\r ]"|"                { return SUBSTITUTION;}
 
-"http://"[^\n\r ]+                                  {return DIRECT_HYPERLINK;}
+"http"s?"://"[^\n\r ]+                              {return DIRECT_HYPERLINK;}
 
 "`"[^`\n\r ][^`\n\r]*[^`\n\r ]"`"                   { return INTERPRETED;}
 "`"{NOT_BACKQUOTE}+"`_""_"?{SEPARATOR}              {yypushback(1); return REFERENCE_NAME;}
