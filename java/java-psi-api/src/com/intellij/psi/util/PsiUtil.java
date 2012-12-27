@@ -472,6 +472,14 @@ public final class PsiUtil extends PsiUtilCore {
       PsiType argType = args[args.length - 1];
       if (argType == null) return ApplicabilityLevel.NOT_APPLICABLE;
       if (TypeConversionUtil.isAssignable(parmType, argType)) return ApplicabilityLevel.FIXED_ARITY;
+      if (isRawSubstitutor(method, substitutorForMethod)) {
+        final PsiType erasedParamType = TypeConversionUtil.erasure(parmType);
+        final PsiType erasedArgType = TypeConversionUtil.erasure(argType);
+        if (erasedArgType != null &&  erasedParamType != null &&
+            TypeConversionUtil.isAssignable(erasedParamType, erasedArgType)) {
+          return ApplicabilityLevel.FIXED_ARITY;
+        }
+      }
     }
 
     if (method.isVarArgs() && languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0) {
