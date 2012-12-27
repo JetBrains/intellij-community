@@ -84,7 +84,7 @@ public class CoberturaCoverageRunner extends JavaCoverageRunner {
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
               if (openInBrowser) {
-                BrowserUtil.launchBrowser(outputDirectory + File.separator + "index.html");
+                BrowserUtil.browse(new File(outputDirectory, "/index.html"));
               }
             }
           });

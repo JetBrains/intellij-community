@@ -34,7 +34,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -632,7 +631,9 @@ public class JavaCoverageEngine extends CoverageEngine {
           Messages.showErrorDialog(project, myExceptions[0].getMessage(), CommonBundle.getErrorTitle());
           return;
         }
-        if (openInBrowser) BrowserUtil.launchBrowser(VfsUtil.pathToUrl(StringUtil.trimEnd(outputDir, File.separator) + File.separator + "index.html"));
+        if (openInBrowser) {
+          BrowserUtil.browse(new File(outputDir, "index.html"));
+        }
       }
     });
   }
