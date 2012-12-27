@@ -158,6 +158,26 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
     doTestCannotPerform();
   }
 
+  // PY-3654
+  public void testSubstringBeforeFormatTuple() {
+    doTest();
+  }
+
+  // PY-3654
+  public void testSubstringInsideFormatTuple() {
+    doTest();
+  }
+
+  // PY-3654
+  public void testSubstringAfterFormatTuple() {
+    doTest();
+  }
+
+  // PY-3654
+  public void testSubstringAfterFormatTupleWithComma() {
+    doTest();
+  }
+
   private void doTestCannotPerform() {
     boolean thrownExpectedException = false;
     try {

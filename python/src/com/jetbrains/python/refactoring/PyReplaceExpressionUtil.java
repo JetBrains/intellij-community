@@ -1,5 +1,6 @@
 package com.jetbrains.python.refactoring;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -9,6 +10,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.inspections.PyStringFormatParser;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,11 +85,35 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
     final LanguageLevel languageLevel = LanguageLevel.forElement(oldExpression);
     final List<PyStringFormatParser.SubstitutionChunk> substitutions = new PyStringFormatParser(fullText).parseSubstitutions();
 
-    // TODO: Handle %-formatted strings
+    if (valueExpression instanceof PyTupleExpression && !containsStringFormatting(fullText, textRange)) {
+      // 'foo%s' % (x,) -> '%s%s' % (s, x)
+      // TODO: Support dict literals and dict() function
+      // TODO: It is possible to resolve to a tuple or dict literal and modify them
+      final String newLiteralText = prefix + "%s" + suffix;
+      final PyStringLiteralExpression newLiteralExpression = generator.createStringLiteralAlreadyEscaped(newLiteralText);
+      oldExpression.replace(newLiteralExpression);
 
-    if (isConcatFormatting(oldExpression) || substitutions.size() > 0) {
+      final PyTupleExpression tuple = (PyTupleExpression)valueExpression;
+      final PyExpression[] members = tuple.getElements();
+      final List<PyStringFormatParser.SubstitutionChunk> positional = PyStringFormatParser.getPositionalSubstitutions(substitutions);
+      final int i = getPositionInRanges(PyStringFormatParser.substitutionsToRanges(positional), textRange);
+      final int n = members.length;
+      if (n > 0 && i <= n) {
+        final boolean last = i == n;
+        final ASTNode trailingComma = PyPsiUtils.getNextComma(members[n - 1].getNode());
+        if (trailingComma != null) {
+          tuple.getNode().removeChild(trailingComma);
+        }
+        final PyExpression before = last ? null : members[i];
+        PyUtil.addListNode(tuple, newExpression, before != null ? before.getNode() : null, i == 0 || !last, last, !last);
+        return newExpression;
+      }
+      return null;
+    }
+    else if (isConcatFormatting(oldExpression) || substitutions.size() > 0) {
       // 'foobar' + 'baz' -> s + 'bar' + 'baz'
       // 'foobar%s' -> s + 'bar%s'
+      // 'f%soobar' % x -> (s + 'bar') % x
       final Pair<String, String> detectedQuotes = PythonStringUtil.getQuotes(fullText);
       final Pair<String, String> quotes = detectedQuotes != null ? detectedQuotes : Pair.create("'", "'");
       final String leftQuote = quotes.getFirst();
@@ -113,6 +139,7 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
     }
     else {
       // 'foobar' -> '%sbar' % s
+      // TODO: Handle extracting substring from a string with new-style formatting
       final PsiElement parent = oldExpression.getParent();
       final boolean parensNeeded = parent instanceof PyExpression && !(parent instanceof PyParenthesizedExpression);
       final StringBuilder builder = new StringBuilder();
@@ -132,6 +159,28 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
       final PsiElement newElement = oldExpression.replace(expression);
       return newElement.findElementAt(pos);
     }
+  }
+
+  private static int getPositionInRanges(@NotNull List<TextRange> ranges, @NotNull TextRange range) {
+    final int end = range.getEndOffset();
+    final int size = ranges.size();
+    for (int i = 0; i < size; i++) {
+      final TextRange r = ranges.get(i);
+      if (end < r.getStartOffset()) {
+        return i;
+      }
+    }
+    return size;
+  }
+
+  private static boolean containsStringFormatting(@NotNull String s, @NotNull TextRange range) {
+    final List<TextRange> ranges = PyStringFormatParser.substitutionsToRanges(new PyStringFormatParser(s).parseSubstitutions());
+    for (TextRange r : ranges) {
+      if (range.contains(r)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean isConcatFormatting(PyStringLiteralExpression element) {

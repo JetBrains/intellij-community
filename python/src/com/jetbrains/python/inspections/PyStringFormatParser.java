@@ -248,6 +248,16 @@ public class PyStringFormatParser {
     return result;
   }
 
+
+  @NotNull
+  public static List<TextRange> substitutionsToRanges(@NotNull List<SubstitutionChunk> substitutions) {
+    final List<TextRange> ranges = new ArrayList<TextRange>();
+    for (SubstitutionChunk substitution : substitutions) {
+      ranges.add(TextRange.create(substitution.getStartIndex(), substitution.getEndIndex()));
+    }
+    return ranges;
+  }
+
   /**
    * Return the RHS operand of %-based string literal format expression.
    */

@@ -286,9 +286,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
         final TextRange intersection = selectionRange.shiftRight(-offset).intersection(innerRange);
         final TextRange finalRange = intersection != null ? intersection : selectionRange;
         final String text = literal.getText();
-        // TODO: Handle extracting substring from a string with %-formatting
         // TODO: Protect against substrings with new-style format characters
-        // TODO: Handle extracting substring from a string with new-style formatting
         if (breaksStringFormatting(text, finalRange) || breaksStringEscaping(text, finalRange)) {
           showCannotPerformError(project, editor);
           return;
@@ -305,12 +303,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   private boolean breaksStringFormatting(@NotNull String s, @NotNull TextRange range) {
-    final PyStringFormatParser parser = new PyStringFormatParser(s);
-    final List<TextRange> ranges = new ArrayList<TextRange>();
-    for (PyStringFormatParser.SubstitutionChunk chunk : parser.parseSubstitutions()) {
-      ranges.add(TextRange.create(chunk.getStartIndex(), chunk.getEndIndex()));
-    }
-    return breaksRanges(ranges, range);
+    return breaksRanges(PyStringFormatParser.substitutionsToRanges(new PyStringFormatParser(s).parseSubstitutions()), range);
   }
 
   private boolean breaksStringEscaping(@NotNull String s, @NotNull TextRange range) {
