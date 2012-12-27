@@ -61,6 +61,6 @@ public final class HgErrorUtil {
     if (StringUtil.isEmptyOrSpaces(destinationPath)) {
       return false;
     }
-    return HgUtil.reposirotyUrlWithPasswordPattern.matcher(destinationPath).matches();
+    return HgUtil.URL_WITH_PASSWORD.matcher(destinationPath).matches();
   }
 }
