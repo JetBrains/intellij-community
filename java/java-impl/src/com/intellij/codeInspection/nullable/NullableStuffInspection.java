@@ -466,7 +466,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
   }
 
   public static List<PsiExpression> findAllConstructorInitializers(PsiField field) {
-    final List<PsiExpression> result = ContainerUtil.createEmptyCOWList();
+    final List<PsiExpression> result = ContainerUtil.createLockFreeCopyOnWriteList();
     ContainerUtil.addIfNotNull(result, field.getInitializer());
 
     PsiClass containingClass = field.getContainingClass();

@@ -50,7 +50,7 @@ public class MavenImportingSettings implements Cloneable {
 
   private GeneratedSourcesFolder generatedSourcesFolder = GeneratedSourcesFolder.AUTODETECT;
 
-  private List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
+  private List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public enum GeneratedSourcesFolder {
     AUTODETECT("Detect automatically"),
@@ -227,7 +227,7 @@ public class MavenImportingSettings implements Cloneable {
   public MavenImportingSettings clone() {
     try {
       MavenImportingSettings result = (MavenImportingSettings)super.clone();
-      result.myListeners = ContainerUtil.createEmptyCOWList();
+      result.myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
       return result;
     }
     catch (CloneNotSupportedException e) {

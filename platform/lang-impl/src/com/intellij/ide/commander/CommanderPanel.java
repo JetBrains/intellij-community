@@ -90,7 +90,7 @@ public class CommanderPanel extends JPanel {
   private static final String ACTION_GO_UP = "GoUp";
   private ProjectAbstractTreeStructureBase myProjectTreeStructure;
   private boolean myActive = true;
-  private final List<CommanderHistoryListener> myHistoryListeners = ContainerUtil.createEmptyCOWList();
+  private final List<CommanderHistoryListener> myHistoryListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myMoveFocus = false;
   private final boolean myEnableSearchHighlighting;
 

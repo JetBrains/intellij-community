@@ -34,11 +34,12 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.SchemesManagerFactoryImpl");
 
-  private final List<SchemesManagerImpl> myRegisteredManagers = ContainerUtil.createEmptyCOWList();
+  private final List<SchemesManagerImpl> myRegisteredManagers = ContainerUtil.createLockFreeCopyOnWriteList();
 
   @Override
   public <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> createSchemesManager(final String fileSpec,
-                                                                   final SchemeProcessor<E> processor, final RoamingType roamingType) {
+                                                                                                      final SchemeProcessor<E> processor,
+                                                                                                      final RoamingType roamingType) {
     final Application application = ApplicationManager.getApplication();
     if (!(application instanceof ApplicationImpl)) return null;
     String baseDirPath = ((ApplicationImpl)application).getStateStore().getStateStorageManager().expandMacros(fileSpec);
@@ -47,12 +48,12 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
 
       StreamProvider[] providers =
         ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager().getStreamProviders(roamingType);
-      SchemesManagerImpl<T, E> manager = new SchemesManagerImpl<T,E>(fileSpec, processor, roamingType, providers, new File(baseDirPath));
+      SchemesManagerImpl<T, E> manager = new SchemesManagerImpl<T, E>(fileSpec, processor, roamingType, providers, new File(baseDirPath));
       myRegisteredManagers.add(manager);
       return manager;
     }
     else {
-      return new AbstractSchemesManager<T,E>(){
+      return new AbstractSchemesManager<T, E>() {
         @Override
         @NotNull
         public Collection<E> loadSchemes() {

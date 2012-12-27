@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class HighlightInfoComposite extends HighlightInfo {
   @NonNls private static final String HTML_HEADER = "<html>";
@@ -44,20 +43,21 @@ public class HighlightInfoComposite extends HighlightInfo {
     text = infos.get(0).text;
     highlighter = infos.get(0).highlighter;
     group = infos.get(0).group;
-    List<Pair<IntentionActionDescriptor, RangeMarker>> markers = null;
-    List<Pair<IntentionActionDescriptor, TextRange>> ranges = null;
+    List EMPTY = ContainerUtil.emptyList();
+    List<Pair<IntentionActionDescriptor, RangeMarker>> markers = EMPTY;
+    List<Pair<IntentionActionDescriptor, TextRange>> ranges = EMPTY;
     for (HighlightInfo info : infos) {
       if (info.quickFixActionMarkers != null) {
-        if (markers == null) markers = new ArrayList<Pair<IntentionActionDescriptor,RangeMarker>>();
+        if (markers == EMPTY) markers = new ArrayList<Pair<IntentionActionDescriptor,RangeMarker>>();
         markers.addAll(info.quickFixActionMarkers);
       }
       if (info.quickFixActionRanges != null) {
-        if (ranges == null) ranges = new ArrayList<Pair<IntentionActionDescriptor, TextRange>>();
+        if (ranges == EMPTY) ranges = new ArrayList<Pair<IntentionActionDescriptor, TextRange>>();
         ranges.addAll(info.quickFixActionRanges);
       }
     }
-    quickFixActionMarkers = markers == null ? ContainerUtil.<Pair<IntentionActionDescriptor,RangeMarker>>createEmptyCOWList() : new CopyOnWriteArrayList<Pair<IntentionActionDescriptor, RangeMarker>>(markers);
-    quickFixActionRanges = ranges == null ? ContainerUtil.<Pair<IntentionActionDescriptor, TextRange>>createEmptyCOWList() : new CopyOnWriteArrayList<Pair<IntentionActionDescriptor, TextRange>>(ranges);
+    quickFixActionMarkers = ContainerUtil.createLockFreeCopyOnWriteList(markers);
+    quickFixActionRanges = ContainerUtil.createLockFreeCopyOnWriteList(ranges);
   }
 
   @Nullable

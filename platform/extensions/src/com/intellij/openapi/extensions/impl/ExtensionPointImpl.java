@@ -51,7 +51,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   private final PluginDescriptor myDescriptor;
 
   private final Set<ExtensionComponentAdapter> myExtensionAdapters = new LinkedHashSet<ExtensionComponentAdapter>();
-  private final List<ExtensionPointListener<T>> myEPListeners = ContainerUtil.createEmptyCOWList();
+  private final List<ExtensionPointListener<T>> myEPListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<ExtensionComponentAdapter> myLoadedAdapters = new ArrayList<ExtensionComponentAdapter>();
 
   private Class<T> myExtensionClass;
@@ -390,7 +390,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   private void assertClass(@NotNull Class<?> extensionClass) {
     Class<T> expectedClass = getExtensionClass();
-    assert expectedClass.isAssignableFrom(extensionClass) : "Expected: "+ expectedClass +"; Actual: "+ extensionClass;
+    assert expectedClass.isAssignableFrom(extensionClass) : "Expected: " + expectedClass + "; Actual: " + extensionClass;
   }
 
   private void clearCache() {

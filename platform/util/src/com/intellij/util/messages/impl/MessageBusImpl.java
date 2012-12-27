@@ -45,8 +45,9 @@ public class MessageBusImpl implements MessageBus {
   private final ThreadLocal<Queue<DeliveryJob>> myMessageQueue = createThreadLocalQueue();
   private final ConcurrentMap<Topic, Object> mySyncPublishers = new ConcurrentHashMap<Topic, Object>();
   private final ConcurrentMap<Topic, Object> myAsyncPublishers = new ConcurrentHashMap<Topic, Object>();
-  private final ConcurrentMap<Topic, List<MessageBusConnectionImpl>> mySubscribers = new ConcurrentHashMap<Topic, List<MessageBusConnectionImpl>>();
-  private final List<MessageBusImpl> myChildBuses = ContainerUtil.createEmptyCOWList();
+  private final ConcurrentMap<Topic, List<MessageBusConnectionImpl>> mySubscribers =
+    new ConcurrentHashMap<Topic, List<MessageBusConnectionImpl>>();
+  private final List<MessageBusImpl> myChildBuses = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private static final Object NA = new Object();
   private MessageBusImpl myParentBus;
@@ -225,7 +226,8 @@ public class MessageBusImpl implements MessageBus {
       DeliveryJob job = queue.poll();
       if (job == null) break;
       job.connection.deliverMessage(job.message);
-    } while (true);
+    }
+    while (true);
 
     for (MessageBusImpl childBus : myChildBuses) {
       LOG.assertTrue(childBus.myParentBus == this);
@@ -237,7 +239,7 @@ public class MessageBusImpl implements MessageBus {
     checkNotDisposed();
     List<MessageBusConnectionImpl> topicSubscribers = mySubscribers.get(topic);
     if (topicSubscribers == null) {
-      topicSubscribers = ContainerUtil.createEmptyCOWList();
+      topicSubscribers = ContainerUtil.createLockFreeCopyOnWriteList();
       topicSubscribers = ConcurrencyUtil.cacheOrGet(mySubscribers, topic, topicSubscribers);
     }
 

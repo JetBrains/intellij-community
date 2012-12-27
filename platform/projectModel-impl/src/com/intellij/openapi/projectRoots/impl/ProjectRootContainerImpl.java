@@ -46,7 +46,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
   private Map<OrderRootType, VirtualFile[]> myFiles = new HashMap<OrderRootType, VirtualFile[]>();
 
   private boolean myInsideChange = false;
-  private final List<ProjectRootListener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<ProjectRootListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private boolean myNoCopyJars = false;
 

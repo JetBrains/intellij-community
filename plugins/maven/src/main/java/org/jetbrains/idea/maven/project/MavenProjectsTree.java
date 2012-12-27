@@ -76,7 +76,7 @@ public class MavenProjectsTree {
   private final Map<MavenProject, List<MavenProject>> myAggregatorToModuleMapping = new THashMap<MavenProject, List<MavenProject>>();
   private final Map<MavenProject, MavenProject> myModuleToAggregatorMapping = new THashMap<MavenProject, MavenProject>();
 
-  private final List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private final MavenProjectReaderProjectLocator myProjectLocator = new MavenProjectReaderProjectLocator() {
     public VirtualFile findProjectFile(MavenId coordinates) {
@@ -869,7 +869,8 @@ public class MavenProjectsTree {
     if (config == null) {
       return Collections.emptySet();
     }
-    final List<String> customNonFilteredExtensions = MavenJDOMUtil.findChildrenValuesByPath(config, "nonFilteredFileExtensions", "nonFilteredFileExtension");
+    final List<String> customNonFilteredExtensions =
+      MavenJDOMUtil.findChildrenValuesByPath(config, "nonFilteredFileExtensions", "nonFilteredFileExtension");
     if (customNonFilteredExtensions.isEmpty()) {
       return Collections.emptySet();
     }

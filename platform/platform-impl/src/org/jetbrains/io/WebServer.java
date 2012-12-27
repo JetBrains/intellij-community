@@ -52,7 +52,7 @@ import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 public class WebServer {
   private static final String START_TIME_PATH = "/startTime";
 
-  private final List<ChannelFutureListener> closingListeners = ContainerUtil.createEmptyCOWList();
+  private final List<ChannelFutureListener> closingListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final ChannelGroup openChannels = new DefaultChannelGroup("web-server");
 
   private static final Logger LOG = Logger.getInstance(WebServer.class);
@@ -134,9 +134,9 @@ public class WebServer {
     ChannelFuture connectFuture = null;
     try {
       connectFuture = bootstrap.connect(remoteAddress);
-    if (!waitComplete(connectFuture, "connect")) {
-      return false;
-    }
+      if (!waitComplete(connectFuture, "connect")) {
+        return false;
+      }
       ChannelFuture writeFuture = connectFuture.getChannel().write(new DefaultHttpRequest(HTTP_1_1, HttpMethod.GET, START_TIME_PATH));
       if (!waitComplete(writeFuture, "write")) {
         return false;
@@ -179,7 +179,9 @@ public class WebServer {
   // so, we bind to 127.0.0.1 and 0.0.0.0
   private int bind(int firstPort, int portsCount, boolean tryAnyPort, ServerBootstrap bootstrap) {
     String property = System.getProperty(PROPERTY_ONLY_ANY_HOST);
-    boolean onlyAnyHost = property == null ? (SystemInfo.isLinux || SystemInfo.isWindows && !SystemInfo.isWinVistaOrNewer) : (property.isEmpty() || Boolean.valueOf(property));
+    boolean onlyAnyHost = property == null
+                          ? (SystemInfo.isLinux || SystemInfo.isWindows && !SystemInfo.isWinVistaOrNewer)
+                          : (property.isEmpty() || Boolean.valueOf(property));
     boolean portChecked = false;
     for (int i = 0; i < portsCount; i++) {
       int port = firstPort + i;

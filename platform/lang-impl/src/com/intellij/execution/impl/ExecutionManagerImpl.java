@@ -64,7 +64,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   private RunContentManagerImpl myContentManager;
   private final Alarm awaitingTerminationAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final List<Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor>> myRunningConfigurations =
-    ContainerUtil.createEmptyCOWList();
+    ContainerUtil.createLockFreeCopyOnWriteList();
 
   /**
    * reflection

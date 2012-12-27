@@ -17,15 +17,18 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.util.ArrayUtil;
 import gnu.trove.TIntArrayList;
+import junit.framework.TestCase;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
-public class ContainerUtilTest extends junit.framework.TestCase {
+public class ContainerUtilTest extends TestCase {
   public void testFindInstanceOf() {
     Iterator<Object> iterator = Arrays.<Object>asList(new Integer(1), new ArrayList(), "1").iterator();
     String string = (String)ContainerUtil.find(iterator, FilteringIterator.instanceOf(String.class));
-    junit.framework.Assert.assertEquals("1", string);
+    assertEquals("1", string);
   }
 
   public void testConcatMulti() {
@@ -111,5 +114,124 @@ public class ContainerUtilTest extends junit.framework.TestCase {
     ContainerUtil.mergeSortedArrays(x1, y1, x2, y2);
     assertEquals(new TIntArrayList(new int[]{-1, -1, -2, 0, 1, 2, 2, 4, 6}), x1);
     assertEquals(new TIntArrayList(new int[]{-1, -2, -3, 0, 1, 2, 3, 4, 6}), y1);
+  }
+
+  public void testLockFreeSingleThreadPerformance() {
+    final List<Object> my = new LockFreeCopyOnWriteArrayList<Object>();
+    final List<Object> stock = new CopyOnWriteArrayList<Object>();
+
+    measure(stock);
+    measure(my);
+    measure(stock);
+    measure(my); // warm up
+    for (int i=0; i<10; i++) {
+      long stockElapsed = measure(stock);
+      long myElapsed = measure(my);
+
+      System.out.println("LockFree my: "+myElapsed+"; stock: "+stockElapsed);
+      assertTrue("lockFree: "+myElapsed+"; stock: "+stockElapsed, (myElapsed - stockElapsed+0.0)/myElapsed < 0.1);
+    }
+  }
+
+
+  private long measure(List<Object> list) {
+    long start = System.currentTimeMillis();
+    for (int n = 0; n < 10000000; n++) {
+      list.add(this);
+      list.remove(this);
+      list.add(this);
+      list.remove(0);
+    }
+    long finish = System.currentTimeMillis();
+    assertTrue(list.isEmpty());
+    return finish - start;
+  }
+
+  //public void testLockFreeContendedPerformance() throws Exception {
+  //  final List<Object> lockFree = new LockFreeCopyOnWriteArrayList<Object>();
+  //  final List<Object> stock = new CopyOnWriteArrayList<Object>();
+  //  LockFreeCopyOnWriteArrayListExpBackoff2<Object> back = new LockFreeCopyOnWriteArrayListExpBackoff2<Object>();
+  //
+  //  measureContended(stock);
+  //  measureContended(lockFree);
+  //  measureContended(back);
+  //  for (int i=0; i<10; i++) {
+  //    long stockElapsed = measureContended(stock);
+  //    LockFreeCopyOnWriteArrayListExpBackoff2.RETRIES.set(0);
+  //    LockFreeCopyOnWriteArrayList.RETRIES.set(0);
+  //    long myElapsed = measureContended(lockFree);
+  //    long bElapsed = measureContended(back);
+  //    int bRetries = LockFreeCopyOnWriteArrayListExpBackoff2.RETRIES.get();
+  //    int mRetries = LockFreeCopyOnWriteArrayList.RETRIES.get();
+  //
+  //    System.out.println("Contended: stock: "+stockElapsed
+  //                       +"; lockFree: "+myElapsed+"; retries per op: "+(mRetries/1000000.0/2)
+  //                       +"; backoff: "+bElapsed+"; retries per op: "+(bRetries/1000000.0/2));
+  //    //assertTrue("my: "+myElapsed+"; stock: "+stockElapsed, Math.abs(myElapsed - stockElapsed+0.0)/myElapsed < 0.1);
+  //  }
+  //}
+  //private long measureContended(final List<Object> list) throws Exception {
+  //  long start = System.currentTimeMillis();
+  //  int N = /*2;//*/Runtime.getRuntime().availableProcessors();
+  //  Thread[] threads = new Thread[N];
+  //  final AtomicReference<Exception> ex = new AtomicReference<Exception>();
+  //  for (int i=0; i< N; i++) {
+  //    Thread thread = new Thread(new Runnable() {
+  //      @Override
+  //      public void run() {
+  //        for (int n = 0; n < 1000000; n++) {
+  //          list.add(this);
+  //          boolean removed = list.remove(this);
+  //          if (!removed) {
+  //            ex.set(new Exception());
+  //          }
+  //        }
+  //      }
+  //    },"t" + i);
+  //    threads[i] = thread;
+  //    thread.start();
+  //  }
+  //  for (int i=0; i< N; i++) {
+  //    try {
+  //      threads[i].join();
+  //    }
+  //    catch (InterruptedException e) {
+  //      throw new RuntimeException(e);
+  //    }
+  //  }
+  //  if (ex.get() != null) throw ex.get();
+  //  long finish = System.currentTimeMillis();
+  //  assertTrue(list.isEmpty());
+  //  return finish - start;
+  //}
+
+  public void testLockFreeCOWDoesNotCreateEmptyArrays() {
+    LockFreeCopyOnWriteArrayList<Object> my = (LockFreeCopyOnWriteArrayList<Object>)ContainerUtil.createLockFreeCopyOnWriteList();
+    //LockFreeCopyOnWriteArrayListExpBackoff2<Object> my = new LockFreeCopyOnWriteArrayListExpBackoff2<Object>();
+
+    for (int i = 0; i < 2; i++) {
+      Object[] array = my.getArray();
+      assertSame(ArrayUtil.EMPTY_OBJECT_ARRAY, array);
+      assertReallyEmpty(my);
+      my.add(this);
+      my.remove(this);
+      assertReallyEmpty(my);
+      my.add(this);
+      my.remove(0);
+      assertReallyEmpty(my);
+      my.add(this);
+      my.clear();
+      assertReallyEmpty(my);
+    }
+  }
+
+  private static void assertReallyEmpty(List<Object> my) {
+    assertEquals(0, my.size());
+
+    Object[] objects = my.toArray();
+    assertSame(ArrayUtil.EMPTY_OBJECT_ARRAY, objects);
+
+    Iterator<Object> iterator = my.iterator();
+    assertSame(EmptyIterator.getInstance(), iterator);
   }
 }

@@ -38,7 +38,7 @@ class SlideComponent extends JComponent {
   private final boolean myVertical;
   private final String myTitle;
 
-  private final List<Consumer<Integer>> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<Consumer<Integer>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private LightweightHint myTooltipHint;
   private final JLabel myLabel = new JLabel();
 

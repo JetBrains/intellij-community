@@ -95,7 +95,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   private final List<Project> myOpenProjects = new ArrayList<Project>();
   private Project[] myOpenProjectsArrayCache = {};
-  private final List<ProjectManagerListener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<ProjectManagerListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private final Set<Project> myTestProjects = new THashSet<Project>();
 
@@ -1038,7 +1038,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public void addProjectManagerListener(@NotNull Project project, @NotNull ProjectManagerListener listener) {
     List<ProjectManagerListener> listeners = project.getUserData(LISTENERS_IN_PROJECT_KEY);
     if (listeners == null) {
-      listeners = ((UserDataHolderEx)project).putUserDataIfAbsent(LISTENERS_IN_PROJECT_KEY, ContainerUtil.<ProjectManagerListener>createEmptyCOWList());
+      listeners = ((UserDataHolderEx)project)
+        .putUserDataIfAbsent(LISTENERS_IN_PROJECT_KEY, ContainerUtil.<ProjectManagerListener>createLockFreeCopyOnWriteList());
     }
     listeners.add(listener);
   }

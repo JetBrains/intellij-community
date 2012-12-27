@@ -41,7 +41,7 @@ import java.util.List;
  */
 public class TemporaryPlacesRegistry {
   private final Project myProject;
-  private final List<TempPlace> myTempPlaces = ContainerUtil.createEmptyCOWList();
+  private final List<TempPlace> myTempPlaces = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private final PsiModificationTracker myModificationTracker;
   private volatile long myPsiModificationCounter;

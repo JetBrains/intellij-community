@@ -104,7 +104,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   private final PerIndexDocumentVersionMap myLastIndexedDocStamps = new PerIndexDocumentVersionMap();
   @NotNull private final ChangedFilesCollector myChangedFilesCollector;
 
-  private final List<IndexableFileSet> myIndexableSets = ContainerUtil.createEmptyCOWList();
+  private final List<IndexableFileSet> myIndexableSets = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Map<IndexableFileSet, Project> myIndexableSetToProjectMap = new THashMap<IndexableFileSet, Project>();
 
   private static final int OK = 1;
@@ -128,7 +128,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   private volatile int myFilesModCount;
   private final AtomicInteger myUpdatingFiles = new AtomicInteger();
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"}) private volatile boolean myInitialized;
-    // need this variable for memory barrier
+  // need this variable for memory barrier
 
   public FileBasedIndexImpl(VirtualFileManager vfManager,
                             FileDocumentManager fdm,
@@ -1769,9 +1769,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
 
     @Nullable
-    private static SilentProgressIndicator create(){
+    private static SilentProgressIndicator create() {
       final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-      return indicator != null? new SilentProgressIndicator(indicator) : null;
+      return indicator != null ? new SilentProgressIndicator(indicator) : null;
     }
 
     @Override
@@ -2389,7 +2389,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
         if (!file.isDirectory()) {
           processor.processFile(file);
-        } else if (indicator != null) {
+        }
+        else if (indicator != null) {
           // once for directory should be cheap enough
           indicator.setText2(file.getPresentableUrl());
         }

@@ -46,7 +46,7 @@ import java.util.*;
  * @author yole
  */
 public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
-  private final List<ChangeListener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<ChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private MyUI myUI;
   private final Project myProject;
   private final List<FilePath> mySelection = new ArrayList<FilePath>();
@@ -103,7 +103,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
       return changeLists;
     }
     final ArrayList<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
-    for(CommittedChangeList list: changeLists) {
+    for (CommittedChangeList list : changeLists) {
       if (listMatchesSelection(list)) {
         result.add(list);
       }
@@ -112,9 +112,9 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
   }
 
   private boolean listMatchesSelection(final CommittedChangeList list) {
-    for(Change change: list.getChanges()) {
+    for (Change change : list.getChanges()) {
       FilePath path = ChangesUtil.getFilePath(change);
-      for(FilePath selPath: mySelection) {
+      for (FilePath selPath : mySelection) {
         if (path.isUnder(selPath, false)) {
           return true;
         }
@@ -142,13 +142,13 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
           final TreePath[] selectionPaths = myStructureTree.getSelectionPaths();
           if (selectionPaths != null) {
             for (TreePath selectionPath : selectionPaths) {
-              Collections.addAll(mySelection, ((ChangesBrowserNode) selectionPath.getLastPathComponent()).getFilePathsUnder());
+              Collections.addAll(mySelection, ((ChangesBrowserNode)selectionPath.getLastPathComponent()).getFilePathsUnder());
             }
           }
 
           if (Comparing.haveEqualElements(filePaths, mySelection)) return;
 
-          for(ChangeListener listener: myListeners) {
+          for (ChangeListener listener : myListeners) {
             listener.stateChanged(new ChangeEvent(this));
           }
         }
@@ -169,16 +169,18 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
     }
 
     public void reset() {
-      myState = TreeState.createOn(myStructureTree, (DefaultMutableTreeNode) myStructureTree.getModel().getRoot());
+      myState = TreeState.createOn(myStructureTree, (DefaultMutableTreeNode)myStructureTree.getModel().getRoot());
       myStructureTree.setModel(myBuilder.clearAndGetModel());
     }
 
     public void append(final List<CommittedChangeList> changeLists) {
-      final TreeState localState = (myState != null) && myBuilder.isEmpty() ? myState : TreeState.createOn(myStructureTree, (DefaultMutableTreeNode) myStructureTree.getModel().getRoot());
+      final TreeState localState = (myState != null) && myBuilder.isEmpty()
+                                   ? myState
+                                   : TreeState.createOn(myStructureTree, (DefaultMutableTreeNode)myStructureTree.getModel().getRoot());
 
       final Set<FilePath> filePaths = new HashSet<FilePath>();
-      for(CommittedChangeList changeList: changeLists) {
-        for(Change change: changeList.getChanges()) {
+      for (CommittedChangeList changeList : changeLists) {
+        for (Change change : changeList.getChanges()) {
           final FilePath path = ChangesUtil.getFilePath(change);
           if (path.getParentPath() != null) {
             filePaths.add(path.getParentPath());
@@ -188,7 +190,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
 
       final DefaultTreeModel model = myBuilder.buildModelFromFilePaths(filePaths);
       myStructureTree.setModel(model);
-      localState.applyTo(myStructureTree, (DefaultMutableTreeNode) myStructureTree.getModel().getRoot());
+      localState.applyTo(myStructureTree, (DefaultMutableTreeNode)myStructureTree.getModel().getRoot());
       myStructureTree.revalidate();
       myStructureTree.repaint();
       initRenderer();

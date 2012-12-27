@@ -35,7 +35,7 @@ import java.util.List;
 
 public class LocalHistoryFacade {
   private final ChangeList myChangeList;
-  private final List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public LocalHistoryFacade(ChangeList changeList) {
     myChangeList = changeList;

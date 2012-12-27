@@ -32,7 +32,7 @@ public class RegistryValue {
   private final Registry myRegistry;
   private final String myKey;
 
-  private final List<RegistryValueListener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<RegistryValueListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private boolean myChangedSinceStart;
 

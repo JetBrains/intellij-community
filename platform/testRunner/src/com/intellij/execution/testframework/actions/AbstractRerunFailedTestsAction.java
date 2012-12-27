@@ -53,7 +53,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public class AbstractRerunFailedTestsAction extends AnAction implements AnAction.TransparentUpdate, Disposable {
-  private static final List<AbstractRerunFailedTestsAction> registry = ContainerUtil.createEmptyCOWList();
+  private static final List<AbstractRerunFailedTestsAction> registry = ContainerUtil.createLockFreeCopyOnWriteList();
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.ui.actions.RerunFailedTestsAction");
   private TestFrameworkRunningModel myModel;
   private Getter<TestFrameworkRunningModel> myModelProvider;
@@ -95,7 +95,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
 
   @NotNull
   private AbstractRerunFailedTestsAction findActualAction() {
-    if (myParent != null  || registry.isEmpty())
+    if (myParent != null || registry.isEmpty())
       return this;
     List<AbstractRerunFailedTestsAction> candidates = new ArrayList<AbstractRerunFailedTestsAction>(registry);
     Collections.sort(candidates, new Comparator<AbstractRerunFailedTestsAction>() {
@@ -138,7 +138,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
   }
 
   @NotNull
-  protected List<AbstractTestProxy> getFailedTests(Project project){
+  protected List<AbstractTestProxy> getFailedTests(Project project) {
     TestFrameworkRunningModel model = getModel();
     final List<? extends AbstractTestProxy> myAllTests = model != null
                                                          ? model.getRoot().getAllTests()
@@ -196,7 +196,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     return null;
   }
 
-  protected static abstract class MyRunProfile extends RunConfigurationBase implements ModuleRunProfile{
+  protected static abstract class MyRunProfile extends RunConfigurationBase implements ModuleRunProfile {
     public RunConfigurationBase getConfiguration() {
       return myConfiguration;
     }
@@ -208,10 +208,12 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
       myConfiguration = configuration;
     }
 
-    public void clear() {    }
+    public void clear() {
+    }
 
 
-    public void checkConfiguration() throws RuntimeConfigurationException {}
+    public void checkConfiguration() throws RuntimeConfigurationException {
+    }
 
     ///////////////////////////////////Delegates
     public void readExternal(final Element element) throws InvalidDataException {

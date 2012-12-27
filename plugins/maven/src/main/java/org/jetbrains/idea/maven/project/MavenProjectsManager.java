@@ -98,7 +98,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private final EventDispatcher<MavenProjectsTree.Listener> myProjectsTreeDispatcher =
     EventDispatcher.create(MavenProjectsTree.Listener.class);
-  private final List<Listener> myManagerListeners = ContainerUtil.createEmptyCOWList();
+  private final List<Listener> myManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private ModificationTracker myModificationTracker;
 
   private MavenWorkspaceSettings myWorkspaceSettings;
@@ -1145,7 +1145,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       props.directory = FileUtil.toSystemIndependentName(dir);
 
       final String target = resource.getTargetPath();
-      props.targetPath = target != null? FileUtil.toSystemIndependentName(target) : null;
+      props.targetPath = target != null ? FileUtil.toSystemIndependentName(target) : null;
 
       props.isFiltered = resource.isFiltered();
       props.includes.clear();

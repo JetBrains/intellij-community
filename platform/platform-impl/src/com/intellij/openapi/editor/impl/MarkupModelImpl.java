@@ -53,7 +53,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   private final DocumentImpl myDocument;
 
   private RangeHighlighter[] myCachedHighlighters;
-  private final List<MarkupModelListener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<MarkupModelListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final RangeHighlighterTree myHighlighterTree;
 
   MarkupModelImpl(@NotNull DocumentImpl document) {

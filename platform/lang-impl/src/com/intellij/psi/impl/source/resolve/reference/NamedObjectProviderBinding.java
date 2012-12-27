@@ -52,7 +52,7 @@ public abstract class NamedObjectProviderBinding<Provider> implements ProviderBi
 
       if (psiReferenceProviders == null) {
         String key = caseSensitive ? attributeName : attributeName.toLowerCase();
-        psiReferenceProviders = ConcurrencyUtil.cacheOrGet(map, key, ContainerUtil.<ProviderInfo<Provider,ElementPattern>>createEmptyCOWList());
+        psiReferenceProviders = ConcurrencyUtil.cacheOrGet(map, key, ContainerUtil.<ProviderInfo<Provider,ElementPattern>>createLockFreeCopyOnWriteList());
       }
 
       psiReferenceProviders.add(new ProviderInfo<Provider,ElementPattern>(provider, filter, priority));

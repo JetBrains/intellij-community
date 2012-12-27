@@ -30,10 +30,10 @@ import java.util.List;
 /**
  * Represents some data that probably can be compared with some other.
  *
- * @see DiffRequest
+ * @see com.intellij.openapi.diff.DiffRequest
  */
 public abstract class DiffContent {
-  private final List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myIsEmpty;
 
   public void addListener(Listener listener) {
@@ -72,7 +72,7 @@ public abstract class DiffContent {
   }
 
   /**
-   * Called by {@link DiffTool}
+   * Called by {@link com.intellij.openapi.diff.DiffTool}
    * when document returned by {@link #getDocument()} is opened in editor. Implementors may use this notification to
    * add listeners when document is editing and remove when editing done to avoid memory leaks.
    *

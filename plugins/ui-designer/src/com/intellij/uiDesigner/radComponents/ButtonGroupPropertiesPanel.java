@@ -38,7 +38,7 @@ public class ButtonGroupPropertiesPanel implements CustomPropertiesPanel {
   private JPanel myPanel;
   private final RadRootContainer myRootContainer;
   private final RadButtonGroup myGroup;
-  private final List<ChangeListener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<ChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public ButtonGroupPropertiesPanel(final RadRootContainer rootContainer, final RadButtonGroup group) {
     myRootContainer = rootContainer;
