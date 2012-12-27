@@ -54,6 +54,7 @@ import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.groovy.annotator.GroovyFrameworkConfigNotification;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -525,5 +526,10 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
                                               notification.expire();
                                             }
                                           }).notify(project);
+  }
+
+  @TestOnly
+  public static void clearAllInTests() {
+    ourStandardScripts = null;
   }
 }
