@@ -17,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.util.List;
-import java.util.regex.Matcher;
 
 public final class HgErrorUtil {
 
@@ -62,10 +61,6 @@ public final class HgErrorUtil {
     if (StringUtil.isEmptyOrSpaces(destinationPath)) {
       return false;
     }
-    Matcher matcher = HgUtil.reposirotyUrlWithPasswordPattern.matcher(destinationPath);
-    if (matcher.matches()) {
-      return true;
-    }
-    return false;
+    return HgUtil.reposirotyUrlWithPasswordPattern.matcher(destinationPath).matches();
   }
 }
