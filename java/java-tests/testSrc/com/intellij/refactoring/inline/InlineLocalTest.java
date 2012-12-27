@@ -195,7 +195,12 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
   public void testUncheckedCast() throws Exception {
     doTest(true);
   }
+
   public void testUncheckedCastNotNeeded() throws Exception {
+    doTest(true);
+  }
+
+  public void testCastNotNeeded() throws Exception {
     doTest(true);
   }
 
