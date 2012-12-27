@@ -49,7 +49,6 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -102,15 +101,8 @@ public class BrowserUtil {
     browse(VfsUtil.toUri(file));
   }
 
-  public static boolean browse(@NotNull File file) {
-    try {
-      browse(new URI(StandardFileSystems.FILE_PROTOCOL, "", file.getAbsolutePath(), null));
-      return true;
-    }
-    catch (URISyntaxException e) {
-      LOG.debug(e);
-      return false;
-    }
+  public static void browse(@NotNull File file) {
+    browse(VfsUtil.toUri(file));
   }
 
   public static void browse(@NotNull URL url) {
@@ -158,10 +150,8 @@ public class BrowserUtil {
         }
       }
 
-      if (browse(file)) {
-        return;
-      }
-      uri = null;
+      browse(file);
+      return;
     }
 
     if (uri == null) {

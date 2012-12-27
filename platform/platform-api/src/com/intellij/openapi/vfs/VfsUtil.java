@@ -498,7 +498,7 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   /**
-   * @return correct URI, must be used only for external communication
+   * @return correct URL, must be used only for external communication
    */
   @NotNull
   public static URI toUri(@NotNull VirtualFile file) {
@@ -511,6 +511,23 @@ public class VfsUtil extends VfsUtilCore {
         return new URI(file.getFileSystem().getProtocol(), "", path, null, null);
       }
       return new URI(file.getFileSystem().getProtocol(), path, null);
+    }
+    catch (URISyntaxException e) {
+      throw new IllegalArgumentException(e);
+    }
+  }
+
+  /**
+   * @return correct URL, must be used only for external communication
+   */
+  @NotNull
+  public static URI toUri(@NotNull File file) {
+    String path = file.toURI().getPath();
+    try {
+      if (SystemInfo.isWindows && path.charAt(0) != '/') {
+        path = '/' + path;
+      }
+      return new URI(StandardFileSystems.FILE_PROTOCOL, "", path, null, null);
     }
     catch (URISyntaxException e) {
       throw new IllegalArgumentException(e);
