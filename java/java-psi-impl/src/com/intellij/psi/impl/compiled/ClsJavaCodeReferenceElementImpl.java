@@ -26,7 +26,9 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
@@ -125,7 +127,19 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
       int index = 0;
       for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable((PsiClass)resolve)) {
         if (index >= myTypeParameters.length) {
-          if (parameter.getOwner() == resolve) substitutionMap.put(parameter, null);
+          final PsiTypeParameterListOwner parameterOwner = parameter.getOwner();
+          if (parameterOwner == resolve) {
+            substitutionMap.put(parameter, null);
+          } else if (parameterOwner instanceof PsiClass) {
+            PsiElement containingClass = myParent;
+            while ((containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class, true)) != null) {
+              final PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getClassSubstitutor((PsiClass)parameterOwner, (PsiClass)containingClass, PsiSubstitutor.EMPTY);
+              if (superClassSubstitutor != null) {
+                substitutionMap.put(parameter, superClassSubstitutor.substitute(parameter));
+                break;
+              }
+            }
+          }
         }
         else {
           substitutionMap.put(parameter, myTypeParameters[index].getType());
