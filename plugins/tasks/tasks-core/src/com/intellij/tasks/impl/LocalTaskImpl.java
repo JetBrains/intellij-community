@@ -61,7 +61,7 @@ public class LocalTaskImpl extends LocalTask {
   private List<ChangeListInfo> myChangeLists = new ArrayList<ChangeListInfo>();
   private boolean myRunning = false;
   private List<WorkItem> myWorkItems = new ArrayList<WorkItem>();
-  private Date myLastPost = null;
+  private Date myLastPost;
 
 
   /** for serialization */
@@ -86,6 +86,7 @@ public class LocalTaskImpl extends LocalTask {
       myActive = ((LocalTaskImpl)origin).isActive();
       myWorkItems = ((LocalTaskImpl)origin).getWorkItems();
       myRunning = ((LocalTaskImpl)origin).isRunning();
+      myLastPost = ((LocalTaskImpl)origin).getLastPost();
     }
   }
 
@@ -302,7 +303,7 @@ public class LocalTaskImpl extends LocalTask {
     myWorkItems.add(workItem);
   }
 
-  @Tag("lastWorkItemPostingDate")
+  @Tag("lastPost")
   @Override
   public Date getLastPost() {
     return myLastPost;

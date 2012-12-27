@@ -11,6 +11,7 @@ import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.timeTracking.model.WorkItem;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -196,6 +197,7 @@ public class TimeTrackingManager implements ProjectComponent, PersistentStateCom
 
   @Override
   public void loadState(final TimeTrackingManager.Config state) {
+    XmlSerializerUtil.copyBean(state, myConfig);
   }
 
   @Override

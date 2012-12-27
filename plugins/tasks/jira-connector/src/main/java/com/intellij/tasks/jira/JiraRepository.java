@@ -4,6 +4,7 @@ import com.atlassian.connector.commons.jira.soap.axis.JiraSoapService;
 import com.atlassian.connector.commons.jira.soap.axis.JiraSoapServiceServiceLocator;
 import com.atlassian.theplugin.jira.api.JIRAIssueBean;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
@@ -215,16 +216,23 @@ public class JiraRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public void updateTimeSpent(final LocalTask task, final int timeSpent, final String comment) throws Exception {
+  public void updateTimeSpent(final LocalTask task, final int timeSpentInMinutes, final String comment) throws Exception {
     final HttpClient client = login();
     checkVersion(client);
     PostMethod method = new PostMethod(getUrl() + "/rest/api/2/issue/" + task.getId() + "/worklog");
-    method.setRequestEntity(new StringRequestEntity("{\"timeSpentSeconds\" : " + String.valueOf(timeSpent * 60) +
-                                                    ", \"comment\" : " + comment + "}", "application/json", "UTF-8"));
+    method.setRequestEntity(
+      new StringRequestEntity("{\"timeSpentSeconds\" : " + String.valueOf(calculateTimeSpent(timeSpentInMinutes)) +
+                              (StringUtil.isNotEmpty(comment) ? ", \"comment\" : " + comment : "")
+                              + " }", "application/json", "UTF-8"));
     client.executeMethod(method);
     if (method.getStatusCode() != 201) {
       throw new Exception(method.getResponseBodyAsString());
     }
+  }
+
+  private static long calculateTimeSpent(final int timeSpentInMinutes) {
+    int days = timeSpentInMinutes / 60 / 24;
+    return (days * 8 * 60 + timeSpentInMinutes % (60 * 24)) * 60;
   }
 
   private void checkVersion(final HttpClient client) throws Exception {
