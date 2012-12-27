@@ -2,8 +2,8 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -29,7 +29,7 @@ public class HgIdentifyCommand {
   public HgCommandResult execute() {
     final List<String> arguments = new LinkedList<String>();
     arguments.add(source);
-    final HgCommandExecutor executor = new HgCommandExecutor(project);
+    final HgCommandExecutor executor = new HgCommandExecutor(project, source);
     executor.setSilent(true);
     return executor.executeInCurrentThread(null, "identify", arguments);
   }

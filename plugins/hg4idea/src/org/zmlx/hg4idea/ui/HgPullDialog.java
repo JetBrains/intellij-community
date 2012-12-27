@@ -99,14 +99,16 @@ public class HgPullDialog extends DialogWrapper {
         VirtualFile repo = hgRepositorySelector.getRepository();
         HgShowConfigCommand configCommand = new HgShowConfigCommand(project);
         final String defaultPath = configCommand.getDefaultPath(repo);
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            myRepositoryURL.setText(defaultPath);
-          }
-        });
+        if (!StringUtil.isEmptyOrSpaces(defaultPath)) {
+          UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              myRepositoryURL.setText(defaultPath);
+            }
+          });
 
-        onChangePullSource();
+          onChangePullSource();
+        }
       }
     });
   }

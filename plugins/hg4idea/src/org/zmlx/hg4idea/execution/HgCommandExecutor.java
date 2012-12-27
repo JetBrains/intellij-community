@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgGlobalSettings;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
+import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.util.HgEncodingUtil;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
@@ -57,6 +58,7 @@ public final class HgCommandExecutor {
 
   private final Project myProject;
   private final HgVcs myVcs;
+  private final String myDestination;
 
   private Charset myCharset = HgEncodingUtil.getDefaultCharset();
   private boolean myIsSilent = false;
@@ -64,8 +66,13 @@ public final class HgCommandExecutor {
   private List<String> myOptions = DEFAULT_OPTIONS;
 
   public HgCommandExecutor(Project project) {
+    this(project, null);
+  }
+
+  public HgCommandExecutor(Project project, @Nullable String destination) {
     myProject = project;
     myVcs = HgVcs.getInstance(myProject);
+    myDestination = destination;
   }
 
   public void setCharset(Charset charset) {
@@ -110,6 +117,12 @@ public final class HgCommandExecutor {
                                                 @Nullable final List<String> arguments, @Nullable HgPromptHandler handler) {
     HgCommandResult result = executeInCurrentThread(repo, operation, arguments, handler, false);
     if (HgErrorUtil.isAuthorizationError(result)) {
+      if (HgErrorUtil.hasAuthorizationInDestinationPath(myDestination)) {
+        new HgCommandResultNotifier(myProject)
+          .notifyError(result, "Authorization failed", "Your hgrc file settings have wrong username or password in [paths].\n" +
+                                                       "Please, update your .hg/hgrc file.");
+        return null;
+      }
       result = executeInCurrentThread(repo, operation, arguments, handler, true);
     }
     return result;

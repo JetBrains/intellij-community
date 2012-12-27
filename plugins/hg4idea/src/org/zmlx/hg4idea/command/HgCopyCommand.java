@@ -30,9 +30,9 @@ public class HgCopyCommand {
   }
 
   public void execute(VirtualFile source, VirtualFile target) {
-    HgCommandExecutor executor = new HgCommandExecutor(myProject);
     VirtualFile sourceRepo = VcsUtil.getVcsRootFor(myProject, source);
     VirtualFile targetRepo = VcsUtil.getVcsRootFor(myProject, target);
+    HgCommandExecutor executor = new HgCommandExecutor(myProject, VcsFileUtil.relativeOrFullPath(sourceRepo, source));
     if (sourceRepo != null && targetRepo != null && sourceRepo.equals(targetRepo)) {
       executor.execute(sourceRepo, "copy", Arrays.asList("--after",
                                                          VcsFileUtil.relativeOrFullPath(sourceRepo, source),

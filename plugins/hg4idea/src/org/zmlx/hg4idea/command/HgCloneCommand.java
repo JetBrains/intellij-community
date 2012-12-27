@@ -31,7 +31,7 @@ public class HgCloneCommand {
     final List<String> arguments = new ArrayList<String>(2);
     arguments.add(repositoryURL);
     arguments.add(directory);
-    final HgCommandExecutor executor = new HgCommandExecutor(project);
+    final HgCommandExecutor executor = new HgCommandExecutor(project, repositoryURL);
     executor.setShowOutput(true);
     return executor.executeInCurrentThread(null, "clone", arguments);
   }

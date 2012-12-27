@@ -17,6 +17,8 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public final class HgErrorUtil {
 
@@ -55,5 +57,17 @@ public final class HgErrorUtil {
 
   public static boolean hasErrorsInCommandExecution(HgCommandResult result) {
     return isAbort(result) || result.getExitValue() != 0;
+  }
+
+  public static boolean hasAuthorizationInDestinationPath(String destinationPath) {
+    if (StringUtil.isEmptyOrSpaces(destinationPath)) {
+      return false;
+    }
+    Pattern pattern = Pattern.compile("(.+):(.+)@(.+)");
+    Matcher matcher = pattern.matcher(destinationPath);
+    if (matcher.matches()) {
+      return true;
+    }
+    return false;
   }
 }
