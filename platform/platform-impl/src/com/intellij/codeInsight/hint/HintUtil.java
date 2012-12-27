@@ -34,7 +34,7 @@ import java.awt.*;
 import java.awt.event.MouseListener;
 
 public class HintUtil {
-  public static final Color INFORMATION_COLOR = new JBColor(new Color(253, 254, 226), new Color(0x575C5D));
+  public static final Color INFORMATION_COLOR = new JBColor(new Color(253, 254, 226), new Color(0x4d4f51));
   public static final Color QUESTION_COLOR = new JBColor(new Color(181, 208, 251), new Color(55, 108, 137));
   public static final Color ERROR_COLOR = new JBColor(new Color(255, 220, 220), new Color(0x781732));
 
