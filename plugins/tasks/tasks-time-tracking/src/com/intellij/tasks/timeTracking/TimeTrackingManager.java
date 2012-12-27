@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.*;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskManager;
@@ -38,7 +39,7 @@ public class TimeTrackingManager implements ProjectComponent, PersistentStateCom
   private final TaskManager myTaskManager;
   private final Config myConfig = new Config();
   private Timer myTimeTrackingTimer;
-  private Alarm myIdleAlarm;
+  private final Alarm myIdleAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private Runnable myActivityListener;
   private LocalTask myLastActiveTask;
 
@@ -139,8 +140,6 @@ public class TimeTrackingManager implements ProjectComponent, PersistentStateCom
         }
       });
 
-      myIdleAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-
       myActivityListener = new Runnable() {
         @Override
         public void run() {
@@ -180,7 +179,7 @@ public class TimeTrackingManager implements ProjectComponent, PersistentStateCom
       myTimeTrackingTimer.stop();
     }
     myIdleAlarm.cancelAllRequests();
-    myIdleAlarm.dispose();
+    Disposer.dispose(myIdleAlarm);
   }
 
   @NotNull
