@@ -19,6 +19,7 @@ package com.intellij.tasks.impl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.tasks.*;
+import com.intellij.tasks.timeTracking.model.WorkItem;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
@@ -58,8 +59,9 @@ public class LocalTaskImpl extends LocalTask {
 
   private boolean myActive;
   private List<ChangeListInfo> myChangeLists = new ArrayList<ChangeListInfo>();
-  private long myTimeSpent = 0;
   private boolean myRunning = false;
+  private List<WorkItem> myWorkItems = new ArrayList<WorkItem>();
+  private Date myLastPost = null;
 
 
   /** for serialization */
@@ -82,7 +84,7 @@ public class LocalTaskImpl extends LocalTask {
     if (origin instanceof LocalTaskImpl) {
       myChangeLists = ((LocalTaskImpl)origin).getChangeLists();
       myActive = ((LocalTaskImpl)origin).isActive();
-      myTimeSpent = ((LocalTaskImpl)origin).getTimeSpent();
+      myWorkItems = ((LocalTaskImpl)origin).getWorkItems();
       myRunning = ((LocalTaskImpl)origin).isRunning();
     }
   }
@@ -264,13 +266,12 @@ public class LocalTaskImpl extends LocalTask {
     return myCustomIcon;
   }
 
-  @Tag("timeSpent")
-  public long getTimeSpent() {
-    return myTimeSpent;
-  }
-
-  public void setTimeSpent(final long timeSpent) {
-    myTimeSpent = timeSpent;
+  public long getTotalTimeSpent() {
+    long timeSpent = 0;
+    for (WorkItem item : myWorkItems) {
+      timeSpent += item.duration;
+    }
+    return timeSpent;
   }
 
   @Tag("running")
@@ -281,5 +282,57 @@ public class LocalTaskImpl extends LocalTask {
 
   public void setRunning(final boolean running) {
     myRunning = running;
+  }
+
+  @Override
+  public void setWorkItems(final List<WorkItem> workItems) {
+    myWorkItems = workItems;
+  }
+
+  @NotNull
+  @Property(surroundWithTag = false)
+  @AbstractCollection(surroundWithTag = false, elementTag="workItem")
+  @Override
+  public List<WorkItem> getWorkItems() {
+    return myWorkItems;
+  }
+
+  @Override
+  public void addWorkItem(final WorkItem workItem) {
+    myWorkItems.add(workItem);
+  }
+
+  @Tag("lastWorkItemPostingDate")
+  @Override
+  public Date getLastPost() {
+    return myLastPost;
+  }
+
+  @Override
+  public void setLastPost(final Date date) {
+    myLastPost = date;
+  }
+
+  @Override
+  public long getTimeSpentFromLastPost() {
+    long timeSpent = 0;
+    if (myLastPost != null) {
+      for (WorkItem item : myWorkItems) {
+        if (item.from.getTime() < myLastPost.getTime()) {
+          if (item.from.getTime() + item.duration > myLastPost.getTime()) {
+            timeSpent += item.from.getTime() + item.duration - myLastPost.getTime();
+          }
+        }
+        else {
+          timeSpent += item.duration;
+        }
+      }
+    }
+    else {
+      for (WorkItem item : myWorkItems) {
+        timeSpent += item.duration;
+      }
+    }
+    return timeSpent;
   }
 }

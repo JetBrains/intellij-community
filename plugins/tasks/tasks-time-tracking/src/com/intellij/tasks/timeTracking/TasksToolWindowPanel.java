@@ -136,26 +136,43 @@ public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Dispo
     });
     group.add(new ModeToggleAction());
     group.add(new StartStopAction());
-    group.add(new AnAction("Post work item to bugtracker", "Post work item to bugtracker", AllIcons.Actions.Export) {
-      @Override
-      public void actionPerformed(final AnActionEvent e) {
-        final LocalTask localTask = myTable.getSelectedObject();
-        if (localTask == null) return;
-        new SendTimeTrackingInformationDialog(myProject, localTask).show();
-      }
 
-      @Override
-      public void update(final AnActionEvent e) {
-        final LocalTask localTask = myTable.getSelectedObject();
-        if (localTask == null) {
-          e.getPresentation().setEnabled(false);
+    if (timeManagementExist()) {
+      group.add(new AnAction("Post work item to bugtracker", "Post work item to bugtracker", AllIcons.Actions.Export) {
+        @Override
+        public void actionPerformed(final AnActionEvent e) {
+          final LocalTask localTask = myTable.getSelectedObject();
+          if (localTask == null) return;
+          new SendTimeTrackingInformationDialog(myProject, localTask).show();
         }
-        else {
-          final TaskRepository repository = localTask.getRepository();
-          e.getPresentation().setEnabled(repository != null && repository.isSupported(TaskRepository.TIME_MANAGEMENT));
+
+        @Override
+        public void update(final AnActionEvent e) {
+          final LocalTask localTask = myTable.getSelectedObject();
+          if (localTask == null) {
+            e.getPresentation().setEnabled(false);
+          }
+          else {
+            final TaskRepository repository = localTask.getRepository();
+            e.getPresentation().setEnabled(repository != null && repository.isSupported(TaskRepository.TIME_MANAGEMENT));
+          }
         }
-      }
-    });
+      });
+
+      group.add(new ToggleAction("Show time spent from last post of work item", "Show time spent from last post of work item",
+                                 TasksIcons.Clock) {
+        @Override
+        public boolean isSelected(final AnActionEvent e) {
+          return myTimeTrackingManager.getState().showSpentTimeFromLastPost;
+        }
+
+        @Override
+        public void setSelected(final AnActionEvent e, final boolean state) {
+          myTimeTrackingManager.getState().showSpentTimeFromLastPost = state;
+          myTable.repaint();
+        }
+      });
+    }
     final ActionToolbar actionToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, myVertical);
     return actionToolBar.getComponent();
   }
@@ -166,7 +183,7 @@ public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Dispo
                                                  @Override
                                                  public boolean value(final LocalTask task) {
                                                    return task.isActive() ||
-                                                          (task.getTimeSpent() != 0 &&
+                                                          (task.getTotalTimeSpent() != 0 &&
                                                            (myTimeTrackingManager.getState().showClosedTasks ||
                                                             !myTaskManager.isLocallyClosed(task)));
                                                  }
@@ -227,7 +244,8 @@ public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Dispo
       @Nullable
       @Override
       public String valueOf(final LocalTask task) {
-        long timeSpent = task.getTimeSpent();
+        long timeSpent =
+          myTimeTrackingManager.getState().showSpentTimeFromLastPost ? task.getTimeSpentFromLastPost() : task.getTotalTimeSpent();
         if (task.isActive()) {
           return formatDuration(timeSpent);
         }
@@ -265,13 +283,26 @@ public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Dispo
         return new Comparator<LocalTask>() {
           @Override
           public int compare(final LocalTask o1, final LocalTask o2) {
-            return Comparing.compare(o1.getTimeSpent(), o2.getTimeSpent());
+            final long timeSpent1 =
+              myTimeTrackingManager.getState().showSpentTimeFromLastPost ? o1.getTimeSpentFromLastPost() : o1.getTotalTimeSpent();
+            final long timeSpent2 =
+              myTimeTrackingManager.getState().showSpentTimeFromLastPost ? o2.getTimeSpentFromLastPost() : o2.getTotalTimeSpent();
+            return Comparing.compare(timeSpent1, timeSpent2);
           }
         };
       }
     };
 
     return new ListTableModel<LocalTask>((new ColumnInfo[]{task, spentTime}));
+  }
+
+  private boolean timeManagementExist() {
+    for (TaskRepository repository : myTaskManager.getAllRepositories()) {
+      if (repository.isSupported(TaskRepository.TIME_MANAGEMENT)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override

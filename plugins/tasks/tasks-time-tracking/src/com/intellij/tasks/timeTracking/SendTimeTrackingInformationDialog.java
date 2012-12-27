@@ -22,12 +22,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskRepository;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.ui.FormBuilder;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,26 +39,39 @@ public class SendTimeTrackingInformationDialog extends DialogWrapper {
 
   @Nullable private final Project myProject;
   private final LocalTask myTask;
-  private JTextField myTimeSpentField;
-  private JTextArea myCommentField;
+  private JRadioButton myFromPreviousPostRadioButton;
+  private JRadioButton myTotallyRadioButton;
+  private JRadioButton myCustomRadioButton;
+  private JTextField myFromPreviousPostTextField;
+  private JTextField myTotallyTextField;
+  private JTextField myCustomTextField;
+  private JTextArea myCommentTextArea;
+  private JPanel myPanel;
+  private JLabel myTaskNameLabel;
 
   protected SendTimeTrackingInformationDialog(@Nullable final Project project, final LocalTask localTask) {
     super(project);
     myProject = project;
     myTask = localTask;
     setTitle("Time Tracking");
+
+    myTaskNameLabel.setText(myTask.getPresentableName());
+    myFromPreviousPostRadioButton.setSelected(true);
+    if (myTask.getLastPost() == null) {
+      myFromPreviousPostRadioButton.setVisible(false);
+      myFromPreviousPostTextField.setVisible(false);
+      myTotallyRadioButton.setSelected(true);
+    }
+    myFromPreviousPostTextField.setText(formatDuration(myTask.getTimeSpentFromLastPost()));
+    myTotallyTextField.setText(formatDuration(myTask.getTotalTimeSpent()));
+
     init();
   }
 
   @Nullable
   @Override
   protected JComponent createCenterPanel() {
-    myTimeSpentField = new JTextField(String.valueOf(formatDuration(myTask.getTimeSpent())));
-    myCommentField = new JTextArea();
-    return FormBuilder.createFormBuilder()
-      .addComponent(new JLabel("Send information about activity on " + myTask.getPresentableName()))
-      .addLabeledComponent("Time spent:", myTimeSpentField, UIUtil.LARGE_VGAP)
-      .addLabeledComponent("Comment", ScrollPaneFactory.createScrollPane(myCommentField)).getPanel();
+    return myPanel;
   }
 
   private static String formatDuration(final long milliseconds) {
@@ -82,7 +93,9 @@ public class SendTimeTrackingInformationDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    final Matcher matcher = PATTERN.matcher(myTimeSpentField.getText());
+    String timeSpentText = myFromPreviousPostRadioButton.isSelected() ? myFromPreviousPostTextField.getText()
+                           : myTotallyRadioButton.isSelected() ? myTotallyTextField.getText() : myCustomTextField.getText();
+    final Matcher matcher = PATTERN.matcher(timeSpentText);
     if (matcher.matches()) {
       final int timeSpent = Integer.valueOf(matcher.group(1)) * 24 * 60 + Integer.valueOf(matcher.group(2)) * 60 + Integer.valueOf(
         matcher.group(3));
@@ -91,7 +104,8 @@ public class SendTimeTrackingInformationDialog extends DialogWrapper {
       if (repository != null &&
           repository.isSupported(TaskRepository.TIME_MANAGEMENT)) {
         try {
-          repository.updateTimeSpent(myTask, timeSpent, myCommentField.getText());
+          repository.updateTimeSpent(myTask, timeSpent, myCommentTextArea.getText());
+          myTask.setLastPost(new Date());
         }
         catch (Exception e1) {
           Messages
@@ -109,7 +123,9 @@ public class SendTimeTrackingInformationDialog extends DialogWrapper {
   @Nullable
   @Override
   protected ValidationInfo doValidate() {
-    if (!PATTERN.matcher(myTimeSpentField.getText()).matches()) return new ValidationInfo("Time Spent has broken format");
+    String timeSpentText = myFromPreviousPostRadioButton.isSelected() ? myFromPreviousPostTextField.getText()
+                                                                      : myTotallyRadioButton.isSelected() ? myTotallyTextField.getText() : myCustomTextField.getText();
+    if (!PATTERN.matcher(timeSpentText).matches()) return new ValidationInfo("Time Spent has broken format");
     return null;
   }
 

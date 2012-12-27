@@ -8,6 +8,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.*;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskManager;
+import com.intellij.tasks.timeTracking.model.WorkItem;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Date;
 
 /**
  * User: Evgeny.Zakrevsky
@@ -37,6 +39,7 @@ public class TimeTrackingManager implements ProjectComponent, PersistentStateCom
   private Timer myTimeTrackingTimer;
   private Alarm myIdleAlarm;
   private Runnable myActivityListener;
+  private LocalTask myLastActiveTask;
 
   public TimeTrackingManager(Project project,
                              TaskManager taskManager) {
@@ -106,16 +109,22 @@ public class TimeTrackingManager implements ProjectComponent, PersistentStateCom
         @Override
         public void actionPerformed(final ActionEvent e) {
           final LocalTask activeTask = myTaskManager.getActiveTask();
+          if (myLastActiveTask != activeTask) {
+            activeTask.addWorkItem(new WorkItem(new Date()));
+          }
           if (getState().autoMode) {
-            activeTask.setTimeSpent(activeTask.getTimeSpent() + TIME_TRACKING_TIME_UNIT);
+            final WorkItem lastWorkItem = activeTask.getWorkItems().get(activeTask.getWorkItems().size() - 1);
+            lastWorkItem.duration += TIME_TRACKING_TIME_UNIT;
             getState().totallyTimeSpent += TIME_TRACKING_TIME_UNIT;
           }
           else {
             if (activeTask.isRunning()) {
-              activeTask.setTimeSpent(activeTask.getTimeSpent() + TIME_TRACKING_TIME_UNIT);
+              final WorkItem lastWorkItem = activeTask.getWorkItems().get(activeTask.getWorkItems().size() - 1);
+              lastWorkItem.duration += TIME_TRACKING_TIME_UNIT;
               getState().totallyTimeSpent += TIME_TRACKING_TIME_UNIT;
             }
           }
+          myLastActiveTask = activeTask;
         }
       });
       StartupManager.getInstance(myProject).registerStartupActivity(new Runnable() {
@@ -198,10 +207,11 @@ public class TimeTrackingManager implements ProjectComponent, PersistentStateCom
   }
 
   public static class Config {
-    public boolean enabled = true;
+    public boolean enabled = false;
     public long totallyTimeSpent = 0;
     public int suspendDelayInSeconds = 600;
     public boolean autoMode = true;
     public boolean showClosedTasks = true;
+    public boolean showSpentTimeFromLastPost = false;
   }
 }
