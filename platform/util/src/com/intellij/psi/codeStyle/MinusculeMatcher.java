@@ -304,10 +304,17 @@ public class MinusculeMatcher implements Matcher {
   }
 
   private boolean isWildcard(int patternIndex) {
-    return isPatternChar(patternIndex, ' ') || isPatternChar(patternIndex, '*');
+    return isPatternChar(patternIndex, ' ', '*');
   }
   private boolean isPatternChar(int patternIndex, char c) {
     return patternIndex >= 0 && patternIndex < myPattern.length && myPattern[patternIndex] == c;
+  }
+  private boolean isPatternChar(int patternIndex, char c1, char c2) {
+    if (patternIndex >= 0 && patternIndex < myPattern.length) {
+      char pc = myPattern[patternIndex];
+      return pc == c1 || pc == c2;
+    }
+    return false;
   }
 
   private int indexOfWordStart(@NotNull String name, int patternIndex, int startFrom, boolean isAsciiName) {
