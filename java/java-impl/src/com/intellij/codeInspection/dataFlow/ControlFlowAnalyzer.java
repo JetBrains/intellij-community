@@ -839,17 +839,16 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override
   public void visitResourceList(PsiResourceList resourceList) {
-    startElement(resourceList);
-
-    List<PsiResourceVariable> variables = resourceList.getResourceVariables();
-    for (PsiResourceVariable variable : variables) {
+    for (PsiResourceVariable variable : resourceList.getResourceVariables()) {
       PsiExpression initializer = variable.getInitializer();
       if (initializer != null) {
         initializeVariable(variable, initializer);
       }
+      PsiMethod closer = PsiUtil.getResourceCloserMethod(variable);
+      if (closer != null) {
+        addMethodThrows(closer);
+      }
     }
-
-    finishElement(resourceList);
   }
 
   @Override public void visitWhileStatement(PsiWhileStatement statement) {
