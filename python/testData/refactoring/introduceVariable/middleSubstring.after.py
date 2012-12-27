@@ -1,2 +1,2 @@
 a = "lo wor"
-print("hel" + a + "ld")
+print(prefix + "hel" + a + "ld")

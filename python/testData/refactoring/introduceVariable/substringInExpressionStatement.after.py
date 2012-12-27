@@ -1,2 +1,2 @@
 a = "two"
-"one " + a + " three"
+"one %s three" % a

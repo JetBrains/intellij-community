@@ -1,12 +1,16 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.HashMap;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 
 /**
@@ -219,6 +223,68 @@ public class PyStringFormatParser {
       }
     }
     return result;
+  }
+
+  @NotNull
+  public static List<SubstitutionChunk> getPositionalSubstitutions(@NotNull List<SubstitutionChunk> substitutions) {
+    final ArrayList<SubstitutionChunk> result = new ArrayList<SubstitutionChunk>();
+    for (SubstitutionChunk s : substitutions) {
+      if (s.getMappingKey() == null) {
+        result.add(s);
+      }
+    }
+    return result;
+  }
+
+  @NotNull
+  public static Map<String, SubstitutionChunk> getKeywordSubstitutions(@NotNull List<SubstitutionChunk> substitutions) {
+    final Map<String, SubstitutionChunk> result = new HashMap<String, SubstitutionChunk>();
+    for (SubstitutionChunk s : substitutions) {
+      final String key = s.getMappingKey();
+      if (key != null) {
+        result.put(key, s);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Return the RHS operand of %-based string literal format expression.
+   */
+  @Nullable
+  public static PyExpression getFormatValueExpression(@NotNull PyStringLiteralExpression element) {
+    final PsiElement parent = element.getParent();
+    if (parent instanceof PyBinaryExpression) {
+      final PyBinaryExpression binaryExpr = (PyBinaryExpression)parent;
+      if (binaryExpr.isOperator("%")) {
+        PyExpression expr = binaryExpr.getRightExpression();
+        while (expr instanceof PyParenthesizedExpression) {
+          expr = ((PyParenthesizedExpression)expr).getContainedExpression();
+        }
+        return expr;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Return the argument list of the str.format() literal format expression.
+   */
+  @Nullable
+  public static PyArgumentList getNewStyleFormatValueExpression(@NotNull PyStringLiteralExpression element) {
+    final PsiElement parent = element.getParent();
+    if (parent instanceof PyQualifiedExpression) {
+      final PyQualifiedExpression qualifiedExpr = (PyQualifiedExpression)parent;
+      final String name = qualifiedExpr.getReferencedName();
+      if ("format".equals(name)) {
+        final PsiElement parent2 = qualifiedExpr.getParent();
+        if (parent2 instanceof PyCallExpression) {
+          final PyCallExpression callExpr = (PyCallExpression)parent2;
+          return callExpr.getArgumentList();
+        }
+      }
+    }
+    return null;
   }
 
   @NotNull

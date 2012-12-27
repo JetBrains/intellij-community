@@ -7,9 +7,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PythonStringUtil;
+import com.jetbrains.python.inspections.PyStringFormatParser;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 import static com.jetbrains.python.PyTokenTypes.*;
 
@@ -72,34 +75,68 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
                                                             @NotNull PsiElement newExpression,
                                                             @NotNull TextRange textRange) {
     final String fullText = oldExpression.getText();
-    final PyElementGenerator generator = PyElementGenerator.getInstance(oldExpression.getProject());
-    final LanguageLevel languageLevel = LanguageLevel.forElement(oldExpression);
     final String prefix = fullText.substring(0, textRange.getStartOffset());
     final String suffix = fullText.substring(textRange.getEndOffset(), oldExpression.getTextLength());
-    final Pair<String, String> detectedQuotes = PythonStringUtil.getQuotes(fullText);
-    final Pair<String, String> quotes = detectedQuotes != null ? detectedQuotes : Pair.create("'", "'");
-    final PsiElement parent = oldExpression.getParent();
-    final boolean parensNeeded = parent instanceof PyExpression && !(parent instanceof PyParenthesizedExpression);
-    final String leftQuote = quotes.getFirst();
-    final String rightQuote = quotes.getSecond();
-    final StringBuilder builder = new StringBuilder();
-    if (parensNeeded) {
-      builder.append("(");
+    final PyExpression valueExpression = PyStringFormatParser.getFormatValueExpression(oldExpression);
+
+    final PyElementGenerator generator = PyElementGenerator.getInstance(oldExpression.getProject());
+    final LanguageLevel languageLevel = LanguageLevel.forElement(oldExpression);
+    final List<PyStringFormatParser.SubstitutionChunk> substitutions = new PyStringFormatParser(fullText).parseSubstitutions();
+
+    // TODO: Handle %-formatted strings
+
+    if (isConcatFormatting(oldExpression) || substitutions.size() > 0) {
+      // 'foobar' + 'baz' -> s + 'bar' + 'baz'
+      // 'foobar%s' -> s + 'bar%s'
+      final Pair<String, String> detectedQuotes = PythonStringUtil.getQuotes(fullText);
+      final Pair<String, String> quotes = detectedQuotes != null ? detectedQuotes : Pair.create("'", "'");
+      final String leftQuote = quotes.getFirst();
+      final String rightQuote = quotes.getSecond();
+      final StringBuilder builder = new StringBuilder();
+      if (valueExpression != null) {
+        builder.append("(");
+      }
+      if (!leftQuote.endsWith(prefix)) {
+        builder.append(prefix + rightQuote + " + ");
+      }
+      final int pos = builder.toString().length();
+      builder.append(newExpression.getText());
+      if (!rightQuote.startsWith(suffix)) {
+        builder.append(" + " + leftQuote + suffix);
+      }
+      if (valueExpression != null) {
+        builder.append(")");
+      }
+      final PsiElement expression = generator.createExpressionFromText(languageLevel, builder.toString());
+      final PsiElement newElement = oldExpression.replace(expression);
+      return newElement.findElementAt(pos);
     }
-    if (!leftQuote.endsWith(prefix)) {
-      builder.append(prefix + rightQuote + " + ");
+    else {
+      // 'foobar' -> '%sbar' % s
+      final PsiElement parent = oldExpression.getParent();
+      final boolean parensNeeded = parent instanceof PyExpression && !(parent instanceof PyParenthesizedExpression);
+      final StringBuilder builder = new StringBuilder();
+      if (parensNeeded) {
+        builder.append("(");
+      }
+      builder.append(prefix);
+      builder.append("%s");
+      builder.append(suffix);
+      builder.append(" % ");
+      final int pos = builder.toString().length();
+      builder.append(newExpression.getText());
+      if (parensNeeded) {
+        builder.append(")");
+      }
+      final PyExpression expression = generator.createExpressionFromText(languageLevel, builder.toString());
+      final PsiElement newElement = oldExpression.replace(expression);
+      return newElement.findElementAt(pos);
     }
-    final int pos = builder.toString().length();
-    builder.append(newExpression.getText());
-    if (!rightQuote.startsWith(suffix)) {
-      builder.append(" + " + leftQuote + suffix);
-    }
-    if (parensNeeded) {
-      builder.append(")");
-    }
-    final PsiElement expression = generator.createExpressionFromText(languageLevel, builder.toString());
-    final PsiElement newElement = oldExpression.replace(expression);
-    return newElement.findElementAt(pos);
+  }
+
+  private static boolean isConcatFormatting(PyStringLiteralExpression element) {
+    final PsiElement parent = element.getParent();
+    return parent instanceof PyBinaryExpression && ((PyBinaryExpression)parent).isOperator("+");
   }
 
   private static boolean isNotAssociative(@NotNull final PyBinaryExpression binaryExpression) {

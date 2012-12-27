@@ -1,2 +1,2 @@
 a = 'foo'
-print((a + 'bar').upper())
+print(('%sbar' % a).upper())

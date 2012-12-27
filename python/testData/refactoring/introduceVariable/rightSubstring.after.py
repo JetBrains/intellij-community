@@ -1,2 +1,2 @@
 a = "world"
-print("hello " + a)
+print("hello " + a + suffix)

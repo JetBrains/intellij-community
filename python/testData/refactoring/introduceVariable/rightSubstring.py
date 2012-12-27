@@ -1,1 +1,1 @@
-print("hello <selection>world</selection>")
+print("hello <selection>world</selection>" + suffix)

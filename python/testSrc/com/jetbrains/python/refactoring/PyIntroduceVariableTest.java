@@ -89,6 +89,11 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
   }
 
   // PY-3654
+  public void testSimpleSubstring() {
+    doTest();
+  }
+
+  // PY-3654
   public void testLeftSubstring() {
     doTest();
   }
