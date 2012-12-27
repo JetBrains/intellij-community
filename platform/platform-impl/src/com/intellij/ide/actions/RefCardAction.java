@@ -36,8 +36,9 @@ public class RefCardAction extends AnAction implements DumbAware {
 
   public void actionPerformed(AnActionEvent e) {
     final String url = KEYMAP_URL;
-    if (new File(url).isFile()) {
-      BrowserUtil.launchBrowser(url);
+    File file = new File(url);
+    if (file.isFile()) {
+      BrowserUtil.browse(file);
     }
     else {
       final ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();

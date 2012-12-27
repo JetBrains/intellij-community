@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -29,6 +28,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
@@ -36,8 +36,6 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 
 /**
  * @author yole
@@ -100,13 +98,7 @@ public class ChangeListDetailsAction extends AnAction implements DumbAware {
     editorPane.setEditable(false);
     editorPane.setBackground(HintUtil.INFORMATION_COLOR);
     editorPane.select(0, 0);
-    editorPane.addHyperlinkListener(new HyperlinkListener() {
-      public void hyperlinkUpdate(final HyperlinkEvent e) {
-        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          BrowserUtil.launchBrowser(e.getDescription());
-        }
-      }
-    });
+    editorPane.addHyperlinkListener(new BrowserHyperlinkListener());
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(editorPane);
     final JBPopup hint =
       JBPopupFactory.getInstance().createComponentPopupBuilder(scrollPane, editorPane)

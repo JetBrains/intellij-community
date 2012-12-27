@@ -45,6 +45,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -220,7 +221,7 @@ public class CreateAvdDialog extends DialogWrapper {
       myTargetBox.setSelectedItem(targets[0]);
     }
     myNameField.setText(generateAvdName());
-    final String url = "http://developer.android.com/guide/developing/tools/avd.html";
+    final URI url = URI.create("http://developer.android.com/guide/developing/tools/avd.html");
     myAvdInfoLink.setText("<html>\n" +
                           "   <body>\n" +
                           "     <p style=\"margin-top: 0;\">\n" +
@@ -237,7 +238,7 @@ public class CreateAvdDialog extends DialogWrapper {
       @Override
       public boolean onClick(MouseEvent e, int clickCount) {
         try {
-          BrowserUtil.launchBrowser(url);
+          BrowserUtil.browse(url);
         }
         catch (IllegalThreadStateException ex) {
           /* not a problem */

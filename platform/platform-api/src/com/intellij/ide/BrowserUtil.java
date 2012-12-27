@@ -48,6 +48,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -62,7 +64,7 @@ import static com.intellij.util.containers.ContainerUtil.newSmartList;
 import static com.intellij.util.containers.ContainerUtilRt.newArrayList;
 
 public class BrowserUtil {
-  private static final Logger LOG = Logger.getInstance("#" + BrowserUtil.class.getName());
+  private static final Logger LOG = Logger.getInstance(BrowserUtil.class);
 
   private static final boolean TRIM_URLS = !"false".equalsIgnoreCase(System.getProperty("idea.browse.trim.urls"));
 
@@ -93,43 +95,123 @@ public class BrowserUtil {
 
   @Nullable
   public static URL getURL(String url) throws MalformedURLException {
-    if (!isAbsoluteURL(url)) {
-      return new URL("file", "", url);
-    }
-
-    return VfsUtil.convertToURL(url);
+    return isAbsoluteURL(url) ? VfsUtil.convertToURL(url) : new URL("file", "", url);
   }
 
-  /**
-   * Main method: tries to launch a browser using every possible way.
-   *
-   * @param url an URL to open.
-   */
-  public static void launchBrowser(@NotNull @NonNls String url) {
-    LOG.debug("Launch browser: [" + url + "]");
+  public static void browse(@NotNull VirtualFile file) {
+    browse(VfsUtil.toUri(file));
+  }
 
+  public static boolean browse(@NotNull File file) {
+    try {
+      browse(new URI(StandardFileSystems.FILE_PROTOCOL, "", file.getAbsolutePath(), null));
+      return true;
+    }
+    catch (URISyntaxException e) {
+      LOG.debug(e);
+      return false;
+    }
+  }
+
+  public static void browse(@NotNull URL url) {
+    launchBrowser(url.toExternalForm());
+  }
+
+  public static void launchBrowser(@NotNull @NonNls String url) {
+    browse(url);
+  }
+
+  public static void browse(@NotNull @NonNls String url) {
+    openOrBrowse(url, true);
+  }
+
+  public static void open(@NotNull @NonNls String url) {
+    openOrBrowse(url, false);
+  }
+
+  private static void openOrBrowse(@NotNull @NonNls String url, boolean browse) {
     if (TRIM_URLS) {
       url = url.trim();
     }
 
     if (url.startsWith("jar:")) {
       String files = extractFiles(url);
-      if (files == null) return;
+      if (files == null) {
+        return;
+      }
       url = files;
     }
 
-    if (getGeneralSettingsInstance().isUseDefaultBrowser() && canStartDefaultBrowser()) {
-      final List<String> command = getDefaultBrowserCommand();
-      if (command != null) {
-        launchBrowserByCommand(url, command);
-      }
-      else {
-        launchBrowserUsingDesktopApi(url);
-      }
+    URI uri;
+    if (isAbsoluteURL(url)) {
+      uri = VfsUtil.toUri(url);
     }
     else {
-      launchBrowserUsingStandardWay(url);
+      File file = new File(url);
+      if (!browse && isDesktopActionSupported(Desktop.Action.OPEN)) {
+        try {
+          Desktop.getDesktop().open(file);
+          return;
+        }
+        catch (IOException e) {
+          LOG.debug(e);
+        }
+      }
+
+      if (browse(file)) {
+        return;
+      }
+      uri = null;
     }
+
+    if (uri == null) {
+      showErrorMessage(IdeBundle.message("error.malformed.url", url), CommonBundle.getErrorTitle());
+    }
+    else {
+      browse(uri);
+    }
+  }
+
+  /**
+   * Main method: tries to launch a browser using every possible way
+   */
+  public static void browse(@NotNull URI uri) {
+    LOG.debug("Launch browser: [" + uri + "]");
+    if (getGeneralSettingsInstance().isUseDefaultBrowser()) {
+      if (isDesktopActionSupported(Desktop.Action.BROWSE)) {
+        try {
+          Desktop.getDesktop().browse(uri);
+          LOG.debug("Browser launched using JDK 1.6 API");
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+        return;
+      }
+      else {
+        List<String> command = getDefaultBrowserCommand();
+        if (command != null) {
+          launchBrowserByCommand(uri, command);
+          return;
+        }
+      }
+    }
+
+    String browserPath = getGeneralSettingsInstance().getBrowserPath();
+    if (StringUtil.isEmptyOrSpaces(browserPath)) {
+      showErrorMessage(IdeBundle.message("error.please.specify.path.to.web.browser"), IdeBundle.message("title.browser.not.found"));
+      return;
+    }
+
+    launchBrowserByCommand(uri, getOpenBrowserCommand(browserPath));
+  }
+
+  private static boolean isDesktopActionSupported(Desktop.Action action) {
+    if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(action)) {
+      // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6457572
+      return !SystemInfo.isWindows || SystemInfo.isJavaVersionAtLeast("1.7");
+    }
+    return false;
   }
 
   private static GeneralSettings getGeneralSettingsInstance() {
@@ -167,22 +249,10 @@ public class BrowserUtil {
     return null;
   }
 
-  private static void launchBrowserByCommand(final String url, @NotNull final List<String> command) {
-    URL curl;
-    try {
-      curl = getURL(url);
-    }
-    catch (MalformedURLException ignored) {
-      curl = null;
-    }
-    if (curl == null) {
-      showErrorMessage(IdeBundle.message("error.malformed.url", url), CommonBundle.getErrorTitle());
-      return;
-    }
-
+  private static void launchBrowserByCommand(@NotNull final URI uri, @NotNull final List<String> command) {
     try {
       final GeneralCommandLine commandLine = new GeneralCommandLine(command);
-      commandLine.addParameter(escapeUrl(curl.toString()));
+      commandLine.addParameter(escapeUrl(uri.toString()));
       if (SystemInfo.isWindows) {
         commandLine.putUserData(GeneralCommandLine.DO_NOT_ESCAPE_QUOTES, true);
       }
@@ -199,31 +269,7 @@ public class BrowserUtil {
 
   @NotNull
   public static String escapeUrl(@NotNull @NonNls String url) {
-    return SystemInfo.isWindows ? "\"" + url + "\""
-                                : url;
-  }
-
-  private static boolean launchBrowserUsingDesktopApi(final String sUrl) {
-    try {
-      URL url = getURL(sUrl);
-      if (url == null) return false;
-      Desktop.getDesktop().browse(url.toURI());
-      LOG.debug("Browser launched using JDK 1.6 API");
-      return true;
-    }
-    catch (Exception e) {
-      return false;
-    }
-  }
-
-  private static void launchBrowserUsingStandardWay(final String url) {
-    final String browserPath = getGeneralSettingsInstance().getBrowserPath();
-    if (StringUtil.isEmptyOrSpaces(browserPath)) {
-      showErrorMessage(IdeBundle.message("error.please.specify.path.to.web.browser"), IdeBundle.message("title.browser.not.found"));
-      return;
-    }
-
-    launchBrowserByCommand(url, getOpenBrowserCommand(browserPath));
+    return SystemInfo.isWindows ? '"' + url + '"' : url;
   }
 
   @NotNull
@@ -281,6 +327,7 @@ public class BrowserUtil {
 
       String targetFilePath = file.getPath();
       String targetFileRelativePath = StringUtil.substringAfter(targetFilePath, JarFileSystem.JAR_SEPARATOR);
+      LOG.assertTrue(targetFileRelativePath != null);
 
       String jarVirtualFileLocationHash = jarVirtualFile.getName() + Integer.toHexString(jarVirtualFile.getUrl().hashCode());
       final File outputDir = new File(getExtractedFilesDir(), jarVirtualFileLocationHash);

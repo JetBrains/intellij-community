@@ -269,7 +269,7 @@ public class ExportTestResultsAction extends DumbAwareAction {
           FileEditorManager.getInstance(project).openFile(result, true);
         }
         else {
-          BrowserUtil.launchBrowser(result.getUrl());
+          BrowserUtil.browse(result);
         }
       }
     });

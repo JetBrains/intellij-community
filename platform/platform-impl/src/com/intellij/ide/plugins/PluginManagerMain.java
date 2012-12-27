@@ -432,7 +432,7 @@ public abstract class PluginManagerMain implements Disposable {
         else {
           URL url = e.getURL();
           if (url != null) {
-            BrowserUtil.launchBrowser(url.toString());
+            BrowserUtil.browse(url);
           }
         }
       }

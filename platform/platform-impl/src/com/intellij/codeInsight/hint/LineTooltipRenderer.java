@@ -138,7 +138,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           final URL url = e.getURL();
           if (url != null) {
-            BrowserUtil.launchBrowser(url.toString());
+            BrowserUtil.browse(url);
             hint.hide();
             return;
           }

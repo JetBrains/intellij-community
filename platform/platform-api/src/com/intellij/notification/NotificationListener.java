@@ -31,7 +31,7 @@ public interface NotificationListener {
     @Override
     public void hyperlinkUpdate(@NotNull final Notification notification, @NotNull final HyperlinkEvent event) {
       if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-        BrowserUtil.launchBrowser(event.getURL().toExternalForm());
+        BrowserUtil.browse(event.getURL());
       }
     }
   };

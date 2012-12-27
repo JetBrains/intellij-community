@@ -115,7 +115,7 @@ public final class GenerateGroovyDocAction extends AnAction implements DumbAware
     if (configuration.OPEN_IN_BROWSER) {
       File url = new File(configuration.OUTPUT_DIRECTORY, INDEX_HTML);
       if (url.exists()) {
-        BrowserUtil.launchBrowser(url.getPath());
+        BrowserUtil.browse(url);
       }
     }
   }
