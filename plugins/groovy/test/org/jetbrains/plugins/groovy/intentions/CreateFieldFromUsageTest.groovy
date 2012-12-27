@@ -22,10 +22,11 @@ import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnr
  */
 class CreateFieldFromUsageTest extends GrIntentionTestCase {
   CreateFieldFromUsageTest() {
-    super('Create Field', GrUnresolvedAccessInspection)
+    super('Create Field')
   }
 
   void testSimpleRef() {
+    myFixture.enableInspections(GrUnresolvedAccessInspection)
     doTextTest('''\
 class A {
     def foo() {
@@ -44,6 +45,8 @@ class A {
   }
 
   void testThisRef() {
+    myFixture.enableInspections(GrUnresolvedAccessInspection)
+
     doTextTest('''\
 class A {
     def foo() {
@@ -62,6 +65,8 @@ class A {
   }
 
   void testInStaticMethod() {
+    myFixture.enableInspections(GrUnresolvedAccessInspection)
+
     doTextTest('''\
 class A {
     static def foo() {
@@ -80,6 +85,8 @@ class A {
   }
 
   void testInStaticMethodwithThis() {
+    myFixture.enableInspections(GrUnresolvedAccessInspection)
+
     doTextTest('''\
 class A {
     static def foo() {
@@ -100,6 +107,8 @@ class A {
 
 
   void testQualifiedRef() {
+    myFixture.enableInspections(GrUnresolvedAccessInspection)
+
     doTextTest('''\
 class A {
 }
@@ -113,6 +122,8 @@ print new A().object
   }
 
   void testQualifiedStaticRef() {
+    myFixture.enableInspections(GrUnresolvedAccessInspection)
+
     doTextTest('''\
 class A {
 }
