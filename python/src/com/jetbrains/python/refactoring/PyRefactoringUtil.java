@@ -14,7 +14,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +42,7 @@ public class PyRefactoringUtil {
           return;
         }
         if (element instanceof PyStringLiteralExpression) {
-          final Pair<PsiElement, TextRange> selection = pattern.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE);
+          final Pair<PsiElement, TextRange> selection = pattern.getUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE);
           if (selection != null) {
             final String substring = selection.getSecond().substring(pattern.getText());
             final PyStringLiteralExpression expr = (PyStringLiteralExpression)element;
@@ -51,7 +50,7 @@ public class PyRefactoringUtil {
             if (text != null && expr.getStringNodes().size() == 1) {
               final int start = text.indexOf(substring);
               if (start >= 0) {
-                element.putUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE, Pair.create(element, TextRange.from(start, substring.length())));
+                element.putUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE, Pair.create(element, TextRange.from(start, substring.length())));
                 occurrences.add(element);
                 return;
               }
@@ -113,7 +112,7 @@ public class PyRefactoringUtil {
         return null;
       }
 
-      expression.putUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE, Pair.create(parent, textRange));
+      expression.putUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE, Pair.create(parent, textRange));
       return expression;
     }
     return null;
