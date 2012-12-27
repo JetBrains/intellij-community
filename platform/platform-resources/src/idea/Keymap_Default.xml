@@ -305,13 +305,6 @@
   <action id="CloseContent">
     <keyboard-shortcut first-keystroke="control F4"/>
   </action>
-  <action id="NextSplitter">
-    <keyboard-shortcut first-keystroke="control TAB"/>
-  </action>
-  <action id="PrevSplitter">
-    <keyboard-shortcut first-keystroke="control shift TAB"/>
-  </action>
-
   <action id="Replace">
     <keyboard-shortcut first-keystroke="control R"/>
   </action>
