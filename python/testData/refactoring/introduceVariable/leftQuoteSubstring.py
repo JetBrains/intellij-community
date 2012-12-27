@@ -1,1 +1,1 @@
-print(<selection>"hello</selection> world")
+print(<selection>"hello</selection> world" + "!")

@@ -1,7 +1,17 @@
 package com.jetbrains.python.inspections;
 
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.HashMap;
+import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
 
 /**
  * @author yole
@@ -33,10 +43,10 @@ public class PyStringFormatParser {
   }
 
   public static class SubstitutionChunk extends FormatStringChunk {
-    private String myMappingKey;
-    private String myConversionFlags;
-    private String myWidth;
-    private String myPrecision;
+    @Nullable private String myMappingKey;
+    @Nullable private String myConversionFlags;
+    @Nullable private String myWidth;
+    @Nullable private String myPrecision;
     private char myLengthModifier;
     private char myConversionType;
     private boolean myUnclosedMapping;
@@ -45,7 +55,7 @@ public class PyStringFormatParser {
       super(startIndex, startIndex);
     }
 
-    public void setEndIndex(int endIndex) {
+    private void setEndIndex(int endIndex) {
       myEndIndex = endIndex;
     }
 
@@ -53,39 +63,43 @@ public class PyStringFormatParser {
       return myConversionType;
     }
 
-    public void setConversionType(char conversionType) {
+    private void setConversionType(char conversionType) {
       myConversionType = conversionType;
     }
 
+    @Nullable
     public String getMappingKey() {
       return myMappingKey;
     }
 
-    public void setMappingKey(String mappingKey) {
+    private void setMappingKey(@Nullable String mappingKey) {
       myMappingKey = mappingKey;
     }
 
+    @Nullable
     public String getConversionFlags() {
       return myConversionFlags;
     }
 
-    public void setConversionFlags(String conversionFlags) {
+    private void setConversionFlags(@Nullable String conversionFlags) {
       myConversionFlags = conversionFlags;
     }
 
+    @Nullable
     public String getWidth() {
       return myWidth;
     }
 
-    public void setWidth(String width) {
+    private void setWidth(@Nullable String width) {
       myWidth = width;
     }
 
+    @Nullable
     public String getPrecision() {
       return myPrecision;
     }
 
-    public void setPrecision(String precision) {
+    private void setPrecision(@Nullable String precision) {
       myPrecision = precision;
     }
 
@@ -93,7 +107,7 @@ public class PyStringFormatParser {
       return myLengthModifier;
     }
 
-    public void setLengthModifier(char lengthModifier) {
+    private void setLengthModifier(char lengthModifier) {
       myLengthModifier = lengthModifier;
     }
 
@@ -101,13 +115,13 @@ public class PyStringFormatParser {
       return myUnclosedMapping;
     }
 
-    public void setUnclosedMapping(boolean unclosedMapping) {
+    private void setUnclosedMapping(boolean unclosedMapping) {
       myUnclosedMapping = unclosedMapping;
     }
   }
 
-  private final String myLiteral;
-  private final List<FormatStringChunk> myResult = new ArrayList<FormatStringChunk>();
+  @NotNull private final String myLiteral;
+  @NotNull private final List<FormatStringChunk> myResult = new ArrayList<FormatStringChunk>();
   private int myPos;
 
   private static final String CONVERSION_FLAGS = "#0- +";
@@ -115,10 +129,11 @@ public class PyStringFormatParser {
   private static final String LENGTH_MODIFIERS = "hlL";
   private static final String VALID_CONVERSION_TYPES = "diouxXeEfFgGcrs";
 
-  public PyStringFormatParser(String literal) {
+  public PyStringFormatParser(@NotNull String literal) {
     myLiteral = literal;
   }
 
+  @NotNull
   public List<FormatStringChunk> parse() {
     myPos = 0;
     while(myPos < myLiteral.length()) {
@@ -173,7 +188,7 @@ public class PyStringFormatParser {
     chunk.setEndIndex(myPos);
   }
 
-  private boolean isAtSet(final String characterSet) {
+  private boolean isAtSet(@NotNull final String characterSet) {
     return myPos < myLiteral.length() && characterSet.indexOf(myLiteral.charAt(myPos)) >= 0;
   }
 
@@ -181,6 +196,7 @@ public class PyStringFormatParser {
     return myPos < myLiteral.length() && myLiteral.charAt(myPos) == c;
   }
 
+  @NotNull
   private String parseWidth() {
     if (isAt('*')) {
       myPos++;
@@ -189,7 +205,8 @@ public class PyStringFormatParser {
     return parseWhileCharacterInSet(DIGITS);
   }
 
-  private String parseWhileCharacterInSet(final String characterSet) {
+  @NotNull
+  private String parseWhileCharacterInSet(@NotNull final String characterSet) {
     int flagStart = myPos;
     while(isAtSet(characterSet)) {
       myPos++;
@@ -197,6 +214,7 @@ public class PyStringFormatParser {
     return myLiteral.substring(flagStart, myPos);
   }
 
+  @NotNull
   public List<SubstitutionChunk> parseSubstitutions() {
     List<SubstitutionChunk> result = new ArrayList<SubstitutionChunk>();
     for (FormatStringChunk chunk : parse()) {
@@ -205,5 +223,87 @@ public class PyStringFormatParser {
       }
     }
     return result;
+  }
+
+  @NotNull
+  public static List<SubstitutionChunk> getPositionalSubstitutions(@NotNull List<SubstitutionChunk> substitutions) {
+    final ArrayList<SubstitutionChunk> result = new ArrayList<SubstitutionChunk>();
+    for (SubstitutionChunk s : substitutions) {
+      if (s.getMappingKey() == null) {
+        result.add(s);
+      }
+    }
+    return result;
+  }
+
+  @NotNull
+  public static Map<String, SubstitutionChunk> getKeywordSubstitutions(@NotNull List<SubstitutionChunk> substitutions) {
+    final Map<String, SubstitutionChunk> result = new HashMap<String, SubstitutionChunk>();
+    for (SubstitutionChunk s : substitutions) {
+      final String key = s.getMappingKey();
+      if (key != null) {
+        result.put(key, s);
+      }
+    }
+    return result;
+  }
+
+
+  @NotNull
+  public static List<TextRange> substitutionsToRanges(@NotNull List<SubstitutionChunk> substitutions) {
+    final List<TextRange> ranges = new ArrayList<TextRange>();
+    for (SubstitutionChunk substitution : substitutions) {
+      ranges.add(TextRange.create(substitution.getStartIndex(), substitution.getEndIndex()));
+    }
+    return ranges;
+  }
+
+  /**
+   * Return the RHS operand of %-based string literal format expression.
+   */
+  @Nullable
+  public static PyExpression getFormatValueExpression(@NotNull PyStringLiteralExpression element) {
+    final PsiElement parent = element.getParent();
+    if (parent instanceof PyBinaryExpression) {
+      final PyBinaryExpression binaryExpr = (PyBinaryExpression)parent;
+      if (binaryExpr.isOperator("%")) {
+        PyExpression expr = binaryExpr.getRightExpression();
+        while (expr instanceof PyParenthesizedExpression) {
+          expr = ((PyParenthesizedExpression)expr).getContainedExpression();
+        }
+        return expr;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Return the argument list of the str.format() literal format expression.
+   */
+  @Nullable
+  public static PyArgumentList getNewStyleFormatValueExpression(@NotNull PyStringLiteralExpression element) {
+    final PsiElement parent = element.getParent();
+    if (parent instanceof PyQualifiedExpression) {
+      final PyQualifiedExpression qualifiedExpr = (PyQualifiedExpression)parent;
+      final String name = qualifiedExpr.getReferencedName();
+      if ("format".equals(name)) {
+        final PsiElement parent2 = qualifiedExpr.getParent();
+        if (parent2 instanceof PyCallExpression) {
+          final PyCallExpression callExpr = (PyCallExpression)parent2;
+          return callExpr.getArgumentList();
+        }
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  public static List<TextRange> getEscapeRanges(@NotNull String s) {
+    final List<TextRange> ranges = new ArrayList<TextRange>();
+    Matcher matcher = PyStringLiteralExpressionImpl.PATTERN_ESCAPE.matcher(s);
+    while (matcher.find()) {
+      ranges.add(TextRange.create(matcher.start(), matcher.end()));
+    }
+    return ranges;
   }
 }

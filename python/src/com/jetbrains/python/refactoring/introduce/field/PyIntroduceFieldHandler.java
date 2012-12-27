@@ -25,7 +25,7 @@ import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.refactoring.PyReplaceExpressionUtil;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.IntroduceOperation;
 import com.jetbrains.python.refactoring.introduce.variable.PyIntroduceVariableHandler;
@@ -78,7 +78,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
   @Override
   protected PsiElement replaceExpression(PsiElement expression, PyExpression newExpression, IntroduceOperation operation) {
     if (operation.getInitPlace() != InitPlace.SAME_METHOD) {
-      return PyPsiUtils.replaceExpression(expression, newExpression);
+      return PyReplaceExpressionUtil.replaceExpression(expression, newExpression);
     }
     return super.replaceExpression(expression, newExpression, operation);
   }

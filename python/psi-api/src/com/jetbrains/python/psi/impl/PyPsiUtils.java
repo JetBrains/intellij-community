@@ -4,9 +4,6 @@ import com.google.common.collect.Lists;
 import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.stubs.StubElement;
@@ -15,7 +12,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,8 +25,6 @@ import java.util.List;
  * @author max
  */
 public class PyPsiUtils {
-  public static final Key<Pair<PsiElement, TextRange>> SELECTION_BREAKS_AST_NODE =
-    new Key<Pair<PsiElement, TextRange>>("python.selection.breaks.ast.node");
   private static final Logger LOG = Logger.getInstance(PyPsiUtils.class.getName());
 
   private PyPsiUtils() {
@@ -66,52 +60,6 @@ public class PyPsiUtils {
     }
     while (node != null && !node.getElementType().equals(comma));
     return node;
-  }
-
-  public static PsiElement replaceExpression(@NotNull final PsiElement oldExpression,
-                                             @NotNull final PsiElement newExpression) {
-    final Pair<PsiElement, TextRange> data = oldExpression.getUserData(SELECTION_BREAKS_AST_NODE);
-    if (data != null) {
-      final PsiElement element = data.first;
-      final TextRange textRange = data.second;
-      final String parentText = element.getText();
-      final String prefix = parentText.substring(0, textRange.getStartOffset());
-      final String suffix = parentText.substring(textRange.getEndOffset(), element.getTextLength());
-      final PyElementGenerator generator = PyElementGenerator.getInstance(oldExpression.getProject());
-      final LanguageLevel languageLevel = LanguageLevel.forElement(oldExpression);
-      if (element instanceof PyStringLiteralExpression) {
-        final Pair<String, String> quotes = PythonStringUtil.getQuotes(parentText);
-        final PsiElement parent = element.getParent();
-        final boolean parensNeeded = parent instanceof PyExpression && !(parent instanceof PyParenthesizedExpression);
-        if (quotes != null) {
-          final String leftQuote = quotes.getFirst();
-          final String rightQuote = quotes.getSecond();
-          final StringBuilder builder = new StringBuilder();
-          if (parensNeeded) {
-            builder.append("(");
-          }
-          if (!leftQuote.endsWith(prefix)) {
-            builder.append(prefix + rightQuote + " + ");
-          }
-          final int pos = builder.toString().length();
-          builder.append(newExpression.getText());
-          if (!rightQuote.startsWith(suffix)) {
-            builder.append(" + " + leftQuote + suffix);
-          }
-          if (parensNeeded) {
-            builder.append(")");
-          }
-          final PsiElement expression = generator.createExpressionFromText(languageLevel, builder.toString());
-          final PsiElement newElement = element.replace(expression);
-          return newElement.findElementAt(pos);
-        }
-      }
-      final PsiElement expression = generator.createFromText(languageLevel, element.getClass(), prefix + newExpression.getText() + suffix);
-      return element.replace(expression);
-    }
-    else {
-      return oldExpression.replace(newExpression);
-    }
   }
 
   public static void addBeforeInParent(@NotNull final PsiElement anchor, @NotNull final PsiElement... newElements) {

@@ -41,6 +41,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.refactoring.PyReplaceExpressionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -308,7 +309,7 @@ public class PyExtractMethodUtil {
 
               // replace statements with call
               if (callElement != null) {
-                callElement = PyPsiUtils.replaceExpression(expression, callElement);
+                callElement = PyReplaceExpressionUtil.replaceExpression(expression, callElement);
               }
 
               // Set editor
@@ -397,7 +398,7 @@ public class PyExtractMethodUtil {
   }
 
   private static PyFunction insertGeneratedMethod(PsiElement anchor, final PyFunction generatedMethod) {
-    final Pair<PsiElement, TextRange> data = anchor.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE);
+    final Pair<PsiElement, TextRange> data = anchor.getUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE);
     if (data != null) {
       anchor = data.first;
     }

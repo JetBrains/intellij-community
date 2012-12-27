@@ -1,2 +1,2 @@
 a = 'foo'
-x = a + 'bar'
+x = '%sbar' % a

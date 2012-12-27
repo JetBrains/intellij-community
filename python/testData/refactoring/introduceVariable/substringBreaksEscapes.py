@@ -1,0 +1,1 @@
+print(u"Hel<selection>lo \u00d6sterreich\\!\</selection>n")
