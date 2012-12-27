@@ -306,4 +306,9 @@ public class RedmineRepository extends BaseRepositoryImpl {
            "/projects" +
            (!StringUtil.isEmpty(getProjectId()) ? "/" + getProjectId() : "");
   }
+
+  @Override
+  protected int getFeatures() {
+    return BASIC_HTTP_AUTHORIZATION;
+  }
 }

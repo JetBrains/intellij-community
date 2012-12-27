@@ -45,9 +45,4 @@ public class RedmineRepositoryType extends BaseRepositoryType<RedmineRepository>
                                            Consumer<RedmineRepository> changeListener) {
     return new RedmineRepositoryEditor(project, repository, changeListener);
   }
-
-  @Override
-  protected int getFeatures() {
-    return BASIC_HTTP_AUTHORIZATION;
-  }
 }

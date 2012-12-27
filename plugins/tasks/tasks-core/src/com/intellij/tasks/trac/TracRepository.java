@@ -258,4 +258,9 @@ public class TracRepository extends BaseRepositoryImpl {
   public boolean equals(Object o) {
     return super.equals(o) && Comparing.equal(((TracRepository)o).getDefaultSearch(), getDefaultSearch());
   }
+
+  @Override
+  protected int getFeatures() {
+    return BASIC_HTTP_AUTHORIZATION;
+  }
 }

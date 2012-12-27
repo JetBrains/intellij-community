@@ -8,9 +8,7 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.tasks.LocalTask;
-import com.intellij.tasks.TaskListenerAdapter;
-import com.intellij.tasks.TaskManager;
+import com.intellij.tasks.*;
 import com.intellij.tasks.actions.GotoTaskAction;
 import com.intellij.tasks.actions.SwitchTaskAction;
 import com.intellij.ui.LayeredIcon;
@@ -136,47 +134,25 @@ public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Dispo
         updateTable();
       }
     });
-    group.add(new ToggleAction("Auto mode", "Automatic starting and stopping of timer", TasksIcons.AutoMode) {
-      @Override
-      public boolean isSelected(final AnActionEvent e) {
-        return myTimeTrackingManager.getState().autoMode;
-      }
-
-      @Override
-      public void setSelected(final AnActionEvent e, final boolean state) {
-        myTimeTrackingManager.setAutoMode(state);
-        updateTable();
-      }
-    });
-    group.add(new AnAction() {
-      @Override
-      public void update(final AnActionEvent e) {
-        if (myTimeTrackingManager.getState().autoMode) {
-          e.getPresentation().setEnabled(false);
-          e.getPresentation().setIcon(TasksIcons.StartTimer);
-          e.getPresentation().setText("Start timer for active task");
-        }
-        else {
-          e.getPresentation().setEnabled(true);
-          if (myTaskManager.getActiveTask().isRunning()) {
-            e.getPresentation().setIcon(TasksIcons.StopTimer);
-            e.getPresentation().setText("Stop timer for active task");
-          }
-          else {
-            e.getPresentation().setIcon(TasksIcons.StartTimer);
-            e.getPresentation().setText("Start timer for active task");
-          }
-        }
-      }
-
+    group.add(new ModeToggleAction());
+    group.add(new StartStopAction());
+    group.add(new AnAction("Post work item to bugtracker", "Post work item to bugtracker", AllIcons.Actions.Export) {
       @Override
       public void actionPerformed(final AnActionEvent e) {
-        final LocalTask activeTask = myTaskManager.getActiveTask();
-        if (activeTask.isRunning()) {
-          activeTask.setRunning(false);
+        final LocalTask localTask = myTable.getSelectedObject();
+        if (localTask == null) return;
+        new SendTimeTrackingInformationDialog(myProject, localTask).show();
+      }
+
+      @Override
+      public void update(final AnActionEvent e) {
+        final LocalTask localTask = myTable.getSelectedObject();
+        if (localTask == null) {
+          e.getPresentation().setEnabled(false);
         }
         else {
-          activeTask.setRunning(true);
+          final TaskRepository repository = localTask.getRepository();
+          e.getPresentation().setEnabled(repository != null && repository.isSupported(TaskRepository.TIME_MANAGEMENT));
         }
       }
     });
@@ -302,5 +278,55 @@ public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Dispo
   public void dispose() {
     myTimer.stop();
     myTimer = null;
+  }
+
+  private class StartStopAction extends AnAction {
+    @Override
+    public void update(final AnActionEvent e) {
+      if (myTimeTrackingManager.getState().autoMode) {
+        e.getPresentation().setEnabled(false);
+        e.getPresentation().setIcon(TasksIcons.StartTimer);
+        e.getPresentation().setText("Start timer for active task");
+      }
+      else {
+        e.getPresentation().setEnabled(true);
+        if (myTaskManager.getActiveTask().isRunning()) {
+          e.getPresentation().setIcon(TasksIcons.StopTimer);
+          e.getPresentation().setText("Stop timer for active task");
+        }
+        else {
+          e.getPresentation().setIcon(TasksIcons.StartTimer);
+          e.getPresentation().setText("Start timer for active task");
+        }
+      }
+    }
+
+    @Override
+    public void actionPerformed(final AnActionEvent e) {
+      final LocalTask activeTask = myTaskManager.getActiveTask();
+      if (activeTask.isRunning()) {
+        activeTask.setRunning(false);
+      }
+      else {
+        activeTask.setRunning(true);
+      }
+    }
+  }
+
+  private class ModeToggleAction extends ToggleAction {
+    public ModeToggleAction() {
+      super("Auto mode", "Automatic starting and stopping of timer", TasksIcons.AutoMode);
+    }
+
+    @Override
+    public boolean isSelected(final AnActionEvent e) {
+      return myTimeTrackingManager.getState().autoMode;
+    }
+
+    @Override
+    public void setSelected(final AnActionEvent e, final boolean state) {
+      myTimeTrackingManager.setAutoMode(state);
+      updateTable();
+    }
   }
 }

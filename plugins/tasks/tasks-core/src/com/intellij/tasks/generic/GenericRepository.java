@@ -331,4 +331,9 @@ public class GenericRepository extends BaseRepositoryImpl {
   protected String getTasksListURLDefault() {
     return "";
   }
+
+  @Override
+  protected int getFeatures() {
+    return LOGIN_ANONYMOUSLY | BASIC_HTTP_AUTHORIZATION;
+  }
 }

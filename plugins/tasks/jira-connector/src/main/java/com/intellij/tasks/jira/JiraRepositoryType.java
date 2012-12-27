@@ -34,11 +34,6 @@ public class JiraRepositoryType extends BaseRepositoryType<JiraRepository> {
   public Class<JiraRepository> getRepositoryClass() {
     return JiraRepository.class;
   }
-
-  @Override
-  protected int getFeatures() {
-    return BASIC_HTTP_AUTHORIZATION;
-  }
   //
   //@Override
   //public EnumSet<TaskState> getPossibleTaskStates() {

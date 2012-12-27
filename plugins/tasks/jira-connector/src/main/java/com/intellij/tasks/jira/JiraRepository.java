@@ -4,6 +4,7 @@ import com.atlassian.connector.commons.jira.soap.axis.JiraSoapService;
 import com.atlassian.connector.commons.jira.soap.axis.JiraSoapServiceServiceLocator;
 import com.atlassian.theplugin.jira.api.JIRAIssueBean;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskState;
@@ -17,6 +18,7 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
@@ -210,5 +212,31 @@ public class JiraRepository extends BaseRepositoryImpl {
       LOG.warn("Cannot get issue " + id + ": " + e.getMessage());
       return null;
     }
+  }
+
+  @Override
+  public void updateTimeSpent(final LocalTask task, final int timeSpent, final String comment) throws Exception {
+    final HttpClient client = login();
+    checkVersion(client);
+    PostMethod method = new PostMethod(getUrl() + "/rest/api/2/issue/" + task.getId() + "/worklog");
+    method.setRequestEntity(new StringRequestEntity("{\"timeSpentSeconds\" : " + String.valueOf(timeSpent * 60) +
+                                                    ", \"comment\" : " + comment + "}", "application/json", "UTF-8"));
+    client.executeMethod(method);
+    if (method.getStatusCode() != 201) {
+      throw new Exception(method.getResponseBodyAsString());
+    }
+  }
+
+  private void checkVersion(final HttpClient client) throws Exception {
+    GetMethod method = new GetMethod(getUrl() + "/rest/api/2/project");
+    client.executeMethod(method);
+    if (method.getStatusCode() != 200) {
+      throw new Exception("This version of JIRA doesn't have support REST API for working with worklog items.");
+    }
+  }
+
+  @Override
+  protected int getFeatures() {
+    return BASIC_HTTP_AUTHORIZATION | TIME_MANAGEMENT;
   }
 }
