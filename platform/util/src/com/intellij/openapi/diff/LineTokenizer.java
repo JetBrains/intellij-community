@@ -43,7 +43,6 @@ public class LineTokenizer {
         else appendNewLine = true;
         skipEOL();
       }
-//      line = new String(myChars, begin, endIndex - begin);
       line = myText.substring(begin, endIndex);
       if (appendNewLine) line += "\n";
       lines.add(line);

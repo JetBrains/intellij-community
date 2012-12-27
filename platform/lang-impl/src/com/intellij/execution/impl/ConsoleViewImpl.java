@@ -943,7 +943,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     final Document document = myEditor.getDocument();
     final int startOffset = document.getLineStartOffset(startLine);
-    String text = new String(document.getText(new TextRange(startOffset, document.getLineEndOffset(endLine))));
+    String text = document.getText(new TextRange(startOffset, document.getLineEndOffset(endLine)));
     final Document documentCopy = new DocumentImpl(text,true);
     documentCopy.setReadOnly(true);
 

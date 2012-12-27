@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -109,7 +110,7 @@ public class Base64Converter {
       out[outIndex] = '=';
     }
 
-    return new String(out);
+    return StringFactory.createShared(out);
   }
 
   public static String decode(@NotNull String s) {

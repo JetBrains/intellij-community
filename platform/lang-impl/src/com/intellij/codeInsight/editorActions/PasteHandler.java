@@ -36,6 +36,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -50,7 +51,6 @@ import org.jetbrains.annotations.NonNls;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
-import java.util.Arrays;
 import java.util.Map;
 
 public class PasteHandler extends EditorActionHandler implements EditorTextInsertHandler {
@@ -409,9 +409,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       linesToAdjustIndent++;
     }
     
-    char[] fill = new char[indentLevel];
-    Arrays.fill(fill, ' ');
-    String indentString = new String(fill);
+    String indentString = StringUtil.repeatSymbol(' ', indentLevel);
 
     for (; linesToAdjustIndent > 0; linesToAdjustIndent--) {
       int lineStartOffset = document.getLineStartOffset(++line);

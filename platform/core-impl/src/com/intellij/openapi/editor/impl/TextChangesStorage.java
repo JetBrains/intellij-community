@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.TextChange;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -441,7 +442,7 @@ public class TextChangesStorage {
     if (outputOffset < data.length) {
       System.arraycopy(originalData, originalStart, data, outputOffset, data.length - outputOffset);
     }
-    return new String(data);
+    return StringFactory.createShared(data);
   }
   
   /**

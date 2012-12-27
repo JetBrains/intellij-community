@@ -71,7 +71,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -745,12 +744,8 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     }
     buffer.append(getMethodName());
     buffer.append("(");
-    int paramIndent = buffer.toString().length();
 
-    char[] chars = new char[paramIndent];
-    Arrays.fill(chars, ' ');
-
-    String indent = new String(chars);
+    String indent = StringUtil.repeatSymbol(' ', buffer.length());
     List<ParameterTableModelItemBase<ParameterInfoImpl>> items = myParametersTableModel.getItems();
     int curIndent = indent.length();
     for (int i = 0; i < items.size(); i++) {
@@ -775,9 +770,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       //buffer.append("\n");
       buffer.append(" throws ");
       curIndent += 9; // ") throws ".length()
-      chars = new char[curIndent];
-      Arrays.fill(chars, ' ');
-      indent = new String(chars);
+      indent = StringUtil.repeatSymbol(' ', curIndent);
       for (int i = 0; i < thrownExceptionsFragments.length; i++) {
         String text = thrownExceptionsFragments[i].getText();
         if (i != 0) buffer.append(indent);

@@ -90,7 +90,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
   private Set<InputEvent> myLastActionInputEvent = new HashSet<InputEvent>();
   private ActionMacroManager.Widget myWidget;
 
-  private String myLastTyping = new String();
+  private String myLastTyping = "";
 
   public ActionMacroManager(ActionManagerEx actionManagerEx) {
     myActionManager = actionManagerEx;

@@ -19,9 +19,13 @@ import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
 import java.nio.CharBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class CharArrayUtil {
@@ -162,6 +166,33 @@ public class CharArrayUtil {
     return seq.toString().toCharArray();
   }
 
+  @NotNull
+  public static char[] fromSequence(@NotNull CharSequence seq, int start, int end) {
+    if (seq instanceof CharSequenceBackedByArray) {
+      return Arrays.copyOfRange(((CharSequenceBackedByArray)seq).getChars(), start, end);
+    }
+
+    if (seq instanceof CharBuffer) {
+      CharBuffer buffer = (CharBuffer)seq;
+      char[] chars = new char[end-start];
+      buffer.position(start);
+      buffer.get(chars, 0, end-start);
+      buffer.position(0);
+      return chars;
+    }
+
+    if (seq instanceof StringBuffer) {
+      char[] chars = new char[end-start];
+      ((StringBuffer)seq).getChars(start, end, chars, 0);
+      return chars;
+    }
+
+    String s = seq.toString();
+    char[] chars = new char[end-start];
+    s.getChars(start, end, chars, 0);
+    return chars;
+  }
+
   public static int shiftForward(@NotNull CharSequence buffer, int offset, @NotNull String chars) {
     while (true) {
       if (offset >= buffer.length()) break;
@@ -218,12 +249,6 @@ public class CharArrayUtil {
   public static int shiftBackward(@NotNull char[] buffer, int offset, @NotNull String chars) {
     return shiftBackward(new CharArrayCharSequence(buffer), offset, chars);
   }
-
-  //Commented in order to apply to green code policy as the method is unused.
-  //
-  //public static int shiftForwardUntil(char[] buffer, int offset, String chars) {
-  //  return shiftForwardUntil(new CharArrayCharSequence(buffer), offset, chars);
-  //}
 
   public static int shiftForwardUntil(@NotNull CharSequence buffer, int offset, @NotNull String chars) {
     while (true) {

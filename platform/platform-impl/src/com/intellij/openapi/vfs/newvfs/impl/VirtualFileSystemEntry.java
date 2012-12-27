@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.util.io.IOUtil;
+import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -142,7 +143,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       chars[i] = (char)bytes[i];
     }
     copyString(chars, length, suffix);
-    return new String(chars);
+    return StringFactory.createShared(chars);
   }
 
   boolean nameMatches(@NotNull String pattern, boolean ignoreCase) {
@@ -288,7 +289,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     int[] pos = {prefixLen};
     char[] chars = appendPathOnFileSystem(prefixLen, pos);
     copyString(chars, copyString(chars, 0, protocol), "://");
-    return new String(chars, 0, pos[0]);
+    return chars.length == pos[0] ? StringFactory.createShared(chars) : new String(chars, 0, pos[0]);
   }
 
   @Override
@@ -296,7 +297,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public String getPath() {
     int[] pos = {0};
     char[] chars = appendPathOnFileSystem(0, pos);
-    return new String(chars, 0, pos[0]);
+    return chars.length == pos[0] ? StringFactory.createShared(chars) : new String(chars, 0, pos[0]);
   }
 
   @Override
