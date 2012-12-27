@@ -24,6 +24,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.zmlx.hg4idea.HgRememberedInputs;
 import org.zmlx.hg4idea.command.HgShowConfigCommand;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -36,6 +37,7 @@ public class HgPullDialog extends DialogWrapper {
   private HgRepositorySelectorComponent hgRepositorySelector;
   private JPanel mainPanel;
   private EditorComboBox myRepositoryURL;
+  private String myCurrentRepositoryUrl;
 
   public HgPullDialog(Project project) {
     super(project, false);
@@ -66,7 +68,7 @@ public class HgPullDialog extends DialogWrapper {
 
   public void rememberSettings() {
     final HgRememberedInputs rememberedInputs = HgRememberedInputs.getInstance(project);
-    rememberedInputs.addRepositoryUrl(getSource());
+    rememberedInputs.addRepositoryUrl(HgUtil.removePasswordIfNeeded(getSource()));
   }
 
 
@@ -75,7 +77,7 @@ public class HgPullDialog extends DialogWrapper {
   }
 
   public String getSource() {
-    return myRepositoryURL.getText();
+    return myCurrentRepositoryUrl;
   }
 
   public void setRoots(Collection<VirtualFile> repos) {
@@ -103,7 +105,8 @@ public class HgPullDialog extends DialogWrapper {
           UIUtil.invokeAndWaitIfNeeded(new Runnable() {
             @Override
             public void run() {
-              myRepositoryURL.setText(defaultPath);
+              myRepositoryURL.setText(HgUtil.removePasswordIfNeeded(defaultPath));
+              myCurrentRepositoryUrl = defaultPath;
             }
           });
 
@@ -114,6 +117,7 @@ public class HgPullDialog extends DialogWrapper {
   }
 
   private void onChangePullSource() {
+    myCurrentRepositoryUrl = myRepositoryURL.getText();
     setOKActionEnabled(!StringUtil.isEmptyOrSpaces(myRepositoryURL.getText()));
   }
 

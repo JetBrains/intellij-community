@@ -27,6 +27,7 @@ import org.zmlx.hg4idea.HgPusher;
 import org.zmlx.hg4idea.HgRememberedInputs;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgTagBranch;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -50,6 +51,7 @@ public class HgPushDialog extends DialogWrapper {
   private JCheckBox branchCheckBox;
   private JComboBox branchComboBox;
   private EditorComboBox myRepositoryURL;
+  private String myCurrentRepositoryUrl;
 
   public HgPushDialog(Project project, Collection<VirtualFile> repos, List<HgTagBranch> branches) {
     super(project, false);
@@ -83,6 +85,7 @@ public class HgPushDialog extends DialogWrapper {
     myRepositoryURL.addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+        myCurrentRepositoryUrl = myRepositoryURL.getText();
         setOKActionEnabled(!StringUtil.isEmptyOrSpaces(myRepositoryURL.getText()));
       }
     });
@@ -93,7 +96,7 @@ public class HgPushDialog extends DialogWrapper {
   }
 
   public String getTarget() {
-    return myRepositoryURL.getText();
+    return myCurrentRepositoryUrl;
   }
 
   @Nullable
@@ -129,7 +132,8 @@ public class HgPushDialog extends DialogWrapper {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            updateRepositoryUrlText(defaultPath);
+            updateRepositoryUrlText(HgUtil.removePasswordIfNeeded(defaultPath));
+            myCurrentRepositoryUrl = defaultPath;
             updateBranchComboBox(branches);
           }
         }, ModalityState.stateForComponent(getRootPane()));
@@ -155,7 +159,7 @@ public class HgPushDialog extends DialogWrapper {
   }
 
   private boolean validateOptions() {
-    return !StringUtil.isEmptyOrSpaces(myRepositoryURL.getText())
+    return !StringUtil.isEmptyOrSpaces(myCurrentRepositoryUrl)
       && !(revisionCbx.isSelected() && StringUtil.isEmptyOrSpaces(revisionTxt.getText()))
       && !(branchCheckBox.isSelected() && (branchComboBox.getSelectedItem() == null));
   }
@@ -167,7 +171,7 @@ public class HgPushDialog extends DialogWrapper {
 
   public void rememberSettings() {
     final HgRememberedInputs rememberedInputs = HgRememberedInputs.getInstance(myProject);
-    rememberedInputs.addRepositoryUrl(myRepositoryURL.getText());
+    rememberedInputs.addRepositoryUrl(HgUtil.removePasswordIfNeeded(myRepositoryURL.getText()));
   }
 
   /**

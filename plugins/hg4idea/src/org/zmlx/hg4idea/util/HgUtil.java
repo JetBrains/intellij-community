@@ -39,12 +39,15 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * HgUtil is a collection of static utility methods for Mercurial.
  */
 public abstract class HgUtil {
 
+  public static final Pattern reposirotyUrlWithPasswordPattern = Pattern.compile("(.+):(.+)@(.+)");
   public static final int MANY_FILES = 100;
   private static final Logger LOG = Logger.getInstance(HgUtil.class);
 
@@ -471,5 +474,13 @@ public abstract class HgUtil {
     else {
       return FileStatus.UNKNOWN;
     }
+  }
+
+  public static String removePasswordIfNeeded(@NotNull String path) {
+    Matcher matcher = reposirotyUrlWithPasswordPattern.matcher(path);
+    if (matcher.matches()) {
+      return matcher.group(1) + "@" + matcher.group(3);
+    }
+    return path;
   }
 }
