@@ -20,13 +20,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -281,8 +282,11 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
           if (containingClass == null && psiClass == null) return true;
           if (containingClass != null) {
+            PsiElementFindProcessor<PsiClass> processor1 = new PsiElementFindProcessor<PsiClass>(containingClass);
             while (psiClass != null) {
-              if (InheritanceUtil.isInheritorOrSelf(containingClass, psiClass, true) || InheritanceUtil.isInheritorOrSelf(psiClass, containingClass, true)) {
+              if (!processor1.process(psiClass) ||
+                  !ClassInheritorsSearch.search(containingClass).forEach(new PsiElementFindProcessor<PsiClass>(psiClass)) ||
+                  !ClassInheritorsSearch.search(psiClass).forEach(processor1)) {
                 return true;
               }
               psiClass = psiClass.getContainingClass();
@@ -293,5 +297,18 @@ public class TargetElementUtil extends TargetElementUtilBase {
       });
     }
     return super.acceptImplementationForReference(reference, element);
+  }
+
+  private static class PsiElementFindProcessor<T extends PsiElement> implements Processor<T> {
+    private final T myElement;
+
+    public PsiElementFindProcessor(T t) {
+      myElement = t;
+    }
+
+    @Override
+    public boolean process(T t) {
+      return !myElement.getManager().areElementsEquivalent(myElement, t);
+    }
   }
 }
