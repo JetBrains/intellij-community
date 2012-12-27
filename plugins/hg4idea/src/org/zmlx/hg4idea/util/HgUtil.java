@@ -47,7 +47,7 @@ import java.util.regex.Pattern;
  */
 public abstract class HgUtil {
 
-  public static final Pattern URL_WITH_PASSWORD = Pattern.compile("(.+):(.+)@(.+)");
+  public static final Pattern URL_WITH_PASSWORD = Pattern.compile("(?:.+)://(?:.+)(:.+)@(?:.+)");      //http(s)://username:password@url
   public static final int MANY_FILES = 100;
   private static final Logger LOG = Logger.getInstance(HgUtil.class);
 
@@ -479,7 +479,7 @@ public abstract class HgUtil {
   public static String removePasswordIfNeeded(@NotNull String path) {
     Matcher matcher = URL_WITH_PASSWORD.matcher(path);
     if (matcher.matches()) {
-      return matcher.group(1) + "@" + matcher.group(3);
+      return path.substring(0, matcher.start(1)) + path.substring(matcher.end(1), path.length());
     }
     return path;
   }
