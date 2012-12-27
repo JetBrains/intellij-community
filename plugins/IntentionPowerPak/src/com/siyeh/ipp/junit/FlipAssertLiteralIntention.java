@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.siyeh.ipp.junit;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -32,8 +31,7 @@ public class FlipAssertLiteralIntention extends MutablyNamedIntention {
   @Override
   protected String getTextForElement(PsiElement element) {
     final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
-    final PsiReferenceExpression methodExpression =
-      call.getMethodExpression();
+    final PsiReferenceExpression methodExpression = call.getMethodExpression();
     @NonNls final String fromMethodName = methodExpression.getReferenceName();
     @NonNls final String toMethodName;
     if ("assertTrue".equals(fromMethodName)) {
@@ -54,13 +52,10 @@ public class FlipAssertLiteralIntention extends MutablyNamedIntention {
   }
 
   @Override
-  public void processIntention(PsiElement element)
-    throws IncorrectOperationException {
+  public void processIntention(@NotNull PsiElement element) {
     final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
-    final PsiReferenceExpression methodExpression =
-      call.getMethodExpression();
-    @NonNls final String fromMethodName =
-      methodExpression.getReferenceName();
+    final PsiReferenceExpression methodExpression = call.getMethodExpression();
+    @NonNls final String fromMethodName = methodExpression.getReferenceName();
     @NonNls final String toMethodName;
     if ("assertTrue".equals(fromMethodName)) {
       toMethodName = "assertFalse";
@@ -68,28 +63,20 @@ public class FlipAssertLiteralIntention extends MutablyNamedIntention {
     else {
       toMethodName = "assertTrue";
     }
-    final StringBuilder newCall = new StringBuilder();
+    @NonNls final StringBuilder newCall = new StringBuilder();
     final PsiElement qualifier = methodExpression.getQualifier();
     if (qualifier == null) {
-      final PsiMethod containingMethod =
-        PsiTreeUtil.getParentOfType(call, PsiMethod.class);
-      if (containingMethod != null &&
-          AnnotationUtil.isAnnotated(containingMethod, "org.junit.Test", true)) {
-        if (ImportUtils.nameCanBeStaticallyImported(
-          "org.junit.Assert", toMethodName, element)) {
-          ImportUtils.addStaticImport("org.junit.Assert", toMethodName, element);
-        }
-        else {
+      final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(call, PsiMethod.class);
+      if (containingMethod != null && AnnotationUtil.isAnnotated(containingMethod, "org.junit.Test", true)) {
+        if (!ImportUtils.addStaticImport("org.junit.Assert", toMethodName, element)) {
           newCall.append("org.junit.Assert.");
         }
       }
     }
     else {
-      newCall.append(qualifier.getText());
-      newCall.append('.');
+      newCall.append(qualifier.getText()).append('.');
     }
-    newCall.append(toMethodName);
-    newCall.append('(');
+    newCall.append(toMethodName).append('(');
     final PsiExpressionList argumentList = call.getArgumentList();
     final PsiExpression[] args = argumentList.getExpressions();
     if (args.length == 1) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.siyeh.ipp.junit;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -26,8 +25,7 @@ import com.siyeh.ipp.psiutils.ImportUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceAssertEqualsWithAssertLiteralIntention
-  extends MutablyNamedIntention {
+public class ReplaceAssertEqualsWithAssertLiteralIntention extends MutablyNamedIntention {
 
   @Override
   protected String getTextForElement(PsiElement element) {
@@ -43,9 +41,7 @@ public class ReplaceAssertEqualsWithAssertLiteralIntention
       final String argText = args[1].getText();
       assertString = getAssertString(argText);
     }
-    return IntentionPowerPackBundle.message(
-      "replace.assert.equals.with.assert.literal.intention.name",
-      assertString);
+    return IntentionPowerPackBundle.message("replace.assert.equals.with.assert.literal.intention.name", assertString);
   }
 
   @Override
@@ -55,10 +51,8 @@ public class ReplaceAssertEqualsWithAssertLiteralIntention
   }
 
   @Override
-  public void processIntention(PsiElement element)
-    throws IncorrectOperationException {
-    final PsiMethodCallExpression call =
-      (PsiMethodCallExpression)element;
+  public void processIntention(@NotNull PsiElement element) {
+    final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
     final PsiReferenceExpression expression = call.getMethodExpression();
     final PsiExpressionList argumentList = call.getArgumentList();
     final PsiExpression[] args = argumentList.getExpressions();
@@ -67,9 +61,7 @@ public class ReplaceAssertEqualsWithAssertLiteralIntention
     if (args.length == 2) {
       @NonNls final String argText = args[0].getText();
       final PsiExpression otherArg;
-      if ("true".equals(argText) ||
-          "false".equals(argText) ||
-          "null".equals(argText)) {
+      if ("true".equals(argText) || "false".equals(argText) || "null".equals(argText)) {
         otherArg = args[1];
       }
       else {
@@ -81,9 +73,7 @@ public class ReplaceAssertEqualsWithAssertLiteralIntention
     else {
       @NonNls final String argText = args[1].getText();
       final PsiExpression otherArg;
-      if ("true".equals(argText) ||
-          "false".equals(argText) ||
-          "null".equals(argText)) {
+      if ("true".equals(argText) || "false".equals(argText) || "null".equals(argText)) {
         otherArg = args[2];
       }
       else {
@@ -93,29 +83,19 @@ public class ReplaceAssertEqualsWithAssertLiteralIntention
       assertString = getAssertString(argText);
     }
     final PsiElement qualifier = expression.getQualifier();
-    final StringBuilder newExpression = new StringBuilder();
+    @NonNls final StringBuilder newExpression = new StringBuilder();
     if (qualifier == null) {
-      final PsiMethod containingMethod =
-        PsiTreeUtil.getParentOfType(call, PsiMethod.class);
-      if (containingMethod != null &&
-          AnnotationUtil.isAnnotated(containingMethod, "org.junit.Test", true)) {
-        if (ImportUtils.nameCanBeStaticallyImported(
-          "org.junit.Assert", assertString, element)) {
-          ImportUtils.addStaticImport("org.junit.Assert", assertString, element);
-        }
-        else {
+      final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(call, PsiMethod.class);
+      if (containingMethod != null && AnnotationUtil.isAnnotated(containingMethod, "org.junit.Test", true)) {
+        if (!ImportUtils.addStaticImport("org.junit.Assert", assertString, element)) {
           newExpression.append("org.junit.Assert.");
         }
       }
     }
     else {
-      newExpression.append(qualifier.getText());
-      newExpression.append('.');
+      newExpression.append(qualifier.getText()).append('.');
     }
-    newExpression.append(assertString);
-    newExpression.append('(');
-    newExpression.append(actualArgumentText);
-    newExpression.append(')');
+    newExpression.append(assertString).append('(').append(actualArgumentText).append(')');
     replaceExpression(newExpression.toString(), call);
   }
 
