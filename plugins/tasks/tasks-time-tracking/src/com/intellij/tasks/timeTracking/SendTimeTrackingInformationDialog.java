@@ -104,7 +104,7 @@ public class SendTimeTrackingInformationDialog extends DialogWrapper {
       if (repository != null &&
           repository.isSupported(TaskRepository.TIME_MANAGEMENT)) {
         try {
-          repository.updateTimeSpent(myTask, timeSpent, myCommentTextArea.getText());
+          repository.updateTimeSpent(myTask, timeSpentText, myCommentTextArea.getText());
           myTask.setLastPost(new Date());
         }
         catch (Exception e1) {

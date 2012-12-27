@@ -282,9 +282,9 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.tasks.youtrack.YouTrackRepository");
 
   @Override
-  public void updateTimeSpent(final LocalTask task, final int timeSpentInMinutes, final String comment) throws Exception {
+  public void updateTimeSpent(final LocalTask task, final String timeSpent, final String comment) throws Exception {
     checkVersion();
-    final HttpMethod method = doREST("/rest/issue/execute/" + task.getId() + "?command=work+Today+" + timeSpentInMinutes + "m+" + comment, true);
+    final HttpMethod method = doREST("/rest/issue/execute/" + task.getId() + "?command=work+Today+" + timeSpent.replaceAll(" ", "+") + "+" + comment, true);
     if (method.getStatusCode() != 200) {
       InputStream stream = method.getResponseBodyAsStream();
       String message = new SAXBuilder(false).build(stream).getRootElement().getText();

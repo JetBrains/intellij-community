@@ -216,23 +216,18 @@ public class JiraRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public void updateTimeSpent(final LocalTask task, final int timeSpentInMinutes, final String comment) throws Exception {
+  public void updateTimeSpent(final LocalTask task, final String timeSpent, final String comment) throws Exception {
     final HttpClient client = login();
     checkVersion(client);
     PostMethod method = new PostMethod(getUrl() + "/rest/api/2/issue/" + task.getId() + "/worklog");
     method.setRequestEntity(
-      new StringRequestEntity("{\"timeSpentSeconds\" : " + String.valueOf(calculateTimeSpent(timeSpentInMinutes)) +
+      new StringRequestEntity("{\"timeSpent\" : \"" + timeSpent + "\"" +
                               (StringUtil.isNotEmpty(comment) ? ", \"comment\" : " + comment : "")
                               + " }", "application/json", "UTF-8"));
     client.executeMethod(method);
     if (method.getStatusCode() != 201) {
       throw new Exception(method.getResponseBodyAsString());
     }
-  }
-
-  private static long calculateTimeSpent(final int timeSpentInMinutes) {
-    int days = timeSpentInMinutes / 60 / 24;
-    return (days * 8 * 60 + timeSpentInMinutes % (60 * 24)) * 60;
   }
 
   private void checkVersion(final HttpClient client) throws Exception {
