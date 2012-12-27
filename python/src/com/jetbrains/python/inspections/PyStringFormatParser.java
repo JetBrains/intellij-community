@@ -1,10 +1,13 @@
 package com.jetbrains.python.inspections;
 
+import com.intellij.openapi.util.TextRange;
+import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
 
 /**
  * @author yole
@@ -216,5 +219,15 @@ public class PyStringFormatParser {
       }
     }
     return result;
+  }
+
+  @NotNull
+  public static List<TextRange> getEscapeRanges(@NotNull String s) {
+    final List<TextRange> ranges = new ArrayList<TextRange>();
+    Matcher matcher = PyStringLiteralExpressionImpl.PATTERN_ESCAPE.matcher(s);
+    while (matcher.find()) {
+      ranges.add(TextRange.create(matcher.start(), matcher.end()));
+    }
+    return ranges;
   }
 }

@@ -31,6 +31,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.inspections.PyStringFormatParser;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -271,10 +272,8 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     }
 
     if (singleElementSelection && element1 instanceof PyStringLiteralExpression) {
-      // TODO: Protect against escapes
-      // TODO: Protect against substrings with format characters
-      // TODO: Handle extracting substring from a string with formatting
       final PyStringLiteralExpression literal = (PyStringLiteralExpression)element1;
+      // Currently introduce for substrings of a multi-part string literals is not supported
       if (literal.getStringNodes().size() > 1) {
         showCannotPerformError(project, editor);
         return;
@@ -286,6 +285,14 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
         final TextRange innerRange = literal.getStringValueTextRange();
         final TextRange intersection = selectionRange.shiftRight(-offset).intersection(innerRange);
         final TextRange finalRange = intersection != null ? intersection : selectionRange;
+        final String text = literal.getText();
+        // TODO: Handle extracting substring from a string with %-formatting
+        // TODO: Protect against substrings with new-style format characters
+        // TODO: Handle extracting substring from a string with new-style formatting
+        if (breaksStringFormatting(text, finalRange) || breaksStringEscaping(text, finalRange)) {
+          showCannotPerformError(project, editor);
+          return;
+        }
         element1.putUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE, Pair.create(element1, finalRange));
       }
     }
@@ -295,6 +302,31 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     }
     operation.setElement(element1);
     performActionOnElement(operation);
+  }
+
+  private boolean breaksStringFormatting(@NotNull String s, @NotNull TextRange range) {
+    final PyStringFormatParser parser = new PyStringFormatParser(s);
+    final List<TextRange> ranges = new ArrayList<TextRange>();
+    for (PyStringFormatParser.SubstitutionChunk chunk : parser.parseSubstitutions()) {
+      ranges.add(TextRange.create(chunk.getStartIndex(), chunk.getEndIndex()));
+    }
+    return breaksRanges(ranges, range);
+  }
+
+  private boolean breaksStringEscaping(@NotNull String s, @NotNull TextRange range) {
+    return breaksRanges(PyStringFormatParser.getEscapeRanges(s), range);
+  }
+
+  private boolean breaksRanges(@NotNull List<TextRange> ranges, @NotNull TextRange range) {
+    for (TextRange r : ranges) {
+      if (range.contains(r)) {
+        continue;
+      }
+      if (range.intersectsStrict(r)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void showCannotPerformError(Project project, Editor editor) {

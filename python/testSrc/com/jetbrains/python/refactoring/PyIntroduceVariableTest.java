@@ -128,9 +128,29 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
     doTest();
   }
 
-  // PY-6354
+  // PY-3654
   public void testBytesSubstring() {
     doTest();
+  }
+
+  // PY-3654
+  public void testSubstringContainsFormatChars() {
+    doTest();
+  }
+
+  // PY-3654
+  public void testSubstringBreaksFormatChars() {
+    doTestCannotPerform();
+  }
+
+  // PY-3654
+  public void testSubstringContainsEscapes() {
+    doTest();
+  }
+
+  // PY-3654
+  public void testSubstringBreaksEscapes() {
+    doTestCannotPerform();
   }
 
   private void doTestCannotPerform() {
