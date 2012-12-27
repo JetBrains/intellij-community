@@ -1042,4 +1042,16 @@ class B extends A{
 }
 ''')
   }
+
+  void testOverriddenProperty() {
+    testHighlighting('''\
+class A {
+    final foo = 2
+}
+
+class B extends A {
+    <error descr="Method 'getFoo()' cannot override method 'getFoo()' in 'A'; overridden method is final">def getFoo()</error>{5}
+}
+''')
+  }
 }
