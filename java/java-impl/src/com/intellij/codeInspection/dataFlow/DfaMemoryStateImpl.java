@@ -220,9 +220,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     Collections.sort(distincs);
     result.append(StringUtil.join(distincs, " "));
 
-    result.append(" stack: ");
-    for (DfaValue value : myStack) {
-      result.append(value);
+    result.append(" stack: ").append(StringUtil.join(myStack, ","));
+    result.append(" vars: ");
+    for (Map.Entry<DfaVariableValue, DfaVariableState> entry : myVariableStates.entrySet()) {
+      result.append("[").append(entry.getKey()).append("->").append(entry.getValue()).append("]");
     }
     result.append('>');
     return result.toString();
