@@ -38,7 +38,6 @@
     </orderEntry>
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="xml" />
-    <orderEntry type="module" module-name="tasks-time-tracking" />
   </component>
 </module>
 
