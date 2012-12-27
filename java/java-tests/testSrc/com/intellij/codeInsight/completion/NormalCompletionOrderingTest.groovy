@@ -392,6 +392,14 @@ import java.lang.annotation.Target;
     assertPreferredItems 0, 'get', 'getClass'
   }
 
+  public void testEqualsStats() {
+    checkPreferredItems 0, 'equals', 'equalsIgnoreCase'
+    incUseCount(lookup, 1)
+    assertPreferredItems 0, 'equalsIgnoreCase', 'equals'
+    incUseCount(lookup, 1)
+    checkPreferredItems 0, 'equals', 'equalsIgnoreCase'
+  }
+
   public void testPreferClassToItsConstants() {
     checkPreferredItems 0, 'Calendar.FIELD_COUNT', 'Calendar', 'Calendar.AM'
   }
