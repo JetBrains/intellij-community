@@ -133,7 +133,7 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
     return -priority;
   }
 
-  @NotNull
+  @Nullable
   private static IElementType getOperationType(@NotNull final PyElement expr) {
     if (expr instanceof PyBinaryExpression) return ((PyBinaryExpression)expr).getOperator();
     return ((PyPrefixExpression)expr).getOperator();
