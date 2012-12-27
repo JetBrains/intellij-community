@@ -36,7 +36,7 @@ class Test {
       System.out.println(r);
     }
     catch (Exception e) {
-      if (e instanceof ResourcefulException1) {
+      if (<warning descr="Condition 'e instanceof ResourcefulException1' is always 'false'">e instanceof ResourcefulException1</warning>) {
         System.out.println("1");
       }
       else if (e instanceof ResourcefulException2) {

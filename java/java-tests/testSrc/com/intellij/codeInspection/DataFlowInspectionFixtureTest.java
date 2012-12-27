@@ -150,6 +150,7 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
 
   public void testTransientFinalField() { doTest(); }
   public void _testSymmetricUncheckedCast() { doTest(); }
+  public void testNullCheckDoesntAffectUncheckedCast() { doTest(); }
 
   public void testNullableForeachVariable() {
     setupCustomAnnotations();
