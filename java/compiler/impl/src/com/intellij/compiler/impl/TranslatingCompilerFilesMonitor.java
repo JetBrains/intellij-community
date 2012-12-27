@@ -200,17 +200,17 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       myOutputsToDelete.remove(projectId);
       myGeneratedDataPaths.remove(project);
     }
+
     synchronized (myProjectOutputRoots) {
+      ensureOutputStorageInitialized();
       myProjectOutputRoots.remove(projectId);
+      try {
+        myOutputRootsStorage.remove(projectId);
+      }
+      catch (IOException e) {
+        LOG.info(e);
+      }
     }
-
-    try {
-      myOutputRootsStorage.remove(projectId);
-    }
-    catch (IOException e) {
-      LOG.info(e);
-    }
-
   }
 
   public void watchProject(Project project) {
@@ -634,7 +634,10 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
     
     try {
-      myOutputRootsStorage.close();
+      final PersistentHashMap<Integer, TIntObjectHashMap<Pair<Integer, Integer>>> storage = myOutputRootsStorage;
+      if (storage != null) {
+        storage.close();
+      }
     }
     catch (IOException e) {
       LOG.info(e);
