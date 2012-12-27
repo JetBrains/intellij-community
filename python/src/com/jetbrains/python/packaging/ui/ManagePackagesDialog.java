@@ -419,7 +419,7 @@ public class ManagePackagesDialog extends DialogWrapper {
         else {
           URL url = e.getURL();
           if (url != null) {
-            BrowserUtil.launchBrowser(url.toString());
+            BrowserUtil.browse(url);
           }
         }
       }
