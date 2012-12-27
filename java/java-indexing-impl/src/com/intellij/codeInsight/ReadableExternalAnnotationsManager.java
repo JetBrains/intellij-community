@@ -52,19 +52,20 @@ public class ReadableExternalAnnotationsManager extends BaseExternalAnnotationsM
     return myHasAnyAnnotationsRoots == ThreeState.YES;
   }
 
-  @NotNull
   @Override
+  @NotNull
   protected List<VirtualFile> getExternalAnnotationsRoots(@NotNull VirtualFile libraryFile) {
-    final List<OrderEntry> entries = ProjectRootManager.getInstance(myPsiManager.getProject()).getFileIndex().getOrderEntriesForFile(
-      libraryFile);
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myPsiManager.getProject()).getFileIndex();
+    List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(libraryFile);
     List<VirtualFile> result = new ArrayList<VirtualFile>();
+    VirtualFileManager vfManager = VirtualFileManager.getInstance();
     for (OrderEntry entry : entries) {
       if (entry instanceof ModuleOrderEntry) {
         continue;
       }
       final String[] externalUrls = AnnotationOrderRootType.getUrls(entry);
       for (String url : externalUrls) {
-        VirtualFile root = VirtualFileManager.getInstance().findFileByUrl(url);
+        VirtualFile root = vfManager.findFileByUrl(url);
         if (root != null) {
           result.add(root);
         }

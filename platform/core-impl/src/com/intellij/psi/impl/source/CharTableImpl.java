@@ -18,10 +18,11 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.util.CharTable;
 import com.intellij.util.containers.OpenTHashSet;
-import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceHashingStrategy;
 import com.intellij.util.text.CharSequenceSubSequence;
+import com.intellij.util.text.StringFactory;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -33,19 +34,25 @@ public class CharTableImpl implements CharTable {
 
   private final OpenTHashSet<CharSequence> entries = new OpenTHashSet<CharSequence>(10, 0.9f, HASHER);
 
+  @NotNull
   @Override
-  public CharSequence intern(final CharSequence text) {
+  public CharSequence intern(@NotNull final CharSequence text) {
     if (text.length() > INTERN_THRESHOLD) return createSequence(text);
 
-    int idx = STATIC_ENTRIES.index(text);
-    if (idx >= 0) {
-      return STATIC_ENTRIES.get(idx);
+    return doIntern(text);
+  }
+
+  @NotNull
+  public CharSequence doIntern(@NotNull CharSequence text) {
+    CharSequence interned = STATIC_ENTRIES.get(text);
+    if (interned != null) {
+      return interned;
     }
 
     synchronized(entries) {
-      idx = entries.index(text);
-      if (idx >= 0) {
-        return entries.get(idx);
+      interned = entries.get(text);
+      if (interned != null) {
+        return interned;
       }
 
       // We need to create separate string just to prevent referencing all character data when original is string or char sequence over string
@@ -57,19 +64,22 @@ public class CharTableImpl implements CharTable {
     }
   }
 
+  @NotNull
   @Override
-  public CharSequence intern(final CharSequence baseText, final int startOffset, final int endOffset) {
+  public CharSequence intern(@NotNull final CharSequence baseText, final int startOffset, final int endOffset) {
     if (endOffset - startOffset == baseText.length()) return baseText;
     return intern(new CharSequenceSubSequence(baseText, startOffset, endOffset));
   }
 
-  private static CharSequence createSequence(final CharSequence text) {
-    final char[] buf = new char[text.length()];
+  @NotNull
+  private static String createSequence(@NotNull CharSequence text) {
+    char[] buf = new char[text.length()];
     CharArrayUtil.getChars(text, buf, 0);
-    return new CharArrayCharSequence(buf);
+
+    return StringFactory.createShared(buf); // this way the .toString() doesn't create another instance (as opposed to new CharArrayCharSequence())
   }
 
-  public static void staticIntern(final String text) {
+  public static void staticIntern(@NotNull String text) {
     synchronized(STATIC_ENTRIES) {
       STATIC_ENTRIES.add(text);
     }

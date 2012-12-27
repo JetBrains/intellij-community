@@ -21,14 +21,13 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class StringInterner {
-
   private final OpenTHashSet<String> mySet = new OpenTHashSet<String>();
 
   @NotNull
   public String intern(@NotNull String name) {
-    int idx = mySet.index(name);
-    if (idx >= 0) {
-      return mySet.get(idx);
+    String interned = mySet.get(name);
+    if (interned != null) {
+      return interned;
     }
 
     boolean added = mySet.add(name);
