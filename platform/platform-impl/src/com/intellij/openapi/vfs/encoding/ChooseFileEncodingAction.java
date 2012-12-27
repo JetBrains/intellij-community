@@ -43,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -60,7 +59,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   public abstract void update(final AnActionEvent e);
 
   @NotNull
-  private static Pair<Charset, String> checkFileType(@NotNull VirtualFile virtualFile) {
+  static Pair<Charset, String> checkFileType(@NotNull VirtualFile virtualFile) {
     FileType fileType = virtualFile.getFileType();
     if (fileType.isBinary()) return Pair.create(null, "binary file");
     if (fileType == StdFileTypes.GUI_DESIGNER_FORM) return Pair.create(CharsetToolkit.UTF8_CHARSET, "IDEA GUI Designer form");
@@ -102,34 +101,6 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
       };
       group.add(action);
     }
-  }
-
-  @Nullable("null means enabled, notnull means disabled and contains error message")
-  public static String checkCanConvert(@NotNull VirtualFile virtualFile) {
-    if (virtualFile.isDirectory()) {
-      return "file is a directory";
-    }
-    String reason = LoadTextUtil.wasCharsetDetectedFromBytes(virtualFile);
-    if (reason == null) {
-      return null;
-    }
-    String failReason = null;
-
-    Charset charsetFromContent = ((EncodingManagerImpl)EncodingManager.getInstance()).computeCharsetFromContent(virtualFile);
-    if (charsetFromContent != null) {
-      failReason = "hard coded in text, encoding: {0}";
-    }
-    else {
-      Pair<Charset, String> check = checkFileType(virtualFile);
-      if (check.second != null) {
-        failReason = check.second;
-      }
-    }
-
-    if (failReason != null) {
-      return MessageFormat.format(failReason, charsetFromContent == null ? "" : charsetFromContent.displayName());
-    }
-    return null;
   }
 
   @NotNull
@@ -198,9 +169,9 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
 
   @NotNull
   public DefaultActionGroup createGroup(@Nullable("null means do not show 'clear' text") String clearItemText,
-                                        @Nullable Condition<Charset> charsetFilter,
                                         @NotNull String pattern,
-                                        Charset alreadySelected) {
+                                        Charset alreadySelected,
+                                        @Nullable Condition<Charset> charsetFilter) {
     DefaultActionGroup group = new DefaultActionGroup();
     List<Charset> favorites = new ArrayList<Charset>(EncodingManager.getInstance().getFavorites());
     Collections.sort(favorites);

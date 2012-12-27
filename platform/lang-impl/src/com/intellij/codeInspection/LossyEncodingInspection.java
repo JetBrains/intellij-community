@@ -116,8 +116,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
       ) {
       return;
     }
-    boolean ok = isGoodCharset(file.getProject(), virtualFile, text, charset);
-    if (!ok) {
+    if (!isGoodCharset(file.getProject(), virtualFile, text, charset)) {
       descriptors.add(manager.createProblemDescriptor(file, "File was loaded in the wrong encoding: '"+charset+"'",
                                                       RELOAD_ENCODING_FIX, ProblemHighlightType.GENERIC_ERROR, isOnTheFly));
     }
@@ -125,10 +124,10 @@ public class LossyEncodingInspection extends LocalInspectionTool {
 
   // check if file was loaded in correct encoding
   // returns true if text converted with charset is equals to the bytes currently on disk
-  public static boolean isGoodCharset(@NotNull Project project,
-                                      @NotNull VirtualFile virtualFile,
-                                      @NotNull String text,
-                                      @NotNull Charset charset) {
+  private static boolean isGoodCharset(@NotNull Project project,
+                                       @NotNull VirtualFile virtualFile,
+                                       @NotNull String text,
+                                       @NotNull Charset charset) {
     byte[] bytes;
     try {
       bytes = virtualFile.contentsToByteArray();

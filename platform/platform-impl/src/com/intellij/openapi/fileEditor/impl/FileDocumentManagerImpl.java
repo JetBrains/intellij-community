@@ -461,16 +461,14 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   @Override
   @NotNull
   public String getLineSeparator(@Nullable VirtualFile file, @Nullable Project project) {
-    String lineSeparator = file != null ? LoadTextUtil.getDetectedLineSeparator(file) : null;
+    String lineSeparator = file == null ? null : LoadTextUtil.getDetectedLineSeparator(file);
     if (lineSeparator == null) {
       CodeStyleFacade settingsManager = project == null
                                         ? CodeStyleFacade.getInstance()
                                         : CodeStyleFacade.getInstance(project);
-      return settingsManager.getLineSeparator();
+      lineSeparator = settingsManager.getLineSeparator();
     }
-    else {
-      return lineSeparator;
-    }
+    return lineSeparator;
   }
 
   @Override
@@ -601,6 +599,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
               boolean wasWritable = document.isWritable();
               DocumentEx documentEx = (DocumentEx)document;
               documentEx.setReadOnly(false);
+              LoadTextUtil.setCharsetWasDetectedFromBytes(file, null);
               documentEx.replaceText(LoadTextUtil.loadText(file), file.getModificationStamp());
               documentEx.setReadOnly(!wasWritable);
             }
