@@ -85,28 +85,30 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
     final LanguageLevel languageLevel = LanguageLevel.forElement(oldExpression);
     final List<PyStringFormatParser.SubstitutionChunk> substitutions = new PyStringFormatParser(fullText).parseSubstitutions();
 
-    if (valueExpression instanceof PyTupleExpression && !containsStringFormatting(fullText, textRange)) {
-      // 'foo%s' % (x,) -> '%s%s' % (s, x)
-      // TODO: Support dict literals and dict() function
-      // TODO: It is possible to resolve to a tuple or dict literal and modify them
-      final String newLiteralText = prefix + "%s" + suffix;
-      final PyStringLiteralExpression newLiteralExpression = generator.createStringLiteralAlreadyEscaped(newLiteralText);
-      oldExpression.replace(newLiteralExpression);
+    if (valueExpression != null && !containsStringFormatting(fullText, textRange)) {
+      if (valueExpression instanceof PyTupleExpression) {
+        // 'foo%s' % (x,) -> '%s%s' % (s, x)
+        // TODO: Support dict literals and dict() function
+        // TODO: It is possible to resolve to a tuple or dict literal and modify them
+        final String newLiteralText = prefix + "%s" + suffix;
+        final PyStringLiteralExpression newLiteralExpression = generator.createStringLiteralAlreadyEscaped(newLiteralText);
+        oldExpression.replace(newLiteralExpression);
 
-      final PyTupleExpression tuple = (PyTupleExpression)valueExpression;
-      final PyExpression[] members = tuple.getElements();
-      final List<PyStringFormatParser.SubstitutionChunk> positional = PyStringFormatParser.getPositionalSubstitutions(substitutions);
-      final int i = getPositionInRanges(PyStringFormatParser.substitutionsToRanges(positional), textRange);
-      final int n = members.length;
-      if (n > 0 && i <= n) {
-        final boolean last = i == n;
-        final ASTNode trailingComma = PyPsiUtils.getNextComma(members[n - 1].getNode());
-        if (trailingComma != null) {
-          tuple.getNode().removeChild(trailingComma);
+        final PyTupleExpression tuple = (PyTupleExpression)valueExpression;
+        final PyExpression[] members = tuple.getElements();
+        final List<PyStringFormatParser.SubstitutionChunk> positional = PyStringFormatParser.getPositionalSubstitutions(substitutions);
+        final int i = getPositionInRanges(PyStringFormatParser.substitutionsToRanges(positional), textRange);
+        final int n = members.length;
+        if (n > 0 && i <= n) {
+          final boolean last = i == n;
+          final ASTNode trailingComma = PyPsiUtils.getNextComma(members[n - 1].getNode());
+          if (trailingComma != null) {
+            tuple.getNode().removeChild(trailingComma);
+          }
+          final PyExpression before = last ? null : members[i];
+          PyUtil.addListNode(tuple, newExpression, before != null ? before.getNode() : null, i == 0 || !last, last, !last);
+          return newExpression;
         }
-        final PyExpression before = last ? null : members[i];
-        PyUtil.addListNode(tuple, newExpression, before != null ? before.getNode() : null, i == 0 || !last, last, !last);
-        return newExpression;
       }
       return null;
     }
