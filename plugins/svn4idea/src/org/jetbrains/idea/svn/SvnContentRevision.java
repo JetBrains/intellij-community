@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.ByteArrayOutputStream;
@@ -57,7 +58,12 @@ public class SvnContentRevision implements ContentRevision, MarkerVcsContentRevi
     myFile = file;
   }
 
-  public static SvnContentRevision createBaseRevision(@NotNull SvnVcs vcs, @NotNull final FilePath file, final SVNRevision revision) {
+  public static SvnContentRevision createBaseRevision(@NotNull SvnVcs vcs, @NotNull final FilePath file, final SVNStatus status) {
+    SVNRevision revision = status.getRevision().isValid() ? status.getRevision() : status.getCommittedRevision();
+    return createBaseRevision(vcs, file, revision);
+  }
+
+  public static SvnContentRevision createBaseRevision(SvnVcs vcs, FilePath file, SVNRevision revision) {
     if (file.getFileType().isBinary()) {
       return new SvnBinaryContentRevision(vcs, file, revision, true);
     }
