@@ -16,6 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.CommonBundle;
+import com.intellij.Patches;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
@@ -65,8 +66,6 @@ import static com.intellij.util.containers.ContainerUtilRt.newArrayList;
 public class BrowserUtil {
   private static final Logger LOG = Logger.getInstance(BrowserUtil.class);
 
-  private static final boolean TRIM_URLS = !"false".equalsIgnoreCase(System.getProperty("idea.browse.trim.urls"));
-
   // The pattern for 'scheme' mainly according to RFC1738.
   // We have to violate the RFC since we need to distinguish
   // real schemes from local Windows paths; The only difference
@@ -84,12 +83,7 @@ public class BrowserUtil {
 
   public static String getDocURL(String url) {
     Matcher anchorMatcher = ourAnchorSuffix.matcher(url);
-
-    if (anchorMatcher.find()) {
-      return anchorMatcher.reset().replaceAll("");
-    }
-
-    return url;
+    return anchorMatcher.find() ? anchorMatcher.reset().replaceAll("") : url;
   }
 
   @Nullable
@@ -106,7 +100,7 @@ public class BrowserUtil {
   }
 
   public static void browse(@NotNull URL url) {
-    launchBrowser(url.toExternalForm());
+    browse(url.toExternalForm());
   }
 
   public static void launchBrowser(@NotNull @NonNls String url) {
@@ -122,9 +116,7 @@ public class BrowserUtil {
   }
 
   private static void openOrBrowse(@NotNull @NonNls String url, boolean browse) {
-    if (TRIM_URLS) {
-      url = url.trim();
-    }
+    url = url.trim();
 
     if (url.startsWith("jar:")) {
       String files = extractFiles(url);
@@ -197,30 +189,18 @@ public class BrowserUtil {
   }
 
   private static boolean isDesktopActionSupported(Desktop.Action action) {
-    if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(action)) {
-      // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6457572
-      return !SystemInfo.isWindows || SystemInfo.isJavaVersionAtLeast("1.7");
-    }
-    return false;
+    return !Patches.SUN_BUG_ID_6457572 && !Patches.SUN_BUG_ID_6486393 &&
+           Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(action);
   }
 
   private static GeneralSettings getGeneralSettingsInstance() {
-    final GeneralSettings settings = ApplicationManager.getApplication() != null ? GeneralSettings.getInstance() : null;
-    return settings != null ? settings : new GeneralSettings();
+    return ApplicationManager.getApplication() != null ? GeneralSettings.getInstance() : new GeneralSettings();
   }
 
   public static boolean canStartDefaultBrowser() {
-    if (SystemInfo.isMac || SystemInfo.isWindows) {
-      return true;
-    }
-    else if (SystemInfo.isUnix && SystemInfo.hasXdgOpen()) {
-      return true;
-    }
-    else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-      return true;
-    }
-
-    return false;
+    return isDesktopActionSupported(Desktop.Action.BROWSE) ||
+           SystemInfo.isMac || SystemInfo.isWindows ||
+           SystemInfo.isUnix && SystemInfo.hasXdgOpen();
   }
 
   @Nullable
