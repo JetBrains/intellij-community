@@ -243,6 +243,7 @@
   </action>
   <action id="Back">
     <keyboard-shortcut first-keystroke="control alt LEFT"/>
+    <mouse-shortcut keystroke="button4"/>
   </action>
   <action id="EditorScrollDown">
     <keyboard-shortcut first-keystroke="control DOWN"/>
@@ -713,6 +714,7 @@
   </action>
   <action id="Forward">
     <keyboard-shortcut first-keystroke="control alt RIGHT"/>
+    <mouse-shortcut keystroke="button5"/>
   </action>
   <action id="CollapseAllRegions">
     <keyboard-shortcut first-keystroke="control shift SUBTRACT"/>
