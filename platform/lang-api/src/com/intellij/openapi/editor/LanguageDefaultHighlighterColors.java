@@ -16,6 +16,10 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.options.colors.AttributesDescriptor;
+import com.intellij.util.containers.HashMap;
+
+import java.util.Map;
 
 /**
  * Base highlighter colors for multiple languages.
@@ -23,8 +27,26 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
  * @author Rustam Vishnyakov
  */
 public class LanguageDefaultHighlighterColors {
+
+  private final static Map<TextAttributesKey,String> DISPLAY_NAMES_MAP = new HashMap<TextAttributesKey, String>();
+
   public final static TextAttributesKey TEMPLATE_LANGUAGE_COLOR =
     TextAttributesKey.createTextAttributesKey("DEFAULT_TEMPLATE_LANGUAGE_COLOR");
 
   public final static TextAttributesKey IDENTIFIER = TextAttributesKey.createTextAttributesKey("DEFAULT_IDENTIFIER");
+
+  static {
+    DISPLAY_NAMES_MAP.put(IDENTIFIER, "Identifier");
+    DISPLAY_NAMES_MAP.put(TEMPLATE_LANGUAGE_COLOR, "Template language");
+  }
+
+  public static AttributesDescriptor createAttributeDescriptor(TextAttributesKey key) {
+    String presentableName = DISPLAY_NAMES_MAP.get(key);
+    if (presentableName == null) presentableName = key.getExternalName();
+    return new AttributesDescriptor(presentableName, key);
+  }
+
+  public static String getDisplayName(TextAttributesKey key) {
+    return DISPLAY_NAMES_MAP.containsKey(key) ? DISPLAY_NAMES_MAP.get(key) : "<" + key.getExternalName() +">";
+  }
 }

@@ -47,8 +47,8 @@ public class LanguageDefaultColorsPage implements ColorSettingsPage, DisplayPrio
   }
 
   private static final AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = {
-    new AttributesDescriptor("Identifier", LanguageDefaultHighlighterColors.IDENTIFIER),
-    new AttributesDescriptor("Template language", LanguageDefaultHighlighterColors.TEMPLATE_LANGUAGE_COLOR)
+    LanguageDefaultHighlighterColors.createAttributeDescriptor(LanguageDefaultHighlighterColors.IDENTIFIER),
+    LanguageDefaultHighlighterColors.createAttributeDescriptor(LanguageDefaultHighlighterColors.TEMPLATE_LANGUAGE_COLOR)
   };
 
   @Nullable

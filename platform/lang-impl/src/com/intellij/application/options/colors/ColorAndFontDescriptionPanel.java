@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.colors;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -60,6 +61,9 @@ public class ColorAndFontDescriptionPanel extends JPanel {
   private ActionListener myActionListener;
   private JLabel myLabelFont;
 
+  private JLabel myInheritanceLabel = new JLabel();
+  private final static Icon INHERITED_ICON = AllIcons.Ide.Link;
+
 
   public ColorAndFontDescriptionPanel() {
     super(new BorderLayout());
@@ -90,6 +94,7 @@ public class ColorAndFontDescriptionPanel extends JPanel {
     settingsPanel.add(createColorSettingsPanel(), gbConstraints);
     gbConstraints.weighty = 1;
     settingsPanel.add(new TailPanel(), gbConstraints);
+    settingsPanel.add(myInheritanceLabel, gbConstraints);
     return settingsPanel;
   }
 
@@ -386,6 +391,17 @@ public class ColorAndFontDescriptionPanel extends JPanel {
     }
     else {
       myEffectsCombo.setEnabled(false);
+    }
+
+    if (description.isInherited()) {
+      myInheritanceLabel.setIcon(INHERITED_ICON);
+      myInheritanceLabel.setText(description.getInheritanceDescription());
+      myInheritanceLabel.setForeground(myLabelFont.getForeground());
+    }
+    else {
+      myInheritanceLabel.setText("X");
+      myInheritanceLabel.setIcon(null);
+      myInheritanceLabel.setForeground(myLabelFont.getBackground());
     }
   }
 

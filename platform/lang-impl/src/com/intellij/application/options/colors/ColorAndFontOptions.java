@@ -31,6 +31,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.settings.DiffOptionsPanel;
 import com.intellij.openapi.diff.impl.settings.DiffPreviewPanel;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.LanguageDefaultHighlighterColors;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -760,6 +761,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     private final TextAttributes myAttributesToApply;
     private final TextAttributesKey key;
     private TextAttributes myFallbackAttributes;
+    private String myInheritanceDescription;
 
     private SchemeTextAttributesDescription(String name, String group, TextAttributesKey key, EditorColorsScheme scheme, Icon icon,
                                            String toolTip) {
@@ -768,8 +770,13 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
             key, scheme, icon, toolTip);
       this.key = key;
       myAttributesToApply = getInitialAttributes(scheme, key);
-      if (key.getFallbackAttributeKey() != null) {
-        myFallbackAttributes = scheme.getAttributes(key.getFallbackAttributeKey());
+      TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
+      if (fallbackKey != null) {
+        myFallbackAttributes = scheme.getAttributes(fallbackKey);
+        myInheritanceDescription = LanguageDefaultHighlighterColors.getDisplayName(fallbackKey);
+        if (myInheritanceDescription == null) {
+          myInheritanceDescription = fallbackKey.getExternalName();
+        }
       }
       initCheckedStatus();
     }
@@ -840,6 +847,21 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     @Override
     public boolean isErrorStripeEnabled() {
       return true;
+    }
+
+    @Override
+    public boolean isInherited() {
+      if (myFallbackAttributes != null) {
+        if (getTextAttributes().isEmpty()) return true;
+        return getTextAttributes().equals(myFallbackAttributes);
+      }
+      return false;
+    }
+
+    @Nullable
+    @Override
+    public String getInheritanceDescription() {
+      return myInheritanceDescription;
     }
   }
 
