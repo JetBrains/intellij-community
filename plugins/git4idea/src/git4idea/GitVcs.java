@@ -363,11 +363,8 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   private void checkExecutableAndVersion() {
     boolean executableIsAlreadyCheckedAndFine = false;
-    String pathToGit = myAppSettings.getPathToGitAtStartup();
-    if (pathToGit == null) {
-      myAppSettings.setPathToGit(new GitExecutableDetector().detect());
-    }
-    else if (!pathToGit.contains(File.separator)) { // no path, just sole executable, with a hope that it is in path
+    String pathToGit = myAppSettings.getPathToGit();
+    if (!pathToGit.contains(File.separator)) { // no path, just sole executable, with a hope that it is in path
       // subject to redetect the path if executable validator fails
       if (!myExecutableValidator.isExecutableValid()) {
         myAppSettings.setPathToGit(new GitExecutableDetector().detect());

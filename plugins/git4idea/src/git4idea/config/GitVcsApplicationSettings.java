@@ -59,22 +59,9 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
   @NotNull
   public String getPathToGit() {
     if (myState.myPathToGit == null) {
-      // can happen only if GitVcs#activate hasn't been called: it is when configurables are built, returning the default value.
-      return GitExecutableDetector.DEFAULT_WIN_GIT;
+      // detecting right away, this can be called from the default project without a call to GitVcs#activate()
+      myState.myPathToGit = new GitExecutableDetector().detect();
     }
-    return myState.myPathToGit;
-  }
-
-  /**
-   * <p>This method differs from {@link #getPathToGit()} only in the @Nullable annotation: initially the path can be null,
-   *    but after VCS is initialized for the first time, correct path is set in {@link git4idea.GitVcs} and is never null,
-   *    so we want the @NotNull annotation there.</p>
-   * <p>This method should be called only from {@link git4idea.GitVcs#activate()}.</p>
-   *
-   * @return Path to Git or null if the path was not written to the config yet.
-   */
-  @Nullable
-  public String getPathToGitAtStartup() {
     return myState.myPathToGit;
   }
 
