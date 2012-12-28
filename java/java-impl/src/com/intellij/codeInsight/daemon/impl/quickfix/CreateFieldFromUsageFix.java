@@ -83,7 +83,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
 
     setupVisibility(parentClass, targetClass, field.getModifierList());
 
-    if (shouldCreateStaticMember(myReferenceExpression, targetClass)) {
+    if (!targetClass.isInterface() && shouldCreateStaticMember(myReferenceExpression, targetClass)) {
       PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
     }
 

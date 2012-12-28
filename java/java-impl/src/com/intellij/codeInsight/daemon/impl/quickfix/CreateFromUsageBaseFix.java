@@ -179,10 +179,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
   }
 
   protected static boolean shouldCreateStaticMember(PsiReferenceExpression ref, PsiClass targetClass) {
-    if (targetClass.isInterface()) {
-      return false;
-    }
-
+    
     PsiExpression qualifierExpression = ref.getQualifierExpression();
     while (qualifierExpression instanceof PsiParenthesizedExpression) {
       qualifierExpression = ((PsiParenthesizedExpression) qualifierExpression).getExpression();
