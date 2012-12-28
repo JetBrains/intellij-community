@@ -106,7 +106,7 @@ public class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
           if (module != null) {
             myModuleToExcludesMap.get(module).add(excluded);
           }
-          parent = parent.getParentFile();
+          parent = FileUtil.getParentFile(parent);
         }
         myExcludedRoots.add(excluded);
       }
