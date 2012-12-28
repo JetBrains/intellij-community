@@ -20,7 +20,7 @@ public final class Hash {
     private static final Map<Hash, Hash> ourCache = new HashMap<Hash, Hash>(CAPABILITY);
 
     private static void clearMap() {
-        if (ourCache.size() >= CAPABILITY) {
+        if (ourCache.size() >= CAPABILITY - 5) {
             ourCache.clear();
         }
     }

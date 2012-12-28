@@ -20,8 +20,8 @@ public class CommitLogData {
                          @NotNull String author, long timeStamp) {
         this.hash = hash;
         this.parents = parents;
-        this.commitMessage = commitMessage;
-        this.author = author;
+        this.commitMessage = new String(commitMessage.getBytes());
+        this.author = new String(author.getBytes());
         this.timeStamp = timeStamp;
     }
 
