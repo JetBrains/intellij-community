@@ -34,7 +34,7 @@ binding.setVariable("buildDebuggerEgg", {String sandbox, String pythonHome, Stri
     replacefilter(token: "@@BUILD_NUMBER@@", value: buildName)
   }
 
-  ant.replace(file: "$eggDir/pydev/pydevd_comm.py") {
+  ant.replace(file: "$eggDir/pydevd_comm.py") {
     replacefilter(token: "@@BUILD_NUMBER@@", value: buildName)
   }
 
