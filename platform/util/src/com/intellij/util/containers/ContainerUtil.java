@@ -166,6 +166,11 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
+  public static <T> List<T> newSmartList(T element) {
+    return new SmartList<T>(element);
+  }
+
+  @NotNull
   public static <T> List<T> newSmartList(T... elements) {
     return new SmartList<T>(elements);
   }

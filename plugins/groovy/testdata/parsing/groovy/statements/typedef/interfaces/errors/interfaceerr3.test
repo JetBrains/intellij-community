@@ -15,12 +15,13 @@ Groovy script
     Type definition body
       PsiElement({)('{')
       PsiWhiteSpace('\n  ')
-      Open block
-        PsiElement({)('{')
-        PsiWhiteSpace('\n  ')
-        PsiElement(})('}')
-      PsiErrorElement:compound statement unexpected in interface
-        <empty list>
+      Class initializer
+        Modifiers
+          <empty list>
+        Open block
+          PsiElement({)('{')
+          PsiWhiteSpace('\n  ')
+          PsiElement(})('}')
       PsiElement(new line)('\n  ')
       PsiElement(})('}')
   PsiElement(new line)('\n')

@@ -1,14 +1,9 @@
 package com.intellij.tasks.timeTracking;
 
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.NonDefaultProjectConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.binding.BindControl;
-import com.intellij.openapi.options.binding.BindableConfigurable;
-import com.intellij.openapi.options.binding.ControlBinder;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.ui.GuiUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -22,22 +17,12 @@ import java.awt.event.ActionListener;
  * User: Evgeny.Zakrevsky
  * Date: 11/19/12
  */
-public class TimeTrackingConfigurable extends BindableConfigurable implements SearchableConfigurable,
-                                                                              NonDefaultProjectConfigurable, Configurable.NoScroll {
-  @BindControl("enabled")
+public class TimeTrackingConfigurable implements SearchableConfigurable, NonDefaultProjectConfigurable, Configurable.NoScroll {
   private JCheckBox myEnableTimeTrackingCheckBox;
-  @BindControl("suspendDelayInSeconds")
   private JTextField myTimeTrackingSuspendDelay;
   private JPanel myTimeTrackingSettings;
   private JPanel myPanel;
   private Project myProject;
-  private final NotNullLazyValue<ControlBinder> myControlBinder = new NotNullLazyValue<ControlBinder>() {
-    @NotNull
-    @Override
-    protected ControlBinder compute() {
-      return new ControlBinder(getConfig());
-    }
-  };
 
 
   public TimeTrackingConfigurable(Project project) {
@@ -58,22 +43,34 @@ public class TimeTrackingConfigurable extends BindableConfigurable implements Se
   }
 
   @Override
-  protected ControlBinder getBinder() {
-    return myControlBinder.getValue();
-  }
-
-  @Override
   public void reset() {
-    super.reset();
+    myEnableTimeTrackingCheckBox.setSelected(getConfig().enabled);
+    myTimeTrackingSuspendDelay.setText(String.valueOf(getConfig().suspendDelayInSeconds));
     enableTimeTrackingPanel();
   }
 
   @Override
-  public void apply() throws ConfigurationException {
+  public void disposeUIResources() {
+  }
+
+
+  @Override
+  public boolean isModified() {
+    return myEnableTimeTrackingCheckBox.isSelected() != getConfig().enabled ||
+           !myTimeTrackingSuspendDelay.getText().equals(String.valueOf(getConfig().suspendDelayInSeconds));
+  }
+
+  @Override
+  public void apply() {
     boolean oldTimeTrackingEnabled = getConfig().enabled;
-    super.apply();
+    getConfig().enabled = myEnableTimeTrackingCheckBox.isSelected();
     if (getConfig().enabled != oldTimeTrackingEnabled) {
       TimeTrackingManager.getInstance(myProject).updateTimeTrackingToolWindow();
+    }
+    try{
+      getConfig().suspendDelayInSeconds = Integer.parseInt(myTimeTrackingSuspendDelay.getText());
+    }
+    catch (NumberFormatException ignored) {
     }
   }
 
@@ -105,7 +102,6 @@ public class TimeTrackingConfigurable extends BindableConfigurable implements Se
   @Nullable
   @Override
   public JComponent createComponent() {
-    bindAnnotations();
     return myPanel;
   }
 }

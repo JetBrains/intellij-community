@@ -573,7 +573,7 @@ public class FileUtil extends FileUtilRt {
     }
   }
 
-  public static void ensureExists(File dir) throws IOException {
+  public static void ensureExists(@NotNull File dir) throws IOException {
     if (!dir.exists() && !dir.mkdirs()) {
       throw new IOException(CommonBundle.message("exception.directory.can.not.create", dir.getPath()));
     }
@@ -1316,6 +1316,19 @@ public class FileUtil extends FileUtilRt {
   @NotNull
   public static byte[] loadBytes(@NotNull InputStream stream, int length) throws IOException {
     return FileUtilRt.loadBytes(stream, length);
+  }
+
+  @NotNull
+  public static List<String> splitPath(@NotNull String path) {
+    ArrayList<String> list = new ArrayList<String>();
+    int index = 0;
+    int nextSeparator;
+    while ((nextSeparator = path.indexOf(File.separatorChar, index)) != -1) {
+      list.add(path.substring(index, nextSeparator));
+      index = nextSeparator + 1;
+    }
+    list.add(path.substring(index, path.length()));
+    return list;
   }
 
   private static final class CompletedFuture<T> implements Future<T> {

@@ -92,62 +92,51 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
       appendText(annotations[i], indentLevel, buffer, separateAnnotations ? NEXT_LINE : " ");
     }
 
-    //TODO : filtering & ordering modifiers can go to CodeStyleManager
     final boolean isClass = parent instanceof PsiClass;
     final boolean isInterface = isClass && ((PsiClass)parent).isInterface();
+    final boolean isEnum = isClass && ((PsiClass)parent).isEnum();
     final boolean isInterfaceClass = isClass && parent.getParent() instanceof PsiClass && ((PsiClass)parent.getParent()).isInterface();
     final boolean isMethod = parent instanceof PsiMethod;
     final boolean isInterfaceMethod = isMethod && parent.getParent() instanceof PsiClass && ((PsiClass)parent.getParent()).isInterface();
     final boolean isField = parent instanceof PsiField;
     final boolean isInterfaceField = isField && parent.getParent() instanceof PsiClass && ((PsiClass)parent.getParent()).isInterface();
+    final boolean isEnumConstant = parent instanceof PsiEnumConstant;
 
-    if (hasModifierProperty(PsiModifier.PUBLIC) && !isInterfaceMethod && !isInterfaceField && !isInterfaceClass) {
-      buffer.append(PsiModifier.PUBLIC);
-      buffer.append(' ');
+    if (hasModifierProperty(PsiModifier.PUBLIC) && !isInterfaceMethod && !isInterfaceField && !isInterfaceClass && !isEnumConstant) {
+      buffer.append(PsiModifier.PUBLIC).append(' ');
     }
     if (hasModifierProperty(PsiModifier.PROTECTED)) {
-      buffer.append(PsiModifier.PROTECTED);
-      buffer.append(' ');
+      buffer.append(PsiModifier.PROTECTED).append(' ');
     }
     if (hasModifierProperty(PsiModifier.PRIVATE)) {
-      buffer.append(PsiModifier.PRIVATE);
-      buffer.append(' ');
+      buffer.append(PsiModifier.PRIVATE).append(' ');
     }
-    if (hasModifierProperty(PsiModifier.STATIC) && !isInterfaceField) {
-      buffer.append(PsiModifier.STATIC);
-      buffer.append(' ');
+    if (hasModifierProperty(PsiModifier.STATIC) && !isInterfaceField && !isEnumConstant) {
+      buffer.append(PsiModifier.STATIC).append(' ');
     }
     if (hasModifierProperty(PsiModifier.ABSTRACT) && !isInterface && !isInterfaceMethod) {
-      buffer.append(PsiModifier.ABSTRACT);
-      buffer.append(' ');
+      buffer.append(PsiModifier.ABSTRACT).append(' ');
     }
-    if (hasModifierProperty(PsiModifier.FINAL) && !isInterfaceField) {
-      buffer.append(PsiModifier.FINAL);
-      buffer.append(' ');
+    if (hasModifierProperty(PsiModifier.FINAL) && !isEnum && !isInterfaceField && !isEnumConstant) {
+      buffer.append(PsiModifier.FINAL).append(' ');
     }
     if (hasModifierProperty(PsiModifier.NATIVE)) {
-      buffer.append(PsiModifier.NATIVE);
-      buffer.append(' ');
+      buffer.append(PsiModifier.NATIVE).append(' ');
     }
     if (hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
-      buffer.append(PsiModifier.SYNCHRONIZED);
-      buffer.append(' ');
+      buffer.append(PsiModifier.SYNCHRONIZED).append(' ');
     }
     if (hasModifierProperty(PsiModifier.TRANSIENT)) {
-      buffer.append(PsiModifier.TRANSIENT);
-      buffer.append(' ');
+      buffer.append(PsiModifier.TRANSIENT).append(' ');
     }
     if (hasModifierProperty(PsiModifier.VOLATILE)) {
-      buffer.append(PsiModifier.VOLATILE);
-      buffer.append(' ');
+      buffer.append(PsiModifier.VOLATILE).append(' ');
     }
     if (hasModifierProperty(PsiModifier.STRICTFP)) {
-      buffer.append(PsiModifier.STRICTFP);
-      buffer.append(' ');
+      buffer.append(PsiModifier.STRICTFP).append(' ');
     }
     if (hasModifierProperty(PsiModifier.DEFAULT)) {
-      buffer.append(PsiModifier.DEFAULT);
-      buffer.append(' ');
+      buffer.append(PsiModifier.DEFAULT).append(' ');
     }
   }
 

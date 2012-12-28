@@ -157,6 +157,27 @@ class Foo {
     assert !state.finished
   }
 
+  public void "test cancel template when completion placed caret outside the variable"() {
+    myFixture.configureByText 'a.java', '''
+class Foo {
+  void foo(int a) {}
+  { <caret>() }
+}
+'''
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("frm", "user", '$VAR$');
+    template.addVariable('VAR', new MacroCallNode(new CompleteMacro()), new EmptyNode(), true)
+    manager.startTemplate(getEditor(), template);
+    myFixture.type('fo\n')
+    myFixture.checkResult '''
+class Foo {
+  void foo(int a) {}
+  { foo(<caret>); }
+}
+'''
+    assert !state
+  }
+
   public void "_test non-imported classes in className macro"() {
     myFixture.addClass('package bar; public class Bar {}')
     myFixture.configureByText 'a.java', '''

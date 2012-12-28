@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
-import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.fail;
+import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.FAIL;
 
 /**
  * @author Dmitry.Krasilschikov
@@ -39,7 +39,7 @@ public class ThrowClause implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, mNLS);
 
-    if (ReferenceElement.parseReferenceElement(builder) == fail) {
+    if (ReferenceElement.parseReferenceElement(builder) == FAIL) {
       throwClauseMarker.done(THROW_CLAUSE);
       builder.error(GroovyBundle.message("identifier.expected"));
       return;
@@ -48,7 +48,7 @@ public class ThrowClause implements GroovyElementTypes {
     while (ParserUtils.getToken(builder, mCOMMA)) {
       ParserUtils.getToken(builder, mNLS);
 
-      if (ReferenceElement.parseReferenceElement(builder) == fail) {
+      if (ReferenceElement.parseReferenceElement(builder) == FAIL) {
         break;
       }
     }

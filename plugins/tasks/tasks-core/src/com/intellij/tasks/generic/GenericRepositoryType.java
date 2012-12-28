@@ -45,9 +45,4 @@ public class GenericRepositoryType extends BaseRepositoryType<GenericRepository>
                                            final Consumer<GenericRepository> changeListener) {
     return new GenericRepositoryEditor<GenericRepository>(project, repository, changeListener);
   }
-
-  @Override
-  protected int getFeatures() {
-    return LOGIN_ANONYMOUSLY | BASIC_HTTP_AUTHORIZATION;
-  }
 }

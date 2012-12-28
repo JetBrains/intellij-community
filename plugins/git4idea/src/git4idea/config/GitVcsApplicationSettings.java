@@ -16,12 +16,8 @@
 package git4idea.config;
 
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.util.SystemInfo;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
 
 /**
  * The application wide settings for the git
@@ -31,17 +27,7 @@ import java.io.File;
   storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/vcs.xml")})
 public class GitVcsApplicationSettings implements PersistentStateComponent<GitVcsApplicationSettings.State> {
 
-  @NonNls private static final String[] DEFAULT_WINDOWS_PATHS = { "C:\\Program Files\\Git\\bin",
-                                                                  "C:\\Program Files (x86)\\Git\\bin",
-                                                                  "C:\\cygwin\\bin" };
-  @NonNls private static final String[] DEFAULT_UNIX_PATHS = { "/usr/local/bin",
-                                                               "/usr/bin",
-                                                               "/opt/local/bin",
-                                                               "/opt/bin",
-                                                               "/usr/local/git/bin" };
-  @NonNls private static final String[] DEFAULT_WINDOWS_GITS = { "git.cmd", "git.exe" };
-  @NonNls private static final String DEFAULT_UNIX_GIT = "git";
-  
+
   private State myState = new State();
 
   /**
@@ -70,42 +56,13 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
     myState = state;
   }
 
-  /**
-   * @return the default executable name depending on the platform
-   */
-  @NotNull
-  public String defaultGit() {
-    if (myState.myPathToGit == null) {
-      String[] paths;
-      String[] programVariants;
-      if (SystemInfo.isWindows) {
-        programVariants = DEFAULT_WINDOWS_GITS;
-        paths = DEFAULT_WINDOWS_PATHS;
-      }
-      else {
-        programVariants = new String[] { DEFAULT_UNIX_GIT };
-        paths = DEFAULT_UNIX_PATHS;
-      }
-
-      for (String p : paths) {
-        for (String program : programVariants) {
-          File f = new File(p, program);
-          if (f.exists()) {
-            myState.myPathToGit = f.getAbsolutePath();
-            break;
-          }
-        }
-      }
-      if (myState.myPathToGit == null) { // otherwise, take the first variant and hope it's in $PATH
-        myState.myPathToGit = programVariants[0];
-      }
-    }
-    return myState.myPathToGit;
-  }
-
   @NotNull
   public String getPathToGit() {
-    return myState.myPathToGit == null ? defaultGit() : myState.myPathToGit;
+    if (myState.myPathToGit == null) {
+      // detecting right away, this can be called from the default project without a call to GitVcs#activate()
+      myState.myPathToGit = new GitExecutableDetector().detect();
+    }
+    return myState.myPathToGit;
   }
 
   public void setPathToGit(String pathToGit) {

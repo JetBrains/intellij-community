@@ -41,8 +41,16 @@ public class ModuleExcludeIndexTest extends JpsJavaModelTestCase {
   public void testExcludeProjectOutput() throws IOException {
     File out = new File(myRoot, "out");
     getJavaService().getOrCreateProjectExtension(myProject).setOutputUrl(JpsPathUtil.pathToUrl(out.getAbsolutePath()));
+    JpsModule module1 = addModule();
+    getJavaService().getOrCreateModuleExtension(module1).setInheritOutput(true);
+    JpsModule module2 = addModule();
+    module2.getContentRootsList().addUrl(JpsPathUtil.pathToUrl(out.getAbsolutePath()));
+    getJavaService().getOrCreateModuleExtension(module2).setInheritOutput(true);
+
     assertNotExcluded(myRoot);
     assertExcluded(out);
+    assertEmpty(getModuleExcludes(module1));
+    assertSameElements(getModuleExcludes(module2), out);
   }
 
   public void testExcludeModuleOutput() {

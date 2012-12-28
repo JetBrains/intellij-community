@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>AbstractClassNeverImplemented.java</file>
+    <line>3</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Abstract class which has no concrete subclass</problem_class>
+    <description>Abstract class &lt;code&gt;AbstractClassNeverImplemented&lt;/code&gt; has no concrete subclass #loc</description>
+  </problem>
+</problems>

@@ -1,0 +1,20 @@
+<idea-plugin version="2">
+  <name>Byte Code Viewer</name>
+  <id>ByteCodeViewer</id>
+  <version>0.1</version>
+  <description>Viewing java bytecode inside IntelliJ IDEA.</description>
+  <vendor>JetBrains</vendor>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <projectService serviceInterface="com.intellij.byteCodeViewer.ByteCodeViewerManager"
+                    serviceImplementation="com.intellij.byteCodeViewer.ByteCodeViewerManager"/>
+  </extensions>
+  <actions>
+    <group>
+      <action id="ByteCodeViewer" class="com.intellij.byteCodeViewer.ShowByteCodeAction" text="Show Byte Code"/>
+      <add-to-group group-id="QuickActions" anchor="after" relative-to-action="QuickJavaDoc"/>
+    </group>
+  </actions>
+
+</idea-plugin>

@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
-import com.intellij.psi.LambdaUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
@@ -81,13 +80,13 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     // then noone can be more specific
     if (!atLeastOneMatch) return null;
 
+    checkLambdaApplicable(conflicts);
+    if (conflicts.size() == 1) return conflicts.get(0);
+
     checkSpecifics(conflicts, applicabilityLevel);
     if (conflicts.size() == 1) return conflicts.get(0);
 
     checkPrimitiveVarargs(conflicts, myActualParameterTypes.length);
-    if (conflicts.size() == 1) return conflicts.get(0);
-
-    checkLambdaApplicable(conflicts);
     if (conflicts.size() == 1) return conflicts.get(0);
 
     THashSet<CandidateInfo> uniques = new THashSet<CandidateInfo>(conflicts);
@@ -566,31 +565,44 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
                                                     PsiSubstitutor classSubstitutor2,
                                                     PsiType type1,
                                                     PsiType type2) {
-    final PsiClass aClass1 = PsiUtil.resolveClassInClassTypeOnly(type1);
-    final PsiClass aClass2 = PsiUtil.resolveClassInClassTypeOnly(type2);
+    final PsiClass aClass1 = PsiUtil.resolveClassInType(type1);
+    final PsiClass aClass2 = PsiUtil.resolveClassInType(type2);
     if (aClass1 instanceof PsiTypeParameter && aClass2 instanceof PsiTypeParameter) {
       return checkTypeParams(method1, method2, classSubstitutor1, classSubstitutor2, type1, type2, (PsiTypeParameter)aClass1, (PsiTypeParameter)aClass2);
     }
-    if (aClass1 instanceof PsiTypeParameter || aClass2 instanceof PsiTypeParameter) return null;
+    if (aClass1 instanceof PsiTypeParameter) {
+      return chooseHigherDimension(type1, type2);
+    }
+    else if (aClass2 instanceof PsiTypeParameter) {
+      return chooseHigherDimension(type2, type1);
+    }
 
     final Map<PsiTypeParameter, PsiType> map1 = classSubstitutor1.getSubstitutionMap();
     final Map<PsiTypeParameter, PsiType> map2 = classSubstitutor2.getSubstitutionMap();
     if (map1.size() == 1 && map2.size() == 1) {
       final PsiType t1 = map1.values().iterator().next();
       final PsiType t2 = map2.values().iterator().next();
-      int d1 = t1 != null ? t1.getArrayDimensions() : 0;
-      int d2 = t2 != null ? t2.getArrayDimensions() : 0;
-      if (d1 > d2) {
-        return Specifics.SECOND;
-      }
-      else if (d2 > d1) {
-        return Specifics.FIRST;
+      final Specifics substArraySpecifics = chooseHigherDimension(t1, t2);
+      if (substArraySpecifics != null) {
+        return substArraySpecifics;
       }
       else {
         final PsiTypeParameter p1 = map1.keySet().iterator().next();
         final PsiTypeParameter p2 = map2.keySet().iterator().next();
         return checkTypeParams(method1, method2, classSubstitutor1, classSubstitutor2, type1, type2, p1, p2);
       }
+    }
+    return null;
+  }
+
+  private static Specifics chooseHigherDimension(PsiType type1, PsiType type2) {
+    int d1 = type1 != null ? type1.getArrayDimensions() : 0;
+    int d2 = type2 != null ? type2.getArrayDimensions() : 0;
+    if (d1 > d2) {
+      return Specifics.SECOND;
+    }
+    else if (d2 > d1) {
+      return Specifics.FIRST;
     }
     return null;
   }

@@ -591,17 +591,12 @@ public class HtmlUtil {
   }
 
   public static boolean hasHtml(PsiFile file) {
-    if (isHtmlFile(file)) return true;
-    if (file.getViewProvider() instanceof TemplateLanguageFileViewProvider) return true;
-    return false;
+    return isHtmlFile(file) || file.getViewProvider() instanceof TemplateLanguageFileViewProvider;
   }
 
-  public static boolean isHtmlFile(final PsiFile file) {
-    final Language language = file.getLanguage();
-    if (language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE) {
-      return true;
-    }
-    return false;
+  public static boolean isHtmlFile(PsiElement element) {
+    Language language = element.getLanguage();
+    return language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE;
   }
 
   public static boolean isHtmlTagContainingFile(PsiElement element) {

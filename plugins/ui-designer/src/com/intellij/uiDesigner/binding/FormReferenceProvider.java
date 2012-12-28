@@ -15,6 +15,7 @@
  */
 package com.intellij.uiDesigner.binding;
 
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -117,13 +118,10 @@ public class FormReferenceProvider extends PsiReferenceProvider {
     final Project project = file.getProject();
     final XmlTag rootTag = ApplicationManager.getApplication().runReadAction(new Computable<XmlTag>() {
       public XmlTag compute() {
-        final XmlFile xmlFile = (XmlFile) PsiFileFactory.getInstance(project).createFileFromText("a.xml", file.getText());
-        final XmlDocument document = xmlFile.getDocument();
-
-        return document.getRootTag();
+        final XmlFile xmlFile = (XmlFile) PsiFileFactory.getInstance(project).createFileFromText("a.xml", XmlFileType.INSTANCE, file.getText());
+        return xmlFile.getRootTag();
       }
     });
-
 
     if (rootTag == null || !Utils.FORM_NAMESPACE.equals(rootTag.getNamespace())) {
       return;

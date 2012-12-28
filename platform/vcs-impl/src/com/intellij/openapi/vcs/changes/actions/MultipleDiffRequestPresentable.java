@@ -24,7 +24,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.psi.impl.source.tree.ChangeUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -96,7 +95,7 @@ public class MultipleDiffRequestPresentable implements DiffRequestPresentable {
   }
 
   @Override
-  public List<? extends AnAction> createActions(ShowDiffAction.DiffExtendUIFactory uiFactory) {
+  public List<? extends AnAction> createActions(DiffExtendUIFactory uiFactory) {
     return Collections.emptyList();
   }
 

@@ -23,9 +23,12 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.actions.DiffExtendUIFactory;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffUIContext;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -50,7 +53,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
   private final boolean myCapableOfExcludingChanges;
   protected final JPanel myHeaderPanel;
   private DefaultActionGroup myToolBarGroup;
-  private ShowDiffAction.DiffExtendUIFactory myDiffExtendUIFactory = new DiffToolbarActionsFactory();
+  private DiffExtendUIFactory myDiffExtendUIFactory = new DiffToolbarActionsFactory();
   private String myToggleActionTitle = VcsBundle.message("commit.dialog.include.action.name");
 
   public static DataKey<ChangesBrowser> DATA_KEY = DataKey.create("com.intellij.openapi.vcs.changes.ui.ChangesBrowser");
@@ -100,11 +103,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
       }
     };
 
-    myViewer.setDoubleClickHandler(new Runnable() {
-      public void run() {
-        showDiff();
-      }
-    });
+    myViewer.setDoubleClickHandler(getDoubleClickHandler());
 
     setInitialSelection(changeLists, changes, initialListSelection);
     rebuildList();
@@ -116,6 +115,15 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     add(myHeaderPanel, BorderLayout.NORTH);
 
     myViewer.installPopupHandler(myToolBarGroup);
+  }
+
+  @NotNull
+  protected Runnable getDoubleClickHandler() {
+    return new Runnable() {
+      public void run() {
+        showDiff();
+      }
+    };
   }
 
   protected void setInitialSelection(final List<? extends ChangeList> changeLists, final List<Change> changes, final ChangeList initialListSelection) {
@@ -134,11 +142,11 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     myToolBarGroup.add(group);
   }
 
-  public ShowDiffAction.DiffExtendUIFactory getDiffExtendUIFactory() {
+  public DiffExtendUIFactory getDiffExtendUIFactory() {
     return myDiffExtendUIFactory;
   }
 
-  public void setDiffExtendUIFactory(final ShowDiffAction.DiffExtendUIFactory diffExtendUIFactory) {
+  public void setDiffExtendUIFactory(final DiffExtendUIFactory diffExtendUIFactory) {
     myDiffExtendUIFactory = diffExtendUIFactory;
   }
 
@@ -245,7 +253,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     return ModalityState.current().equals(ModalityState.NON_MODAL);
   }
 
-  private class DiffToolbarActionsFactory implements ShowDiffAction.DiffExtendUIFactory {
+  private class DiffToolbarActionsFactory implements DiffExtendUIFactory {
     public List<? extends AnAction> createActions(Change change) {
       return createDiffActions(change);
     }
@@ -375,5 +383,9 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
 
   public void setDataIsDirty(boolean dataIsDirty) {
     myDataIsDirty = dataIsDirty;
+  }
+
+  public void setSelectionMode(@JdkConstants.ListSelectionMode int mode) {
+    myViewer.setSelectionMode(mode);
   }
 }

@@ -50,7 +50,8 @@ public class AggregatedDictionary implements EditableDictionary {
            '}';
   }
 
-  public boolean contains(String word) {
+  @Nullable
+  public Boolean contains(String word) {
     if (word == null) {
       return false;
     }

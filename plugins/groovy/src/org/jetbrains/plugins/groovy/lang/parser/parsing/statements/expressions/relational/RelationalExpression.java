@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.a
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
-import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.fail;
+import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.FAIL;
 
 /**
  * @author ilyas
@@ -62,7 +62,7 @@ public class RelationalExpression implements GroovyElementTypes {
     builder.advanceLexer();
     PsiBuilder.Marker rb = builder.mark();
     ParserUtils.getToken(builder, mNLS);
-    if (TypeSpec.parse(builder) == fail) {
+    if (TypeSpec.parse(builder) == FAIL) {
       rb.rollbackTo();
       builder.error(GroovyBundle.message("type.specification.expected"));
     } else {

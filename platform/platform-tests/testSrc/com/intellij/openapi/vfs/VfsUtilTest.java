@@ -20,6 +20,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformLangTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -292,5 +294,58 @@ public class VfsUtilTest extends PlatformLangTestCase {
     VirtualFile vFile2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     assertNotNull(vFile2);
     assertTrue(vFile2.isDirectory());
+  }
+
+  public void testToUri() {
+    if (!SystemInfo.isWindows) {
+      assertEquals("file:///asd", VfsUtil.toUri(new File("/asd")).toASCIIString());
+      assertEquals("file:///asd%20/sd", VfsUtil.toUri(new File("/asd /sd")).toASCIIString());
+    }
+
+    URI uri = VfsUtil.toUri("file:///asd");
+    assertNotNull(uri);
+    assertEquals("file", uri.getScheme());
+    assertEquals("/asd", uri.getPath());
+
+    uri = VfsUtil.toUri("file:///asd/ ads/ad#test");
+    assertNotNull(uri);
+    assertEquals("file", uri.getScheme());
+    assertEquals("/asd/ ads/ad", uri.getPath());
+    assertEquals("test", uri.getFragment());
+
+    uri = VfsUtil.toUri("file:///asd/ ads/ad#");
+    assertNotNull(uri);
+    assertEquals("file:///asd/%20ads/ad#", uri.toString());
+
+    uri = VfsUtil.toUri("mailto:someone@example.com");
+    assertNotNull(uri);
+    assertEquals("someone@example.com", uri.getSchemeSpecificPart());
+
+    if (SystemInfo.isWindows) {
+      uri = VfsUtil.toUri("file://C:/p");
+      assertNotNull(uri);
+      assertEquals("file", uri.getScheme());
+      assertEquals("/C:/p", uri.getPath());
+    }
+
+    uri = VfsUtil.toUri("file:///Users/S pace");
+    assertNotNull(uri);
+    assertEquals("file", uri.getScheme());
+    assertEquals("/Users/S pace", uri.getPath());
+    assertEquals("/Users/S%20pace", uri.getRawPath());
+    assertEquals("file:///Users/S%20pace", uri.toString());
+
+    uri = VfsUtil.toUri("http://developer.android.com/guide/developing/tools/avd.html");
+    assertNotNull(uri);
+    assertEquals("http", uri.getScheme());
+    assertEquals("/guide/developing/tools/avd.html", uri.getRawPath());
+    assertEquals("http://developer.android.com/guide/developing/tools/avd.html", uri.toString());
+
+    uri = VfsUtil.toUri("http://developer.android.com/guide/developing/tools/avd.html?f=23r2ewd");
+    assertNotNull(uri);
+    assertEquals("http", uri.getScheme());
+    assertEquals("/guide/developing/tools/avd.html", uri.getRawPath());
+    assertEquals("http://developer.android.com/guide/developing/tools/avd.html?f=23r2ewd", uri.toString());
+    assertEquals("f=23r2ewd", uri.getQuery());
   }
 }

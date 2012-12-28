@@ -118,6 +118,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     Template template = builder.buildTemplate();
 
     final Editor newEditor = positionCursor(project, targetFile, var);
+    if (newEditor == null) return;
     TextRange range = var.getTextRange();
     newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
 

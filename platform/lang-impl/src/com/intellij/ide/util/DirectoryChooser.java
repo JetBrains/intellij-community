@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -186,23 +187,11 @@ public class DirectoryChooser extends DialogWrapper {
     return "chooseDestDirectoryDialog";
   }
 
-  private static String[] splitPath(String path) {
-    ArrayList<String> list = new ArrayList<String>();
-    int index = 0;
-    int nextSeparator;
-    while ((nextSeparator = path.indexOf(File.separatorChar, index)) != -1) {
-      list.add(path.substring(index, nextSeparator));
-      index = nextSeparator + 1;
-    }
-    list.add(path.substring(index, path.length()));
-    return ArrayUtil.toStringArray(list);
-  }
-
   private void buildFragments() {
     ArrayList<String[]> pathes = new ArrayList<String[]>();
     for (int i = 0; i < myView.getItemsSize(); i++) {
       ItemWrapper item = myView.getItemByIndex(i);
-      pathes.add(splitPath(item.getPresentableUrl()));
+      pathes.add(ArrayUtil.toStringArray(FileUtil.splitPath(item.getPresentableUrl())));
     }
     FragmentBuilder headBuilder = new FragmentBuilder(pathes){
         protected void append(String fragment, StringBuffer buffer) {

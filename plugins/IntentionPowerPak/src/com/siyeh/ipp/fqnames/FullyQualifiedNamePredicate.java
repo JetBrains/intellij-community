@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,35 +29,29 @@ class FullyQualifiedNamePredicate implements PsiElementPredicate {
     if (!(element instanceof PsiJavaCodeReferenceElement)) {
       return false;
     }
-    final PsiJavaCodeReferenceElement referenceElement =
-      (PsiJavaCodeReferenceElement)element;
+    final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)element;
     if (!referenceElement.isQualified()) {
       return false;
     }
     final PsiElement parent = referenceElement.getParent();
-    if (parent instanceof PsiMethodCallExpression ||
-        parent instanceof PsiAssignmentExpression ||
-        parent instanceof PsiVariable) {
+    if (parent instanceof PsiMethodCallExpression || parent instanceof PsiAssignmentExpression || parent instanceof PsiVariable) {
       return false;
     }
-    if (PsiTreeUtil.getParentOfType(element, PsiImportStatementBase.class,
-                                    PsiPackageStatement.class, JavaCodeFragment.class) != null) {
+    if (PsiTreeUtil.getParentOfType(element, PsiImportStatementBase.class, PsiPackageStatement.class, JavaCodeFragment.class) != null) {
       return false;
     }
     final PsiElement qualifier = referenceElement.getQualifier();
     if (!(qualifier instanceof PsiJavaCodeReferenceElement)) {
       return false;
     }
-    final PsiJavaCodeReferenceElement qualifierReferenceElement =
-      (PsiJavaCodeReferenceElement)qualifier;
+    final PsiJavaCodeReferenceElement qualifierReferenceElement = (PsiJavaCodeReferenceElement)qualifier;
     final PsiElement resolved = qualifierReferenceElement.resolve();
     if (!(resolved instanceof PsiPackage)) {
       if (!(resolved instanceof PsiClass)) {
         return false;
       }
       final Project project = element.getProject();
-      final CodeStyleSettings codeStyleSettings =
-        CodeStyleSettingsManager.getSettings(project);
+      final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
       if (!codeStyleSettings.INSERT_INNER_CLASS_IMPORTS) {
         return false;
       }
@@ -71,9 +65,6 @@ class FullyQualifiedNamePredicate implements PsiElementPredicate {
     if (fqName == null) {
       return false;
     }
-    final PsiJavaFile javaFile =
-      PsiTreeUtil.getParentOfType(referenceElement, PsiJavaFile.class);
-    return javaFile != null &&
-           ImportUtils.nameCanBeImported(fqName, javaFile);
+    return ImportUtils.nameCanBeImported(fqName, element);
   }
 }

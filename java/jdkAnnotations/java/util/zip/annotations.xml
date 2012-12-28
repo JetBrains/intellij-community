@@ -1,12 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <root>
-  <item name='java.util.zip.ZipEntry void setMethod(int) 0'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="valuesFromClass" val="java.util.zip.ZipEntry.class"/>
+  <item name="java.util.zip.ZipEntry int getMethod()">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="valuesFromClass" val="java.util.zip.ZipEntry.class" />
     </annotation>
   </item>
-  <item name='java.util.zip.ZipEntry int getMethod()'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="valuesFromClass" val="java.util.zip.ZipEntry.class"/>
+  <item name="java.util.zip.ZipEntry void setMethod(int) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="valuesFromClass" val="java.util.zip.ZipEntry.class" />
     </annotation>
   </item>
 </root>
+

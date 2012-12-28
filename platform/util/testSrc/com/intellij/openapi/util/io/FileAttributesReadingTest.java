@@ -19,6 +19,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
@@ -30,7 +31,6 @@ import java.util.Arrays;
 
 import static com.intellij.openapi.util.io.IoTestUtil.assertTimestampsEqual;
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
 
 public class FileAttributesReadingTest {
@@ -342,6 +342,33 @@ public class FileAttributesReadingTest {
 
     final String resolved = FileSystemUtil.resolveSymLink(link);
     assertEquals(link.getPath(), resolved);
+  }
+
+  @Test
+  public void stamps() throws Exception {
+    FileAttributes attributes = FileSystemUtil.getAttributes(myTempDirectory);
+    assumeTrue(attributes != null && attributes.lastModified > (attributes.lastModified/1000)*1000);
+
+    long t1 = System.currentTimeMillis();
+    TimeoutUtil.sleep(10);
+    File file = IoTestUtil.createTestFile(myTempDirectory, "test.txt");
+    TimeoutUtil.sleep(10);
+    long t2 = System.currentTimeMillis();
+    attributes = getAttributes(file);
+    assertTrue(attributes.lastModified + " not in " + t1 + ".." + t2, t1 <= attributes.lastModified && attributes.lastModified <= t2);
+
+    t1 = System.currentTimeMillis();
+    TimeoutUtil.sleep(10);
+    FileUtil.writeToFile(file, myTestData);
+    TimeoutUtil.sleep(10);
+    t2 = System.currentTimeMillis();
+    attributes = getAttributes(file);
+    assertTrue(attributes.lastModified + " not in " + t1 + ".." + t2, t1 <= attributes.lastModified && attributes.lastModified <= t2);
+
+    ProcessBuilder cmd = SystemInfo.isWindows ? new ProcessBuilder("attrib", "-A", file.getPath()) : new ProcessBuilder("chmod", "644", file.getPath());
+    assertEquals(0, cmd.start().waitFor());
+    attributes = getAttributes(file);
+    assertTrue(attributes.lastModified + " not in " + t1 + ".." + t2, t1 <= attributes.lastModified && attributes.lastModified <= t2);
   }
 
   @NotNull

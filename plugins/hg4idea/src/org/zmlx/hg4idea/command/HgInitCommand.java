@@ -25,7 +25,7 @@ public class HgInitCommand {
   public void execute(@NotNull VirtualFile repositoryRoot,final HgCommandResultHandler resultHandler) {
     final List<String> args = new ArrayList<String>(1);
     args.add(repositoryRoot.getPath());
-    final HgCommandExecutor executor = new HgCommandExecutor(myProject);
+    final HgCommandExecutor executor = new HgCommandExecutor(myProject, repositoryRoot.getPath());
     executor.setShowOutput(true);
     executor.execute(null, "init", args, new HgCommandResultHandler() {
       @Override

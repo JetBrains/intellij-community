@@ -15,6 +15,9 @@
  */
 package com.intellij.xml.index;
 
+import com.intellij.ide.highlighter.DTDFileType;
+import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
@@ -27,7 +30,6 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -41,8 +43,10 @@ public abstract class XmlIndex<V> extends FileBasedIndexExtension<String, V> {
 
   private static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
     public boolean acceptInput(final VirtualFile file) {
-      @NonNls final String extension = file.getExtension();
-      return "xsd".equals(extension) || "dtd".equals(extension);
+      FileType fileType = file.getFileType();
+      final String extension = file.getExtension();
+      return XmlFileType.INSTANCE.equals(fileType) && "xsd".equals(extension) ||
+             DTDFileType.INSTANCE.equals(fileType) && "dtd".equals(extension);
     }
   };
 

@@ -487,10 +487,12 @@
     <action id="Back">
       <keyboard-shortcut first-keystroke="meta OPEN_BRACKET"/>
       <keyboard-shortcut first-keystroke="meta alt LEFT"/>
+      <mouse-shortcut keystroke="button4"/>
     </action>
     <action id="Forward">
       <keyboard-shortcut first-keystroke="meta CLOSE_BRACKET"/>
       <keyboard-shortcut first-keystroke="meta alt RIGHT"/>
+      <mouse-shortcut keystroke="button5"/>
     </action>
 
     <action id="NextProjectWindow">

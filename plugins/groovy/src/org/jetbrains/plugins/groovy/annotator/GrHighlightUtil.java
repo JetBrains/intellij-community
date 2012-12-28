@@ -30,7 +30,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -234,5 +236,18 @@ public class GrHighlightUtil {
       }
     }
     return new TextRange(startOffset, endOffset);
+  }
+
+  public static TextRange getInitializerHeaderTextRange(GrClassInitializer initializer) {
+    final PsiModifierList modifierList = initializer.getModifierList();
+    final GrOpenBlock block = initializer.getBlock();
+
+    final TextRange textRange = modifierList.getTextRange();
+    LOG.assertTrue(textRange != null, initializer.getClass() + ":" + initializer.getText());
+    int startOffset = textRange.getStartOffset();
+    int endOffset = block.getLBrace().getTextRange().getEndOffset() + 1;
+
+    return new TextRange(startOffset, endOffset);
+
   }
 }

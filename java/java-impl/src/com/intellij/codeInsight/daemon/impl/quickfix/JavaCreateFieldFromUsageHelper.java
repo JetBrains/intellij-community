@@ -20,11 +20,10 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Max Medvedev
@@ -63,7 +62,7 @@ public class JavaCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
   }
 
   @Override
-  public PsiField insertFieldImpl(PsiClass targetClass, PsiField field, PsiElement place) {
+  public PsiField insertFieldImpl(@NotNull PsiClass targetClass, @NotNull PsiField field, @NotNull PsiElement place) {
     PsiMember enclosingContext = null;
     PsiClass parentClass;
     do {

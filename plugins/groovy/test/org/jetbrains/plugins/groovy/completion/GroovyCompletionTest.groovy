@@ -129,6 +129,14 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "put", "putAll");
   }
 
+  public void testCompleteTypeParameter() {
+    doVariantableTest('''\
+class Foo<A, B> {
+    public <C, D> void foo(<caret>)
+}
+''', '', CompletionType.BASIC, CompletionResult.contain, 'A', 'B', 'C', 'D')
+  }
+
   public void testCatchClauseParameter() {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "getCause", "getClass");
   }

@@ -314,7 +314,7 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
           if (OPEN_IN_BROWSER) {
             File url = new File(OUTPUT_DIRECTORY, INDEX_HTML);
             if (url.exists() && event.getExitCode() == 0) {
-              BrowserUtil.launchBrowser(url.getPath());
+              BrowserUtil.browse(url);
             }
           }
         }

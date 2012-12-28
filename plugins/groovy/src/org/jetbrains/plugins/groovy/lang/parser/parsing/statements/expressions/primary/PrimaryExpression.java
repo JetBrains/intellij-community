@@ -131,7 +131,7 @@ public class PrimaryExpression implements GroovyElementTypes {
       methodCallArgsParse(builder, parser);
       if (builder.getTokenType() == mLCURLY || ParserUtils.lookAhead(builder, mNLS, mLCURLY)) {
         ParserUtils.getToken(builder, mNLS);
-        TypeDefinition.parseClassBody(builder, name, parser);
+        TypeDefinition.parseBody(builder, name, parser, false);
         anonymousMarker.done(ANONYMOUS_CLASS_DEFINITION);
         return NEW_EXPRESSION;
       }

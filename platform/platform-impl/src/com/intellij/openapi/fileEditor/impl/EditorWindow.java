@@ -40,7 +40,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.EmptyIcon;
@@ -1038,7 +1037,6 @@ public class EditorWindow {
   }
 
   public boolean isFilePinned(final VirtualFile file) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     final EditorComposite editorComposite = findFileComposite(file);
     if (editorComposite == null) {
       throw new IllegalArgumentException("file is not open: " + file.getPath());

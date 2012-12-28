@@ -26,6 +26,7 @@ import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeRequestChain;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -36,18 +37,19 @@ import java.util.List;
  * @author yole
  */
 public class ChangeDiffRequest implements ChangeRequestChain {
-  private final List<DiffRequestPresentable> mySteps;
+  @NotNull private final List<DiffRequestPresentable> mySteps;
   private final boolean myShowFrame;
   private int myIndex;
   
-  private final ShowDiffAction.DiffExtendUIFactory myActionsFactory;
+  private final DiffExtendUIFactory myActionsFactory;
 
   private final AnAction myPrevChangeAction;
   private final AnAction myNextChangeAction;
   private final Project myProject;
   private final DiffChainContext myContext;
+  private final AnAction mySelectChangeAction;
 
-  public ChangeDiffRequest(final Project project, final List<DiffRequestPresentable> steps, final ShowDiffAction.DiffExtendUIFactory actionsFactory,
+  public ChangeDiffRequest(final Project project, @NotNull List<DiffRequestPresentable> steps, final DiffExtendUIFactory actionsFactory,
                            final boolean showFrame) {
     myProject = project;
     mySteps = steps;
@@ -59,6 +61,13 @@ public class ChangeDiffRequest implements ChangeRequestChain {
 
     myPrevChangeAction = ActionManager.getInstance().getAction("Diff.PrevChange");
     myNextChangeAction = ActionManager.getInstance().getAction("Diff.NextChange");
+    mySelectChangeAction = ActionManager.getInstance().getAction("Diff.SelectedChange");
+  }
+
+  @NotNull
+  @Override
+  public List<DiffRequestPresentable> getAllRequests() {
+    return mySteps;
   }
 
   private void onEveryMove(final DiffRequest simpleRequest, final boolean showFrame) {
@@ -118,46 +127,92 @@ public class ChangeDiffRequest implements ChangeRequestChain {
   }
 
   @Nullable
+  @Override
+  public DiffRequest moveTo(DiffRequestPresentable presentable) {
+    int index = findRequest(presentable);
+    if (index == -1) {
+      return null;
+    }
+
+    final List<String> errors = new ArrayList<String>();
+    DiffRequestPresentable.MyResult result = moveImpl(presentable, errors);
+    showErrors(errors);
+    if (result == null) {
+      return null;
+    }
+    if (DiffPresentationReturnValue.removeFromList.equals(result.getReturnValue())) {
+      return null;
+    }
+    myIndex = index;
+    return result.getRequest();
+  }
+
+  private int findRequest(DiffRequestPresentable presentable) {
+    for (int i = 0; i < mySteps.size(); i++) {
+      DiffRequestPresentable step = mySteps.get(i);
+      if (step.equals(presentable)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  @Nullable
   private DiffRequest moveWithErrorReport(final MoveDirection moveDirection) {
     final List<String> errors = new ArrayList<String>();
-    final DiffRequest diffRequest = moveImpl(moveDirection, errors);
+    final DiffRequest diffRequest = moveInc(moveDirection, errors);
     showErrors(errors);
     return diffRequest;
   }
 
   @Nullable
-  private DiffRequest moveImpl(final MoveDirection moveDirection, final List<String> errors) {
+  private DiffRequestPresentable.MyResult moveImpl(DiffRequestPresentable requestPresentable, final List<String> errors) {
+    final DiffRequestPresentable.MyResult result = requestPresentable.step(myContext);
+    final DiffPresentationReturnValue returnValue = result.getReturnValue();
+    if (DiffPresentationReturnValue.quit.equals(returnValue)) {
+      errors.addAll(result.getErrors());
+      return null;
+    }
+
+    if (DiffPresentationReturnValue.removeFromList.equals(returnValue)) {
+      mySteps.remove(requestPresentable);
+      errors.addAll(result.getErrors());
+      return result;
+    }
+
+    final DiffRequest request = result.getRequest();
+    takeStuffFromFactory(request, requestPresentable.createActions(myActionsFactory));
+    onEveryMove(request, myShowFrame);
+    return result;
+  }
+
+  @Nullable
+  private DiffRequest moveInc(final MoveDirection moveDirection, final List<String> errors) {
     while (moveDirection.canMove()) {
       final int nextIdx = myIndex + moveDirection.direction();
-
       final DiffRequestPresentable diffRequestPresentable = mySteps.get(nextIdx);
-      final DiffRequestPresentable.MyResult result = diffRequestPresentable.step(myContext);
-      final DiffPresentationReturnValue returnValue = result.getReturnValue();
-      if (DiffPresentationReturnValue.quit.equals(returnValue)) {
-        errors.addAll(result.getErrors());
+
+      DiffRequestPresentable.MyResult result = moveImpl(diffRequestPresentable, errors);
+      if (result == null) {
         return null;
       }
-      if (DiffPresentationReturnValue.removeFromList.equals(returnValue)) {
-        mySteps.remove(nextIdx);
-        errors.addAll(result.getErrors());
+      if (DiffPresentationReturnValue.removeFromList.equals(result.getReturnValue())) {
         if (moveDirection.direction() < 0) {
           // our position moves to head
           myIndex += moveDirection.direction();
         }
         continue;
       }
-      final DiffRequest request = result.getRequest();
-      takeStuffFromFactory(request, diffRequestPresentable.createActions(myActionsFactory));
+
       myIndex = nextIdx;
-      onEveryMove(request, myShowFrame);
-      return request;
+      return result.getRequest();
     }
     return null;
   }
 
   private void showErrors(final List<String> errors) {
     if (errors.isEmpty()) return;
-    final StringBuilder sb = new StringBuilder("Following problems have occured:\n\n");
+    final StringBuilder sb = new StringBuilder("Following problems have occurred:\n\n");
     for (String error : errors) {
       sb.append(error).append('\n');
     }
@@ -185,12 +240,13 @@ public class ChangeDiffRequest implements ChangeRequestChain {
   private void takeStuffFromFactory(final DiffRequest request, final List<? extends AnAction> actions) {
     if (mySteps.size() > 1 || (myActionsFactory != null)) {
       request.setToolbarAddons(new DiffRequest.ToolbarAddons() {
-        public void customize(DiffToolbar toolbar) {
+        public void customize(final DiffToolbar toolbar) {
           if (mySteps.size() > 1) {
             toolbar.addSeparator();
           }
           toolbar.addAction(myPrevChangeAction);
           toolbar.addAction(myNextChangeAction);
+          toolbar.addAction(mySelectChangeAction);
 
           if (myActionsFactory != null) {
             toolbar.addSeparator();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -387,7 +387,20 @@ public class GroovyParser implements PsiParser {
       return parseLabeledStatement(builder);
     }
 
-    //declaration
+    if (parseDeclaration(builder, false, false, null)) return true;
+
+    return AssignmentExpression.parse(builder, this, true);
+
+  }
+
+  /**
+   * parses imports (marks them as not allowed), type definitions, methods, variables or fields (if isInClass), initializers (if isInClass), constructors
+   * with corresponding typeDefinitionName
+   *
+   * If non of preceding elements was found rolls back and return false
+   *
+   */
+  public boolean parseDeclaration(@NotNull PsiBuilder builder, boolean isInClass, boolean isInAnnotation, @Nullable String typeDefinitionName) {
     PsiBuilder.Marker declMarker = builder.mark();
     boolean modifiersParsed = Modifiers.parse(builder, this);
 
@@ -399,15 +412,24 @@ public class GroovyParser implements PsiParser {
       return true;
     }
 
-    if (kCLASS == builder.getTokenType() || kINTERFACE == builder.getTokenType() || kENUM == builder.getTokenType() || mAT == builder.getTokenType()) {
+    if (isTypeDefinitionStart(builder)) {
       final IElementType tdType = TypeDefinition.parseAfterModifiers(builder, this);
       if (tdType != WRONGWAY) {
         declMarker.done(tdType);
-        return true;
       }
+      else {
+        builder.error(GroovyBundle.message("identifier.expected"));
+        declMarker.drop();
+      }
+      return true;
     }
 
-    final IElementType declType = Declaration.parseAfterModifiers(builder, false, false, this, modifiersParsed);
+    if (isInClass && parseInitializer(builder)) {
+      declMarker.done(CLASS_INITIALIZER);
+      return true;
+    }
+
+    final IElementType declType = Declaration.parseAfterModifiers(builder, isInClass, isInAnnotation, typeDefinitionName, this, modifiersParsed);
     if (declType != WRONGWAY) {
       if (declType != null) {
         declMarker.done(declType);
@@ -419,13 +441,25 @@ public class GroovyParser implements PsiParser {
     }
 
     if (modifiersParsed) {
-      declMarker.done(VARIABLE_DEFINITION);
+      declMarker.drop();
+      builder.error(GroovyBundle.message("identifier.expected"));
       return true;
     }
+
     declMarker.rollbackTo();
+    return false;
+  }
 
-    return AssignmentExpression.parse(builder, this, true);
+  private boolean parseInitializer(PsiBuilder builder) {
+    ParserUtils.getToken(builder, mNLS);
+    return mLCURLY == builder.getTokenType() && OpenOrClosableBlock.parseOpenBlock(builder, this);
+  }
 
+  private static boolean isTypeDefinitionStart(PsiBuilder builder) {
+    return kCLASS == builder.getTokenType() ||               //class
+           kINTERFACE == builder.getTokenType() ||           //interface
+           kENUM == builder.getTokenType() ||                //enum
+           ParserUtils.lookAhead(builder, mAT, kINTERFACE);  //@interface
   }
 
   public boolean parseStatementWithImports(PsiBuilder builder) {

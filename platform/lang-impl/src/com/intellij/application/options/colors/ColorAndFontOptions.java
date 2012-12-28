@@ -21,12 +21,17 @@ import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.execution.impl.ConsoleViewUtil;
+import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
+import com.intellij.ide.ui.laf.darcula.DarculaLaf;
+import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.settings.DiffOptionsPanel;
 import com.intellij.openapi.diff.impl.settings.DiffPreviewPanel;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.LanguageDefaultHighlighterColors;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -45,6 +50,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.colors.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -59,6 +65,7 @@ import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.Nls;
@@ -188,7 +195,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     newScheme.setIsNew();
 
     mySchemes.put(name, newScheme);
-    selectScheme(newScheme.getName());    
+    selectScheme(newScheme.getName());
     resetSchemesCombo(null);
   }
 
@@ -236,7 +243,16 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
         EditorColorsScheme originalScheme = mySelectedScheme.getOriginalScheme();
         myColorsManager.setGlobalScheme(originalScheme);
-
+        if (originalScheme != null && DarculaLaf.NAME.equals(originalScheme.getName()) && !UIUtil.isUnderDarcula()) {
+          int ok = Messages.showYesNoDialog(
+            "Darcula color scheme has been set for editors. Would you like to set Darcula as default Look and Feel?",
+            "Darcula Look and Feel",
+            Messages.getQuestionIcon());
+          if (ok == Messages.OK) {
+            LafManager.getInstance().setCurrentLookAndFeel(new DarculaLookAndFeelInfo());
+            DarculaInstaller.install();
+          }
+        }
         applyChangesToEditors();
 
         reset();
@@ -299,7 +315,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
   @Override
   public Configurable[] buildConfigurables() {
-    myDisposeCompleted = false;    
+    myDisposeCompleted = false;
     initAll();
 
     List<ColorAndFontPanelFactory> panelFactories = createPanelFactories();
@@ -376,7 +392,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       }
     });
     result.addAll(extensions);
-    
+
     result.add(new DiffColorsPageFactory());
     result.add(new FileStatusColorsPageFactory());
     result.add(new ScopeColorsPageFactory());
@@ -524,7 +540,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   private static void initDiffDescriptors(ArrayList<EditorSchemeAttributeDescriptor> descriptions, MyColorScheme scheme) {
     DiffOptionsPanel.addSchemeDescriptions(descriptions, scheme);
   }
-                               
+
   private static void initFileStatusDescriptors(ArrayList<EditorSchemeAttributeDescriptor> descriptions, MyColorScheme scheme) {
 
     FileStatus[] statuses = FileStatusFactory.getInstance().getAllFileStatuses();
@@ -625,7 +641,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     if (isSchemeListModified() || isSomeSchemeModified()) {
       myRevertChangesCompleted = false;
     }
-    
+
     if (!myRevertChangesCompleted) {
       ensureSchemesPanel();
 
@@ -728,7 +744,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       myRevertChangesCompleted = false;
 
       myApplyCompleted = false;
-      myRootSchemesPanel = null;      
+      myRootSchemesPanel = null;
     }
   }
 
@@ -744,23 +760,81 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   private static class SchemeTextAttributesDescription extends TextAttributesDescription {
     private final TextAttributes myAttributesToApply;
     private final TextAttributesKey key;
+    private TextAttributes myFallbackAttributes;
+    private String myInheritanceDescription;
 
     private SchemeTextAttributesDescription(String name, String group, TextAttributesKey key, EditorColorsScheme scheme, Icon icon,
                                            String toolTip) {
       super(name, group,
-            scheme.getAttributes(key) == null
-            ? new TextAttributes()
-            : scheme.getAttributes(key).clone(),
+            getEditableAttributes(scheme, key),
             key, scheme, icon, toolTip);
       this.key = key;
-      myAttributesToApply = scheme.getAttributes(key);
+      myAttributesToApply = getInitialAttributes(scheme, key);
+      TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
+      if (fallbackKey != null) {
+        myFallbackAttributes = scheme.getAttributes(fallbackKey);
+        myInheritanceDescription = LanguageDefaultHighlighterColors.getDisplayName(fallbackKey);
+        if (myInheritanceDescription == null) {
+          myInheritanceDescription = fallbackKey.getExternalName();
+        }
+      }
       initCheckedStatus();
+    }
+
+    private static TextAttributes getEditableAttributes(EditorColorsScheme scheme, TextAttributesKey key) {
+      TextAttributes attributes = getInitialAttributes(scheme, key);
+      if (attributes != null) return attributes.clone();
+      return new TextAttributes();
+    }
+
+    private static TextAttributes getInitialAttributes(EditorColorsScheme scheme, TextAttributesKey key) {
+      TextAttributes attributes = scheme.getAttributes(key);
+      TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
+      if (attributes == null && fallbackKey != null) {
+        TextAttributes fallbackAttributes = scheme.getAttributes(fallbackKey);
+        if (fallbackAttributes != null) return null;
+      }
+      return attributes;
+    }
+
+    private boolean equalToFallbackAttributes() {
+      if (myFallbackAttributes != null) {
+        return myFallbackAttributes.equals(getTextAttributes());
+      }
+      return false;
+    }
+
+    @Override
+    public boolean isBackgroundChecked() {
+      if (equalToFallbackAttributes()) return false;
+      return super.isBackgroundChecked();
+    }
+
+    @Override
+    public boolean isForegroundChecked() {
+      if (equalToFallbackAttributes()) return false;
+      return super.isForegroundChecked();
+    }
+
+    @Override
+    public boolean isErrorStripeChecked() {
+      if (equalToFallbackAttributes()) return false;
+      return super.isErrorStripeChecked();
+    }
+
+    @Override
+    public boolean isEffectsColorChecked() {
+      if (equalToFallbackAttributes()) return false;
+      return super.isEffectsColorChecked();
     }
 
     @Override
     public void apply(EditorColorsScheme scheme) {
       if (scheme == null) scheme = getScheme();
       if (myAttributesToApply != null) {
+        if (equalToFallbackAttributes()) {
+          getTextAttributes().reset();
+        }
         scheme.setAttributes(key, getTextAttributes());
       }
     }
@@ -773,6 +847,21 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     @Override
     public boolean isErrorStripeEnabled() {
       return true;
+    }
+
+    @Override
+    public boolean isInherited() {
+      if (myFallbackAttributes != null) {
+        if (getTextAttributes().isEmpty()) return true;
+        return getTextAttributes().equals(myFallbackAttributes);
+      }
+      return false;
+    }
+
+    @Nullable
+    @Override
+    public String getInheritanceDescription() {
+      return myInheritanceDescription;
     }
   }
 

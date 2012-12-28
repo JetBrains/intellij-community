@@ -127,7 +127,7 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
           final byte[] bytes = FileUtil.loadFileBytes(file);
           final String text = encoding != null? new String(bytes, encoding) : new String(bytes);
           doFilterText(
-            getDelimitersPattern(), text, projectConfig, config, endsWith(file.getName(), ".properties") ? "\\" : null, getProperties(), null,
+            getDelimitersPattern(), text, projectConfig, config, getProperties(), null,
             writer
           );
         }
@@ -202,7 +202,6 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
                                    String text,
                                    MavenProjectConfiguration projectConfig,
                                    MavenModuleResourceConfiguration moduleConfig,
-                                   final @Nullable String escapedCharacters,
                                    @NotNull Map<String, String> additionalProperties,
                                    @Nullable Map<String, String> resolvedPropertiesParam,
                                    final Appendable out) throws IOException {
@@ -259,23 +258,17 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
         resolvedProperties.put(propertyName, null);
 
         StringBuilder sb = new StringBuilder();
-        doFilterText(delimitersPattern, resolved, projectConfig, moduleConfig, escapedCharacters, additionalProperties, resolvedProperties, sb);
+        doFilterText(delimitersPattern, resolved, projectConfig, moduleConfig, additionalProperties, resolvedProperties, sb);
         propertyValue = sb.toString();
 
         resolvedProperties.put(propertyName, propertyValue);
       }
 
-      if (escapedCharacters == null) {
-        out.append(propertyValue);
+      if (moduleConfig.escapeWindowsPaths) {
+        MavenEscapeWindowsCharacterUtils.escapeWindowsPath(out, propertyValue);
       }
       else {
-        for (int i = 0; i < propertyValue.length(); i++) {
-          char ch = propertyValue.charAt(i);
-          if (escapedCharacters.indexOf(ch) != -1) {
-            out.append('\\');
-          }
-          out.append(ch);
-        }
+        out.append(propertyValue);
       }
     }
 

@@ -33,11 +33,6 @@ public abstract class TaskRepositoryType<T extends TaskRepository> {
 
   public static final ExtensionPointName<TaskRepositoryType> EP_NAME = new ExtensionPointName<TaskRepositoryType>("com.intellij.tasks.repositoryType");
 
-  protected static final int NO_FEATURES = 0;
-
-  public static final int BASIC_HTTP_AUTHORIZATION = 0x0001;
-  public static final int LOGIN_ANONYMOUSLY = 0x0002;
-
   @NotNull
   public abstract String getName();
 
@@ -52,15 +47,7 @@ public abstract class TaskRepositoryType<T extends TaskRepository> {
 
   public abstract Class<T> getRepositoryClass();
 
-  public boolean isSupported(int feature) {
-    return (getFeatures() & feature) != 0;
-  }
-
   public EnumSet<TaskState> getPossibleTaskStates() {
     return EnumSet.noneOf(TaskState.class);
-  }
-
-  protected int getFeatures() {
-    return NO_FEATURES;
   }
 }

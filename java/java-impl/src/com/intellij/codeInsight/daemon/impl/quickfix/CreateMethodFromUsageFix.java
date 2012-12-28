@@ -120,6 +120,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     PsiMethodCallExpression call = getMethodCall();
     if (call == null) return Collections.emptyList();
     for (PsiClass target : targets) {
+      if (target.isInterface() && shouldCreateStaticMember(call.getMethodExpression(), target)) continue; 
       if (!isMethodSignatureExists(call, target)) {
         result.add(target);
       }
@@ -186,7 +187,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     expression = getMethodCall();
     LOG.assertTrue(expression.isValid());
 
-    if (shouldCreateStaticMember(expression.getMethodExpression(), targetClass) && !shouldBeAbstract(targetClass)) {
+    if (!targetClass.isInterface() && shouldCreateStaticMember(expression.getMethodExpression(), targetClass) && !shouldBeAbstract(targetClass)) {
       PsiUtil.setModifierProperty(method, PsiModifier.STATIC, true);
     }
 
@@ -235,6 +236,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
 
     RangeMarker rangeMarker = document.createRangeMarker(method.getTextRange());
     final Editor newEditor = positionCursor(project, targetFile, method);
+    if (newEditor == null) return;
     Template template = builder.buildTemplate();
     newEditor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
     newEditor.getDocument().deleteString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());

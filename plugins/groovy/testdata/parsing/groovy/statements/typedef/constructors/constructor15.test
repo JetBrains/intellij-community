@@ -34,10 +34,10 @@ Groovy script
                   PsiElement(>)('>')
             PsiWhiteSpace(' ')
             PsiElement(identifier)('transformer')
+        PsiErrorElement:')' expected
+          <empty list>
         Throw clause
           <empty list>
-      PsiErrorElement:';', '}' or new line expected
-        <empty list>
       PsiElement(==)('==')
       PsiErrorElement:';', '}' or new line expected
         <empty list>

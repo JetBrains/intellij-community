@@ -623,7 +623,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myFinishing = true;
     AccessToken token = WriteAction.start();
     try {
-      insertLookupString(item, myOffsets.getPrefixLength(item, this));
+      insertLookupString(item, getPrefixLength(item));
     }
     finally {
       token.finish();
@@ -636,6 +636,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     doHide(false, true);
 
     fireItemSelected(item, completionChar);
+  }
+
+  public int getPrefixLength(LookupElement item) {
+    return myOffsets.getPrefixLength(item, this);
   }
 
   private void insertLookupString(LookupElement item, final int prefix) {

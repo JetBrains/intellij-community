@@ -63,7 +63,7 @@
                   </scrollpane>
                 </children>
               </grid>
-              <grid id="d3553" binding="myExplorerPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+              <grid id="d3553" binding="myExplorerPanel" custom-create="true" layout-manager="BorderLayout" hgap="0" vgap="0">
                 <constraints>
                   <tabbedpane title="Explorer"/>
                 </constraints>

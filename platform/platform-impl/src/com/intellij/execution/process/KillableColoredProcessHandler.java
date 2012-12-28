@@ -23,11 +23,11 @@ import java.nio.charset.Charset;
 
 /**
  * @author Roman.Chernyatchik
- *
- * This process handler supports ANSI coloring and soft-kill feature. Soft kill works only on Unix.
- * At first "stop" button send SIGINT signal to process, if it still hangs user can termintate it recursively with SIGKILL signal.
- *
- * P.S: probably OSProcessHandler is better place for this feature but it can affect other run configurations and should be tested
+ *         <p/>
+ *         This process handler supports ANSI coloring and soft-kill feature. Soft kill works only on Unix.
+ *         At first "stop" button send SIGINT signal to process, if it still hangs user can termintate it recursively with SIGKILL signal.
+ *         <p/>
+ *         P.S: probably OSProcessHandler is better place for this feature but it can affect other run configurations and should be tested
  */
 public class KillableColoredProcessHandler extends ColoredProcessHandler implements KillableProcess {
   public KillableColoredProcessHandler(final Process process, final String commandLine, @NotNull final Charset charset) {
@@ -38,25 +38,40 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
     super(process, commandLine);
   }
 
-  @Override
-  public boolean canKillProcess() {
+  /**
+   * This method shouldn't be overriden, see shouldKillProcessSoftly
+   * @return
+   */
+  private boolean canKillProcessSoftly() {
     // soft-kill works on Unix systems
-    return SystemInfo.isUnix;
+    return SystemInfo.isUnix && processCanBeKilledByOS(getProcess());
   }
 
   @Override
   protected void doDestroyProcess() {
-    if (!canKillProcess()) {
+    if (canKillProcessSoftly() && shouldKillProcessSoftly()) {
+      // Unix: [soft-kill] at first send INT signal:
+      final Process process = getProcess();
+      UnixProcessManager.sendSigIntToProcessTree(process);
+    }
+    else {
       // if soft kill isn't supported - use default implementation
       super.doDestroyProcess();
-      return;
+      // else IDE will suggest 'terminate dialog'
     }
+  }
 
-    // Unix: [soft-kill] at first send INT signal:
-    final Process process = getProcess();
-    UnixProcessManager.sendSigIntToProcessTree(process);
+  /**
+   * This method should be overriden by children if the process shouldn't be killed softly (e.g. by kill -2)
+   * @return
+   */
+  protected boolean shouldKillProcessSoftly() {
+    return true;
+  }
 
-    // else IDE will suggest 'terminate dialog'
+  @Override
+  public boolean canKillProcess() {
+    return processCanBeKilledByOS(getProcess());
   }
 
   @Override

@@ -183,6 +183,8 @@
       icon="AllIcons.Actions.Prevfile" use-shortcut-of="PreviousTab"/>
     <action id="Diff.NextChange" class="com.intellij.openapi.vcs.changes.actions.ShowNextChangeAction"
       icon="AllIcons.Actions.Nextfile" use-shortcut-of="NextTab"/>
+    <action id="Diff.SelectedChange" class="com.intellij.openapi.vcs.changes.actions.ShowSelectedChangeAction"
+      icon="AllIcons.Actions.ShowAsTree" use-shortcut-of="GotoClass"/>
 
     <group id="EditorGutterVcsPopupMenu">
       <reference ref="Annotate"/>

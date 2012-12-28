@@ -130,7 +130,6 @@ public class AllIcons {
     public static final Icon ShowHiddens = IconLoader.getIcon("/actions/showHiddens.png"); // 16x16
     public static final Icon ShowImportStatements = IconLoader.getIcon("/actions/showImportStatements.png"); // 16x16
     public static final Icon ShowReadAccess = IconLoader.getIcon("/actions/showReadAccess.png"); // 16x16
-    public static final Icon ShowSource = IconLoader.getIcon("/actions/showSource.png"); // 16x16
     public static final Icon ShowViewer = IconLoader.getIcon("/actions/showViewer.png"); // 16x16
     public static final Icon ShowWriteAccess = IconLoader.getIcon("/actions/showWriteAccess.png"); // 16x16
     public static final Icon SortAsc = IconLoader.getIcon("/actions/sortAsc.png"); // 9x8
@@ -1038,6 +1037,7 @@ public class AllIcons {
   
   public static class Toolwindows {
     public static final Icon Documentation = IconLoader.getIcon("/toolwindows/documentation.png"); // 13x13
+    public static final Icon Problems = IconLoader.getIcon("/toolwindows/problems.png"); // 13x13
     public static final Icon ToolWindowAnt = IconLoader.getIcon("/toolwindows/toolWindowAnt.png"); // 13x13
     public static final Icon ToolWindowChanges = IconLoader.getIcon("/toolwindows/toolWindowChanges.png"); // 13x13
     public static final Icon ToolWindowCommander = IconLoader.getIcon("/toolwindows/toolWindowCommander.png"); // 13x13

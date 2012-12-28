@@ -29,6 +29,7 @@ import com.intellij.execution.process.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PathManager;
@@ -50,6 +51,7 @@ import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
@@ -81,6 +83,7 @@ import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepend
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.ide.PooledThreadExecutor;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.api.GlobalOptions;
@@ -140,12 +143,7 @@ public class BuildManager implements ApplicationComponent{
   private final Map<RequestFuture, Project> myAutomakeFutures = new HashMap<RequestFuture, Project>();
   private final Map<String, RequestFuture> myBuildsInProgress = Collections.synchronizedMap(new HashMap<String, RequestFuture>());
   private final CompileServerClasspathManager myClasspathManager = new CompileServerClasspathManager();
-  private final Executor myPooledThreadExecutor = new Executor() {
-    @Override
-    public void execute(@NotNull Runnable command) {
-      ApplicationManager.getApplication().executeOnPooledThread(command);
-    }
-  };
+  private final Executor myPooledThreadExecutor = new PooledThreadExecutor();
   private final SequentialTaskExecutor myRequestsProcessor = new SequentialTaskExecutor(myPooledThreadExecutor);
   private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<String, ProjectData>());
 
@@ -1014,6 +1012,13 @@ public class BuildManager implements ApplicationComponent{
         @Override
         public void processTerminated(@NotNull RunProfile runProfile, @NotNull ProcessHandler handler) {
           scheduleAutoMake();
+        }
+      });
+      final String projectPath = getProjectPath(project);
+      Disposer.register(project, new Disposable() {
+        @Override
+        public void dispose() {
+          myProjectDataMap.remove(projectPath);
         }
       });
       scheduleAutoMake(); // run automake on project opening

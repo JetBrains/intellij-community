@@ -28,7 +28,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
-import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -63,7 +62,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.CompleteReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
@@ -279,10 +278,9 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
         GroovyCompletionData.addGroovyKeywords(parameters, result);
 
+        addUnfinishedMethodTypeParameters(position, result);
 
         suggestVariableNames(position, result);
-
-        addUnfinishedMethodTypeParameters(position, result);
 
         GrReferenceElement reference = findGroovyReference(position);
         if (reference == null) {
@@ -371,26 +369,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
     return couldContainReference(position);
   }
 
-  private static void addUnfinishedMethodTypeParameters(PsiElement position, CompletionResultSet result) {
-    final ProcessingContext context = new ProcessingContext();
-    if (PsiJavaPatterns.psiElement().inside(
-      PsiJavaPatterns.psiElement(GrTypeElement.class).afterLeaf(
-        PsiJavaPatterns.psiElement().withText(">").withParent(
-          PsiJavaPatterns.psiElement(GrTypeParameterList.class).withParent(PsiErrorElement.class).save("typeParameterList")))).accepts(
-      position, context)) {
-      final GrTypeParameterList list = (GrTypeParameterList)context.get("typeParameterList");
-      PsiElement current = list.getParent().getParent();
-      if (current instanceof PsiField) {
-        current = current.getParent();
-      }
-      if (current instanceof GrTypeDefinitionBody) {
-        for (PsiTypeParameter typeParameter : list.getTypeParameters()) {
-          result.addElement(new JavaPsiClassReferenceElement(typeParameter));
-        }
-      }
-    }
-  }
-
   @Override
   public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
     if (AFTER_NUMBER_LITERAL.accepts(parameters.getPosition())) {
@@ -400,9 +378,41 @@ public class GroovyCompletionContributor extends CompletionContributor {
     super.fillCompletionVariants(parameters, result);
   }
 
+
+  private static void addUnfinishedMethodTypeParameters(@NotNull PsiElement position, @NotNull CompletionResultSet result) {
+    final GrTypeParameterList candidate = findTypeParameterListCandidate(position);
+
+    if (candidate != null) {
+      for (GrTypeParameter p : candidate.getTypeParameters()) {
+        result.addElement(new JavaPsiClassReferenceElement(p));
+      }
+    }
+  }
+
+  @Nullable
+  private static GrTypeParameterList findTypeParameterListCandidate(@NotNull PsiElement position) {
+    final PsiElement parent = position.getParent();
+    if (parent instanceof GrVariable) {
+      final PsiElement pparent = parent.getParent();
+      if (pparent instanceof GrVariableDeclaration) {
+        final PsiElement errorElement = PsiUtil.skipWhitespacesAndComments(parent.getPrevSibling(), false);
+        if (errorElement instanceof PsiErrorElement) {
+          final PsiElement child = errorElement.getFirstChild();
+          if (child instanceof GrTypeParameterList) {
+            return (GrTypeParameterList)child;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
   @NotNull
   static Runnable completeReference(final CompletionParameters parameters,
-                                        GrReferenceElement reference, final InheritorsHolder inheritorsHolder, final PrefixMatcher matcher, final Consumer<LookupElement> _consumer) {
+                                    final GrReferenceElement reference,
+                                    final InheritorsHolder inheritorsHolder,
+                                    final PrefixMatcher matcher,
+                                    final Consumer<LookupElement> _consumer) {
     final Consumer<LookupElement> consumer = new Consumer<LookupElement>() {
       final Set<LookupElement> added = newHashSet();
       @Override
@@ -659,7 +669,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
         context.setDummyIdentifier(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
       }
-      else if (semicolonNeeded(context)) {
+      else if (isIdentifierBeforeLParenth(context)) {
         context.setDummyIdentifier(setCorrectCase(context) + ";");
       }
       else if (isInPossibleClosureParameter(position)) {
@@ -727,7 +737,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
     return false;
   }
 
-  private static boolean semicolonNeeded(CompletionInitializationContext context) { //<caret>String name=
+  private static boolean isIdentifierBeforeLParenth(CompletionInitializationContext context) { //<caret>String name=
     HighlighterIterator iterator = ((EditorEx)context.getEditor()).getHighlighter().createIterator(context.getStartOffset());
     if (iterator.atEnd()) return false;
 
@@ -747,13 +757,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
       iterator.advance();
     }
 
-    if (iterator.atEnd() || iterator.getTokenType() != mIDENT) return false;
-    iterator.advance();
-
-    while (!iterator.atEnd() && WHITE_SPACES_OR_COMMENTS.contains(iterator.getTokenType())) {
-      iterator.advance();
-    }
-    return true;
+    return false;
   }
 
   public static void suggestVariableNames(PsiElement context, CompletionResultSet result) {

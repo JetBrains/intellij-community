@@ -37,7 +37,7 @@ public class DocumentFragmentTooltipRenderer implements TooltipRenderer {
   }
 
   @Override
-  public LightweightHint show(@NotNull final Editor editor, @NotNull Point p, boolean alignToRight, TooltipGroup group, @NotNull HintHint intInfo) {
+  public LightweightHint show(@NotNull final Editor editor, @NotNull Point p, boolean alignToRight, @NotNull TooltipGroup group, @NotNull HintHint intInfo) {
     LightweightHint hint;
 
     final JComponent editorComponent = editor.getComponent();

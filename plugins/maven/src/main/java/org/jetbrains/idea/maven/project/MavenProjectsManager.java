@@ -1098,7 +1098,14 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       for (Map.Entry<Object, Object> propEntry : properties.entrySet()) {
         resourceConfig.properties.put((String)propEntry.getKey(), (String)propEntry.getValue());
       }
-      resourceConfig.escapeString = MavenProjectsTree.getEscapeString(mavenProject);
+
+      Element pluginConfiguration = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
+      resourceConfig.escapeString = MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "escapeString", "\\");
+      String escapeWindowsPaths = MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "escapeWindowsPaths");
+      if (escapeWindowsPaths != null) {
+        resourceConfig.escapeWindowsPaths = Boolean.parseBoolean(escapeWindowsPaths);
+      }
+
       projectConfig.moduleConfigurations.put(module.getName(), resourceConfig);
     }
 
@@ -1112,7 +1119,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         try {
           JDOMUtil.writeDocument(document, mavenConfigFile, "\n");
 
-          DataOutputStream crcOutput = new DataOutputStream(new FileOutputStream(crcFile));
+          DataOutputStream crcOutput = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(crcFile)));
           try {
             crcOutput.writeInt(crc);
           }

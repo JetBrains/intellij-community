@@ -199,7 +199,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
             }
 
             if (!sticky) {
-              ((BalloonImpl)balloon).startFadeoutTimer(3000);
+              ((BalloonImpl)balloon).startFadeoutTimer(15000);
             }
             else //noinspection ConstantConditions
               if (noProjects) {

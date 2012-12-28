@@ -23,11 +23,14 @@ package com.intellij.compiler;
 
 import com.intellij.CommonBundle;
 import com.intellij.ProjectTopics;
+import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.api.CompilerAPICompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseEmbeddedCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
+import com.intellij.compiler.options.ExternalBuildOptionListener;
+import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -51,6 +54,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import org.apache.oro.text.regex.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -112,13 +116,41 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     myProject = project;
     myExcludedEntriesConfiguration = new ExcludedEntriesConfiguration();
     Disposer.register(project, myExcludedEntriesConfiguration);
-    project.getMessageBus().connect(project).subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
+    MessageBusConnection connection = project.getMessageBus().connect(project);
+    connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
       public void beforeModuleRemoved(Project project, Module module) {
         getAnnotationProcessingConfiguration(module).removeModuleName(module.getName());
       }
 
       public void moduleAdded(Project project, Module module) {
         myProcessorsProfilesMap = null; // clear cache
+      }
+    });
+
+    connection.subscribe(ExternalBuildOptionListener.TOPIC, new ExternalBuildOptionListener() {
+      @Override
+      public void externalBuildOptionChanged(boolean externalBuildEnabled) {
+    // this will schedule for compilation all files that might become compilable after resource patterns' changing
+        final TranslatingCompilerFilesMonitor monitor = TranslatingCompilerFilesMonitor.getInstance();
+        if (externalBuildEnabled) {
+          monitor.suspendProject(myProject);
+        }
+        else {
+          monitor.watchProject(myProject);
+          monitor.scanSourcesForCompilableFiles(myProject);
+          if (!myProject.isDefault()) {
+            final File buildSystem = BuildManager.getInstance().getBuildSystemDirectory();
+            final File[] subdirs = buildSystem.listFiles();
+            if (subdirs != null) {
+              final String prefix = myProject.getName().toLowerCase(Locale.US) + "_";
+              for (File subdir : subdirs) {
+                if (subdir.getName().startsWith(prefix)) {
+                  FileUtil.asyncDelete(subdir);
+                }
+              }
+            }
+          }
+        }
       }
     });
   }

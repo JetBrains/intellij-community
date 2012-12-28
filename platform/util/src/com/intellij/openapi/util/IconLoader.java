@@ -75,6 +75,8 @@ public final class IconLoader {
 
     ourDeprecatedIconsReplacements.put("/ant/filter.png", "AllIcons.General.Filter");
     ourDeprecatedIconsReplacements.put("/inspector/useFilter.png", "AllIcons.General.Filter");
+
+    ourDeprecatedIconsReplacements.put("/actions/showSource.png", "AllIcons.Actions.Preview");
   }
 
   private static final ImageIcon EMPTY_ICON = new ImageIcon(UIUtil.createImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)) {

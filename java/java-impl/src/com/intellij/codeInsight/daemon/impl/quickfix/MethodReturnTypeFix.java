@@ -338,14 +338,16 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     final PsiSubstitutor superClassSubstitutor =
       TypeConversionUtil.getSuperClassSubstitutor(superClass, baseClass, PsiSubstitutor.EMPTY);
     final PsiType superReturnTypeInBaseClassType = superClassSubstitutor.substitute(superReturnType);
-    PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(project).getResolveHelper();
+    final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(project).getResolveHelper();
     final PsiSubstitutor psiSubstitutor = resolveHelper.inferTypeArguments(baseClass.getTypeParameters(),
                                                                            new PsiType[]{superReturnTypeInBaseClassType},
                                                                            new PsiType[]{returnType},
                                                                            PsiUtil.getLanguageLevel(superClass));
 
     final TypeMigrationRules rules = new TypeMigrationRules(TypeMigrationLabeler.getElementType(derivedClass));
-    rules.setMigrationRootType(JavaPsiFacade.getElementFactory(project).createType(baseClass, psiSubstitutor));
+    final PsiSubstitutor compoundSubstitutor = 
+      TypeConversionUtil.getSuperClassSubstitutor(superClass, derivedClass, PsiSubstitutor.EMPTY).putAll(psiSubstitutor);
+    rules.setMigrationRootType(JavaPsiFacade.getElementFactory(project).createType(baseClass, compoundSubstitutor));
     rules.setBoundScope(new LocalSearchScope(derivedClass));
     TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, referenceParameterList);
 

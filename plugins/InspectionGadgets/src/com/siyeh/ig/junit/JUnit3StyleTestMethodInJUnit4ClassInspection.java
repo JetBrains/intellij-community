@@ -22,7 +22,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ImportUtils;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -84,10 +83,52 @@ public class JUnit3StyleTestMethodInJUnit4ClassInspection extends BaseInspection
       if (TestUtils.isJUnitTestClass(containingClass)) {
         return;
       }
-      if (!ImportUtils.containsReferenceToClass(containingClass, "org.junit.Test")) {
+      if (!containsReferenceToClass(containingClass, "org.junit.Test")) {
         return;
       }
       registerMethodError(method);
+    }
+  }
+
+  public static boolean containsReferenceToClass(PsiElement element, String fullyQualifiedName) {
+    final ClassReferenceVisitor visitor = new ClassReferenceVisitor(fullyQualifiedName);
+    element.accept(visitor);
+    return visitor.isReferenceFound();
+  }
+
+  private static class ClassReferenceVisitor extends JavaRecursiveElementVisitor {
+
+    private final String fullyQualifiedName;
+    private boolean referenceFound = false;
+
+    private ClassReferenceVisitor(String fullyQualifiedName) {
+      this.fullyQualifiedName = fullyQualifiedName;
+    }
+
+    @Override
+    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      super.visitReferenceElement(reference);
+      if (referenceFound) {
+        return;
+      }
+      if (!(reference.getParent() instanceof PsiAnnotation)) {
+        // optimization
+        return;
+      }
+      final PsiElement element = reference.resolve();
+      if (!(element instanceof PsiClass) || element instanceof PsiTypeParameter) {
+        return;
+      }
+      final PsiClass aClass = (PsiClass)element;
+      final String classQualifiedName = aClass.getQualifiedName();
+      if (classQualifiedName == null || !classQualifiedName.equals(fullyQualifiedName)) {
+        return;
+      }
+      referenceFound = true;
+    }
+
+    public boolean isReferenceFound() {
+      return referenceFound;
     }
   }
 }

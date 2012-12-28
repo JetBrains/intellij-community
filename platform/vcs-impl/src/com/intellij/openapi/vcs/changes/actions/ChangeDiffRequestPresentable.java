@@ -56,6 +56,10 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
     myProject = project;
   }
 
+  public Change getChange() {
+    return myChange;
+  }
+
   public void setIgnoreDirectoryFlag(boolean ignoreDirectoryFlag) {
     myIgnoreDirectoryFlag = ignoreDirectoryFlag;
   }
@@ -83,7 +87,7 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
     }
   }
 
-  public List<? extends AnAction> createActions(ShowDiffAction.DiffExtendUIFactory uiFactory) {
+  public List<? extends AnAction> createActions(DiffExtendUIFactory uiFactory) {
     return uiFactory.createActions(myChange);
   }
 
@@ -257,5 +261,22 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
       context.add(pattern);
     }
     return false;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    ChangeDiffRequestPresentable that = (ChangeDiffRequestPresentable)o;
+
+    if (myChange != null ? !myChange.equals(that.myChange) : that.myChange != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myChange != null ? myChange.hashCode() : 0;
   }
 }

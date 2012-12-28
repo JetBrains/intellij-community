@@ -362,4 +362,9 @@ public class GitHubRepository extends BaseRepositoryImpl {
     if (getRepoName() != null ? !getRepoName().equals(that.getRepoName()) : that.getRepoName() != null) return false;
     return true;
   }
+
+  @Override
+  protected int getFeatures() {
+    return BASIC_HTTP_AUTHORIZATION;
+  }
 }

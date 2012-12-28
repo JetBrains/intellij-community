@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -216,6 +217,10 @@ public class JdkUtil {
             }
   
             String classpath = PathUtil.getJarPathForClass(commandLineWrapper);
+            final String utilRtPath = PathUtil.getJarPathForClass(StringUtilRt.class);
+            if (!classpath.equals(utilRtPath)) {
+              classpath += File.pathSeparator + utilRtPath;
+            }
             final Class<UrlClassLoader> ourUrlClassLoader = UrlClassLoader.class;
             if (ourUrlClassLoader.getName().equals(vmParametersList.getPropertyValue("java.system.class.loader"))) {
               classpath += File.pathSeparator + PathUtil.getJarPathForClass(ourUrlClassLoader);

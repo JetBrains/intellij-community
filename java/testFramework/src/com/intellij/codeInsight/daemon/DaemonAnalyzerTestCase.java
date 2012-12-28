@@ -276,6 +276,11 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     doDoTest(checkWarnings, checkInfos);
   }
 
+  protected void doTest(boolean checkWarnings, boolean checkInfos, String ... files) throws Exception {
+    configureByFiles(null, files);
+    doDoTest(checkWarnings, checkInfos);
+  }
+
   @NotNull
   protected Collection<HighlightInfo> doDoTest(boolean checkWarnings, boolean checkInfos) {
     return doDoTest(checkWarnings, checkInfos, false);

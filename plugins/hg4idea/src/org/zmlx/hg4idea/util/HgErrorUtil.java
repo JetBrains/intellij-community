@@ -56,4 +56,11 @@ public final class HgErrorUtil {
   public static boolean hasErrorsInCommandExecution(HgCommandResult result) {
     return isAbort(result) || result.getExitValue() != 0;
   }
+
+  public static boolean hasAuthorizationInDestinationPath(@Nullable String destinationPath) {
+    if (StringUtil.isEmptyOrSpaces(destinationPath)) {
+      return false;
+    }
+    return HgUtil.URL_WITH_PASSWORD.matcher(destinationPath).matches();
+  }
 }

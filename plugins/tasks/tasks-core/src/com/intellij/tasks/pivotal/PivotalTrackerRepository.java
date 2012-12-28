@@ -361,4 +361,9 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
     if (getCommitMessageFormat() != null ? !getCommitMessageFormat().equals(that.getCommitMessageFormat()) : that.getCommitMessageFormat() != null) return false;
     return isShouldFormatCommitMessage() == that.isShouldFormatCommitMessage();
   }
+
+  @Override
+  protected int getFeatures() {
+    return BASIC_HTTP_AUTHORIZATION;
+  }
 }

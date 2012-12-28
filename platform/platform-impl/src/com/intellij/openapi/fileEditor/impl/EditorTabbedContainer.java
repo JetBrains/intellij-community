@@ -42,6 +42,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
@@ -595,7 +596,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
 
     @Override
     public void dragOutFinished(MouseEvent event, TabInfo source) {
-      boolean copy = event.isMetaDown() || (!SystemInfo.isMac && event.isControlDown());
+      boolean copy = UIUtil.isControlKeyDown(event) || mySession.getResponse(event) == DockContainer.ContentResponse.ACCEPT_COPY;
       if (!copy) {
         myFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, Boolean.TRUE);
         FileEditorManagerEx.getInstanceEx(myProject).closeFile(myFile, myWindow);

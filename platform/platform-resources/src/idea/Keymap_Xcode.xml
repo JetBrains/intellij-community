@@ -387,10 +387,12 @@
     <action id="Back">
       <keyboard-shortcut first-keystroke="meta OPEN_BRACKET"/>
       <keyboard-shortcut first-keystroke="meta control LEFT"/>
+      <mouse-shortcut keystroke="button4"/>
     </action>
     <action id="Forward">
       <keyboard-shortcut first-keystroke="meta CLOSE_BRACKET"/>
       <keyboard-shortcut first-keystroke="meta control RIGHT"/>
+      <mouse-shortcut keystroke="button5"/>
     </action>
 
     <action id="EditorCutLineEnd">

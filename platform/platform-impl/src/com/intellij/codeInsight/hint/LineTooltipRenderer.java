@@ -66,7 +66,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   public LightweightHint show(@NotNull final Editor editor,
                               @NotNull final Point p,
                               final boolean alignToRight,
-                              final TooltipGroup group,
+                              @NotNull final TooltipGroup group,
                               @NotNull final HintHint hintHint) {
     if (myText == null) return null;
 
@@ -78,6 +78,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     final JComponent contentComponent = editor.getContentComponent();
 
     final JComponent editorComponent = editor.getComponent();
+    if (!editorComponent.isShowing()) return null;
     final JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
 
     final JEditorPane pane = IdeTooltipManager.initPane(new Html(myText).setKeepFont(true), hintHint, layeredPane);
@@ -137,7 +138,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           final URL url = e.getURL();
           if (url != null) {
-            BrowserUtil.launchBrowser(url.toString());
+            BrowserUtil.browse(url);
             hint.hide();
             return;
           }
@@ -198,7 +199,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
                       @NotNull Point p,
                       @NotNull JEditorPane pane,
                       boolean alignToRight,
-                      TooltipGroup group,
+                      @NotNull TooltipGroup group,
                       @NotNull HintHint hintHint) {
     hint.hide();
     if (myCurrentWidth > 0) {

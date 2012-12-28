@@ -45,9 +45,4 @@ public class AssemblaRepositoryType extends TaskRepositoryType<AssemblaRepositor
   public Class<AssemblaRepository> getRepositoryClass() {
     return AssemblaRepository.class;
   }
-
-  @Override
-  protected int getFeatures() {
-    return BASIC_HTTP_AUTHORIZATION;
-  }
 }

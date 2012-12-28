@@ -62,6 +62,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.Function;
@@ -221,7 +222,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myConsoleEditor.addEditorMouseListener(EditorActionUtil.createEditorPopupHandler(IdeActions.GROUP_CONSOLE_EDITOR_POPUP));
     //noinspection PointlessBooleanExpression,ConstantConditions
     if (SEPARATOR_THICKNESS > 0 && myShowSeparatorLine) {
-      myHistoryViewer.getComponent().setBorder(new SideBorder(Color.LIGHT_GRAY, SideBorder.BOTTOM));
+      myHistoryViewer.getComponent().setBorder(new SideBorder(JBColor.LIGHT_GRAY, SideBorder.BOTTOM));
     }
     myHistoryViewer.getComponent().setMinimumSize(new Dimension(0, 0));
     myHistoryViewer.getComponent().setPreferredSize(new Dimension(0, 0));
@@ -401,8 +402,10 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     final MarkupModel markupModel = DocumentMarkupModel.forDocument(history, myProject, true);
     final int oldHistoryLength = history.getTextLength();
     appendToHistoryDocument(history, sb.toString());
-    assert (oldHistoryLength + offsets[i]) == history.getTextLength()
-      : "Last offset - " + offsets[i] + " history length: old " + oldHistoryLength + ", new - " + history.getTextLength();
+    if ((oldHistoryLength + offsets[i]) != history.getTextLength()) {
+      assert false : "Last offset - " + offsets[i] + " history length: old " + oldHistoryLength + ", new - " + history.getTextLength()
+        + ", history - " + history;
+    }
     LOG.debug("printToHistory(): text added");
     i = 0;
     for (final Pair<String, TextAttributes> pair : attributedText) {

@@ -61,6 +61,7 @@ public class HgPusher {
         final List<VirtualFile> repositories = HgUtil.getHgRepositories(myProject);
         if (repositories.isEmpty()) {
           VcsBalloonProblemNotifier.showOverChangesView(myProject, "No Mercurial repositories in the project", MessageType.ERROR);
+          return;
         }
         VirtualFile firstRepo = repositories.get(0);
         final List<HgTagBranch> branches = getBranches(myProject, firstRepo);

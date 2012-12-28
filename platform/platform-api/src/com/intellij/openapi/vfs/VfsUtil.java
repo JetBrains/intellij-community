@@ -42,6 +42,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
@@ -318,8 +320,6 @@ public class VfsUtil extends VfsUtilCore {
     return file;
   }
 
-  @NonNls private static final String FILE = "file";
-  @NonNls private static final String JAR = "jar";
   @NonNls private static final String MAILTO = "mailto";
   private static final String PROTOCOL_DELIMITER = ":";
 
@@ -359,7 +359,7 @@ public class VfsUtil extends VfsUtilCore {
 
   @Nullable
   public static URL convertToURL(@NotNull String vfsUrl) {
-    if (vfsUrl.startsWith(JAR)) {
+    if (vfsUrl.startsWith(StandardFileSystems.JAR_PROTOCOL)) {
       LOG.error("jar: protocol not supported.");
       return null;
     }
@@ -385,7 +385,7 @@ public class VfsUtil extends VfsUtilCore {
     String path = split[1];
 
     try {
-      if (protocol.equals(FILE)) {
+      if (protocol.equals(StandardFileSystems.FILE_PROTOCOL)) {
         return new URL(protocol, "", path);
       }
       else {
@@ -402,8 +402,8 @@ public class VfsUtil extends VfsUtilCore {
   public static String convertFromUrl(@NotNull URL url) {
     String protocol = url.getProtocol();
     String path = url.getPath();
-    if (protocol.equals(JAR)) {
-      if (StringUtil.startsWithConcatenationOf(path, FILE, PROTOCOL_DELIMITER)) {
+    if (protocol.equals(StandardFileSystems.JAR_PROTOCOL)) {
+      if (StringUtil.startsWithConcatenationOf(path, StandardFileSystems.FILE_PROTOCOL, PROTOCOL_DELIMITER)) {
         try {
           URL subURL = new URL(path);
           path = subURL.getPath();
@@ -495,6 +495,88 @@ public class VfsUtil extends VfsUtilCore {
       }
     }
     return url;
+  }
+
+  /**
+   * @return correct URL, must be used only for external communication
+   */
+  @NotNull
+  public static URI toUri(@NotNull VirtualFile file) {
+    String path = file.getPath();
+    try {
+      if (file.isInLocalFileSystem()) {
+        if (SystemInfo.isWindows && path.charAt(0) != '/') {
+          path = '/' + path;
+        }
+        return new URI(file.getFileSystem().getProtocol(), "", path, null, null);
+      }
+      return new URI(file.getFileSystem().getProtocol(), path, null);
+    }
+    catch (URISyntaxException e) {
+      throw new IllegalArgumentException(e);
+    }
+  }
+
+  /**
+   * @return correct URL, must be used only for external communication
+   */
+  @NotNull
+  public static URI toUri(@NotNull File file) {
+    String path = file.toURI().getPath();
+    try {
+      if (SystemInfo.isWindows && path.charAt(0) != '/') {
+        path = '/' + path;
+      }
+      return new URI(StandardFileSystems.FILE_PROTOCOL, "", path, null, null);
+    }
+    catch (URISyntaxException e) {
+      throw new IllegalArgumentException(e);
+    }
+  }
+
+  /**
+   * uri - may be incorrect (escaping or missed "/" before disk name under windows), may be not fully encoded,
+   * may contains query and fragment
+   * @return correct URI, must be used only for external communication
+   */
+  @Nullable
+  public static URI toUri(@NotNull String uri) {
+    int index = uri.indexOf("://");
+    if (index < 0) {
+      // true URI, like mailto:
+      try {
+        return new URI(uri);
+      }
+      catch (URISyntaxException e) {
+        LOG.debug(e);
+        return null;
+      }
+    }
+
+    if (SystemInfo.isWindows && uri.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
+      int firstSlashIndex = index + "://".length();
+      if (uri.charAt(firstSlashIndex) != '/') {
+        uri = LocalFileSystem.PROTOCOL_PREFIX + '/' + uri.substring(firstSlashIndex);
+      }
+    }
+
+    try {
+      return new URI(uri);
+    }
+    catch (URISyntaxException e) {
+      LOG.debug("uri is not fully encoded", e);
+      // so, uri is not fully encoded (space)
+      try {
+        int fragmentIndex = uri.lastIndexOf('#');
+        String path = uri.substring(index + 1, fragmentIndex > 0 ? fragmentIndex : uri.length());
+        String fragment = fragmentIndex > 0 ? uri.substring(fragmentIndex + 1) : null;
+        return new URI(uri.substring(0, index), path, fragment);
+      }
+      catch (URISyntaxException e1) {
+        LOG.debug(e1);
+        return null;
+      }
+    }
   }
 
   /**

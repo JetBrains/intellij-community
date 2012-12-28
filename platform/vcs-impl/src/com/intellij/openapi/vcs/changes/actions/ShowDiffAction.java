@@ -34,7 +34,6 @@ import com.intellij.util.BeforeAfter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.util.*;
 
@@ -152,23 +151,6 @@ public class ShowDiffAction extends AnAction implements DumbAware {
     return matchingChanges.toArray(new Change[matchingChanges.size()]);
   }
 
-  public interface DiffExtendUIFactory {
-    DiffExtendUIFactory NONE = new DiffExtendUIFactory() {
-      public List<? extends AnAction> createActions(Change change) {
-        return Collections.emptyList();
-      }
-
-      @Nullable
-      public JComponent createBottomComponent() {
-        return null;
-      }
-    };
-    List<? extends AnAction> createActions(Change change);
-
-    @Nullable
-    JComponent createBottomComponent();
-  }
-
   public static void showDiffForChange(final Iterable<Change> changes, final Condition<Change> selectionChecker,
                                        final Project project, @NotNull ShowDiffUIContext context) {
     int cnt = 0;
@@ -283,7 +265,8 @@ public class ShowDiffAction extends AnAction implements DumbAware {
     return isBinaryChange(change) && (change.getAfterRevision() == null || BinaryDiffTool.canShow(project, change.getVirtualFile()));
   }
 
-  public static void showDiffImpl(final Project project, List<DiffRequestPresentable> changeList, int index, @NotNull final ShowDiffUIContext context) {
+  public static void showDiffImpl(final Project project, @NotNull List<DiffRequestPresentable> changeList, int index,
+                                  @NotNull final ShowDiffUIContext context) {
     final ChangeDiffRequest request = new ChangeDiffRequest(project, changeList, context.getActionsFactory(), context.isShowFrame());
     final DiffTool tool = DiffManager.getInstance().getDiffTool();
     final DiffRequest simpleRequest;

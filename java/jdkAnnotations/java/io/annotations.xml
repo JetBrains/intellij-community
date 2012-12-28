@@ -1,30 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <root>
-  <item name='java.io.File File(java.lang.String, java.lang.String) 1'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+  <item name="java.io.File File(java.io.File, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
-  <item name='java.io.File java.io.File createTempFile(java.lang.String, java.lang.String) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+  <item name="java.io.File File(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
-  <item name='java.io.File java.io.File createTempFile(java.lang.String, java.lang.String) 1'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+  <item name="java.io.File File(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
-  <item name='java.io.File java.io.File createTempFile(java.lang.String, java.lang.String, java.io.File) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+  <item name="java.io.File java.io.File createTempFile(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
-  <item name='java.io.File java.io.File createTempFile(java.lang.String, java.lang.String, java.io.File) 1'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+  <item name="java.io.File java.io.File createTempFile(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
-  <item name='java.io.File File(java.lang.String) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+  <item name="java.io.File java.io.File createTempFile(java.lang.String, java.lang.String, java.io.File) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
-  <item name='java.io.File File(java.io.File, java.lang.String) 1'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+  <item name="java.io.File java.io.File createTempFile(java.lang.String, java.lang.String, java.io.File) 1">
+    <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
-  <item name='java.io.RandomAccessFile RandomAccessFile(java.io.File, java.lang.String) 1'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+  <item name="java.io.File java.io.File[] listFiles()">
+    <annotation name="org.jetbrains.annotations.Nullable" />
   </item>
-  <item name='java.io.File java.io.File[] listFiles()'>
-    <annotation name='org.jetbrains.annotations.Nullable'>
-    </annotation>
+  <item name="java.io.RandomAccessFile RandomAccessFile(java.io.File, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
 </root>
+

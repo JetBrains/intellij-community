@@ -18,6 +18,7 @@ package git4idea.history.wholeTree;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ContextHelpAction;
+import com.intellij.ide.actions.RefreshAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -495,7 +496,7 @@ public class GitLogUI implements Disposable {
         if (commitI == null) return;
         final VirtualFile root = commitI.selectRepository(myRootsUnderVcs);
         final List<String> branches = myDetailsCache.getBranches(root, commitI.getHash());
-        if (branches != null && ! branches.isEmpty()) {
+        if (branches != null) {
           try {
             myBranchesLoader.take(commitI, branches);
           }
@@ -884,10 +885,8 @@ public class GitLogUI implements Disposable {
 
       group.addAll(getCustomActions());
 
-      final CustomShortcutSet refreshShortcut =
-        new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK));
-      myRefreshAction.registerCustomShortcutSet(refreshShortcut, myJBTable);
-      myRefreshAction.registerCustomShortcutSet(refreshShortcut, myGraphGutter.getComponent());
+      myRefreshAction.registerShortcutOn(myJBTable);
+      myRefreshAction.registerShortcutOn(myGraphGutter.getComponent());
 
       myContextMenu = ActionManager.getInstance().createActionPopupMenu(GIT_LOG_TABLE_PLACE, group);
     }
@@ -971,7 +970,7 @@ public class GitLogUI implements Disposable {
     group.add(myRootsAction);
     group.add(myMyShowTreeAction);
 
-    group.add(new ToggleAction("Show Details", "Display details panel", AllIcons.Actions.ShowSource) {
+    group.add(new ToggleAction("Show Details", "Display details panel", AllIcons.Actions.Preview) {
         @Override
         public boolean isSelected(AnActionEvent e) {
           return !myProject.isDisposed() && mySettings.isShowDetails();
@@ -1050,7 +1049,8 @@ public class GitLogUI implements Disposable {
         @NotNull
         @Override
         public List<String> getContainingBranches(@NotNull VirtualFile root, @NotNull AbstractHash commitHash) {
-          return myDetailsCache.getBranches(root, commitHash);
+          List<String> branches = myDetailsCache.getBranches(root, commitHash);
+          return branches == null ? Collections.<String>emptyList() : branches;
         }
       };
     }
@@ -1608,7 +1608,7 @@ public class GitLogUI implements Disposable {
     }
   }
 
-  private class MyRefreshAction extends DumbAwareAction {
+  private class MyRefreshAction extends RefreshAction {
     private MyRefreshAction() {
       super("Refresh", "Refresh", AllIcons.Actions.Refresh);
     }
@@ -1629,6 +1629,11 @@ public class GitLogUI implements Disposable {
           LOG.warn("Couldn't update references in repository " + root, e);
         }
       }
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(true);
     }
   }
 

@@ -220,9 +220,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     Collections.sort(distincs);
     result.append(StringUtil.join(distincs, " "));
 
-    result.append(" stack: ");
-    for (DfaValue value : myStack) {
-      result.append(value);
+    result.append(" stack: ").append(StringUtil.join(myStack, ","));
+    result.append(" vars: ");
+    for (Map.Entry<DfaVariableValue, DfaVariableState> entry : myVariableStates.entrySet()) {
+      result.append("[").append(entry.getKey()).append("->").append(entry.getValue()).append("]");
     }
     result.append('>');
     return result.toString();
@@ -548,8 +549,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     DfaTypeValue dfaType = (DfaTypeValue)dfaCond.getRightOperand();
 
     final DfaVariableState varState = getVariableState(dfaVar);
-    varState.setNullable(varState.isNullable() || dfaType.isNullable());
-    return !isNotNull(dfaVar) || varState.setInstanceofValue(dfaType);
+    return isNull(dfaVar) || varState.setInstanceofValue(dfaType);
   }
 
   public boolean applyCondition(DfaValue dfaCond) {
@@ -790,7 +790,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   public void flushVariable(@NotNull DfaVariableValue variable) {
     PsiVariable psiVariable = variable.getPsiVariable();
-    if (psiVariable instanceof PsiField && psiVariable.hasModifierProperty(PsiModifier.FINAL)) {
+    if (DfaVariableState.isFinalField(psiVariable)) {
       return;
     }
 

@@ -324,7 +324,15 @@ public class MavenIndicesManager {
 
   public synchronized void addArchetype(MavenArchetype archetype) {
     ensureInitialized();
-    myUserArchetypes.add(archetype);
+
+    int idx = myUserArchetypes.indexOf(archetype);
+    if (idx >= 0) {
+      myUserArchetypes.set(idx, archetype);
+    }
+    else {
+      myUserArchetypes.add(archetype);
+    }
+
     saveUserArchetypes();
   }
 
@@ -336,8 +344,14 @@ public class MavenIndicesManager {
       Document doc = JDOMUtil.loadDocument(file);
       Element root = doc.getRootElement();
       if (root == null) return;
-      List<MavenArchetype> result = new ArrayList<MavenArchetype>();
-      for (Element each : (Iterable<? extends Element>)root.getChildren(ELEMENT_ARCHETYPE)) {
+
+      // Store artifact to set to remove duplicate created by old IDEA (http://youtrack.jetbrains.com/issue/IDEA-72105)
+      Collection<MavenArchetype> result = new LinkedHashSet<MavenArchetype>();
+
+      List<Element> children = root.getChildren(ELEMENT_ARCHETYPE);
+      for (int i = children.size() - 1; i >= 0; i--) {
+        Element each = children.get(i);
+
         String groupId = each.getAttributeValue(ELEMENT_GROUP_ID);
         String artifactId = each.getAttributeValue(ELEMENT_ARTIFACT_ID);
         String version = each.getAttributeValue(ELEMENT_VERSION);
@@ -353,7 +367,10 @@ public class MavenIndicesManager {
         result.add(new MavenArchetype(groupId, artifactId, version, repository, description));
       }
 
-      myUserArchetypes = result;
+      ArrayList<MavenArchetype> listResult = new ArrayList<MavenArchetype>(result);
+      Collections.reverse(listResult);
+
+      myUserArchetypes = listResult;
     }
     catch (IOException e) {
       MavenLog.LOG.warn(e);

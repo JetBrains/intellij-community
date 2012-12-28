@@ -82,6 +82,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
       .setActionsGroup(actions)
       .setList(list)
       .setDetailView(new DetailViewImpl(project))
+      .setCloseOnEnter(false)
       .setDelegate(this).createMasterDetailPopup();
 
     editDescriptionAction.setPopup(myPopup);
@@ -129,7 +130,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
 
   @Override
   public void itemChosen(ItemWrapper item, Project project, JBPopup popup, boolean withEnterOrDoubleClick) {
-    if (item instanceof BookmarkItem) {
+    if (item instanceof BookmarkItem && withEnterOrDoubleClick) {
       Bookmark bookmark = ((BookmarkItem)item).getBookmark();
       popup.cancel();
       bookmark.navigate();

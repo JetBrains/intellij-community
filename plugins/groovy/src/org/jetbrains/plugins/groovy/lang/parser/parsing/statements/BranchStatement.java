@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class BranchStatement implements GroovyElementTypes {
 
-  public static TokenSet BRANCH_KEYWORDS = TokenSet.create(kRETURN,
+  public static final TokenSet BRANCH_KEYWORDS = TokenSet.create(kRETURN,
           kBREAK,
           kCONTINUE,
           kTHROW,
@@ -120,12 +120,10 @@ public class BranchStatement implements GroovyElementTypes {
    */
   private static void breakOrContinueParse(PsiBuilder builder) {
     PsiBuilder.Marker marker = builder.mark();
-    GroovyElementType result = kBREAK.equals(builder.getTokenType()) ?
-            BREAK_STATEMENT : CONTINUE_STATEMENT;
+    GroovyElementType result = kBREAK.equals(builder.getTokenType()) ? BREAK_STATEMENT : CONTINUE_STATEMENT;
 
     builder.advanceLexer();
 
-    // TODO How does it works?
     ParserUtils.getToken(builder, mIDENT);
 
     marker.done(result);

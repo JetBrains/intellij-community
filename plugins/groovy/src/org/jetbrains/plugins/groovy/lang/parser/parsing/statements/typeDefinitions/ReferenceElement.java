@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefiniti
 import com.intellij.codeInsight.completion.CompletionInitializationContext;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeArguments;
@@ -35,9 +36,9 @@ import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDe
 public class ReferenceElement implements GroovyElementTypes {
   public static final String DUMMY_IDENTIFIER = CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED; //inserted by completion
 
-  public static IElementType parseReferenceList(PsiBuilder builder,
-                                                final IElementType startElement,
-                                                final GrReferenceListElementType<?> clauseType) {
+  public static IElementType parseReferenceList(@NotNull PsiBuilder builder,
+                                                @NotNull final IElementType startElement,
+                                                @NotNull final GrReferenceListElementType<?> clauseType) {
     PsiBuilder.Marker isMarker = builder.mark();
 
     if (!ParserUtils.getToken(builder, startElement)) {
@@ -47,7 +48,7 @@ public class ReferenceElement implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, mNLS);
 
-    if (parseReferenceElement(builder)== fail) {
+    if (parseReferenceElement(builder)== FAIL) {
       isMarker.rollbackTo();
       return WRONGWAY;
     }
@@ -55,7 +56,7 @@ public class ReferenceElement implements GroovyElementTypes {
     while (ParserUtils.getToken(builder, mCOMMA)) {
       ParserUtils.getToken(builder, mNLS);
 
-      if (parseReferenceElement(builder) == fail) {
+      if (parseReferenceElement(builder) == FAIL) {
         isMarker.rollbackTo();
         return WRONGWAY;
       }
@@ -67,32 +68,32 @@ public class ReferenceElement implements GroovyElementTypes {
   }
 
   public enum ReferenceElementResult {
-    mayBeType, mustBeType, fail
+    IDENTIFIER, PATH_REF, REF_WITH_TYPE_PARAMS, FAIL
   }
 
-  public static ReferenceElementResult parseForImport(PsiBuilder builder) {
+  public static ReferenceElementResult parseForImport(@NotNull PsiBuilder builder) {
     return parse(builder, false, false, true, false, false);
   }
 
-  public static ReferenceElementResult parseForPackage(PsiBuilder builder) {
+  public static ReferenceElementResult parseForPackage(@NotNull PsiBuilder builder) {
     return parse(builder, false, false, false, false, false);
   }
 
   
-  //it doesn't important first letter of identifier of ThrowClause, of Annotation, of new Expresion, of implements, extends, superclass clauses
-  public static ReferenceElementResult parseReferenceElement(PsiBuilder builder) {
+  //it doesn't important first letter of identifier of ThrowClause, of Annotation, of new Expression, of implements, extends, superclass clauses
+  public static ReferenceElementResult parseReferenceElement(@NotNull PsiBuilder builder) {
     return parseReferenceElement(builder, false, true);
   }
 
-  public static ReferenceElementResult parseReferenceElement(PsiBuilder builder, boolean isUpperCase, final boolean expressionPossible) {
+  public static ReferenceElementResult parseReferenceElement(@NotNull PsiBuilder builder, boolean isUpperCase, final boolean expressionPossible) {
     return parse(builder, isUpperCase, true, false, false, expressionPossible);
   }
 
-  public static ReferenceElementResult parse(PsiBuilder builder,
+  public static ReferenceElementResult parse(@NotNull PsiBuilder builder,
                                              boolean checkUpperCase,
                                              boolean parseTypeArgs,
                                              boolean forImport,
-                                             final boolean allowDiamond,
+                                             boolean allowDiamond,
                                              boolean expressionPossible) {
     PsiBuilder.Marker internalTypeMarker = builder.mark();
 
@@ -100,7 +101,7 @@ public class ReferenceElement implements GroovyElementTypes {
 
     if (!ParserUtils.getToken(builder, TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS)) {
       internalTypeMarker.rollbackTo();
-      return fail;
+      return FAIL;
     }
 
     boolean hasTypeArguments = false;
@@ -111,13 +112,13 @@ public class ReferenceElement implements GroovyElementTypes {
     internalTypeMarker.done(REFERENCE_ELEMENT);
     internalTypeMarker = internalTypeMarker.precede();
 
-    while (mDOT.equals(builder.getTokenType())) {
+    boolean hasDots = builder.getTokenType() == mDOT;
 
-      if ((ParserUtils.lookAhead(builder, mDOT, mSTAR) ||
-          ParserUtils.lookAhead(builder, mDOT, mNLS, mSTAR)) &&
-          forImport) {
+    while (builder.getTokenType() == mDOT) {
+
+      if ((ParserUtils.lookAhead(builder, mDOT, mSTAR) || ParserUtils.lookAhead(builder, mDOT, mNLS, mSTAR)) && forImport) {
         internalTypeMarker.drop();
-        return mayBeType;
+        return PATH_REF;
       }
 
       ParserUtils.getToken(builder, mDOT);
@@ -130,7 +131,7 @@ public class ReferenceElement implements GroovyElementTypes {
 
       if (!ParserUtils.getToken(builder, TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS)) {
         internalTypeMarker.rollbackTo();
-        return fail;
+        return FAIL;
       }
 
       if (parseTypeArgs) {
@@ -141,18 +142,24 @@ public class ReferenceElement implements GroovyElementTypes {
       internalTypeMarker = internalTypeMarker.precede();
     }
 
-    char firstChar;
-    if (lastIdentifier != null) firstChar = lastIdentifier.charAt(0);
-    else return fail;
-
-    if (checkUpperCase && (!Character.isUpperCase(firstChar) || DUMMY_IDENTIFIER.equals(lastIdentifier))) { //hack to make completion work
-      internalTypeMarker.rollbackTo();
-      return fail;
+    if (lastIdentifier == null) {
+      //eof
+      return FAIL;
     }
 
-    //    internalTypeMarker.done(TYPE_ELEMENT);
+    char firstChar = lastIdentifier.charAt(0);
+    if (checkUpperCase) {
+      if (!Character.isUpperCase(firstChar) || DUMMY_IDENTIFIER.equals(lastIdentifier)) { //hack to make completion work
+        internalTypeMarker.rollbackTo();
+        return FAIL;
+      }
+    }
+
     internalTypeMarker.drop();
-    return hasTypeArguments ? mustBeType : mayBeType;
+
+    return hasTypeArguments ? REF_WITH_TYPE_PARAMS :
+           hasDots ? PATH_REF :
+           IDENTIFIER;
   }
 
 }

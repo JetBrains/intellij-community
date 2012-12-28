@@ -360,7 +360,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
         return file != null && file.isValid() ? file : null;
       }
     });
-    return VfsUtil.toVirtualFileArray(files);
+    return VfsUtilCore.toVirtualFileArray(files);
   }
 
   private <T> List<T> collectSelectedElements(final Function<FileElement, T> converter) {

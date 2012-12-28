@@ -119,7 +119,7 @@ public class ConflictedDiffRequestPresentable implements DiffRequestPresentable 
   }
 
   @Override
-  public List<? extends AnAction> createActions(ShowDiffAction.DiffExtendUIFactory uiFactory) {
+  public List<? extends AnAction> createActions(DiffExtendUIFactory uiFactory) {
     return Collections.emptyList();
   }
 

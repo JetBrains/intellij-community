@@ -143,4 +143,8 @@ public class URLUtil {
           return c - 'A' + 10;
       return -1;
   }
+
+  public static boolean containsScheme(String url) {
+    return url.contains("://");
+  }
 }

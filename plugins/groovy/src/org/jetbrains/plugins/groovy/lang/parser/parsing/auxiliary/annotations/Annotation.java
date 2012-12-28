@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
-import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.fail;
+import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.FAIL;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -48,7 +48,7 @@ public class Annotation implements GroovyElementTypes {
       return false;
     }
 
-    if (ReferenceElement.parseReferenceElement(builder) == fail) {
+    if (ReferenceElement.parseReferenceElement(builder) == FAIL) {
       builder.error("Annotation name expected");
       annMarker.drop();
       return false;

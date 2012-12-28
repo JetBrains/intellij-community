@@ -17,6 +17,7 @@
     </action>
     <action id="Back">
       <keyboard-shortcut first-keystroke="alt LEFT" />
+      <mouse-shortcut keystroke="button4"/>
     </action>
     <action id="ChangeSignature">
       <keyboard-shortcut first-keystroke="shift alt C" />
@@ -134,6 +135,7 @@
     </action>
     <action id="Forward">
       <keyboard-shortcut first-keystroke="alt RIGHT" />
+      <mouse-shortcut keystroke="button5"/>
     </action>
     <action id="GotoTest"/>
     <action id="GotoClass">

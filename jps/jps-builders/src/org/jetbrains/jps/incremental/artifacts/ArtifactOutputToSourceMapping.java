@@ -26,8 +26,7 @@ import java.io.*;
 import java.util.List;
 
 /**
- * Stores source paths for each output path. If a source file or an output file is located in a jar file the full path is stored
- * using '!/' to separate path to the jar file from path to file inside the jar.
+ * Stores source paths for each output path. If a source file or an output file is located in a jar file the path to the jar file is stored.
  *
  * @author nik
  */

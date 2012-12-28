@@ -68,7 +68,7 @@ public class HgPushCommand {
     }
     arguments.add(myDestination);
 
-    final HgCommandExecutor executor = new HgCommandExecutor(myProject);
+    final HgCommandExecutor executor = new HgCommandExecutor(myProject, myDestination);
     executor.setShowOutput(true);
     executor.execute(myRepo, "push", arguments, new HgCommandResultHandler() {
       @Override

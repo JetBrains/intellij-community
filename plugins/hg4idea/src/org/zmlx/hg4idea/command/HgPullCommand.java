@@ -73,7 +73,7 @@ public class HgPullCommand {
 
     arguments.add(source);
 
-    final HgCommandExecutor executor = new HgCommandExecutor(project);
+    final HgCommandExecutor executor = new HgCommandExecutor(project, source);
     executor.setShowOutput(true);
     HgCommandResult result = executor.executeInCurrentThread(repo, "pull", arguments);
     if (HgErrorUtil.isAuthorizationError(result)) {

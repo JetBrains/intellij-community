@@ -38,7 +38,7 @@ public abstract class DiffRequestPresentableProxy implements DiffRequestPresenta
     return myDelegate;
   }
 
-  public List<? extends AnAction> createActions(ShowDiffAction.DiffExtendUIFactory uiFactory) {
+  public List<? extends AnAction> createActions(DiffExtendUIFactory uiFactory) {
     if (myCachedActions == null) {
       try {
         myCachedActions = initRequest().createActions(uiFactory);

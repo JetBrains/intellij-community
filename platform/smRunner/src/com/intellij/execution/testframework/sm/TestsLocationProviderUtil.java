@@ -47,15 +47,6 @@ public class TestsLocationProviderUtil {
   }
 
   @Nullable
-  public static String extractProtocol(@NotNull final String locationUrl) {
-    final int index = locationUrl.indexOf(PROTOCOL_SEPARATOR);
-    if (index >= 0) {
-      return locationUrl.substring(0, index);
-    }
-    return null;
-  }
-
-  @Nullable
   public static String extractPath(@NotNull final String locationUrl) {
     final int index = locationUrl.indexOf(PROTOCOL_SEPARATOR);
     if (index >= 0) {
@@ -169,10 +160,9 @@ public class TestsLocationProviderUtil {
     if (fileByPath != null) {
       return fileByPath;
     }
-    // if we are in UnitTest mode probably TempFileSystem is used instead of LocaFileSystem
+    // if we are in UnitTest mode probably TempFileSystem is used instead of LocalFileSystem
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      final VirtualFile tempFileByPath = TempFileSystem.getInstance().findFileByPath(filePath);
-      return tempFileByPath;
+      return TempFileSystem.getInstance().findFileByPath(filePath);
     }
     return null;
   }

@@ -550,7 +550,7 @@ public class ImplementationViewComponent extends JPanel {
 
   private class ShowSourceAction extends EditSourceActionBase implements HintManagerImpl.ActionToIgnore {
     public ShowSourceAction() {
-      super(false, AllIcons.Actions.ShowSource, CodeInsightBundle.message("quick.definition.show.source"));
+      super(false, AllIcons.Actions.Preview, CodeInsightBundle.message("quick.definition.show.source"));
     }
   }
 

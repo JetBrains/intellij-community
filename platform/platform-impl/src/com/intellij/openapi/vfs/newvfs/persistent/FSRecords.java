@@ -30,6 +30,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
@@ -105,7 +106,7 @@ public class FSRecords implements Forceable {
 
   static class DbConnection {
     private static boolean ourInitialized;
-    private static final TObjectIntHashMap<String> myAttributeIds = new TObjectIntHashMap<String>();
+    private static final ConcurrentHashMap<String, Integer> myAttributeIds = new ConcurrentHashMap<String, Integer>();
 
     private static PersistentStringEnumerator myNames;
     private static Storage myAttributes;
@@ -458,14 +459,11 @@ public class FSRecords implements Forceable {
     }
 
     private static int getAttributeId(String attId) throws IOException {
-      if (myAttributeIds.containsKey(attId)) {
-        return myAttributeIds.get(attId);
-      }
-
-      int id = myNames.enumerate(attId);
-      myAttributeIds.put(attId, id);
-
-      return id;
+      Integer integer = myAttributeIds.get(attId);
+      if (integer != null) return integer.intValue();
+      int enumeratedId = myNames.enumerate(attId);
+      integer = myAttributeIds.putIfAbsent(attId, enumeratedId);
+      return integer == null ? enumeratedId:  integer.intValue();
     }
 
     private static RuntimeException handleError(final Throwable e) {

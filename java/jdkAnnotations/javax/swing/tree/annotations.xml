@@ -1,12 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <root>
-  <item name='javax.swing.tree.TreeSelectionModel void setSelectionMode(int) 0'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="valuesFromClass" val="javax.swing.tree.TreeSelectionModel.class"/>
+  <item name="javax.swing.tree.TreeSelectionModel int getSelectionMode()">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="valuesFromClass" val="javax.swing.tree.TreeSelectionModel.class" />
     </annotation>
   </item>
-  <item name='javax.swing.tree.TreeSelectionModel int getSelectionMode()'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="valuesFromClass" val="javax.swing.tree.TreeSelectionModel.class"/>
+  <item name="javax.swing.tree.TreeSelectionModel void setSelectionMode(int) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="valuesFromClass" val="javax.swing.tree.TreeSelectionModel.class" />
     </annotation>
   </item>
 </root>
+

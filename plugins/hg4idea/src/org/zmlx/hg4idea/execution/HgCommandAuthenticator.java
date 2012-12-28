@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.vcsUtil.AuthDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +52,7 @@ class HgCommandAuthenticator {
     // if checkbox is selected, remember on disk. Otherwise in memory. Don't read password safe settings.
 
     final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
-    final String url = stripSchemaFromUrl(myRunnable.getURL());
+    final String url = VirtualFileManager.extractPath(myRunnable.getURL());
     final String key = keyForUrlAndLogin(url, myRunnable.getUserName());
 
     final PasswordSafeProvider provider =
@@ -66,18 +67,6 @@ class HgCommandAuthenticator {
     catch (PasswordSafeException e) {
       LOG.info("Couldn't store the password for key [" + key + "]", e);
     }
-  }
-
-  /**
-   * Removes schema (protocol) part from url. For example, makes "bitbucket.org" from "http://bitbucket.org".
-   */
-  private static String stripSchemaFromUrl(String url) {
-    final String schemaSeparator = "://";
-    int ind = url.indexOf(schemaSeparator);
-    if (ind != -1) {
-      return url.substring(ind + schemaSeparator.length());
-    }
-    return url;
   }
 
   public boolean promptForAuthentication(Project project, String proposedLogin, String uri, String path) {
@@ -125,7 +114,7 @@ class HgCommandAuthenticator {
       @NotNull final HgGlobalSettings hgGlobalSettings = vcs.getGlobalSettings();
       @Nullable String rememberedLoginsForUrl = null;
       if (!StringUtil.isEmptyOrSpaces(myURL)) {
-        rememberedLoginsForUrl = hgGlobalSettings.getRememberedUserName(stripSchemaFromUrl(myURL));
+        rememberedLoginsForUrl = hgGlobalSettings.getRememberedUserName(VirtualFileManager.extractPath(myURL));
       }
 
       String login = myProposedLogin;

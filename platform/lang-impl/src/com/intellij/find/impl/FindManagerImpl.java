@@ -300,7 +300,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
 
     final char[] textArray = CharArrayUtil.fromSequenceWithoutCopying(text);
 
-    while(true){
+    while(true) {
       FindResult result = doFindString(text, textArray, offset, model, file);
 
       if (!model.isWholeWordsOnly()) {
@@ -314,6 +314,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       }
 
       offset = model.isForward() ? result.getStartOffset() + 1 : result.getEndOffset() - 1;
+      if (offset > text.length() || offset < 0) return NOT_FOUND_RESULT;
     }
   }
 
@@ -345,7 +346,8 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return isWordStart && isWordEnd;
   }
 
-  private static FindModel normalizeIfMultilined(FindModel findmodel) {
+  @NotNull
+  private static FindModel normalizeIfMultilined(@NotNull FindModel findmodel) {
     if (findmodel.isMultiline()) {
       final FindModel model = new FindModel();
       model.copyFrom(findmodel);
@@ -357,7 +359,11 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return findmodel;
   }
 
-  private static FindResult doFindString(CharSequence text, @Nullable char[] textArray, int offset, final FindModel findmodel,
+  @NotNull
+  private static FindResult doFindString(@NotNull CharSequence text,
+                                         @Nullable char[] textArray,
+                                         int offset,
+                                         @NotNull FindModel findmodel,
                                          @Nullable VirtualFile file) {
     FindModel model = normalizeIfMultilined(findmodel);
     String toFind = model.getStringToFind();
@@ -366,6 +372,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     }
 
     if (model.isInCommentsOnly() || model.isInStringLiteralsOnly()) {
+      if (file == null) return NOT_FOUND_RESULT;
       return findInCommentsAndLiterals(text, textArray, offset, model, file);
     }
 
@@ -380,8 +387,8 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       final int res = searcher.scan(text, textArray, offset, text.length());
       index = res < 0 ? -1 : res;
     }
-    else{
-      index = searcher.scan(text, textArray, 0, offset-1);
+    else {
+      index = offset == 0 ? -1 : searcher.scan(text, textArray, 0, offset-1);
     }
     if (index < 0){
       return NOT_FOUND_RESULT;
@@ -389,11 +396,12 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return new FindResultImpl(index, index + toFind.length());
   }
 
-  private static StringSearcher createStringSearcher(FindModel model) {
+  @NotNull
+  private static StringSearcher createStringSearcher(@NotNull FindModel model) {
     return new StringSearcher(model.getStringToFind(), model.isCaseSensitive(), model.isForward());
   }
 
-  static class CommentsLiteralsSearchData {
+  private static class CommentsLiteralsSearchData {
     final VirtualFile lastFile;
     int startOffset = 0;
     final Lexer lexer;
@@ -416,9 +424,12 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
 
   private static final Key<CommentsLiteralsSearchData> ourCommentsLiteralsSearchDataKey = Key.create("comments.literals.search.data");
 
-  private static FindResult findInCommentsAndLiterals(CharSequence text, char[] textArray, int offset, FindModel model, final VirtualFile file) {
-    if (file == null) return NOT_FOUND_RESULT;
-
+  @NotNull
+  private static FindResult findInCommentsAndLiterals(@NotNull CharSequence text,
+                                                      char[] textArray,
+                                                      int offset,
+                                                      @NotNull FindModel model,
+                                                      @NotNull final VirtualFile file) {
     FileType ftype = file.getFileType();
     Language lang = null;
     if (ftype instanceof LanguageFileType) {

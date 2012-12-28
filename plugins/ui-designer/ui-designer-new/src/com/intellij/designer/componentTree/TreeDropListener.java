@@ -27,6 +27,7 @@ import com.intellij.designer.model.RadComponentVisitor;
 import com.intellij.designer.model.RadLayout;
 import com.intellij.designer.palette.PaletteItem;
 import com.intellij.designer.utils.Cursors;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
@@ -52,8 +53,10 @@ public class TreeDropListener extends DropTargetAdapter {
 
   public TreeDropListener(ComponentTree tree, EditableArea area, ToolProvider provider) {
     this(tree, area, provider, TreeDropListener.class, PaletteItem.class);
-    tree.setDragEnabled(true);
-    tree.setTransferHandler(new TreeTransfer(TreeDropListener.class));
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      tree.setDragEnabled(true);
+      tree.setTransferHandler(new TreeTransfer(TreeDropListener.class));
+    }
   }
 
   public TreeDropListener(JComponent component, EditableArea area, ToolProvider provider, Class... dragTargets) {
@@ -61,7 +64,9 @@ public class TreeDropListener extends DropTargetAdapter {
     myContext.setArea(area);
     myToolProvider = provider;
     myDragTargets = dragTargets;
-    component.setDropTarget(new DropTarget(component, this));
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      component.setDropTarget(new DropTarget(component, this));
+    }
   }
 
   @Override

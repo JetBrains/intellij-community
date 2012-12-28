@@ -1,5 +1,9 @@
 package org.jetbrains.ide;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,6 +12,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SimpleTimer;
 import com.intellij.util.Consumer;
+import org.jboss.netty.channel.ChannelException;
 import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jetbrains.annotations.NonNls;
@@ -52,7 +57,18 @@ class WebServerManagerImpl extends WebServerManager {
     application.executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        server = new WebServer();
+        try {
+          server = new WebServer();
+        }
+        catch (ChannelException e) {
+          LOG.info(e);
+          String groupDisplayId = "Web Server";
+          Notifications.Bus.register(groupDisplayId, NotificationDisplayType.STICKY_BALLOON);
+          new Notification(groupDisplayId, "Internal web server disabled",
+                           "Cannot start web server, check firewall settings (Git integration, JS Debugger, LiveEdit will be broken)", NotificationType.ERROR).notify(null);
+          return;
+        }
+
         detectedPortNumber = server.start(getDefaultPort(), PORTS_COUNT, true, new Computable<Consumer<ChannelPipeline>[]>() {
           @Override
           public Consumer<ChannelPipeline>[] compute() {

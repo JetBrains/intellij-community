@@ -15,6 +15,8 @@
  */
 package com.intellij.javaee;
 
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -33,6 +35,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -46,9 +49,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
+import javax.swing.event.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
@@ -65,6 +66,7 @@ import java.util.Set;
  */
 public class MapExternalResourceDialog extends DialogWrapper {
 
+  private static final String MAP_EXTERNAL_RESOURCE_SELECTED_TAB = "map.external.resource.selected.tab";
   private JTextField myUri;
   private JPanel myMainPanel;
   private JTree mySchemasTree;
@@ -72,7 +74,6 @@ public class MapExternalResourceDialog extends DialogWrapper {
   private JBTabbedPane myTabs;
   private final FileSystemTreeImpl myExplorer;
   private String myLocation;
-
 
   public MapExternalResourceDialog(String uri, @NotNull Project project, @Nullable PsiFile file, @Nullable String location) {
     super(project);
@@ -152,6 +153,11 @@ public class MapExternalResourceDialog extends DialogWrapper {
 
     myExplorerPanel.add(ScrollPaneFactory.createScrollPane(myExplorer.getTree()), BorderLayout.CENTER);
 
+    AnAction actionGroup = ActionManager.getInstance().getAction("FileChooserToolbar");
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, (ActionGroup)actionGroup, true);
+    toolbar.setTargetComponent(myExplorerPanel);
+    myExplorerPanel.add(toolbar.getComponent(), BorderLayout.NORTH);
+
     PsiFile schema = null;
     if (file != null) {
       schema = XmlUtil.findNamespaceByLocation(file, uri);
@@ -171,6 +177,14 @@ public class MapExternalResourceDialog extends DialogWrapper {
       myExplorer.select(schema.getVirtualFile(), null);
     }
 
+    int index = PropertiesComponent.getInstance().getOrInitInt(MAP_EXTERNAL_RESOURCE_SELECTED_TAB, 0);
+    myTabs.setSelectedIndex(index);
+    myTabs.getModel().addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        PropertiesComponent.getInstance().setValue(MAP_EXTERNAL_RESOURCE_SELECTED_TAB, Integer.toString(myTabs.getSelectedIndex()));
+      }
+    });
     init();
   }
 
@@ -214,5 +228,19 @@ public class MapExternalResourceDialog extends DialogWrapper {
       VirtualFile file = myExplorer.getSelectedFile();
       return file == null ? null : FileUtil.toSystemIndependentName(file.getPath());
     }
+  }
+
+  private void createUIComponents() {
+    myExplorerPanel = new JBPanel(new BorderLayout()) {
+      @Override
+      public void calcData(DataKey key, DataSink sink) {
+        if (key == PlatformDataKeys.VIRTUAL_FILE_ARRAY) {
+          sink.put(PlatformDataKeys.VIRTUAL_FILE_ARRAY, myExplorer.getSelectedFiles());
+        }
+        else if (key == FileSystemTree.DATA_KEY) {
+          sink.put(FileSystemTree.DATA_KEY, myExplorer);
+        }
+      }
+    };
   }
 }

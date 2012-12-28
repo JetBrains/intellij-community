@@ -53,11 +53,6 @@ public class TracRepositoryType extends BaseRepositoryType<TracRepository> {
     return TracRepository.class;
   }
 
-  @Override
-  protected int getFeatures() {
-    return BASIC_HTTP_AUTHORIZATION;
-  }
-
   @NotNull
   @Override
   public TaskRepositoryEditor createEditor(TracRepository repository,

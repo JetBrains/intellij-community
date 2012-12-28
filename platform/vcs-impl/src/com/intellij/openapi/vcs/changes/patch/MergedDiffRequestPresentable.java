@@ -71,7 +71,7 @@ public class MergedDiffRequestPresentable implements DiffRequestPresentable {
   public void haveStuff() {
   }
 
-  public List<? extends AnAction> createActions(ShowDiffAction.DiffExtendUIFactory uiFactory) {
+  public List<? extends AnAction> createActions(DiffExtendUIFactory uiFactory) {
     return Collections.emptyList();
   }
 }

@@ -787,7 +787,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
     result.add(new RefreshFileHistoryAction());
     if (! myIsStaticAndEmbedded) {
-      result.add(new ToggleAction("Show Details", "Display details panel", AllIcons.Actions.ShowSource) {
+      result.add(new ToggleAction("Show Details", "Display details panel", AllIcons.Actions.Preview) {
         @Override
         public boolean isSelected(AnActionEvent e) {
           return getConfiguration().SHOW_FILE_HISTORY_DETAILS;

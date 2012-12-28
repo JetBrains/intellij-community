@@ -39,13 +39,14 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
@@ -351,6 +352,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
           }
         } else {
           ResolverProcessor classProcessor = CompletionProcessor.createClassCompletionProcessor(this);
+          processTypeParametersFromUnfinishedMethodOrField(classProcessor);
+
           ResolveUtil.treeWalkUp(this, classProcessor, false);
 
           for (LookupElement o : GroovyCompletionUtil.getCompletionVariants(classProcessor.getCandidates(), afterNew, matcher, this)) {
@@ -359,6 +362,50 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
         }
       }
     }
+  }
+
+  private void processTypeParametersFromUnfinishedMethodOrField(@NotNull ResolverProcessor processor) {
+    final PsiElement candidate = findTypeParameterListCandidate();
+
+    if (candidate instanceof GrTypeParameterList) {
+      for (GrTypeParameter p : ((GrTypeParameterList)candidate).getTypeParameters()) {
+        ResolveUtil.processElement(processor, p, ResolveState.initial());
+      }
+    }
+  }
+
+  @Nullable
+  private PsiElement findTypeParameterListCandidate() {
+    final GrTypeElement typeElement = getRootTypeElement();
+    if (typeElement == null) return null;
+
+    if (typeElement.getParent() instanceof GrTypeDefinitionBody) {
+      return PsiUtil.skipWhitespacesAndComments(typeElement.getPrevSibling(), false);
+    }
+
+    if (typeElement.getParent() instanceof GrVariableDeclaration) {
+      final PsiElement errorElement = PsiUtil.skipWhitespacesAndComments(typeElement.getPrevSibling(), false);
+      if (errorElement instanceof PsiErrorElement) {
+        return errorElement.getFirstChild();
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private GrTypeElement getRootTypeElement() {
+    PsiElement parent = getParent();
+    while (isTypeElementChild(parent)) {
+      if (parent instanceof GrTypeElement && !isTypeElementChild(parent.getParent())) return (GrTypeElement)parent;
+      parent = parent.getParent();
+    }
+
+    return null;
+  }
+
+  private static boolean isTypeElementChild(PsiElement element) {
+    return element instanceof GrCodeReferenceElement || element instanceof GrTypeArgumentList || element instanceof GrTypeElement;
   }
 
   public boolean isSoft() {

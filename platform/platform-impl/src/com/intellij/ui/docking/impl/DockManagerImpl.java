@@ -28,10 +28,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FrameWrapper;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.BusyObject;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.MutualMap;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
@@ -162,7 +159,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
   }
 
   @Override
-  public DragSession createDragSession(MouseEvent mouseEvent, DockableContent content) {
+  public DragSession createDragSession(MouseEvent mouseEvent, @NotNull DockableContent content) {
     stopCurrentDragSession();
 
     for (DockContainer each : myContainers) {
@@ -229,12 +226,13 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     private Image myDragImage;
     private final Image myDefaultDragImage;
 
+    @NotNull
     private final DockableContent myContent;
 
     private DockContainer myCurrentOverContainer;
     private final JLabel myImageContainer;
 
-    private MyDragSession(MouseEvent me, DockableContent content) {
+    private MyDragSession(MouseEvent me, @NotNull DockableContent content) {
       myWindow = new JWindow();
       myContent = content;
 
@@ -280,6 +278,22 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
       showPoint.x -= myDragImage.getWidth(null) / 2;
       showPoint.y += 10;
       myWindow.setBounds(new Rectangle(showPoint, new Dimension(myDragImage.getWidth(null), myDragImage.getHeight(null))));
+    }
+
+    @NotNull
+    @Override
+    public DockContainer.ContentResponse getResponse(MouseEvent e) {
+      RelativePoint point = new RelativePoint(e);
+      for (DockContainer each : myContainers) {
+        RelativeRectangle rec = each.getAcceptArea();
+        if (rec.contains(point)) {
+          DockContainer.ContentResponse response = each.getContentResponse(myContent, point);
+          if (response.canAccept()) {
+            return response;
+          }
+        }
+      }
+      return DockContainer.ContentResponse.DENY;
     }
 
     @Override
@@ -343,10 +357,10 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
   }
 
   @Nullable
-  private DockContainer findContainerFor(RelativePoint point, DockableContent content) {
+  private DockContainer findContainerFor(RelativePoint point, @NotNull DockableContent content) {
     for (DockContainer each : myContainers) {
       RelativeRectangle rec = each.getAcceptArea();
-      if (rec.contains(point) && each.canAccept(content, point)) {
+      if (rec.contains(point) && each.getContentResponse(content, point).canAccept()) {
         return each;
       }
     }

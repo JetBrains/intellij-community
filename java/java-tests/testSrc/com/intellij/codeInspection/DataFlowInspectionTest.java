@@ -31,5 +31,6 @@ public class DataFlowInspectionTest extends LightDaemonAnalyzerTestCase {
     return new LocalInspectionTool[]{new DataFlowInspection()};
   }
 
-  public void testTryWithResources() { doTest(); }
+  public void testTryWithResourcesNullability() { doTest(); }
+  public void testTryWithResourcesInstanceOf() { doTest(); }
 }

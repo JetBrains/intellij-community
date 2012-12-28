@@ -974,4 +974,84 @@ print new HashSet<TrackerEventsListener<AgentInfo, NodeEvent<AgentInfo>>>() //co
 print new HashSet<TrackerEventsListener<AgentInfo, <warning descr="Type parameter 'NodeEvent<java.lang.Object>' is not in its bound; should extend 'NodeEvent<N>'">NodeEvent<Object></warning>>>() //incorrect
 ''')
   }
+
+  void testTypeInConstructor() {
+    testHighlighting('''\
+class X {
+  public <error descr="Return type element is not allowed in constructor">void</error> X() {}
+}
+''')
+  }
+
+  void testFinalMethodOverriding() {
+    testHighlighting('''\
+class A {
+    final void foo() {}
+}
+
+class B extends A{
+    <error descr="Method 'foo()' cannot override method 'foo()' in 'A'; overridden method is final">void foo()</error> {}
+}
+''')
+  }
+
+  void testWeakerMethodAccess0() {
+    testHighlighting('''\
+class A {
+    void foo() {}
+}
+
+class B extends A{
+    <error descr="Method 'foo()' cannot have weaker access privileges ('protected') than 'foo()' in 'A' ('public')">protected</error> void foo() {}
+}
+''')
+  }
+
+  void testWeakerMethodAccess1() {
+    testHighlighting('''\
+class A {
+    void foo() {}
+}
+
+class B extends A{
+    <error descr="Method 'foo()' cannot have weaker access privileges ('private') than 'foo()' in 'A' ('public')">private</error> void foo() {}
+}
+''')
+  }
+
+  void testWeakerMethodAccess2() {
+    testHighlighting('''\
+class A {
+    public void foo() {}
+}
+
+class B extends A{
+    void foo() {} //don't highlight anything
+}
+''')
+  }
+
+  void testWeakerMethodAccess3() {
+    testHighlighting('''\
+class A {
+    protected void foo() {}
+}
+
+class B extends A{
+    <error descr="Method 'foo()' cannot have weaker access privileges ('private') than 'foo()' in 'A' ('protected')">private</error> void foo() {}
+}
+''')
+  }
+
+  void testOverriddenProperty() {
+    testHighlighting('''\
+class A {
+    final foo = 2
+}
+
+class B extends A {
+    <error descr="Method 'getFoo()' cannot override method 'getFoo()' in 'A'; overridden method is final">def getFoo()</error>{5}
+}
+''')
+  }
 }

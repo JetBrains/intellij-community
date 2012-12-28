@@ -36,6 +36,10 @@ import java.util.concurrent.Callable;
  */
 @Tag("server")
 public abstract class TaskRepository  {
+  protected static final int NO_FEATURES = 0;
+  public static final int BASIC_HTTP_AUTHORIZATION = 0x0001;
+  public static final int LOGIN_ANONYMOUSLY = 0x0002;
+  public static final int TIME_MANAGEMENT = 0x0004;
 
   @Attribute("url")
   public String getUrl() {
@@ -190,6 +194,10 @@ public abstract class TaskRepository  {
     return "{id} (e.g. FOO-001), {summary}, {number} (e.g. 001), {project} (e.g. FOO)";
   }
 
+  public void updateTimeSpent(final LocalTask task, final String timeSpent, final String comment) throws Exception {
+    throw new UnsupportedOperationException();
+  }
+
   public abstract static class CancellableConnection implements Callable<Exception> {
 
     @Nullable
@@ -209,4 +217,11 @@ public abstract class TaskRepository  {
     public abstract void cancel();
   }
 
+  public boolean isSupported(int feature) {
+    return (getFeatures() & feature) != 0;
+  }
+
+  protected int getFeatures() {
+    return NO_FEATURES;
+  }
 }

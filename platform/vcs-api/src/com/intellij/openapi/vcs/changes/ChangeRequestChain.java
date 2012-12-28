@@ -16,7 +16,11 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diff.DiffRequest;
+import com.intellij.openapi.vcs.changes.actions.DiffRequestPresentable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public interface ChangeRequestChain {
   boolean canMoveForward();
@@ -28,4 +32,10 @@ public interface ChangeRequestChain {
 
   @Nullable
   DiffRequest moveBack();
+
+  @NotNull
+  List<DiffRequestPresentable> getAllRequests();
+
+  @Nullable
+  DiffRequest moveTo(DiffRequestPresentable request);
 }

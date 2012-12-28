@@ -104,10 +104,10 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
       public void hyperlinkUpdate(HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           try {
-            BrowserUtil.launchBrowser(e.getURL().toString());
+            BrowserUtil.browse(e.getURL());
           }
           catch (IllegalThreadStateException ex) {
-            // it's nnot a problem
+            // it's not a problem
           }
         }
       }

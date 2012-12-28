@@ -17,6 +17,7 @@
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -500,34 +501,6 @@ public class NameUtilTest extends UsefulTestCase {
     assertTrue(iLess + ">=" + iMore + "; " + less + ">=" + more, iLess < iMore);
   }
 
-  public void testPerformance() {
-    @NonNls final String longName = "ThisIsAQuiteLongNameWithParentheses().Dots.-Minuses-_UNDERSCORES_digits239:colons:/slashes\\AndOfCourseManyLetters";
-    final List<MinusculeMatcher> matching = new ArrayList<MinusculeMatcher>();
-    final List<MinusculeMatcher> nonMatching = new ArrayList<MinusculeMatcher>();
-
-    for (String s : ContainerUtil.ar("*", "*i", "*a", "*u", "T", "ti", longName, longName.substring(0, 20))) {
-      matching.add(new MinusculeMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
-    }
-    for (String s : ContainerUtil.ar("A", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "tag")) {
-      nonMatching.add(new MinusculeMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
-    }
-
-    PlatformTestUtil.startPerformanceTest("Matcher is slow", 3500, new ThrowableRunnable() {
-      @Override
-      public void run() {
-        for (int i = 0; i < 100000; i++) {
-          for (MinusculeMatcher matcher : matching) {
-            assertTrue(matcher.toString(), matcher.matches(longName));
-            matcher.matchingDegree(longName);
-          }
-          for (MinusculeMatcher matcher : nonMatching) {
-            assertFalse(matcher.toString(), matcher.matches(longName));
-          }
-        }
-      }
-    }).cpuBound().attempts(20).assertTiming();
-  }
-
  public void testSpeedSearchComparator() {
    final SpeedSearchComparator c = new SpeedSearchComparator(false, true);
 
@@ -543,5 +516,49 @@ public class NameUtilTest extends UsefulTestCase {
 
   public void testUsingCapsMeansTheyShouldMatchCaps() {
     assertDoesntMatch("URLCl", "UrlClassLoader");
+  }
+
+  public void testPerformance() {
+    System.out.println("test start: " + System.currentTimeMillis());
+    @NonNls final String longName = "ThisIsAQuiteLongNameWithParentheses().Dots.-Minuses-_UNDERSCORES_digits239:colons:/slashes\\AndOfCourseManyLetters";
+    final List<MinusculeMatcher> matching = new ArrayList<MinusculeMatcher>();
+    final List<MinusculeMatcher> nonMatching = new ArrayList<MinusculeMatcher>();
+
+    for (String s : ContainerUtil.ar("*", "*i", "*a", "*u", "T", "ti", longName, longName.substring(0, 20))) {
+      matching.add(new MinusculeMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
+    }
+    for (String s : ContainerUtil.ar("A", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "tag")) {
+      nonMatching.add(new MinusculeMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
+    }
+
+    System.out.println("measuring start: " + System.currentTimeMillis());
+    PlatformTestUtil.startPerformanceTest("Matcher is slow", 3700, new ThrowableRunnable() {
+      @Override
+      public void run() {
+        System.out.println("attempt start: " + System.currentTimeMillis());
+        for (int i = 0; i < 100000; i++) {
+          for (MinusculeMatcher matcher : matching) {
+            assertTrue(matcher.toString(), matcher.matches(longName));
+            matcher.matchingDegree(longName);
+          }
+          for (MinusculeMatcher matcher : nonMatching) {
+            assertFalse(matcher.toString(), matcher.matches(longName));
+          }
+        }
+        System.out.println("attempt end: " + System.currentTimeMillis());
+      }
+    }).cpuBound().assertTiming();
+  }
+
+  public void testOnlyUnderscoresPerformance() {
+    PlatformTestUtil.startPerformanceTest("Matcher is exponential", 300, new ThrowableRunnable() {
+      @Override
+      public void run() {
+        String small = StringUtil.repeat("_", 50);
+        String big = StringUtil.repeat("_", small.length() + 1);
+        assertMatches("*" + small, big);
+        assertDoesntMatch("*" + big, small);
+      }
+    }).cpuBound().assertTiming();
   }
 }

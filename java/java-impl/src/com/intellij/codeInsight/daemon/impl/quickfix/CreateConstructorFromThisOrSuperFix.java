@@ -104,6 +104,7 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
 
       Template template = templateBuilder.buildTemplate();
       final Editor editor = positionCursor(project, targetClass.getContainingFile(), targetClass);
+      if (editor == null) return;
       final TextRange textRange = constructor.getTextRange();
       final PsiFile file = targetClass.getContainingFile();
       editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());

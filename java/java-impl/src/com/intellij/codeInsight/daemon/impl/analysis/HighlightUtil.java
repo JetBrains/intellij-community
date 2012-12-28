@@ -1941,18 +1941,18 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @Nullable
-  private static String getMethodExpressionName(@NotNull PsiElement element) {
+  private static String getMethodExpressionName(@Nullable PsiElement element) {
     if (!(element instanceof PsiMethodCallExpression)) return null;
     PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)element).getMethodExpression();
     return methodExpression.getReferenceName();
   }
 
-  public static boolean isSuperOrThisMethodCall(@NotNull PsiElement element) {
+  public static boolean isSuperOrThisMethodCall(@Nullable PsiElement element) {
     String name = getMethodExpressionName(element);
     return PsiKeyword.SUPER.equals(name) || PsiKeyword.THIS.equals(name);
   }
 
-  public static boolean isSuperMethodCall(@NotNull PsiElement element) {
+  public static boolean isSuperMethodCall(@Nullable PsiElement element) {
     String name = getMethodExpressionName(element);
     return PsiKeyword.SUPER.equals(name);
   }

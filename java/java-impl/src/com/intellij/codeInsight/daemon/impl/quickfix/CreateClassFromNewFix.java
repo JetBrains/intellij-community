@@ -105,6 +105,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
       template.setToReformat(true);
 
       final Editor editor = positionCursor(project, aClass.getContainingFile(), aClass);
+      if (editor == null) return;
       final RangeMarker textRange = editor.getDocument().createRangeMarker(aClass.getTextRange());
       final Runnable runnable = new Runnable() {
         @Override

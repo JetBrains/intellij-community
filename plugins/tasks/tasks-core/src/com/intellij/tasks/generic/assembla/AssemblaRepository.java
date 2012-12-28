@@ -79,4 +79,9 @@ public class AssemblaRepository extends GenericRepository {
   public boolean isConfigured() {
     return super.isConfigured() && StringUtil.isNotEmpty(getUsername()) && StringUtil.isNotEmpty(getPassword());
   }
+
+  @Override
+  protected int getFeatures() {
+    return BASIC_HTTP_AUTHORIZATION;
+  }
 }

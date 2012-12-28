@@ -70,6 +70,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.GuiUtils;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBScrollBar;
@@ -133,6 +134,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public static final Key<Pair<String, String>> EDITABLE_AREA_MARKER = Key.create("editable.area.marker");
   private static final boolean HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK = Boolean.parseBoolean(System.getProperty("idea.honor.camel.humps.on.triple.click"));
   private static final Key<BufferedImage> BUFFER = Key.create("buffer");
+  public static final JBColor CURSOR_FOREGROUND = new JBColor(Color.white, Color.black);
   @NotNull private final DocumentImpl myDocument;
 
   private final JPanel myPanel;
@@ -686,7 +688,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     );
   }
 
-  public void throwDisposalError(String msg) {
+  public void throwDisposalError(@NonNls @NotNull String msg) {
     myTraceableDisposable.throwDisposalError(msg);
   }
   public void release() {
@@ -1808,12 +1810,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myUpdateCursor = false;
     }
 
-
-    Rectangle visibleArea = getScrollingModel().getVisibleArea();
-    if (visibleArea == null) {
-      return;
-    }
-
     if (isReleased) {
       g.setColor(new Color(128, 255, 128));
       g.fillRect(clip.x, clip.y, clip.width, clip.height);
@@ -2071,8 +2067,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int visibleLine = yPositionToVisibleLine(clip.y);
 
     Point position = new Point(0, visibleLine * lineHeight);
-    if (clipStartVisualPos.line == 0 && myPrefixText != null) {
-      position.x = drawBackground(g, myPrefixAttributes.getBackgroundColor(), new String(myPrefixText), position, myPrefixAttributes.getFontType(),
+    char[] prefixText = myPrefixText;
+    if (clipStartVisualPos.line == 0 && prefixText != null) {
+      position.x = drawBackground(g, myPrefixAttributes.getBackgroundColor(), prefixText, 0, prefixText.length, position, myPrefixAttributes.getFontType(),
                                   defaultBackground, clip);
     }
 
@@ -2102,7 +2099,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       TextAttributes attributes = iterationState.getMergedAttributes();
       Color backColor = getBackgroundColor(attributes);
       int fontType = attributes.getFontType();
-      CharSequence text = myDocument.getCharsNoThreadCheck();
       int lastLineIndex = Math.max(0, myDocument.getLineCount() - 1);
 
       // There is a possible case that we need to draw background from the start of soft wrap-introduced visual line. Given position
@@ -2134,6 +2130,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // on a last visual line of that soft-wrapped line then. Below is a holder for the flag that indicates if caret row
       // background is already drawn.
       boolean[] caretRowPainted = new boolean[1];
+
+      char[] text = myDocument.getChars();
 
       while (!iterationState.atEnd() && !lIterator.atEnd()) {
         int hEnd = iterationState.getEndOffset();
@@ -2177,7 +2175,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 defaultBackground, clip, softWrapsToSkip, caretRowPainted
               );
             }
-            position.x = drawBackground(g, backColor, collapsedFolderAt.getPlaceholderText(), position, fontType, defaultBackground, clip);
+            char[] chars = collapsedFolderAt.getPlaceholderText().toCharArray();
+            position.x = drawBackground(g, backColor, chars, 0, chars.length, position, fontType, defaultBackground, clip);
           }
           else if (hEnd > lEnd - lIterator.getSeparatorLength()) {
             position.x = drawSoftWrapAwareBackground(
@@ -2272,7 +2271,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private int drawSoftWrapAwareBackground(@NotNull Graphics g,
                                           Color backColor,
-                                          @NotNull CharSequence text,
+                                          @NotNull char[] text,
                                           int start,
                                           int end,
                                           @NotNull Point position,
@@ -2296,7 +2295,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         continue;
       }
       if (startToUse < softWrapStart) {
-        position.x = drawBackground(g, backColor, text.subSequence(startToUse, softWrapStart), position, fontType, defaultBackground, clip);
+        position.x = drawBackground(g, backColor, text, startToUse, softWrapStart, position, fontType, defaultBackground, clip);
       }
       boolean drawCustomBackgroundAtSoftWrapVirtualSpace = 
         !Comparing.equal(backColor, defaultBackground) && (softWrapStart > start || Comparing.equal(myLastBackgroundColor, backColor));
@@ -2307,7 +2306,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     if (startToUse < end) {
-      position.x = drawBackground(g, backColor, text.subSequence(startToUse, end), position, fontType, defaultBackground, clip);
+      position.x = drawBackground(g, backColor, text, startToUse, end, position, fontType, defaultBackground, clip);
     }
     return position.x;
   }
@@ -2341,7 +2340,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     paintSelectionOnFirstSoftWrapLineIfNecessary(g, position, clip, defaultBackground, fontType);
     
     int i = CharArrayUtil.lastIndexOf(softWrapText, "\n", softWrapText.length()) + 1;
-    int width = getTextSegmentWidth(softWrapText.subSequence(i, softWrapText.length()), 0, fontType, clip)
+    int width = getTextSegmentWidth(CharArrayUtil.fromSequence(softWrapText), i, softWrapText.length(), 0, fontType, clip)
                 + getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP);
     position.x = 0;
     position.y += getLineHeight();
@@ -2475,12 +2474,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private int drawBackground(@NotNull Graphics g,
                              Color backColor,
-                             @NotNull CharSequence text,
+                             @NotNull char[] text,
+                             int start,
+                             int end,
                              @NotNull Point position,
                              @JdkConstants.FontStyle int fontType,
                              @NotNull Color defaultBackground,
                              @NotNull Rectangle clip) {
-    int width = getTextSegmentWidth(text, position.x, fontType, clip);
+    int width = getTextSegmentWidth(text, start, end, position.x, fontType, clip);
     return drawBackground(g, backColor, width, position, defaultBackground, clip);
   }
 
@@ -3241,16 +3242,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     UIUtil.drawLine(g, x + WAVE_SEGMENT_LENGTH / 2, y, x + WAVE_SEGMENT_LENGTH, y + WAVE_HEIGHT);
   }
 
-  private int getTextSegmentWidth(@NotNull CharSequence text, int xStart, @JdkConstants.FontStyle int fontType, @NotNull Rectangle clip) {
+  private int getTextSegmentWidth(@NotNull char[] text, int start, int end, int xStart, @JdkConstants.FontStyle int fontType, @NotNull Rectangle clip) {
     int x = xStart;
 
-    final int textLength = text.length();
-    for (int i = 0; i < textLength && xStart < clip.x + clip.width; i++) {
-      if (text.charAt(i) == '\t') {
+    for (int i = start; i < end && xStart < clip.x + clip.width; i++) {
+      char c = text[i];
+      if (c == '\t') {
         x = EditorUtil.nextTabStop(x, this);
       }
       else {
-        x += EditorUtil.charWidth(text.charAt(i), fontType, this);
+        x += EditorUtil.charWidth(c, fontType, this);
       }
       if (x > clip.x + clip.width) {
         break;
@@ -3365,9 +3366,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (myVirtualPageHeight > 0) {
         return new Dimension(size.width, size.height + virtualPageHeight);
       }
-      else {
-        return size;
-      }
+      return size;
     }
 
     return getContentSize();
@@ -3497,10 +3496,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (depth >= 0) {
           stackDepth.set(depth + 1);
           if (depth > 15) {
-            LOG.error(String.format(
-              "Detected potential StackOverflowError at logical->visual position mapping. Given logical position: '%s'. State: %s",
-              logicalPos, dumpState()
-            ));
+            LOG.error("Detected potential StackOverflowError at logical->visual position mapping. Given logical position: '" +
+              logicalPos + "'. State: " + dumpState());
             stackDepth.set(-1);
           }
         }
@@ -4294,13 +4291,47 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
       }
       else {
-        Color background = myScheme.getColor(EditorColors.CARET_ROW_COLOR);
-        if (background == null) background = getBackgroundColor();
-        g.setXORMode(background);
-
+        Color caretColor = myScheme.getColor(EditorColors.CARET_COLOR);
+        if (caretColor == null) caretColor = new JBColor(Color.BLACK, Color.WHITE);
+        g.setColor(caretColor);
         g.fillRect(x, y, myWidth, lineHeight - 1);
-
-        g.setPaintMode();
+        final LogicalPosition startPosition = getCaretModel().getLogicalPosition();
+        final int offset = logicalPositionToOffset(startPosition);
+        char[] chars = myDocument.getRawChars();
+        if (chars.length > offset) {
+          FoldRegion folding = myFoldingModel.getCollapsedRegionAtOffset(offset);
+          final char ch;
+          if (folding == null || folding.isExpanded()) {
+            ch = chars[offset];
+          } else {
+            VisualPosition visual = getCaretModel().getVisualPosition();
+            VisualPosition foldingPosition = offsetToVisualPosition(folding.getStartOffset());
+            if (visual.line == foldingPosition.line) {
+              ch = folding.getPlaceholderText().charAt(visual.column - foldingPosition.column);
+            } else {
+              ch = chars[offset];
+            }
+          }
+          IterationState state = null;
+          try {
+            //don't worry it's cheap. Cache is not required
+            state = new IterationState(EditorImpl.this, offset, offset + 1, true);
+            TextAttributes attributes = state.getMergedAttributes();
+            if (attributes != null) {
+              FontInfo info = EditorUtil.fontForChar(ch, attributes.getFontType(), EditorImpl.this);
+              if (info != null) {
+                g.setFont(info.getFont());
+              }
+            }
+            //todo[kb]
+            //in case of italic style we paint out of the cursor block. Painting the symbol to a dedicated buffered image
+            //solves the problem, but still looks weird because it leaves colored pixels at right.
+            g.setColor(CURSOR_FOREGROUND);
+            g.drawChars(new char[]{ch}, 0, 1, x, y + getLineHeight() - getDescent());
+          } finally {
+            if (state != null) state.dispose();
+          }
+        }
       }
     }
   }
@@ -4534,7 +4565,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (barUI instanceof ButtonlessScrollBarUI) {
         return insets.top + ((ButtonlessScrollBarUI)barUI).getIncrementButtonHeight();
       }
-      else if (barUI instanceof BasicScrollBarUI) {
+      if (barUI instanceof BasicScrollBarUI) {
         try {
           JButton incrButtonValue = (JButton)incrButtonField.get(barUI);
           LOG.assertTrue(incrButtonValue != null);
@@ -4544,12 +4575,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           throw new IllegalStateException(exc);
         }
       }
-      else if (APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS.equals(barUI.getClass().getName())) {
+      if (APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS.equals(barUI.getClass().getName())) {
         return insets.bottom + 30;
       }
-      else {
-        return insets.bottom + 15;
-      }
+      return insets.bottom + 15;
     }
 
     @Override
@@ -4998,12 +5027,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (caretIndex < composedStartIndex) {
         return caretIndex;
       }
-      else if (caretIndex < composedEndIndex) {
+      if (caretIndex < composedEndIndex) {
         return composedStartIndex;
       }
-      else {
-        return caretIndex - (composedEndIndex - composedStartIndex);
-      }
+      return caretIndex - (composedEndIndex - composedStartIndex);
     }
 
     private String getText(int startIdx, int endIdx) {

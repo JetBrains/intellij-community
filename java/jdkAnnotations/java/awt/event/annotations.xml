@@ -1,146 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <root>
-  <item name='java.awt.event.InputEvent InputEvent(java.awt.Component, int, long, int) 3'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="flagsFromClass" val="java.awt.event.InputEvent.class"/>
+  <item name="java.awt.event.ActionEvent ActionEvent(java.lang.Object, int, java.lang.String, int) 3">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
     </annotation>
   </item>
-  <item name='java.awt.event.InputEvent int getModifiers()'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="flagsFromClass" val="java.awt.event.InputEvent.class"/>
+  <item name="java.awt.event.ActionEvent ActionEvent(java.lang.Object, int, java.lang.String, long, int) 4">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
     </annotation>
   </item>
-  <item name='java.awt.event.InputEvent int getModifiersEx()'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="flagsFromClass" val="java.awt.event.InputEvent.class"/>
+  <item name="java.awt.event.ActionEvent int getModifiers()">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
     </annotation>
   </item>
-  <item name='java.awt.event.ActionEvent ActionEvent(java.lang.Object, int, java.lang.String, long, int) 4'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="flagsFromClass" val="java.awt.event.InputEvent.class"/>
+  <item name="java.awt.event.AdjustmentEvent AdjustmentEvent(java.awt.Adjustable, int, int, int, boolean) 2">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.awt.event.AdjustmentEvent.UNIT_INCREMENT, java.awt.event.AdjustmentEvent.UNIT_DECREMENT, java.awt.event.AdjustmentEvent.BLOCK_INCREMENT, java.awt.event.AdjustmentEvent.BLOCK_DECREMENT, java.awt.event.AdjustmentEvent.TRACK}" />
     </annotation>
   </item>
-  <item name='java.awt.event.ActionEvent ActionEvent(java.lang.Object, int, java.lang.String, int) 3'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="flagsFromClass" val="java.awt.event.InputEvent.class"/>
+  <item name="java.awt.event.AdjustmentEvent int getAdjustmentType()">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.awt.event.AdjustmentEvent.UNIT_INCREMENT, java.awt.event.AdjustmentEvent.UNIT_DECREMENT, java.awt.event.AdjustmentEvent.BLOCK_INCREMENT, java.awt.event.AdjustmentEvent.BLOCK_DECREMENT, java.awt.event.AdjustmentEvent.TRACK}" />
     </annotation>
   </item>
-  <item name='java.awt.event.ActionEvent int getModifiers()'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="flagsFromClass" val="java.awt.event.InputEvent.class"/>
+  <item name="java.awt.event.HierarchyEvent HierarchyEvent(java.awt.Component, int, java.awt.Component, java.awt.Container, long) 4">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flags" val="{java.awt.event.HierarchyEvent.PARENT_CHANGED,java.awt.event.HierarchyEvent.DISPLAYABILITY_CHANGED,java.awt.event.HierarchyEvent.SHOWING_CHANGED}" />
     </annotation>
   </item>
-  <item name='java.awt.event.KeyEvent java.lang.String getKeyModifiersText(int) 0'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="flagsFromClass" val="java.awt.event.InputEvent.class"/>
+  <item name="java.awt.event.HierarchyEvent int getChangeFlags()">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flags" val="{java.awt.event.HierarchyEvent.PARENT_CHANGED,java.awt.event.HierarchyEvent.DISPLAYABILITY_CHANGED,java.awt.event.HierarchyEvent.SHOWING_CHANGED}" />
     </annotation>
   </item>
-  <item name='java.awt.event.KeyEvent KeyEvent(java.awt.Component, int, long, int, int, char, int) 3'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="flagsFromClass" val="java.awt.event.InputEvent.class"/>
+  <item name="java.awt.event.InputEvent InputEvent(java.awt.Component, int, long, int) 3">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
     </annotation>
   </item>
-  <item name='java.awt.event.KeyEvent KeyEvent(java.awt.Component, int, long, int, int, char) 3'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="flagsFromClass" val="java.awt.event.InputEvent.class"/>
+  <item name="java.awt.event.InputEvent int getModifiers()">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
     </annotation>
   </item>
-  <item name='java.awt.event.KeyEvent KeyEvent(java.awt.Component, int, long, int, int) 3'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="flagsFromClass" val="java.awt.event.InputEvent.class"/>
+  <item name="java.awt.event.InputEvent int getModifiersEx()">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
     </annotation>
   </item>
-  <item name='java.awt.event.KeyEvent void setModifiers(int) 0'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="flagsFromClass" val="java.awt.event.InputEvent.class"/>
+  <item name="java.awt.event.ItemEvent ItemEvent(java.awt.ItemSelectable, int, java.lang.Object, int) 3">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.awt.event.ItemEvent.SELECTED, java.awt.event.ItemEvent.DESELECTED}" />
     </annotation>
   </item>
-  <item name='java.awt.event.MouseEvent MouseEvent(java.awt.Component, int, long, int, int, int, int, boolean) 3'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="flagsFromClass" val="java.awt.event.InputEvent.class"/>
+  <item name="java.awt.event.ItemEvent int getStateChange()">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.awt.event.ItemEvent.SELECTED, java.awt.event.ItemEvent.DESELECTED}" />
     </annotation>
   </item>
-  <item name='java.awt.event.MouseEvent MouseEvent(java.awt.Component, int, long, int, int, int, int, boolean, int) 3'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="flagsFromClass" val="java.awt.event.InputEvent.class"/>
+  <item name="java.awt.event.KeyEvent KeyEvent(java.awt.Component, int, long, int, int) 3">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
     </annotation>
   </item>
-  <item name='java.awt.event.MouseEvent MouseEvent(java.awt.Component, int, long, int, int, int, int, int, int, boolean, int) 3'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="flagsFromClass" val="java.awt.event.InputEvent.class"/>
+  <item name="java.awt.event.KeyEvent KeyEvent(java.awt.Component, int, long, int, int, char) 3">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
     </annotation>
   </item>
-  <item name='java.awt.event.MouseEvent java.lang.String getMouseModifiersText(int) 0'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="flagsFromClass" val="java.awt.event.InputEvent.class"/>
+  <item name="java.awt.event.KeyEvent KeyEvent(java.awt.Component, int, long, int, int, char, int) 3">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
     </annotation>
   </item>
-  <item name='java.awt.event.HierarchyEvent HierarchyEvent(java.awt.Component, int, java.awt.Component, java.awt.Container, long) 4'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="flags" val="{java.awt.event.HierarchyEvent.PARENT_CHANGED,java.awt.event.HierarchyEvent.DISPLAYABILITY_CHANGED,java.awt.event.HierarchyEvent.SHOWING_CHANGED}"/>
+  <item name="java.awt.event.KeyEvent java.lang.String getKeyModifiersText(int) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
     </annotation>
   </item>
-  <item name='java.awt.event.HierarchyEvent int getChangeFlags()'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="flags" val="{java.awt.event.HierarchyEvent.PARENT_CHANGED,java.awt.event.HierarchyEvent.DISPLAYABILITY_CHANGED,java.awt.event.HierarchyEvent.SHOWING_CHANGED}"/>
+  <item name="java.awt.event.KeyEvent void setModifiers(int) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
     </annotation>
   </item>
-  <item name='java.awt.event.ItemEvent ItemEvent(java.awt.ItemSelectable, int, java.lang.Object, int) 3'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="intValues" val="{java.awt.event.ItemEvent.SELECTED, java.awt.event.ItemEvent.DESELECTED}"/>
+  <item name="java.awt.event.MouseEvent MouseEvent(java.awt.Component, int, long, int, int, int, int, boolean) 3">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
     </annotation>
   </item>
-  <item name='java.awt.event.ItemEvent int getStateChange()'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="intValues" val="{java.awt.event.ItemEvent.SELECTED, java.awt.event.ItemEvent.DESELECTED}"/>
+  <item name="java.awt.event.MouseEvent MouseEvent(java.awt.Component, int, long, int, int, int, int, boolean, int) 3">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
     </annotation>
   </item>
-  <item name='java.awt.event.AdjustmentEvent AdjustmentEvent(java.awt.Adjustable, int, int, int, boolean) 2'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="intValues" val="{java.awt.event.AdjustmentEvent.UNIT_INCREMENT, java.awt.event.AdjustmentEvent.UNIT_DECREMENT, java.awt.event.AdjustmentEvent.BLOCK_INCREMENT, java.awt.event.AdjustmentEvent.BLOCK_DECREMENT, java.awt.event.AdjustmentEvent.TRACK}"/>
+  <item name="java.awt.event.MouseEvent MouseEvent(java.awt.Component, int, long, int, int, int, int, int, int, boolean, int) 3">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
     </annotation>
   </item>
-  <item name='java.awt.event.AdjustmentEvent int getAdjustmentType()'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="intValues" val="{java.awt.event.AdjustmentEvent.UNIT_INCREMENT, java.awt.event.AdjustmentEvent.UNIT_DECREMENT, java.awt.event.AdjustmentEvent.BLOCK_INCREMENT, java.awt.event.AdjustmentEvent.BLOCK_DECREMENT, java.awt.event.AdjustmentEvent.TRACK}"/>
+  <item name="java.awt.event.MouseEvent java.lang.String getMouseModifiersText(int) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
     </annotation>
   </item>
-  <item name='java.awt.event.MouseWheelEvent int getScrollType()'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="intValues" val="{java.awt.event.MouseWheelEvent.WHEEL_UNIT_SCROLL, java.awt.event.MouseWheelEvent.WHEEL_BLOCK_SCROLL}"/>
+  <item name="java.awt.event.MouseWheelEvent MouseWheelEvent(java.awt.Component, int, long, int, int, int, int, boolean, int, int, int) 3">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
     </annotation>
   </item>
-  <item name='java.awt.event.MouseWheelEvent MouseWheelEvent(java.awt.Component, int, long, int, int, int, int, boolean, int, int, int) 8'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="intValues" val="{java.awt.event.MouseWheelEvent.WHEEL_UNIT_SCROLL, java.awt.event.MouseWheelEvent.WHEEL_BLOCK_SCROLL}"/>
+  <item name="java.awt.event.MouseWheelEvent MouseWheelEvent(java.awt.Component, int, long, int, int, int, int, boolean, int, int, int) 8">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.awt.event.MouseWheelEvent.WHEEL_UNIT_SCROLL, java.awt.event.MouseWheelEvent.WHEEL_BLOCK_SCROLL}" />
     </annotation>
   </item>
-  <item
-      name='java.awt.event.MouseWheelEvent MouseWheelEvent(java.awt.Component, int, long, int, int, int, int, int, int, boolean, int, int, int) 10'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="intValues" val="{java.awt.event.MouseWheelEvent.WHEEL_UNIT_SCROLL, java.awt.event.MouseWheelEvent.WHEEL_BLOCK_SCROLL}"/>
+  <item name="java.awt.event.MouseWheelEvent MouseWheelEvent(java.awt.Component, int, long, int, int, int, int, int, int, boolean, int, int, int) 10">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.awt.event.MouseWheelEvent.WHEEL_UNIT_SCROLL, java.awt.event.MouseWheelEvent.WHEEL_BLOCK_SCROLL}" />
     </annotation>
   </item>
-  <item
-      name='java.awt.event.MouseWheelEvent MouseWheelEvent(java.awt.Component, int, long, int, int, int, int, int, int, boolean, int, int, int, double) 10'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="intValues" val="{java.awt.event.MouseWheelEvent.WHEEL_UNIT_SCROLL, java.awt.event.MouseWheelEvent.WHEEL_BLOCK_SCROLL}"/>
+  <item name="java.awt.event.MouseWheelEvent MouseWheelEvent(java.awt.Component, int, long, int, int, int, int, int, int, boolean, int, int, int) 3">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
     </annotation>
   </item>
-  <item name='java.awt.event.MouseWheelEvent MouseWheelEvent(java.awt.Component, int, long, int, int, int, int, boolean, int, int, int) 3'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="flagsFromClass" val="java.awt.event.InputEvent.class"/>
+  <item name="java.awt.event.MouseWheelEvent MouseWheelEvent(java.awt.Component, int, long, int, int, int, int, int, int, boolean, int, int, int, double) 10">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.awt.event.MouseWheelEvent.WHEEL_UNIT_SCROLL, java.awt.event.MouseWheelEvent.WHEEL_BLOCK_SCROLL}" />
     </annotation>
   </item>
-  <item
-      name='java.awt.event.MouseWheelEvent MouseWheelEvent(java.awt.Component, int, long, int, int, int, int, int, int, boolean, int, int, int) 3'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="flagsFromClass" val="java.awt.event.InputEvent.class"/>
+  <item name="java.awt.event.MouseWheelEvent MouseWheelEvent(java.awt.Component, int, long, int, int, int, int, int, int, boolean, int, int, int, double) 3">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
     </annotation>
   </item>
-  <item
-      name='java.awt.event.MouseWheelEvent MouseWheelEvent(java.awt.Component, int, long, int, int, int, int, int, int, boolean, int, int, int, double) 3'>
-    <annotation name='org.intellij.lang.annotations.MagicConstant'>
-      <val name="flagsFromClass" val="java.awt.event.InputEvent.class"/>
+  <item name="java.awt.event.MouseWheelEvent int getScrollType()">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.awt.event.MouseWheelEvent.WHEEL_UNIT_SCROLL, java.awt.event.MouseWheelEvent.WHEEL_BLOCK_SCROLL}" />
     </annotation>
   </item>
 </root>
+

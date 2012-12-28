@@ -866,7 +866,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     }
     final PsiElement grandparent = parent.getParent();
     final PsiClass aClass;
-    if (grandparent instanceof PsiMethodCallExpression && HighlightUtil.isSuperOrThisMethodCall(grandparent)) {
+    if (HighlightUtil.isSuperOrThisMethodCall(grandparent)) {
       final PsiMethod method = ((PsiMethodCallExpression)grandparent).resolveMethod();
       if (method != null) {
         aClass = method.getContainingClass();

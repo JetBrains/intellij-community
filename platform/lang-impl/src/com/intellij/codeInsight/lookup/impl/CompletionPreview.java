@@ -39,12 +39,12 @@ public class CompletionPreview {
   private final LookupImpl myLookup;
   private Disposable myUninstaller;
 
-  private CompletionPreview(LookupImpl lookup, final String text, final String prefix) {
+  private CompletionPreview(LookupImpl lookup, final String text, final int prefixLength) {
     myLookup = lookup;
 
     final Editor editor = myLookup.getEditor();
     final int caret = editor.getCaretModel().getOffset();
-    int previewStart = caret - prefix.length();
+    int previewStart = caret - prefixLength;
     final int previewEnd = previewStart + text.length();
 
     myLookup.performGuardedChange(new Runnable() {
@@ -54,7 +54,7 @@ public class CompletionPreview {
           public void run() {
             AccessToken token = WriteAction.start();
             try {
-              editor.getDocument().insertString(caret, text.substring(prefix.length()));
+              editor.getDocument().insertString(caret, text.substring(prefixLength));
             }
             finally {
               token.finish();
@@ -131,12 +131,11 @@ public class CompletionPreview {
       }
     }
 
-    String prefix = lookup.itemPattern(item);
-    if (prefix.length() > text.length()) {
+    int prefixLength = lookup.getPrefixLength(item);
+    if (prefixLength > text.length()) {
       return;
     }
-    
-    new CompletionPreview(lookup, text, prefix);
+    new CompletionPreview(lookup, text, prefixLength);
   }
 
   public void uninstallPreview() {

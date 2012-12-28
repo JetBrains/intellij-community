@@ -740,7 +740,7 @@ public class UIUtil {
 
   public static Color getTreeUnfocusedSelectionBackground() {
     Color background = getTreeTextBackground();
-    return ColorUtil.isDark(background) ? Gray._30 : UNFOCUSED_SELECTION_COLOR;
+    return ColorUtil.isDark(background) ? new JBColor(Gray._30, new Color(13, 41, 62)) : UNFOCUSED_SELECTION_COLOR;
   }
 
   public static Color getTextFieldForeground() {

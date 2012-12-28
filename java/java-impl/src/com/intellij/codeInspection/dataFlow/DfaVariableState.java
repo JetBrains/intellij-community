@@ -63,7 +63,7 @@ public class DfaVariableState implements Cloneable {
   }
 
   private static boolean isNullableInitialized(PsiVariable var, boolean nullable) {
-    if (!var.hasModifierProperty(PsiModifier.FINAL) || !(var instanceof PsiField)) {
+    if (!isFinalField(var)) {
       return false;
     }
 
@@ -88,6 +88,10 @@ public class DfaVariableState implements Cloneable {
       }
     }
     return !nullable;
+  }
+
+  public static boolean isFinalField(PsiVariable var) {
+    return var.hasModifierProperty(PsiModifier.FINAL) && !var.hasModifierProperty(PsiModifier.TRANSIENT) && var instanceof PsiField;
   }
 
   public boolean isNullable() {
@@ -152,21 +156,19 @@ public class DfaVariableState implements Cloneable {
   public String toString() {
     @NonNls StringBuilder buf = new StringBuilder();
 
-    buf.append("instanceof {");
+    buf.append("instanceof ");
     for (Iterator<DfaTypeValue> iterator = myInstanceofValues.iterator(); iterator.hasNext();) {
       DfaTypeValue dfaTypeValue = iterator.next();
-      buf.append(dfaTypeValue);
+      buf.append("{").append(dfaTypeValue).append("}");
       if (iterator.hasNext()) buf.append(", ");
     }
-    buf.append("} ");
 
-    buf.append("not instanceof {");
+    buf.append("not instanceof ");
     for (Iterator<DfaTypeValue> iterator = myNotInstanceofValues.iterator(); iterator.hasNext();) {
       DfaTypeValue dfaTypeValue = iterator.next();
-      buf.append(dfaTypeValue);
+      buf.append("{").append(dfaTypeValue).append("}");
       if (iterator.hasNext()) buf.append(", ");
     }
-    buf.append("}");
     buf.append(", nullable=").append(myNullable);
     return buf.toString();
   }

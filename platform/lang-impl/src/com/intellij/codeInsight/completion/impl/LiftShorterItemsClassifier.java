@@ -48,12 +48,14 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   };
   private final Map<LookupElement, FList<LookupElement>> myToLift = newIdentityHashMap();
   private final IdentityHashMap<FList<LookupElement>, IdentityHashMap<LookupElement, FList<LookupElement>>> myPrepends = newIdentityHashMap();
+  private final String myName;
   private final Classifier<LookupElement> myNext;
   private final LiftingCondition myCondition;
   private final boolean myLiftBefore;
   private int myCount = 0;
 
-  public LiftShorterItemsClassifier(Classifier<LookupElement> next, LiftingCondition condition, boolean liftBefore) {
+  public LiftShorterItemsClassifier(String name, Classifier<LookupElement> next, LiftingCondition condition, boolean liftBefore) {
+    myName = name;
     myNext = next;
     myCondition = condition;
     myLiftBefore = liftBefore;
@@ -150,7 +152,7 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
           builder.append(", ");
         }
 
-        builder.append("liftShorter=").append(lifted.contains(element));
+        builder.append(myName).append("=").append(lifted.contains(element));
       }
     }
     myNext.describeItems(map, context);

@@ -18,6 +18,8 @@ package com.intellij.packaging.impl.compiler;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetRootsProvider;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,6 +27,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,16 +42,17 @@ import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
 import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 import com.intellij.packaging.impl.elements.FileOrDirectoryCopyPackagingElement;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
+import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTargetType;
 
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -138,5 +142,36 @@ public class ArtifactCompilerUtil {
       }
     }
     return affectedOutputPaths;
+  }
+
+  public static boolean containsArtifacts(List<TargetTypeBuildScope> scopes) {
+    for (TargetTypeBuildScope scope : scopes) {
+      if (ArtifactBuildTargetType.INSTANCE.getTypeId().equals(scope.getTypeId())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public static MultiMap<String, Artifact> createOutputToArtifactMap(final Project project) {
+    final MultiMap<String, Artifact> result = new MultiMap<String, Artifact>() {
+      @Override
+      protected Map<String, Collection<Artifact>> createMap() {
+        return new THashMap<String, Collection<Artifact>>(FileUtil.PATH_HASHING_STRATEGY);
+      }
+    };
+    new ReadAction() {
+      protected void run(final Result r) {
+        for (Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {
+          String outputPath = artifact.getOutputFilePath();
+          if (!StringUtil.isEmpty(outputPath)) {
+            result.putValue(outputPath, artifact);
+          }
+        }
+      }
+    }.execute();
+
+
+    return result;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
@@ -35,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -65,7 +67,7 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements Groovy
 
     if (BLOCK_SET.contains(type) && !isSingleHighLevelClassBody(element) || type == CLOSABLE_BLOCK) {
       if (isMultiline(element)) {
-        descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
+        collapseBlock(descriptors, element);
       }
     }
     // comments
@@ -109,6 +111,28 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements Groovy
     }
   }
 
+  private static void collapseBlock(List<FoldingDescriptor> descriptors, PsiElement psi) {
+    if (psi instanceof GrCodeBlock) {
+      final int lineFeedCount = StringUtil.countChars(psi.getText(), '\n');
+      if (lineFeedCount <= 2) {
+        final PsiElement lbrace = ((GrCodeBlock)psi).getLBrace();
+        final PsiElement rbrace = ((GrCodeBlock)psi).getRBrace();
+        if (lbrace != null && rbrace != null) {
+          final PsiElement next = lbrace.getNextSibling();
+          final PsiElement prev = rbrace.getPrevSibling();
+          if (next != null && TokenSets.WHITE_SPACES_SET.contains(next.getNode().getElementType()) &&
+              prev != null && TokenSets.WHITE_SPACES_SET.contains(prev.getNode().getElementType())) {
+            final FoldingGroup group = FoldingGroup.newGroup("block_group");
+            descriptors.add(new NamedFoldingDescriptor(psi.getNode(), lbrace.getTextRange().getStartOffset(), next.getTextRange().getEndOffset(), group, "{"));
+            descriptors.add(new NamedFoldingDescriptor(psi.getNode(), prev.getTextRange().getStartOffset(), rbrace.getTextRange().getEndOffset(), group, "}"));
+            return;
+          }
+        }
+      }
+    }
+    descriptors.add(new FoldingDescriptor(psi, psi.getTextRange()));
+  }
+
   private static boolean isSingleHighLevelClassBody(PsiElement element) {
     if (!(element instanceof GrTypeDefinitionBody)) return false;
 
@@ -147,7 +171,7 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements Groovy
     GrStringInjection injection = injections[0];
     TextRange injectionRange = injection.getTextRange();
     if (startOffset + 1 < injectionRange.getStartOffset()) {
-      descriptors.add(new GStringFoldingDescriptor(node, startOffset, injectionRange.getStartOffset(), group, start_quote));
+      descriptors.add(new NamedFoldingDescriptor(node, startOffset, injectionRange.getStartOffset(), group, start_quote));
     }
 
     final String placeholder = " ";
@@ -157,20 +181,24 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements Groovy
       injectionRange = injection.getTextRange();
       final int endOffset = injectionRange.getStartOffset();
       if (endOffset - startOffset >= 2) {
-        descriptors.add(new GStringFoldingDescriptor(injection.getNode().getTreePrev(), startOffset, endOffset, group, placeholder));
+        descriptors.add(new NamedFoldingDescriptor(injection.getNode().getTreePrev(), startOffset, endOffset, group, placeholder));
       }
       startOffset = injectionRange.getEndOffset();
     }
     if (startOffset + 1 < nodeRange.getEndOffset()) {
-      descriptors.add(new GStringFoldingDescriptor(node.getLastChildNode(), startOffset, nodeRange.getEndOffset(), group, end_quote));
+      descriptors.add(new NamedFoldingDescriptor(node.getLastChildNode(), startOffset, nodeRange.getEndOffset(), group, end_quote));
     }
   }
 
-  private static class GStringFoldingDescriptor extends FoldingDescriptor {
+  private static class NamedFoldingDescriptor extends FoldingDescriptor {
     private final String myPlaceholderText;
 
-    private GStringFoldingDescriptor(@NotNull ASTNode node, int start, int end, @Nullable FoldingGroup group, String placeholderText) {
-      super(node, new TextRange(start, end), group);
+    private NamedFoldingDescriptor(@NotNull ASTNode node, int start, int end, @Nullable FoldingGroup group, @NotNull String placeholderText) {
+      this(node, new TextRange(start, end), group, placeholderText);
+    }
+
+    private NamedFoldingDescriptor(@NotNull ASTNode node, @NotNull final TextRange range, @Nullable FoldingGroup group, @NotNull String placeholderText) {
+      super(node, range, group);
       myPlaceholderText = placeholderText;
     }
 

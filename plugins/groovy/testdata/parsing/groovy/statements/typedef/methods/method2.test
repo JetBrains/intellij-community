@@ -13,7 +13,7 @@ Groovy script
     Type definition body
       PsiElement({)('{')
       PsiWhiteSpace('\n  ')
-      Method
+      Constructor
         Modifiers
           PsiElement(static)('static')
           PsiWhiteSpace(' ')

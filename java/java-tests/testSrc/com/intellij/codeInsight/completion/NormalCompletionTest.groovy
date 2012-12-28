@@ -568,7 +568,7 @@ public class ListUtils {
     checkResult()
   }
 
-  public void testDefaultAnnoParam() throws Throwable { doTest('\n'); }
+  public void testDefaultAnnoParam() throws Throwable { doTest(); }
 
   public void testSpaceAfterLookupString() throws Throwable {
     configureByFile(getTestName(false) + ".java");
@@ -1114,6 +1114,19 @@ public class ListUtils {
     configure()
     assertFirstStringItems "final", "float"
   }
+
+  public void testNonImportedClassInAnnotation() {
+    myFixture.addClass("package foo; public class XInternalTimerServiceController {}")
+    myFixture.configureByText "a.java", """
+class XInternalError {}
+
+@Anno(XInternal<caret>)
+"""
+    myFixture.complete(CompletionType.BASIC, 2)
+    assertFirstStringItems "XInternalError", "XInternalTimerServiceController"
+  }
+
+  public void testAnnotationClassFromWithinAnnotation() { doTest() }
 
   public void testStaticallyImportedFieldsTwice() {
     myFixture.addClass("""
