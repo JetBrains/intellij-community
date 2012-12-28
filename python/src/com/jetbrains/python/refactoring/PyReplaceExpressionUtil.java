@@ -4,8 +4,10 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.Function;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.inspections.PyStringFormatParser;
@@ -77,9 +79,12 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
                                                             @NotNull PsiElement newExpression,
                                                             @NotNull TextRange textRange) {
     final String fullText = oldExpression.getText();
+    final Pair<String, String> detectedQuotes = PythonStringUtil.getQuotes(fullText);
+    final Pair<String, String> quotes = detectedQuotes != null ? detectedQuotes : Pair.create("'", "'");
     final String prefix = fullText.substring(0, textRange.getStartOffset());
     final String suffix = fullText.substring(textRange.getEndOffset(), oldExpression.getTextLength());
     final PyExpression valueExpression = PyStringFormatParser.getFormatValueExpression(oldExpression);
+    final String newText = newExpression.getText();
 
     final PyElementGenerator generator = PyElementGenerator.getInstance(oldExpression.getProject());
     final LanguageLevel languageLevel = LanguageLevel.forElement(oldExpression);
@@ -88,8 +93,6 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
     if (valueExpression != null && !containsStringFormatting(fullText, textRange)) {
       if (valueExpression instanceof PyTupleExpression) {
         // 'foo%s' % (x,) -> '%s%s' % (s, x)
-        // TODO: Support dict literals and dict() function
-        // TODO: It is possible to resolve to a tuple or dict literal and modify them
         final String newLiteralText = prefix + "%s" + suffix;
         final PyStringLiteralExpression newLiteralExpression = generator.createStringLiteralAlreadyEscaped(newLiteralText);
         oldExpression.replace(newLiteralExpression);
@@ -110,14 +113,43 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
           return newExpression;
         }
       }
-      return null;
+      else if (valueExpression instanceof PyDictLiteralExpression) {
+        // 'foo%(x)s' % {'x': x} -> '%(s)s%(x)s' % {'x': x, 's': s}
+        // TODO: Support the dict() function
+        final String newLiteralText = prefix + "%(" + newText + ")s" + suffix;
+        final PyStringLiteralExpression newLiteralExpression = generator.createStringLiteralAlreadyEscaped(newLiteralText);
+        oldExpression.replace(newLiteralExpression);
+
+        final PyDictLiteralExpression dict = (PyDictLiteralExpression)valueExpression;
+        final StringBuilder builder = new StringBuilder();
+        builder.append("{");
+        final PyKeyValueExpression[] elements = dict.getElements();
+        builder.append(StringUtil.join(elements, new Function<PyKeyValueExpression, String>() {
+          @Override
+          public String fun(PyKeyValueExpression expression) {
+            return expression.getText();
+          }
+        }, ","));
+        if (elements.length > 0) {
+          builder.append(",");
+        }
+        builder.append(quotes.getSecond());
+        builder.append(newText);
+        builder.append(quotes.getSecond());
+        builder.append(":");
+        final int pos = builder.toString().length();
+        builder.append(newText);
+        builder.append("}");
+        final PyExpression newDictLiteral = generator.createExpressionFromText(languageLevel, builder.toString());
+        final PsiElement newElement = valueExpression.replace(newDictLiteral);
+        return newElement.findElementAt(pos);
+      }
     }
-    else if (isConcatFormatting(oldExpression) || substitutions.size() > 0) {
+
+    if (isConcatFormatting(oldExpression) || substitutions.size() > 0) {
       // 'foobar' + 'baz' -> s + 'bar' + 'baz'
       // 'foobar%s' -> s + 'bar%s'
       // 'f%soobar' % x -> (s + 'bar') % x
-      final Pair<String, String> detectedQuotes = PythonStringUtil.getQuotes(fullText);
-      final Pair<String, String> quotes = detectedQuotes != null ? detectedQuotes : Pair.create("'", "'");
       final String leftQuote = quotes.getFirst();
       final String rightQuote = quotes.getSecond();
       final StringBuilder builder = new StringBuilder();
@@ -128,7 +160,7 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
         builder.append(prefix + rightQuote + " + ");
       }
       final int pos = builder.toString().length();
-      builder.append(newExpression.getText());
+      builder.append(newText);
       if (!rightQuote.startsWith(suffix)) {
         builder.append(" + " + leftQuote + suffix);
       }
@@ -153,7 +185,7 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
       builder.append(suffix);
       builder.append(" % ");
       final int pos = builder.toString().length();
-      builder.append(newExpression.getText());
+      builder.append(newText);
       if (parensNeeded) {
         builder.append(")");
       }
