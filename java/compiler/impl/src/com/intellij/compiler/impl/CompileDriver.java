@@ -39,6 +39,7 @@ import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.compiler.generic.GenericCompiler;
+import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginId;
@@ -76,6 +77,7 @@ import com.intellij.packaging.impl.artifacts.ArtifactImpl;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.packaging.impl.compiler.ArtifactCompilerUtil;
+import com.intellij.packaging.impl.compiler.ArtifactsCompiler;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Chunk;
@@ -88,6 +90,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.OrderedSet;
 import com.intellij.util.messages.MessageBus;
+import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
@@ -499,7 +502,7 @@ public class CompileDriver {
     }
 
     final MessageBus messageBus = myProject.getMessageBus();
-
+    final MultiMap<String, Artifact> outputToArtifact = ArtifactCompilerUtil.containsArtifacts(scopes) ? ArtifactCompilerUtil.createOutputToArtifactMap(myProject) : null;
     final BuildManager buildManager = BuildManager.getInstance();
     buildManager.cancelAutoMakeTasks(myProject);
     return buildManager.scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), onlyCheckUpToDate, scopes, paths, builderParams, new DefaultMessageHandler(myProject) {
@@ -562,10 +565,23 @@ public class CompileDriver {
           case FILES_GENERATED:
             final List<CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile> generated = event.getGeneratedFilesList();
             final CompilationStatusListener publisher = messageBus.syncPublisher(CompilerTopics.COMPILATION_STATUS);
+            Set<String> writtenArtifactOutputPaths = outputToArtifact != null ? new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY) : null;
             for (CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile generatedFile : generated) {
               final String root = FileUtil.toSystemIndependentName(generatedFile.getOutputRoot());
               final String relativePath = FileUtil.toSystemIndependentName(generatedFile.getRelativePath());
               publisher.fileGenerated(root, relativePath);
+              if (outputToArtifact != null) {
+                Collection<Artifact> artifacts = outputToArtifact.get(root);
+                if (!artifacts.isEmpty()) {
+                  for (Artifact artifact : artifacts) {
+                    ArtifactsCompiler.addChangedArtifact(compileContext, artifact);
+                  }
+                  writtenArtifactOutputPaths.add(FileUtil.toSystemDependentName(DeploymentUtil.appendToPath(root, relativePath)));
+                }
+              }
+            }
+            if (writtenArtifactOutputPaths != null && !writtenArtifactOutputPaths.isEmpty()) {
+              ArtifactsCompiler.addWrittenPaths(compileContext, writtenArtifactOutputPaths);
             }
             break;
           case BUILD_COMPLETED:
