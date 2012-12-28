@@ -445,6 +445,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       for (final LookupElement element : set) {
         result.addElement(element);
       }
+      addAllClasses(parameters, result, new InheritorsHolder(insertedElement, result));
     }
 
     if (annoClass != null) {
