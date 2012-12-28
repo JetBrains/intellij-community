@@ -293,6 +293,14 @@ public def layoutCommunityPlugins(String home) {
       }
     }
 
+    pluginDir("ByteCodeViewer") {
+      dir("lib") {
+        jar("byteCodeViewer.jar") {
+          noResources("ByteCodeViewer")
+        }
+      }
+    }
+
     pluginDir("cvsIntegration") {
       dir("lib") {
         jar("cvs_util.jar") {noResources("cvs-core")}
