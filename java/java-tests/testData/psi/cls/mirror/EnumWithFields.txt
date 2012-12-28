@@ -4,11 +4,11 @@
 
 package pkg;
 
-public final enum EnumWithFields {
-    public static final E1, public static final E2;
+public enum EnumWithFields {
+    E1, E2;
 
-    boolean f1;
-    boolean f2;
+    private boolean f1;
+    static boolean f2;
 
     public static pkg.EnumWithFields[] values() { /* compiled code */ }
 
