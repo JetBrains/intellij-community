@@ -1318,6 +1318,19 @@ public class FileUtil extends FileUtilRt {
     return FileUtilRt.loadBytes(stream, length);
   }
 
+  @NotNull
+  public static List<String> splitPath(@NotNull String path) {
+    ArrayList<String> list = new ArrayList<String>();
+    int index = 0;
+    int nextSeparator;
+    while ((nextSeparator = path.indexOf(File.separatorChar, index)) != -1) {
+      list.add(path.substring(index, nextSeparator));
+      index = nextSeparator + 1;
+    }
+    list.add(path.substring(index, path.length()));
+    return list;
+  }
+
   private static final class CompletedFuture<T> implements Future<T> {
     public boolean cancel(boolean mayInterruptIfRunning) {
       return false;
