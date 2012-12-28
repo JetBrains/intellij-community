@@ -29,6 +29,7 @@ import com.intellij.execution.process.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PathManager;
@@ -50,6 +51,7 @@ import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
@@ -1010,6 +1012,13 @@ public class BuildManager implements ApplicationComponent{
         @Override
         public void processTerminated(@NotNull RunProfile runProfile, @NotNull ProcessHandler handler) {
           scheduleAutoMake();
+        }
+      });
+      final String projectPath = getProjectPath(project);
+      Disposer.register(project, new Disposable() {
+        @Override
+        public void dispose() {
+          myProjectDataMap.remove(projectPath);
         }
       });
       scheduleAutoMake(); // run automake on project opening
