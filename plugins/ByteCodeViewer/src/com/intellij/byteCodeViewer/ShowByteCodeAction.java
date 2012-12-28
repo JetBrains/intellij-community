@@ -70,7 +70,10 @@ public class ShowByteCodeAction extends AnAction {
       codeViewerManager.doUpdateComponent(psiElement);
     } else {
       final String byteCode = ByteCodeViewerManager.getByteCode(psiElement);
-      if (byteCode == null) return;
+      if (byteCode == null) {
+        Messages.showErrorDialog(project, "Unable to parse class file for '" + psiElementTitle + "'.", "Byte Code not Found");
+        return;
+      }
       final ByteCodeViewerComponent component = new ByteCodeViewerComponent(project, null);
       component.setText(byteCode, psiElement);
       Processor<JBPopup> pinCallback = new Processor<JBPopup>() {
