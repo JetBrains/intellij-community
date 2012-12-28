@@ -21,7 +21,6 @@ import com.intellij.codeInsight.template.SmartCompletionContextType;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.ClassLiteralGetter;
 import com.intellij.psi.filters.getters.ThisGetter;
@@ -35,13 +34,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-import static com.intellij.patterns.PsiJavaPatterns.psiElement;
-
 /**
  * @author peter
  */
 public class BasicExpressionCompletionContributor {
-  public static final ElementPattern<PsiElement> AFTER_DOT = psiElement().afterLeaf(".");
 
   private static void addKeyword(final Consumer<LookupElement> result, final PsiElement element, final String s) {
     result.consume(createKeywordLookupItem(element, s));
@@ -67,7 +63,7 @@ public class BasicExpressionCompletionContributor {
 
     }
 
-    if (!AFTER_DOT.accepts(element)) {
+    if (!JavaCompletionData.AFTER_DOT.accepts(element)) {
       if (parameters.getParameters().getInvocationCount() <= 1) {
         new CollectionsUtilityMethodsProvider(parameters.getPosition(),
                                               parameters.getExpectedType(),

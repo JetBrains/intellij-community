@@ -23,7 +23,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -47,7 +46,7 @@ import static com.intellij.patterns.StandardPatterns.not;
 public class JavaCompletionData extends JavaAwareCompletionData {
   private static final @NonNls String[] BLOCK_FINALIZERS = {"{", "}", ";", ":", "else"};
 
-  private static final PsiElementPattern<PsiElement,?> AFTER_DOT = psiElement().afterLeaf(".");
+  public static final ElementPattern<PsiElement> AFTER_DOT = psiElement().afterLeaf(".");
 
   private static final LeftNeighbour INSTANCEOF_PLACE = new LeftNeighbour(new OrFilter(
       new ReferenceOnFilter(new ClassFilter(PsiVariable.class)),
@@ -516,7 +515,7 @@ public class JavaCompletionData extends JavaAwareCompletionData {
     addUnfinishedMethodTypeParameters(position, result);
 
     if (JavaSmartCompletionContributor.INSIDE_EXPRESSION.accepts(position) &&
-        !BasicExpressionCompletionContributor.AFTER_DOT.accepts(position) &&
+        !AFTER_DOT.accepts(position) &&
         !(position.getParent() instanceof PsiLiteralExpression)) {
       addExpectedTypeMembers(parameters, result, position);
       if (SameSignatureCallParametersProvider.IN_CALL_ARGUMENT.accepts(position)) {

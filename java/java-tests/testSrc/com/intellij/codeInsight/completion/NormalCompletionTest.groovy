@@ -1126,6 +1126,8 @@ class XInternalError {}
     assertFirstStringItems "XInternalError", "XInternalTimerServiceController"
   }
 
+  public void testAnnotationClassFromWithinAnnotation() { doTest() }
+
   public void testStaticallyImportedFieldsTwice() {
     myFixture.addClass("""
       class Foo {
