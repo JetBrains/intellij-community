@@ -22,6 +22,7 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +54,7 @@ public class GitExecutableDetector {
   private static final String GIT_EXE = "git.exe";
 
   public static final String DEFAULT_WIN_GIT = GIT_EXE;
+  public static final String PATH_ENV = "PATH";
 
   @NotNull
   public String detect() {
@@ -75,7 +77,12 @@ public class GitExecutableDetector {
 
   @NotNull
   private String detectForWindows() {
-    String exec = checkMsys();
+    String exec = checkInPath();
+    if (exec != null) {
+      return exec;
+    }
+
+    exec = checkProgramFiles();
     if (exec != null) {
       return exec;
     }
@@ -88,8 +95,37 @@ public class GitExecutableDetector {
     return checkSoleExecutable();
   }
 
+  /**
+   * Looks into the %PATH% and checks Git directories mentioned there.
+   * @return Git executable to be used or null if nothing interesting was found in the PATH.
+   */
   @Nullable
-  private static String checkMsys() {
+  private String checkInPath() {
+    String PATH = getPath();
+    if (PATH == null) {
+      return null;
+    }
+    List<String> pathEntries = StringUtil.split(PATH, ";");
+    for (String pathEntry : pathEntries) {
+      if (looksLikeGit(pathEntry)) {
+        return checkBinDir(new File(pathEntry));
+      }
+    }
+    return null;
+  }
+
+  private static boolean looksLikeGit(@NotNull String path) {
+    List<String> dirs = FileUtil.splitPath(path);
+    for (String dir : dirs) {
+      if (dir.toLowerCase().startsWith("git")) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Nullable
+  private static String checkProgramFiles() {
     final String[] PROGRAM_FILES = { "Program Files", "Program Files (x86)" };
 
     // collecting all potential msys distributives
@@ -188,6 +224,11 @@ public class GitExecutableDetector {
     catch (ExecutionException e) {
       return false;
     }
+  }
+
+  @Nullable
+  protected String getPath() {
+    return System.getenv(PATH_ENV);
   }
 
   // Compare strategy: greater is better (if v1 > v2, then v1 is a better candidate for the Git executable)
