@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,6 +117,8 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
 
     loadAllSchemes();
 
+    loadAdditionalTextAttributes();
+
     setGlobalScheme(myDefaultColorSchemesManager.getAllSchemes()[0]);
 
     TextAttributesKey.myDefaultsProvider = new TextAttributesKey.TextAttributeKeyDefaultsProvider() {
@@ -207,6 +209,25 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
             }
           );
         }
+      }
+    }
+  }
+
+  private void loadAdditionalTextAttributes() {
+    for(AdditionalTextAttributesEP attributesEP : AdditionalTextAttributesEP.EP_NAME.getExtensions()){
+      final EditorColorsScheme editorColorsScheme = mySchemesManager.findSchemeByName(attributesEP.scheme);
+      if(editorColorsScheme == null){
+        LOG.warn("Cannot find scheme: " + attributesEP.scheme);
+        continue;
+      }
+      try {
+        InputStream inputStream = attributesEP.getLoaderForClass().getResourceAsStream(attributesEP.file);
+        Document document = JDOMUtil.loadDocument(inputStream);
+
+        ((AbstractColorsScheme)editorColorsScheme).readAttributes(document.getRootElement());
+      }
+      catch (Exception e1) {
+        LOG.error(e1);
       }
     }
   }
