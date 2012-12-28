@@ -297,8 +297,10 @@ public class VfsUtilTest extends PlatformLangTestCase {
   }
 
   public void testToUri() {
-    assertEquals("file:///asd", VfsUtil.toUri(new File("/asd")).toASCIIString());
-    assertEquals("file:///asd%20/sd", VfsUtil.toUri(new File("/asd /sd")).toASCIIString());
+    if (!SystemInfo.isWindows) {
+      assertEquals("file:///asd", VfsUtil.toUri(new File("/asd")).toASCIIString());
+      assertEquals("file:///asd%20/sd", VfsUtil.toUri(new File("/asd /sd")).toASCIIString());
+    }
 
     URI uri = VfsUtil.toUri("file:///asd");
     assertNotNull(uri);
