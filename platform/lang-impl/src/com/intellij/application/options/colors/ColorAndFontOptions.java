@@ -30,8 +30,8 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.settings.DiffOptionsPanel;
 import com.intellij.openapi.diff.impl.settings.DiffPreviewPanel;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.LanguageDefaultHighlighterColors;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -773,7 +773,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
       if (fallbackKey != null) {
         myFallbackAttributes = scheme.getAttributes(fallbackKey);
-        myInheritanceDescription = LanguageDefaultHighlighterColors.getDisplayName(fallbackKey);
+        myInheritanceDescription = DefaultLanguageHighlighterColors.getDisplayName(fallbackKey);
         if (myInheritanceDescription == null) {
           myInheritanceDescription = fallbackKey.getExternalName();
         }

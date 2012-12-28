@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.options.colors.pages;
 
-import com.intellij.openapi.editor.LanguageDefaultHighlighterColors;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
@@ -37,18 +37,18 @@ import java.util.Map;
  *
  * @author Rustam Vishnyakov
  */
-public class LanguageDefaultColorsPage implements ColorSettingsPage, DisplayPrioritySortable {
+public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrioritySortable {
 
   private static final Map<String, TextAttributesKey> TAG_HIGHLIGHTING_MAP = new HashMap<String, TextAttributesKey>();
 
   static {
-    TAG_HIGHLIGHTING_MAP.put("template_language", LanguageDefaultHighlighterColors.TEMPLATE_LANGUAGE_COLOR);
-    TAG_HIGHLIGHTING_MAP.put("identifier", LanguageDefaultHighlighterColors.IDENTIFIER);
+    TAG_HIGHLIGHTING_MAP.put("template_language", DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR);
+    TAG_HIGHLIGHTING_MAP.put("identifier", DefaultLanguageHighlighterColors.IDENTIFIER);
   }
 
   private static final AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = {
-    LanguageDefaultHighlighterColors.createAttributeDescriptor(LanguageDefaultHighlighterColors.IDENTIFIER),
-    LanguageDefaultHighlighterColors.createAttributeDescriptor(LanguageDefaultHighlighterColors.TEMPLATE_LANGUAGE_COLOR)
+    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.IDENTIFIER),
+    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR)
   };
 
   @Nullable

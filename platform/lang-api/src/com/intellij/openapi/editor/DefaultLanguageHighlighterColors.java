@@ -26,7 +26,7 @@ import java.util.Map;
  *
  * @author Rustam Vishnyakov
  */
-public class LanguageDefaultHighlighterColors {
+public class DefaultLanguageHighlighterColors {
 
   private final static Map<TextAttributesKey,String> DISPLAY_NAMES_MAP = new HashMap<TextAttributesKey, String>();
 

@@ -332,7 +332,7 @@
                   serviceImplementation="com.intellij.openapi.roots.impl.LibraryScopeCache"/>
 
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage" id="general"/>
-  <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.LanguageDefaultColorsPage" id="general"/>
+  <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.DefaultLanguageColorsPage" id="general"/>
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.ANSIColoredConsoleColorsPage" id="general"/>
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.CustomColorsPage" id="custom"/>
 
