@@ -52,6 +52,11 @@
           <option name="FOREGROUND"/>
         </value>
       </option>
+      <option name="DEFAULT_NUMBER">
+        <value>
+          <option name="FOREGROUND" value="ff"/>
+        </value>
+      </option>
 
       <option name="LINE_PARTIAL_COVERAGE">
         <value>

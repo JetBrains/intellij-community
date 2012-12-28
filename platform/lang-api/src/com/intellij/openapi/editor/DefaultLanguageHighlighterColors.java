@@ -32,12 +32,15 @@ public class DefaultLanguageHighlighterColors {
 
   public final static TextAttributesKey TEMPLATE_LANGUAGE_COLOR =
     TextAttributesKey.createTextAttributesKey("DEFAULT_TEMPLATE_LANGUAGE_COLOR");
-
-  public final static TextAttributesKey IDENTIFIER = TextAttributesKey.createTextAttributesKey("DEFAULT_IDENTIFIER");
+  public final static TextAttributesKey IDENTIFIER =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_IDENTIFIER");
+  public final static TextAttributesKey NUMBER =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_NUMBER", SyntaxHighlighterColors.NUMBER);
 
   static {
     DISPLAY_NAMES_MAP.put(IDENTIFIER, "Identifier");
     DISPLAY_NAMES_MAP.put(TEMPLATE_LANGUAGE_COLOR, "Template language");
+    DISPLAY_NAMES_MAP.put(NUMBER, "Number");
   }
 
   public static AttributesDescriptor createAttributeDescriptor(TextAttributesKey key) {

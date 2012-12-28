@@ -44,11 +44,13 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
   static {
     TAG_HIGHLIGHTING_MAP.put("template_language", DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR);
     TAG_HIGHLIGHTING_MAP.put("identifier", DefaultLanguageHighlighterColors.IDENTIFIER);
+    TAG_HIGHLIGHTING_MAP.put("number", DefaultLanguageHighlighterColors.NUMBER);
   }
 
   private static final AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = {
     DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.IDENTIFIER),
-    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR)
+    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR),
+    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.NUMBER)
   };
 
   @Nullable
@@ -68,7 +70,8 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
   public String getDemoText() {
     return
       "<identifier>Identifier</identifier>\n" +
-      "<template_language>{% Template language %}</template_language>";
+      "<template_language>{% Template language %}</template_language>\n" +
+      "<number>12345</number>";
   }
 
   @Nullable
