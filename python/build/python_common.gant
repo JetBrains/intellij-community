@@ -1,11 +1,25 @@
+import groovy.io.FileType
+import org.apache.tools.ant.util.StringUtils
+
+private List<String> listTopLevelModules(String root) {
+  def list = []
+
+  def dir = new File(root)
+  dir.eachFile (FileType.FILES) { file ->
+    if (file.name.endsWith(".py")) {
+       list << file.name - ".py"
+    }
+  }
+  return list
+}
+
 binding.setVariable("buildDebuggerEgg", {String sandbox, String pythonHome, String buildName ->
   def eggDir = "$sandbox/pycharm-debug"
   def egg = "$sandbox/pycharm-debug.egg"
 
   ant.delete(dir: eggDir)
   ant.mkdir(dir: eggDir)
-  ant.mkdir(dir:"$eggDir/pydev")
-  ant.copy(todir: "$eggDir/pydev") {
+  ant.copy(todir: "$eggDir") {
     fileset(dir: "$pythonHome/helpers/pydev") {
       include(name: "**/*.py")
     }
@@ -23,6 +37,9 @@ binding.setVariable("buildDebuggerEgg", {String sandbox, String pythonHome, Stri
   ant.replace(file: "$eggDir/pydev/pydevd_comm.py") {
     replacefilter(token: "@@BUILD_NUMBER@@", value: buildName)
   }
+
+  ant.echo(file: "$eggDir/top_level.txt", message: listTopLevelModules("$pythonHome/helpers/pydev").join(StringUtils.LINE_SEP))
+
   ant.zip(destfile: egg) {
     fileset(dir: eggDir)
   }
