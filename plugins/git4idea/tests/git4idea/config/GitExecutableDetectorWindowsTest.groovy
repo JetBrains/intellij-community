@@ -22,6 +22,7 @@ import org.junit.Test
 
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
+import java.util.regex.Matcher
 
 import static junit.framework.Assert.assertEquals
 
@@ -33,14 +34,13 @@ class GitExecutableDetectorWindowsTest {
 
   private File testRoot
   private def CAN_RUN = []
-  private String PATH
+  private String PATH = "%SystemRoot%/system32;%SystemRoot%;%SystemRoot%/System32/Wbem;%SYSTEMROOT%/System32/WindowsPowerShell/v1.0/;"
 
   @Before
   void setUp() {
     GitTestUtil.setWindows(true);
     testRoot = FileUtil.createTempDirectory("", "")
     setWindowsRoot(new File(testRoot, "C_"));
-    PATH = System.getenv("PATH")
   }
 
   @Test
@@ -189,7 +189,7 @@ class GitExecutableDetectorWindowsTest {
   }
 
   String convertBack(String detected) {
-    detected = detected.replace(testRoot.path + "/", "").replace('\\', '/')
+    detected = detected.replace(testRoot.path + File.separator, "").replace('\\', '/')
     detected = returnDiskColor(detected)
     return detected
   }
@@ -201,10 +201,14 @@ class GitExecutableDetectorWindowsTest {
   }
 
   def mkPath(String path) {
-    path = FileUtil.toSystemDependentName(replaceDiskColon(path))
-    def file = new File(testRoot.getPath() + File.separator + path)
+    File file = new File(convertPath(path))
     file.getParentFile().mkdirs()
     file.createNewFile()
+  }
+
+  private String convertPath(String path) {
+    path = FileUtil.toSystemDependentName(replaceDiskColon(path))
+    return testRoot.getPath() + File.separator + path
   }
 
   static String replaceDiskColon(String path) {
@@ -230,7 +234,7 @@ class GitExecutableDetectorWindowsTest {
 
       @Override
       protected String getPath() {
-        return PATH.replaceAll('(\\w):', testRoot.path + File.separator + "\$1_");
+        return PATH.split(";").collect { convertPath(it) }.join(";");
       }
     }.detect();
   }
