@@ -12,7 +12,12 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.inspections.PyStringFormatParser;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.PyTypeParser;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -143,6 +148,40 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
         final PyExpression newDictLiteral = generator.createExpressionFromText(languageLevel, builder.toString());
         final PsiElement newElement = valueExpression.replace(newDictLiteral);
         return newElement.findElementAt(pos);
+      }
+      else {
+        final TypeEvalContext context = TypeEvalContext.slow();
+        final PyType valueType = valueExpression.getType(context);
+        final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(oldExpression);
+        final PyType tupleType = builtinCache.getTupleType();
+        final PyType mappingType = PyTypeParser.getTypeByName(null, "collections.Mapping");
+        if (!PyTypeChecker.match(tupleType, valueType, context) ||
+            (mappingType != null && !PyTypeChecker.match(mappingType, valueType, context))) {
+          // 'foo%s' % value if value is not tuple or mapping -> '%s%s' % (s, value)
+          final String newLiteralText = prefix + "%s" + suffix;
+          final PyStringLiteralExpression newLiteralExpression = generator.createStringLiteralAlreadyEscaped(newLiteralText);
+          oldExpression.replace(newLiteralExpression);
+          final StringBuilder builder = new StringBuilder();
+          builder.append("(");
+          final List<PyStringFormatParser.SubstitutionChunk> positional = PyStringFormatParser.getPositionalSubstitutions(substitutions);
+          final int i = getPositionInRanges(PyStringFormatParser.substitutionsToRanges(positional), textRange);
+          final int pos;
+          if (i == 0) {
+            pos = builder.toString().length();
+            builder.append(newText);
+            builder.append(",");
+            builder.append(valueExpression.getText());
+          }
+          else {
+            builder.append(valueExpression.getText());
+            builder.append(",");
+            pos = builder.toString().length();
+            builder.append(newText);
+          }
+          builder.append(")");
+          final PsiElement newElement = valueExpression.replace(generator.createExpressionFromText(languageLevel, builder.toString()));
+          return newElement.findElementAt(pos);
+        }
       }
     }
 
