@@ -21,10 +21,15 @@ import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.dom.MavenPluginDomUtil;
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
+import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.util.ArrayList;
@@ -40,6 +45,27 @@ public class MavenPropertyPsiReferenceProvider extends PsiReferenceProvider {
     return getReferences(element, SOFT_DEFAULT);
   }
 
+  private static boolean isElementCanContainReference(PsiElement element) {
+    if (element instanceof XmlTag) {
+      if ("delimiter".equals(((XmlTag)element).getName())) {
+        XmlTag delimitersTag = ((XmlTag)element).getParentTag();
+        if (delimitersTag != null && "delimiters".equals(delimitersTag.getName())) {
+          XmlTag configurationTag = delimitersTag.getParentTag();
+          if (configurationTag != null && "configuration".equals(configurationTag.getName())) {
+            DomElement configurationDom = DomManager.getDomManager(configurationTag.getProject()).getDomElement(configurationTag);
+            if (configurationDom != null && configurationDom instanceof MavenDomConfiguration) {
+              if (MavenPluginDomUtil.isPlugin((MavenDomConfiguration)configurationDom, "org.apache.maven.plugins", "maven-resources-plugin")) {
+                return false;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return true;
+  }
+
   public static PsiReference[] getReferences(PsiElement element, boolean isSoft) {
     TextRange textRange = ElementManipulators.getValueTextRange(element);
     if (textRange.isEmpty()) return PsiReference.EMPTY_ARRAY;
@@ -50,6 +76,8 @@ public class MavenPropertyPsiReferenceProvider extends PsiReferenceProvider {
 
     MavenProject mavenProject = MavenDomUtil.findContainingProject(element);
     if (mavenProject == null) return PsiReference.EMPTY_ARRAY;
+
+    if (!isElementCanContainReference(element)) return PsiReference.EMPTY_ARRAY;
 
     List<PsiReference> result = null;
 

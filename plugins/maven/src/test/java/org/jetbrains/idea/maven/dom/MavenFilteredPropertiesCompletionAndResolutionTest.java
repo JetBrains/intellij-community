@@ -557,4 +557,48 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     assertNotNull(resolveReference(f, "pom.baseUri"));
   }
 
+  public void testDontAddReferenceToDelimiterDefinition() throws Exception {
+    importProject("<groupId>test</groupId>\n" +
+                  "<artifactId>project</artifactId>\n" +
+                  "<version>1</version>\n" +
+                  "<properties>\n" +
+                  "  <aaa>${zzz}</aaa>\n" +
+                  "</properties>\n" +
+
+                  "<build>\n" +
+                  "  <plugins>\n" +
+                  "    <plugin>\n" +
+                  "      <artifactId>maven-resources-plugin</artifactId>\n" +
+                  "      <configuration>\n" +
+                  "        <delimiters>\n" +
+                  "          <delimiter>${*}</delimiter>\n" +
+                  "        </delimiters>\n" +
+                  "      </configuration>\n" +
+                  "    </plugin>\n" +
+                  "  </plugins>\n" +
+                  "</build>");
+
+    createProjectPom("<groupId>test</groupId>\n" +
+                     "<artifactId>project</artifactId>\n" +
+                     "<version>1</version>\n" +
+                     "<properties>\n" +
+                     "  <aaa>${<error>zzz</error>}</aaa>\n" +
+                     "</properties>\n" +
+
+                     "<build>\n" +
+                     "  <plugins>\n" +
+                     "    <plugin>\n" +
+                     "      <artifactId>maven-resources-plugin</artifactId>\n" +
+                     "      <configuration>\n" +
+                     "        <delimiters>\n" +
+                     "          <delimiter>${*}</delimiter>\n" +
+                     "        </delimiters>\n" +
+                     "      </configuration>\n" +
+                     "    </plugin>\n" +
+                     "  </plugins>\n" +
+                     "</build>");
+
+    checkHighlighting();
+  }
+
 }
