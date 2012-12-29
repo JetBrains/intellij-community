@@ -30,7 +30,10 @@ import org.jetbrains.idea.svn.portable.SvnUpdateClientI;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.SVNInfo;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNUpdateClient;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -42,7 +45,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
     super(vcs);
   }
 
-  protected AbstractUpdateIntegrateCrawler createCrawler(final ISVNEventHandler eventHandler,
+  protected AbstractUpdateIntegrateCrawler createCrawler(final UpdateEventHandler eventHandler,
                                         final boolean totalUpdate,
                                         final ArrayList<VcsException> exceptions, final UpdatedFiles updatedFiles) {
     return new UpdateCrawler(myVcs, eventHandler, totalUpdate, exceptions, updatedFiles);
@@ -64,7 +67,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
   }
 
   protected static class UpdateCrawler extends AbstractUpdateIntegrateCrawler {
-    public UpdateCrawler(SvnVcs vcs, ISVNEventHandler handler, boolean totalUpdate,
+    public UpdateCrawler(SvnVcs vcs, UpdateEventHandler handler, boolean totalUpdate,
                          Collection<VcsException> exceptions, UpdatedFiles postUpdateFiles) {
       super(totalUpdate, postUpdateFiles, exceptions, handler, vcs);
     }
@@ -87,6 +90,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
       final SVNRevision updateTo = rootInfo != null && rootInfo.isUpdateToRevision() ? rootInfo.getRevision() : SVNRevision.HEAD;
       if (isSwitch) {
         final SvnUpdateClientI updateClient = createUpdateClient(configuration, root, true, sourceUrl);
+        myHandler.addToSwitch(root, sourceUrl);
         rev = updateClient.doSwitch(root, rootInfo.getUrl(), SVNRevision.UNDEFINED, updateTo, configuration.UPDATE_DEPTH, configuration.FORCE_UPDATE, false);
       } else {
         final SvnUpdateClientI updateClient = createUpdateClient(configuration, root, false, sourceUrl);

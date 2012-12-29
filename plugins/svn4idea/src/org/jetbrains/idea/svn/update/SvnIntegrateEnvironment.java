@@ -27,7 +27,6 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
@@ -41,7 +40,7 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
     super(vcs);
   }
 
-  protected AbstractUpdateIntegrateCrawler createCrawler(ISVNEventHandler eventHandler,
+  protected AbstractUpdateIntegrateCrawler createCrawler(UpdateEventHandler eventHandler,
                                                          boolean totalUpdate,
                                                          ArrayList<VcsException> exceptions,
                                                          UpdatedFiles updatedFiles) {
@@ -73,7 +72,7 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
   private class IntegrateCrawler extends AbstractUpdateIntegrateCrawler {
 
     public IntegrateCrawler(SvnVcs vcs,
-                            ISVNEventHandler handler,
+                            UpdateEventHandler handler,
                             boolean totalUpdate,
                             Collection<VcsException> exceptions,
                             UpdatedFiles postUpdateFiles) {

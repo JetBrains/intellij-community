@@ -25,7 +25,6 @@ import org.jetbrains.idea.svn.SvnWCRootCrawler;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 
 import java.io.File;
@@ -33,7 +32,7 @@ import java.util.Collection;
 
 public abstract class AbstractUpdateIntegrateCrawler implements SvnWCRootCrawler {
   protected final SvnVcs myVcs;
-  protected final ISVNEventHandler myHandler;
+  protected final UpdateEventHandler myHandler;
   protected final Collection<VcsException> myExceptions;
   protected final UpdatedFiles myPostUpdateFiles;
   protected final boolean myIsTotalUpdate;
@@ -43,7 +42,7 @@ public abstract class AbstractUpdateIntegrateCrawler implements SvnWCRootCrawler
     final boolean isTotalUpdate,
     final UpdatedFiles postUpdateFiles,
     final Collection<VcsException> exceptions,
-    final ISVNEventHandler handler,
+    final UpdateEventHandler handler,
     final SvnVcs vcs) {
     myIsTotalUpdate = isTotalUpdate;
     myPostUpdateFiles = postUpdateFiles;
