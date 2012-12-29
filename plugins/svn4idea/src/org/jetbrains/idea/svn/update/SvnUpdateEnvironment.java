@@ -87,7 +87,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
       final SVNRevision updateTo = rootInfo != null && rootInfo.isUpdateToRevision() ? rootInfo.getRevision() : SVNRevision.HEAD;
       if (isSwitch) {
         final SvnUpdateClientI updateClient = createUpdateClient(configuration, root, true, sourceUrl);
-        rev = updateClient.doSwitch(root, rootInfo.getUrl(), SVNRevision.UNDEFINED, rootInfo.getRevision(), configuration.UPDATE_DEPTH, configuration.FORCE_UPDATE, false);
+        rev = updateClient.doSwitch(root, rootInfo.getUrl(), SVNRevision.UNDEFINED, updateTo, configuration.UPDATE_DEPTH, configuration.FORCE_UPDATE, false);
       } else {
         final SvnUpdateClientI updateClient = createUpdateClient(configuration, root, false, sourceUrl);
         rev = updateClient.doUpdate(root, updateTo, configuration.UPDATE_DEPTH, configuration.FORCE_UPDATE, false);
