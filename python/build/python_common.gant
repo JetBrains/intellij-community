@@ -33,7 +33,7 @@ binding.setVariable("buildDebuggerEggPy3K", {String sandbox, String pythonHome, 
 
 private GString buildEgg(String sandbox, String pythonHome, String buildName, String eggName, Closure custom) {
   def eggDir = "$sandbox/$eggName"
-  def egg = "$sandbox/$eggName"".egg"
+  def egg = "$sandbox/${eggName}.egg"
 
   ant.delete(dir: eggDir)
   ant.mkdir(dir: eggDir)
