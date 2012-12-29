@@ -119,4 +119,6 @@ public enum A {
   void testFinalMethodParameterUsedInAnonymous() { doTest() }
 
   void testMethodWithUntypedParameterInitializedWithNull() { doTest() }
+
+  void testGroovyDoc() { doTest() }
 }

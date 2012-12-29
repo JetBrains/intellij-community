@@ -61,8 +61,9 @@ import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.
  */
 public class ClassItemGeneratorImpl implements ClassItemGenerator {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.ClassItemGeneratorImpl");
-  private ClassNameProvider classNameProvider;
-  private ExpressionContext context;
+
+  private final ClassNameProvider classNameProvider;
+  private final ExpressionContext context;
 
   public ClassItemGeneratorImpl(@NotNull ExpressionContext context) {
     classNameProvider = new GeneratorClassNameProvider();
@@ -257,7 +258,8 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     ExpressionContext extended = context.extend();
     extended.searchForLocalVarsToWrap((GroovyPsiElement)scriptFile);
     new CodeBlockGenerator(builder, extended, exitPoints)
-      .visitStatementOwner((GroovyFile)scriptFile, MissingReturnInspection.methodMissesSomeReturns((GroovyFile)scriptFile, MissingReturnInspection.ReturnStatus.mustReturnValue));
+      .visitStatementOwner((GroovyFile)scriptFile, MissingReturnInspection
+        .methodMissesSomeReturns((GroovyFile)scriptFile, MissingReturnInspection.ReturnStatus.mustReturnValue));
     builder.append("\n}\n");
   }
 
