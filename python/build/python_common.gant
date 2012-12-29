@@ -14,17 +14,38 @@ private List<String> listTopLevelModules(String root) {
 }
 
 binding.setVariable("buildDebuggerEgg", {String sandbox, String pythonHome, String buildName ->
-  def eggDir = "$sandbox/pycharm-debug"
-  def egg = "$sandbox/pycharm-debug.egg"
+  return buildEgg(sandbox, pythonHome, buildName, "pycharm-debug", {})
+})
+
+binding.setVariable("buildDebuggerEggPy3K", {String sandbox, String pythonHome, String buildName ->
+  return buildEgg(sandbox, pythonHome, buildName, "pycharm-debug-py3k") {
+    exclude("**/_pydev_BaseHTTPServer.py")
+    exclude("**/_pydev_SimpleXMLRPCServer.py")
+    exclude("**/_pydev_SocketServer.py")
+    exclude("**/_pydev_inspect.py")
+    exclude("**/_pydev_threading.py")
+    exclude("**/_pydev_xmlrpclib.py")
+    exclude("**/jyimportsTipper.py")
+    exclude("**/pydevconsole_code_for_ironpython.py")
+    exclude("**/pydevd_exec.py")
+  }
+})
+
+private GString buildEgg(String sandbox, String pythonHome, String buildName, String eggName, Closure custom) {
+  def eggDir = "$sandbox/$eggName"
+  def egg = "$sandbox/$eggName"".egg"
 
   ant.delete(dir: eggDir)
   ant.mkdir(dir: eggDir)
+
   ant.copy(todir: "$eggDir") {
     fileset(dir: "$pythonHome/helpers/pydev") {
       include(name: "**/*.py")
+      custom()
     }
   }
-  ant.mkdir(dir:"$eggDir/EGG-INFO")
+
+  ant.mkdir(dir: "$eggDir/EGG-INFO")
 
   ant.copy(todir: "$eggDir/EGG-INFO") {
     fileset(dir: "$pythonHome/resources/debugger-egg/EGG-INFO")
@@ -38,10 +59,10 @@ binding.setVariable("buildDebuggerEgg", {String sandbox, String pythonHome, Stri
     replacefilter(token: "@@BUILD_NUMBER@@", value: buildName)
   }
 
-  ant.echo(file: "$eggDir/top_level.txt", message: listTopLevelModules("$pythonHome/helpers/pydev").join(StringUtils.LINE_SEP))
+  ant.echo(file: "$eggDir/EGG-INFO/top_level.txt", message: listTopLevelModules("$eggDir").join(StringUtils.LINE_SEP))
 
   ant.zip(destfile: egg) {
     fileset(dir: eggDir)
   }
   return egg
-})
+}
