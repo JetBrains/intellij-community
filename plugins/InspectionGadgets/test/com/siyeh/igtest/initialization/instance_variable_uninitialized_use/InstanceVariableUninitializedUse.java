@@ -15,3 +15,14 @@ class InstanceVariableUnitializedUse {
 
   }
 }
+class InstanceFieldVsDoWhile {
+
+  private Object object;
+
+  public InstanceFieldVsDoWhile() {
+    do {
+      object = new Object();
+    } while (object.hashCode() < 1000); // Instance field used before initialization
+  }
+
+}
