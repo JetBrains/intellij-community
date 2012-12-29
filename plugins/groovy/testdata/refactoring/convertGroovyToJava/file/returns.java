@@ -11,17 +11,11 @@ public int foo3() {
 org.codehaus.groovy.runtime.DefaultGroovyMethods.print(this, "foo");
 }
 
-public java.lang.Integer foo4() {
-return 1;
-}
+public java.lang.Integer foo4() {return 1;}
 
-public java.lang.Integer foo5() {
-return 2;
-}
+public java.lang.Integer foo5() {return 2;}
 
-public int foo6() {
-return 2;
-}
+public int foo6() {return 2;}
 
 public java.lang.Integer foo7() {
 if (true)return 3; else return 4;

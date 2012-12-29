@@ -352,8 +352,12 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.project);
       final String name = typeDefinition.getName();
       GrTypeDefinition tempClass = factory.createTypeDefinition("class " + name + " extends groovy.lang.Script {\n" +
-                                                                "  def " + name + "(groovy.lang.Binding binding){ super(binding);}\n" +
-                                                                "  def " + name + "(){super();}\n" +
+                                                                "  def " + name + "(groovy.lang.Binding binding){\n" +
+                                                                "    super(binding);\n" +
+                                                                "  }\n" +
+                                                                "  def " + name + "(){\n" +
+                                                                "    super();\n" +
+                                                                "  }\n" +
                                                                 "}");
       ContainerUtil.addAll(result, tempClass.getCodeConstructors());
     }

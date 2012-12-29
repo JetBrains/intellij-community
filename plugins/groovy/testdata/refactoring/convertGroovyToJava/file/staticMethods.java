@@ -3,7 +3,6 @@ public void foo() {
 foox();
 }
 
-public static void foox() {
-}
+public static void foox() {}
 
 }

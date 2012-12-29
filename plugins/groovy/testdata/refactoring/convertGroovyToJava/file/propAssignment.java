@@ -13,7 +13,10 @@ new propAssignment(new groovy.lang.Binding(args)).run();
 }
 
 public java.lang.Object run() {
+
+
 A a = new A();
+
 print(3 + (setProp(a, 2 + 1)));
 return null;
 

@@ -23,7 +23,9 @@ org.codehaus.groovy.runtime.DefaultGroovyMethods.println(this, getFoo());
 }
 
 };
+
 an.run();
+
 return null;
 
 }

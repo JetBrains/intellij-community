@@ -3,8 +3,7 @@ public class Foo {
    * method comment
    * @param f
    */
-public <A, B> void abc(java.lang.Object f) {
-}
+public <A, B> void abc(java.lang.Object f) {}
 
 public void abr() {
 abc(null);
