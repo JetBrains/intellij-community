@@ -30,8 +30,8 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.settings.DiffOptionsPanel;
 import com.intellij.openapi.diff.impl.settings.DiffPreviewPanel;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.LanguageDefaultHighlighterColors;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -625,7 +625,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   private static void addSchemedDescription(ArrayList<EditorSchemeAttributeDescriptor> array, String name, String group, TextAttributesKey key,
-                                            EditorColorsScheme scheme,
+                                            MyColorScheme scheme,
                                             Icon icon,
                                             String toolTip) {
     ColorAndFontDescription descr = new SchemeTextAttributesDescription(name, group, key, scheme, icon, toolTip);
@@ -763,17 +763,17 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     private TextAttributes myFallbackAttributes;
     private String myInheritanceDescription;
 
-    private SchemeTextAttributesDescription(String name, String group, TextAttributesKey key, EditorColorsScheme scheme, Icon icon,
+    private SchemeTextAttributesDescription(String name, String group, TextAttributesKey key, MyColorScheme  scheme, Icon icon,
                                            String toolTip) {
       super(name, group,
-            getEditableAttributes(scheme, key),
+            getInitialAttributes(scheme, key).clone(),
             key, scheme, icon, toolTip);
       this.key = key;
       myAttributesToApply = getInitialAttributes(scheme, key);
       TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
       if (fallbackKey != null) {
         myFallbackAttributes = scheme.getAttributes(fallbackKey);
-        myInheritanceDescription = LanguageDefaultHighlighterColors.getDisplayName(fallbackKey);
+        myInheritanceDescription = DefaultLanguageHighlighterColors.getDisplayName(fallbackKey);
         if (myInheritanceDescription == null) {
           myInheritanceDescription = fallbackKey.getExternalName();
         }
@@ -781,60 +781,24 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       initCheckedStatus();
     }
 
-    private static TextAttributes getEditableAttributes(EditorColorsScheme scheme, TextAttributesKey key) {
-      TextAttributes attributes = getInitialAttributes(scheme, key);
-      if (attributes != null) return attributes.clone();
-      return new TextAttributes();
-    }
 
-    private static TextAttributes getInitialAttributes(EditorColorsScheme scheme, TextAttributesKey key) {
+    @NotNull
+    private static TextAttributes getInitialAttributes(MyColorScheme scheme, TextAttributesKey key) {
       TextAttributes attributes = scheme.getAttributes(key);
       TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
-      if (attributes == null && fallbackKey != null) {
+      if (fallbackKey != null && !scheme.containsKey(key)) {
         TextAttributes fallbackAttributes = scheme.getAttributes(fallbackKey);
-        if (fallbackAttributes != null) return null;
+        if (attributes != null && attributes == fallbackAttributes) {
+          return new TextAttributes();
+        }
       }
-      return attributes;
-    }
-
-    private boolean equalToFallbackAttributes() {
-      if (myFallbackAttributes != null) {
-        return myFallbackAttributes.equals(getTextAttributes());
-      }
-      return false;
-    }
-
-    @Override
-    public boolean isBackgroundChecked() {
-      if (equalToFallbackAttributes()) return false;
-      return super.isBackgroundChecked();
-    }
-
-    @Override
-    public boolean isForegroundChecked() {
-      if (equalToFallbackAttributes()) return false;
-      return super.isForegroundChecked();
-    }
-
-    @Override
-    public boolean isErrorStripeChecked() {
-      if (equalToFallbackAttributes()) return false;
-      return super.isErrorStripeChecked();
-    }
-
-    @Override
-    public boolean isEffectsColorChecked() {
-      if (equalToFallbackAttributes()) return false;
-      return super.isEffectsColorChecked();
+      return attributes != null ? attributes : new TextAttributes();
     }
 
     @Override
     public void apply(EditorColorsScheme scheme) {
       if (scheme == null) scheme = getScheme();
       if (myAttributesToApply != null) {
-        if (equalToFallbackAttributes()) {
-          getTextAttributes().reset();
-        }
         scheme.setAttributes(key, getTextAttributes());
       }
     }
@@ -851,11 +815,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     @Override
     public boolean isInherited() {
-      if (myFallbackAttributes != null) {
-        if (getTextAttributes().isEmpty()) return true;
-        return getTextAttributes().equals(myFallbackAttributes);
-      }
-      return false;
+      return myFallbackAttributes != null && getTextAttributes().isEmpty();
     }
 
     @Nullable

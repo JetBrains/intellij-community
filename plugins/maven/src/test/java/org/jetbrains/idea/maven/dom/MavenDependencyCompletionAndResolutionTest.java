@@ -29,6 +29,9 @@ import org.jetbrains.idea.maven.dom.intentions.ChooseFileIntentionAction;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
   @Override
   protected void setUpInWriteAction() throws Exception {
@@ -109,7 +112,8 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "  </dependency>" +
                      "</dependencies>");
 
-    assertCompletionVariants(myProjectPom, "3.8.1", "3.8.2", "4.0");
+    List<String> variants = getCompletionVariants(myProjectPom);
+    assertEquals(Arrays.asList("4.0", "3.8.2", "3.8.1"), variants);
   }
 
   public void testDoesNotCompleteVersionOnUnknownGroupOrArtifact() throws Exception {

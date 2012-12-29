@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.options.colors.pages;
 
-import com.intellij.openapi.editor.LanguageDefaultHighlighterColors;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
@@ -37,18 +37,30 @@ import java.util.Map;
  *
  * @author Rustam Vishnyakov
  */
-public class LanguageDefaultColorsPage implements ColorSettingsPage, DisplayPrioritySortable {
+public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrioritySortable {
 
   private static final Map<String, TextAttributesKey> TAG_HIGHLIGHTING_MAP = new HashMap<String, TextAttributesKey>();
 
   static {
-    TAG_HIGHLIGHTING_MAP.put("template_language", LanguageDefaultHighlighterColors.TEMPLATE_LANGUAGE_COLOR);
-    TAG_HIGHLIGHTING_MAP.put("identifier", LanguageDefaultHighlighterColors.IDENTIFIER);
+    TAG_HIGHLIGHTING_MAP.put("template_language", DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR);
+    TAG_HIGHLIGHTING_MAP.put("identifier", DefaultLanguageHighlighterColors.IDENTIFIER);
+    TAG_HIGHLIGHTING_MAP.put("number", DefaultLanguageHighlighterColors.NUMBER);
+    TAG_HIGHLIGHTING_MAP.put("keyword", DefaultLanguageHighlighterColors.KEYWORD);
+    TAG_HIGHLIGHTING_MAP.put("string", DefaultLanguageHighlighterColors.STRING);
+    TAG_HIGHLIGHTING_MAP.put("line_comment", DefaultLanguageHighlighterColors.LINE_COMMENT);
+    TAG_HIGHLIGHTING_MAP.put("operation_sign", DefaultLanguageHighlighterColors.OPERATION_SIGN);
+    TAG_HIGHLIGHTING_MAP.put("braces", DefaultLanguageHighlighterColors.BRACES);
   }
 
   private static final AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = {
-    LanguageDefaultHighlighterColors.createAttributeDescriptor(LanguageDefaultHighlighterColors.IDENTIFIER),
-    LanguageDefaultHighlighterColors.createAttributeDescriptor(LanguageDefaultHighlighterColors.TEMPLATE_LANGUAGE_COLOR)
+    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.KEYWORD),
+    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.IDENTIFIER),
+    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.STRING),
+    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.NUMBER),
+    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.OPERATION_SIGN),
+    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.LINE_COMMENT),
+    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR),
+    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.BRACES),
   };
 
   @Nullable
@@ -67,7 +79,13 @@ public class LanguageDefaultColorsPage implements ColorSettingsPage, DisplayPrio
   @Override
   public String getDemoText() {
     return
+      "<keyword>Keyword</keyword>\n" +
       "<identifier>Identifier</identifier>\n" +
+      "<string>'String'</string>\n" +
+      "<number>12345</number>\n" +
+      "<operation_sign>Operator</operation_sign>\n" +
+      "<braces>{</braces> Braces <braces>}</braces>\n" +
+      "<line_comment>// Line comment</line_comment>\n" +
       "<template_language>{% Template language %}</template_language>";
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
@@ -45,23 +46,23 @@ public class GrReferenceAdjuster {
   }
 
 
-  public static boolean shortenReferences(PsiElement element) {
+  public static boolean shortenReferences(@NotNull PsiElement element) {
     final TextRange range = element.getTextRange();
     return shortenReferences(element, range.getStartOffset(), range.getEndOffset(), true, false);
   }
 
-  public static boolean shortenReferences(PsiElement element, int start, int end, boolean addImports, boolean incomplete) {
+  public static boolean shortenReferences(@NotNull PsiElement element, int start, int end, boolean addImports, boolean incomplete) {
     return process(element, start, end, addImports, incomplete);
   }
 
-  public static <T extends PsiElement> boolean shortenReference(GrQualifiedReference<T> ref) {
+  public static <T extends PsiElement> boolean shortenReference(@NotNull GrQualifiedReference<T> ref) {
     boolean result = shortenReferenceInner(ref, true, false);
     final TextRange range = ref.getTextRange();
     result |= process(ref, range.getStartOffset(), range.getEndOffset(), true, false);
     return result;
   }
 
-  private static boolean process(PsiElement element, int start, int end, boolean addImports, boolean incomplete) {
+  private static boolean process(@NotNull PsiElement element, int start, int end, boolean addImports, boolean incomplete) {
     boolean result = false;
     if (element instanceof GrQualifiedReference<?> && ((GrQualifiedReference)element).resolve() instanceof PsiClass) {
       result = shortenReferenceInner((GrQualifiedReference<?>)element, addImports, incomplete);
@@ -81,7 +82,9 @@ public class GrReferenceAdjuster {
     return result;
   }
 
-  private static <Qualifier extends PsiElement> boolean shortenReferenceInner(GrQualifiedReference<Qualifier> ref, boolean addImports, boolean incomplete) {
+  private static <Qualifier extends PsiElement> boolean shortenReferenceInner(@NotNull GrQualifiedReference<Qualifier> ref,
+                                                                              boolean addImports,
+                                                                              boolean incomplete) {
 
     final Qualifier qualifier = ref.getQualifier();
     if (qualifier == null || PsiUtil.isSuperReference(qualifier) || cannotShortenInContext(ref)) {
@@ -105,13 +108,20 @@ public class GrReferenceAdjuster {
     return true;
   }
 
-  private static <Qualifier extends PsiElement> boolean checkCopyWithoutQualifier(GrQualifiedReference<Qualifier> ref,
+  private static <Qualifier extends PsiElement> boolean checkCopyWithoutQualifier(@NotNull GrQualifiedReference<Qualifier> ref,
                                                                                   boolean addImports,
-                                                                                  PsiElement resolved) {
+                                                                                  @NotNull PsiElement resolved) {
     final GrQualifiedReference<Qualifier> copy = getCopy(ref);
+    if (copy == null) return false;
     copy.setQualifier(null);
 
-    if (copy.isReferenceTo(resolved)) return true;
+    final PsiElement resolvedCopy = copy.resolve();
+    if (ref.getManager().areElementsEquivalent(resolved, resolvedCopy)) {
+      return true;
+    }
+    else if (resolvedCopy != null) {
+      return false;
+    }
 
     if (resolved instanceof PsiClass) {
       final PsiClass clazz = (PsiClass)resolved;
@@ -127,14 +137,14 @@ public class GrReferenceAdjuster {
     return false;
   }
 
-  private static boolean checkIsInnerClass(PsiClass resolved) {
+  private static boolean checkIsInnerClass(@NotNull PsiClass resolved) {
     final PsiClass containingClass = resolved.getContainingClass();
     return containingClass == null || CodeStyleSettingsManager.getSettings(resolved.getProject())
       .getCustomSettings(GroovyCodeStyleSettings.class).INSERT_INNER_CLASS_IMPORTS;
   }
 
   @Nullable
-  private static <Qualifier extends PsiElement> PsiElement resolveRef(GrQualifiedReference<Qualifier> ref, boolean incomplete) {
+  private static <Qualifier extends PsiElement> PsiElement resolveRef(@NotNull GrQualifiedReference<Qualifier> ref, boolean incomplete) {
     if (!incomplete) return ref.resolve();
 
     PsiResolveHelper helper = JavaPsiFacade.getInstance(ref.getProject()).getResolveHelper();
@@ -149,7 +159,8 @@ public class GrReferenceAdjuster {
 
 
   @SuppressWarnings("unchecked")
-  private static <Qualifier extends PsiElement> GrQualifiedReference<Qualifier> getCopy(GrQualifiedReference<Qualifier> ref) {
+  @Nullable
+  private static <Qualifier extends PsiElement> GrQualifiedReference<Qualifier> getCopy(@NotNull GrQualifiedReference<Qualifier> ref) {
     if (ref.getParent() instanceof GrMethodCall) {
       final GrMethodCall copy = ((GrMethodCall)ref.getParent().copy());
       return (GrQualifiedReference<Qualifier>)copy.getInvokedExpression();
@@ -157,7 +168,7 @@ public class GrReferenceAdjuster {
     return (GrQualifiedReference<Qualifier>)ref.copy();
   }
 
-  private static <Qualifier extends PsiElement> boolean shorteningIsMeaningfully(GrQualifiedReference<Qualifier> ref) {
+  private static <Qualifier extends PsiElement> boolean shorteningIsMeaningfully(@NotNull GrQualifiedReference<Qualifier> ref) {
 
     if (ref instanceof GrReferenceElementImpl && ((GrReferenceElementImpl)ref).isFullyQualified()) {
       final GrDocComment doc = PsiTreeUtil.getParentOfType(ref, GrDocComment.class);
@@ -185,12 +196,12 @@ public class GrReferenceAdjuster {
     return false;
   }
 
-  private static <Qualifier extends PsiElement> boolean cannotShortenInContext(GrQualifiedReference<Qualifier> ref) {
+  private static <Qualifier extends PsiElement> boolean cannotShortenInContext(@NotNull GrQualifiedReference<Qualifier> ref) {
     return PsiTreeUtil.getParentOfType(ref, GrImportStatement.class) != null ||
            PsiTreeUtil.getParentOfType(ref, GroovyCodeFragment.class) != null;
   }
 
-  private static <Qualifier extends PsiElement> boolean mayInsertImport(GrQualifiedReference<Qualifier> ref) {
+  private static <Qualifier extends PsiElement> boolean mayInsertImport(@NotNull GrQualifiedReference<Qualifier> ref) {
     return !(ref.getContainingFile() instanceof GroovyCodeFragment) &&
            PsiTreeUtil.getParentOfType(ref, GrImportStatement.class) == null &&
            ref.getContainingFile() instanceof GroovyFileBase;

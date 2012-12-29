@@ -15,8 +15,16 @@
  */
 package org.jetbrains.idea.maven.dom.converters;
 
+import com.intellij.codeInsight.completion.CompletionLocation;
+import com.intellij.codeInsight.completion.CompletionWeigher;
+import com.intellij.codeInsight.completion.PredefinedCompletionWeigher;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xml.ConvertContext;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.MavenVersionComparable;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.MavenId;
 
@@ -43,5 +51,24 @@ public class MavenArtifactCoordinatesVersionConverter extends MavenArtifactCoord
   protected Set<String> doGetVariants(MavenId id, MavenProjectIndicesManager manager) {
     if (StringUtil.isEmpty(id.getGroupId()) || StringUtil.isEmpty(id.getArtifactId())) return Collections.emptySet();
     return manager.getVersions(id.getGroupId(), id.getArtifactId());
+  }
+
+  @Nullable
+  @Override
+  public LookupElement createLookupElement(String s) {
+    LookupElementBuilder lookup = LookupElementBuilder.create(s);
+
+    lookup.putUserData(PredefinedCompletionWeigher.KEY, MavenVersionWeigher.INSTANCE);
+
+    return lookup;
+  }
+
+  private static class MavenVersionWeigher extends CompletionWeigher {
+    private static final MavenVersionWeigher INSTANCE = new MavenVersionWeigher();
+
+    @Override
+    public Comparable weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {
+      return new MavenVersionComparable(element.getLookupString());
+    }
   }
 }

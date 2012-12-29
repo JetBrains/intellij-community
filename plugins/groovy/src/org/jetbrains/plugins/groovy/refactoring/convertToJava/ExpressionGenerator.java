@@ -25,6 +25,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
@@ -1172,7 +1173,15 @@ public class ExpressionGenerator extends Generator {
     final PsiElement resolved = resolveResult.getElement();
 
     if (resolved instanceof PsiMethod) {
-      final GrExpression typeParam = factory.createExpressionFromText(typeElement.getText(), typeCastExpression);
+      final GrExpression typeParam;
+      try {
+        typeParam = factory.createExpressionFromText(typeElement.getText(), typeCastExpression);
+      }
+      catch (IncorrectOperationException e) {
+        generateCast(typeElement, operand);
+        return;
+      }
+
       invokeMethodOn(
         ((PsiMethod)resolved),
         operand,

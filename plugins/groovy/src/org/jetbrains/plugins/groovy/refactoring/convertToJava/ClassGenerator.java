@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,33 +15,30 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.writeType;
 
 /**
  * @author Maxim.Medvedev
  */
 public class ClassGenerator {
 
-  private ClassNameProvider classNameProvider;
-  private ClassItemGenerator classItemGenerator;
+  private final ClassNameProvider classNameProvider;
+  private final ClassItemGenerator classItemGenerator;
 
   public ClassGenerator(ClassNameProvider classNameProvider, ClassItemGenerator classItemGenerator) {
     this.classNameProvider = classNameProvider;
@@ -140,41 +137,6 @@ public class ClassGenerator {
     classItemGenerator.writePostponed(text, typeDefinition);
   }
 
-  private void writeImplementsList(StringBuilder text, PsiClass typeDefinition, boolean isInterface) {
-    final Collection<PsiClassType> implementsTypes = new LinkedHashSet<PsiClassType>();
-    Collections.addAll(implementsTypes, typeDefinition.getImplementsListTypes());
-  /*for (PsiClass aClass : collectDelegateTypes(typeDefinition)) {
-      if (aClass.isInterface()) {
-        implementsTypes.add(JavaPsiFacade.getElementFactory(myProject).createType(aClass));
-      } else {
-        Collections.addAll(implementsTypes, aClass.getImplementsListTypes());
-      }
-    }*/
-
-    if (implementsTypes.isEmpty()) return;
-
-    text.append(isInterface ? "extends " : "implements ");
-    for (PsiClassType implementsType : implementsTypes) {
-      writeType(text, implementsType, typeDefinition, classNameProvider);
-      text.append(", ");
-    }
-    if (implementsTypes.size() > 0) text.delete(text.length()-2, text.length());
-    //if (implementsTypes.size() > 0) text.removeFromTheEnd(2);
-    text.append(' ');
-  }
-
-  private void writeExtendsList(StringBuilder text, PsiClass typeDefinition) {
-    final PsiClassType[] extendsClassesTypes = typeDefinition.getExtendsListTypes();
-
-    if (extendsClassesTypes.length > 0) {
-
-      text.append("extends ");
-      writeType(text, extendsClassesTypes[0], typeDefinition, classNameProvider);
-      text.append(' ');
-    }
-  }
-
-
   private void writeAllMethods(StringBuilder text, Collection<PsiMethod> methods, PsiClass aClass) {
     for (PsiMethod method : methods) {
       if (!shouldBeGenerated(method)) continue;
@@ -201,15 +163,5 @@ public class ClassGenerator {
       }
     }
     return true;
-  }
-
-
-  private static int getOptionalParameterCount(GrMethod method) {
-    final GrParameter[] parameters = method.getParameterList().getParameters();
-    int count = 0;
-    for (GrParameter parameter : parameters) {
-      if (parameter.isOptional()) count++;
-    }
-    return count;
   }
 }

@@ -332,7 +332,7 @@
                   serviceImplementation="com.intellij.openapi.roots.impl.LibraryScopeCache"/>
 
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage" id="general"/>
-  <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.LanguageDefaultColorsPage" id="general"/>
+  <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.DefaultLanguageColorsPage" id="general"/>
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.ANSIColoredConsoleColorsPage" id="general"/>
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.CustomColorsPage" id="custom"/>
 
@@ -467,6 +467,7 @@
   <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SdkOrLibraryWeigher" id="sdkOrLibrary"
            order="after sameModule"/>
 
+  <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PredefinedCompletionWeigher"/>
   <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PriorityWeigher" id="priority" order="first"/>
   <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.StatisticsWeigher" id="stats"
            order="after priority"/>
