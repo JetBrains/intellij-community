@@ -2,6 +2,7 @@ package git4idea;
 
 import com.intellij.dvcs.test.MockProject;
 import git4idea.commands.Git;
+import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 
 /**
@@ -18,5 +19,7 @@ public class GitCucumberWorld {
   public static GitPlatformFacade myPlatformFacade;
   public static Git myGit;
   public static GitRepository myRepository;
+  public static GitVcsSettings mySettings;
 
+  public static GitTestVirtualCommitsHolder virtualCommits;
 }

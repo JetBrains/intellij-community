@@ -154,16 +154,17 @@ class GitScenarios {
     git("commit -m just_a_commit")
   }
 
-  public static boolean branchExists(GitRepository repo, String branch) {
+  public static boolean branchExists(GitRepository repo = null, String branch) {
     git(repo, "branch").contains(branch)
   }
 
-  public static void checkout(GitRepository repository, String branch) {
-    if (branchExists(repository, branch)) {
+  public static void checkout(GitRepository repository = null, String branch) {
+    if (branch.equals("master") || branchExists(repository, branch)) {
       git("checkout $branch")
     }
     else {
       git("checkout -b $branch")
     }
   }
+
 }

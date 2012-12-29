@@ -6,6 +6,9 @@ import git4idea.GitPlatformFacade
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryImpl
 
+import static com.intellij.dvcs.test.Executor.*
+import static git4idea.test.GitExecutor.*
+
 /**
  *
  * @author Kirill Likhodedov
@@ -20,17 +23,17 @@ class GitTestInitUtil {
    * @param repoRoot
    */
   public static void initRepo(String repoRoot) {
-    com.intellij.dvcs.test.Executor.cd repoRoot
-    git4idea.test.GitExecutor.git("init")
+    cd repoRoot
+    git("init")
     setupUsername();
-    com.intellij.dvcs.test.Executor.touch("initial.txt")
-    git4idea.test.GitExecutor.git("add initial.txt")
-    git4idea.test.GitExecutor.git("commit -m initial")
+    touch("initial.txt")
+    git("add initial.txt")
+    git("commit -m initial")
   }
 
   public static void setupUsername() {
-    git4idea.test.GitExecutor.git("config user.name $USER_NAME")
-    git4idea.test.GitExecutor.git("config user.email $USER_EMAIL")
+    git("config user.name $USER_NAME")
+    git("config user.email $USER_EMAIL")
   }
 
   public static GitRepository createRepository(String rootDir, GitPlatformFacade platformFacade, Project project) {

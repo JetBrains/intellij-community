@@ -32,10 +32,12 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 
 import java.lang.reflect.Method
+import static com.intellij.dvcs.test.Executor.cd;
+import static GitExecutor.git;
+
 /**
  * @author Kirill Likhodedov
  */
-@Mixin(GitExecutor)
 public class GitTestImpl implements Git {
 
   @NotNull
@@ -197,13 +199,13 @@ public class GitTestImpl implements Git {
                                      @NotNull String hash,
                                      boolean autoCommit,
                                      @NotNull GitLineHandlerListener... listeners) {
-    execute(repository, "cherry-pick -x ${autoCommit ? "" : "-n"} $hash")
+    return execute(repository, "cherry-pick -x ${autoCommit ? "" : "-n"} $hash", listeners);
   }
 
   @NotNull
   @Override
   public GitCommandResult getUnmergedFiles(@NotNull GitRepository repository) {
-    execute(repository, "ls-files --unmerged")
+    return execute(repository, "ls-files --unmerged");
   }
 
   @NotNull
@@ -216,28 +218,41 @@ public class GitTestImpl implements Git {
   }
 
   private static GitCommandResult commandResult(String output) {
-    boolean success = !output.split("\n").collect { isError(it) }.contains(true)
-    return new GitCommandResult(success, 0, Collections.emptyList(), Arrays.asList(StringUtil.splitByLines(output)))
+    Collection<String> err = new ArrayList<>();
+    Collection<String> out = new ArrayList<>();
+    for (String line : output.split("\n")) {
+      if (isError(line)) {
+        err.add(line);
+      }
+      else {
+        out.add(line);
+      }
+    }
+    boolean success = err.isEmpty();
+    return new GitCommandResult(success, 0, err, out);
   }
 
   private static boolean isError(String s) {
     // we don't want to make that method public, since it is reused only in the test.
-    Method m = GitImpl.class.getDeclaredMethod("isError", String.class)
-    m.setAccessible(true)
-    return m.invoke(null, s) as boolean
+    Method m = GitImpl.class.getDeclaredMethod("isError", String.class);
+    m.setAccessible(true);
+    return (boolean) m.invoke(null, s);
   }
 
-  static def feedOutput(String output, GitLineHandlerListener... listeners) {
+  private static void feedOutput(String output, GitLineHandlerListener... listeners) {
     listeners.each { GitLineHandlerListener listener ->
-      output.split("\n").each { listener.onLineAvailable(it, ProcessOutputTypes.STDERR) }
+      String split = output.split("\n")
+      for (String line : split) {
+        listener.onLineAvailable(line, ProcessOutputTypes.STDERR);
+      }
     }
   }
 
-  def execute(GitRepository repository, String operation, GitLineHandlerListener... listeners) {
-    cd repository.root.path
-    def out = git(operation)
-    feedOutput(out, listeners)
-    commandResult(out)
+  private static GitCommandResult execute(GitRepository repository, String operation, GitLineHandlerListener... listeners) {
+    cd(repository.getRoot().getPath());
+    String out = git(operation);
+    feedOutput(out, listeners);
+    return commandResult(out);
   }
 
 }

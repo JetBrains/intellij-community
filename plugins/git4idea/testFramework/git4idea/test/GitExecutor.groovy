@@ -95,8 +95,14 @@ class GitExecutor extends Executor {
   }
 
   public static String git(GitRepository repository, String command) {
-    cd repository.root.path
+    if (repository != null) {
+      cd repository.root.path
+    }
     git command
+  }
+
+  public static String git(String formatString, String... args) {
+    return git(String.format(formatString, args))
   }
 
   public static void cd(GitRepository repository) {
