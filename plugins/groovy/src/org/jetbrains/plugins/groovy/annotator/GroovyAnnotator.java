@@ -319,7 +319,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     final PsiElement parent = typeDefinitionBody.getParent();
     if (parent instanceof GrAnonymousClassDefinition) {
       final PsiElement prev = typeDefinitionBody.getPrevSibling();
-      if (prev != null && TokenSets.WHITE_SPACES_SET.contains(prev.getNode().getElementType()) && prev.getText().contains("\n")) {
+      if (PsiUtil.isLineFeed(prev)) {
         myHolder.createErrorAnnotation(typeDefinitionBody, GroovyBundle.message("ambiguous.code.block"));
       }
     }
