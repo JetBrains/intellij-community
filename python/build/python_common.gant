@@ -19,15 +19,15 @@ binding.setVariable("buildDebuggerEgg", {String sandbox, String pythonHome, Stri
 
 binding.setVariable("buildDebuggerEggPy3K", {String sandbox, String pythonHome, String buildName ->
   return buildEgg(sandbox, pythonHome, buildName, "pycharm-debug-py3k") {
-    exclude("**/_pydev_BaseHTTPServer.py")
-    exclude("**/_pydev_SimpleXMLRPCServer.py")
-    exclude("**/_pydev_SocketServer.py")
-    exclude("**/_pydev_inspect.py")
-    exclude("**/_pydev_threading.py")
-    exclude("**/_pydev_xmlrpclib.py")
-    exclude("**/jyimportsTipper.py")
-    exclude("**/pydevconsole_code_for_ironpython.py")
-    exclude("**/pydevd_exec.py")
+    exclude(name:"**/_pydev_BaseHTTPServer.py")
+    exclude(name:"**/_pydev_SimpleXMLRPCServer.py")
+    exclude(name:"**/_pydev_SocketServer.py")
+    exclude(name:"**/_pydev_inspect.py")
+    exclude(name:"**/_pydev_threading.py")
+    exclude(name:"**/_pydev_xmlrpclib.py")
+    exclude(name:"**/jyimportsTipper.py")
+    exclude(name:"**/pydevconsole_code_for_ironpython.py")
+    exclude(name:"**/pydevd_exec.py")
   }
 })
 
