@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <problems>
   <problem>
-    <file>file:///Users/bas/Projects/IntelliJ IDEA Ultimate/community/plugins/InspectionGadgets/test/com/siyeh/igtest/j2me/abstract_class_with_only_one_direct_inheritor/AbstractClassWithOnlyOneDirectInheritor.java</file>
+    <file>AbstractClassWithOnlyOneDirectInheritor.java</file>
     <line>3</line>
-    <module>test_4290229602261428953</module>
-    <package>com.siyeh.igtest.j2me.abstract_class_with_only_one_direct_inheritor</package>
-    <entry_point TYPE="class" FQNAME="com.siyeh.igtest.j2me.abstract_class_with_only_one_direct_inheritor.AbstractClassWithOnlyOneDirectInheritor" />
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Abstract class which has only one direct inheritor</problem_class>
     <description>Abstract class &lt;code&gt;AbstractClassWithOnlyOneDirectInheritor&lt;/code&gt; has only one direct inheritor #loc</description>
   </problem>
