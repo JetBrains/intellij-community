@@ -96,7 +96,8 @@ public class InjectLanguageAction implements IntentionAction {
     final PsiLanguageInjectionHost host = findInjectionHost(editor, file);
     if (host == null) return;
     if (defaultFunctionalityWorked(host, languageId)) return;
-    final Language language = InjectedLanguage.findLanguageById(languageId);
+    Language language = InjectedLanguage.findLanguageById(languageId);
+    if (language == null) return;
     try {
       for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
         if (support.addInjectionInPlace(language, host)) return;
