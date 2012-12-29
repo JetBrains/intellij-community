@@ -45,12 +45,22 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
     TAG_HIGHLIGHTING_MAP.put("template_language", DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR);
     TAG_HIGHLIGHTING_MAP.put("identifier", DefaultLanguageHighlighterColors.IDENTIFIER);
     TAG_HIGHLIGHTING_MAP.put("number", DefaultLanguageHighlighterColors.NUMBER);
+    TAG_HIGHLIGHTING_MAP.put("keyword", DefaultLanguageHighlighterColors.KEYWORD);
+    TAG_HIGHLIGHTING_MAP.put("string", DefaultLanguageHighlighterColors.STRING);
+    TAG_HIGHLIGHTING_MAP.put("line_comment", DefaultLanguageHighlighterColors.LINE_COMMENT);
+    TAG_HIGHLIGHTING_MAP.put("operation_sign", DefaultLanguageHighlighterColors.OPERATION_SIGN);
+    TAG_HIGHLIGHTING_MAP.put("braces", DefaultLanguageHighlighterColors.BRACES);
   }
 
   private static final AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = {
+    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.KEYWORD),
     DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.IDENTIFIER),
+    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.STRING),
+    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.NUMBER),
+    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.OPERATION_SIGN),
+    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.LINE_COMMENT),
     DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR),
-    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.NUMBER)
+    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.BRACES),
   };
 
   @Nullable
@@ -69,9 +79,14 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
   @Override
   public String getDemoText() {
     return
+      "<keyword>Keyword</keyword>\n" +
       "<identifier>Identifier</identifier>\n" +
-      "<template_language>{% Template language %}</template_language>\n" +
-      "<number>12345</number>";
+      "<string>'String'</string>\n" +
+      "<number>12345</number>\n" +
+      "<operation_sign>Operator</operation_sign>\n" +
+      "<braces>{</braces> Braces <braces>}</braces>\n" +
+      "<line_comment>// Line comment</line_comment>\n" +
+      "<template_language>{% Template language %}</template_language>";
   }
 
   @Nullable
