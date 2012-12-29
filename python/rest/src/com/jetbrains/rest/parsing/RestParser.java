@@ -47,9 +47,7 @@ public class RestParser implements PsiParser {
         marker.done(RestTokenTypes.TITLE);
       }
       else if (type == RestTokenTypes.FIELD) {
-        PsiBuilder.Marker marker = builder.mark();
-        builder.advanceLexer();
-        marker.done(RestTokenTypes.FIELD);
+        parseFieldList(builder);
       }
       else if (type == RestTokenTypes.INLINE_LINE) {
         PsiBuilder.Marker marker = builder.mark();
@@ -62,19 +60,39 @@ public class RestParser implements PsiParser {
         marker.done(RestElementTypes.REFERENCE_TARGET);
       }
       else if (type == RestTokenTypes.LINE) {
-        PsiBuilder.Marker marker = builder.mark();
-        while (type == RestTokenTypes.LINE || type == RestTokenTypes.WHITESPACE) {
-          builder.advanceLexer();
-          type = builder.getTokenType();
-        }
-
-        marker.done(RestElementTypes.LINE_TEXT);
+        parseLineText(builder, type);
       }
       else
         builder.advanceLexer();
     }
     rootMarker.done(root);
     return builder.getTreeBuilt();
+  }
+
+  private static boolean parseLineText(PsiBuilder builder, IElementType type) {
+    PsiBuilder.Marker marker = builder.mark();
+    boolean gotLine = false;
+    while (type == RestTokenTypes.LINE || type == RestTokenTypes.WHITESPACE) {
+      builder.advanceLexer();
+      type = builder.getTokenType();
+      gotLine = true;
+    }
+    if (gotLine)
+      marker.done(RestElementTypes.LINE_TEXT);
+    else
+      marker.drop();
+    return gotLine;
+  }
+
+  private static void parseFieldList(PsiBuilder builder) {
+    PsiBuilder.Marker listMarker = builder.mark();
+    PsiBuilder.Marker marker = builder.mark();
+    builder.advanceLexer();
+    marker.done(RestTokenTypes.FIELD);
+    if (parseLineText(builder, builder.getTokenType()))
+      listMarker.done(RestElementTypes.FIELD_LIST);
+    else
+      listMarker.drop();
   }
 
   private void parseMarkup(PsiBuilder builder) {

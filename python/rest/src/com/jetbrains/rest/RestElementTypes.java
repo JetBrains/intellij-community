@@ -12,5 +12,6 @@ public interface RestElementTypes {
   RestElementType INLINE_BLOCK = new RestElementType("INLINE_BLOCK");
 
   RestElementType LINE_TEXT = new RestElementType("LINE_TEXT");
+  RestElementType FIELD_LIST = new RestElementType("FIELD_LIST");
 }
 

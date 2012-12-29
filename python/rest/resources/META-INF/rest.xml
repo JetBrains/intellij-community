@@ -14,7 +14,7 @@
     <lang.psiStructureViewFactory language="ReST"
                                   implementationClass="com.jetbrains.rest.structureView.RestStructureViewFactory"/>
     <annotator language="ReST" implementationClass="com.jetbrains.rest.validation.RestAnnotatingVisitor"/>
-
+    <lang.formatter language="ReST" implementationClass="com.jetbrains.rest.formatter.RestFormattingModelBuilder"/>
     
 
   </extensions>
