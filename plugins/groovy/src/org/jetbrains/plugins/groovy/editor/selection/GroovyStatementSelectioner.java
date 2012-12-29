@@ -134,7 +134,8 @@ public class GroovyStatementSelectioner implements ExtendWordSelectionHandler {
     if (!TokenSets.WHITE_SPACES_SET.contains(e.getNode().getElementType())) return false;
 
     final String text = e.getText();
-    return text.indexOf('\n') == text.lastIndexOf('\n');
+    final int i = text.indexOf('\n');
+    return i >= 0 && i == text.lastIndexOf('\n');
   }
 
   private static boolean isSpaceWithoutLineFeed(PsiElement e) {
