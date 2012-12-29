@@ -467,6 +467,7 @@
   <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SdkOrLibraryWeigher" id="sdkOrLibrary"
            order="after sameModule"/>
 
+  <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PredefinedCompletionWeigher"/>
   <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PriorityWeigher" id="priority" order="first"/>
   <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.StatisticsWeigher" id="stats"
            order="after priority"/>
