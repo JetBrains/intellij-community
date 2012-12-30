@@ -110,7 +110,11 @@ public class SdkSettingsStep extends ModuleWizardStep {
         return false;
       }
     }
-    myModel.apply();
+    try {
+      myModel.apply();
+    } catch (ConfigurationException e) {
+      //IDEA-98382 We should allow Next step if user has wrong SDK
+    }
     return true;
   }
 
