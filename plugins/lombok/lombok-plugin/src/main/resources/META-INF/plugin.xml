@@ -27,6 +27,7 @@
     <lang.psiAugmentProvider implementation="de.plushnikov.intellij.plugin.provider.LombokAugmentProvider"/>
     <implicitUsageProvider implementation="de.plushnikov.intellij.plugin.provider.LombokImplicitUsageProvider"/>
     <inspectionToolProvider implementation="de.plushnikov.intellij.plugin.provider.LombokInspectionProvider"/>
+    <projectConfigurable  implementation="de.plushnikov.intellij.plugin.settings.ProjectSettingsPage"/>
   </extensions>
 
   <change-notes><![CDATA[

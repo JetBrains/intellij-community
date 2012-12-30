@@ -1,8 +1,7 @@
 package de.plushnikov.intellij.lombok.util;
 
-import org.jetbrains.annotations.NotNull;
-
 import com.intellij.openapi.util.BuildNumber;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Plushnikov Michail
@@ -43,6 +42,8 @@ public class IntelliJVersionRangeUtil {
       result = IntelliJVersion.INTELLIJ_10_5;
     } else if (baselineVersion >= 110) {
       result = IntelliJVersion.INTELLIJ_11;
+    } else if (baselineVersion >= 120) {
+      result = IntelliJVersion.INTELLIJ_12;
     }
 
     return result;

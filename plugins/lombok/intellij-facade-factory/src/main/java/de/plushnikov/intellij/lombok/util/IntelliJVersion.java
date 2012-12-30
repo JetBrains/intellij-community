@@ -9,5 +9,6 @@ public enum IntelliJVersion {
   INTELLIJ_9,
   INTELLIJ_10,
   INTELLIJ_10_5,
-  INTELLIJ_11
+  INTELLIJ_11,
+  INTELLIJ_12
 }
