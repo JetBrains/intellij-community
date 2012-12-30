@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 package com.intellij.util;
+
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Bulenkov
@@ -73,5 +77,13 @@ public class PlatformUtils {
 
   public static boolean isIntelliJ() {
     return isIdea() || isCommunity();
+  }
+
+  public static boolean isIdeaProject(@Nullable Project project) {
+    final VirtualFile baseDir;
+    return project != null
+           && ("IDEA".equals(project.getName()) || "community".equals(project.getName()))
+           && (baseDir = project.getBaseDir()) != null
+           && baseDir.findFileByRelativePath("plugins") != null;
   }
 }
