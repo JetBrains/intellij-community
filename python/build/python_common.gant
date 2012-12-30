@@ -14,20 +14,27 @@ private List<String> listTopLevelModules(String root) {
 }
 
 binding.setVariable("buildDebuggerEgg", {String sandbox, String pythonHome, String buildName ->
-  return buildEgg(sandbox, pythonHome, buildName, "pycharm-debug", {})
+  return buildEgg(sandbox, pythonHome, buildName, "pycharm-debug", {
+    fileset(dir: "$pythonHome/helpers/pydev") {
+      include(name: "**/*.py")
+    }
+  })
 })
 
 binding.setVariable("buildDebuggerEggPy3K", {String sandbox, String pythonHome, String buildName ->
   return buildEgg(sandbox, pythonHome, buildName, "pycharm-debug-py3k") {
-    exclude(name:"**/_pydev_BaseHTTPServer.py")
-    exclude(name:"**/_pydev_SimpleXMLRPCServer.py")
-    exclude(name:"**/_pydev_SocketServer.py")
-    exclude(name:"**/_pydev_inspect.py")
-    exclude(name:"**/_pydev_threading.py")
-    exclude(name:"**/_pydev_xmlrpclib.py")
-    exclude(name:"**/jyimportsTipper.py")
-    exclude(name:"**/pydevconsole_code_for_ironpython.py")
-    exclude(name:"**/pydevd_exec.py")
+    fileset(dir: "$pythonHome/helpers/pydev") {
+      include(name: "**/*.py")
+      exclude(name:"**/_pydev_BaseHTTPServer.py")
+      exclude(name:"**/_pydev_SimpleXMLRPCServer.py")
+      exclude(name:"**/_pydev_SocketServer.py")
+      exclude(name:"**/_pydev_inspect.py")
+      exclude(name:"**/_pydev_threading.py")
+      exclude(name:"**/_pydev_xmlrpclib.py")
+      exclude(name:"**/jyimportsTipper.py")
+      exclude(name:"**/pydevconsole_code_for_ironpython.py")
+      exclude(name:"**/pydevd_exec.py")
+    }
   }
 })
 
@@ -39,10 +46,7 @@ private GString buildEgg(String sandbox, String pythonHome, String buildName, St
   ant.mkdir(dir: eggDir)
 
   ant.copy(todir: "$eggDir") {
-    fileset(dir: "$pythonHome/helpers/pydev") {
-      include(name: "**/*.py")
       custom()
-    }
   }
 
   ant.mkdir(dir: "$eggDir/EGG-INFO")
