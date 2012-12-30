@@ -5,9 +5,9 @@ import java.util.List;
 /**
  * @author erokhins
  */
-public class ShortListTest extends AbstractListTest {
+public class OneElementListTest extends AbstractListTest {
     @Override
     protected List<String> getNewList() {
-        return new ShortList<String>();
+        return new OneElementList<String>();
     }
 }
