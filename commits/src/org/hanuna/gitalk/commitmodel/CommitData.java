@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.commitmodel;
 
+import org.hanuna.gitalk.common.OneElementList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -16,7 +17,7 @@ public class CommitData {
     // unmodifiableList parents
     public CommitData(@NotNull List<Commit> parents, @NotNull String message,
                       @NotNull String author, long timeStamp) {
-        this.parents = parents;
+        this.parents = OneElementList.shortlyList(parents);
         this.message = message;
         this.author = author;
         this.timeStamp = timeStamp;

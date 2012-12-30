@@ -1,12 +1,12 @@
 package org.hanuna.gitalk.graph.mutable_graph.graph_elements_impl;
 
 import org.hanuna.gitalk.commitmodel.Commit;
+import org.hanuna.gitalk.common.OneElementList;
 import org.hanuna.gitalk.graph.graph_elements.Branch;
 import org.hanuna.gitalk.graph.graph_elements.Edge;
 import org.hanuna.gitalk.graph.graph_elements.Node;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -20,8 +20,8 @@ public final class MutableNode implements Node {
     private MutableNodeRow row = null;
     private boolean visible = true;
 
-    private final List<Edge> upEdges = new ArrayList<Edge>(2);
-    private final List<Edge> downEdges = new ArrayList<Edge>(2);
+    private final List<Edge> upEdges = new OneElementList<Edge>();
+    private final List<Edge> downEdges = new OneElementList<Edge>();
 
 
     public MutableNode(@NotNull Commit commit, @NotNull Branch branch) {

@@ -38,7 +38,7 @@ public class LayoutModel {
         for (Node node : firstRow.getVisibleNodes()) {
             editableLayoutRow.add(node);
         }
-        layoutRowCompressedList = new RuntimeGenerateCompressedList<LayoutRow>(generator, firstCellRow, rows.size());
+        layoutRowCompressedList = new RuntimeGenerateCompressedList<LayoutRow>(generator, firstCellRow, rows.size(), 40);
     }
 
 

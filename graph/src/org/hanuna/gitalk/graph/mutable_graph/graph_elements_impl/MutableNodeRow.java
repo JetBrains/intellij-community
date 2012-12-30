@@ -1,10 +1,10 @@
 package org.hanuna.gitalk.graph.mutable_graph.graph_elements_impl;
 
+import org.hanuna.gitalk.common.OneElementList;
 import org.hanuna.gitalk.graph.graph_elements.Node;
 import org.hanuna.gitalk.graph.graph_elements.NodeRow;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -12,8 +12,8 @@ import java.util.List;
  * @author erokhins
  */
 public class MutableNodeRow implements NodeRow {
-    private final List<MutableNode> allNodes = new ArrayList<MutableNode>(2);
-    private final List<MutableNode> visibleNodes = new ArrayList<MutableNode>(2);
+    private final List<MutableNode> allNodes = new OneElementList<MutableNode>();
+    private final List<MutableNode> visibleNodes = new OneElementList<MutableNode>();
     private final int logIndex;
     private int rowIndex;
 
