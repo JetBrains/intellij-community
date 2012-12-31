@@ -360,7 +360,7 @@ public class GitCherryPicker {
   private LocalChangeList createChangeList(@NotNull GitCommit commit, @NotNull String commitMessage) {
     List<Change> changes = commit.getChanges();
     if (!changes.isEmpty()) {
-      String changeListName = createNameForChangeList(commitMessage, 0);
+      String changeListName = createNameForChangeList(commitMessage, 0).replace('\n', ' ');
       final LocalChangeList changeList = ((ChangeListManagerEx)myChangeListManager).addChangeList(changeListName, commitMessage, commit);
       myChangeListManager.moveChangesTo(changeList, changes.toArray(new Change[changes.size()]));
       myChangeListManager.setDefaultChangeList(changeList);
