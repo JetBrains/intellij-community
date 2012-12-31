@@ -31,14 +31,15 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.inspections.PyStringFormatParser;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.NameSuggesterUtil;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
+import com.jetbrains.python.refactoring.PyReplaceExpressionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -115,12 +116,12 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   protected PsiElement replaceExpression(PsiElement expression, PyExpression newExpression, IntroduceOperation operation) {
     PyExpressionStatement statement = PsiTreeUtil.getParentOfType(expression, PyExpressionStatement.class);
     if (statement != null) {
-      if (statement.getExpression() == expression && expression.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE) == null) {
+      if (statement.getExpression() == expression && expression.getUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE) == null) {
         statement.delete();
         return null;
       }
     }
-    return PyPsiUtils.replaceExpression(expression, newExpression);
+    return PyReplaceExpressionUtil.replaceExpression(expression, newExpression);
   }
 
   private final IntroduceValidator myValidator;
@@ -172,7 +173,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       }
     };
     String text = expression.getText();
-    final Pair<PsiElement, TextRange> selection = expression.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE);
+    final Pair<PsiElement, TextRange> selection = expression.getUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE);
     if (selection != null) {
       text = selection.getSecond().substring(text);
     }
@@ -271,10 +272,8 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     }
 
     if (singleElementSelection && element1 instanceof PyStringLiteralExpression) {
-      // TODO: Protect against escapes
-      // TODO: Protect against substrings with format characters
-      // TODO: Handle extracting substring from a string with formatting
       final PyStringLiteralExpression literal = (PyStringLiteralExpression)element1;
+      // Currently introduce for substrings of a multi-part string literals is not supported
       if (literal.getStringNodes().size() > 1) {
         showCannotPerformError(project, editor);
         return;
@@ -286,7 +285,13 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
         final TextRange innerRange = literal.getStringValueTextRange();
         final TextRange intersection = selectionRange.shiftRight(-offset).intersection(innerRange);
         final TextRange finalRange = intersection != null ? intersection : selectionRange;
-        element1.putUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE, Pair.create(element1, finalRange));
+        final String text = literal.getText();
+        // TODO: Protect against substrings with new-style format characters
+        if (breaksStringFormatting(text, finalRange) || breaksStringEscaping(text, finalRange)) {
+          showCannotPerformError(project, editor);
+          return;
+        }
+        element1.putUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE, Pair.create(element1, finalRange));
       }
     }
 
@@ -295,6 +300,26 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     }
     operation.setElement(element1);
     performActionOnElement(operation);
+  }
+
+  private boolean breaksStringFormatting(@NotNull String s, @NotNull TextRange range) {
+    return breaksRanges(PyStringFormatParser.substitutionsToRanges(new PyStringFormatParser(s).parseSubstitutions()), range);
+  }
+
+  private boolean breaksStringEscaping(@NotNull String s, @NotNull TextRange range) {
+    return breaksRanges(PyStringFormatParser.getEscapeRanges(s), range);
+  }
+
+  private boolean breaksRanges(@NotNull List<TextRange> ranges, @NotNull TextRange range) {
+    for (TextRange r : ranges) {
+      if (range.contains(r)) {
+        continue;
+      }
+      if (range.intersectsStrict(r)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void showCannotPerformError(Project project, Editor editor) {
@@ -473,7 +498,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
 
     @Override
     public void visitPyStringLiteralExpression(PyStringLiteralExpression node) {
-      final Pair<PsiElement, TextRange> data = node.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE);
+      final Pair<PsiElement, TextRange> data = node.getUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE);
       if (data != null) {
         final PsiElement parent = data.getFirst();
         final String text = parent.getText();
@@ -566,7 +591,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   @Nullable
   public PsiElement addDeclaration(IntroduceOperation operation, PsiElement declaration) {
     final PsiElement expression = operation.getInitializer();
-    final Pair<PsiElement, TextRange> data = expression.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE);
+    final Pair<PsiElement, TextRange> data = expression.getUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE);
     if (data == null) {
       return addDeclaration(expression, declaration, operation);
     }

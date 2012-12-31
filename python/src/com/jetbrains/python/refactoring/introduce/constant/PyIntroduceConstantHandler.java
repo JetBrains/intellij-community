@@ -9,7 +9,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.refactoring.PyReplaceExpressionUtil;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.IntroduceOperation;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +29,7 @@ public class PyIntroduceConstantHandler extends IntroduceHandler {
     if (PsiTreeUtil.getParentOfType(expression, ScopeOwner.class) instanceof PyFile) {
       return super.replaceExpression(expression, newExpression, operation);
     }
-    return PyPsiUtils.replaceExpression(expression, newExpression);
+    return PyReplaceExpressionUtil.replaceExpression(expression, newExpression);
   }
 
   @Override

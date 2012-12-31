@@ -12,8 +12,8 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
+import com.jetbrains.python.refactoring.PyReplaceExpressionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,8 +40,8 @@ public abstract class IntroduceValidator {
   public abstract String check(String name, PsiElement psiElement);
 
   public static boolean isDefinedInScope(String name, PsiElement psiElement) {
-    if (psiElement.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE) != null) {
-      final Pair<PsiElement,TextRange> data = psiElement.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE);
+    if (psiElement.getUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE) != null) {
+      final Pair<PsiElement,TextRange> data = psiElement.getUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE);
       psiElement = data.first;
     }
     PsiElement context = PsiTreeUtil.getParentOfType(psiElement, PyFunction.class);

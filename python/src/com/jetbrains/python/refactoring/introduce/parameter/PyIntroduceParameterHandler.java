@@ -10,7 +10,7 @@ import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.refactoring.PyReplaceExpressionUtil;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.IntroduceOperation;
 import com.jetbrains.python.refactoring.introduce.variable.VariableValidator;
@@ -56,7 +56,7 @@ public class PyIntroduceParameterHandler extends IntroduceHandler {
   @Nullable
   @Override
   protected PsiElement replaceExpression(PsiElement expression, PyExpression newExpression, IntroduceOperation operation) {
-    return PyPsiUtils.replaceExpression(expression, newExpression);
+    return PyReplaceExpressionUtil.replaceExpression(expression, newExpression);
   }
 
   protected boolean isValidIntroduceContext(PsiElement element) {

@@ -119,5 +119,8 @@ class PyDevFrontEnd(PrefilterFrontEnd):
         self.shell.user_ns = locals
 
     def is_automagic(self):
-        return True if self.ipython0.rc.automagic else False
+        if self.ipython0.rc.automagic:
+            return True
+        else:
+            return False
 

@@ -120,8 +120,10 @@ target('default': "Build artifacts") {
   LayoutInfo layoutInfo = layoutFull(args, paths.distAll, usedJars)
   generateLicensesTable("$paths.artifacts/third-party-libraries.txt", layoutInfo.usedModules);
 
-  egg = buildDebuggerEgg(paths.sandbox, "$home/python", buildName)
+  def egg = buildDebuggerEgg(paths.sandbox, "$home/python", buildName)
   ant.copy(file: egg, todir: paths.distAll)
+  def eggPy3k = buildDebuggerEggPy3K(paths.sandbox, "$home/python", buildName)
+  ant.copy(file: eggPy3k, todir: paths.distAll)
 
   scramble()
 
