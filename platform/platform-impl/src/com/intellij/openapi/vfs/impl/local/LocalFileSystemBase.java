@@ -49,7 +49,7 @@ import java.util.Locale;
  * @author Dmitry Avdeev
  */
 public abstract class LocalFileSystemBase extends LocalFileSystem {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl");
+  protected static final Logger LOG = Logger.getInstance(LocalFileSystemBase.class);
 
   private static final FileAttributes FAKE_ROOT_ATTRIBUTES =
     new FileAttributes(true, false, false, false, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, false);
