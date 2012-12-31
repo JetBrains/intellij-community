@@ -682,7 +682,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     @Override
     public PsiElement processMatch(final Match match) throws IncorrectOperationException {
       final boolean makeStatic = myInnerMethod != null &&
-                                 RefactoringUtil.isInStaticContext(match.getMatchStart(), getExtractedMethod().getContainingClass());
+                                 RefactoringUtil.isInStaticContext(match.getMatchStart(), getExtractedMethod().getContainingClass()) &&
+                                 !myInnerMethod.getContainingClass().hasModifierProperty(PsiModifier.STATIC);
       final PsiElement element = super.processMatch(match);
       if (makeStatic) {
         myMadeStatic = true;
