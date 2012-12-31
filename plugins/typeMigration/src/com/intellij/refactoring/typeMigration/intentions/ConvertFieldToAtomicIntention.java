@@ -133,7 +133,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
       psiVariable.getTypeElement().replace(elementFactory.createTypeElement(toType));
       final PsiExpression initializer = psiVariable.getInitializer();
       if (initializer != null) {
-        final TypeConversionDescriptor directConversion = AtomicConversionRule.wrapWithNewExpression(toType, fromType, null);
+        final TypeConversionDescriptor directConversion = AtomicConversionRule.wrapWithNewExpression(toType, fromType, null, element);
         if (directConversion != null) {
           TypeMigrationReplacementUtil.replaceExpression(initializer, project, directConversion);
         }

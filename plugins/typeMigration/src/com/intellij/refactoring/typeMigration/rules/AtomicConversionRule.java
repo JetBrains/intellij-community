@@ -7,6 +7,7 @@ package com.intellij.refactoring.typeMigration.rules;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -191,7 +192,7 @@ public class AtomicConversionRule extends TypeConversionRule {
           if (lExpression instanceof PsiReferenceExpression) {
             final PsiElement element = ((PsiReferenceExpression)lExpression).resolve();
             if (element instanceof PsiVariable && ((PsiVariable)element).hasModifierProperty(PsiModifier.FINAL)) {
-              return wrapWithNewExpression(to, from, ((PsiAssignmentExpression)context).getRExpression());
+              return wrapWithNewExpression(to, from, ((PsiAssignmentExpression)context).getRExpression(), element);
             }
           }
           return new TypeConversionDescriptor("$qualifier$ = $val$", "$qualifier$.set($val$)");
@@ -222,13 +223,13 @@ public class AtomicConversionRule extends TypeConversionRule {
     }
 
     if (parent instanceof PsiVariable) {
-      return wrapWithNewExpression(to, from, null);
+      return wrapWithNewExpression(to, from, null, parent);
     }
     return null;
   }
 
-  public static TypeConversionDescriptor wrapWithNewExpression(PsiType to, PsiType from, PsiExpression expression) {
-    String typeText = to.getCanonicalText();
+  public static TypeConversionDescriptor wrapWithNewExpression(PsiType to, PsiType from, @Nullable PsiExpression expression, PsiElement context) {
+    final String typeText = PsiDiamondTypeUtil.getCollapsedType(to, context);
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(to);
     final PsiClass atomicClass = resolveResult.getElement();
     LOG.assertTrue(atomicClass != null);
@@ -278,12 +279,12 @@ public class AtomicConversionRule extends TypeConversionRule {
       else {
         final PsiExpression rExpression = assignmentExpression.getRExpression();
         if (rExpression == context && operationSign == JavaTokenType.EQ) {   //array = new T[l];
-          return wrapWithNewExpression(to, from, rExpression);
+          return wrapWithNewExpression(to, from, rExpression, context);
         }
       }
     } else if (parent instanceof PsiVariable) {
       if (((PsiVariable)parent).getInitializer() == context) {
-        return wrapWithNewExpression(to, from, (PsiExpression)context);
+        return wrapWithNewExpression(to, from, (PsiExpression)context, context);
       }
     }
 

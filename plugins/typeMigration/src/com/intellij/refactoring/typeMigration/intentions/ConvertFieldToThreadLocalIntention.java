@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.AllowedApiFilterExtension;
+import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -117,7 +118,7 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
         CodeStyleManager.getInstance(project).reformat(psiField);
       }  else if (!psiField.getModifierList().hasModifierProperty(PsiModifier.FINAL)) {
         final PsiExpression defaultInitializer =
-          elementFactory.createExpressionFromText("new " + toType.getPresentableText() + "()", psiField);
+          elementFactory.createExpressionFromText("new " + PsiDiamondTypeUtil.getCollapsedType(toType, psiField) + "()", psiField);
         psiField.setInitializer(defaultInitializer);
       }
     }
