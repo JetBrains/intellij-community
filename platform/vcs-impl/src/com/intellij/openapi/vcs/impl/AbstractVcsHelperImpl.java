@@ -88,11 +88,10 @@ import java.util.List;
 public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl");
 
-  private final Project myProject;
   private Consumer<VcsException> myCustomHandler = null;
 
-  public AbstractVcsHelperImpl(Project project) {
-    myProject = project;
+  protected AbstractVcsHelperImpl(@NotNull Project project) {
+    super(project);
   }
 
   public void openMessagesView(final VcsErrorViewPanel errorTreeView, final String tabDisplayName) {
@@ -569,32 +568,11 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
   @Override
   @NotNull
-  public List<VirtualFile> showMergeDialog(List<VirtualFile> files, MergeProvider provider) {
-    return showMergeDialog(files, provider, new MergeDialogCustomizer());
-  }
-
-  @Override
-  @NotNull
   public List<VirtualFile> showMergeDialog(List<VirtualFile> files, MergeProvider provider, @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
     if (files.isEmpty()) return Collections.emptyList();
     final MultipleFileMergeDialog fileMergeDialog = new MultipleFileMergeDialog(myProject, files, provider, mergeDialogCustomizer);
     fileMergeDialog.show();
     return fileMergeDialog.getProcessedFiles();
-  }
-
-  @NotNull
-  public List<VirtualFile> showMergeDialog(final List<VirtualFile> files) {
-    if (files.isEmpty()) return Collections.emptyList();
-    MergeProvider provider = null;
-    for (VirtualFile virtualFile : files) {
-      final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(virtualFile);
-      if (vcs != null) {
-        provider = vcs.getMergeProvider();
-        if (provider != null) break;
-      }
-    }
-    if (provider == null) return Collections.emptyList();
-    return showMergeDialog(files, provider);
   }
 
   private static DiffContent getContentForVersion(final VcsFileRevision version, final File file) throws IOException, VcsException {
