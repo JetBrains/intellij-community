@@ -163,6 +163,7 @@ public class UpdateEventHandler implements ISVNEventHandler {
       addFileToGroup(FileGroup.RESTORED_ID, event);
     }
     else if (event.getAction() == SVNEventAction.UPDATE_COMPLETED && event.getRevision() >= 0) {
+      possiblySwitched(event);
       myExternalsCount--;
       myText2 = SvnBundle.message("progres.text2.updated.to.revision", event.getRevision());
       if (myExternalsCount == 0) {
@@ -183,6 +184,7 @@ public class UpdateEventHandler implements ISVNEventHandler {
     if (file == null) return;
     final SVNURL wasUrl = myUrlToCheckForSwitch.get(file);
     if (wasUrl != null && ! wasUrl.equals(event.getURL())) {
+      myUrlToCheckForSwitch.remove(file);
       addFileToGroup(FileGroup.SWITCHED_ID, event);
     }
   }
