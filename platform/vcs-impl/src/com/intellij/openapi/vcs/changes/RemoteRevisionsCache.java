@@ -32,6 +32,7 @@ import com.intellij.openapi.vcs.update.UpdateFilesHelper;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlusMinus;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 
 import java.util.Collection;
@@ -55,6 +56,7 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
   private final Object myLock;
   private final Map<String, RemoteDifferenceStrategy> myKinds;
   private final ControlledCycle myControlledCycle;
+  private final MessageBusConnection myConnection;
 
   public static RemoteRevisionsCache getInstance(final Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetService(project, RemoteRevisionsCache.class);
@@ -70,11 +72,13 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
     myChangeDecorator = new RemoteStatusChangeNodeDecorator(this);
 
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
-    myVcsManager.addVcsListener(this);
+    myConnection = myProject.getMessageBus().connect();
+    myConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
+    myConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, this);
     myKinds = new HashMap<String, RemoteDifferenceStrategy>();
     Disposer.register(project, new Disposable() {
       public void dispose() {
-        myVcsManager.removeVcsListener(RemoteRevisionsCache.this);
+        myConnection.disconnect();
       }
     });
     final VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
