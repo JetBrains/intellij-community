@@ -9,6 +9,7 @@ import com.intellij.refactoring.changeSignature.ChangeInfo;
 import com.intellij.refactoring.changeSignature.ChangeSignatureUsageProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.rename.RenameUtil;
+import com.intellij.refactoring.rename.ResolveSnapshotProvider;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Query;
 import com.intellij.util.containers.HashSet;
@@ -313,5 +314,11 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   @Override
   public boolean setupDefaultValues(ChangeInfo changeInfo, Ref<UsageInfo[]> refUsages, Project project) {
     return true;
+  }
+
+  @Override
+  public void registerConflictResolvers(List<ResolveSnapshotProvider.ResolveSnapshot> snapshots,
+                                        @NotNull ResolveSnapshotProvider resolveSnapshotProvider,
+                                        UsageInfo[] usages, ChangeInfo changeInfo) {
   }
 }
