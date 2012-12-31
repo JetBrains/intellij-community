@@ -13,32 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.test
-import com.intellij.dvcs.test.Executor
-import com.intellij.openapi.util.text.StringUtil
-import git4idea.repo.GitRepository
+package git4idea.test;
+
+import com.intellij.dvcs.test.Executor;
+import com.intellij.openapi.util.text.StringUtil;
+import git4idea.repo.GitRepository;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  *
  * @author Kirill Likhodedov
  */
-class GitExecutor extends Executor {
+public class GitExecutor extends Executor {
 
   private static final String GIT_EXECUTABLE_ENV = "IDEA_TEST_GIT_EXECUTABLE";
   private static final String TEAMCITY_GIT_EXECUTABLE_ENV = "TEAMCITY_GIT_PATH";
 
   private static final int MAX_RETRIES = 3;
   private static boolean myVersionPrinted;
-  private static final String GIT_EXECUTABLE = findGitExecutable()
+  private static final String GIT_EXECUTABLE = findGitExecutable();
 
   private static String findGitExecutable() {
-    return findExecutable("Git", "git", "git.exe", [ GIT_EXECUTABLE_ENV, TEAMCITY_GIT_EXECUTABLE_ENV ])
+    return findExecutable("Git", "git", "git.exe", Arrays.asList(GIT_EXECUTABLE_ENV, TEAMCITY_GIT_EXECUTABLE_ENV));
   }
 
   public static String git(String command) {
     printVersionTheFirstTime();
-    def split = splitCommandInParameters(command)
-    split.add(0, GIT_EXECUTABLE)
-    log("git $command")
+    List<String> split = splitCommandInParameters(command);
+    split.add(0, GIT_EXECUTABLE);
+    log("git " + command);
     for (int attempt = 0; attempt < 3; attempt++) {
       String stdout = run(split);
       if (stdout.contains("fatal") && stdout.contains("Unable to create") && stdout.contains(".git/index.lock")) {
@@ -54,19 +60,19 @@ class GitExecutor extends Executor {
   }
 
   private static List<String> splitCommandInParameters(String command) {
-    List<String> split = new ArrayList<>()
+    List<String> split = new ArrayList<String>();
 
     boolean insideParam = false;
-    StringBuilder currentParam = new StringBuilder()
+    StringBuilder currentParam = new StringBuilder();
     for (char c : command.toCharArray()) {
       boolean flush = false;
       if (insideParam) {
         if (c == '\'') {
           insideParam = false;
-          flush = true
+          flush = true;
         }
         else {
-          currentParam.append(c)
+          currentParam.append(c);
         }
       }
       else if (c == '\'') {
@@ -76,43 +82,43 @@ class GitExecutor extends Executor {
         flush = true;
       }
       else {
-        currentParam.append(c)
+        currentParam.append(c);
       }
 
       if (flush) {
         if (!StringUtil.isEmptyOrSpaces(currentParam.toString())) {
-          split.add(currentParam.toString())
+          split.add(currentParam.toString());
         }
-        currentParam = new StringBuilder()
+        currentParam = new StringBuilder();
       }
     }
 
     // last flush
     if (!StringUtil.isEmptyOrSpaces(currentParam.toString())) {
-      split.add(currentParam.toString())
+      split.add(currentParam.toString());
     }
     return split;
   }
 
   public static String git(GitRepository repository, String command) {
     if (repository != null) {
-      cd repository.root.path
+      cd(repository);
     }
-    git command
+    return git(command);
   }
 
   public static String git(String formatString, String... args) {
-    return git(String.format(formatString, args))
+    return git(String.format(formatString, args));
   }
 
   public static void cd(GitRepository repository) {
-    cd repository.root.path
+    cd(repository.getRoot().getPath());
   }
 
   private static void printVersionTheFirstTime() {
     if (!myVersionPrinted) {
       myVersionPrinted = true;
-      git("version")
+      git("version");
     }
   }
 

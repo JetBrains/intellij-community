@@ -158,13 +158,17 @@ class GitScenarios {
     git(repo, "branch").contains(branch)
   }
 
-  public static void checkout(GitRepository repository = null, String branch) {
+  public static void checkoutOrCreate(GitRepository repository = null, String branch) {
     if (branch.equals("master") || branchExists(repository, branch)) {
       git("checkout $branch")
     }
     else {
       git("checkout -b $branch")
     }
+  }
+
+  public static void checkout(String branch) {
+    git("checkout " + branch);
   }
 
 }

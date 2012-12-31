@@ -13,71 +13,105 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.dvcs.test
+package com.intellij.dvcs.test;
 
-import com.intellij.execution.process.CapturingProcessHandler
-import com.intellij.execution.process.ProcessOutput
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.execution.process.CapturingProcessHandler;
+import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+
 /**
  *
  * @author Kirill Likhodedov
  */
 public class Executor {
 
-  private static String ourCurrentDir
+  private static String ourCurrentDir;
 
-  public static cd(String path) {
-    ourCurrentDir = path
-    println "cd ${shortenPath(path)}"
+  public static void cd(String path) {
+    ourCurrentDir = path;
+    log("cd " + shortenPath(path));
   }
 
   public static String pwd() {
-    ourCurrentDir
+    return ourCurrentDir;
   }
 
   public static String touch(String fileName) {
-    File file = child(fileName)
-    assert !file.exists()
-    file.createNewFile()
-    println("touch $fileName")
-    file.path
+    try {
+      File file = child(fileName);
+      assert !file.exists();
+      boolean fileCreated = file.createNewFile();
+      assert fileCreated;
+      log("touch " + fileName);
+      return file.getPath();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public static String touch(String fileName, String content) {
-    String filePath = touch(fileName)
-    echo(fileName, content)
-    filePath
+    String filePath = touch(fileName);
+    echo(fileName, content);
+    return filePath;
   }
 
   public static void echo(String fileName, String content) {
-    child(fileName).withWriterAppend("UTF-8") { it.write(content) }
+    try {
+      FileUtil.writeToFile(child(fileName), content.getBytes(), true);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public static String mkdir(String dirName) {
-    File file = child(dirName)
-    file.mkdir()
-    println("mkdir $dirName")
-    file.path
+    File file = child(dirName);
+    boolean dirMade = file.mkdir();
+    assert dirMade;
+    log("mkdir " + dirName);
+    return file.getPath();
   }
 
   public static String cat(String fileName) {
-    def content = FileUtil.loadFile(child(fileName))
-    println("cat fileName")
-    content
+    try {
+      String content = FileUtil.loadFile(child(fileName));
+      log("cat " + fileName);
+      return content;
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public static void cp(String fileName, File destinationDir) {
-    FileUtil.copy(child(fileName), new File(destinationDir, fileName))
+    try {
+      FileUtil.copy(child(fileName), new File(destinationDir, fileName));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected static String run(List<String> params) {
     final ProcessBuilder builder = new ProcessBuilder().command(params);
     builder.directory(ourCurrentDir());
     builder.redirectErrorStream(true);
-    Process clientProcess = builder.start();
+    Process clientProcess;
+    try {
+      clientProcess = builder.start();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
 
     CapturingProcessHandler handler = new CapturingProcessHandler(clientProcess, CharsetToolkit.getDefaultSystemCharset());
     ProcessOutput result = handler.runProcess(30*1000);
@@ -99,7 +133,7 @@ public class Executor {
     for (String pathEnv : pathEnvs) {
       String exec = System.getenv(pathEnv);
       if (exec != null && new File(exec).canExecute()) {
-        log("Using $programName from $pathEnv: $exec");
+        log(String.format("Using %s from %s: %s", programName, pathEnv, exec));
         return exec;
       }
     }
@@ -122,26 +156,26 @@ public class Executor {
   }
 
   protected static void log(String msg) {
-    println msg
+    System.out.println(msg);
   }
 
   private static String shortenPath(String path) {
-    def split = path.split("/")
-    if (split.size() > 3) {
+    String[] split = path.split("/");
+    if (split.length > 3) {
       // split[0] is empty, because the path starts from /
-      return "/${split[1]}/.../${split[-2]}/${split[-1]}"
+      return String.format("/%s/.../%s/%s", split[1], split[split.length-2], split[split.length-1]);
     }
-    return path
+    return path;
   }
 
   private static File child(String fileName) {
-    assert ourCurrentDir != null : "Current dir hasn't been initialized yet. Call cd at least once before any other command."
-    new File(ourCurrentDir, fileName)
+    assert ourCurrentDir != null : "Current dir hasn't been initialized yet. Call cd at least once before any other command.";
+    return new File(ourCurrentDir, fileName);
   }
 
   private static File ourCurrentDir() {
-    assert ourCurrentDir != null : "Current dir hasn't been initialized yet. Call cd at least once before any other command."
-    new File(ourCurrentDir)
+    assert ourCurrentDir != null : "Current dir hasn't been initialized yet. Call cd at least once before any other command.";
+    return new File(ourCurrentDir);
   }
 
 }

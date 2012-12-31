@@ -152,7 +152,14 @@ public class CommitDetails {
       change.apply();
     }
 
-    String commitOutput = git(String.format("commit -am '%1$s' --author '%2$s <%2$s@example.com>'", myMessage, myAuthor));
+    for (Change change : myChanges) {
+      if (change.myType == Change.Type.ADDED) {
+        git("add %s", change.myFile);
+      }
+    }
+
+    String authorString = myAuthor == null ? "" : String.format(" --author '%1$s <%1$s@example.com>'", myAuthor);
+    String commitOutput = git(String.format("commit -am '%s' %s", myMessage, authorString));
     CommitDetails realCommit = parseHashFromCommitOutput(commitOutput);
     virtualCommits.register(myHash, realCommit);
     return realCommit;

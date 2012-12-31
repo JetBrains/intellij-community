@@ -13,24 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.dvcs.test
-import com.intellij.dvcs.DvcsPlatformFacade
-import com.intellij.ide.SaveAndSyncHandler
-import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.mock.MockLocalFileSystem
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vcs.AbstractVcsHelper
-import com.intellij.openapi.vcs.changes.ChangeListManagerEx
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.vcs.MockChangeListManager
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
+package com.intellij.dvcs.test;
+
+import com.intellij.dvcs.DvcsPlatformFacade;
+import com.intellij.ide.SaveAndSyncHandler;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.mock.MockLocalFileSystem;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.vcs.MockChangeListManager;
+import org.easymock.classextension.EasyMock;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
+import java.io.IOException;
+
 /**
  * 
  * @author Kirill Likhodedov
@@ -86,7 +92,7 @@ public abstract class DvcsTestPlatformFacade implements DvcsPlatformFacade {
   @Override
   public AbstractVcsHelper getVcsHelper(@NotNull Project project) {
     if (myVcsHelper == null) {
-      myVcsHelper = new MockVcsHelper();
+      myVcsHelper = new MockVcsHelper(project);
     }
     return myVcsHelper;
   }
@@ -121,24 +127,16 @@ public abstract class DvcsTestPlatformFacade implements DvcsPlatformFacade {
   @NotNull
   @Override
   public ProjectManagerEx getProjectManager() {
-    [
-            blockReloadingProjectOnExternalChanges: {},
-            unblockReloadingProjectOnExternalChanges: {}
-    ] as ProjectManagerEx
+    return EasyMock.createMock(ProjectManagerEx.class);
   }
 
   @NotNull
   @Override
-  SaveAndSyncHandler getSaveAndSyncHandler() {
-    [
-            blockSaveOnFrameDeactivation: {},
-            blockSyncOnFrameActivation: {},
-            unblockSaveOnFrameDeactivation: {},
-            unblockSyncOnFrameActivation: {}
-    ] as SaveAndSyncHandler
+  public SaveAndSyncHandler getSaveAndSyncHandler() {
+    return EasyMock.createMock(SaveAndSyncHandler.class);
   }
 
   @Override
-  void hardRefresh(VirtualFile root) {
+  public void hardRefresh(@NotNull VirtualFile root) {
   }
 }

@@ -18,19 +18,19 @@ import com.intellij.dvcs.test.MockVirtualFile
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import git4idea.test.GitExecutor
 import git4idea.test.GitLightTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
+import static com.intellij.dvcs.test.Executor.cd
+import static git4idea.test.GitExecutor.git
 import static org.junit.Assert.assertFalse
 import static org.junit.Assert.assertTrue
 /**
  *
  * @author Kirill Likhodedov
  */
-@Mixin(GitExecutor)
 class GitCrlfProblemsDetectorTest extends GitLightTest {
 
   private String myOldCoreAutoCrlfValue
