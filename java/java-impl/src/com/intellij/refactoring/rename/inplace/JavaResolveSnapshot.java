@@ -19,12 +19,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.RenameJavaMemberProcessor;
-import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.refactoring.rename.ResolveSnapshotProvider;
 import com.intellij.util.containers.HashMap;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.Map;
 

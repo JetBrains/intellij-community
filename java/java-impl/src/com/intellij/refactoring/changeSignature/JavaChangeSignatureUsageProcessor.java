@@ -33,6 +33,7 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameUtil;
+import com.intellij.refactoring.rename.ResolveSnapshotProvider;
 import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageInfo;
 import com.intellij.refactoring.util.usageInfo.NoConstructorClassUsageInfo;
@@ -602,6 +603,18 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       }
     }
     return true;
+  }
+
+  @Override
+  public void registerConflictResolvers(List<ResolveSnapshotProvider.ResolveSnapshot> snapshots,
+                                        @NotNull ResolveSnapshotProvider resolveSnapshotProvider,
+                                        UsageInfo[] usages, ChangeInfo changeInfo) {
+    snapshots.add(resolveSnapshotProvider.createSnapshot(changeInfo.getMethod()));
+    for (UsageInfo usage : usages) {
+      if (usage instanceof OverriderUsageInfo) {
+        snapshots.add(resolveSnapshotProvider.createSnapshot(usage.getElement()));
+      }
+    }
   }
 
   private static boolean needDefaultValue(ChangeInfo changeInfo, PsiMethod method) {

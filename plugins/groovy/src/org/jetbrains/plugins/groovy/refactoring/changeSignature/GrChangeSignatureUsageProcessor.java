@@ -28,6 +28,7 @@ import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.changeSignature.*;
+import com.intellij.refactoring.rename.ResolveSnapshotProvider;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageInfo;
@@ -167,6 +168,12 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       }
     }
     return true;
+  }
+
+  @Override
+  public void registerConflictResolvers(List<ResolveSnapshotProvider.ResolveSnapshot> snapshots,
+                                        @NotNull ResolveSnapshotProvider resolveSnapshotProvider,
+                                        UsageInfo[] usages, ChangeInfo changeInfo) {
   }
 
   private static boolean generateDelegate(GrChangeInfoImpl grInfo) {

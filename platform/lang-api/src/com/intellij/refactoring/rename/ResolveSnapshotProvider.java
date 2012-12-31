@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.refactoring.rename.inplace;
+package com.intellij.refactoring.rename;
 
 import com.intellij.psi.PsiElement;
 

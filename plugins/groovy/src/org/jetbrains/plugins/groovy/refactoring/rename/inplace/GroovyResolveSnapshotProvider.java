@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.groovy.refactoring.rename.inplace;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.rename.inplace.ResolveSnapshotProvider;
+import com.intellij.refactoring.rename.ResolveSnapshotProvider;
 
 /**
  * @author Maxim.Medvedev
