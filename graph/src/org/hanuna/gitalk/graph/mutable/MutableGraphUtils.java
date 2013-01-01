@@ -1,10 +1,10 @@
-package org.hanuna.gitalk.graph.mutable_graph;
+package org.hanuna.gitalk.graph.mutable;
 
-import org.hanuna.gitalk.graph.graph_elements.Branch;
-import org.hanuna.gitalk.graph.graph_elements.Edge;
-import org.hanuna.gitalk.graph.graph_elements.Node;
-import org.hanuna.gitalk.graph.mutable_graph.graph_elements_impl.MutableNode;
-import org.hanuna.gitalk.graph.mutable_graph.graph_elements_impl.SimpleEdge;
+import org.hanuna.gitalk.graph.elements.Branch;
+import org.hanuna.gitalk.graph.elements.Edge;
+import org.hanuna.gitalk.graph.elements.Node;
+import org.hanuna.gitalk.graph.mutable.elements.MutableNode;
+import org.hanuna.gitalk.graph.mutable.elements.SimpleEdge;
 import org.jetbrains.annotations.NotNull;
 
 /**

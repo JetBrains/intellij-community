@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.graph.graph_elements;
+package org.hanuna.gitalk.graph.elements;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

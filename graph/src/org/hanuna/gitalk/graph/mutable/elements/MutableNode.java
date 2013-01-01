@@ -1,10 +1,10 @@
-package org.hanuna.gitalk.graph.mutable_graph.graph_elements_impl;
+package org.hanuna.gitalk.graph.mutable.elements;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.OneElementList;
-import org.hanuna.gitalk.graph.graph_elements.Branch;
-import org.hanuna.gitalk.graph.graph_elements.Edge;
-import org.hanuna.gitalk.graph.graph_elements.Node;
+import org.hanuna.gitalk.graph.elements.Branch;
+import org.hanuna.gitalk.graph.elements.Edge;
+import org.hanuna.gitalk.graph.elements.Node;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;

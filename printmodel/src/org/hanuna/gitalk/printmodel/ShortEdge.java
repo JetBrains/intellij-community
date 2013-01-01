@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.printmodel;
 
-import org.hanuna.gitalk.graph.graph_elements.Edge;
+import org.hanuna.gitalk.graph.elements.Edge;
 import org.jetbrains.annotations.NotNull;
 
 /**

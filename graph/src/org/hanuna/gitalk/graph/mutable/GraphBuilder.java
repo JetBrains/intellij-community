@@ -1,21 +1,21 @@
-package org.hanuna.gitalk.graph.mutable_graph;
+package org.hanuna.gitalk.graph.mutable;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.CommitData;
 import org.hanuna.gitalk.commitmodel.Hash;
 import org.hanuna.gitalk.graph.Graph;
-import org.hanuna.gitalk.graph.graph_elements.Branch;
-import org.hanuna.gitalk.graph.graph_elements.Edge;
-import org.hanuna.gitalk.graph.graph_elements.Node;
-import org.hanuna.gitalk.graph.mutable_graph.graph_elements_impl.MutableNode;
-import org.hanuna.gitalk.graph.mutable_graph.graph_elements_impl.MutableNodeRow;
+import org.hanuna.gitalk.graph.elements.Branch;
+import org.hanuna.gitalk.graph.elements.Edge;
+import org.hanuna.gitalk.graph.elements.Node;
+import org.hanuna.gitalk.graph.mutable.elements.MutableNode;
+import org.hanuna.gitalk.graph.mutable.elements.MutableNodeRow;
 import org.hanuna.gitalk.refs.Ref;
 import org.hanuna.gitalk.refs.RefsModel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-import static org.hanuna.gitalk.graph.mutable_graph.MutableGraphUtils.createEdge;
+import static org.hanuna.gitalk.graph.mutable.MutableGraphUtils.createEdge;
 
 /**
  * @author erokhins

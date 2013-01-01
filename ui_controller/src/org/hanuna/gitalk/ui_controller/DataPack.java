@@ -6,7 +6,7 @@ import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.GraphFragmentController;
-import org.hanuna.gitalk.graph.mutable_graph.GraphBuilder;
+import org.hanuna.gitalk.graph.mutable.GraphBuilder;
 import org.hanuna.gitalk.printmodel.GraphPrintCellModel;
 import org.hanuna.gitalk.printmodel.SelectController;
 import org.hanuna.gitalk.printmodel.impl.GraphPrintCellModelImpl;

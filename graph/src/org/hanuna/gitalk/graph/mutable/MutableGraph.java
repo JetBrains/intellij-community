@@ -1,10 +1,10 @@
-package org.hanuna.gitalk.graph.mutable_graph;
+package org.hanuna.gitalk.graph.mutable;
 
 import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.GraphFragmentController;
-import org.hanuna.gitalk.graph.graph_elements.NodeRow;
-import org.hanuna.gitalk.graph.mutable_graph.graph_elements_impl.MutableNodeRow;
+import org.hanuna.gitalk.graph.elements.NodeRow;
+import org.hanuna.gitalk.graph.mutable.elements.MutableNodeRow;
 import org.hanuna.gitalk.refs.RefsModel;
 import org.jetbrains.annotations.NotNull;
 

@@ -1,8 +1,8 @@
 package org.hanuna.gitalk.printmodel.impl;
 
-import org.hanuna.gitalk.graph.graph_elements.Edge;
-import org.hanuna.gitalk.graph.graph_elements.GraphElement;
-import org.hanuna.gitalk.graph.graph_elements.Node;
+import org.hanuna.gitalk.graph.elements.Edge;
+import org.hanuna.gitalk.graph.elements.GraphElement;
+import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.printmodel.SelectController;
 import org.hanuna.gitalk.printmodel.ShortEdge;
 import org.hanuna.gitalk.printmodel.SpecialPrintElement;

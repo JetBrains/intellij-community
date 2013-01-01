@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.printmodel;
 
-import org.hanuna.gitalk.graph.graph_elements.GraphElement;
+import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.jetbrains.annotations.NotNull;
 
 /**

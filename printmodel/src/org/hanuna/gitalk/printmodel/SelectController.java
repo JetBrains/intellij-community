@@ -1,9 +1,9 @@
 package org.hanuna.gitalk.printmodel;
 
-import org.hanuna.gitalk.graph.graph_elements.GraphFragment;
-import org.hanuna.gitalk.graph.graph_elements.Edge;
-import org.hanuna.gitalk.graph.graph_elements.GraphElement;
-import org.hanuna.gitalk.graph.graph_elements.Node;
+import org.hanuna.gitalk.graph.elements.GraphFragment;
+import org.hanuna.gitalk.graph.elements.Edge;
+import org.hanuna.gitalk.graph.elements.GraphElement;
+import org.hanuna.gitalk.graph.elements.Node;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

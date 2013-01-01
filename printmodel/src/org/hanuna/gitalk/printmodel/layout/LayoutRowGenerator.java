@@ -2,10 +2,10 @@ package org.hanuna.gitalk.printmodel.layout;
 
 import org.hanuna.gitalk.common.compressedlist.generator.AbstractGenerator;
 import org.hanuna.gitalk.graph.Graph;
-import org.hanuna.gitalk.graph.graph_elements.Edge;
-import org.hanuna.gitalk.graph.graph_elements.GraphElement;
-import org.hanuna.gitalk.graph.graph_elements.Node;
-import org.hanuna.gitalk.graph.graph_elements.NodeRow;
+import org.hanuna.gitalk.graph.elements.Edge;
+import org.hanuna.gitalk.graph.elements.GraphElement;
+import org.hanuna.gitalk.graph.elements.Node;
+import org.hanuna.gitalk.graph.elements.NodeRow;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;

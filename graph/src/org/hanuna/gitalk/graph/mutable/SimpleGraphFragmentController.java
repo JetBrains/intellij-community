@@ -1,12 +1,12 @@
-package org.hanuna.gitalk.graph.mutable_graph;
+package org.hanuna.gitalk.graph.mutable;
 
 import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.graph.GraphFragmentController;
-import org.hanuna.gitalk.graph.graph_elements.Edge;
-import org.hanuna.gitalk.graph.graph_elements.GraphElement;
-import org.hanuna.gitalk.graph.graph_elements.GraphFragment;
-import org.hanuna.gitalk.graph.graph_elements.Node;
-import org.hanuna.gitalk.graph.mutable_graph.graph_elements_impl.GraphFragmentImpl;
+import org.hanuna.gitalk.graph.elements.Edge;
+import org.hanuna.gitalk.graph.elements.GraphElement;
+import org.hanuna.gitalk.graph.elements.GraphFragment;
+import org.hanuna.gitalk.graph.elements.Node;
+import org.hanuna.gitalk.graph.mutable.elements.GraphFragmentImpl;
 import org.hanuna.gitalk.refs.RefsModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.hanuna.gitalk.graph.mutable_graph.MutableGraphUtils.*;
+import static org.hanuna.gitalk.graph.mutable.MutableGraphUtils.*;
 
 /**
  * @author erokhins

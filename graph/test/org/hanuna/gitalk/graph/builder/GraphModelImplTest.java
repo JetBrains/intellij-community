@@ -4,8 +4,8 @@ import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.GraphFragmentController;
-import org.hanuna.gitalk.graph.graph_elements.GraphFragment;
-import org.hanuna.gitalk.graph.mutable_graph.GraphBuilder;
+import org.hanuna.gitalk.graph.elements.GraphFragment;
+import org.hanuna.gitalk.graph.mutable.GraphBuilder;
 import org.hanuna.gitalk.parser.GitLogParser;
 import org.junit.Test;
 

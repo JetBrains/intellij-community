@@ -1,14 +1,14 @@
-package org.hanuna.gitalk.graph.mutable_graph.graph_elements_impl;
+package org.hanuna.gitalk.graph.mutable.elements;
 
-import org.hanuna.gitalk.graph.graph_elements.GraphFragment;
-import org.hanuna.gitalk.graph.graph_elements.Edge;
-import org.hanuna.gitalk.graph.graph_elements.Node;
+import org.hanuna.gitalk.graph.elements.GraphFragment;
+import org.hanuna.gitalk.graph.elements.Edge;
+import org.hanuna.gitalk.graph.elements.Node;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.hanuna.gitalk.graph.mutable_graph.MutableGraphUtils.firstDownEdge;
+import static org.hanuna.gitalk.graph.mutable.MutableGraphUtils.firstDownEdge;
 
 /**
  * @author erokhins

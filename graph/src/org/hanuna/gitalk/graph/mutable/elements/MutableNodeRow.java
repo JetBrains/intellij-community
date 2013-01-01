@@ -1,8 +1,8 @@
-package org.hanuna.gitalk.graph.mutable_graph.graph_elements_impl;
+package org.hanuna.gitalk.graph.mutable.elements;
 
 import org.hanuna.gitalk.common.OneElementList;
-import org.hanuna.gitalk.graph.graph_elements.Node;
-import org.hanuna.gitalk.graph.graph_elements.NodeRow;
+import org.hanuna.gitalk.graph.elements.Node;
+import org.hanuna.gitalk.graph.elements.NodeRow;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;

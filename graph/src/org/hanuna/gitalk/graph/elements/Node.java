@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.graph.graph_elements;
+package org.hanuna.gitalk.graph.elements;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.jetbrains.annotations.NotNull;
