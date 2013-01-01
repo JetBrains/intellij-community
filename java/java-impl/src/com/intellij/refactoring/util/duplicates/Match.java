@@ -380,8 +380,9 @@ public final class Match {
   }
 
   public void changeSignature(final PsiMethod psiMethod) {
-    final ArrayList<ParameterInfoImpl> newParameters = patchParams(psiMethod);
     final PsiType expressionType = getChangedReturnType(psiMethod);
+    if (expressionType == null && myChangedParams.isEmpty()) return;
+    final ArrayList<ParameterInfoImpl> newParameters = patchParams(psiMethod);
     final ChangeSignatureProcessor csp = new ChangeSignatureProcessor(psiMethod.getProject(), psiMethod, false, null, psiMethod.getName(),
                                                                       expressionType != null ? expressionType : psiMethod.getReturnType(),
                                                                       newParameters.toArray(new ParameterInfoImpl[newParameters.size()]));

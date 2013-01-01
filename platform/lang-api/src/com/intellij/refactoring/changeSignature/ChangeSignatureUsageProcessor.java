@@ -19,8 +19,12 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.rename.ResolveSnapshotProvider;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author Maxim.Medvedev
@@ -40,4 +44,9 @@ public interface ChangeSignatureUsageProcessor {
   boolean shouldPreviewUsages(ChangeInfo changeInfo, UsageInfo[] usages);
 
   boolean setupDefaultValues(ChangeInfo changeInfo, Ref<UsageInfo[]> refUsages, Project project);
+
+  void registerConflictResolvers(List<ResolveSnapshotProvider.ResolveSnapshot> snapshots,
+                                 @NotNull ResolveSnapshotProvider resolveSnapshotProvider,
+                                 UsageInfo[] usages, 
+                                 ChangeInfo changeInfo);
 }

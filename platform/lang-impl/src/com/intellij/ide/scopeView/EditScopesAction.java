@@ -18,6 +18,7 @@ package com.intellij.ide.scopeView;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -60,9 +61,12 @@ public class EditScopesAction extends AnAction implements DumbAware {
     final DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project != null) {
-      final String scopeName = ProjectView.getInstance(project).getCurrentProjectViewPane().getSubId();
-      if (scopeName != null) {
-        e.getPresentation().setEnabled(true);
+      final AbstractProjectViewPane projectViewPane = ProjectView.getInstance(project).getCurrentProjectViewPane();
+      if (projectViewPane != null) {
+        final String scopeName = projectViewPane.getSubId();
+        if (scopeName != null) {
+          e.getPresentation().setEnabled(true);
+        }
       }
     }
   }

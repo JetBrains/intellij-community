@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.projectView.impl.nodes;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
@@ -43,18 +44,18 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWithText {
-
   public PsiFileNode(Project project, PsiFile value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 
   @Override
   public Collection<AbstractTreeNode> getChildrenImpl() {
+    Project project = getProject();
     VirtualFile jarRoot = getJarRoot();
-    if (jarRoot != null) {
-      PsiDirectory psiDirectory = PsiManager.getInstance(getProject()).findDirectory(jarRoot);
+    if (project != null && jarRoot != null) {
+      PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(jarRoot);
       if (psiDirectory != null) {
-        return ProjectViewDirectoryHelper.getInstance(getProject()).getDirectoryChildren(psiDirectory, getSettings(), true);
+        return ProjectViewDirectoryHelper.getInstance(project).getDirectoryChildren(psiDirectory, getSettings(), true);
       }
     }
 
@@ -68,9 +69,21 @@ public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWith
 
   @Override
   protected void updateImpl(PresentationData data) {
-    final PsiFile value = getValue();
+    PsiFile value = getValue();
     data.setPresentableText(value.getName());
     data.setIcon(value.getIcon(Iconable.ICON_FLAG_READ_STATUS));
+
+    VirtualFile file = getVirtualFile();
+    if (file != null && file.isSymLink()) {
+      String target = file.getCanonicalPath();
+      if (target == null) {
+        data.setAttributesKey(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
+        data.setTooltip(CommonBundle.message("vfs.broken.link"));
+      }
+      else {
+        data.setTooltip(FileUtil.toSystemDependentName(target));
+      }
+    }
   }
 
   @Override
@@ -105,7 +118,7 @@ public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWith
 
   @Override
   public void navigate(boolean requestFocus) {
-    VirtualFile jarRoot = getJarRoot();
+    final VirtualFile jarRoot = getJarRoot();
     final Project project = getProject();
     if (requestFocus && jarRoot != null && ProjectRootsUtil.isLibraryRoot(jarRoot, project)) {
       final OrderEntry orderEntry = LibraryUtil.findLibraryEntry(jarRoot, project);
@@ -114,6 +127,7 @@ public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWith
         return;
       }
     }
+
     super.navigate(requestFocus);
   }
 
@@ -132,10 +146,11 @@ public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWith
 
   @Override
   public String getTitle() {
-    final PsiFile file = getValue();
+    VirtualFile file = getVirtualFile();
     if (file != null) {
-      return FileUtil.getLocationRelativeToUserHome(file.getVirtualFile().getPresentableUrl());
+      return FileUtil.getLocationRelativeToUserHome(file.getPresentableUrl());
     }
+
     return super.getTitle();
   }
 
@@ -151,8 +166,15 @@ public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWith
   }
 
   @Nullable
-  public static String extension(final PsiFile file) {
-    return file == null || file.getVirtualFile() == null ? null : file.getVirtualFile().getFileType().getDefaultExtension();
+  public static String extension(@Nullable PsiFile file) {
+    if (file != null) {
+      VirtualFile vFile = file.getVirtualFile();
+      if (vFile != null) {
+        return vFile.getFileType().getDefaultExtension();
+      }
+    }
+
+    return null;
   }
 
   public static class ExtensionSortKey implements Comparable {

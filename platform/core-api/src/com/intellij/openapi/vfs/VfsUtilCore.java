@@ -261,6 +261,16 @@ public class VfsUtilCore {
     }
   }
 
+  /**
+   * Returns {@code true} if given virtual file represents broken symbolic link (which points to non-existent file).
+   */
+  public static boolean isBrokenLink(@NotNull VirtualFile file) {
+    return file.isSymLink() && file.getCanonicalPath() == null;
+  }
+
+  /**
+   * Returns {@code true} if given virtual file represents broken or recursive symbolic link.
+   */
   public static boolean isInvalidLink(@NotNull VirtualFile link) {
     final VirtualFile target = link.getCanonicalFile();
     return target == null || target.equals(link) || isAncestor(target, link, true);

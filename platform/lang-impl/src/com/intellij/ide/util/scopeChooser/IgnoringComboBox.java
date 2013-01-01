@@ -51,15 +51,16 @@ public abstract class IgnoringComboBox extends JComboBox {
 
   @Override
   public void setSelectedIndex(final int anIndex) {
-    Object item = getItemAt(anIndex);
-    if (!(isIgnored(item))) {
-      super.setSelectedIndex(anIndex);
+    int index = anIndex + myDirection;
+    final int size = getModel().getSize();
+    if (index < 0) {
+      index = size - 1;
+    } else if (index > size - 1) {
+      index = 0;
     }
-    else if (myDirection != 0) {
-      item = getItemAt(anIndex + myDirection);
-      if (!isIgnored(item)) {
-        super.setSelectedIndex(anIndex + myDirection);
-      }
+    Object item = getItemAt(index);
+    if (!isIgnored(item)) {
+      super.setSelectedIndex(index);
     }
   }
 

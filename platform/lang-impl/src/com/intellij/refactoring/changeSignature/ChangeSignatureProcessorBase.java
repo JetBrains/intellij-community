@@ -28,6 +28,8 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
 import com.intellij.refactoring.listeners.impl.RefactoringTransaction;
+import com.intellij.refactoring.rename.ResolveSnapshotProvider;
+import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
@@ -131,13 +133,24 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
     try {
       final ChangeSignatureUsageProcessor[] processors = ChangeSignatureUsageProcessor.EP_NAME.getExtensions();
 
+      final PsiElement method = myChangeInfo.getMethod();
+      final ResolveSnapshotProvider resolveSnapshotProvider = myChangeInfo.isParameterNamesChanged()
+                                                              ? VariableInplaceRenamer.INSTANCE.forLanguage(method.getLanguage())
+                                                              : null;
+      final List<ResolveSnapshotProvider.ResolveSnapshot> snapshots = new ArrayList<ResolveSnapshotProvider.ResolveSnapshot>();
+      for (ChangeSignatureUsageProcessor processor : processors) {
+        if (resolveSnapshotProvider != null) {
+          processor.registerConflictResolvers(snapshots, resolveSnapshotProvider, usages, myChangeInfo);
+        }
+      }
+
       for (UsageInfo usage : usages) {
         for (ChangeSignatureUsageProcessor processor : processors) {
           if (processor.processUsage(myChangeInfo, usage, true, usages)) break;
         }
       }
 
-      LOG.assertTrue(myChangeInfo.getMethod().isValid());
+      LOG.assertTrue(method.isValid());
       for (ChangeSignatureUsageProcessor processor : processors) {
         if (processor.processPrimaryMethod(myChangeInfo)) break;
       }
@@ -148,7 +161,13 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
         }
       }
 
-      final PsiElement method = myChangeInfo.getMethod();
+      if (!snapshots.isEmpty()) {
+        for (ParameterInfo parameterInfo : myChangeInfo.getNewParameters()) {
+          for (ResolveSnapshotProvider.ResolveSnapshot snapshot : snapshots) {
+            snapshot.apply(parameterInfo.getName());
+          }
+        }
+      }
       LOG.assertTrue(method.isValid());
       if (elementListener != null && myChangeInfo.isNameChanged()) {
         elementListener.elementRenamed(method);

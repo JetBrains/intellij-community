@@ -340,7 +340,9 @@ public abstract class BaseRefactoringProcessor {
     for (Usage usage : usages) {
       if (usage instanceof PsiElementUsage) {
         final PsiElementUsage elementUsage = (PsiElementUsage)usage;
-        final PsiFile containingFile = elementUsage.getElement().getContainingFile();
+        final PsiElement element = elementUsage.getElement();
+        if (element == null) continue;
+        final PsiFile containingFile = element.getContainingFile();
         if (elementUsage.isNonCodeUsage()) {
           nonCodeUsageCount++;
           nonCodeFiles.add(containingFile);

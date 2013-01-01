@@ -157,4 +157,15 @@ public class PsiDiamondTypeUtil {
     }
     return expr;
   }
+
+  public static String getCollapsedType(PsiType type, PsiElement context) {
+    String typeText = type.getCanonicalText();
+    if (PsiUtil.isLanguageLevel7OrHigher(context)) {
+      final int idx = typeText.indexOf('<');
+      if (idx >= 0) {
+        return typeText.substring(0, idx) + "<>";
+      }
+    }
+    return typeText;
+  }
 }
