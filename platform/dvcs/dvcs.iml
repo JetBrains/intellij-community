@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="core-api" />
     <orderEntry type="module" module-name="testFramework" />
     <orderEntry type="module" module-name="vcs-impl" />
+    <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>
 

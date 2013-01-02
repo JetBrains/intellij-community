@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.history.browser;
+package git4idea.cherrypick;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -31,6 +31,7 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitSimpleEventDetector;
 import git4idea.commands.GitUntrackedFilesOverwrittenByOperationDetector;
+import git4idea.history.browser.GitCommit;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.util.UntrackedFilesNotifier;
@@ -226,18 +227,7 @@ public class GitCherryPicker {
 
   @NotNull
   private static String createCommitMessage(@NotNull GitCommit commit) {
-    // make sure there is an empty line after description
-    String spaces;
-    if (commit.getDescription().endsWith("\n\n")) {
-      spaces = "";
-    }
-    else if (commit.getDescription().endsWith("\n")) {
-      spaces = "\n";
-    }
-    else {
-      spaces = "\n\n";
-    }
-    return commit.getDescription() + spaces + "(cherry-picked from " + commit.getShortHash().getString() + ")";
+    return commit.getDescription() + "\n(cherry picked from commit " + commit.getShortHash().getString() + ")";
   }
 
   private boolean showCommitDialogAndWaitForCommit(@NotNull final GitRepository repository, @NotNull final GitCommitWrapper commit,
@@ -355,7 +345,7 @@ public class GitCherryPicker {
 
   @NotNull
   private static String commitDetails(@NotNull GitCommitWrapper commit) {
-    return commit.getCommit().getShortHash().toString() + " \"" + commit.getOriginalSubject() + "\"";
+    return commit.getCommit().getShortHash().toString() + " " + commit.getOriginalSubject();
   }
 
   private void refreshChangedFiles(@NotNull Collection<FilePath> filePaths) {
@@ -371,7 +361,7 @@ public class GitCherryPicker {
   private LocalChangeList createChangeList(@NotNull GitCommit commit, @NotNull String commitMessage) {
     List<Change> changes = commit.getChanges();
     if (!changes.isEmpty()) {
-      String changeListName = createNameForChangeList(commitMessage, 0);
+      String changeListName = createNameForChangeList(commitMessage, 0).replace('\n', ' ');
       final LocalChangeList changeList = ((ChangeListManagerEx)myChangeListManager).addChangeList(changeListName, commitMessage, commit);
       myChangeListManager.moveChangesTo(changeList, changes.toArray(new Change[changes.size()]));
       myChangeListManager.setDefaultChangeList(changeList);

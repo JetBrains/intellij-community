@@ -33,8 +33,6 @@ import static junit.framework.Assert.assertNull
  *
  * @author Kirill Likhodedov
  */
-@Mixin(GitExecutor)
-@Mixin(GitScenarios)
 class GitRepositoryReaderNewTest extends GitLightTest {
 
   GitRepository myRepository

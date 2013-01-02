@@ -16,6 +16,7 @@
 package com.intellij.dvcs.test;
 
 import com.intellij.ide.errorTreeView.HotfixData;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
@@ -44,8 +45,15 @@ import java.util.Map;
  * @author Kirill Likhodedov
  */
 public class MockVcsHelper extends AbstractVcsHelper {
+  private boolean myCommitDialogShown;
   private boolean myMergeDialogShown;
+
   private CommitHandler myCommitHandler;
+  private MergeHandler myMergeHandler;
+
+  public MockVcsHelper(@NotNull Project project) {
+    super(project);
+  }
 
   @Override
   public void showErrors(List<VcsException> abstractVcsExceptions, @NotNull String tabDisplayName) {
@@ -126,23 +134,14 @@ public class MockVcsHelper extends AbstractVcsHelper {
                                            MergeProvider provider,
                                            @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
     myMergeDialogShown = true;
+    if (myMergeHandler != null) {
+      myMergeHandler.showMergeDialog();
+    }
     return Collections.emptyList();
   }
 
   public boolean mergeDialogWasShown() {
     return myMergeDialogShown;
-  }
-
-  @NotNull
-  @Override
-  public List<VirtualFile> showMergeDialog(List<VirtualFile> files, MergeProvider provider) {
-    return showMergeDialog(files, provider, new MergeDialogCustomizer());
-  }
-
-  @NotNull
-  @Override
-  public List<VirtualFile> showMergeDialog(List<VirtualFile> files) {
-    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -187,6 +186,7 @@ public class MockVcsHelper extends AbstractVcsHelper {
   @Override
   public boolean commitChanges(@NotNull Collection<Change> changes, @NotNull LocalChangeList initialChangeList,
                                @NotNull String commitMessage, @Nullable CommitResultHandler customResultHandler) {
+    myCommitDialogShown = true;
     if (myCommitHandler != null) {
       boolean success = myCommitHandler.commit(commitMessage);
       if (customResultHandler != null) {
@@ -209,8 +209,20 @@ public class MockVcsHelper extends AbstractVcsHelper {
     myCommitHandler = handler;
   }
 
+  public void registerHandler(MergeHandler handler) {
+    myMergeHandler = handler;
+  }
+
+  public boolean commitDialogWasShown() {
+    return myCommitDialogShown;
+  }
+
   public interface CommitHandler {
     boolean commit(String commitMessage);
+  }
+
+  public interface MergeHandler {
+    void showMergeDialog();
   }
 
 }
