@@ -51,7 +51,7 @@ public class GitTestImpl implements Git {
   @NotNull
   @Override
   public GitCommandResult init(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitLineHandlerListener... listeners) {
-    throw new UnsupportedOperationException();
+    return execute(root.getPath(), "init", listeners);
   }
 
   @NotNull
@@ -279,7 +279,11 @@ public class GitTestImpl implements Git {
   }
 
   private static GitCommandResult execute(GitRepository repository, String operation, GitLineHandlerListener... listeners) {
-    cd(repository);
+    return execute(repository.getRoot().getPath(), operation, listeners);
+  }
+
+  private static GitCommandResult execute(String workingDir, String operation, GitLineHandlerListener... listeners) {
+    cd(workingDir);
     String out = git(operation);
     feedOutput(out, listeners);
     return commandResult(out);

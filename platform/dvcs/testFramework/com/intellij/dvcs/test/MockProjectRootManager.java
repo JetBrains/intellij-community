@@ -21,7 +21,6 @@ import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -34,12 +33,16 @@ import java.util.List;
  */
 public class MockProjectRootManager extends ProjectRootManager {
 
-  Collection<VirtualFile> myContentRoots = new ArrayList<VirtualFile>();
+  List<VirtualFile> myContentRoots = new ArrayList<VirtualFile>();
 
   @NotNull
   @Override
   public VirtualFile[] getContentRoots() {
-    return ArrayUtil.toObjectArray(VirtualFile.class, myContentRoots);
+    VirtualFile[] roots = new VirtualFile[myContentRoots.size()];
+    for (int i = 0; i < myContentRoots.size(); i++) {
+      roots[i] = myContentRoots.get(i);
+    }
+    return roots;
   }
 
   @NotNull
