@@ -2,13 +2,10 @@ Feature: Git Cherry-Pick When Auto-Commit is selected
 
 Background:
   Given enabled auto-commit in the settings
-
-  Given new committed file file.txt 'initial'
-  And new committed file f2.txt 'initial'
-  And new committed file conflict.txt 'initial content for conflict'
-
+  Given new committed files file.txt, a.txt, conflict.txt with initial content
   Given branch feature
-  And commit f5027a3 on branch feature
+
+  Given commit f5027a3 on branch feature
     """
     fix #1
     -----
@@ -16,23 +13,6 @@ Background:
     Changes:
     M file.txt "feature changes"
     """
-
-  # conflicting commits
-  Given commit aff6453 on branch master
-    """
-    master content
-    -----
-    Changes:
-    M conflict.txt "master version"
-    """
-  Given commit bb6453c on branch feature
-    """
-    feature content
-    -----
-    Changes:
-    M conflict.txt "feature version"
-    """
-
 
   Scenario: Simple cherry-pick
     When I cherry-pick the commit f5027a3
@@ -50,7 +30,8 @@ Background:
   Scenario: Dirty tree, conflicting with the commit
     Given file.txt is locally modified:
       """
-      master content"""
+      master content
+      """
     When I cherry-pick the commit f5027a3
     Then nothing is committed
     And error notification is shown 'Cherry-pick failed'
@@ -79,10 +60,38 @@ Background:
       """
 
   Scenario: Conflict with cherry-picked commit should show merge dialog
+    Given commit aff6453 on branch master
+      """
+      master content
+      -----
+      Changes:
+      M conflict.txt "master version"
+      """
+    Given commit bb6453c on branch feature
+      """
+      feature content
+      -----
+      Changes:
+      M conflict.txt "feature version"
+      """
     When I cherry-pick the commit bb6453c
     Then merge dialog should be shown
 
   Scenario: Unresolved conflict with cherry-picked commit should produce a changelist
+    Given commit aff6453 on branch master
+      """
+      master content
+      -----
+      Changes:
+      M conflict.txt "master version"
+      """
+    Given commit bb6453c on branch feature
+      """
+      feature content
+      -----
+      Changes:
+      M conflict.txt "feature version"
+      """
     When I cherry-pick the commit bb6453c and don't resolve conflicts
     Then active changelist is 'feature content (cherry picked from commit bb6453c)'
     And warning notification is shown 'Cherry-picked with conflicts'
@@ -92,10 +101,38 @@ Background:
       """
 
   Scenario: Resolved conflict should show commit dialog
+    Given commit aff6453 on branch master
+      """
+      master content
+      -----
+      Changes:
+      M conflict.txt "master version"
+      """
+    Given commit bb6453c on branch feature
+      """
+      feature content
+      -----
+      Changes:
+      M conflict.txt "feature version"
+      """
     When I cherry-pick the commit bb6453c and resolve conflicts
     Then commit dialog should be shown
 
   Scenario: Resolve conflict and agree to commit
+    Given commit aff6453 on branch master
+      """
+      master content
+      -----
+      Changes:
+      M conflict.txt "master version"
+      """
+    Given commit bb6453c on branch feature
+      """
+      feature content
+      -----
+      Changes:
+      M conflict.txt "feature version"
+      """
     When I cherry-pick the commit bb6453c, resolve conflicts and commit
     Then the last commit is
       """
@@ -108,6 +145,20 @@ Background:
     And no new changelists are created
 
   Scenario: Resolve conflict, but cancel commit
+    Given commit aff6453 on branch master
+      """
+      master content
+      -----
+      Changes:
+      M conflict.txt "master version"
+      """
+    Given commit bb6453c on branch feature
+      """
+      feature content
+      -----
+      Changes:
+      M conflict.txt "feature version"
+      """
     When I cherry-pick the commit bb6453c, resolve conflicts and don't commit
     Then active changelist is 'feature content (cherry picked from commit bb6453c)'
     And no notification is shown
@@ -143,6 +194,13 @@ Background:
       Changes:
       M file.txt "feature changes\nmore feature changes"
       """
+    Given commit bb6453c on branch feature
+      """
+      feature content
+      -----
+      Changes:
+      M conflict.txt "feature version"
+      """
     Given conflict.txt is locally modified:
       """
       master uncommitted content
@@ -171,7 +229,21 @@ Background:
       Changes:
       M file.txt "feature changes\nmore feature changes"
       """
-    When I cherry-pick commits f5027a3, bb6453c and f5027a3
+    Given commit bb6453c on branch feature
+      """
+      feature content
+      -----
+      Changes:
+      M conflict.txt "feature version"
+      """
+    Given commit aff6453 on branch master
+      """
+      master content
+      -----
+      Changes:
+      M conflict.txt "master version"
+      """
+    When I cherry-pick commits f5027a3, bb6453c and c123abc
     Then the last commit is
       """
       fix #1
@@ -214,14 +286,14 @@ Background:
   #    fix for f2
   #    -----
   #    Changes:
-  #    M f2.txt "feature changes"
+  #    M a.txt "feature changes"
   #    """
   #  Given commit e098fed on branch master
   #    """
   #    fix for f2 manually incorporated
   #    -----
   #    Changes:
-  #    M f2.txt "feature changes"
+  #    M a.txt "feature changes"
   #    """
   #  When I cherry-pick commits c123abc, d123abc and e123abc
   #  Then `git log -2` should return

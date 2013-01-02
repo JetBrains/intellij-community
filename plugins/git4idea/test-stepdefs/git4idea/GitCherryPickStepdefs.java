@@ -63,6 +63,7 @@ public class GitCherryPickStepdefs {
 
   @When("^I cherry-pick commits (.+) and (.+)$")
   public void I_cherry_pick_commits(String severalCommits, String hash2) throws Throwable {
+
     String[] hashes = severalCommits.split(",");
     String[] allHashes = new String[hashes.length + 1];
     for (int i = 0; i < allHashes.length - 1; i++) {

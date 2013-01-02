@@ -20,6 +20,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import cucumber.annotation.After;
 import cucumber.annotation.Before;
 import cucumber.annotation.en.And;
@@ -31,6 +32,8 @@ import git4idea.test.TestNotificator;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 import static com.intellij.dvcs.test.Executor.cd;
 import static com.intellij.dvcs.test.Executor.mkdir;
@@ -127,4 +130,19 @@ public class GeneralStepdefs {
   public void no_notification_is_shown() throws Throwable {
     assertNull("Notification should not be shown", lastNotification());
   }
+
+  @Given("^new committed files (.+) with initial content$")
+  public void new_committed_files_file_txt_a_txt_b_txt_with_initial_content(String listOfFiles) throws Throwable {
+    List<String> files = splitByComma(listOfFiles);
+    for (String file : files) {
+      touch(file, "initial content");
+    }
+    git("add %s", StringUtil.join(files, " "));
+    git("commit -m 'adding files with initial content'");
+  }
+
+  private static List<String> splitByComma(String listOfFiles) {
+    return Arrays.asList(listOfFiles.split(", ?"));
+  }
+
 }
