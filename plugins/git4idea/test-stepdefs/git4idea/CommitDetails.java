@@ -15,6 +15,8 @@
  */
 package git4idea;
 
+import com.intellij.openapi.util.Pair;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.regex.Matcher;
@@ -75,6 +77,27 @@ public class CommitDetails {
     CHANGES
   }
 
+  private enum Data {
+    AUTHOR("Author") {
+      @Override
+      void apply(CommitDetails commitDetails, String value) {
+        commitDetails.myAuthor = value;
+      }
+    };
+
+    private final String myKey;
+
+    Data(String key) {
+      myKey = key;
+    }
+
+    abstract void apply(CommitDetails commitDetails, String value);
+
+    private String getKey() {
+      return myKey;
+    }
+  }
+
   /**
    * Format:
    * <pre>
@@ -95,13 +118,12 @@ public class CommitDetails {
     Collection<Change> changes = new ArrayList<Change>();
     ParsingStage stage = ParsingStage.MESSAGE;
     for (String line : details.split("\n")) {
-      if (line.equals("-----")) {
+      Pair<Data, String> data = checkDataLine(line);
+      if (data != null) {
         stage = ParsingStage.DATA;
-        continue;
       }
-      else if (line.equals("Changes:")) {
+      else if (line.matches("[MADR]\\d* [^ ]+ .+")) {
         stage = ParsingStage.CHANGES;
-        continue;
       }
 
       if (stage == ParsingStage.MESSAGE) {
@@ -110,14 +132,24 @@ public class CommitDetails {
       else if (stage == ParsingStage.CHANGES) {
         changes.add(parseChange(line));
       }
-      else if (line.toLowerCase().startsWith("author: ")) {
-        commit.myAuthor = line.substring("author: ".length());
+      else if (data != null) {
+        data.getFirst().apply(commit, data.getSecond());
       }
     }
 
     commit.myMessage = message.toString();
     commit.myChanges = changes;
     return commit;
+  }
+
+  private static Pair<Data, String> checkDataLine(String line) {
+    for (Data data : Data.values()) {
+      String dataPrefix = data.getKey().toLowerCase() + ": ";
+      if (line.toLowerCase().startsWith(dataPrefix) && line.trim().length() != dataPrefix.length()) {
+        return Pair.create(data, line.substring(dataPrefix.length()).trim());
+      }
+    }
+    return null;
   }
 
   private static Change parseChange(String change) {

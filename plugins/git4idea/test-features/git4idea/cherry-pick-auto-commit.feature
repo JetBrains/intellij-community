@@ -8,9 +8,7 @@ Background:
   Given commit f5027a3 on branch feature
     """
     fix #1
-    -----
     Author: John Bro
-    Changes:
     M file.txt "feature changes"
     """
 
@@ -45,8 +43,6 @@ Background:
     Given commit aff6453 on branch feature
       """
       add file
-      -----
-      Changes:
       A untracked.txt "feature changes"
       """
     Given file untracked.txt 'master changes'
@@ -63,15 +59,11 @@ Background:
     Given commit aff6453 on branch master
       """
       master content
-      -----
-      Changes:
       M conflict.txt "master version"
       """
     Given commit bb6453c on branch feature
       """
       feature content
-      -----
-      Changes:
       M conflict.txt "feature version"
       """
     When I cherry-pick the commit bb6453c
@@ -81,15 +73,11 @@ Background:
     Given commit aff6453 on branch master
       """
       master content
-      -----
-      Changes:
       M conflict.txt "master version"
       """
     Given commit bb6453c on branch feature
       """
       feature content
-      -----
-      Changes:
       M conflict.txt "feature version"
       """
     When I cherry-pick the commit bb6453c and don't resolve conflicts
@@ -104,15 +92,11 @@ Background:
     Given commit aff6453 on branch master
       """
       master content
-      -----
-      Changes:
       M conflict.txt "master version"
       """
     Given commit bb6453c on branch feature
       """
       feature content
-      -----
-      Changes:
       M conflict.txt "feature version"
       """
     When I cherry-pick the commit bb6453c and resolve conflicts
@@ -122,15 +106,11 @@ Background:
     Given commit aff6453 on branch master
       """
       master content
-      -----
-      Changes:
       M conflict.txt "master version"
       """
     Given commit bb6453c on branch feature
       """
       feature content
-      -----
-      Changes:
       M conflict.txt "feature version"
       """
     When I cherry-pick the commit bb6453c, resolve conflicts and commit
@@ -148,15 +128,11 @@ Background:
     Given commit aff6453 on branch master
       """
       master content
-      -----
-      Changes:
       M conflict.txt "master version"
       """
     Given commit bb6453c on branch feature
       """
       feature content
-      -----
-      Changes:
       M conflict.txt "feature version"
       """
     When I cherry-pick the commit bb6453c, resolve conflicts and don't commit
@@ -167,8 +143,6 @@ Background:
     Given commit c123abc on branch feature
       """
       fix #2
-      -----
-      Changes:
       M file.txt "feature changes\nmore feature changes"
       """
     When I cherry-pick commits f5027a3 and c123abc
@@ -190,15 +164,11 @@ Background:
     Given commit c123abc on branch feature
       """
       fix #2
-      -----
-      Changes:
       M file.txt "feature changes\nmore feature changes"
       """
     Given commit bb6453c on branch feature
       """
       feature content
-      -----
-      Changes:
       M conflict.txt "feature version"
       """
     Given conflict.txt is locally modified:
@@ -225,22 +195,16 @@ Background:
     Given commit c123abc on branch feature
       """
       fix #2
-      -----
-      Changes:
       M file.txt "feature changes\nmore feature changes"
       """
     Given commit bb6453c on branch feature
       """
       feature content
-      -----
-      Changes:
       M conflict.txt "feature version"
       """
     Given commit aff6453 on branch master
       """
       master content
-      -----
-      Changes:
       M conflict.txt "master version"
       """
     When I cherry-pick commits f5027a3, bb6453c and c123abc
@@ -255,8 +219,6 @@ Background:
   #  Given commit eef9832 on branch master
   #    """
   #    fix #1 manually incorporated
-  #    -----
-  #    Changes:
   #    M file.txt "feature changes"
   #    """
   #  When I cherry-pick the commit f5027a3
@@ -270,29 +232,21 @@ Background:
   #  Given commit c123abc on branch feature
   #    """
   #    fix #2
-  #    -----
-  #    Changes:
   #    M file.txt "feature changes\nmore feature changes"
   #    """
   #  Given commit d123abc on branch feature
   #    """
   #    fix #3
-  #    -----
-  #    Changes:
   #    M file.txt "feature changes\nmore feature changes\nmore feature changes"
   #    """
   #  Given commit e123abc on branch feature
   #    """
   #    fix for f2
-  #    -----
-  #    Changes:
   #    M a.txt "feature changes"
   #    """
   #  Given commit e098fed on branch master
   #    """
   #    fix for f2 manually incorporated
-  #    -----
-  #    Changes:
   #    M a.txt "feature changes"
   #    """
   #  When I cherry-pick commits c123abc, d123abc and e123abc
