@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ public class ExpressionParser {
   private static final TokenSet ARGS_LIST_CONTINUE = TokenSet.create(
     JavaTokenType.IDENTIFIER, TokenType.BAD_CHARACTER, JavaTokenType.COMMA, JavaTokenType.INTEGER_LITERAL, JavaTokenType.STRING_LITERAL);
   private static final TokenSet THIS_OR_SUPER = TokenSet.create(JavaTokenType.THIS_KEYWORD, JavaTokenType.SUPER_KEYWORD);
+  private static final TokenSet ID_OR_SUPER = TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.SUPER_KEYWORD);
   private static final TokenSet TYPE_START = TokenSet.orSet(
     ElementType.PRIMITIVE_TYPE_BIT_SET, TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.AT));
 
@@ -396,7 +397,7 @@ public class ExpressionParser {
           final PsiBuilder.Marker refExpr = expr.precede();
           myParser.getReferenceParser().parseReferenceParameterList(builder, false, false);
 
-          if (!expectOrError(builder, JavaTokenType.IDENTIFIER, "expected.identifier")) {
+          if (!expectOrError(builder, ID_OR_SUPER, "expected.identifier")) {
             refExpr.done(JavaElementType.REFERENCE_EXPRESSION);
             startMarker.drop();
             return refExpr;
