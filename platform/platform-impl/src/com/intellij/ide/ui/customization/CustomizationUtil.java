@@ -65,11 +65,11 @@ public class CustomizationUtil {
       }
     }
 
-    return new CachedAction(text, group.isPopup(), group, schema, defaultGroupName);
+    return new CustomisedActionGroup(text, group.isPopup(), group, schema, defaultGroupName);
   }
 
 
-  private static AnAction [] getReordableChildren(ActionGroup group, CustomActionsSchema schema, String defaultGroupName, AnActionEvent e) {
+  static AnAction [] getReordableChildren(ActionGroup group, CustomActionsSchema schema, String defaultGroupName, AnActionEvent e) {
     String text = group.getTemplatePresentation().getText();
     ActionManager actionManager = ActionManager.getInstance();
     final ArrayList<AnAction> reorderedChildren = new ArrayList<AnAction>();
@@ -115,45 +115,6 @@ public class CustomizationUtil {
     }
 
     return reorderedChildren.toArray(new AnAction[reorderedChildren.size()]);
-  }
-
-  private static class CachedAction extends ActionGroup {
-    private boolean myForceUpdate;
-    private final ActionGroup myGroup;
-    private AnAction[] myChildren;
-    private final CustomActionsSchema mySchema;
-    private final String myDefaultGroupName;
-
-    public CachedAction(String shortName, boolean popup, final ActionGroup group, CustomActionsSchema schema, String defaultGroupName) {
-      super(shortName, popup);
-      myGroup = group;
-      mySchema = schema;
-      myDefaultGroupName = defaultGroupName;
-      myForceUpdate = true;
-    }
-
-    @NotNull
-    public AnAction[] getChildren(@Nullable final AnActionEvent e) {
-      if (myForceUpdate){
-        myChildren = getReordableChildren(myGroup, mySchema, myDefaultGroupName, e);
-        myForceUpdate = false;
-        return myChildren;
-      } else {
-        if (!(myGroup instanceof DefaultActionGroup) || myChildren == null){
-          myChildren = getReordableChildren(myGroup, mySchema, myDefaultGroupName, e);
-        }
-        return myChildren;
-      }
-    }
-
-    public void update(AnActionEvent e) {
-      myGroup.update(e);
-    }
-
-    @Override
-    public boolean isDumbAware() {
-      return myGroup.isDumbAware();
-    }
   }
 
   public static void optimizeSchema(final JTree tree, final CustomActionsSchema schema) {

@@ -183,6 +183,13 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     updateToolbarVisibility();
     myContentPane.revalidate();
   }
+  
+  void updateNorthComponents() {
+    for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
+      northComponent.revalidate();
+    }
+    myContentPane.revalidate();
+  }
 
   void updateMainMenuActions(){
     ((IdeMenuBar)menuBar).updateMenuActions();

@@ -24,6 +24,8 @@ import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.Project;
@@ -56,14 +58,22 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
       @Override
       public void uiSettingsChanged(UISettings source) {
-        toggleRunPanel(!source.SHOW_MAIN_TOOLBAR);
+        toggleRunPanel(!source.SHOW_MAIN_TOOLBAR && source.SHOW_NAVIGATION_BAR);
       }
     }, this);
 
-    final AnAction navBarToolBar = ActionManager.getInstance().getAction("NavBarToolBar");
-    myNavToolbarGroupExist = navBarToolBar instanceof DefaultActionGroup && ((DefaultActionGroup)navBarToolBar).getChildrenCount() > 0;
+    myNavToolbarGroupExist = runToolbarExists();
 
     Disposer.register(myProject, this);
+  }
+
+  @Override
+  public void revalidate() {
+    final UISettings settings = UISettings.getInstance();
+    if (!settings.SHOW_MAIN_TOOLBAR && settings.SHOW_NAVIGATION_BAR) {
+      toggleRunPanel(false);
+      toggleRunPanel(true);
+    }
   }
 
   @Override
@@ -76,8 +86,9 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   }
 
   public static boolean runToolbarExists() {
-    final AnAction navBarToolBar = ActionManager.getInstance().getAction("NavBarToolBar");
-    return navBarToolBar instanceof DefaultActionGroup && ((DefaultActionGroup)navBarToolBar).getChildrenCount() > 0;
+    final AnAction correctedAction = CustomActionsSchema.getInstance().getCorrectedAction("NavBarToolBar");
+    return correctedAction instanceof DefaultActionGroup && ((DefaultActionGroup)correctedAction).getChildrenCount() > 0 ||
+           correctedAction instanceof CustomisedActionGroup && ((CustomisedActionGroup)correctedAction).getFirstAction() != null;
   }
 
   public JComponent getComponent() {
@@ -120,11 +131,10 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   private void toggleRunPanel(final boolean show) {
     if (show && myRunPanel == null && runToolbarExists()) {
       final ActionManager manager = ActionManager.getInstance();
-      final AnAction toolbarRunGroup = manager.getAction("NavBarToolBar");
-      if (toolbarRunGroup instanceof DefaultActionGroup) {
-        final DefaultActionGroup group = (DefaultActionGroup)toolbarRunGroup;
-        final boolean needGap = isNeedGap(group);
-        final ActionToolbar actionToolbar = manager.createActionToolbar(ActionPlaces.NAVIGATION_BAR, group, true);
+      AnAction toolbarRunGroup = CustomActionsSchema.getInstance().getCorrectedAction("NavBarToolBar");
+      if (toolbarRunGroup instanceof ActionGroup) {
+        final boolean needGap = isNeedGap(toolbarRunGroup);
+        final ActionToolbar actionToolbar = manager.createActionToolbar(ActionPlaces.NAVIGATION_BAR, (ActionGroup)toolbarRunGroup, true);
         final JComponent component = actionToolbar.getComponent();
         component.setOpaque(false);
         myRunPanel = new JPanel(new BorderLayout()) {
@@ -151,30 +161,36 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     return (ancestor != null && !(ancestor instanceof IdeFrameImpl)) || !UISettings.getInstance().SHOW_MAIN_TOOLBAR;
   }
 
-  private static boolean isNeedGap(final DefaultActionGroup group) {
+  private static boolean isNeedGap(final AnAction group) {
     final AnAction firstAction = getFirstAction(group);
     return firstAction instanceof ComboBoxAction;
   }
 
   @Nullable
-  private static AnAction getFirstAction(final DefaultActionGroup group) {
-    AnAction firstAction = null;
-    for (final AnAction action : group.getChildActionsOrStubs()) {
-      if (action instanceof DefaultActionGroup) {
-        firstAction = getFirstAction((DefaultActionGroup)action);
-      }
-      else if (action instanceof Separator || action instanceof ActionGroup) {
-        continue;
-      }
-      else {
-        firstAction = action;
-        break;
+  private static AnAction getFirstAction(final AnAction group) {
+    if (group instanceof DefaultActionGroup) {
+      AnAction firstAction = null;
+      for (final AnAction action : ((DefaultActionGroup)group).getChildActionsOrStubs()) {
+        if (action instanceof DefaultActionGroup) {
+          firstAction = getFirstAction((DefaultActionGroup)action);
+        }
+        else if (action instanceof Separator || action instanceof ActionGroup) {
+          continue;
+        }
+        else {
+          firstAction = action;
+          break;
+        }
+  
+        if (firstAction != null) break;
       }
 
-      if (firstAction != null) break;
+      return firstAction;
     }
-
-    return firstAction;
+    if (group instanceof CustomisedActionGroup) {
+      return ((CustomisedActionGroup)group).getFirstAction();
+    }
+    return null;
   }
 
   private JComponent buildNavBarPanel() {

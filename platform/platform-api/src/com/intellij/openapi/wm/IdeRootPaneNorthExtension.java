@@ -36,4 +36,6 @@ public abstract class IdeRootPaneNorthExtension implements Disposable {
   public abstract void uiSettingsChanged(UISettings settings);
 
   public abstract IdeRootPaneNorthExtension copy();
+  
+  public void revalidate(){}
 }
