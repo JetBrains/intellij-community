@@ -31,7 +31,6 @@ import git4idea.test.TestNotificator;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.regex.Matcher;
 
 import static com.intellij.dvcs.test.Executor.cd;
 import static com.intellij.dvcs.test.Executor.mkdir;
@@ -104,12 +103,20 @@ public class GeneralStepdefs {
                             notificationType.equals("error") ? NotificationType.ERROR : null;
     assertEquals("Notification type is incorrect", type, lastNotification().getType());
     assertEquals("Notification title is incorrect", title, lastNotification().getTitle());
-    assertEquals("Notification content is incorrect", virtualCommits.replaceVirtualHashes(content),
-                 convertNotificationHtml(lastNotification().getContent()));
+    assertNotificationContent(content, lastNotification().getContent());
   }
 
-  private static String convertNotificationHtml(String content) {
-    return content.replaceAll("<br/>", Matcher.quoteReplacement("\n"));
+  private static void assertNotificationContent(String expected, String actual) {
+    expected = virtualCommits.replaceVirtualHashes(expected);
+    assertEquals("Notification content is incorrect", expected, adjustNotificationContent(actual));
+
+  }
+
+  private static String adjustNotificationContent(String content) {
+    return content.replaceAll("<br/>", "\n")      // we don't want to type <br/> in features
+                  .replaceAll("([^\n])?<hr/>", "$1\n<hr/>")         // surround <hr/> with newlines
+                  .replaceAll("<hr/>([^\n])?", "<hr/>\n$1");
+
   }
 
   private static Notification lastNotification() {

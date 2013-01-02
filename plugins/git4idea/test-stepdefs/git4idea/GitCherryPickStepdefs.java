@@ -35,10 +35,7 @@ import git4idea.history.browser.GitCommit;
 import git4idea.history.browser.SHAHash;
 import git4idea.history.wholeTree.AbstractHash;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static com.intellij.dvcs.test.Executor.echo;
 import static git4idea.GitCucumberWorld.*;
@@ -64,11 +61,29 @@ public class GitCherryPickStepdefs {
     cherryPick(hash);
   }
 
-  private static void cherryPick(String virtualHash) {
-    CommitDetails realCommit = virtualCommits.getRealCommit(virtualHash);
-    GitCommit mockCommit = mockCommit(realCommit.getHash(), realCommit.getMessage());
+  @When("^I cherry-pick commits (.+) and (.+)$")
+  public void I_cherry_pick_commits(String severalCommits, String hash2) throws Throwable {
+    String[] hashes = severalCommits.split(",");
+    String[] allHashes = new String[hashes.length + 1];
+    for (int i = 0; i < allHashes.length - 1; i++) {
+      allHashes[i] = hashes[i].trim();
+    }
+    allHashes[allHashes.length - 1] = hash2;
+    cherryPick(allHashes);
+  }
+
+  private static void cherryPick(String... virtualHashes) {
+    List<GitCommit> commits = new ArrayList<GitCommit>();
+    for (String virtualHash : virtualHashes) {
+      commits.add(createMockCommit(virtualHash));
+    }
     new GitCherryPicker(myProject, myGit, myPlatformFacade, mySettings.isAutoCommitOnCherryPick())
-      .cherryPick(Collections.singletonMap(myRepository, Collections.singletonList(mockCommit)));
+      .cherryPick(Collections.singletonMap(myRepository, commits));
+  }
+
+  private static GitCommit createMockCommit(String virtualHash) {
+    CommitDetails realCommit = virtualCommits.getRealCommit(virtualHash);
+    return mockCommit(realCommit.getHash(), realCommit.getMessage());
   }
 
   private static GitCommit mockCommit(String hash, String message) {
@@ -116,10 +131,24 @@ public class GitCherryPickStepdefs {
   }
 
   @Then("^the last commit is$")
-  public void the_last_commit_is(String message) {
-    String actual = git("log -1 --pretty=%B");
-    message = virtualCommits.replaceVirtualHashes(message);
-    assertEquals("Commit doesn't match", message, trimHash(actual));
+  public void the_last_commit_is(String message) throws Throwable {
+    git_log_should_return(1, message);
+  }
+
+  @Then("^`git log -(\\d+)` should return$")
+  public void git_log_should_return(int commitNum, String messages) throws Throwable {
+    List<String> expectedMessages = Arrays.asList(messages.split("-----"));
+
+    final String RECORD_SEPARATOR = "@";
+    String output = git("log -%s --pretty=%%B%s", String.valueOf(commitNum), RECORD_SEPARATOR);
+    List<String> actualMessages = Arrays.asList(output.split("@"));
+
+    for (int i = 0; i < expectedMessages.size(); i++) {
+      String expectedMessage = expectedMessages.get(i).trim();
+      String actualMessage = actualMessages.get(i).trim();
+      expectedMessage = virtualCommits.replaceVirtualHashes(expectedMessage);
+      assertEquals("Commit doesn't match", expectedMessage, trimHash(actualMessage));
+    }
   }
 
   @And("^no new changelists are created$")
@@ -133,9 +162,7 @@ public class GitCherryPickStepdefs {
   }
 
   String trimHash(String commitMessage) {
-    int hashStart = commitMessage.lastIndexOf(' ') + 1;
-    String hash = commitMessage.substring(hashStart);
-    return commitMessage.replace(hash, hash.substring(0, 7)) + ")";
+    return commitMessage.replaceAll("([a-fA-F0-9]{7})[a-fA-F0-9]{33}", "$1");
   }
 
   @Then("^nothing is committed$")

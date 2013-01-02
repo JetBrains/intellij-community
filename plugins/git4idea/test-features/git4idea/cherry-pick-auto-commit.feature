@@ -40,7 +40,8 @@ Background:
       """
     And success notification is shown 'Cherry-pick successful'
        """
-       f5027a3 fix #1"""
+       f5027a3 fix #1
+       """
     And no new changelists are created
 
   Scenario: Dirty tree, conflicting with the commit
@@ -107,3 +108,73 @@ Background:
     When I cherry-pick the commit bb6453c, resolve conflicts and don't commit
     Then active changelist is 'feature content (cherry picked from commit bb6453c)'
     And no notification is shown
+
+  Scenario: Cherry-pick 2 commits
+    Given commit c123abc on branch feature
+      """
+      fix #2
+      -----
+      Author: John Bro
+      Changes:
+      M file.txt "feature changes\nmore feature changes"
+      """
+    When I cherry-pick commits f5027a3 and c123abc
+    Then `git log -2` should return
+      """
+      fix #2
+      (cherry picked from commit c123abc)
+      -----
+      fix #1
+      (cherry picked from commit f5027a3)
+      """
+    And success notification is shown 'Cherry-pick successful'
+      """
+      f5027a3 fix #1
+      c123abc fix #2
+      """
+
+  Scenario: Cherry-pick 3 commits, where second conflicts with local changes
+    Given commit c123abc on branch feature
+      """
+      fix #2
+      -----
+      Author: John Bro
+      Changes:
+      M file.txt "feature changes\nmore feature changes"
+      """
+    Given conflict.txt is locally modified:
+      """
+      master uncommitted content
+      """
+    When I cherry-pick commits f5027a3, bb6453c and f5027a3
+    Then the last commit is
+      """
+      fix #1
+      (cherry picked from commit f5027a3)
+      """
+    And error notification is shown 'Cherry-pick failed'
+      """
+      bb6453c feature content
+      Your local changes would be overwritten by cherry-pick.
+      Commit your changes or stash them to proceed.
+      <hr/>
+      However cherry-pick succeeded for the following commit:
+      f5027a3 fix #1
+      """
+
+  Scenario: Cherry-pick 3 commits, where second conflicts with master
+    Given commit c123abc on branch feature
+      """
+      fix #2
+      -----
+      Author: John Bro
+      Changes:
+      M file.txt "feature changes\nmore feature changes"
+      """
+    When I cherry-pick commits f5027a3, bb6453c and f5027a3
+    Then the last commit is
+      """
+      fix #1
+      (cherry picked from commit f5027a3)
+      """
+    And merge dialog should be shown
