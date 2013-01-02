@@ -30,7 +30,7 @@ import cucumber.annotation.en.And;
 import cucumber.annotation.en.Given;
 import cucumber.annotation.en.Then;
 import cucumber.annotation.en.When;
-import git4idea.history.browser.GitCherryPicker;
+import git4idea.cherrypick.GitCherryPicker;
 import git4idea.history.browser.GitCommit;
 import git4idea.history.browser.SHAHash;
 import git4idea.history.wholeTree.AbstractHash;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.history.browser;
+package git4idea.cherrypick;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -31,6 +31,7 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitSimpleEventDetector;
 import git4idea.commands.GitUntrackedFilesOverwrittenByOperationDetector;
+import git4idea.history.browser.GitCommit;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.util.UntrackedFilesNotifier;
