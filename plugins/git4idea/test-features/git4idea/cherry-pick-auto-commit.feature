@@ -2,8 +2,11 @@ Feature: Git Cherry-Pick When Auto-Commit is selected
 
 Background:
   Given enabled auto-commit in the settings
+
   Given new committed file file.txt 'initial'
-  Given new committed file conflict.txt 'initial content for conflict'
+  And new committed file f2.txt 'initial'
+  And new committed file conflict.txt 'initial content for conflict'
+
   Given branch feature
   And commit f5027a3 on branch feature
     """
@@ -114,7 +117,6 @@ Background:
       """
       fix #2
       -----
-      Author: John Bro
       Changes:
       M file.txt "feature changes\nmore feature changes"
       """
@@ -138,7 +140,6 @@ Background:
       """
       fix #2
       -----
-      Author: John Bro
       Changes:
       M file.txt "feature changes\nmore feature changes"
       """
@@ -167,7 +168,6 @@ Background:
       """
       fix #2
       -----
-      Author: John Bro
       Changes:
       M file.txt "feature changes\nmore feature changes"
       """
@@ -178,3 +178,64 @@ Background:
       (cherry picked from commit f5027a3)
       """
     And merge dialog should be shown
+
+  #Scenario: Notify if changes have already been applied (IDEA-73548)
+  #  Given commit eef9832 on branch master
+  #    """
+  #    fix #1 manually incorporated
+  #    -----
+  #    Changes:
+  #    M file.txt "feature changes"
+  #    """
+  #  When I cherry-pick the commit f5027a3
+  #  Then the last commit is eef9832
+  #  And warning notification is shown 'Nothing to cherry-pick'
+  #    """
+  #    All changes from f5027a3 fix #1 have already been applied
+  #    """
+  #
+  #Scenario: Cherry-pick 3 commits, second commit have already been applied (IDEA-73548)
+  #  Given commit c123abc on branch feature
+  #    """
+  #    fix #2
+  #    -----
+  #    Changes:
+  #    M file.txt "feature changes\nmore feature changes"
+  #    """
+  #  Given commit d123abc on branch feature
+  #    """
+  #    fix #3
+  #    -----
+  #    Changes:
+  #    M file.txt "feature changes\nmore feature changes\nmore feature changes"
+  #    """
+  #  Given commit e123abc on branch feature
+  #    """
+  #    fix for f2
+  #    -----
+  #    Changes:
+  #    M f2.txt "feature changes"
+  #    """
+  #  Given commit e098fed on branch master
+  #    """
+  #    fix for f2 manually incorporated
+  #    -----
+  #    Changes:
+  #    M f2.txt "feature changes"
+  #    """
+  #  When I cherry-pick commits c123abc, d123abc and e123abc
+  #  Then `git log -2` should return
+  #    """
+  #    fix #3
+  #    (cherry picked from commit c123abc)
+  #    -----
+  #    fix #2
+  #    (cherry picked from commit f5027a3)
+  #    """
+  #  And warning notification is shown 'Cherry-picked 2 commits'
+  #    """
+  #    c123abc fix #2
+  #    d123abc fix #3
+  #    <hr/>
+  #    Commit e123abc wasn't picked, because all changes from it have already been applied.
+  #    """

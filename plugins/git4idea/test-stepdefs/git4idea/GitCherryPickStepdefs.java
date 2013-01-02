@@ -135,6 +135,11 @@ public class GitCherryPickStepdefs {
     git_log_should_return(1, message);
   }
 
+  @Then("^the last commit is (.+)$")
+  public void the_last_commit_is_hash(String hash) throws Throwable {
+    assertEquals("The last commit hash doesn't match", virtualCommits.replaceVirtualHashes(hash), git("log -1 --pretty=%h"));
+  }
+
   @Then("^`git log -(\\d+)` should return$")
   public void git_log_should_return(int commitNum, String messages) throws Throwable {
     List<String> expectedMessages = Arrays.asList(messages.split("-----"));
