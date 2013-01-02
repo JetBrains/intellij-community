@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,6 +109,7 @@ public class ExpressionParserTest extends JavaParsingTestCase {
 
   public void testQualifiedSuperMethodCall0() { doParserTest("new D().super(0)"); }
   public void testQualifiedSuperMethodCall1() { doParserTest("d.super(0)"); }
+  public void testQualifiedSuperMethodCall2() { doParserTest("(new O()).<T>super()"); }
   public void testSuperMethodCallTypeParameterList() { doParserTest("super()"); }
   public void testPrimitiveClassObjectAccess() { doParserTest("int.class"); }
   public void testPrimitiveFieldAccess() { doParserTest("int.x"); }
