@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 package git4idea.repo
-
 import com.intellij.openapi.application.PluginPathManager
 import git4idea.GitLocalBranch
-import git4idea.test.GitExecutor
 import git4idea.test.GitLightTest
-import git4idea.test.GitScenarios
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
+import static git4idea.test.GitScenarios.commit
+import static git4idea.test.GitScenarios.conflict
 import static junit.framework.Assert.assertEquals
 import static junit.framework.Assert.assertNull
-
 /**
  * {@link GitRepositoryReaderTest} reads information from the pre-created .git directory from a real project.
  * This one, on the other hand, operates on a live Git repository, putting it to various situations and checking the results.
