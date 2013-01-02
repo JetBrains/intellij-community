@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
-
 public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/genericsHighlighting";
 
@@ -39,193 +38,167 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
     return new LocalInspectionTool[]{new UncheckedWarningLocalInspection(), new UnusedSymbolLocalInspection(), new UnusedImportLocalInspection()};
   }
 
-  private void doTest(boolean checkWarnings) throws Exception {
-    doTest(getTestName(false) + ".java", checkWarnings);
-  }
-
-  private void doTest(@NonNls String filePath, boolean checkWarnings) throws Exception {
-    doTest(BASE_PATH + "/" + filePath, checkWarnings, false);
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    LanguageLevel level;
-    final String testName = getTestName(false);
-    if (testName.contains("Level17")) {
-      level = LanguageLevel.JDK_1_7;
-    } else if (testName.contains("Level6")) {
-      level = LanguageLevel.JDK_1_6;
-    }
-    else {
-      level = LanguageLevel.JDK_1_5;
-    }
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(level);
-    ((JavaVersionServiceImpl)JavaVersionService.getInstance()).setTestVersion(JavaSdkVersion.JDK_1_6, myTestRootDisposable);
-  }
-
   @Override
   protected Sdk getProjectJDK() {
     return getTestName(false).contains("Jdk14") ? IdeaTestUtil.getMockJdk14() : super.getProjectJDK();
   }
 
-  public void testReferenceTypeParams() throws Exception { doTest(false); }
-  public void testOverridingMethods() throws Exception { doTest(false); }
-  public void testTypeParameterBoundsList() throws Exception { doTest(false); }
-  public void testClassInheritance() throws Exception { doTest(false); }
-  public void testTypeInference() throws Exception { doTest(false); }
-  public void testRaw() throws Exception { doTest(true); }
-  public void testExceptions() throws Exception { doTest(false); }
-  public void testExplicitMethodParameters() throws Exception { doTest(false); }
-  public void testExplicitMethodParameters1() throws Exception { doTest(false); }
-  public void testInferenceWithBounds() throws Exception { doTest(false); }
-  public void testInferenceWithSuperBounds() throws Exception { doTest(false); }
-  public void testInferenceWithUpperBoundPromotion() throws Exception { doTest17Incompatibility(); }
-  public void testVariance() throws Exception { doTest(false); }
-  public void testForeachTypes() throws Exception { doTest(false); }
-  public void testRawOverridingMethods() throws Exception { doTest(false); }
-  public void testAutoboxing() throws Exception { doTest(false); }
-  public void testAutoboxingMethods() throws Exception { doTest(false); }
-  public void testAutoboxingConstructors() throws Exception { doTest(false); }
-  public void testEnumWithAbstractMethods() throws Exception { doTest(false); }
-  public void testEnum() throws Exception { doTest(false); }
-  public void testSameErasure() throws Exception { doTest(false); }
-  public void testMethods() throws Exception { doTest(false); }
-  public void testFields() throws Exception { doTest(false); }
-  public void testStaticImports() throws Exception { doTest(true); }
-  public void testUncheckedCasts() throws Exception { doTest(true); }
-  public void testUncheckedOverriding() throws Exception { doTest(true); }
-  public void testWildcardTypes() throws Exception { doTest(true); }
-  public void testConvertibleTypes() throws Exception { doTest(true); }
-  public void testIntersectionTypes() throws Exception { doTest17Incompatibility(true); }
-  public void testVarargs() throws Exception { doTest(true); }
-  public void testTypeArgsOnRaw() throws Exception { doTest(false); }
-  public void testConditionalExpression() throws Exception { doTest(false); }
-  public void testUnused() throws Exception { doTest(true); }
-  public void testIDEADEV7337() throws Exception { doTest(true); }
-  public void testIDEADEV10459() throws Exception { doTest(true); }
-  public void testIDEADEV12951() throws Exception { doTest(true); }
-  public void testIDEADEV13011() throws Exception { doTest(true); }
-  public void testIDEADEV14006() throws Exception { doTest(true); }
-  public void testIDEADEV14103() throws Exception { doTest(true); }
-  public void testIDEADEV15534() throws Exception { doTest(true); }
-  public void testIDEADEV23157() throws Exception { doTest(true); }
-  public void testIDEADEV24166() throws Exception { doTest(true); }
-  public void testIDEADEV25778() throws Exception { doTest(true); }
-  public void testIDEADEV57343() throws Exception { doTest(false); }
-  public void testSOE() throws Exception { doTest(true); }
-  public void testGenericExtendException() throws Exception { doTest(false); }
-  public void testSameErasureDifferentReturnTypes() throws Exception { doTest17Incompatibility(); }
-  public void testSameErasureDifferentReturnTypesJdk14() throws Exception { doTest(false); }
-  public void testDeepConflictingReturnTypes() throws Exception { doTest(false); }
-  public void testInheritFromTypeParameter() throws Exception { doTest(false); }
-  public void testAnnotationsAsPartOfModifierList() throws Exception { doTest(false); }
-  public void testImplementAnnotation() throws Exception { doTest(false); }
-  public void testOverrideAtLanguageLevel6() throws Exception { doTest(false); }
-  public void testOverrideAtLanguageLevel5() throws Exception { doTest(false); }
-  public void testSuperMethodCallWithErasure() throws Exception { doTest(false); }
-  public void testWildcardCastConversion() throws Exception { doTest(false); }
-  public void testTypeWithinItsWildcardBound() throws Exception { doTest(false); }
-  public void testMethodSignatureEquality() throws Exception { doTest(false); }
-  public void testInnerClassRef() throws Exception { doTest(false); }
-  public void testPrivateInnerClassRef() throws Exception { doTest(false); }
-  public void testWideningCastToTypeParam() throws Exception { doTest(false); }
-  public void testCapturedWildcardAssignments() throws Exception { doTest(false); }
-  public void testTypeParameterBoundVisibility() throws Exception { doTest17Incompatibility(); }
-  public void testTypeParameterBoundVisibilityJdk14() throws Exception { doTest(false); }
-  public void testUncheckedWarningsLevel6() throws Exception { doTest(true); }
-  public void testIDEA77991() throws Exception { doTest(false); }
-  public void testIDEA80386() throws Exception { doTest(false); }
-  public void testIDEA66311() throws Exception { doTest17Incompatibility(); }
-  public void testIDEA67672() throws Exception { doTest17Incompatibility(); }
-  public void testIDEA88895() throws Exception { doTest17Incompatibility(); }
-  public void testIDEA67667() throws Exception { doTest17Incompatibility(); }
-  public void testIDEA66311_16() throws Exception { doTest(false); }
-  public void testIDEA76283() throws Exception { doTest(false); }
-  public void testIDEA74899() throws Exception { doTest(false); }
-  public void testIDEA63291() throws Exception { doTest(false); }
-  public void testIDEA72912() throws Exception { doTest(false); }
-  public void testIllegalGenericTypeInInstanceof() throws Exception { doTest(false); }
-  public void testIDEA57339() throws Exception { doTest(false); }
-  public void testIDEA57340() throws Exception { doTest(false); }
-  public void testIDEA89771() throws Exception { doTest(false); }
-  public void testIDEA89801() throws Exception { doTest(false); }
-  public void testIDEA67681() throws Exception { doTest(false); }
-  public void testIDEA67599() throws Exception { doTest(false); }
-  public void testIDEA57668() throws Exception { doTest(false); }
-  public void testIDEA57667() throws Exception { doTest17Incompatibility(false); }
-  public void testIDEA57650() throws Exception { doTest17Incompatibility(false); }
-  public void testIDEA57378() throws Exception { doTest(false); }
-  public void testIDEA57557() throws Exception { doTest(false); }
-  public void testIDEA57563() throws Exception { doTest(false); }
-  public void testIDEA57275() throws Exception { doTest(false); }
-  public void testIDEA57533() throws Exception { doTest(false); }
-  public void testIDEA57509() throws Exception { doTest(false); }
-  public void testIDEA57410() throws Exception { doTest(false); }
-  public void testIDEA57411() throws Exception { doTest(false); }
-  public void testIDEA57484() throws Exception { doTest(false); }
-  public void testIDEA57485() throws Exception { doTest(false); }
-  public void testIDEA57486() throws Exception { doTest(false); }
-  public void testIDEA57492() throws Exception { doTest(false); }
-  public void testIDEA57493() throws Exception { doTest(false); }
-  public void testIDEA57495() throws Exception { doTest(false); }
-  public void testIDEA57494() throws Exception { doTest(false); }
-  public void testIDEA57496() throws Exception { doTest(false); }
-  public void testIDEA57264() throws Exception { doTest(false); }
-  public void testIDEA57315() throws Exception { doTest(false); }
-  public void testIDEA57346() throws Exception { doTest(false); }
-  public void testIDEA57284() throws Exception { doTest(false); }
-  public void testIDEA57286() throws Exception { doTest(false); }
-  public void testIDEA57307() throws Exception { doTest(true); }
-  public void testIDEA57308() throws Exception { doTest(false); }
-  public void testIDEA57310() throws Exception { doTest(false); }
-  public void testIDEA57311() throws Exception { doTest(false); }
-  public void testIDEA57309() throws Exception { doTest(false); }
-  public void testIDEA90802() throws Exception { doTest(false); }
-  public void testIDEA70370() throws Exception { doTest(true); }
-  public void testInaccessibleThroughWildcard() throws Exception { doTest17Incompatibility();}
-  public void testInconvertibleTypes() throws Exception { doTest(false); }
-  public void testIncompatibleReturnType() throws Exception { doTest(false); }
-  public void testContinueInferenceAfterFirstRawResult() throws Exception { doTest(false); }
-  public void testDoNotAcceptLowerBoundIfRaw() throws Exception { doTest(false); }
-  public void testStaticOverride() throws Exception { doTest(false); }
-  public void testTypeArgumentsGivenOnRawType() throws Exception { doTest(false); }
-  public void testTypeArgumentsGivenOnAnonymousClassCreation() throws Exception { doTest(false); }
-  public void _testIDEA94011() throws Exception { doTest(false); }
-  public void testDifferentTypeParamsInOverloadedMethods() throws Exception { doTest(true); }
-  public void testIDEA91626() throws Exception { doTest(true); }
-  public void testIDEA92022() throws Exception { doTest(false); }
-  public void testRawOnParameterized() throws Exception { doTest(false); }
-  public void testFailedInferenceWithBoxing() throws Exception { doTest(false); }
-  public void testFixedFailedInferenceWithBoxing() throws Exception { doTest17Incompatibility(false); }
-  public void testInferenceWithBoxingCovariant() throws Exception { doTest17Incompatibility(false); }
-  public void testSuperWildcardIsNotWithinItsBound() throws Exception { doTest17Incompatibility(false); }
-  public void testSpecificReturnType() throws Exception { doTest17Incompatibility(false); }
-  public void testParameterizedParameterBound() throws Exception { doTest17Incompatibility(false); }
-  public void testInstanceClassInStaticContextAccess() throws Exception { doTest17Incompatibility(false); }
-  public void testFlattenIntersectionType() throws Exception { doTest17Incompatibility(false); }
-  public void testIDEA97276() throws Exception { doTest17Incompatibility(false); }
-  public void testWildcardsBoundsIntersection() throws Exception { doTest17Incompatibility(false); }
-  public void testOverrideWithMoreSpecificReturn() throws Exception { doTest17Incompatibility(false); }
-  public void testIDEA97888() throws Exception { doTest17Incompatibility(false); }
-  public void testMethodCallParamsOnRawType() throws Exception { doTest(false); }
+  private void doTest(LanguageLevel languageLevel, JavaSdkVersion sdkVersion, boolean checkWarnings) {
+    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(languageLevel);
+    ((JavaVersionServiceImpl)JavaVersionService.getInstance()).setTestVersion(sdkVersion, myTestRootDisposable);
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
+  }
+  private void doTest5(boolean checkWarnings) { doTest(LanguageLevel.JDK_1_5, JavaSdkVersion.JDK_1_6, checkWarnings); }
+  private void doTest6(boolean checkWarnings) { doTest(LanguageLevel.JDK_1_6, JavaSdkVersion.JDK_1_6, checkWarnings); }
+  private void doTest7Incompatibility(boolean checkWarnings) { doTest(LanguageLevel.JDK_1_5, JavaSdkVersion.JDK_1_7, checkWarnings); }
+
+  public void testReferenceTypeParams() { doTest5(false); }
+  public void testOverridingMethods() { doTest5(false); }
+  public void testTypeParameterBoundsList() { doTest5(false); }
+  public void testClassInheritance() { doTest5(false); }
+  public void testTypeInference() { doTest5(false); }
+  public void testRaw() { doTest5(true); }
+  public void testExceptions() { doTest5(false); }
+  public void testExplicitMethodParameters() { doTest5(false); }
+  public void testExplicitMethodParameters1() { doTest5(false); }
+  public void testInferenceWithBounds() { doTest5(false); }
+  public void testInferenceWithSuperBounds() { doTest5(false); }
+  public void testInferenceWithUpperBoundPromotion() { doTest7Incompatibility(false); }
+  public void testVariance() { doTest5(false); }
+  public void testForeachTypes() { doTest5(false); }
+  public void testRawOverridingMethods() { doTest5(false); }
+  public void testAutoboxing() { doTest5(false); }
+  public void testAutoboxingMethods() { doTest5(false); }
+  public void testAutoboxingConstructors() { doTest5(false); }
+  public void testEnumWithAbstractMethods() { doTest5(false); }
+  public void testEnum() { doTest5(false); }
+  public void testSameErasure() { doTest5(false); }
+  public void testMethods() { doTest5(false); }
+  public void testFields() { doTest5(false); }
+  public void testStaticImports() { doTest5(true); }
+  public void testUncheckedCasts() { doTest5(true); }
+  public void testUncheckedOverriding() { doTest5(true); }
+  public void testWildcardTypes() { doTest5(true); }
+  public void testConvertibleTypes() { doTest5(true); }
+  public void testIntersectionTypes() { doTest7Incompatibility(true); }
+  public void testVarargs() { doTest5(true); }
+  public void testTypeArgsOnRaw() { doTest5(false); }
+  public void testConditionalExpression() { doTest5(false); }
+  public void testUnused() { doTest5(true); }
+  public void testIDEADEV7337() { doTest5(true); }
+  public void testIDEADEV10459() { doTest5(true); }
+  public void testIDEADEV12951() { doTest5(true); }
+  public void testIDEADEV13011() { doTest5(true); }
+  public void testIDEADEV14006() { doTest5(true); }
+  public void testIDEADEV14103() { doTest5(true); }
+  public void testIDEADEV15534() { doTest5(true); }
+  public void testIDEADEV23157() { doTest5(true); }
+  public void testIDEADEV24166() { doTest5(true); }
+  public void testIDEADEV25778() { doTest5(true); }
+  public void testIDEADEV57343() { doTest5(false); }
+  public void testSOE() { doTest5(true); }
+  public void testGenericExtendException() { doTest5(false); }
+  public void testSameErasureDifferentReturnTypes() { doTest7Incompatibility(false); }
+  public void testSameErasureDifferentReturnTypesJdk14() { doTest5(false); }
+  public void testDeepConflictingReturnTypes() { doTest5(false); }
+  public void testInheritFromTypeParameter() { doTest5(false); }
+  public void testAnnotationsAsPartOfModifierList() { doTest5(false); }
+  public void testImplementAnnotation() { doTest5(false); }
+  public void testOverrideAtLanguageLevel5() { doTest5(false); }
+  public void testOverrideAtLanguageLevel6() { doTest6(false); }
+  public void testSuperMethodCallWithErasure() { doTest5(false); }
+  public void testWildcardCastConversion() { doTest5(false); }
+  public void testTypeWithinItsWildcardBound() { doTest5(false); }
+  public void testMethodSignatureEquality() { doTest5(false); }
+  public void testInnerClassRef() { doTest5(false); }
+  public void testPrivateInnerClassRef() { doTest5(false); }
+  public void testWideningCastToTypeParam() { doTest5(false); }
+  public void testCapturedWildcardAssignments() { doTest5(false); }
+  public void testTypeParameterBoundVisibility() { doTest7Incompatibility(false); }
+  public void testTypeParameterBoundVisibilityJdk14() { doTest5(false); }
+  public void testUncheckedWarningsLevel6() { doTest6(true); }
+  public void testIDEA77991() { doTest5(false); }
+  public void testIDEA80386() { doTest5(false); }
+  public void testIDEA66311() { doTest7Incompatibility(false); }
+  public void testIDEA67672() { doTest7Incompatibility(false); }
+  public void testIDEA88895() { doTest7Incompatibility(false); }
+  public void testIDEA67667() { doTest7Incompatibility(false); }
+  public void testIDEA66311_16() { doTest5(false); }
+  public void testIDEA76283() { doTest5(false); }
+  public void testIDEA74899() { doTest5(false); }
+  public void testIDEA63291() { doTest5(false); }
+  public void testIDEA72912() { doTest5(false); }
+  public void testIllegalGenericTypeInInstanceof() { doTest5(false); }
+  public void testIDEA57339() { doTest5(false); }
+  public void testIDEA57340() { doTest5(false); }
+  public void testIDEA89771() { doTest5(false); }
+  public void testIDEA89801() { doTest5(false); }
+  public void testIDEA67681() { doTest5(false); }
+  public void testIDEA67599() { doTest5(false); }
+  public void testIDEA57668() { doTest5(false); }
+  public void testIDEA57667() { doTest7Incompatibility(false); }
+  public void testIDEA57650() { doTest7Incompatibility(false); }
+  public void testIDEA57378() { doTest5(false); }
+  public void testIDEA57557() { doTest5(false); }
+  public void testIDEA57563() { doTest5(false); }
+  public void testIDEA57275() { doTest5(false); }
+  public void testIDEA57533() { doTest5(false); }
+  public void testIDEA57509() { doTest5(false); }
+  public void testIDEA57410() { doTest5(false); }
+  public void testIDEA57411() { doTest5(false); }
+  public void testIDEA57484() { doTest5(false); }
+  public void testIDEA57485() { doTest5(false); }
+  public void testIDEA57486() { doTest5(false); }
+  public void testIDEA57492() { doTest5(false); }
+  public void testIDEA57493() { doTest5(false); }
+  public void testIDEA57495() { doTest5(false); }
+  public void testIDEA57494() { doTest5(false); }
+  public void testIDEA57496() { doTest5(false); }
+  public void testIDEA57264() { doTest5(false); }
+  public void testIDEA57315() { doTest5(false); }
+  public void testIDEA57346() { doTest5(false); }
+  public void testIDEA57284() { doTest5(false); }
+  public void testIDEA57286() { doTest5(false); }
+  public void testIDEA57307() { doTest5(true); }
+  public void testIDEA57308() { doTest5(false); }
+  public void testIDEA57310() { doTest5(false); }
+  public void testIDEA57311() { doTest5(false); }
+  public void testIDEA57309() { doTest5(false); }
+  public void testIDEA90802() { doTest5(false); }
+  public void testIDEA70370() { doTest5(true); }
+  public void testInaccessibleThroughWildcard() { doTest7Incompatibility(false);}
+  public void testInconvertibleTypes() { doTest5(false); }
+  public void testIncompatibleReturnType() { doTest5(false); }
+  public void testContinueInferenceAfterFirstRawResult() { doTest5(false); }
+  public void testDoNotAcceptLowerBoundIfRaw() { doTest5(false); }
+  public void testStaticOverride() { doTest5(false); }
+  public void testTypeArgumentsGivenOnRawType() { doTest5(false); }
+  public void testTypeArgumentsGivenOnAnonymousClassCreation() { doTest5(false); }
+  //public void testIDEA94011() { doTest5(false); }
+  public void testDifferentTypeParamsInOverloadedMethods() { doTest5(true); }
+  public void testIDEA91626() { doTest5(true); }
+  public void testIDEA92022() { doTest5(false); }
+  public void testRawOnParameterized() { doTest5(false); }
+  public void testFailedInferenceWithBoxing() { doTest5(false); }
+  public void testFixedFailedInferenceWithBoxing() { doTest7Incompatibility(false); }
+  public void testInferenceWithBoxingCovariant() { doTest7Incompatibility(false); }
+  public void testSuperWildcardIsNotWithinItsBound() { doTest7Incompatibility(false); }
+  public void testSpecificReturnType() { doTest7Incompatibility(false); }
+  public void testParameterizedParameterBound() { doTest7Incompatibility(false); }
+  public void testInstanceClassInStaticContextAccess() { doTest7Incompatibility(false); }
+  public void testFlattenIntersectionType() { doTest7Incompatibility(false); }
+  public void testIDEA97276() { doTest7Incompatibility(false); }
+  public void testWildcardsBoundsIntersection() { doTest7Incompatibility(false); }
+  public void testOverrideWithMoreSpecificReturn() { doTest7Incompatibility(false); }
+  public void testIDEA97888() { doTest7Incompatibility(false); }
+  public void testMethodCallParamsOnRawType() { doTest5(false); }
 
   public void testJavaUtilCollections_NoVerify() throws Exception {
     PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));
-
     assertNotNull(collectionsClass);
     collectionsClass = (PsiClass)collectionsClass.getNavigationElement();
     final String text = collectionsClass.getContainingFile().getText();
-    configureFromFileText("Collections.java", text.replaceAll("\r","\n"));
+    configureFromFileText("Collections.java", text.replaceAll("\r", "\n"));
     doTestConfiguredFile(false, false, null);
-  }
-
-  private void doTest17Incompatibility() throws Exception {
-    doTest17Incompatibility(false);
-  }
-
-  private void doTest17Incompatibility(final boolean warnings) throws Exception {
-    ((JavaVersionServiceImpl)JavaVersionService.getInstance()).setTestVersion(JavaSdkVersion.JDK_1_7, getTestRootDisposable());
-    doTest(warnings);
   }
 }
