@@ -61,7 +61,7 @@ public class GitCherryPickStepdefs {
     cherryPick(hash);
   }
 
-  @When("^I cherry-pick commits (.+) and (.+)$")
+  @When("^I cherry-pick commits (.+) and (\\w+)$")
   public void I_cherry_pick_commits(String severalCommits, String hash2) throws Throwable {
 
     String[] hashes = severalCommits.split(",");
@@ -71,28 +71,6 @@ public class GitCherryPickStepdefs {
     }
     allHashes[allHashes.length - 1] = hash2;
     cherryPick(allHashes);
-  }
-
-  private static void cherryPick(String... virtualHashes) {
-    List<GitCommit> commits = new ArrayList<GitCommit>();
-    for (String virtualHash : virtualHashes) {
-      commits.add(createMockCommit(virtualHash));
-    }
-    new GitCherryPicker(myProject, myGit, myPlatformFacade, mySettings.isAutoCommitOnCherryPick())
-      .cherryPick(Collections.singletonMap(myRepository, commits));
-  }
-
-  private static GitCommit createMockCommit(String virtualHash) {
-    CommitDetails realCommit = virtualCommits.getRealCommit(virtualHash);
-    return mockCommit(realCommit.getHash(), realCommit.getMessage());
-  }
-
-  private static GitCommit mockCommit(String hash, String message) {
-    AbstractHash ahash = AbstractHash.create(hash);
-    List<Change> changes = new ArrayList<Change>();
-    changes.add(new Change(null, new MockContentRevision(new FilePathImpl(new MockVirtualFile("name")), VcsRevisionNumber.NULL)));
-    return new GitCommit(NullVirtualFile.INSTANCE, ahash, SHAHash.emulate(ahash), "John Smith", null, null, message, message,
-                         null, null, null, null, null, null, null, changes, 0);
   }
 
   @When("^I cherry-pick the commit (\\w+) and( don't)? resolve conflicts$")
@@ -112,14 +90,25 @@ public class GitCherryPickStepdefs {
     });
   }
 
-  private static void commitInFuture() {
+  private static void commitInFuture(final int times) {
     myVcsHelper.registerHandler(new MockVcsHelper.CommitHandler() {
+
+      private int myCommitRequests;
+
       @Override
       public boolean commit(String commitMessage) {
+        if (myCommitRequests >= times) {
+          return false;
+        }
+        myCommitRequests++;
         git(String.format("commit -am '%s'", commitMessage));
         return true;
       }
     });
+  }
+
+  private static void commitInFuture() {
+    commitInFuture(Integer.MAX_VALUE);
   }
 
   @When("^I cherry-pick the commit (.+), resolve conflicts and( don't)? commit$")
@@ -129,6 +118,26 @@ public class GitCherryPickStepdefs {
       commitInFuture();
     }
     cherryPick(hash);
+  }
+
+  @When("^I cherry-pick the commit (\\w+) and( don't)? commit$")
+  public void I_cherry_pick_the_commit_hash_and_commit(String hash, String negation) throws Throwable {
+    if (negation == null) {
+      commitInFuture();
+    }
+    cherryPick(hash);
+  }
+
+  @When("^I cherry-pick commits (.+) and commit both of them$")
+  public void I_cherry_pick_commits_and_commit_both_of_them(String listOfHashes) throws Throwable {
+    commitInFuture();
+    cherryPick(GeneralStepdefs.splitByComma(listOfHashes));
+  }
+
+  @When("^I cherry-pick commits (.+), but commit only the first one$")
+  public void I_cherry_pick_commits_but_commit_only_the_first_one(String listOfHashes) throws Throwable {
+    commitInFuture(1);
+    cherryPick(GeneralStepdefs.splitByComma(listOfHashes));
   }
 
   @Then("^the last commit is$")
@@ -172,8 +181,13 @@ public class GitCherryPickStepdefs {
   }
 
   @Then("^nothing is committed$")
-  public void nothing_is_committed() {
-    assertFalse("Working tree is unexpectedly clean", git("diff").trim().isEmpty());
+  public void nothing_is_committed() throws Throwable {
+    working_tree_is_dirty();
+  }
+
+  @And("^working tree is dirty$")
+  public void working_tree_is_dirty() throws Throwable {
+    assertFalse("Working tree is unexpectedly clean", git("diff").trim().isEmpty() && git("diff --cached").trim().isEmpty());
   }
 
   @Then("^merge dialog should be shown$")
@@ -212,9 +226,30 @@ public class GitCherryPickStepdefs {
     assertEquals("Wrong active changelist", name, myChangeListManager.getDefaultChangeList().getName());
   }
 
-  @Given("^branch (.+)$")
-  public void branch(String branchName) throws Throwable {
-    git("branch " + branchName);
+  private static void cherryPick(List<String> virtualHashes) {
+    List<GitCommit> commits = new ArrayList<GitCommit>();
+    for (String virtualHash : virtualHashes) {
+      commits.add(createMockCommit(virtualHash));
+    }
+    new GitCherryPicker(myProject, myGit, myPlatformFacade, mySettings.isAutoCommitOnCherryPick())
+      .cherryPick(Collections.singletonMap(myRepository, commits));
+  }
+
+  private static void cherryPick(String... virtualHashes) {
+    cherryPick(Arrays.asList(virtualHashes));
+  }
+
+  private static GitCommit createMockCommit(String virtualHash) {
+    CommitDetails realCommit = virtualCommits.getRealCommit(virtualHash);
+    return mockCommit(realCommit.getHash(), realCommit.getMessage());
+  }
+
+  private static GitCommit mockCommit(String hash, String message) {
+    AbstractHash ahash = AbstractHash.create(hash);
+    List<Change> changes = new ArrayList<Change>();
+    changes.add(new Change(null, new MockContentRevision(new FilePathImpl(new MockVirtualFile("name")), VcsRevisionNumber.NULL)));
+    return new GitCommit(NullVirtualFile.INSTANCE, ahash, SHAHash.emulate(ahash), "John Smith", null, null, message, message,
+                         null, null, null, null, null, null, null, changes, 0);
   }
 
 }

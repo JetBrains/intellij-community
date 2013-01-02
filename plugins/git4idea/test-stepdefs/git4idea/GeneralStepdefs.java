@@ -141,8 +141,13 @@ public class GeneralStepdefs {
     git("commit -m 'adding files with initial content'");
   }
 
-  private static List<String> splitByComma(String listOfFiles) {
-    return Arrays.asList(listOfFiles.split(", ?"));
+  public static List<String> splitByComma(String listOfItems) {
+    return Arrays.asList(listOfItems.split(", ?"));
+  }
+
+  @Given("^branch (.+)$")
+  public void branch(String branchName) throws Throwable {
+    git("branch " + branchName);
   }
 
 }
