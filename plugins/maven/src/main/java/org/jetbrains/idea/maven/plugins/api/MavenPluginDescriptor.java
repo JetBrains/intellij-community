@@ -71,6 +71,12 @@ public class MavenPluginDescriptor extends AbstractExtensionPointBean {
      */
     @Attribute("language")
     public String language;
+
+    @Attribute("languageInjectionPrefix")
+    public String languageInjectionPrefix;
+
+    @Attribute("languageInjectionSuffix")
+    public String languageInjectionSuffix;
   }
 
   public static Pair<String, String> parsePluginId(String mavenId) {

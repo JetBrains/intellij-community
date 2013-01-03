@@ -43,7 +43,7 @@ public final class MavenPluginConfigurationLanguageInjector implements LanguageI
       public boolean process(MavenPluginParamInfo.ParamInfo info, MavenDomConfiguration configuration) {
         Language language = info.getLanguage();
         if (language != null) {
-          injectionPlacesRegistrar.addPlace(language, TextRange.from(0, host.getTextLength()), null, null);
+          injectionPlacesRegistrar.addPlace(language, TextRange.from(0, host.getTextLength()), info.getLanguageInjectionPrefix(), info.getLanguageInjectionSuffix());
           return false;
         }
         return true;

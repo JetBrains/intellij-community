@@ -168,50 +168,50 @@ public class MavenPluginParamInfo {
   public static class ParamInfo {
     private final ClassLoader myClassLoader;
 
-    private final String myProviderClass;
+    private final MavenPluginDescriptor.Param myParam;
 
-    private volatile String myLanguageId;
+    private volatile boolean myLanguageInitialized;
     private Language myLanguageInstance;
 
     private volatile MavenParamReferenceProvider myProviderInstance;
 
     private ParamInfo(ClassLoader classLoader, MavenPluginDescriptor.Param param) {
       myClassLoader = classLoader;
-      myProviderClass = param.refProvider;
-      myLanguageId = param.language;
+      myParam = param;
     }
 
     public Language getLanguage() {
-      if (myLanguageInstance != null) {
-        return myLanguageInstance;
+      if (!myLanguageInitialized) {
+        if (myParam.language != null) {
+          myLanguageInstance = Language.findLanguageByID(myParam.language);
+        }
+
+        myLanguageInitialized = true;
       }
 
-      String languageId = myLanguageId;
-      if (languageId == null) return null;
+      return myLanguageInstance;
+    }
 
-      Language l = Language.findLanguageByID(languageId);
-      if (l == null) { // May be plugin with language is disabled.
-        myLanguageId = null;
-      }
-      else {
-        myLanguageInstance = l;
-      }
+    public String getLanguageInjectionPrefix() {
+      return myParam.languageInjectionPrefix;
+    }
 
-      return l;
+    public String getLanguageInjectionSuffix() {
+      return myParam.languageInjectionSuffix;
     }
 
     public MavenParamReferenceProvider getProviderInstance() {
-      if (myProviderClass == null) {
-        return null;
-      }
-
       MavenParamReferenceProvider res = myProviderInstance;
 
       if (res == null) {
+        if (myParam.refProvider == null) {
+          return null;
+        }
+
         Object instance;
 
         try {
-          instance = myClassLoader.loadClass(myProviderClass).newInstance();
+          instance = myClassLoader.loadClass(myParam.refProvider).newInstance();
         }
         catch (Exception e) {
           throw new RuntimeException("Failed to create reference provider instance", e);
