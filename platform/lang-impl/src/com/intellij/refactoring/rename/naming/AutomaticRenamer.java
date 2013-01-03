@@ -18,6 +18,7 @@ package com.intellij.refactoring.rename.naming;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
 import com.intellij.usageView.UsageInfo;
@@ -56,6 +57,7 @@ public abstract class AutomaticRenamer {
                          List<UnresolvableCollisionUsageInfo> unresolvedUsages) {
     for (Iterator<PsiNamedElement> iterator = myElements.iterator(); iterator.hasNext();) {
       final PsiNamedElement variable = iterator.next();
+      RenameProcessor.assertNonCompileElement(variable);
       final boolean success = findUsagesForElement(variable, result, searchInStringsAndComments, searchInNonJavaFiles, unresolvedUsages);
       if (!success) {
         iterator.remove();
