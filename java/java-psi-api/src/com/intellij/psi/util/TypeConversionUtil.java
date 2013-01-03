@@ -1245,7 +1245,7 @@ public class TypeConversionUtil {
         if (beforeSubstitutor.getSubstitutionMap().containsKey(boundTypeParameter)) {
           return erasure(beforeSubstitutor.substitute(boundTypeParameter));
         }
-        return typeParameterErasureInner(boundTypeParameter, visited);
+        return typeParameterErasureInner(boundTypeParameter, visited, beforeSubstitutor);
       }
       else if (psiClass != null) {
         return JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(psiClass);
@@ -1254,14 +1254,19 @@ public class TypeConversionUtil {
     return PsiType.getJavaLangObject(typeParameter.getManager(), typeParameter.getResolveScope());
   }
 
-  private static PsiClassType typeParameterErasureInner(PsiTypeParameter typeParameter, Set<PsiClass> visited) {
+  private static PsiClassType typeParameterErasureInner(PsiTypeParameter typeParameter,
+                                                        Set<PsiClass> visited,
+                                                        PsiSubstitutor beforeSubstitutor) {
     final PsiClassType[] extendsList = typeParameter.getExtendsList().getReferencedTypes();
     if (extendsList.length > 0) {
       final PsiClass psiClass = extendsList[0].resolve();
       if (psiClass instanceof PsiTypeParameter) {
         if (!visited.contains(psiClass)) {
           visited.add(psiClass);
-          return typeParameterErasureInner((PsiTypeParameter)psiClass, visited);
+          if (beforeSubstitutor.getSubstitutionMap().containsKey(psiClass)) {
+            return (PsiClassType)erasure(beforeSubstitutor.substitute((PsiTypeParameter)psiClass));
+          }
+          return typeParameterErasureInner((PsiTypeParameter)psiClass, visited, beforeSubstitutor);
         }
       }
       else if (psiClass != null) {
