@@ -8,7 +8,7 @@ import java.util.Map;
 /**
  * @author erokhins
  */
-public class CacheGet<K, V> implements Get<K, V>{
+public class CacheGet<K, V> implements Get<K, V> {
     private final Get<K, V> getFunction;
     private final int size;
     private Map<K, V> map;
@@ -38,11 +38,15 @@ public class CacheGet<K, V> implements Get<K, V>{
             return value;
         } else {
             value = getFunction.get(key);
-            moreMap.put(key, value);
-            map.put(key, value);
-            checkSize();
+            addToCache(key, value);
             return value;
         }
+    }
+
+    public void addToCache(@NotNull K key, @NotNull V value) {
+        moreMap.put(key, value);
+        map.put(key, value);
+        checkSize();
     }
 
     private void checkSize() {
