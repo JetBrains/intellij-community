@@ -27,7 +27,7 @@ import com.intellij.util.ui.ListTableModel;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class StatisticsTable extends ListTableModel {
+public class StatisticsTable extends ListTableModel<TestProxy> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.ui.StatisticsTable");
   private TestProxy myTest;
   private JUnitRunningModel myModel;
@@ -55,11 +55,11 @@ public class StatisticsTable extends ListTableModel {
       resetTests();
       return;
     }
-    setItems(new ArrayList(Arrays.asList(myTest.selectChildren(Filter.NO_FILTER))));
+    setItems(new ArrayList<TestProxy>(Arrays.asList(myTest.selectChildren(Filter.NO_FILTER))));
   }
 
   private void resetTests() {
-    setItems(new ArrayList());
+    setItems(new ArrayList<TestProxy>());
   }
 
   public void setValueAt(final Object aValue, final int rowIndex, final int columnIndex) {
@@ -80,7 +80,7 @@ public class StatisticsTable extends ListTableModel {
   public TestProxy getTestAt(final int rowIndex) {
     if (rowIndex < 0 || rowIndex > getItems().size())
       return null;
-    return (TestProxy)getItems().get(rowIndex);
+    return getItems().get(rowIndex);
   }
 
   public int getIndexOf(final Object test) {
