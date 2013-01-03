@@ -41,12 +41,8 @@ public class RefReader {
     @NotNull
     public List<Ref> readAllRefs() throws GitException, IOException {
         Process process = GitProcessFactory.refs();
-        try {
-            outputReader.startRead(process);
-            return refs;
-        } catch (InterruptedException e) {
-            throw new  IllegalStateException("unaccepted InterruptedException: " + e.getMessage());
-        }
+        outputReader.startRead(process);
+        return refs;
     }
 
 

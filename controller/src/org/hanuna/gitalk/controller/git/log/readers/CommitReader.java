@@ -32,26 +32,18 @@ public class CommitReader {
     @NotNull
     public List<Commit> readAllCommits() throws GitException, IOException {
         Process process = GitProcessFactory.allLog();
-        try {
-            outputReader.startRead(process);
-            if (! builder.allCommitsFound()) {
-                throw new GitException("Bad commit order. Not found several commits");
-            }
-            return builder.build();
-        } catch (InterruptedException e) {
-            throw new  IllegalStateException("unaccepted InterruptedException: " + e.getMessage());
+        outputReader.startRead(process);
+        if (! builder.allCommitsFound()) {
+            throw new GitException("Bad commit order. Not found several commits");
         }
+        return builder.build();
     }
 
     @NotNull
     public List<Commit> readLastCommits(int monthCount) throws GitException, IOException {
         Process process = GitProcessFactory.lastMonth(monthCount);
-        try {
-            outputReader.startRead(process);
-            return builder.build();
-        } catch (InterruptedException e) {
-            throw new  IllegalStateException("unaccepted InterruptedException: " + e.getMessage());
-        }
+        outputReader.startRead(process);
+        return builder.build();
     }
 
 

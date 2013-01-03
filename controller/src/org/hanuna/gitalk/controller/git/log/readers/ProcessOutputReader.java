@@ -82,7 +82,7 @@ public class ProcessOutputReader {
 
     }
 
-    public void startRead(@NotNull Process process) throws IOException, InterruptedException, GitException {
+    public void startRead(@NotNull Process process) throws IOException, GitException {
         ErrorListener errorListener = new ErrorListener(process.getErrorStream());
         errorListener.start();
 
@@ -92,7 +92,11 @@ public class ProcessOutputReader {
             lineAppender.execute(line);
             incCountReadLine();
         }
-        errorListener.join();
+        try {
+            errorListener.join();
+        } catch (InterruptedException e) {
+            throw new GitException("join InterruptedException: " + e.getMessage());
+        }
         String errorMsg = readErrorMsg();
         if (errorMsg != null) {
             throw new GitException(errorMsg);

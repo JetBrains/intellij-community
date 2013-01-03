@@ -4,6 +4,7 @@ import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.Hash;
 import org.hanuna.gitalk.common.CacheGet;
 import org.hanuna.gitalk.common.Get;
+import org.hanuna.gitalk.controller.git.log.readers.CommitDataReader;
 import org.hanuna.gitalk.log.commit.CommitData;
 import org.hanuna.gitalk.log.commit.CommitDataGetter;
 import org.jetbrains.annotations.NotNull;
@@ -19,6 +20,7 @@ public class CacheCommitDataGetter implements CommitDataGetter {
             return readCommitData(key);
         }
     }, 1000);
+    private final CommitDataReader commitDataReader = new CommitDataReader();
 
     @NotNull
     @Override
@@ -29,6 +31,6 @@ public class CacheCommitDataGetter implements CommitDataGetter {
 
     @NotNull
     private CommitData readCommitData(@NotNull Hash hash) {
-        return new CommitData(hash.toStrHash(), "author", 1243646);
+        return commitDataReader.readCommitData(hash.toStrHash());
     }
 }
