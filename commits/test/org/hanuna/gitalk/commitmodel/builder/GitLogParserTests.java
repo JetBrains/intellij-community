@@ -1,6 +1,7 @@
-package org.hanuna.gitalk.parser;
+package org.hanuna.gitalk.commitmodel.builder;
 
 import org.hanuna.gitalk.commitmodel.Commit;
+import org.hanuna.gitalk.parser.SimpleCommitListParser;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -16,8 +17,7 @@ import static org.hanuna.gitalk.CommitTestUtils.toShortStr;
 public class GitLogParserTests {
 
     private void runLogParserTest(String in, boolean full) throws IOException {
-        String input = in.replace("\n", "|-aut|-132352112|-mes\n") + "|-aut|-132352112|-mes";
-        GitLogParser parser = new GitLogParser(new StringReader(input));
+        SimpleCommitListParser parser = new SimpleCommitListParser(new StringReader(in));
         List<Commit> commits = parser.readAllCommits();
         assertEquals(in, toShortStr(commits));
         assertEquals(full, parser.allCommitsFound());
