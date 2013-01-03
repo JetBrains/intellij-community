@@ -970,4 +970,19 @@ public final class PsiUtil extends PsiUtilCore {
     final PsiMethod[] closes = autoCloseable.findMethodsByName("close", false);
     return closes.length == 1 ? resourceClass.findMethodBySignature(closes[0], true) : null;
   }
+
+  @Nullable
+  public static PsiExpression skipParenthesizedExprDown(PsiExpression initializer) {
+    while (initializer instanceof PsiParenthesizedExpression) {
+      initializer = ((PsiParenthesizedExpression)initializer).getExpression();
+    }
+    return initializer;
+  }
+
+  public static PsiElement skipParenthesizedExprUp(PsiElement parent) {
+    while (parent instanceof PsiParenthesizedExpression) {
+      parent = parent.getParent();
+    }
+    return parent;
+  }
 }
