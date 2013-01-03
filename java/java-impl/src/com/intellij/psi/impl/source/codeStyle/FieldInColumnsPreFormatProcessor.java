@@ -99,7 +99,7 @@ public class FieldInColumnsPreFormatProcessor implements PreFormatProcessor {
 
     //region Calculating end offset to use by the end offset of the last field in a group located to the right of the current field.
     int endToUse = range.getEndOffset();
-    for (PsiElement f = parent; f != null; f = f.getPrevSibling()) {
+    for (PsiElement f = parent; f != null; f = f.getNextSibling()) {
       final ASTNode node = f.getNode();
       if (node == null) {
         break;
