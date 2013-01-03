@@ -2011,6 +2011,7 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   public static String fixVariableNameDerivedFromPropertyName(@NotNull String name) {
+    if (isEmptyOrSpaces(name)) return name;
     char c = name.charAt(0);
     if (isVowel(c)) {
       return "an" + Character.toUpperCase(c) + name.substring(1);
