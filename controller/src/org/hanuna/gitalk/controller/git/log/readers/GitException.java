@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.controller.git_log;
+package org.hanuna.gitalk.controller.git.log.readers;
 
 /**
  * @author erokhins

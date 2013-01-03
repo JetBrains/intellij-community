@@ -1,5 +1,6 @@
-package org.hanuna.gitalk.controller.git_log;
+package org.hanuna.gitalk.controller.git.log.readers;
 
+import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.refs.Ref;
 import org.hanuna.gitalk.refs.RefParser;
 import org.jetbrains.annotations.NotNull;
@@ -11,18 +12,28 @@ import java.util.List;
 /**
  * @author erokhins
  */
-public class RefReader extends AbstractProcessOutputReader {
+public class RefReader {
     private final List<Ref> refs = new ArrayList<Ref>();
+    private final ProcessOutputReader outputReader;
 
-    public RefReader(@NotNull ProgressUpdater progressUpdater) {
-        super(progressUpdater);
+    public RefReader(@NotNull Executor<Integer> progressUpdater) {
+        outputReader = new ProcessOutputReader(progressUpdater, new Executor<String>() {
+            @Override
+            public void execute(String key) {
+                appendLine(key);
+            }
+        });
     }
 
     public RefReader() {
-        super();
+        this(new Executor<Integer>() {
+            @Override
+            public void execute(Integer key) {
+
+            }
+        });
     }
 
-    @Override
     protected void appendLine(@NotNull String line) {
         refs.add(RefParser.parse(line));
     }
@@ -31,7 +42,7 @@ public class RefReader extends AbstractProcessOutputReader {
     public List<Ref> readAllRefs() throws GitException, IOException {
         Process process = GitProcessFactory.refs();
         try {
-            startRead(process);
+            outputReader.startRead(process);
             return refs;
         } catch (InterruptedException e) {
             throw new  IllegalStateException("unaccepted InterruptedException: " + e.getMessage());

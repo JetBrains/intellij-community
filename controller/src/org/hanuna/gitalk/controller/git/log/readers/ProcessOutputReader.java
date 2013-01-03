@@ -1,5 +1,6 @@
-package org.hanuna.gitalk.controller.git_log;
+package org.hanuna.gitalk.controller.git.log.readers;
 
+import org.hanuna.gitalk.common.Executor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,31 +12,45 @@ import java.io.InputStreamReader;
 /**
  * @author erokhins
  */
-public abstract class AbstractProcessOutputReader {
-    private final ProgressUpdater progressUpdater;
+public class ProcessOutputReader {
+    private final Executor<Integer> progressUpdater;
+    private final Executor<String> lineAppender;
+    private final Object synchObj = new Object();
     private int countReadLine = 0;
     private String errorMsg = null;
 
-    public AbstractProcessOutputReader(@NotNull ProgressUpdater progressUpdater) {
+    public ProcessOutputReader(@NotNull Executor<Integer> progressUpdater, @NotNull Executor<String> lineAppender) {
         this.progressUpdater = progressUpdater;
+        this.lineAppender = lineAppender;
     }
 
-    public AbstractProcessOutputReader() {
-        this(new ProgressUpdater() {});
+    public ProcessOutputReader(@NotNull Executor<String> lineAppender) {
+        this(
+                new Executor<Integer>() {
+            @Override
+            public void execute(Integer key) {
+
+            }
+        },
+                lineAppender);
     }
 
     private void incCountReadLine() {
-        progressUpdater.updateFinishedCount(countReadLine);
+        progressUpdater.execute(countReadLine);
         countReadLine++;
     }
 
-    private synchronized void writeErrorMsg(@NotNull String errorMsg) {
-        this.errorMsg = errorMsg;
+    private void writeErrorMsg(@NotNull String errorMsg) {
+        synchronized (synchObj) {
+            this.errorMsg = errorMsg;
+        }
     }
 
     @Nullable
-    private synchronized String readErrorMsg() {
-        return errorMsg;
+    private String readErrorMsg() {
+        synchronized (synchObj) {
+            return errorMsg;
+        }
     }
 
     private class ErrorListener extends Thread {
@@ -47,7 +62,7 @@ public abstract class AbstractProcessOutputReader {
 
         private void writeErrorMessage(@NotNull String errorMsg) {
             if (!errorMsg.isEmpty()) {
-                AbstractProcessOutputReader.this.writeErrorMsg(errorMsg);
+                ProcessOutputReader.this.writeErrorMsg(errorMsg);
             }
         }
 
@@ -67,17 +82,14 @@ public abstract class AbstractProcessOutputReader {
 
     }
 
-
-    protected abstract void appendLine(@NotNull String line);
-
-    protected void startRead(@NotNull Process process) throws IOException, InterruptedException, GitException {
+    public void startRead(@NotNull Process process) throws IOException, InterruptedException, GitException {
         ErrorListener errorListener = new ErrorListener(process.getErrorStream());
         errorListener.start();
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
         String line;
         while ((line = reader.readLine()) != null) {
-            appendLine(line);
+            lineAppender.execute(line);
             incCountReadLine();
         }
         errorListener.join();
@@ -87,7 +99,4 @@ public abstract class AbstractProcessOutputReader {
         }
     }
 
-    public static abstract class ProgressUpdater {
-        public void updateFinishedCount(int count) {}
-    }
 }

@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.controller.git_log;
+package org.hanuna.gitalk.controller.git.log;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.Hash;
@@ -29,6 +29,6 @@ public class CacheCommitDataGetter implements CommitDataGetter {
 
     @NotNull
     private CommitData readCommitData(@NotNull Hash hash) {
-        return null;
+        return new CommitData(hash.toStrHash(), "author", 1243646);
     }
 }

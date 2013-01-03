@@ -1,7 +1,7 @@
 package org.hanuna.gitalk;
 
 import org.hanuna.gitalk.controller.Controller;
-import org.hanuna.gitalk.controller.git_log.GitException;
+import org.hanuna.gitalk.controller.git.log.readers.GitException;
 
 import java.io.IOException;
 

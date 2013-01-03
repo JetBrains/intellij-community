@@ -1,8 +1,12 @@
 package org.hanuna.gitalk.controller;
 
 import org.hanuna.gitalk.commitmodel.Commit;
+import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.common.MyTimer;
-import org.hanuna.gitalk.controller.git_log.*;
+import org.hanuna.gitalk.controller.git.log.CacheCommitDataGetter;
+import org.hanuna.gitalk.controller.git.log.readers.CommitReader;
+import org.hanuna.gitalk.controller.git.log.readers.GitException;
+import org.hanuna.gitalk.controller.git.log.readers.RefReader;
 import org.hanuna.gitalk.refs.Ref;
 import org.hanuna.gitalk.refs.RefsModel;
 import org.hanuna.gitalk.swing_ui.ErrorFrame;
@@ -30,15 +34,15 @@ public class Controller {
 
         final MyTimer gitThink = new MyTimer("git think");
         final MyTimer commitReadTimer = new MyTimer("commits read");
-        CommitReader commitReader = new CommitReader(new AbstractProcessOutputReader.ProgressUpdater() {
+        CommitReader commitReader = new CommitReader(new Executor<Integer>() {
             @Override
-            public void updateFinishedCount(int count) {
-                if (count == 0) {
+            public void execute(Integer key) {
+                if (key == 0) {
                     gitThink.print();
                     commitReadTimer.clear();
                 }
-                if (count % 100 == 0) {
-                    progressModel.setMessage("read " + count + " commits");
+                if (key % 100 == 0) {
+                    progressModel.setMessage("read " + key + " commits");
                 }
             }
         });

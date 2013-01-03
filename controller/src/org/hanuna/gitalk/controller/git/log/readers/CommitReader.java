@@ -1,7 +1,8 @@
-package org.hanuna.gitalk.controller.git_log;
+package org.hanuna.gitalk.controller.git.log.readers;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.builder.CommitListBuilder;
+import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.log.commit.CommitParser;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,16 +12,19 @@ import java.util.List;
 /**
  * @author erokhins
  */
-public class CommitReader extends AbstractProcessOutputReader {
+public class CommitReader {
     private final CommitListBuilder builder = new CommitListBuilder();
+    private final ProcessOutputReader outputReader;
 
-    public CommitReader(@NotNull ProgressUpdater progressUpdater){
-        super(progressUpdater);
+    public CommitReader(@NotNull Executor<Integer> progressUpdater){
+        outputReader = new ProcessOutputReader(progressUpdater, new Executor<String>() {
+            @Override
+            public void execute(String key) {
+                appendLine(key);
+            }
+        });
     }
 
-
-
-    @Override
     protected final void appendLine(@NotNull String line) {
         builder.append(CommitParser.parseParentHashes(line));
     }
@@ -29,7 +33,7 @@ public class CommitReader extends AbstractProcessOutputReader {
     public List<Commit> readAllCommits() throws GitException, IOException {
         Process process = GitProcessFactory.allLog();
         try {
-            startRead(process);
+            outputReader.startRead(process);
             if (! builder.allCommitsFound()) {
                 throw new GitException("Bad commit order. Not found several commits");
             }
@@ -43,7 +47,7 @@ public class CommitReader extends AbstractProcessOutputReader {
     public List<Commit> readLastCommits(int monthCount) throws GitException, IOException {
         Process process = GitProcessFactory.lastMonth(monthCount);
         try {
-            startRead(process);
+            outputReader.startRead(process);
             return builder.build();
         } catch (InterruptedException e) {
             throw new  IllegalStateException("unaccepted InterruptedException: " + e.getMessage());
