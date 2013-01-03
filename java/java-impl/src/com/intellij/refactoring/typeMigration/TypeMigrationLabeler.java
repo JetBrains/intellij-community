@@ -162,11 +162,6 @@ public class TypeMigrationLabeler {
       };
     }
 
-    for (final TypeMigrationUsageInfo expr : myNewExpressionTypeChange.keySet()) {
-
-      usages[j++] = expr;
-    }
-
     for (final Pair<TypeMigrationUsageInfo, PsiType> p : declarations) {
       final TypeMigrationUsageInfo element = p.getFirst();
       usages[j++] = element;
@@ -174,6 +169,10 @@ public class TypeMigrationLabeler {
 
     for (TypeMigrationUsageInfo info : myClassTypeArgumentsChange.keySet()) {
       usages[j++] = info;
+    }
+
+    for (final TypeMigrationUsageInfo expr : myNewExpressionTypeChange.keySet()) {
+      usages[j++] = expr;
     }
     return usages;
   }
