@@ -1,9 +1,12 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
 /**
  * @author ven
@@ -21,6 +24,17 @@ public class CreateFieldFromUsageTest extends LightQuickFixTestCase{
   public void testInsideStaticInnerClass() throws Exception { doSingleTest(); }
   public void testCreateFromEquals() throws Exception { doSingleTest(); }
   public void testCreateFromEqualsToPrimitiveType() throws Exception { doSingleTest(); }
+  public void testWithAlignment() throws Exception {
+    final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    boolean old = settings.ALIGN_GROUP_FIELD_DECLARATIONS;
+    try {
+      settings.ALIGN_GROUP_FIELD_DECLARATIONS = true;
+      doSingleTest();
+    }
+    finally {
+      settings.ALIGN_GROUP_FIELD_DECLARATIONS = old;
+    }
+  }
 
   public void testSortByRelevance() throws Exception {
     new WriteCommandAction(getProject()) {
