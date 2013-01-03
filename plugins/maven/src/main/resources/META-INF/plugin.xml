@@ -154,6 +154,8 @@
       <property name="git.commitsCount"/>
       <property name="git.tag"/>
       <property name="git.branch"/>
+
+      <param name="javaScriptBuildnumberCallback" language="JavaScript" languageInjectionPrefix="function() {return a + " languageInjectionSuffix="}" />
     </pluginDescriptor>
 
     <pluginDescriptor mavenId="org.codehaus.mojo:sql-maven-plugin">
