@@ -147,6 +147,14 @@
     <pluginDescriptor mavenId="org.apache.maven.plugins:maven-surefire-plugin">
       <param name="additionalClasspathElements/additionalClasspathElement" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$DirPath"/>
     </pluginDescriptor>
+
+    <pluginDescriptor mavenId="ru.concerteza.buildnumber:maven-jgit-buildnumber-plugin">
+      <property name="git.revision"/>
+      <property name="git.buildnumber"/>
+      <property name="git.commitsCount"/>
+      <property name="git.tag"/>
+      <property name="git.branch"/>
+    </pluginDescriptor>
   </extensions>
 
   <application-components>

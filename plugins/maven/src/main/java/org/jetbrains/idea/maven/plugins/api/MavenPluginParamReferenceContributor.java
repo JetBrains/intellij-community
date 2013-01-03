@@ -63,7 +63,9 @@ public class MavenPluginParamReferenceContributor extends PsiReferenceContributo
         res = new HashMap<String, Map>();
 
         for (MavenPluginDescriptor pluginDescriptor : MavenPluginDescriptor.EP_NAME.getExtensions()) {
-          Pair<String, String> pluginId = parsePluginId(pluginDescriptor.mavenId);
+          if (pluginDescriptor.params == null) continue;
+
+          Pair<String, String> pluginId = MavenPluginDescriptor.parsePluginId(pluginDescriptor.mavenId);
 
           for (MavenPluginDescriptor.Param param : pluginDescriptor.params) {
             String[] paramPath = param.name.split("/");
@@ -91,15 +93,6 @@ public class MavenPluginParamReferenceContributor extends PsiReferenceContributo
       }
 
       return res;
-    }
-
-    private static Pair<String, String> parsePluginId(String mavenId) {
-      int idx = mavenId.indexOf(':');
-      if (idx <= 0 || idx == mavenId.length() - 1 || mavenId.lastIndexOf(':') != idx) {
-        throw new RuntimeException("Failed to parse mavenId: " + mavenId + " (mavenId should has format 'groupId:artifactId')");
-      }
-
-      return new Pair<String, String>(mavenId.substring(0, idx), mavenId.substring(idx + 1));
     }
 
     @NotNull
