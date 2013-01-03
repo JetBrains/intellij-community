@@ -4,6 +4,6 @@ class A<T> {
 }
 public class B extends A<Object> {
    List<Object> getKey() {
-     return new List<Object>();
+     return new List<>();
    }
 }
