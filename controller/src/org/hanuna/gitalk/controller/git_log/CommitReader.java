@@ -2,7 +2,7 @@ package org.hanuna.gitalk.controller.git_log;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.builder.CommitListBuilder;
-import org.hanuna.gitalk.parser.GitLogParser;
+import org.hanuna.gitalk.log.commit.CommitParser;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -22,7 +22,7 @@ public class CommitReader extends AbstractProcessOutputReader {
 
     @Override
     protected final void appendLine(@NotNull String line) {
-        builder.append(GitLogParser.parseCommitData(line));
+        builder.append(CommitParser.parseParentHashes(line));
     }
 
     @NotNull

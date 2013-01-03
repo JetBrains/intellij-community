@@ -1,12 +1,12 @@
 package org.hanuna.gitalk.ui_controller;
 
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.log.commit.CommitData;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.GraphFragmentController;
 import org.hanuna.gitalk.graph.mutable.GraphBuilder;
+import org.hanuna.gitalk.log.commit.CommitDataGetter;
 import org.hanuna.gitalk.printmodel.GraphPrintCellModel;
 import org.hanuna.gitalk.printmodel.SelectController;
 import org.hanuna.gitalk.printmodel.impl.GraphPrintCellModelImpl;
@@ -22,12 +22,14 @@ import java.util.*;
 public class DataPack {
     private final RefsModel refsModel;
     private final List<Commit> commits;
+    private final CommitDataGetter commitDataGetter;
     private Graph graph;
     private GraphPrintCellModel printCellModel;
 
-    public DataPack(RefsModel refsModel, List<Commit> commits) {
+    public DataPack(RefsModel refsModel, List<Commit> commits, CommitDataGetter commitDataGetter) {
         this.refsModel = refsModel;
         this.commits = commits;
+        this.commitDataGetter = commitDataGetter;
         MyTimer graphTimer = new MyTimer("graph build");
         graph = GraphBuilder.build(commits, refsModel);
         graphTimer.print();
@@ -43,9 +45,9 @@ public class DataPack {
             if (startedCommit.contains(commit) || notAddedVisibleCommits.contains(commit)) {
                 showCommits.add(commit);
                 notAddedVisibleCommits.remove(commit);
-                CommitData data = commit.getData();
-                if (data != null) {
-                    for (Commit parent : data.getParents()) {
+                List<Commit> parents = commit.getParents();
+                if (parents != null) {
+                    for (Commit parent : parents) {
                         notAddedVisibleCommits.add(parent);
                     }
                 }
@@ -78,6 +80,10 @@ public class DataPack {
     @NotNull
     public SelectController getSelectController() {
         return printCellModel.getSelectController();
+    }
+
+    public CommitDataGetter getCommitDataGetter() {
+        return commitDataGetter;
     }
 
     public void updatePrintModel() {

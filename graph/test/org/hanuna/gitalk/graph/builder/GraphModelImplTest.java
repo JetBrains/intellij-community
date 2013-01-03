@@ -6,7 +6,7 @@ import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.GraphFragmentController;
 import org.hanuna.gitalk.graph.elements.GraphFragment;
 import org.hanuna.gitalk.graph.mutable.GraphBuilder;
-import org.hanuna.gitalk.parser.GitLogParser;
+import org.hanuna.gitalk.parser.SimpleCommitListParser;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -23,9 +23,8 @@ import static org.hanuna.gitalk.GraphTestUtils.toStr;
  */
 public class GraphModelImplTest {
 
-    private Graph builder(String inputTree) throws IOException {
-        String input = inputTree.replace("\n", "|-aut|-132352112|-mes\n") + "|-aut|-132352112|-mes";
-        GitLogParser parser = new GitLogParser(new StringReader(input));
+    private Graph builder(String input) throws IOException {
+        SimpleCommitListParser parser = new SimpleCommitListParser(new StringReader(input));
         List<Commit> commits = parser.readAllCommits();
         return GraphBuilder.build(commits);
     }

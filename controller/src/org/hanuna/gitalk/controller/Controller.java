@@ -2,10 +2,7 @@ package org.hanuna.gitalk.controller;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.MyTimer;
-import org.hanuna.gitalk.controller.git_log.AbstractProcessOutputReader;
-import org.hanuna.gitalk.controller.git_log.CommitReader;
-import org.hanuna.gitalk.controller.git_log.GitException;
-import org.hanuna.gitalk.controller.git_log.RefReader;
+import org.hanuna.gitalk.controller.git_log.*;
 import org.hanuna.gitalk.refs.Ref;
 import org.hanuna.gitalk.refs.RefsModel;
 import org.hanuna.gitalk.swing_ui.ErrorFrame;
@@ -59,7 +56,7 @@ public class Controller {
         RefsModel refsModel = RefsModel.existedCommitRefs(allRefs, commits);
 
         progressModel.setMessage("graph build");
-        DataPack dataPack = new DataPack(refsModel, commits);
+        DataPack dataPack = new DataPack(refsModel, commits, new CacheCommitDataGetter());
         progressModel.setState(ProgressModel.State.HIDE);
 
         return dataPack;

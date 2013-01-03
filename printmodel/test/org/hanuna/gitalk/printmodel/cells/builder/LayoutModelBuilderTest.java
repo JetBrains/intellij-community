@@ -2,7 +2,7 @@ package org.hanuna.gitalk.printmodel.cells.builder;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.graph.mutable.GraphBuilder;
-import org.hanuna.gitalk.parser.GitLogParser;
+import org.hanuna.gitalk.parser.SimpleCommitListParser;
 import org.hanuna.gitalk.printmodel.layout.LayoutModel;
 import org.junit.Test;
 
@@ -17,9 +17,8 @@ import static org.hanuna.gitalk.printmodel.LayoutTestUtils.toStr;
  * @author erokhins
  */
 public class LayoutModelBuilderTest {
-    private void runTest(String inputTree, String out) throws IOException {
-        String input = inputTree.replace("\n", "|-aut|-132352112|-mes\n") + "|-aut|-132352112|-mes";
-        GitLogParser parser = new GitLogParser(new StringReader(input));
+    private void runTest(String input, String out) throws IOException {
+        SimpleCommitListParser parser = new SimpleCommitListParser(new StringReader(input));
         List<Commit> commits = parser.readAllCommits();
         LayoutModel layoutModel = new LayoutModel(GraphBuilder.build(commits));
         assertEquals(out, toStr(layoutModel));

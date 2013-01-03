@@ -1,7 +1,6 @@
 package org.hanuna.gitalk.graph.mutable;
 
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.log.commit.CommitData;
 import org.hanuna.gitalk.commitmodel.Hash;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Branch;
@@ -47,8 +46,7 @@ public class GraphBuilder {
     private final Map<Commit, Integer> commitLogIndexes;
 
     private int getLogIndexOfCommit(@NotNull Commit commit) {
-        final CommitData data = commit.getData();
-        if (data == null) {
+        if (commit.getParents() == null) {
             return lastLogIndex + 1;
         } else {
             return commitLogIndexes.get(commit);
@@ -101,11 +99,10 @@ public class GraphBuilder {
     private void append(@NotNull Commit commit) {
         MutableNode node = addCurrentCommitAndFinishRow(commit);
 
-        CommitData data = commit.getData();
-        if (data == null) {
-            throw new IllegalStateException("commit was append, but commitData is null");
+        List<Commit> parents = commit.getParents();
+        if (parents == null) {
+            throw new IllegalStateException("commit was append, but commit parents is null");
         }
-        List<Commit> parents = data.getParents();
         for (int i = 0; i < parents.size(); i++) {
             Commit parent = parents.get(i);
             if (i == 0) {

@@ -2,6 +2,7 @@ package org.hanuna.gitalk.ui_controller.table_models;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.log.commit.CommitData;
+import org.hanuna.gitalk.log.commit.CommitDataGetter;
 import org.hanuna.gitalk.ui_controller.DataPack;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.GraphElement;
@@ -24,6 +25,7 @@ import java.util.List;
 public class GraphTableModel extends AbstractTableModel {
     private final String[] columnNames = {"Subject", "Author", "Date"};
     private final RefsModel refsModel;
+    private final CommitDataGetter commitDataGetter;
     private Graph graph;
     private GraphPrintCellModel graphPrintCellModel;
 
@@ -31,6 +33,7 @@ public class GraphTableModel extends AbstractTableModel {
         this.graph = dataPack.getGraph();
         this.refsModel = dataPack.getRefsModel();
         this.graphPrintCellModel = dataPack.getPrintCellModel();
+        this.commitDataGetter = dataPack.getCommitDataGetter();
     }
 
     public void rewriteData(@NotNull DataPack dataPack) {
@@ -69,8 +72,7 @@ public class GraphTableModel extends AbstractTableModel {
         if (commit == null) {
             data = null;
         } else {
-            data = commit.getData();
-            assert data != null;
+            data = commitDataGetter.getCommitData(commit);
         }
         switch (columnIndex) {
             case 0:

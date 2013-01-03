@@ -31,7 +31,11 @@ class MutableCommit implements Commit {
 
     @Override
     public List<Commit> getParents() {
-        return Collections.unmodifiableList(parents);
+        if (parents == null) {
+            return null;
+        } else {
+            return Collections.unmodifiableList(parents);
+        }
     }
 
     @Override

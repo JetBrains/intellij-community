@@ -2,6 +2,7 @@ package org.hanuna.gitalk.ui_controller.table_models;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.log.commit.CommitData;
+import org.hanuna.gitalk.log.commit.CommitDataGetter;
 import org.hanuna.gitalk.refs.Ref;
 import org.hanuna.gitalk.refs.RefsModel;
 import org.hanuna.gitalk.ui_controller.DateConverter;
@@ -35,11 +36,13 @@ public class RefTableModel extends AbstractTableModel {
     private final RefsModel refsModel;
     private final List<Commit> orderedRefCommit;
     private final Set<Commit> checkedCommits;
+    private final CommitDataGetter commitDataGetter;
 
 
 
-    public RefTableModel(RefsModel refsModel) {
+    public RefTableModel(RefsModel refsModel, CommitDataGetter commitDataGetter) {
         this.refsModel = refsModel;
+        this.commitDataGetter = commitDataGetter;
         this.orderedRefCommit = getOrderedBranchCommit(refsModel);
         checkedCommits = new HashSet<Commit>(orderedRefCommit);
     }
@@ -66,8 +69,7 @@ public class RefTableModel extends AbstractTableModel {
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         Commit commit = orderedRefCommit.get(rowIndex);
-        CommitData data = commit.getData();
-        assert data != null;
+        CommitData data = commitDataGetter.getCommitData(commit);
         switch (columnIndex) {
             case 0:
                 return checkedCommits.contains(commit);

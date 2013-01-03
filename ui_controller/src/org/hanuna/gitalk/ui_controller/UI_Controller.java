@@ -36,7 +36,7 @@ public class UI_Controller {
     public UI_Controller(@NotNull DataPack dataPack) {
         this.dataPack = dataPack;
 
-        this.refTableModel = new RefTableModel(dataPack.getRefsModel());
+        this.refTableModel = new RefTableModel(dataPack.getRefsModel(), dataPack.getCommitDataGetter());
         this.graphTableModel = new GraphTableModel(dataPack);
         this.prevSelectionBranches = new HashSet<Commit>(refTableModel.getCheckedCommits());
     }
