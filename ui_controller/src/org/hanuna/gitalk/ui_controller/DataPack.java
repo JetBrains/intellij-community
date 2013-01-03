@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.ui_controller;
 
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.commitmodel.CommitData;
+import org.hanuna.gitalk.log.commit.CommitData;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.graph.Graph;

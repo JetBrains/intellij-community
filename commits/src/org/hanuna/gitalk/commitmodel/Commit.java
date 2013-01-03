@@ -3,6 +3,8 @@ package org.hanuna.gitalk.commitmodel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author erokhins
  *
@@ -12,6 +14,6 @@ public interface Commit {
     public Hash hash();
 
     @Nullable
-    public CommitData getData();
+    public List<Commit> getParents();
 
 }

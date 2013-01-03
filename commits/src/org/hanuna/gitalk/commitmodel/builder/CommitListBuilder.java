@@ -1,11 +1,14 @@
 package org.hanuna.gitalk.commitmodel.builder;
 
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.commitmodel.CommitData;
 import org.hanuna.gitalk.commitmodel.Hash;
+import org.hanuna.gitalk.log.commit.CommitAndParentHashes;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author erokhins
@@ -29,18 +32,16 @@ public class CommitListBuilder {
         cache.remove(hash);
     }
 
-    public void append(@NotNull CommitLogData logData) {
+    public void append(@NotNull CommitAndParentHashes logCommit) {
         assert ! wasBuild : "builder was run, but append request";
-        MutableCommit commit = getCommit(logData.getHash());
-        List<Commit> parents = new ArrayList<Commit>(logData.getParentsHash().size());
-        for (Hash hash : logData.getParentsHash()) {
+        MutableCommit commit = getCommit(logCommit.getCommitHash());
+        List<Commit> parents = new ArrayList<Commit>(logCommit.getParentsHash().size());
+        for (Hash hash : logCommit.getParentsHash()) {
             MutableCommit parent = getCommit(hash);
             parents.add(parent);
         }
-        removeCommit(logData.getHash());
-        CommitData commitData = new CommitData(Collections.unmodifiableList(parents),
-                logData.getCommitMessage(), logData.getAuthor(), logData.getTimeStamp());
-        commit.setCommitData(commitData);
+        removeCommit(logCommit.getCommitHash());
+        commit.setParents(parents);
         commits.add(commit);
     }
 

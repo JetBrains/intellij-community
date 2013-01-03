@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.ui_controller.table_models;
 
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.commitmodel.CommitData;
+import org.hanuna.gitalk.log.commit.CommitData;
 import org.hanuna.gitalk.refs.Ref;
 import org.hanuna.gitalk.refs.RefsModel;
 import org.hanuna.gitalk.ui_controller.DateConverter;

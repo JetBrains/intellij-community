@@ -12,12 +12,6 @@ public interface Node extends GraphElement {
 
     public int getRowIndex();
 
-    /**
-     *
-     * @return if type == COMMIT_NODE - this commit.
-     * if type == EDGE_NODE - common Parent
-     * if type == END_COMMIT_NODE - parent of This Commit
-     */
     @NotNull
     public Type getType();
 
@@ -27,6 +21,12 @@ public interface Node extends GraphElement {
     @NotNull
     public List<Edge> getDownEdges();
 
+    /**
+     *
+     * @return if type == COMMIT_NODE - this commit.
+     * if type == EDGE_NODE - common Parent
+     * if type == END_COMMIT_NODE - parent of This Commit
+     */
     @NotNull
     public Commit getCommit();
 

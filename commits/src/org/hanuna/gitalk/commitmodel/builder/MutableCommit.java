@@ -1,24 +1,26 @@
 package org.hanuna.gitalk.commitmodel.builder;
 
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.commitmodel.CommitData;
 import org.hanuna.gitalk.commitmodel.Hash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author erokhins
  */
 class MutableCommit implements Commit {
     private final Hash hash;
-    private CommitData commitData = null;
+    private List<Commit> parents = null;
 
     public MutableCommit(@NotNull Hash hash) {
         this.hash = hash;
     }
 
-    public void setCommitData(@NotNull CommitData commitData) {
-        this.commitData = commitData;
+    public void setParents(@NotNull List<Commit> parents) {
+        this.parents = parents;
     }
 
     @NotNull
@@ -27,10 +29,9 @@ class MutableCommit implements Commit {
         return hash;
     }
 
-    @Nullable
     @Override
-    public CommitData getData() {
-        return commitData;
+    public List<Commit> getParents() {
+        return Collections.unmodifiableList(parents);
     }
 
     @Override
