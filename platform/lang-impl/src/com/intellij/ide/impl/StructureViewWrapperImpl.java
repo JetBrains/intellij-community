@@ -21,6 +21,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.StructureViewWrapper;
 import com.intellij.ide.structureView.impl.StructureViewComposite;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
@@ -33,6 +34,7 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -49,6 +51,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.*;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -178,7 +181,15 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   }
 
   private void setFile(VirtualFile file) {
-    if (!Comparing.equal(file, myFile)) {
+    boolean forceRebuild = !Comparing.equal(file, myFile);
+    if (!forceRebuild && myStructureView != null) {
+      StructureViewTreeElement treeElement = myStructureView.getTreeModel().getRoot();
+      Object value = treeElement.getValue();
+      if (value == null || value instanceof PsiElement && !((PsiElement)value).isValid()) {
+        forceRebuild = true;
+      }
+    }
+    if (forceRebuild) {
       myFile = file;
       scheduleRebuild();
     }
