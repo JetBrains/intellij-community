@@ -66,6 +66,11 @@ public class MavenPluginDescriptor extends AbstractExtensionPointBean {
     @Attribute("refProvider")
     public String refProvider;
 
+    /**
+     * Language to inject.
+     */
+    @Attribute("language")
+    public String language;
   }
 
   public static Pair<String, String> parsePluginId(String mavenId) {

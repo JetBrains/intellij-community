@@ -4,7 +4,14 @@
     <importer implementation="org.jetbrains.idea.maven.importing.Groovy_1_0_Importer"/>
     <importer implementation="org.jetbrains.idea.maven.importing.Groovy_1_1_plus_Importer"/>
   </extensions>
-  <extensions xmlns="com.intellij">
-    <languageInjector implementation="org.jetbrains.idea.maven.plugins.groovy.MavenGroovyInjector"/>
+
+  <extensions defaultExtensionNs="org.jetbrains.idea.maven">
+    <pluginDescriptor mavenId="org.codehaus.groovy.maven:gmaven-plugin">
+      <param name="source" language="Groovy"/>
+    </pluginDescriptor>
+
+    <pluginDescriptor mavenId="org.codehaus.gmaven:gmaven-plugin">
+      <param name="source" language="Groovy"/>
+    </pluginDescriptor>
   </extensions>
 </idea-plugin>

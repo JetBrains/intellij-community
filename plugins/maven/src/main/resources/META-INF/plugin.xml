@@ -52,7 +52,7 @@
     <compiler implementation="org.jetbrains.idea.maven.compiler.MavenResourceCompiler" order="last"/>
     <compileServer.plugin classpath="jps/maven-jps-plugin.jar"/>
 
-    <languageInjector implementation="org.jetbrains.idea.maven.plugins.sql.MavenSqlInjector"/>
+    <languageInjector implementation="org.jetbrains.idea.maven.plugins.api.MavenPluginConfigurationLanguageInjector"/>
 
     <selectInTarget implementation="org.jetbrains.idea.maven.navigator.SelectInMavenNavigatorTarget"/>
 
@@ -154,6 +154,10 @@
       <property name="git.commitsCount"/>
       <property name="git.tag"/>
       <property name="git.branch"/>
+    </pluginDescriptor>
+
+    <pluginDescriptor mavenId="org.codehaus.mojo:sql-maven-plugin">
+      <param name="sqlCommand" language="SQL"/>
     </pluginDescriptor>
   </extensions>
 
