@@ -56,7 +56,12 @@ public class FontEditorPreview implements PreviewPanel{
       "advanced code editing and refactoring support.\n" +
       "\n" +
       "abcdefghijklmnopqrstuvwxyz 0123456789 (){}[]\n" +
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZ +-*/= .,;:!? #&$%@|^";
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZ +-*/= .,;:!? #&$%@|^\n" +
+      // Create empty lines in order to make the gutter wide enough to display two-digits line numbers (other previews use long text
+      // and we don't want different gutter widths on color pages switching).
+      "\n" +
+      "\n" +
+      "\n";
   }
 
   static void installTrafficLights(@NotNull EditorEx editor) {

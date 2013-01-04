@@ -30,12 +30,8 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.settings.DiffOptionsPanel;
 import com.intellij.openapi.diff.impl.settings.DiffPreviewPanel;
-import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.colors.ColorKey;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
@@ -235,11 +231,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
         myColorsManager.removeAllSchemes();
         for (MyColorScheme scheme : mySchemes.values()) {
-            if (!scheme.isDefault()) {
-              scheme.apply();
-              myColorsManager.addColorsScheme(scheme.getOriginalScheme());
-            }
+          if (!scheme.isDefault()) {
+            scheme.apply();
+            myColorsManager.addColorsScheme(scheme.getOriginalScheme());
           }
+        }
 
         EditorColorsScheme originalScheme = mySelectedScheme.getOriginalScheme();
         myColorsManager.setGlobalScheme(originalScheme);
@@ -420,7 +416,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
   }
 
-   private static class ConsoleFontConfigurableFactory implements ColorAndFontPanelFactoryEx {
+  private static class ConsoleFontConfigurableFactory implements ColorAndFontPanelFactoryEx {
     @Override
     @NotNull
     public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
@@ -444,11 +440,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       return "Console Font";
     }
 
-     @Override
-     public DisplayPriority getPriority() {
-       return DisplayPriority.COMMON_SETTINGS;
-     }
-   }
+    @Override
+    public DisplayPriority getPriority() {
+      return DisplayPriority.COMMON_SETTINGS;
+    }
+  }
 
   private class DiffColorsPageFactory implements ColorAndFontPanelFactory {
     @Override
@@ -606,11 +602,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   private static void addEditorSettingDescription(ArrayList<EditorSchemeAttributeDescriptor> array,
-                                                                     String name,
-                                                                     String group,
-                                                                     ColorKey backgroundKey,
-                                                                     ColorKey foregroundKey,
-                                                                     EditorColorsScheme scheme) {
+                                                  String name,
+                                                  String group,
+                                                  ColorKey backgroundKey,
+                                                  ColorKey foregroundKey,
+                                                  EditorColorsScheme scheme) {
     String type = null;
     if (foregroundKey != null) {
       type = foregroundKey.getExternalName();
@@ -625,7 +621,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   private static void addSchemedDescription(ArrayList<EditorSchemeAttributeDescriptor> array, String name, String group, TextAttributesKey key,
-                                            MyColorScheme scheme,
+                                            EditorColorsScheme scheme,
                                             Icon icon,
                                             String toolTip) {
     ColorAndFontDescription descr = new SchemeTextAttributesDescription(name, group, key, scheme, icon, toolTip);
@@ -761,44 +757,74 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     private final TextAttributes myAttributesToApply;
     private final TextAttributesKey key;
     private TextAttributes myFallbackAttributes;
-    private String myInheritanceDescription;
 
-    private SchemeTextAttributesDescription(String name, String group, TextAttributesKey key, MyColorScheme  scheme, Icon icon,
-                                           String toolTip) {
+    private SchemeTextAttributesDescription(String name, String group, TextAttributesKey key, EditorColorsScheme scheme, Icon icon,
+                                            String toolTip) {
       super(name, group,
-            getInitialAttributes(scheme, key).clone(),
+            getEditableAttributes(scheme, key),
             key, scheme, icon, toolTip);
       this.key = key;
       myAttributesToApply = getInitialAttributes(scheme, key);
-      TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
-      if (fallbackKey != null) {
-        myFallbackAttributes = scheme.getAttributes(fallbackKey);
-        myInheritanceDescription = DefaultLanguageHighlighterColors.getDisplayName(fallbackKey);
-        if (myInheritanceDescription == null) {
-          myInheritanceDescription = fallbackKey.getExternalName();
-        }
+      if (key.getFallbackAttributeKey() != null) {
+        myFallbackAttributes = scheme.getAttributes(key.getFallbackAttributeKey());
       }
       initCheckedStatus();
     }
 
+    private static TextAttributes getEditableAttributes(EditorColorsScheme scheme, TextAttributesKey key) {
+      TextAttributes attributes = getInitialAttributes(scheme, key);
+      if (attributes != null) return attributes.clone();
+      return new TextAttributes();
+    }
 
-    @NotNull
-    private static TextAttributes getInitialAttributes(MyColorScheme scheme, TextAttributesKey key) {
+    private static TextAttributes getInitialAttributes(EditorColorsScheme scheme, TextAttributesKey key) {
       TextAttributes attributes = scheme.getAttributes(key);
       TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
-      if (fallbackKey != null && !scheme.containsKey(key)) {
+      if (attributes == null && fallbackKey != null) {
         TextAttributes fallbackAttributes = scheme.getAttributes(fallbackKey);
-        if (attributes != null && attributes == fallbackAttributes) {
-          return new TextAttributes();
-        }
+        if (fallbackAttributes != null) return null;
       }
-      return attributes != null ? attributes : new TextAttributes();
+      return attributes;
+    }
+
+    private boolean equalToFallbackAttributes() {
+      if (myFallbackAttributes != null) {
+        return myFallbackAttributes.equals(getTextAttributes());
+      }
+      return false;
+    }
+
+    @Override
+    public boolean isBackgroundChecked() {
+      if (equalToFallbackAttributes()) return false;
+      return super.isBackgroundChecked();
+    }
+
+    @Override
+    public boolean isForegroundChecked() {
+      if (equalToFallbackAttributes()) return false;
+      return super.isForegroundChecked();
+    }
+
+    @Override
+    public boolean isErrorStripeChecked() {
+      if (equalToFallbackAttributes()) return false;
+      return super.isErrorStripeChecked();
+    }
+
+    @Override
+    public boolean isEffectsColorChecked() {
+      if (equalToFallbackAttributes()) return false;
+      return super.isEffectsColorChecked();
     }
 
     @Override
     public void apply(EditorColorsScheme scheme) {
       if (scheme == null) scheme = getScheme();
       if (myAttributesToApply != null) {
+        if (equalToFallbackAttributes()) {
+          getTextAttributes().reset();
+        }
         scheme.setAttributes(key, getTextAttributes());
       }
     }
@@ -811,17 +837,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     @Override
     public boolean isErrorStripeEnabled() {
       return true;
-    }
-
-    @Override
-    public boolean isInherited() {
-      return myFallbackAttributes != null && getTextAttributes().isEmpty();
-    }
-
-    @Nullable
-    @Override
-    public String getInheritanceDescription() {
-      return myInheritanceDescription;
     }
   }
 
@@ -863,11 +878,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     private GetSetColor myGetSetBackground;
 
     private EditorSettingColorDescription(String name,
-                                         String group,
-                                         ColorKey backgroundKey,
-                                         ColorKey foregroundKey,
-                                         String type,
-                                         EditorColorsScheme scheme) {
+                                          String group,
+                                          ColorKey backgroundKey,
+                                          ColorKey foregroundKey,
+                                          String type,
+                                          EditorColorsScheme scheme) {
       super(name, group, type, scheme, null, null);
       if (backgroundKey != null) {
         myGetSetBackground = new GetSetColor(backgroundKey, scheme);
@@ -990,27 +1005,18 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   private static class MyColorScheme extends EditorColorsSchemeImpl {
-    private int myFontSize;
-    private float myLineSpacing;
-    private String myFontName;
-
-    private int myConsoleFontSize;
-    private float myConsoleLineSpacing;
-    private String myConsoleFontName;
 
     private EditorSchemeAttributeDescriptor[] myDescriptors;
-    private String myName;
+    private String                            myName;
     private boolean myIsNew = false;
 
     private MyColorScheme(EditorColorsScheme parentScheme) {
       super(parentScheme, DefaultColorSchemesManager.getInstance());
-      myFontSize = parentScheme.getEditorFontSize();
-      myLineSpacing = parentScheme.getLineSpacing();
-      myFontName = parentScheme.getEditorFontName();
+      parentScheme.getFontPreferences().copyTo(getFontPreferences());
+      setLineSpacing(parentScheme.getLineSpacing());
 
-      myConsoleFontSize = parentScheme.getConsoleFontSize();
-      myConsoleLineSpacing = parentScheme.getConsoleLineSpacing();
-      myConsoleFontName = parentScheme.getConsoleFontName();
+      parentScheme.getConsoleFontPreferences().copyTo(getConsoleFontPreferences());
+      setConsoleLineSpacing(parentScheme.getConsoleLineSpacing());
 
       setQuickDocFontSize(parentScheme.getQuickDocFontSize());
       myName = parentScheme.getName();
@@ -1059,17 +1065,15 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
 
     private boolean isFontModified() {
-      if (myFontSize != myParentScheme.getEditorFontSize()) return true;
-      if (myLineSpacing != myParentScheme.getLineSpacing()) return true;
-      if (!myFontName.equals(myParentScheme.getEditorFontName())) return true;
-      if (myQuickDocFontSize != myParentScheme.getQuickDocFontSize()) return true;
+      if (!getFontPreferences().equals(myParentScheme.getFontPreferences())) return true;
+      if (getLineSpacing() != myParentScheme.getLineSpacing()) return true;
+      if (getQuickDocFontSize() != myParentScheme.getQuickDocFontSize()) return true;
       return false;
     }
 
     private boolean isConsoleFontModified() {
-      if (myConsoleFontSize != myParentScheme.getConsoleFontSize()) return true;
-      if (myConsoleLineSpacing != myParentScheme.getConsoleLineSpacing()) return true;
-      if (!myConsoleFontName.equals(myParentScheme.getConsoleFontName())) return true;
+      if (!getConsoleFontPreferences().equals(myParentScheme.getConsoleFontPreferences())) return true;
+      if (getConsoleLineSpacing() != myParentScheme.getConsoleLineSpacing()) return true;
       return false;
     }
 
@@ -1078,83 +1082,15 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
 
     public void apply(EditorColorsScheme scheme) {
-      scheme.setEditorFontSize(myFontSize);
-      scheme.setEditorFontName(myFontName);
+      getFontPreferences().copyTo(scheme.getFontPreferences());
       scheme.setLineSpacing(myLineSpacing);
       scheme.setQuickDocFontSize(getQuickDocFontSize());
-      scheme.setConsoleFontSize(myConsoleFontSize);
-      scheme.setConsoleFontName(myConsoleFontName);
-      scheme.setConsoleLineSpacing(myConsoleLineSpacing);
+      getConsoleFontPreferences().copyTo(scheme.getConsoleFontPreferences());
+      scheme.setConsoleLineSpacing(getConsoleLineSpacing());
 
       for (EditorSchemeAttributeDescriptor descriptor : myDescriptors) {
         descriptor.apply(scheme);
       }
-    }
-
-    @Override
-    public String getEditorFontName() {
-      return myFontName;
-    }
-
-    @Override
-    public int getEditorFontSize() {
-      return myFontSize;
-    }
-
-    @Override
-    public float getLineSpacing() {
-      return myLineSpacing;
-    }
-
-    @Override
-    public void setEditorFontSize(int fontSize) {
-      myFontSize = fontSize;
-      initFonts();
-    }
-
-    @Override
-    public void setLineSpacing(float lineSpacing) {
-      assert lineSpacing >= 0 : lineSpacing;
-      myLineSpacing = lineSpacing;
-    }
-
-    @Override
-    public void setEditorFontName(String fontName) {
-      myFontName = fontName;
-      initFonts();
-    }
-
-    @Override
-    public String getConsoleFontName() {
-      return myConsoleFontName;
-    }
-
-    @Override
-    public void setConsoleFontName(String fontName) {
-      myConsoleFontName = fontName;
-      initFonts();
-    }
-
-    @Override
-    public int getConsoleFontSize() {
-      return myConsoleFontSize;
-    }
-
-    @Override
-    public void setConsoleFontSize(int fontSize) {
-      myConsoleFontSize = fontSize;
-      initFonts();
-    }
-
-    @Override
-    public float getConsoleLineSpacing() {
-      return myConsoleLineSpacing;
-    }
-
-    @Override
-    public void setConsoleLineSpacing(float lineSpacing) {
-      assert lineSpacing >= 0 : lineSpacing;
-      myConsoleLineSpacing = lineSpacing;
     }
 
     @Override
@@ -1236,7 +1172,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       if (mySubPanel == null) {
         mySubPanel = myFactory.createPanel(ColorAndFontOptions.this);
         mySubPanel.reset(this);
-        mySubPanel.addSchemesListener(new ColorAndFontSettingsListener.Abstract(){
+        mySubPanel.addSchemesListener(new ColorAndFontSettingsListener.Abstract() {
           @Override
           public void schemeChanged(final Object source) {
             if (!myIsReset) {
@@ -1245,7 +1181,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
           }
         });
 
-        mySubPanel.addDescriptionListener(new ColorAndFontSettingsListener.Abstract(){
+        mySubPanel.addDescriptionListener(new ColorAndFontSettingsListener.Abstract() {
           @Override
           public void fontChanged() {
             for (NewColorAndFontPanel panel : getPanels()) {
@@ -1285,11 +1221,9 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
             }
           }
         }
-
       }
 
       return false;
-
     }
 
     @Override
@@ -1337,7 +1271,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     @NonNls
     @Override
     public String toString() {
-      return "Color And Fonts for "+getDisplayName();
+      return "Color And Fonts for " + getDisplayName();
     }
   }
 }

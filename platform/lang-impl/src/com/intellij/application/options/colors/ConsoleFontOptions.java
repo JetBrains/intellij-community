@@ -15,6 +15,9 @@
  */
 package com.intellij.application.options.colors;
 
+import com.intellij.openapi.editor.colors.FontPreferences;
+import org.jetbrains.annotations.NotNull;
+
 /**
  * User: anna
  */
@@ -23,24 +26,10 @@ public class ConsoleFontOptions extends FontOptions {
     super(options, "Console Font");
   }
 
+  @NotNull
   @Override
-  protected String getCurrentFontName() {
-    return getCurrentScheme().getConsoleFontName();
-  }
-
-  @Override
-  protected void setCurrentFontName(String fontName) {
-    getCurrentScheme().setConsoleFontName(fontName);
-  }
-
-  @Override
-  protected int getCurrentFontSize() {
-    return getCurrentScheme().getConsoleFontSize();
-  }
-
-  @Override
-  protected void setCurrentFontSize(int fontSize) {
-    getCurrentScheme().setConsoleFontSize(fontSize);
+  protected FontPreferences getFontPreferences() {
+    return getCurrentScheme().getConsoleFontPreferences();
   }
 
   @Override

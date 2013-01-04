@@ -18,12 +18,14 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import gnu.trove.TIntHashSet;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.*;
@@ -140,8 +142,34 @@ public class ComplementaryFontsRegistry {
     boolean found = ourStyledFontNames.contains(styledFamilyName);
     return Pair.create(found ? styledFamilyName : familyName, found ? Font.PLAIN : style);
   }
+
+  @NotNull
+  public static FontInfo getFontAbleToDisplay(char c, @JdkConstants.FontStyle int style, @NotNull FontPreferences preferences) {
+    List<String> fontFamilies = preferences.getFontFamilies();
+    for (String fontFamily : fontFamilies) {
+      FontInfo result = doGetFontAbleToDisplay(c, preferences.getSize(fontFamily), style, fontFamily);
+      if (result != null) {
+        return result;
+      }
+    }
+    int size = FontPreferences.DEFAULT_FONT_SIZE;
+    if (!fontFamilies.isEmpty()) {
+      size = preferences.getSize(fontFamilies.get(0));
+    }
+    return doGetFontAbleToDisplay(c, size, style);
+  }
   
+  @NotNull
   public static FontInfo getFontAbleToDisplay(char c, int size, @JdkConstants.FontStyle int style, @NotNull String defaultFontFamily) {
+    FontInfo result = doGetFontAbleToDisplay(c, size, style, defaultFontFamily);
+    if (result != null) {
+      return result;
+    }
+    return doGetFontAbleToDisplay(c, size, style);
+  }
+
+  @Nullable
+  private static FontInfo doGetFontAbleToDisplay(char c, int size, @JdkConstants.FontStyle int style, @NotNull String defaultFontFamily) {
     synchronized (lock) {
       Pair<String, Integer> p = fontFamily(defaultFontFamily, style);
       if (ourSharedKeyInstance.mySize == size &&
@@ -152,7 +180,7 @@ public class ComplementaryFontsRegistry {
           ( c < 128 ||
             ourSharedDefaultFont.canDisplay(c)
           )
-         ) {
+        ) {
         return ourSharedDefaultFont;
       }
 
@@ -171,8 +199,16 @@ public class ComplementaryFontsRegistry {
       if (c < 128 || defaultFont.canDisplay(c)) {
         return defaultFont;
       }
-
-      if (ourUndisplayableChars.contains(c)) return defaultFont;
+      else {
+        return null;
+      }
+    }
+  }
+  
+  @NotNull
+  private static FontInfo doGetFontAbleToDisplay(char c, int size, @JdkConstants.FontStyle int style) {
+    synchronized (lock) {
+      if (ourUndisplayableChars.contains(c)) return ourSharedDefaultFont;
 
       final Collection<FontInfo> descriptors = ourUsedFonts.values();
       for (FontInfo font : descriptors) {
@@ -193,7 +229,7 @@ public class ComplementaryFontsRegistry {
 
       ourUndisplayableChars.add(c);
 
-      return defaultFont;
+      return ourSharedDefaultFont;
     }
   }
 }
