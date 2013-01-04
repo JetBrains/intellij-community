@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ public class ColorAndFontDescriptionPanel extends JPanel {
   private ActionListener myActionListener;
   private JLabel myLabelFont;
 
-  private JLabel myInheritanceLabel = new JLabel("X");
+  private JLabel myInheritanceLabel = new JLabel();
   private final static Icon INHERITED_ICON = AllIcons.Ide.Link;
 
 

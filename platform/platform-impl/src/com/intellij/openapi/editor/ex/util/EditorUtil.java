@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -509,7 +509,7 @@ public class EditorUtil {
 
   public static FontInfo fontForChar(final char c, @JdkConstants.FontStyle int style, @NotNull Editor editor) {
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
-    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, style, colorsScheme.getFontPreferences());
+    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, colorsScheme.getEditorFontSize(), style, colorsScheme.getEditorFontName());
   }
 
   public static int charWidth(char c, @JdkConstants.FontStyle int fontType, @NotNull Editor editor) {

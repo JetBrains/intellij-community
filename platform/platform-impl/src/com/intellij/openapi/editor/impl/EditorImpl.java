@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -5622,15 +5622,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private class MyColorSchemeDelegate implements EditorColorsScheme {
-
-    private final FontPreferences                            myFontPreferences = new FontPreferences();
-    private final HashMap<TextAttributesKey, TextAttributes> myOwnAttributes   = new HashMap<TextAttributesKey, TextAttributes>();
-    private final HashMap<ColorKey, Color>                   myOwnColors       = new HashMap<ColorKey, Color>();
+    private final HashMap<TextAttributesKey, TextAttributes> myOwnAttributes = new HashMap<TextAttributesKey, TextAttributes>();
+    private final HashMap<ColorKey, Color> myOwnColors = new HashMap<ColorKey, Color>();
     private final EditorColorsScheme myCustomGlobalScheme;
-    private Map<EditorFontType, Font> myFontsMap    = null;
-    private int                       myMaxFontSize = OptionsConstants.MAX_EDITOR_FONT_SIZE;
-    private int                       myFontSize    = -1;
-    private String                    myFaceName    = null;
+    private Map<EditorFontType, Font> myFontsMap = null;
+    private int myMaxFontSize = OptionsConstants.MAX_EDITOR_FONT_SIZE;
+    private int myFontSize = -1;
+    private String myFaceName = null;
     private EditorColorsScheme myGlobalScheme;
 
     private MyColorSchemeDelegate(@Nullable final EditorColorsScheme globalScheme) {
@@ -5651,8 +5649,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     protected void initFonts() {
       String editorFontName = getEditorFontName();
       int editorFontSize = getEditorFontSize();
-      myFontPreferences.clear();
-      myFontPreferences.register(editorFontName, editorFontSize);
 
       myFontsMap = new EnumMap<EditorFontType, Font>(EditorFontType.class);
 
@@ -5739,12 +5735,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myGlobalScheme.setQuickDocFontSize(fontSize);
     }
 
-    @NotNull
-    @Override
-    public FontPreferences getFontPreferences() {
-      return myFontPreferences.getFontFamilies().isEmpty() ? getGlobal().getFontPreferences() : myFontPreferences;
-    }
-
     @Override
     public String getEditorFontName() {
       if (myFaceName == null) {
@@ -5805,12 +5795,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myGlobalScheme = myCustomGlobalScheme == null ? EditorColorsManager.getInstance().getGlobalScheme() : myCustomGlobalScheme;
       int globalFontSize = getGlobal().getEditorFontSize();
       myMaxFontSize = Math.max(OptionsConstants.MAX_EDITOR_FONT_SIZE, globalFontSize);
-    }
-
-    @NotNull
-    @Override
-    public FontPreferences getConsoleFontPreferences() {
-      return getGlobal().getConsoleFontPreferences();
     }
 
     @Override
@@ -6026,7 +6010,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       bulkUpdateFinished();
     }
   }
-
+  
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private class EditorSizeContainer {
     /** Holds logical line widths in pixels. */
@@ -6101,7 +6085,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
      *   </li>
      * </ol>
      </pre>
-     *
+     * 
      * @param startLine     logical line that contains changed fragment start offset
      * @param newEndLine    logical line that contains changed fragment end
      * @param oldEndLine    logical line that contained changed fragment end
@@ -6144,7 +6128,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
      * Please note that there is a possible case that particular logical line is represented in more than one visual lines,
      * hence, this method may be called multiple times with the same logical line argument but different with values. Current
      * container is expected to store max of the given values then.
-     *
+     * 
      * @param logicalLine     logical line which visual width is changed
      * @param widthInPixels   visual width of the given logical line
      */
@@ -6199,7 +6183,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           if (line == lineCount - 1) {
             lastLineLengthCalculated = true;
           }
-
+          
           x = 0;
           int offset = myDocument.getLineStartOffset(line);
 
@@ -6217,11 +6201,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
 
           int endLine;
-          if (maxCalculatedLine < line + 1) {
+          if (maxCalculatedLine < line+1) {
             endLine = lineCount;
           }
           else {
-            for (endLine = line + 1; endLine < maxCalculatedLine; endLine++) {
+            for (endLine=line+1; endLine<maxCalculatedLine;endLine++) {
               if (myLineWidths.getQuick(endLine) != -1) {
                 break;
               }
@@ -6238,8 +6222,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
           if (endOffset > myDocument.getTextLength()) {
             break;
-          }
-
+          } 
+          
           IterationState state = new IterationState(EditorImpl.this, offset, endOffset, false);
           try {
             int fontType = state.getMergedAttributes().getFontType();
@@ -6308,7 +6292,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (lineCount > 0 && lastLineLengthCalculated) {
           myLineWidths.set(lineCount - 1,
                            x);    // Last line can be non-zero length and won't be caught by in-loop procedure since latter only react on \n's
-          maxCalculatedLine = Math.max(maxCalculatedLine, lineCount - 1);
+          maxCalculatedLine = Math.max(maxCalculatedLine, lineCount-1);
         }
 
         // There is a following possible situation:
@@ -6362,7 +6346,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public int calcColumnNumber(@NotNull CharSequence text, int start, int offset, int tabSize) {
-    IterationState state = new IterationState(this, start, start + offset, false);
+    IterationState state = new IterationState(this, start, start+offset, false);
     try {
       int fontType = state.getMergedAttributes().getFontType();
       int column = 0;
@@ -6433,9 +6417,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public void setupCorners() {
       super.setupCorners();
-
+      
       setBorder(new TablessBorder());
-
+      
       setCorner(getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_LEFT ?
                 LOWER_RIGHT_CORNER :
                 LOWER_LEFT_CORNER, new JPanel() {
@@ -6463,7 +6447,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       });
     }
   }
-
+  
   private static class TablessBorder extends SideBorder {
     private TablessBorder() {
       super(UIUtil.getBorderColor(), SideBorder.ALL);
@@ -6475,8 +6459,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         Insets insets = ((JComponent)c).getInsets();
         if (insets.left > 0) {
           super.paintBorder(c, g, x, y, width, height);
-        }
-        else {
+        } else {
           g.setColor(UIUtil.getPanelBackground());
           g.drawLine(x, y, x + width, y);
           g.setColor(new Color(0, 0, 0, 90));
@@ -6526,15 +6509,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private class MyTextDrawingCallback implements TextDrawingCallback {
     @Override
-    public void drawChars(@NotNull Graphics g,
-                          @NotNull char[] data,
-                          int start,
-                          int end,
-                          int x,
-                          int y,
-                          Color color,
-                          @NotNull FontInfo fontInfo)
-    {
+    public void drawChars(@NotNull Graphics g, @NotNull char[] data, int start, int end, int x, int y, Color color, @NotNull FontInfo fontInfo) {
       drawCharsCached(g, data, start, end, x, y, fontInfo, color);
     }
   }

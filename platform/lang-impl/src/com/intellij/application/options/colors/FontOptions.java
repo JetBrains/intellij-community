@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,239 +17,57 @@
 package com.intellij.application.options.colors;
 
 import com.intellij.application.options.OptionsConstants;
+import com.intellij.application.options.SelectFontDialog;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ListSpeedSearch;
-import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.JBList;
-import com.intellij.ui.components.JBMovePanel;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.ui.GridBag;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
-import java.util.List;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 public class FontOptions extends JPanel implements OptionsPanel{
+  private final ColorAndFontOptions myOptions;
 
-  private static List<String> myFontNames;
-  private static List<String> myMonospacedFontNames;
+  private JTextField myEditorFontSizeField;
 
+  private JTextField myLineSpacingField;
+  private JTextField myFontNameField;
+
+  private static ArrayList<String> myFontNames;
+  private static ArrayList<String> myMonospacedFontNames;
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
-
-  @NotNull private final ColorAndFontOptions myOptions;
-
-  @NotNull private final DefaultListModel myAllFontsModel      = new DefaultListModel();
-  @NotNull private final JBList           myAllFontsList       = new JBList(myAllFontsModel);
-  @NotNull private final DefaultListModel mySelectedFontsModel = new DefaultListModel();
-  @NotNull private final JBList           mySelectedFontsList  = new JBList(mySelectedFontsModel);
-  @NotNull private final JBMovePanel      myFontsControl       = new JBMovePanel(myAllFontsList, mySelectedFontsList) {
-    @SuppressWarnings("SSBasedInspection")
-    @Override
-    public void paint(Graphics g) {
-      super.paint(g);
-      if (myFontNames == null) {
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            initFontTables();
-          }
-        });
-      }
-    }
-  };
-
-  @NotNull private final JTextField myEditorFontSizeField = new MyTextField(4);
-  @NotNull private final JTextField myLineSpacingField    = new MyTextField(4);
-
-  @NotNull private final JBCheckBox myOnlyMonospacedCheckBox =
-    new JBCheckBox(ApplicationBundle.message("checkbox.show.only.monospaced.fonts"));
-  @Nullable private final Dimension myPreferredSize;
-
-  private boolean myIsInSchemeChange;
-  private String  myTitle;
+  private boolean myIsInSchemeChange = false;
+  private String myTitle;
 
   public FontOptions(ColorAndFontOptions options) {
     this(options, ApplicationBundle.message("group.editor.font"));
   }
 
-  protected FontOptions(@NotNull ColorAndFontOptions options, final String title) {
-    super(new GridBagLayout());
+  protected FontOptions(ColorAndFontOptions options, final String title) {
+    super(new BorderLayout());
     myOptions = options;
     myTitle = title;
-    add(createEditorFontPanel(), new GridBag().weightx(1).weighty(1).fillCell());
-    myFontsControl.setShowButtons(JBMovePanel.ButtonType.LEFT, JBMovePanel.ButtonType.RIGHT);
-    myFontsControl.setListLabels(ApplicationBundle.message("title.font.available"), ApplicationBundle.message("title.font.selected"));
-    myFontsControl.setEnabled(false); // Disable the controls until fonts are loaded.
-    myFontsControl.setLeftInsertionStrategy(JBMovePanel.NATURAL_ORDER);
-    myOnlyMonospacedCheckBox.setSelected(EditorColorsManager.getInstance().isUseOnlyMonospacedFonts());
-    new ListSpeedSearch(myAllFontsList);
-    new ListSpeedSearch(mySelectedFontsList);
-    
-    // Almost all other color scheme pages use the following pattern:
-    //
-    //    __________________________________________
-    //   |  color keys  |  color and font settings  |
-    //
-    // Here page's height is calculated on the 'color and font settings' preferred height (debugged a lot to ensure that).
-    // The idea is to configure current page to use the same height as other pages. That's why we set it up to use the same preferred
-    // size as 'color and font settings' control.
-    myPreferredSize = new ColorAndFontDescriptionPanel().getPreferredSize();
-    if (myFontNames != null) {
-      onFontsInit();
-    }
-    initListeners();
-  }
 
-  @Override
-  public Dimension getMinimumSize() {
-    return getPreferredSize();
-  }
+    JPanel schemesGroup = new JPanel(new BorderLayout());
 
-  @Override
-  public Dimension getPreferredSize() {
-    return myPreferredSize == null ? super.getPreferredSize() : myPreferredSize;
-  }
-
-  private void initListeners() {
-    myOnlyMonospacedCheckBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        boolean onlyMonospaced = myOnlyMonospacedCheckBox.isSelected();
-        EditorColorsManager.getInstance().setUseOnlyMonospacedFonts(onlyMonospaced);
-        onFontsInit();
-      }
-    });
-    
-    mySelectedFontsModel.addListDataListener(new ListDataListener() {
-      @Override
-      public void intervalAdded(ListDataEvent e) {
-        syncFontFamilies();
-      }
-
-      @Override
-      public void intervalRemoved(ListDataEvent e) {
-        syncFontFamilies();
-      }
-
-      @Override
-      public void contentsChanged(ListDataEvent e) {
-        syncFontFamilies();
-      }
-
-      private void syncFontFamilies() {
-        if (myIsInSchemeChange) {
-          return;
-        }
-        FontPreferences fontPreferences = getFontPreferences();
-        fontPreferences.clearFonts();
-        Enumeration elements = mySelectedFontsModel.elements();
-        while (elements.hasMoreElements()) {
-          String fontFamily = (String)elements.nextElement();
-          // Don't save a single 'default' font family at the font preferences.
-          if (mySelectedFontsModel.getSize() > 1 || !FontPreferences.DEFAULT_FONT_NAME.equals(fontFamily)) {
-            fontPreferences.addFontFamily(fontFamily);
-          }
-        }
-      }
-    });
-    
-    mySelectedFontsList.addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        Object value = mySelectedFontsList.getSelectedValue();
-        if (value != null) {
-          boolean toRestore = myIsInSchemeChange;
-          myIsInSchemeChange = true;
-          try {
-            myEditorFontSizeField.setText(String.valueOf(getFontPreferences().getSize((String)value)));
-          }
-          finally {
-            myIsInSchemeChange = toRestore;
-          }
-        }
-      }
-    });
-    
-    myEditorFontSizeField.getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      public void textChanged(DocumentEvent event) {
-        if (myIsInSchemeChange || !SwingUtilities.isEventDispatchThread()) return;
-        try {
-          int fontSize = Integer.parseInt(myEditorFontSizeField.getText());
-          if (fontSize < 1) fontSize = 1;
-          if (fontSize > OptionsConstants.MAX_EDITOR_FONT_SIZE) fontSize = OptionsConstants.MAX_EDITOR_FONT_SIZE;
-          Object selectedFont = mySelectedFontsList.getSelectedValue();
-          if (selectedFont != null) {
-            FontPreferences fontPreferences = getFontPreferences();
-            fontPreferences.register((String)selectedFont, fontSize);
-          }
-        }
-        catch (NumberFormatException e) {
-          // OK, ignore
-        }
-        finally {
-          updateDescription(true);
-        }
-      }
-    });
-
-    myLineSpacingField.getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      public void textChanged(DocumentEvent event) {
-        if (myIsInSchemeChange) return;
-        float lineSpacing = 1;
-        try {
-          lineSpacing = Float.parseFloat(myLineSpacingField.getText());
-        }
-        catch (NumberFormatException e) {
-          // OK, ignore
-        }
-        finally {
-          if (lineSpacing <= 0) lineSpacing = 1;
-          if (lineSpacing > 30) lineSpacing = 30;
-          if (getLineSpacing() != lineSpacing) {
-            setCurrentLineSpacing(lineSpacing);
-          }
-          updateDescription(true);
-        }
-      }
-    });
-
-  }
-  
-  public static void showReadOnlyMessage(JComponent parent, final boolean sharedScheme) {
-    if (!sharedScheme) {
-      Messages.showMessageDialog(
-        parent,
-        ApplicationBundle.message("error.readonly.scheme.cannot.be.modified"),
-        ApplicationBundle.message("title.cannot.modify.readonly.scheme"),
-        Messages.getInformationIcon()
-      );
-    }
-    else {
-      Messages.showMessageDialog(
-        parent,
-        ApplicationBundle.message("error.shared.scheme.cannot.be.modified"),
-        ApplicationBundle.message("title.cannot.modify.readonly.scheme"),
-        Messages.getInformationIcon()
-      );
-    }
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(createEditorFontPanel(), BorderLayout.NORTH);
+    schemesGroup.add(panel, BorderLayout.CENTER);
+    add(schemesGroup, BorderLayout.CENTER);
   }
 
   @Override
@@ -257,71 +75,35 @@ public class FontOptions extends JPanel implements OptionsPanel{
     myIsInSchemeChange = true;
 
     myLineSpacingField.setText(Float.toString(getLineSpacing()));
-    mySelectedFontsModel.clear();
-    FontPreferences fontPreferences = getFontPreferences();
-    List<String> fontFamilies = fontPreferences.getFontFamilies();
-    Set<String> selectedFonts = ContainerUtilRt.newHashSet();
-    Object selectedValue = mySelectedFontsList.getSelectedValue();
-    mySelectedFontsModel.clear();
-    if (fontFamilies.isEmpty()) {
-      // Add default font.
-      mySelectedFontsModel.addElement(fontPreferences.getFontFamily());
-      selectedFonts.add(fontPreferences.getFontFamily());
-    }
-    else {
-      for (String fontFamily : fontFamilies) {
-        mySelectedFontsModel.addElement(fontFamily);
-        selectedFonts.add(fontFamily);
-      }
-    }
-    
-    int newSelectionIndex = 0;
-    if (selectedValue != null) {
-      newSelectionIndex = Math.max(0, mySelectedFontsModel.indexOf(selectedValue));
-    }
-    mySelectedFontsList.setSelectedIndex(newSelectionIndex);
-    
-    for (int i = myAllFontsModel.size() - 1; i >= 0; i--) {
-      if (selectedFonts.contains(myAllFontsModel.getElementAt(i))) {
-        myAllFontsModel.remove(i);
-      }
-    }
-    myEditorFontSizeField.setText(String.valueOf(fontPreferences.getSize(fontPreferences.getFontFamily())));
+    myEditorFontSizeField.setText(Integer.toString(getCurrentFontSize()));
+    myFontNameField.setText(getCurrentFontName());
 
     boolean enabled = !ColorAndFontOptions.isReadOnly(myOptions.getSelectedScheme());
-    myOnlyMonospacedCheckBox.setEnabled(enabled);
     myLineSpacingField.setEnabled(enabled);
     myEditorFontSizeField.setEditable(enabled);
-    myFontsControl.setEnabled(enabled);
+    myFontNameField.setEnabled(enabled);
 
     myIsInSchemeChange = false;
+
   }
 
-  private void onFontsInit() {
-    assert myFontNames != null;
-    Object selectedValue = myAllFontsList.getSelectedValue();
-    myAllFontsModel.clear();
-    myFontsControl.setEnabled(true);
-    List<String> availableFonts = myOnlyMonospacedCheckBox.isSelected() ? myMonospacedFontNames : myFontNames;
-    int newSelectionIndex = 0;
-    int i = 0;
-    for (String name : availableFonts) {
-      if (!mySelectedFontsModel.contains(name)) { // Don't bother with performance here in assumption that fallback fonts sequence is short
-        myAllFontsModel.addElement(name);
-        if (name.equals(selectedValue)) {
-          newSelectionIndex = i;
-        }
-        i++;
-      }
-    }
-    myAllFontsList.setSelectedIndex(newSelectionIndex);
+  protected String getCurrentFontName() {
+    return getCurrentScheme().getEditorFontName();
   }
-  
-  @NotNull
-  protected FontPreferences getFontPreferences() {
-    return getCurrentScheme().getFontPreferences();
+
+  protected void setCurrentFontName(String fontName) {
+    getCurrentScheme().setEditorFontName(fontName);
   }
-  
+
+
+  protected int getCurrentFontSize() {
+    return getCurrentScheme().getEditorFontSize();
+  }
+
+  protected void setCurrentFontSize(int fontSize) {
+    getCurrentScheme().setEditorFontSize(fontSize);
+  }
+
   protected float getLineSpacing() {
     return getCurrentScheme().getLineSpacing();
   }
@@ -349,34 +131,135 @@ public class FontOptions extends JPanel implements OptionsPanel{
   }
 
   private JPanel createEditorFontPanel() {
-    JPanel editorFontPanel = new JPanel(new GridBagLayout());
-    Insets borderInsets = new Insets(IdeBorderFactory.TITLED_BORDER_TOP_INSET,
-                                     IdeBorderFactory.TITLED_BORDER_LEFT_INSET,
-                                     0,
-                                     IdeBorderFactory.TITLED_BORDER_RIGHT_INSET);
-    editorFontPanel.setBorder(IdeBorderFactory.createTitledBorder(myTitle, false, borderInsets));
+    JPanel editorFontPanel = new JPanel();
+    editorFontPanel.setBorder(IdeBorderFactory.createTitledBorder(myTitle, false));
+    editorFontPanel.setLayout(new GridBagLayout());
+    GridBagConstraints gbConstraints = new GridBagConstraints();
+    gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gbConstraints.weightx = 0;
+    gbConstraints.weighty = 1;
+    gbConstraints.gridx = 0;
+    gbConstraints.gridy = 0;
+    gbConstraints.gridwidth = 1;
 
-    Insets insets = new Insets(0, 0, 5, 0);
-    GridBag constraints = new GridBag().insets(insets);
-    editorFontPanel.add(myOnlyMonospacedCheckBox, constraints);
+    gbConstraints.insets = new Insets(0, 0, 0, 0);
+    gbConstraints.gridwidth = 1;
+    editorFontPanel.add(new JLabel(ApplicationBundle.message("label.font.name")), gbConstraints);
 
-    insets.left = 8;
-    editorFontPanel.add(new JLabel(ApplicationBundle.message("editbox.font.size")), constraints);
-    
-    insets.left = 2;
-    editorFontPanel.add(myEditorFontSizeField, constraints);
-    
-    insets.left = 8;
-    editorFontPanel.add(new JLabel(ApplicationBundle.message("editbox.line.spacing")), constraints);
-    
-    insets.left = 2;
-    editorFontPanel.add(myLineSpacingField, constraints);
-    
-    editorFontPanel.add(new JLabel(""), new GridBag().insets(insets).weightx(1).fillCellHorizontally().coverLine());
-    
-    editorFontPanel.add(myFontsControl, new GridBag().weightx(1).weighty(1).fillCell().coverLine());
-    
+    myFontNameField = new MyTextField(20);
+    myFontNameField.setEditable(false);
+    myFontNameField.setFocusable(false);
+
+    gbConstraints.gridx = 1;
+    gbConstraints.insets = new Insets(0, 0, 0, 2);
+    editorFontPanel.add(myFontNameField, gbConstraints);
+
+    JButton myFontNameButton = new FixedSizeButton(myFontNameField);
+    gbConstraints.gridx = 2;
+    gbConstraints.insets = new Insets(0, 0, 0, 8);
+    editorFontPanel.add(myFontNameButton, gbConstraints);
+
+    gbConstraints.gridx = 3;
+    gbConstraints.insets = new Insets(0, 0, 0, 0);
+    editorFontPanel.add(new JLabel(ApplicationBundle.message("editbox.font.size")), gbConstraints);
+    gbConstraints.gridx = 4;
+    gbConstraints.insets = new Insets(0, 0, 0, 8);
+    myEditorFontSizeField = new MyTextField(4);
+    gbConstraints.gridx = 5;
+    editorFontPanel.add(myEditorFontSizeField, gbConstraints);
+    gbConstraints.insets = new Insets(0, 0, 0, 0);
+    gbConstraints.gridx = 6;
+    editorFontPanel.add(new JLabel(ApplicationBundle.message("editbox.line.spacing")), gbConstraints);
+    gbConstraints.insets = new Insets(0, 0, 0, 0);
+    gbConstraints.gridx = 7;
+    myLineSpacingField = new MyTextField(4);
+    editorFontPanel.add(myLineSpacingField, gbConstraints);
+    gbConstraints.weightx = 1;
+    gbConstraints.gridx = 8;
+    editorFontPanel.add(new TailPanel(), gbConstraints);
+
+    myFontNameButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        EditorColorsScheme current = getCurrentScheme();
+        if (ColorAndFontOptions.isReadOnly(current) || ColorSettingsUtil.isSharedScheme(current)) {
+          showReadOnlyMessage(FontOptions.this, ColorSettingsUtil.isSharedScheme(current));
+          return;
+        }
+
+        selectFont();
+      }
+    });
+
+    myEditorFontSizeField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      public void textChanged(DocumentEvent event) {
+        if (myIsInSchemeChange) return;
+        int fontSize = OptionsConstants.DEFAULT_EDITOR_FONT_SIZE;
+        try {
+          fontSize = Integer.parseInt(myEditorFontSizeField.getText());
+        }
+        catch (NumberFormatException e) {
+          // OK, ignore
+        }
+        finally {
+          if (fontSize < 1) fontSize = 1;
+          if (fontSize > OptionsConstants.MAX_EDITOR_FONT_SIZE) fontSize = OptionsConstants.MAX_EDITOR_FONT_SIZE;
+
+          setCurrentFontSize(fontSize);
+          updateDescription(true);
+        }
+      }
+    });
+
+    myLineSpacingField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      public void textChanged(DocumentEvent event) {
+        if (myIsInSchemeChange) return;
+        float lineSpacing = 1;
+        try {
+          lineSpacing = Float.parseFloat(myLineSpacingField.getText());
+        }
+        catch (NumberFormatException e) {
+          // OK, ignore
+        }
+        finally {
+          if (lineSpacing <= 0) lineSpacing = 1;
+          if (lineSpacing > 30) lineSpacing = 30;
+          if (getLineSpacing() != lineSpacing) {
+            setCurrentLineSpacing(lineSpacing);
+          }
+          updateDescription(true);
+        }
+      }
+    });
+
     return editorFontPanel;
+  }
+
+  private void selectFont() {
+    initFontTables();
+
+    ArrayList<String> fontNames = new ArrayList<String>(myFontNames);
+    ArrayList<String> monospacedFontNames = new ArrayList<String>(myMonospacedFontNames);
+    String initialFontName = myFontNameField.getText();
+    if (!fontNames.contains(EditorSettingsExternalizable.DEFAULT_FONT_NAME)) {
+      fontNames.add(0, EditorSettingsExternalizable.DEFAULT_FONT_NAME);
+    }
+    if (!fontNames.contains(initialFontName)) {
+      fontNames.add(0, initialFontName);
+    }
+    SelectFontDialog selectFontDialog = new SelectFontDialog(this, fontNames, initialFontName, monospacedFontNames);
+    selectFontDialog.show();
+    if (!selectFontDialog.isOK()) {
+      return;
+    }
+    String fontName = selectFontDialog.getFontName();
+    if (fontName != null) {
+      myFontNameField.setText(fontName);
+      setCurrentFontName(fontName);
+      updateDescription(true);
+    }
   }
 
   @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
@@ -402,29 +285,22 @@ public class FontOptions extends JPanel implements OptionsPanel{
     return true;
   }
 
-  @Override
-  public void addListener(ColorAndFontSettingsListener listener) {
-    myDispatcher.addListener(listener);
-  }
-
-  @Override
-  public JPanel getPanel() {
-    return this;
-  }
-
-  @Override
-  public Set<String> processListOptions() {
-    return new HashSet<String>();
-  }
-
-  private static class MyTextField extends JTextField {
-    private MyTextField(int size) {
-      super(size);
+  public static void showReadOnlyMessage(JComponent parent, final boolean sharedScheme) {
+    if (!sharedScheme) {
+      Messages.showMessageDialog(
+          parent,
+          ApplicationBundle.message("error.readonly.scheme.cannot.be.modified"),
+          ApplicationBundle.message("title.cannot.modify.readonly.scheme"),
+          Messages.getInformationIcon()
+      );
     }
-
-    @Override
-    public Dimension getMinimumSize() {
-      return getPreferredSize();
+    else {
+      Messages.showMessageDialog(
+          parent,
+          ApplicationBundle.message("error.shared.scheme.cannot.be.modified"),
+          ApplicationBundle.message("title.cannot.modify.readonly.scheme"),
+          Messages.getInformationIcon()
+      );
     }
   }
 
@@ -474,13 +350,32 @@ public class FontOptions extends JPanel implements OptionsPanel{
           // JRE has problems working with the font. Just skip.
         }
       }
-
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          onFontsInit();
-        }
-      });
     }
+  }
+
+  private static class MyTextField extends JTextField {
+    private MyTextField(int size) {
+      super(size);
+    }
+
+    @Override
+    public Dimension getMinimumSize() {
+      return getPreferredSize();
+    }
+  }
+
+  @Override
+  public void addListener(ColorAndFontSettingsListener listener) {
+    myDispatcher.addListener(listener);
+  }
+
+  @Override
+  public JPanel getPanel() {
+    return this;
+  }
+
+  @Override
+  public Set<String> processListOptions() {
+    return new HashSet<String>();
   }
 }
