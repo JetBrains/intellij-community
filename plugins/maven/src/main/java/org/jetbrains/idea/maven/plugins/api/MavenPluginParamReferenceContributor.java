@@ -46,7 +46,7 @@ public class MavenPluginParamReferenceContributor extends PsiReferenceContributo
     @NotNull
     @Override
     public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
-      XmlText xmlText = (XmlText)element.getParent();
+      final XmlText xmlText = (XmlText)element.getParent();
 
       if (!MavenPluginParamInfo.isSimpleText(xmlText)) return PsiReference.EMPTY_ARRAY;
 
@@ -57,7 +57,7 @@ public class MavenPluginParamReferenceContributor extends PsiReferenceContributo
         public boolean process(ParamInfo info, MavenDomConfiguration domCfg) {
           MavenParamReferenceProvider providerInstance = info.getProviderInstance();
           if (providerInstance != null) {
-            result = providerInstance.getReferencesByElement(element, domCfg, context);
+            result = providerInstance.getReferencesByElement(xmlText, domCfg, context);
             return false;
           }
 
