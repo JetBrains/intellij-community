@@ -348,6 +348,12 @@ public class DuplicatesFinder {
       if (!equivalentResolve(resolveResult1, resolveResult2, qualifier2)) {
         return false;
       }
+      PsiElement qualifier1 = ((PsiJavaCodeReferenceElement)pattern).getQualifier();
+      if (qualifier1 instanceof PsiReferenceExpression && qualifier2 instanceof PsiReferenceExpression && 
+          !match.areCorrespond(((PsiReferenceExpression)qualifier1).resolve(), ((PsiReferenceExpression)qualifier2).resolve())) {
+        return false;
+      }
+      
     }
 
     if (pattern instanceof PsiTypeCastExpression) {
