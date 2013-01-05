@@ -15,7 +15,7 @@ import org.jetbrains.idea.maven.plugins.api.MavenSoftAwareReferenceProvider;
  */
 public class MavenDependencyReferenceProvider extends PsiReferenceProvider implements MavenSoftAwareReferenceProvider {
 
-  private boolean mySoft;
+  private boolean mySoft = true;
 
   private boolean myCanHasVersion = true;
 
@@ -47,6 +47,11 @@ public class MavenDependencyReferenceProvider extends PsiReferenceProvider imple
       };
     }
 
+    int lastDelim = text.indexOf(secondDelim + 1);
+    if (lastDelim == -1) {
+      lastDelim = text.length();
+    }
+
     return new PsiReference[]{
       new GroupReference(element, new TextRange(start, start + firstDelim), mySoft),
 
@@ -54,7 +59,7 @@ public class MavenDependencyReferenceProvider extends PsiReferenceProvider imple
                             element, new TextRange(start + firstDelim + 1, start + secondDelim), mySoft),
 
       new VersionReference(text.substring(0, firstDelim), text.substring(firstDelim + 1, secondDelim),
-                           element, new TextRange(start + secondDelim + 1, range.getEndOffset()), mySoft)
+                           element, new TextRange(start + secondDelim + 1, start + lastDelim), mySoft)
     };
   }
 

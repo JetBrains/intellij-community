@@ -33,15 +33,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
-import org.jetbrains.idea.maven.model.MavenPlugin;
-import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
-import org.jetbrains.idea.maven.utils.MavenPluginInfo;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.Strings;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -95,24 +94,7 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
         protected void addVariants(@NotNull CompletionResultSet result, MavenProjectsManager manager) {
           List<LookupElement> cachedElements = myCachedElements;
           if (cachedElements == null) {
-            Set<String> goals = new HashSet<String>();
-            goals.addAll(MavenConstants.PHASES);
-
-            for (MavenProject mavenProject : manager.getProjects()) {
-              for (MavenPlugin plugin : mavenProject.getPlugins()) {
-                MavenPluginInfo pluginInfo = MavenArtifactUtil.readPluginInfo(manager.getLocalRepository(), plugin.getMavenId());
-                if (pluginInfo != null) {
-                  for (MavenPluginInfo.Mojo mojo : pluginInfo.getMojos()) {
-                    goals.add(mojo.getDisplayName());
-                  }
-                }
-              }
-            }
-
-            cachedElements = new ArrayList<LookupElement>(goals.size());
-            for (String goal : goals) {
-              cachedElements.add(LookupElementBuilder.create(goal).withIcon(icons.MavenIcons.Phase));
-            }
+            cachedElements = MavenUtil.getPhaseVariants(manager);
 
             myCachedElements = cachedElements;
           }
