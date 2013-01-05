@@ -62,6 +62,7 @@ public class MavenCommonParamReferenceProviders {
   public static class DependencyWithoutVersion extends MavenDependencyReferenceProvider {
     public DependencyWithoutVersion() {
       setCanHasVersion(false);
+      setSoft(true);
     }
   }
 

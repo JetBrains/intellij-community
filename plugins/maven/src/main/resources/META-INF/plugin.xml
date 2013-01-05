@@ -149,8 +149,13 @@
     </pluginDescriptor>
 
     <pluginDescriptor mavenId="org.apache.maven.plugins:maven-failsafe-plugin">
-      <param name="classpathDependencyExcludes/classpathDependencyExclude" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$DependencyWithoutVersion" soft="true"/>
+      <param name="classpathDependencyExcludes/classpathDependencyExclude" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$DependencyWithoutVersion"/>
       <param name="encoding" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$Encoding"/>
+      <param name="forkMode" values="never, once, always, perthread, none, pertest" soft="true"/>
+      <param name="junitArtifactName" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$DependencyWithoutVersion"/>
+      <param name="reportFormat" values="brief, plain" soft="true"/>
+      <param name="runOrder" values="alphabetical, reversealphabetical, random, hourly, failedfirst, balanced, filesystem" soft="true"/>
+      <param name="testNGArtifactName" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$DependencyWithoutVersion"/>
     </pluginDescriptor>
 
     <pluginDescriptor mavenId="ru.concerteza.buildnumber:maven-jgit-buildnumber-plugin">
@@ -170,6 +175,10 @@
     <pluginDescriptor mavenId="org.apache.maven.plugins:maven-compiler-plugin">
       <param name="compilerReuseStrategy" values="reuseCreated, reuseSame, alwaysNew"/>
       <param name="proc" values="none, both, only"/>
+      <param name="encoding" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$Encoding"/>
+    </pluginDescriptor>
+
+    <pluginDescriptor mavenId="org.apache.maven.plugins:maven-resources-plugin">
       <param name="encoding" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$Encoding"/>
     </pluginDescriptor>
   </extensions>
