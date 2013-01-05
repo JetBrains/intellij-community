@@ -161,6 +161,11 @@
     <pluginDescriptor mavenId="org.codehaus.mojo:sql-maven-plugin">
       <param name="sqlCommand" language="SQL"/>
     </pluginDescriptor>
+
+    <pluginDescriptor mavenId="org.apache.maven.plugins:maven-compiler-plugin">
+      <param name="compilerReuseStrategy" values="reuseCreated, reuseSame, alwaysNew"/>
+      <param name="proc" values="none, both, only"/>
+    </pluginDescriptor>
   </extensions>
 
   <application-components>
