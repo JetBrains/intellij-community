@@ -222,16 +222,7 @@ public class MavenPluginParamInfo {
             res = (MavenParamReferenceProvider)instance;
           }
           else {
-            final PsiReferenceProvider psiReferenceProvider = (PsiReferenceProvider)instance;
-
-            res = new MavenParamReferenceProvider() {
-              @Override
-              public PsiReference[] getReferencesByElement(@NotNull PsiElement element,
-                                                           @NotNull MavenDomConfiguration domCfg,
-                                                           @NotNull ProcessingContext context) {
-                return psiReferenceProvider.getReferencesByElement(element, context);
-              }
-            };
+            res = new PsiReferenceProviderWrapper((PsiReferenceProvider)instance);
           }
         }
         else if (myParam.values != null) {
@@ -258,6 +249,27 @@ public class MavenPluginParamInfo {
       }
 
       return myProviderInstance;
+    }
+  }
+
+  private static class PsiReferenceProviderWrapper implements MavenParamReferenceProvider, MavenSoftAwareReferenceProvider {
+
+    private final PsiReferenceProvider myProvider;
+
+    private PsiReferenceProviderWrapper(PsiReferenceProvider provider) {
+      this.myProvider = provider;
+    }
+
+    @Override
+    public PsiReference[] getReferencesByElement(@NotNull PsiElement element,
+                                                 @NotNull MavenDomConfiguration domCfg,
+                                                 @NotNull ProcessingContext context) {
+      return myProvider.getReferencesByElement(element, context);
+    }
+
+    @Override
+    public void setSoft(boolean soft) {
+      ((MavenSoftAwareReferenceProvider)myProvider).setSoft(soft);
     }
   }
 

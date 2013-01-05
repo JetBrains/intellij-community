@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
+import org.jetbrains.idea.maven.dom.references.MavenDependencyReferenceProvider;
 import org.jetbrains.idea.maven.dom.references.MavenPathReferenceConverter;
 import org.jetbrains.idea.maven.plugins.api.MavenParamReferenceProvider;
 
@@ -48,6 +49,12 @@ public class MavenCommonParamReferenceProviders {
                                                  @NotNull MavenDomConfiguration domCfg,
                                                  @NotNull ProcessingContext context) {
       return MavenPathReferenceConverter.createReferences(domCfg, element, FileReferenceSet.DIRECTORY_FILTER);
+    }
+  }
+
+  public static class DependencyWithoutVersion extends MavenDependencyReferenceProvider {
+    public DependencyWithoutVersion() {
+      setCanHasVersion(false);
     }
   }
 

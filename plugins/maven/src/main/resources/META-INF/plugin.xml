@@ -148,6 +148,10 @@
       <param name="additionalClasspathElements/additionalClasspathElement" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$DirPath"/>
     </pluginDescriptor>
 
+    <pluginDescriptor mavenId="org.apache.maven.plugins:maven-failsafe-plugin">
+      <param name="classpathDependencyExcludes/classpathDependencyExclude" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$DependencyWithoutVersion" soft="true"/>
+    </pluginDescriptor>
+
     <pluginDescriptor mavenId="ru.concerteza.buildnumber:maven-jgit-buildnumber-plugin">
       <property name="git.revision"/>
       <property name="git.buildnumber"/>
