@@ -35,7 +35,7 @@ public class MavenDependencyReferenceProvider extends PsiReferenceProvider imple
       };
     }
 
-    int secondDelim = text.indexOf(':', firstDelim + 1);
+    int secondDelim = myCanHasVersion ? text.indexOf(':', firstDelim + 1) : -1;
 
     int start = range.getStartOffset();
 
