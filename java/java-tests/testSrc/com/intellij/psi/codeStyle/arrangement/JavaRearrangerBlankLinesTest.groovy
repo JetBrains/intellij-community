@@ -118,4 +118,16 @@ class Test {
       rules: [rule(FIELD, PACKAGE_PRIVATE), rule(METHOD)]
     )
   }
+  
+  void "test blank lines settings are not applied to anonymous classes"() {
+    commonSettings.BLANK_LINES_AROUND_CLASS = 1
+    def text = '''\
+class Test {
+  void test() {
+    a(new Intf() {});
+    a(new Intf() {});
+  }
+}'''
+    doTest(initial: text, expected: text, rules: [rule(CLASS)] )
+  }
 }

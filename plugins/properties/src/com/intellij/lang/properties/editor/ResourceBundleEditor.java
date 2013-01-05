@@ -24,8 +24,8 @@ import com.intellij.ide.FileEditorProvider;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesUtil;
@@ -37,10 +37,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -50,7 +47,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -59,9 +55,13 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.JBSplitter;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.*;
+import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -71,6 +71,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.TreeModelEvent;
+import javax.swing.event.TreeModelListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -83,28 +85,32 @@ import java.util.*;
 import java.util.List;
 
 public class ResourceBundleEditor extends UserDataHolderBase implements FileEditor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.editor.ResourceBundleEditor");
-  private JPanel myPanel;
-  private JPanel myValuesPanel;
-  private JPanel myStructureViewPanel;
-  private JPanel mySplitParent;
-  private final StructureViewComponent myStructureViewComponent;
+  private static final         Logger LOG                  =
+    Logger.getInstance("#com.intellij.lang.properties.editor.ResourceBundleEditor");
+  @NonNls private static final String VALUES               = "values";
+  @NonNls private static final String NO_PROPERTY_SELECTED = "noPropertySelected";
+
+  private final StructureViewComponent      myStructureViewComponent;
   private final Map<PropertiesFile, Editor> myEditors;
-  private final ResourceBundle myResourceBundle;
+  private final ResourceBundle              myResourceBundle;
   private final Map<PropertiesFile, JPanel> myTitledPanels;
-  private final JComponent myNoPropertySelectedPanel = new NoPropertySelectedPanel().getComponent();
-  private final Map<Editor, DocumentListener> myDocumentListeners = new THashMap<Editor, DocumentListener>();
-  private final Project myProject;
-  private boolean myDisposed;
+  private final JComponent                    myNoPropertySelectedPanel = new NoPropertySelectedPanel().getComponent();
+  private final Map<Editor, DocumentListener> myDocumentListeners       = new THashMap<Editor, DocumentListener>();
+  private final Project           myProject;
   private final DataProviderPanel myDataProviderPanel;
   // user pressed backslash in the corresponding editor.
   // we cannot store it back to properties file right now, so just append the backslash to the editor and wait for the subsequent chars
-  private final Set<PropertiesFile> myBackSlashPressed = new THashSet<PropertiesFile>();
-  @NonNls private static final String VALUES = "values";
-  @NonNls private static final String NO_PROPERTY_SELECTED = "noPropertySelected";
-  private VirtualFileListener myVfsListener; 
-  private PsiTreeChangeAdapter myPsiTreeChangeAdapter;
-  @NonNls protected static final String PROPORTION_PROPERTY = "RESOURCE_BUNDLE_SPLITTER_PROPORTION";
+  private final Set<PropertiesFile> myBackSlashPressed     = new THashSet<PropertiesFile>();
+  private final Alarm               myUpdateEditorAlarm    = new Alarm();
+  private final Alarm               mySelectionChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+
+  private JPanel              myPanel;
+  private JPanel              myValuesPanel;
+  private JPanel              myStructureViewPanel;
+  private JPanel              mySplitParent;
+  private boolean             myDisposed;
+  private VirtualFileListener myVfsListener;
+  private Editor              mySelectedEditor;
 
   public ResourceBundleEditor(Project project, ResourceBundle resourceBundle) {
     myProject = project;
@@ -123,7 +129,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
         // filter out temp unselect/select events
         if (getSelectedPropertyName() == null) return;
         if (!Comparing.strEqual(selectedPropertyName, getSelectedPropertyName())
-            || !Comparing.equal(selectedPropertiesFile, getSelectedPropertiesFile())) {
+            || !Comparing.equal(selectedPropertiesFile, getSelectedPropertiesFile()))
+        {
           selectedPropertyName = getSelectedPropertyName();
           selectedPropertiesFile = getSelectedPropertiesFile();
           selectionChanged();
@@ -143,9 +150,124 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       setState(new ResourceBundleEditorState(propName));
     }
     myDataProviderPanel = new DataProviderPanel(myPanel);
+
+    getSplitter().setSplitterProportionKey(getClass() + ".splitter");
+    project.getMessageBus().connect(project).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
+      @Override
+      public void selectionChanged(FileEditorManagerEvent event) {
+        onSelectionChanged(event);
+      }
+    });
   }
 
-  private Editor mySelectedEditor;
+  private void onSelectionChanged(@NotNull FileEditorManagerEvent event) {
+    // Ignore events which don't target current editor.
+    FileEditor oldEditor = event.getOldEditor();
+    FileEditor newEditor = event.getNewEditor();
+    if (oldEditor != this && newEditor != this) {
+      return;
+    }
+
+    // We want to sync selected property key on selection change.
+    if (newEditor == this) {
+      if (oldEditor instanceof TextEditor) {
+        setStructureViewSelectionFromPropertiesFile(((TextEditor)oldEditor).getEditor());
+      }
+    }
+    else if (newEditor instanceof TextEditor) {
+      setPropertiesFileSelectionFromStructureView(((TextEditor)newEditor).getEditor());
+    }
+  }
+
+  private void setStructureViewSelectionFromPropertiesFile(@NotNull Editor propertiesFileEditor) {
+    int line = propertiesFileEditor.getCaretModel().getLogicalPosition().line;
+    Document document = propertiesFileEditor.getDocument();
+    if (line >= document.getLineCount()) {
+      return;
+    }
+    final String propertyName = getPropertyName(document, line);
+    if (propertyName == null) {
+      return;
+    }
+    setStructureViewSelection(propertyName);
+  }
+
+  private void setStructureViewSelection(@NotNull final String propertyName) {
+    JTree tree = myStructureViewComponent.getTree();
+    if (tree == null) {
+      return;
+    }
+    
+    Object root = tree.getModel().getRoot();
+    if (AbstractTreeUi.isLoadingChildrenFor(root)) {
+      mySelectionChangeAlarm.cancelAllRequests();
+      mySelectionChangeAlarm.addRequest(new Runnable() {
+        @Override
+        public void run() {
+          mySelectionChangeAlarm.cancelAllRequests();
+          setStructureViewSelection(propertyName); 
+        }
+      }, 500);
+      return;
+    }
+
+    Stack<DefaultMutableTreeNode> toCheck = ContainerUtilRt.newStack();
+    toCheck.push((DefaultMutableTreeNode)root);
+    DefaultMutableTreeNode nodeToSelect = null;
+    while (!toCheck.isEmpty()) {
+      DefaultMutableTreeNode node = toCheck.pop();
+      String value = getNodeValue(node);
+      if (propertyName.equals(value)) {
+        nodeToSelect = node;
+        break;
+      }
+      else {
+        for (int i = 0; i < node.getChildCount(); i++) {
+          toCheck.push((DefaultMutableTreeNode)node.getChildAt(i));
+        }
+      }
+    }
+    if (nodeToSelect != null) {
+      tree.setSelectionPath(new TreePath(nodeToSelect.getPath()));
+    }
+  }
+
+  @Nullable
+  private static String getPropertyName(@NotNull Document document, int line) {
+    int startOffset = document.getLineStartOffset(line);
+    int endOffset = StringUtil.indexOf(document.getCharsSequence(), '=', startOffset, document.getLineEndOffset(line));
+    if (endOffset <= startOffset) {
+      return null;
+    }
+    String propertyName = document.getCharsSequence().subSequence(startOffset, endOffset).toString().trim();
+    return propertyName.isEmpty() ? null : propertyName;
+  }
+
+  private void setPropertiesFileSelectionFromStructureView(@NotNull Editor propertiesFileEditor) {
+    String selectedPropertyName = getSelectedPropertyName();
+    if (selectedPropertyName == null) {
+      return;
+    }
+
+    Document document = propertiesFileEditor.getDocument();
+    for (int i = 0; i < document.getLineCount(); i++) {
+      String propertyName = getPropertyName(document, i);
+      if (selectedPropertyName.equals(propertyName)) {
+        propertiesFileEditor.getCaretModel().moveToLogicalPosition(new LogicalPosition(i, 0));
+        return;
+      }
+    }
+  }
+  
+  @Nullable
+  private static String getNodeValue(@NotNull DefaultMutableTreeNode node) {
+    Object userObject = node.getUserObject();
+    if (!(userObject instanceof AbstractTreeNode)) return null;
+    Object value = ((AbstractTreeNode)userObject).getValue();
+    return value instanceof ResourceBundlePropertyStructureViewElement ? ((ResourceBundlePropertyStructureViewElement)value).getValue()
+                                                                       : null;
+  }
+
   private void recreateEditorsPanel() {
     myUpdateEditorAlarm.cancelAllRequests();
 
@@ -269,7 +391,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     };
     
     virtualFileManager.addVirtualFileListener(myVfsListener, this);
-    myPsiTreeChangeAdapter = new PsiTreeChangeAdapter() {
+    PsiTreeChangeAdapter psiTreeChangeAdapter = new PsiTreeChangeAdapter() {
       public void childAdded(@NotNull PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
@@ -294,10 +416,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
         updateEditorsFromProperties();
       }
     };
-    PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeAdapter, this);
+    PsiManager.getInstance(myProject).addPsiTreeChangeListener(psiTreeChangeAdapter, this);
   }
-
-  private final Alarm myUpdateEditorAlarm = new Alarm();
   private void selectionChanged() {
     myBackSlashPressed.clear();
     UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -351,7 +471,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
             }, "", this);
 
             JPanel titledPanel = myTitledPanels.get(propertiesFile);
-            ((TitledBorder)titledPanel.getBorder()).setTitleColor(property == null ? Color.red : UIUtil.getLabelTextForeground());
+            ((TitledBorder)titledPanel.getBorder()).setTitleColor(property == null ? JBColor.RED : UIUtil.getLabelTextForeground());
             titledPanel.repaint();
           }
         }
@@ -373,7 +493,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   }
 
   private void updatePropertyValueFromDocument(final String propertyName,
-                                               final Project project,
                                                final PropertiesFile propertiesFile,
                                                final String text) {
     if (PropertiesUtil.isUnescapedBackSlashAtTheEnd(text)) {
@@ -444,6 +563,9 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
                 PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
                 documentManager.commitDocument(document);
                 Document propertiesFileDocument = documentManager.getDocument(propertiesFile.getContainingFile());
+                if (propertiesFileDocument == null) {
+                  return;
+                }
                 documentManager.commitDocument(propertiesFileDocument);
 
                 if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
@@ -458,7 +580,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
                 }
                 String propertyName = getSelectedPropertyName();
                 if (propertyName == null) return;
-                updatePropertyValueFromDocument(propertyName, project, propertiesFile, text);
+                updatePropertyValueFromDocument(propertyName, propertiesFile, text);
               }
             });
           }
@@ -473,11 +595,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     if (tree == null) return null;
     TreePath selected = tree.getSelectionModel().getSelectionPath();
     if (selected == null) return null;
-    DefaultMutableTreeNode node = (DefaultMutableTreeNode)selected.getLastPathComponent();
-    Object userObject = node.getUserObject();
-    if (!(userObject instanceof AbstractTreeNode)) return null;
-    Object value = ((AbstractTreeNode)userObject).getValue();
-    return value instanceof ResourceBundlePropertyStructureViewElement ? ((ResourceBundlePropertyStructureViewElement)value).getValue() : null;
+    return getNodeValue((DefaultMutableTreeNode)selected.getLastPathComponent());
   }
 
   @NotNull
@@ -552,8 +670,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     return new ResourceBundleEditorState(getSelectedPropertyName());
   }
 
-  private Splitter getSplitter() {
-    return (Splitter)mySplitParent.getComponents()[0];
+  private JBSplitter getSplitter() {
+    return (JBSplitter)mySplitParent.getComponents()[0];
   }
 
   public void setState(@NotNull FileEditorState state) {
@@ -563,22 +681,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       myStructureViewComponent.select(propertyName, true);
       selectionChanged();
     }
-    float proportion = 0.5f;
-    try {
-      String value = PropertiesComponent.getInstance(myProject).getValue(PROPORTION_PROPERTY);
-      if (value != null) {
-        proportion = Float.parseFloat(value);
-      }
-    }
-    catch (NumberFormatException ignored) {
-    }
-
-    final float proportion1 = proportion;
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        getSplitter().setProportion(proportion1);
-      }
-    });
   }
 
   public boolean isModified() {
@@ -618,8 +720,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   }
 
   public void dispose() {
-    float proportion = getSplitter().getProportion();
-    PropertiesComponent.getInstance(myProject).setValue(PROPORTION_PROPERTY, Double.toString(proportion));
     VirtualFileManager.getInstance().removeVirtualFileListener(myVfsListener);
 
     myDisposed = true;

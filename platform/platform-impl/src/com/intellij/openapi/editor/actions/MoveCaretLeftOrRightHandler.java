@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.util.TextRange;
 
 class MoveCaretLeftOrRightHandler extends EditorActionHandler {
   enum Direction {LEFT, RIGHT}
@@ -48,11 +47,12 @@ class MoveCaretLeftOrRightHandler extends EditorActionHandler {
       else {
         int start = selectionModel.getSelectionStart();
         int end = selectionModel.getSelectionEnd();
+        int caretOffset = caretModel.getOffset();
 
-        int leftGuard = start + (myDirection == Direction.LEFT ? 1 : 0);
-        int rightGuard = end - (myDirection == Direction.RIGHT ? 1 : 0);
-
-        if (TextRange.from(leftGuard, rightGuard - leftGuard + 1).contains(caretModel.getOffset())) { // See IDEADEV-36957
+        //int leftGuard = start + (myDirection == Direction.LEFT ? 1 : 0);
+        //int rightGuard = end - (myDirection == Direction.RIGHT ? 1 : 0);
+        //if (TextRange.from(leftGuard, rightGuard - leftGuard + 1).contains(caretModel.getOffset())) { // See IDEADEV-36957
+        if (start <= caretOffset && end >= caretOffset) { // See IDEADEV-36957
           selectionModel.removeSelection();
           caretModel.moveToOffset(myDirection == Direction.RIGHT ? end : start);
           scrollingModel.scrollToCaret(ScrollType.RELATIVE);
