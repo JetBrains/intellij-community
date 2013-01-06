@@ -19,6 +19,8 @@ package com.intellij.openapi.wm;
 import com.intellij.openapi.project.Project;
 
 /**
+ * Performs lazy initialization of a toolwindow registered in plugin.xml.
+ *
  * @author yole
  * @see ToolWindowEP
  */

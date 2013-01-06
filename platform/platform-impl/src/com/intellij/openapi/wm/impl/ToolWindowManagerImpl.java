@@ -1104,8 +1104,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   public ToolWindow registerToolWindow(@NotNull final String id,
                                        final boolean canCloseContent,
                                        @NotNull final ToolWindowAnchor anchor,
-                                       final boolean sideTool) {
-    return registerToolWindow(id, null, anchor, sideTool, canCloseContent, false);
+                                       final boolean secondary) {
+    return registerToolWindow(id, null, anchor, secondary, canCloseContent, false);
   }
 
 
