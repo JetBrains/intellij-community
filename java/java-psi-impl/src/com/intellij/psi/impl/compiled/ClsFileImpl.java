@@ -63,7 +63,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   private final boolean myIsForDecompiling;
   private final FileViewProvider myViewProvider;
   private volatile SoftReference<StubTree> myStub;
-  private TreeElement myMirrorFileElement;
+  private volatile TreeElement myMirrorFileElement;
   private volatile ClsPackageStatementImpl myPackageStatement = null;
   private boolean myIsPhysical = true;
 
@@ -261,10 +261,18 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   @Override
   public PsiElement getMirror() {
+    String mirrorText = null;
+    VirtualFile file = null;
+    if (myMirrorFileElement == null) {
+      file = getVirtualFile();
+      // avoid decompiling under MIRROR_LOCK as decompiling can need other locks
+      // (e.g. nice parameter names in mirror need resolve and FQN stub index lock) and stub indices (under own lock) need to access stub
+      // tree with MIRROR_LOCK, see IDEA-98468
+      mirrorText = decompile(getManager(), file);
+    }
+
     synchronized (MIRROR_LOCK) {
       if (myMirrorFileElement == null) {
-        VirtualFile file = getVirtualFile();
-        String mirrorText = decompile(getManager(), file);
         String ext = JavaFileType.INSTANCE.getDefaultExtension();
         PsiClass[] classes = getClasses();
         String fileName = (classes.length > 0 ? classes[0].getName() : file.getNameWithoutExtension()) + "." + ext;
