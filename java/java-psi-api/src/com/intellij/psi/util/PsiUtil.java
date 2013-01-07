@@ -95,7 +95,7 @@ public final class PsiUtil extends PsiUtilCore {
 
   @NotNull
   public static JavaResolveResult getAccessObjectClass(@NotNull PsiExpression expression) {
-    if (expression instanceof PsiSuperExpression || expression instanceof PsiThisExpression) return JavaResolveResult.EMPTY;
+    if (expression instanceof PsiSuperExpression) return JavaResolveResult.EMPTY;
     PsiType type = expression.getType();
     if (type instanceof PsiClassType) {
       return ((PsiClassType)type).resolveGenerics();

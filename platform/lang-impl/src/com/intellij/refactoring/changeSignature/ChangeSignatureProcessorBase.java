@@ -133,10 +133,8 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
     try {
       final ChangeSignatureUsageProcessor[] processors = ChangeSignatureUsageProcessor.EP_NAME.getExtensions();
 
-      final PsiElement method = myChangeInfo.getMethod();
-      final ResolveSnapshotProvider resolveSnapshotProvider = myChangeInfo.isParameterNamesChanged()
-                                                              ? VariableInplaceRenamer.INSTANCE.forLanguage(method.getLanguage())
-                                                              : null;
+      final ResolveSnapshotProvider resolveSnapshotProvider = myChangeInfo.isParameterNamesChanged() ?
+                                                              VariableInplaceRenamer.INSTANCE.forLanguage(myChangeInfo.getMethod().getLanguage()) : null;
       final List<ResolveSnapshotProvider.ResolveSnapshot> snapshots = new ArrayList<ResolveSnapshotProvider.ResolveSnapshot>();
       for (ChangeSignatureUsageProcessor processor : processors) {
         if (resolveSnapshotProvider != null) {
@@ -150,7 +148,7 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
         }
       }
 
-      LOG.assertTrue(method.isValid());
+      LOG.assertTrue(myChangeInfo.getMethod().isValid());
       for (ChangeSignatureUsageProcessor processor : processors) {
         if (processor.processPrimaryMethod(myChangeInfo)) break;
       }
@@ -168,6 +166,7 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
           }
         }
       }
+      final PsiElement method = myChangeInfo.getMethod();
       LOG.assertTrue(method.isValid());
       if (elementListener != null && myChangeInfo.isNameChanged()) {
         elementListener.elementRenamed(method);

@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.infos;
 
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -136,7 +138,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     final PsiMethod psiMethod = getElement();
     PsiTypeParameter[] typeParams = psiMethod.getTypeParameters();
     if (myTypeArguments != null && typeParams.length != myTypeArguments.length && !PsiUtil.isLanguageLevel7OrHigher(psiMethod)){
-      return false;
+      return typeParams.length == 0 && JavaVersionService.getInstance().isAtLeast(psiMethod, JavaSdkVersion.JDK_1_7);
     }
     PsiSubstitutor substitutor = getSubstitutor();
     return GenericsUtil.isTypeArgumentsApplicable(typeParams, substitutor, getParent());
