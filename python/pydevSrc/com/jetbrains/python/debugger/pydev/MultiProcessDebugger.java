@@ -4,7 +4,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xdebugger.frame.XValueChildrenList;
@@ -32,7 +31,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
   private final int myTimeoutInMillis;
 
   private RemoteDebugger myMainDebugger;
-  private List<RemoteDebugger> myOtherDebuggers = Lists.newArrayList();
+  private final List<RemoteDebugger> myOtherDebuggers = Lists.newArrayList();
   private ServerSocket myDebugServerSocket;
   private DebuggerProcessAcceptor myDebugProcessAcceptor;
   private DebuggerProcessListener myOtherDebuggerCloseListener;
@@ -114,7 +113,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
   @Override
   public void disconnect() {
     myMainDebugger.disconnect();
-    for (ProcessDebugger d : myOtherDebuggers) {
+    for (ProcessDebugger d : Lists.newArrayList(myOtherDebuggers)) {
       d.disconnect();
     }
     if (myDebugProcessAcceptor != null) {
@@ -230,26 +229,33 @@ public class MultiProcessDebugger implements ProcessDebugger {
   }
 
   private void cleanOtherDebuggers() {
+    synchronized (myOtherDebuggers) {
+      removeDisconnected(Lists.newArrayList(myOtherDebuggers));
+    }
+  }
+
+  private void removeDisconnected(ArrayList<RemoteDebugger> debuggers) {
     boolean allConnected = true;
-    for (RemoteDebugger d : myOtherDebuggers) {
+    for (RemoteDebugger d : debuggers) {
       if (!d.isConnected()) {
         allConnected = false;
       }
     }
     if (!allConnected) {
       List<RemoteDebugger> newList = Lists.newArrayList();
-      for (RemoteDebugger d : myOtherDebuggers) {
+      for (RemoteDebugger d : debuggers) {
         if (d.isConnected()) {
           newList.add(d);
         }
       }
 
-      myOtherDebuggers = newList;
+      myOtherDebuggers.clear();
+      myOtherDebuggers.addAll(newList);
     }
   }
 
   private void collectAndRegisterOtherDebuggersThreads(List<PyThreadInfo> threads) {
-    for (RemoteDebugger d : myOtherDebuggers) {
+    for (RemoteDebugger d : Lists.newArrayList(myOtherDebuggers)) {
       threads.addAll(d.getThreads());
       for (PyThreadInfo t : d.getThreads()) {
         myThreadRegistry.register(t.getId(), d);
@@ -261,7 +267,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
   @Override
   public void execute(@NotNull AbstractCommand command) {
     myMainDebugger.execute(command);
-    for (ProcessDebugger d : myOtherDebuggers) {
+    for (ProcessDebugger d : Lists.newArrayList(myOtherDebuggers)) {
       d.execute(command);
     }
   }
@@ -282,7 +288,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
   @Override
   public void close() {
     myMainDebugger.close();
-    for (ProcessDebugger d : myOtherDebuggers) {
+    for (ProcessDebugger d : Lists.newArrayList(myOtherDebuggers)) {
       d.close();
     }
   }
@@ -329,7 +335,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
   @Override
   public void removeBreakpoint(String typeId, String file, int line) {
     myMainDebugger.removeBreakpoint(typeId, file, line);
-    for (ProcessDebugger d : myOtherDebuggers) {
+    for (ProcessDebugger d : Lists.newArrayList(myOtherDebuggers)) {
       d.removeBreakpoint(typeId, file, line);
     }
   }
@@ -428,7 +434,9 @@ public class MultiProcessDebugger implements ProcessDebugger {
   }
 
   private void addDebugger(RemoteDebugger debugger) {
-    myOtherDebuggers.add(debugger);
+    synchronized (myOtherDebuggers) {
+      myOtherDebuggers.add(debugger);
+    }
   }
 
   public void addCloseListener(RemoteDebuggerCloseListener listener) {
@@ -444,7 +452,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
   public void addExceptionBreakpoint(ExceptionBreakpointCommandFactory factory) {
     myMainDebugger.execute(factory.createAddCommand(myMainDebugger));
 
-    for (RemoteDebugger d : myOtherDebuggers) {
+    for (RemoteDebugger d : Lists.newArrayList(myOtherDebuggers)) {
       d.execute(factory.createAddCommand(d));
     }
   }
@@ -453,7 +461,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
   public void removeExceptionBreakpoint(ExceptionBreakpointCommandFactory factory) {
     myMainDebugger.execute(factory.createRemoveCommand(myMainDebugger));
 
-    for (RemoteDebugger d : myOtherDebuggers) {
+    for (RemoteDebugger d : Lists.newArrayList(myOtherDebuggers)) {
       d.execute(factory.createRemoveCommand(d));
     }
   }
