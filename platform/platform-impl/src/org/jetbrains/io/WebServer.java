@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.io;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
@@ -293,7 +294,7 @@ public class WebServer {
   }
 
   public void addShutdownHook() {
-    Runtime.getRuntime().addShutdownHook(new Thread(createShutdownTask()));
+    ShutDownTracker.getInstance().registerShutdownTask(createShutdownTask());
   }
 
   public static void removePluggableHandlers(ChannelPipeline pipeline) {
