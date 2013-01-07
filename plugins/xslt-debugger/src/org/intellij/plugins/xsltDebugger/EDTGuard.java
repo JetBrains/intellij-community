@@ -50,7 +50,6 @@ class EDTGuard implements InvocationHandler {
   // maximum time to wait for a result on the EDT
   private static final long MAX_TIMEOUT = 10 * 1000;
 
-  @SuppressWarnings({"unchecked"})
   private final Map<Object, Object> myInstanceCache = ContainerUtil.newIdentityTroveMap();
 
   private final Object myTarget;

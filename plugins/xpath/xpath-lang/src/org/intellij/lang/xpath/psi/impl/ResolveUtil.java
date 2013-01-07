@@ -19,7 +19,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
@@ -34,8 +34,7 @@ import java.util.*;
 
 public class ResolveUtil {
 
-  @SuppressWarnings({"unchecked"})
-  private final Set<PsiElement> myHistory = ContainerUtil.<PsiElement>newIdentityTroveSet();
+    private final Set<PsiElement> myHistory = ContainerUtil.newIdentityTroveSet();
 
     private ResolveUtil() {
     }
@@ -135,7 +134,7 @@ public class ResolveUtil {
     public static PsiElement[] collect(final Matcher matcher) {
         if (matcher == null) return PsiElement.EMPTY_ARRAY;
         final List<PsiElement> found = process(matcher, false);
-      return PsiUtilBase.toPsiElementArray(found);
+      return PsiUtilCore.toPsiElementArray(found);
     }
 
     private static class Stop extends RuntimeException {
