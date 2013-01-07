@@ -576,7 +576,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     if (address < 0) {
       address = -address - POSITIVE_VALUE_SHIFT;
     } else {
-      int value = myEnumerator.myStorage.getInt(keyId + myParentValueRefOffset + 4);
+      long value = (myEnumerator.myStorage.getInt(keyId + myParentValueRefOffset + 4)) & 0xFFFFFFFFL;
       address = ((address << 32) + value) & ~USED_LONG_VALUE_MASK;
     }
 
