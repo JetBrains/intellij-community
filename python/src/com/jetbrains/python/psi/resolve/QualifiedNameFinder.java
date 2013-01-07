@@ -129,11 +129,12 @@ public class QualifiedNameFinder {
    */
   private static class PathChoosingVisitor implements RootVisitor {
 
+    @Nullable
     private final VirtualFile myVFile;
     private List<String> myResult;
     private boolean myIsModuleSource;
 
-    private PathChoosingVisitor(VirtualFile file) {
+    private PathChoosingVisitor(@NotNull VirtualFile file) {
       if (!file.isDirectory() && file.getName().equals(PyNames.INIT_DOT_PY)) {
         myVFile = file.getParent();
       }
@@ -143,20 +144,22 @@ public class QualifiedNameFinder {
     }
 
     public boolean visitRoot(VirtualFile root, Module module, Sdk sdk, boolean isModuleSource) {
-      final String relativePath = VfsUtilCore.getRelativePath(myVFile, root, '/');
-      if (relativePath != null) {
-        List<String> result = StringUtil.split(relativePath, "/");
-        if (myResult == null || result.size() < myResult.size() || (isModuleSource && !myIsModuleSource)) {
-          if (result.size() > 0) {
-            result.set(result.size() - 1, FileUtil.getNameWithoutExtension(result.get(result.size() - 1)));
-          }
-          for (String component : result) {
-            if (!PyNames.isIdentifier(component)) {
-              return true;
+      if (myVFile != null) {
+        final String relativePath = VfsUtilCore.getRelativePath(myVFile, root, '/');
+        if (relativePath != null) {
+          List<String> result = StringUtil.split(relativePath, "/");
+          if (myResult == null || result.size() < myResult.size() || (isModuleSource && !myIsModuleSource)) {
+            if (result.size() > 0) {
+              result.set(result.size() - 1, FileUtil.getNameWithoutExtension(result.get(result.size() - 1)));
             }
+            for (String component : result) {
+              if (!PyNames.isIdentifier(component)) {
+                return true;
+              }
+            }
+            myResult = result;
+            myIsModuleSource = isModuleSource;
           }
-          myResult = result;
-          myIsModuleSource = isModuleSource;
         }
       }
       return myResult == null || myResult.size() > 0;
