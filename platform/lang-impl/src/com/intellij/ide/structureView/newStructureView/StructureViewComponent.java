@@ -758,6 +758,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     return paths == null || paths.length != 1 ? null : paths[0];
   }
 
+  @NotNull
   public StructureViewModel getTreeModel() {
     return myTreeModel;
   }

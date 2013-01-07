@@ -180,13 +180,10 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     boolean forceRebuild = !Comparing.equal(file, myFile);
     if (!forceRebuild && myStructureView != null) {
       StructureViewModel model = myStructureView.getTreeModel();
-      // model is null for UML diagrams
-      if (model != null) {
-        StructureViewTreeElement treeElement = model.getRoot();
-        Object value = treeElement.getValue();
-        if (value == null || value instanceof PsiElement && !((PsiElement)value).isValid()) {
-          forceRebuild = true;
-        }
+      StructureViewTreeElement treeElement = model.getRoot();
+      Object value = treeElement.getValue();
+      if (value == null || value instanceof PsiElement && !((PsiElement)value).isValid()) {
+        forceRebuild = true;
       }
     }
     if (forceRebuild) {
