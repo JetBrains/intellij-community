@@ -1,6 +1,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.IntObjectCache;
@@ -335,7 +336,30 @@ public class PersistentMapTest extends TestCase {
     System.out
       .printf("Data file size = %d bytes\n", new File(myDataFile.getParentFile(), myDataFile.getName() + Storage.DATA_EXTENSION).length());
   }
-  
+
+  private static final boolean DO_SLOW_TEST = false;
+
+  public void test2GLimit() throws IOException {
+    if (!DO_SLOW_TEST) return;
+    File file = FileUtil.createTempFile("persistent", "map");
+    FileUtil.createParentDirs(file);
+    EnumeratorStringDescriptor stringDescriptor = new EnumeratorStringDescriptor();
+    PersistentHashMap<String, String> map = new PersistentHashMap<String, String>(file, stringDescriptor, stringDescriptor);
+    for (int i = 0; i < 12000; i++) {
+      map.put("abc" + i, StringUtil.repeat("0123456789", 10000));
+    }
+    map.close();
+
+    map = new PersistentHashMap<String, String>(file,
+                                                stringDescriptor, stringDescriptor);
+    long len = 0;
+    for (String key : map.getAllKeysWithExistingMapping()) {
+      len += map.get(key).length();
+    }
+    map.close();
+    assertEquals(1200000000L, len);
+  }
+
   private static String createRandomString() {
     return StringEnumeratorTest.createRandomString();
   }
