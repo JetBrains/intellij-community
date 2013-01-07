@@ -1301,7 +1301,7 @@ public class HighlightUtil extends HighlightUtilBase {
     }
     if (aClass == null) return null;
 
-    if (!HighlightClassUtil.hasEnclosingInstanceInScope(aClass, expr, false) &&
+    if (!HighlightClassUtil.hasEnclosingInstanceInScope(aClass, expr, false, false) &&
         !resolvesToImmediateSuperInterface(expr, qualifier, aClass)) {
       return HighlightClassUtil.reportIllegalEnclosingUsage(expr, null, aClass, expr);
     }

@@ -736,7 +736,7 @@ public class HighlightClassUtil {
           if (!PsiUtil.isInnerClass(base)) return;
 
           if (resolve == resolved && baseClass != null && !PsiTreeUtil.isAncestor(baseClass, extendRef, true) &&
-              !hasEnclosingInstanceInScope(baseClass, extendRef, true) && !qualifiedNewCalledInConstructors(aClass, baseClass)) {
+              !hasEnclosingInstanceInScope(baseClass, extendRef, true, true) && !qualifiedNewCalledInConstructors(aClass, baseClass)) {
             String description = JavaErrorMessages.message("no.enclosing.instance.in.scope", HighlightUtil.formatClass(baseClass));
             infos[0] = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, extendRef, description);
           }
@@ -772,7 +772,10 @@ public class HighlightClassUtil {
     return true;
   }
 
-  public static boolean hasEnclosingInstanceInScope(PsiClass aClass, PsiElement scope, final boolean isSuperClassAccepted) {
+  public static boolean hasEnclosingInstanceInScope(PsiClass aClass,
+                                                    PsiElement scope,
+                                                    final boolean isSuperClassAccepted,
+                                                    boolean isTypeParamsAccepted) {
     PsiManager manager = aClass.getManager();
     PsiElement place = scope;
     while (place != null && place != aClass && !(place instanceof PsiFile)) {
@@ -782,6 +785,9 @@ public class HighlightClassUtil {
         }
         else {
           if (manager.areElementsEquivalent(place, aClass)) return true;
+        }
+        if (isTypeParamsAccepted && place instanceof PsiTypeParameter) {
+          return true;
         }
       }
       if (place instanceof PsiModifierListOwner) {
@@ -833,7 +839,7 @@ public class HighlightClassUtil {
     PsiClass outerClass = aClass.getContainingClass();
     if (outerClass == null) return null;
 
-    if (outerClass instanceof JspClass || hasEnclosingInstanceInScope(outerClass, placeToSearchEnclosingFrom, true)) return null;
+    if (outerClass instanceof JspClass || hasEnclosingInstanceInScope(outerClass, placeToSearchEnclosingFrom, true, false)) return null;
     return reportIllegalEnclosingUsage(placeToSearchEnclosingFrom, aClass, outerClass, element);
   }
 
