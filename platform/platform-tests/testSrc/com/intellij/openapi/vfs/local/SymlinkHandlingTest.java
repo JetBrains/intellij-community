@@ -89,8 +89,8 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
   public void testMutualRecursiveLinks() throws Exception {
     File circularDir1 = createTestDir(myTempDir, "dir1");
     File circularDir2 = createTestDir(myTempDir, "dir2");
-    File circularLink1 = createSymLink("../" + circularDir2.getName(), circularDir1 + "/link1");
-    File circularLink2 = createSymLink("../" + circularDir1.getName(), circularDir2 + "/link2");
+    File circularLink1 = createSymLink(circularDir2.getPath(), circularDir1 + "/link1");
+    File circularLink2 = createSymLink(circularDir1.getPath(), circularDir2 + "/link2");
     VirtualFile circularLink1VFile = refreshAndFind(circularLink1);
     VirtualFile circularLink2VFile = refreshAndFind(circularLink2);
     assertNotNull(circularLink1VFile);
