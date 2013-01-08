@@ -118,6 +118,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tasks-core/tasks-core.iml" filepath="$PROJECT_DIR$/plugins/tasks/tasks-core/tasks-core.iml" group="plugins/tasks" />
       <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tasks-java/tasks-java.iml" filepath="$PROJECT_DIR$/plugins/tasks/tasks-java/tasks-java.iml" group="plugins/tasks" />
       <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tasks-tests/tasks-tests.iml" filepath="$PROJECT_DIR$/plugins/tasks/tasks-tests/tasks-tests.iml" group="plugins/tasks" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tasks-time-tracking/tasks-time-tracking.iml" filepath="$PROJECT_DIR$/plugins/tasks/tasks-time-tracking/tasks-time-tracking.iml" group="plugins/tasks" />
       <module fileurl="file://$PROJECT_DIR$/platform/testFramework/testFramework.iml" filepath="$PROJECT_DIR$/platform/testFramework/testFramework.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/java/testFramework/testFramework-java.iml" filepath="$PROJECT_DIR$/java/testFramework/testFramework-java.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/platform/testRunner/testRunner.iml" filepath="$PROJECT_DIR$/platform/testRunner/testRunner.iml" group="platform" />
