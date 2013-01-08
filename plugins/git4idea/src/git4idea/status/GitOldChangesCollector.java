@@ -152,7 +152,7 @@ class GitOldChangesCollector extends GitChangesCollector {
     }
     try {
       String output = GitChangeUtils.getDiffOutput(myProject, myVcsRoot, "HEAD", dirtyPaths);
-      GitChangeUtils.parseChanges(myProject, myVcsRoot, null, GitChangeUtils.loadRevision(myProject, myVcsRoot, "HEAD"), output, myChanges,
+      GitChangeUtils.parseChanges(myProject, myVcsRoot, null, GitChangeUtils.resolveReference(myProject, myVcsRoot, "HEAD"), output, myChanges,
                                   myUnmergedNames);
     }
     catch (VcsException ex) {

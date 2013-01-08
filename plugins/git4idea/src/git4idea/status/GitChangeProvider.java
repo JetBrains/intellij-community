@@ -212,7 +212,7 @@ public class GitChangeProvider implements ChangeProvider {
           if ((myAddGate.getStatus(vf) == null) && myFileDocumentManager.isFileModified(vf)) {
             final VirtualFile root = myVcsManager.getVcsRootFor(vf);
             if (root != null) {
-              final GitRevisionNumber beforeRevisionNumber = GitChangeUtils.loadRevision(myProject, root, "HEAD");
+              final GitRevisionNumber beforeRevisionNumber = GitChangeUtils.resolveReference(myProject, root, "HEAD");
               builder.processChange(new Change(GitContentRevision.createRevision(vf, beforeRevisionNumber, myProject),
                                                GitContentRevision.createRevision(vf, null, myProject), FileStatus.MODIFIED), gitKey);
             }
