@@ -148,15 +148,9 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
     myApplication.editorPaintStart();
 
     try {
-      UIUtil.paintWithRetina(getSize(), g, myEditor.paintBlockCaret(), new Consumer<Graphics2D>() {
-        @Override
-        public void consume(Graphics2D graphics) {
-          UIUtil.setupComposite(graphics);
-
-          UISettings.setupAntialiasing(graphics);
-          myEditor.paint(graphics);
-        }
-      });
+      UIUtil.setupComposite((Graphics2D)g);
+      UISettings.setupAntialiasing(g);
+      myEditor.paint((Graphics2D)g);
     }
     finally {
       myApplication.editorPaintFinish();
