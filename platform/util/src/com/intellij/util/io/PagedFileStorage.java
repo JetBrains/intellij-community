@@ -52,21 +52,17 @@ public class PagedFileStorage implements Forceable {
     final int upper = SystemInfo.is64Bit && !PersistentEnumeratorDelegate.useBtree() ? 500 : 200;
 
     BUFFER_SIZE = Math.max(1, SystemProperties.getIntProperty("idea.paged.storage.page.size", 10)) * MB;
-    if (ByteBufferWrapper.NO_MMAP) {
-      final long max = VM.maxDirectMemory() - 2 * BUFFER_SIZE;
-      LOWER_LIMIT = (int)Math.min(lower * MB, max);
-      UPPER_LIMIT = (int)Math.min(Math.max(LOWER_LIMIT, SystemProperties.getIntProperty("idea.max.paged.storage.cache", upper) * MB), max);
-    }
-    else {
-      LOWER_LIMIT = lower * MB;
-      UPPER_LIMIT = Math.max(LOWER_LIMIT, SystemProperties.getIntProperty("idea.max.paged.storage.cache", upper) * MB);
-    }
+    final long max = VM.maxDirectMemory() - 2 * BUFFER_SIZE;
+    LOWER_LIMIT = (int)Math.min(lower * MB, max);
+    UPPER_LIMIT = (int)Math.min(Math.max(LOWER_LIMIT, SystemProperties.getIntProperty("idea.max.paged.storage.cache", upper) * MB), max);
 
     LOG.info("lower=" + (LOWER_LIMIT / MB) +
              "; upper=" + (UPPER_LIMIT / MB) +
-             "; buffer=" + (BUFFER_SIZE / MB) +
-             "; mmap=" + (!ByteBufferWrapper.NO_MMAP));
+             "; buffer=" + (BUFFER_SIZE / MB));
   }
+
+  // It is important to have ourLock after previous static constants as it depends on them
+  private static final StorageLock ourLock = new StorageLock();
 
   private final StorageLockContext myStorageLockContext;
   private int myLastPage = UNKNOWN_PAGE;
@@ -107,12 +103,12 @@ public class PagedFileStorage implements Forceable {
     this(file, lock.myDefaultStorageLockContext, pageSize, valuesAreBufferAligned);
   }
 
-  public PagedFileStorage(File file, StorageLockContext storageLockContext, int pageSize, boolean valuesAreBufferAligned) throws IOException {
+  public PagedFileStorage(File file, @Nullable StorageLockContext storageLockContext, int pageSize, boolean valuesAreBufferAligned) throws IOException {
     myFile = file;
-    myStorageLockContext = storageLockContext;
+    myStorageLockContext = storageLockContext != null ? storageLockContext:ourLock.myDefaultStorageLockContext;
     myPageSize = Math.max(pageSize > 0 ? pageSize : BUFFER_SIZE, Page.PAGE_SIZE);
     myValuesAreBufferAligned = valuesAreBufferAligned;
-    myStorageIndex = storageLockContext.myStorageLock.registerPagedFileStorage(this);
+    myStorageIndex = myStorageLockContext.myStorageLock.registerPagedFileStorage(this);
     myTypedIOBuffer = valuesAreBufferAligned ? null:new byte[8];
   }
   public PagedFileStorage(File file, StorageLock lock) throws IOException {
@@ -437,12 +433,12 @@ public class PagedFileStorage implements Forceable {
   public static class StorageLock {
     private static final int FILE_INDEX_MASK = 0xFFFF0000;
     private static final int FILE_INDEX_SHIFT = 16;
-    private final boolean checkThreadAccess;
     public final StorageLockContext myDefaultStorageLockContext;
     private final ConcurrentHashMap<Integer, PagedFileStorage> myIndex2Storage = new ConcurrentHashMap<Integer, PagedFileStorage>();
 
     private final LinkedHashMap<Integer, ByteBufferWrapper> mySegments;
     private final SequenceLock mySegmentsAccessLock = new SequenceLock(); // protects map operations of mySegments, needed for LRU order, mySize and myMappingChangeCount
+    // todo avoid locking for access
 
     private final SequenceLock mySegmentsAllocationLock = new SequenceLock();
     private final ConcurrentLinkedQueue<ByteBufferWrapper> mySegmentsToRemove = new ConcurrentLinkedQueue<ByteBufferWrapper>();
@@ -455,8 +451,7 @@ public class PagedFileStorage implements Forceable {
     }
 
     public StorageLock(boolean checkThreadAccess) {
-      this.checkThreadAccess = checkThreadAccess;
-      myDefaultStorageLockContext = new StorageLockContext(this);
+      myDefaultStorageLockContext = new StorageLockContext(this, checkThreadAccess);
 
       mySizeLimit = UPPER_LIMIT;
       mySegments = new LinkedHashMap<Integer, ByteBufferWrapper>(10, 0.75f) {
@@ -556,6 +551,8 @@ public class PagedFileStorage implements Forceable {
     }
 
     private void disposeRemovedSegments() {
+      if (mySegmentsToRemove.isEmpty()) return;
+
       assert mySegmentsAllocationLock.isHeldByCurrentThread();
       Iterator<ByteBufferWrapper> iterator = mySegmentsToRemove.iterator();
       while(iterator.hasNext()) {
@@ -628,7 +625,7 @@ public class PagedFileStorage implements Forceable {
     }
 
     private void checkThreadAccess(StorageLockContext storageLockContext) {
-      if (checkThreadAccess && !storageLockContext.myLock.isHeldByCurrentThread()) {
+      if (storageLockContext.myCheckThreadAccess && !storageLockContext.myLock.isHeldByCurrentThread()) {
         throw new IllegalStateException("Must hold StorageLock lock to access PagedFileStorage");
       }
     }
@@ -715,12 +712,23 @@ public class PagedFileStorage implements Forceable {
   }
 
   public static class StorageLockContext {
+    private final boolean myCheckThreadAccess;
     private final SequenceLock myLock;
     private final StorageLock myStorageLock;
 
+    @Deprecated
     public StorageLockContext(StorageLock lock) {
+      this(lock, true);
+    }
+
+    private StorageLockContext(StorageLock lock, boolean checkAccess) {
       myLock = new SequenceLock();
       myStorageLock = lock;
+      myCheckThreadAccess = checkAccess;
+    }
+
+    public StorageLockContext(boolean checkAccess) {
+      this(ourLock, checkAccess);
     }
   }
 }

@@ -22,6 +22,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 
@@ -31,7 +32,8 @@ public class ResizeableMappedFile implements Forceable {
   private long myLogicalSize;
   private final PagedFileStorage myStorage;
 
-  public ResizeableMappedFile(final File file, int initialSize, PagedFileStorage.StorageLockContext lockContext, int pageSize, boolean valuesAreBufferAligned) throws IOException {
+  public ResizeableMappedFile(final File file, int initialSize, @Nullable PagedFileStorage.StorageLockContext lockContext, int pageSize,
+                              boolean valuesAreBufferAligned) throws IOException {
     myStorage = new PagedFileStorage(file, lockContext, pageSize, valuesAreBufferAligned);
     boolean exists = file.exists();
     if (!exists || file.length() == 0) {
