@@ -416,23 +416,31 @@ public class GitChangeUtils {
 
   @NotNull
   public static Collection<Change> getDiff(@NotNull Project project, @NotNull VirtualFile root,
-                                           @NotNull String oldRevision, @Nullable String newRevision,
+                                           @Nullable String oldRevision, @Nullable String newRevision,
                                            @Nullable Collection<FilePath> dirtyPaths) throws VcsException {
+    LOG.assertTrue(oldRevision != null || newRevision != null, "Both old and new revisions can't be null");
     String range;
     GitRevisionNumber newRev;
-    if (newRevision == null) {
-      // it is current revision
-      range = oldRevision;
+    GitRevisionNumber oldRev;
+    if (newRevision == null) { // current revision at the right
+      range = oldRevision + "..";
+      oldRev = loadRevision(project, root, oldRevision);
       newRev = null;
+    }
+    else if (oldRevision == null) { // current revision at the left
+      range = ".." + newRevision;
+      oldRev = null;
+      newRev = loadRevision(project, root, newRevision);
     }
     else {
       range = oldRevision + ".." + newRevision;
+      oldRev = loadRevision(project, root, oldRevision);
       newRev = loadRevision(project, root, newRevision);
     }
     String output = getDiffOutput(project, root, range, dirtyPaths);
 
     Collection<Change> changes = new ArrayList<Change>();
-    parseChanges(project, root, newRev, loadRevision(project, root, oldRevision), output, changes, Collections.<String>emptySet());
+    parseChanges(project, root, newRev, oldRev, output, changes, Collections.<String>emptySet());
     return changes;
   }
 
