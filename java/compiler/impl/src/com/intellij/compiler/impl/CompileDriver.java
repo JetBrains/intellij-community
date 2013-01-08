@@ -2323,6 +2323,7 @@ public class CompileDriver {
       final Set<File> nonExistingOutputPaths = new HashSet<File>();
       final CompilerConfiguration config = CompilerConfiguration.getInstance(myProject);
       final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
+      final boolean useOutOfProcessBuild = useOutOfProcessBuild();
       for (final Module module : scopeModules) {
         if (!compilerManager.isValidationEnabled(module)) {
           continue;
@@ -2345,9 +2346,11 @@ public class CompileDriver {
         }
         else {
           if (outputPath != null) {
-            final File file = new File(outputPath.replace('/', File.separatorChar));
-            if (!file.exists()) {
-              nonExistingOutputPaths.add(file);
+            if (!useOutOfProcessBuild) {
+              final File file = new File(outputPath.replace('/', File.separatorChar));
+              if (!file.exists()) {
+                nonExistingOutputPaths.add(file);
+              }
             }
           }
           else {
@@ -2356,9 +2359,11 @@ public class CompileDriver {
             }
           }
           if (testsOutputPath != null) {
-            final File f = new File(testsOutputPath.replace('/', File.separatorChar));
-            if (!f.exists()) {
-              nonExistingOutputPaths.add(f);
+            if (!useOutOfProcessBuild) {
+              final File f = new File(testsOutputPath.replace('/', File.separatorChar));
+              if (!f.exists()) {
+                nonExistingOutputPaths.add(f);
+              }
             }
           }
           else {
@@ -2366,7 +2371,7 @@ public class CompileDriver {
               modulesWithoutOutputPathSpecified.add(module.getName());
             }
           }
-          if (!useOutOfProcessBuild()) {
+          if (!useOutOfProcessBuild) {
             if (config.getAnnotationProcessingConfiguration(module).isEnabled()) {
               final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
               if (path == null) {
@@ -2492,7 +2497,7 @@ public class CompileDriver {
           }
         }
       }
-      if (!useOutOfProcessBuild()) {
+      if (!useOutOfProcessBuild) {
         final Compiler[] allCompilers = compilerManager.getCompilers(Compiler.class);
         for (Compiler compiler : allCompilers) {
           if (!compiler.validateConfiguration(scope)) {
