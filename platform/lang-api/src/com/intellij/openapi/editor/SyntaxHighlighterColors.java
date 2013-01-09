@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 
 /**
  * @author yole
+ * @deprecated Use DefaultLanguageHighlighterColors to inherit default attributes.
  */
 public class SyntaxHighlighterColors {
   public static final TextAttributesKey LINE_COMMENT = TextAttributesKey.createTextAttributesKey("JAVA_LINE_COMMENT");
