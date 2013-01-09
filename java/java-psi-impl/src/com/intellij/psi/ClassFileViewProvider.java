@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,14 +42,15 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
     if (fileIndex.isInLibraryClasses(vFile) || !fileIndex.isInSource(vFile)) {
       String name = vFile.getName();
 
-      // skip inners & anonymous
+      // skip inners & anonymous (todo: read actual class name from file)
       int dotIndex = name.lastIndexOf('.');
       if (dotIndex < 0) dotIndex = name.length();
       int index = name.lastIndexOf('$', dotIndex);
-      if (index > 0) return null;  // todo: read actual class name from file
-
-      return new ClsFileImpl((PsiManagerImpl)PsiManager.getInstance(project), this);
+      if (index <= 0 || index == dotIndex - 1) {
+        return new ClsFileImpl((PsiManagerImpl)PsiManager.getInstance(project), this);
+      }
     }
+
     return null;
   }
 
