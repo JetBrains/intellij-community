@@ -80,6 +80,7 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
     myIdToNameList.add(new Pair(IdeActions.GROUP_COMMANDER_POPUP, ActionsTreeUtil.COMMANDER_POPUP));
     myIdToNameList.add(new Pair(IdeActions.GROUP_J2EE_VIEW_POPUP, ActionsTreeUtil.J2EE_POPUP));
     myIdToNameList.add(new Pair(IdeActions.GROUP_NAVBAR_POPUP, "Navigation Bar"));
+    myIdToNameList.add(new Pair("NavBarToolBar", "Navigation Bar Toolbar"));
 
     CustomizableActionGroupProvider.CustomizableActionGroupRegistrar registrar =
       new CustomizableActionGroupProvider.CustomizableActionGroupRegistrar() {
@@ -335,13 +336,12 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
     }
     final IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(null);
     if (frame != null) {
-      frame.updateToolbar();
-      frame.updateMenuBar();
+      frame.updateView();
     }
   }
 
 
- @NotNull
+  @NotNull
   public File[] getExportFiles() {
     return new File[]{PathManager.getOptionsFile(this)};
   }

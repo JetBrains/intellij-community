@@ -19,9 +19,7 @@ package com.intellij.ide.impl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
-import com.intellij.ide.structureView.StructureView;
-import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.ide.structureView.StructureViewWrapper;
+import com.intellij.ide.structureView.*;
 import com.intellij.ide.structureView.impl.StructureViewComposite;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.openapi.Disposable;
@@ -49,6 +47,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.*;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -178,7 +177,16 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   }
 
   private void setFile(VirtualFile file) {
-    if (!Comparing.equal(file, myFile)) {
+    boolean forceRebuild = !Comparing.equal(file, myFile);
+    if (!forceRebuild && myStructureView != null) {
+      StructureViewModel model = myStructureView.getTreeModel();
+      StructureViewTreeElement treeElement = model.getRoot();
+      Object value = treeElement.getValue();
+      if (value == null || value instanceof PsiElement && !((PsiElement)value).isValid()) {
+        forceRebuild = true;
+      }
+    }
+    if (forceRebuild) {
       myFile = file;
       scheduleRebuild();
     }

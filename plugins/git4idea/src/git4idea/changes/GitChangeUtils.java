@@ -181,19 +181,13 @@ public class GitChangeUtils {
   }
 
   /**
-   * Load actual revision number with timestamp basing on revision number expression
-   *
-   * @param project        a project
-   * @param vcsRoot        a repository root
-   * @param revisionNumber a revision number expression
-   * @return a resolved revision
-   * @throws VcsException if there is a problem with running git
+   * Load actual revision number with timestamp basing on a reference: name of a branch or tag, or revision number expression.
    */
   @NotNull
-  public static GitRevisionNumber loadRevision(@NotNull Project project, @NotNull VirtualFile vcsRoot, @NonNls final String revisionNumber)
-    throws VcsException {
+  public static GitRevisionNumber resolveReference(@NotNull Project project, @NotNull VirtualFile vcsRoot,
+                                                   @NotNull String reference) throws VcsException {
     GitSimpleHandler handler = new GitSimpleHandler(project, vcsRoot, GitCommand.REV_LIST);
-    handler.addParameters("--timestamp", "--max-count=1", revisionNumber);
+    handler.addParameters("--timestamp", "--max-count=1", reference);
     handler.endOptions();
     handler.setNoSSH(true);
     handler.setSilent(true);
@@ -207,7 +201,7 @@ public class GitChangeUtils {
       String out = dh.run();
       LOG.info("Diagnostic output from 'git log -1 HEAD': [" + out + "]");
       throw new VcsException(String.format("The string '%s' does not represent a revision number. Output: [%s]\n Root: %s",
-                                           revisionNumber, output, vcsRoot));
+                                           reference, output, vcsRoot));
     }
     Date timestamp = GitUtil.parseTimestampWithNFEReport(stk.nextToken(), handler, output);
     return new GitRevisionNumber(stk.nextToken(), timestamp);
@@ -382,7 +376,7 @@ public class GitChangeUtils {
     GitRevisionNumber thisRevision = new GitRevisionNumber(revisionNumber, commitDate);
 
     if (skipDiffsForMerge || (parents.length <= 1)) {
-      final GitRevisionNumber parentRevision = parents.length > 0 ? loadRevision(project, root, parents[0]) : null;
+      final GitRevisionNumber parentRevision = parents.length > 0 ? resolveReference(project, root, parents[0]) : null;
       // This is the first or normal commit with the single parent.
       // Just parse changes in this commit as returned by the show command.
       parseChanges(project, root, thisRevision, local ? null : parentRevision, s, changes, null);
@@ -393,7 +387,7 @@ public class GitChangeUtils {
       // If no changes are found (why to merge then?). Empty changelist is reported.
 
       for (String parent : parents) {
-        final GitRevisionNumber parentRevision = loadRevision(project, root, parent);
+        final GitRevisionNumber parentRevision = resolveReference(project, root, parent);
         GitSimpleHandler diffHandler = new GitSimpleHandler(project, root, GitCommand.DIFF);
         diffHandler.setNoSSH(true);
         diffHandler.setSilent(true);
@@ -416,23 +410,31 @@ public class GitChangeUtils {
 
   @NotNull
   public static Collection<Change> getDiff(@NotNull Project project, @NotNull VirtualFile root,
-                                           @NotNull String oldRevision, @Nullable String newRevision,
+                                           @Nullable String oldRevision, @Nullable String newRevision,
                                            @Nullable Collection<FilePath> dirtyPaths) throws VcsException {
+    LOG.assertTrue(oldRevision != null || newRevision != null, "Both old and new revisions can't be null");
     String range;
     GitRevisionNumber newRev;
-    if (newRevision == null) {
-      // it is current revision
-      range = oldRevision;
+    GitRevisionNumber oldRev;
+    if (newRevision == null) { // current revision at the right
+      range = oldRevision + "..";
+      oldRev = resolveReference(project, root, oldRevision);
       newRev = null;
+    }
+    else if (oldRevision == null) { // current revision at the left
+      range = ".." + newRevision;
+      oldRev = null;
+      newRev = resolveReference(project, root, newRevision);
     }
     else {
       range = oldRevision + ".." + newRevision;
-      newRev = loadRevision(project, root, newRevision);
+      oldRev = resolveReference(project, root, oldRevision);
+      newRev = resolveReference(project, root, newRevision);
     }
     String output = getDiffOutput(project, root, range, dirtyPaths);
 
     Collection<Change> changes = new ArrayList<Change>();
-    parseChanges(project, root, newRev, loadRevision(project, root, oldRevision), output, changes, Collections.<String>emptySet());
+    parseChanges(project, root, newRev, oldRev, output, changes, Collections.<String>emptySet());
     return changes;
   }
 

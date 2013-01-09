@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -539,7 +539,10 @@ public class ExpectedHighlightingData {
     while (i < list.size()) {
       Pair<String, HighlightInfo> pair = list.get(i);
       HighlightInfo info = pair.second;
-      if (info.endOffset < startPos) break;
+      if (info.endOffset <= startPos) {
+        break;
+      }
+
       String severity = pair.first;
       HighlightInfo prev = i < list.size() - 1 ? list.get(i + 1).second : null;
 

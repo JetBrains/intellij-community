@@ -122,4 +122,8 @@ public class ExtractMethodObjectWithMultipleExitPointsTest extends LightRefactor
   public void testFromStaticContext() throws Exception {
     doTest();
   }
+
+  public void testBatchUpdateCausedByFormatter() throws Exception {
+    doTest();
+  }
 }

@@ -72,7 +72,7 @@ public abstract class ParameterTablePanel extends JPanel {
 
     public VariableData(PsiVariable var, PsiType type) {
       variable = var;
-      this.type = type;
+      this.type = SmartTypePointerManager.getInstance(var.getProject()).createSmartTypePointer(type).getType();
     }
   }
 

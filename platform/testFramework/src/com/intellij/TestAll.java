@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,10 @@
  */
 package com.intellij;
 
+import com.intellij.idea.RecordExecution;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.testFramework.*;
@@ -72,6 +74,8 @@ public class TestAll implements Test {
   private static final boolean PERFORMANCE_TESTS_ONLY = System.getProperty(TestCaseLoader.PERFORMANCE_TESTS_ONLY_FLAG) != null;
   private int myLastTestTestMethodCount = 0;
   public static final int MAX_FAILURE_TEST_COUNT = 150;
+
+  private TestRecorder myTestRecorder;
 
   private static final Filter PERFORMANCE_ONLY = new Filter() {
     @Override
@@ -186,13 +190,52 @@ public class TestAll implements Test {
 
   @Override
   public void run(final TestResult testResult) {
+    loadTestRecorder();
     List<Class> classes = myTestCaseLoader.getClasses();
     int totalTests = classes.size();
     for (final Class aClass : classes) {
-      runNextTest(testResult, totalTests, aClass);
+      boolean recording = false;
+      if (myTestRecorder != null && shouldRecord(aClass)) {
+        myTestRecorder.beginRecording(aClass, (RecordExecution) aClass.getAnnotation(RecordExecution.class));
+        recording = true;
+      }
+      try {
+        runNextTest(testResult, totalTests, aClass);
+      }
+      finally {
+        if (recording) {
+          myTestRecorder.endRecording();
+        }
+      }
       if (testResult.shouldStop()) break;
     }
     tryGc(10);
+  }
+
+  private boolean shouldRecord(Class aClass) {
+    if (aClass.getAnnotation(RecordExecution.class) != null) {
+      return true;
+    }
+    return false;
+  }
+
+  private void loadTestRecorder() {
+    String recorderClassName = System.getProperty("test.recorder.class");
+    if (recorderClassName != null) {
+      try {
+        Class<?> recorderClass = Class.forName(recorderClassName);
+        myTestRecorder = (TestRecorder) recorderClass.newInstance();
+      }
+      catch (ClassNotFoundException e) {
+        System.out.println("CNFE loading test recorder class: " + e);
+      }
+      catch (InstantiationException e) {
+        System.out.println("InstantiationException loading test recorder class: " + e);
+      }
+      catch (IllegalAccessException e) {
+        System.out.println("IAE loading test recorder class: " + e);
+      }
+    }
   }
 
   private void runNextTest(final TestResult testResult, int totalTests, Class testCaseClass) {
@@ -408,6 +451,11 @@ public class TestAll implements Test {
   }
 
   public TestAll(String packageRoot, String... classRoots) throws IOException, ClassNotFoundException {
+    System.out.println("** OS: " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION);
+    System.out.println("** isWin=" + SystemInfo.isWindows);
+    System.out.println("** isLin=" + SystemInfo.isLinux);
+    System.out.println("** isMac=" + SystemInfo.isMac);
+
     String classFilterName = "tests/testGroups.properties";
     if (Boolean.parseBoolean(System.getProperty("idea.ignore.predefined.groups")) || (ourMode & FILTER_CLASSES) == 0) {
       classFilterName = "";

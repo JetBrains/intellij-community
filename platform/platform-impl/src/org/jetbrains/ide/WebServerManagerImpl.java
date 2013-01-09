@@ -54,6 +54,9 @@ class WebServerManagerImpl extends WebServerManager {
       return;
     }
 
+    // preload extensions to avoid deadlock when they try to access other components later (PY-8407)
+    Extensions.getExtensions(EP_NAME);
+
     application.executeOnPooledThread(new Runnable() {
       @Override
       public void run() {

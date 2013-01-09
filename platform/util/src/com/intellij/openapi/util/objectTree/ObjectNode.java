@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,14 +102,18 @@ public final class ObjectNode<T> {
     ObjectTree.executeActionWithRecursiveGuard(this, myTree.getNodesInExecution(), new ObjectTreeAction<ObjectNode<T>>() {
       @Override
       public void execute(@NotNull ObjectNode<T> each) {
-        action.beforeTreeExecution(myObject);
+        try {
+          action.beforeTreeExecution(myObject);
+        }
+        catch (Throwable t) {
+          LOG.error(t);
+        }
 
         ObjectNode<T>[] childrenArray = getChildrenArray();
         //todo: [kirillk] optimize
-
-          for (int i = childrenArray.length - 1; i >= 0; i--) {
-            childrenArray[i].execute(disposeTree, action);
-          }
+        for (int i = childrenArray.length - 1; i >= 0; i--) {
+          childrenArray[i].execute(disposeTree, action);
+        }
 
         if (disposeTree) {
           synchronized (myTree.treeLock) {

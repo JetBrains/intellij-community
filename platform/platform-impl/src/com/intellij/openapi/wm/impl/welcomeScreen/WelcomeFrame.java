@@ -38,7 +38,6 @@ import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutImpl;
-import com.intellij.ui.ScreenUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -48,7 +47,7 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 
 public class WelcomeFrame extends JFrame implements IdeFrame {
-  private static final String DIMENSION_KEY = "WELCOME_SCREEN";
+  static final String DIMENSION_KEY = "WELCOME_SCREEN";
   private static WelcomeFrame ourInstance;
   private final WelcomeScreen myScreen;
   private final BalloonLayout myBalloonLayout;
@@ -76,8 +75,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
     myScreen = screen;
     setupCloseAction();
     new MnemonicHelper().register(this);
-
-    setResizable(false);
+    myScreen.setupFrame(this);
   }
 
   public static WelcomeFrame getInstance() {
@@ -145,7 +143,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
     }
     if (screen == null) {
       //screen = new DefaultWelcomeScreen(rootPane);
-      screen = new NewWelcomeScreen(rootPane);
+      screen = new NewWelcomeScreen();
     }
     return screen;
   }
@@ -154,15 +152,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
   public static void showNow() {
     if (ourInstance == null) {
       WelcomeFrame frame = new WelcomeFrame();
-      frame.pack();
-      Point location = DimensionService.getInstance().getLocation(DIMENSION_KEY, null);
-      Rectangle screenBounds = ScreenUtil.getScreenRectangle(location != null ? location : new Point(0, 0));
-      frame.setLocation(new Point(
-        screenBounds.x + (screenBounds.width - frame.getWidth()) / 2,
-        screenBounds.y + (screenBounds.height - frame.getHeight()) / 3
-      ));
       frame.setVisible(true);
-
       ourInstance = frame;
     }
   }

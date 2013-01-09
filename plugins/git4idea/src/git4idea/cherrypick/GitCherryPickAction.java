@@ -29,7 +29,6 @@ import git4idea.GitPlatformFacade;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.config.GitVcsSettings;
-import git4idea.history.browser.GitCherryPicker;
 import git4idea.history.browser.GitCommit;
 import git4idea.history.wholeTree.AbstractHash;
 import git4idea.history.wholeTree.GitCommitDetailsProvider;

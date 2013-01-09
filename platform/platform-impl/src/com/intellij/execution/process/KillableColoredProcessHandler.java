@@ -40,6 +40,7 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
 
   /**
    * This method shouldn't be overriden, see shouldKillProcessSoftly
+   *
    * @return
    */
   private boolean canKillProcessSoftly() {
@@ -52,17 +53,20 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
     if (canKillProcessSoftly() && shouldKillProcessSoftly()) {
       // Unix: [soft-kill] at first send INT signal:
       final Process process = getProcess();
-      UnixProcessManager.sendSigIntToProcessTree(process);
+      if (UnixProcessManager.sendSigIntToProcessTree(process)) {
+        return;
+      }
     }
-    else {
-      // if soft kill isn't supported - use default implementation
-      super.doDestroyProcess();
-      // else IDE will suggest 'terminate dialog'
-    }
+
+    // if soft kill isn't supported - use default implementation
+    super.doDestroyProcess();
+    // else IDE will suggest 'terminate dialog'
+
   }
 
   /**
    * This method should be overriden by children if the process shouldn't be killed softly (e.g. by kill -2)
+   *
    * @return
    */
   protected boolean shouldKillProcessSoftly() {

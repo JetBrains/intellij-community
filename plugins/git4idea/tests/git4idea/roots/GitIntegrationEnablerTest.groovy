@@ -15,22 +15,37 @@
  */
 package git4idea.roots
 
+import com.intellij.dvcs.test.MockVirtualFile
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.vfs.VirtualFile
-import git4idea.test.GitFastTest
-import com.intellij.dvcs.test.MockVirtualFile
+import git4idea.test.GitLightTest
+import git4idea.test.TestNotificator
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 
 import static git4idea.test.GitGTestUtil.toAbsolute
-import static junit.framework.Assert.assertEquals
-import static junit.framework.Assert.assertTrue
+import static junit.framework.Assert.*
 
 /**
  * 
  * @author Kirill Likhodedov
  */
-class GitIntegrationEnablerTest extends GitFastTest {
+class GitIntegrationEnablerTest extends GitLightTest {
+
+  public static final String TEST_NOTIFICATION_GROUP = "Test"
+
+  @Override
+  @Before
+  public void setUp() {
+    super.setUp();
+  }
+
+  @After
+  public void tearDown() {
+    super.tearDown();
+  }
 
   @Test
   void "1 root for the whole project, then just add VCS root"() {
@@ -43,7 +58,7 @@ class GitIntegrationEnablerTest extends GitFastTest {
     doTest given( [], false ),
            expect( git_init: ["."],
                    vcs_roots: ["."],
-                   notification("Created Git repository in $myProjectDir"))
+                   notification("Created Git repository in $myProjectRoot"))
   }
 
   @Test
@@ -93,7 +108,7 @@ class GitIntegrationEnablerTest extends GitFastTest {
 
   void assertGitInit(Collection<String> roots) {
     roots.each {
-      assertTrue ".git" in new File(myProjectDir + "/" + it).list()
+      assertTrue ".git" in new File(myProjectRoot + "/" + it).list()
     }
   }
 
@@ -117,7 +132,29 @@ class GitIntegrationEnablerTest extends GitFastTest {
   }
 
   String path(String relativePath) {
-    new File(myProjectDir + "/" + relativePath).canonicalPath
+    new File(myProjectRoot + "/" + relativePath).canonicalPath
+  }
+
+  void assertNotificationShown(Notification expected) {
+    if (expected) {
+      Notification actualNotification = (myPlatformFacade.getNotificator(myProject) as TestNotificator).lastNotification
+      assertNotNull "No notification was shown", actualNotification
+      assertEquals "Notification has wrong title", expected.title, actualNotification.title
+      assertEquals "Notification has wrong type", expected.type, actualNotification.type
+      assertEquals "Notification has wrong content", adjustTestContent(expected.content), actualNotification.content
+    }
+  }
+
+  // we allow more spaces and line breaks in tests to make them more readable.
+  // After all, notifications display html, so all line breaks and extra spaces are ignored.
+  String adjustTestContent(String s) {
+    StringBuilder res = new StringBuilder()
+    s.split("\n").each { res.append it.trim() }
+    res.toString()
+  }
+
+  void assertNotificationShown(String title, String message, NotificationType type) {
+    assertNotificationShown(new Notification(TEST_NOTIFICATION_GROUP, title, message, type))
   }
 
 }

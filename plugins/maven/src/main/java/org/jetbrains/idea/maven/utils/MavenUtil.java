@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.execution.configurations.ParametersList;
@@ -50,11 +52,14 @@ import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
+import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.MavenServerUtil;
 
@@ -708,6 +713,29 @@ public class MavenUtil {
     }
 
     return null;
+  }
+
+  public static List<LookupElement> getPhaseVariants(MavenProjectsManager manager) {
+    Set<String> goals = new HashSet<String>();
+    goals.addAll(MavenConstants.PHASES);
+
+    for (MavenProject mavenProject : manager.getProjects()) {
+      for (MavenPlugin plugin : mavenProject.getPlugins()) {
+        MavenPluginInfo pluginInfo = MavenArtifactUtil.readPluginInfo(manager.getLocalRepository(), plugin.getMavenId());
+        if (pluginInfo != null) {
+          for (MavenPluginInfo.Mojo mojo : pluginInfo.getMojos()) {
+            goals.add(mojo.getDisplayName());
+          }
+        }
+      }
+    }
+
+    List<LookupElement> res = new ArrayList<LookupElement>(goals.size());
+    for (String goal : goals) {
+      res.add(LookupElementBuilder.create(goal).withIcon(MavenIcons.Phase));
+    }
+
+    return res;
   }
 
   public interface MavenTaskHandler {

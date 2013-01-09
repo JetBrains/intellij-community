@@ -66,10 +66,16 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
     });
     initModuleExtensions();
 
-    final ModuleRootManagerImpl moduleRootManager = new ModuleRootManagerImpl(this,
-                                                                        DirectoryIndex.getInstance(project),
-                                                                        ProjectRootManagerImpl.getInstanceImpl(project),
-                                                                        VirtualFilePointerManager.getInstance());
+    final ModuleRootManagerImpl moduleRootManager =
+      new ModuleRootManagerImpl(this,
+                                DirectoryIndex.getInstance(project),
+                                ProjectRootManagerImpl.getInstanceImpl(project),
+                                VirtualFilePointerManager.getInstance()) {
+        @Override
+        public void loadState(ModuleRootManagerState object) {
+          loadState(object, false);
+        }
+      };
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {

@@ -213,6 +213,10 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
       }
     }
 
+    if (mavenProject.getProperties().containsKey(myText)) {
+      return myElement;
+    }
+
     if (myText.startsWith("settings.")) {
       return resolveSettingsModelProperty();
     }
@@ -287,11 +291,11 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
   @NotNull
   public Object[] getVariants() {
     List<Object> result = new ArrayList<Object>();
-    collectVariants(result);
+    collectVariants(result, new THashSet<String>());
     return ArrayUtil.toObjectArray(result);
   }
 
-  protected void collectVariants(final List<Object> result) {
+  protected void collectVariants(final List<Object> result, Set<String> variants) {
     int prefixLength = 0;
     if (myText.startsWith("pom.")) {
       prefixLength = "pom.".length();
@@ -339,33 +343,30 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
       }
     });
 
-    collectPropertiesVariants(result);
-    collectSystemEnvProperties(MavenPropertiesVirtualFileSystem.SYSTEM_PROPERTIES_FILE, null, result);
-    collectSystemEnvProperties(MavenPropertiesVirtualFileSystem.ENV_PROPERTIES_FILE, "env.", result);
+    collectPropertiesVariants(result, variants);
+    collectSystemEnvProperties(MavenPropertiesVirtualFileSystem.SYSTEM_PROPERTIES_FILE, null, result, variants);
+    collectSystemEnvProperties(MavenPropertiesVirtualFileSystem.ENV_PROPERTIES_FILE, "env.", result, variants);
 
     MavenRunnerSettings runnerSettings = MavenRunner.getInstance(myProject).getSettings();
     for (String prop : runnerSettings.getMavenProperties().keySet()) {
-      if (!isResultAlreadyContains(result, prop)) {
+      if (variants.add(prefix)) {
         result.add(LookupElementBuilder.create(prop).withIcon(PlatformIcons.PROPERTY_ICON));
       }
     }
     for (String prop : MavenUtil.getPropertiesFromMavenOpts().keySet()) {
-      if (!isResultAlreadyContains(result, prop)) {
+      if (variants.add(prop)) {
         result.add(LookupElementBuilder.create(prop).withIcon(PlatformIcons.PROPERTY_ICON));
       }
     }
-  }
 
-  private static boolean isResultAlreadyContains(List<Object> results, String propertyName) {
-    for (Object result : results) {
-      if (result instanceof LookupElement) {
-        if (((LookupElement)result).getLookupString().equals(propertyName)) {
-          return true;
+    for (Object key : myMavenProject.getProperties().keySet()) {
+      if (key instanceof String) {
+        String property = (String)key;
+        if (variants.add(property)) {
+          result.add(LookupElementBuilder.create(property).withIcon(PlatformIcons.PROPERTY_ICON));
         }
       }
     }
-
-    return false;
   }
 
   private static void addVariant(List<Object> result, String name, @NotNull Object element, @Nullable String prefix, @NotNull Icon icon) {
@@ -382,28 +383,34 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     result.add(createLookupElement(element, nameWithPrefix, icon));
   }
 
-  private void collectPropertiesVariants(final List<Object> result) {
+  private void collectPropertiesVariants(final List<Object> result, Set<String> variants) {
     if (myProjectDom != null) {
       for (XmlTag xmlTag : MavenDomProjectProcessorUtils.collectProperties(myProjectDom, myProject)) {
-        result.add(createLookupElement(xmlTag, xmlTag.getName(), PlatformIcons.PROPERTY_ICON));
+        String propertyName = xmlTag.getName();
+        if (variants.add(propertyName)) {
+          result.add(createLookupElement(xmlTag, propertyName, PlatformIcons.PROPERTY_ICON));
+        }
       }
     }
   }
 
-  private void collectSystemEnvProperties(String propertiesFileName, @Nullable String prefix, List<Object> result) {
+  private void collectSystemEnvProperties(String propertiesFileName, @Nullable String prefix, List<Object> result, Set<String> variants) {
     VirtualFile virtualFile = MavenPropertiesVirtualFileSystem.getInstance().findFileByPath(propertiesFileName);
     PropertiesFile file = MavenDomUtil.getPropertiesFile(myProject, virtualFile);
-    collectPropertiesFileVariants(file, prefix, result);
+    collectPropertiesFileVariants(file, prefix, result, variants);
   }
 
-  protected static void collectPropertiesFileVariants(@Nullable PropertiesFile file, @Nullable String prefix, List<Object> result) {
+  protected static void collectPropertiesFileVariants(@Nullable PropertiesFile file, @Nullable String prefix, List<Object> result, Set<String> variants) {
     if (file == null) return;
 
     for (IProperty each : file.getProperties()) {
       String name = each.getKey();
       if (name != null) {
         if (prefix != null) name = prefix + name;
-        result.add(createLookupElement(each, name, PlatformIcons.PROPERTY_ICON));
+
+        if (variants.add(name)) {
+          result.add(createLookupElement(each, name, PlatformIcons.PROPERTY_ICON));
+        }
       }
     }
   }

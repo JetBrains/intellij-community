@@ -219,6 +219,12 @@ public final class Match {
     }
   }
 
+  boolean areCorrespond(PsiElement patternDeclaration, PsiElement matchDeclaration) {
+    if (matchDeclaration == null || patternDeclaration == null) return false;
+    PsiElement originalValue = myDeclarationCorrespondence.get(patternDeclaration);
+    return originalValue == null || originalValue == matchDeclaration;
+  }
+
   private PsiElement replaceWith(final PsiStatement statement) throws IncorrectOperationException {
     final PsiElement matchStart = getMatchStart();
     final PsiElement matchEnd = getMatchEnd();

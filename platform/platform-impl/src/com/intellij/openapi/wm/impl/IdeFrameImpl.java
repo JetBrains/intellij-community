@@ -202,14 +202,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     return ((IdeRootPane)getRootPane()).getStatusBar();
   }
 
-  public void updateToolbar() {
-    ((IdeRootPane)getRootPane()).updateToolbar();
-  }
-
-  public void updateMenuBar(){
-    ((IdeRootPane)getRootPane()).updateMainMenuActions();
-  }
-
   public void setTitle(final String title) {
     if (myUpdatingTitle) {
       super.setTitle(title);
@@ -266,6 +258,12 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     finally {
       myUpdatingTitle = false;
     }
+  }
+
+  public void updateView() {
+    ((IdeRootPane)getRootPane()).updateToolbar();
+    ((IdeRootPane)getRootPane()).updateMainMenuActions();
+    ((IdeRootPane)getRootPane()).updateNorthComponents();
   }
 
   private static final class Builder {

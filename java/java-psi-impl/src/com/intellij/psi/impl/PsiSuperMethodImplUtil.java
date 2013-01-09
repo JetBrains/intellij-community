@@ -215,14 +215,14 @@ public class PsiSuperMethodImplUtil {
       LOG.assertTrue(copy.getMethod().isValid());
       map.put(signature, copy);
     }
-    else if (isSuperMethod(aClass, existing, hierarchicalMethodSignature)) {
-      mergeSupers(existing, hierarchicalMethodSignature);
-    }
     else if (isReturnTypeIsMoreSpecificThan(hierarchicalMethodSignature, existing) && isSuperMethod(aClass, hierarchicalMethodSignature, existing)) {
       HierarchicalMethodSignatureImpl newSuper = copy(hierarchicalMethodSignature);
       mergeSupers(newSuper, existing);
       LOG.assertTrue(newSuper.getMethod().isValid());
       map.put(signature, newSuper);
+    }
+    else if (isSuperMethod(aClass, existing, hierarchicalMethodSignature)) {
+      mergeSupers(existing, hierarchicalMethodSignature);
     }
     // just drop an invalid method declaration there - to highlight accordingly
     else if (!result.containsKey(signature)) {
@@ -234,7 +234,7 @@ public class PsiSuperMethodImplUtil {
   private static boolean isReturnTypeIsMoreSpecificThan(@NotNull HierarchicalMethodSignature thisSig, @NotNull HierarchicalMethodSignature thatSig) {
     PsiType thisRet = thisSig.getSubstitutor().substitute(thisSig.getMethod().getReturnType());
     PsiType thatRet = thatSig.getSubstitutor().substitute(thatSig.getMethod().getReturnType());
-    return thatRet != null && thisRet != null && !thatRet.equals(thisRet) && TypeConversionUtil.isAssignable(thatRet, thisRet);
+    return thatRet != null && thisRet != null && !thatRet.equals(thisRet) && TypeConversionUtil.isAssignable(thatRet, thisRet, false);
   }
 
   private static void mergeSupers(final HierarchicalMethodSignatureImpl existing, final HierarchicalMethodSignature superSignature) {

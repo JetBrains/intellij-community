@@ -938,10 +938,20 @@ public class ExtractMethodProcessor implements MatchProvider {
         datas.add(variableData);
       }
     }
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
     for (ParameterTablePanel.VariableData data : datas) {
       final List<PsiElement> parameterValue = match.getParameterValues(data.variable);
       if (parameterValue != null) {
         for (PsiElement val : parameterValue) {
+          if (val instanceof PsiExpression) {
+            final PsiType exprType = ((PsiExpression)val).getType();
+            if (exprType != null && !TypeConversionUtil.isAssignable(data.type, exprType)) {
+              final PsiTypeCastExpression cast = (PsiTypeCastExpression)elementFactory.createExpressionFromText("(A)a", val);
+              cast.getCastType().replace(elementFactory.createTypeElement(data.type));
+              cast.getOperand().replace(val.copy());
+              val = cast;
+            }
+          }
           methodCallExpression.getArgumentList().add(val);
         }
       }

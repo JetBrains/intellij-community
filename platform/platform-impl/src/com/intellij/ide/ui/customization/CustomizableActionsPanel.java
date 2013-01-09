@@ -388,8 +388,7 @@ public class CustomizableActionsPanel {
     for (Project project : openProjects) {
       final IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(project);
       if (frame != null) {
-        frame.updateToolbar();
-        frame.updateMenuBar();
+        frame.updateView();
       }
 
       //final FavoritesManager favoritesView = FavoritesManager.getInstance(project);
@@ -400,8 +399,7 @@ public class CustomizableActionsPanel {
     }
     final IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(null);
     if (frame != null) {
-      frame.updateToolbar();
-      frame.updateMenuBar();
+      frame.updateView();
     }
   }
 

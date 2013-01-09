@@ -132,7 +132,7 @@ final class GitBranchWorker {
   @NotNull
   private static Collection<Change> loadTotalDiff(@NotNull GitRepository repository, @NotNull String branchName) {
     try {
-      return GitChangeUtils.getDiff(repository.getProject(), repository.getRoot(), "HEAD", branchName, null);
+      return GitChangeUtils.getDiff(repository.getProject(), repository.getRoot(), null, branchName, null);
     }
     catch (VcsException e) {
       // we treat it as critical and report an error

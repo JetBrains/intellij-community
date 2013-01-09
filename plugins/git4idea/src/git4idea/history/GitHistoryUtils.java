@@ -763,7 +763,8 @@ public class GitHistoryUtils {
       String out1;
       out1 = h1.run();
       final List<GitLogRecord> gitLogRecords1 = parser1.parse(out1);
-      assert gitLogRecords1.size() == 1;
+      LOG.assertTrue(gitLogRecords1.size() == 1, String.format("gitLogRecords size is incorrect. size: %s, records: %s, output: %s",
+                                                               gitLogRecords1.size(), gitLogRecords1, out1));
       final GitLogRecord logRecord = gitLogRecords1.get(0);
       final String[] parentsShortHashes = logRecord.getParentsShortHashes();
       String indexCommit = null;

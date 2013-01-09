@@ -134,12 +134,13 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
   }
 
   @Nullable
-  protected static String getSuperClassName(final PsiJavaCodeReferenceElement element) {
+  protected String getSuperClassName(final PsiJavaCodeReferenceElement element) {
     String superClassName = null;
-    final PsiElement ggParent = element.getParent().getParent();
+    PsiElement parent = element.getParent();
+    final PsiElement ggParent = parent.getParent();
     if (ggParent instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)ggParent;
-      if (method.getThrowsList() == element.getParent()) {
+      if (method.getThrowsList() == parent) {
         superClassName = "java.lang.Exception";
       }
     } else if (ggParent instanceof PsiClassObjectAccessExpression) {
@@ -156,6 +157,16 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
           if (aClass != null) return aClass.getQualifiedName();
         }
       }
+    } else if (ggParent instanceof PsiExpressionList && parent instanceof PsiExpression && myKind == CreateClassKind.ENUM) {
+      final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes((PsiExpression)parent, false);
+      if (expectedTypes.length == 1) {
+        final PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(expectedTypes[0].getType());
+        final PsiClass psiClass = classResolveResult.getElement();
+        if (psiClass != null && psiClass.isInterface()) {
+          return psiClass.getQualifiedName();
+        }
+      }
+      return null;
     }
 
     return superClassName;

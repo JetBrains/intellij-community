@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import java.util.*;
 
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 
 public class ExpectedHighlightingDataTest {
@@ -51,78 +52,85 @@ public class ExpectedHighlightingDataTest {
   @Test
   public void sequential() {
     doTest("_my text_",
-           Arrays.asList(error(1, 3, "1"), error(4, 8, "2")),
+           asList(error(1, 3, "1"), error(4, 8, "2")),
            "_<err descr=\"1\">my</err> <err descr=\"2\">text</err>_");
   }
 
   @Test
   public void simpleNested() {
     doTest("[(nested)]",
-           Arrays.asList(error(1, 9, "1"), error(2, 8, "2")),
+           asList(error(1, 9, "1"), error(2, 8, "2")),
            "[<err descr=\"1\">(<err descr=\"2\">nested</err>)</err>]");
   }
 
   @Test
   public void deepNested() {
     doTest("m1(m2(m3(m4(x))))",
-           Arrays.asList(error(3, 16, "m1"), error(6, 15, "m2"), error(9, 14, "m3"), error(12, 13, "m4")),
+           asList(error(3, 16, "m1"), error(6, 15, "m2"), error(9, 14, "m3"), error(12, 13, "m4")),
            "m1(<err descr=\"m1\">m2(<err descr=\"m2\">m3(<err descr=\"m3\">m4(<err descr=\"m4\">x</err>)</err>)</err>)</err>)");
   }
 
   @Test
   public void sameStart() {
     doTest("same start",
-           Arrays.asList(error(0, 4, "1"), error(0, 10, "2")),
+           asList(error(0, 4, "1"), error(0, 10, "2")),
            "<err descr=\"2\"><err descr=\"1\">same</err> start</err>");
   }
 
   @Test
   public void sameEnd() {
     doTest("same end",
-           Arrays.asList(error(0, 8, "1"), error(5, 8, "2")),
+           asList(error(0, 8, "1"), error(5, 8, "2")),
            "<err descr=\"1\">same <err descr=\"2\">end</err></err>");
   }
 
   @Test
   public void sameBothBounds() {
     doTest("same",
-           Arrays.asList(error(0, 4, "-"), warning(0, 4, "-")),
+           asList(error(0, 4, "-"), warning(0, 4, "-")),
            "<err descr=\"-\"><warn descr=\"-\">same</warn></err>");
   }
 
   @Test
   public void samePriority() {
     doTest("same",
-           Arrays.asList(warning(0, 4, "1"), warning(0, 4, "2")),
+           asList(warning(0, 4, "1"), warning(0, 4, "2")),
            "<warn descr=\"1\"><warn descr=\"2\">same</warn></warn>");
   }
 
   @Test
   public void twoNests() {
     doTest("(two nests)",
-           Arrays.asList(error(0, 11, "-"), error(1, 4, "1"), error(5, 10, "2")),
+           asList(error(0, 11, "-"), error(1, 4, "1"), error(5, 10, "2")),
            "<err descr=\"-\">(<err descr=\"1\">two</err> <err descr=\"2\">nests</err>)</err>");
   }
 
   @Test
   public void realistic() {
     doTest("one and (two nests)",
-           Arrays.asList(error(4, 7, "-"), error(8, 19, "-"), error(9, 12, "1"), error(13, 18, "2")),
+           asList(error(4, 7, "-"), error(8, 19, "-"), error(9, 12, "1"), error(13, 18, "2")),
            "one <err descr=\"-\">and</err> <err descr=\"-\">(<err descr=\"1\">two</err> <err descr=\"2\">nests</err>)</err>");
   }
 
   @Test
   public void twoEOLs() {
     doTest("text\nmore text",
-           Arrays.asList(eolError(4, 4, "1"), eolError(4, 4, "2")),
+           asList(eolError(4, 4, "1"), eolError(4, 4, "2")),
            "text<eol_err descr=\"2\"></eol_err><eol_err descr=\"1\"></eol_err>\nmore text");
   }
 
   @Test
   public void eolAfterError() {
     doTest("some error\nmore text",
-           Arrays.asList(error(5, 10, "1"), eolError(10, 10, "2")),
+           asList(error(5, 10, "1"), eolError(10, 10, "2")),
            "some <err descr=\"1\">error</err><eol_err descr=\"2\"></eol_err>\nmore text");
+  }
+
+  @Test
+  public void consecutiveNests() {
+    doTest(" ab ",
+           asList(error(1, 2, "a1"), error(1, 2, "a2"), error(2, 3, "b1"), error(2, 3, "b2")),
+           " <err descr=\"a1\"><err descr=\"a2\">a</err></err><err descr=\"b1\"><err descr=\"b2\">b</err></err> ");
   }
 
   private static void doTest(String original, Collection<HighlightInfo> highlighting, String expected) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -175,6 +175,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @NonNls private static final String ELEMENT_AUTOSCROLL_TO_SOURCE = "autoscrollToSource";
   @NonNls private static final String ELEMENT_AUTOSCROLL_FROM_SOURCE = "autoscrollFromSource";
   @NonNls private static final String ELEMENT_SORT_BY_TYPE = "sortByType";
+  @NonNls private static final String ELEMENT_FOLDERS_ALWAYS_ON_TOP = "foldersAlwaysOnTop";
+
   private static final String ATTRIBUTE_ID = "id";
   private JPanel myViewContentPanel;
   private static final Comparator<AbstractProjectViewPane> PANE_WEIGHT_COMPARATOR = new Comparator<AbstractProjectViewPane>() {
@@ -190,6 +192,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final Map<String, Element> myUninitializedPaneState = new HashMap<String, Element>();
   private final Map<String, SelectInTarget> mySelectInTargets = new HashMap<String, SelectInTarget>();
   private ContentManager myContentManager;
+  private boolean myFoldersAlwaysOnTop = true;
 
   public ProjectViewImpl(Project project, final FileEditorManager fileEditorManager, final ToolWindowManagerEx toolWindowManager) {
     myProject = project;
@@ -681,6 +684,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     myActionGroup.addAction(myAutoScrollToSourceHandler.createToggleAction()).setAsSecondary(true);
     myActionGroup.addAction(myAutoScrollFromSourceHandler.createToggleAction()).setAsSecondary(true);
     myActionGroup.addAction(new SortByTypeAction()).setAsSecondary(true);
+    myActionGroup.addAction(new FoldersAlwaysOnTopAction()).setAsSecondary(true);
 
     if (!myAutoScrollFromSourceHandler.isAutoScrollEnabled()) {
       myActionGroup.addAction(new ScrollFromSourceAction());
@@ -1438,6 +1442,21 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     setPaneOption(myFlattenPackages, flattenPackages, paneId, true);
   }
 
+  public boolean isFoldersAlwaysOnTop() {
+    return myFoldersAlwaysOnTop;
+  }
+
+  public void setFoldersAlwaysOnTop(boolean foldersAlwaysOnTop) {
+    if (myFoldersAlwaysOnTop != foldersAlwaysOnTop) {
+      myFoldersAlwaysOnTop = foldersAlwaysOnTop;
+      for (AbstractProjectViewPane pane : myId2Pane.values()) {
+        if (pane.getTree() != null) {
+          pane.updateFromRoot(false);
+        }
+      }
+    }
+  }
+
   @Override
   public boolean isShowMembers(String paneId) {
     return getPaneOptionValue(myShowMembers, paneId, ourShowMembersDefaults);
@@ -1767,6 +1786,29 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     @Override
     public void setSelected(AnActionEvent event, boolean flag) {
       setSortByType(getCurrentViewId(), flag);
+    }
+
+    @Override
+    public void update(final AnActionEvent e) {
+      super.update(e);
+      final Presentation presentation = e.getPresentation();
+      presentation.setVisible(getCurrentProjectViewPane() != null);
+    }
+  }
+
+  private class FoldersAlwaysOnTopAction extends ToggleAction {
+    private FoldersAlwaysOnTopAction() {
+      super("Folders Always on Top");
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent event) {
+      return isFoldersAlwaysOnTop();
+    }
+
+    @Override
+    public void setSelected(AnActionEvent event, boolean flag) {
+      setFoldersAlwaysOnTop(flag);
     }
 
     @Override

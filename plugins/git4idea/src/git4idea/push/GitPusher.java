@@ -348,10 +348,12 @@ public final class GitPusher {
       String branchName = source.getName();
       try {
         boolean rebase = getMergeOrRebaseConfig(project, root);
-        String mergeOrRebase = rebase ? ".rebase" : ".merge";
         GitConfigUtil.setValue(project, root, "branch." + branchName + ".remote", remote.getName());
-        GitConfigUtil.setValue(project, root, "branch." + branchName + mergeOrRebase,
+        GitConfigUtil.setValue(project, root, "branch." + branchName + ".merge",
                                GitBranch.REFS_HEADS_PREFIX + dest.getNameForRemoteOperations());
+        if (rebase) {
+          GitConfigUtil.setValue(project, root, "branch." + branchName + ".rebase", "true");
+        }
       }
       catch (VcsException e) {
         LOG.error(String.format("Couldn't set up tracking for source branch %s, target branch %s, remote %s in root %s",

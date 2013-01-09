@@ -124,6 +124,10 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
     return myWelcomePanel;
   }
 
+  @Override
+  public void setupFrame(JFrame frame) {
+  }
+
   public DefaultWelcomeScreen(JComponent rootPane) {
     initApplicationSpecificImages();
 

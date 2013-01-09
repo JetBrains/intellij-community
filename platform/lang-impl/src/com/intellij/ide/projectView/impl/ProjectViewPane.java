@@ -115,7 +115,7 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
 
     @Override
     public boolean addSubtreeToUpdateByElement(Object element) {
-      if (element instanceof PsiDirectory) {
+      if (element instanceof PsiDirectory && !myProject.isDisposed()) {
         final PsiDirectory dir = (PsiDirectory)element;
         final ProjectTreeStructure treeStructure = (ProjectTreeStructure)myTreeStructure;
         PsiDirectory dirToUpdateFrom = dir;

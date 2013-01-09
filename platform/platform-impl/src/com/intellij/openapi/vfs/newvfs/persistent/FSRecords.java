@@ -36,7 +36,6 @@ import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.storage.*;
 import gnu.trove.TIntArrayList;
-import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -206,7 +205,7 @@ public class FSRecords implements Forceable {
           throw new IOException("Corruption marker file found");
         }
 
-        PagedFileStorage.StorageLockContext storageLockContext = new PagedFileStorage.StorageLock(false).myDefaultStorageLockContext;
+        PagedFileStorage.StorageLockContext storageLockContext = new PagedFileStorage.StorageLockContext(false);
         myNames = new PersistentStringEnumerator(namesFile, storageLockContext);
         myAttributes = new Storage(attributesFile.getCanonicalPath(), REASONABLY_SMALL);
         myContents = new RefCountingStorage(contentsFile.getCanonicalPath(), CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH); // sources usually zipped with 4x ratio

@@ -18,13 +18,20 @@ package com.intellij.testIntegration.createTest;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -34,6 +41,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CreateTestAction extends PsiElementBaseIntentionAction {
+
+  private static final String CREATE_TEST_IN_THE_SAME_ROOT = "create.test.in.the.same.root";
+
   @NotNull
   public String getText() {
     return CodeInsightBundle.message("intention.create.test");
@@ -69,7 +79,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
 
     if (psiClass == null) return false;
 
-    Module srcModule = ModuleUtil.findModuleForPsiElement(psiClass);
+    Module srcModule = ModuleUtilCore.findModuleForPsiElement(psiClass);
     if (srcModule == null) return false;
 
     if (psiClass.isAnnotationType() ||
@@ -91,13 +101,22 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
   @Override
   public void invoke(final @NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.preparePsiElementForWrite(element)) return;
-    final Module srcModule = ModuleUtil.findModuleForPsiElement(element);
+    final Module srcModule = ModuleUtilCore.findModuleForPsiElement(element);
     final PsiClass srcClass = getContainingClass(element);
 
     if (srcClass == null) return;
 
     PsiDirectory srcDir = element.getContainingFile().getContainingDirectory();
     PsiPackage srcPackage = JavaDirectoryService.getInstance().getPackage(srcDir);
+
+    final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
+    if (!checkForTestRoots(srcModule) && !propertiesComponent.getBoolean(CREATE_TEST_IN_THE_SAME_ROOT, false)) {
+      if (Messages.showOkCancelDialog(project, "Create test in the same source root?", "No Test Roots Found", Messages.getQuestionIcon()) != DialogWrapper.OK_EXIT_CODE) {
+        return;
+      }
+
+      propertiesComponent.setValue(CREATE_TEST_IN_THE_SAME_ROOT, String.valueOf(true));
+    }
 
     final CreateTestDialog d = new CreateTestDialog(project,
                                                     getText(),
@@ -115,6 +134,16 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
         generator.generateTest(project, d);
       }
     }, CodeInsightBundle.message("intention.create.test"), this);
+  }
+
+  private static boolean checkForTestRoots(Module srcModule) {
+    final ContentEntry[] entries = ModuleRootManager.getInstance(srcModule).getContentEntries();
+    for (ContentEntry entry : entries) {
+      for (SourceFolder sourceFolder : entry.getSourceFolders()) {
+        if (sourceFolder.isTestSource()) return true;
+      }
+    }
+    return false;
   }
 
   @Nullable

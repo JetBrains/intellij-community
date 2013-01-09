@@ -33,7 +33,6 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
-import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.*;
@@ -99,15 +98,15 @@ public class StaticImportMethodFix implements IntentionAction {
   private PsiType getExpectedType() {
     final PsiMethodCallExpression methodCall = myMethodCall.getElement();
     if (methodCall == null) return null;
-    final PsiElement parent = PsiResolveHelperImpl.skipParenthesizedExprUp(methodCall.getParent());
+    final PsiElement parent = PsiUtil.skipParenthesizedExprUp(methodCall.getParent());
 
     if (parent instanceof PsiVariable) {
-      if (methodCall.equals(PsiResolveHelperImpl.skipParenthesizedExprDown(((PsiVariable)parent).getInitializer()))) {
+      if (methodCall.equals(PsiUtil.skipParenthesizedExprDown(((PsiVariable)parent).getInitializer()))) {
         return ((PsiVariable)parent).getType();
       }
     }
     else if (parent instanceof PsiAssignmentExpression) {
-      if (methodCall.equals(PsiResolveHelperImpl.skipParenthesizedExprDown(((PsiAssignmentExpression)parent).getRExpression()))) {
+      if (methodCall.equals(PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)parent).getRExpression()))) {
         return ((PsiAssignmentExpression)parent).getLExpression().getType();
       }
     }
@@ -131,7 +130,7 @@ public class StaticImportMethodFix implements IntentionAction {
         if (psiElement instanceof PsiMethod) {
           final PsiMethod psiMethod = (PsiMethod)psiElement;
           final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-          final int idx = ArrayUtilRt.find(((PsiExpressionList)parent).getExpressions(), PsiResolveHelperImpl.skipParenthesizedExprUp(methodCall));
+          final int idx = ArrayUtilRt.find(((PsiExpressionList)parent).getExpressions(), PsiUtil.skipParenthesizedExprUp(methodCall));
           if (idx > -1 && parameters.length > 0) {
             PsiType parameterType = parameters[Math.min(idx, parameters.length - 1)].getType();
             if (idx >= parameters.length - 1) {

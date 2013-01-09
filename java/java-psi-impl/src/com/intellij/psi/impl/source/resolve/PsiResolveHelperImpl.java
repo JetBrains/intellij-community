@@ -91,7 +91,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(myManager.getProject()).getParserFacade();
     try {
       final PsiJavaCodeReferenceElement ref = parserFacade.createReferenceFromText(referenceText, context);
-      LOG.assertTrue(ref.isValid());
+      LOG.assertTrue(ref.isValid(), referenceText);
       return ResolveClassUtil.resolveClass(ref);
     }
     catch (IncorrectOperationException e) {
@@ -504,7 +504,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     Pair<PsiType, ConstraintType> substitution = null;
     if (owner instanceof PsiMethod && parent instanceof PsiCallExpression) {
       PsiCallExpression methodCall = (PsiCallExpression)parent;
-      substitution = inferMethodTypeParameterFromParent(skipParenthesizedExprUp(methodCall.getParent()), methodCall, typeParameter, substitutor, policy);
+      substitution = inferMethodTypeParameterFromParent(PsiUtil.skipParenthesizedExprUp(methodCall.getParent()), methodCall, typeParameter, substitutor, policy);
     }
     return substitution;
   }
@@ -585,7 +585,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
                                                                            PsiType lowerBound) {
     final PsiLambdaExpression lambdaExpression = arg.getExpression();
     if (PsiUtil.getLanguageLevel(lambdaExpression).isAtLeast(LanguageLevel.JDK_1_8)) {
-      final PsiElement parent = skipParenthesizedExprUp(lambdaExpression.getParent());
+      final PsiElement parent = PsiUtil.skipParenthesizedExprUp(lambdaExpression.getParent());
       if (parent instanceof PsiExpressionList) {
         final PsiExpressionList expressionList = (PsiExpressionList)parent;
         final Map<PsiElement, Pair<PsiMethod, PsiSubstitutor>> methodMap = MethodCandidateInfo.CURRENT_CANDIDATE.get();
@@ -927,12 +927,12 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     PsiType expectedType = null;
 
     if (parent instanceof PsiVariable) {
-      if (methodCall.equals(skipParenthesizedExprDown(((PsiVariable)parent).getInitializer()))) {
+      if (methodCall.equals(PsiUtil.skipParenthesizedExprDown(((PsiVariable)parent).getInitializer()))) {
         expectedType = ((PsiVariable)parent).getType();
       }
     }
     else if (parent instanceof PsiAssignmentExpression) {
-      if (methodCall.equals(skipParenthesizedExprDown(((PsiAssignmentExpression)parent).getRExpression()))) {
+      if (methodCall.equals(PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)parent).getRExpression()))) {
         expectedType = ((PsiAssignmentExpression)parent).getLExpression().getType();
       }
     }
@@ -1052,20 +1052,5 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       result = new Pair<PsiType, ConstraintType>(guess, constraint.getSecond());
     }
     return result;
-  }
-
-  @Nullable
-  public static PsiExpression skipParenthesizedExprDown(PsiExpression initializer) {
-    while (initializer instanceof PsiParenthesizedExpression) {
-      initializer = ((PsiParenthesizedExpression)initializer).getExpression();
-    }
-    return initializer;
-  }
-
-  public static PsiElement skipParenthesizedExprUp(PsiElement parent) {
-    while (parent instanceof PsiParenthesizedExpression) {
-      parent = parent.getParent();
-    }
-    return parent;
   }
 }
