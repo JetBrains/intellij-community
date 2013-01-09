@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -25,7 +24,10 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeParser;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.ChainIterable;
 import com.jetbrains.python.toolbox.FP;
 import org.apache.commons.httpclient.HttpClient;
@@ -36,7 +38,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 
 import static com.jetbrains.python.documentation.DocumentationBuilderKit.*;
 
@@ -548,7 +551,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     PyParameter[] list = element.getParameterList().getParameters();
     StringBuilder builder = new StringBuilder(offset);
     for (PyParameter p : list) {
-      if (p.getText().equals(PyNames.CANONICAL_SELF)) {
+      if (p.getText().equals(PyNames.CANONICAL_SELF) || p.getName() == null) {
         continue;
       }
       builder.append(prefix);

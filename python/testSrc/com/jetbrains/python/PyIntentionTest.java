@@ -335,6 +335,10 @@ public class PyIntentionTest extends PyTestCase {
     doDocStubTest();
   }
 
+  public void testDocStubKeywordOnly() {
+    doDocStubTest(LanguageLevel.PYTHON32);
+  }
+
   // PY-7383
   public void testYieldFrom() {
     doTest(PyBundle.message("INTN.yield.from"), LanguageLevel.PYTHON33);
@@ -342,6 +346,16 @@ public class PyIntentionTest extends PyTestCase {
 
   public void testUnicodeStringConcatToFormat() { //PY-7463
     doTest(PyBundle.message("INTN.replace.plus.with.format.operator"));
+  }
+
+  private void doDocStubTest(LanguageLevel languageLevel) {
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
+    try {
+      doDocStubTest();
+    }
+    finally {
+      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
+    }
   }
 
   private void doDocStubTest() {
