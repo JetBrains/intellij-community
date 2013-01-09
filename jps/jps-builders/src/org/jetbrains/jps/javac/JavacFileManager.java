@@ -18,16 +18,14 @@ package org.jetbrains.jps.javac;
 import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.builders.java.JavaSourceTransformer;
 import org.jetbrains.jps.incremental.Utils;
 
 import javax.tools.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -36,6 +34,7 @@ import java.util.Set;
 class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager> implements StandardJavaFileManager{
 
   private final Context myContext;
+  private final Collection<JavaSourceTransformer> mySourceTransformers;
   private Map<File, Set<File>> myOutputsMap = Collections.emptyMap();
 
   interface Context {
@@ -48,9 +47,10 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     void reportMessage(final Diagnostic.Kind kind, String message);
   }
 
-  public JavacFileManager(Context context) {
+  public JavacFileManager(Context context, Collection<JavaSourceTransformer> transformers) {
     super(context.getStandardFileManager());
     myContext = context;
+    mySourceTransformers = transformers;
   }
 
   public void setOutputDirectories(final Map<File, Set<File>> outputDirToSrcRoots) throws IOException{
@@ -66,19 +66,19 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
   }
 
   public Iterable<? extends JavaFileObject> getJavaFileObjectsFromFiles(Iterable<? extends File> files) {
-    return getStdManager().getJavaFileObjectsFromFiles(files);
+    return wrapJavaFileObjects(getStdManager().getJavaFileObjectsFromFiles(files));
   }
 
   public Iterable<? extends JavaFileObject> getJavaFileObjects(File... files) {
-    return getStdManager().getJavaFileObjects(files);
+    return wrapJavaFileObjects(getStdManager().getJavaFileObjects(files));
   }
 
   public Iterable<? extends JavaFileObject> getJavaFileObjectsFromStrings(Iterable<String> names) {
-    return getStdManager().getJavaFileObjectsFromStrings(names);
+    return wrapJavaFileObjects(getStdManager().getJavaFileObjectsFromStrings(names));
   }
 
   public Iterable<? extends JavaFileObject> getJavaFileObjects(String... names) {
-    return getStdManager().getJavaFileObjects(names);
+    return wrapJavaFileObjects(getStdManager().getJavaFileObjects(names));
   }
 
   public Iterable<? extends File> getLocation(Location location) {
@@ -104,6 +104,24 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
   }
 
   @Override
+  public Iterable<JavaFileObject> list(Location location, String packageName, Set<JavaFileObject.Kind> kinds, boolean recurse) throws IOException {
+    final Iterable<JavaFileObject> objects = super.list(location, packageName, kinds, recurse);
+    //noinspection unchecked
+    return kinds.contains(JavaFileObject.Kind.SOURCE)? (Iterable<JavaFileObject>)wrapJavaFileObjects(objects) : objects;
+  }
+
+  private Iterable<? extends JavaFileObject> wrapJavaFileObjects(Iterable<? extends JavaFileObject> originalObjects) {
+    if (mySourceTransformers.isEmpty()) {
+      return originalObjects;
+    }
+    final List<JavaFileObject> wrapped = new ArrayList<JavaFileObject>();
+    for (JavaFileObject fo : originalObjects) {
+      wrapped.add(JavaFileObject.Kind.SOURCE.equals(fo.getKind())? new TransformableJavaFileObject(fo, mySourceTransformers) : fo);
+    }
+    return wrapped;
+  }
+  
+  @Override
   public JavaFileObject getJavaFileForInput(Location location, String className, JavaFileObject.Kind kind) throws IOException {
     checkCanceled();
     final JavaFileObject fo = super.getJavaFileForInput(location, className, kind);
@@ -111,7 +129,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
       // workaround javac bug (missing null-check): throwing exception here instead of returning null
       throw new FileNotFoundException("Java resource does not exist : " + location + '/' + kind + '/' + className);
     }
-    return fo;
+    return mySourceTransformers.isEmpty()? fo : new TransformableJavaFileObject(fo, mySourceTransformers);
   }
 
   public JavaFileObject getJavaFileForOutput(Location location, String className, JavaFileObject.Kind kind, FileObject sibling) throws IOException {
@@ -200,10 +218,6 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
   @NotNull
   private StandardJavaFileManager getStdManager() {
     return fileManager;
-  }
-
-  public Iterable<? extends JavaFileObject> toJavaFileObjects(Iterable<? extends File> files) {
-    return getStdManager().getJavaFileObjectsFromFiles(files);
   }
 
   @Override
