@@ -255,10 +255,12 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       names.add(info.getName());
     }
     for (PyParameter p : function.getParameterList().getParameters()) {
-      if (!names.contains(p.getName())) {
+      final String paramName = p.getName();
+      if (!names.contains(paramName) && paramName != null) {
         PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(function.getProject());
         String prefix = documentationSettings.isEpydocFormat(docStringExpression.getContainingFile())? "@" : ":";
-        final String replacement = PythonDocCommentUtil.removeParamFromDocstring(docStringExpression.getText(), prefix, p.getName());
+        final String replacement = PythonDocCommentUtil.removeParamFromDocstring(docStringExpression.getText(), prefix,
+                                                                                 paramName);
         PyExpression str = PyElementGenerator.getInstance(function.getProject()).createDocstring(replacement).getExpression();
         docStringExpression.replace(str);
       }
