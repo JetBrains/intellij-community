@@ -65,8 +65,8 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
     }
     final List<PsiElement> superMethods = new ArrayList<PsiElement>(PySuperMethodsSearch.search(function, true).findAll());
     if (superMethods.size() > 0) {
-      // TODO this is not exactly right for multiple inheritance
-      final PyFunction deepestSuperMethod = (PyFunction) superMethods.get(superMethods.size()-1);
+      final PyFunction deepestSuperMethod = PySuperMethodsSearch
+        .getBaseMethod(superMethods, containingClass);
       String message = "Method " + function.getName() + " of class " + containingClass.getQualifiedName() + "\noverrides method of class "
                        + deepestSuperMethod.getContainingClass().getQualifiedName() + ".\nDo you want to rename the base method?";
       int rc = Messages.showYesNoCancelDialog(element.getProject(), message, "Rename", Messages.getQuestionIcon());

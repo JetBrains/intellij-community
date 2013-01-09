@@ -114,32 +114,35 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
   @Nullable
   protected static PyFunction getSuperMethod(@Nullable PyFunction function) {
     if (function == null) return null;
-    final PyClass clazz = function.getContainingClass();
-    if (clazz == null) {
+    final PyClass containingClass = function.getContainingClass();
+    if (containingClass == null) {
       return function;
     }
     final List<PsiElement> superMethods = new ArrayList<PsiElement>(PySuperMethodsSearch.search(function, true).findAll());
     if (superMethods.size() > 0) {
-      final PyFunction result = (PyFunction) superMethods.get(superMethods.size()-1);
+      final PyFunction result = PySuperMethodsSearch.getBaseMethod(superMethods,
+                                                                   containingClass);
       final PyClass baseClass = result.getContainingClass();
       final PyBuiltinCache cache = PyBuiltinCache.getInstance(baseClass);
       String baseClassName = baseClass == null? "" : baseClass.getName();
       if (cache.hasInBuiltins(baseClass))
         return function;
-      final String message = PyBundle.message("refactoring.change.signature.find.usages.of.base.class",
-                                              function.getName(),
-                                              clazz.getName(),
-                                              baseClassName);
+      final String message = PyBundle.message(
+        "refactoring.change.signature.find.usages.of.base.class",
+        function.getName(),
+        containingClass.getName(),
+        baseClassName);
       int choice;
       if (ApplicationManagerEx.getApplicationEx().isUnitTestMode()) {
         choice = 0;
       }
       else {
-        choice = Messages.showYesNoCancelDialog(function.getProject(), message, REFACTORING_NAME, Messages.getQuestionIcon());
+        choice = Messages.showYesNoCancelDialog(function.getProject(), message,
+                                                REFACTORING_NAME, Messages.getQuestionIcon());
       }
       switch (choice) {
         case 0:
-          return (PyFunction)result;
+          return result;
         case 1:
           return function;
         default:

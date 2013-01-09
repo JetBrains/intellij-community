@@ -19,7 +19,7 @@ public class PyParameterInfo implements ParameterInfo {
     myOldIndex = index;
   }
 
-  public PyParameterInfo(int oldIndex, String name, String defaultValue, boolean defaultInSignature) {
+  public PyParameterInfo(int oldIndex, String name, @Nullable String defaultValue, boolean defaultInSignature) {
     myOldIndex = oldIndex;
     myName = name;
     myDefaultValue = defaultValue;

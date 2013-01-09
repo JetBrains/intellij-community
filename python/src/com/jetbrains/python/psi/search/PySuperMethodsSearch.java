@@ -3,13 +3,28 @@ package com.jetbrains.python.psi.search;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.searches.ExtensibleQueryFactory;
 import com.intellij.util.Query;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
+
+import java.util.List;
 
 /**
  * @author yole
  */
 public class PySuperMethodsSearch extends ExtensibleQueryFactory<PsiElement, PySuperMethodsSearch.SearchParameters> {
   public static PySuperMethodsSearch INSTANCE = new PySuperMethodsSearch();
+
+  public static PyFunction getBaseMethod(List<PsiElement> superMethods,
+                                         PyClass containingClass) {
+
+    for (PyClass ancestor : containingClass.iterateAncestorClasses()) {
+      for (PsiElement method : superMethods) {
+        if (ancestor.equals(((PyFunction)method).getContainingClass()))
+          return (PyFunction)method;
+      }
+    }
+    return (PyFunction) superMethods.get(superMethods.size()-1);
+  }
 
   public static class SearchParameters {
     private final PyFunction myDerivedMethod;

@@ -19,6 +19,10 @@ import java.util.List;
 @TestDataPath("$CONTENT_ROOT/../testData/refactoring/changeSignature/")
 public class PyChangeSignatureTest extends PyTestCase {
 
+  public void testChooseSuperMethod() {
+    doChangeSignatureTest("baz", null);
+  }
+
   public void testChangeFunctionName() {
     doChangeSignatureTest("bar", null);
   }
@@ -117,7 +121,7 @@ public class PyChangeSignatureTest extends PyTestCase {
     myFixture.checkResultByFile("refactoring/changeSignature/" + getTestName(true) + ".after.py");
   }
 
-  private void doChangeSignatureTest(String newName, @Nullable List<PyParameterInfo> parameters, LanguageLevel level) {
+  private void doChangeSignatureTest(@Nullable String newName, @Nullable List<PyParameterInfo> parameters, LanguageLevel level) {
     setLanguageLevel(level);
     try {
       doChangeSignatureTest(newName, parameters);
@@ -127,7 +131,7 @@ public class PyChangeSignatureTest extends PyTestCase {
     }
   }
 
-  public void doValidationTest(@Nullable String newName, @Nullable List<PyParameterInfo> parameters, String expected) {
+  public void doValidationTest(@Nullable String newName, @Nullable List<PyParameterInfo> parameters, @Nullable String expected) {
     myFixture.configureByFile("refactoring/changeSignature/" + getTestName(true) + ".py");
     final PyChangeSignatureHandler changeSignatureHandler = new PyChangeSignatureHandler();
     final PyFunction function = (PyFunction)changeSignatureHandler.findTargetMember(myFixture.getFile(), myFixture.getEditor());
@@ -153,11 +157,13 @@ public class PyChangeSignatureTest extends PyTestCase {
 
   private void changeSignature(@Nullable String newName, @Nullable List<PyParameterInfo> parameters) {
     final PyChangeSignatureHandler changeSignatureHandler = new PyChangeSignatureHandler();
-    final PyFunction function = (PyFunction)changeSignatureHandler.findTargetMember(myFixture.getFile(), myFixture.getEditor());
+    final PyFunction function = (PyFunction)changeSignatureHandler.findTargetMember(
+      myFixture.getFile(), myFixture.getEditor());
     assertNotNull(function);
-
-    final PyMethodDescriptor method = new PyMethodDescriptor(function);
-    final TestPyChangeSignatureDialog dialog = new TestPyChangeSignatureDialog(function.getProject(), method);
+    final PyFunction newFunction = PyChangeSignatureHandler.getSuperMethod(function);
+    assertNotNull(newFunction);
+    final PyMethodDescriptor method = new PyMethodDescriptor(newFunction);
+    final TestPyChangeSignatureDialog dialog = new TestPyChangeSignatureDialog(newFunction.getProject(), method);
     try {
       if (newName != null) {
         dialog.setNewName(newName);
