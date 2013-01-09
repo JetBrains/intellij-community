@@ -66,6 +66,12 @@ public class MavenPluginDescriptor extends AbstractExtensionPointBean {
     @Attribute("refProvider")
     public String refProvider;
 
+    @Attribute("values")
+    public String values;
+
+    @Attribute("soft")
+    public Boolean soft;
+
     /**
      * Language to inject.
      */

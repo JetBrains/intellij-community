@@ -33,6 +33,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -40,6 +41,7 @@ import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.duplicates.DuplicatesImpl;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class ExtractMethodObjectHandler implements RefactoringActionHandler {
@@ -86,15 +88,24 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler {
     final RangeMarker marker = editor.getDocument().createRangeMarker(new TextRange(offset, offset));
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
+        PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable() {
           public void run() {
-            extractProcessor.doRefactoring();
+            try {
+              ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                @Override
+                public void run() {
+                  extractProcessor.doRefactoring();
+                }
+              });
+              processor.run();
+              processor.runChangeSignature();
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
+            }
           }
         });
 
-        processor.run();
-        processor.runChangeSignature();
         PsiDocumentManager.getInstance(project).commitAllDocuments();
         if (processor.isCreateInnerClass()) {
           processor.moveUsedMethodsToInner();

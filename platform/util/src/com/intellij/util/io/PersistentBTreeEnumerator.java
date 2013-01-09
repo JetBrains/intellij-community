@@ -66,18 +66,18 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private static final int KEY_SHIFT = 1;
 
   public PersistentBTreeEnumerator(@NotNull File file, @NotNull KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
-    this(file, dataDescriptor, initialSize, ourLock.myDefaultStorageLockContext);
+    this(file, dataDescriptor, initialSize, null);
   }
 
   public PersistentBTreeEnumerator(@NotNull File file,
                                    @NotNull KeyDescriptor<Data> dataDescriptor,
                                    int initialSize,
-                                   PagedFileStorage.StorageLockContext lockContext) throws IOException {
+                                   @Nullable PagedFileStorage.StorageLockContext lockContext) throws IOException {
     super(file,
           new ResizeableMappedFile(
             file,
             initialSize,
-            lockContext != null ? lockContext:ourLock.myDefaultStorageLockContext,
+            lockContext,
             VALUE_PAGE_SIZE,
             true
           ),

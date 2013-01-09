@@ -75,6 +75,7 @@
       <module fileurl="file://$PROJECT_DIR$/java/java-tests/java-tests.iml" filepath="$PROJECT_DIR$/java/java-tests/java-tests.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/compiler/javac2/javac2.iml" filepath="$PROJECT_DIR$/java/compiler/javac2/javac2.iml" group="java/compiler" />
       <module fileurl="file://$PROJECT_DIR$/plugins/cvs/javacvs-src/javacvs-src.iml" filepath="$PROJECT_DIR$/plugins/cvs/javacvs-src/javacvs-src.iml" group="plugins/VCS/cvs" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/javaFX/javaFX.iml" filepath="$PROJECT_DIR$/plugins/javaFX/javaFX.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/jetgroovy.iml" filepath="$PROJECT_DIR$/plugins/groovy/jetgroovy.iml" group="plugins/Groovy" />
       <module fileurl="file://$PROJECT_DIR$/plugins/tasks/jira-connector/jira-connector.iml" filepath="$PROJECT_DIR$/plugins/tasks/jira-connector/jira-connector.iml" group="plugins/tasks" />
       <module fileurl="file://$PROJECT_DIR$/jps/jps-builders/jps-builders.iml" filepath="$PROJECT_DIR$/jps/jps-builders/jps-builders.iml" group="jps" />
@@ -118,6 +119,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tasks-core/tasks-core.iml" filepath="$PROJECT_DIR$/plugins/tasks/tasks-core/tasks-core.iml" group="plugins/tasks" />
       <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tasks-java/tasks-java.iml" filepath="$PROJECT_DIR$/plugins/tasks/tasks-java/tasks-java.iml" group="plugins/tasks" />
       <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tasks-tests/tasks-tests.iml" filepath="$PROJECT_DIR$/plugins/tasks/tasks-tests/tasks-tests.iml" group="plugins/tasks" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tasks-time-tracking/tasks-time-tracking.iml" filepath="$PROJECT_DIR$/plugins/tasks/tasks-time-tracking/tasks-time-tracking.iml" group="plugins/tasks" />
       <module fileurl="file://$PROJECT_DIR$/platform/testFramework/testFramework.iml" filepath="$PROJECT_DIR$/platform/testFramework/testFramework.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/java/testFramework/testFramework-java.iml" filepath="$PROJECT_DIR$/java/testFramework/testFramework-java.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/platform/testRunner/testRunner.iml" filepath="$PROJECT_DIR$/platform/testRunner/testRunner.iml" group="platform" />

@@ -178,9 +178,10 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   public PsiTypeParameter createTypeParameter(String name, PsiClassType[] superTypes) {
     StringBuilder builder = new StringBuilder();
     builder.append("public <").append(name);
-    if (superTypes.length > 0) {
+    if (superTypes.length > 1) {
       builder.append(" extends ");
       for (PsiClassType type : superTypes) {
+        if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) continue;
         builder.append(type.getCanonicalText()).append(',');
       }
 

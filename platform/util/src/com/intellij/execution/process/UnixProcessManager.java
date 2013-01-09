@@ -32,6 +32,8 @@ import java.util.*;
  * @author traff
  */
 public class UnixProcessManager {
+  private static final Logger LOG = Logger.getInstance(UnixProcessManager.class);
+
   public static final int SIGINT = 2;
   public static final int SIGKILL = 9;
   public static final int SIGTERM = 15;
@@ -104,6 +106,7 @@ public class UnixProcessManager {
    * @param process tree root process
    */
   public static boolean sendSignalToProcessTree(Process process, int signal) {
+    try {
     checkCLib();
 
     final int our_pid = C_LIB.getpid();
@@ -137,6 +140,11 @@ public class UnixProcessManager {
     }
     else {
       return true; //the parent process was already killed
+    }
+    } catch (Exception e) {
+      //If we fail somehow just return false
+      LOG.warn("Error killing the process", e);
+      return false;
     }
   }
 
@@ -208,7 +216,7 @@ public class UnixProcessManager {
         errorStr.append(s).append("\n");
       }
       if (errorStr.length() > 0) {
-        throw new IllegalStateException("error:" + errorStr.toString());
+        throw new IOException("Error reading ps output:" + errorStr.toString());
       }
     }
     finally {

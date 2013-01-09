@@ -1482,14 +1482,17 @@ public class UIUtil {
     return new BufferedImage(width, height, type);
   }
 
-  public static void paintWithRetina(@NotNull Dimension size, @NotNull Graphics g, Consumer<Graphics2D> paintRoutine) {
-    paintWithRetina(size, g, true, paintRoutine);
+  public static void paintWithXorOnRetina(@NotNull Dimension size, @NotNull Graphics g, Consumer<Graphics2D> paintRoutine) {
+    paintWithXorOnRetina(size, g, true, paintRoutine);
   }
 
-  public static void paintWithRetina(@NotNull Dimension size,
-                                     @NotNull Graphics g,
-                                     boolean useRetinaCondition,
-                                     Consumer<Graphics2D> paintRoutine) {
+  /**
+   * Direct painting into component's graphics with XORMode is broken on retina-mode so we need to paint into an intermediate buffer first.
+   */
+  public static void paintWithXorOnRetina(@NotNull Dimension size,
+                                          @NotNull Graphics g,
+                                          boolean useRetinaCondition,
+                                          Consumer<Graphics2D> paintRoutine) {
     if (!useRetinaCondition || !isRetina() || Registry.is("ide.mac.retina.disableDrawingFix", false)) {
       paintRoutine.consume((Graphics2D)g);
     }

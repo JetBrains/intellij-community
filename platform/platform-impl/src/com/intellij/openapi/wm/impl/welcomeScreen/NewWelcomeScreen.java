@@ -26,8 +26,10 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.updateSettings.impl.CheckForUpdateAction;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
+import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.WelcomeScreen;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 
@@ -37,14 +39,14 @@ import java.awt.*;
 
 public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
 
-  public NewWelcomeScreen(JRootPane rootPane) {
+  public NewWelcomeScreen() {
     super(new BorderLayout());
     add(createHeaderPanel(), BorderLayout.NORTH);
     add(createFooterPanel(), BorderLayout.SOUTH);
     add(createInnerPanel(), BorderLayout.CENTER);
   }
 
-  private WelcomePane createInnerPanel() {
+  private static WelcomePane createInnerPanel() {
     WelcomeScreenGroup root = new WelcomeScreenGroup(null, "Root");
 
     ActionManager actionManager = ActionManager.getInstance();
@@ -59,7 +61,7 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
     return new WelcomePane(root);
   }
 
-  private WelcomeScreenGroup buildRootGroup(Icon groupIcon, String groupText, String groupId) {
+  private static WelcomeScreenGroup buildRootGroup(Icon groupIcon, String groupText, String groupId) {
     WelcomeScreenGroup docs = new WelcomeScreenGroup(groupIcon, groupText);
     ActionGroup docsActions = (ActionGroup)ActionManager.getInstance().getAction(groupId);
     for (AnAction child : docsActions.getChildren(null)) {
@@ -68,7 +70,7 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
     return docs;
   }
 
-  private JPanel createFooterPanel() {
+  private static JPanel createFooterPanel() {
     JLabel versionLabel = new JLabel(ApplicationNamesInfo.getInstance().getFullProductName() +
                              " " +
                              ApplicationInfo.getInstance().getFullVersion() +
@@ -103,7 +105,7 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
     return label;
   }
 
-  private JPanel createHeaderPanel() {
+  private static JPanel createHeaderPanel() {
     JPanel header = new JPanel(new BorderLayout());
     JLabel welcome = new JLabel("Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName(),
                                 IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getWelcomeScreenLogoUrl()), 
@@ -122,6 +124,18 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
   @Override
   public JComponent getWelcomePanel() {
     return this;
+  }
+
+  @Override
+  public void setupFrame(JFrame frame) {
+    frame.setResizable(false);
+    frame.pack();
+    Point location = DimensionService.getInstance().getLocation(WelcomeFrame.DIMENSION_KEY, null);
+    Rectangle screenBounds = ScreenUtil.getScreenRectangle(location != null ? location : new Point(0, 0));
+    frame.setLocation(new Point(
+      screenBounds.x + (screenBounds.width - frame.getWidth()) / 2,
+      screenBounds.y + (screenBounds.height - frame.getHeight()) / 3
+    ));
   }
 
   @Override

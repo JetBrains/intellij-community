@@ -16,9 +16,16 @@
 package com.intellij.framework.detection.impl;
 
 import com.intellij.framework.detection.FrameworkDetectionContext;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
 public abstract class FrameworkDetectionContextBase implements FrameworkDetectionContext {
+  @Nullable
+  @Override
+  public Project getProject() {
+    return null;
+  }
 }

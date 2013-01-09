@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,10 @@ public class ElementManipulators extends ClassExtension<ElementManipulator> {
     if (valueTextRange.isEmpty()) return "";
 
     final String text = element.getText();
-    LOG.assertTrue(valueTextRange.getEndOffset() <= text.length(), "Wrong range for " + element + " text: " + text + " range " + valueTextRange);
+    if (valueTextRange.getEndOffset() > text.length()) {
+      LOG.error("Wrong range for " + element + " text: " + text + " range " + valueTextRange);
+    }
+
     return valueTextRange.substring(text);
   }
 }

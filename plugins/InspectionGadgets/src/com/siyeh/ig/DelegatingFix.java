@@ -18,6 +18,7 @@ package com.siyeh.ig;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,5 +43,13 @@ public class DelegatingFix extends InspectionGadgetsFix {
   protected void doFix(Project project, ProblemDescriptor descriptor)
     throws IncorrectOperationException {
     delegate.applyFix(project, descriptor);
+  }
+
+  /**
+   * Delegating fix should check for read-only status separately
+   */
+  @Override
+  protected boolean isQuickFixOnReadOnlyFile(PsiElement problemElement) {
+    return false;
   }
 }

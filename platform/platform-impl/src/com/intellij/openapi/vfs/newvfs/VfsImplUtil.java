@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,15 +32,14 @@ public class VfsImplUtil {
   private VfsImplUtil() { }
 
   @Nullable
-  public static NewVirtualFile findFileByPath(@NotNull final NewVirtualFileSystem vfs, @NotNull @NonNls final String path) {
-    final String normalizedPath = vfs.normalize(path);
-    if (normalizedPath == null) return null;
-    final String basePath = vfs.extractRootPath(normalizedPath);
-    NewVirtualFile file = ManagingFS.getInstance().findRoot(basePath, vfs);
-    if (file == null || !file.exists()) return null;
-    if (normalizedPath.length() < basePath.length()) return null;
+  public static NewVirtualFile findFileByPath(@NotNull NewVirtualFileSystem vfs, @NotNull @NonNls String path) {
+    Pair<NewVirtualFile, Iterable<String>> data = prepare(vfs, path);
+    if (data == null) {
+      return null;
+    }
 
-    for (String pathElement : StringUtil.tokenize(normalizedPath.substring(basePath.length()), FILE_SEPARATORS)) {
+    NewVirtualFile file = data.first;
+    for (String pathElement : data.second) {
       if (pathElement.isEmpty() || ".".equals(pathElement)) continue;
       if ("..".equals(pathElement)) {
         if (file.isSymLink()) {
@@ -61,14 +61,14 @@ public class VfsImplUtil {
   }
 
   @Nullable
-  public static NewVirtualFile findFileByPathIfCached(@NotNull final NewVirtualFileSystem vfs, @NotNull @NonNls final String path) {
-    final String normalizedPath = vfs.normalize(path);
-    if (normalizedPath == null) return null;
-    final String basePath = vfs.extractRootPath(normalizedPath);
-    NewVirtualFile file = ManagingFS.getInstance().findRoot(basePath, vfs);
-    if (file == null || !file.exists()) return null;
+  public static NewVirtualFile findFileByPathIfCached(@NotNull NewVirtualFileSystem vfs, @NotNull @NonNls String path) {
+    Pair<NewVirtualFile, Iterable<String>> data = prepare(vfs, path);
+    if (data == null) {
+      return null;
+    }
 
-    for (String pathElement : StringUtil.tokenize(normalizedPath.substring(basePath.length()), FILE_SEPARATORS)) {
+    NewVirtualFile file = data.first;
+    for (String pathElement : data.second) {
       if (pathElement.isEmpty() || ".".equals(pathElement)) continue;
       if ("..".equals(pathElement)) {
         if (file.isSymLink()) {
@@ -91,17 +91,14 @@ public class VfsImplUtil {
   }
 
   @Nullable
-  public static NewVirtualFile refreshAndFindFileByPath(@NotNull final NewVirtualFileSystem vfs, @NotNull @NonNls final String path) {
-    final String normalizedPath = vfs.normalize(path);
-    if (normalizedPath == null) return null;
-    final String basePath = vfs.extractRootPath(normalizedPath);
-    NewVirtualFile file = ManagingFS.getInstance().findRoot(basePath, vfs);
-    if (file == null || !file.exists()) return null;
+  public static NewVirtualFile refreshAndFindFileByPath(@NotNull NewVirtualFileSystem vfs, @NotNull @NonNls String path) {
+    Pair<NewVirtualFile, Iterable<String>> data = prepare(vfs, path);
+    if (data == null) {
+      return null;
+    }
 
-    LOG.assertTrue(basePath.length() <= normalizedPath.length(),
-                   vfs + " failed to extract root path '" + basePath + "' from '" + normalizedPath + "'");
-
-    for (String pathElement : StringUtil.tokenize(normalizedPath.substring(basePath.length()), FILE_SEPARATORS)) {
+    NewVirtualFile file = data.first;
+    for (String pathElement : data.second) {
       if (pathElement.isEmpty() || ".".equals(pathElement)) continue;
       if ("..".equals(pathElement)) {
         if (file.isSymLink()) {
@@ -121,5 +118,27 @@ public class VfsImplUtil {
     }
 
     return file;
+  }
+
+  @Nullable
+  private static Pair<NewVirtualFile, Iterable<String>> prepare(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
+    String normalizedPath = vfs.normalize(path);
+    if (normalizedPath == null) {
+      return null;
+    }
+
+    String basePath = vfs.extractRootPath(normalizedPath);
+    if (basePath.length() > normalizedPath.length()) {
+      LOG.error(vfs + " failed to extract root path '" + basePath + "' from '" + normalizedPath + "'");
+      return null;
+    }
+
+    NewVirtualFile root = ManagingFS.getInstance().findRoot(basePath, vfs);
+    if (root == null || !root.exists()) {
+      return null;
+    }
+
+    Iterable<String> parts = StringUtil.tokenize(normalizedPath.substring(basePath.length()), FILE_SEPARATORS);
+    return Pair.create(root, parts);
   }
 }

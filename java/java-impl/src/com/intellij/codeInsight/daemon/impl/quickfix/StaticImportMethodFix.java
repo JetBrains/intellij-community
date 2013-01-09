@@ -186,7 +186,8 @@ public class StaticImportMethodFix implements IntentionAction {
             .inferTypeArguments(method.getTypeParameters(), method.getParameterList().getParameters(), argumentList.getExpressions(),
                                 PsiSubstitutor.EMPTY, element.getParent(), DefaultParameterTypeInferencePolicy.INSTANCE);
           if (PsiUtil.isApplicable(method, substitutorForMethod, argumentList)) {
-            if (expectedType == null || TypeConversionUtil.isAssignable(expectedType, substitutorForMethod.substitute(method.getReturnType()))) {
+            final PsiType returnType = substitutorForMethod.substitute(method.getReturnType());
+            if (expectedType == null || returnType == null || TypeConversionUtil.isAssignable(expectedType, returnType)) {
               applicableList.add(method);
             }
           }

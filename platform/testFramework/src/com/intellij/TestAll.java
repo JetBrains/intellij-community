@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ package com.intellij;
 import com.intellij.idea.RecordExecution;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.testFramework.*;
@@ -450,6 +451,11 @@ public class TestAll implements Test {
   }
 
   public TestAll(String packageRoot, String... classRoots) throws IOException, ClassNotFoundException {
+    System.out.println("** OS: " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION);
+    System.out.println("** isWin=" + SystemInfo.isWindows);
+    System.out.println("** isLin=" + SystemInfo.isLinux);
+    System.out.println("** isMac=" + SystemInfo.isMac);
+
     String classFilterName = "tests/testGroups.properties";
     if (Boolean.parseBoolean(System.getProperty("idea.ignore.predefined.groups")) || (ourMode & FILTER_CLASSES) == 0) {
       classFilterName = "";

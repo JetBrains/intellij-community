@@ -166,7 +166,7 @@ public class ProjectSettingsPanel {
       final NamedScope scope = setting.getScope();
       if (!iterator.hasNext()) return true;
       final String scopeName = iterator.next();
-      if (!Comparing.strEqual(scopeName, scope.getName())) return true;
+      if (scope == null || !Comparing.strEqual(scopeName, scope.getName())) return true;
       final String profileName = map.get(scope.getName());
       if (profileName == null) return true;
       if (!profileName.equals(setting.getProfileName())) return true;

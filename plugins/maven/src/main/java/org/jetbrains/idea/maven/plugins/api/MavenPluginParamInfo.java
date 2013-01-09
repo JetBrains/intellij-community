@@ -19,6 +19,7 @@ import org.jetbrains.idea.maven.dom.model.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 /**
  * @author Sergey Evdokimov
@@ -173,6 +174,7 @@ public class MavenPluginParamInfo {
     private volatile boolean myLanguageInitialized;
     private Language myLanguageInstance;
 
+    private volatile boolean myProviderInitialized;
     private volatile MavenParamReferenceProvider myProviderInstance;
 
     private ParamInfo(ClassLoader classLoader, MavenPluginDescriptor.Param param) {
@@ -201,42 +203,73 @@ public class MavenPluginParamInfo {
     }
 
     public MavenParamReferenceProvider getProviderInstance() {
-      MavenParamReferenceProvider res = myProviderInstance;
+      if (!myProviderInitialized) {
+        MavenParamReferenceProvider res = null;
 
-      if (res == null) {
-        if (myParam.refProvider == null) {
-          return null;
+        if (myParam.refProvider != null) {
+          assert myParam.values == null : myParam.name;
+
+          Object instance;
+
+          try {
+            instance = myClassLoader.loadClass(myParam.refProvider).newInstance();
+          }
+          catch (Exception e) {
+            throw new RuntimeException("Failed to create reference provider instance", e);
+          }
+
+          if (instance instanceof MavenParamReferenceProvider) {
+            res = (MavenParamReferenceProvider)instance;
+          }
+          else {
+            res = new PsiReferenceProviderWrapper((PsiReferenceProvider)instance);
+          }
+        }
+        else if (myParam.values != null) {
+          StringTokenizer st = new StringTokenizer(myParam.values, " ,;");
+          int n = st.countTokens();
+
+          if (n == 0) throw new RuntimeException("Incorrect value of 'values' attribute for param " + myParam.name);
+
+          String[] values = new String[n];
+
+          for (int i = 0; i < n; i++) {
+            values[i] = st.nextToken();
+          }
+
+          res = new MavenFixedValueReferenceProvider(values);
         }
 
-        Object instance;
-
-        try {
-          instance = myClassLoader.loadClass(myParam.refProvider).newInstance();
-        }
-        catch (Exception e) {
-          throw new RuntimeException("Failed to create reference provider instance", e);
-        }
-
-        if (instance instanceof MavenParamReferenceProvider) {
-          res = (MavenParamReferenceProvider)instance;
-        }
-        else {
-          final PsiReferenceProvider psiReferenceProvider = (PsiReferenceProvider)instance;
-
-          res = new MavenParamReferenceProvider() {
-            @Override
-            public PsiReference[] getReferencesByElement(@NotNull PsiElement element,
-                                                         @NotNull MavenDomConfiguration domCfg,
-                                                         @NotNull ProcessingContext context) {
-              return psiReferenceProvider.getReferencesByElement(element, context);
-            }
-          };
+        if (res != null && myParam.soft != null) {
+          ((MavenSoftAwareReferenceProvider)res).setSoft(myParam.soft);
         }
 
         myProviderInstance = res;
+        myProviderInitialized = true;
       }
 
-      return res;
+      return myProviderInstance;
+    }
+  }
+
+  private static class PsiReferenceProviderWrapper implements MavenParamReferenceProvider, MavenSoftAwareReferenceProvider {
+
+    private final PsiReferenceProvider myProvider;
+
+    private PsiReferenceProviderWrapper(PsiReferenceProvider provider) {
+      this.myProvider = provider;
+    }
+
+    @Override
+    public PsiReference[] getReferencesByElement(@NotNull PsiElement element,
+                                                 @NotNull MavenDomConfiguration domCfg,
+                                                 @NotNull ProcessingContext context) {
+      return myProvider.getReferencesByElement(element, context);
+    }
+
+    @Override
+    public void setSoft(boolean soft) {
+      ((MavenSoftAwareReferenceProvider)myProvider).setSoft(soft);
     }
   }
 

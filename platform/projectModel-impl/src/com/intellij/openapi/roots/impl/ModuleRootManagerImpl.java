@@ -352,10 +352,12 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   }
 
   public void loadState(ModuleRootManagerState object) {
+    loadState(object, myRootModel != null);
+  }
+
+  protected void loadState(ModuleRootManagerState object, boolean throwEvent) {
     try {
       final RootModelImpl newModel = new RootModelImpl(object.getRootModelElement(), this, myProjectRootManager, myFilePointerManager);
-
-      boolean throwEvent = myRootModel != null;
 
       if (throwEvent) {
         makeRootsChange(new Runnable() {

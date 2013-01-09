@@ -31,6 +31,7 @@ import org.jboss.netty.util.Version;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassVisitor;
 import org.jetbrains.asm4.ClassWriter;
+import org.jetbrains.jps.builders.java.JavaSourceTransformer;
 import org.jetbrains.jps.javac.JavacServer;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.impl.JpsModelImpl;
@@ -187,6 +188,12 @@ public class ClasspathBootstrap {
       catch (Throwable th) {
         LOG.info(th);
       }
+    }
+
+    final Class<JavaSourceTransformer> transformerClass = JavaSourceTransformer.class;
+    final ServiceLoader<JavaSourceTransformer> loader = ServiceLoader.load(transformerClass, transformerClass.getClassLoader());
+    for (JavaSourceTransformer t : loader) {
+      cp.add(getResourceFile(t.getClass()));
     }
 
     return new ArrayList<File>(cp);

@@ -121,8 +121,6 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     return ourFlyweight;
   }
 
-  protected static final PagedFileStorage.StorageLock ourLock = new PagedFileStorage.StorageLock();
-
   private static final int ENUMERATION_CACHE_SIZE;
   static {
     String property = System.getProperty("idea.enumerationCacheSize");

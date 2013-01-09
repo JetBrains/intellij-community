@@ -17,6 +17,7 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -102,7 +103,7 @@ public class SdkSettingsStep extends ModuleWizardStep {
 
   @Override
   public boolean validate() throws ConfigurationException {
-    if (myJdkComboBox.getSelectedJdk() == null) {
+    if (myJdkComboBox.getSelectedJdk() == null && !ApplicationManager.getApplication().isUnitTestMode()) {
       int result = Messages.showDialog(getNoSdkMessage(),
                                        IdeBundle.message("title.no.jdk.specified"),
                                        new String[]{CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()}, 1, Messages.getWarningIcon());

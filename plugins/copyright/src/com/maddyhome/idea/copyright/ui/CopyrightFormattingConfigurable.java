@@ -34,11 +34,10 @@ import java.util.Arrays;
 
 public class CopyrightFormattingConfigurable extends SearchableConfigurable.Parent.Abstract implements Configurable.NoScroll {
   private final Project myProject;
-  private final TemplateCommentPanel myPanel;
+  private TemplateCommentPanel myPanel;
 
   CopyrightFormattingConfigurable(Project project) {
     myProject = project;
-    myPanel = new TemplateCommentPanel(null, null, null, project);
   }
 
   @NotNull
@@ -60,6 +59,7 @@ public class CopyrightFormattingConfigurable extends SearchableConfigurable.Pare
   }
 
   public JComponent createComponent() {
+    myPanel = new TemplateCommentPanel(null, null, null, myProject);
     return myPanel.createComponent();
   }
 
@@ -77,6 +77,7 @@ public class CopyrightFormattingConfigurable extends SearchableConfigurable.Pare
 
   public void disposeUIResources() {
     myPanel.disposeUIResources();
+    myPanel = null;
   }
 
   public boolean hasOwnContent() {

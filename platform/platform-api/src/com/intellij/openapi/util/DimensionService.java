@@ -263,13 +263,22 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
   private static String realKey(String key, @Nullable Project project) {
     JFrame frame = project == null ? WindowManager.getInstance().findVisibleFrame() : WindowManager.getInstance().getFrame(project);
 
-    if (frame == null) {
-        return key; //during frame initialization
+    Rectangle screen = new Rectangle(0,0,0,0);
+    if (frame != null) {
+      final Point topLeft = frame.getLocation();
+      Point center = new Point(topLeft.x + frame.getWidth() / 2, topLeft.y + frame.getHeight() / 2);
+      for (GraphicsDevice device : GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
+        Rectangle bounds = device.getDefaultConfiguration().getBounds();
+        if (bounds.contains(center)) {
+          screen = bounds;
+          break;
+        }
+      }
+    } else {
+      GraphicsConfiguration gc =
+        GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[0].getDefaultConfiguration();
+      screen = gc.getBounds();
     }
-
-    final Point topLeft = frame.getLocation();
-    Point center = new Point(topLeft.x + frame.getWidth() / 2, topLeft.y + frame.getHeight() / 2);
-    final Rectangle frameScreen = ScreenUtil.getScreenRectangle(center);
-    return key + '.' + frameScreen.x + '.' + frameScreen.y + '.' + frameScreen.width + '.' + frameScreen.height;
+    return key + '.' + screen.x + '.' + screen.y + '.' + screen.width + '.' + screen.height;
   }
 }

@@ -94,6 +94,7 @@ public class PsiElementListNavigator {
     PopupChooserBuilder popupChooserBuilder = builder.
       setTitle(title).
       setMovable(true).
+      setResizable(true).
       setItemChoosenCallback(new Runnable() {
         @Override
         public void run() {

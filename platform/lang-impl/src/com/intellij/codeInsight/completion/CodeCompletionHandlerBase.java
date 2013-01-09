@@ -144,6 +144,11 @@ public class CodeCompletionHandlerBase {
     }
     */
 
+    LookupEx lookup = LookupManager.getActiveLookup(editor);
+    if (invokedExplicitly && lookup instanceof LookupImpl) {
+      ((LookupImpl)lookup).uninstallPreview();
+    }
+
     int newTime = phase.newCompletionStarted(time, repeated);
     if (invokedExplicitly) {
       time = newTime;

@@ -207,7 +207,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
 
 public def layoutCommunityPlugins(String home) {
   dir("plugins") {
-    def simplePlugins = ["commander", "copyright", "properties", "java-i18n", "hg4idea", "github", "ui-designer-new", "tasks-time-tracking"]
+    def simplePlugins = ["commander", "copyright", "properties", "javaFX", "java-i18n", "hg4idea", "github", "ui-designer-new", "tasks-time-tracking"]
 
     simplePlugins.each {
       layoutPlugin it
@@ -254,7 +254,7 @@ public def layoutCommunityPlugins(String home) {
         fileset(dir: "$home/plugins/maven/maven2-server-impl/lib")
       }
 
-      fileset(dir: "$home/plugins/maven/lib")
+      fileset(dir: "$home/plugins/maven/lib") {exclude(name: "plexus-utils-*") }
       fileset(dir: "$home/plugins/maven/maven-server-api/lib")
     }
 

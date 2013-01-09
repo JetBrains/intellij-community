@@ -221,6 +221,8 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
     @Override
     protected void executeInLookup(LookupImpl lookup, DataContext context) {
+      CompletionPreview preview = lookup.uninstallPreview();
+
       final Editor editor = lookup.getEditor();
       final int offset = editor.getCaretModel().getOffset();
       CharSequence seq = editor.getDocument().getCharsSequence();
@@ -236,8 +238,6 @@ public abstract class LookupActionHandler extends EditorActionHandler {
         myOriginalHandler.execute(editor, context);
         return;
       }
-
-      CompletionPreview preview = lookup.uninstallPreview();
 
       if (!lookup.performGuardedChange(new Runnable() {
         @Override

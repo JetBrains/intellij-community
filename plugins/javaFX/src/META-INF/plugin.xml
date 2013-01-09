@@ -1,0 +1,9 @@
+<idea-plugin>
+  <name>JavaFX</name>
+  <id>org.jetbrains.plugins.javaFX</id>
+  <version>1.0</version>
+  <vendor>JetBrains</vendor>
+  <extensions defaultExtensionNs="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+  </extensions>
+</idea-plugin>
