@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,6 +123,10 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     public boolean checkInput(String inputString) {
       if (FileTypeManager.getInstance().isFileIgnored(getFileName(inputString))) {
         myErrorText = "This filename is ignored (Settings | File Types | Ignore files and folders)";
+        return false;
+      }
+      if (inputString.equals(".") || StringUtil.isEmpty(inputString.replace('.', ' ').trim())) {
+        myErrorText = "Can't create file with name '" + inputString + "'";
         return false;
       }
       myErrorText = null;
