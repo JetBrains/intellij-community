@@ -44,6 +44,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.util.containers.ContainerUtil.*;
 
@@ -86,7 +87,7 @@ public class FileWatcher {
   private volatile int myStartAttemptCount = 0;
   private volatile boolean myIsShuttingDown = false;
   private volatile boolean myFailureShownToTheUser = false;
-  private volatile short mySettingRoots = 0;
+  private final AtomicInteger mySettingRoots = new AtomicInteger(0);
 
   /** @deprecated use {@linkplain com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl#getFileWatcher()} (to remove in IDEA 13) */
   public static FileWatcher getInstance() {
@@ -236,7 +237,7 @@ public class FileWatcher {
   }
 
   public boolean isSettingRoots() {
-    return mySettingRoots > 0;
+    return mySettingRoots.get() > 0;
   }
 
   public static class DirtyPaths {
@@ -283,7 +284,7 @@ public class FileWatcher {
         return;
       }
 
-      ++mySettingRoots;
+      mySettingRoots.incrementAndGet();
       myMapping.clear();
 
       try {
@@ -451,6 +452,7 @@ public class FileWatcher {
             processRemap();
           }
           else {
+            mySettingRoots.decrementAndGet();
             processUnwatchable();
           }
           myLines.clear();
@@ -489,7 +491,6 @@ public class FileWatcher {
 
     private void processUnwatchable() {
       synchronized (myLock) {
-        --mySettingRoots;
         myManualWatchRoots = newArrayList(myLines);
       }
 
