@@ -145,8 +145,8 @@ public class PyStringFormatParser {
     final int n = s.length();
     while (pos < n) {
       int next = s.indexOf('{', pos);
-      while (next > 0 && s.charAt(next - 1) == '\\') {
-        next = s.indexOf('{', next + 1);
+      while (next > 0 && next < n - 1 && s.charAt(next + 1) == '{') {
+        next = s.indexOf('{', next + 2);
       }
       if (next < 0) {
         break;
@@ -156,8 +156,8 @@ public class PyStringFormatParser {
       }
       pos = next;
       next = s.indexOf('}', pos);
-      while (next > 0 && s.charAt(next - 1) == '\\') {
-        next = s.indexOf('}', next + 1);
+      while (next > 0 && next < n - 1 && s.charAt(next + 1) == '}') {
+        next = s.indexOf('}', next + 2);
       }
       if (next > pos) {
         // TODO: Parse substitution details

@@ -119,4 +119,11 @@ public class PyStringFormatParserTest extends TestCase {
     assertEquals(TextRange.create(1, 6), chunks.get(0).getTextRange());
     assertEquals(TextRange.create(6, 11), chunks.get(1).getTextRange());
   }
+
+  // PY-8372
+  public void testBracesEscaping() {
+    final List<SubstitutionChunk> chunks = filterSubstitutions(parseNewStyleFormat("\\{\\}, {{}}"));
+    assertEquals(1, chunks.size());
+    assertEquals(TextRange.create(1, 4), chunks.get(0).getTextRange());
+  }
 }
