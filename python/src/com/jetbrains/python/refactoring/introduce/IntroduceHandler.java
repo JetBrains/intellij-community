@@ -45,6 +45,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.jetbrains.python.inspections.PyStringFormatParser.*;
+
 /**
  * @author Alexey.Ivanov
  * @author vlan
@@ -286,8 +288,9 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
         final TextRange intersection = selectionRange.shiftRight(-offset).intersection(innerRange);
         final TextRange finalRange = intersection != null ? intersection : selectionRange;
         final String text = literal.getText();
-        // TODO: Protect against substrings with new-style format characters
-        if (breaksStringFormatting(text, finalRange) || breaksStringEscaping(text, finalRange)) {
+        if (getFormatValueExpression(literal) != null && breaksStringFormatting(text, finalRange) ||
+            getNewStyleFormatValueExpression(literal) != null && breaksNewStyleStringFormatting(text, finalRange) ||
+            breaksStringEscaping(text, finalRange)) {
           showCannotPerformError(project, editor);
           return;
         }
@@ -303,11 +306,15 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   private boolean breaksStringFormatting(@NotNull String s, @NotNull TextRange range) {
-    return breaksRanges(PyStringFormatParser.substitutionsToRanges(new PyStringFormatParser(s).parseSubstitutions()), range);
+    return breaksRanges(substitutionsToRanges(new PyStringFormatParser(s).parseSubstitutions()), range);
+  }
+
+  private boolean breaksNewStyleStringFormatting(@NotNull String s, @NotNull TextRange range) {
+    return breaksRanges(substitutionsToRanges(filterSubstitutions(parseNewStyleFormat(s))), range);
   }
 
   private boolean breaksStringEscaping(@NotNull String s, @NotNull TextRange range) {
-    return breaksRanges(PyStringFormatParser.getEscapeRanges(s), range);
+    return breaksRanges(getEscapeRanges(s), range);
   }
 
   private boolean breaksRanges(@NotNull List<TextRange> ranges, @NotNull TextRange range) {
