@@ -101,6 +101,8 @@
                             id="Maven" order="after propertiesCompletion, before javaClassReference"/>
     <completion.contributor language="XML"
                             implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenSmartCompletionContributor"/>
+    <completion.contributor language="XML"
+                            implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenVersionCompletionContributor"/>
 
     <psi.referenceContributor implementation="org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReferenceContributor"/>
 
