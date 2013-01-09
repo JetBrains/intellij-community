@@ -24,7 +24,9 @@ import com.intellij.patterns.XmlPatterns;
  */
 public class DomReferenceContributor extends PsiReferenceContributor{
   public void registerReferenceProviders(final PsiReferenceRegistrar registrar) {
-    registrar.registerReferenceProvider(XmlPatterns.xmlTag(), new GenericValueReferenceProvider());
-    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue(), new GenericValueReferenceProvider());
+    GenericValueReferenceProvider provider = new GenericValueReferenceProvider();
+
+    registrar.registerReferenceProvider(XmlPatterns.xmlTag(), provider);
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue(), provider);
   }
 }
