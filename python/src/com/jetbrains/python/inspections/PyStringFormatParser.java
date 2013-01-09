@@ -33,6 +33,11 @@ public class PyStringFormatParser {
     public int getEndIndex() {
       return myEndIndex;
     }
+
+    @NotNull
+    public TextRange getTextRange() {
+      return TextRange.create(myStartIndex, myEndIndex);
+    }
   }
 
   public static class ConstantChunk extends FormatStringChunk {
@@ -134,6 +139,41 @@ public class PyStringFormatParser {
   }
 
   @NotNull
+  public static List<FormatStringChunk> parseNewStyleFormat(@NotNull String s) {
+    final List<FormatStringChunk> results = new ArrayList<FormatStringChunk>();
+    int pos = 0;
+    final int n = s.length();
+    while (pos < n) {
+      int next = s.indexOf('{', pos);
+      while (next > 0 && s.charAt(next - 1) == '\\') {
+        next = s.indexOf('{', next + 1);
+      }
+      if (next < 0) {
+        break;
+      }
+      if (next > pos) {
+        results.add(new ConstantChunk(pos, next));
+      }
+      pos = next;
+      next = s.indexOf('}', pos);
+      while (next > 0 && s.charAt(next - 1) == '\\') {
+        next = s.indexOf('}', next + 1);
+      }
+      if (next > pos) {
+        // TODO: Parse substitution details
+        final SubstitutionChunk chunk = new SubstitutionChunk(pos);
+        chunk.setEndIndex(next + 1);
+        results.add(chunk);
+      }
+      pos = next + 1;
+    }
+    if (pos < n) {
+      results.add(new ConstantChunk(pos, n + 1));
+    }
+    return results;
+  }
+
+  @NotNull
   public List<FormatStringChunk> parse() {
     myPos = 0;
     while(myPos < myLiteral.length()) {
@@ -216,13 +256,18 @@ public class PyStringFormatParser {
 
   @NotNull
   public List<SubstitutionChunk> parseSubstitutions() {
-    List<SubstitutionChunk> result = new ArrayList<SubstitutionChunk>();
-    for (FormatStringChunk chunk : parse()) {
+    return filterSubstitutions(parse());
+  }
+
+  @NotNull
+  public static List<SubstitutionChunk> filterSubstitutions(@NotNull List<FormatStringChunk> chunks) {
+    final List<SubstitutionChunk> results = new ArrayList<SubstitutionChunk>();
+    for (FormatStringChunk chunk : chunks) {
       if (chunk instanceof SubstitutionChunk) {
-        result.add((SubstitutionChunk) chunk);
+        results.add((SubstitutionChunk)chunk);
       }
     }
-    return result;
+    return results;
   }
 
   @NotNull
@@ -247,7 +292,6 @@ public class PyStringFormatParser {
     }
     return result;
   }
-
 
   @NotNull
   public static List<TextRange> substitutionsToRanges(@NotNull List<SubstitutionChunk> substitutions) {
