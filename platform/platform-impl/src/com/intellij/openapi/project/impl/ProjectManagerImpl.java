@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.project.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
 import com.intellij.ide.AppLifecycleListener;
@@ -38,6 +39,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -50,6 +53,8 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.impl.local.FileWatcher;
+import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -410,7 +415,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     fireProjectOpened(project);
 
     final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
-
+    waitForFileWatcher(project);
     boolean ok = myProgressManager.runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
@@ -462,6 +467,31 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   private void cacheOpenProjects() {
     myOpenProjectsArrayCache = myOpenProjects.toArray(new Project[myOpenProjects.size()]);
+  }
+
+  private void waitForFileWatcher(@NotNull Project project) {
+    LocalFileSystem fs = LocalFileSystem.getInstance();
+    if (!(fs instanceof LocalFileSystemImpl)) return;
+
+    final FileWatcher watcher = ((LocalFileSystemImpl)fs).getFileWatcher();
+    if (!watcher.isOperational() || !watcher.isSettingRoots()) return;
+
+    LOG.info("FW/roots waiting started");
+    Task.Modal task = new Task.Modal(project, ProjectBundle.message("project.load.progress"), true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(true);
+        indicator.setText(ProjectBundle.message("project.load.waiting.watcher"));
+        if (indicator instanceof ProgressWindow) {
+          ((ProgressWindow)indicator).setCancelButtonText(CommonBundle.message("button.skip"));
+        }
+        while (watcher.isSettingRoots() && !indicator.isCanceled()) {
+          TimeoutUtil.sleep(10);
+        }
+        LOG.info("FW/roots waiting finished");
+      }
+    };
+    myProgressManager.run(task);
   }
 
   @Override

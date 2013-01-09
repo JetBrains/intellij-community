@@ -86,6 +86,7 @@ public class FileWatcher {
   private volatile int myStartAttemptCount = 0;
   private volatile boolean myIsShuttingDown = false;
   private volatile boolean myFailureShownToTheUser = false;
+  private volatile short mySettingRoots = 0;
 
   /** @deprecated use {@linkplain com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl#getFileWatcher()} (to remove in IDEA 13) */
   public static FileWatcher getInstance() {
@@ -234,6 +235,10 @@ public class FileWatcher {
     return myProcessHandler != null;
   }
 
+  public boolean isSettingRoots() {
+    return mySettingRoots > 0;
+  }
+
   public static class DirtyPaths {
     public final List<String> dirtyPaths;
     public final List<String> dirtyPathsRecursive;
@@ -278,6 +283,7 @@ public class FileWatcher {
         return;
       }
 
+      ++mySettingRoots;
       myMapping.clear();
 
       try {
@@ -483,6 +489,7 @@ public class FileWatcher {
 
     private void processUnwatchable() {
       synchronized (myLock) {
+        --mySettingRoots;
         myManualWatchRoots = newArrayList(myLines);
       }
 
