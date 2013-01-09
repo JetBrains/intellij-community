@@ -264,7 +264,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     }
   }
 
-  protected void assertCompiled(String builderName, String... paths) {
+  public void assertCompiled(String builderName, String... paths) {
     myLogger.assertCompiled(builderName, new File[]{myProjectDir, myDataStorageRoot}, paths);
   }
 
@@ -289,7 +289,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     return createFile(relativePath, "");
   }
 
-  protected String createFile(String relativePath, final String text) {
+  public String createFile(String relativePath, final String text) {
     try {
       File file = new File(getOrCreateProjectDir(), relativePath);
       FileUtil.writeToFile(file, text);
@@ -334,11 +334,11 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     return FileUtil.createTempDirectory("prj", null);
   }
 
-  protected String getAbsolutePath(final String pathRelativeToProjectRoot) {
+  public String getAbsolutePath(final String pathRelativeToProjectRoot) {
     return FileUtil.toSystemIndependentName(new File(getOrCreateProjectDir(), pathRelativeToProjectRoot).getAbsolutePath());
   }
 
-  protected JpsModule addModule(String moduleName, String... srcPaths) {
+  public JpsModule addModule(String moduleName, String... srcPaths) {
     if (myJdk == null) {
       myJdk = addJdk("1.6");
     }
