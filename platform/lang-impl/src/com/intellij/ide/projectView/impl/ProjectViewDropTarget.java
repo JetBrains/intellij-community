@@ -384,6 +384,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
 
     private void doDrop(TreeNode targetNode, PsiElement[] sourceElements) {
       final PsiElement targetElement = getPsiElement(targetNode);
+      if (targetElement == null) return;
       final PsiDirectory psiDirectory;
       if (targetElement instanceof PsiDirectoryContainer) {
         final PsiDirectoryContainer directoryContainer = (PsiDirectoryContainer)targetElement;
