@@ -67,7 +67,7 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
         return false;
       }
     }
-    if (LanguageLevel.forElement(element).isPy3K())
+    if (LanguageLevel.forElement(element).isAtLeast(LanguageLevel.PYTHON27))
       setText(PyBundle.message("INTN.replace.plus.with.str.format"));
     else
       setText(PyBundle.message("INTN.replace.plus.with.format.operator"));
@@ -135,7 +135,7 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
     if (!parameters.isEmpty()) {
-      if (languageLevel.isPy3K()) {
+      if (LanguageLevel.forElement(element).isAtLeast(LanguageLevel.PYTHON27)) {
         stringLiteral.append(".format(").append(StringUtil.join(parameters, ",")).append(")");
 
       }
