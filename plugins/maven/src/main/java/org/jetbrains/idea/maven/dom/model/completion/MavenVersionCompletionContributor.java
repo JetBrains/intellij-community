@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.dom.model.completion;
 
 import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.impl.NegatingComparable;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
@@ -79,7 +80,7 @@ public class MavenVersionCompletionContributor extends CompletionContributor {
             @Nullable
             @Override
             public Comparable weigh(@NotNull LookupElement element) {
-              return new ReverseComparable(new MavenVersionComparable(element.getLookupString()));
+              return new NegatingComparable(new MavenVersionComparable(element.getLookupString()));
             }
           }));
 
@@ -90,17 +91,4 @@ public class MavenVersionCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static class ReverseComparable implements Comparable<ReverseComparable> {
-
-    private final Comparable myElement;
-
-    private ReverseComparable(Comparable element) {
-      myElement = element;
-    }
-
-    @Override
-    public int compareTo(ReverseComparable o) {
-      return -myElement.compareTo(o.myElement);
-    }
-  }
 }
