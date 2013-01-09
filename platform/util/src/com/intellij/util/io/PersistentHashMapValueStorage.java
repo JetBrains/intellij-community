@@ -126,7 +126,7 @@ public class PersistentHashMapValueStorage {
 
   private final byte[] myBuffer = new byte[1024];
 
-  public void compactValues(List<PersistentHashMap.CompactionRecordInfo> infos, PersistentHashMapValueStorage storage) throws IOException {
+  public int compactValues(List<PersistentHashMap.CompactionRecordInfo> infos, PersistentHashMapValueStorage storage) throws IOException {
     PriorityQueue<PersistentHashMap.CompactionRecordInfo> records = new PriorityQueue<PersistentHashMap.CompactionRecordInfo>(
       infos.size(), new Comparator<PersistentHashMap.CompactionRecordInfo>() {
         @Override
@@ -143,11 +143,11 @@ public class PersistentHashMapValueStorage {
     final int maxRecordHeader = Math.max(BYTE_LENGTH_INT_ADDRESS, INT_LENGTH_LONG_ADDRESS);
     final byte[] buffer = new byte[fileBufferLength + maxRecordHeader];
     byte[] recordBuffer = {};
-    long accumulatedBytes = 0;
 
     long lastReadOffset = mySize;
     long lastConsumedOffset = lastReadOffset;
     long allRecordsStart = 0;
+    int fragments = 0;
     int allRecordsLength = 0;
     byte[] stuffFromPreviousRecord = null;
     int bytesRead = (int)(mySize - (mySize / fileBufferLength) * fileBufferLength);
@@ -198,7 +198,7 @@ public class PersistentHashMapValueStorage {
             } else {
               b = new byte[defragmentedChunkSize];
             }
-            System.arraycopy(info.value, 0, b, b.length - info.value.length, info.value.length);
+            System.arraycopy(info.value, 0, b, chunkSize, info.value.length);
           } else {
             if (prevChunkAddress == 0) {
               if (chunkSize >= recordBuffer.length) recordBuffer = new byte[chunkSize];
@@ -228,10 +228,10 @@ public class PersistentHashMapValueStorage {
 
           System.arraycopy(buffer, recordStartInBuffer + dataOffset, b, 0, chunkSize - chunkSizeOutOfBuffer);
 
+          ++fragments;
           records.remove(info);
           if (info.value != null) {
             chunkSize += info.value.length;
-            accumulatedBytes -= info.value.length;
             info.value = null;
           }
 
@@ -258,6 +258,7 @@ public class PersistentHashMapValueStorage {
       lastReadOffset -= bytesRead;
       bytesRead = fileBufferLength;
     }
+    return fragments;
   }
 
   public static class ReadResult {
