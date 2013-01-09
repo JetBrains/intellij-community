@@ -689,7 +689,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       if (constraintFromFormalParams != null) return constraintFromFormalParams;
 
       final PsiParameter[] methodParameters = method.getParameterList().getParameters();
-      if (methodParamsDependOn(typeParam, lambdaExpression, functionalInterfaceType, methodParameters, subst)) {
+      if (methodParamsDependOn(typeParam, lambdaExpression, functionalInterfaceType, methodParameters, subst)) {  
+        //todo should always return null for b.72
         if (lowerBound != PsiType.NULL) {
           return null;
         }
