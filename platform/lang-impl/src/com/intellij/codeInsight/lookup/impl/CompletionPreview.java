@@ -117,22 +117,8 @@ public class CompletionPreview {
     if (item == null) {
       return;
     }
-    
-    LookupElementPresentation presentation = LookupElementPresentation.renderElement(item);
-    String text = presentation.getItemText();
-    if (text == null) {
-      text = item.getLookupString();
-    } else {
-      String tailText = presentation.getTailText();
-      if (tailText != null && tailText.startsWith("(") && tailText.contains(")")) {
-        Editor editor = lookup.getEditor();
-        CharSequence seq = editor.getDocument().getCharsSequence();
-        int caret = editor.getCaretModel().getOffset();
-        if (caret >= seq.length() || seq.charAt(caret) != '(') {
-          text += "()";
-        }
-      }
-    }
+
+    String text = getPreviewText(lookup, item);
 
     int prefixLength = lookup.getPrefixLength(item);
     if (prefixLength > text.length()) {
@@ -147,6 +133,25 @@ public class CompletionPreview {
     TextRange last = arrayList.get(arrayList.size() - 1);
 
     new CompletionPreview(lookup, text, last.getEndOffset());
+  }
+
+  private static String getPreviewText(LookupImpl lookup, LookupElement item) {
+    LookupElementPresentation presentation = LookupElementPresentation.renderElement(item);
+    String text = presentation.getItemText();
+    if (text == null) {
+      text = item.getLookupString();
+    }
+
+    String tailText = presentation.getTailText();
+    if (tailText != null && tailText.startsWith("(") && tailText.contains(")")) {
+      Editor editor = lookup.getEditor();
+      CharSequence seq = editor.getDocument().getCharsSequence();
+      int caret = editor.getCaretModel().getOffset();
+      if (caret >= seq.length() || seq.charAt(caret) != '(') {
+        return text + "()";
+      }
+    }
+    return text;
   }
 
   public void uninstallPreview() {
