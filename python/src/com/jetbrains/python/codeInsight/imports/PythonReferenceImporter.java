@@ -277,7 +277,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
     return result;
   }
 
-  public static boolean isImportableModule(PsiFile targetFile, PsiFileSystemItem file) {
+  public static boolean isImportableModule(PsiFile targetFile, @NotNull PsiFileSystemItem file) {
     PsiDirectory parent = (PsiDirectory)file.getParent();
     return parent != null && file != targetFile &&
            (parent.findFile(PyNames.INIT_DOT_PY) != null ||

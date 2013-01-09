@@ -330,7 +330,11 @@ public class PyDocstringGenerator {
       if (myFunction != null) {
         myFunction = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(myFunction);
       }
-      myDocStringOwner = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(myDocStringOwner);
+      PyDocStringOwner owner = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(myDocStringOwner);
+      if (owner != null) {
+        myDocStringOwner = owner;
+      }
+
       myDocStringExpression = myDocStringOwner.getDocStringExpression();
     }
     else {

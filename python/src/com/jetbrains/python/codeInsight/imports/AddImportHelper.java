@@ -34,16 +34,18 @@ public class AddImportHelper {
     BUILTIN, THIRD_PARTY, PROJECT
   }
 
+  @Nullable
   public static PsiElement getFileInsertPosition(final PsiFile file) {
     return getInsertPosition(file, null, null);
   }
 
+  @Nullable
   private static PsiElement getInsertPosition(final PsiFile file, @Nullable String nameToImport, @Nullable ImportPriority priority) {
     PsiElement feeler = file.getFirstChild();
-    LOG.assertTrue(feeler != null);
+    if (feeler == null) return null;
     // skip initial comments and whitespace and try to get just below the last import stmt
-    boolean skipped_over_imports = false;
-    boolean skipped_over_doc = false;
+    boolean skippedOverImports = false;
+    boolean skippedOverDoc = false;
     PsiElement seeker = feeler;
     do {
       if (feeler instanceof PyImportStatementBase) {
@@ -52,20 +54,20 @@ public class AddImportHelper {
         }
         seeker = feeler;
         feeler = feeler.getNextSibling();
-        skipped_over_imports = true;
+        skippedOverImports = true;
       }
       else if (PyUtil.instanceOf(feeler, PsiWhiteSpace.class, PsiComment.class)) {
         seeker = feeler;
         feeler = feeler.getNextSibling();
       }
       // maybe we arrived at the doc comment stmt; skip over it, too
-      else if (!skipped_over_imports && !skipped_over_doc && file instanceof PyFile) {
+      else if (!skippedOverImports && !skippedOverDoc && file instanceof PyFile) {
         PsiElement doc_elt =
           PythonDocStringFinder.find((PyElement)file); // this gives the literal; its parent is the expr seeker may have encountered
         if (doc_elt != null && doc_elt.getParent() == feeler) {
           feeler = feeler.getNextSibling();
           seeker = feeler; // skip over doc even if there's nothing below it
-          skipped_over_doc = true;
+          skippedOverDoc = true;
         }
         else {
           break; // not a doc comment, stop on it
@@ -108,7 +110,9 @@ public class AddImportHelper {
     else {
       containingFile = source != null ? source.getContainingFile() : null;
     }
-    ImportPriority relativeToPriority = source == null ? ImportPriority.BUILTIN : getImportPriority(file, containingFile);
+    ImportPriority relativeToPriority = source == null || containingFile == null
+                                        ? ImportPriority.BUILTIN
+                                        : getImportPriority(file, containingFile);
     final int rc = priority.compareTo(relativeToPriority);
     if (rc < 0) {
       return true;

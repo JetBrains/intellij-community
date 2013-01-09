@@ -89,6 +89,11 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
   }
 
   // PY-3654
+  public void testSimpleSubstring() {
+    doTest();
+  }
+
+  // PY-3654
   public void testLeftSubstring() {
     doTest();
   }
@@ -128,8 +133,58 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
     doTest();
   }
 
-  // PY-6354
+  // PY-3654
   public void testBytesSubstring() {
+    doTest();
+  }
+
+  // PY-3654
+  public void testSubstringContainsFormatChars() {
+    doTest();
+  }
+
+  // PY-3654
+  public void testSubstringBreaksFormatChars() {
+    doTestCannotPerform();
+  }
+
+  // PY-3654
+  public void testSubstringContainsEscapes() {
+    doTest();
+  }
+
+  // PY-3654
+  public void testSubstringBreaksEscapes() {
+    doTestCannotPerform();
+  }
+
+  // PY-3654
+  public void testSubstringBeforeFormatTuple() {
+    doTest();
+  }
+
+  // PY-3654
+  public void testSubstringInsideFormatTuple() {
+    doTest();
+  }
+
+  // PY-3654
+  public void testSubstringAfterFormatTuple() {
+    doTest();
+  }
+
+  // PY-3654
+  public void testSubstringAfterFormatTupleWithComma() {
+    doTest();
+  }
+
+  // PY-3654
+  public void testSubstringFromFormatDict() {
+    doTest();
+  }
+
+  // PY-3654
+  public void testSubstringFromFormatSingleValue() {
     doTest();
   }
 

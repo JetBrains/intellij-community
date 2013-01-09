@@ -56,8 +56,8 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
     Collection<VirtualFile> files = FileTypeIndex.getFiles(PythonFileType.INSTANCE, PyProjectScopeBuilder.excludeSdkTestsScope(targetFile));
     for (VirtualFile file : files) {
       PsiFile pyFile = targetFile.getManager().findFile(file);
-      if (pyFile == null) continue;
       PsiFileSystemItem importable = (PsiFileSystemItem) PyUtil.turnInitIntoDir(pyFile);
+      if (importable == null) continue;
       if (PythonReferenceImporter.isImportableModule(targetFile, importable)) {
         LookupElementBuilder element = PyModuleType.buildFileLookupElement(importable, null);
         if (element != null) {

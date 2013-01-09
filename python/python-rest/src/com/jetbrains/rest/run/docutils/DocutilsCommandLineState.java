@@ -25,7 +25,7 @@ public class DocutilsCommandLineState extends RestCommandLineState {
         VirtualFile virtualFile = findOutput();
         if (virtualFile != null) {
           if (myConfiguration.openInBrowser()) {
-            BrowserUtil.launchBrowser(virtualFile.getUrl());
+            BrowserUtil.browse(virtualFile);
           }
           else {
             FileEditorManager.getInstance(myConfiguration.getProject()).openFile(virtualFile, true);
