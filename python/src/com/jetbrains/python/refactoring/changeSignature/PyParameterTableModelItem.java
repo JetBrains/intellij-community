@@ -8,13 +8,10 @@ import com.intellij.refactoring.changeSignature.ParameterTableModelItemBase;
 */
 class PyParameterTableModelItem extends ParameterTableModelItemBase<PyParameterInfo> {
 
-  private boolean myDefaultInSignature;
-
   public PyParameterTableModelItem(PyParameterInfo parameter,
                                    PsiCodeFragment typeCodeFragment,
                                    PsiCodeFragment defaultValueCodeFragment, boolean defaultInSignature) {
     super(parameter, typeCodeFragment, defaultValueCodeFragment);
-    myDefaultInSignature = defaultInSignature;
   }
 
   @Override
@@ -23,10 +20,10 @@ class PyParameterTableModelItem extends ParameterTableModelItemBase<PyParameterI
   }
 
   public void setDefaultInSignature(boolean isDefault) {
-    myDefaultInSignature = isDefault;
+    parameter.setDefaultInSignature(isDefault);
   }
 
   public boolean isDefaultInSignature() {
-    return myDefaultInSignature;
+    return parameter.getDefaultInSignature();
   }
 }

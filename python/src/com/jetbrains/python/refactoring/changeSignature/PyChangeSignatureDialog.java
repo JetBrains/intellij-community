@@ -300,14 +300,17 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
 
         final JBLabel inSignatureLabel = new JBLabel(PyBundle.message("refactoring.change.signature.dialog.default.value.checkbox"),
                                                      UIUtil.ComponentStyle.SMALL);
-        IJSwingUtilities.adjustComponentsOnMac(inSignatureLabel, myDefaultInSignature);
+        IJSwingUtilities.adjustComponentsOnMac(inSignatureLabel,
+                                               myDefaultInSignature);
         defaultValuePanel.add(inSignatureLabel, BorderLayout.WEST);
         myDefaultInSignature = new JCheckBox();
-        myDefaultInSignature.setSelected(((PyParameterTableModelItem)item).isDefaultInSignature());
+        myDefaultInSignature.setSelected(
+          ((PyParameterTableModelItem)item).isDefaultInSignature());
         myDefaultInSignature.addItemListener(new ItemListener() {
           @Override
           public void itemStateChanged(ItemEvent event) {
-            ((PyParameterTableModelItem)item).setDefaultInSignature(myDefaultInSignature.isSelected());
+            ((PyParameterTableModelItem)item)
+              .setDefaultInSignature(myDefaultInSignature.isSelected());
           }
         });
         myDefaultInSignature.addChangeListener(mySignatureUpdater);
