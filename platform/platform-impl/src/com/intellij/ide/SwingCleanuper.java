@@ -90,6 +90,7 @@ public final class SwingCleanuper implements ApplicationComponent{
                   }
                 }
 
+                //noinspection SSBasedInspection
                 SwingUtilities.invokeLater(
                   new Runnable() {
                     public void run() {
@@ -163,6 +164,21 @@ public final class SwingCleanuper implements ApplicationComponent{
     );
 
     Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
+
+      private final Field myNativeAXResourceField;
+      {
+        Field field = null;
+        if (SystemInfo.isMac) {
+          try {
+            field = ReflectionUtil.findField(AccessibleContext.class, Object.class, "nativeAXResource");
+            field.setAccessible(true);
+          }
+          catch (NoSuchFieldException ignored) {
+          }
+        }
+        myNativeAXResourceField = field;
+      }
+
       @Override
       public void eventDispatched(AWTEvent event) {
         if (!SystemInfo.isMac || !Registry.is("ide.mac.fix.accessibleLeak")) return;
@@ -209,11 +225,9 @@ public final class SwingCleanuper implements ApplicationComponent{
             }
 
             AccessibleContext ac = c.getAccessibleContext();
-            if (ac != null) {
+            if (ac != null && myNativeAXResourceField != null) {
               try {
-                Field field = ReflectionUtil.findField(ac.getClass(), Object.class, "nativeAXResource");
-                field.setAccessible(true);
-                Object resource = field.get(ac);
+                Object resource = myNativeAXResourceField.get(ac);
                 if (resource != null && resource.getClass().getName().equals("apple.awt.CAccessible")) {
                   Field accessible = ReflectionUtil.findField(resource.getClass(), Accessible.class, "accessible");
                   accessible.setAccessible(true);
