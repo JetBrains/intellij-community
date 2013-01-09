@@ -144,7 +144,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
           myWcRoot = new File(myTempDirFixture.getTempDirPath(), myWcRootName);
           assert myWcRoot.mkdir() || myWcRoot.isDirectory() : myWcRoot;
 
-          myRepoUrl = "file:///" + FileUtil.toSystemIndependentName(myRepoRoot.getPath());
+          myRepoUrl = (SystemInfo.isWindows ? "file:///" : "file://") + FileUtil.toSystemIndependentName(myRepoRoot.getPath());
 
           initProject(myWcRoot, SvnTestCase.this.getTestName());
           activateVCS(SvnVcs.VCS_NAME);
@@ -294,7 +294,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     final ChangeListManagerImpl clManager = (ChangeListManagerImpl)ChangeListManager.getInstance(myProject);
     clManager.stopEveryThingIfInTestMode();
     sleep(100);
-    FileUtil.delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn"));
+    Assert.assertTrue(FileUtil.delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn")));
     sleep(200);
     myWorkingCopyDir.refresh(false, true);
 
