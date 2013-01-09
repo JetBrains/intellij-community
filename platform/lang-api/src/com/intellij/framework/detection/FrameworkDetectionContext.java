@@ -17,6 +17,7 @@ package com.intellij.framework.detection;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetConfiguration;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +29,9 @@ import java.util.List;
  * @author nik
  */
 public interface FrameworkDetectionContext {
+
+  @Nullable
+  Project getProject();
 
   @Nullable
   VirtualFile getBaseDir();
