@@ -9,35 +9,39 @@ import sys
 def get_test_suite_runner():
   if hasattr(settings, "TEST_RUNNER"):
     from django.test.utils import get_runner
+
     class TempSettings:
       TEST_RUNNER = settings.TEST_RUNNER
+
     return get_runner(TempSettings)
 
 try:
   from django.test.simple import DjangoTestSuiteRunner
   from inspect import isfunction
+
   SUITE_RUNNER = get_test_suite_runner()
   if isfunction(SUITE_RUNNER):
     import sys
-    sys.stderr.write("WARNING: TEST_RUNNER variable is ignored. PyCharm test runner supports "
-            "only class-like TEST_RUNNER valiables. Use Tools->run manage.py tasks.\n")
+
+    sys.stderr.write(
+      "WARNING: TEST_RUNNER variable is ignored. PyCharm test runner supports "
+      "only class-like TEST_RUNNER valiables. Use Tools->run manage.py tasks.\n")
     SUITE_RUNNER = None
   BaseSuiteRunner = SUITE_RUNNER or DjangoTestSuiteRunner
 
   class BaseRunner(TeamcityTestRunner, BaseSuiteRunner):
     def __init__(self, stream=sys.stdout, **options):
-      TeamcityTestRunner.__init__(self,stream)
+      TeamcityTestRunner.__init__(self, stream)
       BaseSuiteRunner.__init__(self)
 
 except ImportError:
   class BaseRunner(TeamcityTestRunner):
     def __init__(self, stream=sys.stdout, **options):
-      TeamcityTestRunner.__init__(self,stream)
+      TeamcityTestRunner.__init__(self, stream)
 
 class DjangoTeamcityTestRunner(BaseRunner):
   def __init__(self, stream=sys.stdout, **options):
-    BaseRunner.__init__(self, stream)
-    #self.interactive = False
+    super(DjangoTeamcityTestRunner, self).__init__(stream)
 
   def build_suite(self, *args, **kwargs):
     EXCLUDED_APPS = getattr(settings, 'TEST_EXCLUDE', [])
@@ -69,100 +73,113 @@ class DjangoTeamcityTestRunner(BaseRunner):
 
       from nose_utils import TeamcityNoseRunner
 
-      nose.core.TestProgram(argv=suite, exit=False, testRunner=TeamcityNoseRunner(config=config))
+      nose.core.TestProgram(argv=suite, exit=False,
+        testRunner=TeamcityNoseRunner(config=config))
       return result_plugin.result
     else:
       return TeamcityTestRunner.run(self, suite, **kwargs)
 
+  def run_tests(self, test_labels, extra_tests=None, **kwargs):
+    if hasattr(settings, "TEST_RUNNER") and "NoseTestSuiteRunner" in settings.TEST_RUNNER:
+      return super(DjangoTeamcityTestRunner, self).run_tests(test_labels,
+                   extra_tests)
+    return super(DjangoTeamcityTestRunner, self).run_tests(test_labels,
+                extra_tests, **kwargs)
+
 
 def partition_suite(suite, classes, bins):
-    """
-    Partitions a test suite by test type.
+  """
+  Partitions a test suite by test type.
 
-    classes is a sequence of types
-    bins is a sequence of TestSuites, one more than classes
+  classes is a sequence of types
+  bins is a sequence of TestSuites, one more than classes
 
-    Tests of type classes[i] are added to bins[i],
-    tests with no match found in classes are place in bins[-1]
-    """
-    for test in suite:
-        if isinstance(test, unittest.TestSuite):
-            partition_suite(test, classes, bins)
-        else:
-            for i in range(len(classes)):
-                if isinstance(test, classes[i]):
-                    bins[i].addTest(test)
-                    break
-            else:
-                bins[-1].addTest(test)
+  Tests of type classes[i] are added to bins[i],
+  tests with no match found in classes are place in bins[-1]
+  """
+  for test in suite:
+    if isinstance(test, unittest.TestSuite):
+      partition_suite(test, classes, bins)
+    else:
+      for i in range(len(classes)):
+        if isinstance(test, classes[i]):
+          bins[i].addTest(test)
+          break
+      else:
+        bins[-1].addTest(test)
+
 
 def reorder_suite(suite, classes):
-    """
-    Reorders a test suite by test type.
+  """
+  Reorders a test suite by test type.
 
-    classes is a sequence of types
+  classes is a sequence of types
 
-    All tests of type clases[0] are placed first, then tests of type classes[1], etc.
-    Tests with no match in classes are placed last.
-    """
-    class_count = len(classes)
-    bins = [unittest.TestSuite() for i in range(class_count+1)]
-    partition_suite(suite, classes, bins)
-    for i in range(class_count):
-        bins[0].addTests(bins[i+1])
-    return bins[0]
+  All tests of type clases[0] are placed first, then tests of type classes[1], etc.
+  Tests with no match in classes are placed last.
+  """
+  class_count = len(classes)
+  bins = [unittest.TestSuite() for i in range(class_count + 1)]
+  partition_suite(suite, classes, bins)
+  for i in range(class_count):
+    bins[0].addTests(bins[i + 1])
+  return bins[0]
 
-def run_tests(test_labels, verbosity=1, interactive=False, extra_tests=[], **kwargs):
-    """
-    Run the unit tests for all the test labels in the provided list.
-    Labels must be of the form:
-     - app.TestClass.test_method
-        Run a single specific test method
-     - app.TestClass
-        Run all the test methods in a given class
-     - app
-        Search for doctests and unittests in the named application.
 
-    When looking for tests, the test runner will look in the models and
-    tests modules for the application.
+def run_tests(test_labels, verbosity=1, interactive=False, extra_tests=[],
+              **kwargs):
+  """
+  Run the unit tests for all the test labels in the provided list.
+  Labels must be of the form:
+   - app.TestClass.test_method
+      Run a single specific test method
+   - app.TestClass
+      Run all the test methods in a given class
+   - app
+      Search for doctests and unittests in the named application.
 
-    A list of 'extra' tests may also be provided; these tests
-    will be added to the test suite.
+  When looking for tests, the test runner will look in the models and
+  tests modules for the application.
 
-    Returns the number of tests that failed.
-    """
-    TeamcityServiceMessages(sys.stdout).testMatrixEntered()
-    if django.VERSION[1] > 1:
-      return DjangoTeamcityTestRunner().run_tests(test_labels, extra_tests=extra_tests, **kwargs)
+  A list of 'extra' tests may also be provided; these tests
+  will be added to the test suite.
 
-    setup_test_environment()
+  Returns the number of tests that failed.
+  """
+  TeamcityServiceMessages(sys.stdout).testMatrixEntered()
+  if django.VERSION[1] > 1:
+    return DjangoTeamcityTestRunner().run_tests(test_labels,
+      extra_tests=extra_tests, **kwargs)
 
-    settings.DEBUG = False
-    suite = unittest.TestSuite()
+  setup_test_environment()
 
-    if test_labels:
-        for label in test_labels:
-            if '.' in label:
-                suite.addTest(build_test(label))
-            else:
-                app = get_app(label)
-                suite.addTest(build_suite(app))
-    else:
-        for app in get_apps():
-            suite.addTest(build_suite(app))
+  settings.DEBUG = False
+  suite = unittest.TestSuite()
 
-    for test in extra_tests:
-        suite.addTest(test)
+  if test_labels:
+    for label in test_labels:
+      if '.' in label:
+        suite.addTest(build_test(label))
+      else:
+        app = get_app(label)
+        suite.addTest(build_suite(app))
+  else:
+    for app in get_apps():
+      suite.addTest(build_suite(app))
 
-    suite = reorder_suite(suite, (TestCase,))
+  for test in extra_tests:
+    suite.addTest(test)
 
-    old_name = settings.DATABASE_NAME
-    from django.db import connection
-    connection.creation.create_test_db(verbosity, autoclobber=False)
+  suite = reorder_suite(suite, (TestCase,))
 
-    result = DjangoTeamcityTestRunner().run(suite, **kwargs)
-    connection.creation.destroy_test_db(old_name, verbosity)
+  old_name = settings.DATABASE_NAME
+  from django.db import connection
 
-    teardown_test_environment()
+  connection.creation.create_test_db(verbosity, autoclobber=False)
 
-    return len(result.failures) + len(result.errors)
+  result = DjangoTeamcityTestRunner().run(suite, **kwargs)
+  connection.creation.destroy_test_db(old_name, verbosity)
+
+  teardown_test_environment()
+
+  return len(result.failures) + len(result.errors)
