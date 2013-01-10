@@ -1,7 +1,9 @@
 package com.intellij.application;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformLangTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -16,11 +18,15 @@ import java.util.List;
  */
 public class BadPluginTest extends PlatformLangTestCase {
 
+  private static final String COM_YOURCOMPANY_UNIQUE_PLUGIN_ID = "com.yourcompany.unique.plugin.id";
+
   public void testBadPlugin() throws Exception {
+    IdeaPluginDescriptor plugin = PluginManager.getPlugin(PluginId.getId(COM_YOURCOMPANY_UNIQUE_PLUGIN_ID));
+    assertNotNull(plugin);
     List<String> disabledPlugins = new ArrayList<String>();
     PluginManager.loadDisabledPlugins(PathManager.getConfigPath(), disabledPlugins);
     assertEquals(1, disabledPlugins.size());
-    assertEquals("com.yourcompany.unique.plugin.id", disabledPlugins.get(0));
+    assertEquals(COM_YOURCOMPANY_UNIQUE_PLUGIN_ID, disabledPlugins.get(0));
   }
 
   @Override
