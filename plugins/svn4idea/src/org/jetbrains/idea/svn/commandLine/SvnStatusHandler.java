@@ -682,7 +682,11 @@ public class SvnStatusHandler extends DefaultHandler {
       if (new File(path).isAbsolute()) {
         file = new File(path);
       } else {
-        file = new File(myBase, path);
+        if (".".equals(path)) {
+          file = myBase;
+        } else {
+          file = new File(myBase, path);
+        }
       }
       status.setFile(file);
       final boolean exists = file.exists();
