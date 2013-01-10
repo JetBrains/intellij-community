@@ -200,6 +200,7 @@ libraryLicense(name: "JUnit", libraryName: "JUnit3", version: "3.8.1", license: 
 libraryLicense(name: "JUnit", libraryName: "JUnit4", version: "4.8", license: "CPL 1.0", url: "http://junit.org/")
 libraryLicense(name: "Log4j", libraryName: "Log4J", version: "1.2", license: "Apache 2.0", url: "http://logging.apache.org/log4j/1.2/index.html", licenseUrl: "http://logging.apache.org/license.html")
 libraryLicense(name: "Maven", version: "2.2.1", license: "Apache 2.0", url: "http://maven.apache.org/", licenseUrl: "http://maven.apache.org/license.html")
+libraryLicense(name: "plexus-util", version: "2.0.6", license: "Apache 2.0", url: "http://maven.apache.org/", libraryNames:['plexus-utils-2.0.6.jar'], licenseUrl: "http://apache.org/licenses/LICENSE-2.0")
 libraryLicense(name: "Maven3", libraryNames: ["Maven3", "maven-dependency-tree-1.2.jar", "archetype-catalog-2.2.jar", "archetype-common-2.2.jar"], version: "3.0.3", license: "Apache 2.0", url: "http://maven.apache.org/", licenseUrl: "http://maven.apache.org/license.html")
 libraryLicense(name: "Gradle", version: "1.3", license: "Apache 2.0", url: "http://gradle.org/", licenseUrl: "http://gradle.org/license")
 libraryLicense(name: "Slf4j", version: "1.6.6", license: "MIT License", url: "http://slf4j.org/", licenseUrl: "http://slf4j.org/license.html")

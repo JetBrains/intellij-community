@@ -19,6 +19,7 @@ package com.intellij.application.options.colors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.options.colors.AttributesDescriptor;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -224,7 +225,7 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
   }
 
   @Nullable
-  public String getInheritanceDescription() {
+  public AttributesDescriptor getBaseAttributeDescriptor() {
     return null;
   }
 }
