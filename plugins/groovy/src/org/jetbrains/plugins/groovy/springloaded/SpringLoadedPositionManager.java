@@ -7,7 +7,7 @@ import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -49,35 +49,33 @@ public class SpringLoadedPositionManager implements PositionManager {
   @NotNull
   @Override
   public List<ReferenceType> getAllClasses(final SourcePosition classPosition) throws NoDataException {
-    List<ReferenceType> res = ApplicationManager.getApplication().runReadAction(new Computable<List<ReferenceType>>() {
-      @Nullable
-      @Override
-      public List<ReferenceType> compute() {
-        //if (true) return Collections.emptyList();
-        String className = findEnclosingName(classPosition);
-        if (className == null) return null;
+    AccessToken accessToken = ReadAction.start();
 
-        List<ReferenceType> referenceTypes = myDebugProcess.getVirtualMachineProxy().classesByName(className);
-        if (referenceTypes.isEmpty()) return null;
+    try {
+      String className = findEnclosingName(classPosition);
+      if (className == null) throw new NoDataException();
 
-        Set<ReferenceType> res = new HashSet<ReferenceType>();
-        
-        for (ReferenceType referenceType : referenceTypes) {
-          List<ReferenceType> types = findNested(referenceType, classPosition);
-          if (types != null) {
-            res.addAll(types);
-          }
+      List<ReferenceType> referenceTypes = myDebugProcess.getVirtualMachineProxy().classesByName(className);
+      if (referenceTypes.isEmpty()) throw new NoDataException();
+
+      Set<ReferenceType> res = new HashSet<ReferenceType>();
+
+      for (ReferenceType referenceType : referenceTypes) {
+        List<ReferenceType> types = findNested(referenceType, classPosition);
+        if (types != null) {
+          res.addAll(types);
         }
-
-        return res.isEmpty() ? null : new ArrayList<ReferenceType>(res);
       }
-    });
 
-    if (res == null) throw new NoDataException();
+      if (res.isEmpty()) {
+        throw new NoDataException();
+      }
 
-    assert res.size() > 0;
-
-    return res;
+      return new ArrayList<ReferenceType>(res);
+    }
+    finally {
+      accessToken.finish();
+    }
   }
 
   @NotNull
