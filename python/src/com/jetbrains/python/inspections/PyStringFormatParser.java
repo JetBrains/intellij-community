@@ -1,6 +1,7 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.psi.*;
@@ -33,6 +34,11 @@ public class PyStringFormatParser {
     public int getEndIndex() {
       return myEndIndex;
     }
+
+    @NotNull
+    public TextRange getTextRange() {
+      return TextRange.create(myStartIndex, myEndIndex);
+    }
   }
 
   public static class ConstantChunk extends FormatStringChunk {
@@ -47,6 +53,7 @@ public class PyStringFormatParser {
     @Nullable private String myConversionFlags;
     @Nullable private String myWidth;
     @Nullable private String myPrecision;
+    @Nullable private Integer myPosition;
     private char myLengthModifier;
     private char myConversionType;
     private boolean myUnclosedMapping;
@@ -118,6 +125,15 @@ public class PyStringFormatParser {
     private void setUnclosedMapping(boolean unclosedMapping) {
       myUnclosedMapping = unclosedMapping;
     }
+
+    @Nullable
+    public Integer getPosition() {
+      return myPosition;
+    }
+
+    private void setPosition(@Nullable Integer position) {
+      myPosition = position;
+    }
   }
 
   @NotNull private final String myLiteral;
@@ -131,6 +147,53 @@ public class PyStringFormatParser {
 
   public PyStringFormatParser(@NotNull String literal) {
     myLiteral = literal;
+  }
+
+  @NotNull
+  public static List<FormatStringChunk> parseNewStyleFormat(@NotNull String s) {
+    final List<FormatStringChunk> results = new ArrayList<FormatStringChunk>();
+    int pos = 0;
+    final int n = s.length();
+    while (pos < n) {
+      int next = s.indexOf('{', pos);
+      while (next > 0 && next < n - 1 && s.charAt(next + 1) == '{') {
+        next = s.indexOf('{', next + 2);
+      }
+      if (next < 0) {
+        break;
+      }
+      if (next > pos) {
+        results.add(new ConstantChunk(pos, next));
+      }
+      pos = next;
+      next = s.indexOf('}', pos);
+      while (next > 0 && next < n - 1 && s.charAt(next + 1) == '}') {
+        next = s.indexOf('}', next + 2);
+      }
+      if (next > pos) {
+        final SubstitutionChunk chunk = new SubstitutionChunk(pos);
+        final int nameStart = pos + 1;
+        final int chunkEnd = next + 1;
+        chunk.setEndIndex(chunkEnd);
+        final int nameEnd = StringUtil.indexOfAny(s, "!:.[}", nameStart, chunkEnd);
+        if (nameEnd > 0 && nameStart < nameEnd) {
+          final String name = s.substring(nameStart, nameEnd);
+          try {
+            final int number = Integer.parseInt(name);
+            chunk.setPosition(number);
+          } catch (NumberFormatException e) {
+            chunk.setMappingKey(name);
+          }
+        }
+        // TODO: Parse substitution details
+        results.add(chunk);
+      }
+      pos = next + 1;
+    }
+    if (pos < n) {
+      results.add(new ConstantChunk(pos, n + 1));
+    }
+    return results;
   }
 
   @NotNull
@@ -216,13 +279,18 @@ public class PyStringFormatParser {
 
   @NotNull
   public List<SubstitutionChunk> parseSubstitutions() {
-    List<SubstitutionChunk> result = new ArrayList<SubstitutionChunk>();
-    for (FormatStringChunk chunk : parse()) {
+    return filterSubstitutions(parse());
+  }
+
+  @NotNull
+  public static List<SubstitutionChunk> filterSubstitutions(@NotNull List<FormatStringChunk> chunks) {
+    final List<SubstitutionChunk> results = new ArrayList<SubstitutionChunk>();
+    for (FormatStringChunk chunk : chunks) {
       if (chunk instanceof SubstitutionChunk) {
-        result.add((SubstitutionChunk) chunk);
+        results.add((SubstitutionChunk)chunk);
       }
     }
-    return result;
+    return results;
   }
 
   @NotNull
@@ -247,7 +315,6 @@ public class PyStringFormatParser {
     }
     return result;
   }
-
 
   @NotNull
   public static List<TextRange> substitutionsToRanges(@NotNull List<SubstitutionChunk> substitutions) {

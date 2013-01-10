@@ -2,7 +2,7 @@ class Foo:
     def foo(self):
         print("a")
 
-class Zope(Hand,Foo):
+class Zope(Hand, Foo):
     def _mine(self):
        print "zope"
 

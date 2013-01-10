@@ -188,6 +188,26 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
     doTest();
   }
 
+  // PY-8372
+  public void testSubstringBreaksNewStyleFormatChars() {
+    doTestCannotPerform();
+  }
+
+  // PY-8372
+  public void testSubstringNewStylePositional() {
+    doTest();
+  }
+
+  // PY-8372
+  public void testSubstringNewStyleAutomaticNumbering() {
+    doTest();
+  }
+
+  // PY-8372
+  public void testSubstringNewStyleKeywords() {
+    doTest();
+  }
+
   private void doTestCannotPerform() {
     boolean thrownExpectedException = false;
     try {
