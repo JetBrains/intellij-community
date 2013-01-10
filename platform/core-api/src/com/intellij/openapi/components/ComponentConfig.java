@@ -17,6 +17,7 @@
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
@@ -46,6 +47,11 @@ public class ComponentConfig {
   @Transient
   public ClassLoader getClassLoader() {
     return pluginDescriptor != null ? pluginDescriptor.getPluginClassLoader() : getClass().getClassLoader();
+  }
+
+  @Transient
+  public PluginId getPluginId() {
+    return pluginDescriptor == null ? null : pluginDescriptor.getPluginId();
   }
 
   public String getImplementationClass() {
