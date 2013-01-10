@@ -94,8 +94,6 @@ public class PluginManager {
   private static final Map<PluginId,Integer> ourId2Index = new THashMap<PluginId, Integer>();
   @NonNls private static final String MODULE_DEPENDENCY_PREFIX = "com.intellij.module";
   private static final List<String> ourAvailableModules = new ArrayList<String>();
-  private static final boolean ourOptimize = "true".equals(System.getProperty("idea.optimize"));
-
 
   public static long startupStart;
   public static final float PLUGINS_PROGRESS_MAX_VALUE = 0.3f;
