@@ -59,23 +59,27 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
     TAG_HIGHLIGHTING_MAP.put("parenths", DefaultLanguageHighlighterColors.PARENTHESES);
   }
 
-  private static final AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = {
-    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.KEYWORD),
-    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.IDENTIFIER),
-    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.STRING),
-    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.NUMBER),
-    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.OPERATION_SIGN),
-    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.BRACES),
-    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.PARENTHESES),
-    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.BRACKETS),
-    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.DOT),
-    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.COMMA),
-    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.SEMICOLON),
-    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.LINE_COMMENT),
-    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.BLOCk_COMMENT),
-    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.DOC_COMMENT),
-    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR),
-  };
+  private final AttributesDescriptor[] myAttributesDescriptors;
+
+  public DefaultLanguageColorsPage() {
+    myAttributesDescriptors = new AttributesDescriptor[]{
+      new AttributesDescriptor(this, "Keyword", DefaultLanguageHighlighterColors.KEYWORD),
+      new AttributesDescriptor(this, "Identifier", DefaultLanguageHighlighterColors.IDENTIFIER),
+      new AttributesDescriptor(this, "String", DefaultLanguageHighlighterColors.STRING),
+      new AttributesDescriptor(this, "Number", DefaultLanguageHighlighterColors.NUMBER),
+      new AttributesDescriptor(this, "Operation sign", DefaultLanguageHighlighterColors.OPERATION_SIGN),
+      new AttributesDescriptor(this, "Braces", DefaultLanguageHighlighterColors.BRACES),
+      new AttributesDescriptor(this, "Parentheses", DefaultLanguageHighlighterColors.PARENTHESES),
+      new AttributesDescriptor(this, "Brackets", DefaultLanguageHighlighterColors.BRACKETS),
+      new AttributesDescriptor(this, "Dot", DefaultLanguageHighlighterColors.DOT),
+      new AttributesDescriptor(this, "Comma", DefaultLanguageHighlighterColors.COMMA),
+      new AttributesDescriptor(this, "Semicolon", DefaultLanguageHighlighterColors.SEMICOLON),
+      new AttributesDescriptor(this, "Line comment", DefaultLanguageHighlighterColors.LINE_COMMENT),
+      new AttributesDescriptor(this, "Block comment", DefaultLanguageHighlighterColors.BLOCk_COMMENT),
+      new AttributesDescriptor(this, "Doc comment", DefaultLanguageHighlighterColors.DOC_COMMENT),
+      new AttributesDescriptor(this, "Template language", DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR),
+    };
+  }
 
   @Nullable
   @Override
@@ -117,7 +121,7 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
   @NotNull
   @Override
   public AttributesDescriptor[] getAttributeDescriptors() {
-    return ATTRIBUTES_DESCRIPTORS;
+    return myAttributesDescriptors;
   }
 
   @NotNull

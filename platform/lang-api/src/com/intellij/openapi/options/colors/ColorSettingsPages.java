@@ -16,6 +16,8 @@
 package com.intellij.openapi.options.colors;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Registry for custom pages shown in the "Colors and Fonts" settings dialog.
@@ -45,4 +47,8 @@ public abstract class ColorSettingsPages {
    * @return the list of registered pages.
    */
   public abstract ColorSettingsPage[] getRegisteredPages();
+
+  @Nullable
+  public abstract AttributesDescriptor getAttributeDescriptor(TextAttributesKey key);
+
 }

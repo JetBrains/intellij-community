@@ -15,17 +15,19 @@
  */
 package com.intellij.openapi.options.colors.pages;
 
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.options.colors.ColorSettingsPages;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class ColorSettingsPagesImpl extends ColorSettingsPages {
   private final List<ColorSettingsPage> myPages = new ArrayList<ColorSettingsPage>();
   private boolean myExtensionsLoaded = false;
+  private Map<TextAttributesKey, AttributesDescriptor> myKeyToDescriptorMap = new HashMap<TextAttributesKey,AttributesDescriptor>();
 
   @Override
   public void registerPage(ColorSettingsPage page) {
@@ -39,5 +41,25 @@ public class ColorSettingsPagesImpl extends ColorSettingsPages {
       Collections.addAll(myPages, Extensions.getExtensions(ColorSettingsPage.EP_NAME));
     }
     return myPages.toArray(new ColorSettingsPage[myPages.size()]);
+  }
+
+  @Override
+  @Nullable
+  public AttributesDescriptor getAttributeDescriptor(TextAttributesKey key) {
+    if (myKeyToDescriptorMap.containsKey(key)) {
+      return myKeyToDescriptorMap.get(key);
+    }
+    else {
+      for (ColorSettingsPage page : getRegisteredPages()) {
+        for (AttributesDescriptor descriptor : page.getAttributeDescriptors()) {
+          if (descriptor.getKey() == key) {
+            myKeyToDescriptorMap.put(key, descriptor);
+            return descriptor;
+          }
+        }
+      }
+      myKeyToDescriptorMap.put(key, null);
+    }
+    return null;
   }
 }

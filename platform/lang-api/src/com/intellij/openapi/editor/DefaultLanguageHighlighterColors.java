@@ -16,7 +16,6 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.util.containers.HashMap;
 
 import java.util.Map;
@@ -28,8 +27,6 @@ import java.util.Map;
  */
 @SuppressWarnings("deprecation") // SyntaxHighlighterColors is used for compatibility with old schemes
 public class DefaultLanguageHighlighterColors {
-
-  private final static Map<TextAttributesKey,String> DISPLAY_NAMES_MAP = new HashMap<TextAttributesKey, String>();
 
   public final static TextAttributesKey TEMPLATE_LANGUAGE_COLOR =
     TextAttributesKey.createTextAttributesKey("DEFAULT_TEMPLATE_LANGUAGE_COLOR");
@@ -62,31 +59,5 @@ public class DefaultLanguageHighlighterColors {
   public final static TextAttributesKey BRACKETS =
     TextAttributesKey.createTextAttributesKey("DEFAULT_BRACKETS", SyntaxHighlighterColors.BRACKETS);
 
-  static {
-    DISPLAY_NAMES_MAP.put(IDENTIFIER, "Identifier");
-    DISPLAY_NAMES_MAP.put(TEMPLATE_LANGUAGE_COLOR, "Template language");
-    DISPLAY_NAMES_MAP.put(NUMBER, "Number");
-    DISPLAY_NAMES_MAP.put(KEYWORD, "Keyword");
-    DISPLAY_NAMES_MAP.put(STRING, "String");
-    DISPLAY_NAMES_MAP.put(LINE_COMMENT, "Line comment");
-    DISPLAY_NAMES_MAP.put(OPERATION_SIGN, "Operator");
-    DISPLAY_NAMES_MAP.put(BRACES, "Braces");
-    DISPLAY_NAMES_MAP.put(BLOCk_COMMENT, "Block comment");
-    DISPLAY_NAMES_MAP.put(DOC_COMMENT, "Doc comment");
-    DISPLAY_NAMES_MAP.put(DOT, "Dot");
-    DISPLAY_NAMES_MAP.put(SEMICOLON, "Semicolon");
-    DISPLAY_NAMES_MAP.put(COMMA, "Comma");
-    DISPLAY_NAMES_MAP.put(PARENTHESES, "Parentheses");
-    DISPLAY_NAMES_MAP.put(BRACKETS, "Brackets");
-  }
 
-  public static AttributesDescriptor createAttributeDescriptor(TextAttributesKey key) {
-    String presentableName = DISPLAY_NAMES_MAP.get(key);
-    if (presentableName == null) presentableName = key.getExternalName();
-    return new AttributesDescriptor(presentableName, key);
-  }
-
-  public static String getDisplayName(TextAttributesKey key) {
-    return DISPLAY_NAMES_MAP.containsKey(key) ? DISPLAY_NAMES_MAP.get(key) : "<" + key.getExternalName() +">";
-  }
 }
