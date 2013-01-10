@@ -66,6 +66,11 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
     TAG_HIGHLIGHTING_MAP.put("inst_field", DefaultLanguageHighlighterColors.INSTANCE_FIELD);
     TAG_HIGHLIGHTING_MAP.put("static_method", DefaultLanguageHighlighterColors.STATIC_METHOD);
     TAG_HIGHLIGHTING_MAP.put("static_field", DefaultLanguageHighlighterColors.STATIC_FIELD);
+    TAG_HIGHLIGHTING_MAP.put("label", DefaultLanguageHighlighterColors.LABEL);
+    TAG_HIGHLIGHTING_MAP.put("local_var", DefaultLanguageHighlighterColors.LOCAL_VARIABLE);
+    TAG_HIGHLIGHTING_MAP.put("global_var", DefaultLanguageHighlighterColors.GLOBAL_VARIABLE);
+    TAG_HIGHLIGHTING_MAP.put("const", DefaultLanguageHighlighterColors.CONSTANT);
+    TAG_HIGHLIGHTING_MAP.put("interface", DefaultLanguageHighlighterColors.INTERFACE_NAME);
   }
 
   private final static AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = {
@@ -83,9 +88,14 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
     new AttributesDescriptor("Line comment", DefaultLanguageHighlighterColors.LINE_COMMENT),
     new AttributesDescriptor("Block comment", DefaultLanguageHighlighterColors.BLOCk_COMMENT),
     new AttributesDescriptor("Doc comment", DefaultLanguageHighlighterColors.DOC_COMMENT),
+    new AttributesDescriptor("Label", DefaultLanguageHighlighterColors.LABEL),
+    new AttributesDescriptor("Constant", DefaultLanguageHighlighterColors.CONSTANT),
+    new AttributesDescriptor("Local variable", DefaultLanguageHighlighterColors.LOCAL_VARIABLE),
+    new AttributesDescriptor("Global variable", DefaultLanguageHighlighterColors.GLOBAL_VARIABLE),
     new AttributesDescriptor("Function declaration", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION),
     new AttributesDescriptor("Function call", DefaultLanguageHighlighterColors.FUNCTION_CALL),
     new AttributesDescriptor("Parameter", DefaultLanguageHighlighterColors.PARAMETER),
+    new AttributesDescriptor("Interface name", DefaultLanguageHighlighterColors.INTERFACE_NAME),
     new AttributesDescriptor("Class name", DefaultLanguageHighlighterColors.CLASS_NAME),
     new AttributesDescriptor("Class reference", DefaultLanguageHighlighterColors.CLASS_REFERENCE),
     new AttributesDescriptor("Instance method", DefaultLanguageHighlighterColors.INSTANCE_METHOD),
@@ -123,8 +133,13 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
       "<line_comment>// Line comment</line_comment>\n" +
       "<block_comment>/* Block comment */</block_comment>\n" +
       "<doc_comment>/** Doc comment */</doc_comment>\n" +
+      "<label>:Label</label>\n" +
+      "<const>Constant</const>\n" +
+      "Global <global_var>variable</global_var>\n" +
       "Function <func_decl>declaration</func_decl> (<param>parameter</param>)\n" +
+      "    Local <local_var>variable</local_var>\n" +
       "Function <func_call>call</func_call>()\n" +
+      "Interface <interface>Name</interface>\n" +
       "Class <class_name>Name</class_name>\n" +
       "    instance <inst_method>method</inst_method>\n" +
       "    instance <inst_field>field</inst_field>\n" +

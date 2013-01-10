@@ -59,6 +59,15 @@ public class DefaultLanguageHighlighterColors {
   public final static TextAttributesKey BRACKETS =
     TextAttributesKey.createTextAttributesKey("DEFAULT_BRACKETS", SyntaxHighlighterColors.BRACKETS);
 
+  public final static TextAttributesKey LABEL =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_LABEL", IDENTIFIER);
+  public final static TextAttributesKey CONSTANT =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_CONSTANT", IDENTIFIER);
+  public final static TextAttributesKey LOCAL_VARIABLE =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_LOCAL_VARIABLE", IDENTIFIER);
+  public final static TextAttributesKey GLOBAL_VARIABLE =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_GLOBAL_VARIABLE", IDENTIFIER);
+
   public final static TextAttributesKey FUNCTION_DECLARATION =
     TextAttributesKey.createTextAttributesKey("DEFAULT_FUNCTION_DECLARATION", IDENTIFIER);
   public final static TextAttributesKey FUNCTION_CALL =
@@ -67,6 +76,8 @@ public class DefaultLanguageHighlighterColors {
     TextAttributesKey.createTextAttributesKey("DEFAULT_PARAMETER", IDENTIFIER);
   public final static TextAttributesKey CLASS_NAME =
     TextAttributesKey.createTextAttributesKey("DEFAULT_CLASS_NAME", IDENTIFIER);
+  public final static TextAttributesKey INTERFACE_NAME =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_INTERFACE_NAME", IDENTIFIER);
   public final static TextAttributesKey CLASS_REFERENCE =
     TextAttributesKey.createTextAttributesKey("DEFAULT_CLASS_REFERENCE", IDENTIFIER);
   public final static TextAttributesKey INSTANCE_METHOD =
