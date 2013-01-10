@@ -2,12 +2,12 @@ package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
@@ -26,14 +26,14 @@ public class ResourcePatterns {
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.ResourcePatterns");
 
-  private final List<Pair<Pattern, Pattern>> myCompiledPatterns = new ArrayList<Pair<Pattern, Pattern>>();
-  private final List<Pair<Pattern, Pattern>> myNegatedCompiledPatterns = new ArrayList<Pair<Pattern, Pattern>>();
+  private final List<CompiledPattern> myCompiledPatterns = new ArrayList<CompiledPattern>();
+  private final List<CompiledPattern> myNegatedCompiledPatterns = new ArrayList<CompiledPattern>();
 
   public ResourcePatterns(JpsProject project) {
     JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
     final List<String> patterns = configuration.getResourcePatterns();
     for (String pattern : patterns) {
-      final Pair<Pattern, Pattern> regexp = convertToRegexp(pattern);
+      final CompiledPattern regexp = convertToRegexp(pattern);
       if (isPatternNegated(pattern)) {
         myNegatedCompiledPatterns.add(regexp);
       }
@@ -54,8 +54,8 @@ public class ResourcePatterns {
     else {
       relativePathToParent = null;
     }
-    for (Pair<Pattern, Pattern> pair : myCompiledPatterns) {
-      if (matches(name, relativePathToParent, pair)) {
+    for (CompiledPattern pair : myCompiledPatterns) {
+      if (matches(name, relativePathToParent, srcRoot, pair)) {
         return true;
       }
     }
@@ -66,25 +66,29 @@ public class ResourcePatterns {
 
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < myNegatedCompiledPatterns.size(); i++) {
-      if (matches(name, relativePathToParent, myNegatedCompiledPatterns.get(i))) {
+      if (matches(name, relativePathToParent, srcRoot, myNegatedCompiledPatterns.get(i))) {
         return false;
       }
     }
     return true;
   }
 
-  private boolean matches(String name, String parentRelativePath, Pair<Pattern, Pattern> nameDirPatternPair) {
-    if (!matches(name, nameDirPatternPair.getFirst())) {
+  private static boolean matches(String name, String parentRelativePath, @NotNull File srcRoot, CompiledPattern pattern) {
+    if (!matches(name, pattern.fileName)) {
       return false;
     }
-    final Pattern dirPattern = nameDirPatternPair.getSecond();
-    if (dirPattern == null || parentRelativePath == null) {
-      return true;
+    if (parentRelativePath != null) {
+      if (pattern.dir != null && !matches(parentRelativePath, pattern.dir)) {
+        return false;
+      }
+      if (pattern.srcRoot != null && !matches(srcRoot.getName(), pattern.srcRoot)) {
+        return false;
+      }
     }
-    return matches(parentRelativePath, dirPattern);
+    return true;
   }
 
-  private boolean matches(String s, Pattern p) {
+  private static boolean matches(String s, Pattern p) {
     try {
       return p.matcher(s).matches();
     }
@@ -94,13 +98,20 @@ public class ResourcePatterns {
     }
   }
 
-  private static Pair<Pattern, Pattern> convertToRegexp(String wildcardPattern) {
+  private static CompiledPattern convertToRegexp(String wildcardPattern) {
     if (isPatternNegated(wildcardPattern)) {
       wildcardPattern = wildcardPattern.substring(1);
     }
 
     wildcardPattern = FileUtil.toSystemIndependentName(wildcardPattern);
 
+    String srcRoot = null;
+    int colon = wildcardPattern.indexOf(":");
+    if (colon > 0) {
+      srcRoot = wildcardPattern.substring(0, colon);
+      wildcardPattern = wildcardPattern.substring(colon + 1);
+    }
+    
     String dirPattern = null;
     int slash = wildcardPattern.lastIndexOf('/');
     if (slash >= 0) {
@@ -123,7 +134,8 @@ public class ResourcePatterns {
     wildcardPattern = optimize(wildcardPattern);
 
     final Pattern dirCompiled = dirPattern == null ? null : compilePattern(dirPattern);
-    return Pair.create(compilePattern(wildcardPattern), dirCompiled);
+    final Pattern srcCompiled = srcRoot == null ? null : compilePattern(optimize(normalizeWildcards(srcRoot)));
+    return new CompiledPattern(compilePattern(wildcardPattern), dirCompiled, srcCompiled);
   }
 
   private static String optimize(String wildcardPattern) {
@@ -147,4 +159,17 @@ public class ResourcePatterns {
   private static Pattern compilePattern(@NonNls String s) {
     return Pattern.compile(s, SystemInfo.isFileSystemCaseSensitive ? 0 : Pattern.CASE_INSENSITIVE);
   }
+  
+  private static class CompiledPattern {
+    @NotNull final Pattern fileName;
+    @Nullable final Pattern dir;
+    @Nullable final Pattern srcRoot;
+
+    CompiledPattern(@NotNull Pattern fileName, @Nullable Pattern dir, @Nullable Pattern srcRoot) {
+      this.fileName = fileName;
+      this.dir = dir;
+      this.srcRoot = srcRoot;
+    }
+  }
+  
 }
