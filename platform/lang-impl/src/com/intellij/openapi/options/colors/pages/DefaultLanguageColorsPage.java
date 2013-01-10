@@ -57,6 +57,15 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
     TAG_HIGHLIGHTING_MAP.put("comma", DefaultLanguageHighlighterColors.COMMA);
     TAG_HIGHLIGHTING_MAP.put("brackets", DefaultLanguageHighlighterColors.BRACKETS);
     TAG_HIGHLIGHTING_MAP.put("parenths", DefaultLanguageHighlighterColors.PARENTHESES);
+    TAG_HIGHLIGHTING_MAP.put("func_decl", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION);
+    TAG_HIGHLIGHTING_MAP.put("func_call", DefaultLanguageHighlighterColors.FUNCTION_CALL);
+    TAG_HIGHLIGHTING_MAP.put("param", DefaultLanguageHighlighterColors.PARAMETER);
+    TAG_HIGHLIGHTING_MAP.put("class_name", DefaultLanguageHighlighterColors.CLASS_NAME);
+    TAG_HIGHLIGHTING_MAP.put("class_ref", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
+    TAG_HIGHLIGHTING_MAP.put("inst_method", DefaultLanguageHighlighterColors.INSTANCE_METHOD);
+    TAG_HIGHLIGHTING_MAP.put("inst_field", DefaultLanguageHighlighterColors.INSTANCE_FIELD);
+    TAG_HIGHLIGHTING_MAP.put("static_method", DefaultLanguageHighlighterColors.STATIC_METHOD);
+    TAG_HIGHLIGHTING_MAP.put("static_field", DefaultLanguageHighlighterColors.STATIC_FIELD);
   }
 
   private final AttributesDescriptor[] myAttributesDescriptors;
@@ -77,6 +86,15 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
       new AttributesDescriptor(this, "Line comment", DefaultLanguageHighlighterColors.LINE_COMMENT),
       new AttributesDescriptor(this, "Block comment", DefaultLanguageHighlighterColors.BLOCk_COMMENT),
       new AttributesDescriptor(this, "Doc comment", DefaultLanguageHighlighterColors.DOC_COMMENT),
+      new AttributesDescriptor(this, "Function declaration", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION),
+      new AttributesDescriptor(this, "Function call", DefaultLanguageHighlighterColors.FUNCTION_CALL),
+      new AttributesDescriptor(this, "Parameter", DefaultLanguageHighlighterColors.PARAMETER),
+      new AttributesDescriptor(this, "Class name", DefaultLanguageHighlighterColors.CLASS_NAME),
+      new AttributesDescriptor(this, "Class reference", DefaultLanguageHighlighterColors.CLASS_REFERENCE),
+      new AttributesDescriptor(this, "Instance method", DefaultLanguageHighlighterColors.INSTANCE_METHOD),
+      new AttributesDescriptor(this, "Instance field", DefaultLanguageHighlighterColors.INSTANCE_FIELD),
+      new AttributesDescriptor(this, "Static method", DefaultLanguageHighlighterColors.STATIC_METHOD),
+      new AttributesDescriptor(this, "Static field", DefaultLanguageHighlighterColors.STATIC_FIELD),
       new AttributesDescriptor(this, "Template language", DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR),
     };
   }
@@ -109,6 +127,13 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
       "<line_comment>// Line comment</line_comment>\n" +
       "<block_comment>/* Block comment */</block_comment>\n" +
       "<doc_comment>/** Doc comment */</doc_comment>\n" +
+      "Function <func_decl>declaration</func_decl> (<param>parameter</param>)\n" +
+      "Function <func_call>call</func_call>()\n" +
+      "Class <class_name>Name</class_name>\n" +
+      "    instance <inst_method>method</inst_method>\n" +
+      "    instance <inst_field>field</inst_field>\n" +
+      "    static <static_method>method</static_method>\n" +
+      "    static <static_field>field</static_field>\n" +
       "<template_language>{% Template language %}</template_language>";
   }
 

@@ -39,7 +39,7 @@ public class DefaultLanguageHighlighterColors {
   public final static TextAttributesKey STRING =
     TextAttributesKey.createTextAttributesKey("DEFAULT_STRING", SyntaxHighlighterColors.STRING);
   public final static TextAttributesKey BLOCk_COMMENT =
-    TextAttributesKey.createTextAttributesKey("DEFAULT_BLOCk_COMMENT", SyntaxHighlighterColors.JAVA_BLOCK_COMMENT);
+    TextAttributesKey.createTextAttributesKey("DEFAULT_BLOCK_COMMENT", SyntaxHighlighterColors.JAVA_BLOCK_COMMENT);
   public final static TextAttributesKey LINE_COMMENT =
     TextAttributesKey.createTextAttributesKey("DEFAULT_LINE_COMMENT", SyntaxHighlighterColors.LINE_COMMENT);
   public final static TextAttributesKey DOC_COMMENT =
@@ -58,6 +58,25 @@ public class DefaultLanguageHighlighterColors {
     TextAttributesKey.createTextAttributesKey("DEFAULT_PARENTHS", SyntaxHighlighterColors.PARENTHS);
   public final static TextAttributesKey BRACKETS =
     TextAttributesKey.createTextAttributesKey("DEFAULT_BRACKETS", SyntaxHighlighterColors.BRACKETS);
+
+  public final static TextAttributesKey FUNCTION_DECLARATION =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_FUNCTION_DECLARATION", IDENTIFIER);
+  public final static TextAttributesKey FUNCTION_CALL =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_FUNCTION_CALL", IDENTIFIER);
+  public final static TextAttributesKey PARAMETER =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_PARAMETER", IDENTIFIER);
+  public final static TextAttributesKey CLASS_NAME =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_CLASS_NAME", IDENTIFIER);
+  public final static TextAttributesKey CLASS_REFERENCE =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_CLASS_REFERENCE", IDENTIFIER);
+  public final static TextAttributesKey INSTANCE_METHOD =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_INSTANCE_METHOD", FUNCTION_DECLARATION);
+  public final static TextAttributesKey INSTANCE_FIELD =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_INSTANCE_FIELD", IDENTIFIER);
+  public final static TextAttributesKey STATIC_METHOD =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_STATIC_METHOD", FUNCTION_DECLARATION);
+  public final static TextAttributesKey STATIC_FIELD =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_STATIC_FIELD", IDENTIFIER);
 
 
 }
