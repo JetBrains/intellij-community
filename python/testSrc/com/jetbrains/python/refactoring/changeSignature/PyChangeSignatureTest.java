@@ -101,6 +101,12 @@ public class PyChangeSignatureTest extends PyTestCase {
                                                               new PyParameterInfo(3, "**extra_info", null, false)));
   }
 
+  public void testKeywordOnlyMove() {
+    doChangeSignatureTest("f", Arrays.asList(new PyParameterInfo(2, "param2", null, false),
+                                             new PyParameterInfo(0, "*", null, false),
+                                             new PyParameterInfo(1, "param1", null, false)), LanguageLevel.PYTHON32);
+  }
+
   public void testEmptyParameterName() {
     doValidationTest(null, Arrays.asList(new PyParameterInfo(-1, "", "2", true)),
                      PyBundle.message("refactoring.change.signature.dialog.validation.parameter.name"));
