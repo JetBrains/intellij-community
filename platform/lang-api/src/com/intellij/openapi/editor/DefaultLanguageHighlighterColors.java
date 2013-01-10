@@ -16,9 +16,6 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.util.containers.HashMap;
-
-import java.util.Map;
 
 /**
  * Base highlighter colors for multiple languages.
