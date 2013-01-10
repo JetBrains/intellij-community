@@ -49,6 +49,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -392,6 +393,18 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     final int parentId = getFileId(parent);
 
     final int[] children = FSRecords.list(parentId);
+
+    if (children.length > 0) {
+      // fast path, check that some child has same nameId as given name, this avoid O(N) on retrieving names for processing noncached children
+      int nameId = FSRecords.getNameId(childName);
+      for (final int childId : children) {
+        if (nameId == FSRecords.getNameId(childId)) {
+          return childId;
+        }
+      }
+      // for case sensitive system the above check is exhaustive in consistent state of vfs
+    }
+
     for (final int childId : children) {
       if (namesEqual(fs, childName, FSRecords.getName(childId))) return childId;
     }
