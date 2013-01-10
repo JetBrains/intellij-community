@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.options.colors.ColorSettingsPages;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -27,7 +28,8 @@ import java.util.*;
 public class ColorSettingsPagesImpl extends ColorSettingsPages {
   private final List<ColorSettingsPage> myPages = new ArrayList<ColorSettingsPage>();
   private boolean myExtensionsLoaded = false;
-  private Map<TextAttributesKey, AttributesDescriptor> myKeyToDescriptorMap = new HashMap<TextAttributesKey,AttributesDescriptor>();
+  private Map<TextAttributesKey, Pair<ColorSettingsPage, AttributesDescriptor>> myKeyToDescriptorMap =
+    new HashMap<TextAttributesKey, Pair<ColorSettingsPage, AttributesDescriptor>>();
 
   @Override
   public void registerPage(ColorSettingsPage page) {
@@ -45,7 +47,7 @@ public class ColorSettingsPagesImpl extends ColorSettingsPages {
 
   @Override
   @Nullable
-  public AttributesDescriptor getAttributeDescriptor(TextAttributesKey key) {
+  public Pair<ColorSettingsPage,AttributesDescriptor> getAttributeDescriptor(TextAttributesKey key) {
     if (myKeyToDescriptorMap.containsKey(key)) {
       return myKeyToDescriptorMap.get(key);
     }
@@ -53,8 +55,9 @@ public class ColorSettingsPagesImpl extends ColorSettingsPages {
       for (ColorSettingsPage page : getRegisteredPages()) {
         for (AttributesDescriptor descriptor : page.getAttributeDescriptors()) {
           if (descriptor.getKey() == key) {
-            myKeyToDescriptorMap.put(key, descriptor);
-            return descriptor;
+            Pair<ColorSettingsPage,AttributesDescriptor> result = new Pair<ColorSettingsPage, AttributesDescriptor>(page, descriptor);
+            myKeyToDescriptorMap.put(key, result);
+            return result;
           }
         }
       }

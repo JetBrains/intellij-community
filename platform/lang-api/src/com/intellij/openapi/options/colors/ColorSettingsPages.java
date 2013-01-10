@@ -17,6 +17,7 @@ package com.intellij.openapi.options.colors;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -49,6 +50,6 @@ public abstract class ColorSettingsPages {
   public abstract ColorSettingsPage[] getRegisteredPages();
 
   @Nullable
-  public abstract AttributesDescriptor getAttributeDescriptor(TextAttributesKey key);
+  public abstract Pair<ColorSettingsPage,AttributesDescriptor> getAttributeDescriptor(TextAttributesKey key);
 
 }

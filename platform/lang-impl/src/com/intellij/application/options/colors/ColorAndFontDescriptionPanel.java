@@ -18,6 +18,7 @@ package com.intellij.application.options.colors;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -397,12 +398,12 @@ public class ColorAndFontDescriptionPanel extends JPanel {
 
     if (description.isInherited()) {
       myInheritanceLabel.setIcon(INHERITED_ICON);
-      AttributesDescriptor baseDescriptor = description.getBaseAttributeDescriptor();
+      Pair<ColorSettingsPage,AttributesDescriptor> baseDescriptor = description.getBaseAttributeDescriptor();
       String attrName  = "?";
       String pageName = "?";
-      if (baseDescriptor != null && baseDescriptor.getDisplayName() != null) {
-        attrName = baseDescriptor.getDisplayName();
-        ColorSettingsPage settingsPage = baseDescriptor.getSettingsPage();
+      if (baseDescriptor != null && baseDescriptor.second.getDisplayName() != null) {
+        attrName = baseDescriptor.second.getDisplayName();
+        ColorSettingsPage settingsPage = baseDescriptor.first;
         if (settingsPage != null) {
           pageName = settingsPage.getDisplayName();
         }

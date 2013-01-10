@@ -68,36 +68,32 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
     TAG_HIGHLIGHTING_MAP.put("static_field", DefaultLanguageHighlighterColors.STATIC_FIELD);
   }
 
-  private final AttributesDescriptor[] myAttributesDescriptors;
-
-  public DefaultLanguageColorsPage() {
-    myAttributesDescriptors = new AttributesDescriptor[]{
-      new AttributesDescriptor(this, "Keyword", DefaultLanguageHighlighterColors.KEYWORD),
-      new AttributesDescriptor(this, "Identifier", DefaultLanguageHighlighterColors.IDENTIFIER),
-      new AttributesDescriptor(this, "String", DefaultLanguageHighlighterColors.STRING),
-      new AttributesDescriptor(this, "Number", DefaultLanguageHighlighterColors.NUMBER),
-      new AttributesDescriptor(this, "Operation sign", DefaultLanguageHighlighterColors.OPERATION_SIGN),
-      new AttributesDescriptor(this, "Braces", DefaultLanguageHighlighterColors.BRACES),
-      new AttributesDescriptor(this, "Parentheses", DefaultLanguageHighlighterColors.PARENTHESES),
-      new AttributesDescriptor(this, "Brackets", DefaultLanguageHighlighterColors.BRACKETS),
-      new AttributesDescriptor(this, "Dot", DefaultLanguageHighlighterColors.DOT),
-      new AttributesDescriptor(this, "Comma", DefaultLanguageHighlighterColors.COMMA),
-      new AttributesDescriptor(this, "Semicolon", DefaultLanguageHighlighterColors.SEMICOLON),
-      new AttributesDescriptor(this, "Line comment", DefaultLanguageHighlighterColors.LINE_COMMENT),
-      new AttributesDescriptor(this, "Block comment", DefaultLanguageHighlighterColors.BLOCk_COMMENT),
-      new AttributesDescriptor(this, "Doc comment", DefaultLanguageHighlighterColors.DOC_COMMENT),
-      new AttributesDescriptor(this, "Function declaration", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION),
-      new AttributesDescriptor(this, "Function call", DefaultLanguageHighlighterColors.FUNCTION_CALL),
-      new AttributesDescriptor(this, "Parameter", DefaultLanguageHighlighterColors.PARAMETER),
-      new AttributesDescriptor(this, "Class name", DefaultLanguageHighlighterColors.CLASS_NAME),
-      new AttributesDescriptor(this, "Class reference", DefaultLanguageHighlighterColors.CLASS_REFERENCE),
-      new AttributesDescriptor(this, "Instance method", DefaultLanguageHighlighterColors.INSTANCE_METHOD),
-      new AttributesDescriptor(this, "Instance field", DefaultLanguageHighlighterColors.INSTANCE_FIELD),
-      new AttributesDescriptor(this, "Static method", DefaultLanguageHighlighterColors.STATIC_METHOD),
-      new AttributesDescriptor(this, "Static field", DefaultLanguageHighlighterColors.STATIC_FIELD),
-      new AttributesDescriptor(this, "Template language", DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR),
-    };
-  }
+  private final static AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = {
+    new AttributesDescriptor("Keyword", DefaultLanguageHighlighterColors.KEYWORD),
+    new AttributesDescriptor("Identifier", DefaultLanguageHighlighterColors.IDENTIFIER),
+    new AttributesDescriptor("String", DefaultLanguageHighlighterColors.STRING),
+    new AttributesDescriptor("Number", DefaultLanguageHighlighterColors.NUMBER),
+    new AttributesDescriptor("Operation sign", DefaultLanguageHighlighterColors.OPERATION_SIGN),
+    new AttributesDescriptor("Braces", DefaultLanguageHighlighterColors.BRACES),
+    new AttributesDescriptor("Parentheses", DefaultLanguageHighlighterColors.PARENTHESES),
+    new AttributesDescriptor("Brackets", DefaultLanguageHighlighterColors.BRACKETS),
+    new AttributesDescriptor("Dot", DefaultLanguageHighlighterColors.DOT),
+    new AttributesDescriptor("Comma", DefaultLanguageHighlighterColors.COMMA),
+    new AttributesDescriptor("Semicolon", DefaultLanguageHighlighterColors.SEMICOLON),
+    new AttributesDescriptor("Line comment", DefaultLanguageHighlighterColors.LINE_COMMENT),
+    new AttributesDescriptor("Block comment", DefaultLanguageHighlighterColors.BLOCk_COMMENT),
+    new AttributesDescriptor("Doc comment", DefaultLanguageHighlighterColors.DOC_COMMENT),
+    new AttributesDescriptor("Function declaration", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION),
+    new AttributesDescriptor("Function call", DefaultLanguageHighlighterColors.FUNCTION_CALL),
+    new AttributesDescriptor("Parameter", DefaultLanguageHighlighterColors.PARAMETER),
+    new AttributesDescriptor("Class name", DefaultLanguageHighlighterColors.CLASS_NAME),
+    new AttributesDescriptor("Class reference", DefaultLanguageHighlighterColors.CLASS_REFERENCE),
+    new AttributesDescriptor("Instance method", DefaultLanguageHighlighterColors.INSTANCE_METHOD),
+    new AttributesDescriptor("Instance field", DefaultLanguageHighlighterColors.INSTANCE_FIELD),
+    new AttributesDescriptor("Static method", DefaultLanguageHighlighterColors.STATIC_METHOD),
+    new AttributesDescriptor("Static field", DefaultLanguageHighlighterColors.STATIC_FIELD),
+    new AttributesDescriptor("Template language", DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR),
+  };
 
   @Nullable
   @Override
@@ -146,7 +142,7 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
   @NotNull
   @Override
   public AttributesDescriptor[] getAttributeDescriptors() {
-    return myAttributesDescriptors;
+    return ATTRIBUTES_DESCRIPTORS;
   }
 
   @NotNull

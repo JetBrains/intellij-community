@@ -760,7 +760,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     private final TextAttributes myAttributesToApply;
     private final TextAttributesKey key;
     private TextAttributes myFallbackAttributes;
-    private AttributesDescriptor myBaseAttributeDescriptor;
+    private Pair<ColorSettingsPage,AttributesDescriptor> myBaseAttributeDescriptor;
 
     private SchemeTextAttributesDescription(String name, String group, TextAttributesKey key, MyColorScheme  scheme, Icon icon,
                                            String toolTip) {
@@ -774,7 +774,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
         myFallbackAttributes = scheme.getAttributes(fallbackKey);
         myBaseAttributeDescriptor = ColorSettingsPages.getInstance().getAttributeDescriptor(fallbackKey);
         if (myBaseAttributeDescriptor == null) {
-          myBaseAttributeDescriptor = new AttributesDescriptor(fallbackKey.getExternalName(), fallbackKey);
+          myBaseAttributeDescriptor =
+            new Pair<ColorSettingsPage, AttributesDescriptor>(null, new AttributesDescriptor(fallbackKey.getExternalName(), fallbackKey));
         }
       }
       initCheckedStatus();
@@ -819,7 +820,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     @Nullable
     @Override
-    public AttributesDescriptor getBaseAttributeDescriptor() {
+    public Pair<ColorSettingsPage,AttributesDescriptor> getBaseAttributeDescriptor() {
       return myBaseAttributeDescriptor;
     }
   }
