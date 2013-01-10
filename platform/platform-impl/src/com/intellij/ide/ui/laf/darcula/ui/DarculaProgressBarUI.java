@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.GraphicsUtil;
 import sun.swing.SwingUtilities2;
@@ -59,7 +58,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
     int h = c.getHeight();
     g.fillRect(0, 0, w, h);
     g.setColor(Gray._88);
-    GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+    GraphicsUtil.setupAAPainting(g);
     Path2D.Double path = new Path2D.Double();
     int ww = getPeriodLength() / 2;
     path.moveTo(0, 0);
@@ -106,7 +105,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
       super.paintDeterminate(g, c);
       return;
     }
-
+    GraphicsUtil.setupAAPainting(g);
     Insets b = progressBar.getInsets(); // area for border
     final int w = progressBar.getWidth();
     final int h = progressBar.getHeight();

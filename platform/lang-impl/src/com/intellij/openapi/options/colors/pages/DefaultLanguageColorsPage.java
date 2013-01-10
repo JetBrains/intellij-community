@@ -48,8 +48,15 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
     TAG_HIGHLIGHTING_MAP.put("keyword", DefaultLanguageHighlighterColors.KEYWORD);
     TAG_HIGHLIGHTING_MAP.put("string", DefaultLanguageHighlighterColors.STRING);
     TAG_HIGHLIGHTING_MAP.put("line_comment", DefaultLanguageHighlighterColors.LINE_COMMENT);
+    TAG_HIGHLIGHTING_MAP.put("block_comment", DefaultLanguageHighlighterColors.BLOCk_COMMENT);
     TAG_HIGHLIGHTING_MAP.put("operation_sign", DefaultLanguageHighlighterColors.OPERATION_SIGN);
     TAG_HIGHLIGHTING_MAP.put("braces", DefaultLanguageHighlighterColors.BRACES);
+    TAG_HIGHLIGHTING_MAP.put("doc_comment", DefaultLanguageHighlighterColors.DOC_COMMENT);
+    TAG_HIGHLIGHTING_MAP.put("dot", DefaultLanguageHighlighterColors.DOT);
+    TAG_HIGHLIGHTING_MAP.put("semicolon", DefaultLanguageHighlighterColors.SEMICOLON);
+    TAG_HIGHLIGHTING_MAP.put("comma", DefaultLanguageHighlighterColors.COMMA);
+    TAG_HIGHLIGHTING_MAP.put("brackets", DefaultLanguageHighlighterColors.BRACKETS);
+    TAG_HIGHLIGHTING_MAP.put("parenths", DefaultLanguageHighlighterColors.PARENTHESES);
   }
 
   private static final AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = {
@@ -58,9 +65,16 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
     DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.STRING),
     DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.NUMBER),
     DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.OPERATION_SIGN),
-    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.LINE_COMMENT),
-    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR),
     DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.BRACES),
+    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.PARENTHESES),
+    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.BRACKETS),
+    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.DOT),
+    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.COMMA),
+    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.SEMICOLON),
+    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.LINE_COMMENT),
+    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.BLOCk_COMMENT),
+    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.DOC_COMMENT),
+    DefaultLanguageHighlighterColors.createAttributeDescriptor(DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR),
   };
 
   @Nullable
@@ -84,8 +98,13 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
       "<string>'String'</string>\n" +
       "<number>12345</number>\n" +
       "<operation_sign>Operator</operation_sign>\n" +
+      "Dot: <dot>.</dot> comma: <comma>,</comma> semicolon: <semicolon>;</semicolon>\n" +
       "<braces>{</braces> Braces <braces>}</braces>\n" +
+      "<parenths>(</parenths> Parentheses <parenths>)</parenths>\n" +
+      "<brackets>[</brackets> Brackets <brackets>]</brackets>\n" +
       "<line_comment>// Line comment</line_comment>\n" +
+      "<block_comment>/* Block comment */</block_comment>\n" +
+      "<doc_comment>/** Doc comment */</doc_comment>\n" +
       "<template_language>{% Template language %}</template_language>";
   }
 

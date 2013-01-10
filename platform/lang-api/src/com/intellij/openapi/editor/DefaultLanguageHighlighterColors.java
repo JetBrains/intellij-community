@@ -26,6 +26,7 @@ import java.util.Map;
  *
  * @author Rustam Vishnyakov
  */
+@SuppressWarnings("deprecation") // SyntaxHighlighterColors is used for compatibility with old schemes
 public class DefaultLanguageHighlighterColors {
 
   private final static Map<TextAttributesKey,String> DISPLAY_NAMES_MAP = new HashMap<TextAttributesKey, String>();
@@ -40,12 +41,26 @@ public class DefaultLanguageHighlighterColors {
     TextAttributesKey.createTextAttributesKey("DEFAULT_KEYWORD", SyntaxHighlighterColors.KEYWORD);
   public final static TextAttributesKey STRING =
     TextAttributesKey.createTextAttributesKey("DEFAULT_STRING", SyntaxHighlighterColors.STRING);
+  public final static TextAttributesKey BLOCk_COMMENT =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_BLOCk_COMMENT", SyntaxHighlighterColors.JAVA_BLOCK_COMMENT);
   public final static TextAttributesKey LINE_COMMENT =
     TextAttributesKey.createTextAttributesKey("DEFAULT_LINE_COMMENT", SyntaxHighlighterColors.LINE_COMMENT);
+  public final static TextAttributesKey DOC_COMMENT =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_DOC_COMMENT", SyntaxHighlighterColors.DOC_COMMENT);
   public final static TextAttributesKey OPERATION_SIGN =
     TextAttributesKey.createTextAttributesKey("DEFAULT_OPERATION_SIGN", SyntaxHighlighterColors.OPERATION_SIGN);
   public final static TextAttributesKey BRACES =
     TextAttributesKey.createTextAttributesKey("DEFAULT_BRACES", SyntaxHighlighterColors.BRACES);
+  public final static TextAttributesKey DOT =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_DOT", SyntaxHighlighterColors.DOT);
+  public final static TextAttributesKey SEMICOLON =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_SEMICOLON", SyntaxHighlighterColors.JAVA_SEMICOLON);
+  public final static TextAttributesKey COMMA =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_COMMA", SyntaxHighlighterColors.COMMA);
+  public final static TextAttributesKey PARENTHESES =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_PARENTHS", SyntaxHighlighterColors.PARENTHS);
+  public final static TextAttributesKey BRACKETS =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_BRACKETS", SyntaxHighlighterColors.BRACKETS);
 
   static {
     DISPLAY_NAMES_MAP.put(IDENTIFIER, "Identifier");
@@ -56,6 +71,13 @@ public class DefaultLanguageHighlighterColors {
     DISPLAY_NAMES_MAP.put(LINE_COMMENT, "Line comment");
     DISPLAY_NAMES_MAP.put(OPERATION_SIGN, "Operator");
     DISPLAY_NAMES_MAP.put(BRACES, "Braces");
+    DISPLAY_NAMES_MAP.put(BLOCk_COMMENT, "Block comment");
+    DISPLAY_NAMES_MAP.put(DOC_COMMENT, "Doc comment");
+    DISPLAY_NAMES_MAP.put(DOT, "Dot");
+    DISPLAY_NAMES_MAP.put(SEMICOLON, "Semicolon");
+    DISPLAY_NAMES_MAP.put(COMMA, "Comma");
+    DISPLAY_NAMES_MAP.put(PARENTHESES, "Parentheses");
+    DISPLAY_NAMES_MAP.put(BRACKETS, "Brackets");
   }
 
   public static AttributesDescriptor createAttributeDescriptor(TextAttributesKey key) {

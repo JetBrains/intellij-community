@@ -27,10 +27,13 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.JBColor;
+import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.ArrayList;
 
 /**
  * @author peter
@@ -114,28 +117,41 @@ public class CompletionPreview {
     if (item == null) {
       return;
     }
-    
-    LookupElementPresentation presentation = LookupElementPresentation.renderElement(item);
-    String text = presentation.getItemText();
-    if (text == null) {
-      text = item.getLookupString();
-    } else {
-      String tailText = presentation.getTailText();
-      if (tailText != null && tailText.startsWith("(") && tailText.contains(")")) {
-        Editor editor = lookup.getEditor();
-        CharSequence seq = editor.getDocument().getCharsSequence();
-        int caret = editor.getCaretModel().getOffset();
-        if (caret >= seq.length() || seq.charAt(caret) != '(') {
-          text += "()";
-        }
-      }
-    }
+
+    String text = getPreviewText(lookup, item);
 
     int prefixLength = lookup.getPrefixLength(item);
     if (prefixLength > text.length()) {
       return;
     }
-    new CompletionPreview(lookup, text, prefixLength);
+    FList<TextRange> fragments = LookupCellRenderer.getMatchingFragments(lookup.itemPattern(item).substring(0, prefixLength), text);
+    if (fragments == null || fragments.isEmpty()) {
+      return;
+    }
+
+    ArrayList<TextRange> arrayList = new ArrayList<TextRange>(fragments);
+    TextRange last = arrayList.get(arrayList.size() - 1);
+
+    new CompletionPreview(lookup, text, last.getEndOffset());
+  }
+
+  private static String getPreviewText(LookupImpl lookup, LookupElement item) {
+    LookupElementPresentation presentation = LookupElementPresentation.renderElement(item);
+    String text = presentation.getItemText();
+    if (text == null) {
+      text = item.getLookupString();
+    }
+
+    String tailText = presentation.getTailText();
+    if (tailText != null && tailText.startsWith("(") && tailText.contains(")")) {
+      Editor editor = lookup.getEditor();
+      CharSequence seq = editor.getDocument().getCharsSequence();
+      int caret = editor.getCaretModel().getOffset();
+      if (caret >= seq.length() || seq.charAt(caret) != '(') {
+        return text + "()";
+      }
+    }
+    return text;
   }
 
   public void uninstallPreview() {

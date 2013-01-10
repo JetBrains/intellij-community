@@ -24,4 +24,6 @@ import javax.swing.*;
  */
 public interface WelcomeScreen extends Disposable {
   JComponent getWelcomePanel();
+
+  void setupFrame(JFrame frame);
 }

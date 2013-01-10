@@ -28,6 +28,7 @@ import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
+import com.intellij.util.containers.FList;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
@@ -303,7 +304,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     nameComponent.append(name, base);
   }
 
-  public static Iterable<TextRange> getMatchingFragments(String prefix, String name) {
+  public static FList<TextRange> getMatchingFragments(String prefix, String name) {
     return new MinusculeMatcher("*" + prefix, NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(name);
   }
 

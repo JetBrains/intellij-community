@@ -60,7 +60,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * The dialog wrapper. The dialog wrapper could be used only on event dispatch thread.
+ * The standard base class for modal dialog boxes. The dialog wrapper could be used only on event dispatch thread.
  * In case when the dialog must be created from other threads use
  * {@link EventQueue#invokeLater(Runnable)} or {@link EventQueue#invokeAndWait(Runnable)}.
  */

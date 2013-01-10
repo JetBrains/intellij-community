@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMapBasedOnSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,6 +45,12 @@ public class FrameworkDetectionContextImpl extends FrameworkDetectionContextBase
 
   public FrameworkDetectionContextImpl(@NotNull Project project) {
     myProject = project;
+  }
+
+  @Nullable
+  @Override
+  public Project getProject() {
+    return myProject;
   }
 
   @NotNull

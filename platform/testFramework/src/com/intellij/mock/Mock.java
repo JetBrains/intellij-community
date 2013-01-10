@@ -577,7 +577,7 @@ public class Mock {
     }
 
     @Override
-    public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor, final boolean sideTool) {
+    public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor, final boolean secondary) {
       return null;
     }
 

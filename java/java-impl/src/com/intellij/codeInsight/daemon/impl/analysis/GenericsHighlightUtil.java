@@ -145,7 +145,7 @@ public class GenericsHighlightUtil {
       final String description;
       if (targetParametersNum == 0) {
         if (PsiTreeUtil.getParentOfType(referenceParameterList, PsiCall.class) != null &&
-            PsiUtil.isLanguageLevel7OrHigher(referenceParameterList)) {
+            JavaVersionService.getInstance().isAtLeast(referenceParameterList, JavaSdkVersion.JDK_1_7)) {
           description = null;
         }
         else {

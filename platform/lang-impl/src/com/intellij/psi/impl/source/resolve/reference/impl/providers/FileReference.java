@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,9 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     if (contextRef == null) {
       Collection<PsiFileSystemItem> defaultContexts = myFileReferenceSet.getDefaultContexts();
       for (PsiFileSystemItem context : defaultContexts) {
-        LOG.assertTrue(context != null, myFileReferenceSet.getClass() + " provided a null context");
+        if (context == null) {
+          LOG.error(myFileReferenceSet.getClass() + " provided a null context");
+        }
       }
       result.addAll(defaultContexts);
     } else {

@@ -36,12 +36,21 @@ public class ToolWindowEP extends AbstractExtensionPointBean {
   @Attribute("id")
   public String id;
 
+  /**
+   * The side of the screen on which the toolwindow is displayed ("left", "right" or "bottom").
+   */
   @Attribute("anchor")
   public String anchor;
 
+  /**
+   * The resource path of the icon displayed on the toolwindow button. Toolwindow icons must have the size of 13x13 pixels.
+   */
   @Attribute("icon")
   public String icon;
 
+  /**
+   * The name of the class implementing {@link ToolWindowFactory}, used to create the toolwindow contents.
+   */
   @Attribute("factoryClass")
   public String factoryClass;
 

@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,13 +35,14 @@ public class CoreLocalFileSystem extends DeprecatedVirtualFileSystem {
     return StandardFileSystems.FILE_PROTOCOL;
   }
 
+  @Nullable
+  public VirtualFile findFileByIoFile(@NotNull File ioFile) {
+    return ioFile.exists() ? new CoreLocalVirtualFile(this, ioFile) : null;
+  }
+
   @Override
   public VirtualFile findFileByPath(@NotNull @NonNls String path) {
-    File ioFile = new File(path);
-    if (ioFile.exists()) {
-      return new CoreLocalVirtualFile(this, ioFile);
-    }
-    return null;
+    return findFileByIoFile(new File(path));
   }
 
   @Override

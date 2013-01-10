@@ -526,7 +526,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   public ToolWindow registerToolWindow(@NotNull final String id,
                                        final boolean canCloseContent,
                                        @NotNull final ToolWindowAnchor anchor,
-                                       final boolean sideTool) {
+                                       final boolean secondary) {
     return HEADLESS_WINDOW;
   }
 

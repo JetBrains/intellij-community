@@ -219,7 +219,8 @@ public final class Match {
     }
   }
 
-  boolean areCorrespond(PsiElement patternDeclaration, @NotNull PsiElement matchDeclaration) {
+  boolean areCorrespond(PsiElement patternDeclaration, PsiElement matchDeclaration) {
+    if (matchDeclaration == null || patternDeclaration == null) return false;
     PsiElement originalValue = myDeclarationCorrespondence.get(patternDeclaration);
     return originalValue == null || originalValue == matchDeclaration;
   }

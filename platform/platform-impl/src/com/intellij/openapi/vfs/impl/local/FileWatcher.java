@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.util.containers.ContainerUtil.*;
 
@@ -86,6 +87,7 @@ public class FileWatcher {
   private volatile int myStartAttemptCount = 0;
   private volatile boolean myIsShuttingDown = false;
   private volatile boolean myFailureShownToTheUser = false;
+  private final AtomicInteger mySettingRoots = new AtomicInteger(0);
 
   /** @deprecated use {@linkplain com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl#getFileWatcher()} (to remove in IDEA 13) */
   public static FileWatcher getInstance() {
@@ -183,7 +185,13 @@ public class FileWatcher {
   }
 
   private void startupProcess(final boolean restart) throws IOException {
-    if (myIsShuttingDown) return;
+    if (myIsShuttingDown) {
+      return;
+    }
+    if (ShutDownTracker.isShutdownHookRunning()) {
+      myIsShuttingDown = true;
+      return;
+    }
 
     if (myStartAttemptCount++ > MAX_PROCESS_LAUNCH_ATTEMPT_COUNT) {
       notifyOnFailure(ApplicationBundle.message("watcher.failed.to.start"), null);
@@ -226,6 +234,10 @@ public class FileWatcher {
 
   public boolean isOperational() {
     return myProcessHandler != null;
+  }
+
+  public boolean isSettingRoots() {
+    return mySettingRoots.get() > 0;
   }
 
   public static class DirtyPaths {
@@ -272,6 +284,7 @@ public class FileWatcher {
         return;
       }
 
+      mySettingRoots.incrementAndGet();
       myMapping.clear();
 
       try {
@@ -439,6 +452,7 @@ public class FileWatcher {
             processRemap();
           }
           else {
+            mySettingRoots.decrementAndGet();
             processUnwatchable();
           }
           myLines.clear();

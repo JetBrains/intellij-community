@@ -16,6 +16,7 @@
 package com.intellij.util.io;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,13 +50,13 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   private static final Version ourVersion = new Version(CORRECTLY_CLOSED_MAGIC, DIRTY_MAGIC);
 
   public PersistentEnumerator(@NotNull File file, @NotNull KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
-    this(file, dataDescriptor, initialSize, ourLock.myDefaultStorageLockContext);
+    this(file, dataDescriptor, initialSize, null);
   }
 
   public PersistentEnumerator(@NotNull File file,
                               @NotNull KeyDescriptor<Data> dataDescriptor,
                               int initialSize,
-                              PagedFileStorage.StorageLockContext storageLockContext) throws IOException {
+                              @Nullable PagedFileStorage.StorageLockContext storageLockContext) throws IOException {
     super(file, new ResizeableMappedFile(file, initialSize, storageLockContext, -1, false), dataDescriptor, initialSize, ourVersion,
           new RecordBufferHandler(), true);
   }

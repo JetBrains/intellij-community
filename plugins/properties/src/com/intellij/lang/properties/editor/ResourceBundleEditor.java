@@ -60,7 +60,7 @@ import com.intellij.ui.JBSplitter;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
@@ -71,8 +71,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
-import javax.swing.event.TreeModelEvent;
-import javax.swing.event.TreeModelListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -228,7 +226,9 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       }
     }
     if (nodeToSelect != null) {
-      tree.setSelectionPath(new TreePath(nodeToSelect.getPath()));
+      TreePath path = new TreePath(nodeToSelect.getPath());
+      tree.setSelectionPath(path);
+      tree.scrollPathToVisible(path);
     }
   }
 

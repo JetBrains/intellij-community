@@ -19,10 +19,7 @@ package com.intellij.ide.impl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
-import com.intellij.ide.structureView.StructureView;
-import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.ide.structureView.StructureViewTreeElement;
-import com.intellij.ide.structureView.StructureViewWrapper;
+import com.intellij.ide.structureView.*;
 import com.intellij.ide.structureView.impl.StructureViewComposite;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.openapi.Disposable;
@@ -34,7 +31,6 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -183,7 +179,8 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   private void setFile(VirtualFile file) {
     boolean forceRebuild = !Comparing.equal(file, myFile);
     if (!forceRebuild && myStructureView != null) {
-      StructureViewTreeElement treeElement = myStructureView.getTreeModel().getRoot();
+      StructureViewModel model = myStructureView.getTreeModel();
+      StructureViewTreeElement treeElement = model.getRoot();
       Object value = treeElement.getValue();
       if (value == null || value instanceof PsiElement && !((PsiElement)value).isValid()) {
         forceRebuild = true;

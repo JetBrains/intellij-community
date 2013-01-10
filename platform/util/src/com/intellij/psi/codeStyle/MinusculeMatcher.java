@@ -180,7 +180,7 @@ public class MinusculeMatcher implements Matcher {
   }
 
   @Nullable
-  public Iterable<TextRange> matchingFragments(@NotNull String name) {
+  public FList<TextRange> matchingFragments(@NotNull String name) {
     return matchWildcards(name, 0, 0, IOUtil.isAscii(name));
   }
 

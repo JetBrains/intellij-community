@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.Convertor;
@@ -554,6 +556,7 @@ public class SvnParseCommandLineParseTest extends TestCase {
                      "</status>\n";
 
     final SvnStatusHandler[] handlerArr = new SvnStatusHandler[1];
+    final String basePath = SystemInfo.isWindows ? "C:/base/" : "/base/";
     final SvnStatusHandler handler = new
       SvnStatusHandler(new SvnStatusHandler.ExternalDataCallback() {
       @Override
@@ -564,7 +567,7 @@ public class SvnParseCommandLineParseTest extends TestCase {
       @Override
       public void switchChangeList(String newList) {
       }
-    }, new File("C:/base/"), new Convertor<File, SVNInfo>() {
+    }, new File(basePath), new Convertor<File, SVNInfo>() {
       @Override
       public SVNInfo convert(File o) {
         try {
@@ -578,7 +581,7 @@ public class SvnParseCommandLineParseTest extends TestCase {
         final int secondIdx = o.getPath().indexOf(":", idx + 1);
         Assert.assertTrue(o.getPath(), secondIdx == -1);
         try {
-          return createStubInfo("C:/base/1", "http://a.b.c");
+          return createStubInfo(basePath + "1", "http://a.b.c");
         }
         catch (SVNException e) {
           //
@@ -588,9 +591,15 @@ public class SvnParseCommandLineParseTest extends TestCase {
     });
     handlerArr[0] = handler;
 
+    final String osChecked = changePathsIfNix(s);
     SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-    parser.parse(new ByteArrayInputStream(s.getBytes(CharsetToolkit.UTF8_CHARSET)), handler);
+    parser.parse(new ByteArrayInputStream(osChecked.getBytes(CharsetToolkit.UTF8_CHARSET)), handler);
     final MultiMap<String,PortableStatus> changes = handler.getCurrentListChanges();
+  }
+
+  private String changePathsIfNix(String s) {
+    s = StringUtil.replace(s, "\\", "/");
+    return StringUtil.replace(s, "C:/", "/c/");
   }
 
   private IdeaSVNInfo createStubInfo(final String basePath, final String baseUrl) throws SVNException {
