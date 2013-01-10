@@ -1,6 +1,7 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.psi.*;
@@ -52,6 +53,7 @@ public class PyStringFormatParser {
     @Nullable private String myConversionFlags;
     @Nullable private String myWidth;
     @Nullable private String myPrecision;
+    @Nullable private Integer myPosition;
     private char myLengthModifier;
     private char myConversionType;
     private boolean myUnclosedMapping;
@@ -123,6 +125,15 @@ public class PyStringFormatParser {
     private void setUnclosedMapping(boolean unclosedMapping) {
       myUnclosedMapping = unclosedMapping;
     }
+
+    @Nullable
+    public Integer getPosition() {
+      return myPosition;
+    }
+
+    private void setPosition(@Nullable Integer position) {
+      myPosition = position;
+    }
   }
 
   @NotNull private final String myLiteral;
@@ -160,9 +171,21 @@ public class PyStringFormatParser {
         next = s.indexOf('}', next + 2);
       }
       if (next > pos) {
-        // TODO: Parse substitution details
         final SubstitutionChunk chunk = new SubstitutionChunk(pos);
-        chunk.setEndIndex(next + 1);
+        final int nameStart = pos + 1;
+        final int chunkEnd = next + 1;
+        chunk.setEndIndex(chunkEnd);
+        final int nameEnd = StringUtil.indexOfAny(s, "!:.[}", nameStart, chunkEnd);
+        if (nameEnd > 0 && nameStart < nameEnd) {
+          final String name = s.substring(nameStart, nameEnd);
+          try {
+            final int number = Integer.parseInt(name);
+            chunk.setPosition(number);
+          } catch (NumberFormatException e) {
+            chunk.setMappingKey(name);
+          }
+        }
+        // TODO: Parse substitution details
         results.add(chunk);
       }
       pos = next + 1;
