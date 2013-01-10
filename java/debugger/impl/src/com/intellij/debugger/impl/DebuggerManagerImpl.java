@@ -135,17 +135,19 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
   public DebuggerManagerImpl(Project project, StartupManager startupManager, final EditorColorsManager colorsManager) {
     myProject = project;
     myBreakpointManager = new BreakpointManager(myProject, startupManager, this);
-    final EditorColorsListener myColorsListener = new EditorColorsListener() {
-      public void globalSchemeChange(EditorColorsScheme scheme) {
-        getBreakpointManager().updateBreakpointsUI();
-      }
-    };
-    colorsManager.addEditorColorsListener(myColorsListener);
-    Disposer.register(project, new Disposable() {
-      public void dispose() {
-        colorsManager.removeEditorColorsListener(myColorsListener);
-      }
-    });
+    if (!project.isDefault()) {
+      final EditorColorsListener colorsListener = new EditorColorsListener() {
+        public void globalSchemeChange(EditorColorsScheme scheme) {
+          getBreakpointManager().updateBreakpointsUI();
+        }
+      };
+      colorsManager.addEditorColorsListener(colorsListener);
+      Disposer.register(project, new Disposable() {
+        public void dispose() {
+          colorsManager.removeEditorColorsListener(colorsListener);
+        }
+      });
+    }
   }
 
   public DebuggerSession getSession(DebugProcess process) {
