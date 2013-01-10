@@ -125,14 +125,15 @@ public class CompletionPreview {
       return;
     }
     FList<TextRange> fragments = LookupCellRenderer.getMatchingFragments(lookup.itemPattern(item).substring(0, prefixLength), text);
-    if (fragments == null || fragments.isEmpty()) {
+    if (fragments == null) {
       return;
     }
 
-    ArrayList<TextRange> arrayList = new ArrayList<TextRange>(fragments);
-    TextRange last = arrayList.get(arrayList.size() - 1);
-
-    new CompletionPreview(lookup, text, last.getEndOffset());
+    if (!fragments.isEmpty()) {
+      ArrayList<TextRange> arrayList = new ArrayList<TextRange>(fragments);
+      prefixLength = arrayList.get(arrayList.size() - 1).getEndOffset();
+    }
+    new CompletionPreview(lookup, text, prefixLength);
   }
 
   private static String getPreviewText(LookupImpl lookup, LookupElement item) {
