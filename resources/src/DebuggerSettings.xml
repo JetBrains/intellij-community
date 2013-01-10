@@ -68,4 +68,8 @@
     <option name="PATTERN" value="com.springsource.loaded.*" />
     <option name="ENABLED" value="true" />
   </filter>
+  <filter>
+    <option name="PATTERN" value="org.springsource.loaded.*" />
+    <option name="ENABLED" value="true" />
+  </filter>
 </component>
