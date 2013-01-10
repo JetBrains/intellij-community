@@ -35,9 +35,22 @@ public class Executor {
 
   private static String ourCurrentDir;
 
-  public static void cd(String path) {
-    ourCurrentDir = path;
-    log("cd " + shortenPath(path));
+  private static void cdAbs(String absolutePath) {
+    ourCurrentDir = absolutePath;
+    log("cd " + shortenPath(absolutePath));
+  }
+
+  private static void cdRel(String relativePath) {
+    cdAbs(ourCurrentDir + "/" + relativePath);
+  }
+
+  public static void cd(String relativeOrAbsolutePath) {
+    if (relativeOrAbsolutePath.startsWith("/") || relativeOrAbsolutePath.charAt(1) == ':') {
+      cdAbs(relativeOrAbsolutePath);
+    }
+    else {
+      cdRel(relativeOrAbsolutePath);
+    }
   }
 
   public static String pwd() {
