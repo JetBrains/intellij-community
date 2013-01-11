@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ShutDownTracker;
@@ -1021,7 +1022,12 @@ public class BuildManager implements ApplicationComponent{
           myProjectDataMap.remove(projectPath);
         }
       });
-      scheduleAutoMake(); // run automake on project opening
+      StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
+        @Override
+        public void run() {
+          scheduleAutoMake(); // run automake after project opened
+        }
+      });
     }
 
     @Override
