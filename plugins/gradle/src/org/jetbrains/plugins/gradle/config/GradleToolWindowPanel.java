@@ -157,8 +157,10 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
     for (JComponent component : getToolbarControls()) {
       component.setVisible(showToolbar);
     }
-    
-    updateContent();
+
+    if (!NON_LINKED_CARD_NAME.equals(cardToShow)) {
+      updateContent();
+    }
   }
 
   @NotNull
