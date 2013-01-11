@@ -13,11 +13,13 @@ import org.jetbrains.annotations.NotNull;
  * Date: 1/8/13
  */
 public class JavaFxFileTypeFactory extends FileTypeFactory {
+  public static final String FXML_EXTENSION = "fxml";
+
   public static boolean isFxml(PsiFile file) {
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null) {
-      FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension("fxml");
-      return virtualFile.getFileType() == fileType;
+      FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(FXML_EXTENSION);
+      return virtualFile.getFileType() == fileType && FXML_EXTENSION.equals(virtualFile.getExtension());
     }
     return false;
   }
@@ -26,6 +28,6 @@ public class JavaFxFileTypeFactory extends FileTypeFactory {
   public void createFileTypes(@NotNull FileTypeConsumer consumer) {
     final FileType fileType = consumer.getStandardFileTypeByName("XML");
     assert fileType != null;
-    consumer.consume(fileType, "fxml");
+    consumer.consume(fileType, FXML_EXTENSION);
   }
 }
