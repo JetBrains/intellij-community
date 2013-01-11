@@ -17,6 +17,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.*;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformUtils;
@@ -747,6 +748,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     }
 
     private static void addAutoImportFix(PyElement node, PsiReference reference, List<LocalQuickFix> actions) {
+      final PsiFile file = InjectedLanguageUtil.getTopLevelFile(node);
+      if (!(file instanceof PyFile)) return;
       AutoImportQuickFix importFix = PythonReferenceImporter.proposeImportFix(node, reference);
       if (importFix != null) {
         if (!suppressHintForAutoImport(node, importFix) && PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP) {
