@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 package git4idea.config
+
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import git4idea.test.GitTestUtil
 import org.jetbrains.annotations.NotNull
 import org.junit.Before
 import org.junit.Test
 
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
-import java.util.regex.Matcher
 
 import static junit.framework.Assert.assertEquals
+import static org.junit.Assume.assumeTrue
 
 /**
  *
@@ -38,7 +39,7 @@ class GitExecutableDetectorWindowsTest {
 
   @Before
   void setUp() {
-    GitTestUtil.setWindows(true);
+    assumeTrue(SystemInfo.isWindows)
     testRoot = FileUtil.createTempDirectory("", "")
     setWindowsRoot(new File(testRoot, "C_"));
   }

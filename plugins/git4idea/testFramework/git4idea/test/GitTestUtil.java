@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,14 +28,13 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.fail;
 
 /**
  * @author Kirill Likhodedov
@@ -218,21 +216,6 @@ public class GitTestUtil {
   public static File getTestDataFolder() {
     File pluginRoot = new File(PluginPathManager.getPluginHomePath("git4idea"));
     return new File(pluginRoot, "testData");
-  }
-
-  // for testing purposes we test the behavior of windows and unix gits on both platforms
-  // this method sets SystemInfo.isWindows to whatever we want
-  public static void setWindows(boolean windows) throws NoSuchFieldException, IllegalAccessException {
-    Field win = SystemInfo.class.getDeclaredField("isWindows");
-    win.setAccessible(true);
-
-    Field modifiersField = Field.class.getDeclaredField("modifiers");
-    modifiersField.setAccessible(true);
-    modifiersField.setInt(win, win.getModifiers() & ~Modifier.FINAL);
-
-    win.set(null, windows);
-
-    assertEquals(SystemInfo.isWindows, windows);
   }
 
   public interface EqualityChecker<T, E> {
