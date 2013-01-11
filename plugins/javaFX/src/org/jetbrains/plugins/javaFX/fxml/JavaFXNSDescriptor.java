@@ -34,8 +34,11 @@ public class JavaFXNSDescriptor implements XmlNSDescriptor, Validator<XmlDocumen
     }
     else {
       XmlTag parentTag = tag.getParentTag();
-      return new JavaFxClassBackedElementDescriptor(parentTag.getName(), parentTag).getElementDescriptor(tag, parentTag);
+      if (parentTag != null) {
+        return new JavaFxClassBackedElementDescriptor(parentTag.getName(), parentTag).getElementDescriptor(tag, parentTag);
+      }
     }
+    return null;
   }
 
   public static List<String> parseImports(XmlFile file) {
