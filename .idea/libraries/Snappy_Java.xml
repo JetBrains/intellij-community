@@ -1,14 +1,12 @@
 <component name="libraryTable">
   <library name="Snappy-Java">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/snappy-java-1.0.4.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/snappy-java-1.0.5-M2.jar!/" />
     </CLASSES>
-    <JAVADOC>
-      <root url="jar://$PROJECT_DIR$/lib/src/snappy-java-1.0.4.1-src.zip!/snappy-java-1.0.4.1/wiki/apidocs" />
-    </JAVADOC>
+    <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/snappy-java-1.0.4.1-src.zip!/snappy-java-1.0.4.1/src/main/resources" />
-      <root url="jar://$PROJECT_DIR$/lib/src/snappy-java-1.0.4.1-src.zip!/snappy-java-1.0.4.1/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/snappy-java-1.0.5-M2-src.zip!/snappy-java-1.0.5-M2/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/snappy-java-1.0.5-M2-src.zip!/snappy-java-1.0.5-M2/src/main/resources" />
     </SOURCES>
   </library>
 </component>
