@@ -85,6 +85,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   private JLabel myTargetDestinationLabel;
   private boolean myHavePackages;
   private boolean myTargetDirectoryFixed;
+  private boolean mySuggestToMoveToAnotherRoot;
 
   public MoveClassesOrPackagesDialog(Project project,
                                      boolean searchTextOccurences,
@@ -228,10 +229,12 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
                       String targetPackageName,
                       final PsiDirectory initialTargetDirectory,
                       boolean isTargetDirectoryFixed,
+                      boolean suggestToMoveToAnotherRoot,
                       boolean searchInComments,
                       boolean searchForTextOccurences,
                       String helpID) {
     myTargetDirectoryFixed = isTargetDirectoryFixed;
+    mySuggestToMoveToAnotherRoot = suggestToMoveToAnotherRoot;
     if (targetPackageName.length() != 0) {
       myWithBrowseButtonReference.prependItem(targetPackageName);
       myClassPackageChooser.prependItem(targetPackageName);
@@ -471,7 +474,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
       if (ret != 0) return null;
     }
 
-    return ((DestinationFolderComboBox)myDestinationFolderCB).selectDirectory(targetPackage, true);
+    return ((DestinationFolderComboBox)myDestinationFolderCB).selectDirectory(targetPackage, mySuggestToMoveToAnotherRoot);
   }
 
   private VirtualFile[] getSourceRoots() {
