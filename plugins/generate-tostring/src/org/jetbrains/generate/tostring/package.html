@@ -160,7 +160,7 @@
 
   <h3>JavaDoc</h3>
   It is possible to add javadoc comments to the generated toString() method. This is done by inserting the javadoc
-  comments in the veloicty template. See the supplied javadoc templte example. A requirement is to use /** and */
+  comments in the velocity template. See the supplied javadoc template example. A requirement is to use /** and */
   enclosing the javadoc comments. The javadoc comments should be in the top of the template.
   <p/>
   Here is an example:
@@ -246,7 +246,7 @@
   <h3>Inspection</h3>
   This plugin provides two code inspections:
   <ul>
-    <li/>Class does not overwrite toString() method
+    <li/>Class does not override toString() method
     <li/>Field not used in toString() method
   </ul>
   The <b>Field not used in toString() method</b> inspection can be used to identify out of synchronization situations
@@ -259,7 +259,7 @@
   Enabling the on-the-fly feature can be done from setting <b>settings -> Errors -> ToString() Issues</b>.
   Also on-the-fly should be enabled from the settings to the plugin.
   <p/>
-  The inspection <b>Class does not overwrite toString() method</b> can be used to identify any classes where you
+  The inspection <b>Class does not override toString() method</b> can be used to identify any classes where you
   might have forgotten to add a toString() method. This inspection will use the exclude settings from the plugin
   configuration to ignore classes having fields not supposed to be dumped. An additional settings is to exclude certain
   classes by using a regular expression matching their classname. As default this is used to exclude any Exception classes.
