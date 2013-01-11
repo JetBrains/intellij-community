@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -208,7 +208,6 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     for (File file : files) {
       final String testName = file.getName().substring(BEFORE_PREFIX.length());
       doTestFor(testName, testCase);
-      System.out.println(file.getPath());
     }
     assertTrue("Test files not found in "+testDirPath,files.length != 0);
   }
