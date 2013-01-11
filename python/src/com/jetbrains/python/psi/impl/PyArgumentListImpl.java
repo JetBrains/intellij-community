@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
@@ -105,6 +106,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
       if (before != null && elementPrecedesElementsOfType(before, PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens())) {
         ASTNode comma = PyElementGenerator.getInstance(getProject()).createComma();
         node.addChild(comma, before);
+        node.addChild(ASTFactory.whitespace(" "), before);
         anchorBefore = comma;
       }
       else {
@@ -159,11 +161,13 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     ASTNode argNode = arg.getNode();
     if (commaFirst) {
       node.addChild(comma, beforeThis);
+      node.addChild(ASTFactory.whitespace(" "), beforeThis);
       node.addChild(argNode, beforeThis);
     }
     else {
       node.addChild(argNode, beforeThis);
       node.addChild(comma, beforeThis);
+      node.addChild(ASTFactory.whitespace(" "), beforeThis);
     }
   }
 
