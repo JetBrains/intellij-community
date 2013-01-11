@@ -12,6 +12,7 @@ public class PyParameterInfo implements ParameterInfo {
 
   private final int myOldIndex;
   private String myName = "";
+  private String myOldName = "";
   private String myDefaultValue = null;
   private boolean myDefaultInSignature = false;
 
@@ -22,6 +23,7 @@ public class PyParameterInfo implements ParameterInfo {
   public PyParameterInfo(int oldIndex, String name, @Nullable String defaultValue, boolean defaultInSignature) {
     myOldIndex = oldIndex;
     myName = name;
+    myOldName = name;
     myDefaultValue = defaultValue;
     myDefaultInSignature = defaultInSignature;
   }
@@ -30,6 +32,11 @@ public class PyParameterInfo implements ParameterInfo {
   @Override
   public String getName() {
     return myName;
+  }
+
+  @NotNull
+  public String getOldName() {
+    return myOldName;
   }
 
   @Override
@@ -73,5 +80,9 @@ public class PyParameterInfo implements ParameterInfo {
 
   public void setDefaultInSignature(boolean defaultInSignature) {
     myDefaultInSignature = defaultInSignature;
+  }
+
+  public boolean isRenamed() {
+    return !myOldName.equals(myName);
   }
 }
