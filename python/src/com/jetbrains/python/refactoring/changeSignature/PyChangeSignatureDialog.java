@@ -121,6 +121,8 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
     boolean hadParamsAfterSingleStar = false;
     LanguageLevel languageLevel = LanguageLevel.forElement(myMethod.getMethod());
 
+    int parametersLength = parameters.size();
+
     for (PyParameterTableModelItem info : parameters) {
       final PyParameterInfo parameter = info.parameter;
       final String name = parameter.getName();
@@ -131,6 +133,9 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
 
       if (name.equals("*")) {
         hadSingleStar = true;
+        if (parametersLength == 1) {
+          return PyBundle.message("ANN.named.arguments.after.star");
+        }
       }
       else if (name.startsWith("*") && !name.startsWith("**")) {
         if (hadKeywordContainer) {
