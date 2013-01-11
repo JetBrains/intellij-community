@@ -131,8 +131,8 @@ class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
     assert fooInheritors(m1) == [fooMethod(other0), fooMethod(b1)] as Set
   }
 
-  private PsiMethod fooMethod(PsiClass c) { c.findMethodsByName('foo', false)[0] }
-  private Set<PsiMethod> fooInheritors(PsiClass c) { OverridingMethodsSearch.search(fooMethod(c)).findAll() as Set }
+  private static PsiMethod fooMethod(PsiClass c) { c.findMethodsByName('foo', false)[0] }
+  private static Set<PsiMethod> fooInheritors(PsiClass c) { OverridingMethodsSearch.search(fooMethod(c)).findAll() as Set }
 
   public void "test do not parse not stubbed sources in class jars"() {
     def lib = LocalFileSystem.getInstance().refreshAndFindFileByPath(PathManagerEx.getTestDataPath() + "/libResolve/classesAndSources")
@@ -149,6 +149,9 @@ class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
     Collection<VirtualFile> pkgDirs = pkg.directories.collect { it.virtualFile }
     Collection<VirtualFile> pkgChildren = pkgDirs.collect { it.children as List }.flatten()
     PsiFile javaSrc = psiManager.findFile(pkgChildren.find { it.name == 'LibraryClass.java' })
+    assert !javaSrc.node.parsed
+
+    assert pkg.containsClassNamed('LibraryClass')
     assert !javaSrc.node.parsed
   }
 
