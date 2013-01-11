@@ -54,8 +54,10 @@ public class PyDocReference extends PyReferenceImpl {
             PyResolveUtil.scopeCrawlUp(processor, (ScopeOwner)pair.getFirst(), referencedName, pair.getFirst());
             final List<RatedResolveResult> resultList = getResultsFromProcessor(referencedName, processor, pair.getFirst(),
                                                                                          pair.getFirst());
-            if (resultList.size() > 0)
-              return resultList.toArray(new RatedResolveResult[resultList.size()]);
+            if (resultList.size() > 0) {
+              List<RatedResolveResult> ret = RatedResolveResult.sorted(resultList);
+              return ret.toArray(new RatedResolveResult[ret.size()]);
+            }
           }
         }
       }
@@ -65,8 +67,11 @@ public class PyDocReference extends PyReferenceImpl {
       if (file instanceof ScopeOwner)
         PyResolveUtil.scopeCrawlUp(processor, (ScopeOwner)file, referencedName, file);
       final List<RatedResolveResult> resultList = getResultsFromProcessor(referencedName, processor, file, file);
-      if (resultList.size() > 0)
-        return resultList.toArray(new RatedResolveResult[resultList.size()]);
+      if (resultList.size() > 0) {
+        List<RatedResolveResult> ret = RatedResolveResult.sorted(resultList);
+        return ret.toArray(new RatedResolveResult[ret.size()]);
+      }
+
     }
     return results;
   }
