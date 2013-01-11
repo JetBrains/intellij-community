@@ -116,6 +116,12 @@ public class LambdaUtil {
   }
 
   public static boolean isAcceptable(PsiLambdaExpression lambdaExpression, final PsiType leftType, boolean checkReturnType) {
+    if (leftType instanceof PsiIntersectionType) {
+      for (PsiType conjunctType : ((PsiIntersectionType)leftType).getConjuncts()) {
+        if (isAcceptable(lambdaExpression, conjunctType, checkReturnType)) return true;
+      }
+      return false;
+    }
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(leftType);
     final PsiClass psiClass = resolveResult.getElement();
     if (psiClass instanceof PsiAnonymousClass) {
@@ -462,17 +468,16 @@ public class LambdaUtil {
             if (type == null) {
               type = getFunctionalInterfaceType(lambdaExpression, false);
             }
-            final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(type);
-            if (resolveResult != null) {
-              final PsiMethod method = getFunctionalInterfaceMethod(type);
-              if (method != null) {
-                final PsiParameter[] parameters = method.getParameterList().getParameters();
-                if (parameterIndex < parameters.length) {
-                  final PsiType psiType = getSubstitutor(method, resolveResult).substitute(parameters[parameterIndex].getType());
-                  if (!dependsOnTypeParams(psiType, type, lambdaExpression, null)) {
-                    return GenericsUtil.eliminateWildcards(psiType);
-                  }
-                }
+            if (type instanceof PsiIntersectionType) {
+              final PsiType[] conjuncts = ((PsiIntersectionType)type).getConjuncts();
+              for (PsiType conjunct : conjuncts) {
+                final PsiType lambdaParameterFromType = getLambdaParameterFromType(parameterIndex, lambdaExpression, conjunct);
+                if (lambdaParameterFromType != null) return lambdaParameterFromType;
+              }
+            } else {
+              final PsiType lambdaParameterFromType = getLambdaParameterFromType(parameterIndex, lambdaExpression, type);
+              if (lambdaParameterFromType != null) {
+                return lambdaParameterFromType;
               }
             }
           }
@@ -483,6 +488,23 @@ public class LambdaUtil {
       }
     }
     return new PsiLambdaParameterType(param);
+  }
+
+  private static PsiType getLambdaParameterFromType(int parameterIndex, PsiLambdaExpression lambdaExpression, PsiType conjunct) {
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(conjunct);
+    if (resolveResult != null) {
+      final PsiMethod method = getFunctionalInterfaceMethod(conjunct);
+      if (method != null) {
+        final PsiParameter[] parameters = method.getParameterList().getParameters();
+        if (parameterIndex < parameters.length) {
+          final PsiType psiType = getSubstitutor(method, resolveResult).substitute(parameters[parameterIndex].getType());
+          if (!dependsOnTypeParams(psiType, conjunct, lambdaExpression, null)) {
+            return GenericsUtil.eliminateWildcards(psiType);
+          }
+        }
+      }
+    }
+    return null;
   }
 
   public static PsiSubstitutor inferFromReturnType(final PsiTypeParameter[] typeParameters,

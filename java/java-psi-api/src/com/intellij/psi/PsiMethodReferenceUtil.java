@@ -116,6 +116,12 @@ public class PsiMethodReferenceUtil {
   
   public static boolean isAcceptable(@Nullable final PsiMethodReferenceExpression methodReferenceExpression, PsiType left) {
     if (methodReferenceExpression == null) return false;
+    if (left instanceof PsiIntersectionType) {
+      for (PsiType conjunct : ((PsiIntersectionType)left).getConjuncts()) {
+        if (isAcceptable(methodReferenceExpression, conjunct)) return true;
+      }
+      return false;
+    }
     Map<PsiMethodReferenceExpression, PsiType> map = ourRefs.get();
     if (map == null) {
       map = new HashMap<PsiMethodReferenceExpression, PsiType>();
