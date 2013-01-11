@@ -28,7 +28,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 /**
- * Position manager to debug classes reloaded by com.springsource.springloaded
+ * Position manager to debug classes reloaded by org.springsource.springloaded
  * @author Sergey Evdokimov
  */
 public class SpringLoadedPositionManager implements PositionManager {
