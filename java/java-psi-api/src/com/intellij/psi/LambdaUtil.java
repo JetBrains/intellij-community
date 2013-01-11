@@ -17,10 +17,12 @@ package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
@@ -577,6 +579,84 @@ public class LambdaUtil {
       }
     }
     return result;
+  }
+
+  public static void checkMoreSpecificReturnType(List<CandidateInfo> conflicts, int functionalInterfaceIdx) {
+    final CandidateInfo[] newConflictsArray = conflicts.toArray(new CandidateInfo[conflicts.size()]);
+    for (int i = 1; i < newConflictsArray.length; i++) {
+      final CandidateInfo method = newConflictsArray[i];
+      final PsiType interfaceReturnType = getReturnType(functionalInterfaceIdx, method);
+      for (int j = 0; j < i; j++) {
+        final CandidateInfo conflict = newConflictsArray[j];
+        assert conflict != method;
+        final PsiType interfaceReturnType1 = getReturnType(functionalInterfaceIdx, conflict);
+        if (interfaceReturnType != null && interfaceReturnType1 != null && !Comparing.equal(interfaceReturnType, interfaceReturnType1)) {
+          int moreSpecific = isMoreSpecific(interfaceReturnType, interfaceReturnType1);
+          if (moreSpecific > 0) {
+            conflicts.remove(method);
+            break;
+          }
+          else if (moreSpecific < 0) {
+            conflicts.remove(conflict);
+          }
+        }
+      }
+    }
+  }
+
+  private static int isMoreSpecific(PsiType returnType, PsiType returnType1) {
+    if (returnType instanceof PsiPrimitiveType && returnType != PsiType.VOID && !(returnType1 instanceof PsiPrimitiveType)) {
+      return -1;
+    }
+    if (returnType1 instanceof PsiPrimitiveType && returnType1 != PsiType.VOID && !(returnType instanceof PsiPrimitiveType)) {
+      return 1;
+    }
+    final PsiClassType.ClassResolveResult r = PsiUtil.resolveGenericsClassInType(returnType);
+    final PsiClass rClass = r.getElement();
+    final PsiClassType.ClassResolveResult r1 = PsiUtil.resolveGenericsClassInType(returnType1);
+    final PsiClass rClass1 = r1.getElement();
+    if (rClass != null && rClass1 != null) {
+      if (rClass == rClass1) {
+        int moreSpecific = 0;
+        for (PsiTypeParameter parameter : rClass.getTypeParameters()) {
+          final PsiType t = r.getSubstitutor().substituteWithBoundsPromotion(parameter);
+          final PsiType t1 = r1.getSubstitutor().substituteWithBoundsPromotion(parameter);
+          if (t == null || t1 == null) continue;
+          if (t1.isAssignableFrom(t) && !GenericsUtil.eliminateWildcards(t1).equals(t)) {
+            if (moreSpecific == 1) {
+              return 0;
+            }
+            moreSpecific = -1;
+          }
+          else if (t.isAssignableFrom(t1) && !GenericsUtil.eliminateWildcards(t).equals(t1)) {
+            if (moreSpecific == -1) {
+              return 0;
+            }
+            moreSpecific = 1;
+          }
+          else {
+            return 0;
+          }
+        }
+        return moreSpecific;
+      }
+      else if (rClass1.isInheritor(rClass, true)) {
+        return 1;
+      }
+      else if (rClass.isInheritor(rClass1, true)) {
+        return -1;
+      }
+    }
+    return 0;
+  }
+
+  @Nullable
+  private static PsiType getReturnType(int functionalTypeIdx, CandidateInfo method) {
+    final PsiParameter[] methodParameters = ((PsiMethod)method.getElement()).getParameterList().getParameters();
+    if (methodParameters.length == 0) return null;
+    final PsiParameter param = functionalTypeIdx < methodParameters.length ? methodParameters[functionalTypeIdx] : methodParameters[methodParameters.length - 1];
+    final PsiType functionalInterfaceType = method.getSubstitutor().substitute(param.getType());
+    return getFunctionalInterfaceReturnType(functionalInterfaceType);
   }
 
   static class TypeParamsChecker extends PsiTypeVisitor<Boolean> {
