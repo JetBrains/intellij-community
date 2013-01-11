@@ -65,7 +65,6 @@ public final class IconLoader {
 
     ourDeprecatedIconsReplacements.put("/vcs/refresh.png", "AllIcons.Actions.Refresh");
     ourDeprecatedIconsReplacements.put("/actions/sync.png", "AllIcons.Actions.Refresh");
-    ourDeprecatedIconsReplacements.put("/actions/refreshUsages.png", "AllIcons.Actions.Rerun");
 
     ourDeprecatedIconsReplacements.put("/compiler/error.png", "AllIcons.General.Error");
     ourDeprecatedIconsReplacements.put("/compiler/hideWarnings.png", "AllIcons.General.HideWarnings");
