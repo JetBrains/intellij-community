@@ -92,7 +92,7 @@ public class PyTypeProviderBase implements PyTypeProvider {
   }
 
   @Override
-  public PyType getIterationType(PyClass iterable) {
+  public PyType getIterationType(@NotNull PyClass iterable) {
     return null;
   }
 
