@@ -30,31 +30,31 @@ public class DefaultLanguageHighlighterColors {
   public final static TextAttributesKey IDENTIFIER =
     TextAttributesKey.createTextAttributesKey("DEFAULT_IDENTIFIER");
   public final static TextAttributesKey NUMBER =
-    TextAttributesKey.createTextAttributesKey("DEFAULT_NUMBER", SyntaxHighlighterColors.NUMBER);
+    TextAttributesKey.createTextAttributesKey("DEFAULT_NUMBER", SyntaxHighlighterColors.NUMBER.getDefaultAttributes());
   public final static TextAttributesKey KEYWORD =
-    TextAttributesKey.createTextAttributesKey("DEFAULT_KEYWORD", SyntaxHighlighterColors.KEYWORD);
+    TextAttributesKey.createTextAttributesKey("DEFAULT_KEYWORD", SyntaxHighlighterColors.KEYWORD.getDefaultAttributes());
   public final static TextAttributesKey STRING =
-    TextAttributesKey.createTextAttributesKey("DEFAULT_STRING", SyntaxHighlighterColors.STRING);
+    TextAttributesKey.createTextAttributesKey("DEFAULT_STRING", SyntaxHighlighterColors.STRING.getDefaultAttributes());
   public final static TextAttributesKey BLOCk_COMMENT =
-    TextAttributesKey.createTextAttributesKey("DEFAULT_BLOCK_COMMENT", SyntaxHighlighterColors.JAVA_BLOCK_COMMENT);
+    TextAttributesKey.createTextAttributesKey("DEFAULT_BLOCK_COMMENT", SyntaxHighlighterColors.JAVA_BLOCK_COMMENT.getDefaultAttributes());
   public final static TextAttributesKey LINE_COMMENT =
-    TextAttributesKey.createTextAttributesKey("DEFAULT_LINE_COMMENT", SyntaxHighlighterColors.LINE_COMMENT);
+    TextAttributesKey.createTextAttributesKey("DEFAULT_LINE_COMMENT", SyntaxHighlighterColors.LINE_COMMENT.getDefaultAttributes());
   public final static TextAttributesKey DOC_COMMENT =
-    TextAttributesKey.createTextAttributesKey("DEFAULT_DOC_COMMENT", SyntaxHighlighterColors.DOC_COMMENT);
+    TextAttributesKey.createTextAttributesKey("DEFAULT_DOC_COMMENT", SyntaxHighlighterColors.DOC_COMMENT.getDefaultAttributes());
   public final static TextAttributesKey OPERATION_SIGN =
-    TextAttributesKey.createTextAttributesKey("DEFAULT_OPERATION_SIGN", SyntaxHighlighterColors.OPERATION_SIGN);
+    TextAttributesKey.createTextAttributesKey("DEFAULT_OPERATION_SIGN", SyntaxHighlighterColors.OPERATION_SIGN.getDefaultAttributes());
   public final static TextAttributesKey BRACES =
-    TextAttributesKey.createTextAttributesKey("DEFAULT_BRACES", SyntaxHighlighterColors.BRACES);
+    TextAttributesKey.createTextAttributesKey("DEFAULT_BRACES", SyntaxHighlighterColors.BRACES.getDefaultAttributes());
   public final static TextAttributesKey DOT =
-    TextAttributesKey.createTextAttributesKey("DEFAULT_DOT", SyntaxHighlighterColors.DOT);
+    TextAttributesKey.createTextAttributesKey("DEFAULT_DOT", SyntaxHighlighterColors.DOT.getDefaultAttributes());
   public final static TextAttributesKey SEMICOLON =
-    TextAttributesKey.createTextAttributesKey("DEFAULT_SEMICOLON", SyntaxHighlighterColors.JAVA_SEMICOLON);
+    TextAttributesKey.createTextAttributesKey("DEFAULT_SEMICOLON", SyntaxHighlighterColors.JAVA_SEMICOLON.getDefaultAttributes());
   public final static TextAttributesKey COMMA =
-    TextAttributesKey.createTextAttributesKey("DEFAULT_COMMA", SyntaxHighlighterColors.COMMA);
+    TextAttributesKey.createTextAttributesKey("DEFAULT_COMMA", SyntaxHighlighterColors.COMMA.getDefaultAttributes());
   public final static TextAttributesKey PARENTHESES =
-    TextAttributesKey.createTextAttributesKey("DEFAULT_PARENTHS", SyntaxHighlighterColors.PARENTHS);
+    TextAttributesKey.createTextAttributesKey("DEFAULT_PARENTHS", SyntaxHighlighterColors.PARENTHS.getDefaultAttributes());
   public final static TextAttributesKey BRACKETS =
-    TextAttributesKey.createTextAttributesKey("DEFAULT_BRACKETS", SyntaxHighlighterColors.BRACKETS);
+    TextAttributesKey.createTextAttributesKey("DEFAULT_BRACKETS", SyntaxHighlighterColors.BRACKETS.getDefaultAttributes());
 
   public final static TextAttributesKey LABEL =
     TextAttributesKey.createTextAttributesKey("DEFAULT_LABEL", IDENTIFIER);
