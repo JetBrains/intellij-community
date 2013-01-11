@@ -16,15 +16,18 @@
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
+import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,9 +42,13 @@ import java.util.Map;
  */
 public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrioritySortable {
 
-  private static final Map<String, TextAttributesKey> TAG_HIGHLIGHTING_MAP = new HashMap<String, TextAttributesKey>();
+  @NonNls private static final Map<String, TextAttributesKey> TAG_HIGHLIGHTING_MAP = new HashMap<String, TextAttributesKey>();
+
+  private final static TextAttributesKey FAKE_BAD_CHAR =
+    TextAttributesKey.createTextAttributesKey("FAKE_BAD_CHAR", HighlighterColors.BAD_CHARACTER);
 
   static {
+    TAG_HIGHLIGHTING_MAP.put("bad_char", FAKE_BAD_CHAR);
     TAG_HIGHLIGHTING_MAP.put("template_language", DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR);
     TAG_HIGHLIGHTING_MAP.put("identifier", DefaultLanguageHighlighterColors.IDENTIFIER);
     TAG_HIGHLIGHTING_MAP.put("number", DefaultLanguageHighlighterColors.NUMBER);
@@ -74,6 +81,7 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
   }
 
   private final static AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = {
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.bad.character"), HighlighterColors.BAD_CHARACTER),
     new AttributesDescriptor("Keyword", DefaultLanguageHighlighterColors.KEYWORD),
     new AttributesDescriptor("Identifier", DefaultLanguageHighlighterColors.IDENTIFIER),
     new AttributesDescriptor("String", DefaultLanguageHighlighterColors.STRING),
@@ -121,6 +129,7 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
   @Override
   public String getDemoText() {
     return
+      "Bad characters: <bad_char>????</bad_char>\n" +
       "<keyword>Keyword</keyword>\n" +
       "<identifier>Identifier</identifier>\n" +
       "<string>'String'</string>\n" +
