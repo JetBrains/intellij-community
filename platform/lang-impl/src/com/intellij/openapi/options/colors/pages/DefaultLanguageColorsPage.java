@@ -81,36 +81,66 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
   }
 
   private final static AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = {
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.bad.character"), HighlighterColors.BAD_CHARACTER),
-    new AttributesDescriptor("Keyword", DefaultLanguageHighlighterColors.KEYWORD),
-    new AttributesDescriptor("Identifier", DefaultLanguageHighlighterColors.IDENTIFIER),
-    new AttributesDescriptor("String", DefaultLanguageHighlighterColors.STRING),
-    new AttributesDescriptor("Number", DefaultLanguageHighlighterColors.NUMBER),
-    new AttributesDescriptor("Operation sign", DefaultLanguageHighlighterColors.OPERATION_SIGN),
-    new AttributesDescriptor("Braces", DefaultLanguageHighlighterColors.BRACES),
-    new AttributesDescriptor("Parentheses", DefaultLanguageHighlighterColors.PARENTHESES),
-    new AttributesDescriptor("Brackets", DefaultLanguageHighlighterColors.BRACKETS),
-    new AttributesDescriptor("Dot", DefaultLanguageHighlighterColors.DOT),
-    new AttributesDescriptor("Comma", DefaultLanguageHighlighterColors.COMMA),
-    new AttributesDescriptor("Semicolon", DefaultLanguageHighlighterColors.SEMICOLON),
-    new AttributesDescriptor("Line comment", DefaultLanguageHighlighterColors.LINE_COMMENT),
-    new AttributesDescriptor("Block comment", DefaultLanguageHighlighterColors.BLOCk_COMMENT),
-    new AttributesDescriptor("Doc comment", DefaultLanguageHighlighterColors.DOC_COMMENT),
-    new AttributesDescriptor("Label", DefaultLanguageHighlighterColors.LABEL),
-    new AttributesDescriptor("Constant", DefaultLanguageHighlighterColors.CONSTANT),
-    new AttributesDescriptor("Local variable", DefaultLanguageHighlighterColors.LOCAL_VARIABLE),
-    new AttributesDescriptor("Global variable", DefaultLanguageHighlighterColors.GLOBAL_VARIABLE),
-    new AttributesDescriptor("Function declaration", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION),
-    new AttributesDescriptor("Function call", DefaultLanguageHighlighterColors.FUNCTION_CALL),
-    new AttributesDescriptor("Parameter", DefaultLanguageHighlighterColors.PARAMETER),
-    new AttributesDescriptor("Interface name", DefaultLanguageHighlighterColors.INTERFACE_NAME),
-    new AttributesDescriptor("Class name", DefaultLanguageHighlighterColors.CLASS_NAME),
-    new AttributesDescriptor("Class reference", DefaultLanguageHighlighterColors.CLASS_REFERENCE),
-    new AttributesDescriptor("Instance method", DefaultLanguageHighlighterColors.INSTANCE_METHOD),
-    new AttributesDescriptor("Instance field", DefaultLanguageHighlighterColors.INSTANCE_FIELD),
-    new AttributesDescriptor("Static method", DefaultLanguageHighlighterColors.STATIC_METHOD),
-    new AttributesDescriptor("Static field", DefaultLanguageHighlighterColors.STATIC_FIELD),
-    new AttributesDescriptor("Template language", DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.java.attribute.descriptor.bad.character"), HighlighterColors.BAD_CHARACTER),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.keyword"), DefaultLanguageHighlighterColors.KEYWORD),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.identifier"), DefaultLanguageHighlighterColors.IDENTIFIER),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.string"), DefaultLanguageHighlighterColors.STRING),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.number"), DefaultLanguageHighlighterColors.NUMBER),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.operation"), DefaultLanguageHighlighterColors.OPERATION_SIGN),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.braces"), DefaultLanguageHighlighterColors.BRACES),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.parentheses"), DefaultLanguageHighlighterColors.PARENTHESES),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.brackets"), DefaultLanguageHighlighterColors.BRACKETS),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.dot"), DefaultLanguageHighlighterColors.DOT),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.comma"), DefaultLanguageHighlighterColors.COMMA),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.semicolon"), DefaultLanguageHighlighterColors.SEMICOLON),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.line.comment"), DefaultLanguageHighlighterColors.LINE_COMMENT),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.block.comment"), DefaultLanguageHighlighterColors.BLOCk_COMMENT),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.doc.comment"), DefaultLanguageHighlighterColors.DOC_COMMENT),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.label"), DefaultLanguageHighlighterColors.LABEL),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.constant"), DefaultLanguageHighlighterColors.CONSTANT),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.local.variable"), DefaultLanguageHighlighterColors.LOCAL_VARIABLE),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.global.variable"), DefaultLanguageHighlighterColors.GLOBAL_VARIABLE),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.function.declaration"), DefaultLanguageHighlighterColors.FUNCTION_DECLARATION),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.function.call"), DefaultLanguageHighlighterColors.FUNCTION_CALL),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.parameter"), DefaultLanguageHighlighterColors.PARAMETER),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.interface.name"), DefaultLanguageHighlighterColors.INTERFACE_NAME),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.class.name"), DefaultLanguageHighlighterColors.CLASS_NAME),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.class.reference"), DefaultLanguageHighlighterColors.CLASS_REFERENCE),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.instance.method"), DefaultLanguageHighlighterColors.INSTANCE_METHOD),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.instance.field"), DefaultLanguageHighlighterColors.INSTANCE_FIELD),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.static.method"), DefaultLanguageHighlighterColors.STATIC_METHOD),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.static.field"), DefaultLanguageHighlighterColors.STATIC_FIELD),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.template.language"), DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR),
   };
 
   @Nullable
@@ -178,7 +208,7 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
   @NotNull
   @Override
   public String getDisplayName() {
-    return "Language Defaults";
+    return OptionsBundle.message("options.language.defaults.display.name");
   }
 
   @Override
