@@ -1759,19 +1759,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return isReleased;
   }
 
-  public void stopDumb() {
+  public void stopDumbLater() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     final Runnable stopDumbRunnable = new Runnable() {
       @Override
       public void run() {
-        putUserData(BUFFER, null);
+        stopDumb();
       }
     };
     ApplicationManager.getApplication().invokeLater(stopDumbRunnable, ModalityState.current());
   }
 
+  public void stopDumb() {
+    putUserData(BUFFER, null);
+  }
+
   /**
-   * {@link #stopDumb} must be performed in finally
+   * {@link #stopDumbLater} or {@link #stopDumb} must be performed in finally
    */
   public void startDumb() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
