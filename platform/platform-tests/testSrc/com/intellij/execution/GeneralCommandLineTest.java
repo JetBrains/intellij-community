@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,67 +45,45 @@ public class GeneralCommandLineTest extends UsefulTestCase {
   }
 
   public void testExecuteCommandLine() throws Exception {
-    final File tempFile;
-    if (SystemInfo.isWindows) {
-      final URL url = getClass().getClassLoader().getResource("com/intellij/execution/printArgs.exe");
-      assertNotNull(url);
-      tempFile = FileUtil.createTempFile("path with spaces 'and quotes' ", ".exe");
-      FileUtil.copy(new File(url.getFile()), tempFile);
-    }
-    else {
-      tempFile = ExecUtil.createTempExecutableScript(
-        "path with spaces \"and quotes\" ", ".sh",
-        "#!/bin/sh\n\n" +
-        "echo \"=====\"\n" +
-        "for f in \"$@\" ; do echo \"$f\"; done\n" +
-        "echo \"=====\"\n"
-      );
-    }
+    String[] parameters = {
+      "with space", "\"quoted\"", "\"quoted with spaces\"", "", "  ", "param 1", "\"", "param2", "trailing slash\\"
+    };
 
-    final String[] parameters = { "with space", "\"quoted\"", "\"quoted with spaces\"", "", "  ", "param 1", "\"", "param2", "trailing slash\\" };
-    try {
-      final GeneralCommandLine commandLine = new GeneralCommandLine();
-      commandLine.setExePath(tempFile.getCanonicalPath());
-      commandLine.addParameters(parameters);
-      commandLine.setRedirectErrorStream(true);
-      final Process process = commandLine.createProcess();
-      final String output = FileUtil.loadTextAndClose(process.getInputStream());
-      final int result = process.waitFor();
+    GeneralCommandLine commandLine = makeCommandLine(ParamPassingTest.class);
+    commandLine.addParameters(parameters);
+    Process process = commandLine.createProcess();
+    String output = FileUtil.loadTextAndClose(process.getInputStream());
+    int result = process.waitFor();
 
-      assertEquals("Command:\n" + commandLine.getCommandLineString() + "\nOutput:\n" + output,
-                   0, result);
-      assertEquals("=====\n" + StringUtil.join(parameters, "\n") + "\n=====\n",
-                   StringUtil.convertLineSeparators(output));
-    }
-    finally {
-      FileUtil.delete(tempFile);
-    }
+    assertEquals("Command:\n" + commandLine.getCommandLineString() + "\nOutput:\n" + output, 0, result);
+    assertEquals("=====\n" + StringUtil.join(parameters, "\n") + "\n=====\n", StringUtil.convertLineSeparators(output));
   }
 
   public void testEnvironmentPassing() throws Exception {
-    final URL url = getClass().getClassLoader().getResource("com/intellij/execution/EnvPassingTest.class");
-    assertNotNull(url);
-    final File testClass = new File(url.getFile());
-
-    final String javaHome = System.getenv("JAVA_HOME");
-    final GeneralCommandLine commandLine = new GeneralCommandLine();
-    commandLine.setExePath(javaHome != null ? javaHome + "/bin/java" : "java");
-    commandLine.addParameter("-cp");
-    commandLine.addParameter(testClass.getParentFile().getParentFile().getParentFile().getParentFile().getAbsolutePath());
-    commandLine.addParameter("com.intellij.execution." + testClass.getName().replace(".class", ""));
-    commandLine.setRedirectErrorStream(true);
-
-    final Map<String, String> testEnv = new HashMap<String, String>();
+    Map<String, String> testEnv = new HashMap<String, String>();
     testEnv.put("VALUE_1", "some value");
     testEnv.put("VALUE_2", "another\n\"value\"");
 
+    GeneralCommandLine commandLine = makeCommandLine(EnvPassingTest.class);
     checkEnvPassing(commandLine, testEnv, true);
     checkEnvPassing(commandLine, testEnv, false);
   }
 
-  private static void checkEnvPassing(final GeneralCommandLine commandLine,
-                                      final Map<String, String> testEnv,
-                                      final boolean passParentEnv) throws Exception {
+  private GeneralCommandLine makeCommandLine(Class<?> testClass) {
+    String className = testClass.getName();
+    URL url = getClass().getClassLoader().getResource(className.replace(".", "/") + ".class");
+    assertNotNull(url);
+
+    GeneralCommandLine commandLine = new GeneralCommandLine();
+    commandLine.setExePath(System.getProperty("java.home") + (SystemInfo.isWindows ? "\\bin\\java.exe" : "/bin/java"));
+    commandLine.addParameter("-cp");
+    commandLine.addParameter(new File(url.getFile()).getParentFile().getParentFile().getParentFile().getParentFile().getAbsolutePath());
+    commandLine.addParameter(className);
+    commandLine.setRedirectErrorStream(true);
+    return commandLine;
+  }
+
+  private static void checkEnvPassing(GeneralCommandLine commandLine, Map<String, String> testEnv, boolean passParentEnv) throws Exception {
     commandLine.setEnvParams(testEnv);
     commandLine.setPassParentEnvs(passParentEnv);
 

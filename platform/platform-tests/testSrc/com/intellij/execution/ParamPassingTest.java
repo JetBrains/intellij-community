@@ -15,19 +15,12 @@
  */
 package com.intellij.execution;
 
-import java.util.Map;
-
-public class EnvPassingTest {
+public class ParamPassingTest {
   public static void main(String[] args) {
-    final Map<String, String> environment = System.getenv();
     System.out.println("=====");
-    for (Map.Entry<String, String> entry : environment.entrySet()) {
-      System.out.println(formatEntry(entry));
+    for (String arg : args) {
+      System.out.println(arg);
     }
     System.out.println("=====");
-  }
-
-  public static String formatEntry(final Map.Entry<String, String> entry) {
-    return entry.getKey() + "=" + entry.getValue().hashCode();
   }
 }
