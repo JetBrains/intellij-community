@@ -249,7 +249,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     if (!accessible) return true;
     if (aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
       final PsiClass containingPlaceClass = PsiTreeUtil.getParentOfType(myPlace, PsiClass.class, false);
-      if (containingPlaceClass != null && !PsiTreeUtil.isAncestor(containingPlaceClass, aClass, true)){
+      if (containingPlaceClass != null && !PsiTreeUtil.isAncestor(containingPlaceClass, aClass, false)){
         return true;
       }
     }
