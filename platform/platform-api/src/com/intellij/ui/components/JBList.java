@@ -19,10 +19,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ComponentWithExpandableItems;
-import com.intellij.ui.ExpandableItemsHandler;
-import com.intellij.ui.ExpandableItemsHandlerFactory;
-import com.intellij.ui.ExpandedItemListCellRendererWrapper;
+import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -78,6 +75,9 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
   @Override
   public void removeNotify() {
     super.removeNotify();
+
+    if (!ScreenUtil.isStandardAddRemoveNotify(this))
+      return;
 
     if (myBusyIcon != null) {
       remove(myBusyIcon);

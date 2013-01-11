@@ -24,6 +24,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -41,7 +42,7 @@ public class ToggleMacFullScreenAction extends AnAction implements DumbAware {
   public void actionPerformed(final AnActionEvent e) {
     final Frame frame = getFrame();
     if (frame instanceof IdeFrameImpl) {
-      ((IdeFrameImpl)frame).getFrameDecorator().toggleFullScreen();
+      WindowManagerImpl.toggleFullScreen((IdeFrameImpl)frame);
     }
   }
 
@@ -49,7 +50,7 @@ public class ToggleMacFullScreenAction extends AnAction implements DumbAware {
   public void update(final AnActionEvent e) {
     final Presentation p = e.getPresentation();
 
-    final boolean isApplicable = SystemInfo.isMac && SystemInfo.isMacOSLion;
+    final boolean isApplicable = (SystemInfo.isMac && SystemInfo.isMacOSLion) || SystemInfo.isWindows;
 
     p.setVisible(isApplicable);
     p.setEnabled(isApplicable);

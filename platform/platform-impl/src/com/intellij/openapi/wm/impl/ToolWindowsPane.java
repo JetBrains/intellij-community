@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 
@@ -173,14 +174,18 @@ final class ToolWindowsPane extends JLayeredPane implements Disposable {
    */
   public final void addNotify(){
     super.addNotify();
-    UISettings.getInstance().addUISettingsListener(myUISettingsListener,myDisposable);
+    if (ScreenUtil.isStandardAddRemoveNotify(this)) {
+      UISettings.getInstance().addUISettingsListener(myUISettingsListener,myDisposable);
+    }
   }
 
   /**
    * Invoked when enclosed frame is being disposed.
    */
   public final void removeNotify(){
-    Disposer.dispose(myDisposable);
+    if (ScreenUtil.isStandardAddRemoveNotify(this)) {
+      Disposer.dispose(myDisposable);
+    }
     super.removeNotify();
   }
 

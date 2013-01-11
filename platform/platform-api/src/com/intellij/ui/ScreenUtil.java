@@ -20,6 +20,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.WeakHashMap;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.Map;
 
@@ -28,6 +29,7 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 public class ScreenUtil {
+  public static final String DISPOSE_TEMPORARY = "dispose.temporary";
   @Nullable private static final Map<GraphicsConfiguration, Pair<Insets, Long>> ourInsetsCache;
   static {
     final boolean useCache = SystemInfo.isXWindow && !GraphicsEnvironment.isHeadless();
@@ -79,6 +81,46 @@ public class ScreenUtil {
 
     return answer;
   }
+
+  public static GraphicsDevice getScreenDevice(Rectangle bounds) {
+    GraphicsDevice candidate = null;
+    int maxIntersection = 0;
+
+    for (GraphicsDevice device : GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
+      GraphicsConfiguration config = device.getDefaultConfiguration();
+      final Rectangle rect = config.getBounds();
+      Rectangle intersection = rect.intersection(bounds);
+      if (intersection.isEmpty()) {
+        continue;
+      }
+      if (intersection.width * intersection.height > maxIntersection) {
+        maxIntersection = intersection.width * intersection.height;
+        candidate = device;
+      }
+    }
+
+    return candidate;
+  }
+
+  /**
+   * Method removeNotify (and then addNotify) will be invoked for all components when main frame switches between states "Normal" <-> "FullScreen".
+   * In this case we shouldn't call Disposer  in removeNotify and/or release some resources that we won't initialize again in addNotify (e.g. listeners).
+   */
+  public static boolean isStandardAddRemoveNotify(Component component) {
+    JRootPane rootPane = findMainRootPane(component);
+    return rootPane == null || rootPane.getClientProperty(DISPOSE_TEMPORARY) == null;
+  }
+
+  private static JRootPane findMainRootPane(Component component) {
+    while(component != null) {
+      Container parent = component.getParent();
+      if (parent == null)
+        return component instanceof RootPaneContainer ? ((RootPaneContainer) component).getRootPane() : null;
+      component = parent;
+    }
+    return null;
+  }
+
 
   private static Rectangle applyInsets(Rectangle rect, Insets i) {
     if (i == null) {

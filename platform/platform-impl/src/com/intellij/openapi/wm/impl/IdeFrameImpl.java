@@ -46,15 +46,13 @@ import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.status.EncodingPanel;
 import com.intellij.openapi.wm.impl.status.InsertOverwritePanel;
 import com.intellij.openapi.wm.impl.status.PositionPanel;
 import com.intellij.openapi.wm.impl.status.ToggleReadOnlyAttributePanel;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
-import com.intellij.ui.AppUIUtil;
-import com.intellij.ui.BalloonLayout;
-import com.intellij.ui.BalloonLayoutImpl;
-import com.intellij.ui.FocusTrackback;
+import com.intellij.ui.*;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.UIUtil;
@@ -172,6 +170,8 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     addWindowListener(
       new WindowAdapter() {
         public void windowClosing(final WindowEvent e) {
+          if (isTemporaryDisposed())
+            return;
           final Application app = ApplicationManager.getApplication();
           app.invokeLater(new DumbAwareRunnable() {
             public void run() {
@@ -385,6 +385,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   }
 
   public void dispose() {
+    if (isTemporaryDisposed()) {
+      super.dispose();
+      return;
+    }
     MouseGestureManager.getInstance().remove(this);
     WelcomeFrame.notifyFrameClosed(this);
 
@@ -400,6 +404,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     FocusTrackback.release(this);
 
     super.dispose();
+  }
+
+  private boolean isTemporaryDisposed() {
+    return myRootPane != null && myRootPane.getClientProperty(ScreenUtil.DISPOSE_TEMPORARY) != null;
   }
 
   public MacMainFrameDecorator getFrameDecorator() {
