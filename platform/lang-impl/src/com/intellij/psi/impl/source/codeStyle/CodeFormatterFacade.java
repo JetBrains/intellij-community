@@ -34,14 +34,12 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
@@ -58,8 +56,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.List;
 
 public class CodeFormatterFacade {
@@ -236,59 +232,37 @@ public class CodeFormatterFacade {
     
     PsiFile file = psi.getContainingFile();
     
-    // We use a set here because we encountered a situation when more than one PSI leaf points to the same injected fragment
-    // (at least for sql injected into sql).
-    final LinkedHashSet<TextRange> injectedFileRangesSet = ContainerUtilRt.newLinkedHashSet();
-    if (InjectedLanguageUtil.areInjectionsProcessed(file)) {
-      for (DocumentWindow window : InjectedLanguageUtil.getCachedInjectedDocuments(file)) {
-        injectedFileRangesSet.add(TextRange.create(window.injectedToHost(0), window.injectedToHost(window.getTextLength())));
-      }
-    }
-    else if (!file.getProject().isDefault()) {
-      PsiLanguageInjectionHost.InjectedPsiVisitor visitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-        @Override
-        public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-          for (PsiLanguageInjectionHost.Shred place : places) {
-            Segment rangeMarker = place.getHostRangeMarker();
-            injectedFileRangesSet.add(TextRange.create(rangeMarker.getStartOffset(), rangeMarker.getEndOffset()));
-          }
+    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(file.getProject());
+    List<DocumentWindow> injectedDocuments = InjectedLanguageUtil.getCachedInjectedDocuments(file);
+    if (!injectedDocuments.isEmpty()) {
+      List<DocumentWindow> injectedDocumentsToUse = ContainerUtilRt.newArrayList(injectedDocuments);
+      for (DocumentWindow window : injectedDocumentsToUse) {
+        if (!window.isValid()) {
+          // There is a possible case that format pre-processor modifies target document in a way that some injections are dropped.
+          continue;
         }
-      };
+        PsiFile injected = psiDocumentManager.getCachedPsiFile(window);
+        if (injected != null) {
+          int startHostOffset = window.injectedToHost(0);
+          int endHostOffset = window.injectedToHost(window.getTextLength());
+          int startInjectedOffset = range.getStartOffset() > startHostOffset ? startHostOffset - range.getStartOffset() : 0;
+          int endInjectedOffset = injected.getTextLength();
+          if (range.getEndOffset() < endHostOffset) {
+            endInjectedOffset -= endHostOffset - range.getEndOffset();
+          }
+          final TextRange initialInjectedRange = TextRange.create(startInjectedOffset, endInjectedOffset);
+          TextRange injectedRange = initialInjectedRange;
+          for (PreFormatProcessor processor : Extensions.getExtensions(PreFormatProcessor.EP_NAME)) {
+            injectedRange = processor.process(injected.getNode(), injectedRange);
+          }
 
-      for (PsiElement e = PsiTreeUtil.getDeepestFirst(file); e != null; e = PsiTreeUtil.nextLeaf(e, true)) {
-        InjectedLanguageUtil.enumerate(e, visitor);
-      }
-    }
-    
-    if (!injectedFileRangesSet.isEmpty()) {
-      List<TextRange> ranges = ContainerUtilRt.newArrayList(injectedFileRangesSet);
-      Collections.reverse(ranges);
-      for (TextRange injectedFileRange : ranges) {
-        int startHostOffset = injectedFileRange.getStartOffset();
-        int endHostOffset = injectedFileRange.getEndOffset();
-        if (startHostOffset >= range.getStartOffset() && endHostOffset <= range.getEndOffset()) {
-          PsiFile injected = InjectedLanguageUtil.findInjectedPsiNoCommit(file, startHostOffset);
-          if (injected != null) {
-            int startInjectedOffset = range.getStartOffset() > startHostOffset ? startHostOffset - range.getStartOffset() : 0;
-            int endInjectedOffset = injected.getTextLength();
-            if (range.getEndOffset() < endHostOffset) {
-              endInjectedOffset -= endHostOffset - range.getEndOffset();
-            }
-            final TextRange initialInjectedRange = TextRange.create(startInjectedOffset, endInjectedOffset);
-            TextRange injectedRange = initialInjectedRange;
-            for (PreFormatProcessor processor : Extensions.getExtensions(PreFormatProcessor.EP_NAME)) {
-              injectedRange = processor.process(injected.getNode(), injectedRange);
-            }
-
-            // Allow only range expansion (not reduction) for injected context.
-            if ((initialInjectedRange.getStartOffset() > injectedRange.getStartOffset() && initialInjectedRange.getStartOffset() > 0)
-                || (initialInjectedRange.getEndOffset() < injectedRange.getEndOffset()
-                    && initialInjectedRange.getEndOffset() < injected.getTextLength()))
-            {
-              range = TextRange.create(
-                range.getStartOffset() + injectedRange.getStartOffset() - initialInjectedRange.getStartOffset(),
-                range.getEndOffset() + initialInjectedRange.getEndOffset() - injectedRange.getEndOffset());
-            }
+          // Allow only range expansion (not reduction) for injected context.
+          if ((initialInjectedRange.getStartOffset() > injectedRange.getStartOffset() && initialInjectedRange.getStartOffset() > 0)
+              || (initialInjectedRange.getEndOffset() < injectedRange.getEndOffset()
+                  && initialInjectedRange.getEndOffset() < injected.getTextLength())) {
+            range = TextRange.create(
+              range.getStartOffset() + injectedRange.getStartOffset() - initialInjectedRange.getStartOffset(),
+              range.getEndOffset() + initialInjectedRange.getEndOffset() - injectedRange.getEndOffset());
           }
         }
       }
@@ -296,6 +270,7 @@ public class CodeFormatterFacade {
     for(PreFormatProcessor processor: Extensions.getExtensions(PreFormatProcessor.EP_NAME)) {
       result = processor.process(node, result);
     }
+
     return result;
   }
 

@@ -17,18 +17,18 @@
 package com.intellij.psi.formatter.common;
 
 import com.intellij.formatting.*;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -79,26 +79,25 @@ public abstract class AbstractBlock implements ASTBlock {
     if (file == null) {
       return EMPTY;
     }
-
-    if (InjectedLanguageUtil.areInjectionsProcessed(file) && InjectedLanguageUtil.getCachedInjectedDocuments(file).isEmpty()) {
+    
+    if (InjectedLanguageUtil.getCachedInjectedDocuments(file).isEmpty()) {
       return EMPTY;
     }
     
-    final Ref<PsiFile> injectedRef = new Ref<PsiFile>();
-    InjectedLanguageUtil.enumerate(psi, file, true, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-      @Override
-      public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-        if (injectedRef.get() == null) {
-          injectedRef.set(injectedPsi);
+    TextRange blockRange = myNode.getTextRange();
+    List<DocumentWindow> documentWindows = InjectedLanguageUtil.getCachedInjectedDocuments(file);
+    for (DocumentWindow documentWindow : documentWindows) {
+      int startOffset = documentWindow.injectedToHost(0);
+      int endOffset = startOffset + documentWindow.getTextLength();
+      if (blockRange.containsRange(startOffset, endOffset)) {
+        PsiFile injected = PsiDocumentManager.getInstance(psi.getProject()).getCachedPsiFile(documentWindow);
+        if (injected != null) {
+          List<Block> result = ContainerUtilRt.newArrayList();
+          DefaultInjectedLanguageBlockBuilder builder = new DefaultInjectedLanguageBlockBuilder(((SettingsAwareBlock)this).getSettings());
+          builder.addInjectedBlocks(result, myNode, getWrap(), getAlignment(), getIndent());
+          return result;
         }
       }
-    });
-    PsiFile injected = injectedRef.get();
-    if (injected != null && myNode.getTextLength() >= injected.getTextLength()) {
-      List<Block> result = new ArrayList<Block>();
-      DefaultInjectedLanguageBlockBuilder builder = new DefaultInjectedLanguageBlockBuilder(((SettingsAwareBlock)this).getSettings());
-      builder.addInjectedBlocks(result, myNode, getWrap(), getAlignment(), getIndent());
-      return result;
     }
     return EMPTY;
   }
