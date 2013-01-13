@@ -23,7 +23,6 @@ public class RestPythonUtil {
 
   public static Presentation updateRequirements(final AnActionEvent e, String runner) {
     final Presentation presentation = e.getPresentation();
-    presentation.setVisible(false);
     presentation.setEnabled(false);
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project != null) {
@@ -37,7 +36,6 @@ public class RestPythonUtil {
         if (sdk != null) {
           String htmlRunner = RestUtil.findRunner(sdk.getHomePath(), runner);
           if (htmlRunner != null) {
-            presentation.setVisible(true);
             presentation.setEnabled(true);
           }
         }
