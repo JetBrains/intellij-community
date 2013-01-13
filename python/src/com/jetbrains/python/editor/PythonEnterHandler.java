@@ -307,7 +307,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     }
     PyFromImportStatement fromImportStatement = (PyFromImportStatement)statement;
     PsiElement leftParen = fromImportStatement.getLeftParen();
-    if (leftParen != null && offset > leftParen.getTextRange().getEndOffset()) {
+    if (leftParen != null && offset >= leftParen.getTextRange().getEndOffset()) {
       return true;
     }
     return false;
