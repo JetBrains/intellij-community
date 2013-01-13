@@ -2,6 +2,7 @@ package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -9,8 +10,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -24,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import static com.jetbrains.python.codeInsight.intentions.DeclarationConflictChecker.findDefinitions;
 import static com.jetbrains.python.codeInsight.intentions.DeclarationConflictChecker.showConflicts;
@@ -103,9 +108,9 @@ public class ImportToggleAliasIntention implements IntentionAction {
     return state.isAvailable();
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     // sanity check: isAvailable must have set it.
-    IntentionState state = IntentionState.fromContext(editor, file);
+    final IntentionState state = IntentionState.fromContext(editor, file);
     //
     final String target_name; // we set in in the source
     final String remove_name; // we replace it in the source
@@ -147,17 +152,38 @@ public class ImportToggleAliasIntention implements IntentionAction {
       final PsiElement referee = reference.getReference().resolve();
       if (referee != null && imported_name != null) {
         final Collection<PsiReference> references = new ArrayList<PsiReference>();
-        ScopeOwner scope = PsiTreeUtil.getParentOfType(state.myImportElement, ScopeOwner.class);
+        final ScopeOwner scope = PsiTreeUtil.getParentOfType(state.myImportElement, ScopeOwner.class);
         PsiTreeUtil.processElements(scope, new PsiElementProcessor() {
           public boolean execute(@NotNull PsiElement element) {
-            if (element instanceof PyReferenceExpression && PsiTreeUtil.getParentOfType(element, PyImportElement.class) == null) {
+            getReferences(element);
+            if (element instanceof PyStringLiteralExpression) {
+              final PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)element;
+              final List<Pair<PsiElement,TextRange>> files =
+                InjectedLanguageManager.getInstance(project).getInjectedPsiFiles(host);
+              if (files != null) {
+                for (Pair<PsiElement, TextRange> pair : files) {
+                  final ScopeOwner scopeOwner = (ScopeOwner)pair.getFirst();
+                  PsiTreeUtil.processElements(scopeOwner, new PsiElementProcessor() {
+                    public boolean execute(@NotNull PsiElement element) {
+                      getReferences(element);
+                      return true;
+                    }
+                  });
+                }
+              }
+            }
+            return true;
+          }
+
+          private void getReferences(PsiElement element) {
+            if (element instanceof PyReferenceExpression && PsiTreeUtil.getParentOfType(element,
+                                                                                        PyImportElement.class) == null) {
               PyReferenceExpression ref = (PyReferenceExpression)element;
-              if (remove_name.equals(PyResolveUtil.toPath(ref))) {  // filter out other names that might resolve to our target
+               if (remove_name.equals(PyResolveUtil.toPath(ref))) {  // filter out other names that might resolve to our target
                 PsiElement resolved = ref.getReference().resolve();
                 if (resolved == referee) references.add(ref.getReference());
               }
             }
-            return true;
           }
         });
         // no references here is OK by us.
