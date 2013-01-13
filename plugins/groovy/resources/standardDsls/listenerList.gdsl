@@ -29,6 +29,18 @@ import com.intellij.psi.PsiParameter
  * @author Andres Almiray
  */
 
+def capitalize(String str) {
+    if (str == null || str.trim().length() == 0) return str
+    if (str.length() == 1) return str.toUpperCase()
+    return str.substring(0, 1).toUpperCase() + str.substring(1)
+}
+
+def uncapitalize(String str) {
+    if (str == null || str.trim().length() == 0) return str
+    if (str.length() == 1) return str.toLowerCase()
+    return str.substring(0, 1).toLowerCase() + str.substring(1)
+}
+
 contributor(ctype: hasField(hasAnnotation('groovy.beans.ListenerList'))) {
     for (PsiField field : psiClass?.fields?.grep {it.hasAnnotation('groovy.beans.ListenerList')}) {
 
@@ -40,12 +52,13 @@ contributor(ctype: hasField(hasAnnotation('groovy.beans.ListenerList'))) {
         method name: 'get' + typeClassName + 's', type: typeClassName + '[]'
 
         for(PsiMethod m : findClass(type.getDeepComponentType().canonicalText).getMethods()) {
+            if (m == null) continue
             String methodName = m.getName()
-            methodName = methodName[0].toUpperCase() + methodName[1..-1]
+            methodName = capitalize(methodName[0])
             Map params = [:]
             for(PsiParameter param : m.parameterList.parameters) {
                 String paramName = param.typeElement.text
-                paramName = paramName[0].toLowerCase() + paramName[1..-1]
+                paramName = uncapitalize(paramName[0])
                 params[paramName] = param.type.getDeepComponentType().canonicalText
             }
 
