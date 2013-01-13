@@ -262,38 +262,51 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       if (file instanceof CythonFile && ((CythonFile)file).isIncludeFile()) {
         return;
       }
+      final InjectedLanguageManager injectedLanguageManager =
+        InjectedLanguageManager.getInstance(node.getProject());
+      if (injectedLanguageManager.isInjectedFragment(file)) {
+        final PsiLanguageInjectionHost host =
+          injectedLanguageManager.getInjectionHost(node);
+        processInjection(host);
+      }
       if (node instanceof PyReferenceOwner) {
         final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
         processReference(node, ((PyReferenceOwner)node).getReference(resolveContext));
       }
       else {
         if (node instanceof PsiLanguageInjectionHost) {
-          final List<Pair<PsiElement,TextRange>> files = InjectedLanguageManager.getInstance(node.getProject()).getInjectedPsiFiles(node);
-          if (files != null) {
-            for (Pair<PsiElement,TextRange> pair : files) {
-              new PyRecursiveElementVisitor() {
-                @Override
-                public void visitPyElement(PyElement element) {
-                  super.visitPyElement(element);
-                  if (element instanceof PyReferenceOwner) {
-                    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
-                    final PsiPolyVariantReference reference = ((PyReferenceOwner)element).getReference(resolveContext);
-                    if (reference != null) {
-                      final ResolveResult[] resolveResults = reference.multiResolve(false);
-                      for (ResolveResult resolveResult : resolveResults) {
-                        if (resolveResult instanceof ImportedResolveResult) {
-                          myUsedImports.addAll(((ImportedResolveResult)resolveResult).getNameDefiners());
-                        }
-                      }
-                    }
-                  }
-                }
-              }.visitElement(pair.getFirst());
-            }
-          }
+          processInjection((PsiLanguageInjectionHost)node);
         }
         for (final PsiReference reference : node.getReferences()) {
           processReference(node, reference);
+        }
+      }
+    }
+
+    private void processInjection(@Nullable PsiLanguageInjectionHost node) {
+      if (node == null) return;
+      final List<Pair<PsiElement,TextRange>>
+        files = InjectedLanguageManager.getInstance(node.getProject()).getInjectedPsiFiles(node);
+      if (files != null) {
+        for (Pair<PsiElement,TextRange> pair : files) {
+          new PyRecursiveElementVisitor() {
+            @Override
+            public void visitPyElement(PyElement element) {
+              super.visitPyElement(element);
+              if (element instanceof PyReferenceOwner) {
+                final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
+                final PsiPolyVariantReference reference = ((PyReferenceOwner)element).getReference(resolveContext);
+                if (reference != null) {
+                  final ResolveResult[] resolveResults = reference.multiResolve(false);
+                  for (ResolveResult resolveResult : resolveResults) {
+                    if (resolveResult instanceof ImportedResolveResult) {
+                      myUsedImports.addAll(((ImportedResolveResult)resolveResult).getNameDefiners());
+                    }
+                  }
+                }
+              }
+            }
+          }.visitElement(pair.getFirst());
         }
       }
     }
