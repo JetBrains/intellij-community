@@ -66,11 +66,11 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     final PsiClass psiClass = (PsiClass) element;
 
     if (type.isAssignableFrom(PsiField.class)) {
-      LOG.info("collect field of class: " + psiClass.getQualifiedName());
+      LOG.debug("collect field of class: " + psiClass.getQualifiedName());
       processPsiClassAnnotations(result, psiClass, type);
 
     } else if (type.isAssignableFrom(PsiMethod.class)) {
-      LOG.info("collect methods of class: " + psiClass.getQualifiedName());
+      LOG.debug("collect methods of class: " + psiClass.getQualifiedName());
 
       cleanAttributeUsage(psiClass);
       processPsiClassAnnotations(result, psiClass, type);
