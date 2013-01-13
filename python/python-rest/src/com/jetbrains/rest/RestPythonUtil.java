@@ -8,7 +8,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.SystemInfo;
+import com.jetbrains.python.packaging.PyExternalProcessException;
+import com.jetbrains.python.packaging.PyPackage;
+import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyPackageManagerImpl;
 import com.jetbrains.python.sdk.PythonSdkType;
 
 /**
@@ -17,13 +20,9 @@ import com.jetbrains.python.sdk.PythonSdkType;
 public class RestPythonUtil {
   private RestPythonUtil() {}
 
-  public static Presentation updateDocutilRequiredAction(final AnActionEvent e) {
-    return updateRequirements(e, "rst2html.py");
-  }
-
-  public static Presentation updateRequirements(final AnActionEvent e, String runner) {
+  public static Presentation updateSphinxQuickStartRequiredAction(final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
-    presentation.setEnabled(false);
+
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project != null) {
       Module module = e.getData(LangDataKeys.MODULE);
@@ -34,22 +33,17 @@ public class RestPythonUtil {
       if (module != null) {
         Sdk sdk = PythonSdkType.findPythonSdk(module);
         if (sdk != null) {
-          String htmlRunner = RestUtil.findRunner(sdk.getHomePath(), runner);
-          if (htmlRunner != null) {
-            presentation.setEnabled(true);
+          PyPackageManagerImpl manager = (PyPackageManagerImpl)PyPackageManager.getInstance(sdk);
+          try {
+            final PyPackage sphinx = manager.findPackage("Sphinx");
+            presentation.setEnabled(sphinx != null);
+          }
+          catch (PyExternalProcessException ignored) {
           }
         }
       }
     }
     return presentation;
-  }
-
-  public static Presentation updateSphinxBuildRequiredAction(final AnActionEvent e) {
-    return updateRequirements(e, "sphinx-build"+ (SystemInfo.isWindows ? ".exe" : ""));
-  }
-
-  public static Presentation updateSphinxQuickStartRequiredAction(final AnActionEvent e) {
-    return updateRequirements(e, "sphinx-quickstart"+ (SystemInfo.isWindows ? ".exe" : ""));
   }
 
 }
