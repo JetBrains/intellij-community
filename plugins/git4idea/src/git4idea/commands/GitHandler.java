@@ -276,16 +276,24 @@ public abstract class GitHandler {
   }
 
   @NotNull
-  private static String escapeParameterIfNeeded(@NotNull String parameter) {
-    if (SystemInfo.isWindows && parameter.contains("^")) {
+  private String escapeParameterIfNeeded(@NotNull String parameter) {
+    if (escapeNeeded(parameter)) {
       return parameter.replaceAll("\\^", "^^^^");
     }
     return parameter;
   }
 
+  private boolean escapeNeeded(@NotNull String parameter) {
+    return SystemInfo.isWindows && isCmd() && parameter.contains("^");
+  }
+
+  private boolean isCmd() {
+    return myAppSettings.getPathToGit().toLowerCase().endsWith("cmd");
+  }
+
   @NotNull
   private String unescapeCommandLine(@NotNull String commandLine) {
-    if (SystemInfo.isWindows && commandLine.contains("^")) {
+    if (escapeNeeded(commandLine)) {
       return commandLine.replaceAll("\\^\\^\\^\\^", "^");
     }
     return commandLine;
