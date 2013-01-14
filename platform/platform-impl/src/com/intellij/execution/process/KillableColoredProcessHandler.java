@@ -39,7 +39,7 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
   }
 
   /**
-   * This method shouldn't be overriden, see shouldKillProcessSoftly
+   * This method shouldn't be overridden, see shouldKillProcessSoftly
    *
    * @return
    */
@@ -65,7 +65,7 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
   }
 
   /**
-   * This method should be overriden by children if the process shouldn't be killed softly (e.g. by kill -2)
+   * This method should be overridden by children if the process shouldn't be killed softly (e.g. by kill -2)
    *
    * @return
    */
