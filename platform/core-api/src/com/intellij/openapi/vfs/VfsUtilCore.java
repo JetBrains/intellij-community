@@ -279,13 +279,7 @@ public class VfsUtilCore {
 
   @NotNull
   public static String loadText(@NotNull VirtualFile file) throws IOException{
-    InputStreamReader reader = new InputStreamReader(file.getInputStream(), file.getCharset());
-    try {
-      return StringFactory.createShared(FileUtil.loadText(reader, (int)file.getLength()));
-    }
-    finally {
-      reader.close();
-    }
+    return loadText(file, (int)file.getLength());
   }
 
   @NotNull
