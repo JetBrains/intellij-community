@@ -393,4 +393,18 @@ public class RemoteSdkDataHolder implements RemoteSdkData {
     result = 31 * result + (myRemoteRoots != null ? myRemoteRoots.hashCode() : 0);
     return result;
   }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder();
+    sb.append("RemoteSdkDataHolder");
+    sb.append("{myHost='").append(myHost).append('\'');
+    sb.append(", myPort=").append(myPort);
+    sb.append(", myAnonymous=").append(myAnonymous);
+    sb.append(", myUserName='").append(myUserName).append('\'');
+    sb.append(", myInterpreterPath='").append(myInterpreterPath).append('\'');
+    sb.append(", myHelpersPath='").append(myHelpersPath).append('\'');
+    sb.append('}');
+    return sb.toString();
+  }
 }
