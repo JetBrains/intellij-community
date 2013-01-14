@@ -477,6 +477,49 @@ public class GenericsHighlightUtil {
       if (info != null) return info;
     }
 
+    final PsiIdentifier classIdentifier = aClass.getNameIdentifier();
+    if (PsiUtil.isLanguageLevel8OrHigher(aClass) && classIdentifier != null) {
+      final HighlightInfo info = checkUnrelatedDefaultMethods(aClass, signaturesWithSupers, classIdentifier);
+      if (info != null) return info;
+    }
+
+    return null;
+  }
+
+  private static HighlightInfo checkUnrelatedDefaultMethods(PsiClass aClass,
+                                                            Collection<HierarchicalMethodSignature> signaturesWithSupers,
+                                                            PsiIdentifier classIdentifier) {
+    for (HierarchicalMethodSignature methodSignature : signaturesWithSupers) {
+      final PsiMethod method = methodSignature.getMethod();
+      if (method.hasModifierProperty(PsiModifier.DEFAULT)) {
+        final PsiClass containingClass = method.getContainingClass();
+        List<HierarchicalMethodSignature> superSignatures = methodSignature.getSuperSignatures();
+        if (!superSignatures.isEmpty()) {
+          for (HierarchicalMethodSignature signature : superSignatures) {
+            final PsiMethod superMethod = signature.getMethod();
+            final PsiClass superContainingClass = superMethod.getContainingClass();
+            if (containingClass != null && superContainingClass != null && !InheritanceUtil
+              .isInheritorOrSelf(containingClass, superContainingClass, true)) {
+              if (superMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
+                final String inheritUnrelatedDefaultsMessage = HighlightUtil.formatClass(aClass) + " inherits unrelated defaults for " +
+                                                               HighlightUtil.formatMethod(method) + " from types " + HighlightUtil.formatClass(containingClass) +
+                                                               " and " + HighlightUtil.formatClass(superContainingClass);
+                return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
+                                                         classIdentifier, inheritUnrelatedDefaultsMessage);
+              }
+              if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+                final String message = JavaErrorMessages.message(
+                  aClass instanceof PsiEnumConstantInitializer ? "enum.constant.should.implement.method" : "class.must.be.abstract",
+                  HighlightUtil.formatClass(superContainingClass),
+                  HighlightUtil.formatMethod(superMethod),
+                  HighlightUtil.formatClass(superContainingClass, false));
+                return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, classIdentifier, message);
+              }
+            }
+          }
+        }
+      }
+    }
     return null;
   }
 
