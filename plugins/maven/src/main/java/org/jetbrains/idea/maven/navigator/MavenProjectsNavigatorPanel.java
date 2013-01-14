@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.execution.Location;
+import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -37,9 +38,13 @@ import org.jetbrains.idea.maven.execution.MavenGoalLocation;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
+import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
+import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.util.*;
 import java.util.List;
 
@@ -69,6 +74,8 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     actionToolbar.setTargetComponent(tree);
     setToolbar(actionToolbar.getComponent());
     setContent(ScrollPaneFactory.createScrollPane(myTree));
+
+    setTransferHandler(new MyTransferHandler(project));
 
     myTree.addMouseListener(new PopupHandler() {
       public void invokePopup(final Component comp, final int x, final int y) {
@@ -254,5 +261,50 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     }
     Integer order = standardGoalOrder.get(goal);
     return order != null ? order.intValue() : standardGoalOrder.size();
+  }
+
+  private static class MyTransferHandler extends TransferHandler {
+
+    private final Project myProject;
+
+    private MyTransferHandler(Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public boolean importData(final TransferSupport support) {
+      if (canImport(support)) {
+        List<VirtualFile> pomFiles = new ArrayList<VirtualFile>();
+
+        final List<File> fileList = FileCopyPasteUtil.getFileList(support.getTransferable());
+        if (fileList == null) return false;
+
+        MavenProjectsManager manager = MavenProjectsManager.getInstance(myProject);
+
+        for (File file : fileList) {
+          VirtualFile virtualFile = VfsUtil.findFileByIoFile(file, true);
+          if (file.isFile()
+              && virtualFile != null
+              && MavenActionUtil.isMavenProjectFile(virtualFile)
+              && !manager.isManagedFile(virtualFile)) {
+            pomFiles.add(virtualFile);
+          }
+        }
+
+        if (pomFiles.isEmpty()) {
+          return false;
+        }
+
+        manager.addManagedFiles(pomFiles);
+
+        return true;
+      }
+      return false;
+    }
+
+    @Override
+    public boolean canImport(final TransferSupport support) {
+      return FileCopyPasteUtil.isFileListFlavorSupported(support.getDataFlavors());
+    }
   }
 }
