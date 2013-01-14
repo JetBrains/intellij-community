@@ -17,7 +17,6 @@ package com.intellij.psi.augment;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,11 +34,8 @@ public abstract class PsiAugmentProvider {
   public static <Psi extends PsiElement> List<Psi> collectAugments(@NotNull final PsiElement element, @NotNull final Class<Psi> type) {
     final List<Psi> augments = new ArrayList<Psi>();
     for (PsiAugmentProvider provider : Extensions.getExtensions(EP_NAME)) {
-      try {
-        final List<Psi> list = provider.getAugments(element, type);
-        augments.addAll(list);
-      }
-      catch (ProcessCanceledException ignore) { }
+      final List<Psi> list = provider.getAugments(element, type);
+      augments.addAll(list);
     }
 
     return augments;
