@@ -87,13 +87,15 @@ public class DefaultLanguageHighlighterColors {
     TextAttributesKey.createTextAttributesKey("DEFAULT_STATIC_FIELD", IDENTIFIER);
 
   public final static TextAttributesKey DOC_COMMENT_MARKUP =
-    TextAttributesKey.createTextAttributesKey("DEFAULT_DOC_MARKUP", SyntaxHighlighterColors.DOC_COMMENT_MARKUP);
+    TextAttributesKey.createTextAttributesKey("DEFAULT_DOC_MARKUP", SyntaxHighlighterColors.DOC_COMMENT_MARKUP.getDefaultAttributes());
   public final static TextAttributesKey DOC_COMMENT_TAG =
-    TextAttributesKey.createTextAttributesKey("DEFAULT_DOC_COMMENT_TAG", SyntaxHighlighterColors.DOC_COMMENT_TAG);
+    TextAttributesKey.createTextAttributesKey("DEFAULT_DOC_COMMENT_TAG", SyntaxHighlighterColors.DOC_COMMENT_TAG.getDefaultAttributes());
   public final static TextAttributesKey VALID_STRING_ESCAPE =
-    TextAttributesKey.createTextAttributesKey("DEFAULT_VALID_STRING_ESCAPE", SyntaxHighlighterColors.VALID_STRING_ESCAPE);
+    TextAttributesKey
+      .createTextAttributesKey("DEFAULT_VALID_STRING_ESCAPE", SyntaxHighlighterColors.VALID_STRING_ESCAPE.getDefaultAttributes());
   public final static TextAttributesKey INVALID_STRING_ESCAPE =
-    TextAttributesKey.createTextAttributesKey("DEFAULT_INVALID_STRING_ESCAPE", SyntaxHighlighterColors.VALID_STRING_ESCAPE);
+    TextAttributesKey
+      .createTextAttributesKey("DEFAULT_INVALID_STRING_ESCAPE", SyntaxHighlighterColors.INVALID_STRING_ESCAPE.getDefaultAttributes());
 
   public final static TextAttributesKey PREDEFINED_SYMBOL =
     TextAttributesKey.createTextAttributesKey("DEFAULT_PREDEFINED_SYMBOL", IDENTIFIER);
