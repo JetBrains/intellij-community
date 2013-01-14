@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 
@@ -33,7 +34,9 @@ public class ToggleUseSoftWrapsMenuAction extends AbstractToggleUseSoftWrapsActi
   @Override
   public void update(AnActionEvent e){
     super.update(e);
-    e.getPresentation().setIcon(null);
+    if (!ActionPlaces.isToolbarPlace(e.getPlace())) {
+      e.getPresentation().setIcon(null);
+    }
     e.getPresentation().setEnabled(getEditor(e) != null);
   }
 }
