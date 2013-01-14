@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,6 +106,12 @@ public class GrHighlightUtil {
     return scope != null && getReassignedNames(scope).contains(var.getName());
   }
 
+  /**
+   *
+   * @param resolved declaration element
+   * @param refElement reference to highlight. if null, 'resolved' is highlighted and no resolve is allowed.
+   * @return
+   */
   @Nullable
   static TextAttributesKey getDeclarationHighlightingAttribute(PsiElement resolved, @Nullable PsiElement refElement) {
     if (resolved instanceof PsiField || resolved instanceof GrVariable && ResolveUtil.isScriptField((GrVariable)resolved)) {
