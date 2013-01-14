@@ -310,12 +310,17 @@ public class MavenExternalParameters {
     if (coreSettings.isWorkOffline()) {
       cmdList.add("--offline");
     }
-    if (!coreSettings.isUsePluginRegistry()) {
-      String version = MavenUtil.getMavenVersion(mavenHome);
-      if (version == null || version.compareTo("3.0.0") < 0) {
+    String version = MavenUtil.getMavenVersion(mavenHome);
+    boolean atLeastMaven3 = version != null && version.compareTo("3.0.0") >= 0;
+
+    if (!atLeastMaven3) {
+      addIfNotEmpty(cmdList, coreSettings.getPluginUpdatePolicy().getCommandLineOption());
+
+      if (!coreSettings.isUsePluginRegistry()) {
         cmdList.add("--no-plugin-registry");
       }
     }
+
     if (coreSettings.getOutputLevel() == MavenExecutionOptions.LoggingLevel.DEBUG) {
       cmdList.add("--debug");
     }
