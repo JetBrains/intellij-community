@@ -1,9 +1,11 @@
 package org.jetbrains.plugins.javaFX.fxml;
 
+import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.xml.XmlAttributeImpl;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -13,6 +15,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -21,7 +24,7 @@ import java.util.List;
  * User: anna
  * Date: 1/9/13
  */
-public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor {
+public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor, Validator<XmlTag> {
   private final PsiClass myPsiClass;
   private final String myName;
 
@@ -161,5 +164,15 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor 
   @Override
   public Object[] getDependences() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+
+  @Override
+  public void validate(@NotNull XmlTag context, @NotNull ValidationHost host) {
+    if (context.getParentTag() != null) {
+      final XmlAttribute attribute = context.getAttribute(FxmlConstants.FX_CONTROLLER);
+      if (attribute != null) {
+        host.addMessage(((XmlAttributeImpl)attribute).getNameElement(), "fx:controller can only be applied to root element", ValidationHost.ErrorType.ERROR); //todo add delete/move to upper tag fix
+      }
+    }
   }
 }
