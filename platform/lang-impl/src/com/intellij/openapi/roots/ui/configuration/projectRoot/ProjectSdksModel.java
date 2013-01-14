@@ -39,8 +39,7 @@ import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 
 /**
  * User: anna
@@ -122,8 +121,12 @@ public class ProjectSdksModel implements SdkModel {
   }
 
   public void apply(@Nullable MasterDetailsComponent configurable) throws ConfigurationException {
+    apply(configurable, false);
+  }
+
+  public void apply(@Nullable MasterDetailsComponent configurable, boolean addedOnly) throws ConfigurationException {
     String[] errorString = new String[1];
-    if (!canApply(errorString, configurable)) {
+    if (!canApply(errorString, configurable, addedOnly)) {
       throw new ConfigurationException(errorString[0]);
     }
     final Sdk[] allFromTable = ProjectJdkTable.getInstance().getAllJdks();
@@ -166,10 +169,18 @@ public class ProjectSdksModel implements SdkModel {
     myModified = false;
   }
 
-  private boolean canApply(String[] errorString, @Nullable MasterDetailsComponent rootConfigurable) throws ConfigurationException {
+  private boolean canApply(String[] errorString, @Nullable MasterDetailsComponent rootConfigurable, boolean addedOnly) throws ConfigurationException {
+
+    LinkedHashMap<Sdk, Sdk> sdks = new LinkedHashMap<Sdk, Sdk>(myProjectSdks);
+    if (addedOnly) {
+      Sdk[] allJdks = ProjectJdkTable.getInstance().getAllJdks();
+      for (Sdk jdk : allJdks) {
+        sdks.remove(jdk);
+      }
+    }
     ArrayList<String> allNames = new ArrayList<String>();
     Sdk itemWithError = null;
-    for (Sdk currItem : myProjectSdks.values()) {
+    for (Sdk currItem : sdks.values()) {
       String currName = currItem.getName();
       if (currName.isEmpty()) {
         itemWithError = currItem;
