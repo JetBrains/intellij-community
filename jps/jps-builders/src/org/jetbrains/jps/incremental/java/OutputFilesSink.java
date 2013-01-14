@@ -87,11 +87,14 @@ class OutputFilesSink implements OutputFileConsumer {
       }
     }
 
-    try {
-      writeToDisk(fileObject, isTemp);
-    }
-    catch (IOException e) {
-      myContext.processMessage(new CompilerMessage(JavaBuilder.BUILDER_NAME, BuildMessage.Kind.ERROR, e.getMessage()));
+    if (outKind == JavaFileObject.Kind.CLASS) {
+      // generated sources and resources are handled separately
+      try {
+        writeToDisk(fileObject, isTemp);
+      }
+      catch (IOException e) {
+        myContext.processMessage(new CompilerMessage(JavaBuilder.BUILDER_NAME, BuildMessage.Kind.ERROR, e.getMessage()));
+      }
     }
   }
 
