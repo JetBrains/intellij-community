@@ -34,6 +34,7 @@ public class RunnerMediator {
 
   private static final char IAC = (char)5;
   private static final char BRK = (char)3;
+  private static final char C = (char)5;
   private static final String STANDARD_RUNNERW = "runnerw.exe";
 
   /**
@@ -45,14 +46,14 @@ public class RunnerMediator {
   }
 
   /**
-   * Sends sequence of two chars(codes 5 and 3) to a process output stream
+   * Sends sequence of two chars(codes 5 and {@code event}) to a process output stream
    */
-  private static void sendCtrlBreakThroughStream(Process process) {
+  private static void sendCtrlEventThroughStream(@NotNull final Process process, final char event) {
     OutputStream os = process.getOutputStream();
     PrintWriter pw = new PrintWriter(os);
     try {
       pw.print(IAC);
-      pw.print(BRK);
+      pw.print(event);
       pw.flush();
     }
     finally {
@@ -67,23 +68,18 @@ public class RunnerMediator {
    * Returns appropriate process handle, which in case of Unix is able to terminate whole process tree by sending sig_kill
    *
    */
-  public ProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+  public ProcessHandler createProcess(@NotNull final GeneralCommandLine commandLine) throws ExecutionException {
+    return createProcess(commandLine, false);
+  }
+
+  public ProcessHandler createProcess(@NotNull final GeneralCommandLine commandLine, final boolean useSoftKill) throws ExecutionException {
     if (SystemInfo.isWindows) {
       injectRunnerCommand(commandLine);
     }
 
     Process process = commandLine.createProcess();
 
-    return createProcessHandler(process, commandLine);
-  }
-
-  /**
-   * Creates process handler for process able to be terminated with method RunnerMediator.destroyProcess.
-   * You can override this method to customize process handler creation.
-   * @return
-   */
-  protected ProcessHandler createProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine) {
-    return new CustomDestroyProcessHandler(process, commandLine);
+    return new CustomDestroyProcessHandler(process, commandLine, useSoftKill);
   }
 
   @Nullable
@@ -125,14 +121,27 @@ public class RunnerMediator {
    * Destroys process tree: in case of windows via imitating ctrl+break, in case of unix via sending sig_kill to every process in tree.
    * @param process to kill with all sub-processes.
    */
-  public static boolean destroyProcess(Process process) {
+  public static boolean destroyProcess(@NotNull final Process process) {
+    return destroyProcess(process, false);
+  }
+
+  /**
+   * Destroys process tree: in case of windows via imitating ctrl+c, in case of unix via sending sig_int to every process in tree.
+   * @param process to kill with all sub-processes.
+   */
+  private static boolean destroyProcess(@NotNull final Process process, final boolean softKill) {
     try {
       if (SystemInfo.isWindows) {
-        sendCtrlBreakThroughStream(process);
+        sendCtrlEventThroughStream(process, softKill ? C : BRK);
         return true;
       }
       else if (SystemInfo.isUnix) {
-        return UnixProcessManager.sendSigKillToProcessTree(process);
+        if (softKill) {
+          return UnixProcessManager.sendSigIntToProcessTree(process);
+        }
+        else {
+          return UnixProcessManager.sendSigKillToProcessTree(process);
+        }
       }
       else {
         return false;
@@ -145,8 +154,14 @@ public class RunnerMediator {
   }
 
   public static class CustomDestroyProcessHandler extends ColoredProcessHandler {
+    private final boolean mySoftKill;
+
     public CustomDestroyProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine) {
+      this(process, commandLine, false);
+    }
+    public CustomDestroyProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine, final boolean softKill) {
       super(process, commandLine.getCommandLineString());
+      mySoftKill = softKill;
     }
 
     protected boolean shouldDestroyProcessRecursively(){
@@ -154,7 +169,7 @@ public class RunnerMediator {
     }
     @Override
     protected void destroyProcessImpl() {
-      if (!RunnerMediator.destroyProcess(getProcess())) {
+      if (!RunnerMediator.destroyProcess(getProcess(), mySoftKill)) {
         super.destroyProcessImpl();
       }
     }
