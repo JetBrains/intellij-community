@@ -25,10 +25,7 @@ import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
-import com.intellij.ui.CaptionPanel;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.switcher.QuickActionProvider;
@@ -412,7 +409,7 @@ public class JBTabsImpl extends JComponent
 
     removeTimerUpdate();
 
-    if (myGlassPane != null) {
+    if (ScreenUtil.isStandardAddRemoveNotify(this) && myGlassPane != null) {
       myGlassPane.removeMouseMotionPreprocessor(myTabActionsAutoHideListener);
       myGlassPane = null;
     }

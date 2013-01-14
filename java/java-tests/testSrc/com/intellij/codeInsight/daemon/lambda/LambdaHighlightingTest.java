@@ -16,10 +16,19 @@
 package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import org.jetbrains.annotations.NonNls;
 
 public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/highlighting";
+
+  @Override
+  protected LocalInspectionTool[] configureLocalInspectionTools() {
+    return new LocalInspectionTool[]{
+      new UnusedSymbolLocalInspection(),
+    };
+  }
 
   public void testStaticAccess() throws Exception {
     doTest();
@@ -28,11 +37,11 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testEffectiveFinal() throws Exception {
     doTest();
   }
-  
+
   public void testReassignUsedVars() throws Exception {
     doTest();
   }
-  
+
   public void testLambdaContext() throws Exception {
     doTest();
   }
@@ -40,7 +49,7 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testReturnTypeCompatibility() throws Exception {
     doTest();
   }
-  
+
   public void testTypeArgsConsistency() throws Exception {
     doTest();
   }
@@ -55,7 +64,7 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   public void testTypeArgsConsistencyWithoutParams() throws Exception {
     doTest();
-  } 
+  }
 
   public void testIncompatibleReturnTypes() throws Exception {
     doTest();
@@ -72,7 +81,7 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInferFromTypeArgs() throws Exception {
     doTest();
   }
-  
+
   public void testAmbiguity1() throws Exception {
     doTest();
   }
@@ -80,7 +89,7 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void _testAmbiguity2() throws Exception {
     doTest();
   }
-  
+
   public void testAmbiguityVarargs() throws Exception {
     doTest();
   }
@@ -88,7 +97,7 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testAmbiguityRawGenerics() throws Exception {
     doTest();
   }
-  
+
   public void testDefaultMethod() throws Exception {
     doTest();
   }
@@ -104,7 +113,7 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testReturnTypeCompatibility1() throws Exception {
     doTest();
   }
-  
+
   public void testNoInferenceResult() throws Exception {
     doTest();
   }
@@ -128,7 +137,7 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testConditionalExpr() throws Exception {
     doTest();
   }
-  
+
   public void testIncompleteSubst() throws Exception {
     doTest();
   }
@@ -141,10 +150,14 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testUnhandledExceptions() throws Exception {
+    doTest();
+  }
+
   public void testReturnValue() throws Exception {
     doTest();
   }
-  
+
   public void testAlreadyUsedParamName() throws Exception {
     doTest();
   }
@@ -177,7 +190,19 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testIntersectionTypeInCast() throws Exception {
+    doTest();
+  }
+
+  public void testAmbiguitySpecificReturn() throws Exception {
+    doTest(true);
+  }
+
   private void doTest() throws Exception {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
+    doTest(false);
+  }
+
+  private void doTest(final boolean checkWarnings) throws Exception {
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
   }
 }

@@ -82,7 +82,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
             if (treeElement != null) {
               return notBoundInExistingAst(file, treeElement, stubTree);
             }
-            final FileElement fileElement = file.loadTreeElement();
+            final FileElement fileElement = file.calcTreeElement();
             node = myNode;
             if (node == null) {
               @NonNls String message = "Failed to bind stub to AST for element " + getClass() + " in " +

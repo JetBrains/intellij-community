@@ -1330,6 +1330,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
     public void removeNotify() {
       super.removeNotify();
 
+      if (!ScreenUtil.isStandardAddRemoveNotify(this))
+        return;
+
       final CloseButton closeButton = myCloseRec;
       SwingUtilities.invokeLater(new Runnable() {
         @Override

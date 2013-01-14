@@ -33,8 +33,8 @@ public class ZipperUpdater {
   public ZipperUpdater(final int delay, Disposable parentDisposable) {
     myDelay = delay;
     myIsEmpty = true;
-    myThreadToUse = Alarm.ThreadToUse.OWN_THREAD;
-    myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, parentDisposable);
+    myThreadToUse = Alarm.ThreadToUse.POOLED_THREAD;
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable);
   }
 
   public ZipperUpdater(final int delay, final Alarm.ThreadToUse threadToUse, Disposable parentDisposable) {

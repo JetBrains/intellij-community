@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
+import com.intellij.codeInsight.completion.originInfo.OriginInfoAwareElement;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +49,10 @@ public class GrMethodWrapper extends GrLightMethodBuilder {
       }
 
       addParameter(p);
+    }
+
+    if (method instanceof OriginInfoAwareElement) {
+      setOriginInfo(((OriginInfoAwareElement)method).getOriginInfo());
     }
 
     setReturnType(TYPE_MARKER);

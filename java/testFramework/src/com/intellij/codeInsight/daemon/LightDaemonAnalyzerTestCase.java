@@ -32,6 +32,7 @@ import com.intellij.testFramework.HighlightTestInfo;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtil;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -139,7 +140,14 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
   protected List<HighlightInfo> doHighlighting() {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
-    int[] toIgnore = doFolding() ? ArrayUtil.EMPTY_INT_ARRAY : new int[]{Pass.UPDATE_FOLDING};
+    TIntArrayList toIgnoreList = new TIntArrayList();
+    if (!doFolding()) {
+      toIgnoreList.add(Pass.UPDATE_FOLDING);
+    }
+    if (!doInspections()) {
+      toIgnoreList.add(Pass.LOCAL_INSPECTIONS);
+    }
+    int[] toIgnore = toIgnoreList.isEmpty() ? ArrayUtil.EMPTY_INT_ARRAY : toIgnoreList.toNativeArray();
     Editor editor = getEditor();
     PsiFile file = getFile();
     if (editor instanceof EditorWindow) {
@@ -156,5 +164,9 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
 
   protected boolean doFolding() {
     return false;
+  }
+
+  protected boolean doInspections() {
+    return true;
   }
 }

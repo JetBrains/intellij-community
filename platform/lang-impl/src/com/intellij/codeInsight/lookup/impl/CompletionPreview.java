@@ -22,6 +22,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -45,61 +46,46 @@ public class CompletionPreview {
   private CompletionPreview(LookupImpl lookup, final String text, final int prefixLength) {
     myLookup = lookup;
 
-    final Editor editor = myLookup.getEditor();
-    final int caret = editor.getCaretModel().getOffset();
-    int previewStart = caret - prefixLength;
-    final int previewEnd = previewStart + text.length();
+    final EditorImpl editor = (EditorImpl)myLookup.getEditor();
 
     myLookup.performGuardedChange(new Runnable() {
       @Override
       public void run() {
-        Runnable runnable = new Runnable() {
+        CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
           public void run() {
             AccessToken token = WriteAction.start();
             try {
-              editor.getDocument().insertString(caret, text.substring(prefixLength));
+              String preview = text.substring(prefixLength);
+              int caret = editor.getCaretModel().getOffset();
+              int previewEnd = caret + preview.length();
+
+              editor.getDocument().insertString(caret, preview);
+              final RangeHighlighter highlighter = editor.getMarkupModel()
+                .addRangeHighlighter(caret, previewEnd, HighlighterLayer.LAST,
+                                     new TextAttributes(JBColor.GRAY, null, null, null, Font.PLAIN),
+                                     HighlighterTargetArea.EXACT_RANGE);
+
+              editor.startDumb();
+
+              editor.getMarkupModel().removeHighlighter(highlighter);
+              editor.getDocument().deleteString(caret, previewEnd);
             }
             finally {
               token.finish();
             }
           }
-        };
-        CommandProcessor.getInstance().runUndoTransparentAction(runnable);
+        });
       }
     }, "preview");
-    final RangeHighlighter highlighter = myLookup.getEditor().getMarkupModel()
-      .addRangeHighlighter(caret, previewEnd, HighlighterLayer.LAST,
-                           new TextAttributes(JBColor.GRAY, null, null, null, Font.PLAIN),
-                           HighlighterTargetArea.EXACT_RANGE);
-    
+
+
     myUninstaller = new Disposable() {
       @Override
       public void dispose() {
         myLookup.setPreview(null);
         myUninstaller = null;
-
-        if (editor.isDisposed() || !highlighter.isValid()) {
-          return;
-        }
-
-        myLookup.performGuardedChange(new Runnable() {
-          @Override
-          public void run() {
-            Runnable runnable = new Runnable() {
-              public void run() {
-                AccessToken token = WriteAction.start();
-                try {
-                  editor.getDocument().deleteString(highlighter.getStartOffset(), highlighter.getEndOffset());
-                }
-                finally {
-                  token.finish();
-                }
-              }
-            };
-            CommandProcessor.getInstance().runUndoTransparentAction(runnable);
-          }
-        }, "remove preview");
-        editor.getMarkupModel().removeHighlighter(highlighter);
+        editor.stopDumb();
+        editor.getContentComponent().repaintEditorComponent();
       }
     };
     myLookup.setPreview(this);
@@ -125,14 +111,15 @@ public class CompletionPreview {
       return;
     }
     FList<TextRange> fragments = LookupCellRenderer.getMatchingFragments(lookup.itemPattern(item).substring(0, prefixLength), text);
-    if (fragments == null || fragments.isEmpty()) {
+    if (fragments == null) {
       return;
     }
 
-    ArrayList<TextRange> arrayList = new ArrayList<TextRange>(fragments);
-    TextRange last = arrayList.get(arrayList.size() - 1);
-
-    new CompletionPreview(lookup, text, last.getEndOffset());
+    if (!fragments.isEmpty()) {
+      ArrayList<TextRange> arrayList = new ArrayList<TextRange>(fragments);
+      prefixLength = arrayList.get(arrayList.size() - 1).getEndOffset();
+    }
+    new CompletionPreview(lookup, text, prefixLength);
   }
 
   private static String getPreviewText(LookupImpl lookup, LookupElement item) {

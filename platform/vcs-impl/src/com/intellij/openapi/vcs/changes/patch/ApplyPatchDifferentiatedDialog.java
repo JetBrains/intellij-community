@@ -160,7 +160,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       }
     });
 
-    myLoadQueue = new ZipperUpdater(500, Alarm.ThreadToUse.OWN_THREAD, getDisposable());
+    myLoadQueue = new ZipperUpdater(500, Alarm.ThreadToUse.POOLED_THREAD, getDisposable());
     myCanChangePatchFile = applyPatchMode.isCanChangePatchFile();
     myReset = myCanChangePatchFile ? new Runnable() {
       public void run() {

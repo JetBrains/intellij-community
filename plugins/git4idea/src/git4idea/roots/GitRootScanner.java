@@ -64,7 +64,7 @@ public class GitRootScanner implements BulkFileListener, ModuleRootListener, Dis
     messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, this);
     messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, this);
 
-    myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, project);
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
   }
 
   @Override

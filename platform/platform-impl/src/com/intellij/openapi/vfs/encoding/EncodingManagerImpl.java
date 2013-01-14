@@ -82,7 +82,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private Charset myDefaultEncoding = CharsetToolkit.UTF8_CHARSET;
 
-  private final Alarm updateEncodingFromContent = new Alarm(Alarm.ThreadToUse.OWN_THREAD, this);
+  private final Alarm updateEncodingFromContent = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
   private static final Key<Charset> CACHED_CHARSET_FROM_CONTENT = Key.create("CACHED_CHARSET_FROM_CONTENT");
 
   private final TransferToPooledThreadQueue<Reference<Document>> myChangedDocuments = new TransferToPooledThreadQueue<Reference<Document>>(

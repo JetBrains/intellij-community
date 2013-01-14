@@ -16,15 +16,18 @@
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
+import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,9 +42,13 @@ import java.util.Map;
  */
 public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrioritySortable {
 
-  private static final Map<String, TextAttributesKey> TAG_HIGHLIGHTING_MAP = new HashMap<String, TextAttributesKey>();
+  @NonNls private static final Map<String, TextAttributesKey> TAG_HIGHLIGHTING_MAP = new HashMap<String, TextAttributesKey>();
+
+  private final static TextAttributesKey FAKE_BAD_CHAR =
+    TextAttributesKey.createTextAttributesKey("FAKE_BAD_CHAR", HighlighterColors.BAD_CHARACTER);
 
   static {
+    TAG_HIGHLIGHTING_MAP.put("bad_char", FAKE_BAD_CHAR);
     TAG_HIGHLIGHTING_MAP.put("template_language", DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR);
     TAG_HIGHLIGHTING_MAP.put("identifier", DefaultLanguageHighlighterColors.IDENTIFIER);
     TAG_HIGHLIGHTING_MAP.put("number", DefaultLanguageHighlighterColors.NUMBER);
@@ -57,29 +64,84 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
     TAG_HIGHLIGHTING_MAP.put("comma", DefaultLanguageHighlighterColors.COMMA);
     TAG_HIGHLIGHTING_MAP.put("brackets", DefaultLanguageHighlighterColors.BRACKETS);
     TAG_HIGHLIGHTING_MAP.put("parenths", DefaultLanguageHighlighterColors.PARENTHESES);
+    TAG_HIGHLIGHTING_MAP.put("func_decl", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION);
+    TAG_HIGHLIGHTING_MAP.put("func_call", DefaultLanguageHighlighterColors.FUNCTION_CALL);
+    TAG_HIGHLIGHTING_MAP.put("param", DefaultLanguageHighlighterColors.PARAMETER);
+    TAG_HIGHLIGHTING_MAP.put("class_name", DefaultLanguageHighlighterColors.CLASS_NAME);
+    TAG_HIGHLIGHTING_MAP.put("class_ref", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
+    TAG_HIGHLIGHTING_MAP.put("inst_method", DefaultLanguageHighlighterColors.INSTANCE_METHOD);
+    TAG_HIGHLIGHTING_MAP.put("inst_field", DefaultLanguageHighlighterColors.INSTANCE_FIELD);
+    TAG_HIGHLIGHTING_MAP.put("static_method", DefaultLanguageHighlighterColors.STATIC_METHOD);
+    TAG_HIGHLIGHTING_MAP.put("static_field", DefaultLanguageHighlighterColors.STATIC_FIELD);
+    TAG_HIGHLIGHTING_MAP.put("label", DefaultLanguageHighlighterColors.LABEL);
+    TAG_HIGHLIGHTING_MAP.put("local_var", DefaultLanguageHighlighterColors.LOCAL_VARIABLE);
+    TAG_HIGHLIGHTING_MAP.put("global_var", DefaultLanguageHighlighterColors.GLOBAL_VARIABLE);
+    TAG_HIGHLIGHTING_MAP.put("const", DefaultLanguageHighlighterColors.CONSTANT);
+    TAG_HIGHLIGHTING_MAP.put("interface", DefaultLanguageHighlighterColors.INTERFACE_NAME);
   }
 
-  private final AttributesDescriptor[] myAttributesDescriptors;
-
-  public DefaultLanguageColorsPage() {
-    myAttributesDescriptors = new AttributesDescriptor[]{
-      new AttributesDescriptor(this, "Keyword", DefaultLanguageHighlighterColors.KEYWORD),
-      new AttributesDescriptor(this, "Identifier", DefaultLanguageHighlighterColors.IDENTIFIER),
-      new AttributesDescriptor(this, "String", DefaultLanguageHighlighterColors.STRING),
-      new AttributesDescriptor(this, "Number", DefaultLanguageHighlighterColors.NUMBER),
-      new AttributesDescriptor(this, "Operation sign", DefaultLanguageHighlighterColors.OPERATION_SIGN),
-      new AttributesDescriptor(this, "Braces", DefaultLanguageHighlighterColors.BRACES),
-      new AttributesDescriptor(this, "Parentheses", DefaultLanguageHighlighterColors.PARENTHESES),
-      new AttributesDescriptor(this, "Brackets", DefaultLanguageHighlighterColors.BRACKETS),
-      new AttributesDescriptor(this, "Dot", DefaultLanguageHighlighterColors.DOT),
-      new AttributesDescriptor(this, "Comma", DefaultLanguageHighlighterColors.COMMA),
-      new AttributesDescriptor(this, "Semicolon", DefaultLanguageHighlighterColors.SEMICOLON),
-      new AttributesDescriptor(this, "Line comment", DefaultLanguageHighlighterColors.LINE_COMMENT),
-      new AttributesDescriptor(this, "Block comment", DefaultLanguageHighlighterColors.BLOCk_COMMENT),
-      new AttributesDescriptor(this, "Doc comment", DefaultLanguageHighlighterColors.DOC_COMMENT),
-      new AttributesDescriptor(this, "Template language", DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR),
-    };
-  }
+  private final static AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = {
+    new AttributesDescriptor(
+      OptionsBundle.message("options.java.attribute.descriptor.bad.character"), HighlighterColors.BAD_CHARACTER),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.keyword"), DefaultLanguageHighlighterColors.KEYWORD),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.identifier"), DefaultLanguageHighlighterColors.IDENTIFIER),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.string"), DefaultLanguageHighlighterColors.STRING),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.number"), DefaultLanguageHighlighterColors.NUMBER),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.operation"), DefaultLanguageHighlighterColors.OPERATION_SIGN),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.braces"), DefaultLanguageHighlighterColors.BRACES),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.parentheses"), DefaultLanguageHighlighterColors.PARENTHESES),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.brackets"), DefaultLanguageHighlighterColors.BRACKETS),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.dot"), DefaultLanguageHighlighterColors.DOT),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.comma"), DefaultLanguageHighlighterColors.COMMA),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.semicolon"), DefaultLanguageHighlighterColors.SEMICOLON),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.line.comment"), DefaultLanguageHighlighterColors.LINE_COMMENT),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.block.comment"), DefaultLanguageHighlighterColors.BLOCk_COMMENT),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.doc.comment"), DefaultLanguageHighlighterColors.DOC_COMMENT),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.label"), DefaultLanguageHighlighterColors.LABEL),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.constant"), DefaultLanguageHighlighterColors.CONSTANT),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.local.variable"), DefaultLanguageHighlighterColors.LOCAL_VARIABLE),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.global.variable"), DefaultLanguageHighlighterColors.GLOBAL_VARIABLE),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.function.declaration"), DefaultLanguageHighlighterColors.FUNCTION_DECLARATION),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.function.call"), DefaultLanguageHighlighterColors.FUNCTION_CALL),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.parameter"), DefaultLanguageHighlighterColors.PARAMETER),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.interface.name"), DefaultLanguageHighlighterColors.INTERFACE_NAME),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.class.name"), DefaultLanguageHighlighterColors.CLASS_NAME),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.class.reference"), DefaultLanguageHighlighterColors.CLASS_REFERENCE),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.instance.method"), DefaultLanguageHighlighterColors.INSTANCE_METHOD),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.instance.field"), DefaultLanguageHighlighterColors.INSTANCE_FIELD),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.static.method"), DefaultLanguageHighlighterColors.STATIC_METHOD),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.static.field"), DefaultLanguageHighlighterColors.STATIC_FIELD),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.template.language"), DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR),
+  };
 
   @Nullable
   @Override
@@ -97,6 +159,7 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
   @Override
   public String getDemoText() {
     return
+      "Bad characters: <bad_char>????</bad_char>\n" +
       "<keyword>Keyword</keyword>\n" +
       "<identifier>Identifier</identifier>\n" +
       "<string>'String'</string>\n" +
@@ -109,6 +172,18 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
       "<line_comment>// Line comment</line_comment>\n" +
       "<block_comment>/* Block comment */</block_comment>\n" +
       "<doc_comment>/** Doc comment */</doc_comment>\n" +
+      "<label>:Label</label>\n" +
+      "<const>Constant</const>\n" +
+      "Global <global_var>variable</global_var>\n" +
+      "Function <func_decl>declaration</func_decl> (<param>parameter</param>)\n" +
+      "    Local <local_var>variable</local_var>\n" +
+      "Function <func_call>call</func_call>()\n" +
+      "Interface <interface>Name</interface>\n" +
+      "Class <class_name>Name</class_name>\n" +
+      "    instance <inst_method>method</inst_method>\n" +
+      "    instance <inst_field>field</inst_field>\n" +
+      "    static <static_method>method</static_method>\n" +
+      "    static <static_field>field</static_field>\n" +
       "<template_language>{% Template language %}</template_language>";
   }
 
@@ -121,7 +196,7 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
   @NotNull
   @Override
   public AttributesDescriptor[] getAttributeDescriptors() {
-    return myAttributesDescriptors;
+    return ATTRIBUTES_DESCRIPTORS;
   }
 
   @NotNull
@@ -133,7 +208,7 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
   @NotNull
   @Override
   public String getDisplayName() {
-    return "Language Defaults";
+    return OptionsBundle.message("options.language.defaults.display.name");
   }
 
   @Override

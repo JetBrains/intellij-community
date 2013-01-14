@@ -118,7 +118,9 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
     for (MavenProject each : mavenProjects) {
       for (LibraryOrderEntry entry : orderEntries) {
         final MavenArtifact artifact = MavenRootModelAdapter.findArtifact(each, entry.getLibrary());
-        if (artifact != null) artifacts.add(artifact);
+        if (artifact != null && !"system".equals(artifact.getScope())) {
+          artifacts.add(artifact);
+        }
       }
     }
     return artifacts;

@@ -16,9 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiUtil;
@@ -26,7 +24,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -116,6 +113,12 @@ public class PsiMethodReferenceUtil {
   
   public static boolean isAcceptable(@Nullable final PsiMethodReferenceExpression methodReferenceExpression, PsiType left) {
     if (methodReferenceExpression == null) return false;
+    if (left instanceof PsiIntersectionType) {
+      for (PsiType conjunct : ((PsiIntersectionType)left).getConjuncts()) {
+        if (isAcceptable(methodReferenceExpression, conjunct)) return true;
+      }
+      return false;
+    }
     Map<PsiMethodReferenceExpression, PsiType> map = ourRefs.get();
     if (map == null) {
       map = new HashMap<PsiMethodReferenceExpression, PsiType>();
@@ -265,77 +268,5 @@ public class PsiMethodReferenceUtil {
       .createStatementFromText(leftType.getCanonicalText() + " " + uniqueVarName + " = " + methodReferenceExpression.getText(),
                                methodReferenceExpression);
     return (PsiLocalVariable)((PsiDeclarationStatement)assignmentFromText).getDeclaredElements()[0];
-  }
-
-  public static void processMethodReferenceReturnType(List<CandidateInfo> conflicts, int functionalInterfaceIdx) {
-    final CandidateInfo[] newConflictsArray = conflicts.toArray(new CandidateInfo[conflicts.size()]);
-    for (int i = 1; i < newConflictsArray.length; i++) {
-      final CandidateInfo method = newConflictsArray[i];
-      final PsiType interfaceReturnType = getReturnType(functionalInterfaceIdx, method);
-      for (int j = 0; j < i; j++) {
-        final CandidateInfo conflict = newConflictsArray[j];
-        assert conflict != method;
-        final PsiType interfaceReturnType1 = getReturnType(functionalInterfaceIdx, conflict);
-        if (interfaceReturnType != null && interfaceReturnType1 != null && !Comparing.equal(interfaceReturnType, interfaceReturnType1)) {
-          int moreSpecific = isMoreSpecific(interfaceReturnType, interfaceReturnType1);
-          if (moreSpecific > 0) {
-            conflicts.remove(method);
-            break;
-          }
-          else if (moreSpecific < 0) {
-            conflicts.remove(conflict);
-          }
-        }
-      }
-    }
-  }
-
-  private static int isMoreSpecific(PsiType returnType, PsiType returnType1) {
-    final PsiClassType.ClassResolveResult r = PsiUtil.resolveGenericsClassInType(returnType);
-    final PsiClass rClass = r.getElement();
-    final PsiClassType.ClassResolveResult r1 = PsiUtil.resolveGenericsClassInType(returnType1);
-    final PsiClass rClass1 = r1.getElement();
-    if (rClass != null && rClass1 != null) {
-      if (rClass == rClass1) {
-        int moreSpecific = 0;
-        for (PsiTypeParameter parameter : rClass.getTypeParameters()) {
-          final PsiType t = r.getSubstitutor().substituteWithBoundsPromotion(parameter);
-          final PsiType t1 = r1.getSubstitutor().substituteWithBoundsPromotion(parameter);
-          if (t == null || t1 == null) continue;
-          if (t1.isAssignableFrom(t) && !GenericsUtil.eliminateWildcards(t1).equals(t)) {
-            if (moreSpecific == 1) {
-              return 0;
-            }
-            moreSpecific = -1;
-          }
-          else if (t.isAssignableFrom(t1) && !GenericsUtil.eliminateWildcards(t).equals(t1)) {
-            if (moreSpecific == -1) {
-              return 0;
-            }
-            moreSpecific = 1;
-          }
-          else {
-            return 0;
-          }
-        }
-        return moreSpecific;
-      }
-      else if (rClass1.isInheritor(rClass, true)) {
-        return 1;
-      }
-      else if (rClass.isInheritor(rClass1, true)) {
-        return -1;
-      }
-    }
-    return 0;
-  }
-
-  @Nullable
-  private static PsiType getReturnType(int functionalTypeIdx, CandidateInfo method) {
-    final PsiParameter[] methodParameters = ((PsiMethod)method.getElement()).getParameterList().getParameters();
-    if (methodParameters.length == 0) return null;
-    final PsiParameter param = functionalTypeIdx < methodParameters.length ? methodParameters[functionalTypeIdx] : methodParameters[methodParameters.length - 1];
-    final PsiType functionalInterfaceType = method.getSubstitutor().substitute(param.getType());
-    return LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
   }
 }

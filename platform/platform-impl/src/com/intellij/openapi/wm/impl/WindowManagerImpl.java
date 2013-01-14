@@ -250,7 +250,14 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
 
   @Override
   public boolean isFullScreen(@NotNull Frame frame) {
-    return frame instanceof IdeFrameImpl && ((IdeFrameImpl)frame).isInFullScreen();
+    if (SystemInfo.isMac && SystemInfo.isMacOSLion) {
+      return frame instanceof IdeFrameImpl && ((IdeFrameImpl)frame).isInFullScreen();
+    }
+    if (SystemInfo.isWindows) {
+      GraphicsDevice device = ScreenUtil.getScreenDevice(frame.getBounds());
+      return (device != null && device.getDefaultConfiguration().getBounds().equals(frame.getBounds()) && frame.isUndecorated());
+    }
+    return false;
   }
 
   @Override
@@ -820,5 +827,39 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
 
   public WindowWatcher getWindowWatcher() {
     return myWindowWatcher;
+  }
+  
+  public static void toggleFullScreen(IdeFrameImpl frame) {
+    if (SystemInfo.isMac && SystemInfo.isMacOSLion) {
+      frame.getFrameDecorator().toggleFullScreen();
+      return;
+    }
+
+    if (SystemInfo.isWindows) {
+      GraphicsDevice device = ScreenUtil.getScreenDevice(frame.getBounds());
+      if (device != null) {
+        boolean isFullScreenNow = device.getDefaultConfiguration().getBounds().equals(frame.getBounds()) && frame.isUndecorated();
+        Object o = frame.getRootPane().getClientProperty("oldBounds");
+        Rectangle oldBounds = (o instanceof Rectangle) ? (Rectangle)o : null;
+        try {
+          frame.getRootPane().putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, Boolean.TRUE);
+          if (!isFullScreenNow)
+            frame.getRootPane().putClientProperty("oldBounds", frame.getBounds());
+          frame.dispose();
+          frame.setUndecorated(!isFullScreenNow);
+        } finally {
+          if (isFullScreenNow) {
+            if (oldBounds != null)
+              frame.setBounds(oldBounds);
+          }
+          else {
+            frame.setBounds(device.getDefaultConfiguration().getBounds());
+          }
+          frame.setVisible(true);
+          frame.getRootPane().putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, null);
+        }
+      }
+      return;
+    }
   }
 }

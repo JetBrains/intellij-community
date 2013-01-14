@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,19 +54,20 @@ import java.util.*;
 public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix");
 
-  protected CreateFromUsageBaseFix() {
-  }
-
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    int offset = editor.getCaretModel().getOffset();
     PsiElement element = getElement();
-    if (element == null) {
+    if (element == null || isValidElement(element)) {
+      return false;
+    }
+
+    int offset = editor.getCaretModel().getOffset();
+    if (!isAvailableImpl(offset)) {
       return false;
     }
 
     List<PsiClass> targetClasses = getTargetClasses(element);
-    return !targetClasses.isEmpty() && !isValidElement(element) && isAvailableImpl(offset);
+    return !targetClasses.isEmpty();
   }
 
   protected abstract boolean isAvailableImpl(int offset);

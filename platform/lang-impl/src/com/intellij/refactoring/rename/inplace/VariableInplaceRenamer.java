@@ -271,7 +271,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     }
     finally {
       try {
-        ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).stopDumb();
+        ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).stopDumbLater();
       }
       finally {
         FinishMarkAction.finish(myProject, myEditor, markAction);
@@ -326,7 +326,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
       revertStateOnFinish();
     }
     else {
-      ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).stopDumb();
+      ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).stopDumbLater();
     }
   }
 

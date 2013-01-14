@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 the original author or authors.
+ * Copyright 2001-2012 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.generate.tostring.inspection;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.generate.tostring.GenerateToStringContext;
@@ -39,7 +40,7 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
 
     @NotNull
     public String getDisplayName() {
-        return "Field not used in toString() method";
+        return "Field not used in 'toString()' method";
     }
 
     @NotNull
@@ -113,7 +114,7 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
         // get list of fields supposed to be dumped in the toString method
         Project project = clazz.getProject();
         fields = GenerateToStringUtils.filterAvailableFields(project, psi, clazz, GenerateToStringContext.getConfig().getFilterPattern());
-        if (fields == null || fields.length == 0) {
+        if (fields.length == 0) {
             log.debug("No fields to be dumped as all fields was excluded (exclude field by XXX from Settings)");
             return;
         }
@@ -121,16 +122,18 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
         // toString exists and fields are supposed to be dumped
         // check if any fields are missing (out of sync)
         for (PsiField field : fields) {
-            if (log.isDebugEnabled()) log.debug("Evaluating if field " + field.getName() + " is in toString() method");
+          final String fieldName = field.getName();
+          if (log.isDebugEnabled()) log.debug("Evaluating if field " + fieldName + " is in toString() method");
 
             // field must be enclosed with non words before and after the field to ensure the fieldname are dumped
-            String pattern = "(?s).*\\W" + field.getName() + "[\\W&&[^=]].*";
+            String pattern = "(?s).*\\W" + StringUtil.escapeToRegexp(fieldName) + "[\\W&&[^=]].*";
             if (log.isDebugEnabled()) log.debug("Match pattern = " + pattern);
 
             // use regexp to match if field is used in code
             if (!body.matches(pattern)) {
                 if (log.isDebugEnabled()) log.debug("Field is not used in toString() method (out-of-sync): " + field);
-                holder.registerProblem(field, "Field '" + field.getName() + "' is not used in toString() method", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
+                holder.registerProblem(field.getNameIdentifier(), "Field '" + fieldName + "' is not used in 'toString()' method",
+                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
             }
         }
 
@@ -172,13 +175,13 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
 
         // check if toString uses reflection if so exit
         String body = code.getText();
-        if (body.indexOf("getDeclaredFields()") != -1) {
+        if (body.contains("getDeclaredFields()")) {
             log.debug("Using reflection");
             return;
         }
 
         // must have methods
-      PsiMethod[] methods = clazz.getMethods();
+        PsiMethod[] methods = clazz.getMethods();
         if (methods.length == 0) {
             log.debug("Class does not have any methods");
             return;
@@ -186,7 +189,7 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
 
         // get list of methods supposed to be dumped in the toString method
         methods = GenerateToStringUtils.filterAvailableMethods(psi, clazz, GenerateToStringContext.getConfig().getFilterPattern());
-        if (methods == null || methods.length == 0) {
+        if (methods.length == 0) {
             log.debug("No getter methods to be dumped as all methods was excluded or a field existed for the getter method (exclude method by XXX from Settings)");
             return;
         }
@@ -194,17 +197,22 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
         // toString exists and methods are supposed to be dumped
         // check if any methods are missing (out of sync)
         for (PsiMethod method : methods) {
-            if (log.isDebugEnabled()) log.debug("Evaluating if method " + method.getName() + " is in toString() method");
+          final String methodName = method.getName();
+          if (log.isDebugEnabled()) log.debug("Evaluating if method " + methodName + " is in toString() method");
 
             // method must be enclosed with non words before and after the method to ensure the fieldname are dumped
-            String pattern = "(?s).*\\W" + method.getName() + "[\\W&&[^=]].*";
+            String pattern = "(?s).*\\W" + StringUtil.escapeToRegexp(methodName) + "[\\W&&[^=]].*";
             if (log.isDebugEnabled()) log.debug("Match pattern = " + pattern);
 
             // use regexp to match if method is used in code
             if (!body.matches(pattern)) {
                 // method is not in toString
                 if (log.isDebugEnabled()) log.debug("Getter method is not used in toString() method (out-of-sync): " + method);
-                holder.registerProblem(method, "Method '" + method.getName() + "' is not used in toString() method", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
+
+                final PsiIdentifier identifier = method.getNameIdentifier();
+                final PsiElement target = identifier == null ? method : identifier;
+                holder.registerProblem(target, "Method '" + methodName + "' is not used in 'toString()' method",
+                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
             }
         }
 

@@ -43,6 +43,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                   "<version>1</version>");
   }
 
+  @Bombed(year = 2013, month = Calendar.APRIL, day = 25, user = "sergey.evdokimov")
   public void testGroupIdCompletion() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -59,6 +60,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom, "test", "org.apache.maven.plugins", "org.codehaus.mojo");
   }
 
+  @Bombed(year = 2013, month = Calendar.APRIL, day = 25, user = "sergey.evdokimov")
   public void testArtifactIdCompletion() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -76,6 +78,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom, "maven-compiler-plugin", "maven-war-plugin", "maven-surefire-plugin", "maven-eclipse-plugin");
   }
 
+  @Bombed(year = 2013, month = Calendar.APRIL, day = 25, user = "sergey.evdokimov")
   public void testArtifactWithoutGroupCompletion() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -786,6 +789,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom);
   }
 
+  @Bombed(year = 2013, month = Calendar.MARCH, day = 25, user = "sergey.evdokimov")
   public void testDocumentationForParameter() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

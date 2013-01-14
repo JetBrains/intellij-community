@@ -86,15 +86,23 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
                             @Nullable Disposable parent,
                             @Nullable JComponent activationComponent,
                             boolean executeInDispatchThread) {
+    this(name, mergingTimeSpan, isActive, modalityStateComponent, parent, activationComponent,
+         executeInDispatchThread ? Alarm.ThreadToUse.SWING_THREAD : Alarm.ThreadToUse.POOLED_THREAD);
+  }
+
+  public MergingUpdateQueue(@NonNls String name,
+                            int mergingTimeSpan,
+                            boolean isActive,
+                            @Nullable JComponent modalityStateComponent,
+                            @Nullable Disposable parent,
+                            @Nullable JComponent activationComponent,
+                            @NotNull Alarm.ThreadToUse thread) {
     myMergingTimeSpan = mergingTimeSpan;
     myModalityStateComponent = modalityStateComponent;
     myName = name;
     myPassThrough = ApplicationManager.getApplication().isUnitTestMode();
-    myExecuteInDispatchThread = executeInDispatchThread;
-
-    myWaiterForMerge = myExecuteInDispatchThread
-                       ? createAlarm(Alarm.ThreadToUse.SWING_THREAD, null)
-                       : createAlarm(Alarm.ThreadToUse.OWN_THREAD, this);
+    myExecuteInDispatchThread = thread == Alarm.ThreadToUse.SWING_THREAD;
+    myWaiterForMerge = createAlarm(thread, myExecuteInDispatchThread ? null : this);
 
     if (isActive) {
       showNotify();
@@ -108,7 +116,6 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       setActivationComponent(activationComponent);
     }
   }
-
 
   protected Alarm createAlarm(@NotNull Alarm.ThreadToUse thread, Disposable parent) {
     return new Alarm(thread, parent);

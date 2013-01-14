@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -261,22 +261,26 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
 
   @NotNull
   private static String realKey(String key, @Nullable Project project) {
-    JFrame frame = project == null ? WindowManager.getInstance().findVisibleFrame() : WindowManager.getInstance().getFrame(project);
+    GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+    if (env.isHeadlessInstance()) {
+      return key + ".headless";
+    }
 
-    Rectangle screen = new Rectangle(0,0,0,0);
+    JFrame frame = project == null ? WindowManager.getInstance().findVisibleFrame() : WindowManager.getInstance().getFrame(project);
+    Rectangle screen = new Rectangle(0, 0, 0, 0);
     if (frame != null) {
       final Point topLeft = frame.getLocation();
       Point center = new Point(topLeft.x + frame.getWidth() / 2, topLeft.y + frame.getHeight() / 2);
-      for (GraphicsDevice device : GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
+      for (GraphicsDevice device : env.getScreenDevices()) {
         Rectangle bounds = device.getDefaultConfiguration().getBounds();
         if (bounds.contains(center)) {
           screen = bounds;
           break;
         }
       }
-    } else {
-      GraphicsConfiguration gc =
-        GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[0].getDefaultConfiguration();
+    }
+    else {
+      GraphicsConfiguration gc = env.getScreenDevices()[0].getDefaultConfiguration();
       screen = gc.getBounds();
     }
     return key + '.' + screen.x + '.' + screen.y + '.' + screen.width + '.' + screen.height;

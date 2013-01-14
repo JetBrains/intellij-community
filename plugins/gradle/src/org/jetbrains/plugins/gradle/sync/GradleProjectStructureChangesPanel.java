@@ -108,7 +108,6 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
         scheduleCollapseStateAppliance(e.getTreePath());
       }
     });
-    myTreeModel.rebuild();
     new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true);
     TreeUtil.installActions(myTree);
 

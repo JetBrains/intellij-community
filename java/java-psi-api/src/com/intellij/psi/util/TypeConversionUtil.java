@@ -667,9 +667,7 @@ public class TypeConversionUtil {
 
     if (right instanceof PsiMethodReferenceType) {
       final PsiMethodReferenceExpression methodReferenceExpression = ((PsiMethodReferenceType)right).getExpression();
-      if (left instanceof PsiClassType) {
-        return PsiMethodReferenceUtil.isAcceptable(methodReferenceExpression, (PsiClassType)left);
-      } else if (left instanceof PsiLambdaExpressionType) {
+      if (left instanceof PsiLambdaExpressionType) {
         final PsiType rType = methodReferenceExpression.getFunctionalInterfaceType();
         final PsiType lType = ((PsiLambdaExpressionType)left).getExpression().getFunctionalInterfaceType();
         return Comparing.equal(rType, lType);
@@ -678,18 +676,17 @@ public class TypeConversionUtil {
         final PsiType lType = ((PsiMethodReferenceType)left).getExpression().getFunctionalInterfaceType();
         return Comparing.equal(rType, lType);
       }
+      return PsiMethodReferenceUtil.isAcceptable(methodReferenceExpression, left);
     }
     if (right instanceof PsiLambdaExpressionType) {
       final PsiLambdaExpression rLambdaExpression = ((PsiLambdaExpressionType)right).getExpression();
-      if (left instanceof PsiClassType) {
-        return LambdaUtil.isAcceptable(rLambdaExpression, left, false);
-      }
       if (left instanceof PsiLambdaExpressionType) {
         final PsiLambdaExpression lLambdaExpression = ((PsiLambdaExpressionType)left).getExpression();
         final PsiType rType = rLambdaExpression.getFunctionalInterfaceType();
         final PsiType lType = lLambdaExpression.getFunctionalInterfaceType();
         return Comparing.equal(rType, lType);
       }
+      return LambdaUtil.isAcceptable(rLambdaExpression, left, false);
     }
 
     if (left instanceof PsiIntersectionType) {

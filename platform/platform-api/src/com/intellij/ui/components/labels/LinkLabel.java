@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.UI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -185,7 +186,8 @@ public class LinkLabel extends JLabel {
 
   public void removeNotify() {
     super.removeNotify();
-    disableUnderline();
+    if (ScreenUtil.isStandardAddRemoveNotify(this))
+      disableUnderline();
   }
 
   private void setActive(boolean isActive) {

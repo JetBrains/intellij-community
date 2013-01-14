@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -144,9 +143,8 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
     PsiMethodCallExpression methodCall = (PsiMethodCallExpression) element;
     PsiMethod method = (PsiMethod) methodCall.getMethodExpression().resolve();
     PsiExpressionList argumentList = methodCall.getArgumentList();
-    PsiClass targetClass = getTargetClasses(element).get(0);
-
-    return !CreateFromUsageUtils.shouldCreateConstructor(targetClass, argumentList, method);
+    List<PsiClass> classes = getTargetClasses(element);
+    return classes.size() > 0 && !CreateFromUsageUtils.shouldCreateConstructor(classes.get(0), argumentList, method);
   }
 
   @Override

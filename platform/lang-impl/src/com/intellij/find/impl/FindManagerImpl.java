@@ -40,6 +40,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -404,17 +405,17 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
   private static class CommentsLiteralsSearchData {
     final VirtualFile lastFile;
     int startOffset = 0;
-    final Lexer lexer;
+    final SyntaxHighlighter highlighter;
 
     TokenSet tokensOfInterest;
     final StringSearcher searcher;
     final Matcher matcher;
     final Set<Language> relevantLanguages;
 
-    public CommentsLiteralsSearchData(VirtualFile lastFile, Set<Language> relevantLanguages, Lexer lexer, TokenSet tokensOfInterest,
+    public CommentsLiteralsSearchData(VirtualFile lastFile, Set<Language> relevantLanguages, SyntaxHighlighter highlighter, TokenSet tokensOfInterest,
                                       StringSearcher searcher, Matcher matcher) {
       this.lastFile = lastFile;
-      this.lexer = lexer;
+      this.highlighter = highlighter;
       this.tokensOfInterest = tokensOfInterest;
       this.searcher = searcher;
       this.matcher = matcher;
@@ -440,7 +441,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
 
     CommentsLiteralsSearchData data = model.getUserData(ourCommentsLiteralsSearchDataKey);
     if (data == null || !Comparing.equal(data.lastFile, file)) {
-      Lexer lexer = getLexer(file, lang);
+      SyntaxHighlighter lexer = getHighlighter(file, lang);
 
       TokenSet tokensOfInterest = TokenSet.EMPTY;
       final Language finalLang = lang;
@@ -470,7 +471,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
 
       if(model.isInStringLiteralsOnly()) {
         // TODO: xml does not have string literals defined so we add XmlAttributeValue element type as convenience
-        final Lexer xmlLexer = getLexer(null, Language.findLanguageByID("XML"));
+        final Lexer xmlLexer = getHighlighter(null, Language.findLanguageByID("XML")).getHighlightingLexer();
         final String marker = "xxx";
         xmlLexer.start("<a href=\"" + marker+ "\" />");
 
@@ -491,10 +492,10 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       model.putUserData(ourCommentsLiteralsSearchDataKey, data);
     }
 
-    data.lexer.start(text, data.startOffset, text.length(), 0);
+    final Lexer lexer = data.highlighter.getHighlightingLexer();
+    lexer.start(text, data.startOffset, text.length(), 0);
 
     IElementType tokenType;
-    final Lexer lexer = data.lexer;
     TokenSet tokens = data.tokensOfInterest;
 
     int lastGoodOffset = 0;
@@ -504,7 +505,9 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     while((tokenType = lexer.getTokenType()) != null) {
       if (lexer.getState() == 0) lastGoodOffset = lexer.getTokenStart();
 
-      if (tokens.contains(tokenType)) {
+      final TextAttributesKey[] keys = data.highlighter.getTokenHighlights(tokenType);
+      if (tokens.contains(tokenType) || (model.isInStringLiteralsOnly() && isHighlightedAsString(keys))) {
+
         int start = lexer.getTokenStart();
 
         if (start >= offset || !scanningForward) {
@@ -546,6 +549,19 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return prevFindResult;
   }
 
+  private static boolean isHighlightedAsString(TextAttributesKey... keys) {
+    for (TextAttributesKey key : keys) {
+      if (key == DefaultLanguageHighlighterColors.STRING || key == SyntaxHighlighterColors.STRING) {
+        return true;
+      }
+      final TextAttributesKey fallbackAttributeKey = key.getFallbackAttributeKey();
+      if (fallbackAttributeKey != null && isHighlightedAsString(fallbackAttributeKey)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private static TokenSet addTokenTypesForLanguage(FindModel model, Language lang, TokenSet tokensOfInterest) {
     ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
     if (definition != null) {
@@ -555,10 +571,10 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return tokensOfInterest;
   }
 
-  private static Lexer getLexer(VirtualFile file, Language lang) {
+  private static SyntaxHighlighter getHighlighter(VirtualFile file, Language lang) {
     SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(lang, null, file);
     assert syntaxHighlighter != null:"Syntax highlighter is null:"+file;
-    return syntaxHighlighter.getHighlightingLexer();
+    return syntaxHighlighter;
   }
 
   private static FindResult findStringByRegularExpression(CharSequence text, int startOffset, FindModel model) {

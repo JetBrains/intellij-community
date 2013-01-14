@@ -16,7 +16,6 @@
 package com.intellij.openapi.options.colors;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Describes a text attribute key the attributes for which can be configured in a custom
@@ -27,20 +26,6 @@ import org.jetbrains.annotations.Nullable;
 public final class AttributesDescriptor {
   private final TextAttributesKey myKey;
   private final String myDisplayName;
-  private ColorSettingsPage mySettingsPage;
-
-  /**
-   * Creates an attribute descriptor with the specified name and text attributes key.
-   *
-   * @param settingsPage The settings page hosting the attribute.
-   * @param displayName  the name of the attribute shown in the colors list.
-   * @param key          the attributes key for which the colors are specified.
-   */
-  public AttributesDescriptor(ColorSettingsPage settingsPage, String displayName, TextAttributesKey key) {
-    myKey = key;
-    myDisplayName = displayName;
-    mySettingsPage = settingsPage;
-  }
 
   /**
    * Creates an attribute descriptor with the specified name and text attributes key.
@@ -69,13 +54,5 @@ public final class AttributesDescriptor {
    */
   public String getDisplayName() {
     return myDisplayName;
-  }
-
-  /**
-   * @return The settings page hosting the attribute.
-   */
-  @Nullable
-  public ColorSettingsPage getSettingsPage() {
-    return mySettingsPage;
   }
 }

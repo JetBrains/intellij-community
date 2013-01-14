@@ -23,10 +23,11 @@ import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ConcurrentWeakHashMap;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
@@ -46,7 +47,7 @@ import java.util.Set;
  * @author peter
  */
 public class DynamicGenericInfo extends DomGenericInfoEx {
-  private static final Key<ConcurrentWeakHashMap<ChildrenDescriptionsHolder, ChildrenDescriptionsHolder>> HOLDERS_CACHE = Key.create("DOM_CHILDREN_HOLDERS_CACHE");
+  private static final Key<SoftReference<ConcurrentHashMap<ChildrenDescriptionsHolder, ChildrenDescriptionsHolder>>> HOLDERS_CACHE = Key.create("DOM_CHILDREN_HOLDERS_CACHE");
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("dynamicGenericInfo");
   private final StaticGenericInfo myStaticGenericInfo;
   @NotNull private final DomInvocationHandler myInvocationHandler;
@@ -136,9 +137,11 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
   }
 
   private static <T extends DomChildDescriptionImpl> ChildrenDescriptionsHolder<T> internChildrenHolder(XmlFile file, ChildrenDescriptionsHolder<T> holder) {
-    ConcurrentWeakHashMap<ChildrenDescriptionsHolder, ChildrenDescriptionsHolder> cache = file.getUserData(HOLDERS_CACHE);
+    SoftReference<ConcurrentHashMap<ChildrenDescriptionsHolder, ChildrenDescriptionsHolder>> ref = file.getUserData(HOLDERS_CACHE);
+    ConcurrentHashMap<ChildrenDescriptionsHolder, ChildrenDescriptionsHolder> cache = ref == null ? null : ref.get();
     if (cache == null) {
-      file.putUserData(HOLDERS_CACHE, cache = new ConcurrentWeakHashMap<ChildrenDescriptionsHolder, ChildrenDescriptionsHolder>());
+      cache = new ConcurrentHashMap<ChildrenDescriptionsHolder, ChildrenDescriptionsHolder>();
+      file.putUserData(HOLDERS_CACHE, new SoftReference<ConcurrentHashMap<ChildrenDescriptionsHolder, ChildrenDescriptionsHolder>>(cache));
     }
     ChildrenDescriptionsHolder existing = cache.get(holder);
     if (existing != null) {

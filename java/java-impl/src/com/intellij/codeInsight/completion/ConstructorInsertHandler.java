@@ -22,11 +22,13 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -221,6 +223,15 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
             if (aClass == null) return;
 
             final Collection<CandidateInfo> candidatesToImplement = OverrideImplementUtil.getMethodsToOverrideImplement(aClass, true);
+            if (PsiUtil.isLanguageLevel8OrHigher(aClass)) {
+              for (Iterator<CandidateInfo> iterator = candidatesToImplement.iterator(); iterator.hasNext(); ) {
+                final CandidateInfo candidate = iterator.next();
+                final PsiElement element = candidate.getElement();
+                if (element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.DEFAULT)) {
+                  iterator.remove();
+                }
+              }
+            }
             boolean invokeOverride = candidatesToImplement.isEmpty();
             if (invokeOverride){
               OverrideImplementUtil.chooseAndOverrideOrImplementMethods(project, editor, aClass, false);

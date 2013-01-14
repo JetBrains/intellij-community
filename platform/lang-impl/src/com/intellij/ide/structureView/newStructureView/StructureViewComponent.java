@@ -168,6 +168,10 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     };
   }
 
+  public void showToolbar() {
+    setToolbar(createToolbar());
+  }
+
   private JComponent createToolbar() {
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.STRUCTURE_VIEW_TOOLBAR, createActionGroup(), true).getComponent();
   }

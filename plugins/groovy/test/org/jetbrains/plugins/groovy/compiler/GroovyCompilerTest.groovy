@@ -778,6 +778,16 @@ string
     assertEmpty make()
   }
 
+  public void "test rename class to java and touch its usage"() {
+    def usage = myFixture.addFileToProject('Usage.groovy', 'class Usage { Renamed r } ')
+    def renamed = myFixture.addFileToProject('Renamed.groovy', 'public class Renamed { } ')
+    assertEmpty make()
+
+    touch usage.virtualFile
+    setFileName(renamed, 'Renamed.java')
+    assertEmpty make()
+  }
+
   public static class IdeaModeTest extends GroovyCompilerTest {
     @Override protected boolean useJps() { false }
   }
