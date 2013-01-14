@@ -32,7 +32,13 @@ void ErrorMessage(char *str) {
 
 void CtrlBreak() {
 	if (!GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, 0)) {
-		ErrorMessage("GenerateConsoleCtrlEvent");
+		ErrorMessage("CtrlBreak(): GenerateConsoleCtrlEvent");
+	}
+}
+
+void CtrlC() {
+	if (!GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0)) {
+		ErrorMessage("CtrlC(): GenerateConsoleCtrlEvent");
 	}
 }
 
@@ -40,6 +46,7 @@ BOOL is_iac = FALSE;
 
 char IAC = 5;
 char BRK = 3;
+char C = 5;
 
 BOOL Scan(char buf[], int count) {
 	for (int i = 0; i < count; i++) {
@@ -47,7 +54,12 @@ BOOL Scan(char buf[], int count) {
 			if (buf[i] == BRK) {
 				CtrlBreak();
 				return TRUE;
-			} else {
+			}
+			else if (buf[i] == C) {
+				CtrlC();
+				return TRUE;
+			}
+			else {
 				is_iac = FALSE;
 			}
 		}
@@ -62,6 +74,7 @@ BOOL Scan(char buf[], int count) {
 BOOL CtrlHandler(DWORD fdwCtrlType) {
 	switch (fdwCtrlType) {
 	case CTRL_C_EVENT:
+		return FALSE;
 	case CTRL_CLOSE_EVENT:
 	case CTRL_LOGOFF_EVENT:
 	case CTRL_SHUTDOWN_EVENT:
@@ -93,9 +106,9 @@ DWORD WINAPI StdInThread(void *param) {
 		ReadFile(hStdin, &c, 1, &cbRead, NULL);
 		if (cbRead > 0) {
 			buf[0] = c;
-			bool ctrlBroken = Scan(buf, 1);
+			BOOL ctrlBroken = Scan(buf, 1);
 			WriteFile(threadParams->write_stdin, buf, 1, &cbWrite, NULL);
-			if (ctrlBroken) {
+			if (ctrlBroken == TRUE) {
 				SetEvent(threadParams->hEvent);
 				break;
 			}
@@ -194,8 +207,6 @@ int main(int argc, char * argv[]) {
 	}
 
 	unsigned long exit = 0;
-	unsigned long b_read;
-	unsigned long avail;
 
 	HANDLE threadEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
