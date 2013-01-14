@@ -65,8 +65,8 @@ public class Alarm implements Disposable {
       myExecutorService.shutdown();
     }
     else if (myThreadToUse == ThreadToUse.OWN_THREAD) {
-      ((ThreadPoolExecutor)myExecutorService).getQueue().clear();
       myExecutorService.shutdown();
+      ((ThreadPoolExecutor)myExecutorService).getQueue().clear();
     }
   }
 
