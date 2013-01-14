@@ -42,14 +42,42 @@
 
       <option name="DEFAULT_TEMPLATE_LANGUAGE_COLOR">
         <value>
-          <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="f7faff"/>
-          <option name="EFFECT_COLOR"/>
         </value>
       </option>
       <option name="DEFAULT_IDENTIFIER">
         <value>
           <option name="FOREGROUND"/>
+        </value>
+      </option>
+      <option name="DEFAULT_INSTANCE_FIELD">
+        <value>
+          <option name="FOREGROUND" value="660e7a"/>
+          <option name="FONT_TYPE" value="1"/>
+        </value>
+      </option>
+      <option name="DEFAULT_STATIC_FIELD">
+        <value>
+          <option name="FOREGROUND" value="660e7a"/>
+          <option name="FONT_TYPE" value="2"/>
+        </value>
+      </option>
+      <option name="DEFAULT_CONSTANT">
+        <value>
+          <option name="FOREGROUND" value="660e7a"/>
+          <option name="FONT_TYPE" value="3"/>
+        </value>
+      </option>
+      <option name="DEFAULT_STATIC_METHOD">
+        <value>
+          <option name="FONT_TYPE" value="2"/>
+        </value>
+      </option>
+      <option name="DEFAULT_LABEL">
+        <value>
+          <option name="FONT_TYPE" value="1"/>
+          <option name="EFFECT_TYPE" value="1"/>
+          <option name="EFFECT_COLOR" value="808080"/>
         </value>
       </option>
 

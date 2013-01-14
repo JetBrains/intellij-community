@@ -57,7 +57,7 @@ public class DefaultLanguageHighlighterColors {
     TextAttributesKey.createTextAttributesKey("DEFAULT_BRACKETS", SyntaxHighlighterColors.BRACKETS.getDefaultAttributes());
 
   public final static TextAttributesKey LABEL =
-    TextAttributesKey.createTextAttributesKey("DEFAULT_LABEL", IDENTIFIER);
+    TextAttributesKey.createTextAttributesKey("DEFAULT_LABEL");
   public final static TextAttributesKey CONSTANT =
     TextAttributesKey.createTextAttributesKey("DEFAULT_CONSTANT", IDENTIFIER);
   public final static TextAttributesKey LOCAL_VARIABLE =
@@ -86,5 +86,12 @@ public class DefaultLanguageHighlighterColors {
   public final static TextAttributesKey STATIC_FIELD =
     TextAttributesKey.createTextAttributesKey("DEFAULT_STATIC_FIELD", IDENTIFIER);
 
-
+  public final static TextAttributesKey DOC_COMMENT_MARKUP =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_DOC_MARKUP", SyntaxHighlighterColors.DOC_COMMENT_MARKUP);
+  public final static TextAttributesKey DOC_COMMENT_TAG =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_DOC_COMMENT_TAG", SyntaxHighlighterColors.DOC_COMMENT_TAG);
+  public final static TextAttributesKey VALID_STRING_ESCAPE =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_VALID_STRING_ESCAPE", SyntaxHighlighterColors.VALID_STRING_ESCAPE);
+  public final static TextAttributesKey INVALID_STRING_ESCAPE =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_INVALID_STRING_ESCAPE", SyntaxHighlighterColors.VALID_STRING_ESCAPE);
 }
