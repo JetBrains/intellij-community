@@ -16,6 +16,7 @@
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -32,13 +33,13 @@ import org.jetbrains.annotations.NotNull;
 public class StoragePathMacros {
 
   /** Points to the application-level settings root directory. */
-  @NotNull public static final String APP_CONFIG = "$APP_CONFIG$";
+  @NonNls @NotNull public static final String APP_CONFIG = "$APP_CONFIG$";
   
   /** <code>'.ipr'</code> file path key. */
-  @NotNull public static final String PROJECT_FILE = "$PROJECT_FILE$";
+  @NonNls @NotNull public static final String PROJECT_FILE = "$PROJECT_FILE$";
   
   /** <code>'.idea'</code> directory path key. */
-  @NotNull public static final String PROJECT_CONFIG_DIR = "$PROJECT_CONFIG_DIR$";
+  @NonNls @NotNull public static final String PROJECT_CONFIG_DIR = "$PROJECT_CONFIG_DIR$";
 
   /**
    * {@link Project#getWorkspaceFile() Workspace} file key.
@@ -46,7 +47,7 @@ public class StoragePathMacros {
    * <code>'Workspace file'</code> holds settings that are local to a particular environment and should not be shared with another
    * team members.
    */
-  @NotNull public static final String WORKSPACE_FILE = "$WORKSPACE_FILE$";
+  @NonNls @NotNull public static final String WORKSPACE_FILE = "$WORKSPACE_FILE$";
 
   private StoragePathMacros() {
   }
@@ -66,10 +67,8 @@ public class StoragePathMacros {
       throw new IllegalArgumentException("Can't extract name from the given macro definition. Reason: it's empty");
     }
     if (macro.charAt(0) != '$' || macro.charAt(macro.length() - 1) != '$') {
-      throw new IllegalArgumentException(String.format(
-        "Can't extract name from the given macro definition (%s). Reason: it doesn't conform to the expected format ($NAME$)",
-        macro
-      ));
+      throw new IllegalArgumentException("Can't extract name from the given macro definition (" + macro + ")." +
+                                         " Reason: it doesn't conform to the expected format ($NAME$)");
     }
     return macro.substring(1, macro.length() - 1);
   }
