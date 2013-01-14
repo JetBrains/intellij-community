@@ -162,8 +162,7 @@ public class GeneralCommandLineTest {
   }
 
 
-  private static String execAndGetOutput(GeneralCommandLine commandLine,
-                                         @Nullable String encoding) throws IOException, InterruptedException, ExecutionException {
+  private static String execAndGetOutput(GeneralCommandLine commandLine, @Nullable String encoding) throws Exception {
     Process process = commandLine.createProcess();
     byte[] bytes = FileUtil.loadBytes(process.getInputStream());
     String output = encoding != null ? new String(bytes, encoding) : new String(bytes);
