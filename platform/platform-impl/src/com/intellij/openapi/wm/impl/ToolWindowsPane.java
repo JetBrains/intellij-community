@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
@@ -30,6 +31,7 @@ import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 
@@ -173,14 +175,18 @@ final class ToolWindowsPane extends JLayeredPane implements Disposable {
    */
   public final void addNotify(){
     super.addNotify();
-    UISettings.getInstance().addUISettingsListener(myUISettingsListener,myDisposable);
+    if (ScreenUtil.isStandardAddRemoveNotify(this)) {
+      UISettings.getInstance().addUISettingsListener(myUISettingsListener,myDisposable);
+    }
   }
 
   /**
    * Invoked when enclosed frame is being disposed.
    */
   public final void removeNotify(){
-    Disposer.dispose(myDisposable);
+    if (ScreenUtil.isStandardAddRemoveNotify(this)) {
+      Disposer.dispose(myDisposable);
+    }
     super.removeNotify();
   }
 
@@ -1019,56 +1025,41 @@ final class ToolWindowsPane extends JLayeredPane implements Disposable {
       return SwingUtilities.getDeepestComponentAt(this, 0, 0) == this ? Color.GRAY : UIUtil.getPanelBackground(); 
     }
 
-    /**
-     * TODO[vova] extract method
-     * Lazily creates and returns bottom image for animation.
-     */
     public final Image getBottomImage(){
-      LOG.assertTrue(UISettings.getInstance().ANIMATE_WINDOWS);
-      BufferedImage image= myBottomImageRef.get();
-      if(
-        image==null ||
-        image.getWidth(null) < getWidth() || image.getHeight(null) < getHeight()
-      ){
-        final int width=Math.max(Math.max(1,getWidth()),myFrame.getWidth());
-        final int height=Math.max(Math.max(1,getHeight()),myFrame.getHeight());
-        if(SystemInfo.isWindows || SystemInfo.isMac){
-          image=myFrame.getGraphicsConfiguration().createCompatibleImage(width,height);
-        }else{
-          // Under Linux we have found that images created by createCompatibleImage(),
-          // createVolatileImage(), etc extremely slow for rendering. TrueColor buffered image
-          // is MUCH faster.
-          image=UIUtil.createImage(width,height,BufferedImage.TYPE_INT_RGB);
-        }
-        myBottomImageRef=new SoftReference<BufferedImage>(image);
-      }
-      return image;
+      Pair<BufferedImage, SoftReference<BufferedImage>> result = getImage(myBottomImageRef);
+      myBottomImageRef = result.second;
+      return result.first;
     }
 
-    /**
-     * TODO[vova] extract method
-     * Lazily creates and returns top image for animation.
-     */
     public final Image getTopImage(){
+      Pair<BufferedImage, SoftReference<BufferedImage>> result = getImage(myTopImageRef);
+      myTopImageRef = result.second;
+      return result.first;
+    }
+
+    private Pair<BufferedImage, SoftReference<BufferedImage>> getImage(SoftReference<BufferedImage> imageRef) {
       LOG.assertTrue(UISettings.getInstance().ANIMATE_WINDOWS);
-      BufferedImage image= myTopImageRef.get();
+      BufferedImage image= imageRef.get();
       if(
         image==null ||
         image.getWidth(null) < getWidth() || image.getHeight(null) < getHeight()
       ){
         final int width=Math.max(Math.max(1,getWidth()),myFrame.getWidth());
         final int height=Math.max(Math.max(1,getHeight()),myFrame.getHeight());
-        if(SystemInfo.isWindows || SystemInfo.isMac){
-          image=myFrame.getGraphicsConfiguration().createCompatibleImage(width,height);
-        }else{
+        if (SystemInfo.isWindows) {
+          image = myFrame.getGraphicsConfiguration().createCompatibleImage(width, height);
+        }
+        else {
           // Under Linux we have found that images created by createCompatibleImage(),
           // createVolatileImage(), etc extremely slow for rendering. TrueColor buffered image
           // is MUCH faster.
-          image=UIUtil.createImage(width,height,BufferedImage.TYPE_INT_RGB);
+          // On Mac we create a retina-compatible image
+
+          image = UIUtil.createImage(width, height, BufferedImage.TYPE_INT_RGB);
         }
-        myTopImageRef=new SoftReference<BufferedImage>(image);
+        imageRef = new SoftReference<BufferedImage>(image);
       }
-      return image;
+      return Pair.create(image, imageRef);
     }
 
     /**

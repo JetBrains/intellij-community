@@ -227,7 +227,7 @@ public abstract class UsefulTestCase extends TestCase {
     return CodeStyleSettingsManager.getInstance().getCurrentSettings();
   }
 
-  protected Disposable getTestRootDisposable() {
+  public Disposable getTestRootDisposable() {
     return myTestRootDisposable;
   }
 

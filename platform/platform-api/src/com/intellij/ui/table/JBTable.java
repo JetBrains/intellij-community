@@ -315,16 +315,21 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   }
 
   public void removeNotify() {
-    final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    //noinspection HardCodedStringLiteral
-    keyboardFocusManager.removePropertyChangeListener("permanentFocusOwner", myEditorRemover);
-    //noinspection HardCodedStringLiteral
-    keyboardFocusManager.removePropertyChangeListener("focusOwner", myEditorRemover);
-    super.removeNotify();
-    if (myBusyIcon != null) {
-      remove(myBusyIcon);
-      Disposer.dispose(myBusyIcon);
-      myBusyIcon = null;
+    if (ScreenUtil.isStandardAddRemoveNotify(this)) {
+      final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+      //noinspection HardCodedStringLiteral
+      keyboardFocusManager.removePropertyChangeListener("permanentFocusOwner", myEditorRemover);
+      //noinspection HardCodedStringLiteral
+      keyboardFocusManager.removePropertyChangeListener("focusOwner", myEditorRemover);
+      super.removeNotify();
+      if (myBusyIcon != null) {
+        remove(myBusyIcon);
+        Disposer.dispose(myBusyIcon);
+        myBusyIcon = null;
+      }
+    }
+    else {
+      super.removeNotify();
     }
   }
 

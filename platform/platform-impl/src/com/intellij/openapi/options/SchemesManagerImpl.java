@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -174,8 +174,8 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
           T oldCurrentScheme = null;
           if (scheme != null) {
             oldCurrentScheme = getCurrentScheme();
-            //noinspection unchecked
-            removeScheme((T)scheme);
+            @SuppressWarnings("unchecked") T t = (T)scheme;
+            removeScheme(t);
             myProcessor.onSchemeDeleted(scheme);
           }
 
@@ -211,7 +211,8 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       T oldCurrentScheme = null;
       if (scheme != null) {
         oldCurrentScheme = getCurrentScheme();
-        removeScheme((T)scheme);
+        @SuppressWarnings("unchecked") T t = (T)scheme;
+        removeScheme(t);
         myProcessor.onSchemeDeleted(scheme);
       }
 
@@ -241,7 +242,8 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       if (scheme instanceof ExternalizableScheme) {
         String fileName = ((ExternalizableScheme)scheme).getExternalInfo().getCurrentFileName();
         if (ioFileName.equals(fileName + EXT)) {
-          return (E)scheme;
+          @SuppressWarnings("unchecked") E e = (E)scheme;
+          return e;
         }
       }
     }
@@ -395,11 +397,13 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
         mySchemes.remove(existing);
 
         if (isExternalizable(existing)) {
-          myProcessor.onSchemeDeleted((E)existing);
+          @SuppressWarnings("unchecked") E e = (E)existing;
+          myProcessor.onSchemeDeleted(e);
         }
 
       }
-      addNewScheme((T)scheme, true);
+      @SuppressWarnings("unchecked") T t = (T)scheme;
+      addNewScheme(t, true);
       saveFileName(name, scheme);
       scheme.getExternalInfo().setPreviouslySavedName(scheme.getName());
     }
@@ -832,7 +836,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   private void saveSchemes(final Collection<T> schemes, final UniqueFileNamesProvider fileNameProvider) throws WriteExternalException {
     for (T scheme : schemes) {
       if (isExternalizable(scheme)) {
-        final E eScheme = (E)scheme;
+        @SuppressWarnings("unchecked") final E eScheme = (E)scheme;
         eScheme.getExternalInfo().setPreviouslySavedName(eScheme.getName());
         if (myProcessor.shouldBeSaved(eScheme)) {
           final String fileName = getFileNameForScheme(fileNameProvider, eScheme);
@@ -876,32 +880,13 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     return fileName + EXT;
   }
 
-  private void saveIfNeeded(final E schemeKey, final String fileName, final Document document, final long newHash, final Long oldHash)
-      throws IOException {
+  private void saveIfNeeded(E schemeKey, String fileName, Document document, long newHash, Long oldHash) throws IOException {
     if (oldHash == null || newHash != oldHash.longValue() || myVFSBaseDir.findChild(fileName) == null) {
-      if (oldHash != null && newHash != oldHash.longValue()) {
-        final byte[] text = StorageUtil.printDocument(document);
-
-        ensureFileText(fileName, text);
-      }
-      else {
-        byte[] text = StorageUtil.printDocument(document);
-        ensureFileText(fileName, text);
-      }
+      byte[] text = StorageUtil.printDocument(document);
+      ensureFileText(fileName, text);
       schemeKey.getExternalInfo().setHash(newHash);
       saveFileName(fileName, schemeKey);
-
       saveOnServer(fileName, document);
-    }
-  }
-
-  private boolean needsSave(final String fileName, final byte[] text) throws IOException {
-    VirtualFile file = myVFSBaseDir.findChild(fileName);
-    if (file != null) {
-      return !Arrays.equals(file.contentsToByteArray(), text);
-    }
-    else {
-      return true;
     }
   }
 

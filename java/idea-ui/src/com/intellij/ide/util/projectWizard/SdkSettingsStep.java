@@ -17,7 +17,6 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -103,18 +102,22 @@ public class SdkSettingsStep extends ModuleWizardStep {
 
   @Override
   public boolean validate() throws ConfigurationException {
-    if (myJdkComboBox.getSelectedJdk() == null && !ApplicationManager.getApplication().isUnitTestMode()) {
-      int result = Messages.showDialog(getNoSdkMessage(),
+    if (myJdkComboBox.getSelectedJdk() == null) {
+      if (Messages.showDialog(getNoSdkMessage(),
                                        IdeBundle.message("title.no.jdk.specified"),
-                                       new String[]{CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()}, 1, Messages.getWarningIcon());
-      if (result != Messages.YES) {
+                                       new String[]{CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()}, 1, Messages.getWarningIcon()) != Messages.YES) {
         return false;
       }
     }
     try {
-      myModel.apply();
+      myModel.apply(null, true);
     } catch (ConfigurationException e) {
       //IDEA-98382 We should allow Next step if user has wrong SDK
+      if (Messages.showDialog(e.getMessage() + "/nDo you want to proceed?",
+                                       e.getTitle(),
+                                       new String[]{CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()}, 1, Messages.getWarningIcon()) != Messages.YES) {
+        return false;
+      }
     }
     return true;
   }

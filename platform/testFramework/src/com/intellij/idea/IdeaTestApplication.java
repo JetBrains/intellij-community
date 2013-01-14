@@ -44,12 +44,7 @@ public class IdeaTestApplication extends CommandLineApplication implements Dispo
   }
 
   public static synchronized IdeaTestApplication getInstance(@Nullable final String configPath) {
-    final boolean isForeignApp = /*!(ApplicationManager.getApplication() instanceof ApplicationImpl);*/ false;
-    if (ourInstance == null || isForeignApp) {
-      if (isForeignApp) {
-        disposeInstance();
-        PluginManager.invalidatePlugins();
-      }
+    if (ourInstance == null) {
       new IdeaTestApplication();
       PluginManager.getPlugins();
       final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
@@ -60,10 +55,6 @@ public class IdeaTestApplication extends CommandLineApplication implements Dispo
       }.execute();
     }
     return (IdeaTestApplication)ourInstance;
-  }
-
-  public static boolean isInitialized() {
-    return ourInstance != null;
   }
 
   @Override

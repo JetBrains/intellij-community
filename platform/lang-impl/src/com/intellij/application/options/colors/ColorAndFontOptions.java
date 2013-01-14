@@ -30,7 +30,6 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.settings.DiffOptionsPanel;
 import com.intellij.openapi.diff.impl.settings.DiffPreviewPanel;
-import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -761,7 +760,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     private final TextAttributes myAttributesToApply;
     private final TextAttributesKey key;
     private TextAttributes myFallbackAttributes;
-    private String myInheritanceDescription;
+    private Pair<ColorSettingsPage,AttributesDescriptor> myBaseAttributeDescriptor;
 
     private SchemeTextAttributesDescription(String name, String group, TextAttributesKey key, MyColorScheme  scheme, Icon icon,
                                            String toolTip) {
@@ -773,9 +772,10 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
       if (fallbackKey != null) {
         myFallbackAttributes = scheme.getAttributes(fallbackKey);
-        myInheritanceDescription = DefaultLanguageHighlighterColors.getDisplayName(fallbackKey);
-        if (myInheritanceDescription == null) {
-          myInheritanceDescription = fallbackKey.getExternalName();
+        myBaseAttributeDescriptor = ColorSettingsPages.getInstance().getAttributeDescriptor(fallbackKey);
+        if (myBaseAttributeDescriptor == null) {
+          myBaseAttributeDescriptor =
+            new Pair<ColorSettingsPage, AttributesDescriptor>(null, new AttributesDescriptor(fallbackKey.getExternalName(), fallbackKey));
         }
       }
       initCheckedStatus();
@@ -820,8 +820,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     @Nullable
     @Override
-    public String getInheritanceDescription() {
-      return myInheritanceDescription;
+    public Pair<ColorSettingsPage,AttributesDescriptor> getBaseAttributeDescriptor() {
+      return myBaseAttributeDescriptor;
     }
   }
 

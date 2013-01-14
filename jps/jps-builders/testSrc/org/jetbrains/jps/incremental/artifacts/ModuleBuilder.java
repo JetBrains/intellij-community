@@ -1,11 +1,15 @@
 package org.jetbrains.jps.incremental.artifacts;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.containers.SoftHashMap;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsModuleRootModificationUtil;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
+import org.jetbrains.jps.model.java.JpsJavaDependencyScope;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
@@ -16,6 +20,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.root;
 
 public class ModuleBuilder {
+  private static Map<ArtifactBuilderTestCase, Pair<AtomicInteger, AtomicInteger>> testCaseToNameCounter = new THashMap<ArtifactBuilderTestCase, Pair<AtomicInteger, AtomicInteger>>();
+
   private final ArtifactBuilderTestCase testCase;
   private final String builderName;
 
@@ -25,7 +31,7 @@ public class ModuleBuilder {
 
   private String fromSourceRoot;
 
-  private static Map<ArtifactBuilderTestCase, AtomicInteger> testCaseToModuleNameCounter = new SoftHashMap<ArtifactBuilderTestCase, AtomicInteger>();
+  private JpsArtifact mainArtifact;
 
   public ModuleBuilder(String builderName, ArtifactBuilderTestCase testCase) {
     this(builderName, testCase, null);
@@ -55,12 +61,20 @@ public class ModuleBuilder {
   }
 
   public JpsArtifact createArtifact() {
-    return testCase.addArtifact(getOrCreateModuleName(), root().element(createPackagingElement(get())));
+    JpsArtifact artifact = testCase.addArtifact(generateName(false), root().element(createPackagingElement(get())));
+    if (mainArtifact == null) {
+      mainArtifact = artifact;
+    }
+    return artifact;
   }
 
   public ModuleBuilder artifact() {
     createArtifact();
     return this;
+  }
+
+  public JpsArtifact getArtifact() {
+    return mainArtifact;
   }
 
   protected JpsPackagingElement createPackagingElement(JpsModule module) {
@@ -83,14 +97,24 @@ public class ModuleBuilder {
 
   private String getOrCreateModuleName() {
     if (name == null) {
-      AtomicInteger counter = testCaseToModuleNameCounter.get(testCase);
-      if (counter == null) {
-        counter = new AtomicInteger(0);
-        testCaseToModuleNameCounter.put(testCase, counter);
-      }
-      name = "m" + counter.getAndIncrement();
+      name = generateName(true);
     }
     return name;
+  }
+
+  private String generateName(boolean module) {
+    Pair<AtomicInteger, AtomicInteger> counter = testCaseToNameCounter.get(testCase);
+    if (counter == null) {
+      counter = Pair.create(new AtomicInteger(0), new AtomicInteger(0));
+      testCaseToNameCounter.put(testCase, counter);
+      Disposer.register(testCase.getTestRootDisposable(), new Disposable() {
+        @Override
+        public void dispose() {
+          testCaseToNameCounter.remove(testCase);
+        }
+      });
+    }
+    return (module ? "m" : "a") + (module ? counter.first : counter.second).getAndIncrement();
   }
 
   public ModuleBuilder copy(String file) throws IOException {
@@ -124,6 +148,11 @@ public class ModuleBuilder {
 
   public ModuleBuilder dependsOn(ModuleBuilder dependency) {
     JpsModuleRootModificationUtil.addDependency(get(), dependency.get());
+    return this;
+  }
+
+  public ModuleBuilder dependsOnAndExports(ModuleBuilder dependency) {
+    JpsModuleRootModificationUtil.addDependency(get(), dependency.get(), JpsJavaDependencyScope.COMPILE, true);
     return this;
   }
 }

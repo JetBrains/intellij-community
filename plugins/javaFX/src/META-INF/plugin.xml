@@ -5,5 +5,10 @@
   <vendor>JetBrains</vendor>
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <fileTypeFactory implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory"/>
+    <xml.xmlExtension implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxXmlExtension"/>
+    <xml.fileNSInfoProvider implementation="org.jetbrains.plugins.javaFX.fxml.JavaFXNamespaceProvider"/>
+    <metaDataContributor implementation="org.jetbrains.plugins.javaFX.fxml.JavaFXMetaDataContributor"/>
+    <xml.schemaProvider implementation="org.jetbrains.plugins.javaFX.fxml.JavaFXSchemaHandler"/>
   </extensions>
 </idea-plugin>

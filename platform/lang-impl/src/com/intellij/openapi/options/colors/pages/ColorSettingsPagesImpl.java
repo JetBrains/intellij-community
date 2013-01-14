@@ -15,17 +15,21 @@
  */
 package com.intellij.openapi.options.colors.pages;
 
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.options.colors.ColorSettingsPages;
+import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class ColorSettingsPagesImpl extends ColorSettingsPages {
   private final List<ColorSettingsPage> myPages = new ArrayList<ColorSettingsPage>();
   private boolean myExtensionsLoaded = false;
+  private Map<TextAttributesKey, Pair<ColorSettingsPage, AttributesDescriptor>> myKeyToDescriptorMap =
+    new HashMap<TextAttributesKey, Pair<ColorSettingsPage, AttributesDescriptor>>();
 
   @Override
   public void registerPage(ColorSettingsPage page) {
@@ -39,5 +43,26 @@ public class ColorSettingsPagesImpl extends ColorSettingsPages {
       Collections.addAll(myPages, Extensions.getExtensions(ColorSettingsPage.EP_NAME));
     }
     return myPages.toArray(new ColorSettingsPage[myPages.size()]);
+  }
+
+  @Override
+  @Nullable
+  public Pair<ColorSettingsPage,AttributesDescriptor> getAttributeDescriptor(TextAttributesKey key) {
+    if (myKeyToDescriptorMap.containsKey(key)) {
+      return myKeyToDescriptorMap.get(key);
+    }
+    else {
+      for (ColorSettingsPage page : getRegisteredPages()) {
+        for (AttributesDescriptor descriptor : page.getAttributeDescriptors()) {
+          if (descriptor.getKey() == key) {
+            Pair<ColorSettingsPage,AttributesDescriptor> result = new Pair<ColorSettingsPage, AttributesDescriptor>(page, descriptor);
+            myKeyToDescriptorMap.put(key, result);
+            return result;
+          }
+        }
+      }
+      myKeyToDescriptorMap.put(key, null);
+    }
+    return null;
   }
 }

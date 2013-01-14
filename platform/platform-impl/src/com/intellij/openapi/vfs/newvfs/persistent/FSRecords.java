@@ -929,6 +929,36 @@ public class FSRecords implements Forceable {
     }
   }
 
+  public static int getNameId(int id) {
+    try {
+      r.lock();
+      try {
+        return getRecordInt(id, NAME_OFFSET);
+      }
+      finally {
+        r.unlock();
+      }
+    }
+    catch (Throwable e) {
+      throw DbConnection.handleError(e);
+    }
+  }
+
+  public static int getNameId(String name) {
+    try {
+      r.lock();
+      try {
+        return getNames().enumerate(name);
+      }
+      finally {
+        r.unlock();
+      }
+    }
+    catch (Throwable e) {
+      throw DbConnection.handleError(e);
+    }
+  }
+
   public static String getName(int id) {
     try {
       r.lock();

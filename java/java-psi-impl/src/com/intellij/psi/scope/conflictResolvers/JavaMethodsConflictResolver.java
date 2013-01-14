@@ -123,9 +123,10 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
             }
           }
         }
+        LambdaUtil.checkMoreSpecificReturnType(conflicts, i);
       }
       else if (parameterType instanceof PsiMethodReferenceType) {
-        PsiMethodReferenceUtil.processMethodReferenceReturnType(conflicts, i);
+        LambdaUtil.checkMoreSpecificReturnType(conflicts, i);
       }
     }
   }

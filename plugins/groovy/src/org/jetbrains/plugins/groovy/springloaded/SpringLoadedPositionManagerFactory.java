@@ -17,7 +17,8 @@ public class SpringLoadedPositionManagerFactory extends PositionManagerFactory {
   public PositionManager createPositionManager(final DebugProcess process) {
     AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
     try {
-      if (JavaPsiFacade.getInstance(process.getProject()).findPackage("com.springsource.loaded") != null) {
+      JavaPsiFacade facade = JavaPsiFacade.getInstance(process.getProject());
+      if (facade.findPackage("com.springsource.loaded") != null || facade.findPackage("org.springsource.loaded") != null) {
         return new SpringLoadedPositionManager(process);
       }
       return null;

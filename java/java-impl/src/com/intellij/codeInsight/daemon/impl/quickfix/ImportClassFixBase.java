@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,6 +69,12 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
     if (!myRef.isValid()) {
       return false;
     }
+
+    PsiElement parent = myRef.getParent();
+    if (parent instanceof PsiNewExpression && ((PsiNewExpression)parent).getQualifier() != null) {
+      return false;
+    }
+
     PsiManager manager = file.getManager();
     return manager.isInProject(file) && !getClassesToImport().isEmpty();
   }

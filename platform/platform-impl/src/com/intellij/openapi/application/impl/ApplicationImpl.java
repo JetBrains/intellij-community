@@ -26,6 +26,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.impl.ApplicationPathMacroManager;
@@ -366,15 +367,15 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   @Override
-  protected void handleInitComponentError(final Throwable ex, final boolean fatal, final String componentClassName) {
+  protected void handleInitComponentError(final Throwable ex, final boolean fatal, final String componentClassName, ComponentConfig config) {
     if (myHandlingInitComponentError) {
       return;
     }
     myHandlingInitComponentError = true;
     try {
-      if (PluginManager.isPluginClass(componentClassName)) {
-        LOG.error(ex);
-        PluginId pluginId = PluginManager.getPluginByClassName(componentClassName);
+      PluginId pluginId = config == null ? PluginManager.getPluginByClassName(componentClassName) : config.getPluginId();
+      if (pluginId != null) {
+        LOG.warn(ex);
         @NonNls final String errorMessage =
           "Plugin " + pluginId.getIdString() + " failed to initialize and will be disabled:\n" + ex.getMessage() +
           "\nPlease restart " + ApplicationNamesInfo.getInstance().getFullProductName() + ".";
@@ -382,7 +383,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         if (!myHeadlessMode) {
           JOptionPane.showMessageDialog(null, errorMessage);
         }
-        else {
+        else if (!isUnitTestMode()) {
           //noinspection UseOfSystemOutOrSystemErr
           System.out.println(errorMessage);
           System.exit(1);
@@ -402,7 +403,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           System.out.println(errorMessage);
         }
       }
-      super.handleInitComponentError(ex, fatal, componentClassName);
+      super.handleInitComponentError(ex, fatal, componentClassName, config);
     }
     finally {
       myHandlingInitComponentError = false;

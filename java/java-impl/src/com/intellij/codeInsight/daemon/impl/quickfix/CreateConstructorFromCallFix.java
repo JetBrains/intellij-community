@@ -31,6 +31,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author mike
  */
@@ -140,7 +142,9 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
     PsiConstructorCall constructorCall = (PsiConstructorCall)element;
     PsiMethod method = constructorCall.resolveConstructor();
     PsiExpressionList argumentList = constructorCall.getArgumentList();
-    PsiClass targetClass = getTargetClasses(constructorCall).get(0);
+    List<PsiClass> targetClasses = getTargetClasses(constructorCall);
+    if (targetClasses.isEmpty()) return false;
+    PsiClass targetClass = targetClasses.get(0);
 
     return !CreateFromUsageUtils.shouldCreateConstructor(targetClass, argumentList, method);
   }

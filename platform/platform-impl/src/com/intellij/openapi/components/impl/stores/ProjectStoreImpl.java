@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -694,9 +694,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         }
       }
 
-      if (!componentNames.isEmpty()) {
-        StorageUtil.logStateDiffInfo(changedFiles, componentNames);
-      }
+      StorageUtil.logStateDiffInfo(changedFiles, componentNames);
 
       if (!isReloadPossible(componentNames)) {
         return false;
@@ -721,4 +719,3 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     return true;
   }
 }
-

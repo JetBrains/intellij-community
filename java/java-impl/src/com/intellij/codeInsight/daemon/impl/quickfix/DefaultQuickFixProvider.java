@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,9 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
   public void registerFixes(PsiJavaCodeReferenceElement ref, QuickFixActionRegistrar registrar) {
     registrar.register(new ImportClassFix(ref));
     registrar.register(SetupJDKFix.getInstance());
+
     OrderEntryFix.registerFixes(registrar, ref);
+
     MoveClassToModuleFix.registerFixes(registrar, ref);
 
     if (ref instanceof PsiReferenceExpression) {
@@ -50,7 +52,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
         registrar.register(fixRange, new BringVariableIntoScopeFix(refExpr), null);
       }
 
-      registerPriorityActions(registrar,fixRange,refExpr);
+      registerPriorityActions(registrar, fixRange, refExpr);
     }
 
     registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.INTERFACE));
@@ -58,9 +60,12 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.ENUM));
       registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.ANNOTATION));
     }
+
     PsiElement parent = PsiTreeUtil.getParentOfType(ref, PsiNewExpression.class, PsiMethod.class);
-    final PsiExpressionList expressionList = PsiTreeUtil.getParentOfType(ref, PsiExpressionList.class);
-    if (parent instanceof PsiNewExpression && !(ref.getParent() instanceof PsiTypeElement) && (expressionList == null || !PsiTreeUtil.isAncestor(parent, expressionList, false))) {
+    PsiExpressionList expressionList = PsiTreeUtil.getParentOfType(ref, PsiExpressionList.class);
+    if (parent instanceof PsiNewExpression &&
+        !(ref.getParent() instanceof PsiTypeElement) &&
+        (expressionList == null || !PsiTreeUtil.isAncestor(parent, expressionList, false))) {
       registrar.register(new CreateClassFromNewFix((PsiNewExpression)parent));
       registrar.register(new CreateInnerClassFromNewFix((PsiNewExpression)parent));
     }
@@ -70,35 +75,31 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
     }
   }
 
-  private static void registerPriorityActions(@NotNull final QuickFixActionRegistrar registrar,
-                                                         @NotNull final TextRange fixRange,
-                                                         @NotNull final PsiReferenceExpression refExpr) {
+  private static void registerPriorityActions(@NotNull QuickFixActionRegistrar registrar,
+                                              @NotNull TextRange fixRange,
+                                              @NotNull PsiReferenceExpression refExpr) {
     final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(refExpr.getProject());
 
-    final Map<VariableKind, IntentionAction> map = new HashMap<VariableKind, IntentionAction>() {
-      {
-        put(VariableKind.FIELD, new CreateFieldFromUsageFix(refExpr));
-        put(VariableKind.STATIC_FINAL_FIELD, new CreateConstantFieldFromUsageFix(refExpr));
-        if (!refExpr.isQualified()) {
-          put(VariableKind.LOCAL_VARIABLE, new CreateLocalFromUsageFix(refExpr));
-          put(VariableKind.PARAMETER, new CreateParameterFromUsageFix(refExpr));
-        }
-      }
-    };
+    final Map<VariableKind, IntentionAction> map = new HashMap<VariableKind, IntentionAction>();
+    map.put(VariableKind.FIELD, new CreateFieldFromUsageFix(refExpr));
+    map.put(VariableKind.STATIC_FINAL_FIELD, new CreateConstantFieldFromUsageFix(refExpr));
+    if (!refExpr.isQualified()) {
+      map.put(VariableKind.LOCAL_VARIABLE, new CreateLocalFromUsageFix(refExpr));
+      map.put(VariableKind.PARAMETER, new CreateParameterFromUsageFix(refExpr));
+    }
 
     final VariableKind kind = getKind(styleManager, refExpr);
-    if (map.containsKey(kind)){
+    if (map.containsKey(kind)) {
       map.put(kind, PriorityIntentionActionWrapper.highPriority(map.get(kind)));
     }
 
-    for (IntentionAction action : map.values()){
+    for (IntentionAction action : map.values()) {
       registrar.register(fixRange, action, null);
     }
   }
 
   @NotNull
-  private static VariableKind getKind(@NotNull JavaCodeStyleManager styleManager,
-                                      @NotNull PsiReferenceExpression refExpr) {
+  private static VariableKind getKind(@NotNull JavaCodeStyleManager styleManager, @NotNull PsiReferenceExpression refExpr) {
     final String reference = refExpr.getText();
 
     if (reference.toUpperCase().equals(reference)){

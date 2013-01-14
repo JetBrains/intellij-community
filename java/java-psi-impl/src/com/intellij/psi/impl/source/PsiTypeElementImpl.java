@@ -105,11 +105,14 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
           cachedType = componentType.createArrayType();
         }
         else {
+          final PsiElement opElement = PsiTreeUtil.skipSiblingsForward(element.getPsi(), PsiWhiteSpace.class);
           final List<PsiTypeElement> typeElements = PsiTreeUtil.getChildrenOfTypeAsList(this, PsiTypeElement.class);
           final List<PsiType> types = ContainerUtil.map(typeElements, new Function<PsiTypeElement, PsiType>() {
               @Override public PsiType fun(final PsiTypeElement psiTypeElement) { return psiTypeElement.getType(); }
           });
-          cachedType = new PsiDisjunctionType(types, getManager());
+          cachedType = opElement instanceof PsiJavaToken && ((PsiJavaToken)opElement).getTokenType() == JavaTokenType.AND 
+                       ? PsiIntersectionType.createIntersection(types.toArray(new PsiType[types.size()])) 
+                       : new PsiDisjunctionType(types, getManager());
         }
       }
       else if (elementType == JavaElementType.JAVA_CODE_REFERENCE) {

@@ -16,6 +16,9 @@
 package com.intellij.application.options.colors;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.options.colors.AttributesDescriptor;
+import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -395,7 +398,23 @@ public class ColorAndFontDescriptionPanel extends JPanel {
 
     if (description.isInherited()) {
       myInheritanceLabel.setIcon(INHERITED_ICON);
-      myInheritanceLabel.setText(description.getInheritanceDescription());
+      Pair<ColorSettingsPage,AttributesDescriptor> baseDescriptor = description.getBaseAttributeDescriptor();
+      String attrName  = "?";
+      String pageName = "?";
+      if (baseDescriptor != null && baseDescriptor.second.getDisplayName() != null) {
+        attrName = baseDescriptor.second.getDisplayName();
+        ColorSettingsPage settingsPage = baseDescriptor.first;
+        if (settingsPage != null) {
+          pageName = settingsPage.getDisplayName();
+        }
+      }
+      String tooltipText = attrName + " (" + pageName + ")";
+      String labelText = tooltipText;
+      if (labelText.length() > 30 && pageName.length() >= 4) {
+        labelText = attrName + " (" + pageName.substring(0, 4) + "...)";
+      }
+      myInheritanceLabel.setText(labelText);
+      myInheritanceLabel.setToolTipText(tooltipText);
       myInheritanceLabel.setForeground(myLabelFont.getForeground());
     }
     else {

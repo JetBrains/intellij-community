@@ -68,6 +68,8 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
   @Override
   public void addNotify() {
     super.addNotify();
+    if (!ScreenUtil.isStandardAddRemoveNotify(this))
+      return;
     myGlassPane = IdeGlassPaneUtil.find(this);
     if (myGlassPane != null) {
       myGlassPane.addMouseMotionPreprocessor(this, myDisposable);
@@ -77,6 +79,8 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
   @Override
   public void removeNotify() {
     super.removeNotify();
+    if (!ScreenUtil.isStandardAddRemoveNotify(this))
+      return;
     Disposer.dispose(myDisposable);
   }
 

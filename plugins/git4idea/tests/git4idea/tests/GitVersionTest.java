@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,14 @@
  */
 package git4idea.tests;
 
+import com.intellij.openapi.util.SystemInfo;
 import git4idea.config.GitVersion;
-import git4idea.test.GitTestUtil;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Field;
 
 import static git4idea.config.GitVersion.Type;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
 
 /**
  * @author Kirill Likhodedov
@@ -52,37 +50,39 @@ public class GitVersionTest {
    */
   @Test
   public void testParse() throws Exception {
-    GitTestUtil.setWindows(false);
-    for (TestGitVersion test : commonTests) {
-      GitVersion version = GitVersion.parse(test.output);
-      assertEqualVersions(version, test, Type.UNIX);
+    if (SystemInfo.isUnix) {
+      for (TestGitVersion test : commonTests) {
+        GitVersion version = GitVersion.parse(test.output);
+        assertEqualVersions(version, test, Type.UNIX);
+      }
     }
+    else if (SystemInfo.isWindows) {
+      for (TestGitVersion test : commonTests) {
+        GitVersion version = GitVersion.parse(test.output);
+        assertEqualVersions(version, test, Type.CYGWIN);
+      }
 
-    GitTestUtil.setWindows(true);
-    for (TestGitVersion test : commonTests) {
-      GitVersion version = GitVersion.parse(test.output);
-      assertEqualVersions(version, test, Type.CYGWIN);
-    }
-
-    for (TestGitVersion test : msysTests) {
-      GitVersion version = GitVersion.parse(test.output);
-      assertEqualVersions(version, test, Type.MSYS);
+      for (TestGitVersion test : msysTests) {
+        GitVersion version = GitVersion.parse(test.output);
+        assertEqualVersions(version, test, Type.MSYS);
+      }
     }
   }
 
   @Test
   public void testEqualsAndCompare() throws Exception {
-    GitTestUtil.setWindows(true);
     GitVersion v1 = GitVersion.parse("git version 1.6.3");
     GitVersion v2 = GitVersion.parse("git version 1.7.3");
     GitVersion v3 = GitVersion.parse("git version 1.7.3");
     GitVersion v4 = GitVersion.parse("git version 1.7.3.msysgit.0");
     assertFalse(v1.equals(v2));
     assertFalse(v1.equals(v3));
-    assertFalse(v1.equals(v4));
     assertTrue(v2.equals(v3));
-    assertFalse(v2.equals(v4));
-    assertFalse(v3.equals(v4));
+    if (SystemInfo.isWindows) {
+      assertFalse(v1.equals(v4));
+      assertFalse(v2.equals(v4));
+      assertFalse(v3.equals(v4));
+    }
 
     assertEquals(v1.compareTo(v2), -1);
     assertEquals(v1.compareTo(v3), -1);

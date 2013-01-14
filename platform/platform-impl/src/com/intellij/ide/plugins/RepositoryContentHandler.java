@@ -128,7 +128,7 @@ class RepositoryContentHandler extends DefaultHandler {
   }
 
   private String constructCategoryTree() {
-    StringBuffer category = new StringBuffer("");
+    StringBuilder category = new StringBuilder();
     for (int i = 0; i < categoriesStack.size(); i++) {
       String str = categoriesStack.get(i);
       if (str.length() > 0) {

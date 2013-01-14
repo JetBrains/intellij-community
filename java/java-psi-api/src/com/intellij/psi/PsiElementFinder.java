@@ -99,6 +99,9 @@ public abstract class PsiElementFinder {
     return PsiClass.EMPTY_ARRAY;
   }
 
+  /**
+   * A method to optimize resolve (to only search classes in a package which might be there)
+   */
   @NotNull
   public Set<String> getClassNames(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     return getClassNames(getClasses(psiPackage, scope));

@@ -129,21 +129,16 @@ public class DummyHolder extends PsiFileImpl {
     if (fileElement != null) return fileElement;
 
     synchronized (myTreeElementLock) {
-      return getTreeElementNoLock();
+      fileElement = myFileElement;
+      if (fileElement == null) {
+        fileElement = new FileElement(TokenType.DUMMY_HOLDER, null);
+        fileElement.setPsi(this);
+        if (myTable != null) fileElement.setCharTable(myTable);
+        myFileElement = fileElement;
+        clearCaches();
+      }
+      return fileElement;
     }
-  }
-
-  @Override
-  public FileElement getTreeElementNoLock() {
-    FileElement fileElement = myFileElement;
-    if (fileElement == null) {
-      fileElement = new FileElement(TokenType.DUMMY_HOLDER, null);
-      fileElement.setPsi(this);
-      if (myTable != null) fileElement.setCharTable(myTable);
-      myFileElement = fileElement;
-      clearCaches();
-    }
-    return fileElement;
   }
 
   @Override

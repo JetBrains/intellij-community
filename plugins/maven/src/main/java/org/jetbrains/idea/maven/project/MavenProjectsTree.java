@@ -916,7 +916,7 @@ public class MavenProjectsTree {
         updateCrc(crc, mavenProject.getDirectory());
         updateCrc(crc, MavenFilteredPropertyPsiReferenceProvider.getDelimitersPattern(mavenProject).pattern());
         updateCrc(crc, mavenProject.getModelMap().hashCode());
-        updateCrc(crc, mavenProject.getResources().hashCode() + 1);
+        updateCrc(crc, mavenProject.getResources().hashCode() + 1); // @todo remove '+1' after 01.05.2013 (when 12.0.1 become out of date)
         updateCrc(crc, mavenProject.getTestResources().hashCode());
         updateCrc(crc, getFilterExclusions(mavenProject).hashCode());
         updateCrc(crc, mavenProject.getProperties().hashCode());

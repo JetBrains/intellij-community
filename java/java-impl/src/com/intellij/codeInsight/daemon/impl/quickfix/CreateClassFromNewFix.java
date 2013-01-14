@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -190,17 +190,18 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
 
       if (aClass.isInterface()) {
         PsiReferenceList implementsList = targetClass.getImplementsList();
+        assert implementsList != null : targetClass;
         implementsList.add(factory.createReferenceElementByType(classType));
       }
       else {
         PsiReferenceList extendsList = targetClass.getExtendsList();
+        assert extendsList != null : targetClass;
         if (extendsList.getReferencedTypes().length == 0 && !CommonClassNames.JAVA_LANG_OBJECT.equals(classType.getCanonicalText())) {
           extendsList.add(factory.createReferenceElementByType(classType));
         }
       }
     }
   }
-
 
   private static PsiFile getTargetFile(PsiElement element) {
     PsiJavaCodeReferenceElement referenceElement = getReferenceElement((PsiNewExpression)element);
@@ -242,14 +243,18 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
 
   @Override
   protected boolean isAvailableImpl(int offset) {
-    PsiElement nameElement = getNameElement(getNewExpression());
+    PsiNewExpression expression = getNewExpression();
+    if (expression.getQualifier() != null) {
+      return false;
+    }
 
-    PsiFile targetFile = getTargetFile(getNewExpression());
+    PsiFile targetFile = getTargetFile(expression);
     if (targetFile != null && !targetFile.getManager().isInProject(targetFile)) {
       return false;
     }
 
-    if (CreateFromUsageUtils.shouldShowTag(offset, nameElement, getNewExpression())) {
+    PsiElement nameElement = getNameElement(expression);
+    if (CreateFromUsageUtils.shouldShowTag(offset, nameElement, expression)) {
       String varName = nameElement.getText();
       setText(getText(varName));
       return true;
@@ -268,8 +273,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
 
   private static PsiElement getNameElement(PsiNewExpression targetElement) {
     PsiJavaCodeReferenceElement referenceElement = getReferenceElement(targetElement);
-    if (referenceElement == null) return null;
-    return referenceElement.getReferenceNameElement();
+    return referenceElement != null ? referenceElement.getReferenceNameElement() : null;
   }
 
   @Override

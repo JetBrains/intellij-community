@@ -26,6 +26,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -154,7 +155,9 @@ final class Stripe extends JPanel{
     updateText();
     updateState();
     KeymapManagerEx.getInstanceEx().addWeakListener(myWeakKeymapManagerListener);
-    UISettings.getInstance().addUISettingsListener(myUISettingsListener,myDisposable);
+    if (ScreenUtil.isStandardAddRemoveNotify(this)) {
+      UISettings.getInstance().addUISettingsListener(myUISettingsListener,myDisposable);
+    }
   }
 
   /**
@@ -163,7 +166,9 @@ final class Stripe extends JPanel{
   @Override
   public void removeNotify(){
     KeymapManagerEx.getInstanceEx().removeWeakListener(myWeakKeymapManagerListener);
-    Disposer.dispose(myDisposable);
+    if (ScreenUtil.isStandardAddRemoveNotify(this)) {
+      Disposer.dispose(myDisposable);
+    }
     super.removeNotify();
   }
 

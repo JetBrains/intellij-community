@@ -29,6 +29,7 @@ import com.intellij.openapi.actionSystem.impl.WeakTimerListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -67,6 +68,8 @@ public class IdeMenuBar extends JMenuBar {
   public void addNotify() {
     super.addNotify();
     updateMenuActions();
+    if (!ScreenUtil.isStandardAddRemoveNotify(this))
+      return;
     // Add updater for menus
     myActionManager.addTimerListener(1000, new WeakTimerListener(myActionManager, myTimerListener));
     UISettingsListener UISettingsListener = new UISettingsListener() {
@@ -84,7 +87,9 @@ public class IdeMenuBar extends JMenuBar {
    */
   @Override
   public void removeNotify() {
-    Disposer.dispose(myDisposable);
+    if (ScreenUtil.isStandardAddRemoveNotify(this)) {
+      Disposer.dispose(myDisposable);
+    }
     super.removeNotify();
   }
 

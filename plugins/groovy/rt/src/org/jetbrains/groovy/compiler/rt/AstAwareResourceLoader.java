@@ -35,7 +35,7 @@ public class AstAwareResourceLoader implements GroovyResourceLoader {
     if (className == null) return null;
 
     File file = getSourceFile(className);
-    if (file != null) {
+    if (file != null && file.exists()) {
       return file.toURL();
     }
 

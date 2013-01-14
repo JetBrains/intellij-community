@@ -31,6 +31,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NotNull;
@@ -110,7 +111,8 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
   @Override
   public void removeNotify() {
     super.removeNotify();
-    clearEditor();
+    if (ScreenUtil.isStandardAddRemoveNotify(this))
+      clearEditor();
   }
 
   @Override
