@@ -185,6 +185,11 @@ public class FileWatcher {
   }
 
   private void startupProcess(final boolean restart) throws IOException {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        Notifications.Bus.notify(NOTIFICATION_GROUP.getValue().createNotification("Hello", NotificationType.WARNING));
+      }
+    });
     if (myIsShuttingDown) {
       return;
     }
