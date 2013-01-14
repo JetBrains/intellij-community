@@ -150,6 +150,10 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testUnhandledExceptions() throws Exception {
+    doTest();
+  }
+
   public void testReturnValue() throws Exception {
     doTest();
   }
