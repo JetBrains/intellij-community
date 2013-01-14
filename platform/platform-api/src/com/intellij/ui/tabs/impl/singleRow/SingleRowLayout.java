@@ -363,7 +363,7 @@ public class SingleRowLayout extends TabLayout {
 
 
   public boolean isTabHidden(TabInfo tabInfo) {
-    return myLastSingRowLayout.toDrop.contains(tabInfo);
+    return myLastSingRowLayout != null && myLastSingRowLayout.toDrop.contains(tabInfo);
   }
 
   public class GhostComponent extends JLabel {
