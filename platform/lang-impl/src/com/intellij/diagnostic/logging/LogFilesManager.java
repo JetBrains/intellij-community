@@ -44,7 +44,7 @@ public class LogFilesManager implements Disposable {
   private final Map<LogFileOptions, RunConfigurationBase> myLogFileToConfiguration = new HashMap<LogFileOptions, RunConfigurationBase>();
   private final Runnable myUpdateRequest;
   private final LogConsoleManager myManager;
-  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, this);
+  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
   private boolean myDisposed;
 
   public LogFilesManager(final Project project, LogConsoleManager manager, Disposable parentDisposable) {

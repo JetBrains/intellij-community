@@ -61,10 +61,10 @@ public class Alarm implements Disposable {
     myDisposed = true;
     cancelAllRequests();
 
-    if (myThreadToUse == ThreadToUse.OWN_THREAD) {
+    if (myThreadToUse == ThreadToUse.POOLED_THREAD) {
       myExecutorService.shutdown();
     }
-    else if (myThreadToUse == ThreadToUse.SINGLE_THREAD) {
+    else if (myThreadToUse == ThreadToUse.OWN_THREAD) {
       ((ThreadPoolExecutor)myExecutorService).getQueue().clear();
       myExecutorService.shutdown();
     }
@@ -73,8 +73,8 @@ public class Alarm implements Disposable {
   public enum ThreadToUse {
     SWING_THREAD,
     SHARED_THREAD,
-    OWN_THREAD,
-    SINGLE_THREAD
+    POOLED_THREAD,
+    OWN_THREAD
   }
 
   /**
@@ -90,17 +90,17 @@ public class Alarm implements Disposable {
 
   public Alarm(@NotNull ThreadToUse threadToUse) {
     this(threadToUse, null);
-    LOG.assertTrue(threadToUse != ThreadToUse.OWN_THREAD && threadToUse != ThreadToUse.SINGLE_THREAD,
-                   "You must provide parent Disposable for ThreadToUse.OWN_THREAD and ThreadToUse.SINGLE_THREAD Alarm");
+    LOG.assertTrue(threadToUse != ThreadToUse.POOLED_THREAD && threadToUse != ThreadToUse.OWN_THREAD,
+                   "You must provide parent Disposable for ThreadToUse.POOLED_THREAD and ThreadToUse.OWN_THREAD Alarm");
   }
 
   public Alarm(@NotNull ThreadToUse threadToUse, Disposable parentDisposable) {
     myThreadToUse = threadToUse;
 
-    if (threadToUse == ThreadToUse.OWN_THREAD) {
+    if (threadToUse == ThreadToUse.POOLED_THREAD) {
       myExecutorService = new MyExecutor();
     }
-    else if(threadToUse == ThreadToUse.SINGLE_THREAD) {
+    else if(threadToUse == ThreadToUse.OWN_THREAD) {
       myExecutorService = ConcurrencyUtil.newSingleThreadExecutor(
         "Alarm pool(own)", Thread.NORM_PRIORITY - 2);
     }
