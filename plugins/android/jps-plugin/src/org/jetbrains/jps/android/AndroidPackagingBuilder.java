@@ -20,16 +20,15 @@ import org.jetbrains.jps.android.builder.AndroidBuildTarget;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
+import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
-import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.TargetBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
-import org.jetbrains.jps.incremental.storage.TimestampStorage;
+import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
@@ -79,15 +78,15 @@ public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, 
     try {
       fillStates(modules, resourcesStates, assetsStates, manifestFiles);
 
-      if (!doCaching(context, modules, resourcesStates)) {
+      if (!doCaching(target, context, modules, resourcesStates)) {
         throw new ProjectBuildException();
       }
 
-      if (!doResourcePackaging(context, modules, resourcesStates, assetsStates, manifestFiles)) {
+      if (!doResourcePackaging(target, context, modules, resourcesStates, assetsStates, manifestFiles)) {
         throw new ProjectBuildException();
       }
 
-      if (!doPackaging(context, modules, outputConsumer)) {
+      if (!doPackaging(target, context, modules, outputConsumer)) {
         throw new ProjectBuildException();
       }
     }
@@ -145,29 +144,25 @@ public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, 
     }
   }
 
-  private static boolean doCaching(@NotNull CompileContext context,
+  private static boolean doCaching(@NotNull BuildTarget<?> target,
+                                   @NotNull CompileContext context,
                                    @NotNull Collection<JpsModule> modules,
                                    @NotNull Map<JpsModule, AndroidFileSetState> module2state) throws IOException {
     boolean success = true;
-    final File dataStorageRoot = context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot();
-    final AndroidFileSetStorage storage = new AndroidFileSetStorage(dataStorageRoot, "resource_caching");
+    final AndroidFileSetStorage.Provider provider = new AndroidFileSetStorage.Provider("resource_caching");
+    final AndroidFileSetStorage storage = context.getProjectDescriptor().dataManager.getStorage(target, provider);
 
-    try {
-      for (JpsModule module : modules) {
-        final AndroidFileSetState state = module2state.get(module);
+    for (JpsModule module : modules) {
+      final AndroidFileSetState state = module2state.get(module);
 
-        try {
-          if (!runPngCaching(context, module, storage, state)) {
-            success = false;
-          }
-        }
-        catch (IOException e) {
-          AndroidJpsUtil.reportExceptionError(context, null, e, BUILDER_NAME);
+      try {
+        if (!runPngCaching(context, module, storage, state)) {
+          success = false;
         }
       }
-    }
-    finally {
-      storage.close();
+      catch (IOException e) {
+        AndroidJpsUtil.reportExceptionError(context, null, e, BUILDER_NAME);
+      }
     }
     return success;
   }
@@ -215,7 +210,7 @@ public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, 
       if (!resCacheDir.mkdirs()) {
         context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
                                                    AndroidJpsBundle.message("android.jps.cannot.create.directory", resCacheDir.getPath())));
-        return false;    
+        return false;
       }
     }
 
@@ -231,130 +226,114 @@ public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, 
     return success;
   }
 
-  private static boolean doResourcePackaging(@NotNull CompileContext context,
+  private static boolean doResourcePackaging(@NotNull BuildTarget<?> target,
+                                             @NotNull CompileContext context,
                                              @NotNull Collection<JpsModule> modules,
                                              @NotNull Map<JpsModule, AndroidFileSetState> resourcesStates,
                                              @NotNull Map<JpsModule, AndroidFileSetState> assetsStates,
                                              @NotNull Map<JpsModule, File> manifestFiles) throws IOException {
     boolean success = true;
+    final Map<JpsModule, AndroidFileSetState> manifestStates =
+      new HashMap<JpsModule, AndroidFileSetState>();
 
-    final File dataStorageRoot = context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot();
+    for (JpsModule module : modules) {
+      final File manifestFile = manifestFiles.get(module);
+      manifestStates.put(module, new AndroidFileSetState(
+        manifestFile != null ? Collections.singletonList(manifestFile.getPath()) :
+        Collections.<String>emptyList(), Condition.TRUE, false));
+    }
+
+    final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
     final boolean releaseBuild = AndroidJpsUtil.isReleaseBuild(context);
-    AndroidFileSetStorage resourcesStorage = null;
-    AndroidFileSetStorage assetsStorage = null;
-    TimestampStorage manifestStorage = null;
 
-    try {
-      final String resourcesStorageName = releaseBuild ? "resources_packaging_release" : "resources_packaging_dev";
-      resourcesStorage = new AndroidFileSetStorage(dataStorageRoot, resourcesStorageName);
+    final String resourcesStorageName = releaseBuild ? "resources_packaging_release" : "resources_packaging_dev";
+    final AndroidFileSetStorage.Provider resourcesStorageProvider = new AndroidFileSetStorage.Provider(resourcesStorageName);
+    final AndroidFileSetStorage resourcesStorage = dataManager.getStorage(target, resourcesStorageProvider);
 
-      final String assetsStorageName = releaseBuild ? "assets_packaging_release" : "assets_packaging_dev";
-      assetsStorage = new AndroidFileSetStorage(dataStorageRoot, assetsStorageName);
+    final String assetsStorageName = releaseBuild ? "assets_packaging_release" : "assets_packaging_dev";
+    final AndroidFileSetStorage.Provider assetsStorageProvider = new AndroidFileSetStorage.Provider(assetsStorageName);
+    final AndroidFileSetStorage assetsStorage = dataManager.getStorage(target, assetsStorageProvider);
 
-      final String manifestStorageName = releaseBuild ? "manifest_packaging_release" : "manifest_packaging_dev";
-      manifestStorage = new TimestampStorage(AndroidJpsUtil.getStorageFile(dataStorageRoot, manifestStorageName), context.getProjectDescriptor().getTargetsState());
+    final String manifestStorageName = releaseBuild ? "manifest_packaging_release" : "manifest_packaging_dev";
+    final AndroidFileSetStorage.Provider manifestStorageProvider = new AndroidFileSetStorage.Provider(manifestStorageName);
+    final AndroidFileSetStorage manifestStorage = dataManager.getStorage(target, manifestStorageProvider);
 
-      final Set<JpsModule> modulesToUpdateState = new HashSet<JpsModule>();
+    final Set<JpsModule> modulesToUpdateState = new HashSet<JpsModule>();
 
-      for (JpsModule module : modules) {
-        final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
-        if (extension == null) {
-          continue;
-        }
-
-        final File manifestFile = manifestFiles.get(module);
-        if (manifestFile == null) {
-          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
-                                                     AndroidJpsBundle.message("android.jps.errors.manifest.not.found", module.getName())));
-          success = false;
-          continue;
-        }
-        boolean updateState = true;
-
-        if (!extension.isLibrary() &&
-            !(context.isMake() &&
-              checkUpToDate(module, resourcesStates, resourcesStorage) &&
-              checkUpToDate(module, assetsStates, assetsStorage) &&
-              manifestFile.lastModified() == manifestStorage.getStamp(manifestFile, new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION)))) {
-
-          updateState = packageResources(extension, manifestFile, context);
-
-          if (!updateState) {
-            success = false;
-          }
-        }
-        if (updateState) {
-          modulesToUpdateState.add(module);
-        }
+    for (JpsModule module : modules) {
+      final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
+      if (extension == null) {
+        continue;
       }
 
-      for (JpsModule module : modules) {
-        final boolean updateState = modulesToUpdateState.contains(module);
-        resourcesStorage.update(module.getName(), updateState ? resourcesStates.get(module) : null);
-        assetsStorage.update(module.getName(), updateState ? assetsStates.get(module) : null);
+      final File manifestFile = manifestFiles.get(module);
+      if (manifestFile == null) {
+        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
+                                                   AndroidJpsBundle.message("android.jps.errors.manifest.not.found", module.getName())));
+        success = false;
+        continue;
+      }
+      boolean updateState = true;
 
-        final File manifestFile = manifestFiles.get(module);
-        if (manifestFile != null) {
-          manifestStorage.saveStamp(manifestFile, new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION), manifestFile.lastModified());
+      if (!extension.isLibrary() &&
+          !(context.isMake() &&
+            checkUpToDate(module, resourcesStates, resourcesStorage) &&
+            checkUpToDate(module, assetsStates, assetsStorage) &&
+            checkUpToDate(module, manifestStates, manifestStorage))) {
+
+        updateState = packageResources(extension, manifestFile, context);
+
+        if (!updateState) {
+          success = false;
         }
+      }
+      if (updateState) {
+        modulesToUpdateState.add(module);
       }
     }
-    finally {
-      if (resourcesStorage != null) {
-        resourcesStorage.close();
-      }
 
-      if (assetsStorage != null) {
-        assetsStorage.close();
-      }
-
-      if (manifestStorage != null) {
-        manifestStorage.close();
-      }
+    for (JpsModule module : modules) {
+      final boolean updateState = modulesToUpdateState.contains(module);
+      resourcesStorage.update(module.getName(), updateState ? resourcesStates.get(module) : null);
+      assetsStorage.update(module.getName(), updateState ? assetsStates.get(module) : null);
+      manifestStorage.update(module.getName(), updateState ? manifestStates.get(module) : null);
     }
     return success;
   }
 
-  private static boolean doPackaging(@NotNull CompileContext context,
+  private static boolean doPackaging(@NotNull BuildTarget<?> target,
+                                     @NotNull CompileContext context,
                                      @NotNull Collection<JpsModule> modules,
                                      @NotNull BuildOutputConsumer outputConsumer) throws IOException {
     final boolean release = AndroidJpsUtil.isReleaseBuild(context);
-    final File dataStorageRoot = context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot();
+    final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
 
     boolean success = true;
 
-    AndroidFileSetStorage apkFileSetStorage = null;
-    AndroidApkBuilderConfigStateStorage apkBuilderConfigStateStorage = null;
-    try {
-      final String apkFileSetStorageName = "apk_builder_file_set" + (release ? "_release" : "_dev");
-      apkFileSetStorage = new AndroidFileSetStorage(dataStorageRoot, apkFileSetStorageName);
+    AndroidFileSetStorage apkFileSetStorage;
+    AndroidApkBuilderConfigStateStorage apkBuilderConfigStateStorage;
 
-      final String apkBuilderStateStorageName = "apk_builder_config" + (release ? "_release" : "_dev");
-      apkBuilderConfigStateStorage = new AndroidApkBuilderConfigStateStorage(dataStorageRoot, apkBuilderStateStorageName);
+    final String apkFileSetStorageName = "apk_builder_file_set" + (release ? "_release" : "_dev");
+    final AndroidFileSetStorage.Provider fileSetStorageProvider = new AndroidFileSetStorage.Provider(apkFileSetStorageName);
+    apkFileSetStorage = dataManager.getStorage(target, fileSetStorageProvider);
 
-      for (JpsModule module : modules) {
-        try {
-          if (!doPackagingForModule(context, module, apkFileSetStorage, apkBuilderConfigStateStorage,
-                                    release, outputConsumer)) {
-            success = false;
-          }
-        }
-        catch (IOException e) {
-          AndroidJpsUtil.reportExceptionError(context, null, e, BUILDER_NAME);
+    final String apkBuilderStateStorageName = "apk_builder_config" + (release ? "_release" : "_dev");
+    final AndroidApkBuilderConfigStateStorage.Provider builderStateStoragetProvider =
+      new AndroidApkBuilderConfigStateStorage.Provider(apkBuilderStateStorageName);
+    apkBuilderConfigStateStorage = dataManager.getStorage(target, builderStateStoragetProvider);
+
+    for (JpsModule module : modules) {
+      try {
+        if (!doPackagingForModule(context, module, apkFileSetStorage, apkBuilderConfigStateStorage,
+                                  release, outputConsumer)) {
           success = false;
         }
       }
-    }
-    finally {
-      if (apkFileSetStorage != null) {
-        apkFileSetStorage.close();
-      }
-
-      if (apkBuilderConfigStateStorage != null) {
-        apkBuilderConfigStateStorage.close();
+      catch (IOException e) {
+        AndroidJpsUtil.reportExceptionError(context, null, e, BUILDER_NAME);
+        success = false;
       }
     }
-
     return success;
   }
 
@@ -570,7 +549,7 @@ public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, 
 
   private static void collectAssetDirs(@NotNull JpsAndroidModuleExtension extension, @NotNull List<String> result) throws IOException {
     final File assetsDir = extension.getAssetsDir();
-    
+
     if (assetsDir != null) {
       result.add(assetsDir.getPath());
     }

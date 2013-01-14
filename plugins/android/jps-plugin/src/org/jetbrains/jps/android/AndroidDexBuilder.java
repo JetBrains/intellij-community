@@ -47,6 +47,7 @@ import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.StorageOwner;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.model.JpsSimpleElement;
@@ -100,7 +101,7 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor, Androi
       if (AndroidJpsUtil.isLightBuild(context)) {
         return;
       }
-      doBuild(target.getModule(), context, savedDirtyOutputs);
+      doBuild(target, context, savedDirtyOutputs);
       storage.saveDirtyOutputs(Collections.<String>emptySet());
     }
     catch (ProjectBuildException e) {
@@ -111,26 +112,16 @@ public class AndroidDexBuilder extends TargetBuilder<BuildRootDescriptor, Androi
     }
   }
 
-  private static void doBuild(JpsModule module, CompileContext context, Set<String> dirtyOutputDirs) throws IOException, ProjectBuildException {
-    final File root = context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot();
+  private static void doBuild(AndroidBuildTarget target, CompileContext context, Set<String> dirtyOutputDirs) throws IOException, ProjectBuildException {
+    final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
 
-    AndroidFileSetStorage dexStateStorage = null;
-    AndroidFileSetStorage proguardStateStorage = null;
-    try {
-      dexStateStorage = new AndroidFileSetStorage(root, "dex");
-      proguardStateStorage = new AndroidFileSetStorage(root, "proguard");
+    final AndroidFileSetStorage dexStateStorage =
+      dataManager.getStorage(target, new AndroidFileSetStorage.Provider("dex"));
+    final AndroidFileSetStorage proguardStateStorage =
+      dataManager.getStorage(target, new AndroidFileSetStorage.Provider("proguard"));
 
-      if (!doDexBuild(module, context, dexStateStorage, proguardStateStorage, dirtyOutputDirs)) {
-        throw new ProjectBuildException();
-      }
-    }
-    finally {
-      if (proguardStateStorage != null) {
-        proguardStateStorage.close();
-      }
-      if (dexStateStorage != null) {
-        dexStateStorage.close();
-      }
+    if (!doDexBuild(target.getModule(), context, dexStateStorage, proguardStateStorage, dirtyOutputDirs)) {
+      throw new ProjectBuildException();
     }
   }
 
