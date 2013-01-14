@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.xml.XmlAttributeImpl;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -96,17 +98,21 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
   @Override
   public XmlAttributeDescriptor[] getAttributesDescriptors(@Nullable XmlTag context) {
     if (context != null) {
-      //todo
       final String name = context.getName();
       if (Comparing.equal(name, getName()) && myPsiClass != null) {
+        final List<XmlAttributeDescriptor> simpleAttrs = new ArrayList<XmlAttributeDescriptor>();
         final PsiField[] fields = myPsiClass.getAllFields();
         if (fields.length > 0) {
-          final XmlAttributeDescriptor[] simpleAttrs = new XmlAttributeDescriptor[fields.length];
-          for (int i = 0; i < fields.length; i++) {
-            simpleAttrs[i] = new JavaFxPropertyBackedAttributeDescriptor(fields[i].getName(), myPsiClass);
+          for (PsiField field : fields) {
+            if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
+            final PsiType fieldType = field.getType();
+            if (PropertyUtil.findPropertyGetter(myPsiClass, field.getName(), false, true) != null && 
+                InheritanceUtil.isInheritor(fieldType, "javafx.beans.property.Property")) {//todo filter
+              simpleAttrs.add(new JavaFxPropertyBackedAttributeDescriptor(field.getName(), myPsiClass));
+            }
           }
-          return simpleAttrs;
         }
+        return simpleAttrs.isEmpty() ? XmlAttributeDescriptor.EMPTY : simpleAttrs.toArray(new XmlAttributeDescriptor[simpleAttrs.size()]);
       }
     }
     return XmlAttributeDescriptor.EMPTY;
