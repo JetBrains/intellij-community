@@ -17,12 +17,9 @@ package com.intellij.codeInsight;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.NullableComputable;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -509,35 +506,7 @@ public class ExceptionUtil {
   }
 
   public static boolean isUncheckedException(@NotNull PsiClassType type) {
-    final PsiClass aClass = type.resolve();
-    if (aClass == null) return false;
-
-    final GlobalSearchScope searchScope = ProjectScope.getLibrariesScope(aClass.getProject());
-    final PsiClass runtimeExceptionClass = ApplicationManager.getApplication().runReadAction(
-        new NullableComputable<PsiClass>() {
-          @Override
-          public PsiClass compute() {
-            return JavaPsiFacade.getInstance(aClass.getProject()).findClass(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, searchScope);
-          }
-        }
-    );
-    if (runtimeExceptionClass != null && InheritanceUtil.isInheritorOrSelf(aClass, runtimeExceptionClass, true)) {
-      return true;
-    }
-
-    final PsiClass errorClass = ApplicationManager.getApplication().runReadAction(
-      new NullableComputable<PsiClass>() {
-        @Override
-        public PsiClass compute() {
-          return JavaPsiFacade.getInstance(aClass.getProject()).findClass(CommonClassNames.JAVA_LANG_ERROR, searchScope);
-        }
-      }
-    );
-    if (errorClass != null && InheritanceUtil.isInheritorOrSelf(aClass, errorClass, true)) {
-      return true;
-    }
-
-    return false;
+    return InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION) || InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_ERROR);
   }
 
   public static boolean isUncheckedExceptionOrSuperclass(@NotNull final PsiClassType type) {
