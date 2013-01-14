@@ -419,10 +419,14 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return element;
   }
 
-  private static boolean isGlobal(PsiElement anchor, String name) {
-    final ScopeOwner owner = ScopeUtil.getDeclarationScopeOwner(anchor, name);
-    if (owner != null) {
-      return ControlFlowCache.getScope(owner).isGlobal(name);
+  private static boolean isGlobal(PsiElement element, String name) {
+    final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(element);
+    if (scopeOwner instanceof PyFile) {
+      return true;
+    }
+    final ScopeOwner declarationScopeOwner = ScopeUtil.getDeclarationScopeOwner(element, name);
+    if (declarationScopeOwner != null) {
+      return ControlFlowCache.getScope(declarationScopeOwner).isGlobal(name);
     }
     return false;
   }
@@ -535,15 +539,16 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   private boolean resolvesToSameGlobal(PsiElement element, String elementName, ScopeOwner ourScopeOwner, ScopeOwner theirScopeOwner,
                                        PsiElement resolveResult) {
     // Handle situations when there is no top-level declaration for globals and transitive resolve doesn't help
-    final boolean ourIsGlobal = ControlFlowCache.getScope(ourScopeOwner).isGlobal(elementName);
-    final boolean theirIsGlobal = ControlFlowCache.getScope(theirScopeOwner).isGlobal(elementName);
     final PsiFile ourFile = getElement().getContainingFile();
     final PsiFile theirFile = element.getContainingFile();
-
-    if (ourIsGlobal && theirIsGlobal && ourFile == theirFile) {
-      return true;
+    if (ourFile == theirFile) {
+      final boolean ourIsGlobal = ControlFlowCache.getScope(ourScopeOwner).isGlobal(elementName);
+      final boolean theirIsGlobal = ControlFlowCache.getScope(theirScopeOwner).isGlobal(elementName);
+      if (ourIsGlobal && theirIsGlobal) {
+        return true;
+      }
     }
-    if (theirIsGlobal && ScopeUtil.getScopeOwner(resolveResult) == ourFile) {
+    if (ScopeUtil.getScopeOwner(resolveResult) == ourFile && ControlFlowCache.getScope(theirScopeOwner).isGlobal(elementName)) {
       return true;
     }
     return false;

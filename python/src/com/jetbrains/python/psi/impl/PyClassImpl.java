@@ -17,6 +17,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.*;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
@@ -1078,7 +1079,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   @NotNull
   @Override
   public SearchScope getUseScope() {
-    final ScopeOwner scopeOwner = PsiTreeUtil.getParentOfType(this, ScopeOwner.class);
+    final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(this);
     if (scopeOwner instanceof PyFunction) {
       return new LocalSearchScope(scopeOwner);
     }
