@@ -11,6 +11,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
@@ -41,11 +42,23 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
 
   @Override
   public PyType getReferenceType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
-    if (referenceTarget instanceof PyFunction &&
-        PyNames.NAMEDTUPLE.equals(((PyFunction) referenceTarget).getName()) &&
-        PyNames.COLLECTIONS_PY.equals(referenceTarget.getContainingFile().getName()) &&
-        anchor instanceof PyCallExpression) {
-      return PyNamedTupleType.fromCall((PyCallExpression)anchor);
+    if (referenceTarget instanceof PyTargetExpression) {
+      final PyTargetExpression target = (PyTargetExpression)referenceTarget;
+      final PyQualifiedName calleeName = target.getCalleeName();
+      if (calleeName != null && PyNames.NAMEDTUPLE.equals(calleeName.toString())) {
+        // TODO: Create stubs for namedtuple for preventing switch from stub to AST
+        final PyExpression value = target.findAssignedValue();
+        if (value instanceof PyCallExpression) {
+          final PyCallExpression call = (PyCallExpression)value;
+          final PyCallExpression.PyMarkedCallee callee = call.resolveCallee(PyResolveContext.noImplicits());
+          if (callee != null) {
+            final Callable callable = callee.getCallable();
+            if (PyNames.COLLECTIONS_PY.equals(callable.getContainingFile().getName())) {
+              return PyNamedTupleType.fromCall(call);
+            }
+          }
+        }
+      }
     }
     return null;
   }
