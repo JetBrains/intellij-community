@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -209,10 +209,6 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
   @Nullable
   @Override
   protected String validateAndCommitData() {
-    if (!isGroovyMethodName(getMethodName())) {
-      return message("name.is.wrong", getMethodName());
-    }
-
     if (myReturnTypeCodeFragment != null && !checkType((PsiTypeCodeFragment)myReturnTypeCodeFragment, true)) {
       return message("return.type.is.wrong");
     }
@@ -297,7 +293,6 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
 
   @Override
   protected String calculateSignature() {
-    String name = getMethodName();
     String type = myReturnTypeCodeFragment != null ? myReturnTypeCodeFragment.getText().trim() : "";
 
     StringBuilder builder = new StringBuilder();
@@ -306,12 +301,7 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
       builder.append(type).append(' ');
     }
 
-    if (JavaPsiFacade.getInstance(getProject()).getNameHelper().isIdentifier(name)) {
-      builder.append(name);
-    }
-    else {
-      builder.append("'").append(name).append("'");
-    }
+    builder.append(GrChangeSignatureUtil.getNameWithQuotesIfNeeded(getMethodName(), getProject()));
     builder.append('(');
 
     final List<GrParameterInfo> infos = getParameters();

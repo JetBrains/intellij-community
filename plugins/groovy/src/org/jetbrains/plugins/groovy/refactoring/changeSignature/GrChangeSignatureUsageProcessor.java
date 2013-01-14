@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -181,7 +181,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     final PsiClass psiClass = method.getContainingClass();
     GrMethod newMethod = (GrMethod)method.copy();
     newMethod = (GrMethod)psiClass.addAfter(newMethod, method);
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     buffer.append("\n");
     if (method.isConstructor()) {
       buffer.append("this");
@@ -190,7 +190,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       if (!PsiType.VOID.equals(method.getReturnType())) {
         buffer.append("return ");
       }
-      buffer.append(grInfo.getNewName());
+      buffer.append(GrChangeSignatureUtil.getNameWithQuotesIfNeeded(grInfo.getNewName(), method.getProject()));
     }
 
     generateParametersForDelegateCall(grInfo, method, buffer);
@@ -203,7 +203,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     return processPrimaryMethodInner(grInfo, method, null);
   }
 
-  private static void generateParametersForDelegateCall(GrChangeInfoImpl grInfo, GrMethod method, StringBuffer buffer) {
+  private static void generateParametersForDelegateCall(GrChangeInfoImpl grInfo, GrMethod method, StringBuilder buffer) {
     buffer.append("(");
 
     final GrParameter[] oldParameters = method.getParameterList().getParameters();

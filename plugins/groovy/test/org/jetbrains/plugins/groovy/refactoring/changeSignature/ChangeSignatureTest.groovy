@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
@@ -244,6 +245,15 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
     assertFalse('conflicts are not detected!', true);
   }
 
+  void testRenameToLiteral() {
+    doTest(null, 'a bc', null, [], [], false)
+  }
+
+  void testRenameToLiteral2() {
+    doTest(null, 'a\'bc', null, [], [], false)
+  }
+
+
   private PsiType createType(String typeText) {
     return JavaPsiFacade.getElementFactory(project).createTypeByFQClassName(typeText, GlobalSearchScope.allScope(project));
   }
@@ -252,17 +262,17 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
     doTest(PsiModifier.PUBLIC, null, newReturnType, parameterInfos as List, [], generateDelegate);
   }
 
-  private void doTest(@PsiModifier.ModifierConstant String newVisibility,
+  private void doTest(@Nullable @PsiModifier.ModifierConstant String newVisibility,
                       @Nullable String newName,
                       @Nullable String newReturnType,
-                      List<SimpleInfo> parameterInfo,
-                      List<ThrownExceptionInfo> exceptionInfo,
+                      @NotNull List<SimpleInfo> parameterInfo,
+                      @NotNull List<ThrownExceptionInfo> exceptionInfo,
                       final boolean generateDelegate) {
     final javaTestName = getTestName(false) + ".java"
     final groovyTestName = getTestName(false) + ".groovy"
 
 
-    final File javaSrc = new File(testDataPath + "/" + javaTestName);
+    final File javaSrc = new File("$testDataPath/$javaTestName");
     if (javaSrc.exists()) {
       myFixture.copyFileToProject(javaTestName);
     }
