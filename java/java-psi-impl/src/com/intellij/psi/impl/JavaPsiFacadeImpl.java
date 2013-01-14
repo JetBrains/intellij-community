@@ -365,7 +365,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
         for (PsiFile file : dir.getFiles()) {
           if (file instanceof PsiClassOwner && file.getViewProvider().getLanguages().size() == 1) {
             VirtualFile vFile = file.getVirtualFile();
-            if (vFile != null && facade.isInLibraryClasses(vFile) && !(file instanceof PsiCompiledElement)) {
+            if (vFile != null && !facade.isInSourceContent(vFile) && !(file instanceof PsiCompiledElement)) {
               continue;
             }
 
