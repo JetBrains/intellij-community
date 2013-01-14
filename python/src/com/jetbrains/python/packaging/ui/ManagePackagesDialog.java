@@ -547,7 +547,9 @@ public class ManagePackagesDialog extends DialogWrapper {
         String name = (String)((Pair)value).getFirst();
         myNameLabel.setText(name);
         myRepositoryLabel.setText((String)((Pair)value).getSecond());
-        myNameLabel.setForeground(myInstalledPackages.contains(name) ? PlatformColors.BLUE : Color.BLACK);
+        Component orig = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        final Color fg = orig.getForeground();
+        myNameLabel.setForeground(myInstalledPackages.contains(name) ? PlatformColors.BLUE : fg);
       }
       myRepositoryLabel.setForeground(Color.GRAY);
 
