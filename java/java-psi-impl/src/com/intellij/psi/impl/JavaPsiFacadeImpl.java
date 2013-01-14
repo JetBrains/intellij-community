@@ -365,9 +365,11 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
         for (PsiFile file : dir.getFiles()) {
           if (file instanceof PsiClassOwner && file.getViewProvider().getLanguages().size() == 1) {
             VirtualFile vFile = file.getVirtualFile();
+            /*
             if (vFile != null && !facade.isInSourceContent(vFile) && !(file instanceof PsiCompiledElement)) {
               continue;
             }
+            */
 
             Set<String> inFile = file instanceof PsiClassOwnerEx ? ((PsiClassOwnerEx)file).getClassNames() : getClassNames(((PsiClassOwner)file).getClasses());
 
