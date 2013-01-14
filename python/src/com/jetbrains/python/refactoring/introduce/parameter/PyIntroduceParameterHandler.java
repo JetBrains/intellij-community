@@ -79,8 +79,9 @@ public class PyIntroduceParameterHandler extends IntroduceHandler {
         PsiTreeUtil.getParentOfType(element, PyNonlocalStatement.class, PyGlobalStatement.class);
       final PyStatementList statementList =
         PsiTreeUtil.getParentOfType(element, PyStatementList.class);
+      PyImportStatement importStatement = PsiTreeUtil.getParentOfType(element, PyImportStatement.class);
       return function != null && !isResolvedToParameter(element) && isValid[0] && nonlocalStatement == null &&
-        statementList != null;
+        statementList != null && importStatement == null;
     }
     return false;
   }

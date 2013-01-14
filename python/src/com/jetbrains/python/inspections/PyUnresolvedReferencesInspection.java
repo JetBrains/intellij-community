@@ -467,7 +467,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           }
           PyFunction parentFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class);
           PyDecorator decorator = PsiTreeUtil.getParentOfType(element, PyDecorator.class);
-          if (parentFunction != null && decorator == null) {
+          PyImportStatement importStatement = PsiTreeUtil.getParentOfType(element, PyImportStatement.class);
+          if (parentFunction != null && decorator == null && importStatement == null) {
             actions.add(new UnresolvedReferenceAddParameterQuickFix(refname));
           }
           actions.add(new PyRenameUnresolvedRefQuickFix());
