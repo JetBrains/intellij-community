@@ -32,7 +32,10 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -72,7 +75,7 @@ public class SrcFileAnnotator implements Disposable {
   private SoftReference<byte[]> myOldContent;
   private final static Object LOCK = new Object();
   
-  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, this);
+  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
   public SrcFileAnnotator(final PsiFile file, final Editor editor) {
     myFile = file;
