@@ -28,6 +28,7 @@ public class CompositeIterator<Key> implements Iterator<Key> {
   private int myPreviousIdx;
   private int myIdx;
   private final List<Iterator<Key>> myIterators;
+  private boolean myIsOnLast;
 
   public CompositeIterator(final List<Iterator<Key>> iterators) {
     myIterators = iterators;
@@ -50,6 +51,7 @@ public class CompositeIterator<Key> implements Iterator<Key> {
   @Override
   public Key next() {
     final Key result = myIterators.get(myIdx).next();
+    myIsOnLast = false;
     recalculateCurrent();
     return result;
   }
@@ -57,6 +59,7 @@ public class CompositeIterator<Key> implements Iterator<Key> {
   private void recalculateCurrent() {
     if (myIdx == -1) return;
     if (! myIterators.get(myIdx).hasNext()) {
+      myIsOnLast = true;
       myPreviousIdx = myIdx;
       myIdx = -1;
       for (int i = myPreviousIdx; i < myIterators.size(); i++) {
@@ -71,13 +74,11 @@ public class CompositeIterator<Key> implements Iterator<Key> {
 
   @Override
   public void remove() {
-    if ((myPreviousIdx != -1) && (myPreviousIdx != myIdx)) {
+    if (myIsOnLast) {
       // last element
-      final Iterator<Key> keyIterator = myIterators.get(myPreviousIdx);
-      keyIterator.remove(); // already on last position
+      myIterators.get(myPreviousIdx).remove(); // already on last position
     } else {
       myIterators.get(myIdx).remove();
     }
-    recalculateCurrent();
   }
 }
