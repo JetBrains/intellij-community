@@ -19,15 +19,14 @@ import java.util.Map;
 
 public class EnvPassingTest {
   public static void main(String[] args) {
-    final Map<String, String> environment = System.getenv();
     System.out.println("=====");
-    for (Map.Entry<String, String> entry : environment.entrySet()) {
-      System.out.println(formatEntry(entry));
+    for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
+      System.out.println(format(entry));
     }
     System.out.println("=====");
   }
 
-  public static String formatEntry(final Map.Entry<String, String> entry) {
+  public static String format(Map.Entry<String, String> entry) {
     return entry.getKey() + "=" + entry.getValue().hashCode();
   }
 }
