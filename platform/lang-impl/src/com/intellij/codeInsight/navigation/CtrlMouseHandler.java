@@ -242,7 +242,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     });
     myFileEditorManager = fileEditorManager;
     myDocumentationManager = documentationManager;
-    myDocAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, myProject);
+    myDocAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myProject);
   }
 
   @Override
