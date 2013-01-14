@@ -110,7 +110,8 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
    */
   public TextAttributes getDefaultAttributes() {
     if (myFallbackAttributeKey != null) {
-      return myFallbackAttributeKey.getDefaultAttributes();
+      TextAttributes fallbackAttributes = myFallbackAttributeKey.getDefaultAttributes();
+      if (fallbackAttributes != null && !fallbackAttributes.isEmpty()) return fallbackAttributes;
     }
     if (myDefaultAttributes == NULL_ATTRIBUTES) {
       // E.g. if one text key reuse default attributes of some other predefined key
@@ -129,8 +130,10 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
    * @param defaultAttributes the default text attributes associated with the key.
    * @return the new key instance, or an existing instance if the key with the same
    *         identifier was already registered.
+   * @deprecated Use createTextAttributesKey(externalName, fallbackAttributeKey...) to guarantee compatibility with generic color schemes.
    */
   @NotNull
+  @Deprecated
   public static TextAttributesKey createTextAttributesKey(@NonNls @NotNull String externalName, TextAttributes defaultAttributes) {
     TextAttributesKey key = find(externalName);
     if (key.myDefaultAttributes == null || key.myDefaultAttributes == NULL_ATTRIBUTES) {
@@ -139,10 +142,55 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
     return key;
   }
 
+
+  /**
+   * Registers a text attribute key with the specified identifier and a fallback key. If text attributes for the key are not defined in
+   * a color scheme, they will be acquired by the fallback key if possible.
+   * <p>Fallback keys can be chained, for example, text attribute key
+   * A can depend on key B which in turn can depend on key C. So if text attributes neither for A nor for B are found, they will be
+   * acquired by the key C.
+   * <p>Fallback keys can be used from any place including language's own definitions. Note that there is a common set of keys called
+   * <code>DefaultLanguageHighlighterColors</code> which can be used as a base. Scheme designers are supposed to set colors for these
+   * keys primarily and using them guarantees that most (if not all) text attributes will be shown correctly for the language
+   * regardless of a color scheme.
+   *
+   * @param externalName         the unique identifier of the key.
+   * @param fallbackAttributeKey the fallback key to use if text attributes for this key are not defined.
+   * @return the new key instance, or an existing instance if the key with the same
+   *         identifier was already registered.
+   */
   @NotNull
   public static TextAttributesKey createTextAttributesKey(@NonNls @NotNull String externalName, TextAttributesKey fallbackAttributeKey) {
     TextAttributesKey key = find(externalName);
     key.setFallbackAttributeKey(fallbackAttributeKey);
+    return key;
+  }
+
+  /**
+   * Similar to <code>createTextAttributesKey(externalName, fallbackAttributeKey)</code> but allows to specify attributes which will be used
+   * in default scheme as well as in a scheme created as a copy of default scheme. If specified, shadows a fallback attribute: a scheme
+   * designer may need to clear the attributes to restore dependency on the fallback key. It is strongly recommended to use this method
+   * only if absolutely necessary to define specific highlighting attributes which can not be referenced by any of the keys in
+   * <code>DefaultLanguageHighlighterColors</code>.
+   * <p>
+   *   If a scheme doesn't have the specified key if, for example, it was designed without an installed language plug-in, a fallback key
+   *   will be used instead of default text attributes specified here.
+   * </p>
+   *
+   * @param externalName          The unique identifier of the key.
+   * @param fallbackAttributeKey  The fallback key to use if text attributes for this key are not defined.
+   * @param defaultAttributes     The default text attributes associated with the key.
+   * @return
+   */
+  @NotNull
+  public static TextAttributesKey createTextAttributesKey(@NonNls @NotNull String externalName,
+                                                          TextAttributesKey fallbackAttributeKey,
+                                                          TextAttributes defaultAttributes) {
+    TextAttributesKey key = find(externalName);
+    key.setFallbackAttributeKey(fallbackAttributeKey);
+    if (key.myDefaultAttributes == null || key.myDefaultAttributes == NULL_ATTRIBUTES) {
+      key.myDefaultAttributes = defaultAttributes;
+    }
     return key;
   }
 
