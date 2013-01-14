@@ -38,6 +38,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.wm.ex.AbstractDelegatingToRootTraversalPolicy;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -791,31 +792,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     return mySettingsProviders.remove(provider);
   }
 
-  private static class DelegatingToRootTraversalPolicy extends FocusTraversalPolicy {
-    @Override
-    public Component getComponentAfter(final Container aContainer, final Component aComponent) {
-      final Container cycleRootAncestor = aContainer.getFocusCycleRootAncestor();
-      return cycleRootAncestor.getFocusTraversalPolicy().getComponentAfter(cycleRootAncestor, aContainer);
-    }
-
-    @Override
-    public Component getComponentBefore(final Container aContainer, final Component aComponent) {
-      final Container cycleRootAncestor = aContainer.getFocusCycleRootAncestor();
-      return cycleRootAncestor.getFocusTraversalPolicy().getComponentBefore(cycleRootAncestor, aContainer);
-    }
-
-    @Override
-    public Component getFirstComponent(final Container aContainer) {
-      final Container cycleRootAncestor = aContainer.getFocusCycleRootAncestor();
-      return cycleRootAncestor.getFocusTraversalPolicy().getFirstComponent(cycleRootAncestor);
-    }
-
-    @Override
-    public Component getLastComponent(final Container aContainer) {
-      final Container cycleRootAncestor = aContainer.getFocusCycleRootAncestor();
-      return cycleRootAncestor.getFocusTraversalPolicy().getLastComponent(cycleRootAncestor);
-    }
-
+  private static class DelegatingToRootTraversalPolicy extends AbstractDelegatingToRootTraversalPolicy {
     @Override
     public Component getDefaultComponent(final Container aContainer) {
       final Editor editor = aContainer instanceof EditorTextField ? ((EditorTextField)aContainer).getEditor():null;
