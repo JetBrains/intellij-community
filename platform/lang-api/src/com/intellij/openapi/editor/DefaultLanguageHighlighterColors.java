@@ -94,4 +94,7 @@ public class DefaultLanguageHighlighterColors {
     TextAttributesKey.createTextAttributesKey("DEFAULT_VALID_STRING_ESCAPE", SyntaxHighlighterColors.VALID_STRING_ESCAPE);
   public final static TextAttributesKey INVALID_STRING_ESCAPE =
     TextAttributesKey.createTextAttributesKey("DEFAULT_INVALID_STRING_ESCAPE", SyntaxHighlighterColors.VALID_STRING_ESCAPE);
+
+  public final static TextAttributesKey PREDEFINED_SYMBOL =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_PREDEFINED_SYMBOL", IDENTIFIER);
 }

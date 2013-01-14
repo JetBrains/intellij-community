@@ -82,6 +82,7 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
     TAG_HIGHLIGHTING_MAP.put("doc_tag", DefaultLanguageHighlighterColors.DOC_COMMENT_TAG);
     TAG_HIGHLIGHTING_MAP.put("valid_esc_seq", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE);
     TAG_HIGHLIGHTING_MAP.put("invalid_esc_seq", DefaultLanguageHighlighterColors.INVALID_STRING_ESCAPE);
+    TAG_HIGHLIGHTING_MAP.put("predefined", DefaultLanguageHighlighterColors.PREDEFINED_SYMBOL);
   }
 
   private final static AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = {
@@ -127,6 +128,8 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
       OptionsBundle.message("options.language.defaults.label"), DefaultLanguageHighlighterColors.LABEL),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.constant"), DefaultLanguageHighlighterColors.CONSTANT),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.predefined"), DefaultLanguageHighlighterColors.PREDEFINED_SYMBOL),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.local.variable"), DefaultLanguageHighlighterColors.LOCAL_VARIABLE),
     new AttributesDescriptor(
@@ -188,6 +191,7 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
       " * <doc_tag>@tag</doc_tag> <doc_markup><code>Markup</code></doc_markup>\n" +
       " */</doc_comment>\n" +
       "<label>:Label</label>\n" +
+      "<predefined>predefined_symbol()</predefined>\n" +
       "<const>CONSTANT</const>\n" +
       "Global <global_var>variable</global_var>\n" +
       "Function <func_decl>declaration</func_decl> (<param>parameter</param>)\n" +

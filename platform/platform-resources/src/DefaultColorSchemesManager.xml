@@ -80,6 +80,11 @@
           <option name="EFFECT_COLOR" value="808080"/>
         </value>
       </option>
+      <option name="DEFAULT_PREDEFINED_SYMBOL">
+        <value>
+          <option name="FONT_TYPE" value="2"/>
+        </value>
+      </option>
 
       <option name="LINE_PARTIAL_COVERAGE">
         <value>
