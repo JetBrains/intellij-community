@@ -23,4 +23,5 @@ import org.jetbrains.annotations.NonNls;
  */
 public class FxmlConstants {
   @NonNls public static final String FX_CONTROLLER = "fx:controller";
+  @NonNls public static final String JAVAFX_ANCHOR_PANE = "javafx.scene.layout.AnchorPane";
 }

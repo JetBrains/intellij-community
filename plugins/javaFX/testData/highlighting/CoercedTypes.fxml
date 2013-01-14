@@ -2,7 +2,7 @@
 <?import javafx.scene.layout.*?>
 <?import java.util.*?>
 <?import java.net.*?>
-<AnchorPane id="AnchorPane" maxHeight="-Infinity" maxWidth="-Infinity" unknownAttr="val" xmlns:fx="http://javafx.com/fxml">
+<AnchorPane id="AnchorPane" maxHeight="-Infinity" maxWidth="-Infinity" xmlns:fx="http://javafx.com/fxml">
   <children>
     <<error descr="Unable to coerce java.util.ArrayList to javafx.scene.Node">ArrayList</error>/>
   </children>

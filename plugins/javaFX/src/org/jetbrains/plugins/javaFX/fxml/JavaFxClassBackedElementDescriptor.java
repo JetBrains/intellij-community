@@ -178,12 +178,18 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
       if (attribute != null) {
         host.addMessage(((XmlAttributeImpl)attribute).getNameElement(), "fx:controller can only be applied to root element", ValidationHost.ErrorType.ERROR); //todo add delete/move to upper tag fix
       }
-      validateTagAccordingToFieldType(context, parentTag, host);
     }
+    validateTagAccordingToFieldType(context, parentTag, host);
   }
 
   private void validateTagAccordingToFieldType(XmlTag context, XmlTag parentTag, ValidationHost host) {
     if (myPsiClass != null && myPsiClass.isValid()) {
+      if (parentTag == null) {
+        if (!InheritanceUtil.isInheritor(myPsiClass, FxmlConstants.JAVAFX_ANCHOR_PANE)) {
+          host.addMessage(context.getNavigationElement(), HighlightUtil.formatClass(myPsiClass) + " cannot be cast to " + FxmlConstants.JAVAFX_ANCHOR_PANE, ValidationHost.ErrorType.ERROR);
+        }
+        return;
+      }
       final XmlElementDescriptor descriptor = parentTag.getDescriptor();
       if (descriptor instanceof JavaFxListPropertyElementDescriptor) {
         final PsiElement declaration = descriptor.getDeclaration();
