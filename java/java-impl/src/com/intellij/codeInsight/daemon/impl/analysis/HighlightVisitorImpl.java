@@ -1022,6 +1022,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         }
       }
     }
+    if (!myHolder.hasErrorResults()) {
+      myHolder.add(HighlightUtil.checkUnhandledExceptions(expression, expression.getTextRange()));
+    }
   }
 
   @Override

@@ -66,7 +66,7 @@ public class MavenArtifactSearchPanel extends JPanel {
     myListener = listener;
 
     initComponents(initialText);
-    myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, dialog.getDisposable());
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, dialog.getDisposable());
   }
 
   public JTextField getSearchField() {

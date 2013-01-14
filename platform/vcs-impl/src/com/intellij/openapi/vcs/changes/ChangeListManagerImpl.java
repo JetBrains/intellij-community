@@ -1462,6 +1462,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myUpdater.forceGo();
   }
 
+  public void executeOnUpdaterThread(Runnable r) {
+    ourUpdateAlarm.get().execute(r);
+  }
+
   /**
    * Can be called only from not AWT thread; to do smthg after ChangeListManager refresh, call invokeAfterUpdate
    */

@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -44,7 +45,14 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
 
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element, String text, int offset, final boolean soft) {
+      return  getReferencesByElement(element, text, offset, soft, null);
+  }
+
+  @NotNull
+  public PsiReference[] getReferencesByElement(PsiElement element, String text, int offset, final boolean soft, final @Nullable Module forModule) {
     return new FileReferenceSet(text, element, offset, this, true, myEndingSlashNotAllowed) {
+
+
       @Override
       protected boolean isSoft() {
         return soft;
@@ -68,7 +76,7 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
 
       @Override
       @NotNull public Collection<PsiFileSystemItem> computeDefaultContexts() {
-        final Module module = ModuleUtil.findModuleForPsiElement(getElement());
+        final Module module = forModule == null ? ModuleUtil.findModuleForPsiElement(getElement()) : forModule;
         return getRoots(module, true);
       }
 

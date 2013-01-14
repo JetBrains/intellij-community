@@ -38,10 +38,16 @@ import org.jetbrains.annotations.NotNull;
 public class SurroundWithTryCatchFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.SurroundWithTryCatchFix");
 
-  private PsiStatement myStatement;
+  private PsiStatement myStatement = null;
 
   public SurroundWithTryCatchFix(PsiElement element) {
-    myStatement = PsiTreeUtil.getNonStrictParentOfType(element, PsiStatement.class);
+    final PsiMethodReferenceExpression methodReferenceExpression = PsiTreeUtil.getParentOfType(element, PsiMethodReferenceExpression.class, false);
+    if (methodReferenceExpression == null) {
+      final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
+      if (lambdaExpression == null || lambdaExpression.getBody() instanceof PsiCodeBlock) {
+        myStatement = PsiTreeUtil.getNonStrictParentOfType(element, PsiStatement.class);
+      }
+    }
   }
 
   @Override

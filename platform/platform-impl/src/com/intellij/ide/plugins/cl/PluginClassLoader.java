@@ -104,6 +104,9 @@ public class PluginClassLoader extends UrlClassLoader {
     catch (IncompatibleClassChangeError e) {
       throw new PluginException(e, myPluginId);
     }
+    catch (UnsupportedClassVersionError e) {
+      throw new PluginException(e, myPluginId);
+    }
     if (c != null) {
       PluginManager.addPluginClass(c.getName(), myPluginId);
     }
