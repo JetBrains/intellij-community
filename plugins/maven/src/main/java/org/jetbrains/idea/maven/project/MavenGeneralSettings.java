@@ -47,7 +47,6 @@ public class MavenGeneralSettings implements Cloneable {
   private MavenExecutionOptions.ChecksumPolicy checksumPolicy = MavenExecutionOptions.ChecksumPolicy.FAIL;
   private MavenExecutionOptions.FailureMode failureBehavior = MavenExecutionOptions.FailureMode.FAST;
   private MavenExecutionOptions.SnapshotUpdatePolicy snapshotUpdatePolicy = MavenExecutionOptions.SnapshotUpdatePolicy.ALWAYS_UPDATE;
-  private MavenExecutionOptions.PluginUpdatePolicy pluginUpdatePolicy = MavenExecutionOptions.PluginUpdatePolicy.DEFAULT;
 
   private File myEffectiveLocalRepositoryCache;
   private Set<String> myDefaultPluginsCache;
@@ -71,18 +70,6 @@ public class MavenGeneralSettings implements Cloneable {
     myEffectiveLocalRepositoryCache = null;
     myDefaultPluginsCache = null;
     fireChanged();
-  }
-
-  @Property
-  @NotNull
-  public MavenExecutionOptions.PluginUpdatePolicy getPluginUpdatePolicy() {
-    return pluginUpdatePolicy;
-  }
-
-  public void setPluginUpdatePolicy(MavenExecutionOptions.PluginUpdatePolicy value) {
-    if (value == null) return; // null may come from deserializator
-    this.pluginUpdatePolicy = value;
-    changed();
   }
 
   @Property
@@ -297,7 +284,6 @@ public class MavenGeneralSettings implements Cloneable {
 
     if (nonRecursive != that.nonRecursive) return false;
     if (outputLevel != that.outputLevel) return false;
-    if (pluginUpdatePolicy != that.pluginUpdatePolicy) return false;
     if (snapshotUpdatePolicy != that.snapshotUpdatePolicy) return false;
     if (printErrorStackTraces != that.printErrorStackTraces) return false;
     if (usePluginRegistry != that.usePluginRegistry) return false;
@@ -323,7 +309,6 @@ public class MavenGeneralSettings implements Cloneable {
     result = 31 * result + outputLevel.hashCode();
     result = 31 * result + checksumPolicy.hashCode();
     result = 31 * result + failureBehavior.hashCode();
-    result = 31 * result + pluginUpdatePolicy.hashCode();
     result = 31 * result + snapshotUpdatePolicy.hashCode();
     return result;
   }

@@ -397,7 +397,6 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     result.setUserSettingsFile(settings.getEffectiveUserSettingsIoFile());
     result.setGlobalSettingsFile(settings.getEffectiveGlobalSettingsIoFile());
     result.setLocalRepository(settings.getEffectiveLocalRepository());
-    result.setPluginUpdatePolicy(settings.getPluginUpdatePolicy().getServerPolicy());
     result.setSnapshotUpdatePolicy(settings.getSnapshotUpdatePolicy().getServerPolicy());
     return result;
   }

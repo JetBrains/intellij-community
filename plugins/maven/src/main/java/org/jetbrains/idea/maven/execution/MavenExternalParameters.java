@@ -323,7 +323,6 @@ public class MavenExternalParameters {
     }
 
     addIfNotEmpty(cmdList, coreSettings.getFailureBehavior().getCommandLineOption());
-    addIfNotEmpty(cmdList, coreSettings.getPluginUpdatePolicy().getCommandLineOption());
     addIfNotEmpty(cmdList, coreSettings.getChecksumPolicy().getCommandLineOption());
     addIfNotEmpty(cmdList, coreSettings.getSnapshotUpdatePolicy().getCommandLineOption());
 
