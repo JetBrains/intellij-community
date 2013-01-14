@@ -117,7 +117,7 @@ public class MavenExternalParameters {
                                       : EncodingProjectManager.getInstance(project);
     params.setCharset(encodingManager.getDefaultCharset());
 
-    addMavenParameters(params.getProgramParametersList(), coreSettings, runnerSettings, parameters);
+    addMavenParameters(params.getProgramParametersList(), mavenHome, coreSettings, runnerSettings, parameters);
 
     return params;
   }
@@ -183,10 +183,11 @@ public class MavenExternalParameters {
   }
 
   private static void addMavenParameters(ParametersList parametersList,
+                                         String mavenHome,
                                          MavenGeneralSettings coreSettings,
                                          MavenRunnerSettings runnerSettings,
                                          MavenRunnerParameters parameters) {
-    encodeCoreAndRunnerSettings(coreSettings, runnerSettings, parametersList);
+    encodeCoreAndRunnerSettings(coreSettings, mavenHome, parametersList);
 
     if (runnerSettings.isSkipTests()) {
       parametersList.addProperty("skipTests", "true");
@@ -304,15 +305,18 @@ public class MavenExternalParameters {
     return classpathEntries;
   }
 
-  private static void encodeCoreAndRunnerSettings(MavenGeneralSettings coreSettings, MavenRunnerSettings runnerSettings,
+  private static void encodeCoreAndRunnerSettings(MavenGeneralSettings coreSettings, String mavenHome,
                                                   ParametersList cmdList) {
     if (coreSettings.isWorkOffline()) {
       cmdList.add("--offline");
     }
     if (!coreSettings.isUsePluginRegistry()) {
-      cmdList.add("--no-plugin-registry");
+      String version = MavenUtil.getMavenVersion(mavenHome);
+      if (version == null || version.compareTo("3.0.0") < 0) {
+        cmdList.add("--no-plugin-registry");
+      }
     }
-    if (coreSettings.getLoggingLevel() == MavenExecutionOptions.LoggingLevel.DEBUG) {
+    if (coreSettings.getOutputLevel() == MavenExecutionOptions.LoggingLevel.DEBUG) {
       cmdList.add("--debug");
     }
     if (coreSettings.isNonRecursive()) {
