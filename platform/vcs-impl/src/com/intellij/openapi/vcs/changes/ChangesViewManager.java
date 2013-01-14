@@ -394,11 +394,13 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     if (LOG.isDebugEnabled()) {
       LOG.debug("schedule refresh, was " + was);
     }
-    myRepaintAlarm.addRequest(new Runnable() {
-      public void run() {
-        refreshView();
-      }
-    }, 100, ModalityState.NON_MODAL);
+    if (!myRepaintAlarm.isDisposed()) {
+      myRepaintAlarm.addRequest(new Runnable() {
+        public void run() {
+          refreshView();
+        }
+      }, 100, ModalityState.NON_MODAL);
+    }
   }
 
   void refreshView() {
