@@ -13,3 +13,10 @@ print p._replace
 
 if isinstance(p, Point):
     p.x
+
+class C(namedtuple('C', 'x')):
+    def f(self):
+        return self
+
+c = C()
+print(c.x, c.f())
