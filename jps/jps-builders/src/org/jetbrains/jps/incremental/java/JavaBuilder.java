@@ -803,9 +803,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
         default:
           kind = BuildMessage.Kind.INFO;
       }
-      final JavaFileObject source = diagnostic.getSource();
       File sourceFile = null;
       try {
+        // for eclipse compiler just an attempt to call getSource() may lead to an NPE,
+        // so calling this method under try/catch to avoid induced compiler errors
+        final JavaFileObject source = diagnostic.getSource();
         sourceFile = source != null ? Utils.convertToFile(source.toUri()) : null;
       }
       catch (Exception e) {
@@ -845,6 +847,20 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     public void save(@NotNull final OutputFileObject fileObject) {
+      if (JavaFileObject.Kind.CLASS != fileObject.getKind()) {
+        // generated sources or resources must be saved synchronously, because some compilers (e.g. eclipse)
+        // may want to read generated text for further compilation
+        try {
+          final BinaryContent content = fileObject.getContent();
+          if (content != null) {
+            content.saveToFile(fileObject.getFile());
+          }
+        }
+        catch (IOException e) {
+          myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, e.getMessage()));
+        }
+      }
+
       submitAsyncTask(myContext, new Runnable() {
         public void run() {
           try {
