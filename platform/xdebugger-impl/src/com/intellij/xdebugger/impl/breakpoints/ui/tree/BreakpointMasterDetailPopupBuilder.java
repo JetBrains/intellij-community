@@ -203,6 +203,11 @@ public class BreakpointMasterDetailPopupBuilder {
           myCallback.breakpointChosen(myProject, (BreakpointItem)item,  popup, withEnterOrDoubleClick);
         }
       }
+
+      @Override
+      public void removeSelectedItemsInTree() {
+        myTreeController.removeSelectedBreakpoints(myProject);
+      }
     };
 
     myPopupBuilder.

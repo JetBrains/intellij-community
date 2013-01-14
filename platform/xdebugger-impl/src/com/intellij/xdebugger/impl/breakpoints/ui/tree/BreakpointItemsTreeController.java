@@ -16,16 +16,18 @@
 package com.intellij.xdebugger.impl.breakpoints.ui.tree;
 
 import com.intellij.ide.util.treeView.TreeState;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
@@ -169,10 +171,10 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
   }
 
   public List<BreakpointItem> getSelectedBreakpoints() {
-    final ArrayList<BreakpointItem> list = new ArrayList<BreakpointItem>();
     TreePath[] selectionPaths = myTreeView.getSelectionPaths();
-    if (selectionPaths == null || selectionPaths.length == 0) return list;
+    if (selectionPaths == null || selectionPaths.length == 0) return Collections.emptyList();
 
+    final ArrayList<BreakpointItem> list = new ArrayList<BreakpointItem>();
     for (TreePath selectionPath : selectionPaths) {
       TreeUtil.traverseDepth((TreeNode)selectionPath.getLastPathComponent(), new TreeUtil.Traverse() {
         public boolean accept(final Object node) {
@@ -204,6 +206,26 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
   public void selectFirstBreakpointItem() {
     TreeUtil.selectPath(myTreeView, TreeUtil.getFirstLeafNodePath(myTreeView));
 
+  }
+
+  public void removeSelectedBreakpoints(Project project) {
+    final TreePath[] paths = myTreeView.getSelectionPaths();
+    final List<BreakpointItem> breakpoints = getSelectedBreakpoints();
+    for (TreePath path : paths) {
+      final Object node = path.getLastPathComponent();
+      if (node instanceof BreakpointItemNode) {
+        final BreakpointItem item = ((BreakpointItemNode)node).getBreakpointItem();
+        if (!item.allowedToRemove()) {
+          TreeUtil.unselect(myTreeView, (DefaultMutableTreeNode)node);
+          breakpoints.remove(item);
+        }
+      }
+    }
+    if (breakpoints.isEmpty()) return;
+    TreeUtil.removeSelected(myTreeView);
+    for (BreakpointItem breakpoint : breakpoints) {
+      breakpoint.removed(project);
+    }
   }
 
   private static class TreeNodeComparator implements Comparator<TreeNode> {
