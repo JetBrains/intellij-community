@@ -17,6 +17,7 @@ package org.intellij.lang.xpath.xslt.run;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
 import icons.XpathIcons;
@@ -26,39 +27,45 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class XsltRunConfigType implements ConfigurationType {
-    private final ConfigurationFactory myFactory = new MyConfigurationFactory();
+  private final ConfigurationFactory myFactory;
 
-    public String getDisplayName() {
-        return "XSLT";
+  public XsltRunConfigType() {
+    myFactory = new MyConfigurationFactory(this);
+  }
+
+  public static XsltRunConfigType getInstance() {
+    return ConfigurationTypeUtil.findConfigurationType(XsltRunConfigType.class);
+  }
+
+  public String getDisplayName() {
+    return "XSLT";
+  }
+
+  @NonNls
+  @NotNull
+  public String getId() {
+    return "XSLT";
+  }
+
+  public String getConfigurationTypeDescription() {
+    return "Run XSLT Script";
+  }
+
+  public Icon getIcon() {
+    return XpathIcons.Xslt;
+  }
+
+  public ConfigurationFactory[] getConfigurationFactories() {
+    return new ConfigurationFactory[]{myFactory};
+  }
+
+  private static class MyConfigurationFactory extends ConfigurationFactory {
+    MyConfigurationFactory(XsltRunConfigType type) {
+      super(type);
     }
 
-    @NonNls
-    @NotNull
-    public String getId() {
-        return "XSLT";
+    public RunConfiguration createTemplateConfiguration(final Project project) {
+      return new XsltRunConfiguration(project, this);
     }
-
-    public String getConfigurationTypeDescription() {
-        return "Run XSLT Script";
-    }
-
-    public Icon getIcon() {
-        return XpathIcons.Xslt;
-    }
-
-    public ConfigurationFactory[] getConfigurationFactories() {
-        return new ConfigurationFactory[]{ myFactory };
-    }
-
-    private class MyConfigurationFactory extends ConfigurationFactory {
-        public MyConfigurationFactory() {
-            super(XsltRunConfigType.this);
-        }
-
-        public RunConfiguration createTemplateConfiguration(final Project project) {
-            return new XsltRunConfiguration(project, this);
-        }
-    }
-
-
+  }
 }
