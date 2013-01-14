@@ -217,7 +217,11 @@ public class SingleRowLayout extends TabLayout {
   }
 
   protected void updateMoreIconVisibility(SingleRowPassInfo data) {
-    myMoreIcon.setPainted(data.toLayout.size() > 0 && data.myVisibleInfos.size() > data.toLayout.size());
+    int counter = 0;
+    for (TabInfo tabInfo : data.myVisibleInfos) {
+      if (isTabHidden(tabInfo)) counter++;
+    }
+    myMoreIcon.updateCounter(counter);
   }
 
   protected void layoutMoreButton(SingleRowPassInfo data) {

@@ -1611,6 +1611,17 @@ public class UIUtil {
     }
   }
 
+  public static void drawStringWithHighlighting(Graphics g, String s, int x, int y, Color foreground, Color highlighting) {
+    g.setColor(highlighting);
+    for (int i = x - 1; i <= x + 1; i++) {
+      for (int j = y - 1; j <= y + 1; j++) {
+        g.drawString(s, i, j);
+      }
+    }
+    g.setColor(foreground);
+    g.drawString(s, x, y);
+  }
+
   public static boolean isFocusAncestor(@NotNull final JComponent component) {
     final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     if (owner == null) return false;
