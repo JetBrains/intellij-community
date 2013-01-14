@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 import java.util.Arrays;
@@ -28,11 +30,12 @@ import java.util.Arrays;
  * @author Maxim.Medvedev
  */
 public abstract class ChangeSignatureTestCase extends LightCodeInsightFixtureTestCase {
-  void executeRefactoring(@PsiModifier.ModifierConstant String newVisibility,
-                          String newName,
-                          String newReturnType,
-                          GenParams genParams,
-                          GenExceptions genExceptions, boolean generateDelegate) {
+  void executeRefactoring(@Nullable @PsiModifier.ModifierConstant String newVisibility,
+                          @Nullable String newName,
+                          @Nullable String newReturnType,
+                          @NotNull GenParams genParams,
+                          @NotNull GenExceptions genExceptions,
+                          boolean generateDelegate) {
     final PsiElement targetElement = new GrChangeSignatureHandler().findTargetMember(myFixture.getFile(), myFixture.getEditor());
       //TargetElementUtilBase.findTargetElement(myFixture.getEditor(), TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
     assertTrue("<caret> is not on method name", targetElement instanceof GrMethod);
@@ -54,9 +57,13 @@ public abstract class ChangeSignatureTestCase extends LightCodeInsightFixtureTes
       newType = factory.createTypeFromText(newReturnType, method);
     }
     GrChangeInfoImpl changeInfo =
-      new GrChangeInfoImpl(method, newVisibility, newType != null ? CanonicalTypes.createTypeWrapper(newType) : null,
-                           newName != null ? newName : method.getName(), Arrays.asList(genParams.genParams(method)),
-                           genExceptions.genExceptions(method), generateDelegate);
+      new GrChangeInfoImpl(method,
+                           newVisibility,
+                           newType != null ? CanonicalTypes.createTypeWrapper(newType) : null,
+                           newName != null ? newName : method.getName(),
+                           Arrays.asList(genParams.genParams(method)),
+                           genExceptions.genExceptions(method),
+                           generateDelegate);
     new GrChangeSignatureProcessor(getProject(), changeInfo).run();
   }
 
