@@ -87,7 +87,7 @@ public class BreakpointEditor {
         done();
       }
     };
-    doneAction.registerCustomShortcutSet(new CompositeShortcutSet(CustomShortcutSet.fromString("ESCAPE"), CustomShortcutSet.fromString("control ENTER")), myMainPanel);
+    doneAction.registerCustomShortcutSet(new CompositeShortcutSet(CustomShortcutSet.fromString("ESCAPE"), CustomShortcutSet.fromString("ENTER")), myMainPanel);
   }
 
   private void done() {
