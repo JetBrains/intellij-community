@@ -24,6 +24,7 @@ public class EmptyIntentionInspectionQuickFixTest extends LightQuickFixTestCase{
     return "/codeInsight/daemonCodeAnalyzer/quickFix/emptyIntention";
   }
 
+  @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new DefUseInspection(), new LocalInspectionTool() {

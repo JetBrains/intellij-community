@@ -73,6 +73,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     setLanguageLevel(LanguageLevel.JDK_1_4);
   }
 
+  @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{

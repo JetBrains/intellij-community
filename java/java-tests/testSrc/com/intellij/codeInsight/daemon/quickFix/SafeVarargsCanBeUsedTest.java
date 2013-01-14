@@ -17,9 +17,11 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.PossibleHeapPollutionVarargsInspection;
+import org.jetbrains.annotations.NotNull;
 
 
 public class SafeVarargsCanBeUsedTest extends LightQuickFixTestCase {
+  @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
