@@ -211,13 +211,9 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   private PyClassType getMetaclassType() {
     final PyTargetExpression metaClassAttribute = myClass.findClassAttribute(PyNames.DUNDER_METACLASS, true);
     if (metaClassAttribute != null) {
-      final PyExpression metaclass = metaClassAttribute.findAssignedValue();
-      if (metaclass instanceof PyReferenceExpression) {
-        final QualifiedResolveResult result = ((PyReferenceExpression)metaclass).followAssignmentsChain(PyResolveContext.noImplicits());
-        PsiElement element = result.getElement();
-        if (element instanceof PyClass) {
-          return new PyClassTypeImpl((PyClass)element, false);
-        }
+      final PyType type = metaClassAttribute.getType(TypeEvalContext.fastStubOnly(null));
+      if (type instanceof PyClassType) {
+        return (PyClassType)type;
       }
     }
     return PyBuiltinCache.getInstance(myClass).getObjectType("type");
