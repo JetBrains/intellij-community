@@ -142,7 +142,7 @@ class JiraTask extends Task {
 
   @Override
   public boolean isClosed() {
-    return !JiraConstants.UNRESOLVED.equals(myJiraIssue.getResolution());
+    return getState() == TaskState.RESOLVED;
   }
 
   public boolean isIssue() {
