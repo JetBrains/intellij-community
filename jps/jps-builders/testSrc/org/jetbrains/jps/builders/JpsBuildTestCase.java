@@ -318,7 +318,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     return fullTargetPath;
   }
 
-  private File getOrCreateProjectDir() {
+  public File getOrCreateProjectDir() {
     if (myProjectDir == null) {
       try {
         myProjectDir = doGetProjectDir();

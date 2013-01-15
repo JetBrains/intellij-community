@@ -4,6 +4,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsModuleRootModificationUtil;
@@ -27,7 +28,8 @@ public class ModuleBuilder {
 
   private String name;
   private JpsModule module;
-  private String sourceRoot;
+  private File sourceRoot;
+  private String sourceRootRelativeToProject;
 
   private String fromSourceRoot;
 
@@ -43,6 +45,16 @@ public class ModuleBuilder {
     this.fromSourceRoot = fromSourceRoot;
   }
 
+  public static JpsArtifact createArtifact(ModuleBuilder... builders) {
+    LayoutElementTestUtil.LayoutElementCreator root = root();
+    String name = "";
+    for (ModuleBuilder builder : builders) {
+      root.element(builder.createPackagingElement(builder.get()));
+      name += "_" + builder.get().getName();
+    }
+    return builders[0].testCase.addArtifact(name.substring(1), root);
+  }
+
   public String getName() {
     return get().getName();
   }
@@ -54,7 +66,7 @@ public class ModuleBuilder {
 
   public JpsModule get() {
     if (module == null) {
-      module = testCase.addModule(getOrCreateModuleName(), getSourceRoot());
+      module = testCase.addModule(getOrCreateModuleName(), FileUtilRt.toSystemIndependentName(getSourceRoot().getPath()));
       moduleCreated(module);
     }
     return module;
@@ -84,15 +96,19 @@ public class ModuleBuilder {
   protected void moduleCreated(JpsModule module) {
   }
 
-  private String getSourceRoot() {
-    if (sourceRoot == null) {
-      sourceRoot = testCase.getAbsolutePath(getRelativeToProjectSourceRoot());
-    }
-    return sourceRoot;
+  public ModuleBuilder sourceRoot(String path) {
+    assert sourceRoot == null;
+    sourceRoot = new File(path);
+    sourceRootRelativeToProject = FileUtil.getRelativePath(testCase.getOrCreateProjectDir(), sourceRoot);
+    return this;
   }
 
-  private String getRelativeToProjectSourceRoot() {
-    return getOrCreateModuleName() + "-src";
+  private File getSourceRoot() {
+    if (sourceRoot == null) {
+      sourceRootRelativeToProject = getOrCreateModuleName() + "-src";
+      sourceRoot = new File(testCase.getAbsolutePath(sourceRootRelativeToProject));
+    }
+    return sourceRoot;
   }
 
   private String getOrCreateModuleName() {
@@ -139,9 +155,8 @@ public class ModuleBuilder {
 
   public void assertCompiled(String... modulePaths) {
     String[] paths = new String[modulePaths.length];
-    String root = getRelativeToProjectSourceRoot();
     for (int i = 0; i < modulePaths.length; i++) {
-      paths[i] = root + '/' + modulePaths[i];
+      paths[i] = sourceRootRelativeToProject + '/' + modulePaths[i];
     }
     testCase.assertCompiled(builderName, paths);
   }
