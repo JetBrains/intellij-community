@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1488,4 +1488,10 @@ new X().fo<caret>o('abc')''', PsiMethod)
     assertFalse(method.parameterList.parameters[0].type instanceof PsiEllipsisType)
   }
 
+  void testMethodWithLiteralName() {
+    resolveByText('''\
+def 'a\\'bc'(){}
+"a'b<caret>c"()
+''', GrMethod)
+  }
 }
