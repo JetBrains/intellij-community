@@ -17,12 +17,10 @@ package com.intellij.psi.impl.source.jsp;
 
 import com.intellij.lang.jsp.IBaseJspManager;
 import com.intellij.lang.jsp.JspVersion;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.jsp.JspFile;
@@ -84,4 +82,6 @@ public abstract class JspManager implements IBaseJspManager {
 
   @NotNull
   public abstract JspVersion getJspVersion(@NotNull PsiFileSystemItem context);
+
+  public abstract boolean isElIgnored(@NotNull PsiFile file);
 }
