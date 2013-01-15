@@ -218,21 +218,14 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
     reloadDir(virtualFileOrDir, charset);
   }
 
-  private void setAndSaveOrReload(VirtualFile virtualFileOrDir, Charset charset) {
-    if (virtualFileOrDir == null) {
-      return;
-    }
+  private static void setAndSaveOrReload(@NotNull VirtualFile virtualFileOrDir, Charset charset) {
     virtualFileOrDir.setCharset(charset);
     saveOrReload(virtualFileOrDir);
   }
 
-  private void saveOrReload(@NotNull VirtualFile virtualFile) {
+  private static void saveOrReload(@NotNull VirtualFile virtualFile) {
     FileDocumentManager documentManager = FileDocumentManager.getInstance();
     Document document = documentManager.getDocument(virtualFile);
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    if (document != null) {
-      PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(document);
-    }
     if (documentManager.isFileModified(virtualFile)) {
       if (document != null) {
         documentManager.saveDocument(document);
