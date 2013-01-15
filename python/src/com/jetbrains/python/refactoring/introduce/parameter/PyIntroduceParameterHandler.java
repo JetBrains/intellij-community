@@ -2,6 +2,7 @@ package com.jetbrains.python.refactoring.introduce.parameter;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
@@ -61,32 +62,55 @@ public class PyIntroduceParameterHandler extends IntroduceHandler {
 
   protected boolean isValidIntroduceContext(PsiElement element) {
     if (element != null) {
-      final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
-      final ScopeOwner scopeOwner =  ScopeUtil.getScopeOwner(element);
-      final boolean[] isValid = {true};
-      if (scopeOwner != null) {
-        new PyRecursiveElementVisitor() {
-          @Override
-          public void visitPyReferenceExpression(PyReferenceExpression node) {
-            super.visitPyReferenceExpression(node);
-            if (ControlFlowCache.getScope(scopeOwner).containsDeclaration(node.getName())) {
-              isValid[0] = false;
-            }
-          }
-        }.visitElement(element);
-      }
-      final PyStatement nonlocalStatement =
-        PsiTreeUtil.getParentOfType(element, PyNonlocalStatement.class, PyGlobalStatement.class);
-      final PyStatementList statementList =
-        PsiTreeUtil.getParentOfType(element, PyStatementList.class);
-      PyImportStatement importStatement = PsiTreeUtil.getParentOfType(element, PyImportStatement.class);
-      return function != null && !isResolvedToParameter(element) && isValid[0] && nonlocalStatement == null &&
-        statementList != null && importStatement == null;
+      if (!isValidPlace(element)) return false;
+
+      return isNotDeclared(element);
     }
     return false;
   }
 
-  private boolean isResolvedToParameter(PsiElement element) {
+  private static boolean isNotDeclared(PsiElement element) {
+    final ScopeOwner scopeOwner =  ScopeUtil.getScopeOwner(element);
+    final boolean[] isValid = {true};
+
+    if (scopeOwner != null) {
+      final String name = element instanceof PsiNamedElement? ((PsiNamedElement)element).getName() : element.getText();
+      if (name != null && ControlFlowCache.getScope(scopeOwner).containsDeclaration(name)) {
+        return false;
+      }
+      new PyRecursiveElementVisitor() {
+        @Override
+        public void visitPyReferenceExpression(PyReferenceExpression node) {
+          super.visitPyReferenceExpression(node);
+
+          final String name = node.getName();
+          if (name != null && ControlFlowCache.getScope(scopeOwner).containsDeclaration(name)) {
+            isValid[0] = false;
+          }
+        }
+      }.visitElement(element);
+    }
+    return !isResolvedToParameter(element) && isValid[0];
+  }
+
+  private static boolean isValidPlace(PsiElement element) {
+    final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
+    final PyForPart forPart = PsiTreeUtil.getParentOfType(element, PyForPart.class);
+    if (forPart != null) {
+      final PyExpression target = forPart.getTarget();
+      if (target instanceof PyTargetExpression && element.getText().equals(target.getName()))
+        return false;
+    }
+    final PyStatement nonlocalStatement =
+      PsiTreeUtil.getParentOfType(element, PyNonlocalStatement.class, PyGlobalStatement.class);
+    final PyStatementList statementList =
+      PsiTreeUtil.getParentOfType(element, PyStatementList.class);
+    PyImportStatement importStatement = PsiTreeUtil.getParentOfType(element, PyImportStatement.class);
+    return nonlocalStatement == null && importStatement == null &&
+           statementList != null && function != null;
+  }
+
+  private static boolean isResolvedToParameter(PsiElement element) {
     while (element instanceof PyReferenceExpression) {
       final PsiReference reference = element.getReference();
       if (reference != null && reference.resolve() instanceof PyNamedParameter)
