@@ -46,7 +46,6 @@ import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.status.EncodingPanel;
 import com.intellij.openapi.wm.impl.status.InsertOverwritePanel;
 import com.intellij.openapi.wm.impl.status.PositionPanel;
@@ -132,7 +131,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     return null;
   }
 
-  private static boolean isThereActiveFrame() {
+  public static boolean isThereActiveFrame() {
     Frame[] all = Frame.getFrames();
     for (Frame each : all) {
       if (each.isActive()) {

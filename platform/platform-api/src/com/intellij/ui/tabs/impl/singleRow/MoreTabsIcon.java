@@ -16,6 +16,10 @@
 package com.intellij.ui.tabs.impl.singleRow;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
+import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -24,18 +28,32 @@ import java.awt.*;
  * @author pegov
  */
 public abstract class MoreTabsIcon {
-  private boolean myPainted;
+  private int myCounter;
 
-  public void paintIcon(final Component c, final Graphics g) {
+  public void paintIcon(final Component c, Graphics graphics) {
+    if (myCounter <= 0)
+      return;
     final Rectangle moreRect = getIconRec();
 
     if (moreRect == null) return;
 
     int iconY = getIconY(moreRect);
     int iconX = getIconX(moreRect);
+    graphics.setFont(UIUtil.getLabelFont().deriveFont((float)Math.min(8, UIUtil.getButtonFont().getSize())));
+    int width = graphics.getFontMetrics().stringWidth(String.valueOf(myCounter));
+    iconX -= width / 2 + 1;
 
-    if (myPainted) {
-      AllIcons.General.MoreTabs.paintIcon(c, g, iconX, iconY);
+    AllIcons.General.MoreTabs.paintIcon(c, graphics, iconX, iconY);
+    Graphics g = graphics.create();
+    try {
+      GraphicsUtil.setupAntialiasing(g, true, true);
+      UIUtil.drawStringWithHighlighting(g, String.valueOf(myCounter),
+                                        iconX + AllIcons.General.MoreTabs.getIconWidth() + 2,
+                                        iconY + AllIcons.General.MoreTabs.getIconHeight() - 5,
+                                        JBColor.BLACK,
+                                        ColorUtil.withAlpha(JBColor.WHITE, .9));
+    } finally {
+      g.dispose();
     }
   }
   
@@ -50,7 +68,7 @@ public abstract class MoreTabsIcon {
   @Nullable
   protected abstract Rectangle getIconRec();
 
-  public void setPainted(boolean painted) {
-    myPainted = painted;
+  public void updateCounter(int counter) {
+    myCounter = counter;
   }
 }

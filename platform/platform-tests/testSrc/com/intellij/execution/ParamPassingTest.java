@@ -19,8 +19,12 @@ public class ParamPassingTest {
   public static void main(String[] args) {
     System.out.println("=====");
     for (String arg : args) {
-      System.out.println(arg);
+      System.out.println(format(arg));
     }
     System.out.println("=====");
+  }
+
+  public static String format(String arg) {
+    return String.valueOf(arg.hashCode());
   }
 }

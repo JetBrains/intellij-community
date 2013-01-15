@@ -845,6 +845,11 @@ public class GenericsHighlightUtil {
   public static PsiType getCollectionItemType(@NotNull PsiExpression expression) {
     final PsiType type = expression.getType();
     if (type == null) return null;
+    return getCollectionItemType(type, expression.getResolveScope());
+  }
+
+  @Nullable
+  public static PsiType getCollectionItemType(final PsiType type, final GlobalSearchScope scope) {
     if (type instanceof PsiArrayType) {
       return ((PsiArrayType)type).getComponentType();
     }
@@ -857,7 +862,7 @@ public class GenericsHighlightUtil {
       PsiSubstitutor substitutor = resolveResult.getSubstitutor();
       JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
       if (qName != null) {
-        PsiClass myClass = facade.findClass(qName, expression.getResolveScope());
+        PsiClass myClass = facade.findClass(qName, scope);
         if (myClass != null && myClass != aClass) {
           //different JDKs
           PsiTypeParameter thisTypeParameter = getIterableTypeParameter(facade, myClass);

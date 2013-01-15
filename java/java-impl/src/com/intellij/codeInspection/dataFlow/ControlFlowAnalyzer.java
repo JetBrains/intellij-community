@@ -21,7 +21,9 @@ import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -31,7 +33,14 @@ import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_ERROR;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_THROWABLE;
 
 class ControlFlowAnalyzer extends JavaElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer");
@@ -45,7 +54,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   private int myPassNumber;
   private Set<DfaVariableValue> myFields;
   private Stack<CatchDescriptor> myCatchStack;
-  private PsiType myRuntimeException;
+  private DfaValue myRuntimeException;
+  private DfaValue myError;
 
   ControlFlowAnalyzer(final DfaValueFactory valueFactory) {
     myFactory = valueFactory;
@@ -54,7 +64,10 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   public ControlFlow buildControlFlow(PsiElement codeFragment) {
     if (codeFragment == null) return null;
 
-    myRuntimeException = PsiType.getJavaLangRuntimeException(codeFragment.getManager(), codeFragment.getResolveScope());
+    PsiManager manager = codeFragment.getManager();
+    GlobalSearchScope scope = codeFragment.getResolveScope();
+    myRuntimeException = myFactory.getNotNullFactory().create(PsiType.getJavaLangRuntimeException(manager, scope));
+    myError = myFactory.getNotNullFactory().create(PsiType.getJavaLangError(manager, scope));
     myFields = new HashSet<DfaVariableValue>();
     myCatchStack = new Stack<CatchDescriptor>();
     myPassNumber = 1;
@@ -638,10 +651,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         continue;
       }
 
-      PsiType type = cd.getType();
-      if (type instanceof PsiDisjunctionType) {
-        type = ((PsiDisjunctionType)type).getLeastUpperBound();
-      }
+      PsiType type = cd.getLubType();
       if (type instanceof PsiClassType && ExceptionUtil.isUncheckedExceptionOrSuperclass((PsiClassType)type)) {
         addConditionalRuntimeThrow(cd, true);
         break;
@@ -655,8 +665,22 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     addInstruction(branch);
     addInstruction(new EmptyStackInstruction());
     if (forCatch) {
-      addInstruction(new PushInstruction(myFactory.getNotNullFactory().create(myRuntimeException), null));
-      addGotoCatch(cd);
+      PsiType type = cd.getLubType();
+      boolean isRuntime = InheritanceUtil.isInheritor(type, JAVA_LANG_RUNTIME_EXCEPTION) || ExceptionUtil.isGeneralExceptionType(type);
+      boolean isError = InheritanceUtil.isInheritor(type, JAVA_LANG_ERROR) || type.equalsToText(JAVA_LANG_THROWABLE);
+      if (isRuntime != isError) {
+        addInstruction(new PushInstruction(isRuntime ? myRuntimeException : myError, null));
+        addGotoCatch(cd);
+      } else {
+        pushUnknown();
+        final ConditionalGotoInstruction branch2 = new ConditionalGotoInstruction(-1, false, null);
+        addInstruction(branch2);
+        addInstruction(new PushInstruction(myError, null));
+        addGotoCatch(cd);
+        branch2.setOffset(myCurrentFlow.getInstructionCount());
+        addInstruction(new PushInstruction(myRuntimeException, null));
+        addGotoCatch(cd);
+      }
     }
     else {
       addInstruction(new GosubInstruction(cd.getJumpOffset(this)));
@@ -753,6 +777,14 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     public PsiType getType() {
       return myType;
+    }
+
+    PsiType getLubType() {
+      PsiType type = myType;
+      if (type instanceof PsiDisjunctionType) {
+        return ((PsiDisjunctionType)type).getLeastUpperBound();
+      }
+      return type;
     }
 
     public boolean isFinally() {
