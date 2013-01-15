@@ -23,11 +23,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.java.JavaBuilderExtension;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.model.JpsEncodingConfigurationService;
 import org.jetbrains.jps.model.JpsEncodingProjectConfiguration;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
@@ -58,12 +60,12 @@ public class CompilerEncodingConfiguration {
 
   private Map<JpsModule, Set<String>> computeModuleCharsetMap() {
     final Map<JpsModule, Set<String>> map = new THashMap<JpsModule, Set<String>>();
-    final List<ModuleLevelBuilder> builders = BuilderRegistry.getInstance().getModuleLevelBuilders();
+    final Iterable<JavaBuilderExtension> builderExtensions = JpsServiceManager.getInstance().getExtensions(JavaBuilderExtension.class);
     for (Map.Entry<String, String> entry : myUrlToCharset.entrySet()) {
       final String fileUrl = entry.getKey();
       final String charset = entry.getValue();
       File file = JpsPathUtil.urlToFile(fileUrl);
-      if (charset == null || (!file.isDirectory() && !shouldHonorEncodingForCompilation(builders, file))) continue;
+      if (charset == null || (!file.isDirectory() && !shouldHonorEncodingForCompilation(builderExtensions, file))) continue;
 
       final JavaSourceRootDescriptor rootDescriptor = myRootsIndex.findJavaRootDescriptor(null, file);
       if (rootDescriptor == null) continue;
@@ -97,9 +99,9 @@ public class CompilerEncodingConfiguration {
     return map;
   }
 
-  private static boolean shouldHonorEncodingForCompilation(List<ModuleLevelBuilder> builders, File file) {
-    for (ModuleLevelBuilder builder : builders) {
-      if (builder.shouldHonorFileEncodingForCompilation(file)) {
+  private static boolean shouldHonorEncodingForCompilation(Iterable<JavaBuilderExtension> builders, File file) {
+    for (JavaBuilderExtension extension : builders) {
+      if (extension.shouldHonorFileEncodingForCompilation(file)) {
         return true;
       }
     }

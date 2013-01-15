@@ -72,11 +72,6 @@ public abstract class FormsBuilder extends ModuleLevelBuilder {
     myBuilderName = name;
   }
 
-  @Override
-  public boolean shouldHonorFileEncodingForCompilation(File file) {
-    return FORM_SOURCES_FILTER.accept(file);
-  }
-
   @NotNull
   @Override
   public String getPresentableName() {
