@@ -29,6 +29,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Comparing;
@@ -591,7 +592,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         }
       });
 
-    new JPopupMenu();  // invokes updateUI() -> updateStyle()
+    new JBPopupMenu();  // invokes updateUI() -> updateStyle()
 
     SynthLookAndFeel.setStyleFactory(original);
   }

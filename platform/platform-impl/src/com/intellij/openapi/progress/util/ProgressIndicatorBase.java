@@ -377,7 +377,7 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
     synchronized (this) {
       List<ProgressIndicatorEx> stateDelegates = myStateDelegates;
       if (stateDelegates == null) {
-        myStateDelegates = stateDelegates = ContainerUtil.createEmptyCOWList();
+        myStateDelegates = stateDelegates = ContainerUtil.createLockFreeCopyOnWriteList();
       }
       else {
         LOG.assertTrue(!stateDelegates.contains(delegate), "Already registered: " + delegate);

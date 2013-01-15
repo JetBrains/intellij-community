@@ -32,6 +32,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.ScrollPaneFactory;
@@ -223,9 +224,12 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
   @Nullable
   public static Window findWindowForBalloon(Project project) {
-    final JFrame frame = WindowManager.getInstance().getFrame(project);
+    Window frame = WindowManager.getInstance().getFrame(project);
     if (frame == null && project == null) {
-      return KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+      frame = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+    }
+    if (frame == null && project == null) {
+      frame = WelcomeFrame.getInstance();
     }
     return frame;
   }

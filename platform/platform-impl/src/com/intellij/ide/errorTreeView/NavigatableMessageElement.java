@@ -16,6 +16,7 @@
 package com.intellij.ide.errorTreeView;
 
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -29,7 +30,7 @@ public class NavigatableMessageElement extends ErrorTreeElement {
   private final String myExportText;
   private final String myRendererTextPrefix;
 
-  public NavigatableMessageElement(ErrorTreeElementKind kind,
+  public NavigatableMessageElement(@NotNull ErrorTreeElementKind kind,
                                    @Nullable GroupingElement parent,
                                    String[] message,
                                    Navigatable navigatable,

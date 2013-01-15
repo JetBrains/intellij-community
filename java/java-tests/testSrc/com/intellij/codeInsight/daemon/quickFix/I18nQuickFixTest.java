@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFix15TestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.i18n.I18nInspection;
 import com.intellij.openapi.util.Comparing;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -11,6 +12,7 @@ import com.intellij.openapi.util.Comparing;
 public class I18nQuickFixTest extends LightQuickFix15TestCase {
   private boolean myMustBeAvailableAfterInvoke;
 
+  @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new I18nInspection()};

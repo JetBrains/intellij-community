@@ -64,6 +64,9 @@ public abstract class ModuleLevelBuilder extends Builder {
                                  OutputConsumer outputConsumer)
     throws ProjectBuildException, IOException;
 
+  /**
+   * @deprecated use {@link org.jetbrains.jps.builders.java.JavaBuilderExtension#shouldHonorFileEncodingForCompilation(java.io.File)} instead
+   */
   public boolean shouldHonorFileEncodingForCompilation(File file) {
     return false;
   }

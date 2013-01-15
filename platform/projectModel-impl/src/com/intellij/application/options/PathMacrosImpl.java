@@ -47,7 +47,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   private final Map<String, String> myLegacyMacros = new HashMap<String, String>();
   private final Map<String, String> myMacros = new HashMap<String, String>();
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
-  private final List<String> myIgnoredMacros = ContainerUtil.createEmptyCOWList();
+  private final List<String> myIgnoredMacros = ContainerUtil.createLockFreeCopyOnWriteList();
 
   @NonNls
   public static final String MACRO_ELEMENT = "macro";

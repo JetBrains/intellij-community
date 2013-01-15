@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -120,6 +121,6 @@ public class PsiFileSystemItemUtil {
       }
       parent = parent.getParent();
     }
-    return new String(chars);
+    return StringFactory.createShared(chars);
   }
 }

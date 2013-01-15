@@ -558,4 +558,15 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     return "Monospaced";
   }
 
+  protected TextAttributes getFallbackAttributes(TextAttributesKey fallbackKey) {
+    if (fallbackKey == null) return null;
+    if (myAttributesMap.containsKey(fallbackKey)) {
+      TextAttributes fallbackAttributes = myAttributesMap.get(fallbackKey);
+      if (fallbackAttributes != null && (!fallbackAttributes.isEmpty() || fallbackKey.getFallbackAttributeKey() == null)) {
+        return fallbackAttributes;
+      }
+    }
+    return getFallbackAttributes(fallbackKey.getFallbackAttributeKey());
+  }
+
 }

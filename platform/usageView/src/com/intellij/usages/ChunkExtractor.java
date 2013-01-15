@@ -40,6 +40,8 @@ import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -258,7 +260,7 @@ public class ChunkExtractor {
     TextAttributes attrs = bold
                            ? TextAttributes.merge(originalAttrs, new TextAttributes(null, null, null, null, Font.BOLD))
                            : originalAttrs;
-    result.add(new TextChunk(attrs, new String(chars.subSequence(start, end).toString())));
+    result.add(new TextChunk(attrs, StringFactory.createShared(CharArrayUtil.fromSequence(chars, start, end))));
   }
 
   private static boolean rangeIntersect(int s1, int e1, int s2, int e2) {

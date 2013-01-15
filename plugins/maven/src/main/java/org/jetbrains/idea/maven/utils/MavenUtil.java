@@ -601,6 +601,21 @@ public class MavenUtil {
   }
 
   @Nullable
+  public static String getMavenVersion(String mavenHome) {
+    String[] libs = new File(mavenHome, "lib").list();
+
+    if (libs != null) {
+      for (String lib : libs) {
+        if (lib.startsWith("maven-core-") && lib.endsWith(".jar")) {
+          return lib.substring("maven-core-".length(), lib.length() - ".jar".length());
+        }
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
   public static File resolveGlobalSettingsFile(@Nullable String overriddenMavenHome) {
     File directory = resolveMavenHomeDirectory(overriddenMavenHome);
     if (directory == null) return null;

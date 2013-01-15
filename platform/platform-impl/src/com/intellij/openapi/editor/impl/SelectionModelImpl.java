@@ -59,7 +59,7 @@ import java.util.List;
 public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.SelectionModelImpl");
 
-  private final List<SelectionListener> mySelectionListeners = ContainerUtil.createEmptyCOWList();
+  private final List<SelectionListener> mySelectionListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private volatile MyRangeMarker mySelectionMarker;
   private final EditorImpl myEditor;
   private int myLastSelectionStart;

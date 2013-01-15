@@ -78,7 +78,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   private volatile boolean myIsCommitInProgress;
   private final PsiToDocumentSynchronizer mySynchronizer;
 
-  private final List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final SmartPointerManagerImpl mySmartPointerManager;
 
   public PsiDocumentManagerImpl(@NotNull final Project project,
@@ -782,7 +782,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     error += "*********************************************" + "\n";
     error += "Editor Text tail:(" + (documentLength - i) + ")\n";// + editorText.subSequence(i, Math.min(i + 300, documentLength)) + "\n";
     error += "*********************************************" + "\n";
-    error += "Psi Text tail:(" + (fileText.length - i) + ")\n";// + new String(fileText, i, Math.min(i + 300, fileText.length) - i) + "\n";
+    error += "Psi Text tail:(" + (fileText.length - i) + ")\n";
     error += "*********************************************" + "\n";
 
     if (document instanceof DocumentWindow) {

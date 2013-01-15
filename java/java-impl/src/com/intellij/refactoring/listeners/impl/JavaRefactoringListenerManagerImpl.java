@@ -27,7 +27,7 @@ import java.util.List;
  * @author yole
  */
 public class JavaRefactoringListenerManagerImpl extends JavaRefactoringListenerManager {
-  private final List<MoveMemberListener> myMoveMemberListeners = ContainerUtil.createEmptyCOWList();
+  private final List<MoveMemberListener> myMoveMemberListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public void addMoveMembersListener(MoveMemberListener moveMembersListener) {
     myMoveMemberListeners.add(moveMembersListener);

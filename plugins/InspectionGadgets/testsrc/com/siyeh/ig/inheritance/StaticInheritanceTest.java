@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
  * User: cdr
  */
 public class StaticInheritanceTest extends LightQuickFixTestCase {
+  @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new StaticInheritanceInspection()};

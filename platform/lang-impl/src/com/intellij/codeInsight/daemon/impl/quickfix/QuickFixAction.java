@@ -75,7 +75,7 @@ public final class QuickFixAction {
     if (info == null || action == null) return;
     if (fixRange == null) fixRange = new TextRange(info.startOffset, info.endOffset);
     if (info.quickFixActionRanges == null) {
-      info.quickFixActionRanges = ContainerUtil.createEmptyCOWList();
+      info.quickFixActionRanges = ContainerUtil.createLockFreeCopyOnWriteList();
     }
     HighlightInfo.IntentionActionDescriptor desc = new HighlightInfo.IntentionActionDescriptor(action, options, displayName, null, key);
     info.quickFixActionRanges.add(Pair.create(desc, fixRange));

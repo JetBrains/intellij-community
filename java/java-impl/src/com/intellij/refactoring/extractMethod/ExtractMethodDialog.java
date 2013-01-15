@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -47,7 +48,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Arrays;
 
 
 /**
@@ -448,13 +448,11 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
       buffer.append(myNameField.getText());
     }
     buffer.append("(");
-    int count = 0;
-    char[] chars = new char[buffer.toString().length()];
-    Arrays.fill(chars, ' ');
 
-    final String INDENT = new String(chars);
+    final String INDENT = StringUtil.repeatSymbol(' ', buffer.length());
 
     final ParameterTablePanel.VariableData[] datas = myInputVariables;
+    int count = 0;
     for (int i = 0; i < datas.length;i++) {
       ParameterTablePanel.VariableData data = datas[i];
       if (data.passAsParameter) {

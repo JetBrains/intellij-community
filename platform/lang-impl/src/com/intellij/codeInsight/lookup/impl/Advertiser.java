@@ -34,7 +34,7 @@ import java.util.Random;
  * @author peter
  */
 public class Advertiser {
-  private final List<String> myTexts = ContainerUtil.createEmptyCOWList();
+  private final List<String> myTexts = ContainerUtil.createLockFreeCopyOnWriteList();
   private volatile Dimension myCachedPrefSize;
   private final JPanel myComponent = new JPanel(new GridBagLayout()) {
     private JLabel mySample = createLabel();
@@ -94,7 +94,8 @@ public class Advertiser {
     if (!myTexts.isEmpty()) {
       String text = myTexts.get(myCurrentItem % myTexts.size());
       myTextPanel.setText(prepareText(text));
-    } else {
+    }
+    else {
       myTextPanel.setText("");
     }
     myCachedPrefSize = null;

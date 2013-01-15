@@ -69,7 +69,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
   private final Project myProject;
   private final HashMap<ProcessHandler, DebuggerSession> mySessions = new HashMap<ProcessHandler, DebuggerSession>();
   private final BreakpointManager myBreakpointManager;
-  private final List<NameMapper> myNameMappers = ContainerUtil.createEmptyCOWList();
+  private final List<NameMapper> myNameMappers = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<Function<DebugProcess, PositionManager>> myCustomPositionManagerFactories =
     new ArrayList<Function<DebugProcess, PositionManager>>();
 

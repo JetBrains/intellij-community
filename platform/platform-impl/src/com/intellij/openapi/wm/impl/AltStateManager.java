@@ -37,7 +37,7 @@ public class AltStateManager implements AWTEventListener {
     }
   }
 
-  private final List<AltListener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<AltListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public interface AltListener {
     void altPressed();

@@ -13,27 +13,26 @@ import java.util.*;
 
 /**
  * Not thread-safe.
- * 
+ *
+ * @param <T> type of the target entity {@link org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeDescriptor#getElement() associated} with the current node
  * @author Denis Zhdanov
  * @since 8/23/11 3:50 PM
- * @param <T>   type of the target entity {@link GradleProjectStructureNodeDescriptor#getElement() associated} with the current node
  */
 public class GradleProjectStructureNode<T extends GradleEntityId> extends DefaultMutableTreeNode
-  implements Iterable<GradleProjectStructureNode<?>>
-{
+  implements Iterable<GradleProjectStructureNode<?>> {
 
   private final Set<GradleProjectStructureChange> myConflictChanges = new HashSet<GradleProjectStructureChange>();
-  private final List<Listener>                    myListeners       = ContainerUtil.createEmptyCOWList();
+  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   @NotNull private final Comparator<GradleProjectStructureNode<?>> myComparator;
-  @NotNull private final GradleProjectStructureNodeDescriptor<T>   myDescriptor;
-  
+  @NotNull private final GradleProjectStructureNodeDescriptor<T> myDescriptor;
+
   private boolean mySkipNotification;
 
   /**
    * Creates new <code>GradleProjectStructureNode</code> object with the given descriptor and 'compare-by-name' comparator.
-   * 
-   * @param descriptor  target node descriptor to use within the current node
+   *
+   * @param descriptor target node descriptor to use within the current node
    */
   public GradleProjectStructureNode(@NotNull GradleProjectStructureNodeDescriptor<T> descriptor) {
     this(descriptor, new Comparator<GradleProjectStructureNode<?>>() {
@@ -46,13 +45,12 @@ public class GradleProjectStructureNode<T extends GradleEntityId> extends Defaul
 
   /**
    * Creates new <code>GradleProjectStructureNode</code> object with the given descriptor and comparator to use for organising child nodes.
-   * 
-   * @param descriptor  target node descriptor to use within the current node
-   * @param comparator  comparator to use for organising child nodes of the current node
+   *
+   * @param descriptor target node descriptor to use within the current node
+   * @param comparator comparator to use for organising child nodes of the current node
    */
   public GradleProjectStructureNode(@NotNull GradleProjectStructureNodeDescriptor<T> descriptor,
-                                    @NotNull Comparator<GradleProjectStructureNode<?>> comparator)
-  {
+                                    @NotNull Comparator<GradleProjectStructureNode<?>> comparator) {
     super(descriptor);
     myDescriptor = descriptor;
     myComparator = comparator;
@@ -116,9 +114,9 @@ public class GradleProjectStructureNode<T extends GradleEntityId> extends Defaul
    * Asks current node to ensure that given child node is at the 'right position' (according to the {@link #myComparator}.
    * <p/>
    * Does nothing if given node is not a child of the current node.
-   * 
-   * @param child  target child node
-   * @return       <code>true</code> if child position was changed; <code>false</code> otherwise
+   *
+   * @param child target child node
+   * @return <code>true</code> if child position was changed; <code>false</code> otherwise
    */
   public boolean correctChildPositionIfNecessary(@NotNull GradleProjectStructureNode<?> child) {
     int currentPosition = -1;
@@ -164,7 +162,7 @@ public class GradleProjectStructureNode<T extends GradleEntityId> extends Defaul
     if (nodes.equals(children)) {
       return;
     }
-    
+
     mySkipNotification = true;
     try {
       removeAllChildren();
@@ -184,7 +182,7 @@ public class GradleProjectStructureNode<T extends GradleEntityId> extends Defaul
 
   /**
    * Registers given change within the given node assuming that it is
-   * {@link GradleTextAttributes#CHANGE_CONFLICT 'conflict change'}. We need to track number of such changes per-node because
+   * {@link org.jetbrains.plugins.gradle.config.GradleTextAttributes#CHANGE_CONFLICT 'conflict change'}. We need to track number of such changes per-node because
    * of the following possible situation:
    * <pre>
    * <ol>
@@ -195,8 +193,8 @@ public class GradleProjectStructureNode<T extends GradleEntityId> extends Defaul
    *   <li>The second conflict change is removed. The node should be marked as 'no change' now;</li>
    * </ol>
    * </pre>
-   * 
-   * @param change  conflict change to register for the current node
+   *
+   * @param change conflict change to register for the current node
    */
   public void addConflictChange(@NotNull GradleProjectStructureChange change) {
     myConflictChanges.add(change);
@@ -217,9 +215,9 @@ public class GradleProjectStructureNode<T extends GradleEntityId> extends Defaul
   }
 
   /**
-   * Performs reverse operation to {@link #addConflictChange(GradleProjectStructureChange)}.
-   * 
-   * @param change  conflict change to de-register from the current node
+   * Performs reverse operation to {@link #addConflictChange(org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange)}.
+   *
+   * @param change conflict change to de-register from the current node
    */
   public void removeConflictChange(@NotNull GradleProjectStructureChange change) {
     myConflictChanges.remove(change);
@@ -228,14 +226,14 @@ public class GradleProjectStructureNode<T extends GradleEntityId> extends Defaul
       onNodeChanged(this);
     }
   }
-  
+
   /**
    * Allows to query current node for all children that are associated with the entity of the given type.
-   * 
-   * @param clazz  target entity type
-   * @param <C>    target entity type
-   * @return       all children nodes that are associated with the entity of the given type if any;
-   *               empty collection otherwise
+   *
+   * @param clazz target entity type
+   * @param <C>   target entity type
+   * @return all children nodes that are associated with the entity of the given type if any;
+   *         empty collection otherwise
    */
   @SuppressWarnings("unchecked")
   @NotNull
@@ -257,7 +255,7 @@ public class GradleProjectStructureNode<T extends GradleEntityId> extends Defaul
     }
     return result;
   }
-  
+
   @NotNull
   @Override
   public Iterator<GradleProjectStructureNode<?>> iterator() {
@@ -294,7 +292,7 @@ public class GradleProjectStructureNode<T extends GradleEntityId> extends Defaul
       onNodeChanged(this);
     }
   }
-  
+
   public void addListener(@NotNull Listener listener) {
     myListeners.add(listener);
   }
@@ -334,13 +332,16 @@ public class GradleProjectStructureNode<T extends GradleEntityId> extends Defaul
       listener.onNodeChildrenChanged(this, indices);
     }
   }
-  
+
   public interface Listener {
     void onNodeAdded(@NotNull GradleProjectStructureNode<?> node, int index);
+
     void onNodeRemoved(@NotNull GradleProjectStructureNode<?> parent,
                        @NotNull GradleProjectStructureNode<?> removedChild,
                        int removedChildIndex);
+
     void onNodeChanged(@NotNull GradleProjectStructureNode<?> node);
+
     void onNodeChildrenChanged(@NotNull GradleProjectStructureNode<?> parent, int[] childIndices);
   }
 }

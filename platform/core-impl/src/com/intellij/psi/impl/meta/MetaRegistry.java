@@ -46,7 +46,7 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public class MetaRegistry extends MetaDataRegistrar {
-  private static final List<MyBinding> ourBindings = ContainerUtil.createEmptyCOWList();
+  private static final List<MyBinding> ourBindings = ContainerUtil.createLockFreeCopyOnWriteList();
   private static volatile boolean ourContributorsLoaded = false;
 
   private static final Key<CachedValue<PsiMetaData>> META_DATA_KEY = Key.create("META DATA KEY");

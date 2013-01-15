@@ -320,11 +320,6 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return SystemProperties.getJavaHome() + "/bin/java";
   }
 
-  @Override
-  public boolean shouldHonorFileEncodingForCompilation(File file) {
-    return isGroovyFile(file.getAbsolutePath());
-  }
-
   private static List<File> collectChangedFiles(CompileContext context,
                                                 DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws IOException {
     final ResourcePatterns patterns = ResourcePatterns.KEY.get(context);
@@ -396,7 +391,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return new File(root.getParentFile(), "groovy_rt");
   }
 
-  private static boolean isGroovyFile(String path) {
+  public static boolean isGroovyFile(String path) {
     return path.endsWith(".groovy") || path.endsWith(".gpp");
   }
 

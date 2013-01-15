@@ -106,12 +106,14 @@ public class CheckRegExpForm {
           @Override
           public void documentChanged(DocumentEvent e) {
             updater.cancelAllRequests();
-            updater.addRequest(new Runnable() {
-              @Override
-              public void run() {
-                updateBalloon();
-              }
-            }, 200);
+            if (!updater.isDisposed()) {
+              updater.addRequest(new Runnable() {
+                @Override
+                public void run() {
+                  updateBalloon();
+                }
+              }, 200);
+            }
           }
         };
         myRegExp.addDocumentListener(documentListener);

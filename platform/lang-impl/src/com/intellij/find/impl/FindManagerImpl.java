@@ -155,11 +155,12 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
   }
 
   @Override
-  public int showPromptDialog(final FindModel model, String title) {
+  public int showPromptDialog(@NotNull final FindModel model, String title) {
     return showPromptDialogImpl(model, title, null);
   }
 
-  public int showPromptDialogImpl(final FindModel model, String title, @Nullable final MalformedReplacementStringException exception) {
+  @PromptResultValue
+  public int showPromptDialogImpl(@NotNull final FindModel model, String title, @Nullable final MalformedReplacementStringException exception) {
     ReplacePromptDialog replacePromptDialog = new ReplacePromptDialog(model.isMultipleFiles(), title, myProject, exception) {
       @Override
       @Nullable
@@ -320,7 +321,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
   }
 
   @Override
-  public int showMalformedReplacementPrompt(FindModel model, String title, MalformedReplacementStringException exception) {
+  public int showMalformedReplacementPrompt(@NotNull FindModel model, String title, MalformedReplacementStringException exception) {
     return showPromptDialogImpl(model, title, exception);
   }
 

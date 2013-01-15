@@ -31,12 +31,12 @@ import java.util.List;
 /**
  * @author max
  */
-public class EventDispatcher <T extends EventListener>{
+public class EventDispatcher<T extends EventListener> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.EventDispatcher");
 
   private final T myMulticaster;
 
-  private final List<T> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<T> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public static <T extends EventListener> EventDispatcher<T> create(@NotNull Class<T> listenerClass) {
     return new EventDispatcher<T>(listenerClass);
@@ -44,7 +44,8 @@ public class EventDispatcher <T extends EventListener>{
 
   private EventDispatcher(@NotNull Class<T> listenerClass) {
     InvocationHandler handler = new InvocationHandler() {
-      @NonNls public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
+      @NonNls
+      public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
         if (method.getDeclaringClass().getName().equals("java.lang.Object")) {
           @NonNls String methodName = method.getName();
           if (methodName.equals("toString")) {
@@ -66,7 +67,6 @@ public class EventDispatcher <T extends EventListener>{
           return null;
         }
       }
-
     };
 
     //noinspection unchecked

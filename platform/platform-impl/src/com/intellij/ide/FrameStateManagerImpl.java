@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class FrameStateManagerImpl extends FrameStateManager implements ApplicationComponent {
-  private final List<FrameStateListener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<FrameStateListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private boolean myShouldSynchronize;
   private final Alarm mySyncAlarm;
@@ -74,7 +74,6 @@ public class FrameStateManagerImpl extends FrameStateManager implements Applicat
         }, 200);
       }
     });
-
   }
 
   @Override
@@ -113,5 +112,4 @@ public class FrameStateManagerImpl extends FrameStateManager implements Applicat
   public synchronized void removeListener(FrameStateListener listener) {
     myListeners.remove(listener);
   }
-
 }

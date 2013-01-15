@@ -43,8 +43,9 @@ public class GetInvocation implements Invocation {
       handler.putUserData(DOM_VALUE_KEY, value = cachedValuesManager.createCachedValue(new CachedValueProvider<List<Pair<Converter,Object>>>() {
         @Override
         public Result<List<Pair<Converter,Object>>> compute() {
-          List<Pair<Converter, Object>> list = ContainerUtil.createEmptyCOWList();
-          return Result.create(list, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, domManager, ProjectRootManager.getInstance(project));
+          List<Pair<Converter, Object>> list = ContainerUtil.createLockFreeCopyOnWriteList();
+          return Result
+            .create(list, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, domManager, ProjectRootManager.getInstance(project));
         }
       }, false));
     }

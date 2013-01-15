@@ -139,19 +139,6 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag("project.version"));
   }
 
-  public void testResolvingFromPropertiesSectionOfNonManagedProject() throws Exception {
-    VirtualFile m = createModulePom("module",
-                                    "<groupId>test</groupId>" +
-                                    "<artifactId>module</artifactId>" +
-                                    "<version>1</version>" +
-
-                                    "<properties>" +
-                                    "  <foo>${<caret>project.version}</foo>" +
-                                    "</properties>");
-
-    assertResolved(m, findTag("project.version"));
-  }
-
   public void testResolutionToUnknownProjectProperty() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

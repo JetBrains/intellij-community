@@ -109,7 +109,7 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
       @NotNull
       @Override
       protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-        return createGroup("<System Default>", null, "Choose encoding ''{1}''", selected.get());
+        return createGroup("<System Default>", "Choose encoding ''{1}''", selected.get(), null);
       }
     };
     parentPanel.removeAll();

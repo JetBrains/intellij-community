@@ -1,9 +1,16 @@
 package org.jetbrains.plugins.javaFX.fxml;
 
+import com.intellij.codeInsight.daemon.Validator;
+import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.xml.XmlAttributeImpl;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -13,15 +20,17 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * User: anna
  * Date: 1/9/13
  */
-public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor {
+public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor, Validator<XmlTag> {
   private final PsiClass myPsiClass;
   private final String myName;
 
@@ -89,17 +98,21 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor 
   @Override
   public XmlAttributeDescriptor[] getAttributesDescriptors(@Nullable XmlTag context) {
     if (context != null) {
-      //todo
       final String name = context.getName();
       if (Comparing.equal(name, getName()) && myPsiClass != null) {
+        final List<XmlAttributeDescriptor> simpleAttrs = new ArrayList<XmlAttributeDescriptor>();
         final PsiField[] fields = myPsiClass.getAllFields();
         if (fields.length > 0) {
-          final XmlAttributeDescriptor[] simpleAttrs = new XmlAttributeDescriptor[fields.length];
-          for (int i = 0; i < fields.length; i++) {
-            simpleAttrs[i] = new JavaFxPropertyBackedAttributeDescriptor(fields[i].getName(), myPsiClass);
+          for (PsiField field : fields) {
+            if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
+            final PsiType fieldType = field.getType();
+            if (PropertyUtil.findPropertyGetter(myPsiClass, field.getName(), false, true) != null && 
+                InheritanceUtil.isInheritor(fieldType, "javafx.beans.property.Property")) {//todo filter
+              simpleAttrs.add(new JavaFxPropertyBackedAttributeDescriptor(field.getName(), myPsiClass));
+            }
           }
-          return simpleAttrs;
         }
+        return simpleAttrs.isEmpty() ? XmlAttributeDescriptor.EMPTY : simpleAttrs.toArray(new XmlAttributeDescriptor[simpleAttrs.size()]);
       }
     }
     return XmlAttributeDescriptor.EMPTY;
@@ -161,5 +174,48 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor 
   @Override
   public Object[] getDependences() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+
+  @Override
+  public void validate(@NotNull XmlTag context, @NotNull ValidationHost host) {
+    final XmlTag parentTag = context.getParentTag();
+    if (parentTag != null) {
+      final XmlAttribute attribute = context.getAttribute(FxmlConstants.FX_CONTROLLER);
+      if (attribute != null) {
+        host.addMessage(((XmlAttributeImpl)attribute).getNameElement(), "fx:controller can only be applied to root element", ValidationHost.ErrorType.ERROR); //todo add delete/move to upper tag fix
+      }
+    }
+    validateTagAccordingToFieldType(context, parentTag, host);
+  }
+
+  private void validateTagAccordingToFieldType(XmlTag context, XmlTag parentTag, ValidationHost host) {
+    if (myPsiClass != null && myPsiClass.isValid()) {
+      if (parentTag == null) {
+        if (!InheritanceUtil.isInheritor(myPsiClass, FxmlConstants.JAVAFX_ANCHOR_PANE)) {
+          host.addMessage(context.getNavigationElement(), HighlightUtil.formatClass(myPsiClass) + " cannot be cast to " + FxmlConstants.JAVAFX_ANCHOR_PANE, ValidationHost.ErrorType.ERROR);
+        }
+        return;
+      }
+      final XmlElementDescriptor descriptor = parentTag.getDescriptor();
+      if (descriptor instanceof JavaFxListPropertyElementDescriptor) {
+        final PsiElement declaration = descriptor.getDeclaration();
+        if (declaration instanceof PsiField) {
+          final PsiType type = ((PsiField)declaration).getType();
+          final PsiType collectionItemType = GenericsHighlightUtil.getCollectionItemType(type, myPsiClass.getResolveScope());
+          if (collectionItemType != null && PsiPrimitiveType.getUnboxedType(collectionItemType) == null) {
+            final PsiClass baseClass = PsiUtil.resolveClassInType(collectionItemType);
+            if (baseClass != null) {
+              final String qualifiedName = baseClass.getQualifiedName();
+              if (qualifiedName != null && !Comparing.strEqual(qualifiedName, CommonClassNames.JAVA_LANG_STRING)) {
+                if (!InheritanceUtil.isInheritor(myPsiClass, qualifiedName)) {
+                  host.addMessage(context.getNavigationElement(), 
+                                  "Unable to coerce " + HighlightUtil.formatClass(myPsiClass)+ " to " + qualifiedName, ValidationHost.ErrorType.ERROR);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }

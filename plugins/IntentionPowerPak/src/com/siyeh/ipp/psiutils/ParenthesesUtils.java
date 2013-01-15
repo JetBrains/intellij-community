@@ -455,8 +455,7 @@ public class ParenthesesUtils {
           return true;
         }
       }
-      return false;
     }
-    return parentPrecedence != childPrecedence;
+    return parentPrecedence < childPrecedence;
   }
 }

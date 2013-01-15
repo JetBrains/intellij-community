@@ -44,7 +44,7 @@ import java.util.List;
  */
 public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoint> {
 
-  private final List<MyXBreakpointListener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<MyXBreakpointListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   @Override
   public void createBreakpointsGroupingRules(Collection<XBreakpointGroupingRule> rules) {

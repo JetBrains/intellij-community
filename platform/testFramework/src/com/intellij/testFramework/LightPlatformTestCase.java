@@ -190,7 +190,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     return creationPlace != null && StringUtil.startsWith(creationPlace, LIGHT_PROJECT_MARK);
   }
 
-  private static void initProject(final LightProjectDescriptor descriptor) throws Exception {
+  private static void initProject(@NotNull final LightProjectDescriptor descriptor) throws Exception {
     ourProjectDescriptor = descriptor;
     final File projectFile = FileUtil.createTempFile("light_temp_", ProjectFileType.DOT_DEFAULT_EXTENSION);
 
@@ -329,10 +329,11 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     filePointerManager.storePointers();
   }
 
-  public static void doSetup(final LightProjectDescriptor descriptor,
-                             final LocalInspectionTool[] localInspectionTools, final Map<String, InspectionTool> availableInspectionTools)
+  public static void doSetup(@NotNull LightProjectDescriptor descriptor,
+                             @NotNull LocalInspectionTool[] localInspectionTools,
+                             @NotNull final Map<String, InspectionTool> availableInspectionTools)
     throws Exception {
-    assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overriden without super call.", ourTestCase);
+    assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.", ourTestCase);
     IdeaLogger.ourErrorsOccurred = null;
 
     if (ourProject == null || !ourProjectDescriptor.equals(descriptor)) {
@@ -353,11 +354,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       @Override
       @NotNull
       public InspectionProfileEntry[] getInspectionTools(PsiElement element) {
-        if (availableInspectionTools != null) {
-          final Collection<InspectionTool> tools = availableInspectionTools.values();
-          return tools.toArray(new InspectionTool[tools.size()]);
-        }
-        return new InspectionTool[0];
+        final Collection<InspectionTool> tools = availableInspectionTools.values();
+        return tools.toArray(new InspectionTool[tools.size()]);
       }
 
       @Override
@@ -410,14 +408,10 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     catch (Exception e) {
 
     }
-    assertTrue("open: " +
-               getProject().isOpen() +
-               "; disposed:" +
-               getProject().isDisposed() +
-               "; startup passed:" +
-               passed +
-               "; all open projects: " +
-               Arrays.asList(ProjectManager.getInstance().getOpenProjects()), getProject().isInitialized());
+    assertTrue("open: " + getProject().isOpen() +
+               "; disposed:" + getProject().isDisposed() +
+               "; startup passed:" + passed +
+               "; all open projects: " + Arrays.asList(ProjectManager.getInstance().getOpenProjects()), getProject().isInitialized());
 
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(new CodeStyleSettings());
 
@@ -480,7 +474,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
   }
 
-  private static void enableInspectionTool(final Map<String, InspectionTool> availableLocalTools, InspectionTool wrapper) {
+  private static void enableInspectionTool(@NotNull Map<String, InspectionTool> availableLocalTools, @NotNull InspectionTool wrapper) {
     final String shortName = wrapper.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null) {
@@ -491,6 +485,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     availableLocalTools.put(shortName, wrapper);
   }
 
+  @NotNull
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return LocalInspectionTool.EMPTY_ARRAY;
   }
@@ -744,7 +739,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     String name = getName();
     assertTrue("Test name should start with 'test': " + name, name.startsWith("test"));
     name = name.substring("test".length());
-    if (name.length() > 0 && lowercaseFirstLetter && !UsefulTestCase.isAllUppercaseName(name)) {
+    if (!name.isEmpty() && lowercaseFirstLetter && !UsefulTestCase.isAllUppercaseName(name)) {
       name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
     }
     return name;

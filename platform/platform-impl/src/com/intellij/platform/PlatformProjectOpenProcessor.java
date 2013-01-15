@@ -17,6 +17,7 @@ package com.intellij.platform;
 
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -26,13 +27,14 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.projectImport.ProjectOpenedCallback;
@@ -146,8 +148,9 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
           processor.refreshProjectFiles(projectDir);
         }
         
-        project = ((ProjectManagerImpl) projectManager).convertAndLoadProject(baseDir.getPath());
+        project = projectManager.convertAndLoadProject(baseDir.getPath());
         if (project == null) {
+          WelcomeFrame.showIfNoProjectOpened();
           return null;
         }
         final Module[] modules = ModuleManager.getInstance(project).getModules();
@@ -172,7 +175,18 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     final Module module = runConfigurators ? runDirectoryProjectConfigurators(baseDir, project) : null;
 
     openFileFromCommandLine(project, virtualFile, line);
-    projectManager.openProject(project);
+    if (!projectManager.openProject(project)) {
+      WelcomeFrame.showIfNoProjectOpened();
+      final Project finalProject = project;
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          Disposer.dispose(finalProject);
+        }
+      });
+      return project;
+    }
+
     if (callback != null && runConfigurators) {
       callback.projectOpened(project, module);
     }

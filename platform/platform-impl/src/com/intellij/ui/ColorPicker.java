@@ -461,7 +461,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
     private Color myColor;
 
-    private final List<ColorListener> myListeners = ContainerUtil.createEmptyCOWList();
+    private final List<ColorListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
     private int myOpacity;
 
     private ColorWheel() {
@@ -588,7 +588,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       g.setColor(UIManager.getColor("Panel.background"));
       g.fillRect(0, 0, getWidth(), getHeight());
 
-      g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, ((float)myOpacity) / 255f ));
+      g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, ((float)myOpacity) / 255f));
       g.drawImage(myImage, myWheel.x, myWheel.y, null);
 
       g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC, 1.0f));

@@ -41,6 +41,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -249,12 +250,13 @@ public class CompositeElement extends TreeElement {
   @Override
   @NotNull
   public String getText() {
-    return new String(textToCharArray());
+    return StringFactory.createShared(textToCharArray());
   }
 
   @Override
   public CharSequence getChars() {
-    return new CharArrayCharSequence(textToCharArray());
+    return getText();
+    //return new CharArrayCharSequence(textToCharArray());
   }
 
   @Override

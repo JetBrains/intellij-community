@@ -22,22 +22,29 @@ package com.intellij.util.containers;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class MostlySingularMultiMap<K, V> implements Serializable {
   private static final long serialVersionUID = 2784448345881807109L;
 
-  private final THashMap<K, Object> myMap = new THashMap<K, Object>();
+  protected final Map<K, Object> myMap;
 
-  public void add(K key, V value) {
+  public MostlySingularMultiMap() {
+    myMap = createMap();
+  }
+
+  @NotNull
+  protected Map<K, Object> createMap() {
+    return new THashMap<K, Object>();
+  }
+
+  public void add(@NotNull K key, @NotNull V value) {
     Object current = myMap.get(key);
     if (current == null) {
       myMap.put(key, value);
@@ -52,6 +59,7 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
     }
   }
 
+  @NotNull
   public Set<K> keySet() {
     return myMap.keySet();
   }
@@ -60,11 +68,11 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
     return myMap.isEmpty();
   }
 
-  public boolean processForKey(K key, Processor<V> p) {
+  public boolean processForKey(@NotNull K key, @NotNull Processor<V> p) {
     return processValue(p, myMap.get(key));
   }
 
-  private boolean processValue(Processor<V> p, Object v) {
+  private boolean processValue(@NotNull Processor<V> p, Object v) {
     if (v instanceof Object[]) {
       for (Object o : (Object[])v) {
         if (!p.process((V)o)) return false;
@@ -77,7 +85,7 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
     return true;
   }
 
-  public boolean processAllValues(Processor<V> p) {
+  public boolean processAllValues(@NotNull Processor<V> p) {
     for (Object v : myMap.values()) {
       if (!processValue(p, v)) return false;
     }
@@ -89,7 +97,7 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
     return myMap.size();
   }
 
-  public int valuesForKey(K key) {
+  public int valuesForKey(@NotNull K key) {
     Object current = myMap.get(key);
     if (current == null) return 0;
     if (current instanceof Object[]) return ((Object[])current).length;
@@ -97,19 +105,24 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
   }
 
   @NotNull
-  public Iterable<V> get(K name) {
+  public Iterable<V> get(@NotNull K name) {
     final Object value = myMap.get(name);
+    return rawValueToCollection(value);
+  }
+
+  @NotNull
+  protected List<V> rawValueToCollection(Object value) {
     if (value == null) return Collections.emptyList();
 
     if (value instanceof Object[]) {
-      return (Iterable<V>)Arrays.asList((Object[])value);
+      return (List<V>)Arrays.asList((Object[])value);
     }
 
-    return Collections.singleton((V)value);
+    return Collections.singletonList((V)value);
   }
 
   public void compact() {
-    myMap.compact();
+    ((THashMap)myMap).compact();
   }
 
   @Override
@@ -123,4 +136,57 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
       }
     }, "; ") + "}";
   }
+
+  public void clear() {
+    myMap.clear();
+  }
+
+  @NotNull
+  public static <K,V> MostlySingularMultiMap<K,V> emptyMap() {
+    //noinspection unchecked
+    return EMPTY;
+  }
+  private static final MostlySingularMultiMap EMPTY = new MostlySingularMultiMap() {
+    @Override
+    public void add(@NotNull Object key, @NotNull Object value) {
+      throw new IncorrectOperationException();
+    }
+
+    @NotNull
+    @Override
+    public Set keySet() {
+      return Collections.emptySet();
+    }
+
+    @Override
+    public boolean isEmpty() {
+      return true;
+    }
+
+    @Override
+    public boolean processForKey(@NotNull Object key, @NotNull Processor p) {
+      return true;
+    }
+
+    @Override
+    public boolean processAllValues(@NotNull Processor p) {
+      return true;
+    }
+
+    @Override
+    public int size() {
+      return 0;
+    }
+
+    @Override
+    public int valuesForKey(@NotNull Object key) {
+      return 0;
+    }
+
+    @NotNull
+    @Override
+    public Iterable get(@NotNull Object name) {
+      return EmptyIterable.getInstance();
+    }
+  };
 }

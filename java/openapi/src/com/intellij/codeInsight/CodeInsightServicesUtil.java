@@ -50,8 +50,14 @@ public class CodeInsightServicesUtil {
               expression.getTokenBeforeOperand(op).replace(createOperationToken(factory, ourTokenMap[i + (i % 2 == 0 ? 1 : -1)]));
             }
             if (tokenType == JavaTokenType.OROR || tokenType == JavaTokenType.ANDAND) {
-              op.replace(invertCondition(op));
+              PsiExpression inverted = invertCondition(op);
+              op.replace(inverted);
             }
+          }
+          if (tokenType == JavaTokenType.ANDAND && booleanExpression.getParent() instanceof PsiExpression) {
+            final PsiParenthesizedExpression parth = (PsiParenthesizedExpression)factory.createExpressionFromText("(a)", expression);
+            parth.getExpression().replace(expression);
+            return parth;
           }
           return expression;
         }

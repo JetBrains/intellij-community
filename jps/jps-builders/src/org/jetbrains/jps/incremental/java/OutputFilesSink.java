@@ -15,7 +15,6 @@
  */
 package org.jetbrains.jps.incremental.java;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -40,8 +39,6 @@ import java.util.Set;
 *         Date: 2/16/12
 */
 class OutputFilesSink implements OutputFileConsumer {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.java.OutputFilesSink");
-
   private final CompileContext myContext;
   private final ModuleLevelBuilder.OutputConsumer myOutputConsumer;
   private final Callbacks.Backend myMappingsCallback;
@@ -92,11 +89,14 @@ class OutputFilesSink implements OutputFileConsumer {
       }
     }
 
-    try {
-      writeToDisk(fileObject, isTemp);
-    }
-    catch (IOException e) {
-      myContext.processMessage(new CompilerMessage(JavaBuilder.BUILDER_NAME, BuildMessage.Kind.ERROR, e.getMessage()));
+    if (outKind == JavaFileObject.Kind.CLASS) {
+      // generated sources and resources are handled separately
+      try {
+        writeToDisk(fileObject, isTemp);
+      }
+      catch (IOException e) {
+        myContext.processMessage(new CompilerMessage(JavaBuilder.BUILDER_NAME, BuildMessage.Kind.ERROR, e.getMessage()));
+      }
     }
   }
 

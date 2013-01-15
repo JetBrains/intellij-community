@@ -36,16 +36,16 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * The standard {@link com.intellij.ide.structureView.StructureViewModel} implementation which is linked to a text editor.
+ * The standard {@link StructureViewModel} implementation which is linked to a text editor.
  *
- * @see TreeBasedStructureViewBuilder#createStructureViewModel()
+ * @see com.intellij.ide.structureView.TreeBasedStructureViewBuilder#createStructureViewModel()
  */
 
 public abstract class TextEditorBasedStructureViewModel implements StructureViewModel, ProvidingTreeModel {
   private final Editor myEditor;
   private final PsiFile myPsiFile;
   private final Disposable myDisposable = Disposer.newDisposable();
-  private final List<FileEditorPositionListener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<FileEditorPositionListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   /**
    * Creates a structure view model instance linked to a text editor displaying the specified

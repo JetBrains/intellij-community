@@ -23,8 +23,10 @@ package com.intellij.codeInsight.daemon.quickFix;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
+import org.jetbrains.annotations.NotNull;
 
 public class ReplaceWithTernaryOperatorTest extends LightQuickFixTestCase {
+  @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new DataFlowInspection(), new NullableStuffInspection()};

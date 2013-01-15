@@ -95,7 +95,7 @@ class EncodingFileTreeTable extends AbstractFileTreeTable<Charset> {
           @NotNull
           @Override
           protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-            return createGroup("<Clear>", null, "Encoding ''{1}''", null);
+            return createGroup("<Clear>", "Encoding ''{1}''", null, null);
           }
 
           @Override

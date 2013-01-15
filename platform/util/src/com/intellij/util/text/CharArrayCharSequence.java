@@ -23,11 +23,11 @@ public class CharArrayCharSequence implements CharSequenceBackedByArray {
   private final int myStart;
   private final int myEnd;
 
-  public CharArrayCharSequence(char... chars) {
+  public CharArrayCharSequence(@NotNull char... chars) {
     this(chars, 0, chars.length);
   }
 
-  public CharArrayCharSequence(char[] chars, int start, int end) {
+  public CharArrayCharSequence(@NotNull char[] chars, int start, int end) {
     if (start < 0 || end > chars.length || start > end) {
       throw new IndexOutOfBoundsException("chars.length:" + chars.length +
                                           ", start:" + start +

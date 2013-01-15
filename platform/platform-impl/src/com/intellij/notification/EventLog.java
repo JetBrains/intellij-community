@@ -329,7 +329,7 @@ public class EventLog {
 
   public static class ProjectTracker extends AbstractProjectComponent {
     private volatile EventLogConsole myConsole;
-    private final List<Notification> myInitial = ContainerUtil.createEmptyCOWList();
+    private final List<Notification> myInitial = ContainerUtil.createLockFreeCopyOnWriteList();
     private final LogModel myProjectModel;
 
     public ProjectTracker(@NotNull final Project project) {

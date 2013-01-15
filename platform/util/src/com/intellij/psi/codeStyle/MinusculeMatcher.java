@@ -19,7 +19,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.io.IOUtil;
-import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.NonNls;
@@ -107,7 +106,6 @@ public class MinusculeMatcher implements Matcher {
 
     int fragmentCount = 0;
     int matchingCase = 0;
-    CharArrayCharSequence seq = new CharArrayCharSequence(myPattern);
     int p = -1;
     TextRange first = null;
 
@@ -120,7 +118,7 @@ public class MinusculeMatcher implements Matcher {
       integral += range.getStartOffset() * len + len * (len - 1) / 2;
       for (int i = range.getStartOffset(); i < range.getEndOffset(); i++) {
         char c = name.charAt(i);
-        p = StringUtil.indexOf(seq, c, p + 1, myPattern.length, false);
+        p = StringUtil.indexOf(myPattern, c, p + 1, myPattern.length, false);
         if (p < 0) {
           break;
         }
@@ -306,10 +304,17 @@ public class MinusculeMatcher implements Matcher {
   }
 
   private boolean isWildcard(int patternIndex) {
-    return isPatternChar(patternIndex, ' ') || isPatternChar(patternIndex, '*');
+    return isPatternChar(patternIndex, ' ', '*');
   }
   private boolean isPatternChar(int patternIndex, char c) {
     return patternIndex >= 0 && patternIndex < myPattern.length && myPattern[patternIndex] == c;
+  }
+  private boolean isPatternChar(int patternIndex, char c1, char c2) {
+    if (patternIndex >= 0 && patternIndex < myPattern.length) {
+      char pc = myPattern[patternIndex];
+      return pc == c1 || pc == c2;
+    }
+    return false;
   }
 
   private int indexOfWordStart(@NotNull String name, int patternIndex, int startFrom, boolean isAsciiName) {

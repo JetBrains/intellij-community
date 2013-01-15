@@ -19,9 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.GraphicsConfig;
-import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.ui.ShadowAction;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
@@ -79,8 +77,8 @@ public class JBTabsImpl extends JComponent
 
   private Insets myInnerInsets = JBInsets.NONE;
 
-  private final List<EventListener> myTabMouseListeners = ContainerUtil.createEmptyCOWList();
-  private final List<TabsListener> myTabListeners = ContainerUtil.createEmptyCOWList();
+  private final List<EventListener> myTabMouseListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<TabsListener> myTabListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myFocused;
 
   private Getter<ActionGroup> myPopupGroup;
@@ -339,7 +337,8 @@ public class JBTabsImpl extends JComponent
       img = UIUtil.createImage(width > 0 ? width : 500, height > 0 ? height : 500, BufferedImage.TYPE_INT_ARGB);
       Graphics2D g = img.createGraphics();
       cmp.paint(g);
-    } else {
+    }
+    else {
       img = UIUtil.createImage(500, 500, BufferedImage.TYPE_INT_ARGB);
     }
     return img;
@@ -538,22 +537,20 @@ public class JBTabsImpl extends JComponent
     if (lastLayout == null) {
       return;
     }
-    mySingleRowLayout.myMorePopup = new JPopupMenu();
+    mySingleRowLayout.myMorePopup = new JBPopupMenu();
+    float grayPercent = 0.9f;
     for (final TabInfo each : myVisibleInfos) {
-      final JCheckBoxMenuItem item = new JCheckBoxMenuItem(each.getText());
+      final JMenuItem item = new JBCheckboxMenuItem(each.getText(), getSelectedInfo() == each);
+      item.setIcon(each.getIcon());
       Color color = UIManager.getColor("MenuItem.background");
       if (color != null) {
         if (mySingleRowLayout.isTabHidden(each)) {
-          color = new Color((int)(color.getRed() * 0.85f), (int)(color.getGreen() * 0.85f), (int)(color.getBlue() * 0.85f));
+          color = new Color((int) (color.getRed() * grayPercent), (int) (color.getGreen() * grayPercent), (int) (color.getBlue() * grayPercent));
         }
-
         item.setBackground(color);
       }
 
       mySingleRowLayout.myMorePopup.add(item);
-      if (getSelectedInfo() == each) {
-        item.setSelected(true);
-      }
       item.addActionListener(new ActionListener() {
         public void actionPerformed(final ActionEvent e) {
           select(each, true);
@@ -1648,7 +1645,7 @@ public class JBTabsImpl extends JComponent
       else {
         alpha = 255;
         final Color tabColor = getActiveTabColor(null);
-        final Color defaultBg = UIUtil.isUnderDarcula()? UIUtil.getControlColor() : Color.white;
+        final Color defaultBg = UIUtil.isUnderDarcula() ? UIUtil.getControlColor() : Color.white;
         shapeInfo.from = tabColor == null ? defaultBg : tabColor;
         shapeInfo.to = tabColor == null ? defaultBg : tabColor;
       }
@@ -1776,9 +1773,7 @@ public class JBTabsImpl extends JComponent
   }
 
   protected static class ShapeInfo {
-    public ShapeInfo() {
-    }
-
+    public ShapeInfo() {}
     public ShapeTransform path;
     public ShapeTransform fillPath;
     public ShapeTransform labelPath;
@@ -1933,7 +1928,8 @@ public class JBTabsImpl extends JComponent
       g2d.drawImage(img, x, y, width, height, null);
 
       label.setInactiveStateImage(img);
-    } else {
+    }
+    else {
       doPaintInactive(g2d, leftGhostExists, label, label.getBounds(), rightGhostExists, row, column);
       label.setInactiveStateImage(null);
     }
@@ -2056,14 +2052,14 @@ public class JBTabsImpl extends JComponent
       shape.transformLine(0, topY, 0, topY + shape.deltaY((int)(shape.getHeight() / 1.5)));
 
     final GradientPaint gp = UIUtil.isUnderDarcula()
-      ? new GradientPaint(gradientLine.x1, gradientLine.y1,
-                        shape.transformY1(backgroundColor, backgroundColor),
-                        gradientLine.x2, gradientLine.y2,
-                        shape.transformY1(backgroundColor, backgroundColor))
-      : new GradientPaint(gradientLine.x1, gradientLine.y1,
-                        shape.transformY1(backgroundColor.brighter().brighter(), backgroundColor),
-                        gradientLine.x2, gradientLine.y2,
-                        shape.transformY1(backgroundColor, backgroundColor.brighter().brighter()));
+                             ? new GradientPaint(gradientLine.x1, gradientLine.y1,
+                                                 shape.transformY1(backgroundColor, backgroundColor),
+                                                 gradientLine.x2, gradientLine.y2,
+                                                 shape.transformY1(backgroundColor, backgroundColor))
+                             : new GradientPaint(gradientLine.x1, gradientLine.y1,
+                                                 shape.transformY1(backgroundColor.brighter().brighter(), backgroundColor),
+                                                 gradientLine.x2, gradientLine.y2,
+                                                 shape.transformY1(backgroundColor, backgroundColor.brighter().brighter()));
 
     final Paint old = g2d.getPaint();
     g2d.setPaint(gp);
