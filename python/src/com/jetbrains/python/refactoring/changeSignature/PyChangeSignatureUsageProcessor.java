@@ -221,7 +221,8 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       if (currentParameter instanceof PyKeywordArgument && info.isRenamed()) {
         params.add(currentParameter.getText());
       }
-      else if (oldIndex < arguments.length && !info.getDefaultInSignature() || !(currentParameter instanceof PyKeywordArgument)) {
+      else if (oldIndex < arguments.length && (
+        !info.getDefaultInSignature() || !(currentParameter instanceof PyKeywordArgument))) {
         addOldPositionParameter(params, arguments[oldIndex], info);
       }
       else
