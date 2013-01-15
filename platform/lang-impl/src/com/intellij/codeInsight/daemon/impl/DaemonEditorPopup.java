@@ -23,6 +23,8 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.EditorBundle;
+import com.intellij.openapi.ui.JBMenuItem;
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.awt.RelativePoint;
@@ -43,23 +45,17 @@ public class DaemonEditorPopup extends PopupHandler {
   @Override
   public void invokePopup(final Component comp, final int x, final int y) {
     if (ApplicationManager.getApplication() == null) return;
-    final JRadioButtonMenuItem errorsFirst = new JRadioButtonMenuItem(EditorBundle.message("errors.panel.go.to.errors.first.radio"));
+    final JRadioButtonMenuItem errorsFirst = createRadioButtonMenuItem(EditorBundle.message("errors.panel.go.to.errors.first.radio"));
     errorsFirst.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         DaemonCodeAnalyzerSettings.getInstance().NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = errorsFirst.isSelected();
       }
     });
-    final JPopupMenu popupMenu = new JPopupMenu() {
-      @Override
-      public void paint(Graphics g) {
-        GraphicsUtil.setupAntialiasing(g);
-        super.paint(g);
-      }
-    };
+    final JPopupMenu popupMenu = new JBPopupMenu();
     popupMenu.add(errorsFirst);
 
-    final JRadioButtonMenuItem next = new JRadioButtonMenuItem(EditorBundle.message("errors.panel.go.to.next.error.warning.radio"));
+    final JRadioButtonMenuItem next = createRadioButtonMenuItem(EditorBundle.message("errors.panel.go.to.next.error.warning.radio"));
     next.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -73,7 +69,7 @@ public class DaemonEditorPopup extends PopupHandler {
     group.add(next);
 
     popupMenu.addSeparator();
-    final JMenuItem hLevel = new JMenuItem(EditorBundle.message("customize.highlighting.level.menu.item"));
+    final JMenuItem hLevel = new JBMenuItem(EditorBundle.message("customize.highlighting.level.menu.item"));
     popupMenu.add(hLevel);
 
     final boolean isErrorsFirst = DaemonCodeAnalyzerSettings.getInstance().NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST;
@@ -94,5 +90,15 @@ public class DaemonEditorPopup extends PopupHandler {
     if (file != null && DaemonCodeAnalyzer.getInstance(myPsiFile.getProject()).isHighlightingAvailable(file)) {
       popupMenu.show(comp, x, y);
     }
+  }
+
+  private static JRadioButtonMenuItem createRadioButtonMenuItem(final String message) {
+    return new JRadioButtonMenuItem(message) {
+      @Override
+      public void paint(Graphics g) {
+        GraphicsUtil.setupAntialiasing(g);
+        super.paint(g);
+      }
+    };
   }
 }

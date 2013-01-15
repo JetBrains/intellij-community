@@ -131,4 +131,14 @@ public class ColorUtil {
     // based on perceptional luminosity, see
     return (1 - (0.299 * c.getRed() + 0.587 * c.getGreen() + 0.114 * c.getBlue()) / 255) >= 0.5;
   }
+
+  public static Color mix(Color c1, Color c2, float balance) {
+    assert balance >= 0 && balance <= 1 : "balance should be in 0..1";
+    float[] rgbs1 = c1.getRGBComponents(null);
+    float[] rgbs2 = c2.getRGBComponents(null);
+    for (int i = 0; i < 4; i++) {
+      rgbs1[i] = rgbs1[i] * (1 - balance) + rgbs2[i] * balance;
+    }
+    return new Color(rgbs1[0], rgbs1[1], rgbs1[2], rgbs1[3]);
+  }
 }
