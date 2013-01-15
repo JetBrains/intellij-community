@@ -203,7 +203,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
 
   @Nullable
   private PyType getGenericReturnType(@NotNull TypeEvalContext typeEvalContext, @Nullable PyQualifiedExpression callSite) {
-    if (typeEvalContext.maySwitchToAST(this)) {
+    if (typeEvalContext.maySwitchToAST(this) && LanguageLevel.forElement(this).isAtLeast(LanguageLevel.PYTHON30)) {
       PyAnnotation anno = getAnnotation();
       if (anno != null) {
         PyClass pyClass = anno.resolveToClass();
