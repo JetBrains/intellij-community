@@ -6,7 +6,9 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -78,13 +80,18 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
       return;
     }
     if (!(element instanceof PyFunction)) return;
-    final PyBuiltinCache cache = PyBuiltinCache.getInstance(element);
-    if (cache.hasInBuiltins(element)) {
-      String message =
-        RefactoringBundle.getCannotRefactorMessage("Function is inside builtins file");
-      CommonRefactoringUtil.showErrorHint(project, editor, message,
-                                          REFACTORING_NAME, REFACTORING_NAME);
-      return;
+
+    final PsiFile psiFile = element.getContainingFile();
+    if (psiFile == null) return;
+    final VirtualFile virtualFile = psiFile.getVirtualFile();
+    if (virtualFile != null) {
+      if (ProjectRootManager.getInstance(project).getFileIndex().isInLibraryClasses(virtualFile)) {
+        String message =
+            RefactoringBundle.getCannotRefactorMessage("Function is not under the source root");
+          CommonRefactoringUtil.showErrorHint(project, editor, message,
+                                              REFACTORING_NAME, REFACTORING_NAME);
+          return;
+      }
     }
 
     final PyFunction newFunction = getSuperMethod((PyFunction)element);
