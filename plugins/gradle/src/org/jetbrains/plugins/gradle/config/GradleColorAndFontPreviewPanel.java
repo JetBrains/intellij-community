@@ -37,20 +37,20 @@ import java.util.Map;
  * @since 1/19/12 11:59 AM
  */
 public class GradleColorAndFontPreviewPanel implements PreviewPanel {
-  
+
   private final Map<TextAttributesKey, DefaultMutableTreeNode> myNodes = new HashMap<TextAttributesKey, DefaultMutableTreeNode>();
 
-  private final List<ColorAndFontSettingsListener> myListeners                = ContainerUtil.createEmptyCOWList();
-  private final JPanel                             myContent                  = new JPanel(new GridBagLayout());
-  private final JPanel                             myNodeRenderPanel          = new JPanel(new GridBagLayout());
-  private final Ref<Boolean>                       myAllowTreeExpansion       = new Ref<Boolean>(true);
-  private final ArrowPanel                         mySelectedElementSignPanel = new ArrowPanel();
-  
-  private final Tree             myTree;
+  private final List<ColorAndFontSettingsListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final JPanel myContent = new JPanel(new GridBagLayout());
+  private final JPanel myNodeRenderPanel = new JPanel(new GridBagLayout());
+  private final Ref<Boolean> myAllowTreeExpansion = new Ref<Boolean>(true);
+  private final ArrowPanel mySelectedElementSignPanel = new ArrowPanel();
+
+  private final Tree myTree;
   private final DefaultTreeModel myTreeModel;
 
   private ColorAndFontOptions myOptions;
-  private TreeNode            mySelectedNode;
+  private TreeNode mySelectedNode;
 
   public GradleColorAndFontPreviewPanel(@NotNull ColorAndFontOptions options) {
     myOptions = options;
@@ -77,32 +77,32 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
     );
 
     String intellijLibraryName = GradleBundle.message("gradle.settings.color.text.sample.node.intellij.name");
-                                                      //ApplicationNamesInfo.getInstance().getProductName());
+    //ApplicationNamesInfo.getInstance().getProductName());
     DefaultMutableTreeNode intellijLibrary = createNode(
       intellijLibraryName, AllIcons.Nodes.PpLib, GradleTextAttributes.INTELLIJ_LOCAL_CHANGE
     );
-    
+
     //String syncLibraryName = GradleBundle.message("gradle.settings.color.text.sample.node.sync.name");
     //DefaultMutableTreeNode syncLibrary = createNode(syncLibraryName, GradleIcons.LIB_ICON, GradleTextAttributes.NO_CHANGE);
-    
+
     module.add(gradleLibrary);
     module.add(intellijLibrary);
     //module.add(syncLibrary);
     root.add(module);
-    
+
     mySelectedNode = root;
-    
+
     DefaultTreeModel treeModel = new DefaultTreeModel(root);
     Tree tree = buildTree(treeModel, module);
-    
+
     GridBagConstraints constraints = new GridBagConstraints();
     constraints.fill = GridBagConstraints.BOTH;
     constraints.weightx = constraints.weighty = 1;
     myContent.add(new JBScrollPane(tree), constraints);
     return new Pair<Tree, DefaultTreeModel>(tree, treeModel);
   }
-  
-  private Tree buildTree(@NotNull TreeModel model, DefaultMutableTreeNode ... nodesToExpand) {
+
+  private Tree buildTree(@NotNull TreeModel model, DefaultMutableTreeNode... nodesToExpand) {
     final Tree tree = new Tree(model) {
       @Override
       protected void setExpandedState(TreePath path, boolean state) {
@@ -112,19 +112,19 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
         // Ignore the expansion change events otherwise
       }
     };
-    
+
     // Configure expansion
     for (DefaultMutableTreeNode node : nodesToExpand) {
       tree.expandPath(new TreePath(node.getPath()));
     }
     myAllowTreeExpansion.set(false);
-    
+
     // Configure selection.
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     tree.addTreeSelectionListener(new TreeSelectionListener() {
-      
+
       private boolean myIgnore;
-      
+
       @Override
       public void valueChanged(TreeSelectionEvent e) {
         if (myIgnore) {
@@ -160,7 +160,7 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
         }
       }
     });
-    
+
     // Bind rendering to the target colors scheme.
     final NodeRenderer delegate = new NodeRenderer() {
       @NotNull
@@ -178,8 +178,7 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
                                                     boolean expanded,
                                                     boolean leaf,
                                                     int row,
-                                                    boolean hasFocus)
-      {
+                                                    boolean hasFocus) {
         final Component component = delegate.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
         if (myNodeRenderPanel.getComponentCount() <= 0) {
           GridBagConstraints constraints = new GridBagConstraints();
@@ -188,14 +187,14 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
           constraints.anchor = GridBagConstraints.CENTER;
           myNodeRenderPanel.add(mySelectedElementSignPanel, constraints);
         }
-        
+
         mySelectedElementSignPanel.setPaint(value == mySelectedNode);
         return myNodeRenderPanel;
       }
     });
     return tree;
   }
-  
+
   @Override
   public void blinkSelectedHighlightType(Object selected) {
     if (!(selected instanceof EditorSchemeAttributeDescriptor)) {
@@ -212,8 +211,8 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
 
   /**
    * Instructs the panel to show given node as selected.
-   * 
-   * @param node  node to show as 'selected'
+   *
+   * @param node node to show as 'selected'
    */
   private void pointTo(@NotNull TreeNode node) {
     TreeNode oldSelectedNode = mySelectedNode;
@@ -221,7 +220,7 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
     myTreeModel.nodeChanged(oldSelectedNode);
     myTreeModel.nodeChanged(mySelectedNode);
   }
-  
+
   @Override
   public void disposeUIResources() {
     myListeners.clear();
@@ -274,9 +273,9 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
    * Encapsulates logic of drawing 'selected element' sign.
    */
   private static class ArrowPanel extends JPanel {
-    
+
     private boolean myPaint;
-    
+
     ArrowPanel() {
       super(new BorderLayout());
       // Reserve enough horizontal space.
@@ -310,8 +309,8 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
         }
       }
       int q = unit / 4;
-      int[] x = {0,    unit * 3, unit * 2, unit * 4, unit * 4, unit * 2, unit * 3, 0   };
-      int[] y = {unit, 0,        unit - q, unit - q, unit + q, unit + q, unit * 2, unit};
+      int[] x = {0, unit * 3, unit * 2, unit * 4, unit * 4, unit * 2, unit * 3, 0};
+      int[] y = {unit, 0, unit - q, unit - q, unit + q, unit + q, unit * 2, unit};
       if (yShift != 0) {
         for (int i = 0; i < y.length; i++) {
           y[i] += yShift;

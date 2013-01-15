@@ -22,6 +22,7 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.actions.EditSourceAction;
@@ -493,7 +494,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       String message = (shelvedChangeLists.size() == 1)
         ? VcsBundle.message("shelve.changes.delete.confirm", shelvedChangeLists.get(0).DESCRIPTION)
         : VcsBundle.message("shelve.changes.delete.multiple.confirm", shelvedChangeLists.size());
-      int rc = Messages.showOkCancelDialog(myProject, message, VcsBundle.message("shelvedChanges.delete.title"), Messages.getWarningIcon());
+      int rc = Messages.showOkCancelDialog(myProject, message, VcsBundle.message("shelvedChanges.delete.title"), CommonBundle.message("button.delete"), CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
       if (rc != 0) return;
       for(ShelvedChangeList changeList: shelvedChangeLists) {
         ShelveChangesManager.getInstance(myProject).deleteChangeList(changeList);

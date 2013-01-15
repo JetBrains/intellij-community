@@ -26,25 +26,25 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * A default implementation of {@link com.intellij.openapi.actionSystem.ActionGroup}. Provides the ability
+ * A default implementation of {@link ActionGroup}. Provides the ability
  * to add children actions and separators between them. In most of the
  * cases you will be using this implementation but note that there are
  * cases (for example "Recent files" dialog) where children are determined
  * on rules different than just positional constraints, that's when you need
  * to implement your own <code>ActionGroup</code>.
  *
- * @see com.intellij.openapi.actionSystem.Constraints
+ * @see Constraints
  */
 public class DefaultActionGroup extends ActionGroup {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.DefaultActionGroup");
   /**
    * Contains instances of AnAction
    */
-  private final List<AnAction> mySortedChildren = ContainerUtil.createEmptyCOWList();
+  private final List<AnAction> mySortedChildren = ContainerUtil.createLockFreeCopyOnWriteList();
   /**
    * Contains instances of Pair
    */
-  private final List<Pair<AnAction,Constraints>> myPairs = ContainerUtil.createEmptyCOWList();
+  private final List<Pair<AnAction, Constraints>> myPairs = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public DefaultActionGroup() {
     this(null, false);
@@ -168,7 +168,7 @@ public class DefaultActionGroup extends ActionGroup {
     }
   }
 
-  private boolean addToSortedList(@NotNull AnAction action, Constraints constraint, ActionManager actionManager){
+  private boolean addToSortedList(@NotNull AnAction action, Constraints constraint, ActionManager actionManager) {
     int index = findIndex(constraint.myRelativeToActionId, mySortedChildren, actionManager);
     if (index == -1) {
       return false;
@@ -234,7 +234,7 @@ public class DefaultActionGroup extends ActionGroup {
   @NotNull
   public final AnAction[] getChildren(@Nullable AnActionEvent e) {
     boolean hasNulls = false;
-    
+
     // Mix sorted actions and pairs
     int sortedSize = mySortedChildren.size();
     AnAction[] children = new AnAction[sortedSize + myPairs.size()];
@@ -265,14 +265,14 @@ public class DefaultActionGroup extends ActionGroup {
       hasNulls |= action == null;
       children[i + sortedSize] = action;
     }
-    
+
     if (hasNulls) {
       return ContainerUtil.mapNotNull(children, FunctionUtil.<AnAction>id(), AnAction.EMPTY_ARRAY);
     }
     return children;
   }
 
-  @Nullable 
+  @Nullable
   private AnAction unstub(@Nullable AnActionEvent e, final ActionStub stub) {
     ActionManager actionManager = e != null ? e.getActionManager() : ActionManager.getInstance();
     try {

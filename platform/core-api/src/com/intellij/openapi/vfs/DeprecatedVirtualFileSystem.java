@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
-  protected final List<VirtualFileListener> myFileListeners = ContainerUtil.createEmptyCOWList();
+  protected final List<VirtualFileListener> myFileListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   @Override
   public void addVirtualFileListener(@NotNull VirtualFileListener listener) {
@@ -48,7 +48,11 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
     }
   }
 
-  protected void firePropertyChanged(Object requestor, @NotNull VirtualFile file, @NotNull String propertyName, Object oldValue, Object newValue) {
+  protected void firePropertyChanged(Object requestor,
+                                     @NotNull VirtualFile file,
+                                     @NotNull String propertyName,
+                                     Object oldValue,
+                                     Object newValue) {
     assertWriteAccessAllowed();
 
     if (!myFileListeners.isEmpty()) {
@@ -119,7 +123,11 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
     }
   }
 
-  protected void fireBeforePropertyChange(Object requestor, @NotNull VirtualFile file, @NotNull String propertyName, Object oldValue, Object newValue) {
+  protected void fireBeforePropertyChange(Object requestor,
+                                          @NotNull VirtualFile file,
+                                          @NotNull String propertyName,
+                                          Object oldValue,
+                                          Object newValue) {
     assertWriteAccessAllowed();
 
     if (!myFileListeners.isEmpty()) {

@@ -78,6 +78,12 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
     TAG_HIGHLIGHTING_MAP.put("global_var", DefaultLanguageHighlighterColors.GLOBAL_VARIABLE);
     TAG_HIGHLIGHTING_MAP.put("const", DefaultLanguageHighlighterColors.CONSTANT);
     TAG_HIGHLIGHTING_MAP.put("interface", DefaultLanguageHighlighterColors.INTERFACE_NAME);
+    TAG_HIGHLIGHTING_MAP.put("doc_markup", DefaultLanguageHighlighterColors.DOC_COMMENT_MARKUP);
+    TAG_HIGHLIGHTING_MAP.put("doc_tag", DefaultLanguageHighlighterColors.DOC_COMMENT_TAG);
+    TAG_HIGHLIGHTING_MAP.put("valid_esc_seq", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE);
+    TAG_HIGHLIGHTING_MAP.put("invalid_esc_seq", DefaultLanguageHighlighterColors.INVALID_STRING_ESCAPE);
+    TAG_HIGHLIGHTING_MAP.put("predefined", DefaultLanguageHighlighterColors.PREDEFINED_SYMBOL);
+    TAG_HIGHLIGHTING_MAP.put("metadata", DefaultLanguageHighlighterColors.METADATA);
   }
 
   private final static AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = {
@@ -89,6 +95,10 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
       OptionsBundle.message("options.language.defaults.identifier"), DefaultLanguageHighlighterColors.IDENTIFIER),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.string"), DefaultLanguageHighlighterColors.STRING),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.valid.esc.seq"), DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.invalid.esc.seq"), DefaultLanguageHighlighterColors.INVALID_STRING_ESCAPE),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.number"), DefaultLanguageHighlighterColors.NUMBER),
     new AttributesDescriptor(
@@ -112,9 +122,15 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.doc.comment"), DefaultLanguageHighlighterColors.DOC_COMMENT),
     new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.doc.markup"), DefaultLanguageHighlighterColors.DOC_COMMENT_MARKUP),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.doc.tag"), DefaultLanguageHighlighterColors.DOC_COMMENT_TAG),
+    new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.label"), DefaultLanguageHighlighterColors.LABEL),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.constant"), DefaultLanguageHighlighterColors.CONSTANT),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.predefined"), DefaultLanguageHighlighterColors.PREDEFINED_SYMBOL),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.local.variable"), DefaultLanguageHighlighterColors.LOCAL_VARIABLE),
     new AttributesDescriptor(
@@ -127,6 +143,8 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
       OptionsBundle.message("options.language.defaults.parameter"), DefaultLanguageHighlighterColors.PARAMETER),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.interface.name"), DefaultLanguageHighlighterColors.INTERFACE_NAME),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.metadata"), DefaultLanguageHighlighterColors.METADATA),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.class.name"), DefaultLanguageHighlighterColors.CLASS_NAME),
     new AttributesDescriptor(
@@ -162,7 +180,7 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
       "Bad characters: <bad_char>????</bad_char>\n" +
       "<keyword>Keyword</keyword>\n" +
       "<identifier>Identifier</identifier>\n" +
-      "<string>'String'</string>\n" +
+      "<string>'String <valid_esc_seq>\\n</valid_esc_seq><invalid_esc_seq>\\?</invalid_esc_seq>'</string>\n" +
       "<number>12345</number>\n" +
       "<operation_sign>Operator</operation_sign>\n" +
       "Dot: <dot>.</dot> comma: <comma>,</comma> semicolon: <semicolon>;</semicolon>\n" +
@@ -171,14 +189,19 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
       "<brackets>[</brackets> Brackets <brackets>]</brackets>\n" +
       "<line_comment>// Line comment</line_comment>\n" +
       "<block_comment>/* Block comment */</block_comment>\n" +
-      "<doc_comment>/** Doc comment */</doc_comment>\n" +
+      "<doc_comment>/** \n" +
+      " * Doc comment\n" +
+      " * <doc_tag>@tag</doc_tag> <doc_markup><code>Markup</code></doc_markup>\n" +
+      " */</doc_comment>\n" +
       "<label>:Label</label>\n" +
-      "<const>Constant</const>\n" +
+      "<predefined>predefined_symbol()</predefined>\n" +
+      "<const>CONSTANT</const>\n" +
       "Global <global_var>variable</global_var>\n" +
       "Function <func_decl>declaration</func_decl> (<param>parameter</param>)\n" +
       "    Local <local_var>variable</local_var>\n" +
       "Function <func_call>call</func_call>()\n" +
       "Interface <interface>Name</interface>\n" +
+      "<metadata>@Metadata</metadata>\n" +
       "Class <class_name>Name</class_name>\n" +
       "    instance <inst_method>method</inst_method>\n" +
       "    instance <inst_field>field</inst_field>\n" +

@@ -12,9 +12,11 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
+import org.jetbrains.annotations.NotNull;
 
 public class JavadocInspectionQuickFixTest extends LightQuickFix15TestCase {
 
+  @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     final JavaDocLocalInspection javaDocLocalInspection = new JavaDocLocalInspection();

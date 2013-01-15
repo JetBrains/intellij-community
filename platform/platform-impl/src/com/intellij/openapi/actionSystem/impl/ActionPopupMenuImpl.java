@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.ScreenUtil;
@@ -65,7 +66,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
     myDataContextProvider = dataContextProvider;
   }
 
-  private class MyMenu extends JPopupMenu {
+  private class MyMenu extends JBPopupMenu {
     private final String myPlace;
     private final ActionGroup myGroup;
     private DataContext myContext;

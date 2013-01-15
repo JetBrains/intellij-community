@@ -50,7 +50,7 @@ public abstract class Language extends UserDataHolderBase {
   private final Language myBaseLanguage;
   private final String myID;
   private final String[] myMimeTypes;
-  private final List<Language> myDialects = ContainerUtil.createEmptyCOWList();
+  private final List<Language> myDialects = ContainerUtil.createLockFreeCopyOnWriteList();
   public static final Language ANY = new Language("") {
     @Override
     public String toString() {
@@ -166,7 +166,7 @@ public abstract class Language extends UserDataHolderBase {
     }
     for (final FileType fileType : types) {
       if (fileType instanceof LanguageFileType && isKindOf(((LanguageFileType)fileType).getLanguage())) {
-        return (LanguageFileType) fileType;
+        return (LanguageFileType)fileType;
       }
     }
     return null;

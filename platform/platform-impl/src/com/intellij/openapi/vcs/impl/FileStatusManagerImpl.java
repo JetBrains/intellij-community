@@ -55,7 +55,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   private final Map<VirtualFile, Boolean> myWhetherExactlyParentToChanged =
     Collections.synchronizedMap(new HashMap<VirtualFile, Boolean>());
   private final Project myProject;
-  private final List<FileStatusListener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<FileStatusListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private FileStatusProvider myFileStatusProvider;
   private final NotNullLazyValue<FileStatusProvider[]> myExtensions = new NotNullLazyValue<FileStatusProvider[]>() {
     @NotNull

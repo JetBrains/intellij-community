@@ -59,7 +59,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * Time: 6:00:55 PM
  */
 public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
-  private final List<HotSwapVetoableListener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<HotSwapVetoableListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myAskBeforeHotswap = true;
   private final Project myProject;
   private boolean myPerformHotswapAfterThisCompilation = true;

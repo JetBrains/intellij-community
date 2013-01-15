@@ -30,6 +30,6 @@ public class ConcurrentMultiMap<K,V> extends MultiMap<K,V> {
 
   @Override
   protected Collection<V> createCollection() {
-    return ContainerUtil.createEmptyCOWList();
+    return ContainerUtil.createLockFreeCopyOnWriteList();
   }
 }

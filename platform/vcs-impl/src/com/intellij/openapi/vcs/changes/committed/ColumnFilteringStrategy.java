@@ -42,7 +42,7 @@ import java.util.*;
 public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
   private final JScrollPane myScrollPane;
   private final JList myValueList;
-  private final List<ChangeListener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<ChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final ChangeListColumn myColumn;
   private final Class<? extends CommittedChangesProvider> myProviderClass;
   private final MyListModel myModel;
@@ -54,11 +54,11 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
                                  final Class<? extends CommittedChangesProvider> providerClass) {
     myModel = new MyListModel();
     myValueList = new JBList();
-    myScrollPane =  ScrollPaneFactory.createScrollPane(myValueList);
+    myScrollPane = ScrollPaneFactory.createScrollPane(myValueList);
     myValueList.setModel(myModel);
     myValueList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
-        for(ChangeListener listener: myListeners) {
+        for (ChangeListener listener : myListeners) {
           listener.stateChanged(new ChangeEvent(this));
         }
       }
@@ -144,9 +144,9 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
       return changeLists;
     }
     List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
-    for(CommittedChangeList changeList: changeLists) {
+    for (CommittedChangeList changeList : changeLists) {
       if (myProviderClass == null || myProviderClass.isInstance(changeList.getVcs().getCommittedChangesProvider())) {
-        for(Object value: selection) {
+        for (Object value : selection) {
           //noinspection unchecked
           if (value.toString().equals(myColumn.getValue(ReceivedChangeList.unwrap(changeList)).toString())) {
             result.add(changeList);
@@ -165,7 +165,7 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
       myValues = ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
-    public<T> void addNext(final Collection<T> values, final Convertor<T, String> convertor) {
+    public <T> void addNext(final Collection<T> values, final Convertor<T, String> convertor) {
       final TreeSet<String> set = new TreeSet<String>(Arrays.asList(myValues));
       for (T value : values) {
         final String converted = convertor.convert(value);
@@ -190,7 +190,7 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
       if (index == 0) {
         return VcsBundle.message("committed.changes.filter.all");
       }
-      return myValues[index-1];
+      return myValues[index - 1];
     }
 
     public void clear() {

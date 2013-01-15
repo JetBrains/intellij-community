@@ -28,7 +28,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -58,8 +58,8 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   private final Collection<VirtualFile> myCheckingQueue = new THashSet<VirtualFile>(10);
 
   private final Project myProject;
-  private final List<ProblemListener> myProblemListeners = ContainerUtil.createEmptyCOWList();
-  private final List<Condition<VirtualFile>> myFilters = ContainerUtil.createEmptyCOWList();
+  private final List<ProblemListener> myProblemListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<Condition<VirtualFile>> myFilters = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myFiltersLoaded = false;
   private final ProblemListener fireProblemListeners = new ProblemListener() {
     @Override
@@ -194,7 +194,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   private void clearInvalidFiles() {
     VirtualFile[] files;
     synchronized (myProblems) {
-      files = VfsUtil.toVirtualFileArray(myProblems.keySet());
+      files = VfsUtilCore.toVirtualFileArray(myProblems.keySet());
     }
     for (VirtualFile problemFile : files) {
       if (!problemFile.isValid() || !isToBeHighlighted(problemFile)) {
@@ -251,8 +251,9 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
     long progressLimit = 0;
     for (VirtualFile file : files) {
-      if (file.isValid())
+      if (file.isValid()) {
         progressLimit += file.getLength(); // (rough approx number of PSI elements = file length/2) * (visitor count = 2 usually)
+      }
     }
     pass.setProgressLimit(progressLimit);
     for (final VirtualFile virtualFile : files) {
@@ -359,7 +360,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     return hasProblemFilesBeneath(new Condition<VirtualFile>() {
       @Override
       public boolean value(final VirtualFile virtualFile) {
-        return ModuleUtil.moduleContainsFile(scope, virtualFile, false);
+        return ModuleUtilCore.moduleContainsFile(scope, virtualFile, false);
       }
     });
   }
@@ -399,6 +400,10 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   @Override
   public void queue(VirtualFile suspiciousFile) {
     if (!isToBeHighlighted(suspiciousFile)) return;
+    doQueue(suspiciousFile);
+  }
+
+  private void doQueue(@NotNull VirtualFile suspiciousFile) {
     synchronized (myCheckingQueue) {
       myCheckingQueue.add(suspiciousFile);
     }
@@ -445,9 +450,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       }
       storedProblems.problems.addAll(problems);
     }
-    synchronized (myCheckingQueue) {
-      myCheckingQueue.add(virtualFile);
-    }
+    doQueue(virtualFile);
     if (fireListener) {
       fireProblemListeners.problemsAppeared(virtualFile);
     }
@@ -510,9 +513,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       }
       fireChanged = hasProblemsBefore && !oldInfo.equals(newInfo);
     }
-    synchronized (myCheckingQueue) {
-      myCheckingQueue.add(file);
-    }
+    doQueue(file);
     if (!hasProblemsBefore) {
       fireProblemListeners.problemsAppeared(file);
     }

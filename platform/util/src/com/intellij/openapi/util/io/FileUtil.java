@@ -24,6 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.FilePathHashingStrategy;
+import com.intellij.util.text.StringFactory;
 import gnu.trove.TObjectHashingStrategy;
 import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NonNls;
@@ -253,7 +254,7 @@ public class FileUtil extends FileUtilRt {
   @NotNull
   public static String loadTextAndClose(@NotNull Reader reader) throws IOException {
     try {
-      return new String(adaptiveLoadText(reader));
+      return StringFactory.createShared(adaptiveLoadText(reader));
     }
     finally {
       reader.close();

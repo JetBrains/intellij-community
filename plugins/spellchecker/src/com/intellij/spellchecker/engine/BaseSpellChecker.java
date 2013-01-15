@@ -48,11 +48,11 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   private final Transformation transform = new Transformation();
 
   private final Set<EditableDictionary> dictionaries = new HashSet<EditableDictionary>();
-  private final List<Dictionary> bundledDictionaries = ContainerUtil.createEmptyCOWList();
+  private final List<Dictionary> bundledDictionaries = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Metrics metrics = new LevenshteinDistance();
 
   private final AtomicBoolean myLoadingDictionaries = new AtomicBoolean(false);
-  private final List<Pair<Loader, Consumer<Dictionary>>> myDictionariesToLoad = ContainerUtil.createEmptyCOWList();
+  private final List<Pair<Loader, Consumer<Dictionary>>> myDictionariesToLoad = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Project myProject;
 
   public BaseSpellChecker(final Project project) {

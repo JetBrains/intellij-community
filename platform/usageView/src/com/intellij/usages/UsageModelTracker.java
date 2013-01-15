@@ -31,7 +31,7 @@ public class UsageModelTracker implements Disposable {
     void modelChanged(boolean isPropertyChange);
   }
 
-  private final List<UsageModelTrackerListener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<UsageModelTrackerListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public UsageModelTracker(Project project) {
     final PsiTreeChangeListener myPsiListener = new PsiTreeChangeAdapter() {

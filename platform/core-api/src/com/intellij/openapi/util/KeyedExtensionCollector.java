@@ -45,7 +45,7 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
   private ExtensionPoint<KeyedLazyInstance<T>> myPoint;
   private final String myEpName;
   private ExtensionPointAndAreaListener<KeyedLazyInstance<T>> myListener;
-  private final List<ExtensionPointListener<T>> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<ExtensionPointListener<T>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public KeyedExtensionCollector(@NonNls String epName) {
     myEpName = epName;

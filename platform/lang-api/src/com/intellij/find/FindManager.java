@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.messages.Topic;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,14 +63,15 @@ public abstract class FindManager {
   public abstract void showFindDialog(@NotNull FindModel model, @NotNull Runnable okHandler);
 
   /**
-   * Shows a replace prompt dialog for the specfied replace operation.
+   * Shows a replace prompt dialog for the specified replace operation.
    *
    * @param model the model containing the settings of the replace operation.
    * @param title the title of the dialog to show.
    * @return the exit code of the dialog, as defined by the {@link com.intellij.find.FindManager.PromptResult}
    * interface.
    */
-  public abstract int showPromptDialog(FindModel model, String title);
+  @PromptResultValue
+  public abstract int showPromptDialog(@NotNull FindModel model, String title);
 
   /**
    * Returns the settings of the last performed Find in File operation, or the
@@ -125,10 +127,10 @@ public abstract class FindManager {
    * @param title the title of the dialog to show.
    * @param exception exception from {@link FindManager#getStringToReplace}
    * @return the exit code of the dialog, as defined by the {@link PromptResult}
-   * interface. May be only {@link PromptResult.CANCEL} or {@link PromptResult.SKIP} for bad replace operation
+   * interface. May be only {@link PromptResult#CANCEL} or {@link PromptResult#SKIP} for bad replace operation
    */
-
-  public abstract int showMalformedReplacementPrompt(FindModel model, String title, MalformedReplacementStringException exception);
+  @PromptResultValue
+  public abstract int showMalformedReplacementPrompt(@NotNull FindModel model, String title, MalformedReplacementStringException exception);
 
   public static class MalformedReplacementStringException extends Exception {
     public MalformedReplacementStringException(String s) {
@@ -253,6 +255,9 @@ public abstract class FindManager {
    *         false if an error occurred during the operation.
    */
   public abstract boolean findPreviousUsageInEditor(@NotNull FileEditor editor);
+
+  @MagicConstant(valuesFromClass = FindManager.PromptResult.class)
+  public @interface PromptResultValue {}
 
   /**
    * Possible return values for the {@link FindManager#showPromptDialog(FindModel, String)} method.

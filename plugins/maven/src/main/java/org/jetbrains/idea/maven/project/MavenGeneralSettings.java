@@ -53,7 +53,7 @@ public class MavenGeneralSettings implements Cloneable {
   private Set<String> myDefaultPluginsCache;
 
   private int myBulkUpdateLevel = 0;
-  private List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
+  private List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public void beginUpdate() {
     myBulkUpdateLevel++;
@@ -332,7 +332,7 @@ public class MavenGeneralSettings implements Cloneable {
   public MavenGeneralSettings clone() {
     try {
       MavenGeneralSettings result = (MavenGeneralSettings)super.clone();
-      result.myListeners = ContainerUtil.createEmptyCOWList();
+      result.myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
       result.myBulkUpdateLevel = 0;
       return result;
     }

@@ -4,9 +4,11 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
+import org.jetbrains.annotations.NotNull;
 
 
 public class EnableOptimizeImportsOnTheFlyTest extends LightQuickFixTestCase {
+  @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new UnusedImportLocalInspection()};

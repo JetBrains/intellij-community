@@ -25,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.LineReader;
+import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -939,7 +940,7 @@ public class StringUtil extends StringUtilRt {
   public static String repeatSymbol(final char aChar, final int count) {
     char[] buffer = new char[count];
     Arrays.fill(buffer, aChar);
-    return new String(buffer);
+    return StringFactory.createShared(buffer);
   }
 
   @NotNull
@@ -1362,7 +1363,7 @@ public class StringUtil extends StringUtilRt {
 
     char[] buffer = displayString.toCharArray();
     buffer[0] = uppedFirstChar;
-    return new String(buffer);
+    return StringFactory.createShared(buffer);
   }
 
   /**
@@ -1543,6 +1544,13 @@ public class StringUtil extends StringUtilRt {
   public static int indexOf(@NotNull CharSequence s, char c, int start, int end, boolean caseSensitive) {
     for (int i = start; i < end; i++) {
       if (charsMatch(s.charAt(i), c, !caseSensitive)) return i;
+    }
+    return -1;
+  }
+
+  public static int indexOf(@NotNull char[] s, char c, int start, int end, boolean caseSensitive) {
+    for (int i = start; i < end; i++) {
+      if (charsMatch(s[i], c, !caseSensitive)) return i;
     }
     return -1;
   }

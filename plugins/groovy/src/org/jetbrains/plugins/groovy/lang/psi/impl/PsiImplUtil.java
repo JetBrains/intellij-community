@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,6 +75,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrAdditiveExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrMultiplicativeExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrRangeExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticTypeElement;
@@ -454,21 +455,27 @@ public class PsiImplUtil {
     return result;
   }
 
-  public static String getName(GrNamedElement namedElement) {
+  @NotNull
+  public static String getName(@NotNull GrNamedElement namedElement) {
     PsiElement nameElement = namedElement.getNameIdentifierGroovy();
     ASTNode node = nameElement.getNode();
     LOG.assertTrue(node != null);
-    if (node.getElementType() == mIDENT) return nameElement.getText();
-    else {
-      if (node.getElementType() == mSTRING_LITERAL) {
-        String text = nameElement.getText();
-        return text.endsWith("'") ? text.substring(1, text.length() - 1) : text.substring(1);
-      } else {
-        LOG.assertTrue(node.getElementType() == mGSTRING_LITERAL);
-        String text = nameElement.getText();
-        return text.endsWith("\"") ? text.substring(1, text.length() - 1) : text.substring(1);
+
+    if (node.getElementType() == mIDENT) {
+      return nameElement.getText();
+    }
+
+    if (node.getElementType() == mSTRING_LITERAL || node.getElementType() == mGSTRING_LITERAL) {
+      final Object value = GrLiteralImpl.getLiteralValue(nameElement);
+      if (value instanceof String) {
+        return (String)value;
+      }
+      else {
+        return GrStringUtil.removeQuotes(nameElement.getText());
       }
     }
+
+    throw new IncorrectOperationException("incorrect name element: " + node.getElementType() + ", named element: " + namedElement);
   }
 
   public static void removeNewLineAfter(@NotNull GrStatement statement) {

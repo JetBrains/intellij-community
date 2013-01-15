@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
   private final Map<Key, ChangeTrackingValueContainer<Value>> myMap = new HashMap<Key, ChangeTrackingValueContainer<Value>>();
   private final IndexStorage<Key, Value> myBackendStorage;
-  private final List<BufferingStateListener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<BufferingStateListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final AtomicBoolean myBufferingEnabled = new AtomicBoolean(false);
 
   public interface BufferingStateListener {

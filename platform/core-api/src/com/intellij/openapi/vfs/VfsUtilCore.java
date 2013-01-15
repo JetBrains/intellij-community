@@ -23,6 +23,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,7 +106,7 @@ public class VfsUtilCore {
       }
       parent = parent.getParent();
     }
-    return new String(chars);
+    return StringFactory.createShared(chars);
   }
 
   @Nullable
@@ -277,21 +278,15 @@ public class VfsUtilCore {
   }
 
   @NotNull
-  public static String loadText(@NotNull VirtualFile file) throws IOException{
-    InputStreamReader reader = new InputStreamReader(file.getInputStream(), file.getCharset());
-    try {
-      return new String(FileUtil.loadText(reader, (int)file.getLength()));
-    }
-    finally {
-      reader.close();
-    }
+  public static String loadText(@NotNull VirtualFile file) throws IOException {
+    return loadText(file, (int)file.getLength());
   }
 
   @NotNull
-  public static String loadText(@NotNull VirtualFile file, int length) throws IOException{
+  public static String loadText(@NotNull VirtualFile file, int length) throws IOException {
     InputStreamReader reader = new InputStreamReader(file.getInputStream(), file.getCharset());
     try {
-      return new String(FileUtil.loadText(reader, length));
+      return StringFactory.createShared(FileUtil.loadText(reader, length));
     }
     finally {
       reader.close();

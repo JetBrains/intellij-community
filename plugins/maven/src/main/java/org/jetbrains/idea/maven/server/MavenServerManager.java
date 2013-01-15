@@ -493,7 +493,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   }
 
   private static class RemoteMavenServerDownloadListener extends MavenRemoteObject implements MavenServerDownloadListener {
-    private final List<MavenServerDownloadListener> myListeners = ContainerUtil.createEmptyCOWList();
+    private final List<MavenServerDownloadListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
     public void artifactDownloaded(File file, String relativePath) throws RemoteException {
       for (MavenServerDownloadListener each : myListeners) {

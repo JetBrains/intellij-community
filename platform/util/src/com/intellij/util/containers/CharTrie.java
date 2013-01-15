@@ -15,6 +15,8 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.util.text.StringFactory;
+
 import java.util.ArrayList;
 
 public class CharTrie {
@@ -49,11 +51,11 @@ public class CharTrie {
    * Returns reversed string by unique hash code.
    */
   public String getReversedString(int hashCode) {
-    return new String(getReversedChars(hashCode));
+    return StringFactory.createShared(getReversedChars(hashCode));
   }
 
   public String getString(int hashCode) {
-    return new String(getChars(hashCode));
+    return StringFactory.createShared(getChars(hashCode));
   }
 
   public int getHashCode(char[] chars) {

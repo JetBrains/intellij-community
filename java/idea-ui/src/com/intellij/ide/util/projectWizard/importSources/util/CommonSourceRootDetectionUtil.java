@@ -21,7 +21,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -98,7 +98,7 @@ public abstract class CommonSourceRootDetectionUtil<F> {
 
     @Override
     protected CharSequence loadText(final File file) throws IOException {
-      return new CharArrayCharSequence(FileUtil.loadFileText(file));
+      return StringFactory.createShared(FileUtil.loadFileText(file));
     }
 
     @Override

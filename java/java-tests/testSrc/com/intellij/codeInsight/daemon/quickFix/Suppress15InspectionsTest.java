@@ -26,6 +26,7 @@ import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspec
 import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclaration;
 import com.intellij.codeInspection.unusedParameters.UnusedParametersInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
+import org.jetbrains.annotations.NotNull;
 
 
 public class Suppress15InspectionsTest extends LightQuickFixTestCase {
@@ -35,6 +36,7 @@ public class Suppress15InspectionsTest extends LightQuickFixTestCase {
     enableInspectionTool(new GlobalInspectionToolWrapper(new UnusedParametersInspection()));
   }
 
+  @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{

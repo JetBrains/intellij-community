@@ -33,11 +33,11 @@ import java.awt.*;
 import java.util.List;
 
 /**
- * Default implementation of the {@link ItemPresentation} interface.
+ * Default implementation of the {@link com.intellij.navigation.ItemPresentation} interface.
  */
 
 public class PresentationData implements ColoredItemPresentation, ComparableObject, LocationPresentation {
-  protected final List<PresentableNodeDescriptor.ColoredFragment> myColoredText = ContainerUtil.createEmptyCOWList();
+  protected final List<PresentableNodeDescriptor.ColoredFragment> myColoredText = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private Icon myIcon;
 
@@ -64,8 +64,8 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
    * @param locationString  the location of the object (for example, the package of a class). The location
    *                        string is used by some renderers and usually displayed as grayed text next to
    *                        the item name.
-   * @param icon      the icon shown for the node when it is collapsed in a tree, or when it is displayed
- *                        in a non-tree view.
+   * @param icon            the icon shown for the node when it is collapsed in a tree, or when it is displayed
+   *                        in a non-tree view.
    * @param attributesKey   the attributes for rendering the item text.
    */
   public PresentationData(String presentableText, String locationString, Icon icon,
@@ -140,12 +140,11 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
   }
 
   /**
-   * @deprecated Different icons for open/closed no longer supported. Use setIcon instead
-   * Sets the icon shown for the node when it is collapsed in a tree, or when it is displayed
-   * in a non-tree view.
-   *
    * @param closedIcon the closed icon for the node.
    * @see #setIcons(javax.swing.Icon)
+   * @deprecated Different icons for open/closed no longer supported. Use setIcon instead
+   *             Sets the icon shown for the node when it is collapsed in a tree, or when it is displayed
+   *             in a non-tree view.
    */
   public void setClosedIcon(Icon closedIcon) {
     setIcon(closedIcon);
@@ -153,23 +152,21 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
 
 
   /**
-   * @deprecated Different icons for open/closed no longer supported. This function is no op.
-   * Sets the icon shown for the node when it is expanded in the tree.
-   *
    * @param openIcon the open icon for the node.
    * @see #setIcons(javax.swing.Icon)
+   * @deprecated Different icons for open/closed no longer supported. This function is no op.
+   *             Sets the icon shown for the node when it is expanded in the tree.
    */
   @Deprecated
   public void setOpenIcon(Icon openIcon) {
   }
 
   /**
-   * @deprecated Different icons for open/closed no longer supported. Use setIcon instead.
-   * Sets both the open and closed icons of the node to the specified icon.
-   *
    * @param icon the icon for the node.
    * @see #setOpenIcon(javax.swing.Icon)
    * @see #setClosedIcon(javax.swing.Icon)
+   * @deprecated Different icons for open/closed no longer supported. Use setIcon instead.
+   *             Sets both the open and closed icons of the node to the specified icon.
    */
 
   public void setIcons(Icon icon) {
@@ -186,7 +183,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
     setPresentableText(presentation.getPresentableText());
     setLocationString(presentation.getLocationString());
     if (presentation instanceof ColoredItemPresentation) {
-      setAttributesKey(((ColoredItemPresentation) presentation).getTextAttributesKey());
+      setAttributesKey(((ColoredItemPresentation)presentation).getTextAttributesKey());
     }
     setSeparatorAbove(presentation instanceof ItemPresentationWithSeparator);
     if (presentation instanceof LocationPresentation) {
@@ -194,14 +191,14 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
       myLocationSuffix = ((LocationPresentation)presentation).getLocationSuffix();
     }
   }
-  
+
   public boolean hasSeparatorAbove() {
     return mySeparatorAbove;
   }
-  
+
   public void setSeparatorAbove(final boolean b) {
     mySeparatorAbove = b;
-  } 
+  }
 
   @Override
   public TextAttributesKey getTextAttributesKey() {

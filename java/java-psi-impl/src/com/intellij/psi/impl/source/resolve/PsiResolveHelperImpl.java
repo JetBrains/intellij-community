@@ -546,7 +546,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       if (arg == null ||
           arg.getDeepComponentType() instanceof PsiPrimitiveType ||
           arg instanceof PsiIntersectionType ||
-          (psiClass != null && (isContraVariantPosition || !CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName())))) {
+          (psiClass != null && (isContraVariantPosition || !CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName()) || (arg instanceof PsiArrayType)))) {
         PsiType bound = intersectAllExtends(typeParam, arg);
         return new Pair<PsiType, ConstraintType>(bound, ConstraintType.SUPERTYPE);
       }

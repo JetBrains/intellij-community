@@ -23,6 +23,7 @@ import com.intellij.util.io.URLUtil;
 import com.intellij.util.io.fs.IFile;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceReader;
+import com.intellij.util.text.StringFactory;
 import org.jdom.*;
 import org.jdom.filter.Filter;
 import org.jdom.input.DOMBuilder;
@@ -424,7 +425,7 @@ public class JDOMUtil {
     CharArrayWriter writer = new CharArrayWriter();
     writeDocument(document, writer, lineSeparator);
 
-    return new String(writer.toCharArray()).getBytes(ENCODING);
+    return StringFactory.createShared(writer.toCharArray()).getBytes(ENCODING);
   }
 
   @NotNull

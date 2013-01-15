@@ -29,6 +29,8 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.ui.JBMenuItem;
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.ScrollPaneFactory;
@@ -135,13 +137,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
   private void initCopyFromMenu() {
     if (myCopyFromMenu == null) {
-      myCopyFromMenu = new JPopupMenu() {
-        @Override
-        public void paint(Graphics g) {
-          GraphicsUtil.setupAntialiasing(g);
-          super.paint(g);
-        }
-      };
+      myCopyFromMenu = new JBPopupMenu();
       setupCopyFromMenu(myCopyFromMenu);
     }
   }
@@ -309,13 +305,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
       for (final Language lang : languages) {
         if (!lang.equals(getDefaultLanguage())) {
           final String langName = LanguageCodeStyleSettingsProvider.getLanguageName(lang);
-          JMenuItem langItem = new JMenuItem(langName) {
-            @Override
-            public void paint(Graphics g) {
-              GraphicsUtil.setupAntialiasing(g);
-              super.paint(g);
-            }
-          };
+          JMenuItem langItem = new JBMenuItem(langName);
           langItem.addActionListener(new ActionListener(){
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -338,13 +328,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
   private void fillPredefined(JMenuItem parentMenu) {
     for (final PredefinedCodeStyle predefinedCodeStyle : myPredefinedCodeStyles) {
-      JMenuItem predefinedItem = new JMenuItem(predefinedCodeStyle.getName()) {
-        @Override
-        public void paint(Graphics g) {
-          GraphicsUtil.setupAntialiasing(g);
-          super.paint(g);
-        }
-      };
+      JMenuItem predefinedItem = new JBMenuItem(predefinedCodeStyle.getName());
       parentMenu.add(predefinedItem);
       predefinedItem.addActionListener(new ActionListener() {
         @Override

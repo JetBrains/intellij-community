@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.Stack;
+import com.intellij.util.text.StringFactory;
 import net.n3.nanoxml.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -239,7 +240,7 @@ public class NanoXmlUtil {
     }
 
     protected static String readText(final Reader reader) throws IOException {
-      return new String(StreamUtil.readTextAndConvertSeparators(reader));
+      return StringFactory.createShared(StreamUtil.readTextAndConvertSeparators(reader));
     }
 
     protected String getLocation() {

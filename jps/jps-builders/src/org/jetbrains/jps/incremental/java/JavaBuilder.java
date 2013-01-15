@@ -36,6 +36,7 @@ import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
+import org.jetbrains.jps.builders.java.JavaBuilderExtension;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
@@ -55,6 +56,8 @@ import org.jetbrains.jps.model.java.LanguageLevel;
 import org.jetbrains.jps.model.java.compiler.*;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsModuleType;
+import org.jetbrains.jps.service.JpsServiceManager;
 
 import javax.tools.*;
 import java.io.*;
@@ -84,7 +87,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     "-g", "-deprecation", "-nowarn", "-verbose", "-proc:none", "-proc:only", "-proceedOnError"
   ));
 
-  private static final FileFilter JAVA_SOURCES_FILTER =
+  public static final FileFilter JAVA_SOURCES_FILTER =
     SystemInfo.isFileSystemCaseSensitive?
     new FileFilter() {
       public boolean accept(File file) {
@@ -99,6 +102,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   private final Executor myTaskRunner;
   private static final List<ClassPostProcessor> ourClassProcessors = new ArrayList<ClassPostProcessor>();
+  private static final Set<JpsModuleType<?>> ourCompilableModuleTypes;
+  static {
+    ourCompilableModuleTypes = new HashSet<JpsModuleType<?>>();
+    for (JavaBuilderExtension extension : JpsServiceManager.getInstance().getExtensions(JavaBuilderExtension.class)) {
+      ourCompilableModuleTypes.addAll(extension.getCompilableModuleTypes());
+    }
+  }
 
   public static void registerClassPostProcessor(ClassPostProcessor processor) {
     ourClassProcessors.add(processor);
@@ -144,12 +154,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
       return ExitCode.NOTHING_DONE;
     }
     try {
-      final Map<File, ModuleBuildTarget> filesToCompile = new THashMap<File, ModuleBuildTarget>(FileUtil.FILE_HASHING_STRATEGY);
+      final Set<File> filesToCompile = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
 
       dirtyFilesHolder.processDirtyFiles(new FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>() {
         public boolean apply(ModuleBuildTarget target, File file, JavaSourceRootDescriptor descriptor) throws IOException {
-          if (JAVA_SOURCES_FILTER.accept(file)) {
-            filesToCompile.put(file, target);
+          if (JAVA_SOURCES_FILTER.accept(file) && ourCompilableModuleTypes.contains(target.getModule().getModuleType())) {
+            filesToCompile.add(file);
           }
           return true;
         }
@@ -159,12 +169,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
         final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
         if (logger.isEnabled()) {
           if (filesToCompile.size() > 0) {
-            logger.logCompiledFiles(filesToCompile.keySet(), BUILDER_NAME, "Compiling files:");
+            logger.logCompiledFiles(filesToCompile, BUILDER_NAME, "Compiling files:");
           }
         }
       }
 
-      return compile(context, chunk, dirtyFilesHolder, filesToCompile.keySet(), outputConsumer);
+      return compile(context, chunk, dirtyFilesHolder, filesToCompile, outputConsumer);
     }
     catch (ProjectBuildException e) {
       throw e;
@@ -186,12 +196,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
       throw new ProjectBuildException(message, e);
     }
   }
-
-  @Override
-  public boolean shouldHonorFileEncodingForCompilation(File file) {
-    return JAVA_SOURCES_FILTER.accept(file);
-  }
-
 
   private ExitCode compile(final CompileContext context,
                            ModuleChunk chunk,

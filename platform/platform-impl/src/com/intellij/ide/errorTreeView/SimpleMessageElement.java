@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.errorTreeView;
 
-import javax.swing.*;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
@@ -25,7 +25,7 @@ public class SimpleMessageElement extends ErrorTreeElement{
   private final String[] myMessage;
   private final Object myData;
 
-  public SimpleMessageElement(ErrorTreeElementKind kind, String[] text, Object data) {
+  public SimpleMessageElement(@NotNull ErrorTreeElementKind kind, String[] text, Object data) {
     super(kind);
     myMessage = text;
     myData = data;

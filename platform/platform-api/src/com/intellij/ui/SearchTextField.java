@@ -20,6 +20,8 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.ui.JBMenuItem;
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.SystemInfo;
@@ -107,8 +109,8 @@ public class SearchTextField extends JPanel {
 
     if (hasNativeLeopardSearchControl()) {
       myTextField.putClientProperty("JTextField.variant", "search");
-      myNativeSearchPopup = new JPopupMenu();
-      myNoItems = new JMenuItem("No recent searches");
+      myNativeSearchPopup = new JBPopupMenu();
+      myNoItems = new JBMenuItem("No recent searches");
       myNoItems.setEnabled(false);
 
       updateMenu();
@@ -270,7 +272,7 @@ public class SearchTextField extends JPanel {
   private void addMenuItem(final String item) {
     if (myNativeSearchPopup != null) {
       myNativeSearchPopup.remove(myNoItems);
-      final JMenuItem menuItem = new JMenuItem(item);
+      final JMenuItem menuItem = new JBMenuItem(item);
       myNativeSearchPopup.add(menuItem);
       menuItem.addActionListener(new ActionListener() {
         public void actionPerformed(final ActionEvent e) {

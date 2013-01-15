@@ -75,7 +75,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
   private FormLayout myLayout;
   private int myIndex;
   private boolean myIsRow;
-  private final List<ChangeListener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<ChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myShowing = false;
   private boolean mySaving = false;
 

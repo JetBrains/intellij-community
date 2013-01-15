@@ -1836,8 +1836,21 @@ public class ContainerUtil extends ContainerUtilRt {
     return ContainerUtilRt.createEmptyCOWList();
   }
 
+  /**
+   * Creates List which is thread-safe to modify and iterate.
+   * It differs from the java.util.concurrent.CopyOnWriteArrayList in the following:
+   * - faster modification in the uncontended case
+   * - less memory
+   * - slower modification in highly contented case (which is the kind of situation you shouldn't use COWAL anyway)
+   */
+  @NotNull
+  public static <T> List<T> createLockFreeCopyOnWriteList() {
+    return new LockFreeCopyOnWriteArrayList<T>();
+  }
+
+  @NotNull
   public static <T> List<T> createLockFreeCopyOnWriteList(@NotNull Collection<? extends T> c) {
-    return new CopyOnWriteArrayList<T>(c);
+    return new LockFreeCopyOnWriteArrayList<T>(c);
   }
 
   public static <T> void addIfNotNull(@Nullable T element, @NotNull Collection<T> result) {

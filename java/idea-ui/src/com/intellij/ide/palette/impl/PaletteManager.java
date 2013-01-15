@@ -51,9 +51,9 @@ public class PaletteManager implements ProjectComponent {
   private final FileEditorManager myFileEditorManager;
   private PaletteWindow myPaletteWindow;
   private ToolWindow myPaletteToolWindow;
-  private final List<KeyListener> myKeyListeners = ContainerUtil.createEmptyCOWList();
-  private final List<PaletteDragEventListener> myDragEventListeners = ContainerUtil.createEmptyCOWList();
-  private final List<ListSelectionListener> mySelectionListeners = ContainerUtil.createEmptyCOWList();
+  private final List<KeyListener> myKeyListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<PaletteDragEventListener> myDragEventListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<ListSelectionListener> mySelectionListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public PaletteManager(Project project, FileEditorManager fileEditorManager) {
     myProject = project;

@@ -184,7 +184,7 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
   private final Map<String, List<BaseInjection>> myInjections = new ConcurrentFactoryMap<String, List<BaseInjection>>() {
     @Override
     protected List<BaseInjection> create(final String key) {
-      return ContainerUtil.createEmptyCOWList();
+      return ContainerUtil.createLockFreeCopyOnWriteList();
     }
   };
 

@@ -6,6 +6,7 @@ import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class AnnotateMethodTest extends LightQuickFix15TestCase {
   private boolean myMustBeAvailableAfterInvoke;
@@ -15,6 +16,7 @@ public class AnnotateMethodTest extends LightQuickFix15TestCase {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/annotateMethod";
   }
 
+  @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new NullableStuffInspection(){

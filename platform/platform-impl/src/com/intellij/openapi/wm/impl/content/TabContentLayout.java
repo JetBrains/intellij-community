@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.awt.RelativeRectangle;
@@ -106,7 +107,7 @@ class TabContentLayout extends ContentLayout {
   }
 
   private void showPopup() {
-    myPopup = new JPopupMenu();
+    myPopup = new JBPopupMenu();
     myPopup.addPopupMenuListener(myPopupListener);
 
     ArrayList<ContentTabLabel> tabs = myTabs;

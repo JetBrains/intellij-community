@@ -69,7 +69,9 @@ public class CommandProcessorImpl extends CommandProcessorEx {
 
 //  private HashMap myStatisticsMap = new HashMap(); // command name --> count
 
-  private final List<CommandListener> myListeners = ContainerUtil.createEmptyCOWList();
+  //  private HashMap myStatisticsMap = new HashMap(); // command name --> count
+
+  private final List<CommandListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private int myUndoTransparentCount = 0;
 

@@ -49,7 +49,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -422,12 +421,13 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public long getLength(@NotNull final VirtualFile file) {
-    final int id = getFileId(file);
-
-    long len = FSRecords.getLength(id);
-    if (len == -1) {
-      len = (int)getDelegate(file).getLength(file);
-      FSRecords.setLength(id, len);
+    long len;
+    if (mustReloadContent(file)) {
+      len = reloadLengthFromDelegate(file, getDelegate(file));
+    }
+    else {
+      final int id = getFileId(file);
+      len = FSRecords.getLength(id);
     }
 
     return len;
@@ -498,8 +498,10 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     InputStream contentStream = null;
     boolean reloadFromDelegate;
     boolean outdated;
+    int fileId;
     synchronized (myInputLock) {
-      outdated = checkFlag(file, MUST_RELOAD_CONTENT) || FSRecords.getLength(getFileId(file)) == -1L;
+      fileId = getFileId(file);
+      outdated = checkFlag(fileId, MUST_RELOAD_CONTENT) || FSRecords.getLength(fileId) == -1L;
       reloadFromDelegate = outdated || (contentStream = readContent(file)) == null;
     }
 
@@ -510,13 +512,13 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       if (outdated) {
         // in this case, file can have out-of-date length. so, update it first (it's needed for correct contentsToByteArray() work)
         // see IDEA-90813 for possible bugs
-        FSRecords.setLength(getFileId(file), delegate.getLength(file));
+        FSRecords.setLength(fileId, delegate.getLength(file));
         content = delegate.contentsToByteArray(file);
       }
       else {
         // a bit of optimization
         content = delegate.contentsToByteArray(file);
-        FSRecords.setLength(getFileId(file), content.length);
+        FSRecords.setLength(fileId, content.length);
       }
 
       ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
@@ -561,10 +563,9 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     synchronized (myInputLock) {
       InputStream contentStream;
       if (mustReloadContent(file) || (contentStream = readContent(file)) == null) {
-        final NewVirtualFileSystem delegate = getDelegate(file);
-        final long len = delegate.getLength(file);
-        FSRecords.setLength(getFileId(file), len);
-        final InputStream nativeStream = delegate.getInputStream(file);
+        NewVirtualFileSystem delegate = getDelegate(file);
+        long len = reloadLengthFromDelegate(file, delegate);
+        InputStream nativeStream = delegate.getInputStream(file);
 
         if (len > PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) return nativeStream;
         return createReplicator(file, nativeStream, len, delegate.isReadOnly());
@@ -573,6 +574,12 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         return contentStream;
       }
     }
+  }
+
+  private static long reloadLengthFromDelegate(@NotNull VirtualFile file, @NotNull NewVirtualFileSystem delegate) {
+    final long len = delegate.getLength(file);
+    FSRecords.setLength(getFileId(file), len);
+    return len;
   }
 
   private InputStream createReplicator(@NotNull final VirtualFile file, final InputStream nativeStream, final long fileLength, final boolean readOnly)
@@ -611,7 +618,8 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   private static boolean mustReloadContent(@NotNull VirtualFile file) {
-    return checkFlag(file, MUST_RELOAD_CONTENT) || FSRecords.getLength(getFileId(file)) == -1L;
+    int fileId = getFileId(file);
+    return checkFlag(fileId, MUST_RELOAD_CONTENT) || FSRecords.getLength(fileId) == -1L;
   }
 
   @Override
@@ -1109,8 +1117,8 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     }
   }
 
-  private static boolean checkFlag(@NotNull VirtualFile file, int mask) {
-    return (FSRecords.getFlags(getFileId(file)) & mask) != 0;
+  private static boolean checkFlag(int fileId, int mask) {
+    return (FSRecords.getFlags(fileId) & mask) != 0;
   }
 
   private static void executeTouch(@NotNull VirtualFile file, boolean reloadContentFromDelegate, long newModificationStamp) {
