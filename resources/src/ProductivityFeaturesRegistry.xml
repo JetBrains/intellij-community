@@ -184,6 +184,13 @@
       successive-show="8"
       />
     <feature
+        id="editing.completion.finishByCtrlDot"
+        tip-file="CtrlDotInLookups.html"
+        min-usage-count="7"
+        first-show="4"
+        successive-show="8"
+        />
+    <feature
       id="editing.completion.finishByDotEtc"
       tip-file="DotEtcInLookups.html"
       min-usage-count="7"
