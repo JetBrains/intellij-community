@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,21 +60,27 @@ public class JavaEditorTextProviderImpl implements EditorTextProvider {
 
   @Nullable
   private static PsiElement findExpression(PsiElement element) {
-    if (!(element instanceof PsiIdentifier || element instanceof PsiKeyword)) {
-      return null;
+    PsiElement e = PsiTreeUtil.getParentOfType(element, PsiVariable.class, PsiExpression.class);
+    if (e instanceof PsiVariable) {
+      e = ((PsiVariable)e).getNameIdentifier();
     }
-    PsiElement parent = element.getParent();
-    if (parent instanceof PsiVariable) {
-      return element;
+    else if (e instanceof PsiReferenceExpression) {
+      if (e.getParent() instanceof PsiCallExpression) {
+        e = e.getParent();
+      }
+      else if (e.getParent() instanceof PsiReferenceExpression) {
+        // <caret>System.out case should not return plain class name
+        PsiElement resolve = ((PsiReferenceExpression)e).resolve();
+        if (resolve instanceof PsiClass) {
+          e = e.getParent();
+        }
+      }
     }
-    if (parent instanceof PsiReferenceExpression) {
-      if (parent.getParent() instanceof PsiCallExpression) return parent.getParent();
-      return parent;
+    if (e instanceof PsiNewExpression) {
+      // skip new Runnable() { ... }
+      if (((PsiNewExpression)e).getAnonymousClass() != null) return null;
     }
-    if (parent instanceof PsiThisExpression) {
-      return parent;
-    }
-    return null;
+    return e;
   }
 
   @Nullable
