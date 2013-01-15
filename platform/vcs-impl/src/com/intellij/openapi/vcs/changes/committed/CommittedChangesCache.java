@@ -161,8 +161,6 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
         });
       }
     };
-    myConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, vcsListener);
-    myConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, vcsListener);
     myLocationCache = new RepositoryLocationCache(project);
     myCachesHolder = new CachesHolder(project, myLocationCache);
     myTaskQueue = new ProgressManagerQueue(project, VcsBundle.message("committed.changes.refresh.progress"));
@@ -170,6 +168,8 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       @Override
       public void run() {
         myTaskQueue.start();
+        myConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, vcsListener);
+        myConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, vcsListener);
       }
     });
     myVcsManager = vcsManager;
@@ -708,7 +708,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
           try {
             if (file.isEmpty()) return;
             file.editChangelist(number, newMessage);
-            loadIncomingChanges(false);
+            loadIncomingChanges(true);
             fireChangesLoaded(location, Collections.<CommittedChangeList>emptyList());
           }
           catch (IOException e) {
@@ -847,7 +847,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       final Runnable runnable = new Runnable() {
         @Override
         public void run() {
-          final List<CommittedChangeList> lists = loadIncomingChanges(false);
+          final List<CommittedChangeList> lists = loadIncomingChanges(true);
           fireIncomingChangesUpdated(lists);
         }
       };
