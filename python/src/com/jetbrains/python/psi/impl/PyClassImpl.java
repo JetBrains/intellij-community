@@ -26,6 +26,7 @@ import com.jetbrains.python.psi.stubs.PropertyStubStorage;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
+import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -148,18 +149,19 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     final PyExpression[] superExpressions = getSuperClassExpressions();
     List<PsiElement> superClasses = new ArrayList<PsiElement>();
     for (PyExpression expr : superExpressions) {
-      expr = unfoldClass(expr);
-      if (expr instanceof PyReferenceExpression) {
-        final PsiPolyVariantReference ref = ((PyReferenceExpression)expr).getReference(PyResolveContext.noProperties());
-        final PsiElement result = ref.resolve();
-        if (result != null) {
-          superClasses.add(result);
-          continue;
-        }
-      }
-      superClasses.add(null);
+      superClasses.add(classElementFromExpression(expr));
     }
     return PsiUtilCore.toPsiElementArray(superClasses);
+  }
+
+  @Nullable
+  public static PsiElement classElementFromExpression(@NotNull PyExpression expression) {
+    expression = unfoldClass(expression);
+    if (expression instanceof PyReferenceExpression) {
+      final PsiPolyVariantReference ref = ((PyReferenceExpression)expression).getReference(PyResolveContext.noProperties());
+      return ref.resolve();
+    }
+    return null;
   }
 
   public static PyExpression unfoldClass(PyExpression expression) {
@@ -266,9 +268,19 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     List<PyClassRef> result = resolveSuperClassesFromStub();
     if (result == null) {
       result = new ArrayList<PyClassRef>();
-      PsiElement[] superClassElements = getSuperClassElements();
-      for (PsiElement element : superClassElements) {
-        result.add(new PyClassRef(element));
+      final TypeEvalContext context = TypeEvalContext.fastStubOnly(null);
+      final PyExpression[] superClassExpressions = getSuperClassExpressions();
+      for (PyExpression expression : superClassExpressions) {
+        final PsiElement element = classElementFromExpression(expression);
+        if (element != null) {
+          result.add(new PyClassRef(element));
+        }
+        else {
+          final PyType type = expression.getType(context);
+          if (type instanceof PyClassType) {
+            result.add(new PyClassRef((PyClassType)type));
+          }
+        }
       }
     }
 

@@ -60,6 +60,12 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
         }
       }
     }
+    else if (referenceTarget instanceof PyFunction && anchor instanceof PyCallExpression) {
+      if (PyNames.NAMEDTUPLE.equals(((PyFunction)referenceTarget).getName()) &&
+          PyNames.COLLECTIONS_PY.equals(referenceTarget.getContainingFile().getName())) {
+        return PyNamedTupleType.fromCall((PyCallExpression)anchor);
+      }
+    }
     return null;
   }
 

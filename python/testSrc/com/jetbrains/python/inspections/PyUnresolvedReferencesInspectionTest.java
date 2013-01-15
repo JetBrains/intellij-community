@@ -58,10 +58,6 @@ public class PyUnresolvedReferencesInspectionTest extends PyTestCase {
     doTest();
   }
 
-  public void testNamedTuple() {
-    doTest();
-  }
-
   // PY-2308
   public void testTypeAssertions() {
     doTest();

@@ -49,7 +49,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
     if (myFields.contains(name)) {
       return Collections.singletonList(new RatedResolveResult(1000, new PyElementImpl(myDeclaration.getNode())));
     }
-    return Collections.emptyList();
+    return null;
   }
 
   @Override

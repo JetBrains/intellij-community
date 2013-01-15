@@ -16,8 +16,19 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
     return ourPy3Descriptor;
   }
 
-  private void doMultiFileTest(@NotNull final String filename, @NotNull LanguageLevel level) {
-    runWithLanguageLevel(level, new Runnable() {
+  private void doTest() {
+    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
+      @Override
+      public void run() {
+        myFixture.configureByFile(TEST_DIRECTORY + getTestName(true) + ".py");
+        myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
+        myFixture.checkHighlighting(true, false, false);
+      }
+    });
+  }
+
+  private void doMultiFileTest(@NotNull final String filename) {
+    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
       @Override
       public void run() {
         final String testName = getTestName(false);
@@ -29,11 +40,15 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
     });
   }
 
-  private void doMultiFileTest(@NotNull String filename) {
-    doMultiFileTest(filename, LanguageLevel.PYTHON33);
+  public void testNamedTuple() {
+    doTest();
   }
 
-  public void testNamedTupleStub() {
+  public void testNamedTupleAssignment() {
+    doMultiFileTest("a.py");
+  }
+
+  public void testNamedTupleBaseStub() {
     doMultiFileTest("a.py");
   }
 }
