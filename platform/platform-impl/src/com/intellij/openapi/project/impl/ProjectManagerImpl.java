@@ -502,6 +502,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       return null;
     }
 
+    // todo unify this logic with PlatformProjectOpenProcessor
     if (!openProject(project)) {
       WelcomeFrame.showIfNoProjectOpened();
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
