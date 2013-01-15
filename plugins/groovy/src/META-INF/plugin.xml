@@ -419,6 +419,7 @@
     <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.MethodLateBoundReferencesSearcher"/>
     <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GroovyConstructorUsagesSearcher"/>
     <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GroovyReflectedMethodReferenceSearcher"/>
+    <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GrLiteralMethodSearcher"/>
     <annotatedElementsSearch implementation="org.jetbrains.plugins.groovy.findUsages.AnnotatedMembersSearcher"/>
     <superMethodsSearch implementation="org.jetbrains.plugins.groovy.findUsages.GDKSuperMethodSearcher"/>
     <definitionsSearch implementation="org.jetbrains.plugins.groovy.findUsages.GroovyImplementationSearch"/>
