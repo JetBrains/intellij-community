@@ -349,7 +349,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
-  @Bombed(day = 15, month = Calendar.JANUARY, year = 2013)
+  @Bombed(day = 25, month = Calendar.JANUARY, year = 2013)
   public void testDontHighlightGoalsForUnresolvedPlugin() throws Throwable {
     createProjectPom("<groupId>test</groupId>\n" +
                      "<artifactId>project</artifactId>\n" +

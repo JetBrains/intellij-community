@@ -38,8 +38,8 @@ public class Main {
 
     final JMenu menuFile = new JMenu(ourBundle.getString("form.menu.preview"));
     menuFile.setMnemonic(ourBundle.getString("form.menu.preview.mnemonic").charAt(0));
-    menuFile.add(new JBMenuItem(new MyPackAction(frame)));
-    menuFile.add(new JBMenuItem(new MyExitAction()));
+    menuFile.add(new JMenuItem(new MyPackAction(frame)));
+    menuFile.add(new JMenuItem(new MyExitAction()));
     menuBar.add(menuFile);
 
     final JMenu viewMenu = new JMenu(ourBundle.getString("form.menu.laf"));
