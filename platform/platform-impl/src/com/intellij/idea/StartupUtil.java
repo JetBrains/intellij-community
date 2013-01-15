@@ -45,8 +45,7 @@ import java.util.List;
 public class StartupUtil {
   @NonNls public static final String NO_SPLASH = "nosplash";
 
-  public static final boolean NO_SNAPPY = SystemProperties.getBooleanProperty("idea.no.snappy", false) ||
-                                          SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast("1.7"); // TODO [Maxim] Update Snappy to 1.5M2 http://youtrack.jetbrains.com/issue/IDEA-95319
+  public static final boolean NO_SNAPPY = SystemProperties.getBooleanProperty("idea.no.snappy", false);
 
   static boolean isHeadless;
 
