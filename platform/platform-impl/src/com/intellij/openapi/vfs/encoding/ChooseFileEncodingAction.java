@@ -58,10 +58,13 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   @Override
   public abstract void update(final AnActionEvent e);
 
+  // returns (hardcoded charset from the file type, explanation) or (null, null) if file type does not restrict encoding
   @NotNull
   static Pair<Charset, String> checkFileType(@NotNull VirtualFile virtualFile) {
     FileType fileType = virtualFile.getFileType();
     if (fileType.isBinary()) return Pair.create(null, "binary file");
+    // in lesser IDEs all special file types are plain text so check for that first
+    if (fileType == FileTypes.PLAIN_TEXT) return Pair.create(null, null);
     if (fileType == StdFileTypes.GUI_DESIGNER_FORM) return Pair.create(CharsetToolkit.UTF8_CHARSET, "IDEA GUI Designer form");
     if (fileType == StdFileTypes.IDEA_MODULE) return Pair.create(CharsetToolkit.UTF8_CHARSET, "IDEA module file");
     if (fileType == StdFileTypes.IDEA_PROJECT) return Pair.create(CharsetToolkit.UTF8_CHARSET, "IDEA project file");
@@ -69,9 +72,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
 
     if (fileType == StdFileTypes.PROPERTIES) return Pair.create(virtualFile.getCharset(), ".properties file");
 
-    if (fileType == StdFileTypes.XML
-        || fileType == StdFileTypes.JSPX && fileType != FileTypes.PLAIN_TEXT // in community tests JSPX==PLAIN_TEXT
-      ) {
+    if (fileType == StdFileTypes.XML || fileType == StdFileTypes.JSPX) {
       return Pair.create(virtualFile.getCharset(), "XML file");
     }
     return Pair.create(null, null);
