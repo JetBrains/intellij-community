@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -191,7 +191,7 @@ public class StartupUtil {
         log.info("JNA library loaded (" + (Native.POINTER_SIZE * 8) + "-bit) in " + (System.currentTimeMillis() - t) + " ms");
       }
       catch (Throwable t) {
-        log.error("Unable to load JNA library", t);
+        logError(log, "Unable to load JNA library", t);
       }
     }
     finally {
@@ -208,7 +208,7 @@ public class StartupUtil {
         log.info("Snappy library loaded (" + Snappy.getNativeLibraryVersion() + ") in " + (System.currentTimeMillis() - t) + " ms");
       }
       catch (Throwable t) {
-        log.error("Unable to load Snappy library", t);
+        logError(log, "Unable to load Snappy library", t);
       }
     }
 
@@ -225,6 +225,11 @@ public class StartupUtil {
         log.info("\"FocusKiller\" library not found or there were problems loading it.", t);
       }
     }
+  }
+
+  private static void logError(Logger log, String message, Throwable t) {
+    message = message + " (OS: " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION + ")";
+    log.error(message, t);
   }
 
   // todo[r.sh] drop after migration on Java 7
