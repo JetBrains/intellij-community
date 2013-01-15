@@ -30,4 +30,6 @@
 
   <plugins-page category="VCS Integration" title="Select VCS Integration Plugins"/>
   <plugins-page title="Select Other Plugins"/>
+
+  <statistics settings="http://jetbrains.com/idea/statistics/stat-assistant.xml" service="http://jetbrains.com/idea/statistics/index.jsp"/>
 </component>

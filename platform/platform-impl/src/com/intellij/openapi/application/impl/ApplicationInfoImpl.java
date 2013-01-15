@@ -89,6 +89,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private String myWebHelpUrl = "http://www.jetbrains.com/idea/webhelp/";
   private List<PluginChooserPage> myPluginChooserPages = new ArrayList<PluginChooserPage>();
   private String[] myEssentialPluginsIds;
+  private String myStatisticsSettingsUrl;
+  private String myStatisticsServiceUrl;
 
   @NonNls private static final String IDEA_PATH = "/idea/";
   @NonNls private static final String ELEMENT_VERSION = "version";
@@ -148,6 +150,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ATTRIBUTE_MAC_URL = "mac";
   @NonNls private static final String DEFAULT_PLUGINS_HOST = "http://plugins.intellij.net";
   @NonNls private static final String ESSENTIAL_PLUGIN = "essential-plugin";
+
+  @NonNls private static final String ELEMENT_STATISTICS = "statistics";
+  @NonNls private static final String ATTRIBUTE_STATISTICS_SETTINGS = "settings";
+  @NonNls private static final String ATTRIBUTE_STATISTICS_SERVICE = "service";
+
 
   public void initComponent() { }
 
@@ -360,6 +367,14 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   public boolean showLicenseeInfo() {
     return myShowLicensee;
+  }
+
+  public String getStatisticsSettingsUrl() {
+    return myStatisticsSettingsUrl;
+  }
+
+  public String getStatisticsServiceUrl() {
+    return myStatisticsServiceUrl;
   }
 
   private static ApplicationInfoImpl ourShadowInstance;
@@ -584,6 +599,16 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       }
     });
     myEssentialPluginsIds = ArrayUtil.toStringArray(essentialPluginsIds);
+
+    Element statisticsElement = parentNode.getChild(ELEMENT_STATISTICS);
+    if (statisticsElement != null) {
+      myStatisticsSettingsUrl = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SETTINGS);
+      myStatisticsServiceUrl = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SERVICE);
+    }
+    else {
+      myStatisticsSettingsUrl = "http://jetbrains.com/idea/statistics/stat-assistant.xml";
+      myStatisticsServiceUrl = "http://jetbrains.com/idea/statistics/index.jsp";
+    }
   }
 
   private static GregorianCalendar parseDate(final String dateString) {
