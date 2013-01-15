@@ -99,4 +99,7 @@ public class DefaultLanguageHighlighterColors {
 
   public final static TextAttributesKey PREDEFINED_SYMBOL =
     TextAttributesKey.createTextAttributesKey("DEFAULT_PREDEFINED_SYMBOL", IDENTIFIER);
+
+  public final static TextAttributesKey METADATA =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_METADATA", HighlighterColors.TEXT);
 }

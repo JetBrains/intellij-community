@@ -83,6 +83,7 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
     TAG_HIGHLIGHTING_MAP.put("valid_esc_seq", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE);
     TAG_HIGHLIGHTING_MAP.put("invalid_esc_seq", DefaultLanguageHighlighterColors.INVALID_STRING_ESCAPE);
     TAG_HIGHLIGHTING_MAP.put("predefined", DefaultLanguageHighlighterColors.PREDEFINED_SYMBOL);
+    TAG_HIGHLIGHTING_MAP.put("metadata", DefaultLanguageHighlighterColors.METADATA);
   }
 
   private final static AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = {
@@ -143,6 +144,8 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.interface.name"), DefaultLanguageHighlighterColors.INTERFACE_NAME),
     new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.metadata"), DefaultLanguageHighlighterColors.METADATA),
+    new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.class.name"), DefaultLanguageHighlighterColors.CLASS_NAME),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.class.reference"), DefaultLanguageHighlighterColors.CLASS_REFERENCE),
@@ -198,6 +201,7 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
       "    Local <local_var>variable</local_var>\n" +
       "Function <func_call>call</func_call>()\n" +
       "Interface <interface>Name</interface>\n" +
+      "<metadata>@Metadata</metadata>\n" +
       "Class <class_name>Name</class_name>\n" +
       "    instance <inst_method>method</inst_method>\n" +
       "    instance <inst_field>field</inst_field>\n" +
