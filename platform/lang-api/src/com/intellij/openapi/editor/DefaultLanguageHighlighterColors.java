@@ -28,7 +28,7 @@ public class DefaultLanguageHighlighterColors {
   public final static TextAttributesKey TEMPLATE_LANGUAGE_COLOR =
     TextAttributesKey.createTextAttributesKey("DEFAULT_TEMPLATE_LANGUAGE_COLOR");
   public final static TextAttributesKey IDENTIFIER =
-    TextAttributesKey.createTextAttributesKey("DEFAULT_IDENTIFIER");
+    TextAttributesKey.createTextAttributesKey("DEFAULT_IDENTIFIER", HighlighterColors.TEXT);
   public final static TextAttributesKey NUMBER =
     TextAttributesKey.createTextAttributesKey("DEFAULT_NUMBER", SyntaxHighlighterColors.NUMBER.getDefaultAttributes());
   public final static TextAttributesKey KEYWORD =
