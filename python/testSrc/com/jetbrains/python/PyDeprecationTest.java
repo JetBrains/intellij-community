@@ -27,6 +27,12 @@ public class PyDeprecationTest extends PyTestCase {
     assertNotParsed((PyFile) myFixture.getFile());
   }
 
+  public void testDeprecatedAsFallback() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/deprecatedAsFallback.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
   public void testDeprecatedProperty() {
     myFixture.enableInspections(PyDeprecationInspection.class);
     myFixture.configureByFile("deprecation/deprecatedProperty.py");
