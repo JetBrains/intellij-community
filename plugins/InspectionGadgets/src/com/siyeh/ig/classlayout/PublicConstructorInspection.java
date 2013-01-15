@@ -58,6 +58,11 @@ public class PublicConstructorInspection extends BaseInspection {
     }
   }
 
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
   @Nullable
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
@@ -103,7 +108,11 @@ public class PublicConstructorInspection extends BaseInspection {
       if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
         return;
       }
-      if (SerializationUtils.isExternalizable(method.getContainingClass())) {
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null || aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return;
+      }
+      if (SerializationUtils.isExternalizable(aClass)) {
         final PsiParameterList parameterList = method.getParameterList();
         if (parameterList.getParametersCount() == 0) {
           return;
@@ -118,7 +127,7 @@ public class PublicConstructorInspection extends BaseInspection {
       if (aClass.isInterface() || aClass.isEnum()) {
         return;
       }
-      if (!aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
+      if (!aClass.hasModifierProperty(PsiModifier.PUBLIC) || aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         return;
       }
       final PsiMethod[] constructors = aClass.getConstructors();
