@@ -30,6 +30,11 @@
     <option name="REMOTE_HOST_MAPPED_BACKGROUND_KEY" value="164716" />
   </colors>
   <attributes>
+    <option name="DEFAULT_IDENTIFIER">
+      <value>
+        <option name="FOREGROUND" value="a9b7c6" />
+      </value>
+    </option>
     <option name="DEFAULT_CLASS_NAME">
       <value>
         <option name="FOREGROUND" value="da4939" />
