@@ -23,6 +23,51 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiFormatUtil extends PsiFormatUtilBase {
+  @MagicConstant(flags = {SHOW_TYPE_PARAMETER_EXTENDS})
+  public @interface FormatTypeParameterOptions {}
+
+  @NotNull
+  public static String formatTypeParameters(PsiTypeParameterListOwner owner, @FormatTypeParameterOptions int options){
+    StringBuilder builder = new StringBuilder();
+    formatTypeParameters(owner.getTypeParameters(), builder, options);
+    return builder.toString();
+  }
+
+  public static void formatTypeParameters(PsiTypeParameterListOwner owner, StringBuilder builder, @FormatTypeParameterOptions int options){
+    formatTypeParameters(owner.getTypeParameters(), builder, options);
+  }
+
+  private static void formatTypeParameters(PsiTypeParameter[] typeParameters, StringBuilder builder, @FormatTypeParameterOptions int options){
+    if(typeParameters.length == 0)
+      return;
+
+    builder.append("<");
+    for(int i = 0; i < typeParameters.length; i++){
+      if(i != 0)
+        builder.append(", ");
+      formatTypeParameter(typeParameters[i], builder, options);
+    }
+    builder.append(">");
+  }
+
+  public static String formatTypeParameter(PsiTypeParameter typeParameter, @FormatTypeParameterOptions int options){
+    StringBuilder builder = new StringBuilder();
+    formatTypeParameter(typeParameter, builder, options);
+    return builder.toString();
+  }
+
+  private static void formatTypeParameter(PsiTypeParameter typeParameter, StringBuilder builder, @FormatTypeParameterOptions int options){
+    builder.append(typeParameter.getName());
+    if((options & SHOW_TYPE_PARAMETER_EXTENDS) != 0)
+    {
+      String referenceList = formatReferenceList(typeParameter.getExtendsList(), options);
+      if(!referenceList.isEmpty()){
+        builder.append(":");
+        builder.append(referenceList);
+      }
+    }
+  }
+
   @MagicConstant(flags = {SHOW_MODIFIERS, SHOW_TYPE, TYPE_AFTER, SHOW_CONTAINING_CLASS, SHOW_FQ_NAME, SHOW_NAME, SHOW_MODIFIERS, SHOW_INITIALIZER, SHOW_RAW_TYPE, SHOW_RAW_NON_TOP_TYPE, SHOW_FQ_CLASS_NAMES})
   public @interface FormatVariableOptions {}
 
@@ -31,6 +76,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     formatVariable(variable, options, substitutor,buffer);
     return buffer.toString();
   }
+
   private static void formatVariable(PsiVariable variable,
                                      @FormatVariableOptions int options,
                                      PsiSubstitutor substitutor,
@@ -113,7 +159,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     return buffer.toString();
   }
 
-  @MagicConstant(flags = {SHOW_MODIFIERS, MODIFIERS_AFTER, SHOW_TYPE, TYPE_AFTER, SHOW_CONTAINING_CLASS, SHOW_FQ_NAME, SHOW_NAME, SHOW_PARAMETERS, SHOW_THROWS, SHOW_RAW_TYPE, SHOW_RAW_NON_TOP_TYPE, SHOW_FQ_CLASS_NAMES})
+  @MagicConstant(flags = {SHOW_MODIFIERS, MODIFIERS_AFTER, SHOW_TYPE, TYPE_AFTER, SHOW_CONTAINING_CLASS, SHOW_FQ_NAME, SHOW_NAME, SHOW_PARAMETERS, SHOW_THROWS, SHOW_RAW_TYPE, SHOW_RAW_NON_TOP_TYPE, SHOW_FQ_CLASS_NAMES, SHOW_TYPE_PARAMETERS, SHOW_TYPE_PARAMETER_EXTENDS})
   public @interface FormatMethodOptions {}
 
   private static void formatMethod(PsiMethod method, PsiSubstitutor substitutor, @FormatMethodOptions int options, @FormatVariableOptions int parameterOptions, int maxParametersToShow, StringBuilder buffer){
@@ -158,6 +204,8 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
         buffer.append(method.getName());
       }
     }
+    if((options & SHOW_TYPE_PARAMETERS) != 0)
+      formatTypeParameters(method, buffer, options);
     if ((options & SHOW_PARAMETERS) != 0){
       buffer.append('(');
       PsiParameter[] parms = method.getParameterList().getParameters();
@@ -197,7 +245,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
   }
 
 
-  @MagicConstant(flags = {SHOW_MODIFIERS, SHOW_NAME, SHOW_ANONYMOUS_CLASS_VERBOSE, SHOW_FQ_NAME, MODIFIERS_AFTER, SHOW_EXTENDS_IMPLEMENTS, SHOW_REDUNDANT_MODIFIERS, JAVADOC_MODIFIERS_ONLY})
+  @MagicConstant(flags = {SHOW_MODIFIERS, SHOW_NAME, SHOW_ANONYMOUS_CLASS_VERBOSE, SHOW_FQ_NAME, MODIFIERS_AFTER, SHOW_EXTENDS_IMPLEMENTS, SHOW_REDUNDANT_MODIFIERS, JAVADOC_MODIFIERS_ONLY, SHOW_TYPE_PARAMETERS, SHOW_TYPE_PARAMETER_EXTENDS})
   public @interface FormatClassOptions {}
 
   @NotNull
