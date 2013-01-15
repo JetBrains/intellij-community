@@ -71,10 +71,14 @@ public class PyRenameTest extends PyTestCase {
     doTest("Shazam");
   }
 
+  public void testRenameGlobal() {
+    doTest("bar");
+  }
+
   public void testRenameGlobalWithoutToplevel() { // PY-3547
     doTest("bar");
   }
-  
+
   public void testRenameSlots() {  // PY-4195
     doTest("bacon");
   }
