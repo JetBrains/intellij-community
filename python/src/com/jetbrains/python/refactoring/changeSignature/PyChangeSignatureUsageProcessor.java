@@ -284,8 +284,8 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       final PyParameterInfo[] parameters = changeInfo.getNewParameters();
       for (int i = 0; i != parameters.length; ++i) {
         PyParameterInfo paramInfo = parameters[i];
-        if (paramInfo.getOldIndex() == i) {
-          final PyParameter[] oldParameters = function.getParameterList().getParameters();
+        final PyParameter[] oldParameters = function.getParameterList().getParameters();
+        if (paramInfo.getOldIndex() == i && i < oldParameters.length) {
           final UsageInfo[] usages = RenameUtil.findUsages(oldParameters[i], paramInfo.getName(), true, false, null);
           for (UsageInfo info : usages) {
             RenameUtil.rename(info, paramInfo.getName());
@@ -334,7 +334,12 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     for (int i = 0; i != parameters.length; ++i) {
       PyParameterInfo info = parameters[i];
 
-      if (docstring != null && info.getOldIndex() < 0) {
+      final int oldIndex = info.getOldIndex();
+      if (i != 0 && oldIndex < oldParameters.length) {
+        builder.append(", ");
+      }
+
+      if (docstring != null && oldIndex < 0) {
         final String replacement =
           new PyDocstringGenerator(baseMethod).withParam("param", info.getName()).docStringAsText();
         PyExpression str =
@@ -342,9 +347,10 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
         docstring.replace(str);
       }
 
-      builder.append(info.getName());
-      if (info.getOldIndex() >= 0 && info.getOldIndex() < oldParameters.length) {
-        final PyParameter parameter = oldParameters[info.getOldIndex()];
+      if (oldIndex < oldParameters.length)
+        builder.append(info.getName());
+      if (oldIndex >= 0 && oldIndex < oldParameters.length) {
+        final PyParameter parameter = oldParameters[oldIndex];
         if (parameter instanceof PyNamedParameter) {
           final PyAnnotation annotation = ((PyNamedParameter)parameter).getAnnotation();
           if (annotation != null) {
@@ -357,9 +363,6 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
         builder.append(" = ").append(defaultValue);
       }
 
-      if (i != parameters.length - 1) {
-        builder.append(", ");
-      }
     }
     builder.append("): pass");
 
