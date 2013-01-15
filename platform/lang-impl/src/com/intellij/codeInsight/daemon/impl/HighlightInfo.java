@@ -140,10 +140,13 @@ public class HighlightInfo implements Segment {
       return null;
     }
     if (forcedTextAttributesKey != null) {
-      final Color errorStripeColor = scheme.getAttributes(forcedTextAttributesKey).getErrorStripeColor();
-      // let's copy above behaviour of forcedTextAttributes stripe color, but I'm not sure that the behaviour is correct in general
-      if (errorStripeColor != null) {
-         return errorStripeColor;
+      TextAttributes forcedTextAttributes = scheme.getAttributes(forcedTextAttributesKey);
+      if (forcedTextAttributes != null) {
+        final Color errorStripeColor = forcedTextAttributes.getErrorStripeColor();
+        // let's copy above behaviour of forcedTextAttributes stripe color, but I'm not sure that the behaviour is correct in general
+        if (errorStripeColor != null) {
+          return errorStripeColor;
+        }
       }
     }
 
