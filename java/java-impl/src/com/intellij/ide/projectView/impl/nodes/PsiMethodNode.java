@@ -44,6 +44,8 @@ public class PsiMethodNode extends BasePsiMemberNode<PsiMethod>{
         PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME |
                               PsiFormatUtilBase.SHOW_TYPE |
                               PsiFormatUtilBase.TYPE_AFTER |
+                              PsiFormatUtilBase.SHOW_TYPE_PARAMETERS |
+                              PsiFormatUtilBase.SHOW_TYPE_PARAMETER_EXTENDS |
                               PsiFormatUtilBase.SHOW_PARAMETERS,
         PsiFormatUtilBase.SHOW_TYPE
     );
