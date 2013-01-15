@@ -222,7 +222,7 @@ public class StartupUtil {
         log.info("Using \"FocusKiller\" library to prevent focus stealing.");
       }
       catch (Throwable t) {
-        log.info("\"FocusKiller\" library not found or there were problems loading it.", t);
+        log.warn("\"FocusKiller\" library not found or there were problems loading it.", t);
       }
     }
   }
