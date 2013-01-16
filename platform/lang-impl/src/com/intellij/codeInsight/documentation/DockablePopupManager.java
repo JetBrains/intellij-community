@@ -47,8 +47,7 @@ import java.awt.*;
  */
 public abstract class DockablePopupManager<T extends JComponent & Disposable> {
   protected ToolWindow myToolWindow = null;
-  protected boolean myDefaultAutoUpdateDocumentation = PropertiesComponent.getInstance().isTrueValue(getAutoUpdateEnabledProperty());
-  protected boolean myAutoUpdateDocumentation = myDefaultAutoUpdateDocumentation;
+  protected boolean myAutoUpdateDocumentation = PropertiesComponent.getInstance().isTrueValue(getAutoUpdateEnabledProperty());
   protected Runnable myAutoUpdateRequest;
   @NotNull protected final Project myProject;
 
@@ -106,7 +105,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
     new UiNotifyConnector(component, new Activatable() {
       @Override
       public void showNotify() {
-        restartAutoUpdate(myDefaultAutoUpdateDocumentation);
+        restartAutoUpdate(myAutoUpdateDocumentation);
       }
 
       @Override
