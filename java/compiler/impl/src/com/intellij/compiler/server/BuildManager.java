@@ -554,7 +554,7 @@ public class BuildManager implements ApplicationComponent{
             projectTaskQueue.submit(new Runnable() {
               @Override
               public void run() {
-                ExecutionException execFailure = null;
+                Throwable execFailure = null;
                 try {
                   if (project.isDisposed()) {
                     return;
@@ -595,7 +595,7 @@ public class BuildManager implements ApplicationComponent{
                     handler.handleFailure(sessionId, CmdlineProtoUtil.createFailure("Disconnected from build process", null));
                   }
                 }
-                catch (ExecutionException e) {
+                catch (Throwable e) {
                   execFailure = e;
                 }
                 finally {
@@ -690,12 +690,18 @@ public class BuildManager implements ApplicationComponent{
     int sdkMinorVersion = 0;
 
     final Set<Sdk> candidates = new HashSet<Sdk>();
+    final Sdk defaultSdk = ProjectRootManager.getInstance(project).getProjectSdk();
+    if (defaultSdk != null && defaultSdk.getSdkType() instanceof JavaSdk) {
+      candidates.add(defaultSdk);
+    }
+
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
       if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
         candidates.add(sdk);
       }
     }
+
     // now select the latest version from the sdks that are used in the project, but not older than the internal sdk version
     for (Sdk candidate : candidates) {
       final String vs = candidate.getVersionString();
