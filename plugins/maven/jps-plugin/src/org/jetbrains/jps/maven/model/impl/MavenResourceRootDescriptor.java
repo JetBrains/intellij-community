@@ -88,7 +88,7 @@ public class MavenResourceRootDescriptor extends BuildRootDescriptor {
     if (myNormalizedExcludes == null) {
       myNormalizedExcludes = normalizePatterns(myConfig.excludes);
     }
-    return isIncluded(FileUtil.toSystemIndependentName(relativePath), myNormalizedIncludes, myNormalizedExcludes);
+    return isIncluded(relativePath, myNormalizedIncludes, myNormalizedExcludes);
   }
 
   private static boolean isIncluded(String relativeName, String[] includes, String[] excludes) {
