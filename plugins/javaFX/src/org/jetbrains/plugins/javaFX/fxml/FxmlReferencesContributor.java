@@ -15,22 +15,43 @@
  */
 package org.jetbrains.plugins.javaFX.fxml;
 
+import com.intellij.patterns.PatternCondition;
+import com.intellij.patterns.XmlAttributeValuePattern;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.PsiReferenceContributor;
 import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.patterns.StandardPatterns.string;
 
 /**
  * User: anna
  * Date: 1/14/13
  */
-public class FxmlJavaClassReferencesContributor extends PsiReferenceContributor {
+public class FxmlReferencesContributor extends PsiReferenceContributor {
   public static final JavaClassReferenceProvider CLASS_REFERENCE_PROVIDER = new JavaClassReferenceProvider();
 
   @Override
   public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue()
-                                          .withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_CONTROLLER)), 
+                                          .withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_CONTROLLER)),
                                         CLASS_REFERENCE_PROVIDER);
+
+    final XmlAttributeValuePattern attributeValuePattern = XmlPatterns.xmlAttributeValue().withValue(string().startsWith("#"))
+      .and(XmlPatterns.xmlAttributeValue().with(inFxmlCondition()));
+    registrar.registerReferenceProvider(attributeValuePattern,
+                                        new JavaFxEventHandlerReferenceProvider());
+  }
+
+  private static PatternCondition<XmlAttributeValue> inFxmlCondition() {
+    return new PatternCondition<XmlAttributeValue>("inFxmlFile") {
+      @Override
+      public boolean accepts(@NotNull XmlAttributeValue value, ProcessingContext context) {
+        return JavaFxFileTypeFactory.isFxml(value.getContainingFile());
+      }
+    };
   }
 }
