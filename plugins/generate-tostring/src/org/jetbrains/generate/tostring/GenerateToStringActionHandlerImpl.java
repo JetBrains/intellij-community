@@ -98,9 +98,8 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
         final MemberChooserBuilder<PsiElementClassMember> builder = new MemberChooserBuilder<PsiElementClassMember>(project);
         final MemberChooserHeaderPanel header = new MemberChooserHeaderPanel(clazz);
         builder.setHeaderPanel(header);
-        boolean isJdk15Enabled = PsiUtil.isLanguageLevel5OrHigher(clazz);
-        builder.overrideAnnotationVisible(isJdk15Enabled);
-        builder.setTitle(calcCurrentTitle());
+        builder.overrideAnnotationVisible(PsiUtil.isLanguageLevel5OrHigher(clazz));
+        builder.setTitle("Generate toString()");
 
         logger.debug("Displaying member chooser dialog");
         SwingUtilities.invokeLater(new Runnable() {
@@ -122,7 +121,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
                         GenerateToStringWorker.executeGenerateActionLater(clazz, editor, selectedMembers, template, dialog.isInsertOverrideAnnotation());
                     }
                     else {
-                        Messages.showWarningDialog("The template chosen is invalid.", "Broken Template");
+                        HintManager.getInstance().showErrorHint(editor, "toString() template '" + template.getFileName() + "' is invalid");
                     }
                 }
             }
@@ -131,20 +130,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
         logger.debug("+++ doExecuteAction - END +++");
     }
 
-    private static String calcCurrentTitle() {
-        final TemplateResource template = TemplatesManager.getInstance().getDefaultTemplate();
-
-        if (template.isValidTemplate()) {
-            return "Generate " + template.getTargetMethodName();
-        }
-        else {
-            return "Generate";
-        }
-    }
-
     public static void updateDialog(PsiClass clazz, MemberChooser<PsiElementClassMember> dialog) {
-        dialog.setTitle(calcCurrentTitle());
-
         final PsiElementClassMember[] members = buildMembersToShow(clazz);
         dialog.resetElements(members);
         dialog.selectElements(members);
@@ -157,7 +143,6 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
         Config config = GenerateToStringContext.getConfig();
 
         PsiField[] filteredFields = GenerateToStringUtils.filterAvailableFields(project, psi, clazz, config.getFilterPattern());
-        if (logger.isDebugEnabled()) logger.debug("Number of fields after filtering: " + filteredFields.length);
         if (logger.isDebugEnabled()) logger.debug("Number of fields after filtering: " + filteredFields.length);
         PsiMethod[] filteredMethods = new PsiMethod[0];
         if (config.enableMethods) {
