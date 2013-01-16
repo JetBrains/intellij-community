@@ -15,21 +15,15 @@
  */
 package org.jetbrains.jps.maven.model.impl;
 
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
+import org.codehaus.plexus.util.SelectorUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 /**
  * @author Eugene Zhuravlev
@@ -40,8 +34,6 @@ public class MavenResourceRootDescriptor extends BuildRootDescriptor {
   private final ResourceRootConfiguration myConfig;
   private final File myFile;
   private final String myId;
-  private Collection<Pattern> myCompiledIncludes;
-  private Collection<Pattern> myCompiledExcludes;
 
   public MavenResourceRootDescriptor(@NotNull MavenResourcesTarget target, ResourceRootConfiguration config) {
     myTarget = target;
@@ -81,19 +73,15 @@ public class MavenResourceRootDescriptor extends BuildRootDescriptor {
   }
 
   public boolean isIncluded(String relativePath) {
-    if (myCompiledIncludes == null) {
-      myCompiledIncludes = compilePatterns(myConfig.includes, MavenProjectConfiguration.DEFAULT_INCLUDE_PATTERN);
-    }
-    if (myCompiledExcludes == null) {
-      myCompiledExcludes = compilePatterns(myConfig.excludes, null);
-    }
-    return isIncluded(FileUtil.toSystemIndependentName(relativePath), myCompiledIncludes, myCompiledExcludes);
+    return isIncluded(FileUtil.toSystemIndependentName(relativePath),
+                      myConfig.includes.isEmpty() ? MavenProjectConfiguration.DEFAULT_INCLUDES : myConfig.includes,
+                      myConfig.excludes);
   }
 
-  private static boolean isIncluded(String relativeName, Collection<Pattern> includes, Collection<Pattern> excludes) {
+  private static boolean isIncluded(String relativeName, Collection<String> includes, Collection<String> excludes) {
     boolean isIncluded = false;
-    for (Pattern each : includes) {
-      if (each.matcher(relativeName).matches()) {
+    for (String each : includes) {
+      if (SelectorUtils.matchPath(each, relativeName)) {
         isIncluded = true;
         break;
       }
@@ -101,40 +89,12 @@ public class MavenResourceRootDescriptor extends BuildRootDescriptor {
     if (!isIncluded) {
       return false;
     }
-    for (Pattern each : excludes) {
-      if (each.matcher(relativeName).matches()) {
+    for (String each : excludes) {
+      if (SelectorUtils.matchPath(each, relativeName)) {
         return false;
       }
     }
     return true;
-  }
-
-  @NotNull
-  private static Collection<Pattern> compilePatterns(@NotNull Collection<String> patterns, @Nullable String defaultValue) {
-    final List<Pattern> result = new ArrayList<Pattern>();
-    if (patterns.isEmpty()) {
-      if (defaultValue == null) {
-        return Collections.emptyList();
-      }
-      try {
-        result.add(compilePattern(defaultValue));
-      }
-      catch (PatternSyntaxException ignore) {
-      }
-    }
-
-    for (String pattern : patterns) {
-      try {
-        result.add(compilePattern(pattern));
-      }
-      catch (PatternSyntaxException ignore) {
-      }
-    }
-    return result;
-  }
-
-  private static Pattern compilePattern(String defaultValue) {
-    return Pattern.compile(defaultValue, SystemInfoRt.isFileSystemCaseSensitive ? 0 : Pattern.CASE_INSENSITIVE);
   }
 
   @Override
