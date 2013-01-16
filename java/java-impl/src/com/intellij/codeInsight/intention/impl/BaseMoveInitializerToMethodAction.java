@@ -79,6 +79,7 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
 
     final Collection<PsiMethod> methodsToAddInitialization = getOrCreateMethods(project, editor, element.getContainingFile(), aClass);
 
+    if (methodsToAddInitialization.isEmpty()) return;
 
     final List<PsiExpressionStatement> assignments = addFieldAssignments(field, methodsToAddInitialization);
     field.getInitializer().delete();
