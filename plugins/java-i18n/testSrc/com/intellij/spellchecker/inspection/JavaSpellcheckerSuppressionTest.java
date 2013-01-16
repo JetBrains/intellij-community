@@ -15,26 +15,22 @@
  */
 package com.intellij.spellchecker.inspection;
 
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
-public class JavaSpellcheckerInspectionTest extends LightCodeInsightFixtureTestCase {
+public class JavaSpellcheckerSuppressionTest extends LightQuickFixTestCase {
+  @NotNull
   @Override
-  protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("java-i18n") + "/testData/inspection";
+  protected String getTestDataPath() {
+    return PluginPathManager.getPluginHomePath("java-i18n") + "/testData/suppression";
   }
 
   public void testClassName() { doTest(); }
-  public void testFieldName() { doTest(); }
-  public void testMethodName() { doTest(); }
-  public void testLocalVariableName() { doTest(); }
-  public void testDocComment() { doTest(); }
   public void testStringLiteral() { doTest(); }
-  public void testStringLiteralEscaping() { doTest(); }
-  public void testSuppressions() { doTest(); }
 
   private void doTest() {
-    myFixture.enableInspections(SpellcheckerInspectionTestCase.getInspectionTools());
-    myFixture.testHighlighting(false, false, true, getTestName(false) + ".java");
+    enableInspectionTools(SpellcheckerInspectionTestCase.getInspectionTools());
+    doSingleTest(getTestName(false) + ".java");
   }
 }
