@@ -179,16 +179,20 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         if (Registry.is("ide.completion.show.preview")) {
           myShowPreview = true;
           myLookup.setFocused(false);
-        }
-        else {
+          if (FeatureUsageTracker.getInstance().isToBeAdvertisedInLookup(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_CONTROL_DOT, getProject())) {
+            myLookup.addAdvertisement("Press " +
+                                      CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_DOT) +
+                                      " to choose the selected (or first) suggestion and insert a dot afterwards");
+          }
+        } else {
           myLookup.setFocused(true);
         }
       }
       else if (FeatureUsageTracker.getInstance()
         .isToBeAdvertisedInLookup(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ENTER, getProject())) {
         myLookup.addAdvertisement("Press " +
-                                  CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_ALWAYS) +
-                                  " to choose the first suggestion");
+                                      CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_ALWAYS) +
+                                      " to choose the selected (or first) suggestion");
       }
       if (!myEditor.isOneLineMode() &&
           FeatureUsageTracker.getInstance()

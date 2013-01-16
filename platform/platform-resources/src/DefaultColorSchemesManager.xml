@@ -47,7 +47,7 @@
       </option>
       <option name="DEFAULT_IDENTIFIER">
         <value>
-          <option name="FOREGROUND"/>
+          <option name="FOREGROUND" value="0"/>
         </value>
       </option>
       <option name="DEFAULT_INSTANCE_FIELD">

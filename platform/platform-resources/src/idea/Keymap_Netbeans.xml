@@ -52,6 +52,7 @@
       <keyboard-shortcut first-keystroke="control F4" />
       <keyboard-shortcut first-keystroke="control W" />
     </action>
+    <action id="EditorChooseLookupItemDot"><keyboard-shortcut first-keystroke="control PERIOD"/></action>
     <action id="CodeCompletion">
       <keyboard-shortcut first-keystroke="control SPACE" />
       <keyboard-shortcut first-keystroke="control BACK_SLASH" />

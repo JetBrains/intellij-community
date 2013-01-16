@@ -463,10 +463,16 @@ public class IncProjectBuilder {
         // do not delete output root itself to avoid lots of unnecessary "roots_changed" events in IDEA
         final File[] children = outputRoot.listFiles();
         if (children != null) {
-          filesToDelete.addAll(Arrays.asList(children));
+          for (File child : children) {
+            if (!child.delete()) {
+              filesToDelete.add(child);
+            }
+          }
         }
-        else if (outputRoot.isFile()) {
-          filesToDelete.add(outputRoot);
+        else { // the output root must be file
+          if (!outputRoot.delete()) {
+            filesToDelete.add(outputRoot);
+          }
         }
         registerTargetsWithClearedOutput(context, entry.getValue());
       }

@@ -109,11 +109,11 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
    * @return the text attributes.
    */
   public TextAttributes getDefaultAttributes() {
-    if (myFallbackAttributeKey != null) {
-      TextAttributes fallbackAttributes = myFallbackAttributeKey.getDefaultAttributes();
-      if (fallbackAttributes != null && !fallbackAttributes.isEmpty()) return fallbackAttributes;
-    }
     if (myDefaultAttributes == NULL_ATTRIBUTES) {
+      if (myFallbackAttributeKey != null) {
+        TextAttributes fallbackAttributes = myFallbackAttributeKey.getDefaultAttributes();
+        if (fallbackAttributes != null && !fallbackAttributes.isEmpty()) return fallbackAttributes;
+      }
       // E.g. if one text key reuse default attributes of some other predefined key
       myDefaultAttributes = null;
       final TextAttributeKeyDefaultsProvider provider = ourDefaultsProvider.getValue();

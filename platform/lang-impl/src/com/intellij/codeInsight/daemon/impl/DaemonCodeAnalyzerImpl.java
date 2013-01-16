@@ -598,12 +598,24 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   @Nullable
   public HighlightInfo findHighlightByOffset(@NotNull Document document, final int offset, final boolean includeFixRange) {
+    return findHighlightByOffset(document, offset, includeFixRange, true);
+  }
+
+  @Nullable
+  public HighlightInfo findHighlightByOffset(@NotNull Document document,
+                                             final int offset,
+                                             final boolean includeFixRange,
+                                             final boolean includeAllButInformation) {
     final List<HighlightInfo> foundInfoList = new SmartList<HighlightInfo>();
     processHighlightsNearOffset(document, myProject, HighlightSeverity.INFORMATION, offset, includeFixRange,
                                 new Processor<HighlightInfo>() {
                                   @Override
                                   public boolean process(@NotNull HighlightInfo info) {
-                                    if (!foundInfoList.isEmpty()) {
+                                    if (includeAllButInformation) {
+                                      if (HighlightSeverity.INFORMATION.compareTo(info.getSeverity()) >= 0) {
+                                        return true;
+                                      }
+                                    } else if (!foundInfoList.isEmpty()) {
                                       HighlightInfo foundInfo = foundInfoList.get(0);
                                       int compare = foundInfo.getSeverity().compareTo(info.getSeverity());
                                       if (compare < 0) {

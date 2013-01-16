@@ -108,9 +108,10 @@ public final class Match {
           super.visitReferenceExpression(expression);
           final PsiElement resolved = expression.resolve();
           if (resolved != null && Comparing.equal(resolved.getContainingFile(), getMatchEnd().getContainingFile())) {
-            final TextRange range = resolved.getTextRange();
-            if (getMatchStart().getTextOffset() <= range.getStartOffset() &&
-                range.getEndOffset() <= getMatchEnd().getTextRange().getEndOffset()) {
+            final TextRange range = checkRange(resolved);
+            final TextRange startRange = checkRange(getMatchStart());
+            final TextRange endRange = checkRange(getMatchEnd());
+            if (startRange.getStartOffset() <= range.getStartOffset() && range.getEndOffset() <= endRange.getEndOffset()) {
               valueDependsOnReplacedScope[0] = true;
             }
           }
@@ -291,8 +292,10 @@ public final class Match {
         if (!outVariables.contains(variable)) {
           final PsiIdentifier identifier = variable.getNameIdentifier();
           if (identifier != null) {
-            if (identifier.getTextRange().getStartOffset() >= getMatchStart().getTextRange().getStartOffset() &&
-                identifier.getTextRange().getEndOffset() <= getMatchEnd().getTextRange().getEndOffset()) {
+            final TextRange textRange = checkRange(identifier);
+            final TextRange startRange = checkRange(getMatchStart());
+            final TextRange endRange = checkRange(getMatchEnd());
+            if (textRange.getStartOffset() >= startRange.getStartOffset() && textRange.getEndOffset() <= endRange.getEndOffset()) {
               final String name = variable.getName();
               LOG.assertTrue(name != null);
               PsiDeclarationStatement statement =
@@ -314,6 +317,12 @@ public final class Match {
     }
   }
 
+  private static TextRange checkRange(final PsiElement element) {
+    final TextRange endRange = element.getTextRange();
+    LOG.assertTrue(endRange != null, element);
+    return endRange;
+  }
+
   public PsiElement replaceWithExpression(final PsiExpression psiExpression) throws IncorrectOperationException {
     final PsiElement matchStart = getMatchStart();
     LOG.assertTrue(matchStart == getMatchEnd());
@@ -324,8 +333,9 @@ public final class Match {
   }
 
   TextRange getTextRange() {
-    return new TextRange(getMatchStart().getTextRange().getStartOffset(),
-                  getMatchEnd().getTextRange().getEndOffset());
+    final TextRange startRange = checkRange(getMatchStart());
+    final TextRange endRange = checkRange(getMatchEnd());
+    return new TextRange(startRange.getStartOffset(), endRange.getEndOffset());
   }
 
   @Nullable

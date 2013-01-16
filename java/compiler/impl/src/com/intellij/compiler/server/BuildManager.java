@@ -817,6 +817,8 @@ public class BuildManager implements ApplicationComponent{
     workDirectory.mkdirs();
     ensureLogConfigExists(workDirectory);
 
+    cmdLine.addParameter("-Djava.io.tmpdir=" + FileUtil.toSystemIndependentName(workDirectory.getPath()) + "/_temp_");
+
     final List<String> cp = ClasspathBootstrap.getBuildProcessApplicationClasspath();
     cp.add(compilerPath);
     cp.addAll(myClasspathManager.getCompileServerPluginsClasspath(project));

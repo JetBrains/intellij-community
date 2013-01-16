@@ -22,6 +22,7 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.actions.ContextHelpAction;
+import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.actions.AntBuildFilePropertiesAction;
@@ -67,6 +68,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -78,7 +80,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   private KeymapListener myKeymapListener;
   private final AntBuildFilePropertiesAction myAntBuildFilePropertiesAction;
   private AntConfiguration myConfig;
-  
+
   private final TreeExpander myTreeExpander = new TreeExpander() {
     public void expandAll() {
       myBuilder.expandAll();
@@ -100,6 +102,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
   public AntExplorer(final Project project) {
     super(true, true);
+    setTransferHandler(new MyTransferHandler());
     myProject = project;
     myConfig = AntConfiguration.getInstance(project);
     final DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode());
@@ -159,13 +162,13 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       myKeymapListener = null;
       listener.stopListen();
     }
-    
+
     final AntExplorerTreeBuilder builder = myBuilder;
     if (builder != null) {
       Disposer.dispose(builder);
       myBuilder = null;
     }
-    
+
     final Tree tree = myTree;
     if (tree != null) {
       ToolTipManager.sharedInstance().unregisterComponent(tree);
@@ -205,6 +208,10 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     descriptor.setTitle(AntBundle.message("select.ant.build.file.dialog.title"));
     descriptor.setDescription(AntBundle.message("select.ant.build.file.dialog.description"));
     final VirtualFile[] files = FileChooser.chooseFiles(descriptor, myProject, null);
+    addBuildFile(files);
+  }
+
+  private void addBuildFile(final VirtualFile[] files) {
     if (files.length == 0) {
       return;
     }
@@ -609,7 +616,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
     public void setSelected(AnActionEvent event, boolean state) {
       final AntConfigurationBase antConfiguration = AntConfigurationBase.getInstance(myProject);
-      if (state) {                                                                                                       
+      if (state) {
         final AntBuildFileBase buildFile =
           (AntBuildFileBase)((myTarget instanceof MetaTarget) ? ((MetaTarget)myTarget).getBuildFile() : myTarget.getModel().getBuildFile());
         antConfiguration.setTargetForEvent(buildFile, myTarget.getName(), myExecutionEvent);
@@ -827,6 +834,35 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     public void stopListen() {
       listenTo(null);
       KeymapManagerEx.getInstanceEx().removeKeymapManagerListener(this);
+    }
+  }
+
+  private final class MyTransferHandler extends TransferHandler {
+
+    @Override
+    public boolean importData(final TransferSupport support) {
+      if (canImport(support)) {
+        addBuildFile(getAntFiles(support));
+        return true;
+      }
+      return false;
+    }
+
+    @Override
+    public boolean canImport(final TransferSupport support) {
+      return FileCopyPasteUtil.isFileListFlavorSupported(support.getDataFlavors());
+    }
+
+    private VirtualFile[] getAntFiles(final TransferSupport support) {
+      List<VirtualFile> virtualFileList = new ArrayList<VirtualFile>();
+      final List<File> fileList = FileCopyPasteUtil.getFileList(support.getTransferable());
+      if (fileList != null) {
+        for (File file : fileList ) {
+          ContainerUtil.addIfNotNull(virtualFileList, VfsUtil.findFileByIoFile(file, true));
+        }
+      }
+
+      return VfsUtil.toVirtualFileArray(virtualFileList);
     }
   }
 }

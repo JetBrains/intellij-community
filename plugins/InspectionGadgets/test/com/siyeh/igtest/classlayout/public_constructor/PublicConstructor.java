@@ -7,3 +7,6 @@ abstract class X implements java.io.Externalizable {
 class Y {
   public Y() {}
 }
+abstract class Z {
+  public Z() {}
+}

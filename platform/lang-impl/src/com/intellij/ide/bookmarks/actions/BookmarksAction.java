@@ -137,6 +137,11 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     }
   }
 
+  @Override
+  public void removeSelectedItemsInTree() {
+
+  }
+
   private static DefaultListModel buildModel(Project project) {
     final DefaultListModel model = new DefaultListModel();
 

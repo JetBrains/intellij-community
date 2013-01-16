@@ -94,7 +94,7 @@ public class StatusBarUpdater implements Disposable {
 
     int offset = editor.getCaretModel().getOffset();
     DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-    HighlightInfo info = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(document, offset, false);
+    HighlightInfo info = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(document, offset, false, false);
     String text = info != null && info.description != null ? info.description : "";
 
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(editor.getContentComponent(), myProject);

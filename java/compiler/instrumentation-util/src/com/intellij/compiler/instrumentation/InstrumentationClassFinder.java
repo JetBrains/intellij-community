@@ -97,14 +97,23 @@ public class InstrumentationClassFinder {
   public PseudoClass loadClass(final String name) throws IOException, ClassNotFoundException{
     final String internalName = name.replace('.', '/'); // normalize
     final PseudoClass aClass = myLoaded.get(internalName);
-    if (aClass != null) {
+    if (aClass != null && aClass != PseudoClass.NULL_OBJ) {
       return aClass;
     }
 
-    final InputStream is = getClassBytesAsStream(internalName);
+    final InputStream is = aClass == null? getClassBytesAsStream(internalName) : null;
 
     if (is == null) {
-      throw new ClassNotFoundException("Class not found: " + name.replace('/', '.')); // ensure presentable class name in error message
+      if (aClass == null) {
+        myLoaded.put(internalName, PseudoClass.NULL_OBJ);
+      }
+      // ensure presentable class name in error message
+      throw new ClassNotFoundException("Class not found: " + name.replace('/', '.')) {
+        @Override
+        public synchronized Throwable fillInStackTrace() {
+          return this;
+        }
+      };
     }
 
     try {
@@ -128,7 +137,7 @@ public class InstrumentationClassFinder {
     final String resourceName = internalName + CLASS_RESOURCE_EXTENSION;
     Resource resource = myPlatformClasspath.getResource(resourceName, false);
     if (resource != null) {
-      is = resource.getInputStream();
+      is = new ByteArrayInputStream(resource.getBytes());
     }
     // second look into memory and classspath
     if (is == null) {
@@ -138,7 +147,7 @@ public class InstrumentationClassFinder {
     if (is == null) {
       resource = myClasspath.getResource(resourceName, false);
       if (resource != null) {
-        is = resource.getInputStream();
+        is = new ByteArrayInputStream(resource.getBytes());
       }
     }
 
@@ -153,13 +162,13 @@ public class InstrumentationClassFinder {
 
     Resource resource = myPlatformClasspath.getResource(resourceName, false);
     if (resource != null) {
-      is = resource.getInputStream();
+      is = new ByteArrayInputStream(resource.getBytes());
     }
 
     if (is == null) {
       resource = myClasspath.getResource(resourceName, false);
       if (resource != null) {
-        is = resource.getInputStream();
+        is = new ByteArrayInputStream(resource.getBytes());
       }
     }
 
@@ -180,22 +189,30 @@ public class InstrumentationClassFinder {
 
     reader.accept(visitor, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
-    return new PseudoClass(visitor.myName, visitor.mySuperclassName, visitor.myInterfaces, visitor.myModifiers, visitor.myMethods);
+    return new PseudoClass(this, visitor.myName, visitor.mySuperclassName, visitor.myInterfaces, visitor.myModifiers, visitor.myMethods);
   }
   
-  public final class PseudoClass {
+  public static class PseudoClass {
+    static final PseudoClass NULL_OBJ = new PseudoClass(null, null, null, null, 0, null);
     private final String myName;
     private final String mySuperClass;
     private final String[] myInterfaces;
     private final int myModifiers;
     private final List<PseudoMethod> myMethods;
+    private final InstrumentationClassFinder myFinder;
 
-    private PseudoClass(final String name, final String superClass, final String[] interfaces, final int modifiers, List<PseudoMethod> methods) {
+    private PseudoClass(InstrumentationClassFinder finder,
+                        final String name,
+                        final String superClass,
+                        final String[] interfaces,
+                        final int modifiers,
+                        List<PseudoMethod> methods) {
       myName = name;
       mySuperClass = superClass;
       myInterfaces = interfaces;
       myModifiers = modifiers;
       myMethods = methods;
+      myFinder = finder;
     }
 
     public int getModifiers() {
@@ -234,12 +251,12 @@ public class InstrumentationClassFinder {
     }
 
     public InstrumentationClassFinder getFinder() {
-      return InstrumentationClassFinder.this;
+      return myFinder;
     }
 
     public PseudoClass getSuperClass() throws IOException, ClassNotFoundException {
       final String superClass = mySuperClass;
-      return superClass != null? loadClass(superClass) : null;
+      return superClass != null? myFinder.loadClass(superClass) : null;
     }
 
     public PseudoClass[] getInterfaces() throws IOException, ClassNotFoundException {
@@ -250,7 +267,7 @@ public class InstrumentationClassFinder {
       final PseudoClass[] result = new PseudoClass[myInterfaces.length];
 
       for (int i = 0; i < result.length; i++) {
-        result[i] = loadClass(myInterfaces[i]);
+        result[i] = myFinder.loadClass(myInterfaces[i]);
       }
 
       return result;
