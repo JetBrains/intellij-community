@@ -328,22 +328,22 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
   }
 
   protected JComponent createMainComponent() {
+    myLimitHistory = new VcsLimitHistoryConfigurable(myProject);
+
     JPanel panel = new JPanel(new GridBagLayout());
     GridBag gb = new GridBag()
       .setDefaultInsets(new Insets(0, 0, DEFAULT_VGAP, DEFAULT_HGAP))
       .setDefaultWeightX(1)
-      .setDefaultWeightY(0)
-      .setDefaultFill(GridBagConstraints.BOTH);
+      .setDefaultFill(GridBagConstraints.HORIZONTAL);
 
-    panel.add(createMappingsTable(), gb.nextLine().next().fillCell().weighty(1));
-    panel.add(createProjectMappingDescription(), gb.nextLine().next().fillCellHorizontally());
-    myLimitHistory = new VcsLimitHistoryConfigurable(myProject);
-    panel.add(myLimitHistory.createComponent(), gb.nextLine().next().fillCellHorizontally());
-    panel.add(createErrorList(), gb.nextLine().next().fillCellHorizontally());
-    panel.add(createShowRecursivelyDirtyOption(), gb.nextLine().next().fillCellHorizontally());
-    panel.add(createStoreBaseRevisionOption(), gb.nextLine().next().fillCellHorizontally());
-    panel.add(createShowChangedOption(), gb.nextLine().next().fillCellHorizontally());
-    panel.add(createShowVcsRootErrorNotificationOption(), gb.nextLine().next().fillCellHorizontally());
+    panel.add(createMappingsTable(), gb.nextLine().next().fillCell().weighty(1.0));
+    panel.add(createProjectMappingDescription(), gb.nextLine().next());
+    panel.add(createErrorList(), gb.nextLine().next());
+    panel.add(myLimitHistory.createComponent(), gb.nextLine().next());
+    panel.add(createShowRecursivelyDirtyOption(), gb.nextLine().next());
+    panel.add(createStoreBaseRevisionOption(), gb.nextLine().next());
+    panel.add(createShowChangedOption(), gb.nextLine().next());
+    panel.add(createShowVcsRootErrorNotificationOption(), gb.nextLine().next());
 
     return panel;
   }
