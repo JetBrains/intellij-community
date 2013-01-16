@@ -77,6 +77,6 @@ public class PyPySdkFlavor extends PythonSdkFlavor {
 
   @Override
   public Icon getIcon() {
-    return PythonIcons.Python.Icons.Pypy;
+    return PythonIcons.Python.Pypy;
   }
 }

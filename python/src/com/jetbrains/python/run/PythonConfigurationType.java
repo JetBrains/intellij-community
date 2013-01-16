@@ -48,7 +48,7 @@ public class PythonConfigurationType implements ConfigurationType {
   }
 
   public Icon getIcon() {
-    return PythonIcons.Python.Icons.Python;
+    return PythonIcons.Python.Python;
   }
 
   public ConfigurationFactory[] getConfigurationFactories() {

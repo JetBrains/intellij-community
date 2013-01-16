@@ -275,13 +275,13 @@ public class PyStructureViewElement implements StructureViewTreeElement {
           icon.setIcon(normal_icon, 0);
           Icon overlay = null;
           if (myVisibility == Visibility.PRIVATE || myVisibility == Visibility.PROTECTED) {
-            overlay = PythonIcons.Python.Icons.Nodes.Lock;
+            overlay = PythonIcons.Python.Nodes.Lock;
           }
           else if (myVisibility == Visibility.PREDEFINED) {
-            overlay = PythonIcons.Python.Icons.Nodes.Cyan_dot;
+            overlay = PythonIcons.Python.Nodes.Cyan_dot;
           }
           else if (myVisibility == Visibility.INVISIBLE) {
-            overlay = PythonIcons.Python.Icons.Nodes.Red_inv_triangle;
+            overlay = PythonIcons.Python.Nodes.Red_inv_triangle;
           }
           if (overlay != null) {
             icon.setIcon(overlay, 1);

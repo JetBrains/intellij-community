@@ -229,6 +229,6 @@ public abstract class PythonSdkFlavor {
   }
 
   public Icon getIcon() {
-    return PythonIcons.Python.Icons.Python;
+    return PythonIcons.Python.Python;
   }
 }
