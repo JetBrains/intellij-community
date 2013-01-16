@@ -54,13 +54,18 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
 
   @Override
   protected void updateNotify() {
-    myGroup.update();
+    if (myGroup != null) {
+      myGroup.update();
+    }
   }
 
   public String toString() {
     String result = "";
-    if (myGroup != null) result += myGroup.getText(null);
-    return children == null ? result : result + children.toString();
+    if (myGroup != null) result = myGroup.getText(null);
+    if (children == null) {
+      return result;
+    }
+    return result + children.subList(0, Math.min(10, children.size())).toString();
   }
 
   public GroupNode addGroup(@NotNull UsageGroup group, int ruleIndex, @NotNull Consumer<Runnable> edtQueue) {
@@ -340,7 +345,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   @Override
-  protected String getText(UsageView view) {
+  protected String getText(@NotNull UsageView view) {
     return myGroup.getText(view);
   }
 

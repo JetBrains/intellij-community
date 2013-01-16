@@ -89,7 +89,7 @@ public class UsageNode extends Node implements Comparable<UsageNode>, Navigatabl
   }
 
   @Override
-  protected String getText(final UsageView view) {
+  protected String getText(@NotNull final UsageView view) {
     try {
       return myUsage.getPresentation().getPlainText();
     }
