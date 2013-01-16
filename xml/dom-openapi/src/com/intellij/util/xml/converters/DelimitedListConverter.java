@@ -107,7 +107,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
   }
 
   public String toString(final List<T> ts, final ConvertContext context) {
-    final StringBuffer buffer = new StringBuffer();
+    final StringBuilder buffer = new StringBuilder();
     final char delimiter = getDefaultDelimiter();
     for (T t : ts) {
       final String s = toString(t);
