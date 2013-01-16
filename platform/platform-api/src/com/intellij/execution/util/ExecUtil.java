@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -217,9 +217,10 @@ public class ExecUtil {
   }
 
   @NotNull
-  public static List<String> getTerminalCommand(@Nullable final String title, @NotNull final String command) {
+  public static List<String> getTerminalCommand(@Nullable String title, @NotNull String command) {
     if (SystemInfo.isWindows) {
-      return Arrays.asList("cmd.exe", "/c", "start", '"' + (title != null ? title : "") + '"', command);
+      title = title != null ? title.replace("\"", "'") : "";
+      return Arrays.asList("cmd.exe", "/c", "start", GeneralCommandLine.inescapableQuote(title), command);
     }
     else if (SystemInfo.isMac) {
       return Arrays.asList(getOpenCommandPath(), "-a", "Terminal", command); // todo: title?
