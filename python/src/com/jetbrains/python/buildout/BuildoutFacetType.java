@@ -50,6 +50,6 @@ public class BuildoutFacetType extends FacetType<BuildoutFacet, BuildoutFacetCon
 
   @Override
   public Icon getIcon() {
-    return PythonIcons.Python.Icons.Buildout.Buildout;
+    return PythonIcons.Python.Buildout.Buildout;
   }
 }

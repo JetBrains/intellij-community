@@ -57,7 +57,7 @@ public class PythonFacetType extends FacetType<PythonFacet, PythonFacetConfigura
 
   @Override
   public Icon getIcon() {
-    return PythonIcons.Python.Icons.Python;
+    return PythonIcons.Python.Python;
   }
 
   public static class PythonFrameworkDetector extends FacetBasedFrameworkDetector<PythonFacet, PythonFacetConfiguration> {

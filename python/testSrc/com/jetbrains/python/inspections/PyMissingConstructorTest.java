@@ -33,8 +33,11 @@ public class PyMissingConstructorTest extends PyTestCase {
     doTest();
   }
 
-  // PY-7176
-  public void testException() {
+  public void testException() { // PY-7176
+    doTest();
+  }
+
+  public void testInnerClass() { //PY-7699
     doTest();
   }
   

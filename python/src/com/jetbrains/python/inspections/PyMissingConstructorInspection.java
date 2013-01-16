@@ -123,7 +123,9 @@ public class PyMissingConstructorInspection extends PyInspection {
                 PyExpression[] args = ((PyCallExpression)qualifier).getArguments();
                 if (args.length > 0) {
                   String firstArg = args[0].getText();
-                  if (firstArg.equals(cl.getName()) || firstArg.equals(CANONICAL_SELF+"."+ CLASS))
+                  final String qualifiedName = cl.getQualifiedName();
+                  if (firstArg.equals(cl.getName()) || firstArg.equals(CANONICAL_SELF+"."+ CLASS) ||
+                      (qualifiedName != null && qualifiedName.endsWith(firstArg)))
                       return true;
                   for (PyClass s : cl.iterateAncestorClasses()) {
                     if (firstArg.equals(s.getName()))

@@ -3,6 +3,7 @@ package com.jetbrains.python.refactoring;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.parameter.PyIntroduceParameterHandler;
 
@@ -35,6 +36,27 @@ public class PyIntroduceParameterTest extends PyIntroduceTestCase {
     doTestCannotPerform(PyBundle.message("refactoring.introduce.selection.error"));
   }
 
+  public void testLocalVariable1() {
+    doTestCannotPerform(PyBundle.message("refactoring.introduce.selection.error"));
+  }
+
+  public void testLocalVariableParam() {
+    doTestCannotPerform(PyBundle.message("refactoring.introduce.selection.error"));
+  }
+
+  public void testNonLocal() {
+    doTestCannotPerform(PyBundle.message("refactoring.introduce.selection.error"), LanguageLevel.PYTHON32);
+  }
+
+  public void testGlobal() {
+    doTestCannotPerform(PyBundle.message("refactoring.introduce.selection.error"));
+  }
+
+  public void testFunctionDef() {
+    doTestCannotPerform(PyBundle.message("refactoring.introduce.selection.error"));
+  }
+
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/refactoring/introduceParameter";
@@ -50,6 +72,16 @@ public class PyIntroduceParameterTest extends PyIntroduceTestCase {
     }
     catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
       assertEquals(expected, e.getMessage());
+    }
+  }
+
+  private void doTestCannotPerform(String expected, LanguageLevel languageLevel) {
+    setLanguageLevel(languageLevel);
+    try {
+      doTestCannotPerform(expected);
+    }
+    finally {
+      setLanguageLevel(null);
     }
   }
 }

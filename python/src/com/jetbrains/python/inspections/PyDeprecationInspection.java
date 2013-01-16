@@ -6,9 +6,8 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyReferenceExpression;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +38,11 @@ public class PyDeprecationInspection extends PyInspection {
 
     @Override
     public void visitPyReferenceExpression(PyReferenceExpression node) {
+      final PyExceptPart exceptPart = PsiTreeUtil.getParentOfType(node, PyExceptPart.class);
+      if (exceptPart != null) {
+        final PyExpression exceptClass = exceptPart.getExceptClass();
+        if (exceptClass != null && "ImportError".equals(exceptClass.getText())) return;
+      }
       PsiElement resolveResult = node.getReference(resolveWithoutImplicits()).resolve();
       String deprecationMessage = null;
       if (resolveResult instanceof PyFunction) {

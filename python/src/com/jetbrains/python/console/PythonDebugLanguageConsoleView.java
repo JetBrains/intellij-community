@@ -218,7 +218,7 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
 
     public ShowDebugConsoleAction(final PythonDebugLanguageConsoleView console) {
       super(ExecutionBundle.message("run.configuration.show.command.line.action.name"), null,
-            PythonIcons.Python.Icons.Debug.CommandLine);
+            PythonIcons.Python.Debug.CommandLine);
       myConsole = console;
     }
 

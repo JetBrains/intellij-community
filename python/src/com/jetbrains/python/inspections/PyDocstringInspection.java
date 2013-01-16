@@ -13,6 +13,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.django.model.DjangoMeta;
+import com.jetbrains.django.model.DjangoModel;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.documentation.*;
@@ -68,7 +70,9 @@ public class PyDocstringInspection extends PyInspection {
     @Override
     public void visitPyClass(PyClass node) {
       final String name = node.getName();
-      if (name != null && !name.startsWith("_")) checkDocString(node);
+      final PyClass outerClass = PsiTreeUtil.getParentOfType(node, PyClass.class);
+      final boolean isDjangoMeta = DjangoModel.isDjangoModelDescendant(outerClass) && DjangoMeta.isMetaClass(node);
+      if (name != null && !name.startsWith("_") && !isDjangoMeta) checkDocString(node);
     }
 
     private void checkDocString(PyDocStringOwner node) {

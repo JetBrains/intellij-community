@@ -38,7 +38,7 @@ public class BuildoutCfgFileType extends LanguageFileType {
 
   @Nullable
   public Icon getIcon() {
-    return PythonIcons.Python.Icons.Buildout.Buildout;
+    return PythonIcons.Python.Buildout.Buildout;
   }
 }
 
