@@ -152,7 +152,11 @@ private layoutPlugins(layouts) {
   dir("plugins") {
     layouts.layoutPlugin("django-db-config")
     layouts.layoutPlugin("python-javascript-debugger")
-    layouts.layoutPlugin("remote-run")
+    layouts.layoutPlugin("remote-run") {
+      fileset(dir: "$home/plugins/remote-run/lib") {
+        include(name: "jediterm-0.2.jar")
+      }
+    }
     layouts.layoutPlugin("python-remote-interpreter")
     layouts.layoutPlugin("vagrant") {
       fileset(dir: "$home/plugins/vagrant/lib") {
@@ -214,11 +218,11 @@ private layoutFull(Map args, String target, Set usedJars) {
       }
 
       jar("openapi.jar") {
-        openapiModules.each { module it}
+        openapiModules.each { module it }
       }
 
-      jar("annotations.jar") { module("annotations")}
-      jar("extensions.jar") { module("extensions")}
+      jar("annotations.jar") { module("annotations") }
+      jar("extensions.jar") { module("extensions") }
 
       jar("pycharm.jar") {
         implementationModules.each {
@@ -236,7 +240,7 @@ private layoutFull(Map args, String target, Set usedJars) {
         module("python-pydev")
       }
 
-      jar("bootstrap.jar") { module("bootstrap")}
+      jar("bootstrap.jar") { module("bootstrap") }
       jar("resources.jar") {
         module("platform-resources")
         module("colorSchemes")
