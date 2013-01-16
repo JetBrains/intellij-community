@@ -40,6 +40,8 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.generate.tostring.config.Config;
+import org.jetbrains.generate.tostring.psi.PsiAdapter;
+import org.jetbrains.generate.tostring.psi.PsiAdapterFactory;
 import org.jetbrains.generate.tostring.template.TemplateResource;
 import org.jetbrains.generate.tostring.template.TemplatesManager;
 import org.jetbrains.generate.tostring.view.TemplatesPanel;
