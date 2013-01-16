@@ -78,10 +78,15 @@ public class MavenResourceRootDescriptor extends BuildRootDescriptor {
 
   public boolean isIncluded(String relativePath) {
     if (myNormalizedIncludes == null) {
-      myNormalizedIncludes = normalizePatterns(myConfig.includes, MavenProjectConfiguration.DEFAULT_INCLUDES);
+      if (myConfig.includes.isEmpty()) {
+        myNormalizedIncludes = new String[]{"**" + File.separatorChar + '*'};
+      }
+      else {
+        myNormalizedIncludes = normalizePatterns(myConfig.includes);
+      }
     }
     if (myNormalizedExcludes == null) {
-      myNormalizedExcludes = normalizePatterns(myConfig.excludes, ArrayUtil.EMPTY_STRING_ARRAY);
+      myNormalizedExcludes = normalizePatterns(myConfig.excludes);
     }
     return isIncluded(FileUtil.toSystemIndependentName(relativePath), myNormalizedIncludes, myNormalizedExcludes);
   }
@@ -106,9 +111,7 @@ public class MavenResourceRootDescriptor extends BuildRootDescriptor {
   }
 
   @NotNull
-  private static String[] normalizePatterns(@NotNull Collection<String> patterns, @NotNull String[] defaultValue) {
-    if (patterns.size() == 0) return defaultValue;
-
+  private static String[] normalizePatterns(@NotNull Collection<String> patterns) {
     String[] res = new String[patterns.size()];
 
     int i = 0;
