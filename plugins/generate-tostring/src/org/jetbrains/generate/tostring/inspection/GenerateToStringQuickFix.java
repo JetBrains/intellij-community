@@ -38,7 +38,7 @@ public class GenerateToStringQuickFix extends AbstractGenerateToStringQuickFix {
 
         // execute the action
         GenerateToStringActionHandler handler = new GenerateToStringActionHandlerImpl();
-        handler.executeActionQickFix(project, clazz);
+        handler.executeActionQuickFix(project, clazz);
     }
 
 }

@@ -127,7 +127,9 @@ public class CmdlineProtoUtil {
 
   public static CmdlineRemoteProto.Message.Failure createFailure(String description, @Nullable Throwable cause) {
     final CmdlineRemoteProto.Message.Failure.Builder builder = CmdlineRemoteProto.Message.Failure.newBuilder();
-    builder.setDescription(description);
+    if (description != null) {
+      builder.setDescription(description);
+    }
     if (cause != null) {
       final ByteArrayOutputStream baos = new ByteArrayOutputStream();
       final PrintStream stream = new PrintStream(baos);
@@ -137,7 +139,11 @@ public class CmdlineProtoUtil {
       finally {
         stream.close();
       }
-      builder.setStacktrace(new String(baos.toByteArray()));
+      final String stacktrace = new String(baos.toByteArray());
+      builder.setStacktrace(stacktrace);
+      if (description == null) {
+        builder.setDescription(stacktrace);
+      }
     }
     return builder.build();
   }

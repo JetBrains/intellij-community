@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.generate.tostring.GenerateToStringContext;
 import org.jetbrains.generate.tostring.GenerateToStringUtils;
 import org.jetbrains.generate.tostring.psi.PsiAdapter;
-import org.jetbrains.generate.tostring.psi.PsiAdapterFactory;
 
 /**
  * Intention to check if the current class toString() method is out of
@@ -80,7 +79,6 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
         }
 
         // must have fields
-        PsiAdapter psi = PsiAdapterFactory.getPsiAdapter();
         PsiField[] fields = clazz.getFields();
         if (fields.length == 0) {
             log.debug("Class does not have any fields");
@@ -88,7 +86,7 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
         }
 
         // a toString method must exist
-        PsiMethod toStringMethod = psi.findMethodByName(clazz, "toString");
+        PsiMethod toStringMethod = PsiAdapter.findMethodByName(clazz, "toString");
         if (toStringMethod == null) {
             log.debug("No toString() method");
             return;
@@ -113,7 +111,7 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
 
         // get list of fields supposed to be dumped in the toString method
         Project project = clazz.getProject();
-        fields = GenerateToStringUtils.filterAvailableFields(project, psi, clazz, GenerateToStringContext.getConfig().getFilterPattern());
+        fields = GenerateToStringUtils.filterAvailableFields(clazz, GenerateToStringContext.getConfig().getFilterPattern());
         if (fields.length == 0) {
             log.debug("No fields to be dumped as all fields was excluded (exclude field by XXX from Settings)");
             return;
@@ -159,8 +157,7 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
         }
 
         // a toString method must exist
-        PsiAdapter psi = PsiAdapterFactory.getPsiAdapter();
-        PsiMethod toStringMethod = psi.findMethodByName(clazz, "toString");
+        PsiMethod toStringMethod = PsiAdapter.findMethodByName(clazz, "toString");
         if (toStringMethod == null) {
             log.debug("No toString() method");
             return;
@@ -188,7 +185,7 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
         }
 
         // get list of methods supposed to be dumped in the toString method
-        methods = GenerateToStringUtils.filterAvailableMethods(psi, clazz, GenerateToStringContext.getConfig().getFilterPattern());
+        methods = GenerateToStringUtils.filterAvailableMethods(clazz, GenerateToStringContext.getConfig().getFilterPattern());
         if (methods.length == 0) {
             log.debug("No getter methods to be dumped as all methods was excluded or a field existed for the getter method (exclude method by XXX from Settings)");
             return;

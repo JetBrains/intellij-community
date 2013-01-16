@@ -17,19 +17,22 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CodeCompletionFeatures;
+import com.intellij.codeInsight.completion.CompletionLookupArranger;
+import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.completion.ShowHideIntentionIconLookupAction;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -63,6 +66,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.Alarm;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
@@ -216,15 +220,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     mySortingLabel.setBorder(new LineBorder(Color.LIGHT_GRAY));
     mySortingLabel.setOpaque(true);
-    new ClickListener() {
-      @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
-        FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CHANGE_SORTING);
-        UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = !UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY;
-        updateSorting();
-        return true;
-      }
-    }.installOn(mySortingLabel);
+    new ChangeLookupSorting().installOn(mySortingLabel);
     updateSorting();
     myModalityState = ModalityState.stateForComponent(getComponent());
   }
@@ -254,7 +250,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     });
   }
 
-  private void updateSorting() {
+  void updateSorting() {
     final boolean lexi = UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY;
     mySortingLabel.setIcon(lexi ? AllIcons.Ide.LookupAlphanumeric : AllIcons.Ide.LookupRelevance);
     mySortingLabel.setToolTipText(lexi ? "Click to sort variants by relevance" : "Click to sort variants alphabetically");
@@ -1487,5 +1483,32 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   void setPreview(CompletionPreview preview) {
     myPreview = preview;
+  }
+
+  private class ChangeLookupSorting extends ClickListener {
+
+    @Override
+    public boolean onClick(MouseEvent e, int clickCount) {
+      DataContext context = DataManager.getInstance().getDataContext(mySortingLabel);
+      DefaultActionGroup group = new DefaultActionGroup();
+      group.add(createSortingAction(true));
+      group.add(createSortingAction(false));
+      JBPopupFactory.getInstance().createActionGroupPopup("Change sorting", group, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false).showInBestPositionFor(
+        context);
+      return true;
+    }
+
+    private AnAction createSortingAction(boolean checked) {
+      boolean currentSetting = UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY;
+      final boolean newSetting = checked ? currentSetting : !currentSetting;
+      return new AnAction(newSetting ? "Sort lexicographically" : "Sort by relevance", null, checked ? PlatformIcons.CHECK_ICON : null) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CHANGE_SORTING);
+          UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = newSetting;
+          updateSorting();
+        }
+      };
+    }
   }
 }

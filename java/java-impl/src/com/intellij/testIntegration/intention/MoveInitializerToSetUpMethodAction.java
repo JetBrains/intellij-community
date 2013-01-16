@@ -18,9 +18,14 @@ package com.intellij.testIntegration.intention;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.intention.impl.BaseMoveInitializerToMethodAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testIntegration.JavaTestFramework;
+import com.intellij.testIntegration.TestFramework;
 import com.intellij.testIntegration.TestIntegrationUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,6 +37,8 @@ import java.util.Collections;
  * @author cdr
  */
 public class MoveInitializerToSetUpMethodAction extends BaseMoveInitializerToMethodAction {
+  private static final Logger LOG = Logger.getInstance("#" + MoveInitializerToSetUpMethodAction.class.getName());
+
   @Override
   @NotNull
   public String getFamilyName() {
@@ -46,7 +53,27 @@ public class MoveInitializerToSetUpMethodAction extends BaseMoveInitializerToMet
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    return super.isAvailable(project, editor, element) && TestIntegrationUtils.isTest(element);
+    final boolean isAvailable = super.isAvailable(project, editor, element) && TestIntegrationUtils.isTest(element);
+    if (isAvailable) {
+      final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class);
+      LOG.assertTrue(field != null);
+      final PsiClass aClass = field.getContainingClass();
+      LOG.assertTrue(aClass != null);
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+      for (TestFramework framework : Extensions.getExtensions(TestFramework.EXTENSION_NAME)) {
+        if (framework instanceof JavaTestFramework && framework.isTestClass(aClass)) {
+          try {
+            ((JavaTestFramework)framework).createSetUpPatternMethod(elementFactory);
+            return true;
+          }
+          catch (Exception e) {
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+    return false;
   }
 
   @NotNull
