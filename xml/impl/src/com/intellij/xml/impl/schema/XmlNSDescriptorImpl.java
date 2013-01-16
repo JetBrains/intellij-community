@@ -34,6 +34,7 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -674,7 +675,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
       final List<XmlElementDescriptor> result = new ArrayList<XmlElementDescriptor>();
       
       public boolean execute(@NotNull final XmlTag element) {
-        result.add(getElementDescriptor(element.getAttributeValue("name"),getDefaultNamespace()));
+        ContainerUtil.addIfNotNull(result, getElementDescriptor(element.getAttributeValue("name"), getDefaultNamespace()));
         return true;
       }
     }

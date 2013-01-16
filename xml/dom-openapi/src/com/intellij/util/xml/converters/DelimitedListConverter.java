@@ -107,7 +107,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
   }
 
   public String toString(final List<T> ts, final ConvertContext context) {
-    final StringBuffer buffer = new StringBuffer();
+    final StringBuilder buffer = new StringBuilder();
     final char delimiter = getDefaultDelimiter();
     for (T t : ts) {
       final String s = toString(t);
@@ -149,6 +149,11 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
                                             final boolean delimitersOnly) {
 
     return new MyPsiReference(element, new TextRange(start, end), context, genericDomValue, delimitersOnly);
+  }
+
+  @Override
+  public String toString() {
+    return super.toString() + " delimiters: " + myDelimiters;
   }
 
   protected class MyPsiReference extends PsiReferenceBase<PsiElement> implements EmptyResolveMessageProvider {
@@ -210,6 +215,11 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
       }
 
       return bindElement;
+    }
+
+    @Override
+    public String toString() {
+      return super.toString() + " converter: " + DelimitedListConverter.this;
     }
 
     private Function<PsiElement, PsiElement> getSuperBindToElementFunction(final Ref<IncorrectOperationException> ref) {

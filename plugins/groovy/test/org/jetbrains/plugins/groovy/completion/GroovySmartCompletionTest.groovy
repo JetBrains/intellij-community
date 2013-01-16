@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,11 +52,11 @@ public class GroovySmartCompletionTest extends GroovyCompletionTestBase {
   }
 
   public void testReturnStatement() throws Exception {
-    doSmartCompletion("b", "b1", "b2", "equals", "foo");
+    doSmartCompletion("b", "b1", "b2", "foo");
   }
 
   public void testIncSmartCompletion() throws Exception {
-    doSmartCompletion("a", "b", "hashCode");
+    doSmartCompletion("a", "b");
   }
 
   public void testInheritConstructorsAnnotation() throws Throwable {
@@ -105,8 +105,7 @@ String s = <caret>
     myFixture.complete(CompletionType.SMART, 2)
     assertOrderedEquals(myFixture.lookupElementStrings,
                         'foo',
-                        'string',
-                        'toString')
+                        'string')
   }
 
   public void testGlobalListCreators() {

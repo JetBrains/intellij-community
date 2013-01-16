@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.generate.tostring;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.generate.tostring.config.Config;
 import org.jetbrains.generate.tostring.view.ConfigUI;
 
@@ -30,6 +31,11 @@ public class GenerateToStringConfigurable implements Configurable {
   private static final Logger log = Logger.getInstance("#org.jetbrains.generate.tostring.GenerateToStringConfigurable"); 
 
   private ConfigUI configUI;
+  private final Project myProject;
+
+  public GenerateToStringConfigurable(Project project) {
+    myProject = project;
+  }
 
   public String getDisplayName() {
       return "Settings";
@@ -40,7 +46,7 @@ public class GenerateToStringConfigurable implements Configurable {
   }
 
   public JComponent createComponent() {
-      return configUI = new ConfigUI(GenerateToStringContext.getConfig());
+      return configUI = new ConfigUI(GenerateToStringContext.getConfig(), myProject);
   }
 
   public boolean isModified() {
@@ -49,7 +55,6 @@ public class GenerateToStringConfigurable implements Configurable {
 
   public void apply() throws ConfigurationException {
       Config config = configUI.getConfig();
-
       GenerateToStringContext.setConfig(config); // update context
 
       if (log.isDebugEnabled()) log.debug("Config updated:\n" + config);
@@ -62,6 +67,4 @@ public class GenerateToStringConfigurable implements Configurable {
   public void disposeUIResources() {
       configUI = null;
   }
-
-
 }
