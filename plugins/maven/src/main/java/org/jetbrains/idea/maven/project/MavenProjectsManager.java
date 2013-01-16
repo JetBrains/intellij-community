@@ -1136,11 +1136,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       props.isFiltered = resource.isFiltered();
       props.includes.clear();
       for (String include : resource.getIncludes()) {
-        props.includes.add(include.trim());
+        props.includes.add(FileUtil.convertAntToRegexp(include.trim()));
       }
       props.excludes.clear();
       for (String exclude : resource.getExcludes()) {
-        props.excludes.add(exclude.trim());
+        props.excludes.add(FileUtil.convertAntToRegexp(exclude.trim()));
       }
       container.add(props);
     }
