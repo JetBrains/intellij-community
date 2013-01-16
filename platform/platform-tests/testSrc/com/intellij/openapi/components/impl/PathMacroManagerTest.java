@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.openapi.components.impl;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.mock.MockFileSystem;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PathManager;
@@ -45,6 +46,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeNotNull;
 
 /**
  * @author mike
@@ -65,6 +67,9 @@ public class PathMacroManagerTest {
 
   @Before
   public final void setupApplication() throws Exception {
+    // in fact the test accesses extension points so it rather should be converted to a platform one
+    assumeNotNull(ApplicationManager.getApplication());
+
     context = new JUnit4Mockery();
     context.setImposteriser(ClassImposteriser.INSTANCE);
     myApplication = context.mock(ApplicationEx.class, "application");
@@ -74,7 +79,7 @@ public class PathMacroManagerTest {
         allowing(myApplication).isUnitTestMode(); will(returnValue(false));
         allowing(myApplication).getName(); will(returnValue("IDEA"));
 
-        //some tests leave invokeLaters after them...
+        // some tests leave invokeLater()'s after them
         allowing(myApplication).invokeLater(with(any(Runnable.class)), with(any(ModalityState.class)));
 
         allowing(myApplication).runReadAction(with(any(Runnable.class)));
@@ -217,6 +222,7 @@ public class PathMacroManagerTest {
     }
   }
 
+  @SuppressWarnings("SpellCheckingInspection")
   @Test
   public void testProjectUnderUserHome_ReplaceRecursively() {
     setUpMocks("/home/user/foo");
