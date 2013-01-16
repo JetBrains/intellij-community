@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 the original author or authors.
+ * Copyright 2001-2012 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,12 @@
 package org.jetbrains.generate.tostring.inspection;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import org.jetbrains.generate.tostring.psi.PsiAdapter;
-import org.jetbrains.generate.tostring.psi.PsiAdapterFactory;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Base class to extend for different types of quick fixes.
  */
 public abstract class AbstractGenerateToStringQuickFix implements LocalQuickFix {
-
-    protected PsiAdapter psi;
-
-    public AbstractGenerateToStringQuickFix() {
-        psi = PsiAdapterFactory.getPsiAdapter();
-    }
 
     @NotNull
     public String getName() {

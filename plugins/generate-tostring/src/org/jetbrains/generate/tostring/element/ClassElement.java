@@ -30,7 +30,6 @@ public class ClassElement implements Serializable {
 
     private String name;
     private String qualifiedName;
-    private boolean hasSuper;
     private String superName;
     private String superQualifiedName;
     private String[] implementNames;
@@ -123,12 +122,8 @@ public class ClassElement implements Serializable {
         this.qualifiedName = FQClassname;
     }
 
-    public boolean isHasSuper() {
-        return hasSuper;
-    }
-
-    public void setHasSuper(boolean hasSuper) {
-        this.hasSuper = hasSuper;
+    public boolean hasSuper() {
+        return this.superName != null;
     }
 
     public boolean isDeprecated() {
@@ -167,7 +162,6 @@ public class ClassElement implements Serializable {
         return "ClassElement{" +
                 "name='" + name + "'" +
                 ", qualifiedName='" + qualifiedName + "'" +
-                ", hasSuper=" + hasSuper +
                 ", superName='" + superName + "'" +
                 ", superQualifiedName='" + superQualifiedName + "'" +
                 ", implementNames=" + (implementNames == null ? null : Arrays.asList(implementNames)) +

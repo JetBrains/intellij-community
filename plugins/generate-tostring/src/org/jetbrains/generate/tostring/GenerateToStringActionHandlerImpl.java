@@ -32,7 +32,6 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.TabbedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -40,8 +39,6 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.generate.tostring.config.Config;
-import org.jetbrains.generate.tostring.psi.PsiAdapter;
-import org.jetbrains.generate.tostring.psi.PsiAdapterFactory;
 import org.jetbrains.generate.tostring.template.TemplateResource;
 import org.jetbrains.generate.tostring.template.TemplatesManager;
 import org.jetbrains.generate.tostring.view.TemplatesPanel;
@@ -137,18 +134,16 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
     }
 
     private static PsiElementClassMember[] buildMembersToShow(PsiClass clazz) {
-        Project project = clazz.getProject();
-
-        PsiAdapter psi = PsiAdapterFactory.getPsiAdapter();
         Config config = GenerateToStringContext.getConfig();
-
-        PsiField[] filteredFields = GenerateToStringUtils.filterAvailableFields(project, psi, clazz, config.getFilterPattern());
+        PsiField[] filteredFields = GenerateToStringUtils.filterAvailableFields(clazz, config.getFilterPattern());
         if (logger.isDebugEnabled()) logger.debug("Number of fields after filtering: " + filteredFields.length);
-        PsiMethod[] filteredMethods = new PsiMethod[0];
+        PsiMethod[] filteredMethods;
         if (config.enableMethods) {
             // filter methods as it is enabled from config
-            filteredMethods = GenerateToStringUtils.filterAvailableMethods(psi, clazz, config.getFilterPattern());
+            filteredMethods = GenerateToStringUtils.filterAvailableMethods(clazz, config.getFilterPattern());
             if (logger.isDebugEnabled()) logger.debug("Number of methods after filtering: " + filteredMethods.length);
+        } else {
+          filteredMethods = PsiMethod.EMPTY_ARRAY;
         }
 
         return GenerateToStringUtils.combineToClassMemberList(filteredFields, filteredMethods);

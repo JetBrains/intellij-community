@@ -25,8 +25,6 @@ import com.intellij.util.ui.CheckBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.generate.tostring.GenerateToStringContext;
 import org.jetbrains.generate.tostring.GenerateToStringUtils;
-import org.jetbrains.generate.tostring.psi.PsiAdapter;
-import org.jetbrains.generate.tostring.psi.PsiAdapterFactory;
 import org.jetbrains.generate.tostring.util.StringUtil;
 
 import javax.swing.*;
@@ -83,8 +81,6 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                 if (nameIdentifier == null || clazz.getName() == null)
                     return;
 
-                PsiAdapter psi = PsiAdapterFactory.getPsiAdapter();
-
                 // must not be an exception
                 if (excludeException && InheritanceUtil.isInheritor(clazz, CommonClassNames.JAVA_LANG_THROWABLE)) {
                     log.debug("This class is an exception");
@@ -130,19 +126,17 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                 }
 
                 // get list of fields and getter methods supposed to be dumped in the toString method
-                Project project = clazz.getProject();
-                fields = GenerateToStringUtils.filterAvailableFields(project, psi, clazz, GenerateToStringContext.getConfig().getFilterPattern());
+                fields = GenerateToStringUtils.filterAvailableFields(clazz, GenerateToStringContext.getConfig().getFilterPattern());
                 PsiMethod[] methods = null;
                 if (GenerateToStringContext.getConfig().isEnableMethods()) {
                     // okay 'getters in code generation' is enabled so check
-                    methods = GenerateToStringUtils.filterAvailableMethods(psi, clazz, GenerateToStringContext.getConfig().getFilterPattern());
+                    methods = GenerateToStringUtils.filterAvailableMethods(clazz, GenerateToStringContext.getConfig().getFilterPattern());
                 }
 
                 // there should be any fields
-                if (fields == null && methods == null)
-                    return;
-                else if (Math.max( fields == null ? 0 : fields.length, methods == null ? 0 : methods.length) == 0)
-                    return;
+                if (Math.max(fields.length, methods == null ? 0 : methods.length) == 0) {
+                  return;
+                }
 
                 // okay some fields/getter methods are supposed to dumped, does a toString method exist
                 final PsiMethod[] toStringMethods = clazz.findMethodsByName("toString", false);
