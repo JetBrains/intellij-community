@@ -49,6 +49,7 @@
     <action id="CloseProject">
       <keyboard-shortcut first-keystroke="meta alt W" />
     </action>
+    <action id="EditorChooseLookupItemDot"><keyboard-shortcut first-keystroke="control PERIOD"/></action>
     <action id="CodeCompletion">
       <keyboard-shortcut first-keystroke="control SPACE" />
       <keyboard-shortcut first-keystroke="F5" />

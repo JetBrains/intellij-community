@@ -18,6 +18,7 @@
     <action id="ShowProjectStructureSettings">
       <keyboard-shortcut first-keystroke="meta SEMICOLON"/>
     </action>
+    <action id="EditorChooseLookupItemDot"><keyboard-shortcut first-keystroke="control PERIOD"/></action>
     <action id="CodeCompletion">
       <keyboard-shortcut first-keystroke="control SPACE"/>
     </action>
