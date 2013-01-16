@@ -28,11 +28,7 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.UndoConfirmationPolicy;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.TextRange;
@@ -55,11 +51,6 @@ public abstract class ChooseItemAction extends EditorAction {
     }
 
     @Override
-    public boolean executeInCommand(Editor editor, DataContext dataContext) {
-      return false;
-    }
-
-    @Override
     public void execute(@NotNull final Editor editor, final DataContext dataContext) {
       final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
       if (lookup == null) {
@@ -77,18 +68,8 @@ public abstract class ChooseItemAction extends EditorAction {
       } else if (finishingChar == '.')  {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_CONTROL_DOT);
       }
-      
-      lookup.uninstallPreview();
 
-      Runnable command = new Runnable() {
-        @Override
-        public void run() {
-          lookup.finishLookup(finishingChar);
-        }
-      };
-      Document doc = editor.getDocument();
-      DocCommandGroupId group = DocCommandGroupId.noneGroupId(doc);
-      CommandProcessor.getInstance().executeCommand(editor.getProject(), command, "Completion", group, UndoConfirmationPolicy.DEFAULT, doc);
+      lookup.finishLookup(finishingChar);
     }
 
 
