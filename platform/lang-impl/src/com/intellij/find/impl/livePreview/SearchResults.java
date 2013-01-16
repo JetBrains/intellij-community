@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.Stack;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -254,7 +255,7 @@ public class SearchResults implements DocumentListener {
           };
 
           if (!ApplicationManager.getApplication().isUnitTestMode()) {
-            SwingUtilities.invokeLater(searchCompletedRunnable);
+            UIUtil.invokeLaterIfNeeded(searchCompletedRunnable);
           }
           else {
             searchCompletedRunnable.run();
