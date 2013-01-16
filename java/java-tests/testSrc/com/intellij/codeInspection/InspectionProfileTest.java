@@ -265,7 +265,13 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     }
     profile.writeExternal(new Element("profile"));
     List<InspectionProfileEntry> initializedTools = getInitializedTools(profile);
-    assertEquals(initializedTools.toString(), 1, initializedTools.size());
+    if (initializedTools.size() != 1) {
+      for (InspectionProfileEntry initializedTool : initializedTools) {
+        System.out.println(initializedTool.getShortName());
+        ((InspectionToolWrapper)initializedTool).instantated.printStackTrace();
+      }
+      fail();
+    }
   }
 
   public void testInspectionInitializationForSerialization() throws Exception {
