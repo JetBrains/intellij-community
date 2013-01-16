@@ -57,7 +57,7 @@ import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 /**
  * @author yole
  */
-public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements Configurable {
+public class VcsDirectoryConfigurationPanel extends JPanel implements Configurable {
   private final Project myProject;
   private final String myProjectMessage;
   private final ProjectLevelVcsManager myVcsManager;
@@ -198,7 +198,9 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     myCheckers = new HashMap<String, VcsRootChecker>();
     updateRootCheckers();
 
-    initPanel();
+    setLayout(new BorderLayout());
+    add(createMainComponent());
+
     myDirectoryRenderer = new MyDirectoryRenderer(myProject);
     DIRECTORY = new ColumnInfo<VcsDirectoryMapping, VcsDirectoryMapping>(VcsBundle.message("column.info.configure.vcses.directory")) {
       public VcsDirectoryMapping valueOf(final VcsDirectoryMapping mapping) {
