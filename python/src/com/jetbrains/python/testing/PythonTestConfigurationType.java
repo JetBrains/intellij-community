@@ -121,7 +121,7 @@ public class PythonTestConfigurationType implements ConfigurationType {
 
   @Override
   public Icon getIcon() {
-    return PythonIcons.Python.Icons.PythonTests;
+    return PythonIcons.Python.PythonTests;
   }
 
   @NotNull

@@ -66,6 +66,6 @@ public class JythonSdkFlavor extends PythonSdkFlavor {
 
   @Override
   public Icon getIcon() {
-    return PythonIcons.Python.Icons.Jython;
+    return PythonIcons.Python.Jython;
   }
 }

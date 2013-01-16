@@ -51,7 +51,7 @@ public class PySpecialMethodNamesCompletionContributor extends CompletionContrib
               .create(entry.getKey() + entry.getValue().getSignature())
               .bold()
               .withTypeText("predefined")
-              .withIcon(PythonIcons.Python.Icons.Nodes.Cyan_dot)
+              .withIcon(PythonIcons.Python.Nodes.Cyan_dot)
             ;
             result.addElement(TailTypeDecorator.withTail(item, TailType.CASE_COLON));
           }

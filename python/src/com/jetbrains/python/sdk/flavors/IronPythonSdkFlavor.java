@@ -84,6 +84,6 @@ public class IronPythonSdkFlavor extends PythonSdkFlavor {
 
   @Override
   public Icon getIcon() {
-    return PythonIcons.Python.Icons.Dotnet;
+    return PythonIcons.Python.Dotnet;
   }
 }
