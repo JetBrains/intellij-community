@@ -521,11 +521,10 @@ public class CompileDriver {
 
       @Override
       public void handleFailure(UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
-        compileContext.addMessage(CompilerMessageCategory.ERROR, failure.getDescription(), null, -1, -1);
-        final String trace = failure.getStacktrace();
+        compileContext.addMessage(CompilerMessageCategory.ERROR, failure.hasDescription()? failure.getDescription() : "", null, -1, -1);
+        final String trace = failure.hasStacktrace()? failure.getStacktrace() : null;
         if (trace != null) {
           LOG.info(trace);
-          System.out.println(trace);
         }
         compileContext.putUserData(COMPILE_SERVER_BUILD_STATUS, ExitStatus.ERRORS);
       }
