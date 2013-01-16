@@ -229,9 +229,9 @@ public final class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData imp
     if (element != null) {
       data.myRemoteSdkDataHolder.loadRemoteSdkData(element);
       data.setSkeletonsPath(StringUtil.nullize(element.getAttributeValue(SKELETONS_PATH)));
-      String helpers_path = StringUtil.nullize(element.getAttributeValue("PYCHARM_HELPERS_PATH"));
-      if (helpers_path != null) {
-        data.setHelpersPath(helpers_path);
+      String helpersPath = StringUtil.nullize(element.getAttributeValue("PYCHARM_HELPERS_PATH"));
+      if (helpersPath != null) {
+        data.setHelpersPath(helpersPath);
       }
     }
 

@@ -3,10 +3,10 @@ package com.jetbrains.python;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import icons.PythonPsiApiIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,15 +27,12 @@ public class PythonFileType extends LanguageFileType {
 
   public static PythonFileType INSTANCE = new PythonFileType();
 
-  private final Icon _icon;
-
   public PythonFileType() {
     this(new PythonLanguage());
   }
 
   public PythonFileType(Language language) {
     super(language);
-    _icon = IconLoader.getIcon("/com/jetbrains/python/icons/pythonFile.png");
   }
 
   @NotNull
@@ -55,7 +52,7 @@ public class PythonFileType extends LanguageFileType {
 
   @NotNull
   public Icon getIcon() {
-    return _icon;
+    return PythonPsiApiIcons.PythonFile;
   }
 
   @Override

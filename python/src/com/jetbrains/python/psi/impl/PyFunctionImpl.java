@@ -89,13 +89,13 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       final Property property = getProperty();
       if (property != null) {
         if (property.getGetter().valueOrNull() == this) {
-          return PythonIcons.Python.Icons.PropertyGetter;
+          return PythonIcons.Python.PropertyGetter;
         }
         if (property.getSetter().valueOrNull() == this) {
-          return PythonIcons.Python.Icons.PropertySetter;
+          return PythonIcons.Python.PropertySetter;
         }
         if (property.getDeleter().valueOrNull() == this) {
-          return PythonIcons.Python.Icons.PropertyDeleter;
+          return PythonIcons.Python.PropertyDeleter;
         }
         return PlatformIcons.PROPERTY_ICON;
       }

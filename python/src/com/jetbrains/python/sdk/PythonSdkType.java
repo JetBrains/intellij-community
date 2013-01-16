@@ -94,7 +94,7 @@ public class PythonSdkType extends SdkType {
   }
 
   public Icon getIcon() {
-    return PythonIcons.Python.Icons.Python;
+    return PythonIcons.Python.Python;
   }
 
   @NotNull

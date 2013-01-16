@@ -23,7 +23,6 @@ import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.sdk.PythonSdkType;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -34,7 +33,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
 
   public RunPythonConsoleAction() {
     super();
-    getTemplatePresentation().setIcon(PythonIcons.Python.Icons.Python);
+    getTemplatePresentation().setIcon(PythonIcons.Python.Python);
   }
 
   @Override
