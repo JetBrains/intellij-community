@@ -231,7 +231,10 @@ public class PathMappingSettings implements Cloneable {
         return path;
       }
 
-      return normLocal(path).replace(normLocal(myLocalRoot), norm(myRemoteRoot));
+      if (canReplaceLocal(path)) {
+        return norm(myRemoteRoot) + norm(path).substring(normLocal(myLocalRoot).length());
+      }
+      return path;
     }
 
     private boolean isEmpty() {
