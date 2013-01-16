@@ -132,7 +132,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
         @Override
         public void setSelected(AnActionEvent e, boolean state) {
-          PropertiesComponent.getInstance().setValue(getAutoUpdateEnabledProperty(), Boolean.TRUE.toString());
+          PropertiesComponent.getInstance().setValue(getAutoUpdateEnabledProperty(), String.valueOf(state));
           myAutoUpdateDocumentation = state;
           restartAutoUpdate(state);
         }
