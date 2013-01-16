@@ -95,16 +95,8 @@ public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
       subString = convertToValidSubString(trimmed.substring(0, trimmed.length() - 3), firstQuote);
     }
     else {
-      s = StringUtil.escapeStringCharacters(s);
       StringBuilder stringBuilder = new StringBuilder();
-      for (Character ch : s.toCharArray()) {
-        if (ch == firstQuote) {
-          stringBuilder.append("\\").append(firstQuote);
-        }
-        else {
-          stringBuilder.append(ch);
-        }
-      }
+      stringBuilder = StringUtil.escapeStringCharacters(s.length(), s, String.valueOf(firstQuote), true, stringBuilder);
       subString = stringBuilder.toString();
     }
     return subString;
