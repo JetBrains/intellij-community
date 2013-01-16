@@ -56,8 +56,8 @@ class FooSpec extends spock.lang.Specification {
     varShl << ['aaa', 'bbb']
     [varShl1, varShl2, varShl3] << [['aaa', 'bbb', 'ccc'], ['aaa', 'bbb', 'ccc'], ['aaa', 'bbb', 'ccc']]
 
-    varTable1|varTable2|varTable3|varTable4
-    ""|""|""|""
+    varTable1|varTable2|varTable3||varTable4
+    ""|""|""||""
   }
 }
 """)

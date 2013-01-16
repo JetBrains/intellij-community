@@ -2,6 +2,7 @@ package org.jetbrains.plugins.groovy.spock;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,11 +14,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrShiftExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrBitwiseExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
@@ -198,8 +199,13 @@ public class SpockUtils {
   }
 
   private static boolean isOrStatement(PsiElement element) {
-    return element instanceof GrBitwiseExpressionImpl
-           && ((GrBitwiseExpressionImpl)element).getOperationTokenType() == GroovyTokenTypes.mBOR;
+    if (element instanceof GrBinaryExpression) {
+      IElementType type = ((GrBinaryExpression)element).getOperationTokenType();
+
+      return type == GroovyTokenTypes.mBOR || type == GroovyTokenTypes.mLOR;
+    }
+
+    return false;
   }
 
   @Nullable
@@ -233,23 +239,15 @@ public class SpockUtils {
     return ref.getName();
   }
 
+  // See org.spockframework.compiler.WhereBlockRewriter#splitRow()
   private static void splitOr(List<GrExpression> res, GrExpression element) {
-    GrExpression e = element;
-
-    while (true) {
-      if (e instanceof GrBitwiseExpressionImpl) {
-        GrBitwiseExpressionImpl be = (GrBitwiseExpressionImpl)e;
-        if (be.getOperationTokenType() == GroovyTokenTypes.mBOR) {
-          res.add(be.getRightOperand());
-          e = be.getLeftOperand();
-          continue;
-        }
-      }
-
-      res.add(e);
-      break;
+    if (isOrStatement(element)) {
+      GrBinaryExpression be = (GrBinaryExpression)element;
+      splitOr(res, be.getLeftOperand());
+      splitOr(res, be.getRightOperand());
     }
-
-    Collections.reverse(res);
+    else {
+      res.add(element);
+    }
   }
 }
