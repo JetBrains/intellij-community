@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 the original author or authors.
+ * Copyright 2001-2012 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,6 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.generate.tostring.config.Config;
-import org.jetbrains.generate.tostring.psi.PsiAdapter;
-import org.jetbrains.generate.tostring.psi.PsiAdapterFactory;
 import org.jetbrains.generate.tostring.template.TemplateResource;
 import org.jetbrains.generate.tostring.template.TemplatesManager;
 import org.jetbrains.generate.tostring.view.TemplatesPanel;
@@ -72,7 +70,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
     }
 
 
-    public void executeActionQickFix(final Project project, final PsiClass clazz) {
+    public void executeActionQuickFix(final Project project, final PsiClass clazz) {
         doExecuteAction(project, clazz, null);
     }
 
@@ -218,7 +216,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
                   Configurable composite = new TabbedConfigurable(disposable) {
                         protected List<Configurable> createConfigurables() {
                             List<Configurable> res = new ArrayList<Configurable>();
-                            res.add(new GenerateToStringConfigurable());
+                            res.add(new GenerateToStringConfigurable(clazz.getProject()));
                             res.add(ui);
                             return res;
                         }
@@ -227,7 +225,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
                             return "toString() Generation Settings";
                         }
 
-                    public String getHelpTopic() {
+                        public String getHelpTopic() {
                             return null; // TODO:
                         }
 
