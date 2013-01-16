@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,10 +156,14 @@ public class TypeWriter extends PsiTypeVisitor<Object> {
   }
 
   private static boolean isLastParameter(@NotNull PsiElement context) {
-    final PsiElement parent = context.getParent();
-    return context instanceof PsiParameter &&
-           parent instanceof PsiParameterList &&
-           ((PsiParameterList)parent).getParameterIndex((PsiParameter)context) == ((PsiParameterList)parent).getParametersCount() - 1;
+    if (context instanceof PsiParameter) {
+      final PsiElement scope = ((PsiParameter)context).getDeclarationScope();
+      if (scope instanceof PsiMethod) {
+        final PsiParameter[] parameters = ((PsiMethod)scope).getParameterList().getParameters();
+        return parameters.length > 0 && parameters[parameters.length - 1] == context;
+      }
+    }
+    return false;
   }
 
 }
