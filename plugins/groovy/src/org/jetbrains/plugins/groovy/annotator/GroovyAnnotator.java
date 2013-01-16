@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -269,6 +269,24 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         if (checkExceptionUsed(usedExceptions, parameter, typeElement, type)) {
           usedExceptions.add(type);
         }
+      }
+    }
+  }
+
+  @Override
+  public void visitVariableDeclaration(GrVariableDeclaration variableDeclaration) {
+    if (variableDeclaration.isTuple()) {
+      final GrModifierList list = variableDeclaration.getModifierList();
+
+      final PsiElement last = PsiUtil.skipWhitespacesAndComments(list.getLastChild(), false);
+      if (last != null) {
+        final IElementType type = last.getNode().getElementType();
+        if (type != GroovyTokenTypes.kDEF) {
+          myHolder.createErrorAnnotation(list, GroovyBundle.message("tuple.declaration.should.end.with.def.modifier"));
+        }
+      }
+      else {
+        myHolder.createErrorAnnotation(list, GroovyBundle.message("tuple.declaration.should.end.with.def.modifier"));
       }
     }
   }
