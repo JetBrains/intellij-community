@@ -41,8 +41,8 @@ public class JBGradientPaint extends GradientPaint {
   }
 
   public static void main(String[] args) {
-    final Color c1 = new Color(0, 155, 0);
-    final Color c2 = new Color(0, 111, 0);
+    final Color c1 = new Color(155, 155, 155);
+    final Color c2 = new Color(50, 50, 50);
     final int size = 500;
     JFrame f = new JFrame("JBGradientPaint");
     JPanel contentPane = new JPanel(new GridLayout(1, 2, 1, 1));
