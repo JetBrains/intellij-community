@@ -135,12 +135,16 @@ public class CompilerTask extends Task.Backgroundable {
     try {
 
       try {
+        final Application app = ApplicationManager.getApplication();
         while (!acquired) {
           acquired = semaphore.tryAcquire(500, TimeUnit.MILLISECONDS);
           if (indicator.isCanceled()) {
             // give up obtaining the semaphore,
             // let compile work begin in order to stop gracefuly on cancel event
             break;
+          }
+          if (app.isDispatchThread()) {
+            UIUtil.dispatchAllInvocationEvents();
           }
         }
       }
