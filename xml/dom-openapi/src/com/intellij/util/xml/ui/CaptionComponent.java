@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.util.xml.ui;
 
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.JBColor;
 import com.intellij.util.xml.DomElement;
 
 import javax.swing.*;
@@ -46,6 +47,7 @@ public class CaptionComponent extends JPanel implements Committable, Highlightab
   public CaptionComponent(String text, Icon icon) {
     super(new BorderLayout());
     updateBorder();
+    myRootPanel.setBackground(new JBColor(new Color(243, 244, 229), new Color(42, 55, 62)));
     add(myRootPanel, BorderLayout.CENTER);
 
     setText(text);
@@ -54,7 +56,7 @@ public class CaptionComponent extends JPanel implements Committable, Highlightab
 
   private void updateBorder() {
     if (myBordered) {
-      myRootPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY));
+      myRootPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, JBColor.LIGHT_GRAY));
     }
     else {
       myRootPanel.setBorder(BorderFactory.createEmptyBorder());
