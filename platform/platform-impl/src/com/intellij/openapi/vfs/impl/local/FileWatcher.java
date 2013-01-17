@@ -463,7 +463,7 @@ public class FileWatcher {
         }
       }
       else {
-        processChange(line, myLastOp);
+        processChange(line.replace('\0', '\n'), myLastOp);
         myLastOp = null;
       }
     }
