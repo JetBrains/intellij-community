@@ -32,7 +32,7 @@ public class MethodElement extends AbstractElement implements Serializable, Elem
     private String methodName;
     private String fieldName;
     private boolean modifierAbstract;
-    private boolean modifierSynchronzied;
+    private boolean modifierSynchronized;
     private boolean returnTypeVoid;
     private boolean getter;
     private boolean deprecated;
@@ -65,12 +65,20 @@ public class MethodElement extends AbstractElement implements Serializable, Elem
         this.modifierAbstract = modifierAbstract;
     }
 
+  /**
+   * For compatibility with old templates
+   * @return
+   */
     public boolean isModifierSynchronzied() {
-        return modifierSynchronzied;
+        return isModifierSynchronized();
     }
 
-    public void setModifierSynchronzied(boolean modifierSynchronzied) {
-        this.modifierSynchronzied = modifierSynchronzied;
+    public boolean isModifierSynchronized() {
+        return modifierSynchronized;
+    }
+
+    public void setModifierSynchronized(boolean modifierSynchronized) {
+        this.modifierSynchronized = modifierSynchronized;
     }
 
     public boolean isReturnTypeVoid() {
@@ -135,7 +143,7 @@ public class MethodElement extends AbstractElement implements Serializable, Elem
                 "fieldName='" + fieldName + "'" +
                 ", methodName='" + methodName + "'" +
                 ", modifierAbstract=" + modifierAbstract +
-                ", modifierSynchronzied=" + modifierSynchronzied +
+                ", modifierSynchronized=" + modifierSynchronized +
                 ", returnTypeVoid=" + returnTypeVoid +
                 ", getter=" + getter +
                 ", deprecated=" + deprecated +
