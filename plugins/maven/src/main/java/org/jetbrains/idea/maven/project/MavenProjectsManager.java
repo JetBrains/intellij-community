@@ -1148,7 +1148,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private static Properties getFilteringProperties(MavenProject mavenProject) {
     final Properties properties = new Properties();
-    properties.putAll(mavenProject.getProperties());
+
     for (String each : mavenProject.getFilters()) {
       try {
         FileInputStream in = new FileInputStream(each);
@@ -1162,6 +1162,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       catch (IOException ignored) {
       }
     }
+
+    properties.putAll(mavenProject.getProperties());
     return properties;
   }
 

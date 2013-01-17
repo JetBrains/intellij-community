@@ -216,7 +216,6 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
 
   private static Properties loadPropertiesAndFilters(CompileContext context, MavenProject mavenProject) {
     Properties properties = new Properties();
-    properties.putAll(mavenProject.getProperties());
 
     for (String each : mavenProject.getFilters()) {
       try {
@@ -233,6 +232,9 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
         context.addMessage(CompilerMessageCategory.WARNING, "Maven: Cannot read the filter. " + e.getMessage(), url, -1, -1);
       }
     }
+
+    properties.putAll(mavenProject.getProperties());
+
     return properties;
   }
 
