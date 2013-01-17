@@ -64,6 +64,10 @@ public class EclipseProjectFinder implements EclipseXml {
     if (file.isFile()) {
       try {
         name = JDOMUtil.loadDocument(file).getRootElement().getChildText(NAME_TAG);
+        if (StringUtil.isEmptyOrSpaces(name)) {
+          return null;
+        }
+        name = name.replace("\n", " ").trim();
       }
       catch (JDOMException e) {
         return null;
