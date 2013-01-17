@@ -16,10 +16,8 @@
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.patterns.PatternCondition;
-import com.intellij.patterns.XmlAttributeValuePattern;
 import com.intellij.patterns.XmlPatterns;
-import com.intellij.psi.PsiReferenceContributor;
-import com.intellij.psi.PsiReferenceRegistrar;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ProcessingContext;
@@ -36,13 +34,16 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
 
   @Override
   public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
-    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue()
-                                          .withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_CONTROLLER)),
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_CONTROLLER))
+                                          .and(XmlPatterns.xmlAttributeValue().with(inFxmlCondition())),
                                         CLASS_REFERENCE_PROVIDER);
 
-    final XmlAttributeValuePattern attributeValuePattern = XmlPatterns.xmlAttributeValue().withValue(string().startsWith("#"))
-      .and(XmlPatterns.xmlAttributeValue().with(inFxmlCondition()));
-    registrar.registerReferenceProvider(attributeValuePattern,
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_ID))
+                                          .and(XmlPatterns.xmlAttributeValue().with(inFxmlCondition())),
+                                        new JavaFxFieldIdReferenceProvider());
+
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withValue(string().startsWith("#"))
+                                          .and(XmlPatterns.xmlAttributeValue().with(inFxmlCondition())),
                                         new JavaFxEventHandlerReferenceProvider());
   }
 
