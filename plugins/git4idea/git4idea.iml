@@ -61,22 +61,11 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
-      <library name="JSch">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/jgit/jsch-0.1.44.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/jgit/jsch-0.1.44.zip!/jsch-0.1.44/src" />
-          <root url="jar://$MODULE_DIR$/lib/jgit/jsch-0.1.44.zip!/jsch-0.1.44/examples" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="library" scope="TEST" name="Groovy" level="project" />
     <orderEntry type="module" module-name="dvcs" />
     <orderEntry type="library" scope="TEST" name="cucumber-jvm" level="project" />
     <orderEntry type="library" scope="TEST" name="cucumber-java" level="project" />
+    <orderEntry type="library" name="JSch" level="project" />
   </component>
 </module>
 
