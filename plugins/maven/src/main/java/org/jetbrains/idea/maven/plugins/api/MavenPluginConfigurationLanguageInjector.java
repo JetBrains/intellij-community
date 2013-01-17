@@ -34,7 +34,7 @@ public final class MavenPluginConfigurationLanguageInjector implements LanguageI
   public void getLanguagesToInject(@NotNull final PsiLanguageInjectionHost host, @NotNull final InjectedLanguagePlaces injectionPlacesRegistrar) {
     if (!(host instanceof XmlText)) return;
 
-    XmlText xmlText = (XmlText)host;
+    final XmlText xmlText = (XmlText)host;
 
     if (!MavenPluginParamInfo.isSimpleText(xmlText)) return;
 
@@ -42,6 +42,14 @@ public final class MavenPluginConfigurationLanguageInjector implements LanguageI
       @Override
       public boolean process(MavenPluginParamInfo.ParamInfo info, MavenDomConfiguration configuration) {
         Language language = info.getLanguage();
+
+        if (language == null) {
+          MavenParamLanguageProvider provider = info.getLanguageProvider();
+          if (provider != null) {
+            language = provider.getLanguage(xmlText, configuration);
+          }
+        }
+
         if (language != null) {
           injectionPlacesRegistrar.addPlace(language, TextRange.from(0, host.getTextLength()), info.getLanguageInjectionPrefix(), info.getLanguageInjectionSuffix());
           return false;
