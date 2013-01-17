@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.WeakHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +38,7 @@ import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * @author Anton Katilin
@@ -44,8 +46,8 @@ import java.util.Iterator;
  */
 public final class WindowWatcher implements PropertyChangeListener{
   private static final Logger LOG=Logger.getInstance("#com.intellij.openapi.wm.impl.WindowWatcher");
-  private final Object myLock;
-  private final HashMap<Window, WindowInfo> myWindow2Info;
+  private final Object myLock = new Object();
+  private final Map<Window, WindowInfo> myWindow2Info = new WeakHashMap<Window, WindowInfo>();
   /**
    * Currenly focused window (window which has focused component). Can be <code>null</code> if there is no focused
    * window at all.
@@ -54,14 +56,10 @@ public final class WindowWatcher implements PropertyChangeListener{
   /**
    * Contains last focused window for each project.
    */
-  private final HashSet myFocusedWindows;
+  private final HashSet myFocusedWindows = new HashSet();
   @NonNls protected static final String FOCUSED_WINDOW_PROPERTY = "focusedWindow";
 
-  WindowWatcher(){
-    myLock=new Object();
-    myWindow2Info=new HashMap<Window, WindowInfo>();
-    myFocusedWindows=new HashSet();
-  }
+  WindowWatcher() {}
 
   /**
    * This method should get notifications abount changes of focused window.
@@ -111,7 +109,8 @@ public final class WindowWatcher implements PropertyChangeListener{
 
   final void dispatchComponentEvent(final ComponentEvent e){
     final int id=e.getID();
-    if(WindowEvent.WINDOW_CLOSED==id||(ComponentEvent.COMPONENT_HIDDEN==id&&e.getSource() instanceof Window)){
+    if(WindowEvent.WINDOW_CLOSED == id ||
+       (ComponentEvent.COMPONENT_HIDDEN == id && e.getSource() instanceof Window)){
       dispatchHiddenOrClosed((Window)e.getSource());
     }
     // Clear obsolete reference on root frame
@@ -268,7 +267,7 @@ public final class WindowWatcher implements PropertyChangeListener{
     }
   }
 
-  public final void doNotSuggestAsParent(final Window window){
+  public final void doNotSuggestAsParent(final Window window) {
     if(LOG.isDebugEnabled()){
       LOG.debug("enter: doNotSuggestAsParent("+window+")");
     }
