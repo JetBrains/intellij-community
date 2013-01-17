@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
@@ -524,6 +525,14 @@ public class ResolveUtil {
                                   PsiMethod method2,
                                   PsiSubstitutor substitutor2) {  //method1 has more general parameter types then method2
     if (!method1.getName().equals(method2.getName())) return false;
+
+    if (method1 instanceof GrReflectedMethod && method2 instanceof GrReflectedMethod) {
+      final GrMethod base1 = ((GrReflectedMethod)method1).getBaseMethod();
+      final GrMethod base2 = ((GrReflectedMethod)method2).getBaseMethod();
+      if (base1 == base2) {
+        return method1.getParameterList().getParametersCount() > method2.getParameterList().getParametersCount();
+      }
+    }
 
     PsiParameter[] params1 = method1.getParameterList().getParameters();
     PsiParameter[] params2 = method2.getParameterList().getParameters();
