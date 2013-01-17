@@ -43,6 +43,10 @@ public class GatheringContinuationContext implements ContinuationContext {
   }
 
   @Override
+  public void cancelCurrent() {
+  }
+
+  @Override
   public <T extends Exception> void addExceptionHandler(Class<T> clazz, Consumer<T> consumer) {
   }
 

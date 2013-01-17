@@ -35,6 +35,8 @@ public interface ContinuationContext extends ContinuationPause {
 
   @CalledInAny
   void cancelEverything();
+  @CalledInAny
+  void cancelCurrent();
 
   <T extends Exception> void addExceptionHandler(final Class<T> clazz, final Consumer<T> consumer);
   boolean handleException(final Exception e, boolean cancelEveryThing);

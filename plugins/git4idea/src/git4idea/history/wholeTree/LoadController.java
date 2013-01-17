@@ -13,6 +13,9 @@
 package git4idea.history.wholeTree;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.CalledInAwt;
@@ -29,6 +32,7 @@ import git4idea.history.GitHistoryUtils;
 import git4idea.history.NewGitUsersComponent;
 import git4idea.history.browser.ChangesFilter;
 import git4idea.history.browser.SymbolicRefsI;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -105,26 +109,49 @@ public class LoadController implements Loader {
       oldContinuation.clearQueue();
     }
 
-    final Continuation continuation = Continuation.createFragmented(myProject, true);
-    continuation.add(Arrays.<TaskDescriptor>asList(new RepositoriesSorter(list, shortLoaders, continuation)));
-    continuation.resume();
+    final RepositoriesSorter sorter = new RepositoriesSorter(list, shortLoaders); // this will set previous algorithm for stop
+
+    final Runnable runnable = new Runnable() {
+      @Override
+      public void run() {
+        final Continuation continuation = Continuation.createForCurrentProgress(myProject, true, "Load git log data");
+        sorter.setContinuation(continuation);
+        continuation.add(Arrays.<TaskDescriptor>asList(sorter));
+        continuation.resume();
+      }
+    };
+    loadUnderProgress(runnable);
+  }
+
+  private void loadUnderProgress(final Runnable runnable) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Load git log data", true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        runnable.run();
+      }
+    });
   }
 
   private class RepositoriesSorter extends TaskDescriptor {
     private final List<LoaderAndRefresher<CommitHashPlusParents>> mySimpleLoaders;
     private final List<ByRootLoader> myShortLoaders;
-    private final Continuation myContinuation;
+    private Continuation myContinuation;
 
-    private RepositoriesSorter(final List<LoaderAndRefresher<CommitHashPlusParents>> simpleLoaders, final List<ByRootLoader> shortLoaders,
-                               final Continuation continuation) {
+    private RepositoriesSorter(final List<LoaderAndRefresher<CommitHashPlusParents>> simpleLoaders, final List<ByRootLoader> shortLoaders) {
       super("Order repositories", Where.POOLED);
       mySimpleLoaders = simpleLoaders;
       myShortLoaders = shortLoaders;
+      myPreviousAlgorithm = new LoadAlgorithm(myProject, mySimpleLoaders, myShortLoaders, myGitCommitsSequentially);
+    }
+
+    private void setContinuation(Continuation continuation) {
       myContinuation = continuation;
+      myPreviousAlgorithm.setContinuation(continuation);
     }
 
     @Override
     public void run(ContinuationContext context) {
+      assert myContinuation != null;
       final Map<VirtualFile, SymbolicRefsI> map = new HashMap<VirtualFile, SymbolicRefsI>();
       for (ByRootLoader shortLoader : myShortLoaders) {
         final VirtualFile root = shortLoader.getRootHolder().getRoot();
@@ -161,7 +188,6 @@ public class LoadController implements Loader {
         }
       });
 
-      myPreviousAlgorithm = new LoadAlgorithm(myProject, mySimpleLoaders, myShortLoaders, myContinuation, myGitCommitsSequentially);
       myPreviousAlgorithm.fillContinuation();
     }
   }
@@ -169,7 +195,12 @@ public class LoadController implements Loader {
   @Override
   public void resume() {
     assert myPreviousAlgorithm != null;
-    myPreviousAlgorithm.resume();
+    loadUnderProgress(new Runnable() {
+      @Override
+      public void run() {
+        myPreviousAlgorithm.resume();
+      }
+    });
   }
 
   private List<String> filterNumbers(final String[] s) {

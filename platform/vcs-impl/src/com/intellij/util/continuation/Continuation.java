@@ -18,7 +18,7 @@ package com.intellij.util.continuation;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
 
-import java.util.*;
+import java.util.List;
 
 public class Continuation {
   private GeneralRunner myGeneralRunner;
@@ -56,6 +56,13 @@ public class Continuation {
 
   public void resume() {
     myGeneralRunner.ping();
+  }
+
+  public void resumeOnNewIndicator(final Project project, final boolean cancellable, final String commonTitle) {
+    final SameProgressRunner runner = new SameProgressRunner(project, cancellable, commonTitle);
+    runner.next(myGeneralRunner.myQueue);
+    myGeneralRunner = runner;
+    resume();
   }
 
   public void clearQueue() {

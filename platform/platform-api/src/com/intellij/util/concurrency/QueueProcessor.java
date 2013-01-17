@@ -24,8 +24,9 @@ import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
 
 /**
@@ -45,7 +46,7 @@ public class QueueProcessor<T> {
   }
 
   private final PairConsumer<T, Runnable> myProcessor;
-  private final LinkedList<T> myQueue = new LinkedList<T>();
+  private final Deque<T> myQueue = new ArrayDeque<T>();
   private final Runnable myContinuationContext = new Runnable() {
     @Override
     public void run() {
