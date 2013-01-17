@@ -53,7 +53,7 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
 
   @Override
   public TextAttributes getAttributes(TextAttributesKey key) {
-      if (key != null) {
+    if (key != null) {
       TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
       TextAttributes attributes = myAttributesMap.get(key);
       if (fallbackKey == null) {
@@ -63,6 +63,9 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
         if (attributes != null && !attributes.isEmpty()) return attributes;
         attributes = getFallbackAttributes(fallbackKey);
         if (attributes != null) return attributes;
+        if (myParentScheme instanceof DefaultColorsScheme && !DEFAULT_SCHEME_NAME.equals(getName())) {
+          return null;
+        }
       }
     }
     return myParentScheme.getAttributes(key);

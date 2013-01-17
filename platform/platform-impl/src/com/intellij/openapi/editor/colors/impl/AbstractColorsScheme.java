@@ -445,10 +445,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     if (key.getFallbackAttributeKey() != null && value.isEmpty()) return false;
     boolean hasDefaultValue = value.equals(defaultAttribute);
     if (myParentScheme == null) return !hasDefaultValue;
-    if (EditorColorsManager.getInstance().getGlobalScheme() == this
-        && myParentScheme instanceof AbstractColorsScheme
-        && !((AbstractColorsScheme)myParentScheme).myAttributesMap.containsKey(key)) return !value.isEmpty();
-    return !value.equals(myParentScheme.getAttributes(key));
+    return true;
   }
 
   private void writeAttributes(Element attrElements) throws WriteExternalException {
