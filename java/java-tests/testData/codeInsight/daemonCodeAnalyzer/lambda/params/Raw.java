@@ -1,7 +1,7 @@
 class Test {
   {
-    <error descr="Incompatible types. Found: '<lambda expression>', required: 'java.lang.Comparable'">Comparable c = (String o)->{
+    Comparable c = (<error descr="Incompatible parameter types in lambda expression">String o</error>)->{
       return 0;
-    };</error>
+    };
   }
 }

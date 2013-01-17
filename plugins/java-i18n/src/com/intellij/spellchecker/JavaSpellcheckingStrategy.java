@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,22 @@
  */
 package com.intellij.spellchecker;
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.codeInspection.SuppressManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
+import com.intellij.spellchecker.tokenizer.SuppressibleSpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- *
  * @author shkate@jetbrains.com
  */
-public class JavaSpellcheckingStrategy extends SpellcheckingStrategy {
+public class JavaSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy {
   private final MethodNameTokenizerJava myMethodNameTokenizer = new MethodNameTokenizerJava();
   private final DocCommentTokenizer myDocCommentTokenizer = new DocCommentTokenizer();
   private final LiteralExpressionTokenizer myLiteralExpressionTokenizer = new LiteralExpressionTokenizer();
@@ -39,15 +39,32 @@ public class JavaSpellcheckingStrategy extends SpellcheckingStrategy {
   @NotNull
   @Override
   public Tokenizer getTokenizer(PsiElement element) {
-    if (element instanceof PsiMethod) return myMethodNameTokenizer;
-    if (element instanceof PsiDocComment) return myDocCommentTokenizer;
+    if (element instanceof PsiMethod) {
+      return myMethodNameTokenizer;
+    }
+    if (element instanceof PsiDocComment) {
+      return myDocCommentTokenizer;
+    }
     if (element instanceof PsiLiteralExpression) {
-      if (SuppressManager.isSuppressedInspectionName((PsiLiteralExpression)element)){
+      if (SuppressManager.isSuppressedInspectionName((PsiLiteralExpression)element)) {
         return EMPTY_TOKENIZER;
       }
       return myLiteralExpressionTokenizer;
     }
-    if (element instanceof PsiNamedElement) return myNamedElementTokenizer;
+    if (element instanceof PsiNamedElement) {
+      return myNamedElementTokenizer;
+    }
+
     return super.getTokenizer(element);
+  }
+
+  @Override
+  public boolean isSuppressedFor(@NotNull PsiElement element, @NotNull String name) {
+    return SuppressManager.getInstance().isSuppressedFor(element, name);
+  }
+
+  @Override
+  public SuppressIntentionAction[] getSuppressActions(@NotNull PsiElement element, @NotNull String name) {
+    return SuppressManager.getInstance().createSuppressActions(HighlightDisplayKey.find(name));
   }
 }

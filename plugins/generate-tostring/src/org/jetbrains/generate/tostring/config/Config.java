@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 the original author or authors.
+ * Copyright 2001-2012 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,6 +89,9 @@ public class Config {
     }
 
     public String getFilterFieldName() {
+        if (filterFieldName == null) {
+            return "";
+        }
         return filterFieldName;
     }
 
@@ -113,6 +116,9 @@ public class Config {
     }
 
     public String getFilterMethodName() {
+        if (filterMethodName == null) {
+            return "";
+        }
         return filterMethodName;
     }
 
@@ -145,6 +151,9 @@ public class Config {
     }
 
     public String getFilterFieldType() {
+        if (filterFieldType == null) {
+            return "";
+        }
         return filterFieldType;
     }
 
@@ -161,6 +170,9 @@ public class Config {
     }
 
     public String getFilterMethodType() {
+        if (filterMethodType == null) {
+            return "";
+        }
         return filterMethodType;
     }
 
@@ -169,7 +181,7 @@ public class Config {
     }
 
     /**
-     * Get's the filter pattern that this configuration represent.
+     * Gets the filter pattern that this configuration represent.
      *
      * @return the filter pattern.
      */

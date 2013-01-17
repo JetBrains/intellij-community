@@ -64,7 +64,7 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
     if (method == null || !method.isConstructor()) return false;
     if (CreateMethodFromUsageFix.hasErrorsInArgumentList(myMethodCall)) return false;
     List<PsiClass> targetClasses = getTargetClasses(myMethodCall);
-    LOG.assertTrue(targetClasses.size() == 1);
+    if (targetClasses.isEmpty()) return false;
 
     if (CreateFromUsageUtils.shouldShowTag(offset, ref.getReferenceNameElement(), myMethodCall)) {
       setText(QuickFixBundle.message("create.constructor.text", targetClasses.get(0).getName()));

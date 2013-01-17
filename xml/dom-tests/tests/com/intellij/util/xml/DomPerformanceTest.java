@@ -52,7 +52,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
 
     final MyElement newElement = createElement(DomUtil.getFile(element).getText(), MyElement.class);
 
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 200, new ThrowableRunnable() {
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 300, new ThrowableRunnable() {
       @Override
       public void run() throws Exception {
         newElement.acceptChildren(new DomElementVisitor() {

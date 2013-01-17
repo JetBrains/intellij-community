@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,6 @@ import java.util.concurrent.LinkedBlockingQueue;
  * A handler for git commands
  */
 public abstract class GitHandler {
-
   protected final Project myProject;
   protected final GitCommand myCommand;
 
@@ -785,9 +784,4 @@ public abstract class GitHandler {
   public String toString() {
     return myCommandLine.toString();
   }
-
-  public void dontEscapeQuotes() {
-    myCommandLine.putUserData(GeneralCommandLine.DO_NOT_ESCAPE_QUOTES, true);
-  }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -269,6 +269,24 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         if (checkExceptionUsed(usedExceptions, parameter, typeElement, type)) {
           usedExceptions.add(type);
         }
+      }
+    }
+  }
+
+  @Override
+  public void visitVariableDeclaration(GrVariableDeclaration variableDeclaration) {
+    if (variableDeclaration.isTuple()) {
+      final GrModifierList list = variableDeclaration.getModifierList();
+
+      final PsiElement last = PsiUtil.skipWhitespacesAndComments(list.getLastChild(), false);
+      if (last != null) {
+        final IElementType type = last.getNode().getElementType();
+        if (type != GroovyTokenTypes.kDEF) {
+          myHolder.createErrorAnnotation(list, GroovyBundle.message("tuple.declaration.should.end.with.def.modifier"));
+        }
+      }
+      else {
+        myHolder.createErrorAnnotation(list, GroovyBundle.message("tuple.declaration.should.end.with.def.modifier"));
       }
     }
   }
@@ -588,27 +606,41 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
 
 
-    final GrVariable toSearchFor = ResolveUtil.isScriptField(variable) ? GrScriptField.createScriptFieldFrom(variable) : variable;
-    PsiNamedElement duplicate = ResolveUtil
-      .resolveExistingElement(variable, new DuplicateVariablesProcessor(toSearchFor), GrReferenceExpression.class, GrVariable.class);
-    if (duplicate == null) {
-      if (variable instanceof GrParameter) {
-        @SuppressWarnings({"ConstantConditions"})
-        final PsiElement context = variable.getContext().getContext();
-        if (context instanceof GrClosableBlock) {
-          duplicate = ResolveUtil.resolveExistingElement((GroovyPsiElement)context, new DuplicateVariablesProcessor(variable),
-                                                         GrVariable.class, GrReferenceExpression.class);
+    PsiNamedElement duplicate;
+    if (ResolveUtil.isScriptField(variable)) {
+      final String name = variable.getName();
+
+      int count = 0;
+      final GroovyScriptClass script = (GroovyScriptClass)((GroovyFile)variable.getContainingFile()).getScriptClass();
+      for (GrScriptField field : GrScriptField.getScriptFields(script)) {
+        if (name.equals(field.getName())) count++;
+      }
+
+      duplicate = count > 1 ? GrScriptField.getScriptField(variable) : null;
+    }
+    else {
+      duplicate = ResolveUtil
+        .resolveExistingElement(variable, new DuplicateVariablesProcessor(variable), GrReferenceExpression.class, GrVariable.class);
+      if (duplicate == null) {
+        if (variable instanceof GrParameter) {
+          @SuppressWarnings({"ConstantConditions"})
+          final PsiElement context = variable.getContext().getContext();
+          if (context instanceof GrClosableBlock) {
+            duplicate = ResolveUtil.resolveExistingElement((GroovyPsiElement)context, new DuplicateVariablesProcessor(variable),
+                                                           GrVariable.class, GrReferenceExpression.class);
+          }
+          else if (context instanceof GrMethod && !(context.getParent() instanceof GroovyFile)) {
+            duplicate =
+              ResolveUtil.resolveExistingElement(((GroovyPsiElement)context.getParent()), new DuplicateVariablesProcessor(variable),
+                                                 GrVariable.class, GrReferenceExpression.class);
+          }
         }
-        else if (context instanceof GrMethod && !(context.getParent() instanceof GroovyFile)) {
-          duplicate = ResolveUtil.resolveExistingElement(((GroovyPsiElement)context.getParent()), new DuplicateVariablesProcessor(variable),
-                                                         GrVariable.class, GrReferenceExpression.class);
-        }
+      }
+      if (duplicate instanceof GrLightParameter && "args".equals(duplicate.getName())) {
+        duplicate = null;
       }
     }
 
-    if (duplicate instanceof GrLightParameter && "args".equals(duplicate.getName())) {
-      duplicate = null;
-    }
 
     if (duplicate instanceof GrVariable) {
       if ((variable instanceof GrField || ResolveUtil.isScriptField(variable)) /*&& duplicate instanceof PsiField*/ ||
@@ -1952,12 +1984,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
 
     private static boolean hasExplicitVisibilityModifiers(GrVariable variable) {
-      final PsiModifierList modifierList = variable.getModifierList();
-      if (modifierList instanceof GrModifierList) return ((GrModifierList)modifierList).hasExplicitVisibilityModifiers();
-      if (modifierList == null) return false;
-      return modifierList.hasExplicitModifier(PUBLIC) ||
-             modifierList.hasExplicitModifier(PROTECTED) ||
-             modifierList.hasExplicitModifier(PRIVATE);
+      final GrModifierList modifierList = variable.getModifierList();
+      return modifierList != null && modifierList.hasExplicitVisibilityModifiers();
     }
 
     @Override

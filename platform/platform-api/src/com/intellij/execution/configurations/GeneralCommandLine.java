@@ -47,9 +47,11 @@ import java.util.Map;
  * as required by the underlying platform.
  */
 public class GeneralCommandLine implements UserDataHolder {
-  public static Key<Boolean> DO_NOT_ESCAPE_QUOTES = Key.create("GeneralCommandLine.do.not.escape.quotes");
+  /** @deprecated use {@linkplain #inescapableQuote(String)} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration") public static Key<Boolean> DO_NOT_ESCAPE_QUOTES = Key.create("GeneralCommandLine.do.not.escape.quotes");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.GeneralCommandLine");
+  private static final char QUOTE = '\uEFEF';
 
   private String myExePath = null;
   private File myWorkDirectory = null;
@@ -236,26 +238,29 @@ public class GeneralCommandLine implements UserDataHolder {
 
   private String[] prepareCommands() {
     final List<String> parameters = myProgramParams.getList();
-    final boolean doNotEscape = Boolean.TRUE.equals(getUserData(DO_NOT_ESCAPE_QUOTES));
-
     final String[] result = new String[parameters.size() + 1];
-    result[0] = myExePath != null ? prepareCommand(FileUtil.toSystemDependentName(myExePath), doNotEscape) : null;
+    result[0] = myExePath != null ? prepareCommand(FileUtil.toSystemDependentName(myExePath)) : null;
     for (int i = 0; i < parameters.size(); i++) {
-      result[i + 1] = prepareCommand(parameters.get(i), doNotEscape);
+      result[i + 1] = prepareCommand(parameters.get(i));
     }
     return result;
   }
 
-  // please keep in sync with com.intellij.rt.execution.junit.ProcessBuilder.prepareCommand() (besides doNotEscape option)
-  private static String prepareCommand(String parameter, final boolean doNotEscape) {
+  // please keep in sync with com.intellij.rt.execution.junit.ProcessBuilder.prepareCommand()
+  private static String prepareCommand(String parameter) {
     if (SystemInfo.isWindows) {
-      if (!doNotEscape && parameter.contains("\"")) {
+      if (parameter.contains("\"")) {
         parameter = StringUtil.replace(parameter, "\"", "\\\"");
       }
       else if (parameter.length() == 0) {
         parameter = "\"\"";
       }
     }
+
+    if (parameter.length() >= 2 && parameter.charAt(0) == QUOTE && parameter.charAt(parameter.length() - 1) == QUOTE) {
+      parameter = '"' + parameter.substring(1, parameter.length() - 1) + '"';
+    }
+
     return parameter;
   }
 
@@ -275,6 +280,18 @@ public class GeneralCommandLine implements UserDataHolder {
         environment.putAll(myEnvParams);
       }
     }
+  }
+
+  /**
+   * Normally, double quotes in parameters are escaped so they arrive to a called program as-is.
+   * But some commands (e.g. {@code 'cmd /c start "title" ...'}) should get they quotes non-escaped.
+   * Wrapping a parameter by this method (instead of using quotes) will do exactly this.
+   *
+   * @see com.intellij.execution.util.ExecUtil#getTerminalCommand(String, String)
+   */
+  @NotNull
+  public static String inescapableQuote(@NotNull String parameter) {
+    return QUOTE + parameter + QUOTE;
   }
 
   @Override

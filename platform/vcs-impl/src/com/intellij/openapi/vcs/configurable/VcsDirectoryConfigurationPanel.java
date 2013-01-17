@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.table.TableView;
@@ -56,7 +57,7 @@ import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 /**
  * @author yole
  */
-public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements Configurable {
+public class VcsDirectoryConfigurationPanel extends JPanel implements Configurable {
   private final Project myProject;
   private final String myProjectMessage;
   private final ProjectLevelVcsManager myVcsManager;
@@ -197,7 +198,9 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     myCheckers = new HashMap<String, VcsRootChecker>();
     updateRootCheckers();
 
-    initPanel();
+    setLayout(new BorderLayout());
+    add(createMainComponent());
+
     myDirectoryRenderer = new MyDirectoryRenderer(myProject);
     DIRECTORY = new ColumnInfo<VcsDirectoryMapping, VcsDirectoryMapping>(VcsBundle.message("column.info.configure.vcses.directory")) {
       public VcsDirectoryMapping valueOf(final VcsDirectoryMapping mapping) {
@@ -327,22 +330,22 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
   }
 
   protected JComponent createMainComponent() {
+    myLimitHistory = new VcsLimitHistoryConfigurable(myProject);
+
     JPanel panel = new JPanel(new GridBagLayout());
     GridBag gb = new GridBag()
       .setDefaultInsets(new Insets(0, 0, DEFAULT_VGAP, DEFAULT_HGAP))
       .setDefaultWeightX(1)
-      .setDefaultWeightY(0)
-      .setDefaultFill(GridBagConstraints.BOTH);
+      .setDefaultFill(GridBagConstraints.HORIZONTAL);
 
-    panel.add(createMappingsTable(), gb.nextLine().next().fillCell().weighty(1));
-    panel.add(createProjectMappingDescription(), gb.nextLine().next().fillCellHorizontally());
-    myLimitHistory = new VcsLimitHistoryConfigurable(myProject);
-    panel.add(myLimitHistory.createComponent(), gb.nextLine().next().fillCellHorizontally());
-    panel.add(createErrorList(), gb.nextLine().next().fillCellHorizontally());
-    panel.add(createShowRecursivelyDirtyOption(), gb.nextLine().next().fillCellHorizontally());
-    panel.add(createStoreBaseRevisionOption(), gb.nextLine().next().fillCellHorizontally());
-    panel.add(createShowChangedOption(), gb.nextLine().next().fillCellHorizontally());
-    panel.add(createShowVcsRootErrorNotificationOption(), gb.nextLine().next().fillCellHorizontally());
+    panel.add(createMappingsTable(), gb.nextLine().next().fillCell().weighty(1.0));
+    panel.add(createProjectMappingDescription(), gb.nextLine().next());
+    panel.add(createErrorList(), gb.nextLine().next());
+    panel.add(myLimitHistory.createComponent(), gb.nextLine().next());
+    panel.add(createShowRecursivelyDirtyOption(), gb.nextLine().next());
+    panel.add(createStoreBaseRevisionOption(), gb.nextLine().next());
+    panel.add(createShowChangedOption(), gb.nextLine().next());
+    panel.add(createShowVcsRootErrorNotificationOption(), gb.nextLine().next());
 
     return panel;
   }
@@ -390,7 +393,10 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
   }
 
   private JComponent createErrorList() {
-    Box box = Box.createVerticalBox();
+    final int DEFAULT_HEIGHT = 200;
+    final JComponent errorPanel = Box.createVerticalBox();
+    final JBScrollPane pane = new JBScrollPane(errorPanel);
+
     for (Map.Entry<String, VcsRootChecker> entry : myCheckers.entrySet()) {
       VcsRootChecker checker = entry.getValue();
       for (final String root : checker.getUnregisteredRoots()) {
@@ -401,13 +407,25 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
           @Override
           public void run() {
             addMapping(new VcsDirectoryMapping(root, vcs));
-            vcsRootErrorLabel.setVisible(false);
+            errorPanel.remove(vcsRootErrorLabel);
+            if (errorPanel.getComponentCount() == 0) {
+              pane.setVisible(false);
+            }
+            pane.setMinimumSize(new Dimension(-1, calcMinHeight(errorPanel, DEFAULT_HEIGHT)));
+            validate();
           }
         });
-        box.add(vcsRootErrorLabel);
+        errorPanel.add(vcsRootErrorLabel);
       }
     }
-    return box;
+    pane.setMinimumSize(new Dimension(-1, calcMinHeight(errorPanel, DEFAULT_HEIGHT)));
+    pane.setMaximumSize(new Dimension(-1, DEFAULT_HEIGHT));
+    return pane;
+  }
+
+  private static int calcMinHeight(@NotNull JComponent errorPanel, int defaultHeight) {
+    int height = errorPanel.getPreferredSize().height;
+    return height > defaultHeight ? defaultHeight : height;
   }
 
   private JComponent createProjectMappingDescription() {

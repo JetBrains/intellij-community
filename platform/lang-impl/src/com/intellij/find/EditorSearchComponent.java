@@ -427,6 +427,9 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     to.setRegularExpressions(from.isRegularExpressions());
     to.setInCommentsOnly(from.isInCommentsOnly());
     to.setInStringLiteralsOnly(from.isInStringLiteralsOnly());
+    if (from.isReplaceState()) {
+      to.setPreserveCase(from.isPreserveCase());
+    }
   }
 
   private void updateUIWithFindModel() {

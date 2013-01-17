@@ -230,7 +230,15 @@ public class CompletionLookupArranger extends LookupArranger {
     ensureItemAdded(items, model, byRelevance, relevantSelection);
     ensureEverythingVisibleAdded(lookup, model, byRelevance);
 
-    return new ArrayList<LookupElement>(model);
+    ArrayList<LookupElement> result = new ArrayList<LookupElement>(model);
+    if (result.size() > 1) {
+      LookupElement first = result.get(0);
+      if (isLiveTemplate(first) && isPrefixItem(lookup, first, true)) {
+        ContainerUtil.swapElements(result, 0, 1);
+      }
+    }
+
+    return result;
   }
 
   private static void ensureEverythingVisibleAdded(LookupImpl lookup, final LinkedHashSet<LookupElement> model, Iterator<LookupElement> byRelevance) {

@@ -17,10 +17,18 @@
 package com.intellij.refactoring.actions;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupEx;
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -87,7 +95,22 @@ public abstract class BaseRefactoringAction extends AnAction {
       InplaceRefactoring.unableToStartWarning(project, editor);
       return;
     }
-    
+
+    final LookupEx lookup = LookupManager.getActiveLookup(editor);
+    if (lookup instanceof LookupImpl) {
+      Runnable command = new Runnable() {
+        @Override
+        public void run() {
+          ((LookupImpl)lookup).finishLookup(Lookup.NORMAL_SELECT_CHAR);
+        }
+      };
+      assert editor != null;
+      Document doc = editor.getDocument();
+      DocCommandGroupId group = DocCommandGroupId.noneGroupId(doc);
+      CommandProcessor.getInstance().executeCommand(editor.getProject(), command, "Completion", group, UndoConfirmationPolicy.DEFAULT, doc);
+    }
+
+
     IdeEventQueue.getInstance().setEventCount(eventCount);
     if (editor != null) {
       final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());

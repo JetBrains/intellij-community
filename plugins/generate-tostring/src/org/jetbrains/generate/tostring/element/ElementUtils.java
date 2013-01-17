@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 the original author or authors.
+ * Copyright 2001-2012 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,9 @@
  */
 package org.jetbrains.generate.tostring.element;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
-import org.jetbrains.generate.tostring.psi.PsiAdapter;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,24 +28,21 @@ import java.util.List;
  */
 public class ElementUtils {
 
-    private ElementUtils() {
-    }
+    private ElementUtils() {}
 
     /**
-     * Get's the list of members to be put in the VelocityContext.
+     * Gets the list of members to be put in the VelocityContext.
      *
-     * @param project           Project
-     * @param psi               PSI adapter
      * @param members a list of {@link com.intellij.psi.PsiMember} objects.
      * @return a filtered list of only the fields as {@link FieldElement} objects.
      */
-    public static List<FieldElement> getOnlyAsFieldElements(Project project, PsiAdapter psi, Collection<PsiMember> members) {
+    public static List<FieldElement> getOnlyAsFieldElements(Collection<PsiMember> members) {
         List<FieldElement> fieldElementList = new ArrayList<FieldElement>();
 
         for (PsiMember member : members) {
             if (member instanceof PsiField) {
                 PsiField field = (PsiField) member;
-                FieldElement fe = ElementFactory.newFieldElement(project, field, psi);
+                FieldElement fe = ElementFactory.newFieldElement(field);
                 fieldElementList.add(fe);
             }
         }
@@ -57,20 +51,18 @@ public class ElementUtils {
     }
 
     /**
-     * Get's the list of members to be put in the VelocityContext.
+     * Gets the list of members to be put in the VelocityContext.
      *
-     * @param psi               PSI adapter
-     * @param elementFactory    Element Factory
      * @param members a list of {@link com.intellij.psi.PsiMember} objects.
      * @return a filtered list of only the methods as a {@link MethodElement} objects.
      */
-    public static List<MethodElement> getOnlyAsMethodElements(PsiElementFactory elementFactory, PsiAdapter psi, Collection<PsiMember> members) {
+    public static List<MethodElement> getOnlyAsMethodElements(Collection<PsiMember> members) {
         List<MethodElement> methodElementList = new ArrayList<MethodElement>();
 
         for (PsiMember member : members) {
             if (member instanceof PsiMethod) {
                 PsiMethod method = (PsiMethod) member;
-                MethodElement me = ElementFactory.newMethodElement(method, elementFactory, psi);
+                MethodElement me = ElementFactory.newMethodElement(method);
                 methodElementList.add(me);
             }
         }
@@ -79,30 +71,25 @@ public class ElementUtils {
     }
 
     /**
-     * Get's the list of members to be put in the VelocityContext.
+     * Gets the list of members to be put in the VelocityContext.
      *
-     * @param project           Project
-     * @param elementFactory    Element Factory
-     * @param psi               PSI adapter
      * @param members a list of {@link com.intellij.psi.PsiMember} objects.
      * @return a filtered list of only the methods as a {@link FieldElement} or {@link MethodElement} objects.
      */
-    public static List<Element> getOnlyAsFieldAndMethodElements(Project project, PsiElementFactory elementFactory, PsiAdapter psi, Collection<PsiMember> members) {
+    public static List<Element> getOnlyAsFieldAndMethodElements(Collection<PsiMember> members) {
         List<Element> elementList = new ArrayList<Element>();
 
         for (PsiMember member : members) {
             if (member instanceof PsiField) {
                 PsiField field = (PsiField) member;
-                FieldElement fe = ElementFactory.newFieldElement(project, field, psi);
+                FieldElement fe = ElementFactory.newFieldElement(field);
                 elementList.add(fe);
             } else if (member instanceof PsiMethod) {
                 PsiMethod method = (PsiMethod) member;
-                MethodElement me = ElementFactory.newMethodElement(method, elementFactory, psi);
+                MethodElement me = ElementFactory.newMethodElement(method);
                 elementList.add(me);
             }
         }
-
         return elementList;
     }
-    
 }

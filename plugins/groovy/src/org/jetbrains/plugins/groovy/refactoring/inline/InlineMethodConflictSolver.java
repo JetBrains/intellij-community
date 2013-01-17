@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -39,7 +40,8 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 public class InlineMethodConflictSolver {
   private InlineMethodConflictSolver() {}
 
-  public static String suggestNewName(@NotNull String startName, @Nullable GrMethod method, PsiElement call, String... otherNames) {
+  @NotNull
+  public static String suggestNewName(@NotNull String startName, @Nullable GrMethod method, @NotNull PsiElement call, String... otherNames) {
     String newName;
     int i = 1;
     PsiElement parent = call.getParent();
@@ -57,7 +59,7 @@ public class InlineMethodConflictSolver {
     return newName;
   }
 
-  static boolean isValid(String name, String ... otherNames) {
+  static boolean isValid(@Nullable String name, String ... otherNames) {
     for (String otherName : otherNames) {
       if (otherName.equals(name)) {
         return false;
@@ -66,17 +68,18 @@ public class InlineMethodConflictSolver {
     return true;
   }
 
-  private static boolean isValidNameInMethod(@NotNull String name, GrMethod method) {
+  private static boolean isValidNameInMethod(@NotNull String name, @NotNull GrMethod method) {
     for (GrParameter parameter : method.getParameters()) {
       if (name.equals(parameter.getName())) return false;
     }
-    if (method.getBlock() != null) {
-      return isValidNameDown(name, method.getBlock(), null);
+    final GrOpenBlock block = method.getBlock();
+    if (block != null) {
+      return isValidNameDown(name, block, null);
     }
     return true;
   }
 
-  public static boolean isValidName(@NotNull String name, PsiElement scopeElement, PsiElement call) {
+  public static boolean isValidName(@NotNull String name, @NotNull PsiElement scopeElement, PsiElement call) {
     if (isValidNameDown(name, scopeElement, call)) {
       if (!(scopeElement instanceof GroovyFileBase)) {
         return isValidNameUp(name, scopeElement, call);
@@ -88,7 +91,7 @@ public class InlineMethodConflictSolver {
     }
   }
 
-  private static boolean isValidNameDown(@NotNull String name, PsiElement startElement, @Nullable PsiElement call) {
+  private static boolean isValidNameDown(@NotNull String name, @NotNull PsiElement startElement, @Nullable PsiElement call) {
 
     PsiElement child = startElement.getFirstChild();
     while (child != null) {
@@ -121,7 +124,7 @@ public class InlineMethodConflictSolver {
     return true;
   }
 
-  private static boolean isValidNameUp(@NotNull String name, PsiElement startElement, PsiElement call) {
+  private static boolean isValidNameUp(@NotNull String name, @NotNull PsiElement startElement, @Nullable PsiElement call) {
     if (startElement instanceof PsiFile) {
       return true;
     }

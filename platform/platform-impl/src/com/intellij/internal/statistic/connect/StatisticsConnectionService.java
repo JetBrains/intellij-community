@@ -16,6 +16,7 @@
 package com.intellij.internal.statistic.connect;
 
 import com.intellij.facet.frameworks.SettingsConnectionService;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -28,15 +29,12 @@ import java.util.List;
 import java.util.Set;
 
 public class StatisticsConnectionService extends SettingsConnectionService {
-
-  private static final String SETTINGS_URL = "http://jetbrains.com/idea/statistics/stat-assistant.xml";
-  private static final String DEFAULT_SERVICE_URL = "http://jetbrains.com/idea/statistics/index.jsp";
-
   private static final String PERMISSION_ATTR_NAME = "permitted";
   private static final String DISABLED = "disabled";
 
   public StatisticsConnectionService() {
-    this(SETTINGS_URL, DEFAULT_SERVICE_URL);
+    this(((ApplicationInfoImpl)ApplicationInfoImpl.getShadowInstance()).getStatisticsSettingsUrl(),
+         ((ApplicationInfoImpl)ApplicationInfoImpl.getShadowInstance()).getStatisticsServiceUrl());
   }
 
   public StatisticsConnectionService(@NotNull String settingsUrl, @Nullable String defaultServiceUrl) {

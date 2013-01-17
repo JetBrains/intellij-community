@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package testData.inspection.docCommentWithMistakes.data.java.src;
+package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic
 
 /**
- * doc <TYPO descr="Typo: In word 'commment'">commment</TYPO>
- *
- * @author Test Test
+ * @author Max Medvedev
  */
-class SPITest6 {
-  /**
-   * @param parameter - first parameter
-   */
-  private void method(String parameter) {
-
-  }
+class GrScriptBindingVariable {
 }

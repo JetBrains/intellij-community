@@ -60,14 +60,14 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
       }
     """)
     type('i')
-    assertContains("if", "iterable", "int")
+    assertContains("iterable", "if", "int")
 
     type('t')
     assertContains "iterable"
     assertEquals 'iterable', lookup.currentItem.lookupString
 
     type('er')
-    assertContains("iter", "iterable")
+    assertContains "iterable", "iter"
     assertEquals 'iterable', lookup.currentItem.lookupString
     assert lookup.focused
 
@@ -76,7 +76,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
   }
 
   def assertContains(String... items) {
-    assert myFixture.lookupElementStrings.containsAll(items as List)
+    myFixture.assertPreferredCompletionItems(0, items)
   }
 
   public void testRecalculateItemsOnBackspace() {
@@ -89,7 +89,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
       }
     """)
     type "r"
-    assertContains "iter", "iterable"
+    assertContains "iterable", "iter"
 
     type '\b'
     assertContains "iterable"
@@ -104,7 +104,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assertContains "iterable"
 
     type "r"
-    assertContains "iter", "iterable"
+    assertContains "iterable", "iter"
   }
 
   public void testExplicitSelectionShouldSurvive() {
@@ -124,8 +124,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assertEquals 'iterable2', lookup.currentItem.lookupString
 
     type "r"
-    assertContains "iter", "iterable", 'iterable2'
-    assertEquals 'iterable2', lookup.currentItem.lookupString
+    myFixture.assertPreferredCompletionItems 2, "iterable", "iter", 'iterable2'
 
   }
 
@@ -146,8 +145,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assertEquals 'iterable2', lookup.currentItem.lookupString
 
     type "r"
-    assertContains "iter", "iterable", 'iterable2'
-    assertEquals 'iterable2', lookup.currentItem.lookupString
+    myFixture.assertPreferredCompletionItems 2, "iterable", "iter", 'iterable2'
 
   }
 
@@ -554,7 +552,7 @@ public interface Test {
     """)
     type('i')
     def offset = myFixture.editor.caretModel.offset
-    assertContains "if", "iterable", "int"
+    assertContains "iterable", "if", "int"
 
     edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT) }
     assert myFixture.editor.caretModel.offset == offset + 1
@@ -569,7 +567,7 @@ public interface Test {
     joinAutopopup()
     joinCompletion()
     assert !lookup.calculating
-    assertContains "if", "iterable", "int"
+    assertContains "iterable", "if", "int"
     assertEquals 'iterable', lookup.currentItem.lookupString
 
     edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT) }
@@ -654,26 +652,6 @@ public interface Test {
     finally {
       CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
     }
-  }
-
-  public void testTemplateSelectionByComma() {
-    myFixture.configureByText("a.java", """
-class Foo {
-    int itea = 2;
-    int itera = 2;
-
-    {
-        it<caret>
-    }
-}
-""")
-    type 'e'
-    assertContains "itea", "itera"
-    type 'r'
-    assertContains "iter", "itera"
-    type ','
-    assert !lookup
-    assert myFixture.editor.document.text.contains('itera,')
   }
 
   public void testTemplateSelectionBySpace() {
@@ -959,7 +937,7 @@ class Foo {
     }
 
     type('_')
-    assertContains 'x__foo', 'x__goo'
+    myFixture.assertPreferredCompletionItems 1, 'x__foo', 'x__goo'
     edt {
       assert goo == TargetElementUtil.instance.findTargetElement(myFixture.editor, TargetElementUtil.LOOKUP_ITEM_ACCEPTED)
       myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)
@@ -1074,14 +1052,6 @@ public class UTest {
     };
     disposeOnTearDown ({ manager.editorProvider = old } as Disposable)
     return editor
-  }
-
-  public void _testCharSelectionUndo() {
-    myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
-    def editor = openEditorForUndo();
-    type('ArrStoExce.')
-    edt { UndoManager.getInstance(project).undo(editor) }
-    assert myFixture.editor.document.text.contains('ArrStoExce.')
   }
 
   public void testAutopopupTypingUndo() {

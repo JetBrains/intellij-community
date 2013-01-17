@@ -923,6 +923,38 @@ public abstract class ResourceFilteringTest extends MavenImportingTestCase {
                  "value2=value\n");
   }
 
+  public void testPropertyPriority() throws Exception {
+    createProjectSubFile("filters/filter.properties", "xxx=fromFilterFile\n" +
+                                                      "yyy=fromFilterFile");
+    createProjectSubFile("resources/file.properties","value1=${xxx}\n" +
+                                                     "value2=${yyy}");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<properties>" +
+                  "  <xxx>fromProperties</xxx>" +
+                  "</properties>" +
+
+                  "<build>" +
+                  "  <filters>" +
+                  "    <filter>filters/filter.properties</filter>" +
+                  "  </filters>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>resources</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+
+    compileModules("project");
+    assertResult("target/classes/file.properties",
+                 "value1=fromProperties\n" +
+                 "value2=fromFilterFile");
+  }
+
   public void testCustomEscapingFiltering() throws Exception {
     createProjectSubFile("filters/filter.properties", "xxx=value");
     createProjectSubFile("resources/file.properties",

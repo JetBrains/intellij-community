@@ -10,6 +10,7 @@
     <xml.fileNSInfoProvider implementation="org.jetbrains.plugins.javaFX.fxml.JavaFXNamespaceProvider"/>
     <metaDataContributor implementation="org.jetbrains.plugins.javaFX.fxml.JavaFXMetaDataContributor"/>
     <xml.schemaProvider implementation="org.jetbrains.plugins.javaFX.fxml.JavaFXSchemaHandler"/>
-    <psi.referenceContributor implementation="org.jetbrains.plugins.javaFX.fxml.FxmlJavaClassReferencesContributor"/>
+    <psi.referenceContributor implementation="org.jetbrains.plugins.javaFX.fxml.FxmlReferencesContributor"/>
+    <codeInsight.unresolvedReferenceQuickFixProvider implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxEventHandlerReference$JavaFxUnresolvedReferenceHandlerQuickfixProvider"/>
   </extensions>
 </idea-plugin>

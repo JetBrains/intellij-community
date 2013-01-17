@@ -23,7 +23,7 @@ import org.jetbrains.idea.maven.dom.inspections.MavenDuplicateDependenciesInspec
  */
 class MavenDuplicatedInspectionTest extends MavenDomTestCase {
 
-  public void testDuplicatedInOneFile() {
+  public void testDuplicatedInSameFile() {
     myFixture.enableInspections(MavenDuplicateDependenciesInspection)
 
     createProjectPom("""
@@ -49,7 +49,32 @@ class MavenDuplicatedInspectionTest extends MavenDomTestCase {
     checkHighlighting()
   }
 
-  public void testDuplicatedInParent1() {
+  public void testDuplicatedInSameFileDifferentVersion() {
+    myFixture.enableInspections(MavenDuplicateDependenciesInspection)
+
+    createProjectPom("""
+  <groupId>mavenParent</groupId>
+  <artifactId>childA</artifactId>
+  <version>1.0</version>
+
+  <dependencies>
+    <<warning>dependency</warning>>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.2</version>
+    </dependency>
+    <<warning>dependency</warning>>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+    </dependency>
+  </dependencies>
+""")
+
+    checkHighlighting()
+  }
+
+  public void testDuplicatedInParentDifferentScope() {
     myFixture.enableInspections(MavenDuplicateDependenciesInspection)
 
     createModulePom("child", """
@@ -98,7 +123,7 @@ class MavenDuplicatedInspectionTest extends MavenDomTestCase {
     checkHighlighting(myProjectPom, true, false, true)
   }
 
-  public void testDuplicatedInParent2() {
+  public void testDuplicatedInParentSameScope() {
     myFixture.enableInspections(MavenDuplicateDependenciesInspection)
 
     createModulePom("child", """
@@ -142,6 +167,51 @@ class MavenDuplicatedInspectionTest extends MavenDomTestCase {
 """)
 
     importProject()
+
+    checkHighlighting(myProjectPom, true, false, true)
+  }
+
+  public void testDuplicatedInParentDifferentVersion() {
+    myFixture.enableInspections(MavenDuplicateDependenciesInspection)
+
+    createModulePom("child", """
+  <groupId>mavenParent</groupId>
+  <artifactId>child</artifactId>
+  <version>1.0</version>
+
+<parent>
+  <groupId>mavenParent</groupId>
+  <artifactId>parent</artifactId>
+  <version>1.0</version>
+</parent>
+
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+    </dependency>
+  </dependencies>
+""")
+
+    importProject("""
+  <groupId>mavenParent</groupId>
+  <artifactId>parent</artifactId>
+  <version>1.0</version>
+  <packaging>pom</packaging>
+
+  <modules>
+    <module>child</module>
+  </modules>
+
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.2</version>
+    </dependency>
+  </dependencies>
+""")
 
     checkHighlighting(myProjectPom, true, false, true)
   }
