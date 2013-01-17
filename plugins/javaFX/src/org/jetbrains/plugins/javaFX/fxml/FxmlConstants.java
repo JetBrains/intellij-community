@@ -37,7 +37,4 @@ public class FxmlConstants {
   @NonNls public static final String FX_SCRIPT = "fx:script";
   
   public static final List<String> FX_DEFAULT_PROPERTIES = Arrays.asList(FX_ID, FX_CONTROLLER, VALUE, FX_VALUE, FX_FACTORY, FX_INCLUDE, FX_REFERENCE, FX_COPY, FX_DEFINE, FX_SCRIPT);
-
-  @NonNls public static final String JAVAFX_ANCHOR_PANE = "javafx.scene.layout.AnchorPane";
-  @NonNls public static final String JAVAFX_EVENT = "javafx.event.Event";
 }

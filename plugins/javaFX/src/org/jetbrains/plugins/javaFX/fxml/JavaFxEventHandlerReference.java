@@ -66,7 +66,7 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
       final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
       if (parameters.length == 1) {
         final PsiType parameterType = parameters[0].getType();
-        if (parameterType.equalsToText(FxmlConstants.JAVAFX_EVENT)) {
+        if (parameterType.equalsToText(JavaFxCommonClassNames.JAVAFX_EVENT)) {
           return true;
         }
       }
@@ -93,7 +93,7 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
     }
 
     private static String getHandlerSignature(JavaFxEventHandlerReference ref) {
-      return "public void " + ref.getElement().getValue().substring(1) + "(" + FxmlConstants.JAVAFX_EVENT + " e)";
+      return "public void " + ref.getElement().getValue().substring(1) + "(" + JavaFxCommonClassNames.JAVAFX_EVENT + " e)";
     }
 
     @NotNull

@@ -76,7 +76,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
       XmlElementDescriptor descriptor = context.getDescriptor();
       if (descriptor instanceof JavaFxClassBackedElementDescriptor) {
         
-      } else if (descriptor instanceof JavaFxListPropertyElementDescriptor) {
+      } else if (descriptor instanceof JavaFxPropertyElementDescriptor) {
         
       }
     }
@@ -87,12 +87,25 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
   @Override
   public XmlElementDescriptor getElementDescriptor(XmlTag childTag, XmlTag contextTag) {
     final String name = childTag.getName();
-    if (StringUtil.isCapitalized(name)) {
+    if (isClassTag(name)) {
       return new JavaFxClassBackedElementDescriptor(name, childTag);
     }
     else {
-      return myPsiClass != null ? new JavaFxListPropertyElementDescriptor(myPsiClass, name) : null;
+      final String shortName = StringUtil.getShortName(name);
+      if (!name.equals(shortName)) { //static property
+        final PsiMethod propertySetter = findPropertySetter(name, childTag);
+        if (propertySetter != null) {
+          return new JavaFxPropertyElementDescriptor(propertySetter.getContainingClass(), shortName);
+        }
+        return null;
+      }
+      return myPsiClass != null ? new JavaFxPropertyElementDescriptor(myPsiClass, name) : null;
     }
+  }
+
+  public static boolean isClassTag(String name) {
+    final String shortName = StringUtil.getShortName(name);
+    return StringUtil.isCapitalized(name) && name.equals(shortName);
   }
 
   @Override
@@ -107,8 +120,8 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
             if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
             final PsiType fieldType = field.getType();
             if (PropertyUtil.findPropertyGetter(myPsiClass, field.getName(), false, true) != null && 
-                InheritanceUtil.isInheritor(fieldType, "javafx.beans.property.Property")) {//todo filter
-              simpleAttrs.add(new JavaFxPropertyBackedAttributeDescriptor(field.getName(), myPsiClass));
+                InheritanceUtil.isInheritor(fieldType, JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY_PROPERTY)) {//todo filter
+              simpleAttrs.add(new JavaFxPropertyAttributeDescriptor(field.getName(), myPsiClass));
             }
           }
         }
@@ -121,7 +134,19 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
   @Nullable
   @Override
   public XmlAttributeDescriptor getAttributeDescriptor(@NonNls String attributeName, @Nullable XmlTag context) {
-    return new JavaFxPropertyBackedAttributeDescriptor(attributeName, (PsiClass)getDeclaration());
+    if (myPsiClass == null) return null;
+    if (myPsiClass.findFieldByName(attributeName, true) == null) {
+      if (FxmlConstants.FX_DEFAULT_PROPERTIES.contains(attributeName)){
+        return new JavaFxDefaultAttributeDescriptor(attributeName);
+      } else {
+        final PsiMethod propertySetter = findPropertySetter(attributeName, context);
+        if (propertySetter != null) {
+          return new JavaFxStaticPropertyAttributeDescriptor(propertySetter, attributeName);
+        }
+        return null;
+      }
+    }
+    return new JavaFxPropertyAttributeDescriptor(attributeName, myPsiClass);
   }
 
   @Nullable
@@ -190,14 +215,8 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
 
   private void validateTagAccordingToFieldType(XmlTag context, XmlTag parentTag, ValidationHost host) {
     if (myPsiClass != null && myPsiClass.isValid()) {
-      if (parentTag == null) {
-        if (!InheritanceUtil.isInheritor(myPsiClass, FxmlConstants.JAVAFX_ANCHOR_PANE)) {
-          host.addMessage(context.getNavigationElement(), HighlightUtil.formatClass(myPsiClass) + " cannot be cast to " + FxmlConstants.JAVAFX_ANCHOR_PANE, ValidationHost.ErrorType.ERROR);
-        }
-        return;
-      }
-      final XmlElementDescriptor descriptor = parentTag.getDescriptor();
-      if (descriptor instanceof JavaFxListPropertyElementDescriptor) {
+      final XmlElementDescriptor descriptor = parentTag != null ? parentTag.getDescriptor() : null;
+      if (descriptor instanceof JavaFxPropertyElementDescriptor) {
         final PsiElement declaration = descriptor.getDeclaration();
         if (declaration instanceof PsiField) {
           final PsiType type = ((PsiField)declaration).getType();
@@ -217,5 +236,26 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
         }
       }
     }
+  }
+
+  public static PsiMethod findPropertySetter(String attributeName, XmlTag context) {
+    final String packageName = StringUtil.getPackageName(attributeName);
+    if (context != null && !StringUtil.isEmptyOrSpaces(packageName)) {
+      final PsiClass classWithStaticProperty =
+        findPsiClass(packageName, JavaFXNSDescriptor.parseImports((XmlFile)context.getContainingFile()), context, context.getProject());
+      if (classWithStaticProperty != null) {
+        return findPropertySetter(attributeName, classWithStaticProperty);
+      }
+    }
+    return null;
+  }
+
+  public static PsiMethod findPropertySetter(String attributeName, PsiClass classWithStaticProperty) {
+    final String setterName = PropertyUtil.suggestSetterName(StringUtil.getShortName(attributeName));
+    final PsiMethod[] setters = classWithStaticProperty.findMethodsByName(setterName, true);
+    if (setters.length == 1) {
+      return setters[0];
+    }
+    return null;
   }
 }

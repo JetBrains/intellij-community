@@ -11,11 +11,11 @@ import org.jetbrains.annotations.Nullable;
  * User: anna
  * Date: 1/10/13
  */
-public class JavaFxPropertyBackedAttributeDescriptor implements XmlAttributeDescriptor {
+public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor {
   private final String myName;
   private final PsiClass myPsiClass;
 
-  public JavaFxPropertyBackedAttributeDescriptor(String name, PsiClass psiClass) {
+  public JavaFxPropertyAttributeDescriptor(String name, PsiClass psiClass) {
     myName = name;
     myPsiClass = psiClass;
   }

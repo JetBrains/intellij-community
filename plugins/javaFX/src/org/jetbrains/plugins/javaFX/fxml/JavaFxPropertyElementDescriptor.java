@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.javaFX.fxml;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
@@ -17,11 +17,11 @@ import org.jetbrains.annotations.Nullable;
  * User: anna
  * Date: 1/10/13
  */
-public class JavaFxListPropertyElementDescriptor implements XmlElementDescriptor {
+public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
   private final PsiClass myPsiClass;
   private final String myName;
 
-  public JavaFxListPropertyElementDescriptor(PsiClass psiClass, String name) {
+  public JavaFxPropertyElementDescriptor(PsiClass psiClass, String name) {
     myPsiClass = psiClass;
     myName = name;
   }
@@ -47,12 +47,13 @@ public class JavaFxListPropertyElementDescriptor implements XmlElementDescriptor
   @Override
   public XmlElementDescriptor getElementDescriptor(XmlTag childTag, XmlTag contextTag) {
     final String name = childTag.getName();
-    if (StringUtil.isCapitalized(name)) {
+    if (JavaFxClassBackedElementDescriptor.isClassTag(name)) {
       return new JavaFxClassBackedElementDescriptor(name, childTag);
     }
-    else {
-      return myPsiClass != null ? new JavaFxListPropertyElementDescriptor(myPsiClass, name) : null;
+    else if (myPsiClass != null) {
+      return new JavaFxPropertyElementDescriptor(myPsiClass, name);
     }
+    return null;
   }
 
   @Override
@@ -96,7 +97,12 @@ public class JavaFxListPropertyElementDescriptor implements XmlElementDescriptor
 
   @Override
   public PsiElement getDeclaration() {
-    return myPsiClass.findFieldByName(myName, true);
+    if (myPsiClass == null) return null;
+    final PsiField field = myPsiClass.findFieldByName(myName, true);
+    if (field != null) {
+      return field;
+    }
+    return JavaFxClassBackedElementDescriptor.findPropertySetter(myName, myPsiClass);
   }
 
   @Override

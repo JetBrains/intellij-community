@@ -32,7 +32,7 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
     doTest();
   }
 
-  public void testRootTagConstraint() throws Exception {
+  public void testStaticProperties() throws Exception {
     doTest();
   }
 
