@@ -28,7 +28,9 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.ArrayList;
@@ -99,6 +101,18 @@ public class GrScriptField extends GrLightField {
                 }
                 super.visitVariableDeclaration(element);
               }
+
+              @Override
+              public void visitMethod(GrMethod method) {
+                //skip methods
+              }
+
+              @Override
+              public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
+                //skip type defs
+              }
+
+
             });
             return result;
           }
