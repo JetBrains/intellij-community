@@ -16,8 +16,6 @@
 package org.jetbrains.generate.tostring.config;
 
 /**
- * Configuration.
- * <p/>
  * The configuration is stored standard xmlb.XmlSerializer that automatically stores the
  * state of this classes public fields.
  */
@@ -39,6 +37,8 @@ public class Config {
     public boolean enableMethods = false;
     public boolean jumpToMethod = true; // jump cursor to toString method
     public int sortElements = 0; // 0 = none, 1 = asc, 2 = desc
+
+    private FilterPattern myPattern = null;
 
     public boolean isUseFullyQualifiedName() {
         return useFullyQualifiedName;
@@ -181,12 +181,16 @@ public class Config {
     }
 
     /**
-     * Gets the filter pattern that this configuration represent.
+     * Gets the filter pattern that this configuration represents.
      *
      * @return the filter pattern.
      */
     public FilterPattern getFilterPattern() {
-        FilterPattern pattern = new FilterPattern();
+        FilterPattern pattern = myPattern;
+        if (pattern != null) {
+            return pattern;
+        }
+        pattern = new FilterPattern();
         pattern.setConstantField(filterConstantField);
         pattern.setTransientModifier(filterTransientModifier);
         pattern.setStaticModifier(filterStaticModifier);
@@ -196,7 +200,7 @@ public class Config {
         pattern.setMethodType(filterMethodType);
         pattern.setEnumField(filterEnumField);
         pattern.setLoggers(filterLoggers);
-        return pattern;
+        return myPattern = pattern;
     }
 
     public boolean equals(Object o) {
