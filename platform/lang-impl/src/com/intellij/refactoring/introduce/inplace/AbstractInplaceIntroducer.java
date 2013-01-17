@@ -42,6 +42,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.ui.DottedBorder;
 import com.intellij.util.ui.PositionTracker;
@@ -555,6 +556,11 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     if (success) {
       performPostIntroduceTasks();
     }
+  }
+
+  @Override
+  protected boolean startsOnTheSameElement(RefactoringActionHandler handler, PsiElement element) {
+    return super.startsOnTheSameElement(handler, element) || getLocalVariable() == element;
   }
 
   public V getLocalVariable() {
