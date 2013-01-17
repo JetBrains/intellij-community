@@ -222,7 +222,7 @@ public class BrowserUtil {
   private static void launchBrowserByCommand(@NotNull final URI uri, @NotNull final List<String> command) {
     try {
       GeneralCommandLine commandLine = new GeneralCommandLine(command);
-      commandLine.addParameter(escapeUrl(uri.toString()));
+      commandLine.addParameter(uri.toString());
       commandLine.createProcess();
 
       if (LOG.isDebugEnabled()) {
@@ -234,6 +234,7 @@ public class BrowserUtil {
     }
   }
 
+  /** @deprecated unneeded and misleading (to remove in IDEA 13) */
   @NotNull
   public static String escapeUrl(@NotNull @NonNls String url) {
     return SystemInfo.isWindows ? '"' + url + '"' : url;
