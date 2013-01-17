@@ -88,7 +88,7 @@ public class PyStringLiteralLexer extends LexerBase {
     if (myStart >= myEnd) return null;
 
     // skip non-escapes immediately
-    if (myBuffer.charAt(myStart) != '\\' || myIsRaw) {
+    if (myBuffer.charAt(myStart) != '\\' || (myIsRaw && (!isUnicodeMode() || !nextIsUnicodeEscape()))) {
       mySeenEscapedSpacesOnly = false;
       return myOriginalLiteralToken;
     }
@@ -150,6 +150,14 @@ public class PyStringLiteralLexer extends LexerBase {
 
     // other unrecognized escapes are just part of string, not an error
     return myOriginalLiteralToken;
+  }
+
+  private boolean nextIsUnicodeEscape() {
+    if (myStart + 1 < myEnd) {
+      char nextChar = myBuffer.charAt(myStart + 1);
+      return nextChar == 'u' || nextChar == 'U';
+    }
+    return false;
   }
 
   private boolean isUnicodeMode() {
