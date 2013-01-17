@@ -41,7 +41,7 @@ public abstract class Animator implements Disposable {
   private int myCurrentFrame;
   private long myStartTime;
   private long myStopTime;
-  private boolean myDisposed = false;
+  private volatile boolean myDisposed = false;
 
   public Animator(@NonNls final String name,
                   final int totalFrames,
@@ -143,7 +143,7 @@ public abstract class Animator implements Disposable {
 
         @Override
         public void run() {
-          if (scheduled.compareAndSet(false, true)) {
+          if (scheduled.compareAndSet(false, true) && !isDisposed()) {
             SwingUtilities.invokeLater(new Runnable() {
               @Override
               public void run() {
