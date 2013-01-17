@@ -17,6 +17,7 @@ package org.jetbrains.generate.tostring.psi;
 
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -24,6 +25,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
@@ -663,4 +665,30 @@ public class PsiAdapter {
     public static boolean isPrimitiveType(PsiType type) {
         return type instanceof PsiPrimitiveType;
     }
+
+  public static int getJavaVersion(PsiElement element) {
+    final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(element);
+    int version = 0;
+    switch (languageLevel) {
+      case JDK_1_3:
+        version = 3;
+        break;
+      case JDK_1_4:
+        version = 4;
+        break;
+      case JDK_1_5:
+        version = 5;
+        break;
+      case JDK_1_6:
+        version = 6;
+        break;
+      case JDK_1_7:
+        version = 7;
+        break;
+      case JDK_1_8:
+        version = 8;
+        break;
+    }
+    return version;
+  }
 }

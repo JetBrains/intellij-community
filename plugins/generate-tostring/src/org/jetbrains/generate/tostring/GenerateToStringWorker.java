@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.IncorrectOperationException;
 import org.apache.velocity.VelocityContext;
@@ -205,40 +206,25 @@ public class GenerateToStringWorker {
     PsiFile containingFile = clazz.getContainingFile();
     if (containingFile instanceof PsiJavaFile) {
       final PsiJavaFile javaFile = (PsiJavaFile)containingFile;
-      // if the code uses Arrays, then make sure java.util.Arrays is imported.
-      String javaCode = method.getText();
-      if (javaCode.indexOf("Arrays.") > 0 &&
-          !(PsiAdapter.hasImportStatement(javaFile, "java.util.*") || PsiAdapter.hasImportStatement(javaFile, "java.util.Arrays"))) {
-        // java.util.Arrays must be imported as java.util.* since the addImportStatement method doens't support onDemand-import statement yet.
-        PsiAdapter.addImportStatement(javaFile, "java.util.*");
-      }
-
-      // if the code uses Reflection (Field[]), then make sure java.lang.reflect.Field is imported.
-      if (javaCode.indexOf("Field[]") > 0 &&
-          !(PsiAdapter.hasImportStatement(javaFile, "java.lang.reflect.*") || PsiAdapter.hasImportStatement(javaFile, "java.lang.reflect.Field"))) {
-        // java.lang.reflect.Field must be imported as java.lang.reflect.* since the addImportStatement method doens't support onDemand-import statement yet.
-        PsiAdapter.addImportStatement(javaFile, "java.lang.reflect.*");
-      }
-
-      // any additional packages to import from the params
       if (params.get("autoImportPackages") != null) {
+        // keep this for old user templates
         autoImportPackages(javaFile, params.get("autoImportPackages"));
       }
+      method = (PsiMethod)JavaCodeStyleManager.getInstance(clazz.getProject()).shortenClassReferences(method);
     }
 
     // jump to method
-    if (config.isJumpToMethod() && editor != null) {
-      PsiMethod newMethod = PsiAdapter.findMethodByName(clazz, template.getTargetMethodName());
-      if (newMethod != null) {
-        int offset = newMethod.getTextOffset();
-        if (offset > 2) {
-          VisualPosition vp = editor.offsetToVisualPosition(offset);
-          if (logger.isDebugEnabled()) logger.debug("Moving/Scrolling caret to " + vp + " (offset=" + offset + ")");
-          editor.getCaretModel().moveToVisualPosition(vp);
-          editor.getScrollingModel().scrollToCaret(ScrollType.CENTER_DOWN);
-        }
-      }
+    if (!config.isJumpToMethod() || editor == null) {
+      return;
     }
+    int offset = method.getTextOffset();
+    if (offset <= 2) {
+      return;
+    }
+    VisualPosition vp = editor.offsetToVisualPosition(offset);
+    if (logger.isDebugEnabled()) logger.debug("Moving/Scrolling caret to " + vp + " (offset=" + offset + ")");
+    editor.getCaretModel().moveToVisualPosition(vp);
+    editor.getScrollingModel().scrollToCaret(ScrollType.CENTER_DOWN);
   }
 
   /**
@@ -276,6 +262,8 @@ public class GenerateToStringWorker {
     StringWriter sw = new StringWriter();
     try {
       VelocityContext vc = new VelocityContext();
+
+      vc.put("java_version", PsiAdapter.getJavaVersion(clazz));
 
       // field information
       logger.debug("Velocity Context - adding fields");
