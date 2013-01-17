@@ -20,12 +20,15 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.lang.parameterInfo.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
@@ -250,6 +253,12 @@ public class ParameterInfoController {
     LookupManager.getInstance(project).addPropertyChangeListener(myLookupListener);
 
     updateComponent();
+    Disposer.register(((EditorImpl)myEditor).getDisposable(), new Disposable() {
+      @Override
+      public void dispose() {
+        ParameterInfoController.this.dispose();
+      }
+    });
   }
 
   private void dispose(){
