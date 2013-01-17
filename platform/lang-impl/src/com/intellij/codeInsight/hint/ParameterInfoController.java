@@ -253,12 +253,14 @@ public class ParameterInfoController {
     LookupManager.getInstance(project).addPropertyChangeListener(myLookupListener);
 
     updateComponent();
-    Disposer.register(((EditorImpl)myEditor).getDisposable(), new Disposable() {
-      @Override
-      public void dispose() {
-        ParameterInfoController.this.dispose();
-      }
-    });
+    if (myEditor instanceof EditorImpl) {
+      Disposer.register(((EditorImpl)myEditor).getDisposable(), new Disposable() {
+        @Override
+        public void dispose() {
+          ParameterInfoController.this.dispose();
+        }
+      });
+    }
   }
 
   private void dispose(){
