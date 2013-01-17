@@ -18,18 +18,29 @@ package com.intellij.util;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.sun.jna.Native;
+import com.sun.jna.Pointer;
 import com.sun.jna.WString;
+import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.win32.StdCallLibrary;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
+@SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public class Restarter {
   private Restarter() {
   }
 
-  public static int getRestartCode() {
+  private static int getRestartCode() {
     String s = System.getProperty("jb.restart.code");
     if (s != null) {
       try {
@@ -42,45 +53,63 @@ public class Restarter {
   }
 
   public static boolean isSupported() {
-    return SystemInfo.isWindows || SystemInfo.isMac;
+    return getRestartCode() != 0 || SystemInfo.isWindows || SystemInfo.isMac;
   }
 
-  public static boolean restart() throws CannotRestartException {
-    try {
-      if (SystemInfo.isWindows) {
-        return restartOnWindows();
+  public static int scheduleRestart(@NotNull String... beforeRestart) throws IOException {
+    int restartCode = getRestartCode();
+    if (restartCode != 0) {
+      try {
+        Process process = Runtime.getRuntime().exec(beforeRestart);
+
+        Thread outThread = new Thread(new StreamRedirector(process.getInputStream(), System.out));
+        Thread errThread = new Thread(new StreamRedirector(process.getErrorStream(), System.err));
+        outThread.start();
+        errThread.start();
+
+        try {
+          process.waitFor();
+        }
+        finally {
+          outThread.join();
+          errThread.join();
+        }
       }
-      else if (SystemInfo.isMac) {
-        return restartOnMac();
+      catch (InterruptedException ignore) {
       }
+
+      return restartCode;
     }
-    catch (CannotRestartException e) {
-      throw e;
+    else if (SystemInfo.isWindows) {
+      restartOnWindows(beforeRestart);
+      return 0;
     }
-    catch (Throwable e) {
-      throw new CannotRestartException(e);
+    else if (SystemInfo.isMac) {
+      restartOnMac(beforeRestart);
+      return 0;
     }
-    return false;
+    throw new IOException("Cannot restart application: not supported.");
   }
 
-  private static boolean restartOnWindows() throws CannotRestartException {
+  private static void restartOnWindows(@NotNull final String... beforeRestart) throws IOException {
     Kernel32 kernel32 = (Kernel32)Native.loadLibrary("kernel32", Kernel32.class);
-    WString cline = kernel32.GetCommandLineW();
-    int pid = kernel32.GetCurrentProcessId();
+    Shell32 shell32 = (Shell32)Native.loadLibrary("shell32", Shell32.class);
 
-    try {
-      // to prevent blocking exe file during update we should copy it
-      File restarterFile = new File(PathManager.getBinPath(), "restarter.exe");
-      File restarterCopy = FileUtil.createTempFile("restarter", ".exe");
+    final int pid = kernel32.GetCurrentProcessId();
+    final IntByReference argc = new IntByReference();
+    Pointer argv_ptr = shell32.CommandLineToArgvW(kernel32.GetCommandLineW(), argc);
+    final String[] argv = argv_ptr.getStringArray(0, argc.getValue(), true);
+    kernel32.LocalFree(argv_ptr);
 
-      FileUtil.copy(restarterFile, restarterCopy);
-
-      String command = "\"" + restarterCopy + "\" " + Integer.toString(pid) + " " + cline;
-      Runtime.getRuntime().exec(command, null, new File(PathManager.getBinPath()));
-    }
-    catch (IOException ex) {
-      throw new CannotRestartException(ex);
-    }
+    doScheduleRestart(new File(PathManager.getBinPath(), "restarter.exe"), new Consumer<List<String>>() {
+      @Override
+      public void consume(List<String> commands) {
+        Collections.addAll(commands, String.valueOf(pid), String.valueOf(beforeRestart.length));
+        Collections.addAll(commands, beforeRestart);
+        Collections.addAll(commands, String.valueOf(argc.getValue()));
+        Collections.addAll(commands, argv);
+      }
+    });
 
     // Since the process ID is passed through the command line, we want to make sure that we don't exit before the "restarter"
     // process has a chance to open the handle to our process, and that it doesn't wait for the termination of an unrelated
@@ -88,39 +117,67 @@ public class Restarter {
     try {
       Thread.sleep(500);
     }
-    catch (InterruptedException e1) {
-      // ignore
+    catch (InterruptedException ignore) {
     }
-    return true;
+  }
+
+  private static void restartOnMac(@NotNull final String... beforeRestart) throws IOException {
+    final String homePath = PathManager.getHomePath();
+    if (!StringUtil.endsWithIgnoreCase(homePath, ".app")) throw new IOException("Application bundle not found: " + homePath);
+
+    doScheduleRestart(new File(PathManager.getBinPath(), "restarter"), new Consumer<List<String>>() {
+      @Override
+      public void consume(List<String> commands) {
+        Collections.addAll(commands, homePath);
+        Collections.addAll(commands, beforeRestart);
+      }
+    });
+  }
+
+  private static void doScheduleRestart(File restarterFile, Consumer<List<String>> argumentsBuilder) throws IOException {
+    List<String> commands = new ArrayList<String>();
+    commands.add(createTempExecutable(restarterFile).getPath());
+    argumentsBuilder.consume(commands);
+    Runtime.getRuntime().exec(commands.toArray(new String[commands.size()]));
+  }
+
+  public static File createTempExecutable(File executable) throws IOException {
+    String ext = FileUtil.getExtension(executable.getName());
+    File copy = FileUtil.createTempFile(FileUtil.getNameWithoutExtension(executable),
+                                        StringUtil.isEmptyOrSpaces(ext) ? ".tmp" : ("." + ext),
+                                        false);
+    FileUtil.copy(executable, copy);
+    if (!copy.setExecutable(executable.canExecute())) throw new IOException("Cannot make file executable: " + copy);
+    return copy;
   }
 
   private interface Kernel32 extends StdCallLibrary {
+    int GetCurrentProcessId();
+
     WString GetCommandLineW();
 
-    int GetCurrentProcessId();
+    Pointer LocalFree(Pointer pointer);
   }
 
-  private static boolean restartOnMac() throws CannotRestartException {
-    String binPath = PathManager.getBinPath();
-
-    if (!binPath.contains(".app")) return false;
-
-    int appIndex = binPath.indexOf(".app");
-    String appPath = binPath.substring(0, appIndex + 4);
-
-    try {
-      Runtime.getRuntime().exec(new String[]{new File(PathManager.getBinPath(), "relaunch").getPath(), appPath});
-    }
-    catch (IOException e) {
-      throw new CannotRestartException(e);
-    }
-
-    return true;
+  private interface Shell32 extends StdCallLibrary {
+    Pointer CommandLineToArgvW(WString command_line, IntByReference argc);
   }
 
-  public static class CannotRestartException extends Exception {
-    public CannotRestartException(Throwable cause) {
-      super(cause);
+  private static class StreamRedirector implements Runnable {
+    private final InputStream myIn;
+    private final OutputStream myOut;
+
+    private StreamRedirector(InputStream in, OutputStream out) {
+      myIn = in;
+      myOut = out;
+    }
+
+    public void run() {
+      try {
+        StreamUtil.copyStreamContent(myIn, myOut);
+      }
+      catch (IOException ignore) {
+      }
     }
   }
 }

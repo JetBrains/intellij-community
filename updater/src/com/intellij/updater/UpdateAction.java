@@ -42,7 +42,7 @@ public class UpdateAction extends BaseUpdateAction {
       out.close();
     }
 
-    Utils.copy(temp, toFile);
+    replaceUpdated(temp, toFile);
     Utils.setExecutable(toFile, executable);
   }
 }

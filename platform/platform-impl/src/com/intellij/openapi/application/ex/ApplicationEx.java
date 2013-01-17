@@ -51,6 +51,8 @@ public interface ApplicationEx extends Application {
   //force exit
   void exit(boolean force);
 
+  void restart(boolean force);
+
   /**
    * Runs modal process. For internal use only, see {@link Task}
    */

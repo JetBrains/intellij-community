@@ -33,6 +33,12 @@ public abstract class BaseUpdateAction extends PatchAction {
     Utils.copy(toFile, backupFile);
   }
 
+  protected void replaceUpdated(File from, File dest) throws IOException {
+    // on OS X code signing caches seem to be associated with specific file ids, so we need to remove the original file.
+    if (!dest.delete()) throw new IOException("Cannot delete file " + dest);
+    Utils.copy(from, dest);
+  }
+
   @Override
   protected void doRevert(File toFile, File backupFile) throws IOException {
     if (!toFile.exists() || isModified(toFile)) {
