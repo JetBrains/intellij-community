@@ -37,7 +37,6 @@ import java.util.regex.Pattern;
 public class MavenProjectConfiguration {
   public static final String CONFIGURATION_FILE_RELATIVE_PATH = "maven/configuration.xml";
   public static final String DEFAULT_ESCAPE_STRING = "\\";
-  public static final String DEFAULT_INCLUDE_PATTERN = FileUtil.convertAntToRegexp("**/*");
   private static final Pattern PROPERTY_PATTERN = Pattern.compile("-D(\\S+?)=(.+)");
   public static final Set<String> DEFAULT_FILTERING_EXCLUDED_EXTENSIONS;
   static {

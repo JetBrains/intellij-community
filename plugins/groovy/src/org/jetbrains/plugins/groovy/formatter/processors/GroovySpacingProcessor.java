@@ -54,6 +54,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAnnotationMethod;
@@ -327,9 +328,15 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
     if (myType2 == CLASS_BODY) {
-      PsiElement nameIdentifier = typeDefinition.getNameIdentifierGroovy();
-      int dependenceStart = nameIdentifier.getTextRange().getStartOffset();
-      createSpaceBeforeLBrace(mySettings.SPACE_BEFORE_CLASS_LBRACE, mySettings.CLASS_BRACE_STYLE, new TextRange(dependenceStart, myChild1.getTextRange().getEndOffset()), false);
+      if (typeDefinition instanceof GrAnonymousClassDefinition) {
+        createSpaceProperty(mySettings.SPACE_BEFORE_CLASS_LBRACE, true, 100); //don't manually remove line feeds because this line is ambiguous
+      }
+      else {
+        PsiElement nameIdentifier = typeDefinition.getNameIdentifierGroovy();
+        int dependenceStart = nameIdentifier.getTextRange().getStartOffset();
+        final TextRange range = new TextRange(dependenceStart, myChild1.getTextRange().getEndOffset());
+        createSpaceBeforeLBrace(mySettings.SPACE_BEFORE_CLASS_LBRACE, mySettings.CLASS_BRACE_STYLE, range, false);
+      }
     }
   }
 

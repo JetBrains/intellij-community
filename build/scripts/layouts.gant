@@ -254,7 +254,7 @@ public def layoutCommunityPlugins(String home) {
         fileset(dir: "$home/plugins/maven/maven2-server-impl/lib")
       }
 
-      fileset(dir: "$home/plugins/maven/lib")
+      fileset(dir: "$home/plugins/maven/lib") {exclude(name: "plexus-utils-*") }
       fileset(dir: "$home/plugins/maven/maven-server-api/lib")
     }
 

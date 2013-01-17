@@ -13,6 +13,15 @@
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="jps-builders" />
     <orderEntry type="module" module-name="jps-model-serialization" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../lib/plexus-utils-2.0.6.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>
 

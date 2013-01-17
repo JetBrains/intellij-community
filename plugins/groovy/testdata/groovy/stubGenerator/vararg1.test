@@ -12,7 +12,7 @@ public void foo(java.lang.String[] foo, java.lang.Object bar) {
 return ;
 }
 
-public void foo(java.lang.String[] foo) {
+public void foo(java.lang.String... foo) {
 return ;
 }
 

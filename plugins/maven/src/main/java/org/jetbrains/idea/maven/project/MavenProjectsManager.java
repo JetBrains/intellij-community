@@ -1136,11 +1136,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       props.isFiltered = resource.isFiltered();
       props.includes.clear();
       for (String include : resource.getIncludes()) {
-        props.includes.add(FileUtil.convertAntToRegexp(include.trim()));
+        props.includes.add(include.trim());
       }
       props.excludes.clear();
       for (String exclude : resource.getExcludes()) {
-        props.excludes.add(FileUtil.convertAntToRegexp(exclude.trim()));
+        props.excludes.add(exclude.trim());
       }
       container.add(props);
     }
@@ -1148,7 +1148,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private static Properties getFilteringProperties(MavenProject mavenProject) {
     final Properties properties = new Properties();
-    properties.putAll(mavenProject.getProperties());
+
     for (String each : mavenProject.getFilters()) {
       try {
         FileInputStream in = new FileInputStream(each);
@@ -1162,6 +1162,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       catch (IOException ignored) {
       }
     }
+
+    properties.putAll(mavenProject.getProperties());
     return properties;
   }
 
