@@ -815,7 +815,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     @Override
     public boolean isInherited() {
-      return myFallbackAttributes != null && getTextAttributes().isEmpty();
+      return myFallbackAttributes != null && getTextAttributes().isFallbackEnabled();
     }
 
     @Nullable

@@ -60,12 +60,9 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
         if (attributes != null) return attributes;
       }
       else {
-        if (attributes != null && !attributes.isEmpty()) return attributes;
+        if (attributes != null && !attributes.isFallbackEnabled()) return attributes;
         attributes = getFallbackAttributes(fallbackKey);
         if (attributes != null) return attributes;
-        if (myParentScheme instanceof DefaultColorsScheme && !DEFAULT_SCHEME_NAME.equals(getName())) {
-          return null;
-        }
       }
     }
     return myParentScheme.getAttributes(key);
