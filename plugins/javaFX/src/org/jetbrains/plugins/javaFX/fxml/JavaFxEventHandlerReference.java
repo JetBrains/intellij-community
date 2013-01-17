@@ -15,11 +15,13 @@
  */
 package org.jetbrains.plugins.javaFX.fxml;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodQuickFix;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -62,12 +64,14 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
   }
 
   public static boolean isHandlerMethod(PsiMethod psiMethod) {
-    if (!psiMethod.hasModifierProperty(PsiModifier.STATIC) && psiMethod.hasModifierProperty(PsiModifier.PUBLIC) && PsiType.VOID.equals(psiMethod.getReturnType())) {
-      final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-      if (parameters.length == 1) {
-        final PsiType parameterType = parameters[0].getType();
-        if (parameterType.equalsToText(JavaFxCommonClassNames.JAVAFX_EVENT)) {
-          return true;
+    if (!psiMethod.hasModifierProperty(PsiModifier.STATIC) && PsiType.VOID.equals(psiMethod.getReturnType())) {
+      if (psiMethod.hasModifierProperty(PsiModifier.PUBLIC) || AnnotationUtil.isAnnotated(psiMethod, JavaFxCommonClassNames.JAVAFX_FXML_FXML, false)) {
+        final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+        if (parameters.length == 1) {
+          final PsiType parameterType = parameters[0].getType();
+          if (InheritanceUtil.isInheritor(parameterType, JavaFxCommonClassNames.JAVAFX_EVENT)) {
+            return true;
+          }
         }
       }
     }

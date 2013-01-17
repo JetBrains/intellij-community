@@ -26,4 +26,5 @@ public class JavaFxCommonClassNames {
   @NonNls public static final String JAVAFX_ANCHOR_PANE = "javafx.scene.layout.AnchorPane";
   @NonNls public static final String JAVAFX_EVENT = "javafx.event.Event";
   @NonNls public static final String JAVAFX_BEANS_DEFAULT_PROPERTY = "javafx.beans.DefaultProperty";
+  @NonNls public static final String JAVAFX_FXML_FXML = "javafx.fxml.FXML";
 }
