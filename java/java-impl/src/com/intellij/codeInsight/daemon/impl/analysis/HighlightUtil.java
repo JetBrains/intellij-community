@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.intellij.util.containers.ContainerUtil.newTroveSet;
 
@@ -833,27 +835,35 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @Nullable
   public static HighlightInfo checkLiteralExpressionParsingError(@NotNull final PsiLiteralExpression expression) {
-    final Object value = expression.getValue();
-    final PsiElement literal = expression.getFirstChild();
+    PsiElement literal = expression.getFirstChild();
     assert literal instanceof PsiJavaToken : literal;
-    final IElementType type = ((PsiJavaToken)literal).getTokenType();
-    String text = PsiLiteralExpressionImpl.NUMERIC_LITERALS.contains(type) ? literal.getText().toLowerCase() : literal.getText();
+    IElementType type = ((PsiJavaToken)literal).getTokenType();
+    if (type == JavaTokenType.TRUE_KEYWORD || type == JavaTokenType.FALSE_KEYWORD || type == JavaTokenType.NULL_KEYWORD) {
+      return null;
+    }
 
-    if (PsiLiteralExpressionImpl.REAL_LITERALS.contains(type)) {
+    boolean isInt = PsiLiteralExpressionImpl.INTEGER_LITERALS.contains(type);
+    boolean isFP = PsiLiteralExpressionImpl.REAL_LITERALS.contains(type);
+    String text = isInt || isFP ? literal.getText().toLowerCase() : literal.getText();
+    Object value = expression.getValue();
+
+    if (isFP) {
       if (text.startsWith(PsiLiteralExpressionImpl.HEX_PREFIX)) {
         final HighlightInfo info = checkFeature(expression, Feature.HEX_FP_LITERALS);
         if (info != null) return info;
       }
     }
-    if (PsiLiteralExpressionImpl.INTEGER_LITERALS.contains(type)) {
+    if (isInt) {
       if (text.startsWith(PsiLiteralExpressionImpl.BIN_PREFIX)) {
         final HighlightInfo info = checkFeature(expression, Feature.BIN_LITERALS);
         if (info != null) return info;
       }
     }
-    if (PsiLiteralExpressionImpl.NUMERIC_LITERALS.contains(type)) {
+    if (isInt || isFP) {
       if (text.contains("_")) {
-        final HighlightInfo info = checkFeature(expression, Feature.UNDERSCORES);
+        HighlightInfo info = checkFeature(expression, Feature.UNDERSCORES);
+        if (info != null) return info;
+        info = checkUnderscores(expression, text, isInt);
         if (info != null) return info;
       }
     }
@@ -898,14 +908,11 @@ public class HighlightUtil extends HighlightUtilBase {
         }
       }
     }
-    else if (type == JavaTokenType.FLOAT_LITERAL || type == JavaTokenType.DOUBLE_LITERAL) {
+    else if (isFP) {
       if (value == null) {
         final String message = JavaErrorMessages.message("malformed.floating.point.literal");
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, message);
       }
-    }
-    else if (type == JavaTokenType.TRUE_KEYWORD || type == JavaTokenType.FALSE_KEYWORD || type == JavaTokenType.NULL_KEYWORD) {
-      return null;
     }
     else if (type == JavaTokenType.CHARACTER_LITERAL) {
       // todo[r.sh] clean this mess up
@@ -996,6 +1003,43 @@ public class HighlightUtil extends HighlightUtilBase {
       }
       if (number.doubleValue() == 0 && !isFPZero(text)) {
         final String message = JavaErrorMessages.message("floating.point.number.too.small");
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, message);
+      }
+    }
+
+    return null;
+  }
+
+  private static final Pattern FP_LITERAL_PARTS =
+    Pattern.compile("(?:" +
+                    "(?:0x([_\\p{XDigit}]*)\\.?([_\\p{XDigit}]*)p[+-]?([_\\d]*))" +
+                    "|" +
+                    "(?:([_\\d]*)\\.?([_\\d]*)e?[+-]?([_\\d]*))" +
+                    ")[fd]?");
+
+  @Nullable
+  private static HighlightInfo checkUnderscores(PsiElement expression, String text, boolean isInt) {
+    String[] parts = ArrayUtil.EMPTY_STRING_ARRAY;
+
+    if (isInt) {
+      int start = 0, end = text.length();
+      if (text.startsWith(PsiLiteralExpressionImpl.HEX_PREFIX) || text.startsWith(PsiLiteralExpressionImpl.BIN_PREFIX)) start += 2;
+      if (StringUtil.endsWithChar(text, 'l')) --end;
+      parts = new String[]{text.substring(start, end)};
+    }
+    else {
+      Matcher matcher = FP_LITERAL_PARTS.matcher(text);
+      if (matcher.matches()) {
+        parts = new String[matcher.groupCount()];
+        for (int i = 0; i < matcher.groupCount(); i++) {
+          parts[i] = matcher.group(i + 1);
+        }
+      }
+    }
+
+    for (String part : parts) {
+      if (part != null && (StringUtil.startsWithChar(part, '_') || StringUtil.endsWithChar(part, '_'))) {
+        String message = JavaErrorMessages.message("illegal.underscore");
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, message);
       }
     }
