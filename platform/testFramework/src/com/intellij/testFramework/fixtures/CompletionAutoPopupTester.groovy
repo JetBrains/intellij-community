@@ -15,8 +15,6 @@
  */
 package com.intellij.testFramework.fixtures
 import com.intellij.codeInsight.AutoPopupController
-import com.intellij.codeInsight.completion.CompletionPhase
-import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
@@ -25,7 +23,6 @@ import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.ui.UIUtil
-import junit.framework.Assert
 
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -52,16 +49,6 @@ class CompletionAutoPopupTester {
   }
 
   void joinCompletion() {
-    for (i in 0.1000) {
-      if (i==999) {
-        UsefulTestCase.printThreadDump()
-        Assert.fail("Could not wait for committed doc")
-      }
-      CompletionPhase phase = CompletionServiceImpl.getCompletionPhase()
-      if (phase != com.intellij.codeInsight.completion.CompletionPhase.NoCompletion) break;
-      Thread.sleep(10)
-    }
-
     for (j in 1..4000) {
       LookupImpl l = null
       UsefulTestCase.edt {
