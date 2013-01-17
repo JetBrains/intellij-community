@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.IncorrectOperationException;
 import org.apache.velocity.VelocityContext;
@@ -105,18 +104,18 @@ public class GenerateToStringWorker {
    * <br/> 1) If there is a settings to always override use this.
    * <br/> 2) Prompt a dialog and let the user decide.
    *
-   * @param template the choosen template to use
+   * @param template the chosen template to use
    * @return the policy the user selected (never null)
    */
   private ConflictResolutionPolicy exitsMethodDialog(TemplateResource template) {
-    final DuplicatonPolicy dupPolicy = config.getReplaceDialogInitialOption();
-    if (dupPolicy == DuplicatonPolicy.ASK) {
+    final DuplicationPolicy dupPolicy = config.getReplaceDialogInitialOption();
+    if (dupPolicy == DuplicationPolicy.ASK) {
       PsiMethod existingMethod = PsiAdapter.findMethodByName(clazz, template.getTargetMethodName());
       if (existingMethod != null) {
         return MethodExistsDialog.showDialog(template.getTargetMethodName());
       }
     }
-    else if (dupPolicy == DuplicatonPolicy.REPLACE) {
+    else if (dupPolicy == DuplicationPolicy.REPLACE) {
       return ReplacePolicy.getInstance();
     }
 
@@ -253,7 +252,7 @@ public class GenerateToStringWorker {
   /**
    * Automatic import the packages.
    *
-   * @param packageNames names of packages (must end with .* and be seperated by ; or ,)
+   * @param packageNames names of packages (must end with .* and be separated by ; or ,)
    * @throws IncorrectOperationException error adding imported package
    */
   private static void autoImportPackages(PsiJavaFile psiJavaFile, String packageNames) throws IncorrectOperationException {
@@ -343,7 +342,7 @@ public class GenerateToStringWorker {
    * fields, doing the work through a WriteAction ran by a CommandProcessor.
    *
    * @param selectedMembers list of members selected
-   * @param template         the choosen template to use
+   * @param template         the chosen template to use
    * @param insertAtOverride
    */
   public static void executeGenerateActionLater(final PsiClass clazz,

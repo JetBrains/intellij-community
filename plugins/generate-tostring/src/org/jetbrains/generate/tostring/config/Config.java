@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2012 the original author or authors.
+ * Copyright 2001-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ public class Config {
 
     public boolean useFullyQualifiedName = false;
     public InsertWhere insertNewMethodOption = InsertWhere.AT_CARET;
-    public DuplicatonPolicy whenDuplicatesOption = DuplicatonPolicy.ASK;
+    public DuplicationPolicy whenDuplicatesOption = DuplicationPolicy.ASK;
     public boolean filterConstantField = true;
     public boolean filterEnumField = false;
     public boolean filterTransientModifier = false;
@@ -48,11 +48,11 @@ public class Config {
         this.useFullyQualifiedName = useFullyQualifiedName;
     }
 
-    public DuplicatonPolicy getReplaceDialogInitialOption() {
+    public DuplicationPolicy getReplaceDialogInitialOption() {
         return whenDuplicatesOption;
     }
 
-    public void setReplaceDialogInitialOption(DuplicatonPolicy option) {
+    public void setReplaceDialogInitialOption(DuplicationPolicy option) {
         this.whenDuplicatesOption = option;
     }
 
