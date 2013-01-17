@@ -541,7 +541,7 @@ class X {
 import groovy.transform.Field
 
 while(true) {
-  @Field def foo
+  @Field def <error descr="Field 'foo' already defined">foo</error>
 }
 
 while(false) {
