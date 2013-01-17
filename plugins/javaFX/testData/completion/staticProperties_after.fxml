@@ -4,6 +4,6 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.text.*?>
-<GridPane fx:controller="pp.ExampleController" xmlns:fx="http://javafx.com/fxml" alignment="center" hgap="10" vgap="10">
-    <HBox spacing="10" alignment="BOTTOM_RIGHT" GridPane.columnIndex="" GridPane.rowIndex="4"/>
+<GridPane xmlns:fx="http://javafx.com/fxml">
+    <HBox GridPane.columnIndex="" GridPane.rowIndex="4"/>
 </GridPane>

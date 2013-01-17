@@ -72,7 +72,7 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
     return null;
   }
 
-  private PsiClass getEnum() {
+  protected PsiClass getEnum() {
     final PsiElement field = getDeclaration();
     if (field instanceof PsiField) {
       final PsiType type = ((PsiField)field).getType();

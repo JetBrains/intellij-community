@@ -15,8 +15,11 @@
  */
 package org.jetbrains.plugins.javaFX.fxml;
 
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.util.PsiUtil;
 
 /**
  * User: anna
@@ -33,5 +36,17 @@ public class JavaFxStaticPropertyAttributeDescriptor extends JavaFxPropertyAttri
   @Override
   public PsiElement getDeclaration() {
     return mySetter;
+  }
+
+  @Override
+  protected PsiClass getEnum() {
+    if (mySetter != null) {
+      final PsiParameter[] parameters = mySetter.getParameterList().getParameters();
+      if (parameters.length == 2) {
+        final PsiClass enumClass = PsiUtil.resolveClassInType(parameters[1].getType());
+        return enumClass != null && enumClass.isEnum() ? enumClass : null;
+      }
+    }
+    return null;
   }
 }

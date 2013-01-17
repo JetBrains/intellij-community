@@ -5,5 +5,5 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.text.*?>
 <GridPane xmlns:fx="http://javafx.com/fxml">
-    <HBox <caret> GridPane.rowIndex="4"/>
+    <HBox GridPane.hgrow="<caret>"/>
 </GridPane>
