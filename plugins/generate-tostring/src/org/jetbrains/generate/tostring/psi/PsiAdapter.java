@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2012 the original author or authors.
+ * Copyright 2001-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -463,13 +463,7 @@ public class PsiAdapter {
         if (parameterList.getParametersCount() != 0) {
             return false;
         }
-        if (method.getName().matches("^(is|has)\\p{Upper}.*")) {
-          final PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
-          return isBooleanType(factory, method.getReturnType());
-        } else if (method.getName().matches("^(get)\\p{Upper}.*")) {
-            return true;
-        }
-        return false;
+        return true;
     }
 
     /**
@@ -505,25 +499,12 @@ public class PsiAdapter {
      */
     public static boolean isEnumField(PsiField field) {
         PsiType type = field.getType();
-
-        // must not be an primitive type
-        if (isPrimitiveType(type)) {
+        if (!(type instanceof PsiClassType)) {
             return false;
         }
-
-        GlobalSearchScope scope = type.getResolveScope();
-        if (scope == null) {
-            return false;
-        }
-
-        // find the class
-        String name = type.getCanonicalText();
-        PsiClass clazz = JavaPsiFacade.getInstance(field.getProject()).findClass(name, scope);
-        if (clazz == null) {
-            return false;
-        }
-
-        return clazz.isEnum();
+        final PsiClassType classType = (PsiClassType)type;
+        final PsiClass aClass = classType.resolve();
+        return (aClass != null) && aClass.isEnum();
     }
 
     /**
