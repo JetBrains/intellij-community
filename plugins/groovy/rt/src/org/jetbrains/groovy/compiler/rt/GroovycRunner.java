@@ -76,8 +76,11 @@ public class GroovycRunner {
     */
 
     if (args.length != 2) {
-      System.err.println("There is no arguments for groovy compiler");
-      return;
+      if (args.length != 3 || !"--indy".equals(args[2])) {
+        System.err.println("There is no arguments for groovy compiler");
+        System.exit(1);
+      }
+      System.setProperty("groovy.target.indy", "true");
     }
 
     final boolean forStubs = "stubs".equals(args[0]);
@@ -85,7 +88,7 @@ public class GroovycRunner {
 
     if (!argsFile.exists()) {
       System.err.println("Arguments file for groovy compiler not found");
-      return;
+      System.exit(1);
     }
 
     try {
