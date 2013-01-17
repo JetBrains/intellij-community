@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +37,7 @@ class WolfHighlightingPass extends ProgressableTextEditorHighlightingPass implem
 
   @Override
   protected void collectInformationWithProgress(final ProgressIndicator progress) {
+    if (!Registry.is("wolf.the.problem.solver", true)) return;
     final WolfTheProblemSolver solver = WolfTheProblemSolver.getInstance(myProject);
     if (solver instanceof WolfTheProblemSolverImpl) {
       ((WolfTheProblemSolverImpl)solver).startCheckingIfVincentSolvedProblemsYet(progress, this);
