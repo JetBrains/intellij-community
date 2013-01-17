@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.completion.CompletionTestCase;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,10 +37,31 @@ public class JavaFxCompletionTest extends CompletionTestCase {
     doTest();
   }
 
+  public void testStaticProperties() throws Exception {
+    doTest("GridPane.columnIndex");
+  }
+
   private void doTest() throws Exception {
+    doTest(null);
+  }
+
+  private void doTest(final String selection) throws Exception {
     configureByFile(getTestName(true) + ".fxml");
     assertTrue(myItems.length > 0);
-    selectItem(myItems[0]);
+    LookupElement selectionElement = null;
+    for (LookupElement item : myItems) {
+      if (item.getLookupString().equals(selection)) {
+        selectionElement = item;
+        break;
+      }
+    }
+    if (selection != null && selectionElement == null) {
+      fail(selection + " is not suggested");
+    }
+    if (selectionElement == null) {
+      selectionElement = myItems[0];
+    }
+    selectItem(selectionElement);
     checkResultByFile(getTestName(true) + "_after.fxml");
   }
 
