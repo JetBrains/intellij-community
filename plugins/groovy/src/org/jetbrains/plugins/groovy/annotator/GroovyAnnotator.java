@@ -606,7 +606,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
 
 
-    final GrVariable toSearchFor = ResolveUtil.isScriptField(variable) ? GrScriptField.createScriptFieldFrom(variable) : variable;
+    final GrVariable toSearchFor = ResolveUtil.isScriptField(variable) ? GrScriptField.getScriptField(variable) : variable;
     PsiNamedElement duplicate = ResolveUtil
       .resolveExistingElement(variable, new DuplicateVariablesProcessor(toSearchFor), GrReferenceExpression.class, GrVariable.class);
     if (duplicate == null) {
@@ -628,7 +628,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       duplicate = null;
     }
 
-    if (duplicate instanceof GrVariable) {
+    if (duplicate instanceof GrVariable && duplicate != toSearchFor) {
       if ((variable instanceof GrField || ResolveUtil.isScriptField(variable)) /*&& duplicate instanceof PsiField*/ ||
           !(duplicate instanceof GrField)) {
         final String key = duplicate instanceof GrField ? "field.already.defined" : "variable.already.defined";
@@ -1970,12 +1970,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
 
     private static boolean hasExplicitVisibilityModifiers(GrVariable variable) {
-      final PsiModifierList modifierList = variable.getModifierList();
-      if (modifierList instanceof GrModifierList) return ((GrModifierList)modifierList).hasExplicitVisibilityModifiers();
-      if (modifierList == null) return false;
-      return modifierList.hasExplicitModifier(PUBLIC) ||
-             modifierList.hasExplicitModifier(PROTECTED) ||
-             modifierList.hasExplicitModifier(PRIVATE);
+      final GrModifierList modifierList = variable.getModifierList();
+      return modifierList != null && modifierList.hasExplicitVisibilityModifiers();
     }
 
     @Override

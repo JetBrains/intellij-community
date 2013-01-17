@@ -16,9 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
@@ -29,7 +27,6 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,18 +34,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -203,7 +194,7 @@ public class GroovyScriptClass extends LightElement implements PsiClass, Synthet
 
   @NotNull
   public PsiField[] getFields() {
-    return getScriptFields();
+    return GrScriptField.getScriptFields(this);
   }
 
   @NotNull
@@ -360,37 +351,6 @@ public class GroovyScriptClass extends LightElement implements PsiClass, Synthet
 
   public boolean isDeprecated() {
     return false;
-  }
-
-  private GrField[] getScriptFields() {
-    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<GrField[]>() {
-      @Override
-      public Result<GrField[]> compute() {
-        List<GrField> result = RecursionManager.doPreventingRecursion(GroovyScriptClass.this, true, new Computable<List<GrField>>() {
-          @Override
-          public List<GrField> compute() {
-            final List<GrField> result = new ArrayList<GrField>();
-            myFile.accept(new GroovyRecursiveElementVisitor() {
-              @Override
-              public void visitVariableDeclaration(GrVariableDeclaration element) {
-                if (element.getModifierList().findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_FIELD) != null) {
-                  for (GrVariable variable : element.getVariables()) {
-                    result.add(GrScriptField.createScriptFieldFrom(variable));
-                  }
-                }
-                super.visitVariableDeclaration(element);
-              }
-            });
-            return result;
-          }
-        });
-
-        if (result == null) {
-          result = Collections.emptyList();
-        }
-        return Result.create(result.toArray(new GrField[result.size()]), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, myFile);
-      }
-    });
   }
 
   public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,
