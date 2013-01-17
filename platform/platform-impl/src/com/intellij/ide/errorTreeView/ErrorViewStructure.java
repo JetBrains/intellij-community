@@ -385,7 +385,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           @Override
           public void run() {
-            PsiFile psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
+            final PsiFile psiFile = virtualFile.isValid()? PsiManager.getInstance(myProject).findFile(virtualFile) : null;
             if (psiFile != null) {
               DaemonCodeAnalyzer.getInstance(myProject).restart(psiFile); // urge the daemon to re-highlight the file despite no modification has been made
             }
