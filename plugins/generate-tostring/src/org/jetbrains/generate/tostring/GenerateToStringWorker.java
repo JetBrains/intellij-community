@@ -20,11 +20,11 @@
 package org.jetbrains.generate.tostring;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.VisualPosition;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -47,20 +47,14 @@ import java.util.*;
 public class GenerateToStringWorker {
   private static final Logger logger = Logger.getInstance("#org.jetbrains.generate.tostring.GenerateToStringWorker");
 
-  private final JVMElementFactory topLevelFactory;
-  private final CodeStyleManager codeStyleManager;
   private final Editor editor;
   private final PsiClass clazz;
   private final Config config;
-  private final Project project;
   private final boolean hasOverrideAnnotation;
 
   public GenerateToStringWorker(PsiClass clazz, Editor editor, boolean insertAtOverride) {
     this.clazz = clazz;
-    this.project = clazz.getProject();
     this.editor = editor;
-    this.topLevelFactory = JVMElementFactories.getFactory(clazz.getLanguage(), project);
-    this.codeStyleManager = CodeStyleManager.getInstance(project);
     this.config = GenerateToStringContext.getConfig();
     this.hasOverrideAnnotation = insertAtOverride;
   }
@@ -163,8 +157,9 @@ public class GenerateToStringWorker {
     body = StringUtil.convertLineSeparators(body);
 
     // create psi newMethod named toString()
+    final JVMElementFactory topLevelFactory = JVMElementFactories.getFactory(clazz.getLanguage(), clazz.getProject());
     PsiMethod newMethod = topLevelFactory.createMethodFromText(template.getMethodSignature() + " { " + body + " }", clazz);
-    codeStyleManager.reformat(newMethod);
+    CodeStyleManager.getInstance(clazz.getProject()).reformat(newMethod);
 
     // insertNewMethod conflict resolution policy (add/replace, duplicate, cancel)
     PsiMethod existingMethod = clazz.findMethodBySignature(newMethod, false);
@@ -230,9 +225,6 @@ public class GenerateToStringWorker {
         autoImportPackages(javaFile, params.get("autoImportPackages"));
       }
     }
-
-    // reformat code
-    codeStyleManager.reformat(method);
 
     // jump to method
     if (config.isJumpToMethod() && editor != null) {
@@ -323,12 +315,6 @@ public class GenerateToStringWorker {
       if (vc.get("autoImportPackages") != null) {
         params.put("autoImportPackages", (String)vc.get("autoImportPackages"));
       }
-
-      // add java.io.Serializable if chosen in [settings] and does not already implements it
-      if (config.isAddImplementSerializable() && !ce.isImplements("java.io.Serializable")) {
-        PsiAdapter.addImplements(clazz, "java.io.Serializable");
-      }
-
     }
     catch (Exception e) {
       throw new GenerateCodeException("Error in Velocity code generator", e);
@@ -365,6 +351,6 @@ public class GenerateToStringWorker {
       }
     };
 
-    PsiAdapter.executeCommand(clazz.getProject(), writeCommand);
+    CommandProcessor.getInstance().executeCommand(clazz.getProject(), writeCommand, "GenerateToString", null);
   }
 }

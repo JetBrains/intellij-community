@@ -682,38 +682,4 @@ public class PsiAdapter {
     public static boolean isPrimitiveType(PsiType type) {
         return type instanceof PsiPrimitiveType;
     }
-
-    /**
-     * Executes the given runnable in IDEA command.
-     *
-     * @param project IDEA project
-     * @param runnable the runnable task to execute.
-     */
-    public static void executeCommand(Project project, Runnable runnable) {
-        CommandProcessor.getInstance().executeCommand(project, runnable, "GenerateToString", null);
-    }
-
-    /**
-     * Adds the interface name to the class implementation list.
-     *
-     * @param clazz         the class
-     * @param interfaceName the interface name the class should implement
-     * @throws IncorrectOperationException is thrown by IDEA.
-     */
-    public static void addImplements(PsiClass clazz, String interfaceName) {
-      final Project project = clazz.getProject();
-      JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-
-        // get the interface class
-        PsiClass interfaceClass = facade.findClass(interfaceName, GlobalSearchScope.allScope(project));
-
-        // if the interface exists add it as a reference in the implements list
-        if (interfaceClass != null) {
-            PsiJavaCodeReferenceElement ref = facade.getElementFactory().createClassReferenceElement(interfaceClass);
-            PsiReferenceList list = clazz.getImplementsList();
-            if (list != null) {
-                list.add(ref);
-            }
-        }
-    }
 }

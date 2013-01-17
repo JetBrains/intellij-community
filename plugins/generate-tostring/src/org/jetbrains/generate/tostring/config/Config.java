@@ -99,14 +99,6 @@ public class Config {
         this.filterFieldName = filterFieldName;
     }
 
-    public boolean isAddImplementSerializable() {
-        return addImplementSerializable;
-    }
-
-    public void setAddImplementSerializable(boolean addImplementSerializable) {
-        this.addImplementSerializable = addImplementSerializable;
-    }
-
     public boolean isEnableMethods() {
         return enableMethods;
     }
