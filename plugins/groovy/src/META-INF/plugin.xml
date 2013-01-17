@@ -459,6 +459,8 @@
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory"
                     serviceImplementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementFactoryImpl"/>
+    <projectService serviceInterface="org.jetbrains.plugins.groovy.compiler.GroovyCompilerWorkspaceConfiguration"
+                    serviceImplementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerWorkspaceConfiguration"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration"
                     serviceImplementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration"/>
 

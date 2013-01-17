@@ -28,17 +28,30 @@ import org.jdom.Element;
  * @author peter
  */
 @State(
-  name = "GroovyCompilerConfiguration",
+  name = "GroovyCompilerProjectConfiguration",
   storages = {
-    @Storage( file = StoragePathMacros.WORKSPACE_FILE),
+    @Storage( file = StoragePathMacros.PROJECT_FILE),
     @Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/groovyc.xml", scheme = StorageScheme.DIRECTORY_BASED)
   }
 )
 public class GroovyCompilerConfiguration implements PersistentStateComponent<GroovyCompilerConfiguration.MyStateBean>, Disposable {
-  private String myHeapSize = "400";
-  private boolean myInvokeDynamic = false;
-  public boolean transformsOk = false;
+  static final String DEFAULT_HEAP_SIZE = "400";
+  static final boolean DEFAULT_INVOKE_DYNAMIC = false;
+  static final boolean DEFAULT_TRANSFORMS_OK = false;
+
+  private String myHeapSize = DEFAULT_HEAP_SIZE;
+  private boolean myInvokeDynamic = DEFAULT_INVOKE_DYNAMIC;
+  public boolean transformsOk = DEFAULT_TRANSFORMS_OK;
   private final ExcludedEntriesConfiguration myExcludeFromStubGeneration = new ExcludedEntriesConfiguration();
+
+  public GroovyCompilerConfiguration(Project project) {
+    GroovyCompilerWorkspaceConfiguration workspaceConfiguration = ServiceManager.getService(project, GroovyCompilerWorkspaceConfiguration.class);
+    loadState(workspaceConfiguration.getState());
+    workspaceConfiguration.myHeapSize = DEFAULT_HEAP_SIZE;
+    workspaceConfiguration.transformsOk = DEFAULT_TRANSFORMS_OK;
+    workspaceConfiguration.myInvokeDynamic = DEFAULT_INVOKE_DYNAMIC;
+    workspaceConfiguration.myExcludeFromStubGeneration.removeAllExcludeEntryDescriptions();
+  }
 
   public MyStateBean getState() {
     final MyStateBean bean = new MyStateBean();
@@ -90,12 +103,12 @@ public class GroovyCompilerConfiguration implements PersistentStateComponent<Gro
   }
 
   public static class MyStateBean {
-    public String heapSize = "400";
-    public boolean invokeDynamic = false;
+    public String heapSize = DEFAULT_HEAP_SIZE;
+    public boolean invokeDynamic = DEFAULT_INVOKE_DYNAMIC;
 
     @Tag("excludes") public Element excludes = new Element("aaa");
 
-    public boolean transformsOk = false;
+    public boolean transformsOk = DEFAULT_TRANSFORMS_OK;
 
   }
 }
