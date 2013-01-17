@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public class TitlePanel extends CaptionPanel {
     if (UIUtil.isUnderAquaLookAndFeel()) {
       myLabel.setFont(myLabel.getFont().deriveFont(12f));
     }
-    myLabel.setForeground(Color.black);
+    myLabel.setForeground(JBColor.foreground);
     myLabel.setHorizontalAlignment(SwingConstants.CENTER);
     myLabel.setVerticalAlignment(SwingConstants.CENTER);
     myLabel.setBorder(new EmptyBorder(1, 2, 2, 2));

@@ -16,6 +16,7 @@
 package org.intellij.plugins.xpathView;
 
 import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.template.impl.DefaultLiveTemplatesProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,6 +30,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.LightweightHint;
 import org.intellij.plugins.xpathView.util.HighlighterUtil;
 import org.jdom.Element;
@@ -193,8 +195,8 @@ public class XPathAppComponent implements ApplicationComponent, JDOMExternalizab
         label.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createBevelBorder(BevelBorder.RAISED, Color.WHITE, Gray._128),
                 BorderFactory.createEmptyBorder(3, 5, 3, 5)));
-        label.setForeground(Color.BLACK);
-        label.setBackground(new Color(253, 254, 226));
+        label.setForeground(JBColor.foreground);
+        label.setBackground(HintUtil.INFORMATION_COLOR);
         label.setOpaque(true);
         label.setFont(label.getFont().deriveFont(Font.BOLD));
 
