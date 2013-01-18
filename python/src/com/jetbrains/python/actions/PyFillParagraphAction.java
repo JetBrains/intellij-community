@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -59,18 +60,23 @@ public class PyFillParagraphAction extends AnAction {
                                                     LanguageLevel.forElement(element), PyExpressionStatement.class,
                                                     replacementString).getExpression();
         final PsiElement finalElement = element;
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            PsiElement replacementElement = finalElement.replace(docstring);
-            replacementElement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(replacementElement);
 
-            final TextRange textRange = getTextRange(replacementElement);
-            CodeStyleManager.getInstance(project).reformatText(
-              replacementElement.getContainingFile(), textRange.getStartOffset(),
-                                                      textRange.getEndOffset());
+        CommandProcessor.getInstance().executeCommand(element.getProject(), new Runnable() {
+          public void run() {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
+              public void run() {
+                PsiElement replacementElement = finalElement.replace(docstring);
+                replacementElement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(replacementElement);
+
+                final TextRange textRange = getTextRange(replacementElement);
+                CodeStyleManager.getInstance(project).reformatText(
+                  replacementElement.getContainingFile(), textRange.getStartOffset(),
+                  textRange.getEndOffset());
+              }
+            });
           }
-        });
+        }, null, editor.getDocument());
 
       }
     }
@@ -87,16 +93,21 @@ public class PyFillParagraphAction extends AnAction {
     }
     final String newText = stringBuilder.toString();
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
+    CommandProcessor.getInstance().executeCommand(element.getProject(), new Runnable() {
       public void run() {
-        document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(), getCommentPrefix() + newText);
-        CodeStyleManager.getInstance(element.getProject()).reformatText(
-          element.getContainingFile(),
-          textRange.getStartOffset(),
-          textRange.getStartOffset() + newText.length() + 1);
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(),
+                                   getCommentPrefix() + newText);
+            CodeStyleManager.getInstance(element.getProject()).reformatText(
+              element.getContainingFile(),
+              textRange.getStartOffset(),
+              textRange.getStartOffset() + newText.length() + 1);
+          }
+        });
       }
-    });
+    }, null, document);
 
   }
 
