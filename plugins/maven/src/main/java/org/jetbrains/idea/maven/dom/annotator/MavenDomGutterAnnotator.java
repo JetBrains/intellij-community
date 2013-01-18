@@ -82,24 +82,23 @@ public class MavenDomGutterAnnotator implements Annotator {
     }
   }
 
-  private static final NotNullFunction<MavenDomDependency, Collection<? extends PsiElement>> CONVERTER =
-    new NotNullFunction<MavenDomDependency, Collection<? extends PsiElement>>() {
+  private static class DependencyConverter implements NotNullFunction<MavenDomDependency, Collection<? extends PsiElement>> {
+    public static final DependencyConverter INSTANCE = new DependencyConverter();
 
-      @NotNull
-      public Collection<? extends PsiElement> fun(final MavenDomDependency pointer) {
-        return ContainerUtil.createMaybeSingletonList(pointer.getXmlTag());
-      }
-    };
+    @NotNull
+    public Collection<? extends PsiElement> fun(final MavenDomDependency pointer) {
+      return ContainerUtil.createMaybeSingletonList(pointer.getXmlTag());
+    }
+  }
 
-  private static final NotNullFunction<MavenDomProjectModel, Collection<? extends PsiElement>> MAVEN_PROJECT_CONVERTER =
-    new NotNullFunction<MavenDomProjectModel, Collection<? extends PsiElement>>() {
+  private static class MavenProjectConverter implements NotNullFunction<MavenDomProjectModel, Collection<? extends PsiElement>> {
+    public static final MavenProjectConverter INSTANCE = new MavenProjectConverter();
 
-      @NotNull
-      public Collection<? extends PsiElement> fun(final MavenDomProjectModel pointer) {
-        return ContainerUtil.createMaybeSingletonList(pointer.getXmlTag());
-      }
-    };
-
+    @NotNull
+    public Collection<? extends PsiElement> fun(final MavenDomProjectModel pointer) {
+      return ContainerUtil.createMaybeSingletonList(pointer.getXmlTag());
+    }
+  }
 
   private static void annotateDependencyUsages(@NotNull MavenDomDependency dependency, AnnotationHolder holder) {
     final XmlTag tag = dependency.getXmlTag();
@@ -108,7 +107,7 @@ public class MavenDomGutterAnnotator implements Annotator {
     final Set<MavenDomDependency> children = getDependencyUsages(dependency);
     if (children.size() > 0) {
       final NavigationGutterIconBuilder<MavenDomDependency> iconBuilder =
-        NavigationGutterIconBuilder.create(AllIcons.General.OverridenMethod, CONVERTER);
+        NavigationGutterIconBuilder.create(AllIcons.General.OverridenMethod, DependencyConverter.INSTANCE);
       iconBuilder.
         setTargets(children).
         setPopupTitle(MavenDomBundle.message("navigate.parent.dependency.title")).
@@ -126,7 +125,7 @@ public class MavenDomGutterAnnotator implements Annotator {
     if (children.size() > 0) {
 
       final NavigationGutterIconBuilder<MavenDomDependency> iconBuilder =
-        NavigationGutterIconBuilder.create(AllIcons.General.OverridingMethod, CONVERTER);
+        NavigationGutterIconBuilder.create(AllIcons.General.OverridingMethod, DependencyConverter.INSTANCE);
       iconBuilder.
         setTargets(children).
         setTooltipText(MavenDomBundle.message("overriden.dependency.title")).
@@ -176,7 +175,7 @@ public class MavenDomGutterAnnotator implements Annotator {
     MavenDomProjectModel parent = MavenDomProjectProcessorUtils.findParent(mavenDomParent, mavenDomParent.getManager().getProject());
 
     if (parent != null) {
-      NavigationGutterIconBuilder.create(icons.MavenIcons.ParentProject, MAVEN_PROJECT_CONVERTER).
+      NavigationGutterIconBuilder.create(icons.MavenIcons.ParentProject, MavenProjectConverter.INSTANCE).
         setTargets(parent).
         setTooltipText(MavenDomBundle.message("parent.pom.title")).
         install(holder, mavenDomParent.getXmlElement());
@@ -189,7 +188,7 @@ public class MavenDomGutterAnnotator implements Annotator {
       Set<MavenDomProjectModel> children = MavenDomProjectProcessorUtils.getChildrenProjects(model);
 
       if (children.size() > 0) {
-        NavigationGutterIconBuilder.create(icons.MavenIcons.ChildrenProjects, MAVEN_PROJECT_CONVERTER).
+        NavigationGutterIconBuilder.create(icons.MavenIcons.ChildrenProjects, MavenProjectConverter.INSTANCE).
           setTargets(children).
           setCellRenderer(MyListCellRenderer.INSTANCE).
           setPopupTitle(MavenDomBundle.message("navigate.children.poms.title")).
