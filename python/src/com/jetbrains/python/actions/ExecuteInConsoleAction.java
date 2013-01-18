@@ -123,17 +123,15 @@ public class ExecuteInConsoleAction extends AnAction {
         selectConsole(project, editor, consumer);
       }
       else {
-        startConsole(project, editor, consumer, e.getData(LangDataKeys.MODULE));
+        startConsole(project, consumer, e.getData(LangDataKeys.MODULE));
       }
     }
   }
 
   private static void startConsole(final Project project,
-                                   final Editor editor,
                                    final Consumer<PyCodeExecutor> consumer,
                                    Module context) {
     PydevConsoleRunner runner = RunPythonConsoleAction.runPythonConsole(project, context);
-    assert runner != null;
     runner.addConsoleListener(new PydevConsoleRunner.ConsoleListener() {
       @Override
       public void handleConsoleInitialized(LanguageConsoleViewImpl consoleView) {
