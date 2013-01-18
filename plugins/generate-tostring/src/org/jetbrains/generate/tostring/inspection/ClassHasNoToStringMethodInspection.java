@@ -16,6 +16,7 @@
 package org.jetbrains.generate.tostring.inspection;
 
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
@@ -43,7 +44,7 @@ import java.awt.*;
  */
 public class ClassHasNoToStringMethodInspection extends AbstractToStringInspection {
 
-    private final AbstractGenerateToStringQuickFix fix = new GenerateToStringQuickFix();
+    private final LocalQuickFix fix = new GenerateToStringQuickFix();
 
     /** User options for classes to exclude. Must be a regexp pattern */
     public String excludeClassNames = "";  // must be public for JDOMSerialization

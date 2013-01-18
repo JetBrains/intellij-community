@@ -15,6 +15,7 @@
  */
 package org.jetbrains.generate.tostring.inspection;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
@@ -35,7 +36,7 @@ import org.jetbrains.generate.tostring.psi.PsiAdapter;
  */
 public class FieldNotUsedInToStringInspection extends AbstractToStringInspection {
 
-    private final AbstractGenerateToStringQuickFix  fix = new GenerateToStringQuickFix();
+    private final LocalQuickFix fix = new GenerateToStringQuickFix();
 
     @NotNull
     public String getDisplayName() {
