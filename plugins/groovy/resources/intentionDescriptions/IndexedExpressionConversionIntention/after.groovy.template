@@ -1,2 +1,2 @@
 
-x = y[z]
+<spot>x = y.getAt(z) </spot>
