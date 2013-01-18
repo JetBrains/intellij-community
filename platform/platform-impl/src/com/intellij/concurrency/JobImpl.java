@@ -162,6 +162,7 @@ public class JobImpl<T> implements Job<T> {
       }
       catch (CancellationException ignore) {
         // already cancelled
+        cancel();
       }
       catch (ExecutionException e) {
         cancel();
