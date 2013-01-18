@@ -138,7 +138,7 @@ public abstract class Animator implements Disposable {
       animationDone();
     }
     else if (myTicker == null) {
-      myTicker = scheduler.scheduleAtFixedRate(new Runnable() {
+      myTicker = scheduler.scheduleWithFixedDelay(new Runnable() {
         AtomicBoolean scheduled = new AtomicBoolean(false);
 
         @Override

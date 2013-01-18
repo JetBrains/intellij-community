@@ -222,7 +222,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
    */
   @Override
   public void addNotify() {
-    myFuture = JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
+    myFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
       public void run() {
         if (isDisplayable()) {
           updateState();
