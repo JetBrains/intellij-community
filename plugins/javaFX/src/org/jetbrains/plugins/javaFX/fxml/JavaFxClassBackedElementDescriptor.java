@@ -121,7 +121,8 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
             if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
             final PsiType fieldType = field.getType();
             if (PropertyUtil.findPropertyGetter(myPsiClass, field.getName(), false, true) != null && 
-                InheritanceUtil.isInheritor(fieldType, JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY_PROPERTY)) {
+                InheritanceUtil.isInheritor(fieldType, JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY_PROPERTY) || 
+                fieldType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
               simpleAttrs.add(new JavaFxPropertyAttributeDescriptor(field.getName(), myPsiClass));
             }
           }
