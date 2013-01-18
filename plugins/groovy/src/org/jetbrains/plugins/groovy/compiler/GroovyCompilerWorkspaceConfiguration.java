@@ -18,23 +18,25 @@ package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.util.Disposer;
-
-import static org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration.MyStateBean;
+import org.jetbrains.jps.incremental.groovy.JpsGroovySettings;
 
 /**
  * @author peter
  */
 @State(name = "GroovyCompilerConfiguration", storages = @Storage( file = StoragePathMacros.WORKSPACE_FILE))
-public class GroovyCompilerWorkspaceConfiguration implements PersistentStateComponent<MyStateBean>, Disposable {
-  String myHeapSize = GroovyCompilerConfiguration.DEFAULT_HEAP_SIZE;
-  boolean myInvokeDynamic = GroovyCompilerConfiguration.DEFAULT_INVOKE_DYNAMIC;
-  boolean transformsOk = GroovyCompilerConfiguration.DEFAULT_TRANSFORMS_OK;
+public class GroovyCompilerWorkspaceConfiguration implements PersistentStateComponent<JpsGroovySettings>, Disposable {
+  String myHeapSize = JpsGroovySettings.DEFAULT_HEAP_SIZE;
+  boolean myInvokeDynamic = JpsGroovySettings.DEFAULT_INVOKE_DYNAMIC;
+  boolean transformsOk = JpsGroovySettings.DEFAULT_TRANSFORMS_OK;
   final ExcludedEntriesConfiguration myExcludeFromStubGeneration = new ExcludedEntriesConfiguration();
 
-  public MyStateBean getState() {
-    final MyStateBean bean = new MyStateBean();
+  public JpsGroovySettings getState() {
+    final JpsGroovySettings bean = new JpsGroovySettings();
     bean.heapSize = myHeapSize;
     bean.invokeDynamic = myInvokeDynamic;
     bean.transformsOk = transformsOk;
@@ -42,7 +44,7 @@ public class GroovyCompilerWorkspaceConfiguration implements PersistentStateComp
     return bean;
   }
 
-  public void loadState(MyStateBean state) {
+  public void loadState(JpsGroovySettings state) {
     myHeapSize = state.heapSize;
     myInvokeDynamic = state.invokeDynamic;
     transformsOk = state.transformsOk;

@@ -10,6 +10,8 @@
     <orderEntry type="module" module-name="jps-model-api" />
     <orderEntry type="module" module-name="jps-builders" />
     <orderEntry type="module" module-name="groovy-rt-constants" />
+    <orderEntry type="module" module-name="jps-model-serialization" />
+    <orderEntry type="module" module-name="jps-model-impl" />
   </component>
 </module>
 
