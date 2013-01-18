@@ -133,6 +133,9 @@ public class PyFillParagraphAction extends AnAction {
     PsiElement e = element.getPrevSibling();
     PsiElement result = element;
     while (e instanceof PsiComment || e instanceof PsiWhiteSpace) {
+      final String text = e.getText();
+      if (StringUtil.countChars(text, '\n') > 1)
+        break;
       if (e instanceof PsiComment)
         result = e;
       e = e.getPrevSibling();
@@ -144,6 +147,9 @@ public class PyFillParagraphAction extends AnAction {
     PsiElement e = element.getNextSibling();
     PsiElement result = element;
     while (e instanceof PsiComment || e instanceof PsiWhiteSpace) {
+      final String text = e.getText();
+      if (StringUtil.countChars(text, '\n') > 1)
+        break;
       if (e instanceof PsiComment)
         result = e;
       e = e.getNextSibling();
