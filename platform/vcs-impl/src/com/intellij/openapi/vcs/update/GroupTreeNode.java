@@ -39,17 +39,23 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
   private final Map<String, String> myErrorsMap;
   private final SimpleTextAttributes myInvalidAttributes;
   private final Project myProject;
+  private final String myFileGroupId;
 
   public GroupTreeNode(@NotNull String name,
                        boolean supportsDeletion,
                        @NotNull SimpleTextAttributes invalidAttributes,
                        @NotNull Project project,
-                       @NotNull Map<String, String> errorsMap) {
+                       @NotNull Map<String, String> errorsMap, String id) {
     myName = name;
     mySupportsDeletion = supportsDeletion;
     myInvalidAttributes = invalidAttributes;
     myProject = project;
     myErrorsMap = errorsMap;
+    myFileGroupId = id;
+  }
+
+  public String getFileGroupId() {
+    return myFileGroupId;
   }
 
   @NotNull

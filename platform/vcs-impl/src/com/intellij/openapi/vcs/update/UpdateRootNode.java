@@ -28,7 +28,7 @@ public class UpdateRootNode extends GroupTreeNode {
   private final Project myProject;
 
   public UpdateRootNode(UpdatedFiles updatedFiles, Project project, String rootName, ActionInfo actionInfo) {
-    super(rootName, false, SimpleTextAttributes.ERROR_ATTRIBUTES, project, Collections.<String, String>emptyMap());
+    super(rootName, false, SimpleTextAttributes.ERROR_ATTRIBUTES, project, Collections.<String, String>emptyMap(), null);
     myProject = project;
 
     addGroupsToNode(updatedFiles.getTopLevelGroups(), this, actionInfo);
@@ -49,7 +49,7 @@ public class UpdateRootNode extends GroupTreeNode {
       return null;
     }
     GroupTreeNode group = new GroupTreeNode(actionInfo.getGroupName(fileGroup), fileGroup.getSupportsDeletion(),
-                                            fileGroup.getInvalidAttributes(), myProject, fileGroup.getErrorsMap());
+                                            fileGroup.getInvalidAttributes(), myProject, fileGroup.getErrorsMap(), fileGroup.getId());
     Disposer.register(this, group);
     parent.add(group);
     for (final String s : fileGroup.getFiles()) {
