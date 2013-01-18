@@ -44,17 +44,21 @@ public class MavenPluginDomUtil {
     return MavenDomUtil.getMavenDomModel(p, pluginXmlFile, MavenDomPluginModel.class);
   }
 
-  public static boolean isPlugin(@NotNull MavenDomConfiguration configuration, @NotNull String groupId, @NotNull String artifactId) {
+  public static boolean isPlugin(@NotNull MavenDomConfiguration configuration, @Nullable String groupId, @NotNull String artifactId) {
     MavenDomPlugin domPlugin = configuration.getParentOfType(MavenDomPlugin.class, true);
     if (domPlugin == null) return false;
 
     return isPlugin(domPlugin, groupId, artifactId);
   }
 
-  public static boolean isPlugin(@NotNull MavenDomPlugin plugin, @NotNull String groupId, @NotNull String artifactId) {
+  public static boolean isPlugin(@NotNull MavenDomPlugin plugin, @Nullable String groupId, @NotNull String artifactId) {
     if (!artifactId.equals(plugin.getArtifactId().getStringValue())) return false;
 
     String pluginGroupId = plugin.getGroupId().getStringValue();
+
+    if (groupId == null) {
+      return pluginGroupId == null || (pluginGroupId.equals("org.apache.maven.plugins") || pluginGroupId.equals("org.codehaus.mojo"));
+    }
 
     if (pluginGroupId == null && (groupId.equals("org.apache.maven.plugins") || groupId.equals("org.codehaus.mojo"))) {
       return true;
