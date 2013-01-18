@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.gradle.ui;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.GradleTextAttributes;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
@@ -21,11 +21,13 @@ import java.util.*;
 public class GradleProjectStructureNode<T extends GradleEntityId> extends DefaultMutableTreeNode
   implements Iterable<GradleProjectStructureNode<?>> {
 
-  private final Set<GradleProjectStructureChange> myConflictChanges = new HashSet<GradleProjectStructureChange>();
-  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final Set<GradleProjectStructureChange> myConflictChanges = ContainerUtilRt.newHashSet();
+  // TODO den switch to ContainerUtil.createLockFreeCopyOnWriteList() when v.12.1 is going to be released (preserve JetGradle
+  // TODO compatibility with v.12.0 at the moment)
+  private final List<Listener>                    myListeners       = ContainerUtilRt.createEmptyCOWList();
 
   @NotNull private final Comparator<GradleProjectStructureNode<?>> myComparator;
-  @NotNull private final GradleProjectStructureNodeDescriptor<T> myDescriptor;
+  @NotNull private final GradleProjectStructureNodeDescriptor<T>   myDescriptor;
 
   private boolean mySkipNotification;
 

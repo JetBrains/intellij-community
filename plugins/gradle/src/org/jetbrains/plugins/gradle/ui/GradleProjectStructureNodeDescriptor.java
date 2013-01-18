@@ -63,7 +63,7 @@ public class GradleProjectStructureNodeDescriptor<T extends GradleEntityId> exte
       owner = GradleEntityOwner.GRADLE;
     }
     else if (attributes == GradleTextAttributes.NO_CHANGE || attributes == GradleTextAttributes.INTELLIJ_LOCAL_CHANGE) {
-      owner = GradleEntityOwner.INTELLIJ;
+      owner = GradleEntityOwner.IDE;
     }
     myId.setOwner(owner);
     update();

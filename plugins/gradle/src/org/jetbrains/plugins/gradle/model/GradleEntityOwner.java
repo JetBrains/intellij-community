@@ -5,5 +5,5 @@ package org.jetbrains.plugins.gradle.model;
  * @since 2/14/12 12:59 PM
  */
 public enum GradleEntityOwner {
-  GRADLE, INTELLIJ
+  GRADLE, IDE
 }

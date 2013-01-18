@@ -35,17 +35,17 @@ public abstract class GradleAbstractConflictingPropertyChange<T> extends GradleA
   @NotNull private final GradleEntityId myEntityId;
   @NotNull private final String         myPropertyDescription;
   @NotNull private final T              myGradleValue;
-  @NotNull private final T              myIntellijValue;
+  @NotNull private final T              myIdeValue;
 
   public GradleAbstractConflictingPropertyChange(@NotNull GradleEntityId id,
                                                  @NotNull String propertyDescription,
                                                  @NotNull T gradleValue,
-                                                 @NotNull T intellijValue)
+                                                 @NotNull T ideValue)
   {
     myEntityId = id;
     myPropertyDescription = propertyDescription;
     myGradleValue = gradleValue;
-    myIntellijValue = intellijValue;
+    myIdeValue = ideValue;
   }
 
   @NotNull
@@ -54,7 +54,7 @@ public abstract class GradleAbstractConflictingPropertyChange<T> extends GradleA
   }
 
   /**
-   * @return    target property's value at Gradle side
+   * @return target property's value at Gradle side
    */
   @NotNull
   public T getGradleValue() {
@@ -62,18 +62,18 @@ public abstract class GradleAbstractConflictingPropertyChange<T> extends GradleA
   }
 
   /**
-   * @return    target property's value at IntelliJ IDEA side
+   * @return target property's value at ide side
    */
   @NotNull
-  public T getIntellijValue() {
-    return myIntellijValue;
+  public T getIdeValue() {
+    return myIdeValue;
   }
 
   @Override
   public int hashCode() {
     int result = 31 * super.hashCode() + myEntityId.hashCode();
     result = 31 * result + myGradleValue.hashCode();
-    return  31 * result + myIntellijValue.hashCode();
+    return 31 * result + myIdeValue.hashCode();
   }
 
   @Override
@@ -84,11 +84,11 @@ public abstract class GradleAbstractConflictingPropertyChange<T> extends GradleA
 
     GradleAbstractConflictingPropertyChange that = (GradleAbstractConflictingPropertyChange)o;
 
-    return myEntityId.equals(that.myEntityId) && myGradleValue.equals(that.myGradleValue) && myIntellijValue.equals(that.myIntellijValue);
+    return myEntityId.equals(that.myEntityId) && myGradleValue.equals(that.myGradleValue) && myIdeValue.equals(that.myIdeValue);
   }
 
   @Override
   public String toString() {
-    return String.format("%s change: gradle='%s', intellij='%s'", myPropertyDescription, myGradleValue, myIntellijValue);
+    return String.format("%s change: gradle='%s', ide='%s'", myPropertyDescription, myGradleValue, myIdeValue);
   }
 }

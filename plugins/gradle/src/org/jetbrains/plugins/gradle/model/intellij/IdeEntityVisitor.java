@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 2/14/12 1:48 PM
  */
-public interface IntellijEntityVisitor {
+public interface IdeEntityVisitor {
 
   void visit(@NotNull Project project);
 

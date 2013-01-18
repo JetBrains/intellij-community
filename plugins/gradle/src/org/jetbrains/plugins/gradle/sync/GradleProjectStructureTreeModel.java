@@ -238,7 +238,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
 
     GradleLibraryId libraryId = node.getDescriptor().getElement().getLibraryId();
     for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
-      GradleJarId jarId = new GradleJarId(GradleUtil.getLocalFileSystemPath(file), libraryId);
+      GradleJarId jarId = new GradleJarId(GradleUtil.getLocalFileSystemPath(file), LibraryPathType.BINARY, libraryId);
       GradleProjectStructureNode<GradleJarId> jarNode = buildNode(jarId, GradleUtil.extractNameFromPath(jarId.getPath()));
       jarNode.getDescriptor().setToolTip(jarId.getPath());
       node.add(jarNode);
@@ -361,7 +361,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
       singleRoot = module == null || module.getContentRoots().size() <= 1;
     }
     else {
-      final Module module = myProjectStructureHelper.findIntellijModule(id.getModuleName());
+      final Module module = myProjectStructureHelper.findIdeModule(id.getModuleName());
       singleRoot = module == null || myPlatformFacade.getContentRoots(module).size() <= 1;
     }
     return buildContentRootNode(id, singleRoot);
@@ -502,7 +502,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     Map<GradleJarId, GradleProjectStructureNode<GradleJarId>> gradleJarIds = ContainerUtilRt.newHashMap();
     GradleLibraryId libraryId = dependencyNode.getDescriptor().getElement().getLibraryId();
     for (String path : gradleLibrary.getPaths(LibraryPathType.BINARY)) {
-      GradleJarId jarId = new GradleJarId(path, libraryId);
+      GradleJarId jarId = new GradleJarId(path, LibraryPathType.BINARY, libraryId);
       GradleProjectStructureNode<GradleJarId> jarNode = existingJarNodes.get(jarId);
       if (jarNode == null) {
         jarNode = buildNode(jarId, GradleUtil.extractNameFromPath(jarId.getPath()));
@@ -513,7 +513,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
       gradleJarIds.put(jarId, jarNode);
     }
 
-    Library intellijLibrary = myProjectStructureHelper.findIntellijLibrary(gradleLibrary);
+    Library intellijLibrary = myProjectStructureHelper.findIdeLibrary(gradleLibrary);
     if (intellijLibrary == null) {
       for (GradleProjectStructureNode<?> jarNode : dependencyNode) {
         jarNode.setAttributes(GradleTextAttributes.GRADLE_LOCAL_CHANGE);
@@ -522,7 +522,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     else {
       Set<GradleJarId> intellijJarIds = ContainerUtilRt.newHashSet();
       for (VirtualFile jarFile : intellijLibrary.getFiles(OrderRootType.CLASSES)) {
-        GradleJarId jarId = new GradleJarId(GradleUtil.getLocalFileSystemPath(jarFile), libraryId);
+        GradleJarId jarId = new GradleJarId(GradleUtil.getLocalFileSystemPath(jarFile), LibraryPathType.BINARY, libraryId);
         if (gradleJarIds.remove(jarId) == null) {
           intellijJarIds.add(jarId);
         }
@@ -543,9 +543,13 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     GradleJarId jarId = change.getGradleEntity();
     TextAttributesKey attributes = GradleTextAttributes.GRADLE_LOCAL_CHANGE;
     if (jarId == null) {
-      jarId = change.getIntellijEntity();
+      jarId = change.getIdeEntity();
       attributes = GradleTextAttributes.INTELLIJ_LOCAL_CHANGE;
       assert jarId != null;
+    }
+    if (jarId.getLibraryPathType() != LibraryPathType.BINARY) {
+      // Ignore non-binary paths (docs, sources) as they are not shown at the JetGradle tool window's project structure view.
+      return;
     }
     if (obsolete) {
       attributes = GradleTextAttributes.NO_CHANGE;
@@ -563,7 +567,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
 
         for (GradleProjectStructureNode<GradleJarId> jarNode : libraryDependencyNode.getChildren(GradleJarId.class)) {
           if (jarNode.getDescriptor().getElement().equals(jarId)) {
-            if (obsolete && myProjectStructureHelper.findIntellijJar(jarId) == null) {
+            if (obsolete && myProjectStructureHelper.findIdeJar(jarId) == null) {
               // It was a gradle-local change which is now obsolete. Remove the jar node then.
               jarNode.removeFromParent();
             }
@@ -580,7 +584,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
 
         // There is a possible case that both gradle and intellij have a library with the same name but different jar sets.
         // We don't want to show intellij-local jars for the gradle-local module which uses that library then.
-        if (jarId.getOwner() ==  GradleEntityOwner.INTELLIJ
+        if (jarId.getOwner() ==  GradleEntityOwner.IDE
             && myModules.get(entry.getKey()).getDescriptor().getAttributes() == GradleTextAttributes.GRADLE_LOCAL_CHANGE)
         {
           continue;
@@ -609,7 +613,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     I id = change.getGradleEntity();
     TextAttributesKey attributes = GradleTextAttributes.GRADLE_LOCAL_CHANGE;
     if (id == null) {
-      id = change.getIntellijEntity();
+      id = change.getIdeEntity();
       attributes = GradleTextAttributes.INTELLIJ_LOCAL_CHANGE;
     }
     assert id != null;
@@ -639,7 +643,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     final GradleModuleId id;
     final TextAttributesKey key;
     if (change.getGradleEntity() == null) {
-      id = change.getIntellijEntity();
+      id = change.getIdeEntity();
       key = GradleTextAttributes.INTELLIJ_LOCAL_CHANGE;
     }
     else {
@@ -659,7 +663,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     GradleContentRootId id = change.getGradleEntity();
     TextAttributesKey key = GradleTextAttributes.GRADLE_LOCAL_CHANGE;
     if (id == null) {
-      id = change.getIntellijEntity();
+      id = change.getIdeEntity();
       key = GradleTextAttributes.INTELLIJ_LOCAL_CHANGE;
     }
     assert id != null;
@@ -701,9 +705,9 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     GradleLibraryDependencyId id = change.getGradleEntity();
     boolean removeNode;
     if (id == null) {
-      id = change.getIntellijEntity();
+      id = change.getIdeEntity();
       assert id != null;
-      removeNode = !myProjectStructureHelper.isIntellijLibraryDependencyExist(id);
+      removeNode = !myProjectStructureHelper.isIdeLibraryDependencyExist(id);
     }
     else {
       removeNode = !myProjectStructureHelper.isGradleLibraryDependencyExist(id);
@@ -715,9 +719,9 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     GradleModuleDependencyId id = change.getGradleEntity();
     boolean removeNode;
     if (id == null) {
-      id = change.getIntellijEntity();
+      id = change.getIdeEntity();
       assert id != null;
-      removeNode = !myProjectStructureHelper.isIntellijModuleDependencyExist(id);
+      removeNode = !myProjectStructureHelper.isIdeModuleDependencyExist(id);
     }
     else {
       removeNode = !myProjectStructureHelper.isGradleModuleDependencyExist(id);
@@ -762,9 +766,9 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     GradleModuleId id = change.getGradleEntity();
     boolean removeNode;
     if (id == null) {
-      id = change.getIntellijEntity();
+      id = change.getIdeEntity();
       assert id != null;
-      removeNode = myProjectStructureHelper.findIntellijModule(id.getModuleName()) == null;
+      removeNode = myProjectStructureHelper.findIdeModule(id.getModuleName()) == null;
     }
     else {
       removeNode = myProjectStructureHelper.findGradleModule(id.getModuleName()) == null;
@@ -796,9 +800,9 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     GradleContentRootId id = change.getGradleEntity();
     final boolean removeNode;
     if (id == null) {
-      id = change.getIntellijEntity();
+      id = change.getIdeEntity();
       assert id != null;
-      removeNode = myProjectStructureHelper.findIntellijContentRoot(id) == null;
+      removeNode = myProjectStructureHelper.findIdeContentRoot(id) == null;
     }
     else {
       removeNode = myProjectStructureHelper.findGradleContentRoot(id) == null;

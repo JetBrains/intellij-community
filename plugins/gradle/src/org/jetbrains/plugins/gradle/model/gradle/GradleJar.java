@@ -13,17 +13,23 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
  * @since 12/11/12 3:07 PM
  */
 public class GradleJar extends AbstractNamedGradleEntity {
-  
-  @NotNull private final String myPath;
-  
-  @Nullable private final Library myIntellijLibrary;
-  @Nullable private final GradleLibrary myGradleLibrary;
 
-  public GradleJar(@NotNull String path, @Nullable Library intellijLibrary, @Nullable GradleLibrary gradleLibrary) {
+  @NotNull private final String myPath;
+
+  @Nullable private final Library         myIdeLibrary;
+  @Nullable private final GradleLibrary   myGradleLibrary;
+  @NotNull private final  LibraryPathType myPathType;
+
+  public GradleJar(@NotNull String path,
+                   @NotNull LibraryPathType pathType,
+                   @Nullable Library ideLibrary,
+                   @Nullable GradleLibrary gradleLibrary)
+  {
     super(GradleUtil.extractNameFromPath(path));
-    assert intellijLibrary == null ^ gradleLibrary == null;
+    myPathType = pathType;
+    assert ideLibrary == null ^ gradleLibrary == null;
     myPath = path;
-    myIntellijLibrary = intellijLibrary;
+    myIdeLibrary = ideLibrary;
     myGradleLibrary = gradleLibrary;
   }
 
@@ -33,14 +39,19 @@ public class GradleJar extends AbstractNamedGradleEntity {
   }
 
   @NotNull
+  public LibraryPathType getPathType() {
+    return myPathType;
+  }
+
+  @NotNull
   public GradleJarId getId() {
-    return new GradleJarId(myPath, getLibraryId());
+    return new GradleJarId(myPath, myPathType, getLibraryId());
   }
   
   @NotNull
   public GradleLibraryId getLibraryId() {
-    if (myIntellijLibrary != null) {
-      return new GradleLibraryId(GradleEntityOwner.INTELLIJ, GradleUtil.getLibraryName(myIntellijLibrary));
+    if (myIdeLibrary != null) {
+      return new GradleLibraryId(GradleEntityOwner.IDE, GradleUtil.getLibraryName(myIdeLibrary));
     }
     assert myGradleLibrary != null;
     return new GradleLibraryId(GradleEntityOwner.GRADLE, myGradleLibrary.getName());
@@ -54,14 +65,15 @@ public class GradleJar extends AbstractNamedGradleEntity {
   @NotNull
   @Override
   public GradleJar clone(@NotNull GradleEntityCloneContext context) {
-    return new GradleJar(myPath, myIntellijLibrary, myGradleLibrary == null ? null : context.getLibrary(myGradleLibrary));
+    return new GradleJar(myPath, myPathType, myIdeLibrary, myGradleLibrary == null ? null : context.getLibrary(myGradleLibrary));
   }
 
   @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + myPath.hashCode();
-    result = 31 * result + (myIntellijLibrary != null ? myIntellijLibrary.hashCode() : 0);
+    result = 31 * result + myPathType.hashCode();
+    result = 31 * result + (myIdeLibrary != null ? myIdeLibrary.hashCode() : 0);
     result = 31 * result + (myGradleLibrary != null ? myGradleLibrary.hashCode() : 0);
     return result;
   }
@@ -73,15 +85,16 @@ public class GradleJar extends AbstractNamedGradleEntity {
     GradleJar that = (GradleJar)o;
     
     if (!myPath.equals(that.myPath)) return false;
+    if (!myPathType.equals(that.myPathType)) return false;
     if (myGradleLibrary != null ? !myGradleLibrary.equals(that.myGradleLibrary) : that.myGradleLibrary != null) return false;
-    if (myIntellijLibrary == null && that.myIntellijLibrary != null) {
+    if (myIdeLibrary == null && that.myIdeLibrary != null) {
       return false;
     }
-    else if (myIntellijLibrary != null) {
-      if (that.myIntellijLibrary == null) {
+    else if (myIdeLibrary != null) {
+      if (that.myIdeLibrary == null) {
         return false;
       }
-      else if (!GradleUtil.getLibraryName(myIntellijLibrary).equals(GradleUtil.getLibraryName(that.myIntellijLibrary))) {
+      else if (!GradleUtil.getLibraryName(myIdeLibrary).equals(GradleUtil.getLibraryName(that.myIdeLibrary))) {
         return false;
       }
     }
@@ -92,8 +105,9 @@ public class GradleJar extends AbstractNamedGradleEntity {
   @Override
   public String toString() {
     return String.format(
-      "jar at '%s'. Belongs to library '%s'",
-      myPath, myIntellijLibrary == null ? myGradleLibrary.getName() : GradleUtil.getLibraryName(myIntellijLibrary)
+      "%s jar at '%s'. Belongs to library '%s'",
+      myPathType.toString().toLowerCase(), myPath,
+      myIdeLibrary == null ? myGradleLibrary.getName() : GradleUtil.getLibraryName(myIdeLibrary)
     );
   }
 }

@@ -9,7 +9,7 @@ import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
-import org.jetbrains.plugins.gradle.model.intellij.IntellijEntityVisitor;
+import org.jetbrains.plugins.gradle.model.intellij.IdeEntityVisitor;
 import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
@@ -51,7 +51,7 @@ public class GradleConflictControlFactory {
   @Nullable
   public JComponent getDiffControl(@NotNull Object entity, final @NotNull Collection<GradleProjectStructureChange> changes) {
     final Ref<JComponent> result = new Ref<JComponent>();
-    GradleUtil.dispatch(entity, new IntellijEntityVisitor() {
+    GradleUtil.dispatch(entity, new IdeEntityVisitor() {
       @Override
       public void visit(@NotNull Project project) {
         result.set(myProjectFactory.getControl(changes));

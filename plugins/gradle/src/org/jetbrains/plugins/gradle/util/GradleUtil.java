@@ -44,7 +44,7 @@ import org.jetbrains.plugins.gradle.manage.GradleProjectEntityChangeListener;
 import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
 import org.jetbrains.plugins.gradle.model.id.GradleEntityId;
 import org.jetbrains.plugins.gradle.model.id.GradleSyntheticId;
-import org.jetbrains.plugins.gradle.model.intellij.IntellijEntityVisitor;
+import org.jetbrains.plugins.gradle.model.intellij.IdeEntityVisitor;
 import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
 import org.jetbrains.plugins.gradle.remote.GradleApiException;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel;
@@ -64,6 +64,8 @@ import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Holds miscellaneous utility methods.
@@ -73,8 +75,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class GradleUtil {
 
-  public static final String PATH_SEPARATOR            = "/";
-  public static final String SYSTEM_DIRECTORY_PATH_KEY = "GRADLE_USER_HOME";
+  public static final  String  PATH_SEPARATOR            = "/";
+  public static final  String  SYSTEM_DIRECTORY_PATH_KEY = "GRADLE_USER_HOME";
+  private static final Pattern ARTIFACT_PATTERN          = Pattern.compile(".*/(.+?)(?:-([\\d+](?:\\.[\\d]+)*))?(?:\\.[^\\.]+?)?");
 
   private static final NotNullLazyValue<GradleInstallationManager> INSTALLATION_MANAGER =
     new NotNullLazyValue<GradleInstallationManager>() {
@@ -220,12 +223,15 @@ public class GradleUtil {
       return;
     }
     assert linkedProjectPath != null;
-    Ref<String> errorDetailsHolder = new Ref<String>();
+    Ref<String> errorDetailsHolder = new Ref<String>() {
+      @Override
+      public void set(@Nullable String error) {
+        if (!StringUtil.isEmpty(error)) {
+          GradleLog.LOG.warn(error);
+        }
+      }
+    };
     refreshProject(project, linkedProjectPath, errorMessageHolder, errorDetailsHolder, true, false);
-    final String error = errorDetailsHolder.get();
-    if (!StringUtil.isEmpty(error)) {
-      GradleLog.LOG.warn(error);
-    }
   }
 
   /**
@@ -332,7 +338,7 @@ public class GradleUtil {
    * @param entity   intellij project entity candidate to dispatch
    * @param visitor  dispatch callback to use for the given entity
    */
-  public static void dispatch(@Nullable Object entity, @NotNull IntellijEntityVisitor visitor) {
+  public static void dispatch(@Nullable Object entity, @NotNull IdeEntityVisitor visitor) {
     if (entity instanceof Project) {
       visitor.visit(((Project)entity));
     }
@@ -518,12 +524,30 @@ public class GradleUtil {
 
   
   public static void executeProjectChangeAction(@NotNull Project project, @NotNull Object entityToChange, @NotNull Runnable task) {
-    executeProjectChangeAction(project, Collections.singleton(entityToChange), task);
+    executeProjectChangeAction(project, entityToChange, false, task);
+  }
+
+  public static void executeProjectChangeAction(@NotNull Project project,
+                                                @NotNull Object entityToChange,
+                                                boolean synchronous,
+                                                @NotNull Runnable task)
+  {
+    executeProjectChangeAction(project, Collections.singleton(entityToChange), synchronous, task);
+  }
+
+  public static void executeProjectChangeAction(@NotNull final Project project,
+                                                @NotNull final Iterable<?> entitiesToChange,
+                                                @NotNull final Runnable task)
+  {
+    executeProjectChangeAction(project, entitiesToChange, false, task);
   }
   
-  public static void executeProjectChangeAction(@NotNull final Project project, @NotNull final Iterable<?> entitiesToChange, @NotNull final Runnable task) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
+  public static void executeProjectChangeAction(@NotNull final Project project,
+                                                @NotNull final Iterable<?> entitiesToChange,
+                                                boolean synchronous,
+                                                @NotNull final Runnable task)
+  {
+    Runnable wrappedTask = new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
@@ -539,11 +563,27 @@ public class GradleUtil {
               for (Object e : entitiesToChange) {
                 publisher.onChangeEnd(e);
               }
-            } 
+            }
           }
         });
       }
-    });
+    };
+
+    if (synchronous) {
+      UIUtil.invokeAndWaitIfNeeded(wrappedTask);
+    }
+    else {
+      UIUtil.invokeLaterIfNeeded(wrappedTask);
+    }
+  }
+
+  @Nullable
+  public static GradleArtifactInfo parseArtifactInfo(@NotNull String fileName) {
+    Matcher matcher = ARTIFACT_PATTERN.matcher(fileName);
+    if (!matcher.matches()) {
+      return null;
+    }
+    return new GradleArtifactInfo(matcher.group(1), null, matcher.group(2));
   }
   
   private interface TaskUnderProgress {

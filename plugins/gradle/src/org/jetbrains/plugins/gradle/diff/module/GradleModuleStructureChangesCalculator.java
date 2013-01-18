@@ -59,21 +59,21 @@ public class GradleModuleStructureChangesCalculator implements GradleStructureCh
 
   @Override
   public void calculate(@NotNull GradleModule gradleEntity,
-                        @NotNull Module intellijEntity,
+                        @NotNull Module ideEntity,
                         @NotNull GradleChangesCalculationContext context)
   {
     // Content roots.
     final Collection<GradleContentRoot> gradleContentRoots = gradleEntity.getContentRoots();
-    final Collection<ModuleAwareContentRoot> intellijContentRoots = context.getPlatformFacade().getContentRoots(intellijEntity);
+    final Collection<ModuleAwareContentRoot> intellijContentRoots = context.getPlatformFacade().getContentRoots(ideEntity);
     GradleDiffUtil.calculate(myContentRootCalculator, gradleContentRoots, intellijContentRoots, context);
     
     // Dependencies.
-    checkDependencies(gradleEntity, intellijEntity, context); 
+    checkDependencies(gradleEntity, ideEntity, context); 
   }
 
   @NotNull
   @Override
-  public Object getIntellijKey(@NotNull Module entity) {
+  public Object getIdeKey(@NotNull Module entity) {
     return entity.getName();
   }
 

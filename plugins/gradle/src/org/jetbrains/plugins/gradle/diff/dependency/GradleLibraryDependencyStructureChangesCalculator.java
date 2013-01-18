@@ -35,12 +35,12 @@ public class GradleLibraryDependencyStructureChangesCalculator
 
   @NotNull
   @Override
-  public Object getIntellijKey(@NotNull LibraryOrderEntry entity) {
+  public Object getIdeKey(@NotNull LibraryOrderEntry entity) {
     final Library library = entity.getLibrary();
     if (library == null) {
       return "";
     }
-    return myLibraryCalculator.getIntellijKey(library);
+    return myLibraryCalculator.getIdeKey(library);
   }
 
   @NotNull

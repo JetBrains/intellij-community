@@ -237,7 +237,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
             myLibraryManager.importLibraries(projectWithResolvedLibraries.getLibraries(), project);
             GradleProjectStructureHelper helper = project.getComponent(GradleProjectStructureHelper.class);
             for (GradleModule module : projectWithResolvedLibraries.getModules()) {
-              Module intellijModule = helper.findIntellijModule(module);
+              Module intellijModule = helper.findIdeModule(module);
               assert intellijModule != null;
               myDependencyManager.importDependencies(module.getDependencies(), intellijModule);
             }

@@ -72,11 +72,11 @@ public class GradleCommonDependencyConflictControlFactory {
     MatrixControlBuilder builder = GradleUtil.getConflictChangeBuilder();
     if (scopeChange != null) {
       builder.addRow(GradleBundle.message("gradle.sync.change.dependency.scope.text"),
-                     scopeChange.getGradleValue(), scopeChange.getIntellijValue());
+                     scopeChange.getGradleValue(), scopeChange.getIdeValue());
     }
     if (exportedChange != null) {
       builder.addRow(GradleBundle.message("gradle.sync.change.dependency.exported.text"),
-                     exportedChange.getGradleValue(), exportedChange.getIntellijValue());
+                     exportedChange.getGradleValue(), exportedChange.getIdeValue());
     }
     return builder.build();
   }

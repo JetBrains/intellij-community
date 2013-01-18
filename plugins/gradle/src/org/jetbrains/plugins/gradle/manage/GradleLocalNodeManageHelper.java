@@ -17,7 +17,7 @@ import org.jetbrains.plugins.gradle.model.gradle.*;
 import org.jetbrains.plugins.gradle.model.id.GradleContentRootId;
 import org.jetbrains.plugins.gradle.model.id.GradleEntityId;
 import org.jetbrains.plugins.gradle.model.id.GradleEntityIdMapper;
-import org.jetbrains.plugins.gradle.model.intellij.IntellijEntityVisitor;
+import org.jetbrains.plugins.gradle.model.intellij.IdeEntityVisitor;
 import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
@@ -139,7 +139,7 @@ public class GradleLocalNodeManageHelper {
   }
 
   private void collectModuleEntities(@NotNull GradleModule module, @NotNull Context context) {
-    final Module intellijModule = myProjectStructureHelper.findIntellijModule(module);
+    final Module intellijModule = myProjectStructureHelper.findIdeModule(module);
     if (intellijModule != null) {
       // Already imported
       return;
@@ -158,7 +158,7 @@ public class GradleLocalNodeManageHelper {
 
   private void collectContentRoots(@NotNull GradleContentRoot contentRoot, @NotNull Context context) {
     final GradleContentRootId id = GradleEntityIdMapper.mapEntityToId(contentRoot);
-    final ModuleAwareContentRoot intellijContentRoot = myProjectStructureHelper.findIntellijContentRoot(id);
+    final ModuleAwareContentRoot intellijContentRoot = myProjectStructureHelper.findIdeContentRoot(id);
     if (intellijContentRoot != null) {
       // Already imported.
       return;
@@ -167,14 +167,14 @@ public class GradleLocalNodeManageHelper {
   }
   
   private void collectModuleDependencyEntities(@NotNull GradleModuleDependency dependency, @NotNull Context context) {
-    final ModuleOrderEntry intellijModuleDependency = myProjectStructureHelper.findIntellijModuleDependency(dependency);
+    final ModuleOrderEntry intellijModuleDependency = myProjectStructureHelper.findIdeModuleDependency(dependency);
     if (intellijModuleDependency != null) {
       // Already imported.
       return;
     }
     context.dependencies.add(dependency);
     final GradleModule gradleModule = dependency.getTarget();
-    final Module intellijModule = myProjectStructureHelper.findIntellijModule(gradleModule);
+    final Module intellijModule = myProjectStructureHelper.findIdeModule(gradleModule);
     if (intellijModule != null) {
       return;
     }
@@ -190,7 +190,7 @@ public class GradleLocalNodeManageHelper {
 
   private void collectLibraryDependencyEntities(@NotNull GradleLibraryDependency dependency, @NotNull Context context) {
     final LibraryOrderEntry intellijDependency
-      = myProjectStructureHelper.findIntellijLibraryDependency(dependency.getOwnerModule().getName(), dependency.getName());
+      = myProjectStructureHelper.findIdeLibraryDependency(dependency.getOwnerModule().getName(), dependency.getName());
     Set<String> intellijPaths = ContainerUtilRt.newHashSet();
     GradleLibrary gradleLibrary = dependency.getTarget();
     Library intellijLibrary = null;
@@ -202,7 +202,7 @@ public class GradleLocalNodeManageHelper {
     }
 
     if (intellijLibrary == null) {
-      intellijLibrary = myProjectStructureHelper.findIntellijLibrary(gradleLibrary);
+      intellijLibrary = myProjectStructureHelper.findIdeLibrary(gradleLibrary);
     }
 
     if (intellijLibrary == null) {
@@ -216,7 +216,7 @@ public class GradleLocalNodeManageHelper {
     
     for (String gradleJarPath : gradleLibrary.getPaths(LibraryPathType.BINARY)) {
       if (!intellijPaths.contains(gradleJarPath)) {
-        context.jars.add(new GradleJar(gradleJarPath, null, gradleLibrary));
+        context.jars.add(new GradleJar(gradleJarPath, LibraryPathType.BINARY, null, gradleLibrary));
       }
     }
   }
@@ -240,7 +240,7 @@ public class GradleLocalNodeManageHelper {
 
         @Override
         public void visit(@NotNull GradleContentRoot contentRoot) {
-          final Module intellijModule = myProjectStructureHelper.findIntellijModule(contentRoot.getOwnerModule());
+          final Module intellijModule = myProjectStructureHelper.findIdeModule(contentRoot.getOwnerModule());
           if (intellijModule == null) {
             GradleLog.LOG.warn(String.format(
               "Can't import gradle module content root. Reason: corresponding module is not registered at the current intellij project. "
@@ -263,14 +263,14 @@ public class GradleLocalNodeManageHelper {
 
         @Override
         public void visit(@NotNull GradleModuleDependency dependency) {
-          final Module module = myProjectStructureHelper.findIntellijModule(dependency.getOwnerModule());
+          final Module module = myProjectStructureHelper.findIdeModule(dependency.getOwnerModule());
           assert module != null;
           myModuleDependencyManager.importDependency(dependency, module); 
         }
 
         @Override
         public void visit(@NotNull GradleLibraryDependency dependency) {
-          final Module module = myProjectStructureHelper.findIntellijModule(dependency.getOwnerModule());
+          final Module module = myProjectStructureHelper.findIdeModule(dependency.getOwnerModule());
           assert module != null;
           myModuleDependencyManager.importDependency(dependency, module); 
         }
@@ -284,7 +284,7 @@ public class GradleLocalNodeManageHelper {
     final List<ModuleAwareContentRoot> contentRoots = ContainerUtilRt.newArrayList();
     final List<ExportableOrderEntry> dependencies = ContainerUtilRt.newArrayList();
     final List<GradleJar> jars = ContainerUtilRt.newArrayList();
-    IntellijEntityVisitor intellijVisitor = new IntellijEntityVisitor() {
+    IdeEntityVisitor intellijVisitor = new IdeEntityVisitor() {
       @Override public void visit(@NotNull Project project) { }
       @Override public void visit(@NotNull Module module) { modules.add(module); }
       @Override public void visit(@NotNull ModuleAwareContentRoot contentRoot) { contentRoots.add(contentRoot); }

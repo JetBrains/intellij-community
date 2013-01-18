@@ -30,7 +30,7 @@ import org.jetbrains.plugins.gradle.util.GradleBundle;
 public class GradleLanguageLevelChange extends GradleAbstractConflictingPropertyChange<LanguageLevel> {
   
   public GradleLanguageLevelChange(@NotNull LanguageLevel gradleValue, @NotNull LanguageLevel intellijValue) {
-    super(new GradleProjectId(GradleEntityOwner.INTELLIJ), GradleBundle.message("gradle.sync.change.project.language.level.text"),
+    super(new GradleProjectId(GradleEntityOwner.IDE), GradleBundle.message("gradle.sync.change.project.language.level.text"),
           gradleValue, intellijValue);
   }
 

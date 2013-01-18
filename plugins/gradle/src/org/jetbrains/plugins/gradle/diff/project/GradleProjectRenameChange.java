@@ -16,7 +16,7 @@ import org.jetbrains.plugins.gradle.util.GradleBundle;
 public class GradleProjectRenameChange extends GradleAbstractConflictingPropertyChange<String> {
 
   public GradleProjectRenameChange(@NotNull String gradleName, @NotNull String intellijName) {
-    super(new GradleProjectId(GradleEntityOwner.INTELLIJ), GradleBundle.message("gradle.sync.change.project.name.text"),
+    super(new GradleProjectId(GradleEntityOwner.IDE), GradleBundle.message("gradle.sync.change.project.name.text"),
           gradleName, intellijName);
   }
 

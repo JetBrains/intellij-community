@@ -39,7 +39,7 @@ public class GradleContentRootId extends GradleAbstractEntityId {
   public Object mapToEntity(@NotNull GradleProjectStructureContext context) {
     switch (getOwner()) {
       case GRADLE: return context.getProjectStructureHelper().findGradleContentRoot(this);
-      case INTELLIJ: return context.getProjectStructureHelper().findIntellijContentRoot(this);
+      case IDE: return context.getProjectStructureHelper().findIdeContentRoot(this);
     }
     return null;
   }

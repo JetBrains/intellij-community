@@ -20,16 +20,16 @@ public abstract class GradleAbstractDependencyStructureChangesCalculator<G exten
   implements GradleStructureChangesCalculator<G, I>
 {
   @Override
-  public void calculate(@NotNull G gradleEntity, @NotNull I intellijEntity, @NotNull GradleChangesCalculationContext context) {
+  public void calculate(@NotNull G gradleEntity, @NotNull I ideEntity, @NotNull GradleChangesCalculationContext context) {
     final GradleAbstractDependencyId id = GradleEntityIdMapper.mapEntityToId(gradleEntity);
-    if (gradleEntity.getScope() != intellijEntity.getScope()) {
-      context.register(new GradleDependencyScopeChange(id, gradleEntity.getScope(), intellijEntity.getScope()));
+    if (gradleEntity.getScope() != ideEntity.getScope()) {
+      context.register(new GradleDependencyScopeChange(id, gradleEntity.getScope(), ideEntity.getScope()));
     }
-    if (gradleEntity.isExported() != intellijEntity.isExported()) {
-      context.register(new GradleDependencyExportedChange(id, gradleEntity.isExported(), intellijEntity.isExported()));
+    if (gradleEntity.isExported() != ideEntity.isExported()) {
+      context.register(new GradleDependencyExportedChange(id, gradleEntity.isExported(), ideEntity.isExported()));
     }
     
-    doCalculate(gradleEntity, intellijEntity, context);
+    doCalculate(gradleEntity, ideEntity, context);
   }
   
   protected abstract void doCalculate(@NotNull G gradleEntity, @NotNull I intellijEntity, @NotNull GradleChangesCalculationContext context);
