@@ -201,7 +201,6 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
       VirtualFileWindowImpl virtualFile = new VirtualFileWindowImpl(myHostVirtualFile, documentWindow, myLanguage, outChars);
       Language forcedLanguage = myContextElement.getUserData(InjectedFileViewProvider.LANGUAGE_FOR_INJECTED_COPY_KEY);
       myLanguage = forcedLanguage == null ? LanguageSubstitutors.INSTANCE.substituteLanguage(myLanguage, virtualFile, myProject) : forcedLanguage;
-      virtualFile.setLanguage(myLanguage);
 
       DocumentImpl decodedDocument;
       if (StringUtil.indexOf(outChars, '\r') == -1) {
