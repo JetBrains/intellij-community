@@ -1044,10 +1044,21 @@ public class ContainerUtil extends ContainerUtilRt {
           Iterable<? extends T> iterable = iterables[i];
           iterators[i] = iterable.iterator();
         }
-        return new SequenceIterator<T>(iterators);
+        return concatIterators(iterators);
       }
     };
   }
+
+  @NotNull
+  public static <T> Iterator<T> concatIterators(@NotNull Iterator<T>... iterators) {
+    return new SequenceIterator<T>(iterators);
+  }
+
+  @NotNull
+  public static <T> Iterator<T> concatIterators(@NotNull Collection<Iterator<T>> iterators) {
+    return new SequenceIterator<T>(iterators);
+  }
+
   @NotNull
   public static <T> Iterable<T> concat(@NotNull final T[]... iterables) {
     return new Iterable<T>() {
@@ -1058,7 +1069,7 @@ public class ContainerUtil extends ContainerUtilRt {
           T[] iterable = iterables[i];
           iterators[i] = Arrays.asList(iterable).iterator();
         }
-        return new SequenceIterator<T>(iterators);
+        return concatIterators(iterators);
       }
     };
   }
