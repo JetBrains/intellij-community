@@ -55,4 +55,48 @@
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant local variable</problem_class>
     <description>Local variable &lt;code&gt;r3&lt;/code&gt; is redundant #loc</description>
   </problem>
+
+  <problem>
+    <file>C.java</file>
+    <line>30</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant local variable</problem_class>
+    <description>Local variable &lt;code&gt;a&lt;/code&gt; is redundant #loc</description>
+  </problem>
+
+  <problem>
+    <file>C.java</file>
+    <line>31</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant local variable</problem_class>
+    <description>Local variable &lt;code&gt;b&lt;/code&gt; is redundant #loc</description>
+  </problem>
+
+  <problem>
+    <file>C.java</file>
+    <line>36</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant local variable</problem_class>
+    <description>Local variable &lt;code&gt;b&lt;/code&gt; is redundant #loc</description>
+  </problem>
+
+  <problem>
+    <file>C.java</file>
+    <line>41</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant local variable</problem_class>
+    <description>Local variable &lt;code&gt;b&lt;/code&gt; is redundant #loc</description>
+  </problem>
+
+  <problem>
+    <file>C.java</file>
+    <line>47</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant local variable</problem_class>
+    <description>Local variable &lt;code&gt;b&lt;/code&gt; is redundant #loc</description>
+  </problem>
+
+  <problem>
+    <file>C.java</file>
+    <line>55</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant local variable</problem_class>
+    <description>Local variable &lt;code&gt;value&lt;/code&gt; is redundant #loc</description>
+  </problem>
+
+
 </problems>
