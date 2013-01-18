@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 the original author or authors.
+ * Copyright 2001-2012 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.generate.tostring.inspection;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -26,19 +27,28 @@ import org.jetbrains.generate.tostring.GenerateToStringActionHandlerImpl;
 /**
  * Quick fix to run Generate toString() to fix any code inspection problems.
  */
-public class GenerateToStringQuickFix extends AbstractGenerateToStringQuickFix {
+public class GenerateToStringQuickFix implements LocalQuickFix {
 
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor desc) {
+  @NotNull
+  public String getName() {
+    return "Generate toString()";
+  }
 
-        // find the class
-        PsiClass clazz = PsiTreeUtil.getParentOfType(desc.getPsiElement(), PsiClass.class);
-        if (clazz == null) {
-            return; // no class to fix, so return
-        }
+  @NotNull
+  public String getFamilyName() {
+    return "Generate";
+  }
 
-        // execute the action
-        GenerateToStringActionHandler handler = new GenerateToStringActionHandlerImpl();
-        handler.executeActionQuickFix(project, clazz);
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor desc) {
+
+    // find the class
+    PsiClass clazz = PsiTreeUtil.getParentOfType(desc.getPsiElement(), PsiClass.class);
+    if (clazz == null) {
+      return; // no class to fix, so return
     }
 
+    // execute the action
+    GenerateToStringActionHandler handler = new GenerateToStringActionHandlerImpl();
+    handler.executeActionQuickFix(project, clazz);
+  }
 }
