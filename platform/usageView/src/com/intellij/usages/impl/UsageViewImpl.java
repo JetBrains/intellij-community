@@ -41,6 +41,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageInfo;
@@ -275,7 +276,13 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     if (UsageViewSettings.getInstance().IS_PREVIEW_USAGES) {
       myPreviewSplitter.setProportion(UsageViewSettings.getInstance().PREVIEW_USAGES_SPLITTER_PROPORTIONS);
       treePane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.RIGHT);
-      final JBRadioTabbedPane tabbedPane = new JBRadioTabbedPane(SwingConstants.BOTTOM);
+      final JBTabbedPane tabbedPane = new JBTabbedPane(SwingConstants.BOTTOM){
+        @NotNull
+        @Override
+        protected Insets getInsetsForTabComponent() {
+          return new Insets(0,0,0,0);
+        }
+      };
 
       UsageContextPanel.Provider[] extensions = Extensions.getExtensions(UsageContextPanel.Provider.EP_NAME, myProject);
       myUsageContextPanelProviders = ContainerUtil.filter(extensions, new Condition<UsageContextPanel.Provider>() {
@@ -309,7 +316,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
           }
         }
       });
-
+      tabbedPane.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
       myPreviewSplitter.setSecondComponent(tabbedPane);
     }
     else {
