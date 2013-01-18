@@ -265,7 +265,7 @@ public class GitLogDetailsPanel {
         hash).append("</td></tr>" + "<tr valign=\"top\"><td><i>Author:</i></td><td>")
         .append(author).append(" (").append(c.getAuthorEmail()).append(") <i>at</i> ")
         .append(DateFormatUtil.formatPrettyDateTime(c.getAuthorTime()))
-        .append("</td></tr>" + "<tr valign=\"top\"><td><i>Commiter:</i></td><td>")
+        .append("</td></tr>" + "<tr valign=\"top\"><td><i>Committer:</i></td><td>")
         .append(committer).append(" (").append(c.getComitterEmail()).append(") <i>at</i> ")
         .append(DateFormatUtil.formatPrettyDateTime(c.getDate())).append(
         "</td></tr>" + "<tr valign=\"top\"><td><i>Description:</i></td><td><b>")
