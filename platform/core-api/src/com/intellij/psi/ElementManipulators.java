@@ -37,7 +37,7 @@ public class ElementManipulators extends ClassExtension<ElementManipulator> {
   }
 
   public static <T extends PsiElement> ElementManipulator<T> getManipulator(@NotNull T element) {
-    return ElementManipulators.INSTANCE.forClass(element.getClass());
+    return INSTANCE.forClass(element.getClass());
   }
 
   public static int getOffsetInElement(final PsiElement element) {
