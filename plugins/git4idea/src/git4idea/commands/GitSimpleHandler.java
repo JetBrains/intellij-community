@@ -81,7 +81,7 @@ public class GitSimpleHandler extends GitTextHandler {
   protected void processTerminated(final int exitCode) {
     if (myVcs == null) { return; }
     String stdout = myStdoutLine.toString();
-    String stderr = myStdoutLine.toString();
+    String stderr = myStderrLine.toString();
     if (!isStdoutSuppressed() && !StringUtil.isEmptyOrSpaces(stdout)) {
       myVcs.showMessages(stdout);
       LOG.info(stdout.trim());
