@@ -17,7 +17,7 @@ package com.intellij.util;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.sun.jna.Native;
@@ -142,11 +142,11 @@ public class Restarter {
   }
 
   public static File createTempExecutable(File executable) throws IOException {
-    String ext = FileUtil.getExtension(executable.getName());
-    File copy = FileUtil.createTempFile(FileUtil.getNameWithoutExtension(executable),
-                                        StringUtil.isEmptyOrSpaces(ext) ? ".tmp" : ("." + ext),
-                                        false);
-    FileUtil.copy(executable, copy);
+    String ext = FileUtilRt.getExtension(executable.getName());
+    File copy = FileUtilRt.createTempFile(FileUtilRt.getNameWithoutExtension(executable.getName()),
+                                          StringUtil.isEmptyOrSpaces(ext) ? ".tmp" : ("." + ext),
+                                          false);
+    FileUtilRt.copy(executable, copy);
     if (!copy.setExecutable(executable.canExecute())) throw new IOException("Cannot make file executable: " + copy);
     return copy;
   }

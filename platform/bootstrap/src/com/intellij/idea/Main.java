@@ -20,7 +20,7 @@ import com.intellij.ide.Bootstrap;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Restarter;
 import org.jetbrains.annotations.NonNls;
 
@@ -58,7 +58,7 @@ public class Main {
 
         File log = null;
         try {
-          log = FileUtil.createTempFile("patch", ".log", false);
+          log = FileUtilRt.createTempFile("patch", ".log", false);
           PrintWriter writer = new PrintWriter(log);
           try {
             e.printStackTrace(writer);
@@ -124,11 +124,11 @@ public class Main {
     File copyPatchFile = new File(System.getProperty("java.io.tmpdir"), patchFileName + "_copy");
 
     // always delete previous patch copy
-    if (!FileUtil.delete(copyPatchFile)) throw new IOException("Cannot create temporary patch file");
+    if (!FileUtilRt.delete(copyPatchFile)) throw new IOException("Cannot create temporary patch file");
 
     if (!originalPatchFile.exists()) return;
 
-    if (!originalPatchFile.renameTo(copyPatchFile) || !FileUtil.delete(originalPatchFile)) {
+    if (!originalPatchFile.renameTo(copyPatchFile) || !FileUtilRt.delete(originalPatchFile)) {
       throw new IOException("Cannot create temporary patch file");
     }
 
