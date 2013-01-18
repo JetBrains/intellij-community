@@ -520,7 +520,8 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     boolean update = false;
 
     for (WatchRequest watchRequest : watchRequests) {
-      final boolean wasWatched = myRootsToWatch.remove((WatchRequestImpl)watchRequest) && !((WatchRequestImpl)watchRequest).myDominated;
+      WatchRequestImpl impl = (WatchRequestImpl)watchRequest;
+      boolean wasWatched = myRootsToWatch.remove(impl) && !impl.myDominated;
       update |= wasWatched;
     }
 
