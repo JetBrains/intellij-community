@@ -1054,4 +1054,10 @@ class B extends A {
 }
 ''')
   }
+
+  void testUnresolvedQualifierHighlighting() {
+    testHighlighting('''\
+<error descr="Cannot resolve symbol 'Abc'">Abc</error>.Cde abc
+''')
+  }
 }
