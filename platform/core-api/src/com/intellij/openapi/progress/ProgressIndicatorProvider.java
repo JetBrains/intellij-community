@@ -51,7 +51,7 @@ public abstract class ProgressIndicatorProvider {
     };
   }
 
-  public static boolean ourNeedToCheckCancel = false;
+  public static volatile boolean ourNeedToCheckCancel = false;
   public static void checkCanceled() throws ProcessCanceledException {
     // smart optimization! There's a thread started in ProgressManagerImpl, that set's this flag up once in 10 milliseconds
     if (ourNeedToCheckCancel && ourInstance != null) {
