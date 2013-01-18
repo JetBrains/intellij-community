@@ -1060,4 +1060,10 @@ class B extends A {
 <error descr="Cannot resolve symbol 'Abc'">Abc</error>.Cde abc
 ''')
   }
+
+  void testVarargParameterWithoutTypeElement() {
+    testHighlighting('''\
+def foo(def <error descr="Ellipsis type is not allowed here">...</error> vararg, def last) {}
+''')
+  }
 }
