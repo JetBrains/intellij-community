@@ -44,7 +44,9 @@ import java.util.Set;
 
 public class MavenDomGutterAnnotator implements Annotator {
 
-  private static final PsiElementListCellRenderer<XmlTag> RENDERER = new PsiElementListCellRenderer<XmlTag>() {
+  private static class MyListCellRenderer extends PsiElementListCellRenderer<XmlTag> {
+    public static final MyListCellRenderer INSTANCE = new MyListCellRenderer();
+
     @Override
     public String getElementText(XmlTag tag) {
       DomElement domElement = DomManager.getDomManager(tag.getProject()).getDomElement(tag);
@@ -78,7 +80,7 @@ public class MavenDomGutterAnnotator implements Annotator {
     protected int getIconFlags() {
       return 0;
     }
-  };
+  }
 
   private static final NotNullFunction<MavenDomDependency, Collection<? extends PsiElement>> CONVERTER =
     new NotNullFunction<MavenDomDependency, Collection<? extends PsiElement>>() {
@@ -110,7 +112,7 @@ public class MavenDomGutterAnnotator implements Annotator {
       iconBuilder.
         setTargets(children).
         setPopupTitle(MavenDomBundle.message("navigate.parent.dependency.title")).
-        setCellRenderer(RENDERER).
+        setCellRenderer(MyListCellRenderer.INSTANCE).
         setTooltipText(MavenDomBundle.message("overriding.dependency.title")).
         install(holder, dependency.getXmlTag());
     }
@@ -189,7 +191,7 @@ public class MavenDomGutterAnnotator implements Annotator {
       if (children.size() > 0) {
         NavigationGutterIconBuilder.create(icons.MavenIcons.ChildrenProjects, MAVEN_PROJECT_CONVERTER).
           setTargets(children).
-          setCellRenderer(RENDERER).
+          setCellRenderer(MyListCellRenderer.INSTANCE).
           setPopupTitle(MavenDomBundle.message("navigate.children.poms.title")).
           setTooltipText(MavenDomBundle.message("children.poms.title")).
           install(holder, model.getXmlElement());
