@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,12 @@ public class GroovyGenerationInfo<T extends PsiMember> extends PsiGenerationInfo
 
   @Override
   public PsiElement findInsertionAnchor(@NotNull PsiClass aClass, @NotNull PsiElement leaf) {
+    if (leaf.getParent() == aClass) {
+      return null; // we are not in class body
+    }
+
     PsiElement parent = aClass instanceof GroovyScriptClass ? aClass.getContainingFile() : ((GrTypeDefinition)aClass).getBody();
+    if (parent == null) return null;
 
     PsiElement element = PsiTreeUtil.findPrevParent(parent, leaf);
 

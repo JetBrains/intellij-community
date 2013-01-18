@@ -18,14 +18,17 @@ public class GradleProjectStructureContext {
   @NotNull private final GradleProjectStructureHelper       myProjectStructureHelper;
   @NotNull private final PlatformFacade                     myPlatformFacade;
   @NotNull private final GradleProjectStructureChangesModel myChangesModel;
+  @NotNull private final GradleLibraryPathTypeMapper        myLibraryPathTypeMapper;
 
   public GradleProjectStructureContext(@NotNull GradleProjectStructureHelper projectStructureHelper,
                                        @NotNull PlatformFacade platformFacade,
-                                       @NotNull GradleProjectStructureChangesModel changesModel)
+                                       @NotNull GradleProjectStructureChangesModel changesModel,
+                                       @NotNull GradleLibraryPathTypeMapper mapper)
   {
     myProjectStructureHelper = projectStructureHelper;
     myPlatformFacade = platformFacade;
     myChangesModel = changesModel;
+    myLibraryPathTypeMapper = mapper;
   }
 
   @NotNull
@@ -41,5 +44,10 @@ public class GradleProjectStructureContext {
   @NotNull
   public GradleProjectStructureChangesModel getChangesModel() {
     return myChangesModel;
+  }
+
+  @NotNull
+  public GradleLibraryPathTypeMapper getLibraryPathTypeMapper() {
+    return myLibraryPathTypeMapper;
   }
 }

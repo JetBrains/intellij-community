@@ -2,6 +2,8 @@ package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,12 +34,32 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
     doTest();
   }
 
-  public void testRootTagConstraint() throws Exception {
+  public void testStaticProperties() throws Exception {
+    doTest();
+  }
+
+  public void testEnumValues() throws Exception {
     doTest();
   }
 
   private void doTest() throws Exception {
     doTest(false, false, getTestName(true) + ".fxml");
+  }
+
+  public void testControllerIdRef() throws Exception {
+    doTestIdController();
+  }
+  
+  private void doTestIdController() throws Exception {
+    final String controllerClassName = getTestName(false) + "Controller";
+    configureByFiles(null, getTestName(true) + ".fxml", controllerClassName + ".java");
+    final PsiClass controllerClass = findClass(controllerClassName);
+    assertNotNull(controllerClass);
+    assertTrue(controllerClass.getFields().length > 0);
+    final int offset = myEditor.getCaretModel().getOffset();
+    final PsiReference reference = myFile.findReferenceAt(offset);
+    assertNotNull(reference);
+    assertEquals(controllerClass.getFields()[0], reference.resolve());
   }
 
   @NotNull

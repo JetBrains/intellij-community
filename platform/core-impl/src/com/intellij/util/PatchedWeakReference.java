@@ -32,7 +32,7 @@ public class PatchedWeakReference<T> extends WeakReference<T>{
   private static final ReferenceQueue ourQueue = new ReferenceQueue();
 
   static {
-    JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
+    JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
       @Override
       public void run() {
         processQueue();
@@ -42,9 +42,6 @@ public class PatchedWeakReference<T> extends WeakReference<T>{
 
   public PatchedWeakReference(T referent) {
     super(referent, ourQueue);
-    if(ourRefsList.size() % 100 == 0) {
-      int i = 0;
-    }
     synchronized(ourQueue) {
       ourRefsList.add(this);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2012 the original author or authors.
+ * Copyright 2001-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,27 +16,19 @@
 package org.jetbrains.generate.tostring.view;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.LanguageTextField;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.VelocityEngine;
-import org.apache.velocity.exception.ParseErrorException;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.generate.tostring.config.Config;
-import org.jetbrains.generate.tostring.config.DuplicatonPolicy;
+import org.jetbrains.generate.tostring.config.DuplicationPolicy;
 import org.jetbrains.generate.tostring.config.InsertWhere;
 import org.jetbrains.generate.tostring.config.PolicyOptions;
-import org.jetbrains.generate.tostring.exception.PluginException;
-import org.jetbrains.generate.tostring.template.TemplateResource;
-import org.jetbrains.generate.tostring.velocity.VelocityFactory;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.StringWriter;
 
 /**
  * Configuration User Interface.
@@ -133,7 +125,7 @@ public class ConfigUI extends JPanel {
         outer.add(panel, constraint);
 
         // UI Layout - Conflict Resolution
-        DuplicatonPolicy[] options = PolicyOptions.getConflictOptions();
+        DuplicationPolicy[] options = PolicyOptions.getConflictOptions();
         initialValueForReplaceDialog = new JRadioButton[options.length];
         ButtonGroup selection = new ButtonGroup();
         for (int i = 0; i < options.length; i++) {
@@ -230,7 +222,7 @@ public class ConfigUI extends JPanel {
      */
     public final void setConfig(Config config) {
         fullyQualifiedName.setSelected(config.isUseFullyQualifiedName());
-        DuplicatonPolicy option = config.getReplaceDialogInitialOption();
+        DuplicationPolicy option = config.getReplaceDialogInitialOption();
         for (JRadioButton anInitialValueForReplaceDialog : initialValueForReplaceDialog) {
             if (anInitialValueForReplaceDialog.getText().equals(option.toString())) {
                 anInitialValueForReplaceDialog.setSelected(true);
@@ -318,9 +310,9 @@ public class ConfigUI extends JPanel {
      * Action for the options for the conflict resolution policy
      */
     private static class ConflictResolutionOptionAction extends AbstractAction {
-        public final DuplicatonPolicy option;
+        public final DuplicationPolicy option;
 
-        ConflictResolutionOptionAction(DuplicatonPolicy option) {
+        ConflictResolutionOptionAction(DuplicationPolicy option) {
             super(option.toString());
             this.option = option;
         }

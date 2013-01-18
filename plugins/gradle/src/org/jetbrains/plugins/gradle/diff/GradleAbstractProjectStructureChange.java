@@ -15,25 +15,11 @@
  */
 package org.jetbrains.plugins.gradle.diff;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 /**
  * @author Denis Zhdanov
  * @since 11/15/11 1:33 PM
  */
 public abstract class GradleAbstractProjectStructureChange implements GradleProjectStructureChange {
-
-  private final AtomicBoolean myConfirmed = new AtomicBoolean();
-
-  @Override
-  public boolean isConfirmed() {
-    return myConfirmed.get();
-  }
-
-  @Override
-  public void confirm() {
-    myConfirmed.set(true);
-  }
 
   @Override
   public int hashCode() {

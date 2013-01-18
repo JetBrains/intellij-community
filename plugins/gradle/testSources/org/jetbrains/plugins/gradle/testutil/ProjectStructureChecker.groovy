@@ -81,7 +81,7 @@ class ProjectStructureChecker {
     assertEquals("node '$descriptor'", expectedMarkup, descriptor.attributes)
 
     if (descriptor.element.type != GradleEntityType.SYNTHETIC) {
-      def expectedOwner = expectedMarkup == GradleTextAttributes.GRADLE_LOCAL_CHANGE ? GradleEntityOwner.GRADLE : GradleEntityOwner.INTELLIJ
+      def expectedOwner = expectedMarkup == GradleTextAttributes.GRADLE_LOCAL_CHANGE ? GradleEntityOwner.GRADLE : GradleEntityOwner.IDE
       assertEquals("node '$descriptor'", expectedOwner, descriptor.element.owner)
     }
   }

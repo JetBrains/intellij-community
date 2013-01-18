@@ -473,19 +473,6 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
         }
       }, this);
 
-      Extensions.getArea(myProject).getExtensionPoint(IdeRootPaneNorthExtension.EP_NAME).addExtensionPointListener(
-        new ExtensionPointListener<IdeRootPaneNorthExtension>() {
-          @Override
-          public void extensionAdded(@NotNull IdeRootPaneNorthExtension extension, @Nullable PluginDescriptor pluginDescriptor) {
-            updateNorthPanel();
-          }
-
-          @Override
-          public void extensionRemoved(@NotNull IdeRootPaneNorthExtension extension, @Nullable PluginDescriptor pluginDescriptor) {
-            updateNorthPanel();
-          }
-        });
-
       UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
         @Override
         public void uiSettingsChanged(UISettings source) {

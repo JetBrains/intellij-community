@@ -310,6 +310,23 @@ public class MavenDomProjectProcessorUtils {
     return process(projectDom, processor, project, domProfileFunction, projectDomFunction);
   }
 
+  public static boolean processDependencies(@NotNull MavenDomProjectModel projectDom,
+                                            @NotNull final Processor<MavenDomDependencies> processor) {
+
+    Function<MavenDomProfile, MavenDomDependencies> domProfileFunction = new Function<MavenDomProfile, MavenDomDependencies>() {
+      public MavenDomDependencies fun(MavenDomProfile mavenDomProfile) {
+        return mavenDomProfile.getDependencies();
+      }
+    };
+    Function<MavenDomProjectModel, MavenDomDependencies> projectDomFunction = new Function<MavenDomProjectModel, MavenDomDependencies>() {
+      public MavenDomDependencies fun(MavenDomProjectModel mavenDomProjectModel) {
+        return mavenDomProjectModel.getDependencies();
+      }
+    };
+
+    return process(projectDom, processor, projectDom.getManager().getProject(), domProfileFunction, projectDomFunction);
+  }
+
   public static boolean processProperties(@NotNull MavenDomProjectModel projectDom,
                                           @NotNull final Processor<MavenDomProperties> processor,
                                           @NotNull final Project project) {
@@ -473,7 +490,7 @@ public class MavenDomProjectProcessorUtils {
     }
   }
 
-  private abstract static class SearchProcessor<R, T> implements Processor<T> {
+  public abstract static class SearchProcessor<R, T> implements Processor<T> {
 
     private R myResult;
 
@@ -490,5 +507,11 @@ public class MavenDomProjectProcessorUtils {
 
     @Nullable
     protected abstract R find(T element);
+
+    public R getResult() {
+      return myResult;
+    }
   }
+
+
 }

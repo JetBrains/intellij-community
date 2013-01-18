@@ -58,6 +58,10 @@ public class MockApplicationEx extends MockApplication implements ApplicationEx 
   }
 
   @Override
+  public void restart(boolean force) {
+  }
+
+  @Override
   public void doNotSave() {
   }
 

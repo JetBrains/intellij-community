@@ -635,7 +635,7 @@ binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths,
       zipfileset(dir: it, prefix: zipRoot) {
         exclude(name: "bin/*.sh")
         exclude(name: "bin/fsnotifier")
-        exclude(name: "bin/relaunch")
+        exclude(name: "bin/restarter")
         exclude(name: "Contents/MacOS/*")
         extraBins.each {
           exclude(name: it)
@@ -648,7 +648,7 @@ binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths,
       zipfileset(dir: it, filemode: "755", prefix: zipRoot) {
         include(name: "bin/*.sh")
         include(name: "bin/fsnotifier")
-        include(name: "bin/relaunch")
+        include(name: "bin/restarter")
         include(name: "Contents/MacOS/*")
         extraBins.each {
           include(name: it)

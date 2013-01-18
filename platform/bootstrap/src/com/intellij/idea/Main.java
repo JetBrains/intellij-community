@@ -17,9 +17,10 @@
 package com.intellij.idea;
 
 import com.intellij.ide.Bootstrap;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Restarter;
 import org.jetbrains.annotations.NonNls;
 
@@ -27,11 +28,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -39,43 +36,51 @@ import java.util.List;
 public class Main {
   private static boolean isHeadless;
 
-  private Main() { }
+  private Main() {
+  }
 
   @SuppressWarnings("MethodNamesDifferingOnlyByCase")
   public static void main(final String[] args) {
-    final int[] restartCode = {Restarter.getRestartCode()};
-
-    Runnable restart = new Runnable() {
-      @Override
-      public void run() {
-        if (restartCode[0] == 0) {
-          try {
-            if (Restarter.restart()) restartCode[0] = 1;
-          }
-          catch (Throwable ignore) {
-          }
-        }
-      }
-    };
-
-    if (installPatch(restart)) {
-      if (restartCode[0] == 0) {
-        try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); } catch (Throwable ignore) { }
-
-        String msg = "Patch has been applied successfully, please restart application.";
-        JOptionPane.showMessageDialog(null, msg, "Update", JOptionPane.INFORMATION_MESSAGE);
-      }
-
-      System.exit(restartCode[0]);
-      return;
-    }
-
     isHeadless = isHeadless(args);
     if (isHeadless) {
       System.setProperty("java.awt.headless", Boolean.TRUE.toString());
     }
     else if (GraphicsEnvironment.isHeadless()) {
       throw new HeadlessException("Unable to detect graphics environment");
+    }
+
+    if (!isHeadless) {
+      try {
+        installPatch();
+      }
+      catch (IOException e) {
+        e.printStackTrace();
+
+        File log = null;
+        try {
+          log = FileUtilRt.createTempFile("patch", ".log", false);
+          PrintWriter writer = new PrintWriter(log);
+          try {
+            e.printStackTrace(writer);
+          }
+          finally {
+            writer.close();
+          }
+        }
+        catch (IOException ignore) {
+          ignore.printStackTrace();
+        }
+
+        try {
+          UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        }
+        catch (Throwable ignore) {
+        }
+        String message = e.getMessage()
+                         + "\n" + (log == null ? "Log cannot be saved" : "Log is saved in " + log)
+                         + "\n\nPlease download and install update manually" ;
+        JOptionPane.showMessageDialog(null, message, "Cannot Apply Patch", JOptionPane.ERROR_MESSAGE);
+      }
     }
 
     Bootstrap.main(args, Main.class.getName() + "Impl", "start");
@@ -112,100 +117,34 @@ public class Main {
     return isHeadless;
   }
 
-  private static boolean installPatch(Runnable restart) {
-    try {
-      File ideaHomeDir = getIdeaHomeDir();
-      if (ideaHomeDir == null) return false;
+  private static void installPatch() throws IOException {
+    String platform = System.getProperty("idea.platform.prefix", "idea");
+    String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase();
+    File originalPatchFile = new File(System.getProperty("java.io.tmpdir"), patchFileName);
+    File copyPatchFile = new File(System.getProperty("java.io.tmpdir"), patchFileName + "_copy");
 
-      String platform = System.getProperty("idea.platform.prefix", "idea");
-      String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase();
-      File patchFile = new File(System.getProperty("java.io.tmpdir"), patchFileName);
+    // always delete previous patch copy
+    if (!FileUtilRt.delete(copyPatchFile)) throw new IOException("Cannot create temporary patch file");
 
-      if (!patchFile.exists()) return false;
+    if (!originalPatchFile.exists()) return;
 
-      try {
-        List<String> args = new ArrayList<String>();
-        if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
-          File launcherFile = new File(ideaHomeDir, "bin/vistalauncher.exe");
-          File launcherCopy = FileUtil.createTempFile("vistalauncher", ".exe");
-          launcherCopy.deleteOnExit();
-          FileUtil.copy(launcherFile, launcherCopy);
-          args.add(launcherCopy.getPath());
-        }
-
-        restart.run();
-
-        Collections.addAll(args,
-                           System.getProperty("java.home") + "/bin/java",
-                           "-classpath",
-                           patchFile.getPath(),
-                           "com.intellij.updater.Runner",
-                           "install",
-                           ideaHomeDir.getPath());
-        Process process = Runtime.getRuntime().exec(args.toArray(new String[args.size()]));
-
-        Thread outThread = new Thread(new StreamRedirector(process.getInputStream(), System.out));
-        Thread errThread = new Thread(new StreamRedirector(process.getErrorStream(), System.err));
-        outThread.start();
-        errThread.start();
-
-        try {
-          process.waitFor();
-        }
-        finally {
-          outThread.join();
-          errThread.join();
-        }
-
-        return true;
-      }
-      finally {
-        patchFile.delete();
-      }
-    }
-    catch (Exception e) {
-      e.printStackTrace();
-    }
-    return false;
-  }
-
-  private static class StreamRedirector implements Runnable {
-    private final InputStream myIn;
-    private final OutputStream myOut;
-
-    private StreamRedirector(InputStream in, OutputStream out) {
-      myIn = in;
-      myOut = out;
+    if (!originalPatchFile.renameTo(copyPatchFile) || !FileUtilRt.delete(originalPatchFile)) {
+      throw new IOException("Cannot create temporary patch file");
     }
 
-    public void run() {
-      try {
-        StreamUtil.copyStreamContent(myIn, myOut);
-      }
-      catch (IOException e) {
-        e.printStackTrace();
-      }
+    List<String> args = new ArrayList<String>();
+    if (SystemInfo.isWindows) {
+      args.add(Restarter.createTempExecutable(new File(PathManager.getBinPath(), "vistalauncher.exe")).getPath());
     }
-  }
 
-  private static File getIdeaHomeDir() throws IOException {
-    URL url = Bootstrap.class.getResource("");
-    if (url == null || !"jar".equals(url.getProtocol())) return null;
+    Collections.addAll(args,
+                       System.getProperty("java.home") + "/bin/java",
+                       "-classpath",
+                       copyPatchFile.getPath(),
+                       "com.intellij.updater.Runner",
+                       "install",
+                       PathManager.getHomePath());
 
-    String path = url.getPath();
-
-    int start = path.indexOf("file:/");
-    int end = path.indexOf("!/");
-    if (start == -1 || end == -1) return null;
-
-    String jarFileUrl = path.substring(start, end);
-
-    try {
-      File bootstrapJar = new File(new URI(jarFileUrl));
-      return bootstrapJar.getParentFile().getParentFile();
-    }
-    catch (URISyntaxException e) {
-      return null;
-    }
+    System.exit(Restarter.scheduleRestart(args.toArray(new String[args.size()])));
   }
 }

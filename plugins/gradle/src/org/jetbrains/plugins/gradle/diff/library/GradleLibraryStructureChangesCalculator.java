@@ -31,36 +31,47 @@ public class GradleLibraryStructureChangesCalculator implements GradleStructureC
 
   @Override
   public void calculate(@NotNull GradleLibrary gradleEntity,
-                        @NotNull Library intellijEntity,
+                        @NotNull Library ideEntity,
                         @NotNull GradleChangesCalculationContext context)
   {
-    final Set<String> gradleBinaryPaths = new HashSet<String>(gradleEntity.getPaths(LibraryPathType.BINARY));
-    final Set<String> intellijBinaryPaths = new HashSet<String>();
-    for (VirtualFile file : intellijEntity.getFiles(OrderRootType.CLASSES)) {
+    for (LibraryPathType pathType : LibraryPathType.values()) {
+      doCalculate(gradleEntity, pathType, context.getLibraryPathTypeMapper().map(pathType), ideEntity, context);
+    }
+  }
+
+  private void doCalculate(@NotNull GradleLibrary gradleEntity,
+                           @NotNull LibraryPathType gradleType,
+                           @NotNull OrderRootType ideType,
+                           @NotNull Library ideEntity,
+                           @NotNull GradleChangesCalculationContext context)
+  {
+    final Set<String> gradleBinaryPaths = new HashSet<String>(gradleEntity.getPaths(gradleType));
+    final Set<String> ideBinaryPaths = new HashSet<String>();
+    for (VirtualFile file : ideEntity.getFiles(ideType)) {
       final String path = myPlatformFacade.getLocalFileSystemPath(file);
       if (!gradleBinaryPaths.remove(path)) {
-        intellijBinaryPaths.add(path);
+        ideBinaryPaths.add(path);
       }
     }
 
     if (!gradleBinaryPaths.isEmpty()) {
       GradleLibraryId libraryId = new GradleLibraryId(GradleEntityOwner.GRADLE, gradleEntity.getName());
       for (String path : gradleBinaryPaths) {
-        context.register(new GradleJarPresenceChange(new GradleJarId(path, libraryId), null));
+        context.register(new GradleJarPresenceChange(new GradleJarId(path, gradleType, libraryId), null));
       }
     }
 
-    if (!intellijBinaryPaths.isEmpty()) {
-      GradleLibraryId libraryId = new GradleLibraryId(GradleEntityOwner.INTELLIJ, GradleUtil.getLibraryName(intellijEntity));
-      for (String path : intellijBinaryPaths) {
-        context.register(new GradleJarPresenceChange(null, new GradleJarId(path, libraryId)));
+    if (!ideBinaryPaths.isEmpty()) {
+      GradleLibraryId libraryId = new GradleLibraryId(GradleEntityOwner.IDE, GradleUtil.getLibraryName(ideEntity));
+      for (String path : ideBinaryPaths) {
+        context.register(new GradleJarPresenceChange(null, new GradleJarId(path, gradleType, libraryId)));
       }
     }
   }
 
   @NotNull
   @Override
-  public Object getIntellijKey(@NotNull Library entity) {
+  public Object getIdeKey(@NotNull Library entity) {
     return GradleUtil.getLibraryName(entity);
   }
 

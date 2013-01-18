@@ -1,11 +1,13 @@
 package org.jetbrains.plugins.gradle.model.id;
 
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.GradleEntityType;
 import org.jetbrains.plugins.gradle.model.gradle.GradleJar;
 import org.jetbrains.plugins.gradle.model.gradle.GradleLibrary;
+import org.jetbrains.plugins.gradle.model.gradle.LibraryPathType;
 import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext;
 
 /**
@@ -13,13 +15,15 @@ import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext;
  * @since 12/11/12 3:04 PM
  */
 public class GradleJarId extends GradleAbstractEntityId {
-  
-  @NotNull private final String myPath;
+
+  @NotNull private final String          myPath;
   @NotNull private final GradleLibraryId myLibraryId;
-  
-  public GradleJarId(@NotNull String path, @NotNull GradleLibraryId libraryId) {
+  @NotNull private final LibraryPathType myPathType;
+
+  public GradleJarId(@NotNull String path, @NotNull LibraryPathType pathType, @NotNull GradleLibraryId libraryId) {
     super(GradleEntityType.JAR, libraryId.getOwner());
     myPath = path;
+    myPathType = pathType;
     myLibraryId = libraryId;
   }
 
@@ -33,17 +37,24 @@ public class GradleJarId extends GradleAbstractEntityId {
     return myLibraryId;
   }
 
+  @NotNull
+  public LibraryPathType getLibraryPathType() {
+    return myPathType;
+  }
+
   @Nullable
   @Override
-  public Object mapToEntity(@NotNull GradleProjectStructureContext context) {
-    Library intellijLibrary = context.getProjectStructureHelper().findIntellijLibrary(myLibraryId.getLibraryName(), myPath);
+  public GradleJar mapToEntity(@NotNull GradleProjectStructureContext context) {
+    String libraryName = myLibraryId.getLibraryName();
+    OrderRootType jarType = context.getLibraryPathTypeMapper().map(myPathType);
+    Library intellijLibrary = context.getProjectStructureHelper().findIdeLibrary(libraryName, jarType, myPath);
     if (intellijLibrary != null) {
-      return new GradleJar(myPath, intellijLibrary, null);
+      return new GradleJar(myPath, myPathType, intellijLibrary, null);
     }
 
-    GradleLibrary gradleLibrary = context.getProjectStructureHelper().findGradleLibrary(myLibraryId.getLibraryName(), myPath);
+    GradleLibrary gradleLibrary = context.getProjectStructureHelper().findGradleLibrary(libraryName, myPathType, myPath);
     if (gradleLibrary != null) {
-      return new GradleJar(myPath, null, gradleLibrary);
+      return new GradleJar(myPath, myPathType, null, gradleLibrary);
     }
     return null;
   }
@@ -65,6 +76,6 @@ public class GradleJarId extends GradleAbstractEntityId {
 
   @Override
   public String toString() {
-    return String.format("jar '%s'", myPath);
+    return String.format("%s jar '%s'", myPathType.toString().toLowerCase(), myPath);
   }
 }

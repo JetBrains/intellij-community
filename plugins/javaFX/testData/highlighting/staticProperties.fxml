@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns:fx="http://javafx.com/fxml">
+    <children>
+        <AnchorPane AnchorPane.leftAnchor="0.0" <error descr="Attribute AnchorPane.leftAnchor1 is not allowed here">AnchorPane.leftAnchor1</error>="0.0">
+           <AnchorPane.bottomAnchor>200</AnchorPane.bottomAnchor>
+           <<error descr="Element AnchorPane1.bottomAnchor is not allowed here">AnchorPane1.bottomAnchor</error>>200</<error descr="Element AnchorPane1.bottomAnchor is not allowed here">AnchorPane1.bottomAnchor</error>>
+           <GridPane.rowIndex>0</GridPane.rowIndex>
+        </AnchorPane>
+    </children>
+</AnchorPane>

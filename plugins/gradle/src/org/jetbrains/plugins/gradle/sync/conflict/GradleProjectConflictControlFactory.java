@@ -58,12 +58,12 @@ public class GradleProjectConflictControlFactory {
     MatrixControlBuilder builder = GradleUtil.getConflictChangeBuilder();
     if (renameChange != null) {
       builder.addRow(GradleBundle.message("gradle.import.structure.settings.label.name"),
-                     renameChange.getGradleValue(), renameChange.getIntellijValue());
+                     renameChange.getGradleValue(), renameChange.getIdeValue());
     }
 
     if (languageLevelChange != null) {
       builder.addRow(GradleBundle.message("gradle.import.structure.settings.label.language.level"),
-                     getTextToShow(languageLevelChange.getGradleValue()), getTextToShow(languageLevelChange.getIntellijValue()));
+                     getTextToShow(languageLevelChange.getGradleValue()), getTextToShow(languageLevelChange.getIdeValue()));
     }
     
     return builder.build();

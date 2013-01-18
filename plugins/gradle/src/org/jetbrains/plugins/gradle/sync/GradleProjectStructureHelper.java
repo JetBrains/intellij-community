@@ -14,6 +14,7 @@ import org.jetbrains.plugins.gradle.config.PlatformFacade;
 import org.jetbrains.plugins.gradle.model.gradle.*;
 import org.jetbrains.plugins.gradle.model.id.*;
 import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
+import org.jetbrains.plugins.gradle.util.GradleLibraryPathTypeMapper;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 /**
@@ -24,23 +25,26 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
  */
 public class GradleProjectStructureHelper extends AbstractProjectComponent {
 
-  private final GradleProjectStructureChangesModel myModel;
-  private final PlatformFacade                     myFacade;
+  @NotNull private final GradleProjectStructureChangesModel myModel;
+  @NotNull private final PlatformFacade                     myFacade;
+  @NotNull private final GradleLibraryPathTypeMapper        myLibraryPathTypeMapper;
 
   public GradleProjectStructureHelper(@NotNull Project project,
                                       @NotNull GradleProjectStructureChangesModel model,
-                                      @NotNull PlatformFacade facade)
+                                      @NotNull PlatformFacade facade,
+                                      @NotNull GradleLibraryPathTypeMapper mapper)
   {
     super(project);
     myModel = model;
     myFacade = facade;
+    myLibraryPathTypeMapper = mapper;
   }
-  
+
   @NotNull
   public Project getProject() {
     return myProject;
   }
-  
+
   /**
    * Allows to answer if target library dependency is still available at the target project.
    *
@@ -48,8 +52,8 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
    * @return         <code>true</code> if target library dependency is still available at the target project;
    *                 <code>false</code> otherwise
    */
-  public boolean isIntellijLibraryDependencyExist(@NotNull final GradleLibraryDependencyId id) {
-    return findIntellijLibraryDependency(id.getOwnerModuleName(), id.getDependencyName()) != null;
+  public boolean isIdeLibraryDependencyExist(@NotNull final GradleLibraryDependencyId id) {
+    return findIdeLibraryDependency(id.getOwnerModuleName(), id.getDependencyName()) != null;
   }
 
   /**
@@ -63,24 +67,23 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
     return findGradleLibraryDependency(id.getOwnerModuleName(), id.getDependencyName()) != null;
   }
 
-  public boolean isIntellijModuleDependencyExist(@NotNull final GradleModuleDependencyId id) {
-    return findIntellijModuleDependency(id.getOwnerModuleName(), id.getDependencyName()) != null;
+  public boolean isIdeModuleDependencyExist(@NotNull final GradleModuleDependencyId id) {
+    return findIdeModuleDependency(id.getOwnerModuleName(), id.getDependencyName()) != null;
   }
   
   public boolean isGradleModuleDependencyExist(@NotNull final GradleModuleDependencyId id) {
-    return findIntellijModuleDependency(id.getOwnerModuleName(), id.getDependencyName()) != null;
+    return findIdeModuleDependency(id.getOwnerModuleName(), id.getDependencyName()) != null;
   }
   
   @Nullable
-  public Module findIntellijModule(@NotNull GradleModule module) {
-    // TODO den consider 'merged modules' at the registered project structure changes here.
-    return findIntellijModule(module.getName());
+  public Module findIdeModule(@NotNull GradleModule module) {
+    return findIdeModule(module.getName());
   }
   
   @Nullable
-  public Module findIntellijModule(@NotNull String intellijModuleName) {
+  public Module findIdeModule(@NotNull String ideModuleName) {
     for (Module module : myFacade.getModules(myProject)) {
-      if (intellijModuleName.equals(module.getName())) {
+      if (ideModuleName.equals(module.getName())) {
         return module;
       }
     }
@@ -116,8 +119,8 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
   }
   
   @Nullable
-  public ModuleAwareContentRoot findIntellijContentRoot(@NotNull GradleContentRootId id) {
-    final Module module = findIntellijModule(id.getModuleName());
+  public ModuleAwareContentRoot findIdeContentRoot(@NotNull GradleContentRootId id) {
+    final Module module = findIdeModule(id.getModuleName());
     if (module == null) {
       return null;
     }
@@ -131,29 +134,28 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
   }
   
   @Nullable
-  public Library findIntellijLibrary(@NotNull final GradleLibrary library) {
-    return findIntellijLibrary(library.getName());
+  public Library findIdeLibrary(@NotNull final GradleLibrary library) {
+    return findIdeLibrary(library.getName());
   }
   
   @Nullable
-  public Library findIntellijLibrary(@NotNull String libraryName) {
+  public Library findIdeLibrary(@NotNull String libraryName) {
     final LibraryTable libraryTable = myFacade.getProjectLibraryTable(myProject);
-    for (Library intellijLibrary : libraryTable.getLibraries()) {
-      // TODO den consider 'merged libraries' at the registered project structure changes here.
-      if (libraryName.equals(GradleUtil.getLibraryName(intellijLibrary))) {
-        return intellijLibrary;
+    for (Library ideLibrary : libraryTable.getLibraries()) {
+      if (libraryName.equals(GradleUtil.getLibraryName(ideLibrary))) {
+        return ideLibrary;
       }
     }
     return null;
   }
 
   @Nullable
-  public Library findIntellijLibrary(@NotNull String libraryName, @NotNull String jarPath) {
-    Library library = findIntellijLibrary(libraryName);
+  public Library findIdeLibrary(@NotNull String libraryName, @NotNull OrderRootType jarType, @NotNull String jarPath) {
+    Library library = findIdeLibrary(libraryName);
     if (library == null) {
       return null;
     }
-    for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
+    for (VirtualFile file : library.getFiles(jarType)) {
       if (jarPath.equals(GradleUtil.getLocalFileSystemPath(file))) {
         return library;
       }
@@ -162,22 +164,21 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
   }
   
   @Nullable
-  public LibraryOrderEntry findIntellijLibraryDependency(@NotNull final String moduleName, @NotNull final String libraryName) {
-    final Module intellijModule = findIntellijModule(moduleName);
-    if (intellijModule == null) {
+  public LibraryOrderEntry findIdeLibraryDependency(@NotNull final String moduleName, @NotNull final String libraryName) {
+    final Module ideModule = findIdeModule(moduleName);
+    if (ideModule == null) {
       return null;
     }
     RootPolicy<LibraryOrderEntry> visitor = new RootPolicy<LibraryOrderEntry>() {
       @Override
-      public LibraryOrderEntry visitLibraryOrderEntry(LibraryOrderEntry intellijDependency, LibraryOrderEntry value) {
-        // TODO den consider 'merged libraries' at the registered project structure changes here.
-        if (libraryName.equals(intellijDependency.getLibraryName())) {
-          return intellijDependency;
+      public LibraryOrderEntry visitLibraryOrderEntry(LibraryOrderEntry ideDependency, LibraryOrderEntry value) {
+        if (libraryName.equals(ideDependency.getLibraryName())) {
+          return ideDependency;
         }
         return value;
       }
     };
-    for (OrderEntry entry : myFacade.getOrderEntries(intellijModule)) {
+    for (OrderEntry entry : myFacade.getOrderEntries(ideModule)) {
       final LibraryOrderEntry result = entry.accept(visitor, null);
       if (result != null) {
         return result;
@@ -187,8 +188,8 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
   }
 
   @Nullable
-  public LibraryOrderEntry findIntellijLibraryDependency(@NotNull final String libraryName,
-                                                         @NotNull ModifiableRootModel model)
+  public LibraryOrderEntry findIdeLibraryDependency(@NotNull final String libraryName,
+                                                    @NotNull ModifiableRootModel model)
   {
     for (OrderEntry entry : model.getOrderEntries()) {
       if (entry instanceof LibraryOrderEntry) {
@@ -221,12 +222,12 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
   }
 
   @Nullable
-  public GradleLibrary findGradleLibrary(@NotNull String libraryName, @NotNull String jarPath) {
+  public GradleLibrary findGradleLibrary(@NotNull String libraryName, @NotNull LibraryPathType jarType, @NotNull String jarPath) {
     GradleLibrary library = findGradleLibrary(libraryName);
     if (library == null) {
       return null;
     }
-    return library.getPaths(LibraryPathType.BINARY).contains(jarPath) ? library : null;
+    return library.getPaths(jarType).contains(jarPath) ? library : null;
   }
   
   @Nullable
@@ -278,28 +279,27 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
   }
   
   @Nullable
-  public ModuleOrderEntry findIntellijModuleDependency(@NotNull final GradleModuleDependency gradleDependency) {
-    return findIntellijModuleDependency(gradleDependency.getOwnerModule().getName(), gradleDependency.getTarget().getName());
+  public ModuleOrderEntry findIdeModuleDependency(@NotNull final GradleModuleDependency gradleDependency) {
+    return findIdeModuleDependency(gradleDependency.getOwnerModule().getName(), gradleDependency.getTarget().getName());
   }
   
   @Nullable
-  public ModuleOrderEntry findIntellijModuleDependency(@NotNull final String ownerModuleName, @NotNull final String dependencyModuleName) {
-    final Module intellijOwnerModule = findIntellijModule(ownerModuleName);
-    if (intellijOwnerModule == null) {
+  public ModuleOrderEntry findIdeModuleDependency(@NotNull final String ownerModuleName, @NotNull final String dependencyModuleName) {
+    final Module ideOwnerModule = findIdeModule(ownerModuleName);
+    if (ideOwnerModule == null) {
       return null;
     }
 
     RootPolicy<ModuleOrderEntry> visitor = new RootPolicy<ModuleOrderEntry>() {
       @Override
-      public ModuleOrderEntry visitModuleOrderEntry(ModuleOrderEntry intellijDependency, ModuleOrderEntry value) {
-        // TODO den consider 'merged modules' at the registered project structure changes here.
-        if (dependencyModuleName.equals(intellijDependency.getModuleName())) {
-          return intellijDependency;
+      public ModuleOrderEntry visitModuleOrderEntry(ModuleOrderEntry ideDependency, ModuleOrderEntry value) {
+        if (dependencyModuleName.equals(ideDependency.getModuleName())) {
+          return ideDependency;
         }
         return value;
       }
     };
-    for (OrderEntry orderEntry : myFacade.getOrderEntries(intellijOwnerModule)) {
+    for (OrderEntry orderEntry : myFacade.getOrderEntries(ideOwnerModule)) {
       final ModuleOrderEntry result = orderEntry.accept(visitor, null);
       if (result != null) {
         return result;
@@ -309,7 +309,7 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
   }
 
   @Nullable
-  public ModuleOrderEntry findIntellijModuleDependency(@NotNull GradleModuleDependency dependency, @NotNull ModifiableRootModel model) {
+  public ModuleOrderEntry findIdeModuleDependency(@NotNull GradleModuleDependency dependency, @NotNull ModifiableRootModel model) {
     for (OrderEntry entry : model.getOrderEntries()) {
       if (entry instanceof ModuleOrderEntry) {
         ModuleOrderEntry candidate = (ModuleOrderEntry)entry;
@@ -322,14 +322,14 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
   }
 
   @Nullable
-  public GradleJar findIntellijJar(@NotNull GradleJarId jarId) {
-    Library library = findIntellijLibrary(jarId.getLibraryId().getLibraryName());
+  public GradleJar findIdeJar(@NotNull GradleJarId jarId) {
+    Library library = findIdeLibrary(jarId.getLibraryId().getLibraryName());
     if (library == null) {
       return null;
     }
-    for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
+    for (VirtualFile file : library.getFiles(myLibraryPathTypeMapper.map(jarId.getLibraryPathType()))) {
       if (jarId.getPath().equals(GradleUtil.getLocalFileSystemPath(file))) {
-        return new GradleJar(jarId.getPath(), library, null);
+        return new GradleJar(jarId.getPath(), jarId.getLibraryPathType(), library, null);
       }
     }
     return null;

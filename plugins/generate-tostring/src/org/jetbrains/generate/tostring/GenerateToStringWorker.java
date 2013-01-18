@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,11 @@
 package org.jetbrains.generate.tostring;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.VisualPosition;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -48,20 +48,14 @@ import java.util.*;
 public class GenerateToStringWorker {
   private static final Logger logger = Logger.getInstance("#org.jetbrains.generate.tostring.GenerateToStringWorker");
 
-  private final JVMElementFactory topLevelFactory;
-  private final CodeStyleManager codeStyleManager;
   private final Editor editor;
   private final PsiClass clazz;
   private final Config config;
-  private final Project project;
   private final boolean hasOverrideAnnotation;
 
   public GenerateToStringWorker(PsiClass clazz, Editor editor, boolean insertAtOverride) {
     this.clazz = clazz;
-    this.project = clazz.getProject();
     this.editor = editor;
-    this.topLevelFactory = JVMElementFactories.getFactory(clazz.getLanguage(), project);
-    this.codeStyleManager = CodeStyleManager.getInstance(project);
     this.config = GenerateToStringContext.getConfig();
     this.hasOverrideAnnotation = insertAtOverride;
   }
@@ -105,18 +99,18 @@ public class GenerateToStringWorker {
    * <br/> 1) If there is a settings to always override use this.
    * <br/> 2) Prompt a dialog and let the user decide.
    *
-   * @param template the choosen template to use
+   * @param template the chosen template to use
    * @return the policy the user selected (never null)
    */
   private ConflictResolutionPolicy exitsMethodDialog(TemplateResource template) {
-    final DuplicatonPolicy dupPolicy = config.getReplaceDialogInitialOption();
-    if (dupPolicy == DuplicatonPolicy.ASK) {
+    final DuplicationPolicy dupPolicy = config.getReplaceDialogInitialOption();
+    if (dupPolicy == DuplicationPolicy.ASK) {
       PsiMethod existingMethod = PsiAdapter.findMethodByName(clazz, template.getTargetMethodName());
       if (existingMethod != null) {
         return MethodExistsDialog.showDialog(template.getTargetMethodName());
       }
     }
-    else if (dupPolicy == DuplicatonPolicy.REPLACE) {
+    else if (dupPolicy == DuplicationPolicy.REPLACE) {
       return ReplacePolicy.getInstance();
     }
 
@@ -164,8 +158,9 @@ public class GenerateToStringWorker {
     body = StringUtil.convertLineSeparators(body);
 
     // create psi newMethod named toString()
+    final JVMElementFactory topLevelFactory = JVMElementFactories.getFactory(clazz.getLanguage(), clazz.getProject());
     PsiMethod newMethod = topLevelFactory.createMethodFromText(template.getMethodSignature() + " { " + body + " }", clazz);
-    codeStyleManager.reformat(newMethod);
+    CodeStyleManager.getInstance(clazz.getProject()).reformat(newMethod);
 
     // insertNewMethod conflict resolution policy (add/replace, duplicate, cancel)
     PsiMethod existingMethod = clazz.findMethodBySignature(newMethod, false);
@@ -211,49 +206,31 @@ public class GenerateToStringWorker {
     PsiFile containingFile = clazz.getContainingFile();
     if (containingFile instanceof PsiJavaFile) {
       final PsiJavaFile javaFile = (PsiJavaFile)containingFile;
-      // if the code uses Arrays, then make sure java.util.Arrays is imported.
-      String javaCode = method.getText();
-      if (javaCode.indexOf("Arrays.") > 0 &&
-          !(PsiAdapter.hasImportStatement(javaFile, "java.util.*") || PsiAdapter.hasImportStatement(javaFile, "java.util.Arrays"))) {
-        // java.util.Arrays must be imported as java.util.* since the addImportStatement method doens't support onDemand-import statement yet.
-        PsiAdapter.addImportStatement(javaFile, "java.util.*");
-      }
-
-      // if the code uses Reflection (Field[]), then make sure java.lang.reflect.Field is imported.
-      if (javaCode.indexOf("Field[]") > 0 &&
-          !(PsiAdapter.hasImportStatement(javaFile, "java.lang.reflect.*") || PsiAdapter.hasImportStatement(javaFile, "java.lang.reflect.Field"))) {
-        // java.lang.reflect.Field must be imported as java.lang.reflect.* since the addImportStatement method doens't support onDemand-import statement yet.
-        PsiAdapter.addImportStatement(javaFile, "java.lang.reflect.*");
-      }
-
-      // any additional packages to import from the params
       if (params.get("autoImportPackages") != null) {
+        // keep this for old user templates
         autoImportPackages(javaFile, params.get("autoImportPackages"));
       }
+      method = (PsiMethod)JavaCodeStyleManager.getInstance(clazz.getProject()).shortenClassReferences(method);
     }
-
-    // reformat code
-    codeStyleManager.reformat(method);
 
     // jump to method
-    if (config.isJumpToMethod() && editor != null) {
-      PsiMethod newMethod = PsiAdapter.findMethodByName(clazz, template.getTargetMethodName());
-      if (newMethod != null) {
-        int offset = newMethod.getTextOffset();
-        if (offset > 2) {
-          VisualPosition vp = editor.offsetToVisualPosition(offset);
-          if (logger.isDebugEnabled()) logger.debug("Moving/Scrolling caret to " + vp + " (offset=" + offset + ")");
-          editor.getCaretModel().moveToVisualPosition(vp);
-          editor.getScrollingModel().scrollToCaret(ScrollType.CENTER_DOWN);
-        }
-      }
+    if (!config.isJumpToMethod() || editor == null) {
+      return;
     }
+    int offset = method.getTextOffset();
+    if (offset <= 2) {
+      return;
+    }
+    VisualPosition vp = editor.offsetToVisualPosition(offset);
+    if (logger.isDebugEnabled()) logger.debug("Moving/Scrolling caret to " + vp + " (offset=" + offset + ")");
+    editor.getCaretModel().moveToVisualPosition(vp);
+    editor.getScrollingModel().scrollToCaret(ScrollType.CENTER_DOWN);
   }
 
   /**
    * Automatic import the packages.
    *
-   * @param packageNames names of packages (must end with .* and be seperated by ; or ,)
+   * @param packageNames names of packages (must end with .* and be separated by ; or ,)
    * @throws IncorrectOperationException error adding imported package
    */
   private static void autoImportPackages(PsiJavaFile psiJavaFile, String packageNames) throws IncorrectOperationException {
@@ -285,6 +262,8 @@ public class GenerateToStringWorker {
     StringWriter sw = new StringWriter();
     try {
       VelocityContext vc = new VelocityContext();
+
+      vc.put("java_version", PsiAdapter.getJavaVersion(clazz));
 
       // field information
       logger.debug("Velocity Context - adding fields");
@@ -324,12 +303,6 @@ public class GenerateToStringWorker {
       if (vc.get("autoImportPackages") != null) {
         params.put("autoImportPackages", (String)vc.get("autoImportPackages"));
       }
-
-      // add java.io.Serializable if chosen in [settings] and does not already implements it
-      if (config.isAddImplementSerializable() && !ce.isImplements("java.io.Serializable")) {
-        PsiAdapter.addImplements(clazz, "java.io.Serializable");
-      }
-
     }
     catch (Exception e) {
       throw new GenerateCodeException("Error in Velocity code generator", e);
@@ -343,7 +316,7 @@ public class GenerateToStringWorker {
    * fields, doing the work through a WriteAction ran by a CommandProcessor.
    *
    * @param selectedMembers list of members selected
-   * @param template         the choosen template to use
+   * @param template         the chosen template to use
    * @param insertAtOverride
    */
   public static void executeGenerateActionLater(final PsiClass clazz,
@@ -366,6 +339,6 @@ public class GenerateToStringWorker {
       }
     };
 
-    PsiAdapter.executeCommand(clazz.getProject(), writeCommand);
+    CommandProcessor.getInstance().executeCommand(clazz.getProject(), writeCommand, "GenerateToString", null);
   }
 }

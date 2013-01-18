@@ -5,6 +5,7 @@ import com.intellij.testFramework.SkipInHeadlessEnvironment
 import org.jetbrains.plugins.gradle.diff.library.GradleJarPresenceChange
 import org.jetbrains.plugins.gradle.diff.module.GradleModulePresenceChange
 import org.jetbrains.plugins.gradle.testutil.AbstractGradleTest
+import org.junit.Before
 import org.junit.Test
 
 import static org.junit.Assert.assertEquals
@@ -18,6 +19,12 @@ import org.jetbrains.plugins.gradle.config.GradleTextAttributes
 @SkipInHeadlessEnvironment
 public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
 
+  @Before
+  public void setUp() {
+    super.setUp()
+    clearChangePostProcessors()
+  }
+  
   @Test
   public void "obsolete gradle-local modules"() {
     // Configure initial projects state.

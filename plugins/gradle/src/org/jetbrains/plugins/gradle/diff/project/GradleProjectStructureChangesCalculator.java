@@ -44,22 +44,22 @@ public class GradleProjectStructureChangesCalculator implements GradleStructureC
 
   @Override
   public void calculate(@NotNull GradleProject gradleEntity,
-                        @NotNull Project intellijEntity,
+                        @NotNull Project ideEntity,
                         @NotNull GradleChangesCalculationContext context)
   {
-    calculateProjectChanges(gradleEntity, intellijEntity, context.getCurrentChanges());
+    calculateProjectChanges(gradleEntity, ideEntity, context.getCurrentChanges());
 
     final Set<? extends GradleModule> gradleSubEntities = gradleEntity.getModules();
-    final Collection<Module> intellijSubEntities = myPlatformFacade.getModules(intellijEntity);
+    final Collection<Module> intellijSubEntities = myPlatformFacade.getModules(ideEntity);
     GradleDiffUtil.calculate(myModuleChangesCalculator, gradleSubEntities, intellijSubEntities, context);
     
-    LibraryTable libraryTable = myPlatformFacade.getProjectLibraryTable(intellijEntity);
+    LibraryTable libraryTable = myPlatformFacade.getProjectLibraryTable(ideEntity);
     GradleDiffUtil.calculate(myLibraryChangesCalculator, gradleEntity.getLibraries(), Arrays.asList(libraryTable.getLibraries()), context);
   }
 
   @NotNull
   @Override
-  public Object getIntellijKey(@NotNull Project entity) {
+  public Object getIdeKey(@NotNull Project entity) {
     return entity.getName();
   }
 

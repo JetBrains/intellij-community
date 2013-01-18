@@ -7,6 +7,11 @@ public class NumericLiterals {
     int i5 = 0b0001_0010_0100_1000;
     int i6 = <error descr="Binary numbers must contain at least one binary digit">0b</error>;
     int i7 = <error descr="Integer number too large">0b1_1111_1111_1111_1111_1111_1111_1111_1111</error>;
+    int i8 = <error descr="Illegal underscore">0_</error>;
+    int i9 = <error descr="Integer number too large">0_8</error>;
+    int i10 = <error descr="Illegal underscore">0x_f</error>;
+    int i11 = <error descr="Illegal underscore">0b_1</error>;
+    int i12 = <error descr="Integer number too large">0B2</error>;
 
     long l1 = 1_2L;
     long l2 = 012__34l;
@@ -41,5 +46,7 @@ public class NumericLiterals {
     double d10 = 0x.a_bcP1___23d;
     double d11 = <error descr="Floating point number too small">1e-3_2_4</error>;
     double d12 = <error descr="Floating point number too large">0xa_bc.de_fP1_234D</error>;
+    double d13 = <error descr="Illegal underscore">0x1.0_p-1</error>;
+    double d14 = <error descr="Illegal underscore">1.0e_1022</error>;
   }
 }

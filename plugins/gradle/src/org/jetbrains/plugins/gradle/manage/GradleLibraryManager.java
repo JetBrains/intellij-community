@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.gradle.manage;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -14,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.PlatformFacade;
 import org.jetbrains.plugins.gradle.model.gradle.GradleLibrary;
 import org.jetbrains.plugins.gradle.model.gradle.LibraryPathType;
+import org.jetbrains.plugins.gradle.util.GradleLibraryPathTypeMapper;
 import org.jetbrains.plugins.gradle.util.GradleLog;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
@@ -26,10 +26,12 @@ import java.util.*;
  */
 public class GradleLibraryManager {
 
-  @NotNull private final PlatformFacade myPlatformFacade;
+  @NotNull private final PlatformFacade              myPlatformFacade;
+  @NotNull private final GradleLibraryPathTypeMapper myLibraryPathTypeMapper;
 
-  public GradleLibraryManager(@NotNull PlatformFacade platformFacade) {
+  public GradleLibraryManager(@NotNull PlatformFacade platformFacade, @NotNull GradleLibraryPathTypeMapper mapper) {
     myPlatformFacade = platformFacade;
+    myLibraryPathTypeMapper = mapper;
   }
 
   public void importLibraries(@NotNull Collection<? extends GradleLibrary> libraries, @NotNull Project project) {
@@ -37,7 +39,7 @@ public class GradleLibraryManager {
       importLibrary(library, project);
     }
   }
-  
+
   public void importLibrary(@NotNull final GradleLibrary library, @NotNull final Project project) {
     Map<OrderRootType, Collection<File>> libraryFiles = new HashMap<OrderRootType, Collection<File>>();
     for (LibraryPathType pathType : LibraryPathType.values()) {
@@ -45,7 +47,7 @@ public class GradleLibraryManager {
       if (paths.isEmpty()) {
         continue;
       }
-      libraryFiles.put(Lazy.LIBRARY_ROOT_MAPPINGS.get(pathType), ContainerUtil.map(paths, new NotNullFunction<String, File>() {
+      libraryFiles.put(myLibraryPathTypeMapper.map(pathType), ContainerUtil.map(paths, new NotNullFunction<String, File>() {
         @NotNull
         @Override
         public File fun(String path) {
@@ -118,17 +120,5 @@ public class GradleLibraryManager {
     // TODO den implement
     //LibraryTable table = library.getTable();
     //table.removeLibrary(library);
-  }
-  
-  
-  private static class Lazy {
-    static final Map<LibraryPathType, OrderRootType> LIBRARY_ROOT_MAPPINGS
-      = new EnumMap<LibraryPathType, OrderRootType>(LibraryPathType.class);
-    static {
-      LIBRARY_ROOT_MAPPINGS.put(LibraryPathType.BINARY, OrderRootType.CLASSES);
-      LIBRARY_ROOT_MAPPINGS.put(LibraryPathType.SOURCE, OrderRootType.SOURCES);
-      LIBRARY_ROOT_MAPPINGS.put(LibraryPathType.DOC, JavadocOrderRootType.getInstance());
-      assert LibraryPathType.values().length == LIBRARY_ROOT_MAPPINGS.size();
-    }
   }
 }

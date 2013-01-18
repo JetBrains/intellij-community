@@ -68,7 +68,7 @@ public class GradleDependencyManager {
           final GradleProjectStructureHelper projectStructureHelper = module.getProject().getComponent(GradleProjectStructureHelper.class);
           for (GradleModuleDependency dependency : dependencies) {
             final String moduleName = dependency.getName();
-            final Module intellijModule = projectStructureHelper.findIntellijModule(moduleName);
+            final Module intellijModule = projectStructureHelper.findIdeModule(moduleName);
             if (intellijModule == null) {
               assert false;
               continue;
@@ -78,7 +78,7 @@ public class GradleDependencyManager {
               continue;
             }
 
-            ModuleOrderEntry orderEntry = projectStructureHelper.findIntellijModuleDependency(dependency, moduleRootModel);
+            ModuleOrderEntry orderEntry = projectStructureHelper.findIdeModuleDependency(dependency, moduleRootModel);
             if (orderEntry == null) {
               orderEntry = moduleRootModel.addModuleOrderEntry(intellijModule);
             }
@@ -120,7 +120,7 @@ public class GradleDependencyManager {
               assert false;
               continue;
             }
-            LibraryOrderEntry orderEntry = helper.findIntellijLibraryDependency(dependency.getName(), moduleRootModel);
+            LibraryOrderEntry orderEntry = helper.findIdeLibraryDependency(dependency.getName(), moduleRootModel);
             if (orderEntry == null) {
               // We need to get the most up-to-date Library object due to our project model restrictions.
               orderEntry = moduleRootModel.addLibraryEntry(library);

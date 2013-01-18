@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2012 the original author or authors.
+ * Copyright 2001-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.generate.tostring.config.FilterPattern;
-import org.jetbrains.generate.tostring.element.ElementFactory;
-import org.jetbrains.generate.tostring.element.FieldElement;
-import org.jetbrains.generate.tostring.element.MethodElement;
 import org.jetbrains.generate.tostring.exception.GenerateCodeException;
 import org.jetbrains.generate.tostring.exception.PluginException;
 import org.jetbrains.generate.tostring.psi.PsiAdapter;
@@ -38,13 +35,10 @@ import java.util.List;
  * Utility methods for GenerationToStringAction and the inspections.
  */
 public class GenerateToStringUtils {
+
     private static final Logger log = Logger.getInstance("#org.jetbrains.generate.tostring.GenerateToStringUtils");
 
-    /**
-     * Private constructor.
-     */
-    private GenerateToStringUtils() {
-    }
+    private GenerateToStringUtils() {}
 
     /**
      * Filters the list of fields from the class with the given parameters from the {@link org.jetbrains.generate.tostring.config.Config config} settings.
@@ -61,11 +55,8 @@ public class GenerateToStringUtils {
         // performs til filtering process
         PsiField[] fields = clazz.getFields();
         for (PsiField field : fields) {
-            FieldElement fe = ElementFactory.newFieldElement(field);
-            if (log.isDebugEnabled()) log.debug("Field being filtered: " + fe);
-
             // if the field matches the pattern then it shouldn't be in the list of available fields
-            if (!fe.applyFilter(pattern)) {
+            if (!pattern.fieldMatches(field)) {
                 availableFields.add(field);
             }
         }
@@ -90,10 +81,8 @@ public class GenerateToStringUtils {
     public static PsiMethod[] filterAvailableMethods(PsiClass clazz, @NotNull FilterPattern pattern) {
         if (log.isDebugEnabled()) log.debug("Filtering methods using the pattern: " + pattern);
         List<PsiMethod> availableMethods = new ArrayList<PsiMethod>();
-
         PsiMethod[] methods = clazz.getMethods();
         for (PsiMethod method : methods) {
-
             // the method should be a getter
             if (!PsiAdapter.isGetterMethod(method)) {
                 continue;
@@ -119,19 +108,19 @@ public class GenerateToStringUtils {
 
             // must not be named toString or getClass
             final String methodName = method.getName();
-            if ("toString".equals(methodName) || "getClass".equals(methodName)) {
+            if ("toString".equals(methodName) || "getClass".equals(methodName) || "hashCode".equals(methodName)) {
                 continue;
             }
 
             // if the method matches the pattern then it shouldn't be in the list of available methods
-            MethodElement me = ElementFactory.newMethodElement(method);
-            if (!me.applyFilter(pattern)) {
-                if (log.isDebugEnabled())
-                    log.debug("Adding the method " + methodName + " as there is not a field for this getter");
-                availableMethods.add(method);
+            if (pattern.methodMatches(method)) {
+                continue;
             }
-        }
 
+            if (log.isDebugEnabled())
+                log.debug("Adding the method " + methodName + " as there is not a field for this getter");
+            availableMethods.add(method);
+        }
         return availableMethods.toArray(new PsiMethod[availableMethods.size()]);
     }
 

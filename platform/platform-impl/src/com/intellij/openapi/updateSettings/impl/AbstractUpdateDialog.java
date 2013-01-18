@@ -107,12 +107,7 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
       app.invokeLater(new Runnable() {
         @Override
         public void run() {
-          if (app.isRestartCapable()) {
-            app.restart();
-          }
-          else {
-            app.exit(true);
-          }
+          app.restart(true);
         }
       });
     }

@@ -76,7 +76,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
   };
   private final Object myWaiter = new Object();
   private int myTimeout = NATIVE_PROCESS_DELAY;
-  private final List<VFileEvent> myEvents = new ArrayList<VFileEvent>();
+  private final List<VFileEvent> myEvents = ContainerUtil.createLockFreeCopyOnWriteList();
 
   @Override
   protected void setUp() throws Exception {
@@ -288,11 +288,11 @@ public class FileWatcherTest extends PlatformLangTestCase {
 
   public void testDirectoryOverlapping() throws Exception {
     final File topDir = FileUtil.createTempDirectory("top.", null);
-    final File fileInTopDir = FileUtil.createTempFile(topDir, "file1.", ".txt");
-    final File subDir = FileUtil.createTempDirectory(topDir, "sub.", null);
-    final File fileInSubDir = FileUtil.createTempFile(subDir, "file2.", ".txt");
+    final File fileInTopDir = new File(topDir, "file1.txt"); FileUtil.createIfNotExists(fileInTopDir);
+    final File subDir = new File(topDir, "sub");  FileUtil.createDirectory(subDir);
+    final File fileInSubDir = new File(subDir, "file2.txt"); FileUtil.createIfNotExists(fileInSubDir);
     final File sideDir = FileUtil.createTempDirectory("side.", null);
-    final File fileInSideDir = FileUtil.createTempFile(sideDir, "file3.", ".txt");
+    final File fileInSideDir = new File(sideDir, "file3.txt"); FileUtil.createIfNotExists(fileInSideDir);
     refresh(topDir);
     refresh(sideDir);
 
@@ -548,6 +548,45 @@ public class FileWatcherTest extends PlatformLangTestCase {
     FileUtil.writeToFile(file2, "xyz");
     assertEvent(VFileEvent.class);
     myTimeout = NATIVE_PROCESS_DELAY;
+  }
+
+  /*public void testUnicodePaths() throws Exception {
+    File topDir = IoTestUtil.createTestDir("topDir");
+    File testDir = IoTestUtil.createTestDir(topDir, "unicode директория");
+    File testFile = IoTestUtil.createTestFile(testDir, "unicode файл");
+    refresh(topDir);
+
+    LocalFileSystem.WatchRequest request = watch(topDir);
+    try {
+      myAccept = true;
+      FileUtil.writeToFile(testFile, "abc");
+      assertEvent(VFileContentChangeEvent.class, testFile.getPath());
+    }
+    finally {
+      unwatch(request);
+    }
+  }*/
+
+  public void testLineBreaksInName() throws Exception {
+    if (!SystemInfo.isUnix) {
+      System.err.println("Ignored: Unix required");
+      return;
+    }
+
+    File topDir = IoTestUtil.createTestDir("topDir");
+    File testDir = IoTestUtil.createTestDir(topDir, "weird\ndir\nname");
+    File testFile = IoTestUtil.createTestFile(testDir, "weird\nfile\nname");
+    refresh(topDir);
+
+    LocalFileSystem.WatchRequest request = watch(topDir);
+    try {
+      myAccept = true;
+      FileUtil.writeToFile(testFile, "abc");
+      assertEvent(VFileContentChangeEvent.class, testFile.getPath());
+    }
+    finally {
+      unwatch(request);
+    }
   }
 
 

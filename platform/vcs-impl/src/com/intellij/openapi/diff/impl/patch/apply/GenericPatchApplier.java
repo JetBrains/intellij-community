@@ -25,7 +25,7 @@ import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.CompositeIterator;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -737,8 +737,8 @@ public class GenericPatchApplier {
   }
   
   private Iterator<Integer> getMatchingIterator(final String line, final int originalStart, final int maxWalkFromBinding) {
-    return new CompositeIterator<Integer>(Arrays.<Iterator<Integer>>asList(new WalkingIterator(line, originalStart, maxWalkFromBinding, true),
-                                          new WalkingIterator(line, originalStart, maxWalkFromBinding, false)));
+    return ContainerUtil.concatIterators(new WalkingIterator(line, originalStart, maxWalkFromBinding, true),
+                                          new WalkingIterator(line, originalStart, maxWalkFromBinding, false));
   }
   
   private class WalkingIterator implements Iterator<Integer> {

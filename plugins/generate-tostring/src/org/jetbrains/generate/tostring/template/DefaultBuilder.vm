@@ -1,5 +1,5 @@
-public String toString() {
-final StringBuilder sb = new StringBuilder("$classname{");
+public java.lang.String toString() {
+final java.lang.StringBuilder sb = new java.lang.StringBuilder("$classname{");
 #set ($i = 0)
 #foreach ($member in $members)
 #if ($i == 0)

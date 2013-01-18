@@ -652,10 +652,25 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
     PsiType type = variable.getDeclaredType();
     if (type instanceof PsiEllipsisType && !isLastParameter(variable)) {
-      TextRange range = getTypeRange(variable);
-      LOG.assertTrue(range != null, variable.getText());
-      myHolder.createErrorAnnotation(range, GroovyBundle.message("ellipsis.type.is.not.allowed.here"));
+      TextRange range = getEllipsisRange(variable);
+      if (range == null) {
+        range = getTypeRange(variable);
+      }
+      if (range != null) {
+        myHolder.createErrorAnnotation(range, GroovyBundle.message("ellipsis.type.is.not.allowed.here"));
+      }
     }
+  }
+
+  @Nullable
+  private static TextRange getEllipsisRange(GrVariable variable) {
+    if (variable instanceof GrParameter) {
+      final PsiElement dots = ((GrParameter)variable).getEllipsisDots();
+      if (dots != null) {
+        return dots.getTextRange();
+      }
+    }
+    return null;
   }
 
   @Nullable

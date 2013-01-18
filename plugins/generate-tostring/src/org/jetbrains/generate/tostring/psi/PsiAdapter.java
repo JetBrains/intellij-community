@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2012 the original author or authors.
+ * Copyright 2001-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.generate.tostring.psi;
 
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -24,6 +25,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
@@ -463,13 +465,7 @@ public class PsiAdapter {
         if (parameterList.getParametersCount() != 0) {
             return false;
         }
-        if (method.getName().matches("^(is|has)\\p{Upper}.*")) {
-          final PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
-          return isBooleanType(factory, method.getReturnType());
-        } else if (method.getName().matches("^(get)\\p{Upper}.*")) {
-            return true;
-        }
-        return false;
+        return true;
     }
 
     /**
@@ -505,25 +501,12 @@ public class PsiAdapter {
      */
     public static boolean isEnumField(PsiField field) {
         PsiType type = field.getType();
-
-        // must not be an primitive type
-        if (isPrimitiveType(type)) {
+        if (!(type instanceof PsiClassType)) {
             return false;
         }
-
-        GlobalSearchScope scope = type.getResolveScope();
-        if (scope == null) {
-            return false;
-        }
-
-        // find the class
-        String name = type.getCanonicalText();
-        PsiClass clazz = JavaPsiFacade.getInstance(field.getProject()).findClass(name, scope);
-        if (clazz == null) {
-            return false;
-        }
-
-        return clazz.isEnum();
+        final PsiClassType classType = (PsiClassType)type;
+        final PsiClass aClass = classType.resolve();
+        return (aClass != null) && aClass.isEnum();
     }
 
     /**
@@ -683,37 +666,29 @@ public class PsiAdapter {
         return type instanceof PsiPrimitiveType;
     }
 
-    /**
-     * Executes the given runnable in IDEA command.
-     *
-     * @param project IDEA project
-     * @param runnable the runnable task to execute.
-     */
-    public static void executeCommand(Project project, Runnable runnable) {
-        CommandProcessor.getInstance().executeCommand(project, runnable, "GenerateToString", null);
+  public static int getJavaVersion(PsiElement element) {
+    final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(element);
+    int version = 0;
+    switch (languageLevel) {
+      case JDK_1_3:
+        version = 3;
+        break;
+      case JDK_1_4:
+        version = 4;
+        break;
+      case JDK_1_5:
+        version = 5;
+        break;
+      case JDK_1_6:
+        version = 6;
+        break;
+      case JDK_1_7:
+        version = 7;
+        break;
+      case JDK_1_8:
+        version = 8;
+        break;
     }
-
-    /**
-     * Adds the interface name to the class implementation list.
-     *
-     * @param clazz         the class
-     * @param interfaceName the interface name the class should implement
-     * @throws IncorrectOperationException is thrown by IDEA.
-     */
-    public static void addImplements(PsiClass clazz, String interfaceName) {
-      final Project project = clazz.getProject();
-      JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-
-        // get the interface class
-        PsiClass interfaceClass = facade.findClass(interfaceName, GlobalSearchScope.allScope(project));
-
-        // if the interface exists add it as a reference in the implements list
-        if (interfaceClass != null) {
-            PsiJavaCodeReferenceElement ref = facade.getElementFactory().createClassReferenceElement(interfaceClass);
-            PsiReferenceList list = clazz.getImplementsList();
-            if (list != null) {
-                list.add(ref);
-            }
-        }
-    }
+    return version;
+  }
 }

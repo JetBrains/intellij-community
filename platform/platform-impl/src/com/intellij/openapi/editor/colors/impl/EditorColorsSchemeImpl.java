@@ -53,14 +53,14 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
 
   @Override
   public TextAttributes getAttributes(TextAttributesKey key) {
-      if (key != null) {
+    if (key != null) {
       TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
       TextAttributes attributes = myAttributesMap.get(key);
       if (fallbackKey == null) {
         if (attributes != null) return attributes;
       }
       else {
-        if (attributes != null && !attributes.isEmpty()) return attributes;
+        if (attributes != null && !attributes.isFallbackEnabled()) return attributes;
         attributes = getFallbackAttributes(fallbackKey);
         if (attributes != null) return attributes;
       }

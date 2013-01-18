@@ -71,6 +71,7 @@ static void unregister_roots();
 static bool register_roots(array* new_roots, array* unwatchable, array* mounts);
 static array* unwatchable_mounts();
 static void inotify_callback(char* path, int event);
+static void report_event(char* event, char* path);
 static void output(const char* format, ...);
 
 
@@ -398,26 +399,23 @@ static array* unwatchable_mounts() {
 
 static void inotify_callback(char* path, int event) {
   if (event & IN_CREATE || event & IN_MOVED_TO) {
-    output("CREATE\n%s\nCHANGE\n%s\n", path, path);
-    userlog(LOG_DEBUG, "CREATE: %s", path);
+    report_event("CREATE", path);
+    report_event("CHANGE", path);
     return;
   }
 
   if (event & IN_MODIFY) {
-    output("CHANGE\n%s\n", path);
-    userlog(LOG_DEBUG, "CHANGE: %s", path);
+    report_event("CHANGE", path);
     return;
   }
 
   if (event & IN_ATTRIB) {
-    output("STATS\n%s\n", path);
-    userlog(LOG_DEBUG, "STATS: %s", path);
+    report_event("STATS", path);
     return;
   }
 
   if (event & IN_DELETE || event & IN_MOVED_FROM) {
-    output("DELETE\n%s\n", path);
-    userlog(LOG_DEBUG, "DELETE: %s", path);
+    report_event("DELETE", path);
     return;
   }
 
@@ -426,6 +424,22 @@ static void inotify_callback(char* path, int event) {
     userlog(LOG_DEBUG, "RESET");
     return;
   }
+}
+
+static void report_event(char* event, char* path) {
+  userlog(LOG_DEBUG, "%s: %s", event, path);
+
+  int len = strlen(path);
+  for (char* p = path; *p != '\0'; p++){
+    if (*p == '\n') {
+      *p = '\0';
+    }
+  }
+
+  fputs(event, stdout);
+  fputc('\n', stdout);
+  fwrite(path, len, 1, stdout);
+  fputc('\n', stdout);
 }
 
 

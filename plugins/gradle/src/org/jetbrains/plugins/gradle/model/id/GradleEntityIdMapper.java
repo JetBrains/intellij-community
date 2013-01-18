@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.GradleEntityOwner;
 import org.jetbrains.plugins.gradle.model.gradle.*;
-import org.jetbrains.plugins.gradle.model.intellij.IntellijEntityVisitor;
+import org.jetbrains.plugins.gradle.model.intellij.IdeEntityVisitor;
 import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
 import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
@@ -84,21 +84,21 @@ public class GradleEntityIdMapper {
     }
 
     if (result.get() == null) {
-      GradleUtil.dispatch(entity, new IntellijEntityVisitor() {
+      GradleUtil.dispatch(entity, new IdeEntityVisitor() {
         @Override
         public void visit(@NotNull Project project) {
-          result.set(new GradleProjectId(GradleEntityOwner.INTELLIJ));
+          result.set(new GradleProjectId(GradleEntityOwner.IDE));
         }
 
         @Override
         public void visit(@NotNull Module module) {
-          result.set(new GradleModuleId(GradleEntityOwner.INTELLIJ, module.getName()));
+          result.set(new GradleModuleId(GradleEntityOwner.IDE, module.getName()));
         }
 
         @Override
         public void visit(@NotNull ModuleAwareContentRoot contentRoot) {
           final String path = contentRoot.getFile().getPath();
-          result.set(new GradleContentRootId(GradleEntityOwner.INTELLIJ, contentRoot.getModule().getName(), path));
+          result.set(new GradleContentRootId(GradleEntityOwner.IDE, contentRoot.getModule().getName(), path));
         }
 
         @Override
@@ -113,19 +113,19 @@ public class GradleEntityIdMapper {
           if (libraryName == null) {
             return;
           }
-          result.set(new GradleLibraryDependencyId(GradleEntityOwner.INTELLIJ, libraryDependency.getOwnerModule().getName(), libraryName));
+          result.set(new GradleLibraryDependencyId(GradleEntityOwner.IDE, libraryDependency.getOwnerModule().getName(), libraryName));
         }
 
         @Override
         public void visit(@NotNull ModuleOrderEntry moduleDependency) {
           result.set(new GradleModuleDependencyId(
-            GradleEntityOwner.INTELLIJ, moduleDependency.getOwnerModule().getName(), moduleDependency.getModuleName()
+            GradleEntityOwner.IDE, moduleDependency.getOwnerModule().getName(), moduleDependency.getModuleName()
           ));
         }
 
         @Override
         public void visit(@NotNull Library library) {
-          result.set(new GradleLibraryId(GradleEntityOwner.INTELLIJ, GradleUtil.getLibraryName(library)));
+          result.set(new GradleLibraryId(GradleEntityOwner.IDE, GradleUtil.getLibraryName(library)));
         }
       });
     }

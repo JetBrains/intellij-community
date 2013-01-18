@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 the original author or authors.
+ * Copyright 2001-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,25 +21,13 @@ import org.jetbrains.generate.tostring.util.StringUtil;
 import java.io.Serializable;
 
 /**
- * A template.
- * <p/>
- * A template contains the methody body and the filename of the resource where
+ * A template contains the method body and the filename of the resource where
  * the text is stored.
  */
 public class TemplateResource implements Serializable {
   private final boolean isDefault;
   private String fileName = "";
   private String template = "";
-
-  /**
-   * Constructor.
-   *
-   * @param fileName a template filename
-   * @param template the template velocity body content
-   */
-  public TemplateResource(String fileName, String template) {
-    this(fileName, template, false);
-  }
 
   public TemplateResource(String fileName, String template, boolean aDefault) {
     isDefault = aDefault;
@@ -133,7 +121,7 @@ public class TemplateResource implements Serializable {
         continue;
       }
       signature.append(line);
-      if (line.indexOf("{") > -1) {
+      if (line.indexOf('{') > -1) {
         break;
       }
     }
@@ -144,7 +132,7 @@ public class TemplateResource implements Serializable {
   }
 
   /**
-   * Get's the method that this template is for (toString)
+   * Gets the method that this template is for (toString)
    */
   public String getTargetMethodName() {
     String s = getMethodSignature();
@@ -171,13 +159,13 @@ public class TemplateResource implements Serializable {
   public static boolean isValidTemplate(String template) {
     template = template.trim();
 
-    if (template.indexOf("{") == -1) {
+    if (template.indexOf('{') == -1) {
       return false;
     }
 
     // ending } must be the last character
     String s = template.trim();
-    if (s.lastIndexOf("}") != s.length() - 1) {
+    if (s.lastIndexOf('}') != s.length() - 1) {
       return false;
     }
 
@@ -193,52 +181,7 @@ public class TemplateResource implements Serializable {
   }
 
   /**
-   * Does the template use annotations?
-   *
-   * @return true if so, false if not.
-   */
-  public boolean hasAnnotations() {
-    return getAnnotations() != null;
-  }
-
-  /**
-   * Get's the annotations
-   *
-   * @return the annotation, null if does not have.
-   */
-  public String[] getAnnotations() {
-    String signature = getMethodSignature();
-    String javadoc = getJavaDoc();
-    String annotations;
-    if (javadoc != null) {
-      annotations = StringUtil.middle(template, javadoc, signature);
-    }
-    else {
-      annotations = StringUtil.before(template, signature);
-    }
-
-    if (StringUtil.isEmpty(annotations)) {
-      return null;
-    }
-
-    if (annotations.indexOf("@") == -1) {
-      return null;
-    }
-
-    // remove first and last \n
-    annotations = annotations.trim();
-    if (annotations.startsWith("\n")) {
-      annotations = annotations.substring(1);
-    }
-    if (annotations.endsWith("\n")) {
-      annotations = annotations.substring(0, annotations.length() - 1);
-    }
-
-    return annotations.split("\n");
-  }
-
-  /**
-   * Important to return filename only as it is the displayname in the UI.
+   * Important to return filename only as it is the display name in the UI.
    *
    * @return filename for UI.
    */
@@ -248,15 +191,6 @@ public class TemplateResource implements Serializable {
 
   public String getName() {
     return fileName;
-  }
-
-  public void copyFrom(TemplateResource templateResource) {
-    fileName = templateResource.getFileName();
-    template = templateResource.getTemplate();
-  }
-
-  public void setName(String name) {
-    fileName = name;
   }
 
   @Override

@@ -1,0 +1,6 @@
+*.aps
+*.vcxproj.user
+Release
+*.suo
+*.opensdf
+*.sdf

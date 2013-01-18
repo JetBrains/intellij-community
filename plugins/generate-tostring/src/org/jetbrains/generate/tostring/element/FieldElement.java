@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 the original author or authors.
+ * Copyright 2001-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,6 @@
 package org.jetbrains.generate.tostring.element;
 
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.generate.tostring.config.FilterPattern;
-import org.jetbrains.generate.tostring.config.Filterable;
-
-import java.io.Serializable;
 
 /**
  * This is a field element containing information about the field.
@@ -27,7 +23,7 @@ import java.io.Serializable;
  * @see ElementFactory
  */
 @SuppressWarnings({"JavaDoc"})
-public class FieldElement extends AbstractElement implements Serializable, Element, Filterable {
+public class FieldElement extends AbstractElement implements Element {
 
     private boolean isConstant;
     private boolean isEnum;
@@ -78,7 +74,7 @@ public class FieldElement extends AbstractElement implements Serializable, Eleme
 
     void setModifierVolatile(boolean modifierVolatile) {
          this.isModifierVolatile = modifierVolatile;
-     }
+    }
 
     public void setEnum(boolean anEnum) {
         isEnum = anEnum;
@@ -99,44 +95,6 @@ public class FieldElement extends AbstractElement implements Serializable, Eleme
         return name.matches(regexp);
     }
 
-    public boolean applyFilter(FilterPattern pattern) {
-        if (pattern == null)
-            return false;
-
-        if (pattern.isConstantField() && isConstant) {
-            return true;
-        }
-
-        if (pattern.isEnumField() && isEnum) {
-            return true;
-        }
-
-        if (pattern.isStaticModifier() && isModifierStatic) {
-            return true;
-        }
-
-        if (pattern.isTransientModifier() && isModifierTransient) {
-            return true;
-        }
-
-        if (StringUtil.isNotEmpty(pattern.getFieldName()) && name.matches(pattern.getFieldName())) {
-            return true;
-        }
-
-        if (StringUtil.isNotEmpty(pattern.getFieldType()) && !isPrimitive && getTypeQualifiedName() != null) {
-            String type = getTypeQualifiedName();
-            if (type.matches(pattern.getFieldType()))
-                return true;
-        }
-
-        if (pattern.isLoggers() && !isPrimitive && ("org.apache.log4j.Logger".equals(getTypeQualifiedName())
-                || "java.util.logging.Logger".equals(getTypeQualifiedName()) || "org.apache.commons.logging.Log".equals(getTypeQualifiedName())) ) {
-            return true;
-        }
-
-        return false;
-    }
-
     public String toString() {
         return super.toString() + " ::: FieldElement{" +
                 "isConstant=" + isConstant +
@@ -145,6 +103,4 @@ public class FieldElement extends AbstractElement implements Serializable, Eleme
                 ", isModifierVolatile=" + isModifierVolatile +
                 "}";
     }
-
-
 }
