@@ -78,14 +78,8 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
 
   @Override
   public boolean isInContent(@NotNull VirtualFile fileOrDir) {
-    if (fileOrDir.isDirectory()) {
-      DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(fileOrDir);
-      return info != null && myModule.equals(info.getModule());
-    }
-    else {
-      VirtualFile parent = fileOrDir.getParent();
-      return parent != null && isInContent(parent);
-    }
+    DirectoryInfo info = ProjectFileIndexImpl.getInfoForFileOrDirectory(fileOrDir, myDirectoryIndex);
+    return info != null && myModule.equals(info.getModule());
   }
 
   @Override
@@ -103,19 +97,14 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
   @Override
   @NotNull
   public List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile fileOrDir) {
-    VirtualFile dir = fileOrDir.isDirectory() ? fileOrDir : fileOrDir.getParent();
-    if (dir == null) return Collections.emptyList();
-    final DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(dir);
+    DirectoryInfo info = ProjectFileIndexImpl.getInfoForFileOrDirectory(fileOrDir, myDirectoryIndex);
     if (info == null) return Collections.emptyList();
-
     return info.findAllOrderEntriesWithOwnerModule(myModule);
   }
 
   @Override
   public OrderEntry getOrderEntryForFile(@NotNull VirtualFile fileOrDir) {
-    VirtualFile dir = fileOrDir.isDirectory() ? fileOrDir : fileOrDir.getParent();
-    if (dir == null) return null;
-    final DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(dir);
+    DirectoryInfo info = ProjectFileIndexImpl.getInfoForFileOrDirectory(fileOrDir, myDirectoryIndex);
     if (info == null) return null;
     return info.findOrderEntryWithOwnerModule(myModule);
   }
